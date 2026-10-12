@@ -4,11 +4,15 @@
 
 I'd like to change monitoring in vpsfree-cz-configuration so that alerts about the aitherdev machine would go only to me (aither), and not others. Look it over and suggest a solution.
 
+Follow-up: suggest a generic per-system marker selecting one or more users,
+with aitherdev as the first application.
+
 ## Affected repositories
 
-- `vpsfree-cz-configuration`: monitoring labels, Prometheus rules and Alertmanager
-  routes. Investigation uses the canonical bare repository; no feature worktree
-  or configuration changes are requested at this stage.
+- `vpsfree-cz-configuration`: cluster recipient metadata, contact registry,
+  Alertmanager route generation, shared management identity helper, monitoring
+  documentation and focused tests. Feature worktree and branch use this session's
+  exact slug; metric labels and Prometheus rules remain unchanged.
 
 ## Approach
 
@@ -17,11 +21,22 @@ I'd like to change monitoring in vpsfree-cz-configuration so that alerts about t
   and daytime behavior.
 - Suggest an exclusive route with minimal deployment scope and an offline
   receiver-selection verification plan.
+- Generate exclusive routes from per-machine `monitoring.alertRecipients`
+  metadata and shared contacts, using existing subject identity labels. See
+  [investigation and proposal](findings.md) for details and identity boundaries.
 
 ## Decisions
 
-- Current request is investigation and a proposal, without implementation,
-  deployment or integration.
+- User accepted the generic proposal and requested implementation, then approved
+  integration into `vpsfree-cz-configuration/master` with "ok, merge it".
+  The exact final head was fast-forwarded and pushed; deployment remains
+  unrequested. See [integration evidence](integration.json).
+- Recommend nullable recipient metadata: `null` keeps normal team delivery;
+  a nonempty registered-user list replaces it. Reject empty/unknown selections.
+- Avoid new metric recipient labels: existing CPU/I/O aggregations would drop
+  them, and ping-target constructors do not propagate custom labels.
+- [Lead-owned design brief](design.md) defines final implementation boundaries,
+  identity precedence and acceptance checks.
 - Lead owns investigation and proposed design. Retained `reviewer0` is ready,
   read-only, Astra/xhigh; final review is reserved for a completed substantive
   deliverable, not routine findings.

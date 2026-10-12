@@ -1,0 +1,904 @@
+diff --git a/cluster/cz.vpsfree/machines/aitherdev/module.nix b/cluster/cz.vpsfree/machines/aitherdev/module.nix
+index 30a8e227..114769ab 100644
+--- a/cluster/cz.vpsfree/machines/aitherdev/module.nix
++++ b/cluster/cz.vpsfree/machines/aitherdev/module.nix
+@@ -3,6 +3,7 @@
+   cluster."cz.vpsfree/machines/aitherdev" = rec {
+     spin = "nixos";
+     machineType = "vm";
++    monitoring.alertRecipients = [ "aither" ];
+     inputs.channels = [
+       "nixos-stable"
+       "home-manager"
+diff --git a/data/default.nix b/data/default.nix
+index 8f74ffe4..7858a077 100644
+--- a/data/default.nix
++++ b/data/default.nix
+@@ -4,6 +4,8 @@
+ 
+   meet = import ./meet.nix;
+ 
++  monitoring = import ./monitoring.nix;
++
+   vpsadmin = import ./vpsadmin { inherit lib; };
+ 
+   cloudflare = import ./cloudflare.nix;
+diff --git a/data/monitoring.nix b/data/monitoring.nix
+new file mode 100644
+index 00000000..0c86c691
+--- /dev/null
++++ b/data/monitoring.nix
+@@ -0,0 +1,25 @@
++{
++  teamRecipients = [
++    "aither"
++    "snajpa"
++    "kerrycze"
++  ];
++
++  users = {
++    aither = {
++      email = "aither@havefun.cz";
++      sms = {
++        startTime = "07:00";
++        endTime = "22:00";
++      };
++    };
++    snajpa = {
++      email = "snajpa@snajpa.net";
++      sms = {
++        startTime = "09:00";
++        endTime = "23:00";
++      };
++    };
++    kerrycze.email = "monitoring@kerrycze.net";
++  };
++}
+diff --git a/docs/services/monitoring.md b/docs/services/monitoring.md
+index e2244698..b7c453ff 100644
+--- a/docs/services/monitoring.md
++++ b/docs/services/monitoring.md
+@@ -17,6 +17,52 @@ bridge's paired node-exporter (9100) and Jitsi exporter (9700) targets with
+ `machine_type="vps"`, preserving alias, type and project labels. Reconsider this
+ classification when the bridge inventory changes.
+ 
++## Alert recipients
++
++Set `monitoring.alertRecipients` in a system's cluster metadata to send its
++alerts only to selected users:
++
++```nix
++cluster."cz.vpsfree/machines/aitherdev".monitoring.alertRecipients = [ "aither" ];
++```
++
++The default `null` uses normal team routing. A nonempty list replaces team
++recipients; `[ "aither" "snajpa" ]` selects both users. Empty lists and unknown
++users fail configuration evaluation. Ordering and duplicate entries do not
++change the selection. This setting does not disable monitoring or alert rules.
++
++`data/monitoring.nix` defines the registered users, their email addresses,
++optional SMS daytime windows, and the normal team recipients. To add SMS for
++a user, also configure the matching `sms-<user>` receiver in the private sachet
++configuration on both APU gateways and the Alertmanager fallback service.
++Email-only contacts need no SMS setup. The contact registry contains no secrets.
++
++Selected recipients receive warning, critical and fatal alerts by email, with
++the normal repeat frequencies and resolved notifications. Critical and fatal
++alerts also use each selected user's configured SMS receiver. Critical SMS
++respects that user's daytime window in Europe/Prague; fatal SMS is active at
++all times. Shared Telegram is excluded. `severity=none` remains silent, while
++an unknown or missing severity falls back to selected-user email.
++
++Alertmanager generates exclusive routes from the existing identity labels.
++These routes match the system's primary FQDN and, for nodes, its management
++FQDN. A nonempty `node_fqdn` identifies the subject and takes precedence over
++the scrape host's `fqdn`. This covers node checks supplied by another system,
++such as download-pool healthchecks. A selected system cannot override its
++custom `monitoring.labels.fqdn` with a different identity.
++
++Public service and global alerts without machine identity keep team routing.
++Selecting one machine does not select its dependent systems or public services.
++Recipient metadata does not add Prometheus labels or change alert identities.
++
++Recipient changes require updating both Alertmanager replicas. Exporters,
++monitors and the selected machine need no runtime update. During a rolling
++update, an old replica can still send team notifications; the exclusive policy
++is effective only after both replicas load it. Check reload health and loaded
++routes on both replicas. New route groups can send fresh notifications.
++Restoring both previous configurations restores previous routing and can read
++the existing Alertmanager state; no migration or state deletion is needed.
++
+ ## Filesystem alerts
+ 
+ `FilesystemCritFreeSpace` applies only to exact `machine_type="vm"` or
+@@ -37,8 +83,8 @@ monitor configuration changes and send their normal resolved notifications.
+ frequency, for every type, including VPS and missing types. A VPS critical
+ filesystem alert cannot inhibit its warning because that critical is absent;
+ other inhibition still applies. The separate node fatal-rootfs alert remains
+-at or below 5% after five minutes. Alertmanager keeps its normal routes and
+-receivers, including normal routing for independently supplied critical alerts.
++at or below 5% after five minutes. Independently supplied critical alerts keep
++normal routing, subject to the machine's recipient policy.
+ 
+ The `/run` selection remains. `/run` is normally tmpfs; expanding a VPS disk
+ does not expand it.
+@@ -58,7 +104,8 @@ rules keep their existing policies.
+ ## Configuration changes
+ 
+ Update both monitors with the labels and critical rule together. No exporter,
+-node, VM or video bridge update is required. Alertmanager routing is unchanged.
++node, VM or video bridge update is required. These label and rule changes do
++not require an Alertmanager update.
+ Changing target labels creates new series and alert identities and can reset
+ pending alerts and rate windows. During mixed monitor versions, an older monitor
+ may still emit VPS critical alerts. Complete both monitor updates before
+@@ -78,6 +125,7 @@ From the repository's pinned development shell:
+ 
+ ```sh
+ nix build --no-write-lock-file --no-link \
++  .#checks.x86_64-linux.alert-recipients \
+   .#checks.x86_64-linux.infra-monitoring-config \
+   .#checks.x86_64-linux.infra-monitoring-rules
+ ```
+@@ -85,6 +133,8 @@ nix build --no-write-lock-file --no-link \
+ The config check evaluates real machine metadata, generated host and video
+ bridge labels, global filesystem eligibility, thresholds, values and timing.
+ It also checks offline Alertmanager routing with inert receivers. The CPU
+-check covers thresholds, hold times, locations and boot suppression. Offline
++check covers thresholds, hold times, locations and boot suppression. The
++recipient check covers metadata validation, email destinations, SMS policies,
++exclusive routing and subject identity precedence. Offline
+ routing verifies receiver selection; it does not send notifications or exercise
+ delivery, daytime activation, repeat timers or inhibition.
+diff --git a/flake.nix b/flake.nix
+index 103364f2..df981fc8 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -171,6 +171,11 @@
+         ];
+       };
+       checks.${system} = {
++        alert-recipients = import ./tests/prometheus/alert-recipients.nix {
++          inherit confctl;
++          pkgs = devPkgs;
++          machines = confctlOutputs.machines;
++        };
+         infra-monitoring-rules = import ./tests/prometheus/infra-monitoring-rules.nix {
+           pkgs = devPkgs;
+         };
+diff --git a/lib/monitoring.nix b/lib/monitoring.nix
+new file mode 100644
+index 00000000..4cd6fb1a
+--- /dev/null
++++ b/lib/monitoring.nix
+@@ -0,0 +1,9 @@
++{ lib }:
++{
++  managementFqdn =
++    hostname:
++    let
++      parts = lib.splitString "." hostname;
++    in
++    lib.concatStringsSep "." ([ "${builtins.head parts}-mgmt" ] ++ builtins.tail parts);
++}
+diff --git a/modules/cluster/default.nix b/modules/cluster/default.nix
+index d8e872a1..2289a92a 100644
+--- a/modules/cluster/default.nix
++++ b/modules/cluster/default.nix
+@@ -7,6 +7,7 @@
+ with lib;
+ let
+   topLevelConfig = config;
++  monitoringUsers = (import ../../data/monitoring.nix).users;
+ 
+   machine =
+     { config, ... }:
+@@ -72,6 +73,27 @@ let
+               Custom labels added to the Prometheus target
+             '';
+           };
++
++          alertRecipients = mkOption {
++            type = types.nullOr (types.listOf (types.enum (attrNames monitoringUsers)));
++            default = null;
++            apply =
++              recipients:
++              if recipients == null then
++                null
++              else if recipients == [ ] then
++                throw "monitoring.alertRecipients must be null or a nonempty list of registered users"
++              else if config.monitoring.labels ? fqdn && config.monitoring.labels.fqdn != config.host.fqdn then
++                throw "monitoring.alertRecipients requires monitoring.labels.fqdn to match host.fqdn"
++              else
++                sort lessThan (unique recipients);
++            description = ''
++              Users from data/monitoring.nix who exclusively receive this
++              machine's alerts. Null keeps normal team routing. Empty lists
++              are invalid. Critical and fatal alerts also use these users'
++              configured SMS policies; shared Telegram is excluded.
++            '';
++          };
+         };
+ 
+         logging = {
+diff --git a/modules/clusterconf/alerter/default.nix b/modules/clusterconf/alerter/default.nix
+index f1c8a4d1..57ddc188 100644
+--- a/modules/clusterconf/alerter/default.nix
++++ b/modules/clusterconf/alerter/default.nix
+@@ -24,6 +24,14 @@ let
+   alertmanagerPort = confMachine.services.alertmanager.port;
+ 
+   allMachines = confLib.getClusterMachines config.cluster;
++  monitoringLib = import ../../../lib/monitoring.nix { inherit lib; };
++  contacts = confData.monitoring.users;
++  hasSms = user: (contacts.${user}.sms or null) != null;
++  smsUsers = filter hasSms (attrNames contacts);
++  # Carried netboot copies share the node's metadata; route the ordinary system once.
++  selectedMachines = filter (
++    m: m.carrier == null && m.metaConfig.monitoring.alertRecipients != null
++  ) allMachines;
+ 
+   allMonitors = filter (m: m.metaConfig.monitoring.isMonitor) allMachines;
+ 
+@@ -140,10 +148,106 @@ let
+     }
+   ];
+ 
+-  intervalRoutesForSms = {
+-    aither = map (v: v // { active_time_intervals = [ "daytime-aither" ]; }) intervalRoutes;
++  mkMailRoute = receiver: {
++    match_re.severity = "warning|critical|fatal";
++    inherit receiver;
++    group_wait = "30s";
++    group_interval = "2m";
++    repeat_interval = "4h";
++    continue = true;
++    routes = intervalRoutes;
++  };
++
++  mkSmsRoute = user: {
++    match_re.severity = "critical|fatal";
++    continue = true;
++    routes = [
++      {
++        match.severity = "critical";
++        receiver = "sms-${user}";
++        group_wait = "10s";
++        repeat_interval = "10m";
++        continue = false;
++        active_time_intervals = [ "daytime-${user}" ];
++        routes = map (v: v // { active_time_intervals = [ "daytime-${user}" ]; }) intervalRoutes;
++      }
++      {
++        match.severity = "fatal";
++        receiver = "sms-${user}";
++        group_wait = "10s";
++        repeat_interval = "10m";
++        continue = false;
++        routes = intervalRoutes;
++      }
++    ];
++  };
+ 
+-    snajpa = map (v: v // { active_time_intervals = [ "daytime-snajpa" ]; }) intervalRoutes;
++  blackholeRoute = {
++    match.severity = "none";
++    receiver = "blackhole";
++    continue = false;
++  };
++
++  teamRoutes = [
++    (mkMailRoute "team-mail")
++    {
++      match_re.severity = "critical|fatal";
++      receiver = "team-telegram";
++      group_wait = "10s";
++      repeat_interval = "10m";
++      continue = true;
++      routes = intervalRoutes;
++    }
++  ]
++  ++ map mkSmsRoute (filter hasSms confData.monitoring.teamRecipients)
++  ++ [ blackholeRoute ];
++
++  machineMailReceiver = machine: "machine-mail-${machine.metaConfig.host.fqdn}";
++  mkMachineRoute = machine: match: {
++    inherit match;
++    receiver = machineMailReceiver machine;
++    continue = false;
++    routes = [
++      blackholeRoute
++      (mkMailRoute (machineMailReceiver machine))
++    ]
++    ++ map mkSmsRoute (filter hasSms machine.metaConfig.monitoring.alertRecipients);
++  };
++
++  # A node_fqdn identifies the subject, which can differ from the scrape host.
++  selectedSubjectRoutes = map (
++    machine:
++    mkMachineRoute machine {
++      node_fqdn = machine.metaConfig.host.fqdn;
++    }
++  ) selectedMachines;
++
++  selectedHostRoutes = flatten (
++    map (
++      machine:
++      [
++        (mkMachineRoute machine {
++          fqdn = machine.metaConfig.host.fqdn;
++          node_fqdn = "";
++        })
++      ]
++      ++ optional (machine.metaConfig.node != null) (
++        mkMachineRoute machine {
++          fqdn = monitoringLib.managementFqdn machine.metaConfig.host.fqdn;
++          node_fqdn = "";
++        }
++      )
++    ) selectedMachines
++  );
++
++  mkMailReceiver = name: users: {
++    inherit name;
++    email_configs = [
++      {
++        to = concatStringsSep "," (map (user: contacts.${user}.email) users);
++        send_resolved = true;
++      }
++    ];
+   };
+ 
+   telegramTemplate = pkgs.writeText "telegram.tmpl" ''
+@@ -266,39 +370,20 @@ in
+           telegramTemplate
+         ];
+ 
+-        time_intervals = [
+-          {
+-            name = "daytime-aither";
+-            time_intervals = [
+-              {
+-                times = [
+-                  {
+-                    start_time = "07:00";
+-                    end_time = "22:00";
+-                  }
+-                ];
+-
+-                location = "Europe/Prague";
+-              }
+-            ];
+-          }
+-
+-          {
+-            name = "daytime-snajpa";
+-            time_intervals = [
+-              {
+-                times = [
+-                  {
+-                    start_time = "09:00";
+-                    end_time = "23:00";
+-                  }
+-                ];
+-
+-                location = "Europe/Prague";
+-              }
+-            ];
+-          }
+-        ];
++        time_intervals = map (user: {
++          name = "daytime-${user}";
++          time_intervals = [
++            {
++              times = [
++                {
++                  start_time = contacts.${user}.sms.startTime;
++                  end_time = contacts.${user}.sms.endTime;
++                }
++              ];
++              location = "Europe/Prague";
++            }
++          ];
++        }) smsUsers;
+ 
+         route = {
+           group_by = [
+@@ -310,119 +395,11 @@ in
+           repeat_interval = "4h";
+           receiver = "team-mail";
+ 
+-          routes = [
+-            # Mail alerts
+-            {
+-              match_re = {
+-                severity = "warning|critical|fatal";
+-              };
+-              group_wait = "30s";
+-              group_interval = "2m";
+-              repeat_interval = "4h";
+-              receiver = "team-mail";
+-              continue = true;
+-
+-              routes = intervalRoutes;
+-            }
+-
+-            # Telegram alerts
+-            {
+-              match_re = {
+-                severity = "critical|fatal";
+-              };
+-              receiver = "team-telegram";
+-              group_wait = "10s";
+-              repeat_interval = "10m";
+-              continue = true;
+-
+-              routes = intervalRoutes;
+-            }
+-
+-            # SMS alerts - aither
+-            {
+-              match_re = {
+-                severity = "critical|fatal";
+-              };
+-              continue = true;
+-              routes = [
+-                {
+-                  match = {
+-                    severity = "critical";
+-                  };
+-                  receiver = "sms-aither";
+-                  group_wait = "10s";
+-                  repeat_interval = "10m";
+-                  continue = false;
+-                  active_time_intervals = [ "daytime-aither" ];
+-                  routes = intervalRoutesForSms.aither;
+-                }
+-
+-                {
+-                  match = {
+-                    severity = "fatal";
+-                  };
+-                  receiver = "sms-aither";
+-                  group_wait = "10s";
+-                  repeat_interval = "10m";
+-                  continue = false;
+-                  routes = intervalRoutes;
+-                }
+-              ];
+-            }
+-
+-            # SMS alerts - snajpa
+-            {
+-              match_re = {
+-                severity = "critical|fatal";
+-              };
+-              continue = true;
+-              routes = [
+-                {
+-                  match = {
+-                    severity = "critical";
+-                  };
+-                  receiver = "sms-snajpa";
+-                  group_wait = "10s";
+-                  repeat_interval = "10m";
+-                  continue = false;
+-                  active_time_intervals = [ "daytime-snajpa" ];
+-                  routes = intervalRoutesForSms.snajpa;
+-                }
+-
+-                {
+-                  match = {
+-                    severity = "fatal";
+-                  };
+-                  receiver = "sms-snajpa";
+-                  group_wait = "10s";
+-                  repeat_interval = "10m";
+-                  continue = false;
+-                  routes = intervalRoutes;
+-                }
+-              ];
+-            }
+-
+-            # Blackhole
+-            {
+-              match = {
+-                severity = "none";
+-              };
+-              receiver = "blackhole";
+-              continue = false;
+-            }
+-          ];
++          routes = selectedSubjectRoutes ++ selectedHostRoutes ++ teamRoutes;
+         };
+ 
+         receivers = [
+-          {
+-            name = "team-mail";
+-            email_configs = [
+-              {
+-                to = "aither@havefun.cz,snajpa@snajpa.net,monitoring@kerrycze.net";
+-                send_resolved = true;
+-              }
+-            ];
+-          }
++          (mkMailReceiver "team-mail" confData.monitoring.teamRecipients)
+           {
+             name = "team-telegram";
+             telegram_configs = [
+@@ -434,28 +411,24 @@ in
+               }
+             ];
+           }
+-          {
+-            name = "sms-aither";
+-            webhook_configs = [
+-              {
+-                url = "http://127.0.0.1:5000/alert";
+-                send_resolved = true;
+-              }
+-            ];
+-          }
+-          {
+-            name = "sms-snajpa";
+-            webhook_configs = [
+-              {
+-                url = "http://127.0.0.1:5000/alert";
+-                send_resolved = true;
+-              }
+-            ];
+-          }
++        ]
++        ++ map (user: {
++          name = "sms-${user}";
++          webhook_configs = [
++            {
++              url = "http://127.0.0.1:5000/alert";
++              send_resolved = true;
++            }
++          ];
++        }) smsUsers
++        ++ [
+           {
+             name = "blackhole";
+           }
+-        ];
++        ]
++        ++ map (
++          machine: mkMailReceiver (machineMailReceiver machine) machine.metaConfig.monitoring.alertRecipients
++        ) selectedMachines;
+ 
+         inhibit_rules = [
+           # Ignore unreachable exporters when nodes are down
+diff --git a/modules/clusterconf/monitor/default.nix b/modules/clusterconf/monitor/default.nix
+index 8b7e0f4d..7439cb9c 100644
+--- a/modules/clusterconf/monitor/default.nix
++++ b/modules/clusterconf/monitor/default.nix
+@@ -10,6 +10,7 @@
+ with lib;
+ let
+   cfg = config.clusterconf.monitor;
++  monitoringLib = import ../../../lib/monitoring.nix { inherit lib; };
+ 
+   promPort = confMachine.services.prometheus.port;
+   exporterPort = confMachine.services.node-exporter.port;
+@@ -279,14 +280,7 @@ let
+         mgmtPingConfigs = map (
+           m:
+           let
+-            makeMgmt =
+-              hostname:
+-              let
+-                parts = splitString "." hostname;
+-              in
+-              concatStringsSep "." ([ "${elemAt parts 0}-mgmt" ] ++ (tail parts));
+-
+-            fqdn = makeMgmt m.metaConfig.host.fqdn;
++            fqdn = monitoringLib.managementFqdn m.metaConfig.host.fqdn;
+           in
+           {
+             targets = [ fqdn ];
+diff --git a/tests/prometheus/alert-recipients-routing.sh b/tests/prometheus/alert-recipients-routing.sh
+new file mode 100644
+index 00000000..b1ed331e
+--- /dev/null
++++ b/tests/prometheus/alert-recipients-routing.sh
+@@ -0,0 +1,60 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++check() {
++  local receivers="$1"
++  shift
++  amtool config routes test --config.file="$ALERTMANAGER_CONFIG" \
++    --verify.receivers="$receivers" "$@"
++}
++
++aither=machine-mail-aitherdev.int.vpsfree.cz
++multi=machine-mail-node19.prg.vpsfree.cz
++mail_only=machine-mail-mail-only.int.vpsfree.cz
++team=team-mail,team-telegram,sms-aither,sms-snajpa
++
++for identity in fqdn=aitherdev.int.vpsfree.cz node_fqdn=aitherdev.int.vpsfree.cz; do
++  for alert in InfraHighCpuLoad InfraHighIoWait InfraExporterDown FilesystemCritFreeSpace SystemdUnitFailed; do
++    for frequency in hourly daily; do
++      check "$aither" "$identity" "alertname=$alert" severity=warning "frequency=$frequency"
++      check "$aither,sms-aither" "$identity" "alertname=$alert" severity=critical "frequency=$frequency"
++      check "$aither,sms-aither" "$identity" "alertname=$alert" severity=fatal "frequency=$frequency"
++      check blackhole "$identity" "alertname=$alert" severity=none "frequency=$frequency"
++    done
++  done
++  check "$aither" "$identity" alertname=UnknownSeverity severity=unknown
++  check "$aither" "$identity" alertname=MissingSeverity
++done
++
++# The same policy covers host, management and independently reported node alerts.
++for identity in fqdn=node19.prg.vpsfree.cz fqdn=node19-mgmt.prg.vpsfree.cz node_fqdn=node19.prg.vpsfree.cz; do
++  check "$multi" "$identity" alertname=Warning severity=warning
++  check "$multi,sms-aither,sms-snajpa" "$identity" alertname=Critical severity=critical
++  check "$multi,sms-aither,sms-snajpa" "$identity" alertname=Fatal severity=fatal
++  check blackhole "$identity" alertname=Inhibition severity=none
++done
++
++# Selected users without SMS get email at every notifying severity.
++for severity in warning critical fatal; do
++  check "$mail_only" fqdn=mail-only.int.vpsfree.cz "severity=$severity"
++done
++check blackhole fqdn=mail-only.int.vpsfree.cz severity=none
++
++# Subject identity takes precedence over the scrape host, including unmarked nodes.
++check "$multi,sms-aither,sms-snajpa" fqdn=aitherdev.int.vpsfree.cz \
++  node_fqdn=node19.prg.vpsfree.cz severity=critical
++check "$team" fqdn=aitherdev.int.vpsfree.cz node_fqdn=normal.int.vpsfree.cz severity=critical
++check "$team" fqdn=aitherdev.int.vpsfree.cz node_fqdn=unknown.int.vpsfree.cz severity=fatal
++check "$aither,sms-aither" fqdn=node19.prg.vpsfree.cz \
++  node_fqdn=aitherdev.int.vpsfree.cz severity=critical
++check "$aither,sms-aither" fqdn=aitherdev.int.vpsfree.cz node_fqdn= severity=critical
++
++# Unmarked and lookalike systems, plus global alerts, keep team routing.
++for fqdn in normal.int.vpsfree.cz unknown.int.vpsfree.cz aitherdev2.int.vpsfree.cz aitherdev.int.vpsfree.cz.example; do
++  check team-mail "fqdn=$fqdn" severity=warning
++  check "$team" "fqdn=$fqdn" severity=critical
++  check "$team" "fqdn=$fqdn" severity=fatal
++  check blackhole "fqdn=$fqdn" severity=none
++done
++check "$team" alertname=GlobalCritical severity=critical
++check team-mail alertname=GlobalUnknown severity=unknown
+diff --git a/tests/prometheus/alert-recipients.nix b/tests/prometheus/alert-recipients.nix
+new file mode 100644
+index 00000000..a87c528a
+--- /dev/null
++++ b/tests/prometheus/alert-recipients.nix
+@@ -0,0 +1,175 @@
++{
++  pkgs,
++  machines,
++  confctl,
++}:
++let
++  inherit (pkgs) lib;
++  confLib = import (confctl + "/nix/lib") {
++    confDir = ../..;
++    coreLib = lib;
++    corePkgs = pkgs;
++  };
++
++  # Exercise the public metadata option, including its type and normalization.
++  recipients =
++    value: labels:
++    (lib.evalModules {
++      modules = [
++        ../../modules/cluster
++        {
++          options.cluster = lib.mkOption {
++            type = lib.types.attrsOf (
++              lib.types.submodule {
++                freeformType = lib.types.attrs;
++                options.spin = lib.mkOption {
++                  type = lib.types.str;
++                  default = "other";
++                };
++              }
++            );
++          };
++          config.cluster.fixture = {
++            host.fqdn = "fixture.int.vpsfree.cz";
++            monitoring = {
++              inherit labels;
++              alertRecipients = value;
++            };
++          };
++        }
++      ];
++      specialArgs = { inherit confLib; };
++    }).config.cluster.fixture.monitoring.alertRecipients;
++  succeeds = value: (builtins.tryEval (builtins.deepSeq value true)).success;
++
++  aitherdev = machines."cz.vpsfree/machines/aitherdev".metaConfig;
++  node = machines."cz.vpsfree/nodes/prg/node19".metaConfig;
++  # Use the real inventory and pinned confctl carrier expansion. Netboot copies
++  # share their ordinary node's FQDN and recipient policy.
++  ordinaryMachines = lib.filterAttrs (_: machine: machine.carrier == null) machines;
++  cluster = lib.mapAttrs (_: machine: machine.metaConfig) ordinaryMachines // {
++    "cz.vpsfree/nodes/prg/node19" = node // {
++      monitoring = node.monitoring // {
++        alertRecipients = recipients [ "snajpa" "aither" "aither" ] { };
++      };
++    };
++    mailOnly = aitherdev // {
++      host = aitherdev.host // {
++        fqdn = "mail-only.int.vpsfree.cz";
++      };
++      monitoring = aitherdev.monitoring // {
++        alertRecipients = recipients [ "kerrycze" ] { };
++      };
++    };
++    normal = aitherdev // {
++      host = aitherdev.host // {
++        fqdn = "normal.int.vpsfree.cz";
++      };
++      monitoring = aitherdev.monitoring // {
++        alertRecipients = null;
++      };
++    };
++  };
++  alerter =
++    (import ../../modules/clusterconf/alerter {
++      inherit pkgs lib confLib;
++      confData.monitoring = import ../../data/monitoring.nix;
++      confMachine.services.alertmanager.port = 9093;
++      config = {
++        inherit cluster;
++        clusterconf.alerter.enable = true;
++      };
++    }).config.content.services.prometheus.alertmanager.configuration;
++
++  receiver =
++    name: lib.findFirst (r: r.name == name) (throw "Missing receiver ${name}") alerter.receivers;
++  hostRoute =
++    fqdn:
++    lib.findFirst (
++      r: (r.match.fqdn or "") == fqdn
++    ) (throw "Missing route ${fqdn}") alerter.route.routes;
++  email = name: (builtins.head (receiver name).email_configs).to;
++  receiverNames = map (r: r.name) alerter.receivers;
++  nodeCopies = lib.filter (m: m.metaConfig.host.fqdn == node.host.fqdn) (
++    confLib.getClusterMachines cluster
++  );
++  smsRoute =
++    route: user:
++    lib.findFirst (
++      r:
++      (r.match_re.severity or "") == "critical|fatal"
++      && (builtins.head r.routes).receiver == "sms-${user}"
++    ) (throw "Missing SMS ${user}") route.routes;
++  checkSms =
++    route: user:
++    let
++      sms = smsRoute route user;
++      critical = builtins.elemAt sms.routes 0;
++      fatal = builtins.elemAt sms.routes 1;
++    in
++    sms.continue
++    && critical.match.severity == "critical"
++    && fatal.match.severity == "fatal"
++    && critical.active_time_intervals == [ "daytime-${user}" ]
++    && builtins.all (r: r.active_time_intervals == [ "daytime-${user}" ]) critical.routes
++    && !(fatal ? active_time_intervals)
++    && builtins.all (r: !(r ? active_time_intervals)) fatal.routes
++    && critical.group_wait == "10s"
++    && fatal.group_wait == "10s"
++    && critical.repeat_interval == "10m"
++    && fatal.repeat_interval == "10m";
++
++  # Run Alertmanager's own receiver selection with every transport made inert.
++  routeFile = pkgs.writeText "alert-recipients.json" (
++    builtins.toJSON {
++      inherit (alerter) route time_intervals;
++      receivers = map (r: { inherit (r) name; }) alerter.receivers;
++    }
++  );
++in
++assert recipients null { } == null;
++assert
++  recipients [ "snajpa" "aither" "aither" ] { } == [
++    "aither"
++    "snajpa"
++  ];
++assert recipients [ "aither" ] { fqdn = "fixture.int.vpsfree.cz"; } == [ "aither" ];
++assert !(succeeds (recipients [ ] { }));
++assert !(succeeds (recipients [ "unknown" ] { }));
++assert !(succeeds (recipients [ "aither" ] { fqdn = "other.int.vpsfree.cz"; }));
++assert aitherdev.monitoring.alertRecipients == [ "aither" ];
++assert builtins.length nodeCopies > 1;
++assert builtins.length (lib.filter (m: m.carrier == null) nodeCopies) == 1;
++assert builtins.length receiverNames == builtins.length (lib.unique receiverNames);
++assert
++  builtins.length (lib.filter (name: name == "machine-mail-node19.prg.vpsfree.cz") receiverNames)
++  == 1;
++assert
++  builtins.length (
++    lib.filter (r: (r.match.fqdn or "") == "node19.prg.vpsfree.cz") alerter.route.routes
++  ) == 1;
++assert
++  builtins.length (
++    lib.filter (r: (r.match.fqdn or "") == "node19-mgmt.prg.vpsfree.cz") alerter.route.routes
++  ) == 1;
++assert
++  builtins.length (
++    lib.filter (r: (r.match.node_fqdn or "") == "node19.prg.vpsfree.cz") alerter.route.routes
++  ) == 1;
++assert email "team-mail" == "aither@havefun.cz,snajpa@snajpa.net,monitoring@kerrycze.net";
++assert email "machine-mail-aitherdev.int.vpsfree.cz" == "aither@havefun.cz";
++assert email "machine-mail-node19.prg.vpsfree.cz" == "aither@havefun.cz,snajpa@snajpa.net";
++assert email "machine-mail-mail-only.int.vpsfree.cz" == "monitoring@kerrycze.net";
++assert builtins.all (
++  r: builtins.all (c: c.send_resolved) (r.email_configs or [ ])
++) alerter.receivers;
++assert checkSms (hostRoute "aitherdev.int.vpsfree.cz") "aither";
++assert checkSms (hostRoute "node19.prg.vpsfree.cz") "aither";
++assert checkSms (hostRoute "node19.prg.vpsfree.cz") "snajpa";
++assert builtins.all (r: !((r.match or { }) ? fqdn) || !r.continue) alerter.route.routes;
++pkgs.runCommand "alert-recipients" { nativeBuildInputs = [ pkgs.prometheus-alertmanager ]; } ''
++  amtool check-config ${routeFile}
++  export ALERTMANAGER_CONFIG=${routeFile}
++  bash ${./alert-recipients-routing.sh}
++  touch $out
++''
+diff --git a/tests/prometheus/infra-monitoring-config.nix b/tests/prometheus/infra-monitoring-config.nix
+index 5b144fd6..12a124f0 100644
+--- a/tests/prometheus/infra-monitoring-config.nix
++++ b/tests/prometheus/infra-monitoring-config.nix
+@@ -168,6 +168,11 @@ let
+       infra = getJob jobs "infra";
+       nodes = getJob jobs "nodes";
+       nodeMetas = lib.filter (meta: meta.node != null) (builtins.attrValues cluster);
++      managementPing = getJob jobs "nodes-mgmt-ping";
++      managementFqdn =
++        meta:
++        builtins.replaceStrings [ "node19." "backuper2." ] [ "node19-mgmt." "backuper2-mgmt." ]
++          meta.host.fqdn;
+       infraMetas = lib.filter (meta: meta.node == null && !meta.monitoring.isMonitor) (
+         builtins.attrValues cluster
+       );
+@@ -228,6 +233,20 @@ let
+     && checkNodeJob "nodes-zfs-hypervisor" "hypervisor" 9134
+     && checkNodeJob "nodes-zfs-storage" "storage" 9134
+     && checkNodeJob "nodes-ipmi" null 9290
++    && builtins.all (
++      meta:
++      builtins.elem {
++        targets = [ (managementFqdn meta) ];
++        labels = {
++          alias = alias meta;
++          fqdn = managementFqdn meta;
++          domain = meta.host.domain;
++          location = meta.host.location;
++          role = meta.node.role;
++          os = meta.spin;
++        };
++      } managementPing.static_configs
++    ) nodeMetas
+     && checkMeetJob jobs;
+ 
+   metadataFixture =
+@@ -256,11 +275,16 @@ let
+   alerter =
+     (import ../../modules/clusterconf/alerter {
+       inherit pkgs lib confLib;
+-      confData = { };
++      confData.monitoring = import ../../data/monitoring.nix;
+       confMachine.services.alertmanager.port = 9093;
+-      config.clusterconf.alerter.enable = true;
++      config = {
++        inherit cluster;
++        clusterconf.alerter.enable = true;
++      };
+     }).config.content.services.prometheus.alertmanager.configuration;
+-  routes = alerter.route.routes;
++  routes = lib.filter (
++    route: !((route.match or { }) ? fqdn) && !((route.match or { }) ? node_fqdn)
++  ) alerter.route.routes;
+   mail = builtins.elemAt routes 0;
+   telegram = builtins.elemAt routes 1;
+   smsAither = builtins.elemAt routes 2;
