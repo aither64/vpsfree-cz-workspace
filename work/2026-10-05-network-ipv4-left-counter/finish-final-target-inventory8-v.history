@@ -1,0 +1,65 @@
+commit c3d05d5160434b00f21851459eb818a41db4c6bb
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:09:44 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 12 23:27:32 2026 +0200
+
+    api: add network availability admission controls
+    
+    Allow administrators to disable new use of a network without interrupting
+    existing assigned addresses. Count available public IPv4 allocation rows
+    only in enabled pools and expose optional availability metadata and filters.
+    
+    Capture each operation's source and destination networks before reserving IP
+    rows, retaining that set through included allocations and retries. Recheck
+    current address identity and eligibility after reservation while preserving
+    trusted assigned-address continuity during migration, swap and restore.
+    
+    The additive enabled column defaults to true. Update all API writers before
+    disabling a network; older writers do not enforce this policy.
+
+commit c208d38ecc80f856c1d5066c87cfc134db9c6c6d
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:10:41 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 12 23:27:32 2026 +0200
+
+    webui: expose network availability and inventory
+    
+    Add confirmed administrator availability controls and keep disabled owned
+    addresses visible without detached assignment actions. Enabled selectors
+    follow advertised API capabilities and remain compatible with older APIs.
+    
+    Group network identity, properties, IP usage and actions in four columns.
+    Use authoritative available and owned-unassigned counts with descriptions
+    of ownership, interface assignment and capacity. Missing statistics remain
+    unknown. Shade disabled routed-IP rows and explain them at the network
+    address, preserving existing service links and stale-form guards.
+
+commit 609d9e76b46a8b8db87eef5dd555579abe8cc789
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 00:07:08 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 12 23:27:33 2026 +0200
+
+    api: restrict non-admin network and IP lists
+    
+    Disabled inventory is unavailable for new use and should be omitted from
+    member lists. Retain owned and assigned addresses within existing
+    permissions, and preserve direct Show and association access. Apply the
+    restriction before counts and pagination; admin inventory stays unchanged.
+
+commit f778f762047bff3f4bd725fbb73882f65babdd65
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Thu Oct 8 10:30:57 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 12 23:27:34 2026 +0200
+
+    api: expose authoritative network inventory counts
+    
+    Count registered allocations available to users using the shared reservation
+    scope, and report owned allocations without an interface assignment even in
+    reserved or disabled inventory. These admin-only read-only fields distinguish
+    available inventory from theoretical capacity and overlapping ownership totals.
+    
+    The output fields are additive and require no schema migration.

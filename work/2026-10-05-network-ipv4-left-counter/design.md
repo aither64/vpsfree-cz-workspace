@@ -6536,3 +6536,3265 @@ identity, upscale, reset, launch another pair or proceed to capture. A later
 real continuation requires its own explicit root disposition and fresh owned
 state/liveness/capacity assessment after the source gates; this diagnosis grants
 none of those operations. G14, G13, G4, G6, isolation3 and preview remain intact.
+
+## PROPOSAL: separate G725 retained-instance smoke and captures (2026-10-11)
+
+This bounded continuation supersedes only the handoff's selection of no further
+action. It does not turn the failed G14 campaign into a completed qualification.
+Root accepts the operation packet and source correction below before execution;
+this section records source analysis, not operational certification. Identity
+and roster revision 17 were checked from the exact tracking directory with the absolute
+public dev-session CLI, login:false and both markers absent. The retained
+architect settings remain unchanged. Required workspace procedures and K owning
+guidance were read; no private campaign inputs, accounts, credentials or serial
+logs were opened, and no runtime/check/build/ref operation was performed.
+
+**Recommendation and evidence.** Reuse the stopped G14 instance through ordinary
+public resume with its original immutable K generator
+`725c325e8b4971931e5d16df86bafa8584358ecb` (G725). Do not allocate another pair.
+`finish-continuation-g14-retention1.json` records a successful separate public
+stop and a fresh stopped/nonready, complete, all-recorded-processes-gone
+observation, absent own claim/socket namespace and unchanged disk identities.
+The instance is `31f2a709-4906-45fe-8224-dec594ce9471`; its accepted artifact is
+`48591a1e-11b3-4d46-af34-8b4f3a3a5985`, digest
+`7b677e1be8f1407f877e768f4d5e6af7058595cc06ae24eea3d4ef4020a11a16`.
+These are retained snapshots; public resume must reprove its own prerequisites.
+The failed attempt hash
+`f5a7f1c287912b1beb6d1608d4e66c670599265e571dd9786317126ad5954125`
+and absence of a completed campaign receipt remain unchanged.
+
+The exact source is `/nix/store/rm2h27hrml95lbwri4vcmg6f7jlkrbqp-source`.
+Its `cluster/lib/kb_runtime.rb:146–188` requires exact selected metadata,
+credentials, original configuration, complete prepared artifact, retained disks,
+no pending update and proven stopped state; `resume` then starts the same
+artifact with a fresh run ID. It does not build an image or copy a root disk.
+`cluster/launcher.rb:53–57` rejects replacement config/topology/network on resume.
+The public runtime does not consult the verifier campaign. In contrast,
+`tools/runtime-verify.rb:230–253` refuses the existing incomplete attempt, and
+its bilingual phase requires a completed same-input runtime receipt. Therefore
+do not invoke that campaign again, erase its attempt, fabricate its completion,
+instantiate Campaign to call private phase methods, or place a new campaign
+identity around the old state. Use a separately named finite public-operation
+evidence unit outside the failed campaign, with its own native outcomes.
+
+Final reviewed K `22e2fb772f69ec1f5e32e3a8d314ab3ffb63d3cd` differs from G725 only
+in `tools/runtime-verify.rb` and `tools/test-runtime-verify.rb`; the retained
+review establishes all other 257 paths/modes unchanged. This supports relevance
+to unchanged runtime/capture code, not a claim that K22 guests or the whole K22
+verifier passed. K22 resume would correctly reject a G725 prepared source.
+Never substitute G725 metadata into a K22 runtime/capture executable.
+
+**Exact public selection and finite sequence.** Use the genuine G725 packages:
+
+- runtime `/nix/store/iz66p9qv5aybgkm4lq6ich7jgma04zrk-vpsfree-kb-devcluster`;
+- capture/validator `/nix/store/v9j7ym82bxfp6gw1h41zww17j49afgnv-vpsfree-kb-capture`;
+- metadata `/nix/store/n5vvjlikqjbvipicfs218zpvwvkcq0l6-vpsfree-kb-runtime-source.json`;
+- existing selection `/nix/store/mz39kh0vk87h10xkhsn5lppw2gyc7q7p-vpsfree-kb-verify-selection.json`.
+
+Root verifies retained package/closure availability and uses the selected
+PATH/Ruby/Node/browser/font/CA environment in a private ordinary directory.
+No source override, workspace provider activation, new package build or image
+preparation is implicit. Use the existing durable user-service context and fresh
+watcher, exact controller admission/tuple/cgroup facts, finite command deadlines
+and reserve monitoring. `finish-continuation-user-lifetime1.json` confirms the
+already-active user manager, RuntimePath and Linger=yes; it is not a new unit or
+live-run proof. The prior controller, service status or copied PID is not
+authority over the next run.
+
+1. Bind the separate evidence unit to the failed-attempt hash, exact G725
+   selection, accepted artifact, stopped snapshot, capacity decision and current
+   private state-root path. Recheck normal owned state/claims/resource admission.
+   Run the G725 public `vpsfree-kb-devcluster --state-root STATE resume same-slug
+   --timeout 900`, without config/topology/network overrides. Retain fresh public
+   status and connection privately. Require the same instance/artifact, a fresh
+   run and normal exact source, guest metadata, current system closure and SSH
+   host-key proof. No adoption, refresh or manual acceptance is involved.
+2. Use public `ssh same-slug services -- sh -s` and the corresponding node1
+   command with the exact reviewed K22 `resource_script` shell bytes. Record
+   those script hashes and K22 origin separately from the G725 system under
+   observation. Do not instantiate the failed verifier to obtain or run them.
+   Preserve status-checked producers, numeric memory/bytes/inodes/ZFS fields,
+   PSI, existing thresholds and private native diagnostics. No zero fallback or
+   interpretation of a parser failure as resource success is permitted.
+3. Reuse G725's existing `read_smoke` JS composition at
+   `tools/runtime-verify.rb:535–578` as a finite public-operation command: exported
+   `readConnection`/`openLease`/`Connection`, `inventoryIdentity`, browser `login`,
+   `goto` and `assertInventoryMember`. Hold the real public lease, verify exact
+   G725 source/guest closures, dedicated admin/member API identities and TLS,
+   and ordinary member PHP access. Close the browser before releasing the lease.
+   The helper imports existing code; it does not call Campaign or private
+   lifecycle methods. Retain only allowlisted identity/result fields publicly.
+4. Exercise live public lease exclusion, EOF, owned-controller interruption and
+   reacquisition using the repaired observation helper described below. Retain
+   wrong-source-before-SSH and explicit endpoint-routing checks. While the
+   lease is held, public stop/update/reset must return 75 with protected state
+   unchanged; update uses only the original private config. No queued destructive
+   request, guest signal or broad process scan is allowed.
+5. Establish the existing root/data sentinels through public SSH only after
+   checking their exact dedicated paths are absent; never overwrite an
+   unexpected file. Hash all six credential files, accounts, accepted/prepared
+   artifact and original config without publishing secret contents. Record disk
+   device/inode/size and guest closures. Perform ordinary G725 public stop with timeout 900,
+   require stopped/complete/all-gone and normal socket/claim cleanup, then
+   ordinary G725 resume with timeout 900. Require fresh run, same artifact/source/closures,
+   same six credential/account bytes, same disks and sentinel hashes. Accounts
+   may be atomically rewritten from the same config, so their inode is not a
+   continuity invariant. Verify real resources and API/PHP identity again.
+6. Only after those results and capture-specific resource admission, use the
+   same resumed instance for the two selected canonical images. From an ordinary
+   CWD different from the output directory, invoke packaged capture with
+   `--cluster same-slug --state-root STATE --language cs --checkpoint
+   networking/ip-address-list --output-root OUTPUT`. Obtain a fresh private
+   public connection descriptor, then use `--connection DESCRIPTOR --language
+   en --checkpoint networking/ip-address-list --output-root OUTPUT`. Retain the
+   existing optional EN invocation from OUTPUT without `--output-root` if
+   default-CWD proof remains selected; it replaces that same EN result, not a
+   third exported bitmap. Both languages share one private writable output root.
+   Existing physical artifact locks, live leases, source validation and dedicated
+   ip-inventory fixture remain intact. No NAS/traffic fixture or extra host VM.
+7. Run the G725 packaged validator `--update --output-root OUTPUT`, then strict
+   `--output-root OUTPUT` without allow-missing. `runner/validate-artifacts.cjs`
+   uses unchanged source assets for the rest of the 120-variant inventory and
+   requires verified result rows for both changed images. Export through existing
+   `KbCaptureArtifacts.export` under its physical output lock: exactly two PNGs,
+   captures.json, tmp/capture-results.json and tmp/capture-source.json. Preserve
+   source hashes, merged two-row provenance, export hashes and root visual
+   acceptance; no connection/credential/config/raw transcript export.
+
+Each stage has a native result, and the first unexpected failure ends this
+finite evidence unit. No automatic retry, third qualification, upscale, new pair,
+reset, unlink, unit retirement or cleanup follows. A successful bounded result
+means the listed G725 public behavior was observed; the original G14 finite
+verifier still failed. Historical upgrade/two-root proof stays deferred. Normal
+stop/resume here is the explicitly selected continuity test, not failed-campaign
+replay. G4/G6/isolation3/G13/preview and their ownership remain untouched.
+
+**Concrete verifier defect and minimal prospective repair.** G725
+`tools/verify-live-lease.cjs:76–137` recursively hashes every non-image/non-log
+file and includes its inode, then compares the full maps around each contended
+public operation. Its exact current `processes-RUN.json` is included. The real
+runner at `cluster/lib/devcluster_runner.rb:110–134,196–208` atomically replaces
+that receipt every tracker pass, including unchanged bytes, approximately every
+50ms. Thus healthy publication can change the comparison; the helper cannot
+truthfully require that file's inode/bytes to remain frozen. This is an
+established source defect, not a claim that it caused a completed native run.
+
+Own only `tools/verify-live-lease.cjs`, its existing
+`tools/test-ip-inventory.cjs` coverage and any necessary short owning-contract
+explanation. Keep the whole protected map comparison for identity, launch,
+ready, phase, credentials, accounts, config, artifacts, exact claim, historical
+process receipts and every other retained entry. Select at most ONE dynamic
+path, `clusters/same-slug/processes-<validated-current-run>.json`, only after
+descriptor/launch/instance/artifact binding. Do not ignore all JSON files,
+globally ignore process files, suppress the tracker or compare only a few
+convenient fields from otherwise protected records.
+
+Read that exact live receipt under the validated private instance directory as
+a bounded owned ordinary 0600 file with no symlink following and fd-based
+size/mode/UID validation; expected atomic
+replacement is allowed, unsafe/malformed/missing reads refuse. Validate schema 1,
+all four instance/run/artifact fields, complete=false during a ready held lease,
+and the exact authenticated runner identity/launch arguments. Bind runner boot,
+UID, PID/start, executable and argv to the established runner tuple, using the
+existing K ProcessIdentity read contract where native matching is needed rather
+than introducing a second identity protocol. Validate well-formed unique child
+identity keys and the same boot/UID, retaining every previously observed
+PID/start identity while permitting newly discovered descendants. Recorded
+children need not all still be alive; a valid tracker retains exited children.
+Do not impose immutable executable/argv on an ongoing child's legitimate exec
+transition: if checked, use the existing exact live-or-gone identity semantics.
+The authenticated runner's append-only publisher is the receipt authority; this
+snapshot is not a globally atomic process-tree or complete-exit certificate.
+The public lease/ready checks and ordinary stop's complete descendant proof
+continue to own those guarantees. No cleanup or signalling authority comes from
+the helper's process observation.
+
+Use deterministic barriers with real owned files/processes in the existing
+hosted Node test owner: atomically rename a new inode with identical valid
+receipt bytes between snapshots; then a valid append-only child publication.
+Both must coexist with successful protected-state comparison. Mutate a separate
+protected file or claim and require refusal. Cover wrong run/instance/artifact,
+changed runner, malformed/truncated record, unsafe mode/symlink, missing or
+removed retained identities and foreign boot/UID. Keep existing heldController
+readiness/EOF/loss/sole-reaper tests unchanged. Do not remove assertions, extend
+deadlines or execute tests locally. The focused hosted selector is
+`nix develop --command node --test tools/test-ip-inventory.cjs`, followed by the
+existing affected canonical source checks and committed independent review
+before real helper use; root owns exact heads and E's mechanical selection.
+
+After that repair, the separately selected immutable helper source/revision is
+recorded as the observation harness; its expected subject metadata argument is
+genuine G725. Runtime/capture/guest selection remains G725 throughout. This is
+an explicit two-source verification relationship, not a software-metadata
+override or claim that a new engine ran. No engine, guest, provider, schema,
+protocol, persisted-state or source-compatibility change is needed. Reverting
+the helper repair restores a false-failure oracle without changing instance
+state. Until its affected gates pass, hold the lease-evidence stage; do not
+silently run the broken whole-map oracle or certify a skipped check.
+
+**Incremental resources and provenance.** The fresh capacity record reports
+141,578,555,392B free, 85,881,999,360B retained writable growth including G14 and
+a 17,179,869,184B base reserve: 38,516,686,848B remains before assessed additional
+browser/log/evidence overhead. RAM is 42,417,541,120B and shm is 28,162,588,672B.
+These are snapshots, not future admission. G14's services root is already fully
+allocated; its tank has 8,587,255,808B remaining growth, included once in that
+total. Resume adds zero new 8GiB images, zero new 8GiB root copies and zero new 8GiB
+tanks. It needs no guest build/import or 2GiB builder. Peak live guests remain
+the existing two 2GiB machines; the 1GiB fixture VPS consumes the node's configured
+resources, not another host VM. Retain the measured host/browser/shm margins and
+guest root/inode/ZFS/fixture quota checks; reassess before capture. Template and
+VPS writes consume the already reserved tank extent, not a second full tank.
+New run metadata, logs, artifacts and any actually missing tool/store paths must
+be assessed; do not reuse the new-pair staging charge or invent a scratch bound.
+No cleanup credit or dismissal of older growth is involved. If a required
+package path is missing or resources fail, stop for a concrete disposition.
+
+The generator for successful images is G725, with its exact final PHP/vpsAdmin
+pin `ebe4fab3d50a51bda1f94014ca95c73ba2a967a8`; it is never relabelled K22 or a
+later helper revision. The final media commit M may follow the current source
+lineage while retaining that genuine G725 generation provenance: root carries
+back only the two PNGs and candidate inventory, retains the full five-file
+evidence bundle separately, and runs the existing strict hosted canonical media
+gate on M. Temporary G725 result/source receipts must not be presented as
+current-M live receipts or rewritten to satisfy another package. Validate the
+external bundle using G725's actual package. Select M in E's one canonical input
+stream after media acceptance, preserving its own graph and unchanged provider.
+No merge, deployment, workspace activation, production KB write, archive or
+general retained-state cleanup is implied. The outcome is a verified handoff
+with this narrower real evidence and explicit unfinished broader qualification.
+
+### Reconciliation: current process publisher's temporary files (2026-10-11)
+
+This closes the observation boundary in the preceding helper proposal, within
+the same two source/test owners; it adds no runtime or cleanup authority.
+Current/binding and roster revision 17 were reverified, with retained architect
+settings. Immutable G725 `cluster/lib/kb_state.rb:82–97` creates
+`path + "." + SecureRandom.hex(12)` using EXCL/NOFOLLOW and mode 0600, writes,
+flushes/fsyncs, closes, then renames it onto the published record. Consequently
+the walker can legitimately see an empty or partially written temporary file,
+or a listed entry can disappear before lstat/open. Excluding only the published
+process receipt still permits false comparison/read failures. This is source
+evidence, not a claim about a historical native interleaving.
+
+After validating the current descriptor, launch, instance/artifact and private
+instance directory, derive the exact published process-receipt path P. In that
+directory only, distinguish P and names matching the entire escaped basename
+of P followed by `.` and exactly 24 lowercase hexadecimal characters. This is
+the one authenticated current publisher's unpublished-output namespace, not a
+general `.json.*` exclusion. Never derive the exception from an arbitrary name
+discovered during traversal. Wrong-run/historical receipt temporaries, matching
+basenames in another directory, wrong suffix lengths/characters, protected
+record temporaries and all unrelated entries retain ordinary comparison/refusal.
+
+Recognized temporary entries do not belong in the durable inode/content map.
+When present, they must still pass private-parent and no-symlink, ordinary-file,
+current-UID, exact 0600 and existing bounded-size metadata checks. If opened for
+descriptor validation, use NOFOLLOW and validate fstat against the observed
+safe file; do not accept an observed inode substitution at the same temporary
+name. No content parse/hash or minimum nonzero length is required: the writer
+has not published a JSON document yet. The mandatory separate validation of P
+still requires complete valid JSON and the bound process identities; a matching
+temporary file cannot replace or excuse a missing/malformed published receipt.
+
+Handle ENOENT only at the metadata/open boundary for one such recognized
+temporary entry listed by this traversal: its rename/disappearance is expected,
+so continue without retrying the walk. Do not swallow EACCES, ELOOP, ENOTDIR,
+unsafe metadata or other I/O failures; an unsafe observation already made must
+refuse even if the name subsequently disappears. No general ENOENT rescue for
+published/protected paths, directory disappearance or arbitrary entries. A
+successfully opened safe descriptor may remain valid after its name is renamed.
+This is a bounded observation of the producer's publication protocol, not proof
+of a globally atomic tree or permission to remove unpublished files. No State
+change, producer pause, new lock, retry loop or ignored-file framework is needed.
+
+Extend `tools/test-ip-inventory.cjs` in the same hosted-only selector with a held
+atomic writer using real private files and deterministic barriers. Hold the
+exact current temporary file after create, after a partial write and after
+fsync/before rename; the protected snapshot must remain comparable while P
+continues to validate. Release the actual rename and verify the new published
+receipt through the existing dynamic-record checks. Deterministically place
+rename between enumeration and temporary lstat/open, requiring acceptance of
+only that missing temporary entry without sleeps or longer deadlines. Keep a
+simultaneous unrelated/protected mutation detectable. Cover a historical-run
+temporary, same basename in another directory, malformed suffix, symlink,
+wrong mode/owner or oversize metadata, and missing/malformed published P.
+Preserve the existing live-lease/control/reaper assertions and all earlier
+negative cases. Source/hosted/review gates remain unchanged; no test or runtime
+operation was executed for this clarification, and mutable remediation was not
+inspected.
+
+## DIAGNOSIS / PROPOSAL: node SSH identity after G14 resume (2026-10-11)
+
+This is a source-supported diagnosis and prospective boundary for root
+acceptance, not implementation or permission to retry the ended continuation.
+Current was verified from the exact tracking CWD with login:false and absent
+environment markers. The supplied fresh roster17 binds the same workspace,
+slug and architect0 Astra/xhigh/design/workspace_write. Required workspace/K
+guidance and the reached OS instructions were read or reused unchanged.
+No private configuration, accounts, passwords, raw serial, live SSH/keyscan,
+process probe, test, build or lifecycle command was performed here.
+
+**Observed native facts.** `finish-continuation-public-smoke1-failure-proof.json`
+records native exit1 at the first public G725 resume. The corrected observation
+harness is `8e1804afce64ebe63cf623f098cf1a4032ca37e8`; the actual runtime and
+prepared guests remain `725c325e8b4971931e5d16df86bafa8584358ecb`.
+`finish-g14-resume-key-observation1.json` adds the named 09:50:24Z snapshot:
+the same G14 instance/artifact, new run
+`91c20a6a-948a-447c-aeb1-338b9581a0b4`, phase verifying, ready=false,
+processes.complete=false, matching recorded runner and14 children, and retained
+own claim/socket namespace. These are bounded live observations, not complete
+exit proof. The original failed Campaign and new failed public unit remain
+failed; resources/API/PHP/lease/continuity/captures were not reached.
+
+The stored successful node1 scan at `[127.0.0.1]:25401` contains RSA fingerprint
+`SHA256:60a2lUGJUPU0KdF0hkNxe+MEK5dQsfk9idN+9J8GGhc`; retained RSA is
+`SHA256:MDzw+Oh8vPiBjVhyL60D1Rcs8FfPJaxHQZBVyceyfXA`. Its additional Ed25519
+key was not in retained trust. Services' stored RSA fingerprint matches its
+retained RSA exactly. The known_hosts digest remains
+`43526b5eda9872d8868506788b86f3f1139c8a2139afe605ce6a81c3204d28d3`.
+Thus different node RSA public-key material is established by the parent's
+stored-byte comparison; this is not solely key ordering or an extra algorithm.
+No private host key or historical guest key-generation event was inspected.
+
+**Exact source path to the refusal.** In immutable G725
+`/nix/store/rm2h27hrml95lbwri4vcmg6f7jlkrbqp-source`,
+`cluster/lib/kb_runtime.rb:179–188,274–339` resumes the already accepted artifact
+with a fresh run, waits for the runner marker, marks verifying, then establishes
+SSH trust before guest source/closure attestation and readiness. At617–683,
+discovery compares each normalized scan line against retained known_hosts and
+refuses any newly observed untrusted line without replacing trust. Only empty
+first-contact trust can be initially written, after all endpoints succeed.
+
+`ssh_host_keys` at765–795 checks the exact endpoint, supported key type and SSH
+wire structure, ignores comments/blank lines and normalizes inter-field
+whitespace. Comparison is membership, so ordering and a subset of already
+trusted keys do not cause this refusal. A newly observed key type absent from
+initial trust can separately refuse even if another key is unchanged; native
+first contact retained only RSA for both machines. That strict superset behavior
+is a distinct observable limitation, not an alternative explanation for the
+changed RSA. Do not weaken it or silently expand trust as part of persistence.
+No transport exception, deadline expansion or retry repairs changed key bytes.
+
+**Guest persistence source.** Exact OS source is
+`/nix/store/m7lppk7djkzqvrddvj0f2aa05sywl5d3-source`, revision
+`6bdf458fd9105379860234ff33d352e55844f08f`:
+
+- G725 `cluster/nix/test.nix:1318–1327` enables SSH and supplies the client
+  authorized public key, but configures no persistent host-key paths. The node
+  module at1830–1860 adds source shares and networking, not host-key persistence.
+  `mkNodeMachine` at1908–1930 gives the vpsAdminOS node one tank file disk and
+  imports the existing pool-tank module. The source shares at1196–1240 mount
+  repository sources under /mnt; they are not an SSH-state store.
+- OS `tests/configs/vpsadminos/base.nix` supplies `root=/dev/vda`.
+  `osvm/lib/osvm/vpsadminos_machine.rb` attaches squashfs read-only as boot
+  media. `os/modules/system/boot/stage-1-init.sh:78–115,153–175` defaults to live
+  mode and mounts the root on tmpfs; the squashfs provides the read-only Nix
+  store with a volatile writable overlay. It does not persist /etc simply
+  because a tank disk exists.
+- OS `os/modules/services/networking/sshd.nix:31–48` creates /etc/ssh and runs
+  ssh-keygen for each configured host-key path that is missing before starting
+  sshd. `os/modules/nixos-modules.nix:47` imports the upstream SSH options.
+  K leaves the host-key locations inherited. No node host-key persistence was
+  found in the inspected K/OS modules. The exact effective inherited HostKey
+  lines from G14's immutable node closure were not extracted in this task;
+  root may close that final path-attribution detail with an allowlisted source
+  read, without a guest command. Attempts to read the exact pinned upstream
+  Nixpkgs SSH module through the web tool returned cache misses and supply no
+  evidence. Do not represent an arbitrary other Nixpkgs checkout as that pin.
+- OS `tests/configs/vpsadminos/pool-tank.nix` imports/creates the tank on sda.
+  K `cluster/lib/kb_machine.rb` PreparedDisks and `kb_disks.rb` preserve and
+  validate that tank's device/inode/size on resume. Only NixOS machines also
+  have a retained writable root copy. OSVM preserving the node tank therefore
+  does not preserve the node's volatile root filesystem.
+
+This source arrangement supports reboot-time regeneration of missing node host
+keys as the cause of the real mismatch. The exact historical syscall sequence
+was not observed, and no current guest filesystem was read. The persisted
+services root and its unchanged RSA provide a consistent contrast, not proof
+of the node's historical file events. The six host-side dedicated credentials
+contain the SSH *client* key and TLS material, not the original node SSH private
+host key; unchanged six-file hashes cannot establish server-key continuity.
+
+**Smallest prospective boundary.** Keep this in K's dedicated node configuration
+(`cluster/nix/test.nix`, or a small K-owned imported node module if needed), not
+an OS-wide SSH behavior change. Use the existing `services.openssh.hostKeys`
+option to put each node's generated private host keys in a dedicated root-only
+directory on its existing tank, for example `/tank/.vpsfree-kb-ssh`. Preserve
+the selected key types/parameters and strict client discovery policy; do not
+introduce hardcoded/shared private keys, store private keys in a Nix derivation,
+reuse the client key as a server key, or add a host credential/state schema.
+
+Order the node's existing runit sshd startup before its original generation
+loop using the existing `waitForService pool-tank` mechanism, then positively
+check the expected tank filesystem is mounted at the intended persistent path
+before creating/using the private key directory. A directory named /tank on
+tmpfs is insufficient. Refuse unavailable/wrong storage or unsafe existing key
+paths; do not generate a fallback identity on the volatile root, copy an
+untrusted current key over an old key, or overwrite existing keys. Keep existing
+key generation in its owner where feasible. If preserving that owner requires
+more than a small K prefix/path selection, refer the concrete deviation before
+expanding source scope.
+
+OS `os/modules/tasks/filesystems/zfs/pool-service.nix` mounts the pool/datasets
+before completing its one-shot service; runit `helpers.sh:104–121` provides the
+service wait, and runit/default.nix publishes the one-shot done marker only
+after its run body completes. This ordering can therefore gate SSH on mounted
+persistent storage without a new supervisor. Pool startup waits for osctld,
+whose inspected startup path does not wait for sshd. Retain the existing public
+readiness deadline and failure/retention behavior; do not create a new timeout
+or kernel/resource requirement. The keys consume the existing tank and add no
+new disk or VM to the reduced profile.
+
+**Existing G14 cannot be repaired through the accepted public continuation.**
+G725 public resume accepts neither a replacement config nor another source;
+`validate_prepared` enforces both. A new controller cannot retrofit persistence
+into that immutable guest artifact. Public update requires a ready predecessor
+and strict old-trust guest attestation (`kb_runtime.rb:191–219`), which this
+verifying run lacks. The original trusted private node key is not established
+as recoverable by any supported public source contract. Do not edit known_hosts,
+prepared records, artifact/source metadata or the guest, invoke a private shell
+or Engine mutation, use a new source with old metadata, or retry for a lucky key.
+The proposed persistence fix is for a new genuinely prepared source/artifact,
+subject to root's separate source and later operational acceptance. It does not
+authorize a new pair, stopping this run, reset, adoption or disk reuse.
+
+**Compatibility, recovery and verification.** Runtime schema2/connection1,
+disk layout, six credentials, TLS, endpoint ownership and ordinary public
+commands remain unchanged. New supported instances retain their generated
+server keys on the existing tank across same-artifact stop/resume. Future
+updates between implementations preserving the same paths/key policy can keep
+those keys. Older volatile-key instances receive no automatic migration, and
+rolling a corrected guest back to the old volatile-key configuration does not
+promise SSH continuity. An old controller's ability to read state or request a
+proven owned stop is not an upgrade/recovery path. No production node rollout
+or coordinated OS upgrade is proposed; this is the dedicated K runtime only.
+
+Before implementation, confirm the effective node host-key paths/types and
+mount/service ordering from the selected immutable/module output. Add focused
+hosted coverage for the actual generated node startup configuration: storage
+gate precedes key generation; initial keys are private; a second boot preparation
+on the same persistent directory preserves their fingerprints/bytes; unavailable
+or wrong storage refuses rather than using tmpfs. Keep current client trust
+tests for changed material, wrong endpoint, malformed wire data, reordered and
+partial sets, and record the intentional extra-key-type refusal. Do not mock
+away key generation in the new persistence test or call fake machine resume
+coverage proof of guest persistence. Existing `tools/test-runtime.rb` owns
+trust assertions; K's generated-module/key-preparation coverage and short
+`cluster/runtime-contract.md` explanation own the new guarantee. No local CI.
+
+Only after the new exact source, affected hosted checks and committed review
+may root consider a separately admitted finite real test: genuine initial
+attestation, ordinary stop/resume, unchanged server-key fingerprints and
+known_hosts plus all six credentials/disks/sentinels/source closures. That test
+needs an explicit resource/state disposition and is not launched or selected
+by this document. No new operation can inherit success from the two failed G14
+units. Current G14 is retained nonready/live in the latest snapshot; all older
+campaigns and preview remain untouched. The immediate deliverable is this
+bounded prospective fix and the explicit unsupported-current-artifact limit.
+
+### Final bounded proposal and stopped-state evidence
+
+The later parent evidence `finish-g14-resume-refusal-stop1-proof.json`
+supersedes only the preceding live-state snapshot. A separately selected genuine
+G725 public stop returned native 0 in approximately 51 seconds. Its guarded
+09:59:07Z observation records phase stopped, processes.complete=true, runner
+and all 14 recorded children positively gone, and own claim/socket namespace
+absent. The disk identities, retained known_hosts and original failed Campaign
+hash are unchanged. No reset, unit retirement or readiness repair occurred.
+Both failed verification units remain failed; this successful stop supplies no
+resume/capture success. These are parent-provided observations, not operations
+performed by the design owner.
+
+The proposed implementation boundary is one K node-module change (directly in
+`cluster/nix/test.nix`, with a small imported K module only if that makes the
+generated startup testable), focused hosted coverage, and the owning runtime
+contract. Keep the current OS ssh-keygen loop and select persistent paths for
+its configured keys. Use `lib.mkBefore` on the node sshd run body to wait for
+the existing pool service, validate the actual tank mount and prepare the
+private directory before that loop. Do not replace the SSH daemon, alter the
+shared services VM, add an OS input change, or alter the runtime trust reader.
+The effective types/parameters must be read from the selected evaluated module
+before choosing equivalent persistent declarations; an arbitrary Nixpkgs
+version or guessed default is insufficient.
+
+Hosted coverage must check the generated module, not merely search Nix source
+text for a path. Evaluate the small node declaration with the repository's
+pinned inputs and project the actual hostKeys, sshd run body and pool-service
+dependency. Assert that every private host-key path is under the chosen tank
+directory, that configured key types/parameters are intentional, and that the
+storage gate precedes every key-generation command. Preserve the existing
+service body and services-machine behavior. This declaration/ordering proof
+does not require booting a VM or rebuilding a kernel.
+
+For the small startup boundary, use a hosted private temporary directory and
+execute the generated preparation/generation body with controlled storage
+observations and real ssh-keygen. Test initial private creation and a second
+invocation preserving every private-key byte and public fingerprint. A held
+pool-ready condition must prevent any key generation until released. An absent
+pool, tmpfs directory masquerading as /tank, wrong dataset/mountpoint, unsafe
+directory/key type or mode, and preparation failure must prevent generation
+and daemon start without overwriting existing keys. Mocked mount observations
+prove branching and ordering only; they are not a real ZFS or reboot claim.
+Do not construct a generic service simulator. Wire this focused coverage into
+the existing hosted `nix develop --command bin/check --allow-missing` source
+gate; `tools/test-runtime.rb` remains the owner of existing trust/refusal tests.
+If a new small test owner is needed for evaluated Nix output, include it in the
+same gate rather than introducing another workflow or runtime framework.
+
+Keep the current wrong-key, malformed-wire, wrong-endpoint and no-trust-rewrite
+tests. Add explicit set-order/subset/extra-type cases only where existing tests
+do not already establish those semantics. A first-contact scan that records
+only a subset of enabled server algorithms can still encounter the existing
+extra-key-type refusal later, even after key persistence is fixed. This
+separate strict-discovery limitation is not solved or silently relaxed by the
+proposal; the eventual finite real proof must record the offered/retained key
+sets as well as unchanged fingerprints. A concrete further source requirement
+at that boundary must return to root before implementation scope grows.
+
+Current stopped G725 remains unsuitable for readiness repair: no public resume
+can apply the new node configuration to its accepted artifact, and it cannot
+supply the ready, trusted predecessor required by public update. Stopping it
+does not change those facts. Root must accept the prospective source boundary
+and separately choose any later genuine new preparation/admission. No new
+attempt, disk reuse, trust edit or resource cleanup is implied here. Only this
+design file was changed; no hosted or local check was executed.
+
+### Stable node host-key set: concrete prospective choice
+
+For root acceptance, narrow the preceding key-declaration proposal to **one
+explicit Ed25519 host key for newly prepared dedicated K nodes**, at a fixed
+private path such as `/tank/.vpsfree-kb-ssh/ssh_host_ed25519_key`. This supersedes
+the suggestion above to reproduce the inherited multi-key defaults. Declare
+the complete node `services.openssh.hostKeys` list and verify the resulting
+sshd configuration advertises exactly that key, without another inherited
+HostKey entry or default-key fallback. Keep the services VM unchanged.
+
+This is a deliberate new-guest configuration choice, not acceptance of the
+Ed25519 key observed on G14. The pinned OS generation loop accepts configured
+key types, the native resumed node already offered Ed25519, and G725's strict
+wire parser already supports it. No new client algorithm or Engine behavior is
+required. The same selected key path and algorithm remain part of the supported
+node configuration across subsequent boots and compatible updates. With one
+configured key, successful first-contact discovery cannot record only RSA and
+later encounter an additional node algorithm. Missing or unusable persistent
+storage/key preparation must prevent sshd startup; it must not enable another
+key or fall back to volatile storage. Existing private keys are never replaced
+merely because a client cannot authenticate them.
+
+The source owner remains the K node module and its small pre-generation storage
+gate. The order is: pool-tank completion; positive expected mounted-filesystem
+proof; private-directory/key-path checks; the existing OS generation loop for
+that one key; sshd start. Hosted declaration tests must inspect the evaluated
+hostKeys **and actual sshd_config HostKey entries**, proving the single
+Ed25519 persistent path and absence of implicit RSA/ECDSA/other paths. The
+generated-startup test must run real Ed25519 generation, preserve both private
+bytes and derived public fingerprint on its second invocation, and prove that
+negative storage/path cases cannot reach generation or daemon start. Retain
+the strict Engine test that a previously unrecorded algorithm refuses without
+changing known_hosts; test first/repeated valid single-key discovery as the
+positive pairing. These are hosted source checks, not guest-reboot evidence.
+
+Compatibility is intentionally limited to newly prepared nodes with this
+configuration and later configurations preserving its key contract. G14's
+original RSA-only trust, its new untrusted Ed25519 key, and its old ephemeral
+artifact receive no conversion or enlargement. An existing multi-key or
+volatile-key artifact cannot be labelled compatible merely because the new
+configuration has a stable single key. A later deliberate algorithm/path
+change would need its own compatibility decision; it is not an automatic
+update or rollback promise. The stopped G725 unsupported-repair boundary and
+all retained evidence remain unchanged. This additional choice needs root's
+source acceptance before implementation; it authorizes no operation.
+
+### Reconciled proposal: one host-key algorithm across the dedicated K profile
+
+`finish-g14-effective-host-key-declarations1.json` closes the effective-default
+gap above. From the exact selected immutable node closure
+`/nix/store/wgd3z7bipn2z5sdnsf8s59gmcj7sfhbv-vpsadminos-system-node1-26.05pre-git`,
+the parent extracted two HostKey declarations and their generation arguments:
+RSA 4096 at `/etc/ssh/ssh_host_rsa_key`, and Ed25519 at
+`/etc/ssh/ssh_host_ed25519_key`. The evidence binds the configuration/run-file
+hashes and contains no private keys. Together with the exact live-root source,
+this establishes that both configured node key paths were volatile. It does
+not claim observation of the historical key-generation syscalls.
+
+The final prospective choice is **one explicitly configured Ed25519 host key
+per machine throughout K's dedicated SSH profile**, not only on the node. This
+supersedes the preceding instruction to leave services' key declaration
+unchanged. Preserving both defaults would retain the partial-initial-scan
+problem even with perfect persistence: the current Engine accepts the first
+valid nonempty key set, and another valid but previously unrecorded algorithm
+later refuses. Fixing that while retaining multiple algorithms would require
+additional discovery/completeness policy. The single-key declaration avoids
+that change; trust remains strict and is never enlarged automatically.
+
+Use the existing shared `sshModule` in `cluster/nix/test.nix:1318` as the one
+algorithm owner, parameterized only by its host-key path. Its services and
+other NixOS callers use `/etc/ssh/ssh_host_ed25519_key` on their ordinary
+retained writable root. Its vpsAdminOS node caller uses
+`/tank/.vpsfree-kb-ssh/ssh_host_ed25519_key`, with the previously specified
+pool/mount/private-path gate before the existing OS generation loop. Explicit
+parameterization avoids accidentally merging a shared root-path key list with
+a second node-path list. The effective list and sshd HostKey declarations must
+each contain exactly one entry; unrelated old key files must not be advertised
+or deleted by this change. Optional NixOS DNS machines already import this
+shared module, so inherit the same root-path declaration without a separate
+policy or added real-VM campaign. No guest shares another guest's private key.
+
+Ordering remains node-specific: pool-tank completes, the expected tank mount
+is positively verified, private paths are prepared/validated, the existing OS
+loop creates the one missing key, then sshd starts. Services retain the normal
+NixOS host-key startup owner and retained-root behavior; add no tank dependency
+there. The fixed algorithm and path must persist across supported subsequent
+boots/updates. Empty discovery remains a normal discovery failure, not grounds
+to enable RSA, fall back to volatile keys or extend deadlines. A successful
+single-key scan cannot omit another configured algorithm because there is none.
+
+Focused hosted declaration coverage must now include both machine types:
+evaluate the actual selected K module configuration and assert exactly one
+Ed25519 hostKeys entry and one matching generated HostKey line for services and
+node. Check that only the node has the pool/storage prefix and that the prefix
+precedes generation and daemon execution. Exercise the actual small generated
+node preparation/generation path with real Ed25519 keys and controlled storage
+observations: repeat invocation preserves bytes/fingerprint; storage/path
+refusals neither generate a fallback key nor launch sshd. Existing Engine tests
+must retain wrong-key/extra-algorithm refusal and unchanged known_hosts, with a
+positive initial/repeated single-key case. Do not substitute textual source
+searches for evaluated declarations or claim these hosted checks prove an
+actual reboot. Wire only the focused test owner into the existing source gate;
+no new workflow, dependency, guest topology or engine/state schema is needed.
+
+This profile uses Ed25519 already supported by the pinned OpenSSH and runtime
+parser; it intentionally does not promise compatibility with RSA-only external
+clients. These are dedicated K endpoints, not production SSH policy. Older
+multi-key/ephemeral artifacts, including stopped G725, receive no automatic
+retrofit, trust rewrite or compatible-update claim. New services and node
+artifacts must be genuinely prepared from the new source; source/closure and
+six-credential checks remain unchanged. Rollback to a multi-key or volatile
+configuration is not a supported continuity promise. Root source acceptance and
+later operational disposition remain separate. Fresh current/roster revision
+17 were reconfirmed; only this assigned design document was appended.
+
+### PROPOSAL: reconcile the pinned runit string option (2026-10-11)
+
+This explicitly corrects this design's earlier `lib.mkBefore` implementation
+direction. The persistent single-Ed25519-key policy, storage refusals and OS
+generation ownership remain accepted requirements; the stated string-composition
+mechanism was wrong for the actual pin. Root source acceptance is required
+before the implementer changes the frozen source.
+
+At published K `5bf3be8fb7ab6bd7a052ba6b8ae9522a50c33e04`, both native hosted
+runs 38132390845 and 38132386751 fail every NodeSshTest case in configuration
+projection, before the shell assertions. The retained failure record is
+`finish-host-key-persistence-failure1.json`; full logs remain under
+`finish-host-key-persistence-hosted1/{k,k-runtime}/full.log`. The earlier native
+runtime 101/1263, closure 12/51 and machine 34/1244 results passed. None of those
+results establishes that the new node configuration evaluates or its real key
+preparation passes. E remains watcher-owned; no rerun or workflow polling was
+performed for this diagnosis.
+
+**Cause and supported interface.** Exact OS
+`6bdf458fd9105379860234ff33d352e55844f08f`, immutable source
+`/nix/store/m7lppk7djkzqvrddvj0f2aa05sywl5d3-source`, declares service `run` as
+`types.str` at `os/modules/system/boot/runit/default.nix:18–21`; services are
+`attrsOf (submodule service)` at584–587. Its SSH module supplies the single
+key-generation/daemon body at `os/modules/services/networking/sshd.nix:31–58`.
+There is no separate pre-start string hook in that pinned service declaration.
+K's additional `run = lib.mkBefore ...` therefore supplies a second unequal
+string instead of a prefix that the type can concatenate.
+
+The committed K lock resolves root nixpkgs through root vpsadminos, then
+vpsadmin/vpsadminos/nixpkgs, to node `nixpkgs_2` at
+`5dfba6236110080a54247d6460bc2ff5dda939cc` (not the unrelated lock node named
+`nixpkgs`). Its `types.str` uses equality merging, while a function-valued
+submodule definition is imported as a full module, allowing an option
+declaration scoped to one service. The pinned module system applies an option's
+`apply` function to the merged value. This is the supported composition point:
+[pinned types.nix](https://raw.githubusercontent.com/NixOS/nixpkgs/5dfba6236110080a54247d6460bc2ff5dda939cc/lib/types.nix),
+[pinned modules.nix](https://raw.githubusercontent.com/NixOS/nixpkgs/5dfba6236110080a54247d6460bc2ff5dda939cc/lib/modules.nix),
+[pinned options.nix](https://raw.githubusercontent.com/NixOS/nixpkgs/5dfba6236110080a54247d6460bc2ff5dda939cc/lib/options.nix).
+Relevant lines are types526–532/1109–1114/1206–1219, modules1056–1061/1156–1158,
+and options109–110/139–152. These exact public source bytes were read, not
+evaluated. Two separate `apply` declarations would also refuse; do not add
+fallback or override logic to hide that future conflict.
+
+**Smallest source change.** In K `cluster/nix/test.nix` nodeModule, remove the
+competing `run` value and install a function-valued module only at
+`runit.services.sshd`. Extend that submodule's existing `run` declaration with
+`lib.mkOption { apply = osRun: existingPreparation + "\n" + osRun; }`.
+Here `existingPreparation` is the current committed pool/mount/metadata guard
+body, preserved without changing its shell semantics. The prospective shape is:
+
+```nix
+runit.services.sshd = { ... }: {
+  options.run = lib.mkOption {
+    apply = osRun: existingPreparation + "\n" + osRun;
+  };
+};
+```
+
+The function-valued form is significant: the service type interprets an ordinary
+attribute-set definition as configuration shorthand. Do not put `options` in
+that shorthand, redefine `run`'s type/default, or read the resulting
+`config.runit.services.sshd.run` from its own transform. There remains one OS
+`run` definition, checked under its original string type, with K's preparation
+applied once before it. No option-definition reflection, extraction of private
+module internals, copied OS body, priority replacement, global runit change,
+second generator or second daemon is needed. Other services and their run
+options remain outside this extension.
+
+The resulting order stays: existing runit helpers/environment; K's `set -e`,
+pool wait, mount/metadata/private-key validation and umask; untouched OS missing
+key generation; untouched OS daemon exec/config identity tail. The existing
+generation failure still exits before the daemon because K's `set -e` remains
+in that same shell. Preserve the shared services/DNS single-key declarations,
+node tank path, all mode/owner/type/link checks and all readiness/trust rules.
+
+**Hosted verification and owners.** `tools/test-node-ssh.rb:17–100` already
+evaluates the selected pinned node configuration and projects the applied
+`node.runit.services.sshd.run`. Keep that projection and its existing private
+fixture execution; changing the composition interface does not justify bypassing
+evaluation or hand-assembling the service in the test. Preserve all ten cases,
+barriers, five-second bounds, real Ed25519 generation and refusal assertions.
+The declaration test should additionally establish one pool-wait prefix, one
+OS generation block and one daemon exec, in that order. Existing services/DNS
+projections must remain unchanged and free of node storage dependencies. Adapt
+only a projection assertion if necessary; do not weaken the generated-body
+execution or replace it with searches of unevaluated source text.
+
+Prospective application owners are only `cluster/nix/test.nix` and the existing
+`tools/test-node-ssh.rb`. Root's runtime-contract prose already describes the
+intended ordering without promising `mkBefore`; no behavior/documentation scope
+expansion is needed. After a committed correction, select the existing hosted
+source check (`nix develop --command bin/check --allow-missing`), which includes
+`ruby tools/test-node-ssh.rb`, and the owning exact-input package/contract checks.
+Root owns publication, affected review and interpretation. No local test, syntax
+check, Nix evaluation, build or real operation is authorized by this brief.
+
+There is no state/protocol/schema, OS/V/input, timeout, trust, resource or recovery
+change. Rolling source back to the rejected composition restores an evaluation
+failure, not a supported guest fallback. Old G725 remains stopped with retained
+disks/trust and cannot be retrofitted. All failed packets/native evidence and
+older campaigns remain untouched. Current and live roster revision 17 were
+verified with retained architect0 settings; only design.md was appended.
+
+### ACCEPTED FINISH BRIEF: working reduced runtime and bilingual captures (2026-10-11)
+
+This section records `finish-working-delivery-plan1.md` and the user's explicit
+clarification that finishing means getting the tooling working. A failed real
+run establishes a blocker to diagnose and repair; it does not satisfy delivery.
+Historical failed attempts and their limits remain unchanged. This brief adds
+no product decision, runtime framework or speculative source work.
+
+Root reports the K6645483/Efec9cd0 source, hosted checks, review and package gates
+accepted. Reuse that exact-object evidence for unchanged content. Upstream
+reconciliation is root-owned and starting: preserve reviewed patches and
+migration lineage, resolve only actual integration conflicts, and settle the
+final source selections before constructing the new environment. Accepted
+source/package evidence is not current resource, guest or capture proof. Any
+changed source must receive its required hosted checks and affected committed
+review before the corresponding real verification; do not repeat unaffected
+verification merely to restate an existing result. The no-local-CI constraint
+remains in force.
+
+**One reduced environment.** Use the existing public packaged single/local
+runtime with one services guest and one node, each 2048 MiB RAM. The image
+builder uses 2048 MiB and completes before the two guests start. Keep the
+services image, independent writable root copy and node tank at 8 GiB each:
+24 GiB intrinsic eventual file extent, not a universal admission floor. Bind
+fresh source/package/configuration/identity and explicitly disjoint resources
+through the existing registry and ordinary user-service lifetime context.
+Refresh measured capacity, exact kernel/cache prerequisites and ports before
+admission. Account retained sparse growth, closure/staging overlap, unknown
+builder scratch, assessed headroom and host reserves separately; give no
+unperformed cleanup credit and perform no automatic upscale.
+
+The prepared G14 public reset still requires separate explicit approval because
+it deletes its two retained test disks. Before any approved reset, root must
+reprove stopped identity, complete recorded exit, own claim/socket absence and
+preserved non-disk failure evidence. This brief grants no reset or unit-retirement
+authority. G14 is not a source-compatible host-key retrofit candidate. Other
+failed environments and preview remain untouched; neither their adoption nor
+their cleanup is a prerequisite silently added here.
+
+**Required real delivery sequence.** Through the existing immutable public
+tools and normal fresh-watcher monitoring, establish:
+
+1. A successful `runtime-smoke`: public start, exact guest identity and actual
+   system-closure attestation, real resource observations, TLS/API identity and
+   member PHP access, and live lease contention/loss/reacquisition semantics.
+2. Ordinary public stop with positive complete exit, then supported same-artifact
+   resume with a fresh run. Preserve all six dedicated credentials, accounts,
+   disk identities, sentinels, server-key/known_hosts continuity and exact source;
+   repeat the required live attestation. A partial boot or a source check cannot
+   substitute for this continuity result.
+3. From that same resumed environment, real CS and EN
+   `networking/ip-address-list` captures using the existing minimal inventory
+   fixture. Exercise the existing cluster, connection and packaged default-output
+   paths. Strictly validate the full inventory, export only the two PNGs,
+   candidate captures.json, merged results and source receipt under the physical
+   artifact lock, and inspect both images. Preserve genuine generator provenance
+   when media is later committed; export no private connection, account,
+   credential or raw diagnostic material.
+4. End the new environment with ordinary public stop and positive complete-exit
+   proof. Handoff must have no running verification job or newly created guest;
+   this does not authorize actions on older retained environments or preview.
+
+**Demonstrated-blocker loop, with immutable attempts.** One native failure ends
+that attempt and retains its exact receipt and private diagnostics. Diagnose the
+actual failure, assign only its necessary repair from an accepted bounded brief,
+add meaningful focused regression coverage when needed, and obtain the changed
+source/hosted/affected-review gates. Then root may prepare a genuinely fresh
+attempt using supported state/resource admission. Never replay or edit a failed
+Campaign, transplant acceptance or identities, retry probabilistically, weaken
+ownership/trust/storage guards, or infer cleanup permission from a failure.
+An unsafe ownership/capacity refusal holds advancement until its concrete
+prerequisite is resolved. The task continues toward working delivery; stopping
+an individual failed attempt is not a completion claim. Historical upgrade and
+two-root experiments remain deferred, not passed or prerequisites for these PNGs.
+
+**Final source/media handoff.** Root owns final media acceptance, consolidated
+E/C selections, project documentation, publication and the exact repository /
+target integration inventory. Retained implementer owns actual application
+repairs; retained independent reviewer owns affected review; fresh policy
+watchers own uncertain-duration verification. Preserve the default-true database
+migration, runtime schemas and no-old-artifact-adoption policy. Require actual
+runtime/lease/continuity success, both genuine accepted images, strict validation,
+consistent final branches/pins/docs and no unresolved Blocking or Important
+findings before calling delivery ready. Integration, deployment, provider
+activation, production KB writes and archival remain outside this approval.
+The initiative stays active until exact-head integration and outstanding owned
+obligations are resolved through their separately authorized paths.
+
+Current, absent environment markers and live roster revision 17 were verified
+from the exact tracking CWD with login:false; architect0 retains its saved
+Astra/xhigh/design/workspace_write settings. The required workspace procedures
+and documentation skill were read or reused unchanged. No concrete discrepancy
+with the accepted working-delivery plan was found. Only this design section was
+appended; no application investigation, source/ref/pin edit, check, CI request,
+probe, package preparation or lifecycle operation was performed.
+
+### DIAGNOSIS / PROPOSAL: inventory API version and bounded helper qualification (2026-10-11)
+
+The real `member-read-smoke` blocker is the K inventory caller's unsupported
+version prefix. Exact K87d51f0fb0a03f361ba7dfe9718d95af29772fc6,
+`fixtures/prepare.cjs:455-493`, constructs `v1/RESOURCE`.
+Selected V939159f27b5d627930281d5fac0c0aa9ba53bfc7 declares
+`HaveAPI.implicit_version = '7.0'` in `api/lib/vpsadmin/api.rb:3`.
+Its `resources/user.rb` Current action returns the authenticated user; the
+existing API specs resolve the version through native OPTIONS metadata in
+`api/spec/support/version_helpers.rb` and issue GET to the versioned route.
+K's `tools/runtime-verify.rb:539-581` invokes `inventoryIdentity` after the
+lease/source proof and before launching the member browser.
+
+This is now native evidence, not an authentication hypothesis:
+`finish-working-delivery-api-diagnosis1.json` records both dedicated accounts
+receiving HTTP404 / status false / `Action not found` at
+`GET /v1/users/current`. `finish-working-delivery-api-diagnosis2.json` records
+both receiving HTTP200 / status true with `response.user` at
+`GET /v7.0/users/current`, under the same attested instance/run/artifact and
+public lease. These observations establish the route correction; they do not
+establish browser, fixture, continuity or capture success. The original failed
+Campaign and its native failure remain immutable.
+
+**Minimal source boundary.** In K `fixtures/prepare.cjs`, give the inventory
+caller one explicit `7.0` version constant and construct `v7.0/RESOURCE` for
+all its existing resource actions. This is the contract of the selected V
+input, not a configurable API version, discovery framework, fallback or retry.
+Keep the existing HTTP methods, request bodies, success envelope and account
+selection. Keep exact endpoint/Host/SNI/CA routing, Basic authentication from
+recorded dedicated accounts, bounded responses, timeouts, lease assertions and
+abort signal. Preserve member/admin identity and role checks, ordinary member
+browser identity, dedicated-pool ownership/idempotence and all fixture guards.
+No V, Engine, guest, server-key, profile, schema or dependency change is needed.
+A nearby comment should identify the selected vpsAdmin API contract so a future
+input-version change checks the caller explicitly.
+
+The helper may improve its existing action-failure error with only the method,
+known resource path and numeric HTTP status. Do not include Authorization,
+account/password values, request bodies, arbitrary response messages/bodies or
+query values in that diagnostic. A failure stays a failure before subsequent
+fixture/browser work; it must not trigger route guessing or another request.
+
+**Hosted regression boundary.** Own the correction in `fixtures/prepare.cjs`
+and `tools/test-ip-inventory.cjs`. The existing transport mock at lines 37-63
+strips `/v1/` and therefore models the erroneous caller as valid. Assert the
+complete wire path before any resource normalization. In particular, assert
+both identities use `GET /v7.0/users/current`, with the existing correct account,
+TLS and lease fields, and verify full versioned paths for inventory actions
+already exercised by the fixture tests. A `/v1/` or unversioned request must
+not be accepted by the mock. Retain all current negative role/identity/lease
+and disabled-pool rerun cases. Add a 404/status-false regression that refuses
+before browser/mutation and, if diagnostics change, proves no synthetic secret
+or raw response content reaches the error. Do not replace the wire assertion
+with a test of an exported constant or a source-text check.
+
+The existing hosted Check source route runs
+`nix develop --command bin/check --allow-missing`, which includes
+`node tools/test-ip-inventory.cjs`. Use that exact-head evidence and affected
+committed review under the standing no-local-CI override. No new workflow,
+dependency, broad test campaign or rerun of unrelated accepted evidence is
+required by this brief. Root owns publication, corresponding E selection and
+the source/package/review gates before any subsequent real qualification.
+
+**Useful qualification on the existing environment.** After those gates, root
+may separately select a finite read-only helper qualification without entering
+or continuing the failed Campaign. Reprove the current genuine G87d public
+connection, controller lease, exact G87d metadata/artifact and actual guest
+closures with its matching immutable tools. Import only the corrected
+`inventoryIdentity` (and unchanged member assertion, if used) from the newly
+committed immutable helper source into the existing read-smoke composition.
+Keep source verification directed at the genuine G87d guest metadata; record
+the corrected helper revision and file digest separately. Use its two ordinary
+current-user GETs, then the existing dedicated member PHP read if selected.
+Do not call the provisioning fixture for this diagnostic. Preserve browser
+cleanup before lease release and retain the native outcome in a new evidence
+unit. This proves corrected caller compatibility against that pinned V server;
+it creates no successful runtime-smoke receipt, guest update or canonical PNG.
+It needs no replacement image or new VM for that limited claim.
+
+**Final capture still requires a genuine matching artifact.** Changing
+`fixtures/prepare.cjs` changes the source fixture digest. K
+`lib/connection.cjs:236-264` compares the expected source with descriptor,
+artifact and live guest identity, then checks actual system closures. Installed
+capture from the corrected source therefore cannot accept the unchanged G87d
+artifact. Do not override expected metadata, splice corrected fixture code into
+an allegedly canonical G87d capture, or relabel the generator. New matching
+prepared guest identity is necessary even though V and the resource profile
+are unchanged.
+
+The existing public `update` is a supported same-instance route in principle:
+`cluster/lib/kb_runtime.rb:187-264` requires a live ready attested predecessor,
+compatible endpoints/layout/credentials/configuration, exact candidate build
+and complete closure preparation before ordinary shutdown and verified boot.
+This investigation proves neither its current admission nor capacity. It also
+cannot turn the failed Campaign into a completed verifier receipt. Do not make
+an update or a new continuation interface an implicit extra requirement here.
+For the existing required finite verifier/capture route, root can instead
+select ordinary owned stop, separately approved reset when deletion is needed,
+and fresh one-instance admission from the corrected immutable package. Preserve
+failed evidence outside any approved deletion, remeasure resources, and never
+allocate a second live pair by assumption. Root owns that concrete disposition;
+this source proposal authorizes no lifecycle action or cleanup.
+
+Current and both absent environment markers were checked from the exact tracking
+CWD with login:false. Live roster revision 17 retains architect0's saved
+Astra/xhigh/design/workspace_write settings. Applicable guidance and the
+documentation skill were read or reused unchanged. Only this design proposal
+was appended; there were no application edits, checks, live requests, probes,
+package operations or lifecycle/ref changes. Review and native success of the
+prospective correction remain unclaimed.
+
+#### Reconciliation: same-instance public update, with one concrete prelaunch blocker
+
+Root's proposed same-instance route is supported by the existing public
+contracts. Once a repaired source is committed, checked, reviewed and genuinely
+packaged, public `update` can transform the accepted ready G87d artifact into
+an artifact for that exact source while retaining the instance, configuration,
+endpoints, six credentials, host-key trust and compatible disks. This is an
+ordinary repair of the selected final-source environment, not an attempt to
+certify the deferred historical predecessor experiment. A failed Campaign does
+not invalidate a separately accepted runtime artifact, but neither public
+update nor a later success may rewrite that Campaign's failed receipt.
+
+`runner/capture.cjs:24-108` requires the ordinary public connection/lease,
+matching immutable source and actual guest closures; it does not require a
+Campaign receipt. After successful update, a separately recorded finite public
+member/API/PHP/lease/sentinel/ordinary-stop-resume sequence can therefore supply
+the remaining real evidence. Direct capture and validation from the same new
+immutable package can then generate genuine CS/EN images. Retain the original
+failed campaign and new operation evidence separately; never manufacture a
+completed `runtime-smoke` receipt to enter `bilingual-capture`. The direct
+operation must still cover the selected checks, both selectors/default output,
+physical locks, strict inventory validation and five-file export. No source
+adapter, private Engine method or expected-source override is necessary.
+
+**Source-supported blocker before selecting update.** Exact G87d
+`cluster/lib/kb_closure.rb:112-119`, `ClosurePreparation#capacity`, still sends:
+`df -B1 --output=avail /nix/store | tail -n1; df -i --output=iavail /nix/store | tail -n1`.
+The inode invocation has the same GNU df option conflict documented at this
+design's G14 resource diagnosis above. `set -eu` does not preserve a producer
+failure through the successful tail; the result lacks the inode number and
+the existing capacity condition refuses preparation. This is a command-source
+defect, not a native update result or evidence of insufficient guest capacity.
+The current `tools/test-closure.rb:30` supplies both synthetic numbers whenever
+the command contains `df -B1`, so it does not execute the defective shell.
+
+If root accepts update as the finite delivery route, the smallest additional
+source scope is `cluster/lib/kb_closure.rb` plus existing `tools/test-closure.rb`:
+use `df --output=iavail`, and capture both df producers in status-checked
+standalone assignments before formatting their output. Preserve exact missing
+closure bytes/entry counting and the 256 MiB / 10,000 inode reserves. Retain
+strict numeric parsing/refusal and every source, credential, host-key, content,
+GC-root and import-order proof. Add hosted coverage executing the actual
+emitted capacity command with declared GNU tools, plus controlled producer
+failure/malformed output that cannot reach `nix copy` or a prepared receipt.
+Retain the existing insufficient-byte/inode and partial-import tests. This is
+not accepted application scope until root explicitly assigns it; no local
+execution or remediation was performed by the architect.
+
+**Admission and failure limits.** Update builds while the old two guests remain
+live, so assess the peak old guest RAM plus candidate image builder separately
+from the original sequential first-start profile. `kb_source.rb:129-146` builds
+the candidate cluster config and runner and retains their store roots. Count
+the actual missing candidate outputs, a possible new 8 GiB immutable services
+image, construction staging and unknown scratch; do not assume that a small
+JavaScript diff makes those outputs free. Existing writable root/tank are kept
+by `kb_machine.rb` / `kb_disks.rb`; do not budget another writable pair or claim
+old image/closure reclamation. Import adds exact candidate NixOS store paths
+to the retained services root before shutdown, with its own byte/inode reserve.
+Refresh capacity and the live ready predecessor proof before the one selected
+public update; the current diagnostic is not that admission.
+
+Use the repaired package's public update with the same explicit private config,
+`--topology single --network local`, original state root/slug and existing
+900-second controller budget. Candidate artifact/run/closure identities must
+change truthfully; unchanged disk/account/credential/trust identities must not.
+One native failure ends this selected operation and leaves its genuine stage
+and any update journal intact. No automatic retry, fallback artifact, resume,
+reset, new pair or cleanup follows. A successful update must be freshly
+attested before the separately selected smoke and captures. All later commands,
+watcher/context/capacity admission and failure disposition remain root-owned.
+
+### OPERATION PROPOSAL: ordinary G87d stop/resume after services SSH health failure (2026-10-11)
+
+`finish-working-delivery-member-diagnosis3.json` records successful real
+API7 current-user requests and ordinary member PHP read on instance
+271d430a-f951-4979-b115-fe66c7516e11, run
+5b83fc44-1224-44c5-bd23-49f10a42f7b2, artifact
+a3406dd9-97b0-4914-98a7-86541b5062b2. The first separate lifecycle helper
+changed descriptor bytes and refused before lifecycle; its diagnosis remains
+in `finish-working-delivery-owned-lifecycle1-diagnosis.json`. The corrected
+helper's native failure is retained in `finish-working-delivery-owned-lifecycle2.json`.
+Root additionally reports that its lease failed during services SSH attestation,
+and a separate public SSH read returned native255 / `Connection timed out during
+banner exchange` at the recorded services endpoint 127.0.0.1:25700. Those latter
+native strings and filtered console health observations are parent-supplied;
+the architect did not open private diagnostics or make a live request.
+
+The API and console-router HAProxy backend failures reported at17:04:54Z and
+17:08:51Z, and the absence of matched OOM/panic lines in the bounded filter,
+do not establish the root cause of guest unresponsiveness or exclude resource
+pressure. Earlier boot/closure/resource/API/PHP success remains valid for its
+recorded time. It is not current health or liveness proof. No new source repair,
+timeout change or resource increase follows from this evidence alone.
+
+**Supported finite next operation.** Root may separately select public
+`G87_RUNTIME --state-root ROOT stop SLUG --timeout 900`, then, only after
+successful stopped/complete-exit proof and refreshed admission,
+`G87_RUNTIME --state-root ROOT resume SLUG --timeout 900`. Here G87_RUNTIME
+means the genuine immutable G87d packaged launcher with its paired metadata,
+not a newly repaired fixture package or metadata override. Resume accepts no
+replacement config/topology/network. Preserve the failed Campaign and both
+failed helper receipts; write any new native operation evidence separately.
+This is an ordinary lifecycle operation on the accepted artifact, not Campaign
+replay, a new pair or an instruction to call a private engine method.
+
+Exact G87d `cluster/lib/kb_runtime.rb` public stop/control/stop_locked paths
+authenticate the recorded launch, live runner tuple, private socket namespace
+and SO_PEERCRED peer under the existing operation/gate. Unlike capture_lease,
+they do not call `verify_live` or require guest SSH/API health. The runner then
+uses its existing machine/test-shell shutdown and reaper path; services uses
+OSVM's NixOS `poweroff` through that shell, not external SSH. Thus banner
+failure does not itself block this public stop route. A guest hang can still
+prevent graceful shutdown, so no success is presumed.
+
+Before stop, reprove the exact owned launch/runner/control context using current
+named evidence; a live `complete:false` receipt is normal and must not be
+rewritten. Let public stop establish its own authenticated handoff and final
+complete/all-recorded-processes-gone proof. Require native success, stopped
+phase, complete exit and ordinary claim/socket disposition before advancing.
+A refusal or expired900-second caller observation holds resume and further
+work. The caller budget is distinct from the runner's sequential machine drain;
+timeout supplies no force, signal, reset, unlink, process search or automatic
+retry authority. Preserve any still-draining runner and its receipts.
+
+G87d `resume` at `kb_runtime.rb:175-185` requires proven stopped state, no
+pending update, accepted artifact, exact selected metadata, preparation,
+configuration, credential and disk proofs. It calls `start_locked` with a
+fresh run ID and the same artifact; it invokes no image build. The existing
+prepared-disk adapter retains root/tank rather than copying a new root. Refresh
+RAM/shm, exact resource availability and retained disk-growth admission; no
+cleanup credit or extra pair is permitted. Compare the same artifact, all six
+credentials, accounts, known_hosts and disk identities across the operation.
+Resume must freshly establish SSH trust and actual guest identity/system
+closures before its normal readiness result.
+
+After native resume success, root may select a fresh canonical public lease,
+exact-source attestation and read-only API7/member PHP observations. Preserve
+the distinction between restored health at that point and an explained original
+failure; restarting alone proves only the former. One new native failure ends
+this selected finite sequence. Even success does not fix G87d's inventory
+prefix or make campaign2 complete, and final corrected-source captures still
+require the genuine source/artifact transition recorded above. No update is
+currently admitted through a guest that cannot pass its required SSH proof.
+
+Current/absent markers and live roster17 were reverified from the exact tracking
+CWD with login:false; saved architect0 settings remain unchanged. Applicable
+root/K procedures and documentation guidance were reused unchanged. This is a
+design-only recommendation: no live proof, stop/resume, test, source/ref edit,
+package work or private campaign read was performed. Root owns selection,
+fresh watcher/context/admission and all native outcome acceptance; other retained
+environments and preview remain outside this operation.
+
+### SOURCE NOTE: reduced services RAM retains larger test-service defaults (2026-10-11)
+
+The current health failure still has no established memory-exhaustion cause.
+This bounded source trace does establish a relevant configuration mismatch:
+G87d `cluster/nix/test.nix:2031-2050` imports V939159's
+`tests/configs/nixos/vpsadmin-services.nix`, and K's services module forces
+`virtualisation.memorySize` to the selected2048MiB without reducing that
+module's worker/buffer settings. The imported test baseline declares8192MiB.
+This is evidence about declarations, not a new evaluated configuration, actual
+resident-memory measurement or explanation of the observed SSH/HAProxy failure.
+
+The inherited settings and their existing owners are:
+
+| Component | Source-declared setting inherited by K | Existing adjustment boundary |
+| --- | --- | --- |
+| API | V test module:2 Puma worker processes, threads1..8 per worker; API database pool defaults to5 per process | `vpsadmin.api.workers`, `threads.min/max`, `database.pool`; generated Puma config in `nixos/modules/vpsadmin/api/default.nix` uses these directly |
+| Console router | `nixos/modules/vpsadmin/console-router.nix`: threads0..5; generated Puma config supplies no `workers` directive | `vpsadmin.console-router.threads.min/max`; no additional worker pool is declared here |
+| Member PHP | Container `webui`, `nixos/modules/vpsadmin/webui.nix:215-228`: dynamic FPM, max32 children, start2, spare2..5, recycle after500 requests | Nested `containers.webui.config.services.phpfpm.pools.vpsadmin-webui.settings`; this is inside the same guest, not extra VM memory |
+| MySQL | V test module: `innodb_buffer_pool_size=1024M`, max200 connections | `services.mysql.settings.mysqld`; K can override within its own test services module |
+| Other MySQL buffers | V `nixos/modules/vpsadmin/database.nix:68-99`: join256M, sort512M, read128M, tmp tables96M, max heap1024M, max packet256M; read/write/purge thread settings32/16/16 remain inherited | Same existing MySQL settings; these are limits/configured buffers, not proof they are all allocated concurrently |
+| RabbitMQ | V test/module enable the broker, management and Prometheus plugins; `cluster_partition_handling=pause_minority`; neither K nor V supplies a memory-watermark or Erlang scheduler override | Existing upstream `services.rabbitmq` configuration remains the owner; no exact effective broker watermark/scheduler number was established by this trace |
+
+The test module's1GiB pool overrides the production module's `mkDefault
+14000M`; it is incorrect to report a14GiB pool here. Likewise, PHP32 is a
+ceiling, not32 workers proven resident, and Puma/SQL pool settings are not
+measured RSS. The separate K `vpsfree` web FPM pool is conditional on the
+optional web source/enable path; do not count it as present without the public
+selected-configuration proof. No private configuration was read.
+
+If later native evidence supports resource pressure, a K-only override of
+existing service options is a materially narrower fit correction than increasing
+the fixed2GiB services/2GiB node/2GiB sequential-builder boundary. The smallest
+concurrency candidate is reducing the API's configured2 workers to1 while
+retaining bounded threads and adequate database-pool capacity. The explicit
+1GiB pool and large demand-dependent SQL buffers deserve measurement before
+assuming that worker reduction alone solves the fit. PHP concurrency can also
+be bounded at the nested pool owner if observations identify it. No new public
+configuration schema, generic profile framework, production V defaults or OS
+changes are necessary to express such a test-only correction.
+
+These are available source boundaries, not accepted tuning values or a command
+to apply changes now. The `extraModules.services` function parameter is not
+exposed by the ordinary packaged CLI, so do not invent an ambient override to
+inject changes into the retained artifact. Any selected K configuration edit
+would need an exact new source/artifact and its normal affected declaration/
+hosted/review gates before real use. Preserve service functionality and all
+readiness, source, trust and capacity checks; do not disable dependencies to
+make a smoke pass. Hold further tuning pending the current native stop/health
+outcome and concrete diagnostic evidence. No retry, build, probe, service change
+or resource increase is selected by this source note.
+
+Current and absent environment markers plus retained roster17/settings were
+rechecked. Applicable guidance was reused unchanged. Only this design note was
+appended; no private configuration/log read, guest/process operation, test,
+source edit, Git action or CI observation was performed.
+
+### CAPTURE ADMISSION NOTE: recorded node memory zero (2026-10-11)
+
+This assessment uses only the parent's supplied scalar observations from before
+the failed member-read: services memory565198848 bytes, filesystem free4164939776
+bytes /385082 inodes and zero recorded PSI values; node memory0 bytes,
+tank available7800966656 bytes and empty pressure text. They are historical
+snapshots, not current liveness, capture admission or the cause of the later
+services hang. No private original receipt/configuration/serial was opened.
+
+Exact G87d and committed Kf467934d3f678abc8b552f89805636d4d910438a have the same
+`tools/runtime-verify.rb:580-629` measurement and admission code. The script
+extracts `/proc/meminfo`'s `MemAvailable` field with awk and multiplies its kB
+value by1024. There is no unavailable-measurement sentinel or zero fallback.
+A missing field emits an empty value, which fails the required numeric-key
+check; an unsuccessful producer exits through the standalone assignment.
+For normal kernel-formatted input, recorded0 therefore means a zero available
+memory estimate. The raw MemAvailable line was not inspected here, and no
+formatter defect is established by the supplied numeric result.
+
+The ordinary `resources(..., capture:false)` call validates required numeric
+fields and services free disk of at least1GiB; it does not enforce guest memory
+headroom. This explains how the earlier resource assertions can pass with node0.
+Later `resources(..., capture:true)` checks each guest against a strictly
+positive assessed memory requirement at623-624. `positive_bytes` at352-355
+rejects zero thresholds. Reusing that node0 snapshot would necessarily refuse
+with `assessed live guest memory headroom`, before fixture creation; no smaller
+positive assessment can make zero pass. Direct capture is not permission to
+skip this accepted admission requirement.
+
+Empty node pressure text is distinct from a zero-pressure measurement. The
+script emits PSI only when `/proc/pressure/memory` is readable, and pinned
+OS6bdf `os/packages/linux/common-config.nix:81` declares `PSI = no`. Empty text
+is consistent with that source configuration and supplies no evidence of low
+pressure. The same OS source's `os/modules/config/tunables.nix:74` declares
+`vm.min_free_kbytes = mkDefault (1 * 1024 * 1024)`; K's node profile has no
+corresponding override. This is a concrete reserve setting to observe, not a
+proved effective live value or permission to lower it. A `zfs_arc_min=1GiB`
+string in `os/modules/tasks/filesystems/zfs/default.nix:321` is merely an
+option example, not an assigned ARC minimum. Do not infer ARC usage or add ARC
+bytes to MemAvailable. The exact kernel implementation object read did not
+complete and was cancelled; no kernel-specific causal conclusion relies on it.
+
+The inventory fixture remains one real running VPS with1CPU, memory1024MiB,
+swap0 and disk quota4096MiB (`fixtures/prepare.cjs`, `INVENTORY_RESOURCES` and
+the inventory preparation branch). A quota/limit is not measured resident
+usage or guaranteed free host memory. The capture gate separately requires
+the4GiB tank quota plus positive assessed template/metadata space. The supplied
+tank snapshot leaves3505999360 bytes above4GiB, but no private assessment values
+were inspected, so neither tank nor services capture sufficiency is certified.
+
+**Smallest next observation, within the already selected next attempt only.**
+After root's separately approved recovery/admission and normal ready/source
+proof, before any inventory VPS/template mutation, collect one bounded public
+SSH observation: the existing resource script plus allowlisted numeric node
+MemTotal/MemFree/MemAvailable/Cached/SReclaimable/SUnreclaim fields, the effective
+`/proc/sys/vm/min_free_kbytes`, PSI-file presence and, if present, numeric ZFS
+ARC size/c/c_min/c_max fields. Preserve the exact MemAvailable value/unit and
+native status so conversion can be reconciled. Compare that fresh observation
+with the existing positive capture assessment for both guests and actual tank
+space. If it passes, proceed only under ordinary admission; if zero recurs,
+hold fixture/capture work and return those facts to root. This is one finite
+diagnostic at an existing gate, not a polling/tuning loop or a new campaign.
+Positive headroom admits the bounded attempt; only successful real fixture and
+capture execution establishes practical fit.
+
+No source change is selected. Do not replace MemAvailable with declared RAM,
+MemFree plus guessed reclaimability, a synthetic positive value or a relaxed
+threshold. Keep two2048MiB runtime guests, the sequential2048MiB builder and
+intrinsic24GiB image/root/tank profile unchanged. Native cause, current capacity
+and the pending recovery remain root-owned; all failed attempts and other
+retained environments stay untouched. Current/markers and saved roster17
+settings were verified; only this design note was appended.
+
+### FINITE PUBLIC CONTINUATION: accepted f467 artifact and short browser TMPDIR (2026-10-11)
+
+`finish-working-delivery-browser-path-diagnosis1.json` establishes a host-side
+Chromium `SingletonSocket` path-length failure after genuine public start of
+Kf467934d3f678abc8b552f89805636d4d910438a. The accepted instance is
+f0cf3d9e-abac-461f-a9cc-86415da2e1ae, initial run
+e7c720e8-36f2-42d9-ad78-292a154d6e0c and artifact
+7209e6c4-0828-413b-b232-1b2e8377aca7, digest
+c7aeecd5c6a1410c94dd13ac3278d19725633539d29f61f16c4adab5270d360c.
+These are stored acceptance facts, not current liveness. Preserve the failed
+attempt hash959d225ae09f624c2891d1d449226a03efd93dbbdf9eeeb9d70118c96f2e5b1d
+and its absent runtime-completion receipt. No replacement artifact, image or
+pair is needed solely to shorten Chromium's temporary socket path.
+
+**Supported selection.** Use a separately recorded finite operation unit with
+the same immutable f467 runtime/capture/validator, paired metadata and selected
+Node/Playwright/browser environment. Give the actual browser child a newly
+owned ordinary0700 short absolute TMPDIR, for example a private random directory
+under `/tmp`, with ample byte-length margin for Chromium's generated suffix.
+Record its ownership/path and capacity placement; do not move or symlink cluster
+state, output, credentials or the failed Campaign. Keep private browser scratch
+out of carryback. `lib/browser.cjs` supplies no custom user-data path or child
+environment, and the packaged capture wrapper preserves TMPDIR. In contrast,
+`tools/runtime-verify.rb:27-30` overwrites it with `root/temporary`: merely
+prefixing another Campaign invocation with TMPDIR would not correct this path.
+Do not instantiate/re-enter that failed Campaign or its command wrapper.
+
+The selected sequence, under root's existing durable context/watcher and native
+failure recording, is:
+
+1. Reprove the same accepted current f467 instance through the public connection
+   and source/guest-closure checks. Preserve canonical connection bytes exactly
+   when writing a private descriptor; parsing and reformatting changes its lease
+   digest. Bind the separate packet to the original failed-attempt hash and
+   current artifact, config and package identities without copying nested secrets
+   into public records. Root's bounded node-memory read remains diagnostic,
+   not automatic capture admission.
+2. Run the existing exported read-smoke composition with short TMPDIR: canonical
+   public lease, matching `Connection.verify`, corrected `inventoryIdentity`,
+   ordinary member login/list and `assertInventoryMember`. Close browser/proxy
+   resources before releasing the lease. Then invoke the unchanged immutable
+   `tools/verify-live-lease.cjs` with its real descriptor, metadata, runtime
+   package, state root and original private config. It requires the retained
+   slug `same-slug`; preserve it. This covers public75 contention, peer loss,
+   reacquisition, routing and wrong-source refusal without private lifecycle calls.
+3. After those successes, create the two existing dedicated sentinel paths only
+   if absent, using public SSH and a new operation marker. Baseline their hashes,
+   all six credentials, accounts, known_hosts, disk identities/sizes, immutable
+   image and accepted artifact/closure identities. Preserve private bytes;
+   output only their allowlisted identities/hashes. Do not overwrite a preexisting
+   unexpected sentinel or use a failed Campaign receipt as the baseline.
+4. Select ordinary public `stop --timeout 900`. Require native success and
+   guarded stopped/complete/all-recorded-processes-gone proof before resume.
+   Refresh host admission, then genuine same-source public `resume --timeout 900`
+   without config/topology replacement. Require the same instance/artifact,
+   fresh run, unchanged baseline/sentinels and fresh live identity/actual-closure
+   and trust proofs. No image rebuild is part of resume. Repeat the member read
+   with short TMPDIR and record the result independently of the failed Campaign.
+5. Before fixture mutations, satisfy the existing positive guest-memory, services
+   disk/inode, node template/quota and host/browser-headroom admission with fresh
+   measured facts. The earlier node0 value cannot pass that gate. If fit refuses,
+   stop advancement and retain the concrete result; do not reduce thresholds,
+   increase resources or substitute declared RAM for measured availability.
+6. Use the matching public packaged capture/validator on this same resumed run:
+   CS `--cluster same-slug --state-root ROOT`, EN `--connection FILE`, both with
+   `--checkpoint networking/ip-address-list --output-root OUTPUT`. Use one new
+   private writable output root; repeat EN from that output CWD without an
+   explicit output-root to retain the selected default-CWD proof. All browser
+   invocations receive the same short private TMPDIR. Update the candidate
+   inventory with the matching validator, then strictly validate without
+   `--allow-missing`. Use existing `tools/capture-export.rb` /
+   `KbCaptureArtifacts.export` under its physical lock for exactly the two PNGs,
+   captures.json, merged results and source receipt. Retain f467 generator
+   provenance when later committing media; review both genuine images.
+7. Finish selected successful work with ordinary public stop and complete exit
+   proof under the standing finish brief. No reset, state deletion, forced signal
+   or action on other environments is implied by this sequence.
+
+No unsupported source gate was found for this direct route. The repository's
+documented public capture path does not consume a Campaign completion file;
+the verifier's `bilingual-capture` phase does. Separate operation evidence must
+cover the required real criteria honestly, never synthesize that file or claim
+the original `runtime-smoke` passed. One native failure ends this selected
+sequence and holds dependent steps. Current ownership, health and capacity
+remain actual operation prerequisites, not conclusions of this source read.
+Keep two2048MiB guests, the unchanged sequential2048MiB builder definition and
+intrinsic24GiB disk profile; this continuation launches no builder or new pair.
+
+Current, absent markers and live roster17/settings were verified. Applicable
+workspace/K guidance and documentation skill were read or reused unchanged.
+Only this design section was appended; there was no source edit, check, build,
+CI request, private input read, probe or lifecycle action. Root owns the exact
+finite packet, operational selection and acceptance; no new source scope is
+requested by this brief.
+
+### PROPOSAL: bounded reduced-node reserve correction (2026-10-11)
+
+This is prospective source/operation guidance, not permission to modify the
+guest or an accepted capture result. `finish-working-delivery-node-memory-observation4.json`
+binds the current f467 instance/run/artifact from the preceding section and
+records MemTotal2025076KiB, MemFree1178304KiB, MemAvailable0KiB and
+vm.min_free_kbytes1048576KiB. ARC resident size is about11MB; PSI is unavailable.
+The zero is a real reported value, not the verifier's unavailable-measurement
+convention. It does not establish exhaustion or explain the earlier services
+hang. `tools/runtime-verify.rb:580-629` reads MemAvailable directly and its
+positive capture-memory check correctly refuses this observation.
+
+**Smallest proposed persistent policy.** At pinned OS6bdf,
+`os/modules/config/tunables.nix:74` supplies the matching1GiB `mkDefault`.
+The same pinned source's `tests/suite/kernel/proactive-swap.nix:23-38` explicitly
+uses65536KiB with a3072MiB test VM. Adopt that existing64MiB test reserve as the
+single candidate for K's dedicated reduced node, not a claimed measured minimum
+or an automatic consequence of having2048MiB RAM. Copy none of that test's
+DAMON/swap/NUMA settings. There is no reason here to change ARC, services,
+kernel configuration, OS production defaults, API limits or capture thresholds.
+
+The production-code owner is only K `cluster/nix/test.nix:1831` (`nodeModule`).
+Use its ordinary `boot.kernel.sysctl."vm.min_free_kbytes"` option to override
+the upstream default with65536 for the existing reduced shape: single/local,
+services2048MiB/root8192MiB and node2048MiB/tank8GiB. One explicit local
+predicate suffices; add no configuration field, profile selector or scaling
+algorithm. Nonmatching K profiles retain the inherited value. Normal module
+priority is sufficient against `mkDefault`; do not use `mkForce`, change the
+OS input, or alter the kernel derivation. Two2048MiB runtime guests, the
+2048MiB builder, disk sizes and every positive admission criterion stay fixed.
+
+**Optional one-value measurement before source acceptance.** If root separately
+selects it, use the genuine paired f467 public
+`vpsfree-kb-devcluster ssh same-slug node1 -- sh -s` under the existing owned
+operation context. Reprove the exact ready instance/run/artifact, retained SSH
+trust, guest identity and actual system closure immediately beforehand. Within
+that guarded command, compare the identity/closure with the bound values and
+require the current sysctl to be exactly1048576 before writing anything.
+Record only the allowlisted numeric memory/reserve/ARC fields. Set65536 once,
+verify that readback, and repeat those measurements and the unchanged numeric
+capture assessment; do not create a fixture or take screenshots in this
+experiment. More MemFree alone is not admission; actual MemAvailable and all
+other original capture requirements must pass.
+
+Install shell exit/signal restoration before the write. Restore1048576 only
+from the expected temporary65536 value, then require a successful public
+readback; an unexpected value refuses rather than being overwritten. An SSH
+failure can prevent confirmed restoration, so a trap is not proof of rollback:
+root must retain the failure and establish the exact current value through the
+same public authority before any dependent work. No second value, automatic
+retry, reboot or reset is part of this measurement. Its evidence says
+"f467 plus temporary runtime sysctl experiment", never that f467 declares the
+new policy or that its failed Campaign completed. A positive result justifies
+the candidate; an insufficient result restores the old value and holds work.
+
+**Same-instance source transition and its actual cost.** The existing public
+`update` route is compatible with this sysctl-only K correction. At immutable
+f467 source `/nix/store/xllyhnv9ba1d49f9fvdwbpgxaf04phdf-source`,
+`cluster/lib/kb_runtime.rb:187-264` admits only a ready, attested predecessor,
+unchanged SSH endpoints, compatible disk layout/TLS names and identical six-file
+credentials. It journals and builds the real candidate, imports the exact
+NixOS closure while the predecessor is reachable, then gracefully stops and
+direct-boots the candidate. Root must first restore any diagnostic sysctl and
+finish/release its current read/lease operation. The candidate uses the original
+private configuration; retain accounts, known_hosts, persistent Ed25519 keys,
+disk identities and sentinels. Accept a new artifact/run/source only after the
+existing live identity and actual-system proofs. This needs no new instance or
+second writable root/tank and never replays the failed Campaign.
+
+It is **not** an unchanged-services-image or no-build route. `kb_source.rb:75-90`
+creates new guest identity containing the artifact and full source metadata;
+`test.nix:1319-1320` installs it in every guest, including services.
+`kb_source.rb:124-145` builds the entire candidate cluster-config and records
+its boot/image paths. The retained writable services root is preserved, but
+the candidate services closure/image must be treated as new construction until
+exact native derivation/substitution evidence proves otherwise. Its8GiB image
+may coexist with the retained old image. Candidate construction occurs before
+old guests stop, so an actual2048MiB image builder can overlap the existing4GiB
+runtime: the initial-start sequential peak cannot be reused as update admission.
+No resource setting increases, but root must assess this6GiB guest/builder peak
+plus real overhead, image/staging/missing closures, retained growth and reserves.
+The existing guest-import256MiB/10000-inode reserves remain enforced. If that
+bounded construction/import does not fit, public update is blocked; there is no
+supported no-build source relabel, in-place declaration edit or private prepare
+shortcut in this proposal.
+
+**Verification and limits.** Extend the existing actual pinned-module/profile
+projection in `tools/test-runtime-verify.rb` to assert65536 for the reduced node,
+1048576 for a nonmatching/default node, unchanged kernel outputs and unchanged
+guest/builder/disk dimensions. Project the effective OS sysctl through the same
+module evaluation pattern already used by `tools/test-node-ssh.rb`; a text-match
+assertion or fake runtimePlan field is insufficient. Preserve the existing
+resource producer/error and insufficient-live-memory tests, including zero
+refusal. Owning hosted selection is the existing declared-shell
+`ruby tools/test-runtime-verify.rb` (already included by `bin/check`); no new
+workflow, broad suite or local check is requested. Add one short reduced-profile
+policy/rationale paragraph in `cluster/runtime-contract.md`. Root coordinates
+the narrow committed source review and ordinary exact E pin/package evidence.
+
+After separately admitted public update, fresh numeric observation must show
+65536 and satisfy the unchanged capture thresholds before fixtures. Ordinary
+same-source stop/resume must preserve65536, artifact/source/closure, all six
+credentials/accounts, SSH trust, disks and sentinels. Then the previously
+accepted short-TMPDIR CS/EN capture/strict validation/export sequence applies,
+with the genuine new generator revision retained in later media provenance.
+Neither declaration tests nor the temporary experiment certify practical VPS
+fit. One native failure ends the selected operation and retains its journal
+and evidence; no automatic rollback, reset or third attempt follows. A source
+rollback requires an explicitly selected supported update and fresh admission,
+not editing accepted-artifact metadata. No schema, guest data layout, network
+feature, provider behavior or production policy change is proposed.
+
+Current/absent markers and live same-session roster17 were verified with the
+absolute public CLI; saved architect0 settings remain unchanged. Only this
+design section was appended. No application edit, private input read, check,
+evaluation/build, probe, guest command, lifecycle action or Git/ref operation
+was performed. Root owns source acceptance and any measured operation decision.
+
+### ADDENDUM: services health blocks reserve/update advancement (2026-10-11)
+
+`finish-working-delivery-current-services-ssh-diagnosis1.json` records native255
+and a banner-exchange timeout at the exact services endpoint127.0.0.1:25700
+for the same f467 instance/run/artifact. The separate public continuation ended
+before browser work during fresh services identity verification. Successful
+connection export and node identity/closure proof do not supply that missing
+services proof. Keep the failed operation and failed Campaign results distinct
+and immutable; neither completed, and no stop/resume was selected by the failure.
+
+`finish-working-delivery-current-services-console-facts1.json` contains five
+allowlisted matches, all ordinary startup messages for the OOM-killer service
+or API oom-report tasks. They establish neither an OOM event nor its absence
+outside that filtered evidence. The SSH timeout does not identify a memory,
+daemon, scheduling or network cause. Similar G87 symptoms are historical
+observations, not proof of a shared cause. The node's inherited1GiB reserve
+and zero MemAvailable are a separate fit issue: changing that node policy
+cannot be claimed to restore services SSH or make screenshots feasible.
+
+**Existing diagnostic route boundary.** Source inspection of exact immutable
+f467 `cluster/launcher.rb:39-87` finds public SSH but no console/test-shell
+execution or attach command. `cluster/lib/devcluster_runner.rb:172-192` accepts
+only the exact authenticated schema-1 `stop` request on the control socket.
+It has no diagnostic RPC. The pinned OS6bdf
+`osvm/lib/osvm/shell.rb:39-52,135-146` owns a UNIX listener and the QEMU-connected
+shell stream inside the existing runner. Its preparation unlinks/recreates the
+socket, and its execute path can start a machine. OSVM's CLI exposes only
+`script`, not a retained-run attach operation (`osvm/lib/osvm/cli/app.rb:24-30`).
+Constructing another Machine/Shell, writing the socket protocol directly or
+using a private Engine invocation would not preserve K's existing full ownership,
+serialization and source contract. None is a supported read-only substitute.
+
+There is an existing passive source of diagnostic evidence: the original
+runner's console writer (`osvm/lib/osvm/machine.rb:734-755`) writes the named
+services console log. Root may separately select bounded reads of already
+recorded, exactly owned console/machine evidence with its established path/
+identity guards and a field/message allowlist. Keep credentials, raw serial,
+configuration and account data private. Such logs can establish only the events
+they actually record; they do not execute a guest command, restore live source
+attestation or certify present health. No current supported non-SSH active
+guest-shell route retaining all requested guards was found.
+
+**Next decision.** Hold reserve experiments, persistent-fit transition and
+capture advancement pending services diagnosis or separately accepted recovery.
+`Engine#verify_live` (`kb_runtime.rb:796-807`) reads every guest identity and
+actual closure through SSH; public `update` invokes it before preparing its
+candidate (`:201-205`). It therefore currently has a concrete admission blocker,
+not an available workaround for the health failure. The preceding64MiB proposal
+remains conditional source guidance, with no inferred health benefit, source
+acceptance or operation authority. Node-only success cannot waive services
+proof. No timeout increase, trust change, tuning, new diagnostic framework or
+lifecycle retry is proposed here. If the narrowly retained evidence cannot
+explain the failure, report that limit before root selects further action.
+
+Fresh current/absent markers and roster17/settings were verified; required
+workspace/K guidance was reused unchanged. Only this addendum was appended.
+No application edit, private input/raw-log read, check, probe, guest operation,
+Git/ref change, lifecycle action or mutable-source certification was performed.
+
+### PROPOSAL: operator-prepared f467 captures without source transition (2026-10-11)
+
+The later allowlisted `finish-working-delivery-current-tls-native1.json`
+records native OpenSSL success and HTTP200 from both exact CA/SNI-bound API and
+PHP endpoints. `finish-working-delivery-services-ssh-bounded-diagnosis2.json`
+records successful retained-key services identity verification with a diagnostic
+ConnectTimeout30. Root reports that request returned in0.6s. These observations
+supersede an assertion of continuous services unavailability, but do not explain
+the earlier public5s failure, certify current health or change any public timeout.
+The separately watcher-owned member/read/lease operation must supply its own
+native result. The earlier failed continuation remains failed.
+
+**Supported attribution decision.** An explicitly selected, documented public
+SSH reserve preparation can support canonical captures from the genuine
+unchanged f467 artifact. It is an operator-prepared capture environment, not a
+claim that f467 declares64MiB or that the stock reduced profile passed unchanged.
+This supersedes the earlier diagnostic-only restriction solely if root accepts
+this bounded capture preparation. The persistent K declaration proposal remains
+deferred; neither public update nor another image builder is selected.
+
+The source basis is f467 `lib/connection.cjs:236-268`: capture verifies the exact
+descriptor/artifact digest, source metadata, configuration-input identity,
+guest identity and actual system closures, then records those exact values.
+`runner/capture.cjs:44-90` also requires the original inventory/pinned V revision,
+the physical output lock, live cluster lease and original fixture/scenario code.
+A runtime write to `/proc/sys/vm/min_free_kbytes` changes none of those identities.
+The provenance does not attest every mutable kernel parameter or say that all
+runtime state derives exclusively from the source. Fixtures themselves prepare
+mutable guest state. This contract permits explicit preparation without a
+metadata override; absence of a sysctl check alone is not the acceptance case.
+Reproducibility requires retaining the exact extra preparation as part of the
+operator procedure and evidence, not hiding it behind an unchanged source hash.
+
+Keep the following finite sequence, subject to root's actual operation selection:
+
+1. Require the current normal public member/read and lease checks to pass with
+   their unchanged transports/timeouts. Complete the selected sentinel and
+   six-credential/account/disk/image baseline, ordinary public stop with complete
+   exit proof, and genuine same-source resume before reserve preparation. Fresh
+   public attestation must prove the same f467 artifact/system closures, a fresh
+   run and unchanged baseline/sentinels. Require the resumed node's reserve to
+   equal its declared1048576KiB. This proves normal source/artifact continuity;
+   it deliberately does not claim that a transient64MiB setting persists.
+2. Bind one separately recorded preparation to that exact resumed instance/run/
+   artifact, public source metadata and both actual system closures. Reuse the
+   preceding guarded public node SSH procedure, but retain65536KiB for this
+   selected capture window instead of restoring it at the end of measurement.
+   Require1048576 before the one write,65536 afterward and unchanged guest/source/
+   closure identities. No persistent file, configuration input, accepted artifact
+   or known_hosts changes. Record the exact preparation command/recipe digest
+   and only allowlisted numeric before/after fields, never credential values.
+3. Reapply the original fresh guest-memory, services disk/inode, tank-template/
+   quota and host/browser-headroom admission. Use actual MemAvailable and the
+   existing positive thresholds. A positive change alone is not sufficient.
+   Refusal ends advancement and selects restoration, not a smaller threshold,
+   second reserve value, fixture mutation or capacity assumption.
+4. Use the genuine paired f467 capture/validator packages, short private TMPDIR,
+   unchanged fixture/scenario and exact selected V pin. Run the accepted CS/EN
+   checkpoint/selectors/default-CWD sequence on this same resumed instance and
+   one output root. Recheck the prepared reserve and applicable fresh capacity
+   before each capture. Public preparation/readback commands finish before a
+   capture acquires its lease; never nest another public gate holder inside it.
+   Each actual capture must acquire its own physical artifact/cluster locks and
+   independently pass ordinary live source/system attestation. No diagnostic
+   ConnectTimeout30 substitution is permitted in the accepted capture path.
+5. Close all browser/SSH/lease activity before restoration. Require the same
+   owned run and temporary65536 value, restore1048576 by public SSH and prove
+   readback, preserving identities and private baseline hashes. The finite
+   parent operation owns this cleanup even if a capture or validator failed;
+   do not rely on a shell trap from the earlier, now-finished preparation call.
+   Unexpected value, lost authority or failed SSH leaves restoration unproved
+   and holds dependent actions; it never authorizes overwriting an unknown
+   value, replay, force or reset. The existing separately selected final public
+   stop remains ordinary lifecycle work, not a substitute success receipt for
+   an unproved restoration. Stop/resume source defaults have already been
+   measured before this capture window; no extra lifecycle cycle is required.
+
+The finite packet must bind the preparation/restoration observations to exact
+capture result/source-receipt and PNG hashes, the immutable generator and the
+failed Campaign hash. Retain it as sanitized operation evidence, separate from
+the unchanged canonical five-file carryback. Do not add fictitious fields to
+the descriptor, artifact or capture-source schema. Strict installed validation
+and actual bilingual visual review still govern the candidate media. Record a
+short portable public-command preparation recipe and this qualification in the
+owning capture workflow/media handoff so another operator can reproduce the
+images without this workspace or an ambient sysctl setting. Documentation/media
+commit M retains f467 as actual generator G; it does not retrospectively declare
+the64MiB policy in G. This requires no runtime/application change or new package,
+kernel, services image, writable root, tank, guest pair or broader test suite.
+
+Acceptance can honestly establish same-source ordinary lifecycle continuity
+and genuine f467 CS/EN images under recorded operator preparation. It cannot
+establish unmodified-default capture fit, a persistent reduced-profile policy,
+source-upgrade behavior, an explanation of the intermittent services failure,
+or completion of any failed Campaign. If root requires source-declared64MiB
+rather than this explicit operator-prepared condition, the earlier source/update
+construction boundary still applies and cannot meet the selected no-builder-
+while-pair-alive constraint by relabeling the artifact. No such update is
+proposed for finishing these screenshots.
+
+Current/absent markers and live roster17/settings were verified; applicable
+unchanged guidance and exact immutable capture source were reused/read. Only
+this proposal was appended. No operation, source edit, check, private input
+read, CI observation, build or lifecycle action was performed or certified.
+
+Subsequent closed evidence `finish-working-delivery-public-member-read2-proof.json`
+records native0 for connection export, ordinary member browser/API/TLS read and
+the unchanged live-lease helper on that same f467 instance/run/artifact.
+Its original failed-attempt hash is unchanged and it expressly records no
+lifecycle/fixture mutation or completed Campaign. This satisfies the services
+health/read/lease prerequisite for that observation, without diagnosing the
+earlier transient timeout. Root may separately select the ordinary stop/resume
+step above; reserve preparation, capture and restoration remain unexecuted and
+require their own fresh proofs. No failed unit is replayed or reclassified.
+
+### RECONCILIATION: ordinary continuity without pre-stop sentinels (2026-10-11)
+
+The separate public-continuity3 attempt failed before writing sentinels or
+requesting stop. `finish-working-delivery-services-public-equivalent-diagnosis1.json`
+records native255 with the unchanged5s client banner timeout;
+`finish-working-delivery-services-ssh-limits-diagnosis1.json` also records255
+for the subsequent30s diagnostic. Neither returned guest observation fields.
+Keep both failures alongside the earlier genuine native0 member/read/lease
+and strict-SSH observations. This proves intermittent success/failure, not its
+cause, present liveness or a useful timeout adjustment.
+
+Root's separately selected ordinary public stop/resume can proceed without
+pre-sentinels under its existing ownership and admission requirements. In exact
+f467 `cluster/lib/kb_runtime.rb:493-521`, stop requests the authenticated recorded
+runner and waits for complete exit before resource/socket cleanup and stopped
+phase; it does not require services SSH or a new guest source read. Resume
+(`:175-185`) requires stopped/all-gone, the existing accepted artifact and valid
+prepared disks, then starts a fresh run. It does not require sentinel files.
+Failure/refusal/expiry still holds dependent work; no force, reset, build,
+configuration replacement or automatic lifecycle retry is supplied here.
+
+Before stop, root retains the canonical descriptor, exact validated live control/
+launch tuple and private six-credential/account/known_hosts hashes, accepted
+artifact/config/source/expected-closure evidence, writable disk identities and
+immutable image identity/hash. Label the last successful services attestation
+by its actual observation time; descriptor readiness does not refresh that proof.
+For writable disks, compare device/inode/type/declared size as supported, not an
+unchanged whole-image checksum while the guest legitimately writes its filesystem.
+No private contents enter public evidence.
+
+Require successful public stop900 plus independent stopped/complete/all-recorded-
+processes-gone proof before fresh6GiB-RAM/5GiB-shm and retained-growth/reserve
+admission and genuine same-artifact public resume900. Resume uses the exact
+f467 runtime/source and takes no replacement configuration. Afterward require
+the same instance/artifact, fresh run, unchanged six credentials/accounts/trust,
+disks and immutable image, then ordinary public source/actual-closure and member
+API/PHP verification with the original transports and thresholds. Every proof
+is native evidence of this separately selected operation, not a continuation
+or completion record for a failed Campaign/unit.
+
+**Acceptance limit.** Success establishes ordinary stop/resume and identity/
+artifact/storage-object continuity. It does not prove preservation of dedicated
+services-root or node-ZFS payload contents: no pre-stop sentinels exist, and
+post-resume writes cannot establish that missing comparison retroactively.
+Retain that omission explicitly. f467 `tools/runtime-verify.rb:645-673` requires
+sentinels for its full runtime-smoke receipt, so that receipt remains absent and
+that full qualification remains incomplete. Do not amend the verifier guard,
+forge its receipt or require another lifecycle campaign solely to erase this
+known limitation.
+
+Actual public capture uses `runner/capture.cjs:44-90` / `Connection.verify`,
+whose original-source/fixture, artifact, live guest closure and physical lease
+checks contain no sentinel prerequisite. Thus this narrower continuity evidence
+can support the already accepted operator-prepared canonical capture route,
+provided fresh post-resume health, guarded65536KiB preparation, unchanged positive
+capacity gates, both real language captures, strict validation and restoration
+all succeed. Record the missing payload proof in the final handoff; it neither
+invalidates genuine images nor becomes an implied full runtime-suite pass.
+
+**SSH diagnosis boundary.** Both K `Engine#ssh` (`kb_runtime.rb:606-616`) and
+`Connection#ssh` (`lib/connection.cjs:207-224`) explicitly set ConnectTimeout5,
+dedicated identity, strict retained host trust and no ambient SSH config. The
+leased wrapper's30s child deadline is separate, not a30s handshake allowance.
+K's `sshModule` (`test.nix:1318-1328`) supplies the dedicated key/authorized-key
+policy but no demonstrated banner-performance correction. No source-supported
+service tuning, DNS setting, keepalive or longer timeout can be selected as a
+fix from these observations. In particular, absent remote numeric output is
+not a measurement of sshd limits or load.
+
+The bounded diagnostic opportunity is after the selected resume, if ordinary
+public SSH works: root may separately retain allowlisted numeric memory/load,
+sshd process/unit state and relevant time-bounded sshd failure events through
+that same guarded public route. Exact client-stage debug output from the selected
+native OpenSSH client is another diagnostic-only boundary, using the same
+endpoint/key/trust and timeout, with raw output private and only negotiation
+stage/timing facts exported. It cannot replace public acceptance or justify
+repeating failed attempts. While SSH is unavailable, the prior no-public-console-
+attach conclusion remains: only guarded passive owned logs are already available.
+No diagnostic operation, preparation/tuning, restart or new source interface is
+selected by this paragraph. The source does not explain the recurring banner
+failure; a successful resume must be observed, not presumed to cure it.
+
+Current/absent markers, roster17 and retained architect settings were verified;
+unchanged mandatory guidance was reused. Only this reconciliation was appended.
+No guest/process probe, check, application/source edit, lifecycle action, build,
+CI observation, private input/raw-log read or Git/ref mutation was performed.
+
+### PROPOSAL: exact immutable capture entry with private exception retention (2026-10-11)
+
+`finish-working-delivery-operator-capture-window1-disposition.json` records a
+native1 CS capture after positive host/guest admission, followed by successful
+public reserve restoration to1048576KiB. Root verified all16 recorded stream
+hashes. No accepted PNG/results exist; missing fixture-output files do not prove
+that fixture mutations never began. Preserve the failed unit and its private
+output unchanged. The separate `finish-working-delivery-capture-read-diagnosis1-proof.json`
+records native0 for both original consumers: public connection and the original
+live lease/Connection.verify/browser/CS-member-login composition, with clean
+closure and no provisioning/lifecycle. Its outer summary's later missing-key
+error remains an overall helper failure; it does not invalidate those recorded
+native results or justify rerunning that helper.
+
+**Source-supported diagnostic equivalent.** Exact f467
+`runner/package-capture.cjs` reads metadata from argv[2],
+imports `main` from `runner/capture.cjs`, and calls it with argv.slice(3), that
+metadata, output default `process.cwd()` and state default
+`path.join(process.cwd(), '.devcluster/v2')`. Its only error handling replaces
+the exception with the50-byte generic message and sets exitCode1. The installed
+wrapper at `/nix/store/6xsyrxxjf15czc4vldqw975f0hix3niq-vpsfree-kb-capture/bin/vpsfree-kb-capture`
+sets the selected tools/client PATH, NODE_PATH, PLAYWRIGHT_BROWSERS_PATH and
+FONTCONFIG_FILE, then invokes that exact entry with immutable metadata
+`/nix/store/3jpiaycynic81567fq6n41jgpdg2sh1s-vpsfree-kb-runtime-source.json`.
+
+Root can select a single finite diagnostic invocation whose only difference is
+the outer rejection sink. A small private coordination entry imports the exact
+exported `main` from
+`/nix/store/xllyhnv9ba1d49f9fvdwbpgxaf04phdf-source/runner/capture.cjs`, reads that
+same metadata file and supplies exactly the four package arguments. For a
+normal Node script, pass `process.argv.slice(2)` as `argv`; do not accidentally
+reuse the package-entry offset3 or Node `-e` argument conventions. Preserve
+output/state CWD defaults exactly. On rejection, retain the original error/stack
+only on the pre-established private stderr stream and set exitCode1. Do not
+call process.exit, swallow the rejection, reinterpret a partial result as
+success or install interception inside main. Parent must ensure stdout/stderr
+and the entry/packet are private ordinary files under its owned directory;
+raw exceptions may contain sensitive runtime context and are not public output.
+Publish only allowlisted diagnosis and hashes after inspection.
+
+Bind the entry bytes, full selected argv, CWD, immutable module/metadata hashes
+and effective packaged environment before invocation. Use the same selected
+Node, all package export values including the client PATH component, short
+private TMPDIR and remaining accepted clean environment. A new private output
+root preserves the failed output; "same arguments" means equality with the
+packaged command for this newly selected invocation, not re-entry into the old
+failed unit. Keep the real same-slug/state/checkpoint/language and normal output
+selection. No mutable checkout, current verifier source substitution, checkout
+metadata computation, source override, monkeypatch, alternate fixture, fake
+descriptor or private Engine call is part of this equivalent.
+
+All work remains in the original `main`: actual argument parsing, inventory and
+pin checks, physical artifact lock, canonical descriptor/controller, cluster
+lease, original guest/source/closure verification, browser/login, provisioning,
+scenario/checkpoint, publication and finally cleanup (`runner/capture.cjs:25-115`).
+Its module-relative source root remains f467. No permission or safety gate moves
+into the coordination entry. In particular, invoking `runner/capture.cjs` as
+its checkout-style CLI would compute checkout metadata and is not this route.
+This is a finite composition of the exported entry used by the package, not
+a new documented launcher, source patch or additional runtime authority.
+
+**Finite operation boundary.** Require root's separate acceptance and fresh
+same-instance/run/artifact public proof and original positive capacity admission.
+Re-enter only the already accepted guarded1048576->65536 operator window, with
+restoration owned by the parent even on failure. Select one diagnostic CS
+invocation on the existing resumed instance. The fixture's original rerun/
+ownership guards handle any partial prior preparation; do not presume an empty
+guest or bypass a refusal. One native failure ends that selected capture work,
+retains the exception/evidence privately and requires restoration/readback,
+without automatic second capture, lifecycle retry, reset, builder or new pair.
+The root-owned observer may diagnose the concrete exception afterward; this
+proposal guesses no failure cause from Source/Output-only stdout.
+
+**Canonical-output decision.** A native0 from this exact original core may
+qualify its CS image as genuine f467 generated output, rather than being
+diagnostic-only, because the complete original capture, source/lease checks
+and result provenance are unchanged. Record that it used the diagnostic outer
+entry; do not claim the installed package entry passed or change the original
+failed result. A PNG alone is not acceptance: require original successful
+results/source receipt, exact hashes and subsequent matching installed strict
+validation plus visual review. Complete EN and the selected default-CWD proof
+only in root's explicitly bounded success continuation, using the package or
+the same approved equivalent with identical defaults. Keep both language results
+under one genuine generator/source contract. The normal five-file locked export
+remains unchanged; entry/error/preparation records stay separate private or
+sanitized operational evidence. Later media commit M retains generator f467.
+
+No application/package change or new guest artifact is necessary for this
+diagnostic sink. If inspection reveals any need to change the core, its options,
+fixtures, cleanup or proof, stop this equivalence claim and refer that concrete
+source issue to root; a changed core would require its own genuine source/
+artifact path rather than an override of the current f467 environment. Current,
+absent markers and roster17/settings were verified, applicable unchanged
+guidance reused, and only this proposal appended. No check, probe, application
+edit, operation, private input/raw-log read, Git/ref change or passing capture
+claim was made by this design task.
+
+### SOURCE DIAGNOSIS: bounded services-periodic-work observation (2026-10-11)
+
+Window2 failed at the services resource-read admission before invoking either
+capture entry or provisioning. Its successful reserve restoration and the six
+native commands remain recorded in
+`finish-working-delivery-operator-capture-window2-proof.json`; the selected
+diagnostic-entry flag is not evidence that main ran. The subsequent exact5s
+native SSH observation reached TCP establishment but received no guest bytes
+before banner timeout. The passive named-QEMU RSS/thread/cumulative CPU values
+do not identify a guest process, measure a utilization interval or prove memory
+pressure. Empty filtered console categories do not establish event absence.
+The cause remains unknown despite the earlier genuine same-transport pass.
+
+**Concrete source workload.** The selected V939159 services test module
+(`tests/configs/nixos/vpsadmin-services.nix`) enables default API rake tasks and
+the scheduler, in addition to two API workers and the1GiB MySQL buffer pool
+already described at7639. Kf467 forces2GiB services RAM without suppressing
+those tasks. The owning V module `nixos/modules/vpsadmin/api/rake-tasks.nix:65-99`
+creates independent `bundle exec rake` oneshot services with a1h default start
+budget; some prune jobs explicitly use infinity. `api/Rakefile` loads ActiveRecord,
+the API and its plugins for each ordinary rake process. The named recurring
+work includes:
+
+| Unit stem (prefix `vpsadmin-api-`) | Source schedule |
+| --- | --- |
+| `prometheus-export-base` | Boot1min, every2min, randomized delay up to60s |
+| `prometheus-export-dns-records` | Boot10min, every10min, randomized delay up to60s |
+| `incident-reports`, `outage-reports-auto-resolve` | Boot5min, every2min, randomized delay up to60s |
+| `oom-reports-run`, `monitoring-check`, `payments-process` | Boot5min, every10min, randomized delay up to60s |
+| `requests-ipqs` | Boot5min,2min after completion, randomized delay up to10s |
+
+These are declared schedules, not observed concurrent jobs. They provide a
+specific possible source of transient Ruby/SQL work in the small guest; they
+do not establish that any such invocation overlapped an SSH failure. K also
+enables vpsf-status checks every30s (`test.nix:1425-1441`) and Adminer, while the
+WebUI container prunes expired sessions every5min. No evidence selects any
+one of these, API concurrency, MySQL buffers or RabbitMQ as the culprit.
+
+**Smallest useful next diagnosis.** Root may separately select one bounded
+public-SSH observation when the original guarded transport responds, bound to
+the exact current source/artifact/closure and run. Read services MemAvailable,
+swap and PSI availability/counters, load/runnable counts, and only the named
+rake services/timers above. `systemctl show` can restrict output to unit ID,
+LoadState/ActiveState/SubState/Result, activation/last-trigger timestamps and
+CPUUsageNSec/MemoryCurrent/TasksCurrent where available. Do not print ExecStart,
+Environment, journal bodies, process arguments or configuration. Unavailable
+accounting is unknown, not zero. Timing should be compared with the already
+retained SSH failure times; a later quiet sample cannot prove the earlier cause.
+This is more discriminating than further connection-timeout variations or
+QEMU lifetime counters. Another native SSH refusal ends that observation; it
+does not authorize a retry loop or a console attach bypass.
+
+**Conditional preparation boundary, not a tuning selection.** Source identifies
+only two especially narrow candidates to isolate if that observation supports
+periodic-job contention: `vpsadmin-api-prometheus-export-base.timer` and
+`vpsadmin-api-prometheus-export-dns-records.timer`. Their task owner
+`api/lib/vpsadmin/api/tasks/prometheus.rb:238-570,756-762` queries inventory/DNS
+and publishes metrics files; the original `ip-inventory` fixture/scenario has
+no dependency on these exporters. They are not the API request workers,
+transaction supervisor, scheduler, database, broker, node daemon or member PHP.
+
+If root explicitly accepts such preparation after the observation, require
+the expected immutable services source/closure and exact loaded units, record
+their initial timer active/inactive and enable states, and stop only those
+two timers through ordinary public SSH. Do not stop/kill their executing
+oneshot services. Timer stop does not terminate already-running work: require
+the corresponding services and metrics-deploy oneshot to finish naturally and
+be inactive before claiming quiescence. If they remain active within the
+selected bounded window, hold rather than kill, wait indefinitely or widen
+the unit set. No disable/mask/daemon-reload, service restart, environment or
+database modification is part of this candidate.
+
+Keep every capture dependency and all source/lease/capacity/timeout guards.
+Root would need fresh original API/member/SSH success and capture admission
+after the preparation; stopped timers alone are not a health or fit pass.
+Restore only timers that were initially active after browser/lease cleanup,
+leave initially inactive timers inactive, and prove final active/enable state.
+Do not claim the exact prior deadline or missed-run history was rolled back;
+restoration may schedule an overdue run. Retain this extra operator preparation
+beside reserve/capture provenance, with no source/artifact relabeling. Losing
+public SSH makes preparation/restoration unproved and stops dependent work.
+
+No timer suspension is recommended from source declarations alone, and no broad
+"disable all rake tasks", reporting-service stop or worker/buffer tuning is
+selected. The source shows a reversible candidate, not its expected benefit.
+If the finite observation cannot establish useful activity/resource evidence,
+or SSH cannot be used safely, the concrete blocker remains unreliable mandatory
+services attestation on the current2GiB guest. The existing full-service module
+was declared for8GiB; its reduction is not a measured sustained-fit guarantee.
+There is then no supported no-build source fix established under the standing
+no-builder/no-RAM-increase/no-new-pair constraints. Hold capture and report the
+missing evidence rather than repeat lifecycle/capture attempts or infer success.
+The completed ordinary stop/resume proof remains valid with its explicit missing
+sentinel limit; no new continuity campaign is proposed.
+
+Fresh current/absent markers and roster17/settings were verified. Applicable
+workspace/K guidance was reused; V instructions/documentation and the owning
+selected module/task sources were read. Only this diagnosis was appended.
+No private input/raw-log read, source edit, check, CI observation, guest/process
+probe, lifecycle action, Git/ref mutation or preparation was performed.
+
+### PROPOSAL: bounded K services workload for the reduced single profile (2026-10-11)
+
+This is a source proposal awaiting root acceptance, not permission to change
+the running environment or to start another attempt. The one selected workload
+observation (`finish-working-delivery-services-workload-observation4.json`)
+returned native1 after5.449s with empty stdout. It supplies no guest pressure,
+exporter-activity or causal evidence. Recurring services SSH banner failure
+remains unexplained. Root's final public stop900 is independently watcher-owned;
+this brief neither observes nor certifies its result. Failed campaigns, both
+capture windows and the successful node-reserve restorations remain unchanged.
+
+**Concrete source mismatch and proposed owner.** Exact Kf467934d3f678abc8b552f89805636d4d910438a
+at `/nix/store/xllyhnv9ba1d49f9fvdwbpgxaf04phdf-source` forces the configured
+services memory in `cluster/nix/test.nix:73,1371,2034`, but imports V's services
+test module at2042. The selected V939159 module
+`tests/configs/nixos/vpsadmin-services.nix:250-258,510-524` was declared with
+8192MiB, a1024M MySQL buffer pool,200 connections and two API workers with up
+to8 threads each. Its owning database defaults
+(`nixos/modules/vpsadmin/database.nix:68-104`) additionally permit256M join,
+512M sort and128M read buffers,96M temporary tables and1024M heap tables.
+The nested WebUI FPM pool (`nixos/modules/vpsadmin/webui.nix:215-235`) permits
+32 children and starts two. These are configuration limits; they are not a
+measurement of resident memory or proof that any buffer was allocated during
+the failure. Their scale is nevertheless inappropriate as the deliberate
+starting policy for a small, sequential documentation fixture.
+
+Implement one K-local declaration block in `cluster/nix/test.nix`, selected
+only by the existing `topology == "single" && serviceMemoryMiB == 2048`
+configuration. No new JSON field, profile registry, engine interface or V/OS
+module change is needed. Other topologies and the normal4096MiB configuration
+retain their inherited declarations. Use these explicit qualification targets:
+
+| Effective setting | Reduced-profile value |
+| --- | --- |
+| `services.mysql.settings.mysqld.innodb_buffer_pool_size` | `256M` |
+| `max_connections` in that same attribute set | `64` |
+| `join_buffer_size`, `sort_buffer_size`, `read_buffer_size` | `1M`, `2M`, `1M` |
+| `tmp_table_size`, `max_heap_table_size` | `16M`, `16M` |
+| `vpsadmin.api.workers` | `1` |
+| `vpsadmin.api.threads.min`, `.max` | `1`, `4` |
+| Nested WebUI FPM `pm.max_children` | `4` |
+| Nested WebUI FPM start/min-spare/max-spare | `1` / `1` / `2` |
+
+Apply the FPM declarations to
+`containers.webui.config.services.phpfpm.pools.vpsadmin-webui.settings`, not
+to an unrelated host PHP pool. Resolve inherited ordinary definitions with
+per-leaf `lib.mkForce` where required; ordinary values suffice against the
+database module's `mkDefault` buffers. Do not force entire service/module trees.
+Keep dynamic FPM, its500-request recycling policy, logging, API authentication,
+request/SSH deadlines and all actual SQL consistency/durability settings.
+The smaller SQL workspace/table limits may spill work to disk or queue/fail
+excess concurrency; that tradeoff is acceptable only for this dedicated fixture
+and must be qualified. Neither64 connections nor these buffers constitute a
+computed total memory cap. Keeping one API worker and four request threads
+retains concurrent request handling without claiming production throughput.
+
+Also set only the two existing
+`vpsadmin.api.rake.tasks.prometheus-export-{base,dns-records}.timer.enable`
+leaves to false for this profile. The V rake owner at443-469 otherwise launches
+these independent full API/Ruby jobs every2/10min; their task implementation
+queries inventory and publishes metrics, which `ip-inventory` does not consume.
+Keep their task definitions and the metrics integration available; suppress
+automatic scheduling, not arbitrary executing services. This is a prospective
+declaration, not authority to stop the current timers.
+
+Preserve all other default tasks, including authentication/session expiration,
+dataset expansion, incident processing, the scheduler and supervisor. Incident
+processing can perform CPU-limit transaction chains
+(`api/lib/vpsadmin/api/tasks/incident_report.rb`), so treating all reports as
+irrelevant would be too broad. Preserve MySQL, RabbitMQ, Redis, API/HAProxy,
+nginx/member PHP, console-router, node daemons and template/provisioning paths.
+Do not disable plugins, Adminer, status checks or safety-related work as another
+unmeasured optimization. The real1CPU/1GiB/4GiB VPS, dedicated disabled pool,
+member/admin roles, bilingual scenario, quota and positive capture thresholds
+stay exact. Node reserve is a separate already-recorded operator-preparation
+requirement; this services proposal does not pretend the source declares64MiB.
+
+**Minimal implementation and verification boundary.** Application owners are
+`cluster/nix/test.nix`, the existing configuration-projection coverage in
+`tools/test-runtime-verify.rb`, and a short reduced-profile paragraph in
+`cluster/runtime-contract.md`. Extend the existing pinned Nix projection to
+read effective services and nested WebUI configuration through the selected
+modules, following the repository's actual NixOS projection pattern. Assert
+the table above, absence of just the two generated timers, continued presence
+of their service definitions and of essential API/database/supervisor/scheduler,
+authentication/session/incident/dataset tasks, and unchanged normal-profile
+values. Check actual merged/generated Puma/FPM/MySQL settings where exposed,
+not source-text matches. Retain the existing2x2048MiB runtime,2048MiB builder,
+8GiB image/root and8GiB tank/kernel assertions. No new test runner or dependency.
+
+User's no-local-CI rule remains. The declared focused owner is
+`nix develop --command ruby tools/test-runtime-verify.rb`; use the existing
+hosted `Check` route, whose source command is
+`nix develop --command bin/check --allow-missing`, without workflow edits or
+re-running unrelated V/W suites as a new prerequisite. Root owns source
+publication, exact K package/E input composition evidence and affected committed
+review before any construction. Keep the same V/OS pins and input graph. The
+change has no database migration, protocol/schema, key policy or production
+configuration effect. It creates a different genuine K artifact/closure; old
+source attestation must never be relabeled. Reverting the declaration does not
+authorize an automatic artifact downgrade or data rollback.
+
+**Public update does not provide offline preparation.** In exact f467
+`cluster/lib/kb_runtime.rb:187-234`, a previously unprepared update first requires
+the old run to be ready and attested, creates its candidate, then builds and
+imports exact closures while that predecessor is live. Only an already fully
+prepared journal can continue offline. `resume:176-183` requires the identical
+accepted source/artifact (`validate_prepared:146-173`) and cannot select the new
+profile. `cluster/lib/kb_source.rb:74-96,129-147` generates a new artifact UUID
+and embeds the instance/source/config identity in every guest before building
+the complete cluster configuration. K's `sshModule` at1318-1323 places this
+identity in the services root as well as the node. A placeholder offline build
+is not that candidate and cannot establish its exact import/preparation proof.
+There is no public `prepare` command or supported offline root modification.
+
+Consequently, **stop both guests, build the fixed image, then perform a
+cache-only public update preserving the same instance is not supported** for
+this new, unprepared candidate. Do not create a journal privately, invoke
+`Software.prepare`, substitute metadata, copy a new root or use the failed
+Campaign as a preparation interface. Even if unchanged packages/kernels are
+already cached, the candidate's guest identity makes a new image/closure
+necessary. Its exact services import also requires reliable old SSH and guest
+store headroom, neither supplied by a source review.
+
+There are two explicit resource/disposition consequences, not new permissions:
+
+1. Keeping the same instance/disks/credentials requires the existing public
+   old-source resume and new-source update path. That requires relaxing the
+   no-builder-while-guests-live rule for one2048MiB image builder alongside the
+   two2048MiB old guests (6GiB guest/builder peak before host overhead), allowing
+   a new8GiB candidate image while the old rooted image remains, and proving
+   live import headroom. Old services SSH health makes this an uncertain route;
+   source compatibility alone does not make it usable. No such exception is
+   selected here.
+2. To preserve the sequential2048MiB-builder/4096MiB-runtime limit, the smallest
+   existing public route is an explicitly approved sequential replacement:
+   after successful complete stop proof and preservation of the exact failed
+   evidence outside the removable tree, public reset of **only** this disposable
+   working3 instance, then one fresh public start from the new immutable K
+   package/config. This sacrifices that instance's disks/credentials and creates
+   fresh identities; it is not update, resume or adoption. It requires explicit
+   reset/replacement and one new-image approval, presently absent. It adds no
+   concurrent second pair and no engine/recovery changes. A stop/reset refusal
+   ends this route before construction; no manual removal or force follows.
+
+Recommend the second route if root/user decide to implement this profile while
+keeping the strict sequential resource limit. Do not recommend a new public
+offline-update mechanism solely to retain a disposable fixture. Until that
+concrete disposition is accepted, the new profile has no admissible real route
+under the current combined constraints. Retaining working3 instead is valid,
+but does not authorize another cluster or establish room for it.
+
+The replacement's eventual new outputs remain8+8+8GiB, not a universal free-space
+floor. The old immutable image may remain in the store after public reset;
+reset is not GC and promises no store reclamation. Root must account its actual
+remaining blocks, new image/build staging and all other retained sparse growth
+separately, crediting only observed space after an authorized operation. For a
+disk-preserving update, account both immutable images plus exact imported
+closures explicitly instead of calling it a24GiB total. No guessed scratch
+constant, foreign cleanup or earlier capacity receipt proves this admission.
+
+**One finite qualification after a separately accepted route.** Refresh exact
+source/package/config/kernel/host admission, use the existing durable service
+and reserve watcher, and let public start/update perform its real fit and
+attestation checks. Reuse valid unchanged process/lease/trust/source tests and
+the previous evidence at its original source. The new target needs measured
+guest memory/disk/inodes and real API/member PHP/SSH/lease success, then the
+already selected ordinary continuity/capture scope on that one instance and
+the unchanged positive fit gates, CS+EN `networking/ip-address-list`, strict
+inventory/export and visual review. Attribute any node reserve preparation to
+the actual new run and restore it; do not carry f467 evidence across as native
+new-source proof. A native failure ends this finite attempt with its state and
+evidence retained. No automatic retuning, upscale, third attempt, broader suite
+or cleanup is implied. Practical sustained fit and successful PNG generation
+remain unproved until those steps succeed.
+
+Current/absent markers and roster17 architect0 settings were reverified; the
+documentation skill and required workspace/K/V guidance were read/reused.
+Only this design proposal was appended. No application, private campaign,
+process/guest, verification, Git/ref or lifecycle operation was performed.
+
+### FINITE WORKING4 CONTINUATION: short browser temporary directory (2026-10-12)
+
+Source assessment only, conditional on the original working4 native outcome.
+Kcd2cfac65af26842b078617eeeaf82f346f18b07, paired E2e38a541, remains the
+actual generator. Its accepted immutable source is
+`/nix/store/w74cspfb7yckb4jb7ynsd4klziy7d72s-source`; package/selection binding
+is recorded in `finish-working-delivery-package-realize3-acceptance.json` and
+the finite admission in `finish-working-delivery-runtime-smoke4-preparation.json`.
+No current guest result or liveness was observed by this assessment.
+
+**Established caller defect.** `tools/runtime-verify.rb:20-32` keeps only four
+inherited identity/runtime variables, then unconditionally assigns
+`TMPDIR = root/temporary`. Therefore the wrapper's short TMPDIR cannot reach
+the browser through this Commands object. The historical f467 fatal in
+`finish-working-delivery-browser-path-diagnosis1.json` establishes the real
+Chromium UNIX-socket path failure, not the as-yet unobserved working4 outcome.
+`lib/browser.cjs:87-96` uses the ordinary packaged Chromium launch without a
+different temporary-root override. No guest/image change is needed to change
+this host-only child-process environment.
+
+**Recommended separate public-operation route.** Let the original attempt end
+and retain its exact native result, attempt hash and absent/present completion
+facts. If failure is confined to browser preparation after genuine accepted
+start, root may select one finite continuation on that same source-matched
+instance. First establish fresh public status/connection and guest identity/
+closure/ownership facts; an accepted historical start does not replace them.
+Do not run `Campaign#run`, `runtime_smoke` or `bilingual_capture` directly to
+skip their failed-attempt/prerequisite guards, and do not call start/update or
+create a new campaign that claims the retained state. No live source result is
+inferred from this proposal.
+
+Use the existing finite public-driver pattern with a new private evidence
+directory outside the failed Campaign. Construct the unchanged
+`KbVerify::Commands.new(selection, evidence_root)` from the exact immutable
+source, then assign its public `environment['TMPDIR']` to an already verified,
+canonical, owned0700 short directory, such as a fresh `/tmp/kbc-<random>` root.
+Record that directory identity and the exact environment exception privately;
+preserve the selected PATH, browser/font/Node/Ruby packages, Nix limits and all
+other environment scrubbing. Commands exposes the mutable hash via
+`attr_reader :environment`; this needs no reflection or process-runner patch.
+Only the new Commands object changes, not the active/finished verifier process.
+The parent checks actual backing-filesystem/RAM effects in normal admission;
+TMPDIR is not a builder-scratch bound. Keep it until browser/controller cleanup
+finishes. Do not shorten paths by moving state or introducing a state symlink.
+
+There is an important limit to the proposed helper reuse: Campaign's Ruby
+methods are public but do not form a separate documented resumable phase API.
+`read_smoke:539-577`, `resources:604-629` and `capacity:419-486` write beneath
+the object's Campaign root; `engine('resume')` also invokes capacity. Changing
+TMPDIR alone would thus still write new evidence into the old Campaign.
+Do not treat the whole method chain as a supported resume or redirect its root
+to make it discover another instance.
+
+Instead retain the earlier finite public-driver composition: the unchanged
+read-smoke JavaScript body invokes the same selected Connection.verify, native
+TLS/API identities, browser/member login and lease/cleanup through Commands;
+its result goes to the new evidence directory. The unchanged
+`resource_script(machine)` body goes through public SSH with stdin intact,
+with its original numeric parsing and positive admission checks. Bind these
+copied command bodies to their exact immutable source/hash; do not modify their
+assertions. Read-only `descriptor`, `identities`, `sentinels`, `continuity` and
+`resource_script` logic can be reused against the original root where it only
+reads retained records or invokes public commands. Do not use `send`, allocate
+an uninitialized object, override Campaign methods or call private Engine
+lifecycle methods. A driver that reuses the exact-source Campaign constructor
+must retain its selection/configuration checks and never print its `inputs`.
+Save the public connection's original bytes for descriptor-digest consumers,
+not a reformatted JSON encoding.
+
+The concrete sequence is fresh attested descriptor/resources; native member
+read; unchanged `tools/verify-live-lease.cjs` with the exact package metadata,
+runtime, state root and configuration; exclusive creation of the two dedicated
+sentinels only if absent; six-credential/account/artifact/disk/image and sentinel
+baseline; ordinary public stop900 plus complete exit proof; refreshed resume
+capacity; ordinary same-source resume900; fresh source/closures/trust and
+continuity comparison, resources and member read. All lifecycle calls execute
+the original packaged `vpsfree-kb-devcluster` against the original root/slug.
+Native command records, resource observations and the final assertion summary
+belong solely to the new evidence unit. Retain the same finite failure boundary,
+durable execution context and reserve monitoring. No reset, new image/pair,
+resource increase or forced cleanup follows from this assessment.
+
+**Capture can remain genuine Gcd2 evidence.** After the separate continuity
+proof and original positive host/guest capture gates, invoke the genuine paired
+`vpsfree-kb-capture`/`vpsfree-kb-validate` executables directly using this short
+TMPDIR. The selected package wrapper sets its client PATH/browser/font/Node
+environment but does not replace TMPDIR. Keep CS cluster selector, EN canonical
+connection selector and packaged writable-CWD recapture on the same resumed
+instance and one fresh output root; then candidate update, strict full inventory,
+physically locked five-file export and visual review. Keep the already accepted
+node-reserve preparation/restoration as separately attributed operator work if
+required; zero or failed admission never permits fixture execution. Capture's
+own locks, live lease, source/artifact/closure proof, fixtures and result merging
+are unchanged. The failed verifier's `bilingual-capture` phase remains ineligible;
+direct public captures and a separately completed public lifecycle evidence unit
+do not fabricate its `receipts/runtime-smoke.json` or turn its failure into a pass.
+G-to-media provenance remains cd2cfac65 even if a later commit records the PNGs.
+
+**Permanent verifier correction remains narrow.** The above can finish public
+operations without rebuilding guests, but does not certify the unmodified
+Campaign runner for long roots. Its owning follow-up would make Commands honor
+an explicitly selected valid private short TMPDIR, with focused existing
+`tools/test-runtime-verify.rb` coverage that proves the spawned child receives
+it while all unrelated environment/source scrubbing remains. No current source
+edit is assigned here. That harness-only correction needs its own affected
+hosted evidence/review if selected, not another image or unrelated V/W campaign;
+its revision must not be substituted for the running cd2cfac65 generator.
+
+Fresh current/absent markers and roster17/settings matched. Required guidance
+and the documentation skill were read/reused; only this reconciliation was
+appended. No active-run poll, private inputs, application edit, check, build,
+guest/process operation, package/ref mutation or lifecycle action was performed.
+
+### BOUNDED CAPTURE FIX: omitted zero-swap control and genuine Gcd2 media (2026-10-12)
+
+Root's completed separate working4 public proof establishes API/member/TLS,
+lease and ordinary stop/resume with all six credentials, accounts, retained
+trust, disks/image and root/ZFS sentinels. It does not turn the original failed
+Campaign into a pass. The next CS failure is independently retained in
+`finish-working-delivery-capture-core-failure4-diagnosis.json`: the original
+core reached `fixtures/prepare.cjs:99:51,631:39` and timed out filling swap;
+no PNG was accepted and node reserve1048576 was restored. This brief proposes
+the narrow fixture correction and an explicitly attributed same-pair preparation,
+not new guest operations or retrospective fixture-mutation absence.
+
+**Source mechanism and permanent two-owner fix.** At exact
+Gcd2cfac65af26842b078617eeeaf82f346f18b07, `createVpsIn:64-125` fills every entry
+in its supplied resources map. The inventory tuple at556 is
+`{cpu:1, memory:1024, swap:0, diskspace:4096}`. Pinned V939159
+`webui/forms/vps.forms.php:395-423` deliberately skips a resource row for an
+ordinary member whose allocation value is exactly zero. Its
+`webui/pages/page_adminvps.php:136-145` supplies omitted swap as zero on final
+submission. Thus absence of that particular control is valid for this requested
+tuple; waiting for it cannot make the form correct.
+
+Change only `fixtures/prepare.cjs` and `tools/test-ip-inventory.cjs`. In the
+resource loop, skip a missing control only when `name === 'swap'`, the requested
+value is numeric0, and the locator count is0. Present swap still receives the
+requested value, including0. Missing nonzero swap, CPU, memory or disk remains
+a refusal; ambiguous/multiple controls must not be selected with `.first()`.
+Do not catch a broad fill timeout, skip other zero resources or substitute a
+default for an unknown field. Keep `INVENTORY_RESOURCES`, member identity,
+`waitForRunning`, and `ensureIpInventory:559-619` unchanged: the real resulting
+VPS must retain its owner/hostname and all four resource values, including swap0,
+before dedicated IP provisioning proceeds.
+
+Extend the existing member-form fixture at `tools/test-ip-inventory.cjs:361-455`
+to model real locator absence instead of returning count1 for every field.
+Exercise actual `createVpsIn`/preparation paths: missing swap+requested0 succeeds
+without a fill; present swap0 is filled; present nonzero swap is filled; absent
+nonzero swap refuses before final submission; each other required control's
+absence refuses even if a proposed value is0. Preserve strict resulting-resource
+mismatch refusal and member/admin role separation. Tests should assert the
+submission boundary and observed fills, not merely match the new conditional.
+The existing hosted `node tools/test-ip-inventory.cjs` owner and normal affected
+K source check/review suffice; no browser/VM framework, timeout increase, V
+change, schema/migration or new resource profile is involved. No check is run
+by this design task.
+
+**Immediate same-G operator preparation is source-supported.** The unchanged
+module exports `createVpsIn` and accepts a caller-supplied resource map
+(`prepare.cjs:713-714`). Under root's separately recorded finite operation,
+the original Gcd2 Connection.verify and live lease can guard an ordinary
+test-user1 browser throughout. Before final creation, prove that member identity,
+the bounded owned-name lookup has no `ip-inventory` VPS, member swap allocation
+and the rendered omitted-swap/default0 contract, and the existing positive
+host/guest memory, quota/template/tank and TLS/source/trust admission. A partial
+fixture or name/owner ambiguity is a refusal, not delete/rename/adoption authority.
+
+Call the original exported helper with member.id, hostname `ip-inventory`,
+boot=true, `Production`, `Praha`, and a new map containing only
+`{cpu:1, memory:1024, diskspace:4096}` after asserting the original constant's
+swap is0. Do not mutate that exported constant, replace the module, monkeypatch
+its internals, switch the browser to admin or invoke a raw guest/DB shortcut.
+The original PHP submission supplies swap0. Retain the returned VPS ID and
+prove the real native API owner, exact hostname and numeric resource tuple
+including swap0; a returned/null/missing/nonzero value must not be accepted as
+the intended zero. Keep provisioning and later capture within the original
+lease/source rules, with normal browser-before-lease cleanup. Failure ends
+this preparation and preserves any created fixture for diagnosis.
+
+After that proof, the original packaged Gcd2 capture uses
+`findOwnedVps:26-41` and `prepareFixtures:627-633` to find the existing owned VPS,
+wait for it to run, then execute its unchanged strict resource/IP/pool checks
+and provisioning. It therefore avoids the broken creation branch without
+changing capture code or bypassing a check. Record the preparatory member UI
+operation, exact tuple and actual source beside the existing reserve window;
+do not call the unmodified fixture a successful first-creation test. Preserve
+the failed CS output and use the selected fresh output/evidence unit. CS/EN,
+connection/default-CWD coverage, strict validation, physical locks/export and
+visual acceptance remain required. No new image, artifact, VM pair or resource
+increase is necessary for this caller-level preparation.
+
+**G-to-final-media lineage must remain explicit.** Preserve the exact published
+`retained-network-working-gcd2cfac6` generator ref, original immutable tools,
+original G validator proof and the full allowlisted five-file export. The
+permanent fixture fix changes `Software.fixture_digest`; it does not retroactively
+change the actual guest/capture generator. `cluster/source-metadata.rb:5-17`
+correctly refuses validation of G result/source receipts against changed
+fixtures or a different checkout revision. Do not relax that check, feed an
+M metadata file to G, or import G's `tmp/capture-{results,source}.json` into the
+fixed M source tree as if freshly generated there.
+
+For normal source carryback, commit only the two verified PNGs and their
+candidate `captures.json` changes, preserving embedded G provenance and the
+unchanged V pin/semantic contract. Keep the two supporting result/source receipts
+as original-generator evidence outside that source tree. The existing validator
+can strictly check M's committed inventory/PNG hashes without reinterpreting
+external G results: `runner/validate-artifacts.cjs:15-25` invokes receipt/source
+verification when external results/source receipts exist or `--update` is used;
+ordinary validation of the already committed inventory uses its source assets.
+That M check proves committed artifact consistency, while G's original strict
+validation proves generation/source matching. Neither claims that M's changed
+fixture has run in a guest. Retain this distinction in final review/handoff;
+the new two-owner fixture behavior receives its focused hosted evidence, and
+the actual PNG generation remains the operator-prepared Gcd2 execution.
+
+Current identity, absent markers and saved roster17 architect settings matched.
+Applicable workspace/K/V guidance and documentation skill were reused; owning
+source and the allowlisted failure were read. Only this design was appended.
+No private campaign/credentials, application edit, test/build/eval/probe, Git,
+CI, guest/lifecycle or capture operation was performed.
+
+### FINITE OPERATOR POLICY: explicit64MiB node capture margin (2026-10-12)
+
+The window5 refusal is valid and remains a failure of the original admission:
+node MemAvailable1176363008B was below1207959552B (1GiB+128MiB), before the
+Node fixture helper or VPS mutation. Services308723712B exceeded256MiB and
+tank7800932864B exceeded5GiB; the other recorded disk/inode gates passed.
+The successful restoration to min_free_kbytes1048576 and the prior complete
+same-G public continuity/member proofs remain distinct results.
+
+**Recommendation: permit root to select one explicitly reassessed operator
+attempt with64MiB extra node margin.** Its threshold is exactly1140850688B
+(1073741824B requested fixture RAM +67108864B), not64MiB total available RAM.
+The old window observation would exceed that threshold by35512320B, about33.9MiB,
+and leaves about97.9MiB above the full requested1GiB. These calculations explain
+the proposed tolerance; they are not fresh admission or proof of a future peak.
+This is a proportionate limited-risk qualification policy for one disposable
+1CPU/1GiB/swap0/4GiB fixture with no second VPS or simultaneous capture, not a
+generally sufficient runtime margin or a diagnosis of prior service failures.
+
+The source gate (`tools/runtime-verify.rb:614-625` at Gcd2cfac65) accepts an
+explicit positive assessment and compares it with actual MemAvailable. The
+128MiB addition was an operator assessment, not a minimum hard-coded by the
+engine or fixture. Linux MemAvailable already accounts for kernel low-watermark
+reserves; do not add separate cache, reclaimable-slab or ARC figures to it or
+count a reserve reduction as an independently guaranteed amount of free RAM.
+The later stock-reserve snapshot in
+`finish-working-delivery-node-memory-observation1.json` reports MemAvailable0
+with min_free_kbytes1048576. It does not supply the new window's available
+memory. Its ARCsize11320440B, c_min64802304B and reported physical free value
+establish neither reclaimable ARC credit nor a safe peak. Missing PSI is unknown,
+not zero pressure. No swap is available as a fallback.
+
+Root must record a new separately hash-bound operator assessment before the
+window, referencing the original capacity4 digest, exact Gcd2/configuration,
+instance/run/artifact and supporting observations. Change only the declared
+extra node margin128->64MiB. Keep capacity4, the Campaign, failed window and all
+original receipts immutable; do not present the new assessment as a correction
+to historical measurements or a pass of the former gate. No source/schema or
+validator change is required to express this separate operator decision.
+
+Keep two2048MiB guests, the already accepted min_free_kbytes65536 preparation
+and explicit restoration to1048576, full fixture resources/API verification,
+positive services256MiB/inode/1GiB-disk gates, node4+1GiB tank requirement and
+host2GiB RAM/1GiB shared-memory browser margins. Retained growth/base reserve,
+current disk admission, source/trust/lease/physical artifact locks, member/admin
+separation, genuine CS+EN, strict validation/export and visual acceptance remain
+unchanged. Re-read actual positive node headroom under the proved65536 setting
+before mutation; stock-reserve or previous-window values cannot substitute.
+The existing driver at `finish-working-delivery-operator-capture-window5.py:189,205`
+checks resources before preparation and before each capture. Preserve those
+checks: provisioning can consume headroom, so passing preparation does not
+guarantee that CS, EN or default-CWD recapture will be admitted.
+
+Peak kernel/slab, ZFS, container boot and background-work demand remain unproved;
+the smaller margin increases the risk of a native refusal or memory-related
+failure even if admission passes. Select one finite window only. Any failed
+resource/ownership/transport/provisioning/capture check ends dependent work,
+retains exact partial state/results and triggers the existing guarded reserve
+restoration/cleanup boundaries. No further margin lowering, min_free32MiB,
+drop_caches, daemon stop, quota shrink, automatic retry/upscale, new pair or
+old-state cleanup follows. Success would prove this recorded operator-prepared
+capture, not stock-profile sufficiency or completion of the failed Campaign.
+
+Fresh session/current/absent markers and roster17 settings matched. Applicable
+unchanged guidance was reused. Only safe evidence/source and this design were
+read or written; no admission, guest/probe, check/build/CI, application/Git or
+lifecycle action was performed. Root owns policy acceptance and any operation.
+
+### PROPOSAL: one 4+4GiB runtime with unchanged disk sizes (2026-10-12)
+
+The user now permits modest doubling of test RAM. Assess one services guest
+and one node, each4096MiB, with services root/image8192MiB and tank8GiB.
+This supersedes the earlier RAM ceiling only. It does not establish capacity,
+repair the current SSH failure, authorize reset, or complete a failed Campaign.
+Fresh current/absent environment markers and retained roster17 matched;
+architect0 remains Astra/xhigh/design/workspace_write. The documentation skill
+and applicable workspace/K guidance were applied. Source evidence below is
+immutable Gcd2cfac65af26842b078617eeeaf82f346f18b07, paired E2e38a541,
+not the held fixture correction or another mutable implementation.
+
+**Configuration and workload.** The public launcher already accepts this RAM
+configuration: `cluster/nix/test.nix:1371,2014,2061` selects services runtime,
+node runtime and services image-builder memory from the explicit configuration.
+The builder consequently becomes4GiB too; preserving a2GiB builder would need
+a separate source change and is not implied here. Disk sizes need not increase.
+However, the current bounded SQL/API/PHP workload applies only when topology is
+single and services RAM equals2048 (`test.nix:1383`). A RAM-only4096 config
+restores the inherited1GiB MySQL buffer pool,200 connections, large per-query
+buffers, two API workers/eight threads,32 PHP children and both metrics timers.
+The owning projection test records those distinctions at
+`tools/test-runtime-verify.rb:959-1000`; this is not evidence that those defaults
+caused the observed SSH failures.
+
+Recommendation: preserve the existing bounded workload when extending the
+dedicated single runtime to4096MiB. The smallest prospective K change is to
+extend that existing single-topology predicate to the two explicit supported
+sizes2048/4096, retain its values, and adjust its owning projection test and
+contract. This intentionally changes K's single4096 workload, previously left
+inherited; other topologies remain unchanged. No new profile framework,
+production V/OS policy or dependency change is needed. Root must accept that
+small source boundary before implementation; no held source was changed here.
+A config-only launch at exact Gcd2 remains supported, but it must be described
+as the inherited4096 workload, not extra RAM for the previously bounded one.
+
+**Public transition rules.** `cluster/launcher.rb:40-50` permits replacement
+config only for start/update. `Engine#start` at `kb_runtime.rb:107-128` requires
+fresh state and prepares its actual artifact before starting guests. `resume`
+at176-184 validates the exact selected source, accepted artifact, retained
+config/preparation, credentials and disks; it cannot change RAM or guest source.
+Neither editing private inputs nor supplying a new config to resume is a route.
+
+Public update at187-264 can change memory while preserving root/tank sizes,
+endpoints, TLS identities and credentials: `Software.layout` at
+`kb_source.rb:111-126` excludes RAM but retains disk compatibility. It first
+requires a ready live predecessor and successful guest SSH/source attestation,
+then builds and imports the exact candidate before ordinary shutdown/direct
+boot. Current reported services SSH failure blocks this admission. A stopped
+old artifact cannot prepare a new candidate offline; only an already completely
+prepared update journal has that recovery path. No cache assumption bypasses
+old-guest attestation, import or prepared-artifact proof.
+
+The preferred disk-preserving route, if root establishes current guest health,
+is one separately selected public update to the accepted4096 configuration.
+This requires explicitly revising the prior no-builder-while-guests-live
+scheduling constraint: a4GiB builder overlaps the current2+2GiB guests, then
+exits before the new4+4GiB pair starts. Both peaks are8GiB plus measured host
+overhead, with no second pair. This is a proposed admission change, not an
+operation selected here. If that overlap or working predecessor is unavailable,
+the existing route is proven ordinary stop followed by an explicitly approved
+owned reset/replacement and fresh public start, building while both old guests
+are stopped. RAM permission alone does not approve deleting retained disks.
+An incomplete stop holds either route; no private preparation, force cleanup,
+fresh pair beside a live old pair or old-state adoption is permitted.
+
+**Node reserve and resource admission.** Exact OS6bdf
+`os/modules/config/tunables.nix:74` defaults min_free_kbytes to1048576KiB,
+independent of guest RAM. At4GiB, initially retain that source policy and measure
+actual MemAvailable; do not presume it remains zero or estimate availability
+by adding2GiB to an old observation. Keep the full1GiB fixture and original
+positive128MiB extra capture margin, services256MiB and all disk/inode gates.
+Doubling RAM does not require a further admission-margin reduction. If a
+dedicated lower reserve is still necessary, the already bounded65536KiB policy
+is the concrete existing candidate, not a new32MiB value or ARC/cache credit.
+It must be selected explicitly as guarded operator preparation/restoration or
+declared by a separately accepted K node module; it is not part of Gcd2's
+4096 configuration. No claim of practical fit follows without the native read.
+
+Fresh start/resume admission counts8GiB runtime RAM/shared memory plus assessed
+overhead. The existing2GiB RAM/1GiB shm overhead example becomes10GiB available
+RAM/9GiB free shm before runtime start, subject to refreshed actual assessment;
+already-live capture counts only its additional margins. Intrinsic fresh disk
+extents stay24GiB (8GiB image +8GiB writable root +8GiB tank). An update retains
+the old image and creates a distinct candidate image and imported closures;
+those measured allocations and temporary costs are additional, not deduplicated
+because sizes match. Existing allocated bytes already reduce free space;
+retained sparse growth/base reserve, missing closures and unknown builder
+scratch remain separately accounted. No cleanup credit or universal disk floor.
+
+**Evidence route and stop condition.** Current `Campaign#validate_config`
+at `tools/runtime-verify.rb:144-177` explicitly refuses4096. Use separately
+recorded public lifecycle/read/lease/capture operations if source is unchanged;
+do not call that a completed Campaign or bypass its failed-attempt/config guard.
+If the packaged verifier itself is selected for4096, its narrow profile check,
+existing config/accounting tests and owning documentation must first be revised
+and reviewed; the existing `memory_requirements` method already derives demand
+from config. No broad verifier redesign is required or authorized here.
+
+Only affected hosted projection/config checks and committed review are needed
+for any accepted source delta; reuse unchanged evidence and preserve the user
+no-local-CI rule. One admitted native qualification must prove real source,
+closures, TLS/SSH, member/API/lease and ordinary same-artifact continuity, then
+the same instance supplies CS/EN and strict export if positive gates pass.
+Short private TMPDIR and the accepted omitted-swap boundary still apply.
+Any native failure ends dependent work and retains evidence; no automatic
+further upscale/replay or extra pair. Generator provenance must name the actual
+new artifact's immutable source, never relabel the old Gcd2 guest. This report
+is source assessment only; no operation, source edit, check or probe occurred.
+
+### ACCEPTED IMPLEMENTATION ADDENDUM: bounded 2048/4096 profile (2026-10-12)
+
+Root accepts the preceding RAM proposal with **one sequential fresh replacement**
+as the selected route, subject to root-owned preservation, retirement and measured
+admission. Old-guest update is not required. Root reports working4 shutdown after
+the separately selected services pidfd TERM, complete exit of all14 children,
+absent claims/socket and retained disks. This does not turn that recovery into
+an ordinary graceful-stop pass. The stopped source/artifact cannot be resized
+or adopted through resume; the replacement uses genuine public fresh start with
+new preparation and provenance. No old failed Campaign is replayed or edited.
+
+The minimal K implementation owners are:
+
+- `cluster/nix/test.nix`: extend only the existing single-topology compact
+  services predicate from2048 to the explicit set `[2048 4096]`. Keep every
+  compact SQL/API/PHP value and the two timer selections unchanged. Other
+  topologies keep their inherited settings. No new configuration mode or knob.
+- `tools/runtime-verify.rb`: in the existing single/local profile validation,
+  allow services RAM and node1 RAM independently to be either2048 or4096MiB.
+  The selected replacement is4096/4096. Preserve exactly two guests, explicit
+  networking/accounts, services image/root8192MiB, tank8GiB and all other guards.
+  Keep existing memory derivation; do not add a second accounting mechanism.
+- `tools/test-runtime-verify.rb`: extend the existing config, accounting and
+  public Nix projection/generated-service tests. Prove compact effective MySQL,
+  generated MySQL/Puma/PHP configuration and timer policy at both supported
+  single services sizes. Move the inherited-workload comparison to an unchanged
+  other-topology case rather than retaining the obsolete single4096 expectation.
+  Cover both mixed RAM combinations as valid, unsupported values as refusals,
+  unchanged disk/topology/account refusals, runtime/builder values and kernels.
+- `cluster/runtime-contract.md` and `docs/webui-change-workflow.md`: reconcile
+  the supported choices, chosen4096/4096 qualification, compact4096 behavior,
+  sequential preparation and measured admission. No other owner is required
+  by this addendum; preserve the separately held TMPDIR/zero-swap drafts.
+
+Accounting acceptance: with the assessed2GiB RAM/1GiB shm overhead,4096/4096
+requires10GiB available RAM and9GiB free shm before runtime start/resume. The
+4096MiB image builder runs before runtime guests and is assessed separately;
+do not sum stopped guests with it. Already-live capture requires only its
+additional2GiB/1GiB margins. Tests must prove these values and the existing2048
+case, including source/config binding and rejection of stale capacity evidence.
+Intrinsic image/root/tank extents remain24GiB; retained growth, actual additional
+closures/staging and unknown builder scratch still need root's fresh assessment.
+No node reserve, capture threshold, quota, trust, lease or disk policy changes
+are part of this source unit.
+
+Use hosted affected config/accounting/projection checks and committed independent
+review before package construction or the one real replacement qualification;
+no local CI. Reuse unaffected evidence. Real acceptance remains public readiness,
+API/member/TLS/lease, ordinary same-artifact stop/resume with credentials/accounts/
+trust/disks/image/sentinels, then genuine same-source CS/EN and strict validation/
+export if positive admission holds. One native failure ends dependent work;
+no automatic extra pair, upscale, reset or repeat qualification. Root owns all
+source assignment, Git/pins, retirement/backup/capacity and operational selection.
+
+Current and both absent markers were checked from the exact tracking CWD with
+login:false; fresh roster17 retained architect0 settings. Unchanged applicable
+guidance and the documentation skill were reused. Only this design addendum
+was written; no application, private-state, test/build/probe or lifecycle action.
+
+### DISK ACCOUNTING ADDENDUM: sequential image construction and runtime (2026-10-12)
+
+This is a receipt-assessment refinement, not a source change or admission.
+Fresh current/absent markers and roster17 settings matched; unchanged required
+guidance was reused. Read-only evidence is Gcd2's unchanged Engine/Software/disk
+owners and exact OS6bdf/nixpkgs5dfba623 sources. No private capacity/configuration,
+cache or filesystem observation was read or performed. K6cfd source/package
+checks remain root-owned; no result is inferred here.
+
+**The phases do not allocate all their files concurrently.** Gcd2
+`cluster/lib/kb_runtime.rb:107-128` completes `Software.prepare` and `build`
+before `start_locked` at274 creates runtime directories and spawns the runner.
+`kb_source.rb:74-95,129-146` first evaluates the actual prepared identity/config,
+then completes the cluster-config and runner builds. Only the runner's
+`PreparedDisks#prepare_disks` in `cluster/lib/kb_machine.rb` copies the published
+image with `IO.copy_stream`; the base OSVM `Machine#prepare_disks` at
+`osvm/lib/osvm/machine.rb:799-805` creates the tank by truncate. Thus runtime
+root-copy/tank allocation starts after successful image construction, not during
+the earlier staging-root/image preparation. The tank remains a full8GiB eventual
+obligation even when initially sparse. No root-copy sparsity saving is assumed.
+
+OS `tests/make-test.nix:253-266` selects raw format, an8GiB image and no partition
+table. The pinned [image builder](https://raw.githubusercontent.com/NixOS/nixpkgs/5dfba6236110080a54247d6460bc2ff5dda939cc/nixos/lib/make-disk-image.nix)
+at434-494,568-597 stages an installed root, creates the raw image, copies the
+payload into it and publishes raw output with `mv`. It does not unconditionally
+convert raw to a second image. Same-filesystem rename needs no second full
+image; cross-filesystem move or separately evidenced store-import behavior can
+require additional simultaneous bytes. The pinned
+[VM wrapper](https://raw.githubusercontent.com/NixOS/nixpkgs/5dfba6236110080a54247d6460bc2ff5dda939cc/pkgs/build-support/vm/default.nix)
+at264-307 runs preparation, image-finalization VM and publication in that order.
+None is the later runtime root copy. Actual daemon sandbox/output filesystem
+semantics and retained temporary bytes still require root's evidence; a client
+TMPDIR or NAR total does not establish those facts.
+
+For a fresh instance on one proven shared filesystem, describe known prospective
+allocation in two rows, excluding bytes already reflected in measured free:
+
+- Construction: newly missing permanent closures + staging payload/workfiles +
+  the8GiB image allowance + any evidenced image-publication copy overlap.
+- Runtime: newly missing permanent closures +8GiB image +8GiB writable root +
+ 8GiB tank eventual growth, plus any construction remnants actually retained.
+
+Use the larger row, not their sum. The eventual intrinsic output stays24GiB.
+In particular, do not charge an additional16GiB root/tank in the construction
+row and then add its staging charge on top of the full runtime envelope.
+Keep transient substitution/import bytes in their actual phase and filesystem;
+never deduct closure bytes merely because the same payload is also inside an
+image. Deduplicate actual store paths/inodes, not logically similar content.
+
+The existing verifier already charges remaining image/root/tank growth plus
+missing non-image closures before `construction_overlap_bytes`
+(`tools/runtime-verify.rb:398-480`). Its receipt can conservatively assess that
+field as **the nonnegative construction peak excess above those already charged
+outputs**, with the two rows and subtraction written explicitly in
+`construction_overlap_assessment`. For fresh, single-filesystem, no-remnant
+accounting this known excess is `max(0, staging + publication_overlap -16GiB)`.
+That is not a claim that staging or unknown scratch is zero. Retain the separate
+8GiB assessed build headroom and16GiB base reserve unchanged; unknown builder
+scratch remains unknown and requires the existing live reserve monitoring.
+For distinct filesystems derive each peak independently; runtime disk capacity
+on one filesystem cannot offset scratch demand on another. If staging/remnant
+or publication behavior lacks evidence, retain an explicit conservative
+assessment rather than manufacturing a zero excess.
+
+The old11.3GiB construction overlap is not automatically valid for the new
+source/cache state, nor may it simply be deleted. Root should decompose its
+meaning and rebind current realized/missing paths, exact image/payload facts,
+daemon/state/store filesystems, effective one-job/core construction, phase rows
+and monitoring assessment. This is supported use of existing receipt fields;
+no engine/accounting framework or new tests are proposed. Preserve the original
+capacity4 receipt unchanged.
+
+Using only the supplied historical72GiB retained-growth declaration and current
+125778415616B free, even zero additional overlap leaves about2.86GiB short of
+72+16+8+24GiB, before any missing closures. This arithmetic is not fresh admission:
+root's authorized stopped-working4 reset, if performed, changes both measured
+free blocks and that instance's remaining-growth obligation. Count those changes
+only after actual successful owned retirement and refreshed evidence. Existing
+store images do not become free merely because their runtime was reset; no GC
+credit or guessed reclaim is allowed. All other retained obligations persist.
+
+One fresh public start follows only root's accepted evidence and measured fit.
+A build failure retains its actual outputs/diagnostics and ends dependent work;
+it supplies no cleanup or retry authority. Source sequencing establishes the
+accounting shape, not a mathematical bound on future scratch or a passing host
+capacity result. Only this design addendum was written.
+
+### WORKING5 CONTINUATION: real source update before corrected captures (2026-10-12)
+
+Root reports genuine K6cfd working5 runtime-smoke success, including78 native
+commands and ordinary stop/resume, followed by a failed CS fixture query. Those
+results and the failed bilingual Campaign remain immutable. Source inspection
+used the realized K6cfd source
+`/nix/store/xcv7hw7946rk8ygx3zdyih4c9mvcxpda-source`; no private state or native
+response was inspected. The four GET query corrections and consuming fixture
+test are root's separate implementation brief. Changing fixture/source digests
+requires a genuinely prepared new artifact before its package can capture.
+
+**Supported route, with a concrete outstanding blocker.** Public
+`Engine#update` (`cluster/lib/kb_runtime.rb:187-264`) supports this same-instance
+transition with the same explicit4+4GiB config,8GiB disks, V939/locked inputs,
+endpoints, host keys and credentials. It attests the live predecessor, journals
+the candidate, builds/imports, proves ordinary complete shutdown and boots the
+new artifact. Do not stop first: an unprepared offline candidate is unsupported.
+`Software.prepare/build` (`kb_source.rb:74-95,129-146`) records the real new
+source/config/artifact and constructs its actual closures. There is no private
+preparation, source override, metadata relabel or failed-Campaign replay.
+
+However, the earlier prelaunch blocker at this design's7510 section remains
+present in exact K6cfd: `cluster/lib/kb_closure.rb:112-120` still invokes
+`df -i --output=iavail /nix/store | tail -n1`. The documented GNU df option
+conflict prevents its inode measurement; successful tail can mask the producer
+failure and the missing second number refuses capacity before import. Existing
+`tools/test-closure.rb:30` returns synthetic numbers when it sees `df -B1`,
+so its passing mocked coverage does not establish command validity. This is
+source evidence, not an actual working5 update failure. A fixture-only correction
+does not remove this blocker. Root must accept the already bounded two-owner
+repair (`kb_closure.rb`, existing `test-closure.rb`) before selecting update:
+remove `-i`, status-check both df producers before formatting, retain numeric
+refusal and all reserves/proofs. Hosted execution of the emitted command plus
+producer-error/malformed and existing space/inode refusal coverage belongs to
+that existing owner, not a new suite/framework. No such edit is authorized here.
+
+**Prospective measured admission.** This update differs from sequential fresh
+start. Its4GiB image builder overlaps the existing8GiB runtime pair:12GiB
+guest/builder demand plus assessed overhead. With the existing2GiB RAM/1GiB shm
+assessment, that is a14/13GiB combined envelope; measured availability while
+the8GiB pair already runs must cover the additional6/5GiB, without double
+charging resident guests. After old exit, candidate runtime needs10/9GiB before
+start; once live, capture needs its additional2/1GiB. No second runtime pair
+is started. This builder overlap needs root's explicit operation admission;
+the first-start capacity receipt does not certify it.
+
+Build/import disk assessment must include a new8GiB immutable services image,
+missing candidate closures, exact staging/publication overlap and assessed
+unknown scratch. The old image/result roots remain; no GC credit. K's
+`PreparedDisks` retains the existing writable root/tank and their identities,
+so do not charge another writable16GiB pair. Keep their actual remaining growth
+through construction, all other retained growth, base reserve and build headroom.
+A tiny fixture diff does not imply a reusable image: artifact/source identity
+changes the generated guest configuration. Actual new outputs/cache facts govern
+the assessment; no guessed zero build or guaranteed8GiB-payload fit.
+
+`ClosurePreparation#prepare` (`kb_closure.rb:45-90`) imports the exact recursive
+candidate services closure through the old trusted SSH route before shutdown.
+It requires writable guest Nix/store tools, missing NAR bytes plus256MiB and
+missing path-entry count plus10000 free inodes, then verifies path contents,
+references and the per-artifact guest GC root. Import consumes space inside the
+retained8GiB services root; it is not another host image, but its resulting root
+allocation is real. Node boots candidate read-only media with the same tank.
+Retain post-update1GiB services free-space, inode, memory and tank capture gates;
+passing the smaller import reserve alone does not admit capture. No GC, resizing,
+old-image copy or profile activation substitutes for those checks.
+
+**Finite operation and evidence.** After affected source gates and immutable
+package binding, root may separately select the new package's public
+`update SLUG --state-root ROOT --config SAME_CONFIG --topology single
+--network local --timeout 900`. The existing durable service/fresh watcher must
+span preparation, shutdown and replacement;900 is not a total build deadline.
+Release prior capture leases first; normal nonblocking gate/refusal remains.
+Before admission establish fresh old readiness/source/SSH, same config and
+private continuity baselines. After success require new accepted artifact/run,
+exact new guest identities/current-system closures, unchanged six credentials,
+accounts/trust, disk identities and existing sentinel contents, plus current
+TLS/API/member/lease and resource evidence. Do not invent another lifecycle
+campaign to relabel the original passed one as a new-source full-smoke result.
+
+Public capture has no Campaign-receipt prerequisite (`runner/capture.cjs` and
+the runtime contract's connection/source/artifact sections). A new finite output
+unit may therefore use the genuinely matching new runtime/capture/validator
+packages, short private TMPDIR, actual physical locks and live leases, CS/EN,
+both selectors/default-output evidence, strict full inventory and five-file
+export. Retain prior partial fixture/output state honestly; unchanged fixture
+identity/idempotence guards must validate it, never assume the failed CS did
+not mutate. Preserve the actual new generator G and its immutable validation
+proof when later media commit M records the PNGs; do not mix K6cfd results or
+claim that M's guest ran. Original runtime-smoke remains exact-source evidence
+for the unchanged mechanisms, supplemented by this actual update/capture unit.
+
+Any source, capacity, guest-store, SSH, shutdown or candidate-attestation refusal
+holds capture and preserves its journal/state. Retry, if later selected, must
+use only the recorded candidate; no automatic rollback, new instance/reset or
+alternate source is proposed. If adequate overlap/import capacity or the narrow
+command repair cannot be established, report that exact blocker without launch.
+Fresh current/absent markers/roster17 and full applicable guidance were read;
+only this design was appended. No application edit, operation or passing new
+source/runtime claim was made. Root owns source acceptance and any execution.
+
+### WORKING5 UPDATE WORKSHEET: measured physical allocation assessment (2026-10-12)
+
+Recommendation: the proposed smaller allowance is defensible for **one monitored
+update as an explicitly assessed risk**, not as a bound or readiness approval.
+It supersedes the earlier8GiB assessed build headroom only for this separately
+recorded operation. Retained writable growth and the16GiB base reserve do not
+change. Source/package gates are root-reported for Kb5e39e6/E9205957; the realized
+K source is `/nix/store/9z238nf417z9ynj8qb14k7ipg0ma820k-source`. Its corrected
+`kb_closure.rb:112-127` now status-checks the valid df producers, closing the
+previous command-source blocker. Actual guest import admission remains unproved.
+
+The allowlisted package5 host observation and original-build observation5 give:
+
+| Item | Bytes |
+| --- | ---: |
+| Current free store space | 121636823040 |
+| Other retained writable growth | 77289816064 |
+| Working5 tank remaining growth | 8200409088 |
+| Unchanged base reserve | 17179869184 |
+| Total protected obligations P | 102670094336 |
+| Free above P | 18966728704 (17.664GiB) |
+| Proposed new physical image allowance | 4294967296 (4GiB) |
+| Proposed additional publication-copy allowance | 4294967296 (4GiB) |
+| Prior measured staging plus current missing closure NAR | 3412352328 |
+| Separately assessed uncertainty/headroom | 5368709120 (5GiB) |
+| Total assessed additional peak N | 17370996040 (16.178GiB) |
+| Unassigned remainder above P after N | 1595732664 (1.486GiB) |
+
+Staging3127554904 and missing closure284797424 are included once in that row.
+The old image measured3615100928 allocated bytes (3.367GiB), despite its8GiB
+logical length. The old successful construction's maximum net host free-space
+reduction was12370911232 (11.521GiB). This corroborates an assessment below the
+former sum of full logical extents; it is neither builder-only attribution nor
+an upper bound on the next run. Inputs/profile/V939 are unchanged, but new
+source/artifact context and concurrent host activity can change the
+actual footprint. No construction success or stable future peak is inferred.
+
+The source ordering remains `Software.build` -> exact guest import -> owned
+shutdown -> direct boot (`kb_source.rb:129-146`, `kb_runtime.rb:187-264`). The
+existing writable root is fully allocated and reused; tank growth is protected
+above. Import must fit the guest's own byte/inode reserve independently. No new
+root/tank copy is charged or created. Old immutable images remain allocated and
+already reduce current free space; their holes have no future writable-growth
+obligation. Prospective candidate physical allocation remains an estimate until
+publication. Existing raw `make-disk-image.nix` publication uses mv, as traced
+above; no same-device/rename/reflink/sparse-copy guarantee is assumed here.
+
+In particular, the4GiB publication allowance is **not** a proven copy maximum.
+A cross-mount dense8GiB copy can exceed it by4GiB. That overrun would consume4GiB
+of the5GiB uncertainty allowance, leaving only1GiB for other overruns before
+the unassigned remainder. Likewise, a larger candidate image consumes the same
+aggregate allowance. Thus this worksheet cannot promise an independent5GiB of
+scratch space after every possible copy. If root requires that guarantee, the
+supplied capacity is insufficient and update must remain held. The finite
+recommendation accepts a possible monitored refusal instead; it does not rename
+known bytes as unknown or declare scratch bounded. No increase of this budget
+is automatic if the estimate proves wrong.
+
+Bind a fresh operation receipt to exact source/packages/configuration and actual
+store/daemon-scratch/state filesystems. N is a conservative sum of the proposed
+simultaneous construction components, not another24GiB fresh-instance envelope.
+Post-publication/import uses the retained writable disks and actual candidate
+outputs; compare phase peaks rather than summing sequential phases. Retain
+possible staging remnants until evidence excludes them. If filesystems differ,
+assess each independently; unused capacity elsewhere supplies no admission.
+
+For the supplied snapshot, propose the existing watcher's early cancellation
+floor **104265827000B free = P +1595732664B**, corresponding to consumption of N.
+Refresh the arithmetic before launch and keep the chosen floor fixed or more
+conservative during the operation; do not chase falling space by lowering it.
+Also cancel/hold on observation loss or an unrelated resource/source/ownership
+failure. Use only root's existing cancellation contract for the owned operation,
+with its actual handling of outstanding Nix work established before launch.
+Monitoring and cancellation are not instantaneous and cannot guarantee that the
+1.486GiB runway prevents all overshoot. They grant no signals to guests/foreign
+processes, store GC, reset or automatic retry. If that existing cancellation
+contract cannot preserve the required operation boundary, this estimate is not
+admissible. On cancellation retain the update journal and exact candidate;
+capture remains held, with any later recovery separately selected.
+
+Supplied RAM30909935616B/shm20534583296B exceeds the preceding proposed additional
+6/5GiB builder-overlap admission, but fresh live readiness/capacity still belongs
+to root. Keep original failed/pass receipts and genuine G->M attribution. G14's
+already completed reset supplies no new credit; G13/G4/G6/isolation3/preview are
+unchanged. Current/absent markers and roster17 retained settings matched; required
+guidance was read/reused unchanged. Only safe evidence/public source and this
+design were accessed; no private inputs, probes, operations or application edits.
+
+### WORKING5 FINAL CAPACITY RECONCILIATION: hold on the fresh byte accounting (2026-10-12)
+
+Final recommendation: **HOLD this update on the supplied fresh observation.**
+The fixed3GiB uncertainty proposal does not fit even before considering whether
+its operational risk is acceptable. Do not reduce it again to chase admission.
+This supersedes the preceding worksheet's conditional recommendation for the
+earlier, larger free-space snapshot.
+
+`finish-working-delivery-update-admission5-refusal1.json` records free space
+118001684480B and required space120324396856B, with admission false and no
+context/service/update created. The additional permanent missing closure
+284797424B is distinct from the staging copy and must remain charged; the
+previous worksheet did not include this second physical allocation.
+
+| Fixed proposed component | Bytes |
+| --- | ---: |
+| Physical candidate image assessment,4GiB | 4294967296 |
+| Additional publication copy assessment,4GiB | 4294967296 |
+| Measured staging3127554904 + missing staging284797424 | 3412352328 |
+| Separate permanent missing closure | 284797424 |
+| Final assessed uncertainty,3GiB | 3221225472 |
+| Total additional assessment | 15508309816 (14.443GiB) |
+
+Changing only uncertainty from5GiB to3GiB reduces the refused requirement by
+2147483648B, giving **118176913208B required**, still **175228728B (167.11MiB)
+above actual free space**. Equivalently, the refused worksheet implies protected
+obligations102668603392B after subtracting its5GiB assessment. Space above those
+obligations is15333081088B:15.33 decimal GB, but **14.280GiB**, not15.33GiB.
+Thus the proposed0.9GiB unassigned buffer is not present in these byte figures.
+This reconciliation uses the recorded requirement rather than inventing a new
+tank-growth measurement; all retained growth and the16GiB reserve stay protected.
+
+The previous successful net host peak12370911232B remains useful evidence, not
+a future bound or builder-only measurement. The proposed total is about2.922GiB
+larger, but that comparison cannot create the missing free space. The source's
+possible dense8GiB publication copy, unknown scratch and unrelated host activity
+also remain risks; no rename/sparse-copy guarantee has been established.
+
+Root's revised cancellation boundary targets only its positively identified
+direct Nix client and then the owned public CLI. It supplies no guest/foreign
+signal authority and no guarantee that daemon work immediately stops. Therefore
+it cannot replace prelaunch admission or justify consuming protected obligations.
+Any cancellation would retain candidate/journal evidence and hold capture pending
+separate diagnosis. No new cancellation mechanism is proposed here.
+
+No operation was launched by this assessment. Preserve the refusal and current
+source/guest evidence. Root owns disposition and any genuinely changed fresh
+capacity evidence; there is no further allowance reduction, cleanup credit,
+automatic retry or new pair recommendation. Only this design appendix changed.
+
+### WORKING5 PREPARING CONTINUATION: bounded private guest-store preparation (2026-10-12)
+
+Recommendation: the supplied native facts support a separately selected,
+operator-prepared continuation of the **same public update candidate**, subject
+to fresh guards below. This is not an application change or operation approval.
+The earlier capacity refusal remains historical; root's later admitted operation
+built its image without cancellation and then failed at guest prerequisites.
+
+`finish-working-delivery-public-update5-failure-disposition.json` records native1,
+operation0f96e20e-061f-44f3-ba1e-6d83592d4c8f, stage`preparing`, candidate
+c7595a57-6b7f-4e90-96f8-8179b5530530 and Kb5e39e6. Its artifact digest is
+bffe7687747efdd349bd881c922f4ded08f9e040882d621e0426d8fe7a1e7e97. The candidate
+image has8GiB logical length and3615162368B allocated; no completed import proof
+exists. The old instanceaa7bc9ad-c6d3-4541-b12c-938d03c484c2/run
+e8f5d11b-28b8-4cca-be80-572d6d595c5e remains the predecessor. Neither successful
+replacement nor capture is inferred.
+
+The guarded prerequisite diagnosis5 establishes installed Nix tools, writable
+database, nonwritable store and plain path-info failure, with the same query
+succeeding when nix-command is explicit. Mount observation5 establishes `/`
+as rw ext4 `/dev/sda`, `/nix/store` as ro,nosuid,nodev,relatime ext4
+`/dev/sda[/nix/store]` with fsroot`/nix/store`, and the database on the rw root.
+These are snapshots, not current authorization. Exact OS6bdf
+`tests/configs/nixos/test-vm.nix:4-7` disables host-store mounting/shared VM
+directories, and `tests/make-test.nix:237-267` creates the ext4 raw guest image.
+The actual guarded mount facts, rather than that declaration alone, exclude a
+host virtiofs/shared store here.
+
+Root may select one ordinary authenticated public SSH preparation after proving
+the exact predecessor launch/runner, strict retained keys, old guest identity and
+current-system closure again. Public SSH (`cluster/launcher.rb:76-82`) holds the
+gate but does not itself attest guest source: the remote script must check those
+identity/closure expectations before mutations. Phase`updating` must not be
+changed to ready merely to obtain access. Recheck the same root/store mount
+identities, ext4 backing, fsroot, options and private owned root-disk binding;
+unexpected mounts, shared storage, symlinks or changed source refuse.
+
+For that exact private bind only, `mount -o remount,bind,rw,nosuid,nodev,relatime
+/nix/store` is the proposed guest operation. It must retain mount identity and
+nosuid/nodev protections, leave `/` and every host/shared mount unchanged, and
+be followed by matching mount facts and writable-store/database checks. No
+unmount, recursive remount, chmod of store contents or immutable path edit is
+included. Record original options privately for restoration.
+
+Enable only `extra-experimental-features = nix-command` in the dedicated root
+user's ordinary mutable Nix configuration. The expected path is
+`/root/.config/nix/nix.conf`, only after confirming the SSH user's HOME and Nix
+configuration resolution select it; unexpected NIX_USER_CONF_FILES/NIX_CONFIG
+or XDG overrides refuse rather than being silently redirected. The retained
+Nix2.31.5 manual's configuration-file section documents user configuration and
+the additive extra- list syntax; a fresh plain path-info query in the same public
+SSH environment must prove the selected guest consumes the setting. Preserve
+any prior bytes, absence, mode and ownership privately; reject symlink/unsafe
+parents or files, retain unrelated settings, and create only owned private
+directories/files when absent. Never change `/etc/nix/nix.conf`, profiles,
+closures, guest source metadata, credentials or trust. Do not print the prior
+configuration. No daemon restart, extra feature, substituter or trust change is
+part of this preparation.
+
+Then root may select **one** same-package public `update` with the identical
+config/topology/network and normal900-second controller budget. Exact Kb5
+`kb_runtime.rb:198-235` matches the recorded source/config, reads the existing
+artifact at stage preparing and reruns closure preparation without calling
+Software.build when that artifact exists. Thus no new image/builder/pair is
+needed. Missing/changed candidate evidence is a refusal, not permission to
+rebuild or substitute. `kb_closure.rb:45-90,92-96,112-137` still requires live
+old-source proof, actual guest missing-NAR/inode capacity plus256MiB/10000
+reserves, authenticated import, recursive content/reference verification and
+the candidate GC root before public shutdown/direct boot. Host import growth
+and current RAM/shm/reserves need fresh assessment; already allocated candidate
+outputs are not charged a second time. No space or successful import is assumed.
+
+After native success, require actual new run/artifact/Kb5 identities, system
+closures, unchanged six credentials/accounts/trust/disks/sentinels and normal
+resource/API/member/lease proof before separately selected canonical captures.
+Restore the exact prior root-user config (or its prior absence) through guarded
+public SSH and confirm the store has its original ro/nosuid/nodev state. A new
+boot may already restore the immutable mount policy; observe rather than assume
+it. If still rw, restore only the same proven private bind. Recheck identity and
+plain read/capture prerequisites after restoration. Record operator preparation
+as such; it does not become a declaration of either immutable guest source.
+
+A preparation or continuation failure ends this selected unit and holds capture.
+Preserve its native failure, exact candidate journal and any imported closures;
+do not undo imports/GC roots, activate an old profile, replay the Campaign or
+reset. Restore only the recorded operator config/mount changes when the current
+authenticated guest/run and absence of ongoing import permit it; uncertain
+identity or active work requires a hold, not blind rollback or cleanup. Later
+journal recovery remains separately selected. No application edit, checks,
+guest operation or new acceptance claim was made by this design assessment.
+
+### WORKING5 NULL PRIMARY: narrow fixture correction and finite capture disposition (2026-10-12)
+
+PROPOSAL for root source/operation selection. Native B5 update and its13-command
+post-proof remain successful evidence; CS remains failed without a PNG. The
+allowlisted `finish-working-delivery-location-flags5.json` binds instanceaa7bc9ad,
+run7325536f and artifactc7595a57 to B5, with dedicated network4 enabledtrue and
+association7 returning primarynull/autopickfalse/userpickfalse. The exact B5
+`fixtures/prepare.cjs:599` rejects that legitimate output before IP registration
+or disabling. This is a caller contract error, not evidence of a pickable pool.
+
+V939's owning contract is `api/models/location_network.rb:8-15`: before save,
+literal false becomes nil so its unique primary index permits multiple
+non-primary associations. `api/lib/vpsadmin/api/resources/location_network.rb`
+exports primary through its bool parameter and returns the saved record for
+Create and Index; the actual native null confirms serialization. Create's
+operation only sets primary_location when the saved association is primary.
+Neither changing the API nor repeatedly requesting false can make B5's guard
+work. A data-only workaround would contradict this supported model contract.
+
+Only application owners proposed: K `fixtures/prepare.cjs` and existing
+`tools/test-ip-inventory.cjs`. Accept primary only when `primary === false ||
+primary === null`; retain autopick/userpick exactlyfalse. Do not use truthiness,
+loose equality, nullish defaults or normalize the response. Missing primary,
+true, numbers and strings refuse. Continue requesting literal primaryfalse in
+the POST and leave every other resource/permission/identity check unchanged.
+
+The existing HTTP fixture must represent the actual callback: new POST with
+primaryfalse returns primarynull, and retained non-primary records default to
+null. Cite the owning V model in the test rather than inventing a coercion rule.
+Exercise both new and retained null, explicit false compatibility, and a disabled
+valid-null rerun with no writes. Table-test missing/true/0/1/string primary and
+missing/null/true/numeric/string autopick or userpick: refuse before IP POST or
+network disable. For new association responses, the association POST itself may
+already have succeeded; do not assert that nothing was created. Preserve the
+full API7 wire paths, namespaced filter/pagination assertions and literal false
+request assertion. Extend the same existing fixture tests, without a new
+database/browser framework, to retain representative wrong charge/prefix/address
+and enabled-flag refusals before disable; no further production fix is supported
+by this source inspection.
+
+Remaining fixture-output trace, separate from unexecuted future capture:
+
+| Fixture expectation | Owning contract and conclusion |
+| --- | --- |
+| VPS1CPU/1024MiB/zero swap/4096MiB, member/node/location IDs | VPS resource params expose the four cluster resources (diskspace is total_diskspace); resourceId handles association object or scalar ID. Existing real creation and strict tuple checks stand. |
+| Dedicated pool role/purpose/address/prefix/managed/enabled | Network common params expose enums as strings and integer prefixes; model requires managed/enabled actual booleans. Keep exact checks and enabled creation; null accommodation applies only to association primary. |
+| Detached203.0.113.10/32, size/ownership/charge | IpAddress.Create parses the supplied CIDR and requires the user's location to belong to the network. IpAddress.register derives charged_environment from that location, charges one IPv4 unit transactionally and creates the allocation without an interface. Output addr omits the CIDR suffix, prefix is integer32 and charged_environment is an association. |
+| Correct charge/quota environment | K test.nix selects Production/Praha; production-shape declares userIpOwnershiptrue. Its standard package has one IPv4 and captureUserResourceHeadroom adds one. seed-production-shape.rb adds these values, yielding two units for the assigned VPS and detached address; it does not bypass quota. |
+| Existing assigned enabled IPv4 | IpAddress.Index's namespaced vps/version filters join the VPS interface/network; Ip::Allocate records the VPS owner in the ownership-enabled Production environment. Primary network enabledtrue remains mandatory. |
+| Disable and bilingual rerun | Network.Update returns the saved boolean false without reassigning existing service. The fixture rereads through the administrator, validates owner/null-interface/charge, and performs no duplicate charge or reenablement on a complete disabled rerun. |
+
+Relevant server owners inspected are the location_network operations/resource,
+network resource/model, ip_address resource/model(register), Ip::Allocate and
+VPS/node/location resource outputs. K owners include production-shape.json,
+seed-production-shape.rb and test.nix seeding. This identifies no additional
+incompatible output assumption; actual remaining IP creation/quota/disable and
+both language captures are still unproved, not certified by mocks or source.
+
+After one logical fix is committed/published, use the existing hosted Check
+(`nix develop --command bin/check --allow-missing`, which invokes
+`node tools/test-ip-inventory.cjs`) and affected committed review under the
+standing no-local-CI rule. Root owns the mechanical exact E selection and normal
+composition evidence; no workflow, dependency, V/OS, engine or SSH batching
+change belongs to this remedy. Reuse unaffected accepted evidence.
+
+There is **no supported image-free source switch**: Software.prepare/build and
+Engine.update bind a new artifact to the changed fixture/source digest and build
+its services image. Resume requires the matching old source; a changed capture
+package cannot claim B5 generated it. Ordinary update remains supported, but
+retains candidate construction/import and full path verification costs even if
+most paths already exist. The observed44-minute import is not addressed here.
+
+Recommended finite finish disposition is one sequential fresh replacement,
+only if root separately selects its destructive boundary: seal the B5 successes,
+failed Campaign/captures and private evidence/continuity backups; ordinary public
+stop must prove complete owned exit; only then public reset of this disposable
+instance, followed by freshly admitted public start at the corrected immutable
+source. Preserve source/metadata receipts and failure evidence outside reset.
+Keep4+4GiB guests,4GiB sequential builder and8GiB image/root/tank; never overlap
+two pairs. Credit only actual verified released allocation, not an assumed reset
+or immutable-store GC. Existing images still occupy host space. A refused stop,
+reset or fresh capacity check holds the route; this proposal authorizes none.
+
+Use the new source's genuine accepted guest identities/closures, TLS/API/member,
+lease and resource proof before direct same-source CS/EN captures and strict
+validation/export. Existing lifecycle proofs remain attributed to their original
+generators; no new completed Campaign receipt is fabricated. Preserve new G
+through later media commit M, visual review and exact-media hosted strict Check.
+One native failure ends the selected unit without automatic retry/reset/upscale.
+Root may retain B5 instead if replacement is not selected; then capture remains
+blocked. Only this design was appended; no application or runtime work occurred.
+
+### WORKING5 REPLACEMENT CHOICE: current named-disk accounting (2026-10-12)
+
+Recommendation: select **one sequential replacement**, contingent on a sealed
+private evidence backup, ordinary proved stop, explicitly selected public reset
+and fresh admission. Do not select another same-instance update at these disk
+figures: it retains the old writable disks and repeats the supported expensive
+closure-import proof. There is no source-attested image-free switch. This is an
+operational proposal, not permission to stop/reset or a claim of available fit.
+
+Current/absent markers and roster17 matched saved architect0 settings. The
+restart observation5 binds B5/run7325536f/artifactc7595a57 and records both QEMUs;
+it is not a new guest-health or stop proof. Read-only lstat of only the named
+disks from update-admission5 matched every retained device/inode, UID1000 and
+ordinary0600 file. No contents, credentials, process probes or guest operations
+were read/run. The changed figures are small additional allocated tank extents:
+
+| Current named writable growth | Bytes |
+| --- | ---: |
+| G4 tank | 17179869184 |
+| G6 tank | 17179869184 |
+| isolation3A tank | 17177071616 |
+| isolation3B tank | 17165471744 |
+| G13 tank | 8586313728 |
+| Other retained growth total | 77288595456 |
+| Working5 tank remaining growth | 8195731456 |
+| Working5 root allocated / remaining growth | 8590065664 / 0 |
+| Working5 tank allocated | 394203136 |
+| Working5 allocated total | 8984268800 |
+
+All other named writable roots are fully allocated. Old immutable image holes
+are not future writable obligations; their existing allocated bytes already
+reduce free space. No old state or image is removed by this proposal except the
+separately selected disposable working5 tree through its own public reset.
+
+Against root's supplied free113633284096B, current retained growth plus the
+unchanged16GiB reserve totals102664196096B, leaving10969088000B (10.216GiB) for an
+update. That is below the previous fixed14.443GiB construction assessment. The
+old observed net peak11.521GiB is also greater; neither observation is a future
+bound and neither supports lowering headroom to make this update fit.
+
+If, and only if, public reset actually releases working5's8984268800 allocated
+bytes and removes its8195731456 future-growth obligation, conditional free above
+the remaining other-growth+16GiB reserve becomes28149088256B (26.216GiB), before
+backup bytes and unrelated host changes. This counts freed allocation and removed
+obligation separately, once each. It does not reclaim store outputs, presume GC,
+credit G14 again or certify that unlink has released blocks while descriptors
+remain. Root must measure actual free space after complete exit/reset/backup.
+
+Use separate phase peaks for the fresh same4+4GiB/8GiB-disk profile:
+
+1. Construction has no runtime guests or writable replacement disks yet.
+   Software.prepare/build finishes before start_locked spawns the runner. Retain
+   the prior4GiB image +4GiB possible publication copy + measured staging and
+   separately missing permanent closure + fixed3GiB assessed uncertainty as a
+   reference, currently14.443GiB using the old missing-path numbers. These missing
+   paths may now be cached, but new source/package facts must establish that;
+   take no assumed reduction. The actual prior image3615162368B supports the
+   physical4GiB estimate, not an8GiB logical-length bound. Scratch remains unknown.
+2. Runtime provisioning retains one new immutable image and creates one fully
+   copied8GiB root plus an8GiB tank. Charge the whole new16GiB writable extent
+   once, including future sparse growth. With a4GiB physical image assessment,
+   the same3GiB uncertainty and prior284797424B permanent-missing reference, this
+   phase is24980859376B (23.265GiB), leaving about2.951GiB before backup/new
+   closure differences. Do not add construction's transient publication copy
+   and staging again once actually gone. If remnants overlap provisioning,
+   their measured/assessed bytes belong in this phase; no assumed cleanup credit.
+3. Capture reuses that pair/image/root/tank. Deduct actual writable allocations
+   and retain their remaining growth, plus measured evidence/browser/log output.
+   Do not recharge a24GiB fresh extent or rebuild for the second language.
+
+For comparison, the full logical24GiB image/root/tank extent alone would leave
+only2.216GiB, before new permanent closures/backup/headroom. Thus the route is
+plausible under the established monitored physical-image assessment, not a
+guaranteed worst-case fit. Dense/larger image or retained staging, other host
+consumption and builder scratch can still refuse it. Keep the3GiB assessment
+fixed; do not progressively reduce reserves/headroom. Root's existing watcher,
+phase accounting and owned cancellation retain their limits, especially no
+guarantee of immediate Nix-daemon cessation. No new allocator/monitor is proposed.
+
+The minimum backup is evidence, not a bootable disk clone: preserve the failed
+Campaign and successful runtime/B5 update/post-proof receipts unchanged; retain
+all owned non-disk reset-tree records, source/artifact/config/launch/disk receipts,
+private six credentials/accounts/trust and native diagnostics/fixture outputs
+outside the reset target, with checksums, original path/identity metadata and
+private permissions. Preserve result-link targets as provenance without copying
+store trees. Root measures backup size and verifies the backup before reset.
+Secrets remain private and no backup receipt confers adoption authority. This
+deliberately discards disposable guest database/VPS disk contents; B5 cannot be
+resumed from that evidence backup. A full same-filesystem disk copy would consume
+roughly the release being relied on and needs a different capacity decision;
+do not quietly take that backup and still claim the release credit.
+
+After final source/hosted/affected-review gates, the selected public stop must
+prove complete runner/descendant exit; a refusal holds reset and replacement.
+Then public reset, fresh measured capacity and one fresh public start create
+new source/artifact/run/credentials without transplanting any old identity or
+Campaign receipt. New package/kernel/missing-closure facts, measured backup,
+post-reset free/store/scratch placement and RAM/shm are the remaining admission
+facts. Builder4GiB is sequential with the8GiB runtime pair; no simultaneous pair.
+Require fresh guest/source/TLS/API/member/lease/resource proof before direct
+same-generator CS/EN capture, strict inventory/export and visual acceptance.
+Existing lifecycle/import proofs keep their B5/G6cfd attribution and need no new
+historical campaign. One native failure holds the selected unit; no automatic
+retry/upscale/reset or source substitution. Root owns the concrete operation
+selection. Only this design appendix changed.
+
+### FINAL TARGET RECONCILIATION: preserve G while preparing current integration heads (2026-10-12)
+
+READY as a source-only proposal for root, not branch, deployment or operation
+acceptance. Current slug, both absent environment markers and live roster17
+matched the retained architect0 Astra/xhigh/workspace_write binding. This
+checkpoint supersedes no failed receipt or WORKING5/6 operation. Only design.md
+is appended; the frozen M/E review and watcher remain their owners' work.
+
+The allowlisted public-start6/post-start6, direct-capture7/proof, visual-media7
+and working6-stop7 receipts establish genuine Gd0b4f407 source/closures,
+TLS/API/member/lease, packaged CS/EN/default-CWD captures, typed fixture,
+strict full inventory/export and final ordinary complete stop. Runner and15
+children are gone; disks remain. They do not establish a completed G Campaign,
+an M guest, current production deployment or freshness of every retained image.
+The original failed CS attempt and its unknown cause remain recorded.
+
+The exact Gd0b4f40708cc8b59aab7c91ae05fba695abc233c is M706b9d8's direct parent.
+Their diff contains only captures.json and the two networking/ip-address-list
+PNGs. Keep M706b9d8c18edde528af4fb5279786491aedd47fa and its K application,
+fixture, runtime, lock and contract bytes unchanged. K's own flake:5-7 selects
+V939159f27b5d627930281d5fac0c0aa9ba53bfc7 and OS6bdf458. This remains the
+canonical consumed graph, even when a patch-equivalent V feature moves onto
+the current production target. Preserve V939 under a dedicated exact published
+retained ref BEFORE rewriting its existing feature ref: the inspected local
+and origin-tracking refs currently expose it only through that feature branch.
+Retain G through the unchanged published M ancestry and the frozen receipts.
+Do not substitute new V/M metadata for G or regenerate images just for unrelated
+default advances. K runtime-contract's Source proof/Source and artifacts and
+webui-change-workflow sections2-4 require truthful exact selection, not equality
+with every other consumer's newest target.
+
+The smallest target preparation, after root releases the frozen review refs:
+
+| Owner | Necessary action and source evidence |
+| --- | --- |
+| V | Rebase the same four logical feature commits from base8a50010 onto master7d911899. The two upstream commits change packaged HaveAPI dependencies and services-up documentation tests; their changed-path set has NO intersection with the feature. Preserve the migration and feature bytes, prove range-diff equivalence and publish the resulting V head. This inspection predicts a clean rebase; none was executed. |
+| D | Rebase the existing three-commit series from17222c onto master1a27453. Upstream leaves libexec/workspace-host, its streaming tests, operation_state_test.go, flake inputs and host-path declarations unchanged. Shared docs/workspace-portal.md hunks are separate. In operation_state.go, upstream adds archived-mode validation at273, while the feature retains the transition guard/original deadline and adds the post-proof deadline check around341. Upstream server_test.go changes other tests, not the two completed-delete retry cases. Preserve all newer archive/portal/artifact behavior and prove patch equivalence; a real semantic conflict goes to the implementer rather than being discarded. |
+| C | Rebuild the TWO existing channel-pin commits on master1697613 with normal confctl generation, after final V is published: channel/role vpsadmin/vpsadmin selects that V; vpsadmin-webui/vpsadmin-webui remains exact W30cce68142. flake.nix:103-111 owns these mappings; WebUI's vpsadmin follows vpsadminServices. Preserve current monitoring, staging OS, web and devWorkspace1a27453 changes. Do not resolve a lock conflict by restoring an old whole lock or hand-editing nodes. Keep generated changelogs and one final commit per existing pin stream. |
+| E | Once rebased D is published, change only its exact dev-workspace selector and generated lock, folding that into the existing single paired-input commit. Keep K=M706b9d8, its complete independent graph, ordinary devcluster sibling graphs/follows, and the provider commit's content/message unchanged. flake.nix:6-7 selects D/K independently; there is no K follows to E's ordinary V/OS. Retain two logical E commits, not another superseded selector tail. |
+
+Wnetworkce856841 is already an exact ancestor of current main7152729 through
+external integration. W30cce681424b866f6a51cbc0a1e4daa226ed33fc07 has that exact
+main as its parent and remains unmerged PR39. Neither needs source work or a
+rebase at these recorded targets. Preserve both histories and W30's existing
+review/native evidence; root's eventual fresh fetch can detect later movement.
+
+HaveAPI compatibility is concrete source evidence. Comparing tags
+v0.29.8=22fae15809b37e66ffea53a1162544e6321d09ab and
+v0.29.9=784e113c216b16586c482e710ee4a0e0a04e6f8e shows documentation packaging,
+release/version updates and an ENOENT-to404 guard only for /doc/json-schema
+(servers/ruby/lib/haveapi/server.rb:533). Action, parameter, metadata, pagination
+and model-adapter logic are unchanged. action.rb:688-732 still separates the
+singular input namespace from _meta; actions/paginable.rb still caps namespaced
+limit at1000; actions/default.rb:14-28 keeps _meta[count]/total_count. Protocol
+version stays2.0. V api/lib/vpsadmin/api.rb:3 still selects API7.0, and the
+location_network model's false-to-nil callback remains unchanged. Thus the
+actual K /v7.0 routes, namespaced filters/limit, nullable primary and strict
+autopick/userpick/enabled output assumptions have no identified new conflict.
+This is not a running .29.9 API or packaging certificate; the new V packages
+must retain their own hosted evidence. No source finding requires K to repin.
+
+Keep deployment and rollback boundaries explicit. V's existing
+docs/upgrade-network-availability.md remains authoritative: migration
+20261006120000 directly follows20260914190000, adds NOT NULL/defaulttrue, and
+has already been consumed by disposable/preview systems. Do not rewrite it or
+invent production/release consumption. Apply schema before enforcing writers;
+replace all old allocation writers before disabling pools, then deploy capable
+interfaces. Older writers ignore the flag; schema rollback loses policy.
+No node-protocol or coordinated OS update is introduced by these rebases.
+D's rebase must preserve upstream lifecycle formats; it supplies no promise of
+rolling an installed package back across newly created upstream archive state.
+
+E source selection does not activate the runtime. The current workspace's
+flake.nix:8 overrides D to1a27453, matching C's current devWorkspace selection.
+Leave that pair unchanged in this integration-preflight scope. A later decision
+to install new E/D must align the workspace's direct nested D selector and C's
+dev-workspace/devWorkspace channel, then run the existing deployment-contract
+check. Merely updating E's lock cannot override the consuming workspace's D.
+This is a deployment prerequisite, not a reason to expand this source plan or
+change K, its guest, or the generated media.
+
+Verification is finite and respects NO LOCAL CI. Root's quick source work is a
+fresh target inventory, preserved V/G reachability, V/D range-diffs and complete
+histories, unchanged migration blobs, C semantic channel/lock comparison and E
+provider/K/sibling graph comparison. These checks distinguish patch equivalence
+from exact consumed source. For changed heads use the existing hosted V API,
+migration/PHP and selected CI evidence, including services-up's packaged shared
+documentation check introduced by7d911899; D's Check fast package/streaming/Go
+contracts; and E's ordinary composition/provider/host-path checks at the final
+D selector. Do not add host-migration or guest-capture campaigns for this
+patch-equivalent target move. C has only daily-update workflow, so do not call
+its pins configuration-tested without an actually selected owning check; any
+later deployment retains its normal build/admission gate.
+
+Reuse the unchanged M source/runtime/strict-media watcher and real G receipts;
+their final acceptance remains root/reviewer-owned, not inferred here. After
+the changed-head quick gates, give the retained reviewer only the affected
+rebase/composition delta plus final whole-branch/consolidation/migration
+inventory. Earlier frozen review is not certification of newly rebased heads.
+No compatibility blocker was found in the inspected upstream delta. Remaining
+gates are actual rebase/lock results, published retained V proof, final hosted
+and affected-review acceptance, and explicit repository/target integration
+approval. V/D/C/E/K defaults and W30 integration remain unapproved; W's already
+integrated feature is historical fact. No deployment, KB publication, session
+closure, cleanup or new runtime operation follows from this checkpoint.

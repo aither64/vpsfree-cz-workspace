@@ -6,7 +6,759 @@ lifecycle: active
 
 ## Status
 
-### Current phase (2026-10-11, source accepted; reduced-runtime handoff)
+### Working delivery qualification (2026-10-12)
+
+**Real bilingual media is now generated, strictly validated, visually inspected,
+committed and published.** Generator Gd0b4f407 is retained as the parent of media
+recording M706b9d8c18edde528af4fb5279786491aedd47fa; the inventory preserves G's
+actual instance/run/artifact and immutable source. E selects M at
+dc94c8f60b4e869ce738f4c242459cc5cadf1b3d. K has three logical commits (canonical
+V input, reviewed runtime generator, genuine generated media); E retains two
+(final consolidated paired input and unchanged provider). No application code
+changed after the completed null-primary review.
+
+- Complete: null-primary correction, exact source/package checks and independent
+  four-lane/full-history/native review; Number Advisory remains accepted/unfixed.
+- Complete: B5 ordinary stop, sealed 122-file/four-link private backup and owned
+  reset; disposable raw disks discarded, historical receipts/trust retained.
+- Complete: fresh corrected-source working6 public start native0; actual guest
+  source/system closures, 8GiB image/root/tank identities, measured resource
+  headroom, TLS/API/current-user/ordinary-member PHP and public live lease.
+- Complete: actual packaged CS and EN captures plus EN output-CWD recapture,
+  numeric cpu1/memory1024/swap0/disk4096 result and dedicated disabled/detached
+  fixture, strict full inventory, locked five-file export and visual inspection.
+- Complete: carryback only two generated PNGs and their candidate inventory;
+  original generator/run provenance preserved. Both K worktrees/E are clean.
+- Complete: ordinary final working6 stop native0; complete runner/all-child
+  exit and absent resource claim/socket namespace independently checked with
+  the owning SDK. State/disks/evidence retained; no reset or other-state action.
+- Complete: final exact K source/runtime and explicitly dispatched strict-media
+  checks, plus paired E source/package checks, all terminal success. Root matched
+  all36 collector hashes, exact native identities/steps and raw counters in
+  [final hosted acceptance](finish-media-hosted7-acceptance1.json).
+- Complete: reviewer7 source/media/composition/full-history/native assessment reports
+  no new findings; independently readable typed fixture supplement confirms
+  actual JSON integers1/1024/0/4096. Reviewer independently matched all36 hosted
+  artifacts, native steps/raw counters and strict120-PNG inventory success.
+- Complete: V and D rebases are clean and patch-equivalent (all four/three
+  range-diff entries equal); V's exact consumed939159 source is preserved in
+  published retained-network-capture-v939159f2. Migration/database blobs match.
+- Complete: C owning two final confctl selectors on current master, E D selector
+  folded into its paired-input owner; all four new feature heads published.
+  Current final V f778f762, D16d949b, C961f5b61, E78463762; K M706b9d8 unchanged.
+  [Current-target inventory](finish-final-target-inventory8.json),
+  [C semantic proof](finish-final-target-c8-proof.json),
+  [E composition/provider proof](finish-final-target-e8-proof.json).
+- Running: affected final target review8 under retained reviewer0 and exact
+  changed-head hosted native collection. No application/guest/media changes.
+- Remaining: changed-head native results and affected review closure, then
+  named-default integration handoff. C pins are mechanically reconciled;
+  no configuration build/deployment claim.
+- Risk: first packaged CS attempt failed before scenario/PNG and discarded the
+  original exception. Cause is unestablished. Unchanged exported core succeeded;
+  a subsequent finite genuine packaged CS/EN/default-CWD/strict pass is retained
+  separately. The first failure is not erased or claimed repaired. Only these
+  two PNGs are fresh; full strict inventory does not make all120 images fresh.
+- Next: close changed-head checks and affected review under the implemented
+  [current-target plan](design.md#final-target-reconciliation-preserve-g-while-preparing-current-integration-heads-2026-10-12),
+  then present concrete named defaults for integration approval. Wnetwork is
+  already externally integrated; W30 is based on current main and needs no
+  rebase. No default integration, deployment, activation, production KB write
+  or session lifecycle is approved.
+
+Current authoritative phase checklist:
+
+- [x] Implement and independently review corrected runtime/fixture source.
+- [x] Generate and inspect genuine CS/EN PNGs; preserve exact generator evidence.
+- [x] Stop the working6 pair normally; retain stopped state/disks/receipts.
+- [x] Close final strict-media/source/package hosted checks and independent review7.
+- [x] Prepare and publish current-target patch-equivalent V/D and owning C/E pins.
+- [ ] Close changed-head hosted evidence and affected review8.
+- [ ] Present concrete named-default integration decision.
+- [ ] Integrate approved repository/default set, if directed; remain active otherwise.
+
+The older phase checklists below are historical checkpoints, not unfinished
+instructions to replay superseded campaigns.
+
+[Final native captures/export](finish-working-delivery-direct-capture7-proof.json),
+[visual and carryback acceptance](finish-working-delivery-visual-media7-acceptance.json),
+[public five-file media packet](finish-working-delivery-media7/),
+[real post-start proof](finish-working-delivery-post-start6-proof.json),
+[ordinary final stop and exit proof](finish-working-delivery-working6-stop7-proof.json),
+[retained first failure](finish-working-delivery-capture-failure6-disposition.json),
+[final composed selector](finish-media-e-pin7-proof.json),
+[complete final six-project inventory](finish-media-inventory7.json),
+[completed original source review](finish-capture-primary-null-review1-disposition.json).
+
+The source-remedy checkpoint and B5 provenance below are retained history.
+Their old phase/head summaries do not replace the current phase above.
+
+Portal artifact registration remains limited by the ordinary command's
+"session creation is unfinished" refusal. Existing session identity/start was
+previously verified; no journal/manifest repair or recreation is selected.
+Local evidence links remain usable. Final worktree comparisons have been saved
+with the normal capture-comparison command at the current exact heads.
+
+Current phase: corrected nullable-primary source/package proof and affected review.
+The two-file correction is published as Kd0b4f40708cc8b59aab7c91ae05fba695abc233c,
+paired with E87908ab13a1c01d7f4117d70a70606e6854c2450. Only the primary guard
+changes; selected-server fixture modeling and42 consuming cases retain strict
+pickability, address ownership and disable/refusal ordering. All258 other K
+paths are unchanged. Genuine B5 is retained at published
+retained-network-working-gb5e39e6f. Both K worktrees and E are clean, complete
+six histories remain4/1/2/2/3/2 without merges; E provider patch is equal.
+Fresh Luna/low watcher owns the exact current hosted Check batch. Both K checks
+38300188331/38300188489 are terminal success atd0b4f40; root inspected actual
+steps and raw106/106 inventory plus all zero-failure/error/skip native suites.
+E38300317573 completed success in both declared steps. Root and reviewer0
+independently matched all27 closed artifacts/metadata/steps/raw arrays. Final
+four-lane source/history/composition/native review is complete with no new
+findings. Number Advisory remains accepted/unfixed; strict-media skipped.
+Operational corrected-package dry-run returned0 in33.5s: only seven tool wrappers
+and3 small fetched paths (1.5MiB download/7.6MiB unpacked), no image or kernel.
+Corrected tools realized in11.4s; all260 immutable source bytes/modes match
+exactd0b4f40. No image/guest built. Ordinary B5 stop with complete exit proof is
+selected as the next finite operation; no reset/new pair admitted yet.
+[Current K source proof](finish-capture-primary-null-k-quick-acceptance1.json).
+Architect0 completed the measured route comparison. Root selected one sequential
+working5 replacement after source/check/affected-review gates, complete public
+stop, sealed private non-disk evidence and measured public reset. Existing
+8.37GiB allocated writable disks and7.63GiB future growth are separate release
+terms; other retained obligations+16GiB reserve remain. Fixed3GiB uncertainty
+and separate construction/runtime peaks govern fresh admission; fit is prospective.
+Offline working6 config retains4+4GiB/8GiB disks and fresh disposable passwords.
+No new pair, stop or reset has been launched. A live backup stopped when an
+atomic process-receipt temporary file disappeared; partial private evidence is
+retained and complete backup will be sealed after proven ordinary stop.
+[Selected sequential route](finish-working-delivery-sequential-replacement6-selection.json),
+[offline config](finish-working-delivery-private-config6.json),
+[incomplete live snapshot](finish-working-delivery-working5-private-backup6-incomplete.json).
+Portal registration refuses a retained creation journal despite its ready state.
+Ordinary exact-session start --as-is --no-attach returned0 and the SAME root
+thread, but artifact registration still refuses. Keep the evidence locally;
+no session recreation, journal deletion or manifest bypass is selected.
+This incidental portal catalog issue does not alter source/cluster ownership.
+[Published correction](finish-capture-primary-null-publication1.json),
+[paired selector](finish-capture-primary-null-e-publication1.json),
+[current histories](finish-capture-primary-null-inventory1.json).
+
+Prior B5 completion and failures remain attributed below. Network disabling
+and the WebUI timeout fix are implemented, published and independently reviewed.
+Runtime-smoke5 passed at genuine K6cfd with native0,78 completed commands,
+real TLS/API/member PHP/public lease proof, ordinary stop/same-artifact resume and
+credential/account/trust/disk/image/sentinel continuity. Its immutable completion
+remains credited to that generator.
+
+The subsequent bilingual capture failed before PNG generation: flat fixture
+filters returned unrelated rows. The four singular-resource query filters and
+status-checked closure capacity producers are corrected. Independent final review
+of K424f/E dcbce found one Important: limit is resource input, not metadata.
+The exact requested two-path pagination remedy is published as
+K b5e39e6fe9b44d2c31800dce75ad287d85981844 /
+E 9205957052ba29c33d0875e457379213ae029ea8.
+Root's direct source inspection and focused native verification resolve it under
+mandatory-change-review step9; no redundant reviewer rerun or scope expansion.
+All258 other paths are unchanged from the original reviewed head.
+The inherited numeric-coercion Advisory remains accepted/unfixed; the actual
+fixture's numeric cpu1/memory1024/swap0/disk4096 tuple has been retained separately.
+
+Both exact corrected K source jobs and both declared paired E checks pass.
+All27 native collector artifacts and raw counters are reconciled. Inventory64
+tests pass; closure19/150 and selected SDK8/68/public5/58 pass with no skips.
+Broader D real-tmux and E supplementary-group skips retain their prior limits.
+Strict media remains skipped until fresh images. Complete six-project history
+counts4/1/2/2/3/2, no merges; final selectors consolidated.
+
+Current installed tool candidates are realized and all260 immutable source files
+match exact Kb5. Pure public planning proves unchanged4096/4096 runtime,4096
+builder, exact cached kernels,43 derivations and22 fetch paths; no kernel build.
+The separately admitted public update built its actual fixed8GiB candidate image,
+then returned native1 before import or old shutdown. Its journal remains at
+`preparing` for exact candidate c7595a57-6b7f-4e90-96f8-8179b5530530.
+Source selection does not relabel old G6cfd.
+
+- Complete: network behavior, WebUI timeout, source/package checks and review.
+- Complete: genuine one-pair runtime smoke, ordinary stop/resume and continuity.
+- Complete: bounded fixture filter/pagination and native closure df remedies.
+- Complete: fresh measured build admission and actual new candidate image build;
+  no resource cancellation or unexpected kernel compilation occurred.
+- Complete: the original failure was traced to the old guest's read-only store
+  and disabled `nix-command`. Guarded public read-only
+  findmnt proves /nix/store is a read-only bind of /dev/sda on the owned ext4
+  guest root, rather than a host virtiofs/shared store. The accepted architect
+  brief's ordinary SSH preparation returned native0: private bind writable,
+  plain path-info successful, immutable Nix config unchanged, prior user-config
+  absence privately recorded. Fresh continuation admission has107.700GiB free
+  against99.617GiB assessed requirement; retained growth/base reserve unchanged.
+- Complete: the exact already-built candidate continuation returned native0
+  after44m18s with no resource cancellation/wrapper failure. Import, old-run
+  shutdown and new candidate boot/readiness passed the public update gates.
+  Candidate run is7325536f-30e7-4bec-94f2-423f9b22faca on the same instance.
+- Complete: explicit candidate post proof returned0,13 completed commands,
+  new-source/closure and six-credential/account/trust/disk/sentinel continuity,
+  old complete exit, TLS/API/member PHP and live public lease verified.
+  Guarded restoration returned0: prior user-config absence and read-only private
+  store options restored; no imported closures or immutable config changed.
+- Failed: CS public capture returned1 after48s; no PNG accepted. The identical
+  exported-core diagnostic retained the original error privately. Guarded actual
+  API proof shows the dedicated association has primary:null, autopick:false,
+  userpick:false. V's model deliberately stores non-primary as null for uniqueness;
+  the fixture incorrectly requires primary strictlyfalse.
+- Current: architect's narrow caller/test correction and honest source/runtime
+  finish disposition. Remaining fixture output assumptions are traced against
+  actual server before another real attempt. No database/API output tampering,
+  source override or fake PNG provenance is selected.
+  A reused old working4 tracking filename refused before launch; its record
+  is preserved and the new operation uses unique working5 tracking/context names.
+- Remaining: public same-instance update/new-source attestation/continuity,
+  standalone CS/EN capture, strict validation, five-file export and visual review,
+  final media/pin evidence and named-default integration handoff.
+- Risk: actual fixture/capture fit remains prospective. The original
+  failed update remains failed; any separately selected public continuation
+  must reuse its exact already-built candidate. Failure
+  ends dependent work and preserves evidence; no failed-Campaign replay, second
+  pair, automatic upscale/reset or old-state cleanup is selected.
+- Next: correct only the nullable non-primary guard, obtain focused exact source
+  proof, then generate and validate real CS/EN images from its genuinely accepted
+  source. Preserve the completed B5 public update and real post proof.
+
+[Corrected native source/package acceptance](finish-capture-query-pagination-hosted1-acceptance1.json),
+[direct pagination finding disposition](finish-capture-query-pagination-step9-acceptance1.json),
+[final six histories](finish-capture-query-pagination-inventory1.json),
+[current immutable tools/source](finish-working-delivery-package-realize5-acceptance.json),
+[actual update failure and candidate](finish-working-delivery-public-update5-failure-disposition.json),
+[actual Nix prerequisites](finish-working-delivery-update-nix-prerequisite-diagnosis5.json),
+[private guest store mount](finish-working-delivery-update-store-mount-observation5.json),
+[guarded operator preparation](finish-working-delivery-update-guest-preparation5.json),
+[fresh exact-candidate continuation admission](finish-working-delivery-update-continuation5-admission.json),
+[successful native public continuation](finish-working-delivery-update-continuation5.json),
+[accepted actual candidate post proof](finish-working-delivery-public-update5-proof.json),
+[restored temporary guest settings](finish-working-delivery-update-guest-restoration5.json),
+[current same-instance capture admission](finish-working-delivery-operator-capture-working5-preparation.json),
+[actual earlier build observations](finish-working-delivery-original-build-disk-observation5.json),
+[bounded update/source design](finish-capture-query-update-design1-acceptance.json),
+[passed real runtime](finish-working-delivery-runtime-smoke5-acceptance.json),
+[failed capture](finish-working-delivery-bilingual-capture5-disposition.json),
+[live wire and numeric resource proof](finish-working-delivery-query-read-diagnosis5-acceptance.json).
+
+Earlier checkpoints below remain historical evidence, not current operations.
+
+The earlier public stop900 returned native1 after15m01.6s. At that timeout,
+the incomplete receipt retained the services QEMU, six virtiofs children and
+runner. That failed result is preserved separately from the subsequent
+user-authorized forced recovery and positive complete exit.
+[Final stop disposition](finish-working-delivery-final-public-stop1-disposition.json),
+[exact retained ownership](finish-working-delivery-final-public-stop1-retention1.json).
+
+The user instructed "continue and you don't have to ask to terminate stuck VMs".
+Root freshly validated the exact working3 ownership and sent one pidfd-bound
+SIGTERM to its services QEMU. The existing reapers completed; public stop returned0
+and exact proof has the runner/all14 children gone, own claim/socket absent and
+disks retained. The first verification wrapper had a missing relative Python
+interpreter before any child launched; its failure is preserved. The corrected
+absolute interpreter completed the public operation. The original failed
+Campaign hash is unchanged and is not relabelled complete. Root preserved
+private non-disk failure evidence and completed the presented sequential
+disposable-environment replacement within the accepted resource limits.
+[Recovery proposal](finish-working-delivery-forced-stop-proposal2.md),
+[prepared guard](finish-working-delivery-services-qemu-stop2-preparation.json),
+[user instruction and selected action](finish-working-delivery-services-qemu-stop2-approval.json),
+[signal result](finish-working-delivery-services-qemu-stop2-result.json),
+[complete recovery/exit acceptance](finish-working-delivery-recovery-public-stop3-acceptance.json).
+
+The finite workload observation returned no guest measurements and establishes
+no timer activity or pressure cause. Architect0's complete source brief at8440
+is accepted for an isolated reduced-services workload implementation only:
+MySQL256M/64connections/small per-session buffers, oneAPI worker/1..4threads,
+nested dynamicPHP maximum4 and just two metrics timers disabled for single+2GiB.
+Production/default4096MiB and other topologies retain inherited declarations.
+Implementer0 completed Nix and effective-projection coverage; root completed the
+short runtime-contract paragraph. All unchanged code/dependencies/evidence are reused.
+[Source acceptance](finish-working-delivery-services-profile-design1-acceptance.json).
+
+The three-path profile correction is committed/published as Kcd2cfac65, paired
+with E2e38a541. Both K worktrees and E are clean; the genuine consumed Gf467
+has its published retained tag. Both exact K source Checks and both E declared
+checks passed. Root independently inspected terminal jobs/raw counters and all51
+collector artifact hashes. The fresh Luna/low watcher has completed; three
+Managed VM workflows were cancelled and supply no integration result.
+Retained reviewer0 Sol/xhigh/read_only completed all four affected lanes with
+no findings, including selected E composition and complete-history/migration
+conclusions. Unchanged reviews were reused after exact reconciliation. The
+reviewed immutable tools are prepared at working-package3; root independently
+matched all260 source blobs/modes and the runtime/capture/validator metadata
+pairing. Only the seven planned small wrappers were built, with7.6MiB of tool
+fetches. No profile image or guest was built during package preparation.
+The subsequent continuation has complete recovery/exit, a verified private
+200-entry non-disk evidence backup and successful public reset of working3 only.
+One working4 configuration has fresh passwords and the same2GiB/8GiB profile.
+Fresh host/KVM/registry/lifetime and public Nix kernel/cache planning passed.
+Luna/low now owns exactly one real runtime-smoke, with short private TMPDIR,
+one build job/core and the existing reserve monitor. The actual8GiB image build
+precedes its two guests; no old pair overlaps and no kernel compile is planned.
+[Source inspection](finish-working-delivery-services-profile-source-inspection1.json),
+[publication](finish-working-delivery-services-profile-publication1.json),
+[closed native acceptance](finish-services-profile-hosted1-acceptance1.json),
+[affected review assignment](finish-services-profile-review1-assignment.json),
+[completed review disposition](finish-services-profile-review1-disposition.json),
+[immutable package/source binding](finish-working-delivery-package-realize3-acceptance.json).
+
+[Working3 private backup](finish-working-delivery-working3-private-backup1.json),
+[successful working3 public reset](finish-working-delivery-recovery-reset2.json),
+[fresh construction planning](finish-working-delivery-planning-batch3-acceptance.json),
+[one admitted runtime attempt](finish-working-delivery-runtime-smoke4-preparation.json).
+
+Applying this genuine new artifact has no supported offline same-instance
+prepare route. Preserving the sequential2GiB-builder/4GiB-runtime limit requires
+recovery, complete public stop, private evidence backup and public reset of only
+the disposable working3 instance, followed by one sequential fresh image/start.
+User continuation authorized that presented sequence; root recorded its scope
+and admitted working4 after fresh facts. There is no RAM increase or concurrent
+pair. A native failure ends this attempt without replay or automatic upscale.
+The first actual CS window failed after its numeric host/guest gates passed.
+Its generic packaged diagnostic does not identify the cause or prove fixture
+mutation absent. EN/default-CWD/strict validation/export/visual acceptance were
+not reached and no fresh canonical PNG is accepted. A separate read-only
+original-consumer diagnosis passed public lease, both guest source/closure
+checks, Chromium and CS member login; its root summary KeyError after successful
+proof publication remains an overall helper failure. Window2 then failed at
+mandatory services SSH before invoking capture/provisioning. A diagnostic with
+the original5s timeout recorded TCP establishment followed by SSH-banner timeout;
+no remote facts returned. Passive process/log counts establish no cause. The
+accepted source-only diagnosis says there is no established no-build correction
+within the current resource/operation boundary; do not repeat capture/lifecycle
+campaigns or infer sustained2GiB profile fit.
+Ordinary public
+stop900 and same-artifact resume900 passed. Root independently checked14 native
+output hashes: the original runner/all14 children are gone, own claims/socket
+namespace absent, same instance/artifact resumed with a fresh run, all six
+credentials/accounts/trust/disks/image unchanged, and real member TLS/API/PHP
+read passed afterward. Dedicated sentinel content continuity is unproved because
+prior services SSH refusals prevented those writes.
+
+The original runtime-smoke remains an immutable/incomplete Chromium long-TMPDIR
+failure. Separate real member/live-lease proof and the completed ordinary cycle
+are honest public-operation evidence; no completed Campaign receipt is forged.
+The selected capture window uses short private TMPDIR and one guarded temporary
+node reserve1048576->65536KiB, unchanged actual positive capacity thresholds,
+genuine same-source CS/EN captures and explicit restoration to1048576. No source
+policy change, stock-profile fit claim, extra image/pair, builder overlap, RAM
+increase, force or reset is authorized. Strict/export/visual acceptance and final
+ordinary stop remain pending. Root independently matched all16 capture-window
+native stream hashes. [Capture disposition](finish-working-delivery-operator-capture-window1-disposition.json),
+[Read-only diagnosis selection](finish-working-delivery-capture-read-diagnosis1-preparation.json).
+[Read-only outcomes and helper qualification](finish-working-delivery-capture-read-diagnosis1-disposition.json).
+[Exact-entry acceptance](finish-working-delivery-capture-entry-equivalence-acceptance1.json),
+[Window2 disposition](finish-working-delivery-operator-capture-window2-disposition.json),
+[Same-transport banner timeout](finish-working-delivery-services-ssh-observation3.json).
+[Ordinary-cycle acceptance](finish-working-delivery-public-continuity4-acceptance.json),
+[Actual cycle proof](finish-working-delivery-public-continuity4-proof.json),
+[Selected capture window](finish-working-delivery-operator-capture-window1-preparation.json),
+[Accepted preparation boundary](finish-working-delivery-operator-capture-preparation-acceptance1.json).
+
+The previously approved single-QEMU recovery is complete: original reapers
+proved all14 children gone, public stop/reset succeeded, and158 private
+nondisk evidence files remain preserved. No other retained environment changed.
+
+Network disabling is implemented and source-verified. The active work is the
+real reduced runtime and genuine bilingual screenshots. The API blocker was
+the fixture caller's `/v1` prefix against the selected API7.0. Separate genuine
+TLS/API7 and ordinary-member PHP reads passed on the existing G87d guests.
+The original API7 correction at K8de/E3092 passed all three source gates.
+The direct malformed-response remediation is now published at Kf467934d,
+paired with E9f75a28e; all three exact-head checks pass.
+Independent review found a bounded diagnostic leak on malformed API response
+bodies. The direct two-file correction is complete; unchanged source/history
+review conclusions are retained. Focused inspection and hosted47/47 regression
+proof resolve the Important finding under step9. [Resolution](finish-working-delivery-api-diagnostic-step9-acceptance1.json). The failed campaign stays
+immutable. In the previous working2 environment, services SSH banner and
+API/console health failed. Its separately admitted public stop900 ended exit1
+after901s: owned
+  shutdown was incomplete. That historical proof remains unchanged. The later
+  explicitly approved single-QEMU recovery completed the original reapers,
+  followed by successful public stop/reset. [Recovery](finish-working-delivery-recovery-reset1.json).
+  [Original stop and retention](finish-working-delivery-health-stop2.json). No completed
+qualification or fresh screenshot is inferred from that historical environment.
+
+- [x] User accepted the complete finish plan, including working screenshot tooling,
+  and clarified that a failed attempt is not completion.
+- [x] Current identity and retained roster17 verified. All prior exact source,
+  review and package evidence remains retained.
+- [x] Final upstream reconciliation is published without application conflicts:
+  V939159f2, D0a422d1f, K87d51f0f, Ee5e8db20 and C4caeeb1a. All seven
+  V/D feature patches and the E provider remain patch-equivalent. K/E/C pins
+  are canonical and their owning dependency graphs agree; unchanged roots
+  and configuration nodes are preserved. W30 remains cce68142 on current main.
+  [Rebase proof](finish-working-delivery-rebase2-proof.json),
+  [input graphs](finish-working-delivery-e-graph1.json),
+  [complete source inventory](finish-working-delivery-inventory2.json).
+- [x] All ten exact source Checks succeed, including V API topic-parallel
+  38147474669 with all27 jobs successful. Both K and paired E/D checks pass.
+  Root independently read terminal native identities, jobs, logs and collection
+  exits, and matched all290 evidence hashes. Prior independent conclusions are
+  retained only for unchanged patches and mechanical input updates; no new full
+  review assigned. [Acceptance](finish-working-delivery-source-hosted1-acceptance.json).
+- [x] Architect0 recorded the accepted working-delivery brief at design.md:7280;
+  root read it with no discrepancy. Actual blocker repairs remain bounded.
+  [Brief acceptance](finish-working-delivery-design1-acceptance.json).
+- [x] The final K87d immutable verifier/runtime/capture/validator package is
+  prepared: seven wrapper derivations, no image or guest, all260 source blobs
+  and modes verified against Git. [Package binding](finish-working-delivery-package-realize1-acceptance.json).
+- [x] Independent preparation is complete: the public reduced-profile projection
+  and actual builder memory match 2048MiB, no kernel compilation is planned,
+  and 66 missing cached paths total390366488NARbytes. A fresh private configuration
+  has disjoint explicit ports and fresh credentials; no values were exported.
+  [Kernel/builder](finish-working-delivery-kernel-builder-proof1.json),
+  [closure facts](finish-working-delivery-missing-closure-facts1.json),
+  [private configuration proof](finish-working-delivery-private-config1.json).
+- [x] Read-only G14 proof confirms stopped/nonready, complete runner/all14-child
+  exit, own claim/socket absence and unchanged retained disks/trust. Existing
+  lingering user manager is active/running without queued unit jobs; its user
+  label `closing` is not used as manager teardown proof. One named manager exe
+  read was denied and is explicitly qualified; no privilege/configuration change.
+  [G14 retention](finish-working-delivery-g14-retention1.json),
+  [manager lifetime](finish-working-delivery-user-lifetime1.json).
+- [x] Current RAM/shm exceed the reduced margins. Disk admission remains
+  conditional on the separately approved G14 reset; no cleanup credit is taken.
+  Unknown image fit/scratch remain public fit/live-monitoring gates.
+  [Measured accounting](finish-working-delivery-capacity-observation1.json).
+- [x] The user's `continue` directly answering the concrete G14 reset question
+  authorizes that described next action. Fresh same-instance stopped/complete
+  runner/all14-child/claim/socket proof and all53 private backup-file hashes were
+  checked immediately before the public reset. It returned0; G14's cluster tree
+  and two old disks are absent. Original failed receipt and private non-disk
+  evidence are unchanged. Other retained environments and units remain untouched.
+  [Approval](finish-working-delivery-g14-reset-approval1.json),
+  [Public reset](finish-working-delivery-g14-reset1.json).
+- [x] The first real command refused before any lifecycle command because root
+  preparation bound capacity to the parent path rather than the exact campaign
+  path. Its three native commands were filesystem observations; no engine state,
+  image build or guest was created. The failed campaign and diagnostics are
+  preserved. This is a root-preparation correction, with product source unchanged.
+  [Diagnosis](finish-working-delivery-runtime-smoke1-diagnosis.json).
+- [x] Corrected capacity binds the exact new campaign2 root. Fresh named-file,
+  filesystem/RAM/shm/KVM/registry/port observations admit the same reduced profile:
+  1.89GiB remains after all construction charges, retained sparse growth,16GiB
+  reserve and8GiB assessed headroom. A fresh Luna/low watcher owns one separately
+  admitted runtime-smoke; no replay, upscale or automatic cleanup.
+  [Admission](finish-working-delivery-runtime-smoke2-preparation.json).
+- [x] Public start and all15 guest/source/resource assertions succeeded under
+  watcher2. The native runtime-smoke then exited1 at member-read-smoke with
+  `Inventory resource action failed`, before browser/lease-proof/stop/resume.
+  No capacity exhaustion is inferred. Root is diagnosing that exact request
+  through the existing public lease, without replaying the failed phase.
+  [Native failure](finish-working-delivery-runtime-smoke2.json),
+  [Allowlisted finding](finish-working-delivery-member-smoke-finding1.json).
+- [x] Bounded diagnostics prove both API7 identity requests and the actual
+  ordinary-member PHP read. Architect0 bounded the fix to the inventory caller
+  and full-wire tests; implementer0 froze exactly those two owners. Root inspected,
+  folded and published K8de17765, mirrored both K branches, retained genuine G87d
+  by published ref and changed only E's K input to produce E3092d272.
+  [API proof](finish-working-delivery-api-diagnosis2.json),
+  [Member PHP proof](finish-working-delivery-member-diagnosis3.json),
+  [Complete current inventory](finish-working-delivery-api-version-inventory1.json).
+- [x] The original API7 caller at K8de/E3092 passed both K Checks and paired E
+  Check. Retained reviewer0 completed all four source/history/composition lanes
+  and independently checked all33 native evidence hashes, with one Important
+  malformed-response diagnostic finding. Broader D counters are405/5463 and
+  140/1089 with declared12/3 skips; strict K media remains skipped.
+- [x] Root inspected the direct requested two-owner remediation at Kf467934d:
+  HTTP refusal precedes parsing, invalid successful envelopes have fixed errors,
+  and eleven regressions cover raw malformed bodies and invalid envelopes with
+  no parser cause, body, browser work or follow-on mutation. All258 other source
+  paths/modes match the reviewed original. E9f75 selects this exact K; provider
+  behavior is unchanged. [Focused inspection](finish-working-delivery-api-diagnostic-step9-inspection1.json).
+- [x] Exact K38161062346/K38161062355 and E38161386901 completed success.
+  Root independently matched all12 primary native hashes,12 zero collection
+  exits,3 valid ZIPs and exact checkout/selected K/D context. Both K inventory
+  suites pass47/47; selected E SDK8/68 and public5/58 pass without skips.
+  Strict media remains skipped. Focused step9 disposition is complete; no
+  unaffected review rerun. [Native acceptance](finish-working-delivery-api-diagnostic-hosted1-acceptance.json).
+- [x] Exact corrected immutable runtime/capture/verifier tools are prepared.
+  The dry-run selected only7 wrappers/metadata derivations and7.6MiB fetched
+  dependencies; realization succeeded in13.8s. Root independently matches
+  all260 immutable source blobs/modes to Kf467 and binds runtime, capture and
+  validator to the same new metadata. No image/kernel/guest was built or
+  launched. Package1 and genuine old Campaign evidence stay retained.
+  [Package/source binding](finish-working-delivery-package-realize2-acceptance.json).
+- [x] Separate helper1 refused because root reformatted descriptor bytes;
+  corrected helper2 preserved bytes but failed capture-lease services SSH
+  attestation. The actual public SSH diagnostic timed out before authentication,
+  and retained console HAProxy lines report unavailable API/console backends.
+  These establish degraded services health, not its cause or memory exhaustion.
+  [Descriptor diagnosis](finish-working-delivery-owned-lifecycle1-diagnosis.json).
+- [x] Ordinary public health-stop2 failed after901s with exit1 and retained
+  owned shutdown. Stored named proof preserves phase stopping, completefalse,
+  exact same runner and7 recorded children not proved gone. Node exited;
+  services QEMU and its six filesystem daemons remain unproved gone. Root's
+  first stop precheck confused an executable path with a process tuple and
+  refused before invoking stop; original evidence is preserved.
+  [Precheck diagnosis](finish-working-delivery-health-stop1-diagnosis.json),
+  [Current public-stop admission](finish-working-delivery-health-stop2-preparation.json).
+- [x] The user approved the concrete recovery by saying continue immediately
+  after the handoff. Fresh ownership proof and a pidfd bound the sole SIGTERM
+  to services QEMU. Its original runner completed all14 recorded children;
+  ordinary public stop returned0. Fresh stopped/complete/claim/socket proof
+  and158 private evidence files were checked before public reset returned0.
+  Only this disposable cluster's tree/disks were removed. Original failed
+  Campaign receipts and other retained environments/units remain unchanged.
+  [Approval](finish-working-delivery-forced-stop-approval1.json),
+  [exit proof](finish-working-delivery-recovery-retention3.json),
+  [reset](finish-working-delivery-recovery-reset1.json).
+- [x] Fresh corrected-source credentials are private; the same reduced profile
+  and ports are preserved. Current KVM/registry/port and host observations
+  passed, with no conflicting claims or guest launched. The existing user
+  manager remains active/running. Exact construction planning remains the
+  next admission gate. [Capacity observation](finish-working-delivery-admission-observation3.json).
+- [x] Exact corrected-source planning completed once: two2048MiB guests,
+  2048MiB builder, unchanged cached kernels,50 planned derivations and23 fetched
+  paths284858720NARbytes, with no kernel compile. Root matched16 native evidence
+  hashes. Fresh measured admission leaves3.15GiB after all charges, including
+  retained growth/reserve/headroom. One finite runtime-smoke is launched under
+  working3; failures retain evidence without replay/upscale/automatic reset.
+  [Planning](finish-working-delivery-planning-batch2-acceptance.json),
+  [admission](finish-working-delivery-runtime-smoke3-preparation.json).
+- [x] Corrected-source public start succeeded. The finite runtime-smoke then
+  failed on long Chromium TMPDIR; original failed receipt is unchanged and no
+  completed Campaign receipt exists. Short private TMPDIR repaired the browser
+  operation without source changes. Separate genuine member/TLS/API and public
+  lease proofs passed; no Campaign completion is inferred.
+- [x] The separately selected ordinary stop/resume cycle passed after exact
+  runner-control authentication and fresh6/5 host admission. Full source/artifact,
+  six-credential/account/trust/disk/image identity continuity and resumed member
+  access passed. Sentinel payload continuity remains unproved; no completed
+  original Campaign or replacement lifecycle campaign is claimed.
+- [ ] After positive same-artifact readiness/source proof, apply only the accepted
+  temporary node reserve window, repeat actual positive capture admission and
+  restore the original value even if capture fails. No threshold/RAM increase.
+- [x] Architect0 completed the bounded source assessment of saved node1
+  available-memory zero. Zero is not an unavailable-measurement convention;
+  capture would refuse it. The pinned OS declares a1GiB free-memory reserve
+  default and disables PSI; effective live settings and the hang's cause remain
+  unproved. One bounded numeric observation belongs before any future inventory
+  mutation; no source/threshold change, guessed reclaimability, tuning or
+  resource increase is selected. [Assessment](finish-working-delivery-capture-memory-source1-acceptance.json).
+- [ ] Finish real lease and ordinary stop/resume continuity and genuine captures.
+  Corrected fixture bytes change prepared-source identity: old G87d evidence must
+  stay G87d, and current failed campaign cannot be replayed or marked complete.
+  No extra pair, builder/live-guest overlap, upscale or automatic deletion.
+- [x] Original Campaign capture preparation remains ineligible. The accepted
+  separate public route preserves its failure and genuine generator, with
+  ordinary-cycle evidence and explicit operator reserve preparation instead.
+  [Media carryback boundary](finish-working-delivery-media-handoff.md).
+- [ ] Both CS/EN images, strict media/visual acceptance and final integration
+  inventory remain unfinished; no default integration approval has been given.
+
+See [the accepted working-delivery plan](finish-working-delivery-plan1.md).
+
+
+### Earlier source checkpoint (2026-10-11, superseded by working delivery above)
+
+- [x] Persistent single-Ed25519 preparation and both scoped fixture corrections
+  are published at **K6645483 / Efec9cd0**, with two logical commits per branch,
+  whole K45/D17 input graphs and the unchanged optional-provider patch.
+- [x] Both exact K source jobs and the paired E package job succeed. All27
+  native evidence hashes match; nodeSSH10/343 and lease35/35 pass. Strict media
+  remains skipped. [Full hosted acceptance](finish-lease-runner-negative-fixture-hosted1-acceptance.json).
+- [x] Retained reviewer0 Sol/xhigh/read_only completed all four affected lanes
+  with no findings on the exact committed pair, including full six-project
+  histories/migrations, K45/D17 composition, pinned OS/Nixpkgs source and all27
+  final evidence hashes. [Review](finish-host-key-persistence-final-review4-report.md),
+  [source-gate acceptance](finish-host-key-persistence-final-review4-acceptance.json).
+- [x] A fresh read-only observation proves G14 remains stopped/nonready,
+  complete runner/all14-child exit, no own claim/socket, unchanged retained
+  disks/trust and original failed-attempt hash. No lifecycle mutation.
+  [Retention](finish-host-key-persistence-post-review-retention2.json).
+- [x] Current named-file/RAM/shm accounting is refreshed. A new additional
+  pair remains outside the prior reference construction envelope. Removing
+  only G14 via a separately approved public reset would provide conditional
+  space, but no cleanup credit is taken and exact future package/scratch costs
+  still need assessment. [Capacity](finish-host-key-persistence-post-review-capacity1.json).
+- [x] The exact corrected immutable runtime/capture/verifier package is
+  prepared. Seven wrapper/metadata derivations built, three dependencies fetched
+  (7.6MiB unpacked), no image or guest. All260 Git/source blobs and modes match,
+  and wrappers share exact metadata. [Package acceptance](finish-persistent-key-package-realize1-acceptance.json).
+- [x] G14's53 non-disk files are privately copied/hash-verified outside its
+  cluster tree before any possible reset; original disks remain. No values are
+  exported. [Private evidence proof](finish-g14-pre-reset-private-evidence1.json).
+- [ ] Real qualification and CS/EN captures need a new genuinely prepared
+  artifact. G14 public resume cannot retrofit its old SSH configuration.
+  Reset/disk deletion, new guests, trust replacement and integration remain
+  unselected. Next action awaits explicit approval of the prepared public G14
+  reset, which deletes only its two old8GiB test disks and cluster metadata.
+  Exact future runtime admission must be refreshed after reset; this is not
+  current cleanup credit. [Concrete operation](finish-persistent-key-next-operation-plan.md).
+
+### Selected continuation (2026-10-11, supported reuse assessment)
+
+The user's new `continue` selects the unfinished reduced runtime and capture
+work. First assess ordinary public reuse of stopped G14 rather than build
+another image or allocate another pair. Its original failed qualification stays
+immutable; any separate smoke/media result must retain actual G725 provenance.
+
+- [x] Fresh guarded retained-state proof confirms the same stopped instance,
+  complete runner/all-14-child exit, no own claim/socket namespace, unchanged
+  disks and failed-attempt hash. No lifecycle mutation occurred.
+  [Retention](finish-continuation-g14-retention1.json).
+- [x] Named-file accounting and host RAM/shm are refreshed. Reusing G14 avoids
+  another 24-GiB output extent; a fresh pair does not fit the previous assessed
+  construction envelope after protecting retained sparse growth. This is a
+  reference comparison, not new operation admission.
+  [Accounting](finish-continuation-capacity-observation1.json).
+- [x] Existing ordinary user-manager lifetime is rechecked without mutation.
+  [Lifetime](finish-continuation-user-lifetime1.json).
+- [x] Architect0 Astra/xhigh recorded the supported matching-source public
+  resume/smoke/stop-resume and conditional captures at design.md:6540. Root
+  accepted it with original G725 package/guest/media attribution and no failed
+  Campaign replay. [Acceptance](finish-continuation-reuse-design1-acceptance.json).
+- [x] Implementer0 Sol/xhigh froze the two-file lease-evidence oracle correction.
+  Root verified its hashes, exact diff, unchanged controller and twelve original
+  tests, and all 257 protected paths. It is published at K8e1804afce64ebe63cf623f098cf1a4032ca37e8,
+  with E335a663f6a6739da9e60f8440c6702b9d036ec45 selecting it. The current
+  process receipt permits validated append-only publication and narrowly named
+  safe unpublished files; other records and the claim remain invariant.
+  [Inspection](finish-k-lease-observation-source1-inspection.json).
+- [x] The prior K38125306206 duplicate-port fixture failure is preserved.
+  The bounded fixture-only correction is inspected and published; production
+  resource refusal is unchanged. K38127185734/runtime-K38127181968 and
+  E38127251055 succeed at the exact current pair. All 27 evidence hashes,
+  native source identities, jobs and complete counters are verified. Runtime
+  99/1242, machine34/1244, verifier33/744, lease inventory35 tests and selected
+  SDK8/68/public5/58 have no failures/errors/skips. Strict media is skipped.
+  [Acceptance](finish-lease-observation-hosted2-acceptance.json).
+- [x] Retained reviewer0 Sol/xhigh/read_only completed all four affected
+  lanes with no findings at K8e1804a/E335a663, including full history,
+  migrations, K45/D17 graphs and all27 native evidence hashes. The restored
+  immutable helper source was independently re-read; all259 blobs/modes and
+  five G725 SDK owners match. [Review](finish-lease-observation-review1-report.md).
+- [x] Fresh retained-state/capacity/lifetime/tool observations permit this
+  separate ordinary public G725 reuse: zero new images/root/tanks/builds,
+  4GiB guests, 6/5GiB pre-resume margins and retained growth/base reserve.
+  [Concrete admission](finish-continuation-public-smoke1-preparation.json).
+- [x] The finite public continuation ended at its first public resume, native
+  exit1 after about130s. Node1's stored successful RSA scan has different key
+  material from retained trust; services' RSA still matches. Trust was not
+  replaced. Resource/TLS/API/member PHP, lease, stop/resume continuity and
+  captures were not reached. [Failure](finish-continuation-public-smoke1-failure-proof.json).
+- [x] Fresh noncreating, nonwaiting SDK reads bind new run
+  `91c20a6a-948a-447c-aeb1-338b9581a0b4` to the same instance/artifact. Phase
+  verifying/nonready, completefalse; the exact runner and all14 recorded children
+  match live native tuples. The own claim and socket namespace remain. Unit
+  main exit1 is distinct from its populated active/running cgroup.
+  [Read-only ownership and key fingerprints](finish-g14-resume-key-observation1.json),
+  [unit](finish-g14-resume-key-unit-observation1.json).
+- [x] Root separately selected one supported public G725 graceful stop to
+  release the newly resumed guests after the finite smoke unit ended. Native0
+  in51s; independent guarded proof establishes phase stopped/complete,
+  runner/all14 children gone, own claim/socket absent, disks/trust and original
+  failed Campaign unchanged. No reset or unit retirement.
+  [Exact stop proof](finish-g14-resume-refusal-stop1-proof.json).
+- [x] Architect0 traced the node's volatile host-key paths and reconciled one
+  explicit Ed25519 key per dedicated KB machine. Root accepted the prospective
+  node tank storage gate and retained-root services/DNS policy at design.md:7108.
+  [Source acceptance](finish-k-host-key-persistence1-source-acceptance.json).
+- [x] Implementer0 froze the four application/test owners; root independently
+  verified the full per-file diffs, hashes/modes, original tests and 255 protected
+  paths, and the separately owned contract prose. Exactly one persistent Ed25519
+  key is selected for services, optional DNS and each tank-backed node.
+  [Inspection](finish-k-host-key-persistence-source1-inspection.json),
+  [root prose](finish-k-host-key-persistence1-prose1.json).
+- [x] K5bf3be8fb7ab6bd7a052ba6b8ae9522a50c33e04 is published with both KB
+  worktrees matching. E4ae53b0cfe7cffcb1b50fb0e8e05f912f3c3eb34 selects it;
+  K45/D17 graphs and provider patch/message remain exact. The preservation-name
+  collision was resolved using a unique ref, leaving the existing ref untouched.
+  [K publication](finish-k-host-key-persistence-source1-proof.json),
+  [E publication](finish-e-host-key-persistence-pin1-proof.json),
+  [collision disposition](finish-e-host-key-persistence-pin1-collision-disposition.json).
+- [x] First exact pair's source gates are preserved: K38132390845 and
+  runtime-K38132386751 fail at5bf3be8 before all ten new SSH shell cases on
+  conflicting pinned plain-string `runit.services.sshd.run` definitions.
+  E38132750180 succeeds at4ae53b0 but cannot certify its failed K input.
+  All27 evidence hashes are verified. Managed VM runs were cancelled.
+  [Failed pair disposition](finish-host-key-persistence-hosted1-disposition.json).
+- [x] Architect0 reconciled the pinned option at design.md:7177. Root accepted
+  a node-sshd-only function-valued submodule `options.run.apply`, preserving the
+  OS-owned body and preparation guard. Implementer0 froze the two-owner fix.
+  Root verified hashes/full diff and all258 protected paths, and preservation of
+  all ten shell cases. [Inspection](finish-k-host-key-composition-source1-inspection.json).
+- [x] Corrected K2c3d49fedc98e512a64874ccb77134dbdb93f692 is published, both
+  KB worktrees clean/matching. E2847feca78675af46a75eef37457c2498f60f519
+  selects it with whole K45/D17 graphs and provider patch/message preserved.
+  Failed5bf has a preservation ref. No local tests or hook bypass.
+  [K publication](finish-k-host-key-composition-source1-proof.json),
+  [E publication](finish-e-host-key-composition-pin1-proof.json).
+- [x] A fresh mechanical-generation watcher verified the exact tracking CWD
+  and completed exit0. The earlier watcher failed identity before execution;
+  its incomplete report remains recorded. No identity/lifecycle mutation.
+  [First watcher disposition](finish-e-host-key-composition-pin1-watcher1-disposition.json).
+- [x] Both corrected K gates now evaluate the composed configuration, then
+  fail the pool-release success fixture with Bash `read` EAGAIN. Runtime101/1263,
+  closure12/51 and machine34/1244 pass; node SSH10/342 has one failure in each.
+  The external shell inherits a nonblocking Ruby pipe. This is not a guest
+  failure or capacity observation. [Diagnosis](finish-host-key-composition-barrier-failure1.json).
+- [x] Implementer0 froze the one-file blocking pipe correction. Root verified
+  all18 control hashes, the full diff, recovery of every original method/assertion
+  by removing only the three added lines and all259 other paths unchanged.
+  K9a06c9989d462bc16197dc948e59e1968273ab68 is published on both matching
+  KB feature refs; failed2c3 has a preservation ref.
+  [Inspection](finish-k-host-key-barrier-source1-inspection.json),
+  [publication](finish-k-host-key-barrier-source1-proof.json).
+- [x] E36a99516bcae49f19f93bc31f3aa42d21647801f selects K9a06c99 with
+  exact K45/D17 graphs and unchanged provider patch/message. Only the input node
+  changed. [Paired selection](finish-e-host-key-barrier-pin1-proof.json).
+- [x] The previous observer completed all27 terminal artifacts. Both old K
+  jobs failed; superseded E38134554189 was cancelled, not accepted.
+  [Old batch disposition](finish-host-key-composition-hosted1-disposition.json).
+- [x] New K38135145234 passes; runtime-K38135141443 fails one unchanged lease
+  negative fixture. Both new node SSH suites pass10/343. E38135228622 succeeds. The observer completed all27 hashed artifacts;
+  the pair remains unaccepted due to the lease fixture failure. Managed VM38135145201/38135141430 were
+  cancelled while queued; the exact selector correction remains recorded.
+  [Source run selection](finish-host-key-barrier-hosted1-runs.json),
+  [selector correction](finish-host-key-barrier-hosted1-managed-selector-correction.json).
+- [x] The failed lease fixture invents runner PID+1. Native evidence shows that
+  tuple authenticated and reached the correct unchanged-runner refusal, which
+  differs from the test's expected invalid-identity error. The guessed-PID
+  assumption is unsafe for this assertion; historical fork scheduling remains
+  inferred. No production refusal is relaxed.
+  [Diagnosis](finish-lease-runner-negative-fixture1.json).
+- [x] Implementer0 completed a bounded one-file deterministic invalid-runner case
+  plus a real owned alternate-runner assertion. Source-only freeze, publication,
+  exact new K/E hosted gates and committed affected review remain pending.
+  [Assignment](finish-lease-runner-negative-fixture1-implementation-brief.txt).
+- [x] Implementer0 froze the deterministic one-file lease fixture. Root
+  verified all18 control hashes, exact inverse recovery of the original file and
+  all259 other paths/modes unchanged. Both KB refs now select K664548385c575f40dcb76bc13daaf29b4997d1e3;
+  E fec9cd094b60e08ba34ad059882c10e61034ed87 selects it with K45/D17 graphs
+  and the provider patch/message preserved. Failed9a06 remains on a provenance
+  ref, outside the two-commit final series.
+  [Inspection](finish-k-lease-runner-negative-fixture-source1-inspection.json),
+  [K publication](finish-k-lease-runner-negative-fixture-source1-proof.json),
+  [E selection](finish-e-lease-runner-negative-fixture-pin1-proof.json).
+- [x] Both exact K38136960909/runtime-K38136956744 source checks succeed:
+  runtime101/1263, machine34/1244, nodeSSH10/343, verifier33/744, lease35/pass35
+  and retained suites all have zero failures/errors/skips. The precise changed-
+  runner case passes in both. All18 current terminal artifacts are hash-bound.
+  [Quick source proof](finish-lease-runner-negative-fixture-hosted1-quick-source.json).
+- [x] Fresh Luna/low observer completed E38137021789 success at the exact
+  corrected pair; collector0 and all27 evidence hashes verified. Both declared
+  E steps succeed, selected SDK8/68/public5/58 have zero failures/errors/skips.
+  Managed38136960905/38136956736 were cancelled while queued; no Managed pass.
+  [Full acceptance](finish-lease-runner-negative-fixture-hosted1-acceptance.json).
+- [x] Retained reviewer0 completed the final four-lane source/history/migration
+  and composition assessment on the exact committed pair, with no findings.
+  The final E account and pinned source were independently checked.
+  [Review](finish-host-key-persistence-final-review4-report.md),
+  [acceptance](finish-host-key-persistence-final-review4-acceptance.json),
+  [final inventory](finish-host-key-persistence-final-inventory4.json).
+
+Next: finish exact E package collection and independent committed review.
+Substantive source checks are passed; package/operation clearance remains pending. G14 is stopped with complete process exit; disks
+and trust remain. Its volatile-key artifact cannot receive the prospective new
+configuration through public resume. No new real attempt, capture, replay,
+upscale, known-hosts rewrite, reset or retirement is selected. G13/G4/G6/isolation3
+and preview remain untouched.
+
+### Prior stopped checkpoint (2026-10-11, before the public continuation)
 
 The one reduced G14 qualification ended with native exit 1 after 9m32s.
 Its fixed 8-GiB image built, public start succeeded, and both 2048-MiB guests
@@ -2223,3 +2975,17 @@ starts at V be136b6c; W e4c49bcd, C dd10d880 and K 291566b2 remain initial pins.
 List restrictions must not touch shared Show/association permission scopes.
 
 Final preview checkpoint: network-counter-preview-refresh2-result.md/json record successful services activation, actual current-system equality, rooted applied proof, final API/React source and CA-verified endpoints. Normal provider node refresh is expected. Utility completed; no owned operation remains running. Final review2 resolves tooltip Important, with no new findings. Feature branches remain published and unmerged; two real KB bitmaps and recorded Advisories remain separate open work.
+
+### Services-profile exact pairing (2026-10-11)
+
+Kcd2cfac65 and E2e38a541 are published; both K worktrees and E are clean.
+Only the three assigned K paths and E K-selector changed. The provider patch
+and message remain equal. Whole-lock resolution matches K45/D17. All six
+complete histories remain4/1/2/2/3/2 without merges; consumed Gf467 is retained
+in its published tag. Hosted K38177379686/38177380039 and E38177494732 are
+watcher-owned and pending; three Managed VM workflows were cancelled. No new
+image, guest or package activation is claimed. Affected committed review follows
+quick hosted success; unchanged reviews are reused.
+[Exact pin](finish-working-delivery-services-profile-e-pin1.json),
+[whole lock](finish-services-profile-whole-lock1.json),
+[complete inventory](finish-services-profile-inventory1.json).

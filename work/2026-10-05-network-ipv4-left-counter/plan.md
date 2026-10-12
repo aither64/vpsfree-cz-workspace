@@ -1,5 +1,80 @@
 # Network availability and IPv4 counter implementation
 
+Current finish path (2026-10-12): genuine corrected-source CS/EN images are
+finished. The null-primary fix and exact source/package/independent review gates
+passed. The selected sequential working5 replacement completed ordinary stop,
+sealed non-disk backup and owned reset; raw disposable disks were discarded.
+Working6 started from Gd0b4f407, passed actual guest/source/resource/TLS/API/member
+PHP/live-lease proof, then actual packaged CS/EN/output-CWD repeat captures,
+typed fixture resources, strict full inventory, locked export and visual review.
+It subsequently stopped normally with complete runner/15-child exit and absent
+claim/socket namespace. Its stopped state/disks/evidence remain retained.
+
+Media recording M706b9d8 and its original paired E dc94c8f are published and
+their final source/media/history/native review is complete without new findings.
+The explicit hosted strict inventory run passed without allow-missing.
+The generated inventory
+preserves actual G source/run/artifact provenance. Only the two affected PNGs
+are fresh. The initial packaged capture failure is retained with unestablished
+cause; unchanged diagnostic core and subsequent complete packaged capture passed.
+No application/runtime code change or guest/resource workaround followed it.
+
+Remaining finish sequence:
+
+1. Close current-target changed-head native evidence and affected review8.
+   Under architect's bounded plan, V/D clean patch-equivalent rebases are now
+   published as f778f762/16d949b; C961f5b61 contains only the two owning generated
+   selectors on current master, and E78463762 consolidates the final D selector
+   while retaining K M706b9d8. Exact consumed V939 is publicly preserved.
+   Network Wce is already externally integrated; W30 needs no rebase.
+2. Retain unchanged K/G/media and all failure provenance. No source relabel or
+   automatic guest replay; no configuration build/deployment claim for C pins.
+3. Present concrete reviewed final branches for named-default integration
+   approval. Deployment, production KB writes and session closure remain
+   separate and unapproved.
+
+Keep the tested 4+4GiB pair/4GiB sequential builder/8GiB image-root-tank evidence
+at its original source. No overlapping pair, importer batching, SSH framework,
+general hardening, further VM construction or other retained-state cleanup is
+selected. The current work is final evidence and integration preparation.
+
+See [current state](state.md),
+[actual final captures/export](finish-working-delivery-direct-capture7-proof.json),
+[visual/media acceptance](finish-working-delivery-visual-media7-acceptance.json),
+[ordinary final stop](finish-working-delivery-working6-stop7-proof.json),
+[final branch inventory](finish-media-inventory7.json) and
+[current default-target analysis](finish-final-default-target-analysis7.json).
+Older continuation accounts below are historical provenance.
+
+
+The current continuation reuses the existing G725 G14 disks, with no new image
+or pair. Exact K8e1804/E335a663 source/hosted/independent gates passed. Its
+separately admitted public resume failed on changed node1 RSA host keys.
+Stored services RSA still matches; retained trust and the original failed
+Campaign remain unchanged. A separately selected public stop subsequently proved
+complete runner/all14-child exit and claim/socket absence, preserving disks and
+trust. Root accepted Architect0's prospective single-Ed25519 profile: services
+and DNS retain the key on their writable root; nodes use the existing tank with
+storage checked before key generation. Implementer0 owns configuration and
+hosted regressions; root owns prose and exact K/E publication/check/review gates.
+The first hosted pair failed on the pinned plain-string run option. Its scoped
+composition correction is published at K2c3d49f with E2847feca selecting it;
+the generated configuration now evaluates. Its external-shell pipe barrier
+correction is published at K9a06c99/E36a99516; both node SSH suites pass10/343.
+One source job fails an existing guessed-PID lease negative fixture, so the pair
+is not accepted. The bounded deterministic fixture correction is published at K6645483 with
+Efec9cd0 selecting it. Both exact K quick source checks pass. Both exact K source checks and the mechanical E selector package check now
+pass; all27 retained hashes and native result context are verified. Independent affected source/history review is complete with no findings. The corrected immutable command/capture/verifier package is now prepared and
+all260 source blobs/modes match. The next concrete choice is public reset of
+only stopped G14's two old8GiB test disks, with53 private non-disk files already
+preserved. Reset is not approved or executed; new runtime admission still needs
+fresh measurements afterward. See
+[the operation proposal](finish-persistent-key-next-operation-plan.md).
+The old artifact cannot receive this configuration through public resume. No
+new attempt, trust replacement, reset or capture is selected.
+See [current state](state.md) and
+[source acceptance](finish-k-host-key-persistence1-source-acceptance.json).
+
 The current requested finish path is the
 [resource-reduction plan](finish-resource-reduction-plan.md) (2026-10-10).
 It replaces the required two-instance/historical campaign with one smaller
