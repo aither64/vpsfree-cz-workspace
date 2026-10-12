@@ -162,7 +162,10 @@ above.
 
 After material changes, review checkpoints, or user-requested status updates,
 use `~/.codex/skills/dev-session-handoff/SKILL.md`. Keep the initiative portal manifest
-current and include the stable link printed by
+current. Register or update artifacts with
+`dev-session artifact add <slug> <path> --label "Caption" --as-is` instead of
+hand-editing artifact YAML. This uses the validated atomic writer and preserves
+the session's identity and repository scope. Include the stable link printed by
 `dev-session url <slug> --as-is` in the handoff. If the portal has not been
 deployed yet, identify it as the post-deployment URL.
 
