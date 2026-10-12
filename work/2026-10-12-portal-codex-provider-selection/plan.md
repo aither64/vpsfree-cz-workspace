@@ -1,56 +1,40 @@
-# Portal Codex provider selection
+# Portal provider selection and limits preview
 
-## Goal and scope
+## Authorized outcome
 
-The user asks for provider selection in the portal and provider identity beside
-Codex limits. Implement the reusable portal/runtime in dev-workspace and native
-client support in codex-web. The proposed selector applies to the whole registered
-workspace, including retained roots and members; an optional scope question is
-pending. Use a separate initiative because this conversation has no existing
-session binding. The completed operational switch remains separate.
+The user approved implementation of the conversational plan, including rollout on
+aitherdev through vpsfree-cz-configuration and the workspace user profile.
+Initial choices are the existing Codex subscription and codex-lb on Snajpa.
+The popup previews any configured provider without changing routing; its explicit
+Switch button records a workspace-wide request that waits automatically until idle.
+A pending request is cancelable before application. Include codex-lb usage metrics.
+No default-branch integration, lifecycle cleanup or forced interruption is approved.
 
-Show configured provider IDs and names, including the built-in subscription
-provider. Keep credentials and executable authentication configuration server-side.
-Display effective routing and any pending change clearly. Account subscription
-limits must not appear to describe a custom provider which does not report them.
+## Projects and implementation
 
-## Design and safety requirements
+codex-web owns generic explicit provider selection/effective runtime settings.
+dev-workspace owns the provider catalog, private workspace state, durable worker,
+limits adapters, guarded native transition, portal UI and recovery contract.
+workspace owns the composed user-profile pin. vpsfree-cz-configuration owns the
+matching host input and aitherdev provider definitions. Preserve the extension pin.
 
-The selected native App Server ignores provider overrides on loaded threads.
-Provider application needs a guarded reload operation, preserving exact retained
-conversation IDs, histories, models, effort, instructions and member access.
-Never archive conversations or use a service restart that kills development VMs.
-Refuse active turns, pending requests, queued work, active goals, lifecycle/package
-conflicts and additional processes in the Codex service cgroup. Leave the portal
-and tmux running. Use native APIs for retained provider changes, not database or
-rollout rewrites. Record recovery state before a runtime mutation and recover the
-shared server if a transition is interrupted. Native writer locks remain binding.
+The lead owns design and source edits; this tracking-only initiative has no saved
+roster. Use the installed review fallback and utility watcher policies when required.
+The implementation/verification brief is [design.md](design.md).
 
-Confirm ownership, persistence and runtime-generation boundaries in the existing
-code before choosing the durable format. Keep provider defaults scoped to one
-workspace; do not silently modify other registered workspaces or authentication.
-Use only configured provider IDs, server-owned sockets/paths and exact-origin
-mutation protection. Record the final design and verification brief before edits.
+## Compatibility, rollout and documentation
 
-## Compatibility, deployment and recovery
+Use additive versioned provider state/journals and publish compatibility requirements
+in the runtime contract. Existing installation without selection keeps its current
+routing. Preserve global config/auth, thread IDs/history/model/effort/member access.
+No native version upgrade. Recovery uses native APIs and never overwrites histories.
 
-Consider old/new portal clients, package generations, provider-state and operation
-journal schemas, native experimental protocol, and rollback loading of persisted
-state. Keep additions backward compatible where possible and document any required
-ordering or refused downgrade. Source changes remain on dedicated feature branches.
-Publishing branches and checks does not authorize default-branch integration or
-live deployment. No live provider change is needed to develop this feature.
+Run quick checks, commit, publish and complete mandatory independent whole-branch
+review before longer checks. Keep feature configuration unmerged during rollout.
+Deploy host definitions with confctl, verify composed input identity, then select the
+user-profile application in a safe idle window. Never kill VMs to deploy or switch.
 
-## Verification and documentation
-
-Use protocol-schema/request tests for provider reads and overrides; unit/contract
-tests for selector validation, secret redaction, account-limit attribution, busy
-refusals, settings retention, interruptions and service recovery. Browser checks
-cover the sidebar and compact popover. Run quick focused checks, commit, then the
-mandatory independent whole-branch review before long integration/build checks.
-Use a fresh utility watcher for long or uncertain verification.
-
-Readers are portal users and operators plus developers maintaining the provider
-transition. Update the portal guide/README and native-client documentation where
-the behavior is owned. Keep dated deployment details in this initiative and
-credentials/full histories out of tracking. Preserve unrelated shared changes.
+Readers are portal users/operators and runtime/client maintainers. Put lasting
+behavior/recovery in project docs; site configuration/rollout instructions in the
+configuration repository. Keep dated verification and rollout evidence here. Apply
+vpsfree-user-facing-writing after technical facts are settled.
