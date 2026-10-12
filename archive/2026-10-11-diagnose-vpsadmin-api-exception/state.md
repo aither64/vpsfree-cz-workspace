@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: archived
 ---
 
 # 2026-10-11-diagnose-vpsadmin-api-exception

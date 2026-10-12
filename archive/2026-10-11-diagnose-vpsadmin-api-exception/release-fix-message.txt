@@ -1,0 +1,14 @@
+servers/ruby: ship shared documentation in release gems
+
+Make release packaging generate shared documentation first and reject a
+server Rake build when required documents are missing or empty. Return
+404 for an absent JSON schema document while preserving other errors.
+
+Exercise the generated routes and a real extracted gem in specs, prepare
+documentation in CI, and describe the release prerequisites. This prevents
+advertised documentation links from raising request exceptions in gems
+built from a clean checkout.
+
+Preserve the release branch's inline developer guidance layout.
+
+(cherry picked from commit 8053a2292396bb3a982431f2df6ef99a2a5b7b6f)

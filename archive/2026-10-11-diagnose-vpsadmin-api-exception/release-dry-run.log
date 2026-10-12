@@ -1,0 +1,11 @@
+./utils/copydoc.sh servers/*
+mkdir -p dist
+cd clients/ruby && bundle install && bundle exec rake build
+mv clients/ruby/pkg/haveapi-client-0.29.0.gem dist/
+gem install dist/haveapi-client-0.29.0.gem
+cd servers/ruby && bundle install && bundle exec rake build
+mv servers/ruby/pkg/haveapi-0.29.0.gem dist/
+cd clients/go && bundle install && bundle exec rake build
+mv clients/go/pkg/haveapi-go-client-0.29.0.gem dist/
+cd clients/js && ./node_modules/.bin/gulp
+cp clients/js/dist/haveapi-client.js dist/
