@@ -2,17 +2,16 @@
 
 ## Goal and scope
 
-Recommend a replacement for ikiwiki under vpsAdmin `docs/`. The user needs a
+Replace ikiwiki under vpsAdmin `docs/` with ordinary Markdown. The user needs a
 place to write documentation without building or publishing a site and allows
-removal of obsolete material. This turn prepares a proposal; implementation is
-a follow-up.
+removal of obsolete material. The user accepted the proposal and authorized implementation.
 
 ## Affected repositories
 
 - `vpsadmin`: docs, root README documentation link, and AGENTS docs entry.
 - Coordination workspace: this initiative's plan and state only.
 
-## Proposed approach
+## Accepted approach
 
 Use ordinary Markdown with a hand-maintained `docs/README.md` topic index.
 Keep the existing layout where useful, use `.md` extensions and explicit
@@ -42,7 +41,7 @@ subdirectories when there is actual material to put there.
 
 ## Decisions
 
-- Recommendation: plain Markdown now. No generator configuration, publishing
+- Plain Markdown now. No generator configuration, publishing
   pipeline, theme, or build dependencies are needed for the stated purpose.
 - MkDocs can be added when rendering becomes useful: it accepts regular
   Markdown, relative `.md` links, and README index files. Reference:
@@ -74,3 +73,17 @@ MkDocs documentation. Implementation: verify retained technical claims,
 Markdown links and anchors, index coverage, removal of ikiwiki syntax, obsolete
 path references, and whitespace. Run repository hooks and mandatory review of
 committed docs changes. VM tests are unnecessary for docs-only changes.
+
+## Commit split
+
+1. Remove obsolete release/upgrade and OpenVZ guides and their index entries.
+2. Convert and refresh retained docs, consolidate storage stubs, remove ikiwiki
+   build files, and update entry points. Content corrections accompany format
+   conversion so the new Markdown collection describes supported behavior.
+
+## Integration authorization
+
+The user explicitly authorized merging into default branches when done. After
+CI passes, fetch master, reconcile any upstream advance, capture the final
+comparison, and integrate vpsAdmin through a fresh temporary target worktree
+with a fast-forward-only merge. Retain the feature branch and session.
