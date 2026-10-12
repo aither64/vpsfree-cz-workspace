@@ -1,12 +1,13 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Session archive policies
 
-Phase: implementation, review, verification, deployment and requested archive
-finished; ready, awaiting merge approval. No default-branch integration is
-authorized. This implementation initiative remains open.
+Phase: complete. Implementation, review, checks, deployment, the requested archive
+and all three authorized fast-forward integrations are finished. Exact feature
+heads are merged into remote master. No CI wait, as directed. This initiative
+remains open; no archive of this implementation initiative was requested.
 
 - [x] Explicit archival preserves local work privately and removes owned worktrees.
 - [x] Automatic archival retains merged-work requirements and exact target proofs.
@@ -16,7 +17,7 @@ authorized. This implementation initiative remains open.
 - [x] Deploy aitherdev host and application; verify live operation.
 - [x] Archive the selected original session and verify recovery/retirement.
 - [x] Curate evidence and finish handoff.
-- [ ] Integrate feature branches only after explicit repository/target direction.
+- [x] Integrate and push all three feature branches under explicit user direction.
 
 ## Identity and final branches
 
@@ -31,15 +32,14 @@ worktrees are beneath worktrees/2026-10-12-session-archive-policies/.
 | Project | Reviewed base | Final published head |
 | --- | --- | --- |
 | dev-workspace | 60c679c52c263a0fc7a4b08c5f83a291cfd89191 | 1a27453c0b67c8c24cbe1474d5a05607eb698a9a |
-| workspace | shared master e76c0c146a47fc9ce10d4a811610b5a9f6a02bda | d1e5888a9f96e32833d56f5ae18da477df44472b |
+| workspace | shared master ceb960e2fcf11c3c511e396557e0a75344d1ccb7 | 7116fee9aa111b513eb987192593bac19e382dd4 |
 | vpsfree-cz-configuration | b17dbea2cb1b9bf93714c929da776a4d4a6618f8 | 1697613eab00a4bb0642b79c355c0b673b758a41 |
 
 History: three logical runtime commits, three owned workspace commits, and one
 consolidated configuration pin. Inherited coordination commits are preserved.
-Workspace rebase was patch-equivalent. Shared master advanced afterward through
-tracking/archive commits, including the actual requested archive; before a later
-approved integration, rebase/check against its then-current target under the Git
-procedure. No database migrations or obsolete feature iterations remain.
+Workspace rebases were patch-equivalent. Its final integration rebase retained
+all intervening tracking/archive commits, including the actual requested archive
+and handoff checkpoint. Git range-diff marked all three feature commits equal. No database migrations or obsolete feature iterations remain.
 
 Both consumers select runtime 1a27453c with
 sha256-z8n/lDZiB5pwmzZPdCCUiN4ATDAXZHgvmBplIzUvRLo=.
@@ -107,10 +107,41 @@ README links reach the contracts; reusable failure lessons are in
 notes/dev-workspace/2026-10-12-artifact-captions-and-readonly-notices.md.
 Full transient logs are retained locally and excluded from the curated checkpoint.
 
-No implementation, review, verification or rollout work remains. Next operator
-action is explicit integration direction for the named repository/target set;
-then apply current-target rebase, final history checks and fast-forward-only
-integration. Keep this initiative active until every registered final head is
-merged and no work remains. Retain feature branches.
+No implementation, review, verification, deployment or integration work remains.
+[Integration proof](integration-result.json) records all exact merged heads and
+retained remote feature branches. Temporary merge checkouts were removed without
+force; original feature worktrees and branches remain. No next action or merge
+blocker. New CI was not awaited under the explicit user instruction.
 
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-12-session-archive-policies/
+
+
+## Authorized integration
+
+User direction on 2026-10-12: "merge it, no waiting for ci". Scope is the three
+previously reported published branches into master: aither64/dev-workspace,
+aither64/vpsfree-cz-workspace, and vpsfreecz/vpsfree-cz-configuration. No CI wait.
+Fetched all three targets. Runtime/configuration targets are unchanged; shared
+workspace master advanced only through coordination/archive tracking. Rebase the
+workspace feature patch-equivalently, run required quick checks, preserve final
+comparisons, integrate fast-forward-only, and retain all feature branches.
+
+
+Pre-merge final check: runtime 1a27453c0b67c8c24cbe1474d5a05607eb698a9a
+(three commits), workspace 7116fee9aa111b513eb987192593bac19e382dd4
+(three feature commits over shared master ceb960e2), configuration
+1697613eab00a4bb0642b79c355c0b673b758a41 (one generated pin). The workspace
+range-diff marks all three commits equal to the reviewed series. All 117 newly
+inherited paths are coordination records only. No obsolete approaches, repeated
+pin streams or migrations. Prior independent history/compatibility conclusions
+remain applicable. Workspace quick checks passed 12 runs/163 assertions; final
+diffs pass whitespace checks. Comparison captures cover all three final heads.
+
+
+Integration completed: all three remote master and retained feature refs were
+verified with git ls-remote, then their exact ancestry was checked locally.
+Runtime/configuration heads stayed unchanged; workspace rebased patch-equivalently
+to 7116fee9. The configuration target quick contract check passed before push,
+with declared Overcommit hooks active. Temporary merge worktrees were removed.
+No source edit, new deployment or CI wait was needed. No superseded workspace
+workflow was live (the scoped run list was empty).

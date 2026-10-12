@@ -324,3 +324,26 @@ absent tmux session and absent runtime authority. No revival was performed.
 The temporary application GC root was removed only after confirming that the
 selected user profile retains the exact final application. All utility handles
 are finished. The three published source worktrees remain clean and unmerged.
+
+
+## Authorized final integration
+
+The user instructed "merge it, no waiting for ci". All three master branches
+were fast-forwarded and pushed over SSH. Runtime/configuration targets and heads
+were unchanged. Workspace rebased from d1e5888a to 7116fee9 over shared master
+ceb960e2; range-diff marked all three feature commits equal. All newly inherited
+117 paths were tracking/archive/notes only. Existing review remains applicable.
+Final workspace quick checks: 12 runs/163 assertions, zero failures/errors;
+runtime syntax and final deployment contract passed. No CI was awaited. Scoped
+workspace workflow listing was empty, so no superseded run needed cancellation.
+
+One contract check was started before the temporary configuration target's merge
+command had completed; it read the old target input and reported a runtime
+mismatch. Waiting for actual merge exit 0 and checking the resulting target head
+produced a passing final contract check. This was verification ordering, with
+no code or pin change. Future dependent steps must treat a yielded session_id
+as still running and gate on actual completion.
+
+Remote master and retained feature refs exactly matched each final head. Both
+temporary integration checkouts were removed without force; source branches and
+worktrees remain. The initiative is complete, open, and not archived.

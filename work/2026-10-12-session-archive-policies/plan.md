@@ -5,8 +5,9 @@
 Explicit archival closes the selected session without merge/publication or clean
 checkout prerequisites. Automatic archival retains its strict completion policy.
 Implement the accepted conversation plan, deploy on aitherdev, then archive
-2026-10-11-diagnose-vpsadmin-api-exception. This does not authorize integrating
-feature content into any default branch or archiving this implementation session.
+2026-10-11-diagnose-vpsadmin-api-exception. The later user instruction "merge it, no waiting for ci" authorizes the three
+registered branches into master. It does not authorize archiving this
+implementation session.
 
 ## Affected repositories
 
@@ -82,5 +83,5 @@ affected independent review before final long checks and deployment.
 
 The accepted scope is implemented, independently reviewed and deployed. The
 selected original session is archived with verified recovery. See state.md and
-rollout.md for final revisions and execution evidence. This initiative remains
-active, ready and awaiting explicit feature-integration direction.
+rollout.md for final revisions and execution evidence. All three registered feature heads are now merged into remote master under
+explicit user direction. This initiative is complete and remains open.

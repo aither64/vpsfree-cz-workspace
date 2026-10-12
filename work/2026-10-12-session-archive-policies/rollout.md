@@ -2,7 +2,8 @@
 
 Executed and verified on aitherdev. The final application is selected in the
 user profile. The requested session is archived with ten verified recovery
-snapshots. No configuration/project default branch was integrated.
+snapshots. Deployment left the configuration/project default branches unmerged. Their later
+authorized integration is recorded in integration-result.json.
 
 ## Final deployment
 
@@ -79,7 +80,9 @@ before another package transition. Workspace package recovery is forward-only.
 Supported predecessor formats remain readable.
 
 No database/node migration or coordinated running-node update was required.
-No default-branch integration was authorized. Final unmerged histories are
+No default-branch integration was authorized at rollout time. Later user
+direction authorized all three master integrations, now verified. Final histories are
 consolidated; exact earlier rollout revisions above preserve execution evidence.
-Future integration requires explicit repository/target direction and the normal
-current-target rebase/final-history checks. All source branches are retained.
+Integration used the normal current-target rebase/final-history checks; all
+three remote defaults contain the exact final feature heads. All source branches
+are retained. No deployment repeat or CI wait was needed for integration.

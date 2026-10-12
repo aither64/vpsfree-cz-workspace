@@ -1,6 +1,6 @@
 # Archive policy review packets and results
 
-Current correction heads: runtime 1a27453c0b67c8c24cbe1474d5a05607eb698a9a,
+Reviewed correction heads: runtime 1a27453c0b67c8c24cbe1474d5a05607eb698a9a,
 workspace d1e5888a9f96e32833d56f5ae18da477df44472b, configuration 1697613eab00a4bb0642b79c355c0b673b758a41.
 Earlier reviews below retain their historical exact revisions. The bounded
 shutdown-context correction passed affected General/Architecture/Risk review with
@@ -315,3 +315,14 @@ runtime retirement. State.md, rollout.md and requested-archive-result.json recor
 the final outcome. No subsequent source change or new format was introduced.
 Shared master advanced only through coordination/archive tracking; future approved
 integration must perform the normal current-target checks.
+
+
+## Explicitly authorized integration outcome
+
+The user later instructed "merge it, no waiting for ci". Runtime 1a27453c and
+configuration 1697613e were integrated unchanged. Workspace rebased
+patch-equivalently from d1e5888a to 7116fee9aa111b513eb987192593bac19e382dd4;
+all three feature commits compare equal and new inherited paths are tracking
+only. Completed independent review remains applicable. Quick checks passed; all
+three exact heads are now present in their remote master branches.
+Integration-result.json records remote proof and temporary-checkout cleanup.
