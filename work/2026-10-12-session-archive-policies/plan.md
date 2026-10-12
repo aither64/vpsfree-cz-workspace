@@ -52,3 +52,35 @@ browser verification. Cover dirty/index/untracked/ignored/binary recovery,
 detached/unpublished/unmerged/missing refs, busy/queued agents, multi-target
 automatic proof, interruption/retry, old journals and revival. Use fresh catalog
 watchers for long checks and deployment observation.
+
+## Artifact metadata prevention (user-requested scope extension)
+
+The network-ipv4-left-counter thread prepended three uncommitted artifact entries
+with name captions instead of label. The existing strict Go and Ruby readers
+reject this presentation-field mismatch and disable normal session access. At
+investigation time no typed artifact writer existed; agents edited YAML directly. The user
+explicitly requested correcting this record and preventing recurrence.
+
+Add matching name-as-label reads in Go/Ruby, retaining label as the canonical
+written field and preserving path confinement, explicit scope and all identity
+validation. Add dev-session artifact add SLUG PATH --label TEXT --as-is as a
+locked, generation-checked, fully validated atomic manifest update. It updates
+normalized existing paths without duplication, refuses pending lifecycle/creation
+operations and never starts a session or changes repositories/conversations.
+Document the command in the session guide/documentation skill and site procedure.
+Repair only the three specified caption keys in the selected record. No automatic
+repair of arbitrary identity metadata; no schema bump or new persisted format.
+Old executors read every newly written canonical manifest. Aliases supplied by
+hand remain a forward-readable input extension; canonical writers remove them.
+Quick checks cover shared Go/Ruby alias fixtures, unsafe paths and caption
+precedence, update/insert without scope loss, failed update leaving bytes unchanged,
+operation exclusion and CLI parsing. New public mutation/interface requires
+affected independent review before final long checks and deployment.
+
+
+## Implementation outcome
+
+The accepted scope is implemented, independently reviewed and deployed. The
+selected original session is archived with verified recovery. See state.md and
+rollout.md for final revisions and execution evidence. This initiative remains
+active, ready and awaiting explicit feature-integration direction.
