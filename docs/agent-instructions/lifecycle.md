@@ -25,54 +25,34 @@ inactivity periods. The worker preserves the existing archive checks and
 journal recovery. This authorization does not permit an agent to bypass the
 worker, abandon other work, delete sessions, or schedule its own delayed cleanup.
 
-Run `dev-session archive <slug> --as-is` for a completed initiative, or add
-`--abandoned` when the user explicitly discards the work. Archival is one
-deterministic, journaled operation. It verifies that the Codex root and retained
-members have no active turn, pending request, or queued message; releases
-development clusters;
-removes clean, owned worktrees with non-force `git worktree remove`; retains
-branches; writes terminal lifecycle and manifest metadata; moves
-`work/<slug>/` atomically to `archive/<slug>/`; commits only that tracking
-transition on a compatible shared `master`; and retires the Codex thread, tmux
-session, and runtime authority. Preserve unrelated working-tree and index
-changes. Resolve any refusal and retry the same command, which resumes its
-private journal. The CLI and portal each ask for one yes/no confirmation; they
-do not require the slug to be typed.
+Run `dev-session archive <slug> --as-is` for explicit archival. The command
+closes the session with neutral `lifecycle: archived`, including unfinished,
+unmerged, unpublished, detached or dirty work. It stops owned active agents,
+pauses active goals, keeps conversations and queued prompt records, releases
+clusters, captures local checkout files and index state in private recovery,
+forcefully removes owned worktrees, retains branches, moves tracking atomically
+to `archive/`, commits only that transition and retires runtime state. It does
+not fetch or require merged feature heads. Preserve unrelated shared index and
+working-tree changes. CLI and portal each ask for one yes/no confirmation.
 
-Canonical Git registration and exact ref proofs also cover nested default-branch
-and detached auxiliary worktrees. The runtime's `docs/session-archive-recovery.md`
-owns these cleanup and retry rules; attaching an auxiliary checkout to a feature
-branch is not a prerequisite.
+Automatic archival retains its merge, publication, cleanliness and idle policy.
+`--require-merged` requests that completion policy manually; `--abandoned` retains
+the explicit discard policy. A retry resumes its journal's saved policy, including
+older complete/abandoned operations. Wrong ownership, changed recovery contents,
+conflicting operations and actual copy/removal errors still require recovery.
+The runtime's `docs/session-archive-recovery.md` owns formats, private snapshots,
+retained prompts, target-specific merge proofs and interruption recovery.
 
-For a completed initiative, archival fetches each registered feature and
-default branch and proves that the exact local and remote feature head is an
-ancestor of `origin/<default_branch>`. It refuses unmerged, divergent, missing,
-or unprovable refs and reports every offending repository. An interrupted
-archive reproves those exact journaled heads before each remaining destructive
-phase and verifies the exact projected archive tree and retained thread identity
-before committing or retiring runtime state. Pushing, testing, deploying, or
-removing a worktree does not satisfy this rule. The merge check is skipped only
-for an explicitly abandoned initiative. Coordination-only initiatives with no
-registered branches remain valid. Before archiving, remove credentials, caches,
-reproducible bulk captures, and other transient outputs; preserve the plan,
-state, and intentionally useful evidence.
-
-Follow-up work before merge must reuse the same slug and retained branches. Run
-`dev-session revive <slug> --as-is` to restore a prematurely archived
-initiative. Reviving commits the move from `archive/<slug>/` back to
-`work/<slug>/`, restores the active lifecycle, clears terminal repository
-heads, preserves repository, branch, base, and conversation identity, and
-starts the exact retained Codex thread. It does not recreate worktrees. The
-confirmation uses a stronger warning for an abandoned initiative and is stored
-in the revive journal so a retry does not ask again. Recovery verifies the
-complete restored tracking tree before committing it. New revival of unresolved
-manifestless archives refuses before a journal, move, runtime or root is created.
-Use the workspace's [dated repair procedure](../maintenance/repair-legacy-sessions-2026-10-04.md)
-for separately reviewed historic scope, roots and terminal metadata, including
-obligations without checkouts. Ordinary repaired records preserve their exact
-root and unknown bases without fabricated creation/goals evidence; a genuinely
-threadless archive stays threadless. Accepted predecessor journals retain their
-own recovery contract. Revival refuses dirty, duplicated, ambiguous, or live state.
+Run `dev-session revive <slug> --as-is` to reopen an archived initiative. Revival
+commits tracking back under `work/`, restores active lifecycle and preserves the
+retained repository and conversation identities. Explicit archives recreate their
+saved worktrees with staged, unstaged, untracked and ignored files before starting
+the conversation. Queued prompts stay held. Older complete/abandoned archives do
+not gain snapshots. The stronger abandoned warning and all accepted confirmations
+remain journaled so retries do not ask again. New manifestless revival refuses;
+repair historical scope under the separately assigned dated repair procedure.
+Unfinished lifecycle journals reserve their slug and must be resumed before
+conflicting session, cluster or package mutations.
 
 `dev-session delete` is the user-directed destructive discard. Agents must not
 run it unless the user explicitly asks to delete that session. It requires an

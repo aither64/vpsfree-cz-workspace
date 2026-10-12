@@ -18,7 +18,7 @@ Use these paths consistently:
   lessons that should survive beyond one initiative. Store each lesson in its
   own file to reduce conflicts between concurrent Codex instances.
 - `archive/`: committed plan, state, and curated durable artifacts for
-  initiatives that are fully completed or explicitly abandoned.
+  explicitly archived, completed or abandoned initiatives.
 
 The initiative slug must be descriptive and dated, for example
 `2026-05-27-api-token-rotation`. For affected project repositories, use the
@@ -105,7 +105,8 @@ default branch and no review, CI, deployment, approval, or cleanup remains.
 Pushing, testing, deploying, or temporarily removing worktrees does not make an
 initiative complete. Use `abandoned` only when the work is explicitly
 discarded; abandoned work does not have to be merged. Coordination-only
-initiatives with no registered branches can still be completed. The anchored
+initiatives with no registered branches can still be completed. Explicit user archival uses `archived` to close unfinished or integrated work
+without claiming completion or discard. The anchored
 front matter is the only lifecycle authority; lifecycle-looking text in the
 Markdown body has no effect.
 
