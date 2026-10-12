@@ -78,6 +78,9 @@ checks, and exact-head CI. Later verify the vpsAdmin service package and channel
 lock. See the quick and longer check definitions in [design.md](design.md).
 
 The user passed the first review checkpoint and authorized HaveAPI/master and
-release on 2026-10-12. All package publication for this patch is now authorized;
-vpsAdmin/master, configuration/master and PHP-mirror/master remain separate
-named-repository integration gates under the workspace Git procedure.
+release on 2026-10-12. The later affirmative answer to the concrete three-master
+integration request authorized PHP release, then vpsAdmin and configuration.
+Those integrations and registry checks are complete. Full integration CI waiting
+was explicitly waived in favor of the passing specs and packaged checks.
+Deployment stays user-owned; see [delivery.md](delivery.md). npm automation is
+deferred to a later task. Session and branches remain open and retained.

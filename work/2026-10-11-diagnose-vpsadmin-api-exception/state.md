@@ -6,14 +6,29 @@ lifecycle: active
 
 ## Status
 
-- Phase: HaveAPI merged; Ruby 0.29.9 release published; downstream preparation.
+- Phase: release and integration complete; ready for user-owned deployment.
 - User authorized HaveAPI/master integration and the agreed 0.29 release on
-  2026-10-12. Master is ed88e2a; release target/tag is784e113/v0.29.9.
+  2026-10-12. Reviewed master integration was ed88e2a; release target/tag is
+  784e113/v0.29.9. Current master 06865bb includes a later protected Nix pin update.
 - All three Ruby gems published and the downloaded server artifact verified.
-  npm authentication is blocked (401); user was asked to refresh login.
-- vpsAdmin dependency/smoke checks and configuration channel work continue on
-  feature branches. PHP mirror metadata is prepared. Downstream and PHP master
-  integration require named-repository approvals. Deployment remains user-owned.
+  User completed npm publishing authentication. haveapi-client 0.29.9 is now
+  published; its registry integrity checks pass and the downloaded JavaScript
+  matches the independently reviewed release build.
+- vpsAdmin master is 7d911899 and configuration master is 8e4da52c. PHP mirror
+  master/tag is 7fa4e35/v0.29.9, visible as haveapi/client 0.29.9 on Packagist;
+  its downloaded archive matches all 35 reviewed source files.
+- All five registered exact feature heads are merged into their configured
+  targets, confirmed by fresh remote refs and ancestry checks. The refreshed
+  configuration host builds passed. Full consumer CI was last seen queued;
+  the user explicitly waived waiting for it, and observation has ended.
+- User deferred npm release automation and requested continuation of the
+  original release/adoption work. No automation workflow/settings change is in
+  this deliverable.
+- User approved the listed master integrations and PHP tagging with "well yes,
+  release the php haveapi client, then proceed with merging vpsadmin." This
+  answers the immediately preceding three-repository/master approval request.
+  Order: release PHP first, integrate vpsAdmin next, then its configuration pin.
+  Deployment remains user-owned; no deployment or session cleanup is authorized.
 - Requested diagnosis complete: HaveAPI 0.29.8 was published without generated
   documentation. A crawler requested the advertised JSON schema page; its
   unguarded file read raised `Errno::ENOENT` and triggered ExceptionMailer.
@@ -43,19 +58,27 @@ lifecycle: active
 - [x] Integrate reviewed HaveAPI/master head.
 - [x] Backport and prepare 0.29.9; committed final review and release checks.
 - [x] Integrate release branch, tag and publish all three Ruby gems.
-- [ ] Resume JavaScript npm publication after authentication refresh.
-- [ ] Review PHP mirror history and obtain its master/tag integration approval.
+- [x] Publish the prepared JavaScript package and verify its registry artifact.
+- [x] Independently review PHP mirror history and metadata.
+- [x] Obtain PHP mirror master/tag integration approval.
+- [x] Integrate/tag PHP mirror and verify Packagist distribution.
 - [x] Prepare and review vpsAdmin dependency/package smoke changes.
 - [x] Prepare, review and build configuration vpsadmin channel update.
-- [ ] Obtain downstream integration approvals and hand off deployment.
+- [x] Recheck both API host builds after the configuration baseline refresh.
+- [x] Resolve downstream verification: specs pass; full CI wait waived by user.
+- [x] Obtain downstream integration approvals and hand off deployment.
+- [x] Integrate vpsAdmin and configuration by fast-forward and verify remote refs.
+- [ ] User-owned: deploy API hosts and verify the live documentation routes.
 
 ## Next actions
 
-Refresh npm authentication, then publish only the prepared JS package (the
-Ruby gems are already published). The retained utility watcher owns exact-head
-API/integration CI. After those finish, obtain explicit master integration
-approval for vpsAdmin, configuration and the PHP mirror; PHP tagging follows
-its merge. User owns deployment of the built API host generation.
+Ruby and npm publication, consumer specs, packaged service checks and both
+refreshed API host builds are verified. Full CI wait is explicitly waived.
+All authorized release/integration work is complete. The user deploys built API
+host generation 2026-10-12--14-44-02 from the retained configuration worktree and
+checks the live routes, following [delivery.md](delivery.md). npm automation is deferred by the user;
+the researched recommendation remains in
+[delivery.md](delivery.md) for a later task.
 
 ## Documentation
 
@@ -310,3 +333,120 @@ and named downstream/PHP master approvals are still pending. No deployment.
 - This is a genuine ownership handoff for credential/integration actions, with
   CI monitoring retained. No deployment, archive, removal or session closure.
 - [Release and consumer handoff](delivery.md), [CI checkpoint](consumer-ci-checkpoint.json).
+
+## npm publication retry after login refresh
+
+User reported login complete and explicitly requested a release retry.
+The prepared staging package is haveapi-client 0.29.9; its JS distribution
+matches the reviewed release at 784e113. Only npm publication was retried,
+using the release Nix environment; already-published Ruby gems were untouched.
+The command exited 1 with EOTP, requiring a one-time password. No challenge
+URL, token or password was recorded in curated evidence. The next action is
+interactive npm publication in the user's terminal, followed by registry
+version/artifact verification. No branch, tag, deployment or lifecycle change.
+The sole active verification utility remains consumer_ci; its occupied slot
+required a visible parent-monitoring fallback for this publication retry.
+
+## npm publication verified and automation investigated
+
+After the user reported interactive publication complete, the registry returned
+haveapi-client 0.29.9. The downloaded tarball passes its registry SHA1/SHA512
+integrity checks; its package metadata identifies the expected name/version,
+and dist/haveapi-client.js is byte-identical to the reviewed 784e113 build.
+Tarball SHA256:559ef8cbe4b5eba1f6ee0c414780a902e3165eb8bb1b34a436af59af1273db03.
+See [published npm artifact evidence](npm-published-artifact.json).
+
+npm's current documentation supports unattended trusted publishing from
+GitHub-hosted runners using OIDC. Local bypass-2FA granular tokens still allow
+direct publishing but that capability is scheduled for removal in January
+2027. The HaveAPI JS package currently points repository.url to the separate
+haveapi-client-js repository; a workflow in HaveAPI would require correcting
+that metadata. No automation implementation or account-setting mutation was
+performed. Full consumer integration CI is still queued after about 91 minutes
+in the retained watcher's latest report; API Specs and four other workflows
+have passed. Session stays active and open, with deployment user-owned.
+
+## Original work resumed; configuration baseline refreshed
+
+The user deferred release automation and asked to continue the original work.
+Fresh upstream reads confirm unchanged vpsAdmin/master8a50010f and PHP/master
+0f5f9dad, with both exact feature heads still published. PHP tag v0.29.9 is
+absent. Configuration master advanced to0fdae436, an already-merged staging OS
+input update. The owned pin branch rebased cleanly to8e4da52c55f1d4396547630d1d4de518f8255619.
+git range-diff proves its one pin commit patch-equivalent to reviewed ad9830a5;
+the semantic lock check still finds only vpsadminServices rev/narHash/lastModified
+changed from current master, selecting the same reviewed vpsAdmin7d911899.
+No new design or feature content was introduced; the independent review remains
+applicable under the clean patch-equivalent rebase procedure. New API host
+builds will verify the advanced configuration baseline. The occupied single
+utility slot requires visible parent monitoring for this build recheck.
+
+One-time job-routing diagnosis: full CI job114762933628 targets self-hosted,
+has runner_id0, no runner name and no steps. No vpsAdmin workflows were running
+at that read. Runner inventory access returned403 for the current token, so
+offline versus busy elsewhere is unresolved. No runner/repository/token change,
+CI cancellation or rerun was performed; consumer_ci retains observation.
+
+## Final downstream verification and integration handoff
+
+User explicitly directed: "we will not be waiting for the full CI. specs are
+fine." The watcher stopped observation without any post-waiver status request.
+API Specs and four other exact-head workflows passed. Full CI38234863953 was
+last observed queued at12:43:44Z and remains untouched; its wait is waived,
+not recorded as a pass. No CI wait or local verification operation remains.
+
+Fresh consumer_hosts_rebase_watch Luna/low utility observed the existing host
+build through independent log/status files. Both int.api1 and int.api2 passed
+at8e4da52c, exit0, approximately114s total (confctl build phase44.818s), generation
+2026-10-12--14-44-02. No deployment occurred. Result:
+[refreshed host-build evidence](consumer-hosts-rebase-result.json).
+
+The configuration feature was published with a lease against its exact previous
+remote headad9830a5. No superseded configuration CI runs exist. Its comparison
+was recaptured at current base0fdae436/head8e4da52c. All three feature checkouts
+are clean; local and remote feature heads agree. Complete final series remain:
+vpsAdmin4d53979a+7d911899; configuration8e4da52c; PHP7fa4e35. Final diffs pass
+reverse-application checks and match reviewed content (configuration range-diff
+is patch-equivalent after its clean rebase). Review conclusions still apply:
+no obsolete history, repeated update streams, schema changes or migrations.
+
+Ready, awaiting explicit master integration approval for the three named
+repositories and normal PHP v0.29.9 tagging. Earlier approval covered HaveAPI
+integration/release; the latest instruction waived CI waiting without naming
+new integration targets. Deployment stays user-owned. Session and branches
+remain open and retained; no lifecycle or cleanup action was performed.
+
+## Approved PHP release and downstream integration completed
+
+The user's affirmative answer to the three-master integration request supplied
+approval; its explicit order was honored: PHP release first, vpsAdmin next,
+then the configuration pin. Fresh bases/heads and complete histories matched
+the final review, with no obsolete updates or migrations. All comparisons were
+captured before integration. No hooks were bypassed.
+
+PHP mirror master fast-forwarded from 0f5f9dad to 7fa4e35. Master and annotated
+v0.29.9 were pushed atomically over SSH. Tag object 51e53ad224a2920792e78a08315eea42ad107327
+peels to 7fa4e35. Packagist lists haveapi/client 0.29.9 at that exact source/dist
+reference. Downloaded distribution byte-compared against all 35 tracked mirror
+files successfully; see [PHP publication evidence](php-published-artifact.json).
+
+vpsAdmin master fast-forwarded from 8a50010f to 7d911899 and configuration master
+from 0fdae436 to 8e4da52c, both pushed over SSH and independently read back.
+Normal project Nix environments supplied Git hook tools for integration. No
+new implementation commits, changes to tested feature heads, or extra tests
+were needed. Remote vpsAdmin push reported two high Dependabot alerts; this
+documentation packaging release does not investigate unrelated dependency alerts.
+
+Fresh final fetch proves all five registered exact feature heads are merged
+into their configured remote targets. HaveAPI master has additionally advanced
+to 06865bb through an unrelated already-merged Nix pin update; ed88e2a is an
+ancestor and the repair remains present. See [integration proof](integration-result.json).
+All feature/target checkouts are clean. Owned detached auxiliary worktrees:
+haveapi-client-php-master, vpsadmin-master, vpsfree-cz-configuration-master under
+the existing worktrees/<slug> directory, in addition to earlier HaveAPI targets.
+All refs/worktrees are retained; no session lifecycle operation was performed.
+
+The final checkpoint hands ownership to the user for deployment. No full-CI
+wait remains (explicitly waived), no watcher/process is active, and no further
+release or merge approval remains. Session stays active/open for deployment
+feedback under the retained instruction; no archive, stop or cleanup was run.

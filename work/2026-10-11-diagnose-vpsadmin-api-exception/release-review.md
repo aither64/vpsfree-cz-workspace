@@ -18,9 +18,18 @@ v0.29.9 tag pushed. RubyGems published all three Ruby packages. Published server
 SHA256:a0797067cf871a42402f917f1919a3db624d8e1e9cfb632daf7e64c2ae0061a4.
 
 The normal publish recipe failed at npm with404; whoami/access checks show401.
-User asked to refresh npm authentication; resume only npm publication afterward.
-PHP mirror metadata is separately prepared and reviewed, pending named master
-integration approval. Full multi-component release remains incomplete.
+After the user refreshed login, only npm publication was retried from the
+reviewed staging package. It exited 1 with EOTP, requiring a publishing
+one-time password; the retry did not publish a version. The user then completed
+interactive publication. npm haveapi-client 0.29.9 is now available; its
+downloaded tarball passes registry integrity checks and its JavaScript matches
+the reviewed release build. See [artifact evidence](npm-published-artifact.json)
+and [the automation recommendation](delivery.md).
+PHP mirror metadata was separately prepared and reviewed, then approved and
+fast-forwarded into its master. Annotated v0.29.9 was pushed; Packagist lists
+haveapi/client 0.29.9 at the reviewed commit and its archive matches all 35 tracked
+files. All components of this patch release are now published and verified.
+See [PHP publication evidence](php-published-artifact.json).
 
 [Release packet](release-review-packet.md), [CI evidence](release-ci-result.json).
 No deployment, session closure or branch removal occurred.

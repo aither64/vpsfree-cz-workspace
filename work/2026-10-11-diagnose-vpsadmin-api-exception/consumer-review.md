@@ -17,9 +17,20 @@ protected upstream history remains intact. Other configuration inputs and follow
 are unchanged. Previous service pin:b4ef8535a629ee8c9cd753afecdb05e0895d0eea.
 
 Local service verification (31 examples) and both API host builds passed.
-API specs also passed; full integration CI remains queued.
-Ruby release evidence does not substitute for these checks. Integration of these
-three repositories remains unapproved; deployment is user-owned. npm publication
-is blocked by401 authentication, independently of Ruby adoption.
+API specs also passed; the user subsequently waived waiting for full integration
+CI. It was last seen queued and left untouched; observation ended.
+Ruby release evidence does not substitute for these checks. The user subsequently
+approved all three master integrations and PHP tagging. They are now integrated,
+and PHP is visible on Packagist with its distribution verified bytewise. Deployment
+is user-owned. npm publication has completed and its downloaded artifact matches
+the reviewed build.
+
+Post-review reconciliation: configuration master advanced with a protected
+staging OS input update. A clean rebase changed the feature head fromad9830a5
+to8e4da52c; range-diff proves the single reviewed pin patch identical. The lock
+still changes only vpsadminServices from current master. Both API hosts built
+again at8e4da52c (generation2026-10-12--14-44-02). This introduced no new feature
+design or review boundary; original whole-branch conclusions remain applicable
+under the patch-equivalent rebase procedure. The other two heads are unchanged.
 
 [Complete review packet](consumer-review-packet.md).
