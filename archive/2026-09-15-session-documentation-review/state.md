@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 # Model-driven development documentation
 
@@ -21,6 +21,8 @@ The user instructed "no waiting for CI" for the vpsAdmin rename. Its queued or
 running CI is left enabled and is not a merge gate. Lifecycle remains active
 while those runs remain outstanding; there is no source, deployment or cleanup
 work left. No archive, deletion, stop or delayed agent cleanup was requested.
+The earlier question about waiting or cancelling was superseded by that
+instruction: the rename is already merged, and no decision remains pending.
 
 ## Documentation
 
@@ -108,10 +110,11 @@ The context owner applied the writing workflow after the technical content was
 settled. The original three repositories declared no hook framework; vpsAdmin's
 hooks ran normally. No hooks were bypassed.
 
-## CI snapshot at cleanup
+## Latest CI snapshot
 
-A single status read was used for this checkpoint; no CI waiting or cancellation
-was performed. All runs below use vpsAdmin head `f8fb5b3af`.
+A single status read on the user's follow-up confirmed the results below; no
+CI waiting or cancellation was performed. Remote master and the feature branch
+still match vpsAdmin head `f8fb5b3af`.
 
 | Branch | Workflow | Run | Observed status |
 | --- | --- | --- | --- |
@@ -120,7 +123,7 @@ was performed. All runs below use vpsAdmin head `f8fb5b3af`.
 | feature | Migration specs, RuboCop, i18n health | 34960028036 / 34960028123 / 34960028041 | passed |
 | master | Full integration CI | 34960332591 | queued |
 | master | API topic specs | 34960332531 | queued |
-| master | Migration specs | 34960332616 | queued |
+| master | Migration specs | 34960332616 | passed |
 | master | RuboCop, i18n health | 34960332581 / 34960332507 | passed |
 
 ## Deployment
