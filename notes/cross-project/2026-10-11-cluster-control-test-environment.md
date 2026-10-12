@@ -18,3 +18,8 @@ bundle exec overcommit --sign inside nix develop before committing. Do not
 bypass the hooks. This setup succeeded for the initiative.
 
 Related work: work/2026-10-11-cluster-controls/.
+
+During integration, the configuration's pre-push hook also refused when Git ran
+outside its Nix shell, with the same missing Bundler gems. Repeating the exact
+push through the configuration's nix develop ran the hook normally. Checkout,
+merge and push all need that environment; no hook was bypassed.

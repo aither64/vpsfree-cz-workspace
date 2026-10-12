@@ -1,18 +1,20 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-10-11-cluster-controls
 
 ## Status
 
-Ready, awaiting merge approval. Inset Reveal is deployed and verified on aitherdev.
+Complete: all four exact final feature heads are merged into remote master,
+and both post-merge CI workflows passed.
+Inset Reveal is deployed and verified on aitherdev.
 The toolbar, retained Start/Stop/Release and credential icons are available; secret
 fields contain Reveal and plain fields/commands have no external placeholder.
 Independent whole-branch review, quick/browser/package/composition checks, CI, host
 build/activation and authenticated asset verification passed.
 The user's "Implement the plan" authorizes implementation and deployment.
-Feature integration into master is not authorized.
+User authorized integration into all four master branches with "better, merge it".
 
 - [x] Plan and user preferences: normal Start, visible toolbar controls.
 - [x] Create separate owned initiative (no native Codex lead/roster).
@@ -26,21 +28,18 @@ Feature integration into master is not authorized.
 - [x] Inset Reveal implementation and focused checks.
 - [x] Updated branch history/pins and independent review.
 - [x] Browser verification, CI and aitherdev update.
-- [x] Ready, awaiting merge approval.
+- [x] Merge approval received.
+- [x] Four fast-forward integrations and remote proof.
+- [x] Post-merge CI and final integration handoff.
 
 ## Next actions
 
-The implementation/deployment handoff is complete. User owns the remaining
-integration decision for dev-workspace, vpsfree-dev-workspace, configuration and
-workspace into their respective master branches. Integrate the four published feature branches only after
-explicit repository/target direction. The first-rollout series is in
-[final-heads.md](final-heads.md). Review: [review.md](review.md);
-inventory: [review-packet.md](review-packet.md).
-Integration remains gated on explicit repository/target direction. Before an
-approved integration, fetch current upstreams and rebase as needed, prove patch
-equivalence and repeat affected checks/comparison capture. Current workspace feature head 86d96b26 was rebased onto shared local master
-64a39659 before inset final review. The historical deployed workspace 7c226d3
-is retained on the rollout-1 ref; current deployment uses 86d96b26.
+No remaining work or operator action. Session stays open for follow-up;
+registered feature worktrees and primary/rollout references are retained.
+Rebased workspace head 0ea24610 is patch-equivalent to the reviewed/deployed
+86d96b26; its deployed exact source remains published on rollout-2. The other
+three final heads are unchanged. Updated inventory: [merge-record.md](merge-record.md).
+Reviewed history/pin streams remain clean, with no migrations.
 
 ## Documentation
 
@@ -167,7 +166,9 @@ devcluster-check workflow).
 
 ## Cleanup
 
-Keep initiative active and retain all branches. No archive/delete is authorized.
+Initiative complete; session remains open and all branches are retained.
+Temporary integration worktrees were removed non-force. No archive/delete or
+session stop is authorized.
 
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-11-cluster-controls/
 
@@ -249,3 +250,69 @@ session stop occurred. The shared-master handoff tracking commit may advance its
 local tip beyond the reviewed workspace feature base; before integration, perform
 the required fetch/rebase/patch-equivalence checks and comparison capture. Final
 reviewed/deployed workspace source remains 86d96b26.
+
+## Integration authorization and pre-merge phase
+
+User instruction on 2026-10-12: "better, merge it", following the explicit
+four-branch handoff. Approved set: dev-workspace, vpsfree-dev-workspace,
+vpsfree-cz-configuration and workspace, each into its master branch. This covers
+the reviewed cluster controls and inset Reveal deliverable, not unrelated feature
+branches, archive/delete or another deployment. Clean patch-equivalent rebases
+retain this approval under the Git procedure. Shared master coordination ancestry
+is preserved; no unrelated working-tree or index change will be staged.
+
+The integration phase refreshed upstreams, compared the final complete series/diff
+to inset-review.md, rebased workspace onto current shared master with
+patch-equivalence proof, repeated affected quick checks, captured comparisons and
+fast-forwarded/pushed all four targets. Feature and rollout refs are retained.
+
+Workspace rebase completed cleanly onto ea7d06da. range-diff confirms exact patch
+equivalence, and flake.nix/lock have no differences between 86d96b26 and 0ea24610.
+New workspace feature published with exact force lease; no Actions workflows on
+that branch, so no superseded runs to cancel. Quick rebase checks passed: deployment
+contract fixture 4 runs/19 assertions; agent instructions 8 runs/144 assertions;
+real composed configuration/workspace deployment contract at runtime 60c679c.
+All four final comparisons captured before integration. Fresh owned detached
+integration-targets created for the three independent repositories; no shared
+default checkout switched. Configuration checkout/merge uses its Nix environment
+so Overcommit runs normally.
+
+Integration target checks passed: Go web cases (0.096s) and JS syntax; provider status
+2 runs/37 assertions and retained-start 2/40, no failures/errors/skips; actual
+configuration-target deployment contract passed. Default pushes succeeded for
+generic, extension and workspace. Configuration's first push used ambient Git;
+its Overcommit pre-push loader refused absent gems, before pushing. Corrected
+command uses configuration nix develop with hooks enabled. No bypass, no source
+or history fix and no CI retry. This matches the earlier environment lesson.
+
+Post-merge master Check runs: generic 38225092025 at 60c679c and extension
+38225093076 at 7157c80. Fresh Luna/low /root/merge_ci_watch observed exact runs
+under the installed policy; parent retained source/integration decisions. No new local long
+tests: exact unchanged source heads already passed the complete suites.
+
+All four default pushes succeeded. Fresh fetch and SSH ls-remote prove exact
+feature heads on their remote master: generic 60c679c, extension 7157c80,
+configuration e65ef2c4, workspace 0ea24610. No default branch was force-pushed.
+Unrelated root tracked changes/index were hash-verified preserved during ff-only
+merge. Temporary integration targets were removed with ordinary non-force
+worktree remove; registered feature worktrees and branch refs remain retained.
+
+All temporary integration worktrees removed non-force after successful pushes;
+parent directory removed only when empty. Registered feature worktrees remain
+clean. Explicit final-head checks prove all four exact final feature heads are
+ancestors of fetched remote master.
+
+Both exact post-merge Check workflows completed successfully:
+[runtime 38225092025](https://github.com/aither64/dev-workspace/actions/runs/38225092025)
+at 60c679c52c263a0fc7a4b08c5f83a291cfd89191 (12m00s) and
+[extension 38225093076](https://github.com/vpsfreecz/dev-workspace/actions/runs/38225093076)
+at 7157c8098dcf60127aa4df823fab82b4185ad22a (15m16s). Watcher completed;
+parent checked its exact-head results. No retry, cancellation, failure or running
+job remains. Configuration/workspace have no Actions workflows; their exact
+composed checks and deployment passed before integration. No additional deployment
+is needed for the workspace's patch-equivalent coordination rebase.
+
+Final integration handoff records the approved scope, exact heads, comparison and
+remote ancestry proofs, cleanup and CI. No technical blocker or required work
+remains. Feature documentation already matches the deployed behavior; integration
+adds no behavior requiring another project documentation change.

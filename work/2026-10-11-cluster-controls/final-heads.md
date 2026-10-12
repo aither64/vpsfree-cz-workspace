@@ -1,25 +1,33 @@
-# Current reviewed final heads
+# Integrated final heads
 
-The inset Reveal follow-up is independently reviewed with no findings. Full series,
-base/head diff inventory and repeated stream dispositions: inset-review-packet.md.
-Whole-branch conclusions: inset-review.md. All four primary feature branches are
-published; matching rollout-1 refs preserve the previous consumer sources below.
+All four feature heads below are merged into remote master. Integration approval:
+user "better, merge it" on 2026-10-12. Final review and history conclusions:
+inset-review.md; original inventory: inset-review-packet.md. Pre-merge inventory,
+patch equivalence, checks and push evidence: merge-record.md.
 
-| Repository | Current head |
+| Repository | Integrated feature head |
 | --- | --- |
 | dev-workspace | 60c679c52c263a0fc7a4b08c5f83a291cfd89191 |
 | vpsfree-dev-workspace | 7157c8098dcf60127aa4df823fab82b4185ad22a |
 | vpsfree-cz-configuration | e65ef2c4cd179dac2d96cfdfe6d6c6967f08d566 |
-| workspace | 86d96b2656c89f37cd4d521fb150ebb123efa89c |
+| workspace | 0ea2461032ef6be99d0cf88f38090d3ecc38b4dd |
 
 Generic: three coherent functional commits; extension: one; configuration and
 workspace: one final selection commit each. No migrations or obsolete final-tree
-paths. Workspace feature comparison base is shared local master 64a39659; its
-remote merge-base is 0c827576 with three pre-existing coordination ancestors.
-No merge approval is present. New browser/package/build and deployment verification
-passed at these heads; results are tracked in state.md. Workspace remains based on
-the reviewed 64a39659 feature comparison even when later handoff tracking advances
-shared master. Required final rebase/checks apply before an approved integration.
+paths. All final comparisons were captured before integration.
+
+The reviewed/deployed workspace 86d96b26 used shared local base 64a39659. Its
+remote pre-merge base was 0c827576, including pre-existing coordination ancestors.
+A clean rebase onto handoff tracking ea7d06da yielded integrated head 0ea24610;
+range-diff proves the selection patch is identical. Quick tests and the composed
+deployment contract passed after that rebase. The runtime/provider heads and
+workspace input files are unchanged from the full deployed verification.
+
+The exact deployed workspace source 86d96b26 remains published on rollout-2;
+rollout-1 sources remain preserved. The installed aitherdev composition is still
+the fully verified runtime 60c679c/extension 7157c80. A tracking-only rebase did
+not require another application deployment. Both post-merge CI workflows passed;
+exact run/head evidence is in merge-record.md and state.md.
 
 ## First rollout after narrow review remediation
 
