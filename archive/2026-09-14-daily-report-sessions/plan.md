@@ -150,7 +150,8 @@ Add a dedicated aggregation helper called by
 additive keys such as `user_sessions`, `password_changes`, and
 `password_recoveries`. Keep database queries out of the new template sections.
 Use grouped SQL counts and targeted joins/EXISTS rather than loading complete
-session histories. Include only aggregate values in the new report payload.
+session histories. Keep session/recovery payloads aggregate-only; the approved follow-up below
+also includes individual password-change and failed-login details.
 
 Update the built-in text report and the organization HTML report together.
 Place the compact sections near the user overview. Apply the user-facing
@@ -219,8 +220,9 @@ of live-table locking and rollback cost. Old code can read the same data.
 - Build `cz.vpsfree/vpsadmin/int.api*`. API1 owns report scheduling and managed
   templates. Keep template input following vpsadminServices.
 - Extend the existing daily-report integration test to check delivered content.
-- User selected validated branches as the stopping point, with no merges or
-  live deployments. Keep the session open.
+- User initially selected validated branches as the stopping point. The later
+  request authorizes merging all three default branches and cleaning disposable
+  artifacts. No live deployment is requested; keep the session open.
 
 ## Review decisions and rollout detail
 
@@ -236,3 +238,37 @@ rollout must run `vpsadmin-api-migrate-db.service` once from the new package,
 monitoring metadata locks and I/O during index creation, before relying on
 indexed report performance. Old code remains compatible with the extra indexes;
 rollback can leave them installed. No migration or activation runs in this task.
+
+## Approved follow-up: individual actions
+
+Add all password-change and failed-login records beneath their summaries in
+both report formats. Include timestamp with seconds, user login/ID, source or
+mechanism/reason, and recorded client IP (user selected this detail level).
+Order oldest first with record ID breaking timestamp ties, preserve repeated
+actions, and apply no limit. Missing IP is an em dash. No PTR/user agents,
+additional recovery-attempt details or per-session listings.
+
+Add eager `events` arrays under the existing two hashes. Query the same report
+window, batch-resolve logins with User.unscoped, and retain rows for missing
+users using plain user IDs. HTML links existing users to their admin page and
+escapes all new dynamic content/attributes. Hide empty or absent details so
+older aggregate-only payloads remain compatible. No new logging/migration.
+
+Add follow-up commits to retained branches. Extend focused specs, previews and
+delivered-mail checks; run mandatory review before long integration. Push API
+and template heads, refresh both exact configuration pins through confctl,
+review pins and build both API hosts. The later integration request authorizes default-branch merges; deployment
+remains outside scope.
+
+
+## Integration and cleanup
+
+The user authorized default-branch merges and cleanup after implementation.
+All three exact reviewed heads were fast-forward merged into remote master
+without rebasing or regenerating pins. Temporary target worktrees supplied the
+final checks and pushes, then were removed with non-force git worktree remove.
+Disposable gem/lint caches, completed VM test directories and the temporary
+Chromium profile were removed. Keep canonical worktrees, feature branch refs,
+built API generations and useful review evidence; no session archive/delete or
+retirement action was requested. CI status and exact revisions are recorded in
+state.md, integration-results.json and merge-ci-results.json.
