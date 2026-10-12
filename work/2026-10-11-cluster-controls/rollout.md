@@ -106,3 +106,49 @@ occurred. The same retained disks were used until the final Release.
 Deployment is ready for use. All four feature branches remain published and
 unmerged; the active initiative awaits explicit integration direction. No
 archive, delete or session stop was performed.
+
+## Inset Reveal rollout: deployed and verified
+
+User approved embedding the eye inside secret inputs and removing external
+placeholders. Generic source 60c679c52c263a0fc7a4b08c5f83a291cfd89191; extension
+7157c8098dcf60127aa4df823fab82b4185ad22a unchanged. Consolidated configuration
+e65ef2c4cd179dac2d96cfdfe6d6c6967f08d566 and workspace
+86d96b2656c89f37cd4d521fb150ebb123efa89c select this composition. Initial deployed
+configuration/workspace revisions remain published on rollout-1 refs. Quick checks
+and exact deployment contract passed. Generic CI 38216790841 passed.
+
+Prepared inset-checks.sh runs both browser engines at desktop/mobile widths with
+long secrets, generic package/host-package contract, composed workspace flake
+checks and exact aitherdev confctl build. Independent review gates execution.
+Prepared inset-deploy.sh guards both prior generations and exact source heads,
+dry-activates/switches matching configuration with health checks, switches the
+user-profile application through its stable command, and compares authenticated
+assets. Launch under workspace-portal-owner to avoid inherited user-manager
+group omissions. Evidence goes to inset-checks.* and inset-deploy.*. No new live
+cluster is needed for template/CSS-only behavior; unchanged disk-retention
+validation above remains the backend evidence. No default integration authorized.
+
+Independent review passed with no findings; all prepared checks/builds passed
+(status 0, about 25m40s). Built aitherdev generation 2026-10-12--10-08-43. Parent
+launched cluster-controls-inset-deploy-20261012.service once, invocation
+3379efe48b994cd7b6fc3ddb132d6a88. Fresh Luna/low inset_deployment_watch observes
+the unit and independent logs/status; it does not deploy. Guards remain the
+previous exact system/profile and reviewed source heads.
+
+The rollout passed with status 0 and final phase complete in about 3m49s.
+Dry activation, host switch and application switch succeeded; host health checks
+passed 2/2. Selected generations:
+
+- System: /nix/store/bz16nqb4iq55kg52nc16621hgx08rkzw-nixos-system-aitherdev-26.05.20261010.6fcc160.
+- Application: /nix/store/0yf4aajlf1jp68ab4d0llar89lf91i5x-dev-workspace-0.2.0.
+
+Authenticated HTTPS returned HTTP 200/TLS 0. Live app.js/style.css match reviewed
+source, portal/router active. The owner-group launcher avoided the first-rollout
+credential-read problem; no credential or file permission changed. Parent checked
+actual status, final phase, bounded log evidence and selected generations after
+the watcher finished. No operation remains running. Evidence: inset-deploy.log,
+inset-deploy.status and inset-deploy.phase.
+
+Ready for use. All four final feature heads remain published and unmerged; user
+owns the integration decision. Primary pin streams each contain one final update;
+rollout-1 source refs remain preserved. Initiative stays active.

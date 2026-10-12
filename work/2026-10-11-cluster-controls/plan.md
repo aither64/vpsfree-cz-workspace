@@ -20,8 +20,10 @@ default-team fallback; long verification uses the site utility watcher policy.
 
 ## Accepted behavior
 
-Credential rows use value, reserved reveal slot, copy slot. Reveal toggles the
-eye icon and accessible state. Copy reuses the existing SVG and preserves it
+Credential rows use an input and Copy column. Secret fields contain an inset
+Reveal button at the input's right edge, with text padding around the eye.
+Plain fields and connection commands have no reserved reveal slot. Reveal
+toggles the eye icon and accessible state. Copy reuses the existing SVG and preserves it
 during feedback. Connection commands also use copy icons. Toolbar controls
 wrap on small screens, display progress inline, preserve the service tab and
 update without reloading. Start and Stop need no confirmation. Release confirms
@@ -65,16 +67,12 @@ another session's cluster. Preserve project control contracts in their guides
 and individual rollout evidence in this session. Apply user-facing writing
 guidance to labels, feedback and confirmation after technical facts settle.
 
-## Goal
+## Credential layout refinement
 
-## Affected repositories
-
-## Approach
-
-## Decisions
-
-## Compatibility and deployment
-
-## Documentation
-
-## Testing plan
+The user requested an inset Reveal button after the first successful rollout
+and approved implementation of that plan. Keep the existing handlers and ARIA
+state, use two row columns, and probe alignment, inset bounds, text padding,
+keyboard toggling and copying at 1280/375px in Chromium and Firefox. This is
+presentation-only, with no API, persisted-state, schema or migration change.
+Retain the first rollout sources, consolidate downstream pin streams to their
+new final selections, review, and update aitherdev through the existing workflow.

@@ -4,7 +4,7 @@ Final sources and branch series: [final-heads.md](final-heads.md).
 Independent review: [review.md](review.md); narrow remediation is recorded in
 the final-head inventory and state.
 
-## Completed checks
+## First-rollout completed checks
 
 - Focused Go cluster and HTTP/template tests, Ruby provider status and retained
   Start tests, JavaScript syntax and shell syntax passed. The corrected shared
@@ -61,5 +61,34 @@ live-cluster-network-wait.*. The corrected check probes SSH/tank readiness
 before each file operation; it does not retry Start requests.
 The final probes showed those transient startup errors resolve once services
 are ready. No unexpected local kernel build or cancellation occurred. The same
-retained disks were used until the final Release. No implementation or
-verification work remains.
+retained disks were used until the final Release. That first rollout completed its implementation and verification work.
+
+## Inset Reveal follow-up
+
+Current full branch review: inset-review.md; inventory: inset-review-packet.md.
+Quick JavaScript syntax, diff whitespace and two Go rendering/browser-contract
+cases passed. Final composed deployment contract passed at 60c679c. Configuration
+hooks passed; only intended lock nodes changed.
+[Runtime CI Check 38216790841](https://github.com/aither64/dev-workspace/actions/runs/38216790841)
+passed on exact runtime 60c679c52c263a0fc7a4b08c5f83a291cfd89191. No superseded
+live runs exist; workspace and configuration have no Actions runs.
+
+A fresh Luna/low inset_checks watcher owns inset-checks.sh after independent
+review passed. Exact guarded heads are in final-heads.md; results are recorded below. This
+batch checks both browsers at 1280/375 widths with long credentials, inset bounds
+and padding, keyboard Tab/Space and Copy, plus the existing error/control cases;
+then packaged tests/host-package contract, composed workspace flake checks and
+matching aitherdev build. The entire batch passed with status 0 in about 25m40s:
+browser fixture 17.14s; generic and site-composed packaged suites, contracts and
+workspace checks passed; aitherdev generation 2026-10-12--10-08-43 built. Full
+local logs: inset-checks.log/status. No unexpected kernel build or cancellation. The first-rollout live VM evidence applies to the
+unchanged backend; no new disposable cluster is required for the CSS/template
+follow-up.
+
+Inset activation and live verification passed: status 0/phase complete, about
+3m49s. Host dry/switch and user-profile switch succeeded, health 2 passed/0 failed,
+authenticated HTTP 200/TLS 0, exact reviewed app.js/style.css, portal/router active.
+Fresh Luna/low inset_deployment_watch monitored parent-launched invocation
+3379efe48b994cd7b6fc3ddb132d6a88. Selected generations are in rollout.md; primary
+checked actual local evidence after watcher completion. No running operation or
+remaining implementation/verification work. Feature integration remains gated.

@@ -6,8 +6,11 @@ lifecycle: active
 
 ## Status
 
-Ready, awaiting merge approval. Implementation, independent review, local checks,
-CI, aitherdev deployment and live VM validation are complete.
+Ready, awaiting merge approval. Inset Reveal is deployed and verified on aitherdev.
+The toolbar, retained Start/Stop/Release and credential icons are available; secret
+fields contain Reveal and plain fields/commands have no external placeholder.
+Independent whole-branch review, quick/browser/package/composition checks, CI, host
+build/activation and authenticated asset verification passed.
 The user's "Implement the plan" authorizes implementation and deployment.
 Feature integration into master is not authorized.
 
@@ -20,19 +23,24 @@ Feature integration into master is not authorized.
 - [x] aitherdev deployment and authenticated live assets.
 - [x] Disposable-cluster known-file creation and portal Stop validation.
 - [x] Portal Start disk-retention and Release validation.
+- [x] Inset Reveal implementation and focused checks.
+- [x] Updated branch history/pins and independent review.
+- [x] Browser verification, CI and aitherdev update.
 - [x] Ready, awaiting merge approval.
 
 ## Next actions
 
-No remaining implementation or verification work. Integrate the four published
-feature branches only after explicit repository/target direction. Final series:
+The implementation/deployment handoff is complete. User owns the remaining
+integration decision for dev-workspace, vpsfree-dev-workspace, configuration and
+workspace into their respective master branches. Integrate the four published feature branches only after
+explicit repository/target direction. The first-rollout series is in
 [final-heads.md](final-heads.md). Review: [review.md](review.md);
 inventory: [review-packet.md](review-packet.md).
 Integration remains gated on explicit repository/target direction. Before an
 approved integration, fetch current upstreams and rebase as needed, prove patch
-equivalence and repeat affected checks/comparison capture. Shared workspace
-master advanced with unrelated tracking after final review; the exact reviewed
-and deployed workspace feature head remains 7c226d3.
+equivalence and repeat affected checks/comparison capture. Current workspace feature head 86d96b26 was rebased onto shared local master
+64a39659 before inset final review. The historical deployed workspace 7c226d3
+is retained on the rollout-1 ref; current deployment uses 86d96b26.
 
 ## Documentation
 
@@ -162,3 +170,82 @@ devcluster-check workflow).
 Keep initiative active and retain all branches. No archive/delete is authorized.
 
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-11-cluster-controls/
+
+## Inset Reveal follow-up
+
+Committed and published runtime 60c679c52c263a0fc7a4b08c5f83a291cfd89191.
+Secret inputs now contain the eye; plain fields and commands have no placeholder.
+Copy uses one aligned outer column. Existing labels/event handlers remain intact.
+Quick JavaScript syntax and two focused Go rendering/browser-contract tests passed
+(0.088s); diff whitespace passed. Portal guide updated and parent applied the
+user-facing writing skill before committing.
+
+Final configuration e65ef2c4cd179dac2d96cfdfe6d6c6967f08d566 selects 60c679c
+through its confctl channel (hooks passed). Workspace 86d96b2656c89f37cd4d521fb150ebb123efa89c
+is based on current shared master 64a39659 and selects extension 7157c80 plus
+60c679c. Only intended lock nodes changed, and the final deployment contract
+passed. Both primary branches force-pushed with exact leases after upstream fetch.
+Superseded exact deployed consumer sources 4d0ff7c and 7c226d3 are retained and
+published as 2026-10-11-cluster-controls-rollout-1, while final primary pin streams
+contain one update each. No migrations.
+
+Fresh standalone /root/inset_review, GPT-6 Astra/xhigh, all four lanes. Previous
+standalone reviewer absent from live tree, identity/settings unverified, so replaced
+under skill policy; no retained roster exists. Installed policy catalog digest
+437585347ac8b2cdbf498a169d8871e684f3f61ccf1dd48e8589d79ef9629abd, published
+catalog file hash abc80df4cd14ba74a26f9de1f807b6f2a49f2b9651aea7acbbb70d9a2e5fe7bc.
+Native role/model/access selector limitations match the original review. Complete
+packet: inset-review-packet.md. Generic exact-head CI 38216790841 passed at 60c679c;
+no superseded live runs exist. Workspace/configuration have no Actions runs.
+
+New browser/package/build batch is prepared but waits for independent review.
+The initial full checks and live disk-retention/Release evidence remain valid for
+unchanged backend/provider code; this follow-up verifies new presentation and exact
+composed package. No new live cluster is required.
+
+Independent inset review passed at all four final heads with no findings. All four
+lane conclusions, complete history/pin consolidation and no-migration conclusion
+are in inset-review.md. Fresh /root/inset_checks, GPT-6 Luna/low utility under the
+same installed catalog policy, now owns the prepared related batch. No new
+integration test/build was launched before review completion.
+
+Inset verification progress: both browser engines passed; generic packaged suite
+and host-package contract completed. Workspace deployment-contract tests passed
+(4 runs, 19 assertions). Site-composed package Go tests passed; its Ruby suite
+is still running. Watcher retains sole operation/log ownership; no timeout or
+retry introduced and no unexpected local kernel build reported.
+
+Inset batch passed: status 0, about 25m40s. Real Chromium/Firefox fixture passed
+in 17.14s. Generic package/host-package contract and composed workspace flake
+checks passed. Packaged Ruby suites in each composition: 405 runs/5463 assertions
+(0 failures/errors, 12 existing skips), auto-archive 12/50 (no skips), host 127/994
+(0 failures/errors, 3 existing skips). Host configuration built generation
+2026-10-12--10-08-43 for exact cz.vpsfree/machines/aitherdev. No unexpected local
+kernel build or cancellation. Parent checked actual status and bounded log evidence
+after watcher completed. Full local evidence: inset-checks.log/status.
+
+Parent launched guarded deployment once, unit
+cluster-controls-inset-deploy-20261012.service, invocation
+3379efe48b994cd7b6fc3ddb132d6a88, under workspace-portal-owner. Fresh
+/root/inset_deployment_watch (same Luna/low policy) observes independent
+inset-deploy.log/phase/status and unit state. Parent owns deployment, watcher
+only observes; no retries/cancellation/diagnosis delegated. Candidate profile
+evaluates to /nix/store/0yf4aajlf1jp68ab4d0llar89lf91i5x-dev-workspace-0.2.0.
+
+Inset deployment passed: status 0, phase complete, about 3m49s. Host generation
+2026-10-12--10-08-43 activated, system
+/nix/store/bz16nqb4iq55kg52nc16621hgx08rkzw-nixos-system-aitherdev-26.05.20261010.6fcc160;
+application /nix/store/0yf4aajlf1jp68ab4d0llar89lf91i5x-dev-workspace-0.2.0.
+Two health checks passed, zero failed. Authenticated HTTP 200/TLS 0; live app.js
+and style.css match reviewed source and both user services are active. Watcher
+completed successfully; parent checked actual status/phase/log and both selected
+generations independently after ownership returned. No operation remains running.
+All four published final heads independently match local clean worktrees.
+
+This is the completed implementation/deployment handoff to the user for the
+integration decision, not another intermediate status checkpoint. Keep lifecycle
+active and retain primary/rollout refs. No default integration, archive, delete or
+session stop occurred. The shared-master handoff tracking commit may advance its
+local tip beyond the reviewed workspace feature base; before integration, perform
+the required fetch/rebase/patch-equivalence checks and comparison capture. Final
+reviewed/deployed workspace source remains 86d96b26.

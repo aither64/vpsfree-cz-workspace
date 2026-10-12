@@ -38,8 +38,10 @@ state and never automatically repeats a mutation.
 ## Browser layout and refresh
 
 The top toolbar contains state and Ready plus visible icon/text Start/Stop and
-Release buttons. Topology/network stay below. Credentials use fixed reveal and
-copy columns with a flexible input; readable fields reserve the eye column.
+Release buttons. Topology/network stay below. Credential rows use a flexible
+input and a fixed Copy column. Secret inputs have an inset Reveal button inside
+a positioned wrapper; input padding protects the text in both visibility
+states. Plain inputs and connection commands have no reveal placeholder.
 The shared copy handler detects icon markup and restores its original accessible
 label/title without changing the SVG. Feedback names the field, never its value.
 Reveal updates title, aria-label and aria-pressed and swaps eye/eye-off SVGs.
@@ -64,7 +66,7 @@ Stop/Start preserve disks; Release intentionally removes them after confirmation
 
 Quick: Go cluster/web behavior tests, JavaScript syntax/browser contracts, Ruby
 provider status/start-selected cases, bash syntax and git diff --check. Fixtures
-prove reserved copy alignment, repeated toggles, hidden copying, clipboard errors,
+prove input and Copy alignment, repeated toggles, hidden copying, clipboard errors,
 tab preservation, pending/error controls, concurrency, lifecycle admission,
 deadline cleanup, missing selection, maintenance and old/new helper contracts.
 
