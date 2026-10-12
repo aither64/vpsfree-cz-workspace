@@ -1,0 +1,257 @@
+diff --git a/api/Gemfile b/api/Gemfile
+index 04f5dfab7..56a4d8b07 100644
+--- a/api/Gemfile
++++ b/api/Gemfile
+@@ -15,7 +15,7 @@ gem 'bcrypt', '~> 3.1.20'
+ gem 'bunny', '~> 2.24.0'
+ gem 'dnsruby', '~> 1.73'
+ 
+-gem 'haveapi', '~> 0.29.6'
++gem 'haveapi', '~> 0.29.9'
+ 
+ gem 'ipaddress', '~> 0.8.3'
+ # ActiveSupport 8.1 passes JSON.parse options as a positional argument.
+diff --git a/client/vpsadmin-client.gemspec b/client/vpsadmin-client.gemspec
+index fe44cf395..61d6ddc6b 100644
+--- a/client/vpsadmin-client.gemspec
++++ b/client/vpsadmin-client.gemspec
+@@ -23,7 +23,7 @@ Gem::Specification.new do |spec|
+ 
+   spec.add_dependency 'base64'
+   spec.add_dependency 'curses'
+-  spec.add_dependency 'haveapi-client', '~> 0.29.6'
++  spec.add_dependency 'haveapi-client', '~> 0.29.9'
+   spec.add_dependency 'json'
+   spec.add_dependency 'ruby-progressbar'
+ end
+diff --git a/docs/agent-instructions/testing.md b/docs/agent-instructions/testing.md
+index f6433f08e..191ad4fe8 100644
+--- a/docs/agent-instructions/testing.md
++++ b/docs/agent-instructions/testing.md
+@@ -12,6 +12,9 @@ repository root unless explicitly stated otherwise.
+   package has to be refreshed. Do not create build IDs or upload first-party
+   gems to a remote RubyGems repository.
+ - Use `./test-runner.sh ls` to enumerate tests and `./test-runner.sh test <test>` (e.g. `services-up`).
++- `services-up` checks shared HaveAPI documentation through the packaged API,
++  including JSON schema, protocol and client documentation. Run it after
++  updating HaveAPI package dependencies to catch missing gem content.
+ - Test definitions are in `tests/all-tests.nix` and `tests/suite/*`; machines compose `tests/machines/cluster/*.nix` plus seeds from `api/db/seeds/test*.nix` to spin up services and vpsAdminOS nodes on user+socket networks.
+ - Tests that transfer, migrate, reinstall, replace, back up, or restore a VPS
+   dataset must verify data integrity when the operation is expected to preserve
+diff --git a/download_mounter/Gemfile b/download_mounter/Gemfile
+index b983c84ca..52e905652 100644
+--- a/download_mounter/Gemfile
++++ b/download_mounter/Gemfile
+@@ -1,6 +1,6 @@
+ source 'https://rubygems.org'
+ 
+-gem 'haveapi-client', '~> 0.29.6'
++gem 'haveapi-client', '~> 0.29.9'
+ gem 'highline'
+ 
+ group :test do
+diff --git a/packages/api/Gemfile b/packages/api/Gemfile
+index 104e3b533..ddfc96590 100644
+--- a/packages/api/Gemfile
++++ b/packages/api/Gemfile
+@@ -15,7 +15,7 @@ gem 'bcrypt', '~> 3.1.20'
+ gem 'bunny', '~> 2.24.0'
+ gem 'dnsruby', '~> 1.73'
+ 
+-gem 'haveapi', '~> 0.29.6'
++gem 'haveapi', '~> 0.29.9'
+ 
+ gem 'ipaddress', '~> 0.8.3'
+ # ActiveSupport 8.1 passes JSON.parse options as a positional argument.
+diff --git a/packages/api/Gemfile.lock b/packages/api/Gemfile.lock
+index 78a70a720..d1395d6ca 100644
+--- a/packages/api/Gemfile.lock
++++ b/packages/api/Gemfile.lock
+@@ -60,9 +60,9 @@ GEM
+       net-http (~> 0.5)
+     fio_api (0.0.11)
+       httparty (>= 0.16.2)
+-    haveapi (0.29.8)
++    haveapi (0.29.9)
+       activesupport (>= 7.1)
+-      haveapi-client (~> 0.29.8)
++      haveapi-client (~> 0.29.9)
+       i18n (>= 1.6, < 2)
+       json
+       mail
+@@ -74,7 +74,7 @@ GEM
+       sinatra (~> 4.0)
+       sinatra-contrib (~> 4.0)
+       tilt (~> 2.4)
+-    haveapi-client (0.29.8)
++    haveapi-client (0.29.9)
+       activesupport (>= 7.0)
+       highline (~> 3.1)
+       json
+@@ -292,7 +292,7 @@ DEPENDENCIES
+   bunny (~> 2.24.0)
+   dnsruby (~> 1.73)
+   fio_api!
+-  haveapi (~> 0.29.6)
++  haveapi (~> 0.29.9)
+   ipaddress (~> 0.8.3)
+   json (< 3)
+   mysql2 (~> 0.5.6)
+diff --git a/packages/api/gemset.nix b/packages/api/gemset.nix
+index be7457d58..a2ffbb557 100644
+--- a/packages/api/gemset.nix
++++ b/packages/api/gemset.nix
+@@ -360,10 +360,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1ry1kvfs326ingsjx6xspidf3cjnf0iv2fz57qipf73bkvpjldlf";
++      sha256 = "193102pc4r3ymwnn7yww3s74sqnvlccijzwi5x0446l7rxkp0yd0";
+       type = "gem";
+     };
+-    version = "0.29.8";
++    version = "0.29.9";
+   };
+   haveapi-client = {
+     dependencies = [
+@@ -378,10 +378,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1xngwpff10qs6ylj72lm6xn8p0d1gx7i3v2f1kp7rgqza482dg2p";
++      sha256 = "1m6xmn4vv5wjcln8scvyk7pf34047dfqak1qkib5h9yhjpb53h4a";
+       type = "gem";
+     };
+-    version = "0.29.8";
++    version = "0.29.9";
+   };
+   highline = {
+     dependencies = [ "reline" ];
+diff --git a/packages/client/Gemfile.lock b/packages/client/Gemfile.lock
+index edffc2a4b..45c8b9eb8 100644
+--- a/packages/client/Gemfile.lock
++++ b/packages/client/Gemfile.lock
+@@ -4,7 +4,7 @@ PATH
+     vpsadmin-client (4.2.1)
+       base64
+       curses
+-      haveapi-client (~> 0.29.6)
++      haveapi-client (~> 0.29.9)
+       json
+       ruby-progressbar
+ 
+@@ -31,7 +31,7 @@ GEM
+     curses (1.7.0)
+     domain_name (0.6.20260921)
+     drb (2.2.3)
+-    haveapi-client (0.29.8)
++    haveapi-client (0.29.9)
+       activesupport (>= 7.0)
+       highline (~> 3.1)
+       json
+diff --git a/packages/client/gemset.nix b/packages/client/gemset.nix
+index 32475cc4b..e2cd06d10 100644
+--- a/packages/client/gemset.nix
++++ b/packages/client/gemset.nix
+@@ -106,10 +106,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1xngwpff10qs6ylj72lm6xn8p0d1gx7i3v2f1kp7rgqza482dg2p";
++      sha256 = "1m6xmn4vv5wjcln8scvyk7pf34047dfqak1qkib5h9yhjpb53h4a";
+       type = "gem";
+     };
+-    version = "0.29.8";
++    version = "0.29.9";
+   };
+   highline = {
+     dependencies = [ "reline" ];
+diff --git a/packages/download-mounter/Gemfile b/packages/download-mounter/Gemfile
+index b983c84ca..52e905652 100644
+--- a/packages/download-mounter/Gemfile
++++ b/packages/download-mounter/Gemfile
+@@ -1,6 +1,6 @@
+ source 'https://rubygems.org'
+ 
+-gem 'haveapi-client', '~> 0.29.6'
++gem 'haveapi-client', '~> 0.29.9'
+ gem 'highline'
+ 
+ group :test do
+diff --git a/packages/download-mounter/Gemfile.lock b/packages/download-mounter/Gemfile.lock
+index 718b6b63e..261448b8c 100644
+--- a/packages/download-mounter/Gemfile.lock
++++ b/packages/download-mounter/Gemfile.lock
+@@ -21,7 +21,7 @@ GEM
+     diff-lcs (1.6.2)
+     domain_name (0.6.20260921)
+     drb (2.2.3)
+-    haveapi-client (0.29.8)
++    haveapi-client (0.29.9)
+       activesupport (>= 7.0)
+       highline (~> 3.1)
+       json
+@@ -79,7 +79,7 @@ PLATFORMS
+   x86_64-linux
+ 
+ DEPENDENCIES
+-  haveapi-client (~> 0.29.6)
++  haveapi-client (~> 0.29.9)
+   highline
+   rspec
+ 
+diff --git a/packages/download-mounter/gemset.nix b/packages/download-mounter/gemset.nix
+index 295630edd..e66556567 100644
+--- a/packages/download-mounter/gemset.nix
++++ b/packages/download-mounter/gemset.nix
+@@ -109,10 +109,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1xngwpff10qs6ylj72lm6xn8p0d1gx7i3v2f1kp7rgqza482dg2p";
++      sha256 = "1m6xmn4vv5wjcln8scvyk7pf34047dfqak1qkib5h9yhjpb53h4a";
+       type = "gem";
+     };
+-    version = "0.29.8";
++    version = "0.29.9";
+   };
+   highline = {
+     dependencies = [ "reline" ];
+diff --git a/plugins/outage_reports/utils/Gemfile b/plugins/outage_reports/utils/Gemfile
+index bf26a7886..18d4a029e 100644
+--- a/plugins/outage_reports/utils/Gemfile
++++ b/plugins/outage_reports/utils/Gemfile
+@@ -1,4 +1,4 @@
+ source 'https://rubygems.org'
+-gem 'haveapi-client', '~> 0.29.6'
++gem 'haveapi-client', '~> 0.29.9'
+ gem 'highline'
+ gem 'nokogiri'
+diff --git a/tests/suite/services-up.nix b/tests/suite/services-up.nix
+index b8b9d46be..239dc0176 100644
+--- a/tests/suite/services-up.nix
++++ b/tests/suite/services-up.nix
+@@ -138,6 +138,23 @@ import ../make-test.nix (
+               true
+             end
+           end
++
++          {
++            '/doc/json-schema' => 'Envelope',
++            '/doc/protocol.md' => 'Protocol definition',
++            '/doc/create-client.md' => 'Client definition',
++          }.each do |path, heading|
++            it "serves shared documentation at #{path}" do
++              wait_until_block_succeeds(name: "api documentation #{path}") do
++                _, output = services.succeeds(
++                  "curl --silent --fail-with-body --write-out '\\n%{http_code}' http://api.vpsadmin.test#{path}"
++                )
++                expect(output).to include(heading)
++                expect(output).to end_with("\n200")
++                true
++              end
++            end
++          end
+         end
+ 
+         example 'scheduler is running' do

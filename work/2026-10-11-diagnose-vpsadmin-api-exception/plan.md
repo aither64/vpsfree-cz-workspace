@@ -14,6 +14,8 @@ outside version control; retain sanitized findings as diagnosis evidence.
 - HaveAPI: Ruby documentation route, generated documentation and gem release.
 - vpsAdmin: consumer of the published HaveAPI 0.29.8 gem through its API package.
 - vpsfree-cz-configuration: downstream `vpsadmin` service channel, in a later phase.
+- HaveAPI PHP client mirror: synchronize shared release metadata under the
+  normal release procedure; prepare its branch before separate master approval.
 - Coordination workspace: plan, design, state and review/verification evidence.
 
 ## Approach
@@ -74,3 +76,8 @@ Run syntax/lint checks and focused specs before final review. After review, run
 the full Ruby server suite, clean packaging and extracted-artifact endpoint
 checks, and exact-head CI. Later verify the vpsAdmin service package and channel
 lock. See the quick and longer check definitions in [design.md](design.md).
+
+The user passed the first review checkpoint and authorized HaveAPI/master and
+release on 2026-10-12. All package publication for this patch is now authorized;
+vpsAdmin/master, configuration/master and PHP-mirror/master remain separate
+named-repository integration gates under the workspace Git procedure.

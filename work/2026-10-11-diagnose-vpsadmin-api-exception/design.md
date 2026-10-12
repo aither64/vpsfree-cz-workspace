@@ -76,3 +76,41 @@ Before readiness, inventory complete base-to-head commits/diff and state there
 are no migrations, superseded approaches or repeated dependency-pin streams.
 Retained reviewer independently assesses those conclusions. Record all actual
 results and unresolved gaps in state, then stop for the user's review.
+
+## Approved release and consumer phase (2026-10-12)
+
+Lead owns backport and consumer edits. Integrate the reviewed master head by
+fast-forward, then create an owned release feature branch from the current
+haveapi-0.29 target. Cherry-pick the functional repair with provenance and the
+compatible action refresh. Adapt developer guidance to the release branch's
+inline AGENTS layout. Keep version/changelog metadata in a separate commit:
+make version VERSION=0.29.9. Run normal top-level make release and make publish
+in Nix, after committed final review and package checks. Preserve branches and
+owned auxiliary target worktrees. Publication is authorized by the user's
+explicit release instruction. PHP synchronization is a separate repository
+operation; establish its release requirements before integrating it.
+
+No schema, persisted data, action/client protocol or configuration option
+changes. Patch version metadata follows the existing shared component version
+contract. Validate actual release gem content and extracted documentation
+routes, then independently verify the downloaded published server artifact.
+Use the retained reviewer for complete release history/migration review.
+Quick checks cover changed Ruby/tests/workflows, metadata and hook checks;
+long checks cover full server suite and make release artifact builds. Use a
+fresh utility watcher for long verification.
+
+After publication, update the existing HaveAPI Ruby constraints in vpsAdmin
+and regenerate only the affected API/client/download_mounter package closures
+with the repository's current Rake tasks. Add documentation URL smoke checks
+to the existing services-up Nix test so the final packaged API is exercised.
+No first-party vpsAdmin gem release is needed. Check generated closures for
+unexpected transitive updates. Commit and independently review before long
+services-up verification. Publish the feature branch.
+
+Update only the configuration vpsadmin channel/role via confctl, using the
+reviewed published vpsAdmin feature revision until its master integration is
+approved. Audit the semantic lock diff and evaluate/build the selected API
+host configuration without deployment. Record previous and prepared revisions
+for user-owned rollout and rollback. vpsAdmin/master and configuration/master
+integration remain separate approval gates. Rollback restores the previous
+source/channel without state conversion; nodes need no coordinated update.

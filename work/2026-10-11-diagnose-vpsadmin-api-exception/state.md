@@ -6,10 +6,14 @@ lifecycle: active
 
 ## Status
 
-- Phase: first deliverable ready for user review; ready, awaiting merge approval.
-  User requests
-  a review checkpoint before backport/release/downstream changes; deployment is
-  user-owned. No default-branch integration is authorized.
+- Phase: HaveAPI merged; Ruby 0.29.9 release published; downstream preparation.
+- User authorized HaveAPI/master integration and the agreed 0.29 release on
+  2026-10-12. Master is ed88e2a; release target/tag is784e113/v0.29.9.
+- All three Ruby gems published and the downloaded server artifact verified.
+  npm authentication is blocked (401); user was asked to refresh login.
+- vpsAdmin dependency/smoke checks and configuration channel work continue on
+  feature branches. PHP mirror metadata is prepared. Downstream and PHP master
+  integration require named-repository approvals. Deployment remains user-owned.
 - Requested diagnosis complete: HaveAPI 0.29.8 was published without generated
   documentation. A crawler requested the advertised JSON schema page; its
   unguarded file read raised `Errno::ENOENT` and triggered ExceptionMailer.
@@ -17,7 +21,7 @@ lifecycle: active
   missing files. See [findings](findings.md).
 - HaveAPI fix coded, locally checked, independently reviewed and published.
   Final head `ed88e2a814b3e1f8bbf85067f84cf64032c20f63`; all seven CI workflows
-  passed. No backport, release, downstream update or deployment has occurred.
+  passed. The approved backport and Ruby release are now complete; no deployment occurred.
 - Session remains open with `lifecycle: active` for follow-up.
 
 ## Phase checklist
@@ -35,12 +39,23 @@ lifecycle: active
 - [x] Independent final whole-branch review; I1 fixed and locally verified.
 - [x] Longer verification and exact-head CI.
 - [x] Publish feature branch and stop for user's review.
-- [ ] After user review: backport/release and downstream dependency/channel work.
+- [x] User approved HaveAPI/master integration and patch release.
+- [x] Integrate reviewed HaveAPI/master head.
+- [x] Backport and prepare 0.29.9; committed final review and release checks.
+- [x] Integrate release branch, tag and publish all three Ruby gems.
+- [ ] Resume JavaScript npm publication after authentication refresh.
+- [ ] Review PHP mirror history and obtain its master/tag integration approval.
+- [x] Prepare and review vpsAdmin dependency/package smoke changes.
+- [x] Prepare, review and build configuration vpsadmin channel update.
+- [ ] Obtain downstream integration approvals and hand off deployment.
 
 ## Next actions
 
-Await the user's review of the [published diff](https://github.com/vpsfreecz/haveapi/compare/feda9518634a89b0ff5724fa32bea3c694deebdc...ed88e2a814b3e1f8bbf85067f84cf64032c20f63). Then follow the agreed backport/release and downstream phases with
-required integration/publication approvals. The user handles deployment.
+Refresh npm authentication, then publish only the prepared JS package (the
+Ruby gems are already published). The retained utility watcher owns exact-head
+API/integration CI. After those finish, obtain explicit master integration
+approval for vpsAdmin, configuration and the PHP mirror; PHP tagging follows
+its merge. User owns deployment of the built API host generation.
 
 ## Documentation
 
@@ -150,3 +165,148 @@ session lifecycle operation was performed.
 - [Verification and handoff](verification.md); [CI evidence](ci-result.json).
 - No technical blockers. Current next action belongs to user review; no merge,
   release, backport or deployment approval has been inferred. Session stays open.
+
+## Approved integration and release preparation
+
+User approved HaveAPI/master integration and the agreed patch release on
+2026-10-12. Fresh fetch confirmed the reviewed base/head series unchanged:
+`feda951..ed88e2a`, exactly two commits, final diff reverse-applies to the
+reviewed checkout and diff checks pass. No migrations or obsolete updates.
+Fresh owned detached target checkout: `worktrees/<slug>/haveapi-master`.
+Fast-forward merge and SSH push completed: remote master is `ed88e2a`.
+No branch/worktree/session cleanup was performed. Registry checks still show
+0.29.8 for Ruby server/client/Go and npm client; 0.29.9 tag is unused.
+
+## Release committed checkpoint
+
+- Release worktree: `worktrees/<slug>/haveapi-release`, branch
+  `2026-10-11-diagnose-vpsadmin-api-exception-haveapi-0.29`,
+  target `haveapi-0.29`, base `22fae15809b37e66ffea53a1162544e6321d09ab`.
+- Complete published series: b2dd423 functional backport with inline guidance;
+  4b781a0 action refresh; 784e113 separate0.29.9 metadata/changelog.
+- Head `784e113c216b16586c482e710ee4a0e0a04e6f8e`; clean worktree, normal hooks passed.
+- Quick checks: 20 focused specs pass, lint/syntax clean.
+- Final independent review assigned to retained reviewer0 Astra/xhigh/read-only;
+  all four lanes, full history/migration inventory. Long release builds pending.
+- Release environment setup passed151s. npm reported17 dependency audit warnings
+  in the existing JS development closure; no dependency upgrade included.
+- Downstream vpsAdmin worktree created at8a50010f4; its ordinary post-checkout
+  signature refusal awaits normal signing after environment setup.
+
+## Independent release review
+
+Retained reviewer0 completed final review of `22fae158..784e113` with all four
+lanes on Astra/xhigh/read-only. No Blocking, Important or Advisory findings.
+I1 is resolved. Runtime/test patches match master; only developer-doc layout
+adapted. Three-commit split and single version/action streams are coherent;
+no obsolete history, transitional migrations, schemas or persisted-state edits.
+Full release build/server suite, actual dist artifact and registry verification
+remain pending. PHP mirror prepared: only composer/Client version lines change.
+
+## Release verification passed
+
+- Fresh Luna/low release-build watcher: exit0,34.9s, head784e113.
+- Full release-branch server suite:365 examples,0 failures.
+- Normal make release built Ruby client/server/Go gems and JS artifact.
+- Actual dist/haveapi-0.29.9.gem has five nonempty shared docs, loads exclusively
+  from its extraction, and serves JSON schema/protocol/client docs200 with
+  expected HTML content. Final tracked diff is clean.
+- All seven exact-release-head CI workflows succeeded; see release-ci-result.json.
+- Configuration dependency setup passed64.2s; vpsAdmin setup passed137s.
+- Final pre-integration range/diff unchanged from independent release review.
+
+## Publication and downstream progress
+
+- haveapi-0.29 fast-forwarded to784e113; annotated v0.29.9 tag pushed.
+- RubyGems accepted haveapi-client, haveapi, haveapi-go-client0.29.9.
+- Downloaded server artifact byte-identical to verified build; SHA256
+  a0797067cf871a42402f917f1919a3db624d8e1e9cfb632daf7e64c2ae0061a4.
+- Registry latest JSON still cached0.29.8 immediately after push; exact new gem
+  download available. No inference of publication failure from cached latest.
+- npm publication E404; follow-up whoami/access checks return401 Unauthorized.
+  User asked asynchronously to refresh npm login; Ruby gems must not be pushed
+  again. Resume only the prepared npm staging publication after credentials.
+- PHP mirror source synchronized35 tracked files: only two version lines differ.
+  PHP syntax/JSON checks pass; no repository hook framework declared. Published
+  feature7fa4e35; master integration/tagging await separate approval.
+- vpsAdmin documentation smoke assertions prepared; first commit hook refused
+  an API development-gem mismatch (API setup installed newer lint gems than
+  hook-selected ignored lock). Install exact hook bundle normally; no bypass.
+- Initial root bundle-exec Rake metadata run failed because inherited Bundler
+  setup polluted Bundix's Ruby process. Retry uses documented plain rake.
+  Source constraints now0.29.9; package regeneration is in progress.
+
+## Downstream environment boundary resolved
+
+API dependency setup was valid; ordinary Git commits succeed with all hooks.
+Outer `bundle exec git` leaked root activation into the API hook, producing
+misleading missing-gem versions. Plain `git commit` in the Nix shell resolved
+it without installing another lint stream or bypassing hooks. Plain Rake also
+resolved Bundix activation. Reusable note: notes/vpsadmin/2026-10-12-bundler-git-and-bundix.md.
+Consumer closure diff contains only HaveAPI server/client version/hash and
+requirements. No transitive updates. Smoke/test guidance committed4d53979a3.
+Downloaded published artifact independently passes extraction/source-location
+and all three200/content assertions (published-artifact-check.log).
+
+## Consumer committed checkpoint
+
+- vpsAdmin base8a50010f4, complete series4d53979a3 smoke/guidance and7d911899d
+  HaveAPI requirements/three generated closures. Head7d911899d0d3d335546f6b3676b2eb46a291764d.
+- Configuration basee65ef2c4, generated commit/headad9830a53a34f169197ecb7a919b08a98a4493fd.
+  Only vpsadminServices locked node changes b4ef853->7d911899; all other
+  inputs/follows/original URL fields remain identical.
+- Prior pinned vpsAdmin b4ef853..base8a500 gap contains four already-merged
+  mechanical dependency commits only; no migrations/runtime/Nix module edits.
+- PHP mirror base0f5f9dad, one shared metadata commit7fa4e35a9d9cb462320a4b2f2786bf84b8e024f2.
+- All feature heads pushed, clean, current target ancestry confirmed by fetch;
+  normal hooks/quick checks pass. Whole histories/inventories in consumer packet.
+- Final independent review assigned to retained reviewer0 Astra/xhigh/read-only,
+  all four lanes, before services-up and API host builds. No integration approved.
+
+## Independent consumer review
+
+Reviewer0 Astra/xhigh/read-only verified complete vpsAdmin8a500..7d911,
+configuratione65ef..ad983 and PHP0f5f..7fa4 branches with all four lanes.
+No findings of any severity. Histories clean; one dependency/pin/metadata
+stream per owner, no obsolete updates or migrations. Actual hashes, runner
+retry/decoded-output contract and API host channel consumption independently
+confirmed. The prior configuration source gap has four protected upstream
+mechanical dependency commits, including date/net-http/uri updates; no runtime
+or migration changes. Services-up, two API host builds and two pending CI runs
+are now owned by fresh Luna/low utility watchers. No deployment has occurred.
+Host first build attempt stopped at confctl confirmation/EOF before building;
+rerun will supply the standard option for already-authorized exact targets.
+
+## API host build verification
+
+Fresh consumer_hosts_confirmed Luna/low watcher ran only the prepared config
+verification with documented confctl build --yes. Both exact api1/api2 hosts
+built successfully atad9830a5: exit0,239s, local generation
+2026-10-12--12-29-00. No kernel compilation or deployment. Logs/status:
+consumer-hosts-final.log/.status. First prompt/EOF attempt remains recorded.
+services-up reached the VM on cached Linux6.12.112 and first assertions passed;
+full31-example result remains pending. API CI started; integration CI still
+queued. Four other exact-head vpsAdmin workflows already passed.
+
+## Packaged service verification passed
+
+consumer_services fresh Luna/low watcher completed services-up at7d911899:
+exit0,31/31 examples passed, including all three documentation URLs from the
+running Nix-packaged API. Wrapper761s, runner542.51s; cached Linux6.12.112,
+no local kernel compilation, no operation remains. Both API hosts also built
+successfully. Independent reviews and all planned local checks now pass.
+Exact-head API specs and full integration CI remain watcher-owned; npm auth
+and named downstream/PHP master approvals are still pending. No deployment.
+
+## Verification handoff checkpoint
+
+- Exact-head API Specs38234864061 completed successfully; five consumer CI
+  workflows now pass. Full integration38234863953 remains queued after about
+  30 minutes, under consumer_ci utility ownership; no run was canceled/retried.
+- All intended code/config/metadata changes committed, independently reviewed
+  and locally validated. Registered consumer/PHP branches remain unmerged;
+  lifecycle stays active. Remaining work requires npm authentication, external
+  CI completion and explicit named-repository master integration approvals.
+- This is a genuine ownership handoff for credential/integration actions, with
+  CI monitoring retained. No deployment, archive, removal or session closure.
+- [Release and consumer handoff](delivery.md), [CI checkpoint](consumer-ci-checkpoint.json).
