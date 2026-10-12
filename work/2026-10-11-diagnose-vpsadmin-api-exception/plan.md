@@ -2,30 +2,49 @@
 
 ## Goal
 
-Find the cause of the API exception reported in `api-exception-rb-sysopen.eml`
-and recommend a fix. Preserve the original email outside version control and
-record only relevant, sanitized evidence. Implementation, release publication
-and deployment are outside this request.
+Implement the accepted fix for the missing documentation in HaveAPI packages.
+Prepare and verify the development-branch fix first, then stop for the user's
+review. Only after that checkpoint, backport to HaveAPI 0.29 and release,
+update vpsAdmin Ruby dependencies, and update the configuration's `vpsadmin`
+channel. The user handles deployment. Preserve the original exception email
+outside version control; retain sanitized findings as diagnosis evidence.
 
 ## Affected repositories
 
 - HaveAPI: Ruby documentation route, generated documentation and gem release.
 - vpsAdmin: consumer of the published HaveAPI 0.29.8 gem through its API package.
-- Coordination workspace: investigation records only; no feature worktrees.
+- vpsfree-cz-configuration: downstream `vpsadmin` service channel, in a later phase.
+- Coordination workspace: plan, design, state and review/verification evidence.
 
 ## Approach
 
-1. Extract the exception, relevant stack frame, method, path and user agent.
-2. Inspect the exact installed Nix package and HaveAPI tag `v0.29.8`.
-3. Compare the published RubyGems artifact with installed documentation.
-4. Explain the packaging failure, why it sends email, and the smallest durable
-   release and route changes that would prevent recurrence.
+1. Follow [design.md](design.md) for the HaveAPI fix on a feature branch based on
+   current `master`: mandatory release documentation, direct-build checks,
+   narrow JSON-schema missing-file handling, regression specs and CI coverage.
+2. Commit all intended changes and pass quick checks. Obtain independent final
+   review of the complete branch, then run longer verification and publish the
+   feature branch for user review. Stop at this checkpoint.
+3. After user review and the required integration/publication approvals,
+   backport using `cherry-pick -x`, prepare the next 0.29 patch release
+   (currently 0.29.9), and verify the published artifact.
+4. Update existing Ruby dependency constraints and affected Nix gemsets in
+   vpsAdmin with current focused Rake tasks, add packaged API documentation
+   smoke checks, and complete review/verification before approved integration.
+5. Update only the configuration `vpsadmin` channel with confctl. Hand off exact
+   revisions and deployment checks; do not deploy or dry-activate services.
 
 ## Decisions
 
-- Lead owns this investigation. The verified retained team is `lead_reviewed`.
-- No application changes or production requests are necessary for diagnosis.
-- Routine findings and evidence do not trigger independent final review.
+- Lead owns design and implementation using retained Sol/xhigh settings.
+- Independent review uses retained ready `reviewer0`, Astra/xhigh, read-only.
+- Long or uncertain verification uses fresh Luna/low utility watchers resolved
+  from the pinned catalog; no additional team members are acquired.
+- User's delivery constraint: "you should first prepare the fix. after my review,
+  you will backport it to haveapi 0.29 and release it. then you will update
+  vpsadmin dependencies and update vpsadmin channel in vpsfree-cz-configuration.
+  I will handle deployment myself."
+- No version bumps, release publication, backport, downstream changes or default
+  branch integration before the initial user-review checkpoint.
 - Keep the session open for follow-up; do not archive or stop it.
 
 ## Compatibility and deployment
@@ -38,21 +57,20 @@ gemset update, followed by ordinary API deployment. Mixed API/node versions are
 unaffected; API instances may be rolled independently. Rolling back the API
 package restores the old documentation behavior without data conversion.
 
-Publication and deployment are proposals, not executed operations. Avoid editing
-the immutable Nix store or suppressing unrelated exception notifications.
+Publication follows user review and approval of concrete release artifacts.
+Deployment belongs to the user. Avoid editing the immutable Nix store or
+suppressing unrelated exception notifications. There are no migrations.
 
 ## Documentation
 
 Readers are the operator receiving the alert and a developer fixing the release
 process. Keep incident evidence and proposed checks in `findings.md` and current
-status in `state.md`. No project documentation changes are needed for this
-diagnosis-only request. A future implementation should update release guidance
-alongside its automated packaging requirement.
+status in `state.md`. Update HaveAPI's release/development guidance alongside
+the implementation. Keep individual review and rollout evidence in the session.
 
 ## Testing plan
 
-For this investigation, inspect installed files and the original published gem,
-and match the email stack frame to tagged source. No long builds or integration
-tests are needed. A future fix should check documentation in the built gem and
-exercise documentation endpoints from the installed artifact, including the
-missing-file case and absence of exception mail for that case.
+Run syntax/lint checks and focused specs before final review. After review, run
+the full Ruby server suite, clean packaging and extracted-artifact endpoint
+checks, and exact-head CI. Later verify the vpsAdmin service package and channel
+lock. See the quick and longer check definitions in [design.md](design.md).

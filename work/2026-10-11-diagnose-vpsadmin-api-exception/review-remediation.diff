@@ -1,0 +1,26 @@
+diff --git a/servers/ruby/spec/packaging_spec.rb b/servers/ruby/spec/packaging_spec.rb
+index b0ddb38..93d01f5 100644
+--- a/servers/ruby/spec/packaging_spec.rb
++++ b/servers/ruby/spec/packaging_spec.rb
+@@ -86,9 +86,20 @@ describe HaveAPI::Server do
+         })
+       RUBY
+ 
++      empty_gem_home = File.join(dir, 'empty-gems')
++      original_env = Bundler.original_env.merge('GEM_HOME' => empty_gem_home, 'GEM_PATH' => empty_gem_home)
++      allow(Bundler).to receive(:original_env).and_return(original_env)
++
++      # Retain Bundler's resolved gem paths for installations such as vendor/bundle.
++      child_env = {
++        'GEM_HOME' => Gem.dir,
++        'GEM_PATH' => Gem.path.join(File::PATH_SEPARATOR),
++        'RUBYLIB' => nil,
++        'RUBYOPT' => nil
++      }
+       stdout, stderr, status = Bundler.with_unbundled_env do
+         Open3.capture3(
+-          { 'RUBYLIB' => nil, 'RUBYOPT' => nil },
++          child_env,
+           RbConfig.ruby, '-I', File.join(dir, 'lib'), '-e', script,
+           '-I', File.join(Gem.loaded_specs.fetch('haveapi-client').full_gem_path, 'lib'),
+           chdir: dir

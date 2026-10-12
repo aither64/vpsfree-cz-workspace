@@ -1,0 +1,351 @@
+diff --git a/.github/workflows/_ruby-rspec.yml b/.github/workflows/_ruby-rspec.yml
+index affa55b..515c8bf 100644
+--- a/.github/workflows/_ruby-rspec.yml
++++ b/.github/workflows/_ruby-rspec.yml
+@@ -32,7 +32,7 @@ jobs:
+ 
+     steps:
+       - name: Check out source
+-        uses: actions/checkout@v6
++        uses: actions/checkout@v7
+         with:
+           fetch-depth: 1
+ 
+@@ -54,10 +54,14 @@ jobs:
+ 
+       - name: Set up Go
+         if: ${{ inputs.setup-go }}
+-        uses: actions/setup-go@v6
++        uses: actions/setup-go@v7
+         with:
+           go-version: "stable"
+ 
++      - name: Generate shared server documentation
++        if: ${{ inputs.rspec-working-directory == 'servers/ruby' }}
++        run: make doc
++
+       - name: Run RSpec
+         working-directory: ${{ inputs.rspec-working-directory }}
+         shell: bash
+diff --git a/.github/workflows/servers-ruby-rspec.yml b/.github/workflows/servers-ruby-rspec.yml
+index 59e5344..c9dae5d 100644
+--- a/.github/workflows/servers-ruby-rspec.yml
++++ b/.github/workflows/servers-ruby-rspec.yml
+@@ -4,10 +4,18 @@ on:
+   push:
+     paths:
+       - "servers/ruby/**"
++      - "doc/**"
++      - "utils/copydoc.sh"
++      - "Makefile"
++      - ".github/workflows/_ruby-rspec.yml"
+       - ".github/workflows/servers-ruby-rspec.yml"
+   pull_request:
+     paths:
+       - "servers/ruby/**"
++      - "doc/**"
++      - "utils/copydoc.sh"
++      - "Makefile"
++      - ".github/workflows/_ruby-rspec.yml"
+       - ".github/workflows/servers-ruby-rspec.yml"
+ 
+ jobs:
+diff --git a/Makefile b/Makefile
+index a5eb3f0..c16aaee 100644
+--- a/Makefile
++++ b/Makefile
+@@ -13,7 +13,7 @@ test:
+ 	cd clients/js && npm test
+ 	cd clients/php && vendor/bin/phpunit
+ 
+-release:
++release: doc
+ 	mkdir -p dist
+ 	
+ 	cd clients/ruby && bundle install && bundle exec rake build
+diff --git a/doc/agent-instructions/development.md b/doc/agent-instructions/development.md
+index e918d6f..23233ad 100644
+--- a/doc/agent-instructions/development.md
++++ b/doc/agent-instructions/development.md
+@@ -12,6 +12,8 @@ repository root unless explicitly stated otherwise.
+   `nix develop .#example-ruby-activerecord-auth`. From within the shell,
+   standard language tools are used.
+ - Sync documentation into server packages with `make doc`.
++- Run `make doc` before Ruby server specs. They check shared documentation and
++  build/extract a real server gem to exercise the packaged documentation routes.
+ - Run the full suite from repo root with `make test` (install deps first or use `nix develop`; this starts local test servers and needs permission to bind localhost ports).
+ - Ruby server tests: from `servers/ruby`, run `bundle exec rspec` or `bundle exec rake spec`.
+ - JS client build: from `clients/js`, run `./node_modules/.bin/gulp` after installing deps to refresh `dist/haveapi-client.js`.
+diff --git a/doc/agent-instructions/releases.md b/doc/agent-instructions/releases.md
+index b8da31b..5138385 100644
+--- a/doc/agent-instructions/releases.md
++++ b/doc/agent-instructions/releases.md
+@@ -17,6 +17,14 @@ repository root unless explicitly stated otherwise.
+ - Update `CHANGELOG.md` and add a brief description of changes for each component. If there are no changes to a component, it is not mentioned.
+ - Always run `make release` and `make publish` from within the top-level `nix develop` shell so the correct toolchain is used; running them outside nix can produce build failures or mismatched Ruby versions.
+ - `make release` will build artifacts of all components. Run it inside `nix develop`.
++- `make release` generates shared server documentation before building gems.
++  Generation failures stop the release. A direct server `bundle exec rake build`
++  rejects missing or empty shared documentation; run `make doc` from the
++  repository root first. Do not commit the generated server documents.
++- Before publication, run the Ruby server specs after `make doc`. The packaging
++  specs build and extract a server gem, check the required documents and serve
++  the documentation routes using the extracted framework. This catches missing
++  package content that a prepared source checkout could conceal.
+ - `make publish` will upload the built artifacts to package repositories, e.g. rubygems.org, npmjs.com, etc. Run it inside `nix develop` and always ask before publishing a new version.
+ 
+ 
+diff --git a/servers/ruby/.gitignore b/servers/ruby/.gitignore
+index 113ae36..943360c 100644
+--- a/servers/ruby/.gitignore
++++ b/servers/ruby/.gitignore
+@@ -1,3 +1,4 @@
+ doc/protocol.*
+ doc/create-client.md
++doc/typed-input-validation.md
+ doc/json-schema.html
+diff --git a/servers/ruby/Rakefile b/servers/ruby/Rakefile
+index 18c2335..548c23f 100644
+--- a/servers/ruby/Rakefile
++++ b/servers/ruby/Rakefile
+@@ -6,6 +6,25 @@ require 'haveapi'
+ require 'haveapi/tasks/i18n'
+ require 'haveapi/tasks/yard'
+ 
++desc 'Check shared documentation required in the server gem'
++task :check_doc do
++  required = %w[
++    doc/json-schema.html
++    doc/protocol.md
++    doc/create-client.md
++    doc/typed-input-validation.md
++    doc/protocol.png
++  ]
++  missing = required.reject { |path| File.file?(path) && File.size?(path) }
++
++  unless missing.empty?
++    abort "Missing or empty shared documentation: #{missing.join(', ')}. " \
++          'Run `make doc` from the repository root before building the server gem.'
++  end
++end
++
++Rake::Task[:build].enhance([:check_doc])
++
+ RSpec::Core::RakeTask.new(:spec) do |spec|
+   spec.pattern = FileList['spec/**/*_spec.rb']
+   spec.rspec_opts = '--require spec_helper'
+diff --git a/servers/ruby/lib/haveapi/server.rb b/servers/ruby/lib/haveapi/server.rb
+index 4e7a0b2..e3a1601 100644
+--- a/servers/ruby/lib/haveapi/server.rb
++++ b/servers/ruby/lib/haveapi/server.rb
+@@ -533,7 +533,12 @@ module HaveAPI
+       @sinatra.get "#{@root}doc/json-schema" do
+         content_type 'text/html'
+         erb :doc_layout, layout: :main_layout do
+-          @content = File.read(File.join(settings.root, '../../doc/json-schema.html'))
++          begin
++            @content = File.read(File.join(settings.root, '../../doc/json-schema.html'))
++          rescue Errno::ENOENT
++            halt 404
++          end
++
+           @sidebar = erb :'doc_sidebars/json-schema'
+         end
+       end
+diff --git a/servers/ruby/spec/documentation_spec.rb b/servers/ruby/spec/documentation_spec.rb
+index 1aeec11..6d34a19 100644
+--- a/servers/ruby/spec/documentation_spec.rb
++++ b/servers/ruby/spec/documentation_spec.rb
+@@ -195,4 +195,18 @@ describe 'Documentation' do
+     expect(last_response.status).to eq(200)
+     expect(last_response.headers['Content-Type']).to include('text/html')
+   end
++
++  {
++    '/doc/json-schema' => 'Envelope',
++    '/doc/protocol.md' => 'Protocol definition',
++    '/doc/create-client.md' => 'Client definition'
++  }.each do |path, heading|
++    it "serves shared documentation at #{path}" do
++      get path
++
++      expect(last_response.status).to eq(200)
++      expect(last_response.headers['Content-Type']).to include('text/html')
++      expect(last_response.body).to include(heading)
++    end
++  end
+ end
+diff --git a/servers/ruby/spec/extensions/exception_mailer_spec.rb b/servers/ruby/spec/extensions/exception_mailer_spec.rb
+index 51a8d43..097478d 100644
+--- a/servers/ruby/spec/extensions/exception_mailer_spec.rb
++++ b/servers/ruby/spec/extensions/exception_mailer_spec.rb
+@@ -122,6 +122,39 @@ describe HaveAPI::Extensions::ExceptionMailer do
+     expect(body).to include('request boom')
+   end
+ 
++  it 'does not mail a missing JSON schema documentation file' do
++    mailer = new_mailer
++    calls = collect_mail_calls(mailer)
++    doc_path = File.join(app.settings.root, '../../doc/json-schema.html')
++    allow(File).to receive(:read).and_call_original
++    allow(File).to receive(:read).with(doc_path).and_raise(Errno::ENOENT, doc_path)
++
++    with_exception_mailer(mailer) do
++      get '/doc/json-schema'
++    end
++
++    expect(last_response.status).to eq(404)
++    expect(calls).to be_empty
++  end
++
++  it 'still mails other JSON schema file errors' do
++    mailer = new_mailer
++    calls = collect_mail_calls(mailer)
++    app.set :raise_errors, false
++    app.set :show_exceptions, false
++    doc_path = File.join(app.settings.root, '../../doc/json-schema.html')
++    allow(File).to receive(:read).and_call_original
++    allow(File).to receive(:read).with(doc_path).and_raise(Errno::EACCES, doc_path)
++
++    with_exception_mailer(mailer) do
++      get '/doc/json-schema'
++    end
++
++    expect(last_response.status).to eq(500)
++    expect(calls.size).to eq(1)
++    expect(calls.first[1]).to be_a(Errno::EACCES)
++  end
++
+   it 'redacts secrets from request-level exception emails' do
+     mailer = new_mailer
+     calls = collect_mail_calls(mailer)
+diff --git a/servers/ruby/spec/packaging_spec.rb b/servers/ruby/spec/packaging_spec.rb
+new file mode 100644
+index 0000000..93d01f5
+--- /dev/null
++++ b/servers/ruby/spec/packaging_spec.rb
+@@ -0,0 +1,124 @@
++# frozen_string_literal: true
++
++require 'fileutils'
++require 'open3'
++require 'rake'
++require 'rbconfig'
++require 'rubygems/package'
++require 'tmpdir'
++
++describe HaveAPI::Server do
++  def required_docs
++    %w[json-schema.html protocol.md create-client.md typed-input-validation.md protocol.png]
++  end
++
++  before(:context) do
++    load File.expand_path('../Rakefile', __dir__)
++  end
++
++  def invoke_build
++    Rake::Task[:check_doc].reenable
++    Rake::Task[:build].reenable
++    Rake::Task[:build].invoke
++  end
++
++  %i[missing empty].each do |condition|
++    it "rejects a direct build with #{condition} shared documentation" do
++      Dir.mktmpdir('haveapi-doc-check') do |dir|
++        FileUtils.mkdir_p(File.join(dir, 'doc'))
++        required_docs.each do |name|
++          next if name == 'json-schema.html' && condition == :missing
++
++          content = name == 'json-schema.html' && condition == :empty ? '' : 'document'
++          File.write(File.join(dir, 'doc', name), content)
++        end
++
++        Dir.chdir(dir) do
++          expect do
++            expect { invoke_build }.to raise_error(SystemExit) do |error|
++              expect(error.status).to eq(1)
++            end
++          end.to output(/json-schema.html.*Run `make doc`/).to_stderr
++        end
++      end
++    end
++  end
++
++  it 'ships and serves shared documentation from the built gem' do
++    invoke_build
++    gem_path = File.expand_path("../pkg/haveapi-#{HaveAPI::VERSION}.gem", __dir__)
++
++    Dir.mktmpdir('haveapi-package') do |dir|
++      Gem::Package.new(gem_path).extract_files(dir)
++      required_docs.each do |name|
++        expect(File.read(File.join(dir, 'doc', name))).not_to be_empty
++      end
++
++      script = <<~RUBY
++        require 'haveapi'
++        require 'rack/mock'
++
++        module PackagedAPI
++          class Test < HaveAPI::Resource
++            version 1
++            auth false
++
++            class Index < HaveAPI::Actions::Default::Index
++              authorize { allow }
++              def exec
++                []
++              end
++            end
++          end
++        end
++
++        server = HaveAPI::Server.new(PackagedAPI)
++        server.use_version(1)
++        server.mount('/')
++        request = Rack::MockRequest.new(server.app)
++        responses = %w[/doc/json-schema /doc/protocol.md /doc/create-client.md].to_h do |path|
++          response = request.get(path, 'HTTP_HOST' => 'localhost')
++          [path, { status: response.status, type: response.content_type, body: response.body }]
++        end
++        puts JSON.generate({
++          framework: HaveAPI::Server.instance_method(:mount).source_location.first,
++          responses: responses
++        })
++      RUBY
++
++      empty_gem_home = File.join(dir, 'empty-gems')
++      original_env = Bundler.original_env.merge('GEM_HOME' => empty_gem_home, 'GEM_PATH' => empty_gem_home)
++      allow(Bundler).to receive(:original_env).and_return(original_env)
++
++      # Retain Bundler's resolved gem paths for installations such as vendor/bundle.
++      child_env = {
++        'GEM_HOME' => Gem.dir,
++        'GEM_PATH' => Gem.path.join(File::PATH_SEPARATOR),
++        'RUBYLIB' => nil,
++        'RUBYOPT' => nil
++      }
++      stdout, stderr, status = Bundler.with_unbundled_env do
++        Open3.capture3(
++          child_env,
++          RbConfig.ruby, '-I', File.join(dir, 'lib'), '-e', script,
++          '-I', File.join(Gem.loaded_specs.fetch('haveapi-client').full_gem_path, 'lib'),
++          chdir: dir
++        )
++      end
++      expect(status.success?).to be(true), "Packaged server failed: #{stderr}"
++      result = JSON.parse(stdout)
++      expect(File.realpath(result.fetch('framework'))).to eq(File.join(dir, 'lib/haveapi/server.rb'))
++
++      {
++        '/doc/json-schema' => 'Envelope',
++        '/doc/protocol.md' => 'Protocol definition',
++        '/doc/create-client.md' => 'Client definition'
++      }.each do |path, heading|
++        response = result.fetch('responses').fetch(path)
++        expect(response.fetch('status')).to eq(200), "Packaged route failed: #{path}"
++        expect(response.fetch('type')).to include('text/html')
++        expect(response.fetch('body')).to include(heading)
++      end
++    end
++  end
++end
