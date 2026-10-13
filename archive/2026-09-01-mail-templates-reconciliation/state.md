@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 # 2026-09-01-mail-templates-reconciliation
 
