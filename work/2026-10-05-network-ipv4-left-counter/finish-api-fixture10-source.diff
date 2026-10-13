@@ -1,0 +1,19 @@
+diff --git a/api/spec/support/network_export_dns_chain_spec_helpers.rb b/api/spec/support/network_export_dns_chain_spec_helpers.rb
+index 4c7b43dc98b7fcd87ca9403372e51238a8037931..d61c53487b14b6af90bdf7d61461ceac77160ea3 100644
+--- a/api/spec/support/network_export_dns_chain_spec_helpers.rb
++++ b/api/spec/support/network_export_dns_chain_spec_helpers.rb
+@@ -210,8 +210,12 @@ module NetworkExportDnsChainSpecHelpers
+       raise ArgumentError, 'create_ipv4_address_in_network! expects an IPv4 /24 network'
+     end
+ 
+-    host_octet = ((IpAddress.maximum(:id).to_i % 200) + 20)
+-    addr = "#{network.address.split('.').first(3).join('.')}.#{host_octet}"
++    start = IpAddress.maximum(:id).to_i % 200
++    occupied = IpAddress.pluck(:ip_addr)
++    network_prefix = network.address.split('.').first(3).join('.')
++    addr = (0...200).map { |offset| "#{network_prefix}.#{((start + offset) % 200) + 20}" }
++                    .find { |candidate| !occupied.include?(candidate) }
++    raise ArgumentError, 'No unused fixture IP address in the requested network' unless addr
+ 
+     create_ip_address!(
+       network: network,

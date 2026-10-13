@@ -1,6 +1,6 @@
 # Network availability and IPv4 counter implementation
 
-Current finish path (2026-10-12): genuine corrected-source CS/EN images are
+Current finish path (2026-10-13): genuine corrected-source CS/EN images are
 finished. The null-primary fix and exact source/package/independent review gates
 passed. The selected sequential working5 replacement completed ordinary stop,
 sealed non-disk backup and owned reset; raw disposable disks were discarded.
@@ -21,7 +21,19 @@ No application/runtime code change or guest/resource workaround followed it.
 
 Remaining finish sequence:
 
-1. Close current-target changed-head native evidence and affected review8.
+1. Correct the new actual allocation-test fixture collision and close required
+   API proof. Exact59097 run38364190560 exercises the rendering initializer
+   successfully in core/full, but full seed27013 fails a separate fixture on
+   duplicate ip_addr before allocation assertions. Implementer0 owns the bounded
+   actual-network free-address helper correction under the direct lead brief;
+   root owns its review, publication/C pin and finite hosted verification.
+   Preserve both original failed runs and the unchanged production/media proof.
+   Original review8 is closed with10passing runs including full118-test CI and
+   one API core-foundation failure: inherited verified double before lazy AR
+   attributes existed. Minimal three-line initialization is published separately
+   at59097cb4, production/schema bytes unchanged; Cda130dcd regenerates its same
+   final V/W30 streams. Final-series reviewer reconciliation complete without
+   another source-lane rerun. Failed original f778 result remains immutable.
    Under architect's bounded plan, V/D clean patch-equivalent rebases are now
    published as f778f762/16d949b; C961f5b61 contains only the two owning generated
    selectors on current master, and E78463762 consolidates the final D selector

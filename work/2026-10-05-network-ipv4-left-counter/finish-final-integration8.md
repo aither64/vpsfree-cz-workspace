@@ -1,17 +1,22 @@
 # Integration decision preparation
 
-Status: current-target feature heads published; affected review8 and changed-head
-native evidence pending. This record is a prepared decision, not merge approval
-or a claim that pending checks passed.
+Status: source/history/media reviews complete and exact changed-head account
+closed as10pass/1failed API matrix. Root requested/directly inspected narrow
+test-initialization correction; V/C final heads below published. Corrected-source
+API account is now mixed: corrected rendering example passes both modes,
+while full foundation fails another duplicate-address fixture and the required
+aggregate fails. A bounded helper correction is assigned; heads below remain
+frozen original objects until that correction is committed. This record is a
+prepared decision, not merge approval or all-pass acceptance.
 
 | Repository | Target | Prepared feature head | Purpose |
 | --- | --- | --- | --- |
-| vpsfreecz/vpsadmin | master | f778f762047bff3f4bd725fbb73882f65babdd65 | Network admission, member visibility, authoritative counters and PHP interface |
+| vpsfreecz/vpsadmin | master | 59097cb4d67b732b0539f2db93a111013ee92555 | Network feature plus inherited rendering-test initialization |
 | vpsfreecz/vpsadmin-webui | main | cce681424b866f6a51cbc0a1e4daa226ed33fc07 | Bound suggestion capability discovery, existing PR39 |
 | aither64/dev-workspace | master | 16d949b39e162870cc21a6f23d2d138b2e642887 | Public capture transport and reviewed deadline/retry contracts |
 | vpsfreecz/vpsfree-kb-contracts | master | 706b9d8c18edde528af4fb5279786491aedd47fa | Portable runtime, exact API fixture and genuine CS/EN media |
 | vpsfreecz/dev-workspace | master | 78463762fcf79b94ae026ea1acc3a36354938cd1 | Consolidated paired inputs and optional public KB provider |
-| vpsfreecz/vpsfree-cz-configuration | master | 961f5b61f608c60390caa7f76be0377ba389bb2d | Two owning generated services/WebUI channel selections |
+| vpsfreecz/vpsfree-cz-configuration | master | da130dcda754ca7c8f317012bebcd4896cbec162 | Two owning generated services/WebUI channel selections |
 
 The two registered K worktrees select the same head and require one repository
 integration. Registered Wnetwork/proxy-addr and workspace feature heads already

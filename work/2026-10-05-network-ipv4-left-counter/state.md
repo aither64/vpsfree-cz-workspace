@@ -6,13 +6,73 @@ lifecycle: active
 
 ## Status
 
-### Working delivery qualification (2026-10-12)
+### Current integration decision (2026-10-13)
+
+Implementation, genuine bilingual media and final whole-branch history review
+are complete through V59097/Cda130. Exact corrected API38364190560 is now
+closed as mixed: the rendering example passes in BOTH modes, core foundation
+1432/0/52pending; full foundation1432/1/3pending, seed27013, fails the separate
+allocation fixture [1:7] during address creation (duplicate ip_addr), before
+allocation assertions. Required topic aggregate also fails. Original f778 API
+failure remains immutable. No local test suite was run.
+
+[Corrected-source native assessment](finish-api-render9-api-assessment1.json)
+records all26 counters, exact jobs and GitHub-digest-verified core/full native
+JSONs. Root assigned implementer0 a bounded source-only fixture helper correction
+under [the direct brief](finish-api-fixture10-brief.txt); investigate max-ID modulo
+address reuse and select a free address in the actual /24 without weakening
+uniqueness/allocation assertions. No retry, production/schema or media change.
+Correction now committed as V4a21dd25b23de9832166def98526f410416b651e
+with all normal pre-commit/commit-msg hooks passing. All3158 other paths and
+production/database/assertion bytes remain exact. Retained reviewer0 owns the
+committed helper delta/complete V six-commit series assessment; V publication,
+C regeneration and finite hosted proof follow that review. No default approval.
+Coordination follow-up to retained reviewer0 is still waiting on its native
+team command response. A read-only process wait-channel check identifies
+ordinary commands waiting in locks_lock_inode_wait while a shared workspace
+package switch remains active. That transition belongs to another initiative;
+no bypass, cancellation, private-state read or package change is authorized.
+The retained review may be waiting at its ordinary session identity check.
+No duplicate source/reviewer work or publication is
+started. Existing reviewer assignment accepted turn01a1345d-46a2-7873-8e36-2acfe386674e.
+Current phase: fixture correction review and focused verification; merge approval
+handoff remains blocked by the genuinely failed required API matrix.
+The correction gate is the exact new-head API matrix and topic aggregate,
+with RuboCop and translation checks. Original f778 full CI118 passed and all
+production/integration-test bytes are unchanged at59097. The automatic new-head
+full CI is additional observed evidence, not a new production acceptance claim
+or a reason to repeat the unchanged runtime campaign; the watcher retains it.
+No pending run counts as a pass.
+
+| Repository | Final feature head | Target |
+| --- | --- | --- |
+| vpsadmin | 4a21dd25 (committed; publication/review pending) | master |
+| vpsadmin-webui (W30) | cce68142 | main |
+| dev-workspace (aither64) | 16d949b3 | master |
+| vpsfree-kb-contracts | 706b9d8c | master |
+| dev-workspace (vpsfreecz) | 78463762 | master |
+| vpsfree-cz-configuration | da130dcd | master |
+
+The prior complete reviewed inventory and exact heads are in
+[final corrected inventory](finish-api-render9-inventory.json) and
+[prepared integration decision](finish-final-integration8.md). Current V6-commit
+source/series is [the committed correction proof](finish-api-fixture10-committed-proof.json);
+C remains atda130 until V publication and owning-channel regeneration.
+Wnetwork, proxy-addr
+and the registered workspace feature are already integrated; they require no
+new merge. All final worktrees remain clean. No default integration is approved.
+C has no configuration-build proof; installation/deployment, production KB
+publication and lifecycle actions remain separate. The inherited Number-coercion
+Advisory remains accepted and unfixed. Only two screenshots are fresh.
+
+### Working delivery qualification (2026-10-13)
 
 **Real bilingual media is now generated, strictly validated, visually inspected,
 committed and published.** Generator Gd0b4f407 is retained as the parent of media
 recording M706b9d8c18edde528af4fb5279786491aedd47fa; the inventory preserves G's
-actual instance/run/artifact and immutable source. E selects M at
-dc94c8f60b4e869ce738f4c242459cc5cadf1b3d. K has three logical commits (canonical
+actual instance/run/artifact and immutable source. The original media-paired E selected M at
+dc94c8f60b4e869ce738f4c242459cc5cadf1b3d; current E78463762 preserves M
+while reconciling its D input. K has three logical commits (canonical
 V input, reviewed runtime generator, genuine generated media); E retains two
 (final consolidated paired input and unchanged provider). No application code
 changed after the completed null-primary review.
@@ -45,13 +105,57 @@ changed after the completed null-primary review.
   published retained-network-capture-v939159f2. Migration/database blobs match.
 - Complete: C owning two final confctl selectors on current master, E D selector
   folded into its paired-input owner; all four new feature heads published.
-  Current final V f778f762, D16d949b, C961f5b61, E78463762; K M706b9d8 unchanged.
+  Reviewed original V f778f762, D16d949b, C961f5b61, E78463762;
+  current corrected V59097cb4/Cda130dcd below, K M706b9d8 unchanged.
   [Current-target inventory](finish-final-target-inventory8.json),
   [C semantic proof](finish-final-target-c8-proof.json),
   [E composition/provider proof](finish-final-target-e8-proof.json).
-- Running: affected final target review8 under retained reviewer0 and exact
-  changed-head hosted native collection. No application/guest/media changes.
-- Remaining: changed-head native results and affected review closure, then
+- Complete: affected final target review8 source/history/composition concludes
+  no new findings; all four/three V/D patches and migration blobs preserved,
+  C/E actual owning graphs and consolidated final series accepted.
+- Complete: changed-head native collector closes103 artifacts/eleven runs.
+  Ten runs pass, including V's full118-test integration suite, PHP, migration
+  and all companion checks plus exact D/E packages. API matrix38310941934 fails
+  one core-foundation verifying-double example (1432examples/1failure/52pending,
+  seed27800); full-foundation1432/0/3pending. Original failure is retained.
+  [Mixed native assessment](finish-final-target-hosted8-assessment1.json).
+- Complete: implementer diagnosis and reviewer original-object mixed native
+  account; required API failure remains genuine on original f778. The requested
+  minimal source correction is now committed/published and directly inspected.
+- New reviewer8 Important: inherited rendering-test verified doubles depend on
+  lazy AR methods before generation. Root accepts step9 narrow test-only
+  correction: explicitly generate campaign/request attribute methods in that
+  one example, keep all strict doubles/assertions, then focused/new-head hosted
+  proof. No production/schema/K/media change or repeated guest campaign.
+  Implementer supplied exactly three additive lines in one example; all3158
+  other tracked paths unchanged. First normal-hook commit refused: API i18n
+  hook's ignored local dependency cache still had HaveAPI0.29.8 after upstream
+  moved to0.29.9. No hook bypass; repair through documented API Nix shell's
+  ordinary Bundler setup, then retry the same unchanged test-only commit.
+  Dependency setup0 and second normal-hook commit pass; test-only V59097cb4
+  adds exactly three lines, original four patches and all production/database
+  bytes unchanged. Root direct step9 committed inspection complete; canonical
+  new-head hosted API proof still required. C owning selector regeneration
+  retains one final V stream, unchanged W30 and current default graphs.
+  V59097cb4 and Cda130dcd are published; corrected final series5/1/2/3/3/2
+  retains the inherited fixture correction as a separate logical owner.
+  [Final corrected inventory](finish-api-render9-inventory.json),
+  [direct committed source proof](finish-api-render9-committed-proof.json),
+  [C owning selector proof](finish-api-render9-c-proof.json).
+  V's dependency/package delta selects the repository's normal full ci-tagged
+  suite under its existing selector. API specs also run. PHP/migration paths
+  are unchanged by the rebase push and need no invented new-head rerun claim;
+  their prior source/evidence is retained with unchanged blobs. No additional
+  screenshot campaign or local CI suite is selected.
+- Complete: corrected V59097 API native account is mixed: rendering example
+  passes both modes; another allocation fixture hits duplicate address creation.
+  All26 arrays/terminal jobs/native foundation ZIP/JSON hashes are retained in
+  [the corrected-source assessment](finish-api-render9-api-assessment1.json).
+- Complete: implementer0 bounded actual-network free-address fixture correction,
+  committed as V4a21dd25b under passing normal hooks; source/production proof held.
+- Running: retained reviewer0 affected helper and complete six-commit V history;
+  existing watcher retains automatically triggered full CI38364190592.
+- Remaining: fixture correction/review/focused hosted proof, then
   named-default integration handoff. C pins are mechanically reconciled;
   no configuration build/deployment claim.
 - Risk: first packaged CS attempt failed before scenario/PNG and discarded the
@@ -73,7 +177,11 @@ Current authoritative phase checklist:
 - [x] Stop the working6 pair normally; retain stopped state/disks/receipts.
 - [x] Close final strict-media/source/package hosted checks and independent review7.
 - [x] Prepare and publish current-target patch-equivalent V/D and owning C/E pins.
-- [ ] Close changed-head hosted evidence and affected review8.
+- [x] Close affected review8 source/history/composition without new findings.
+- [x] Close changed-head native review8 as mixed, retaining the sole API failure.
+- [x] Apply/directly inspect narrow inherited template-test initialization fix.
+- [x] Close V59097 native API account; rendering correction passes both modes.
+- [ ] Correct allocation fixture address collision; verify required API gate.
 - [ ] Present concrete named-default integration decision.
 - [ ] Integrate approved repository/default set, if directed; remain active otherwise.
 

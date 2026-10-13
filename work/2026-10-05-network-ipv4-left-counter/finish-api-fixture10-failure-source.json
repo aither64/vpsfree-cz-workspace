@@ -1,0 +1,36 @@
+{
+  "head": "59097cb4d67b732b0539f2db93a111013ee92555",
+  "run": 38364190560,
+  "native_full_seed": 27013,
+  "failure_id": "./spec/models/transaction_chains/ip/allocate_spec.rb[1:7]",
+  "error": "ActiveRecord::RecordInvalid: Validation failed: Ip addr has already been taken",
+  "source_comparison": [
+    {
+      "path": "api/spec/support/network_export_dns_chain_spec_helpers.rb",
+      "head_sha256": "cfe9eac2aabf9b457b2b028385fde45a9afbf0d6407fb8cb09a320add3285c0b",
+      "target_sha256": "cfe9eac2aabf9b457b2b028385fde45a9afbf0d6407fb8cb09a320add3285c0b",
+      "same_as_target": true
+    },
+    {
+      "path": "api/spec/support/storage_chain_spec_helpers.rb",
+      "head_sha256": "d1a86a45dbeb4da8ec1b658751f9a957f45969c229229203f3a6fcae4a964285",
+      "target_sha256": "d1a86a45dbeb4da8ec1b658751f9a957f45969c229229203f3a6fcae4a964285",
+      "same_as_target": true
+    },
+    {
+      "path": "api/models/ip_address.rb",
+      "head_sha256": "88e95bc7fbc7ce7f6ab29cac90c6d8eea202e4be22ccc12938f62754c5fe099a",
+      "target_sha256": "56e21b406a8111756b72ddcef6165ee466d00a44c37eb7a6a2df1cb76087812c",
+      "same_as_target": false
+    },
+    {
+      "path": "api/spec/models/transaction_chains/ip/allocate_spec.rb",
+      "head_sha256": "131003756bb6f68b3a3691241b81b08d0476590f8d69efc96567d26b5f32f0ae",
+      "target_sha256": "4fb45a4c0d9dca0b622e6900d3193bed333c32e8fd27e1b4a9f44addc99d1411",
+      "same_as_target": false
+    }
+  ],
+  "source_diagnosis": "Actual-network helper chooses max(id) modulo200 host without occupied-address check and passes explicit addr into the lower helper, bypassing its existing unused-default-address scan; ip_addr is globally unique. Source supports collision mechanism; exact colliding address not present in returned native JSON, and no local reproduction ran.",
+  "preserved_rendering_fix": "Native strict rendering example[1:48] passes core/full; entire required API run still fails separately.",
+  "scope": "Bounded test-helper-only correction assigned; no production/schema/media update."
+}
