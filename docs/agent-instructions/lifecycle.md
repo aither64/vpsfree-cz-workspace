@@ -4,6 +4,12 @@ Required workspace procedure, selected by the routing table in `AGENTS.md`.
 Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
+Read [coordination](../coordination.md) before a lifecycle/package mutation that
+affects queued work or a machine reservation. Running/uncertain operations fence
+lifecycle changes; archived/deleted deployed owners retain recovery reservations.
+Revival preserves ownership. Package candidates must preserve the coordination
+contract and retained artifacts; inactivity never frees a review reservation.
+
 An initiative can leave `work/` through an explicitly requested archive or
 delete action, or through the enabled automatic archive policy below. Completing
 the requested work, answering the current message,
