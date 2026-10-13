@@ -4,6 +4,15 @@ Required workspace procedure, selected by the routing table in `AGENTS.md`.
 Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
+The selected package also provides the authoritative installed guides through
+`workspace-host coordination guide`, including before workspace integration.
+
+Before deployment activation or a workspace profile switch, read
+[coordination](../coordination.md) in full. Build and copy outside execution
+claims; activate through the exact owner's approved jobs and machine reservation.
+Retain that reservation during human review, feedback and redeployment. Finish
+requires exact integration proofs and explicit deployment/review completion.
+
 In every confctl-managed configuration repository, inspect its defined
 channels and the channel-to-input mapping before updating a flake input. For a
 normal update to a published upstream revision, run
