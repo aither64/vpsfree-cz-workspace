@@ -4,6 +4,11 @@ Required workspace procedure, selected by the routing table in `AGENTS.md`.
 Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
+For queued merges/deployments, complete builds, tests and review before submitting
+the prepared snapshot. Resource contention is a wait, not a failed check. Follow
+[coordination](../coordination.md) for interruptible waiting and stale-snapshot
+refresh; repeat only the checks/review required by the changed patch or baseline.
+
 ## Development Environment
 
 Use the generic `dev-session-monitor` skill for authorized tests, CI checks and

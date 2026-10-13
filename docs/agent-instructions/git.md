@@ -4,6 +4,11 @@ Required workspace procedure, selected by the routing table in `AGENTS.md`.
 Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
+Before feature integration, read [coordination](../coordination.md) in full.
+Prepare/rebase/review outside claims, then submit authorized merge jobs through
+the selected runtime. It executes the fast-forward/SSH procedure below. Waiting
+agents keep their turns open; a busy resource never authorizes a direct bypass.
+
 ## Published branches and pull requests
 
 Ordinary workspace projects use published development branches. Do not create or
