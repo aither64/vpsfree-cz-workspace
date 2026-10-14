@@ -6,9 +6,10 @@ lifecycle: active
 
 ## Status
 
-Implementation started. Initiative created without spawning another lead thread.
-No retained roster exists (team list refuses without a lead thread); use the
-installed catalog's mandatory-review fallback. No deployment has run.
+Implementation started. The coordinator requires a retained native destination.
+Initialize an idle tracking conversation without transferring application work.
+This ownership initialization checkpoint is required before retained creation;
+its scope must match the committed tracking baseline. No deployment has run.
 
 - [x] Plan and decisions settled.
 - [ ] Implementation and quick checks.
@@ -24,6 +25,14 @@ Commit initial tracking, create owned worktrees, implement the notice and tests.
 ## Documentation
 
 ## Repositories
+
+Owned worktrees under worktrees/2026-10-14-dismiss-recovery-banner/:
+dev-workspace at 3b5550fd, workspace at e99891bf, and
+vpsfree-cz-configuration at c2fa9777, each on the dated initiative branch.
+
+Configuration worktree checkout initially failed in ambient Overcommit because
+its gems were absent. The checkout existed; entering nix develop, installing
+bundle/hooks and re-registering the same worktree succeeded.
 
 ## Commands run
 
