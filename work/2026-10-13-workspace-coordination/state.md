@@ -1,13 +1,31 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Workspace operation coordination
 
-Phase: implementation, verification, independent review, deployment and all
-four final repository integrations complete. Ready for use. Aitherdev remains
-reserved in `deployed_review` for human UI review; no finish/release or session
-closure was performed. No further code review or merge remains.
+Phase: complete. Implementation, verification, independent source review,
+deployment and all four final repository integrations are finished. Aitherdev
+was released through the normal finish command after explicit user direction;
+no further review or work remains. The session stays open, with clean worktrees
+and feature refs retained.
+
+Release request `b5995a58-7dbb-4f84-87c4-b058ffcbf2e3` settled reservation
+`d114323d-806c-479f-b7a4-8c1a08afb45b` at revision 15, state `released`.
+Normal completion checked actual final integrations, cumulative deployed sources,
+settled operations and unchanged live identities. Thirteen nonancestor historical
+sources have canonical direct-final `reviewed_change` receipts, actual final
+merge approvals and later successful same-kind deployments. Additional exact
+lineage review was explicitly waived by the user; receipts identify that user
+acceptance honestly and do not claim new independent review of composed mappings.
+Existing independent source/history reviews, artifacts and original refs remain.
+[Release proof](release-proof.json) and [acceptance](release-lineage-acceptance.json).
+
+The requested [handoff for already-running sessions](running-sessions-handoff.md)
+contains current guidance, identity checks, normal command/request sequence,
+waiting, review reservations, release, stale snapshots and recovery. Commands
+and fields were checked against the installed guide and current implementation;
+no live job or another session was started to validate examples.
 
 The permanent preparation fix initializes each repository's Nix shell and hook
 dependencies, checks Bundler/Overcommit and SSH, and prepares source/target hooks
@@ -26,7 +44,7 @@ changed. Final configuration and workspace merge drivers completed in 15.0 and
 Fresh upstream fetches and ancestry proofs confirm every exact final head.
 All registered feature worktrees retain their branches and are clean. The
 coordinator reports 18 succeeded jobs, no pending job/notification and the
-original held reservation `d114323d-806c-479f-b7a4-8c1a08afb45b` for
+original now-released reservation `d114323d-806c-479f-b7a4-8c1a08afb45b` for
 `vpsfree:aitherdev`, owner `55e83d75-cb96-417a-9308-11d3caf22dcd`.
 Final proof: [final-integration-acceptance.json](final-integration-acceptance.json).
 
@@ -70,7 +88,7 @@ Open [Operations](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/operatio
 from the menu above Automatic archival. It shows reserved machines, active work
 and recent results. Cards show named/count reservation badges and tooltips.
 The session's [Reservations tab](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-13-workspace-coordination/#reservations)
-shows the retained aitherdev reservation.
+shows the released aitherdev reservation in its history.
 
 Documentation remains reconciled: runtime `docs/coordination.md`,
 `docs/coordination-operations.md` and `docs/workspace-portal.md`; workspace
@@ -86,11 +104,21 @@ Individual execution history is in [rollout.md](rollout.md).
 - [x] No-reboot deployment and actual live acceptance.
 - [x] All four exact final heads merged into remote master.
 - [x] Final live package/system, services, queue and reservation verified.
-- [ ] Explicit human deployed-review completion before releasing aitherdev.
+- [x] User explicitly waived remaining review and directed normal release.
+- [x] Aitherdev released with cumulative deployment and exact final merge proofs.
+- [x] Requested handoff for existing sessions prepared and published.
 
-Next: user UI review and any feedback. No implementation, verification, review
-or merge blocker remains. The initiative stays active while it owns the machine
-reservation. No archive/delete, reboot, forced release or closure is authorized.
+Next: no remaining work. Other sessions can deploy through normal coordination.
+The user requested a handoff and explicitly directed release: "I said that no
+review is needed, you should release it." This supersedes the earlier hold.
+A second same-day tracking commit is allowed for this explicitly requested
+handoff. No archive/delete, reboot or session closure was performed.
+This requested handoff checkpoint is saved locally while another session's
+unpublished initial tracking commit `959fbf5a` remains above remote master.
+The shared filesystem and live portal already expose the handoff. Canonical
+range-diff artifacts retain Git-generated whitespace because their exact bytes
+are bound to release receipts; whitespace checks cover authored records. No foreign
+working-tree file or commit was published by this checkpoint.
 
 ## Earlier checkpoints
 

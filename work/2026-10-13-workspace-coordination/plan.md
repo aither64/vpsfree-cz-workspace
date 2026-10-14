@@ -142,3 +142,15 @@ feature heads are integrated into remote master and freshly proved by
 `final-integration-acceptance.json`. No additional review or merge work remains.
 Keep the initiative active and aitherdev reserved for human UI review; release
 requires the explicit review-completion proof under the existing contract.
+
+
+## Explicit release and handoff, 2026-10-14
+
+The user clarified that no review remains and explicitly directed release.
+Normal finish succeeded with the final integrated/deployed heads, historical
+replacement lineage and unchanged live identities. Additional exact-mapping
+review was explicitly waived; existing independent source reviews remain the
+verification basis, with transparent user-acceptance receipts. Aitherdev is
+available to other sessions. The initiative is complete; no archival or session
+closure was performed. The requested running-session handoff is in
+`running-sessions-handoff.md` and the portal Artifacts catalog.

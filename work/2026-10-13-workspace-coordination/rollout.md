@@ -1,13 +1,13 @@
 # Workspace coordination rollout
 
 Status: final fix deployed and verified; all four exact final feature heads
-merged into their remote master branches. Aitherdev remains reserved for human
-UI review. Final acceptance is in `final-integration-acceptance.json`; earlier
+merged into their remote master branches. Aitherdev has been released through normal finish after explicit user
+direction; additional review was waived. Final acceptance is in `final-integration-acceptance.json`; earlier
 sections below preserve historical rollout observations.
 
 Deployment and four master integrations were explicitly authorized by the user.
-The application remains selected from its user profile. No reboot, finish,
-reservation release or session closure was performed.
+The application remains selected from its user profile. No reboot or session closure was performed. Normal finish and reservation
+release completed after the user explicitly directed release.
 
 ## Initial observation
 
@@ -495,3 +495,22 @@ No finish/release was attempted. Existing historical lineage receipts are not a
 substitute for any future finish proof at the final heads. The user explicitly
 requested no additional review; prior accepted final review and patch-equivalent
 rebase evidence remain sufficient.
+
+## Normal release and running-session handoff, 2026-10-14
+
+The user explicitly directed release and waived any remaining review. Normal
+finish request `b5995a58-7dbb-4f84-87c4-b058ffcbf2e3` succeeded, setting the
+original aitherdev reservation to `released`, revision 15. Exact final feature
+heads, cumulative deployed input integration and live system/profile identity
+checks passed. Thirteen canonical direct-final material-replacement receipts
+bind existing final merge approvals and later successful deployments. Their
+reviewer field honestly records the user's additional-review waiver; no new
+exact-mapping independent review was claimed or run. Existing reviewed source
+and migration evidence and all predecessor refs/artifacts are preserved.
+
+`release-proof.json` records settled jobs and actual integration proofs;
+`release-request.json` and `release-result.json` retain the ordinary idempotent
+operation. The integrated machine frontier was published. The initiative is
+complete and remains open, with branches and clean worktrees retained.
+`running-sessions-handoff.md` is registered in Artifacts and supplies the
+requested workflow to existing sessions. It was not sent to other conversations.
