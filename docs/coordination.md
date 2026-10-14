@@ -14,6 +14,19 @@ the existing merge, deployment, session-ownership and mandatory-review gates.
 
 ## Agent workflow
 
+For a completed reviewed deliverable, prefer the installed runtime's
+[integration driver](https://github.com/aither64/dev-workspace/blob/master/docs/integration.md).
+Freeze the original review and check receipts, then provide the actual integration
+and deployment directions in its request. The driver batches dependent merges,
+refreshes proven mechanical changes and publishes compact completion records.
+Conflicts and substantive changes return to the lead for applicable review.
+The existing individual commands remain the recovery interface.
+
+`config/integration.nix` selects the nested workspace runtime and configuration's
+confctl channel. The extension supplies the immutable `workspace-pins` recipe.
+The workspace pin remains a direct nested override; configuration still selects
+the matching host module separately from the application profile.
+
 1. Keep the initiative's own branches and worktrees. Complete implementation,
    history consolidation, quick checks and independent review. Run longer checks
    under the verification procedure. Rebase and rebuild outside coordination
@@ -53,7 +66,9 @@ dependencies already prepared in its Nix environment. Feature refs remain.
 
 The shared workspace stays on master. Its feature merge uses the existing
 `dev-session-tracking.lock`, preserves unrelated index/files and refuses overlap.
-A new tracking commit invalidates a previously prepared baseline. Tracking-only
+A new tracking commit invalidates a previously prepared baseline. A certified
+refresh over tracking records preserves the original review when reconstruction
+and complete input identities prove the applicable equivalence. Tracking-only
 commits retain their existing approval exemption, but must use the same lock for
 shared staging/commit operations. Never reset, clean, stash or switch the shared
 checkout to force an integration.

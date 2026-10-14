@@ -4,8 +4,8 @@
   inputs = {
     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
     vpsfree-dev-workspace = {
-      url = "github:vpsfreecz/dev-workspace/3f0777ffb020b5d02c21c65ee7bcd46804768ff1";
-      inputs.dev-workspace.url = "github:aither64/dev-workspace/ba8669b14536f72b559abc912bba8eac430111e4";
+      url = "github:vpsfreecz/dev-workspace/767dfd587e346168e1443e65ccdb67ce748f3fe3";
+      inputs.dev-workspace.url = "github:aither64/dev-workspace/832d9f1a6a21337dd44063ddf39f7a88cfc95450";
     };
   };
 
@@ -45,6 +45,7 @@
       package = vpsfree-dev-workspace.lib.mkPackage {
         inherit pkgs siteConfig teamConfig;
         coordinationConfig = import ./config/coordination.nix;
+        integrationConfig = import ./config/integration.nix;
       };
     in
     {
@@ -52,6 +53,7 @@
         default = package;
         vpsfree-dev-workspace = package;
       };
+      devShells.${system}.default = pkgs.mkShell { inputsFrom = [ package ]; };
       apps.${system}.workspace-host = {
         type = "app";
         program = "${package}/bin/workspace-host";

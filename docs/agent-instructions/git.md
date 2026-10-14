@@ -160,6 +160,15 @@ history that has already been merged.
 
 ## Final branch history and merge readiness
 
+For a later mechanical refresh of a fully independently reviewed branch, the
+installed coordinator's certified-equivalence workflow may reuse that review.
+The certificate must bind the original exact range, reviewer, final range,
+reconstruction or installed pin proof, and migration conclusion. Changes outside
+that boundary require the applicable independent review. Preserve the original
+report and revisions. A certificate never grants integration approval or permits
+rewriting master. Use the integration driver for operation batches and retries;
+retain the individual coordination commands for uncertain-effect recovery.
+
 Before final review of an unmerged branch, compare its complete base-to-head
 commit series and final diff with the intended result. Identify superseded
 approaches, follow-up fixes, unused compatibility paths, and every migration.

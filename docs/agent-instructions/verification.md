@@ -9,6 +9,14 @@ the prepared snapshot. Resource contention is a wait, not a failed check. Follow
 [coordination](../coordination.md) for interruptible waiting and stale-snapshot
 refresh; repeat only the checks/review required by the changed patch or baseline.
 
+Use separately exported Ruby checks and retained derivation/input receipts to
+reuse exact successful verification. Tree equality alone does not justify reuse.
+The aggregate Ruby check must prove complete unique shard coverage; preserve the
+unsharded diagnostic mode. Run independent checks concurrently where safe.
+An integration driver that also approves/submits/activates operations is launched
+by the lead. A verification utility may observe its independent logs/status; it
+must not launch or resume that mutation driver itself.
+
 ## Development Environment
 
 Use the generic `dev-session-monitor` skill for authorized tests, CI checks and
