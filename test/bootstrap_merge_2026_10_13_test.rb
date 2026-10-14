@@ -76,6 +76,151 @@ class BootstrapMerge20261013Test < WorkspaceCoordinationTest
     end
   end
 
+  def rebased_deployment_fixture
+    old_head = @plan['repositories']['code']['head']
+    upstream = File.join(@tmp, 'upstream')
+    git('clone', @remote, upstream)
+    git('-C', upstream, 'config', 'user.name', 'Fixture')
+    git('-C', upstream, 'config', 'user.email', 'fixture@example.test')
+    File.write(File.join(upstream, 'upstream-change'), 'independent work')
+    git('-C', upstream, 'add', 'upstream-change')
+    git('-C', upstream, 'commit', '-m', 'independent upstream work')
+    git('-C', upstream, 'push', 'origin', 'master')
+    new_base = git('-C', upstream, 'rev-parse', 'HEAD').strip
+    git('-C', @bare, 'fetch', 'origin', 'master')
+    git('-C', @bare, 'update-ref', 'refs/fixture/deployed', old_head)
+    git('-C', File.join(@tmp, @owner['slug']), 'rebase', new_base)
+    new_head = git('-C', @bare, 'rev-parse', @owner['slug']).strip
+    @plan['repositories']['code']['head'] = new_head
+    proof = @plan['deploymentEvidence']
+    value = JSON.parse(File.read(proof['path']))
+    value['sourceHeads']['code'] = old_head
+    File.write(proof['path'], JSON.generate(value))
+    proof['sha256'] = Digest::SHA256.file(proof['path']).hexdigest
+    @engine.store.transaction do |data|
+      data['reservations'][@reservation['id']]['history'] << {'attempt' => SecureRandom.uuid,
+        'artifact' => WorkspaceCoordination.digest('fixture' => 'deployed code'), 'observed' => {},
+        'kind' => 'machine_activate', 'outcome' => 'applied',
+        'coverageContracts' => [{'repository' => 'code', 'target' => 'refs/heads/master', 'owned' => true}],
+        'coverage' => [{'repository' => 'code', 'revision' => old_head}]}
+    end
+    mapping = {'repository' => 'code', 'target' => 'refs/heads/master', 'from' => old_head, 'fromBase' => @base,
+               'to' => new_head, 'toBase' => new_base, 'relation' => 'patch_equivalent'}
+    artifacts = %w[range_diff verification migration_review].map do |kind|
+      path = File.join(@workspace, 'work', @owner['slug'], kind)
+      content = kind == 'range_diff' ? git('-C', @bare, 'range-diff', '--no-color', '--creation-factor=80', "#{@base}..#{old_head}", "#{new_base}..#{new_head}") : 'checked private fixture'
+      File.write(path, content)
+      {'kind' => kind, 'path' => path, 'sha256' => Digest::SHA256.file(path).hexdigest}
+    end
+    @lineage_receipt = {'schema' => 1, 'ownerId' => @owner['id'], 'reservationId' => @reservation['id'],
+      'mapping' => mapping, 'decision' => 'accepted', 'reviewer' => 'independent fixture reviewer', 'artifacts' => artifacts}
+    path = File.join(@workspace, 'work', @owner['slug'], 'lineage-review.json')
+    File.write(path, JSON.generate(@lineage_receipt))
+    @lineage_ref = {'kind' => 'review', 'path' => path, 'sha256' => Digest::SHA256.file(path).hexdigest}
+    @plan['evidence'].concat(artifacts + [@lineage_ref])
+    @plan['lineageEvidence'] = [@lineage_ref]
+  end
+
+  def update_fixture_lineage
+    File.write(@lineage_ref['path'], JSON.generate(@lineage_receipt))
+    @lineage_ref['sha256'] = Digest::SHA256.file(@lineage_ref['path']).hexdigest
+  end
+
+  def test_dated_reviewed_rebase_and_canonical_finish_receipt_use_actual_approval
+    rebased_deployment_fixture
+    without = @plan.reject { |key, _| key == 'lineageEvidence' }
+    assert_raises(WorkspaceCoordination::Error) { @driver.operate(without, @preparation, prepare: true) }
+    execution = @driver.operate(@plan, @preparation, prepare: true)
+    before = @engine.store.read['reservations']
+    result = @driver.operate(@plan, execution)
+    assert_equal 'succeeded', result['state']
+    assert_equal result, @driver.operate(@plan, execution)
+    data = @engine.store.read
+    assert_equal before, data['reservations']
+    assert_equal 1, data['jobs'].length
+    final = [{'repository' => 'code', 'target' => 'refs/heads/master', 'head' => @lineage_receipt['mapping']['to']}]
+    preapproval = @lineage_receipt['mapping'].merge('evidence' => @lineage_ref)
+    assert_raises(WorkspaceCoordination::Error) { @engine.validate_replacements(@owner, data['reservations'][@reservation['id']], [preapproval], final) }
+    mapping = @lineage_receipt['mapping'].merge('approvalId' => data['jobs'][result['jobId']]['approvalId'])
+    path = File.join(@workspace, 'work', @owner['slug'], 'canonical-lineage.json')
+    File.write(path, JSON.generate(@lineage_receipt.merge('mapping' => mapping)))
+    reference = {'kind' => 'review', 'path' => path, 'sha256' => Digest::SHA256.file(path).hexdigest}
+    item = mapping.merge('evidence' => reference)
+    assert_equal [item], @engine.validate_replacements(@owner, data['reservations'][@reservation['id']], [item], final)
+  end
+
+  def test_dated_rebase_wrong_owner_and_duplicate_mapping_refuse
+    rebased_deployment_fixture
+    @lineage_receipt['ownerId'] = SecureRandom.uuid
+    update_fixture_lineage
+    assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, @preparation, prepare: true) }
+    @lineage_receipt['ownerId'] = @owner['id']
+    update_fixture_lineage
+    @plan['lineageEvidence'] << @lineage_ref
+    assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, @preparation, prepare: true) }
+    assert_empty @engine.store.read['jobs']
+  end
+
+  def test_dated_rebase_changed_patches_or_noncanonical_artifact_refuse
+    rebased_deployment_fixture
+    range = @lineage_receipt['artifacts'].find { |ref| ref['kind'] == 'range_diff' }
+    File.write(range['path'], 'noncanonical range diff')
+    range['sha256'] = Digest::SHA256.file(range['path']).hexdigest
+    update_fixture_lineage
+    assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, @preparation, prepare: true) }
+    checkout = File.join(@tmp, @owner['slug'])
+    File.write(File.join(checkout, 'extra'), 'changed feature')
+    git('-C', checkout, 'add', 'extra')
+    git('-C', checkout, 'commit', '-m', 'changed feature')
+    @plan['repositories']['code']['head'] = git('-C', checkout, 'rev-parse', 'HEAD').strip
+    @lineage_receipt['mapping']['to'] = @plan['repositories']['code']['head']
+    update_fixture_lineage
+    assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, @preparation, prepare: true) }
+    assert_empty @engine.store.read['jobs']
+  end
+
+  def test_dated_rebase_prepared_base_must_match_reviewed_range
+    rebased_deployment_fixture
+    original = @engine.method(:prepare_merge)
+    base = @base
+    @engine.define_singleton_method(:prepare_merge) do |*args|
+      value = original.call(*args)
+      value['operation']['comparisonBase'] = base
+      value
+    end
+    error = assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, @preparation, prepare: true) }
+    assert_equal 3, error.code
+    assert_empty @engine.store.read['jobs']
+  end
+
+  def test_dated_rebase_approval_only_interruption_keeps_original_identity
+    rebased_deployment_fixture
+    test_dated_retry_after_approval_only_reuses_its_identity
+  end
+
+  def test_dated_rebase_new_plan_cannot_consume_old_bundle
+    rebased_deployment_fixture
+    execution = @driver.operate(@plan, @preparation, prepare: true)
+    path = File.join(@workspace, 'work', @owner['slug'], 'new-evidence')
+    File.write(path, 'later independent check')
+    @plan['evidence'] << {'kind' => 'verification', 'path' => path, 'sha256' => Digest::SHA256.file(path).hexdigest}
+    assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, execution) }
+    assert_empty @engine.store.read['jobs']
+  end
+
+  def test_dated_rebase_empty_range_and_missing_applied_coverage_refuse
+    rebased_deployment_fixture
+    base = @lineage_receipt['mapping']['fromBase']
+    @lineage_receipt['mapping']['fromBase'] = @lineage_receipt['mapping']['from']
+    update_fixture_lineage
+    assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, @preparation, prepare: true) }
+    @lineage_receipt['mapping']['fromBase'] = base
+    update_fixture_lineage
+    @engine.store.transaction { |data| data['reservations'][@reservation['id']]['history'] = [] }
+    assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, @preparation, prepare: true) }
+    assert_empty @engine.store.read['jobs']
+  end
+
   def test_dated_execution_and_completed_retry_use_one_real_worker
     execution = @driver.operate(@plan, @preparation, prepare: true)
     before = @engine.store.read['reservations']

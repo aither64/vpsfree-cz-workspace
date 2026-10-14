@@ -67,13 +67,74 @@ class BootstrapMerge20261013 < DevWorkspaceHost::Host
            value.dig('reservation', 'id') == @plan['reservationId'] && value.dig('reservation', 'ownerId') == @plan['ownerId']
       raise WorkspaceCoordination::Error.new('successful reserved creation-fix deployment is required', 4)
     end
+    @lineages = reviewed_lineages(value)
     @plan.fetch('repositories').each do |name, selected|
       path, _common, _remote, registration = @engine.repository(@owner, name)
       unless "refs/heads/#{registration.fetch('default_branch')}" == selected.fetch('target') &&
              @engine.capture('git', '-C', path, 'rev-parse', "#{registration.fetch('branch')}^{commit}").strip == selected.fetch('head') &&
-             @engine.ancestor?(path, value.fetch('sourceHeads').fetch(name), selected.fetch('head'))
+             (@engine.ancestor?(path, value.fetch('sourceHeads').fetch(name), selected.fetch('head')) || @lineages.key?(name))
         raise WorkspaceCoordination::Error.new('reviewed registered head or deployed ancestry changed', 3)
       end
+    end
+  end
+
+  def reviewed_lineages(deployment)
+    refs = @plan.fetch('lineageEvidence', [])
+    raise WorkspaceCoordination::Error, 'lineage evidence must be a list' unless refs.is_a?(Array)
+    refs.each_with_object({}) do |ref, result|
+      unless ref['kind'] == 'review' && @plan.fetch('evidence').include?(ref)
+        raise WorkspaceCoordination::Error, 'lineage review is outside frozen evidence'
+      end
+      receipt = WorkspaceCoordination.parse(File.binread(@engine.lineage_evidence(@owner, ref), WorkspaceCoordination::MAX_REQUEST + 1))
+      WorkspaceCoordination.keys!(receipt, %w[schema ownerId reservationId mapping decision reviewer artifacts])
+      unless receipt['schema'] == 1 && receipt['ownerId'] == @owner['id'] && receipt['reservationId'] == @plan['reservationId'] &&
+             receipt['decision'] == 'accepted' && receipt['reviewer'].is_a?(String) && !receipt['reviewer'].strip.empty?
+        raise WorkspaceCoordination::Error.new('lineage review owner or decision changed', 4)
+      end
+      mapping = receipt.fetch('mapping')
+      WorkspaceCoordination.keys!(mapping, %w[repository target from fromBase to toBase relation])
+      name = mapping.fetch('repository')
+      selected = @plan.fetch('repositories').fetch(name) { raise WorkspaceCoordination::Error, 'lineage repository outside scope' }
+      unless !result.key?(name) && mapping['relation'] == 'patch_equivalent' && mapping['target'] == selected['target'] &&
+             mapping['from'] == deployment.fetch('sourceHeads').fetch(name) && mapping['to'] == selected['head'] &&
+             %w[from fromBase to toBase].all? { |key| mapping[key].is_a?(String) && mapping[key].match?(WorkspaceCoordination::SHA) }
+        raise WorkspaceCoordination::Error.new('lineage mapping is duplicate or differs from frozen heads', 4)
+      end
+      reservation = @engine.store.read['reservations'].fetch(@plan['reservationId'])
+      covered = reservation.fetch('history').any? do |record|
+        record['outcome'] == 'applied' && record.fetch('coverageContracts').any? { |contract| contract['owned'] && contract.slice('repository', 'target') == mapping.slice('repository', 'target') } &&
+          record.fetch('coverage').include?({'repository' => name, 'revision' => mapping['from']})
+      end
+      raise WorkspaceCoordination::Error.new('lineage source has no applied owned deployment coverage', 4) unless covered
+      path, = @engine.repository(@owner, name)
+      unless mapping['fromBase'] != mapping['from'] && mapping['toBase'] != mapping['to'] &&
+             @engine.ancestor?(path, mapping['fromBase'], mapping['from']) && @engine.ancestor?(path, mapping['toBase'], mapping['to']) &&
+             !@engine.ancestor?(path, mapping['from'], mapping['to'])
+        raise WorkspaceCoordination::Error.new('lineage ranges are empty, invalid or unused', 4)
+      end
+      artifacts = receipt.fetch('artifacts')
+      unless artifacts.is_a?(Array) && artifacts.map { |artifact| artifact['kind'] }.sort == %w[migration_review range_diff verification] &&
+             artifacts.all? { |artifact| @plan['evidence'].include?(artifact) }
+        raise WorkspaceCoordination::Error, 'lineage needs all three frozen review artifacts'
+      end
+      artifacts.each { |artifact| @engine.lineage_evidence(@owner, artifact) }
+      unless @engine.ordered_patch_ids(path, mapping['fromBase'], mapping['from']) == @engine.ordered_patch_ids(path, mapping['toBase'], mapping['to'])
+        raise WorkspaceCoordination::Error.new('lineage changes the ordered patches', 4)
+      end
+      range = artifacts.find { |artifact| artifact['kind'] == 'range_diff' }
+      actual = @engine.capture('git', '-C', path, 'range-diff', '--no-color', '--creation-factor=80', "#{mapping['fromBase']}..#{mapping['from']}", "#{mapping['toBase']}..#{mapping['to']}", digest: true)
+      raise WorkspaceCoordination::Error.new('lineage range diff is not canonical', 4) unless actual == "sha256:#{range['sha256']}"
+      result[name] = mapping
+    end
+  end
+
+  def lineage_operation!(operation)
+    mapping = @lineages[operation.fetch('repository')]
+    return unless mapping
+    unless operation.slice('repository', 'target', 'featureHead', 'comparisonBase', 'expectedRemoteHead') ==
+           {'repository' => mapping['repository'], 'target' => mapping['target'], 'featureHead' => mapping['to'],
+            'comparisonBase' => mapping['toBase'], 'expectedRemoteHead' => mapping['toBase']}
+      raise WorkspaceCoordination::Error.new('prepared lineage baseline differs from reviewed range', 3)
     end
   end
 
@@ -88,6 +149,7 @@ class BootstrapMerge20261013 < DevWorkspaceHost::Host
     end
     return receipt if receipt
     snapshot = @engine.prepare_merge(@owner, request['repository'], @plan.fetch('evidence'))
+    lineage_operation!(snapshot.fetch('operation'))
     unless snapshot.dig('operation', 'featureHead') == selected.fetch('head') && snapshot.dig('operation', 'target') == selected.fetch('target')
       raise WorkspaceCoordination::Error.new('prepared head differs from the reviewed inventory', 3)
     end
@@ -111,6 +173,7 @@ class BootstrapMerge20261013 < DevWorkspaceHost::Host
     end
     snapshot = bundle.fetch('snapshot')
     operation = snapshot.fetch('operation')
+    lineage_operation!(operation)
     selected = @plan.fetch('repositories').fetch(operation.fetch('repository'))
     unless operation['featureHead'] == selected['head'] && operation['target'] == selected['target']
       raise WorkspaceCoordination::Error.new('bundle is outside the reviewed integration scope', 4)

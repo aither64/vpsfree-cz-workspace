@@ -101,6 +101,41 @@ old evidence, cancel through the ordinary exact-owner command with current revis
 and a fresh cancellation ID, then rebase/review/verify and prepare a new P.
 Never cancel or replace an ambiguous claimed attempt to escape recovery.
 
+## Reviewed rebases after another integration
+
+An exact patch-equivalent rebase can preserve the existing repository/target
+approval under the Git procedure. Keep the deployed predecessor ref, complete
+old/new ranges, ordered patch IDs, canonical range-diff and independent review.
+Material replacements remain outside this dated route.
+
+An optional plan `lineageEvidence` list contains review references also present
+in `evidence`. Each bounded schema-1 receipt has `ownerId`, `reservationId`,
+`mapping`, `decision: "accepted"`, the independent `reviewer` and `artifacts`.
+Mapping fields are `repository`, full `target`, `from`, `fromBase`, `to`,
+`toBase` and `relation: "patch_equivalent"`. Artifacts contain exactly one
+`range_diff`, `verification` and `migration_review` reference, all included in
+the frozen plan evidence. This is a pre-approval receipt; it has no approval ID.
+
+The helper checks applied owned deployment coverage, exact deployed/final heads,
+nonempty nonancestor ranges, the selected runtime's ordered patch comparator
+and canonical range-diff. Duplicate, unused or changed mappings refuse. The
+prepared operation must use `toBase` as both comparison and expected remote base.
+Completed retries check those immutable fields without requiring today's remote
+head to remain at that old base.
+
+Freeze a new remaining-merges plan and use fresh preparation IDs. Preserve plans
+and requests already admitted; an old bundle cannot be paired with a new plan.
+Do not revise old evidence to escape a stale or uncertain operation.
+
+After successful submission, obtain the actual approval record ID from the job's
+`approvalId`. The bundle's `approvalId` is only the approve request UUID. Verify
+the actual record's owner, merge scope, user source and retained snapshot binds
+`to`, `toBase` and target. Create a separate canonical finish review receipt with
+that ID added to the reviewed mapping and the same independent reviewer and
+artifacts. Its outer replacement entry adds the ordinary review evidence ref.
+Keep the pre-approval receipt unchanged. The independent review covers this
+deterministic post-submission binding; preparing it does not authorize finish.
+
 ## Compatibility and finish
 
 This route uses the existing runtime schemas and worker envelope without
