@@ -1,0 +1,52 @@
+====== NixOS ======
+[[https://nixos.org|NixOS]] is a distribution based on the Nix package manager.
+It allows one to declaratively configure the system and its services. This page
+describes NixOS specifics on vpsFree.cz's VPS. For more information about NixOS
+in general, see its [[https://nixos.org/learn.html|documentation]].
+
+===== Supported versions =====
+We provide templates for the stable releases and continually for unstable.
+
+NixOS is used heavily at vpsFree.cz for its
+[[https://github.com/vpsfreecz/vpsfree-cz-configuration|infrastructure and services]],
+so we make sure that it works reliably. We use mainly the current stable release.
+Our virtualization platform [[manuals:vps:vpsadminos|vpsAdminOS]] is actually
+based on NixOS and nixpkgs.
+
+===== Initial configuration =====
+The VPS is created from a template which contains a minimal system with SSH.
+You can log in using a [[manuals:vps:management#root_password|generated password]]
+or [[manuals:vps:management#ssh_public_keys|deploy your public key]] using vpsAdmin.
+The system can then be configured using :
+
+<code>
+nixos-rebuild switch --flake /etc/nixos#vps
+</code>
+
+Note that our VPS are Linux containers, so there is no boot loader, the kernel is shared
+and some configuration is required for the VPS to work properly. The template handles this by using vpsAdminOS as flake input and importing the necessary module.
+
+It is possible to deploy custom configuration using vpsAdmin on VPS creation and reinstallation,
+see [[manuals:vps:userdata|user data]].
+
+===== VPS management =====
+See the [[:home|VPS manuals]] for more information about our infrastructure and possibilities.
+
+===== Impermanence =====
+See [[manuals:distributions:nixos:impermanence]].
+
+===== GitHub API limit =====
+Nixpkgs  are downloaded from [[https://github.com/nixos/nixpkgs|GitHub]] and [[https://nixos.wiki/wiki/Binary_Cache|Binary Cache]]. GitHub does not support IPv6 and rate limits either  [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-unauthenticated-users|per IPv4]] or [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-authenticated-users|per user]].
+After exhausting the API limit, Nix (or rather GitHub API) complains:
+<code>
+error: unable to download 'GITHUB_URL': HTTP error 403 ('')
+
+       response body:
+
+       {"message":"API rate limit exceeded for IP_ADDR. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}
+</code>
+The solution is to [[https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token|create personal access token]] (Public repositories, the Permissions could be blank) and enter [[https://search.nixos.org/options?channel=26.05&query=nix.settings&type=options#show=option%253Anix.settings|the configuration]] to Nix:
+<code>
+# configuration.nix
+nix.settings.access-tokens = [ "github.com=github_pat_TokenTokenChangeMe" ];
+</code>
