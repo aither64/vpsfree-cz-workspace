@@ -1,0 +1,11 @@
+1:  8cc280a ! 1:  92b2576 portal: dismiss restored-session notices without continuing work
+    @@ portal/internal/web/server.go: func (s *Server) sessionDetails(w http.ResponseWr
+     +	recovery, _ := s.selectedRecoveryStatus(summary, r.URL.Query().Get("member"))
+      	s.writeJSON(w, http.StatusOK, map[string]any{
+      		"currentTarget":    s.lifecycleSnapshot(summary.Slug),
+    - 		"recovery":         recovery,
+    + 		"pendingLifecycle": pendingLifecycle,
+     @@ portal/internal/web/server.go: func (s *Server) sessionAPIForSummary(
+      		s.coordinationAPI(w, r, summary.Slug)
+      		return
+2:  f899a9a < -:  ------- test: match sidebar focus to the Operations entry

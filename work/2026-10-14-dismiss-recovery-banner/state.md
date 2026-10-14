@@ -1,102 +1,96 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Recovery notice dismissal
 
 ## Current status
 
-Implemented, independently reviewed, verified and deployed to aitherdev.
-Live acceptance passes: X persists dismissal across reload and another browser
-page, while recovery remains waiting and execution held. User-message count
-stays at six, queue and private recovery permission unchanged. The only browser
-mutation was dismiss-recovery. No continuation message or native activation.
-
-Ready, awaiting merge approval. No default-branch integration is authorized.
-Retain the aitherdev review reservation and feature refs/worktrees. This initiative
-stays active; do not archive, delete or stop it. Its notification conversation is
-restored and remains deliberately paused after acceptance.
+Complete. All exact final feature heads are merged into their remote master
+branches, and the final system/application version is deployed to aitherdev.
+The coordinator released reservation b25bce2e-84c8-4c58-aae1-63aee7c6e80b after
+verifying final integration, deployed replacement lineage and live identities.
+No remaining work or blockers. Retain this session, feature refs and worktrees.
+No archive, delete or stop action was requested or performed.
 
 ## Phase checklist
 
-- [x] Goal, plan and design settled.
-- [x] Implementation committed and quick checks passed.
-- [x] Independent source/history/pin review; Important reset finding resolved.
-- [x] Packaged tests, Chromium/Firefox, aitherdev build and final CI passed.
-- [x] Coordinated system/profile activation and live acceptance passed.
-- [ ] User deployment review and explicit integration direction.
-- [ ] Integrate exact final heads and finish reservation after explicit completion.
+- [x] Plan/design and implementation committed.
+- [x] Quick checks and independent final/history reviews passed.
+- [x] Final package, Chromium/Firefox, composition, aitherdev build and CI passed.
+- [x] User final direction "merge it" recorded for all three master targets.
+- [x] Exact final heads integrated through coordinator.
+- [x] Reviewed replacements deployed, provenance and live behavior checked.
+- [x] Exact completion proofs accepted and reservation released.
 
 ## Final repositories
 
-All worktrees are under worktrees/2026-10-14-dismiss-recovery-banner/, on published
-branch 2026-10-14-dismiss-recovery-banner:
+Published branch: 2026-10-14-dismiss-recovery-banner.
+Worktrees: worktrees/2026-10-14-dismiss-recovery-banner/<repository>.
 
-- dev-workspace: f899a9a583118ca6033d95f94f5eaa3c2f87fe54
-- workspace: a49bc282e7d8134ad3fd9d6dfa90f6793ff4f34e
-- vpsfree-cz-configuration: 60f11105c17b49139348bceab136d3e13cb4431d
+- dev-workspace: 92b2576d82a850fa4e24f889a8ff592a1e7f3e42
+- workspace: 5a2119d4774719f78c1b72059cf0f8f10068374a
+- vpsfree-cz-configuration: ac00192849f682eed847a152a91978a399f0105e
 
-Source was rebased onto integrated archive fix 6f8773da. Range-diff proves both
-source commits patch-equivalent. Workspace/configuration preserve that deployed
-baseline and select identical source/content hash with only their owned input
-nodes changed. One pin per consumer, no obsolete history or repeated streams.
-No migrations; strict recovery schema, submission and Codex protocol unchanged.
-No code edits or hooks bypassed after final review.
+Each final branch contains one logical feature/pin commit. The preexisting sidebar
+fixture correction was absorbed into upstream master. Consumer pins were
+regenerated on current baselines and consolidated; no obsolete approaches,
+redundant updates or migrations remain. Final proofs: final-integration-proofs.json.
 
-## Verification and review
+## Review, verification and compatibility
 
-- Independent Astra/xhigh reviewer /root/final_review, installed default fallback
-  because retained roster:null. General, architecture, scope and risk lanes.
-- Important: reset previously lived only in portal wrapper. Fixed by deriving
-  notice identity from canonical terminal identity, socket epoch and session
-  incarnation. Same reviewer accepted affected lane rerun.
-- A separate one-line browser fixture correction matches existing Operations
-  autofocus. Verified directly under narrow-fix review rules; no production change.
-- Final source focused recovery/browser contract checks pass (2.319s).
-- Rebased Chromium/Firefox regression passes (22.678s), including failed saves,
-  stale poll suppression, keyboard/mobile layout, drafts and continued holds.
-- Final composed package tests/build pass (899.8s), aitherdev build (90.81s),
-  composition check and exact final source CI 38603485646 pass.
-- Live acceptance passes; live-acceptance.json records unchanged message count,
-  held execution, server dismissal and sole POST mutation.
+Original independent reviewer /root/final_review: installed default Astra/xhigh,
+read-only fallback because roster:null. Original feature/general, architecture,
+scope and risk review passed after fixing canonical restoration identity. Final
+source/workspace replacement supplement accepted exact reviewed_change ranges.
 
-See final-review.md, source-review-1.md/source-review-2.md, quick-checks.json,
-consumer-verification-results.json, source-rebase-range-diff.txt and
-rebased-browser-check.log. Frozen deployment-review.md/deployment-verification.json
-are exact coordinator evidence; do not edit them beneath retained snapshots.
+The interface could not address the retained standalone reviewer for the last
+configuration-only baseline refresh. Fresh native reviewer
+01a13ba4-01b6-7c70-9e16-c0a2e0ac1ed8 used the installed default Astra/xhigh,
+read-only policy and accepted final configuration lineage. One Advisory identified
+confctl self.rev provenance despite identical trees. Addressed by preparing from
+ac001928 and inspecting its embedded revision, followed by successful deployment.
+No Blocking/Important findings. No schema or execution-permission-format changes.
+See merge-final-review.md, merge-config-baseline-review.md and final-lineage-*.json.
 
-## Deployed identity and ownership
+Fresh Luna/low utility /root/merge_verification passed all five final checks:
+package 874.65s, browser 24.48s, aitherdev 128.94s, composition and CI38609538860.
+See merge-final-verification-results.json. Final configuration ac001928 has the
+same complete Git tree as tested cf698664; unchanged runtime tests were retained,
+while the exact final deployment artifact was rebuilt for its provenance.
+Later native deployment wait delegation was unavailable; bounded parent monitoring
+used the documented fallback. No unexpected kernel builds or hook bypasses.
 
-System: /nix/store/f3f1p5s9gn8dvw506w5hm3nrm98h8nz0-nixos-system-aitherdev-26.05.20261012.7993f34
-Application: /nix/store/vv46vd0iwyach9llclsyaxgi5j27wj7r-dev-workspace-0.2.0
-Portal health 200, exact running/system-profile and application identities verified.
-Codex/tmux retained root 01a13b27-0b7e-7053-89c4-cb08a304424c preserved.
+## Final deployment and live evidence
 
-Reservation b25bce2e-84c8-4c58-aae1-63aee7c6e80b remains deployed_review for
-vpsfree:aitherdev. Jobs 740b7c9b(system) and47879512(profile) succeeded, with explicit
-system-before-profile dependency. Full results in deployment-status.json.
-Actual user deployment direction: "Implement the plan.", accepting the plan's
-coordinated aitherdev deployment; it supplies no merge approval.
+System/live profile: /nix/store/xf0i8ryhpx575282m5hlq2vavq56vms8-nixos-system-aitherdev-26.05.20261012.7993f34
+Application: /nix/store/13s6kwhliihnnby7rxym6wsbafv6cxh6-dev-workspace-0.2.0
+System job 6eca7d13-75f4-436a-b2a3-ac3c0f9ef02b and dependent profile
+job 9ab4dbb6-9977-489d-a798-70c1d1c20410 succeeded. No reboot.
+Final artifact embeds clean configuration revision ac001928. Current machine and
+application identities were verified by activation and coordinator completion.
 
-During preparation another initiative integrated/deployed archive correction and
-held aitherdev review ownership. Its owner later released it and completed the
-foreign lifecycle prerequisites. No foreign records, journals or reservations
-were altered. Refused preparations and prior build results are recorded in
-execution-history.md and rollout.md. Exact frozen evidence retry resolved the
-changed-checksum refusal. No uncertain activation remains.
+Fresh held-session X behavior passed in Chromium/Firefox. Initial live waiting
+fixture in live-acceptance.json proved dismissal persistence, unchanged holds,
+queues and six user messages. Final live check in merge-live-acceptance.json
+shows hidden notice across reload/another page, unchanged permissions/queue and
+18 user messages before/after. Its root was active for coordinator acknowledgements;
+only existing active-session queue/reconcile polling occurred, with no Continue
+request or added user message. The session/root was preserved as-is.
+
+All three original deployed nonancestor heads map directly to exact final heads
+through independent reviewed_change receipts. Later system/profile deployment
+satisfies their replacement requirement. Original store artifacts and source
+objects remain retained. Final-finish-request.json/final-finish.json and
+final-completion-status.json contain accepted completion and release evidence.
 
 ## Documentation and next action
 
-Project recovery behavior: dev-workspace docs/workspace-portal.md and
-docs/dev-sessions.md. Design/design rationale in design.md; individual rollout in
-rollout.md. Reusable environment/init lessons in
-notes/dev-workspace/2026-10-14-threadless-coordination-initialization.md.
-
-User can review X on any restored session. After explicit integration direction
-for dev-workspace/master, workspace/master and vpsfree-cz-configuration/master,
-refresh reviewed branches if necessary, preserve patch-equivalence/replacement
-proofs for deployed heads, integrate through coordinator and obtain deployment/
-review completion before releasing the reservation. Retain feature refs.
+No operator action remains. Project explanations are in dev-workspace
+docs/workspace-portal.md and docs/dev-sessions.md. Technical rationale: design.md.
+Initial rollout: rollout.md. Final integration/rollout: merge-completion.md.
+Detailed earlier execution: execution-history.md and merge-execution-history.md.
+Frozen deployment-review.md/deployment-verification.json remain unchanged.
 
 Stable portal:
 https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-14-dismiss-recovery-banner/

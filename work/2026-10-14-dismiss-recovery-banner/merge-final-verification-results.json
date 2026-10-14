@@ -1,0 +1,86 @@
+{
+  "finalHeads": {
+    "dev-workspace": "92b2576d82a850fa4e24f889a8ff592a1e7f3e42",
+    "workspace": "5a2119d4774719f78c1b72059cf0f8f10068374a",
+    "vpsfree-cz-configuration": "cf698664db845a1b166c6484d768a70ff3057619"
+  },
+  "checks": [
+    {
+      "label": "merge-final-browser",
+      "command": [
+        "nix",
+        "develop",
+        "--command",
+        "go",
+        "-C",
+        "portal",
+        "test",
+        "-mod=readonly",
+        "./internal/web",
+        "-run",
+        "TestQuestionBrowser/(page_lifecycle|archive_failure)_browser_test.cjs",
+        "-count=1",
+        "-v"
+      ],
+      "exitStatus": 0,
+      "elapsedSeconds": 24.48,
+      "head": "92b2576d82a850fa4e24f889a8ff592a1e7f3e42"
+    },
+    {
+      "label": "merge-final-workspace-build",
+      "command": [
+        "nix",
+        "build",
+        "--print-build-logs",
+        "--out-link",
+        "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-dismiss-recovery-banner/merge-final-workspace-package"
+      ],
+      "exitStatus": 0,
+      "elapsedSeconds": 874.65,
+      "head": "5a2119d4774719f78c1b72059cf0f8f10068374a"
+    },
+    {
+      "label": "merge-final-composition",
+      "command": [
+        "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-dismiss-recovery-banner/workspace/bin/check-dev-workspace-deployment",
+        "--workspace-root",
+        "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-dismiss-recovery-banner/workspace",
+        "--configuration-root",
+        "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-dismiss-recovery-banner/vpsfree-cz-configuration"
+      ],
+      "exitStatus": 0,
+      "elapsedSeconds": 0.24,
+      "head": "5a2119d4774719f78c1b72059cf0f8f10068374a"
+    },
+    {
+      "label": "merge-final-aitherdev-build",
+      "command": [
+        "nix",
+        "develop",
+        "--command",
+        "confctl",
+        "build",
+        "--yes",
+        "cz.vpsfree/machines/aitherdev"
+      ],
+      "exitStatus": 0,
+      "elapsedSeconds": 128.94,
+      "head": "cf698664db845a1b166c6484d768a70ff3057619"
+    },
+    {
+      "label": "merge-final-ci",
+      "command": [
+        "gh",
+        "run",
+        "watch",
+        "38609538860",
+        "--repo",
+        "aither64/dev-workspace",
+        "--exit-status"
+      ],
+      "exitStatus": 0,
+      "elapsedSeconds": 1.02,
+      "head": "92b2576d82a850fa4e24f889a8ff592a1e7f3e42"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "sourceHead": "92b2576d82a850fa4e24f889a8ff592a1e7f3e42",
+  "checks": [
+    {
+      "command": "node --check portal/internal/web/static/app.js",
+      "exitStatus": 0
+    },
+    {
+      "command": "node --check portal/internal/web/page_lifecycle_browser_test.cjs",
+      "exitStatus": 0
+    },
+    {
+      "command": "go -C portal test -mod=readonly ./internal/web -run TestRecovery|TestShippedBrowserClientMatchesSessionAPI|TestSessionDetailsArchived -count=1",
+      "exitStatus": 0,
+      "elapsedSeconds": 2.123
+    }
+  ],
+  "baseline": "ad63a832bad1061b023b861fe3772bbe6b85c6de",
+  "rangeDiff": "merge-final-source-range-diff.txt",
+  "fixtureAbsorbedUpstream": "ad63a832bad1061b023b861fe3772bbe6b85c6de"
+}
