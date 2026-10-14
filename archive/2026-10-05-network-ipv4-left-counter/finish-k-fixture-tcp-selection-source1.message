@@ -1,0 +1,10 @@
+tests: select distinct lifecycle fixture TCP ports
+
+Keep the loopback SSH and HTTPS probes open together while constructing
+the lifecycle fixture configuration, then close both on return or error.
+Sequential ephemeral selection can reuse the first closed port and produce
+duplicate TCP claims before the public-stop case starts.
+
+Remove the unused single-probe helper. Production resource admission and
+UDP selection stay unchanged. Closed probes do not reserve ports against
+unrelated host activity.

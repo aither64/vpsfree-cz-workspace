@@ -1,0 +1,172 @@
+diff --git a/fixtures/prepare.cjs b/fixtures/prepare.cjs
+index d61efcb5be17322c2f479c8f3d496af034f7240b..8e6ba3104db0a3f4c5bed2ea9b6dac1c0ef4efb0 100644
+--- a/fixtures/prepare.cjs
++++ b/fixtures/prepare.cjs
+@@ -595,7 +595,8 @@ async function ensureIpInventory(api, { userId, vpsId }) {
+       network: pool.id, location: locationId, primary: false, priority: 100, autopick: false, userpick: false,
+     } })).location_network];
+   }
+-  if (locations[0].primary !== false || locations[0].autopick !== false || locations[0].userpick !== false) {
++  if ((locations[0].primary !== false && locations[0].primary !== null)
++      || locations[0].autopick !== false || locations[0].userpick !== false) {
+     throw new Error('Dedicated inventory location is unexpectedly pickable');
+   }
+   const addresses = (await api('GET', `ip_addresses?ip_address%5Bnetwork%5D=${pool.id}&ip_address%5Blimit%5D=1000`)).ip_addresses;
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index 8d9815e489e72e91d30980df9646eff1c62ed1a1..a1a66ff28fa2ab2b3511ffefdb87ce741ae6a0cf 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -275,7 +275,7 @@ function fixture({ disabled = false, missing = false, assigned = false, owner =
+   const pool = { ...INVENTORY_POOL, id: 5, enabled: !disabled };
+   let ip = missing ? null : { id: 90, addr: '203.0.113.10', prefix: 32, network: { id: 5 },
+     user: { id: owner }, network_interface: assigned ? { id: 12 } : null, charged_environment: { id: 1 } };
+-  let dedicatedLocation = locationMissing ? null : { network: { id: 5 }, location: { id: 1 }, primary: false, autopick: false, userpick: false };
++  let dedicatedLocation = locationMissing ? null : { network: { id: 5 }, location: { id: 1 }, primary: null, autopick: false, userpick: false };
+   const unrelated = {
+     networks: [{ id: 1, address: '198.51.100.0', enabled: true }, { id: 2, address: '2001:db8:106::', enabled: true }],
+     locations: [{ network: { id: 1 }, location: { id: 1 }, primary: true, autopick: true, userpick: true },
+@@ -310,6 +310,8 @@ function fixture({ disabled = false, missing = false, assigned = false, owner =
+     if (method === 'POST' && resource === 'networks') { networkMissing = false; return { network: pool }; }
+     if (method === 'POST' && resource === 'location_networks') {
+       dedicatedLocation = { ...body.location_network, network: { id: body.location_network.network }, location: { id: body.location_network.location } };
++      // V939 api/models/location_network.rb nillify_primary preserves the unique primary index.
++      if (dedicatedLocation.primary === false) dedicatedLocation.primary = null;
+       return { location_network: dedicatedLocation };
+     }
+     if (method === 'POST' && resource === 'ip_addresses') {
+@@ -517,6 +519,135 @@ test('pool identity collision refuses before any mutation', async () => {
+   assert(calls.every(([method]) => method === 'GET'));
+ });
+ 
++for (const locationMissing of [true, false]) {
++  for (const primary of [null, false]) {
++    test(`${locationMissing ? 'new' : 'retained'} non-primary association accepts exact ${primary} and disabled reuse performs no writes`, async (t) => {
++      const inventory = fixture({ locationMissing, missing: true });
++      const unrelated = JSON.stringify(inventory.unrelated);
++      const calls = mockInventoryTransport(t, async (call) => {
++        if (call.resource === 'users/current') return { response: currentUser(call.login) };
++        assert.equal(call.login, 'test-admin');
++        const response = await inventory.api(call.method, call.resource, call.body);
++        if (response.location_network) {
++          assert.equal(call.body.location_network.primary, false, 'creation still requests literal false');
++          assert.equal(response.location_network.primary, null, 'the selected model saves false as null');
++          // Explicit false output remains compatible with a non-primary record.
++          response.location_network = { ...response.location_network, primary };
++        }
++        if (response.location_networks) {
++          response.location_networks = response.location_networks.map((entry) => {
++            assert.equal(entry.primary, null, 'retained non-primary fixture records use the saved model value');
++            return { ...entry, primary };
++          });
++        }
++        return { response };
++      });
++      await withInventoryConnection(recordedAccounts(), async (cluster) => {
++        const { adminApi } = await inventoryIdentity(cluster);
++        const expected = { inventoryVpsId: 10, disabledIpId: 90, disabledNetworkId: 5, disabledAddress: '203.0.113.10' };
++        assert.deepEqual(await ensureIpInventory(adminApi, { userId: 2, vpsId: 10 }), expected);
++        assert.equal(inventory.pool.enabled, false);
++        const writes = calls.filter((call) => call.method !== 'GET');
++        assert.deepEqual(writes.map((call) => [call.method, call.resource]), [
++          ...(locationMissing ? [['POST', 'location_networks']] : []),
++          ['POST', 'ip_addresses'], ['PUT', 'networks/5'],
++        ]);
++        if (locationMissing) assert.deepEqual(writes[0].body, { location_network: {
++          network: 5, location: 1, primary: false, priority: 100, autopick: false, userpick: false,
++        } });
++        const afterProvision = calls.length;
++        assert.deepEqual(await ensureIpInventory(adminApi, { userId: 2, vpsId: 10 }), expected);
++        assert(calls.slice(afterProvision).every((call) => call.method === 'GET'), 'a complete disabled pool cannot reenable, allocate or charge again');
++      });
++      assert.equal(JSON.stringify(inventory.unrelated), unrelated);
++    });
++  }
++}
++
++const invalidLocationFlags = [
++  ...[undefined, true, 0, 1, 'false'].map((value) => ['primary', value]),
++  ...['autopick', 'userpick'].flatMap((field) => [undefined, null, true, 0, 'false'].map((value) => [field, value])),
++];
++for (const locationMissing of [true, false]) {
++  for (const [field, value] of invalidLocationFlags) {
++    test(`${locationMissing ? 'new' : 'retained'} association ${field} ${value === undefined ? 'missing' : JSON.stringify(value)} refuses before IP creation or disable`, async (t) => {
++      const inventory = fixture({ locationMissing, missing: true });
++      const calls = mockInventoryTransport(t, async (call) => {
++        if (call.resource === 'users/current') return { response: currentUser(call.login) };
++        assert.equal(call.login, 'test-admin');
++        const response = await inventory.api(call.method, call.resource, call.body);
++        if (response.location_network) assert.equal(call.body.location_network.primary, false);
++        const associations = response.location_network ? [response.location_network] : response.location_networks;
++        if (associations) {
++          for (const association of associations) {
++            assert.equal(association.primary, null);
++            if (value === undefined) delete association[field];
++            else association[field] = value;
++          }
++        }
++        return { response };
++      });
++      await withInventoryConnection(recordedAccounts(), async (cluster) => {
++        const { adminApi } = await inventoryIdentity(cluster);
++        await assert.rejects(ensureIpInventory(adminApi, { userId: 2, vpsId: 10 }), (error) => {
++          assert.equal(error.message, 'Dedicated inventory location is unexpectedly pickable');
++          return true;
++        });
++      });
++      assert.deepEqual(calls.filter((call) => call.method !== 'GET').map((call) => [call.method, call.resource]),
++        locationMissing ? [['POST', 'location_networks']] : [], 'a new association may already exist, but IP creation and disable must not follow');
++      assert(!calls.some((call) => call.pathname === '/v7.0/ip_addresses'));
++      assert.equal(inventory.pool.enabled, true);
++    });
++  }
++}
++
++for (const [field, value] of [['charged_environment', { id: 2 }], ['prefix', 24], ['addr', '203.0.113.11']]) {
++  test(`valid null-primary association does not admit a retained address with wrong ${field}`, async (t) => {
++    const inventory = fixture();
++    const calls = mockInventoryTransport(t, async (call) => {
++      if (call.resource === 'users/current') return { response: currentUser(call.login) };
++      const response = await inventory.api(call.method, call.resource, call.body);
++      if (response.location_networks) assert.equal(response.location_networks[0].primary, null);
++      if (response.ip_addresses && call.query.some(([key]) => key === 'ip_address[network]')) {
++        response.ip_addresses[0][field] = value;
++      }
++      return { response };
++    });
++    await withInventoryConnection(recordedAccounts(), async (cluster) => {
++      const { adminApi } = await inventoryIdentity(cluster);
++      await assert.rejects(ensureIpInventory(adminApi, { userId: 2, vpsId: 10 }), /Unexpected dedicated inventory address ownership, charge or assignment/);
++    });
++    assert(calls.every((call) => call.method === 'GET'));
++    assert.equal(inventory.pool.enabled, true);
++  });
++}
++
++for (const [source, value] of [['primary pool', false], ['primary pool', null], ['dedicated pool', null], ['disable response', true], ['disable response', null]]) {
++  test(`valid null-primary association preserves ${source} enabled ${value} refusal`, async (t) => {
++    const inventory = fixture();
++    const calls = mockInventoryTransport(t, async (call) => {
++      if (call.resource === 'users/current') return { response: currentUser(call.login) };
++      const response = await inventory.api(call.method, call.resource, call.body);
++      if (response.networks && source === 'primary pool') response.networks.find((entry) => entry.address === '198.51.100.0').enabled = value;
++      if (response.networks && source === 'dedicated pool') response.networks.find((entry) => entry.id === 5).enabled = value;
++      if (response.location_networks) assert.equal(response.location_networks[0].primary, null);
++      if (response.network && source === 'disable response') response.network = { ...response.network, enabled: value };
++      return { response };
++    });
++    await withInventoryConnection(recordedAccounts(), async (cluster) => {
++      const { adminApi } = await inventoryIdentity(cluster);
++      const expected = source === 'primary pool' ? 'Primary inventory pool is not enabled' : 'Dedicated inventory network did not become disabled';
++      await assert.rejects(ensureIpInventory(adminApi, { userId: 2, vpsId: 10 }), (error) => {
++        assert.equal(error.message, expected);
++        return true;
++      });
++    });
++    assert.deepEqual(calls.filter((call) => call.method !== 'GET').map((call) => [call.method, call.resource]),
++      source === 'disable response' ? [['PUT', 'networks/5']] : []);
++  });
++}
++
+ function memberCreationPage(calls, resourceCounts = {}) {
+   let stage = 'location';
+   const entries = [];

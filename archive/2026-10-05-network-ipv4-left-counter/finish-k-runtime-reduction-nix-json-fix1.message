@@ -1,0 +1,8 @@
+verification: match the selected Nix derivation JSON contract
+
+Nix 2.34 returns versioned derivation JSON keyed by store basenames. The
+image-profile test used the requested absolute store path, so it failed before
+checking the native image builder's memory.
+
+Require format 4 and exactly the requested basename key. Inspect that entry's
+env.memSize without falling back to older shapes or another derivation.

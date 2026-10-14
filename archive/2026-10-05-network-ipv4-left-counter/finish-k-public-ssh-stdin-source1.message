@@ -1,0 +1,10 @@
+runtime: forward non-terminal input through public SSH
+
+The public launcher discarded stdin before calling the existing SSH
+transport, so piped resource scripts reached the remote command as EOF.
+Pass non-terminal stdin directly through the existing input seam while
+holding the same gate. Terminal invocations continue to send no input.
+
+Cover exact piped/file bytes, empty EOF and the terminal no-read branch
+through the real transport with an owned synthetic SSH executable. Keep
+strict trust, environment clearing and remote argument handling unchanged.

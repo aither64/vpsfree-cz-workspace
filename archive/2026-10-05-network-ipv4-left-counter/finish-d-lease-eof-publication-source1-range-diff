@@ -1,0 +1,44 @@
+1:  730d33e ! 1:  3cca38f cluster: mediate capture leases through the generation guard
+    @@ test/workspace_host/commands_and_locks_test.rb
+     +      File.write(context.fetch(:provider), <<~RUBY)
+     +        #!#{RbConfig.ruby}
+     +        require 'json'
+    ++        def publish_input_eof
+    ++          target = ENV.fetch('PROVIDER_ENDED')
+    ++          temporary = target + '.tmp'
+    ++          # Existence must imply the complete EOF payload for waiting readers.
+    ++          File.open(temporary, 'wb') { |file| file.write('EOF') }
+    ++          File.rename(temporary, target)
+    ++        end
+     +        File.write(ENV.fetch('PROVIDER_PID'), Process.pid.to_s)
+     +        STDOUT.sync = true
+     +        STDERR.sync = true
+    @@ test/workspace_host/commands_and_locks_test.rb
+     +          STDOUT.reopen(File::NULL, 'w')
+     +          STDOUT.close
+     +          STDIN.read
+    -+          File.write(ENV.fetch('PROVIDER_ENDED'), 'EOF')
+    ++          publish_input_eof
+     +          sleep 0.2
+     +          exit 0
+     +        end
+    @@ test/workspace_host/commands_and_locks_test.rb
+     +          STDOUT.reopen(File::NULL, 'w')
+     +          STDOUT.close
+     +          STDIN.read
+    -+          File.write(ENV.fetch('PROVIDER_ENDED'), 'EOF')
+    ++          publish_input_eof
+     +          if ARGV[1] == 'stdout-default'
+     +            sleep 0.01 until File.exist?(ENV.fetch('PROVIDER_RELEASE'))
+     +          else
+    @@ test/workspace_host/commands_and_locks_test.rb
+     +          loop { sleep 1 }
+     +        end
+     +        STDIN.each_line { |line| puts 'echo:' + line }
+    -+        File.write(ENV.fetch('PROVIDER_ENDED'), 'EOF')
+    ++        publish_input_eof
+     +        sleep 0.2
+     +      RUBY
+     +      File.chmod(0o755, context.fetch(:provider))
+2:  d2d64f2 = 2:  e66a441 portal: check reconciliation deadline after proof
+3:  b1ec1bf = 3:  91c47ad portal: model completed deletion in force retry tests

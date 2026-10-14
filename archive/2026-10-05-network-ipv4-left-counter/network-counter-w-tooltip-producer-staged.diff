@@ -1,0 +1,47 @@
+diff --git a/docs/work-log/2026-10-06-network-availability.md b/docs/work-log/2026-10-06-network-availability.md
+index bd4741150628a6125ee083323bc6276c166ec0da..00808754a28637eb4268275c0d8fe476754532a9 100644
+--- a/docs/work-log/2026-10-06-network-availability.md
++++ b/docs/work-log/2026-10-06-network-availability.md
+@@ -122,3 +122,17 @@ page. They also exercise placement above a trigger near the viewport bottom and
+ preserve focus/hover behavior without navigating the row. These correction
+ checks are prepared for hosted execution; local CI remains excluded. Synthetic
+ browser evidence does not certify a live API or deployment.
++
++Hosted nonbrowser checks passed at `1eb3f8d97f9091ec643ff63c2d0e4bb259e81a16`.
++The corrected count and editor descriptions are readable in English and Czech
++on desktop and mobile. The browser run passed both mobile jobs but failed the
++two desktop final-IP cases after viewport resizing. Its traces show that the
++fixture crossed the 1280px filter breakpoint, moving the focused final row
++outside the viewport, where its description is correctly hidden.
++
++The final-row fixture now brings the trigger back into view after viewport
++changes and retains its focus, text bounds, flip and scroll assertions. Focused
++flag screenshots use the current viewport to preserve the open description;
++the earlier full-page images omitted it despite passing geometry assertions.
++Final-head hosted results remain pending. These fixtures do not establish live
++API or deployment behavior, and local CI remains excluded.
+diff --git a/e2e/specs/admin/network_availability.spec.ts b/e2e/specs/admin/network_availability.spec.ts
+index 9fc52f3019081f9eb3cca04120dce04cac6aec96..585fffb99d0c6e06839b2f0cff30309516d5308d 100644
+--- a/e2e/specs/admin/network_availability.spec.ts
++++ b/e2e/specs/admin/network_availability.spec.ts
+@@ -321,9 +321,19 @@ for (const language of ['en', 'cs'] as const) {
+     await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollBefore);
+     await expectUnclippedDescription(page, flag, description);
+     await page.setViewportSize({ width: viewport.width - 16, height: bottomHeight + 24 });
++    // Filter reflow across a breakpoint can move the final row out of view.
++    await flag.scrollIntoViewIfNeeded();
++    await expect(flag).toBeInViewport({ ratio: 1 });
++    await expect(flag).toBeFocused();
+     await expectUnclippedDescription(page, flag, description);
+     await page.setViewportSize({ width: viewport.width, height: bottomHeight });
++    await flag.scrollIntoViewIfNeeded();
++    await expect(flag).toBeInViewport({ ratio: 1 });
++    await expect(flag).toBeFocused();
++    await expectUnclippedDescription(page, flag, description);
++    // Keep the scrolled trigger and its fixed description in the captured viewport.
++    await page.screenshot({ path: testInfo.outputPath(`admin-ip-flags-${language}.png`), fullPage: false });
++    await expect(flag).toBeFocused();
+     await expectUnclippedDescription(page, flag, description);
+-    await page.screenshot({ path: testInfo.outputPath(`admin-ip-flags-${language}.png`), fullPage: true });
+   });
+ }

@@ -1,0 +1,7 @@
+tests: match pinned virtiofsd TERM handler status
+
+virtiofsd 1.13.3 handles TERM by exiting with status 1, rather than dying
+from the signal. Bind each observed native status to one successful TERM
+delivery and one real wait for the three handshake-verified owned daemons.
+Keep listener, protocol, namespace cleanup and descriptor assertions intact.
+Production daemon and shutdown behavior remain unchanged.

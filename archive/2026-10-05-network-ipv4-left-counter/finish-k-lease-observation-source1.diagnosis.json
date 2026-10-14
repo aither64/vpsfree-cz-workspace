@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "source_supported": true,
+  "native_reproduction": false,
+  "finding": "The active receipt is atomically replaced on every tracker pass; exact inode/hash invariance can reject healthy publication.",
+  "temporary_finding": "State.write publishes via exact path plus dot and 24 lowercase hex; listed transient output may be empty, partial or renamed before lstat/open.",
+  "accepted_boundary": "Exactly one authenticated current receipt and only its validated same-directory unpublished namespace; all other durable comparison/refusal remains strict.",
+  "design": {
+    "path": "design.md",
+    "sha256": "e28d2906f701bd1a0bd3d2e32498fb02b42ba4a679a8f77d04d229432413ed55",
+    "accepted_observation_section_6540_end_sha256": "12ddd76c67b33070c1cd7bff6497356bdb1b5fb76f6ac859836ca2fd7bdf6308",
+    "accepted_temporary_section_6766_end_sha256": "2dad04d77bf70dc3090bea63a2a27915845c861bdeb84797f9b365e0e76d1f7c"
+  },
+  "acceptance_and_finding": [
+    {
+      "path": "finish-continuation-reuse-design1-acceptance.json",
+      "sha256": "a29f1a11b9f1e18516abec84fa52bd6f3a591dcd292ac851303bedea084a4cd5"
+    },
+    {
+      "path": "finish-continuation-lease-observation-finding1.json",
+      "sha256": "8ae93e3c3ede4b764c10735f4f6daba030d0f94aa79a6f66ae23b53d67b7cb4a"
+    },
+    {
+      "path": "finish-continuation-lease-temporary-design1-acceptance.json",
+      "sha256": "413a81f186b2009fcbe25baaccc66529815bb87274128e5389c5bd23f987c9b3"
+    }
+  ],
+  "native_limits": "No native historical interleaving diagnosed or reproduced; G14 failure and prior source controls remain unchanged.",
+  "operations_started": false,
+  "private_campaign_access": false
+}

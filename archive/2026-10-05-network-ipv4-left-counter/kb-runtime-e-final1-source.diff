@@ -1,0 +1,626 @@
+diff --git a/README.md b/README.md
+index 131d3c0861498b72eb39fb01591da6531c1ab8bd..f166e255a9bc7483fa8f413608f6791d089fa9e2 100644
+--- a/README.md
++++ b/README.md
+@@ -2,11 +2,13 @@
+ 
+ This repository adds vpsFree.cz tools to the reusable
+ [`aither64/dev-workspace`](https://github.com/aither64/dev-workspace) runtime.
+-It owns the KB commands, vpsAdmin and vpsAdminOS development-cluster providers,
++It owns the KB commands, vpsAdmin, vpsAdminOS and optional KB cluster providers,
+ Codex skills, and the one-time namespace migration helper.
+ 
+ The [vpsAdmin development cluster guide](dev-clusters/vpsadmin/README.md)
+ documents its configuration, runtime credentials, and recovery steps.
++The [managed KB cluster guide](dev-clusters/kb/README.md) explains the optional
++provider and its connection to the standalone KB runtime.
+ 
+ The generic runtime supplies the `dev-session-documentation` skill. Its
+ [session guide](https://github.com/aither64/dev-workspace/blob/master/docs/dev-sessions.md#documentation-during-development)
+@@ -48,6 +50,8 @@ vpsfree-dev-workspace.lib.mkPackage {
+     clusterDefaults = {
+       vpsadmin = ./config/vpsadmin-devcluster.json;
+       vpsadminos = ./config/vpsadminos-devcluster.json;
++      # Optional: include the managed KB cluster provider.
++      kb = ./config/kb-devcluster.json;
+     };
+   };
+ }
+@@ -55,8 +59,9 @@ vpsfree-dev-workspace.lib.mkPackage {
+ 
+ Each registered workspace keeps its portal identity and selected cluster
+ providers in the `.dev-workspace.json` file at its own root. This extension
+-exports `vpsadmin` and `vpsadminos`; a workspace can select either or both
+-only while its package is built through this extension.
++exports `vpsadmin` and `vpsadminos`. Setting `siteConfig.clusterDefaults.kb`
++also exports `kb`; omitting it preserves the existing provider set. A workspace
++can select providers only while its package includes them.
+ 
+ ## Catalog composition
+ 
+@@ -71,6 +76,8 @@ The vpsFree package must continue to provide `dev-session-handoff`,
+ other site skills. Its catalog must list the `vpsadmin` and `vpsadminos`
+ providers, whose recorded commands and portal helper executables must be
+ present in the installed package.
++When KB cluster defaults are configured, the catalog also lists `kb` and the
++package includes its fixed portable engine and public provider command.
+ 
+ The optional `userNamespace` and `routerSocket` arguments are passed to the
+ generic package constructor. They are intended for a compatibility generation
+diff --git a/flake.lock b/flake.lock
+index 5a583dac4ef1eb4b6fb44c82b43e441bbe89c11c..5b16784796fc861d445ca314b76e73db62d96d60 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -41,17 +41,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1791094073,
+-        "narHash": "sha256-Twh5X2WD88/AlCzBh8sThCaM4yVcAtBM0sdlhQP2C5E=",
++        "lastModified": 1791144036,
++        "narHash": "sha256-tsVai0aKhc5oStiZHNtHhocXg8nhjib2X21e+KjzyjY=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "32775fa7fdd9bc9b41aef74b7f195e5c3bc0f8d5",
++        "rev": "3d07cf60cfde5d117a181a9bdb6d90a5860f6f0c",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "32775fa7fdd9bc9b41aef74b7f195e5c3bc0f8d5",
++        "rev": "3d07cf60cfde5d117a181a9bdb6d90a5860f6f0c",
+         "type": "github"
+       }
+     },
+@@ -62,17 +62,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1791131661,
+-        "narHash": "sha256-N1jEjNR5Jr4elS2so0fEEaZY4bMR6emmygTA0zRZo7I=",
++        "lastModified": 1791384181,
++        "narHash": "sha256-tGNXTRsh8QJReNiYgade9QhnyreUu77diToFVXSKEe8=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "6a972b9ab01077611b2c60e0fc726c185e050315",
++        "rev": "51aba080b264c28f5584867b6cf006bf423ae2f3",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "6a972b9ab01077611b2c60e0fc726c185e050315",
++        "rev": "51aba080b264c28f5584867b6cf006bf423ae2f3",
+         "type": "github"
+       }
+     },
+@@ -222,6 +222,30 @@
+         "type": "github"
+       }
+     },
++    "home-manager_2": {
++      "inputs": {
++        "nixpkgs": [
++          "kb-runtime",
++          "vpsadmin",
++          "vpsadminos",
++          "impermanence",
++          "nixpkgs"
++        ]
++      },
++      "locked": {
++        "lastModified": 1768598210,
++        "narHash": "sha256-kkgA32s/f4jaa4UG+2f8C225Qvclxnqs76mf8zvTVPg=",
++        "owner": "nix-community",
++        "repo": "home-manager",
++        "rev": "c47b2cc64a629f8e075de52e4742de688f930dc6",
++        "type": "github"
++      },
++      "original": {
++        "owner": "nix-community",
++        "repo": "home-manager",
++        "type": "github"
++      }
++    },
+     "impermanence": {
+       "inputs": {
+         "home-manager": "home-manager",
+@@ -241,6 +265,56 @@
+         "type": "github"
+       }
+     },
++    "impermanence_2": {
++      "inputs": {
++        "home-manager": "home-manager_2",
++        "nixpkgs": "nixpkgs_5"
++      },
++      "locked": {
++        "lastModified": 1769548169,
++        "narHash": "sha256-03+JxvzmfwRu+5JafM0DLbxgHttOQZkUtDWBmeUkN8Y=",
++        "owner": "nix-community",
++        "repo": "impermanence",
++        "rev": "7b1d382faf603b6d264f58627330f9faa5cba149",
++        "type": "github"
++      },
++      "original": {
++        "owner": "nix-community",
++        "repo": "impermanence",
++        "type": "github"
++      }
++    },
++    "kb-runtime": {
++      "inputs": {
++        "nixpkgs": [
++          "kb-runtime",
++          "vpsadminos",
++          "nixpkgs"
++        ],
++        "toolsNixpkgs": "toolsNixpkgs",
++        "vpsadmin": "vpsadmin",
++        "vpsadminos": [
++          "kb-runtime",
++          "vpsadmin",
++          "vpsadminos"
++        ],
++        "vpsfStatus": "vpsfStatus"
++      },
++      "locked": {
++        "lastModified": 1791382540,
++        "narHash": "sha256-GY6gfiTgJeH2pbpJIGzrQeIDL/mEAMzB/oQQMKQCRI4=",
++        "owner": "vpsfreecz",
++        "repo": "vpsfree-kb-contracts",
++        "rev": "93a16d6cecb6bc847ec9335a3f170eb8b301ab56",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "repo": "vpsfree-kb-contracts",
++        "rev": "93a16d6cecb6bc847ec9335a3f170eb8b301ab56",
++        "type": "github"
++      }
++    },
+     "llm-agents": {
+       "inputs": {
+         "bun2nix": "bun2nix",
+@@ -279,6 +353,22 @@
+         "type": "github"
+       }
+     },
++    "netlinkrb_2": {
++      "flake": false,
++      "locked": {
++        "lastModified": 1562850306,
++        "narHash": "sha256-0bXTWUdUDr2XP+bEIfIbxXap8Niva/IoPXTxFeXXImg=",
++        "owner": "vpsfreecz",
++        "repo": "netlinkrb",
++        "rev": "d9de53d843d2586ffa5b7b404887fa801c697ddf",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "repo": "netlinkrb",
++        "type": "github"
++      }
++    },
+     "nixpkgs": {
+       "locked": {
+         "lastModified": 1790600678,
+@@ -311,6 +401,22 @@
+         "type": "github"
+       }
+     },
++    "nixpkgsUnstable_2": {
++      "locked": {
++        "lastModified": 1788179007,
++        "narHash": "sha256-hn1oU2rue2SYK8dAr8+WNZWtbsz1S2W5mnHlSEuh3bo=",
++        "owner": "NixOS",
++        "repo": "nixpkgs",
++        "rev": "34ab99075ac4f7e40cf037eef32cb1c360bb85e9",
++        "type": "github"
++      },
++      "original": {
++        "owner": "NixOS",
++        "ref": "nixos-unstable",
++        "repo": "nixpkgs",
++        "type": "github"
++      }
++    },
+     "nixpkgs_2": {
+       "locked": {
+         "lastModified": 1788405554,
+@@ -360,6 +466,38 @@
+       }
+     },
+     "nixpkgs_5": {
++      "locked": {
++        "lastModified": 1768564909,
++        "narHash": "sha256-Kell/SpJYVkHWMvnhqJz/8DqQg2b6PguxVWOuadbHCc=",
++        "owner": "nixos",
++        "repo": "nixpkgs",
++        "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
++        "type": "github"
++      },
++      "original": {
++        "owner": "nixos",
++        "ref": "nixos-unstable",
++        "repo": "nixpkgs",
++        "type": "github"
++      }
++    },
++    "nixpkgs_6": {
++      "locked": {
++        "lastModified": 1788187754,
++        "narHash": "sha256-bu1QxmXKmPuvBLN7bHP355OV9Qo13x9WCiRDH62CqRM=",
++        "owner": "NixOS",
++        "repo": "nixpkgs",
++        "rev": "5dfba6236110080a54247d6460bc2ff5dda939cc",
++        "type": "github"
++      },
++      "original": {
++        "owner": "NixOS",
++        "ref": "nixos-26.05",
++        "repo": "nixpkgs",
++        "type": "github"
++      }
++    },
++    "nixpkgs_7": {
+       "locked": {
+         "lastModified": 1789009968,
+         "narHash": "sha256-GB16oaxpsrnGNnGIE+0uYBqMRzB9X6FYDUvjvnJAYew=",
+@@ -382,7 +520,8 @@
+         "devcluster-vpsadminWebui": "devcluster-vpsadminWebui",
+         "devcluster-vpsadminos": "devcluster-vpsadminos",
+         "devcluster-vpsf-status": "devcluster-vpsf-status",
+-        "nixpkgs": "nixpkgs_5"
++        "kb-runtime": "kb-runtime",
++        "nixpkgs": "nixpkgs_7"
+       }
+     },
+     "ruby-lxc": {
+@@ -402,6 +541,23 @@
+         "type": "github"
+       }
+     },
++    "ruby-lxc_2": {
++      "flake": false,
++      "locked": {
++        "lastModified": 1780499941,
++        "narHash": "sha256-guAdOSP9MyCL3BQ1LGXAhcCoXgEU1fUE69d2ATMqUGE=",
++        "owner": "vpsfreecz",
++        "repo": "ruby-lxc",
++        "rev": "004bf35eb90d41ba60b347b5b1e73d868a4f95d9",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "ref": "2026-06-03-nixos-26-05-port",
++        "repo": "ruby-lxc",
++        "type": "github"
++      }
++    },
+     "systems": {
+       "locked": {
+         "lastModified": 1681028828,
+@@ -417,6 +573,22 @@
+         "type": "github"
+       }
+     },
++    "toolsNixpkgs": {
++      "locked": {
++        "lastModified": 1783522502,
++        "narHash": "sha256-iffAls3iaNTyJC2faYcUXSI+Gp02cDjYl+MygxKl2GI=",
++        "owner": "NixOS",
++        "repo": "nixpkgs",
++        "rev": "0bb7ec54c8483066ec9d7720e780a5caa71f8612",
++        "type": "github"
++      },
++      "original": {
++        "owner": "NixOS",
++        "ref": "nixos-unstable",
++        "repo": "nixpkgs",
++        "type": "github"
++      }
++    },
+     "treefmt-nix": {
+       "inputs": {
+         "nixpkgs": [
+@@ -438,6 +610,84 @@
+         "repo": "treefmt-nix",
+         "type": "github"
+       }
++    },
++    "vpsadmin": {
++      "inputs": {
++        "nixpkgs": [
++          "kb-runtime",
++          "vpsadmin",
++          "vpsadminos",
++          "nixpkgs"
++        ],
++        "vpsadminos": "vpsadminos"
++      },
++      "locked": {
++        "lastModified": 1791332255,
++        "narHash": "sha256-AdPmqAySyv1pwBKlfG3TcafF8DTJbEXK5PCJuUw57ME=",
++        "owner": "vpsfreecz",
++        "repo": "vpsadmin",
++        "rev": "5d5527a67315c18b595345aa6996d7724c1ed071",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "repo": "vpsadmin",
++        "rev": "5d5527a67315c18b595345aa6996d7724c1ed071",
++        "type": "github"
++      }
++    },
++    "vpsadminos": {
++      "inputs": {
++        "impermanence": "impermanence_2",
++        "netlinkrb": "netlinkrb_2",
++        "nixpkgs": "nixpkgs_6",
++        "nixpkgsUnstable": "nixpkgsUnstable_2",
++        "ruby-lxc": "ruby-lxc_2"
++      },
++      "locked": {
++        "lastModified": 1788379445,
++        "narHash": "sha256-mDLxNpbfUmo2FRXW5MJWJ8WqKLINUru6nVHB7zN4bVo=",
++        "owner": "vpsfreecz",
++        "repo": "vpsadminos",
++        "rev": "6bdf458fd9105379860234ff33d352e55844f08f",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "repo": "vpsadminos",
++        "rev": "6bdf458fd9105379860234ff33d352e55844f08f",
++        "type": "github"
++      }
++    },
++    "vpsfStatus": {
++      "inputs": {
++        "nixpkgs": [
++          "kb-runtime",
++          "nixpkgs"
++        ],
++        "vpsadmin": [
++          "kb-runtime",
++          "vpsadmin"
++        ],
++        "vpsadminos": [
++          "kb-runtime",
++          "vpsadminos"
++        ]
++      },
++      "locked": {
++        "lastModified": 1783669700,
++        "narHash": "sha256-fiaFXRCldKuaiEFNO+TSvzrgYOCW8xOsEjDRND97Pss=",
++        "owner": "vpsfreecz",
++        "repo": "vpsf-status",
++        "rev": "29853c364e2fa072152d2de4f17e57f1e802b9f3",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "ref": "master",
++        "repo": "vpsf-status",
++        "type": "github"
++      }
+     }
+   },
+   "root": "root",
+diff --git a/flake.nix b/flake.nix
+index 70dcb82caaf831fc66b8f9d9877c9f1f302cc2d2..9ef9f530bf09626ed7b94886b8fe0d7c9680c2e4 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -3,7 +3,8 @@
+ 
+   inputs = {
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+-    dev-workspace.url = "github:aither64/dev-workspace/6a972b9ab01077611b2c60e0fc726c185e050315";
++    dev-workspace.url = "github:aither64/dev-workspace/51aba080b264c28f5584867b6cf006bf423ae2f3";
++    kb-runtime.url = "github:vpsfreecz/vpsfree-kb-contracts/93a16d6cecb6bc847ec9335a3f170eb8b301ab56";
+     devcluster-vpsadminos.url = "github:vpsfreecz/vpsadminos/15802517e2d92dda4ddc07ebac3d1d7ea087b430";
+     devcluster-vpsadmin = {
+       url = "github:vpsfreecz/vpsadmin/5c76e3290481b297dcd0baa76d246133f0353d8f";
+@@ -59,6 +60,14 @@
+         pkgs.callPackage ./nix/organization-tools.nix {
+           src = self;
+           runtimeContract = dev-workspace.lib.runtimeContract;
++          kbRuntimePackage =
++            if siteConfig.clusterDefaults ? kb then
++              inputs.kb-runtime.packages.${pkgs.stdenv.hostPlatform.system}.kb-runtime
++            else null;
++          kbSourceMetadata =
++            if siteConfig.clusterDefaults ? kb then
++              inputs.kb-runtime.packages.${pkgs.stdenv.hostPlatform.system}.runtime-source
++            else null;
+           inherit siteConfig;
+         };
+       mkPackage =
+@@ -107,6 +116,11 @@
+                   label = "vpsAdminOS";
+                   command = "${tools}/bin/vpsadminos-devcluster";
+                 };
++              } // lib.optionalAttrs (validatedSiteConfig.clusterDefaults ? kb) {
++                kb = {
++                  label = "KB";
++                  command = "${tools}/bin/kb-devcluster";
++                };
+               };
+             };
+           }
+@@ -144,6 +158,15 @@
+         inherit pkgs;
+         siteConfig = testSiteConfig;
+       };
++      testKbSiteConfig = testSiteConfig // {
++        clusterDefaults = testSiteConfig.clusterDefaults // {
++          kb = ./test/fixtures/kb-config.json;
++        };
++      };
++      testKbPackage = mkPackage {
++        inherit pkgs;
++        siteConfig = testKbSiteConfig;
++      };
+       devclusterCheck = pkgs.writeShellApplication {
+         name = "devcluster-check";
+         runtimeInputs = [
+@@ -188,6 +211,22 @@
+             };
+           }
+         )
++        (
++          testSiteConfig
++          // {
++            clusterDefaults = testSiteConfig.clusterDefaults // {
++              kb = "/tmp/mutable-kb.json";
++            };
++          }
++        )
++        (
++          testSiteConfig
++          // {
++            clusterDefaults = testSiteConfig.clusterDefaults // {
++              kb = ./test/fixtures/not-object.json;
++            };
++          }
++        )
+         (
+           testSiteConfig
+           // {
+@@ -251,6 +290,27 @@
+       checks.${system} = {
+         compatibility-package = testCompatibilityPackage;
+         package = testPackage;
++        kb-provider-package = testKbPackage;
++        kb-provider-contract = pkgs.runCommand "vpsfree-kb-provider-contract" { } ''
++          ${pkgs.jq}/bin/jq -e '
++            [.clusterProviders[] | { id, label }] == [
++              { id: "kb", label: "KB" },
++              { id: "vpsadmin", label: "vpsAdmin" },
++              { id: "vpsadminos", label: "vpsAdminOS" }
++            ]
++          ' ${testKbPackage}/share/dev-workspace/extensions.json >/dev/null
++          for provider in kb vpsadmin vpsadminos; do
++            command=$(${pkgs.jq}/bin/jq -er --arg provider "$provider" \
++              '.clusterProviders[] | select(.id == $provider) | .command' \
++              ${testKbPackage}/share/dev-workspace/extensions.json)
++            test -x "$command"
++            test -x ${testKbPackage}/libexec/workspace-portal/"$provider"-devcluster
++          done
++          ${pkgs.coreutils}/bin/env -i HOME="$TMPDIR" PATH=/empty \
++            ${testKbPackage}/libexec/workspace-portal/kb-devcluster --help >/dev/null
++          test ! -e ${testPackage}/libexec/workspace-portal/kb-devcluster
++          touch "$out"
++        '';
+         package-metadata = pkgs.runCommand "vpsfree-dev-workspace-package-metadata" { } ''
+           ${pkgs.jq}/bin/jq -e \
+             --arg router ${nixpkgs.lib.escapeShellArg dev-workspace.lib.hostPaths.routerSocket} \
+@@ -338,6 +398,11 @@
+               cd source
+               patchShebangs bin dev-clusters
+               ${testEnvironment}
++              unset RUBYOPT RUBYLIB GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH
++              export GEM_HOME=$(${pkgs.ruby}/bin/ruby --disable-gems -rrubygems -e 'print Gem.default_dir')
++              export GEM_PATH="$GEM_HOME"
++              export VPSFREE_KB_ENGINE_METADATA=${inputs.kb-runtime.packages.${system}.runtime-source}
++              export DEV_WORKSPACE_HOST_SOURCE=${dev-workspace}
+               export RUNTIME_AUTHORITY_CORPUS=${dev-workspace.lib.runtimeAuthorityCorpus}
+               ruby test/devcluster_status_test.rb
+               ruby test/devcluster_commands_test.rb
+@@ -346,6 +411,13 @@
+               ruby test/devcluster_maintenance_test.rb
+               ruby test/devcluster_store_roots_test.rb
+               ruby test/devcluster_storage_profile_test.rb
++              ruby test/kb_devcluster_test.rb
++              ruby test/kb_guards_test.rb
++              ruby test/kb_connection_test.rb
++              ruby test/kb_lease_test.rb
++              ruby test/kb_cli_test.rb
++              ruby test/kb_portable_test.rb
++              ruby test/kb_public_dispatch_test.rb
+               ruby test/kb_cleanup_test.rb
+               ruby test/kb_contract_tools_test.rb
+               ruby test/kb_page_test.rb
+diff --git a/nix/organization-tools.nix b/nix/organization-tools.nix
+index 567bf7c0022553e18ca8c0ee68d8ced3efe51745..63f867a38bcdad314be7644864dde3885e4ee3a4 100644
+--- a/nix/organization-tools.nix
++++ b/nix/organization-tools.nix
+@@ -8,6 +8,8 @@
+   gnused,
+   iproute2,
+   jq,
++  kbRuntimePackage ? null,
++  kbSourceMetadata ? null,
+   lib,
+   makeWrapper,
+   nix,
+@@ -25,6 +27,7 @@
+ let
+   kb = siteConfig.kb or { };
+   clusters = siteConfig.clusterDefaults or { };
++  kbProviderEnabled = clusters ? kb;
+   clusterConfigurations = builtins.mapAttrs (
+     name: value:
+     builtins.path {
+@@ -73,6 +76,8 @@ let
+ in
+ assert lib.assertMsg authorityPolicyValid
+   "the namespace migration must be reviewed for the selected runtime authority policy";
++assert lib.assertMsg (!kbProviderEnabled || (kbRuntimePackage != null && kbSourceMetadata != null))
++  "the KB provider requires its exact published portable engine input";
+ stdenvNoCC.mkDerivation {
+   pname = "vpsfree-dev-workspace-tools";
+   version = "0.1.0";
+@@ -141,6 +146,21 @@ stdenvNoCC.mkDerivation {
+       --prefix PATH : ${lib.escapeShellArg clusterRuntimePath} \
+       --set VPSADMINOS_DEVCLUSTER_DEFAULT_CONFIG ${lib.escapeShellArg (toString clusterConfigurations.vpsadminos)}
+ 
++    ${lib.optionalString kbProviderEnabled ''
++      install -m644 ${clusterConfigurations.kb} \
++        "$out/share/vpsfree-dev-workspace/dev-clusters/kb/default-config.json"
++      substituteInPlace "$out/share/vpsfree-dev-workspace/dev-clusters/kb/bin/devcluster" \
++        --replace-fail '#!/usr/bin/env ruby' '#!${ruby}/bin/ruby'
++      makeWrapper "$out/share/vpsfree-dev-workspace/dev-clusters/kb/bin/devcluster" \
++        "$out/bin/kb-devcluster" \
++        --prefix PATH : ${lib.escapeShellArg clusterRuntimePath} \
++        --set VPSFREE_KB_ENGINE ${kbRuntimePackage}/bin/vpsfree-kb-devcluster \
++        --set VPSFREE_KB_ENGINE_METADATA ${kbSourceMetadata} \
++        --set VPSFREE_KB_DEFAULT_CONFIG ${lib.escapeShellArg (toString clusterConfigurations.kb)} \
++        --set DEVCLUSTER_RUNTIME_CONTRACT \
++          "$out/share/vpsfree-dev-workspace/dev-clusters/runtime-contract.json"
++    ''}
++
+     runHook postInstall
+   '';
+ 
+@@ -176,6 +196,14 @@ stdenvNoCC.mkDerivation {
+     done
+     DEVCLUSTER_WORKSPACE="$TMPDIR/workspace" "$out/bin/vpsadmin-devcluster" --help >/dev/null
+     DEVCLUSTER_WORKSPACE="$TMPDIR/workspace" "$out/bin/vpsadminos-devcluster" --help >/dev/null
++    ${if kbProviderEnabled then ''
++      ${diffutils}/bin/cmp ${clusterConfigurations.kb} \
++        "$out/share/vpsfree-dev-workspace/dev-clusters/kb/default-config.json"
++      ${coreutils}/bin/env -i HOME="$TMPDIR" PATH=/empty "$out/bin/kb-devcluster" --help >/dev/null
++      test ! -e "$TMPDIR/workspace/.dev-clusters/kb"
++    '' else ''
++      test ! -e "$out/bin/kb-devcluster"
++    ''}
+     ${coreutils}/bin/env -i HOME="$TMPDIR" PATH=/empty \
+       "$out/bin/vpsfree-dev-workspace-migrate" --help >/dev/null
+   '';
+diff --git a/nix/site-config.nix b/nix/site-config.nix
+index 8e0029eef8bcfc3c54ec91679583bc0926b4d89d..dd8bcc4f040404b0ff8cbdfe1dc97aa71c8b8378 100644
+--- a/nix/site-config.nix
++++ b/nix/site-config.nix
+@@ -38,7 +38,7 @@ let
+         (kb.stagingUsername or null)
+       ]
+     )
+-    && hasExactKeys clusters [ "vpsadmin" "vpsadminos" ] [ ]
++    && hasExactKeys clusters [ "vpsadmin" "vpsadminos" ] [ "kb" ]
+     && builtins.all validJsonObject (builtins.attrValues clusters);
+ in
+ assert lib.assertMsg valid "vpsFree development workspace site configuration is invalid";

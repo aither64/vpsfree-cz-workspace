@@ -1,0 +1,14 @@
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index a4266501126ec3bd7fb3c2f3e4937afd70d0560f..d79774855c5e7c87bc4481bd61a80efbdfebdc41 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -93,6 +93,9 @@ After authenticating the owned paths and peer, the controller marks the run
+ `stopping` before sending the request. The runner withdraws readiness and issues
+ at most one graceful stop per started, running machine. Repeated authenticated
+ requests acknowledge the same shutdown and wait; they do not repeat poweroff.
++Once a valid request starts shutdown, the runner continues even if its reply
++cannot reach the caller. A missing reply does not prove that shutdown was
++rejected; a later public stop can wait for the same drain.
+ 
+ The runner uses its configured machine operation budget, normally 900 seconds.
+ The CLI's `--timeout` bounds the controller's observation after acknowledgement;

@@ -1,0 +1,59 @@
+{
+  "head": "f203f0a5ce3afc0649e884bc2195188b34cbaea1",
+  "native": "63 runs /656 assertions /0 failures /1 error /0 skips in four exact K workflows",
+  "failure": "RuntimeLifecycleTest#test_shared_ssh_discovery_deadline_reaches_existing_live_verification_once: retained trust mismatch",
+  "source_cause": "LocalTransportEngine#initialize_credentials writes nonempty synthetic credential into known_hosts. New test calls real establish_ssh_trust but never supplies fresh empty trust. Real runtime correctly refuses replacement.",
+  "repair_scope": "Only the new existing lifecycle method in tools/test-runtime.rb: scoped initialize_credentials seam calls existing initializer then empties only its new fixture known_hosts before preparation. Keep all assertions, production guard and other fixtures exact.",
+  "evidence": [
+    {
+      "path": "finish-ssh-session-hosted1/k/final.json",
+      "sha256": "33b22f2869304366b89000b4c28fc83ba0dc150a9b3cba0462d28e63f38ff17c"
+    },
+    {
+      "path": "finish-ssh-session-hosted1/k/full.log",
+      "sha256": "2a35ec15821ad42e8158ecc1dd88f66c3d640a3b5c5594cfbd4cbb351f8163c5"
+    },
+    {
+      "path": "finish-ssh-session-hosted1/k/logs.zip",
+      "sha256": "43de940521e4589aae448267eacb8613fb41f7e6a741881eb1c3b06d2f55f3a9"
+    },
+    {
+      "path": "finish-ssh-session-hosted1/k-runtime/final.json",
+      "sha256": "8db20e6072892ca0275ab12892de86773768fa61cae649e7c9c83fe9a1304621"
+    },
+    {
+      "path": "finish-ssh-session-hosted1/k-runtime/full.log",
+      "sha256": "66c539df5822fe2635baf21f7db184243432a93df56d6d71cfa5ce5f575c0b2e"
+    },
+    {
+      "path": "finish-ssh-session-hosted1/k-runtime/logs.zip",
+      "sha256": "eef0a7f4c7bbfd44566fd0f8050ff27cf46e691ece0ccec83d6c2a09d94889f0"
+    },
+    {
+      "path": "finish-ssh-session-hosted1/k-managed/final.json",
+      "sha256": "b4b61f17a4c92abd0b60745d37e7e3d0eb2d111ad88a1118fe0013a7766019b9"
+    },
+    {
+      "path": "finish-ssh-session-hosted1/k-managed/full.log",
+      "sha256": "a1ac1f518c0e2b475efb9f615a56c859ef511044974c3b281daf7c744efc1b95"
+    },
+    {
+      "path": "finish-ssh-session-hosted1/k-managed/logs.zip",
+      "sha256": "79bf884b65c1b036bbc4484be18733b9ab493f6a75324ae751c5f67d8f320d90"
+    },
+    {
+      "path": "finish-ssh-session-hosted1/k-runtime-managed/final.json",
+      "sha256": "0fd27a19065484acef4a031c066303efca8df52d81d945a02444061e61622df8"
+    },
+    {
+      "path": "finish-ssh-session-hosted1/k-runtime-managed/full.log",
+      "sha256": "03cc9796041f54372822b113fd5f049e19003294990404171d09dfe9ab216bec"
+    },
+    {
+      "path": "finish-ssh-session-hosted1/k-runtime-managed/logs.zip",
+      "sha256": "7d74f1bdf852984481170597e89f8bc90f8f59c49acc898e61c16c76e9767ffb"
+    }
+  ],
+  "no_local_reproduction": true,
+  "downstream_not_run": true
+}

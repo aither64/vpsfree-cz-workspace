@@ -1,0 +1,31 @@
+Add network availability and correct free IPv4 inventory
+
+Networks cannot currently be disabled, so unused pools can inflate the public
+IPv4-left statistic and remain eligible for new use. Add administrator-controlled
+Network.enabled,
+defaulting to true, and exclude disabled pools and reserved addresses from the
+shared public count. Public/private classification continues to use Network.role.
+Both public index pages keep consuming the same integer.
+
+Disabled networks reject new allocations, detached-owned assignments and
+ownership transfers, including export endpoints transferred with a VPS. Existing
+assigned service, release and trusted same-owner migration/restore continuity
+remain supported. Preparation takes ordered shared network locks before IP locks
+and rechecks current eligibility after reservation; an operation admitted before
+disable may finish. The legacy UI exposes confirmed CSRF-protected POST controls
+and keeps retained inventory visible.
+
+Validation includes focused resource/admission/batch tests, the reversible
+migration, locale health, PHP regressions and scoped Ruby/PHP/Nix checks. After
+review corrections, VPS ownership tests passed 14 examples and isolated core/full
+SQL concurrency/Create runs each passed 18 examples at the failing CI seeds.
+All 26 API CI jobs passed at the final backend head. The route/host-address VM
+scenario also passed. The independent review covered complete histories,
+migration lineage and all four review lanes. Remaining VM continuity and
+legacy browser verification are
+tracked in the [session portal](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-05-network-ipv4-left-counter/).
+
+Apply the additive schema, upgrade every allocation writer, then enable the UI
+controls and explicitly disable selected old pools. An old API rollback while
+pools remain disabled loses enforcement. No coordinated node update is required.
+This PR includes no deployment or production network retirement.

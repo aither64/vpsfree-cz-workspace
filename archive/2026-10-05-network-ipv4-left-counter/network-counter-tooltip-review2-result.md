@@ -1,0 +1,13 @@
+# Final affected committed review
+
+Independent reviewer0 completed mandatory-change-review step10 at Vcc8e9e7e/Wce856841/Ca433e19a/K819c4824. Retained thread01a10c52-55c7-7490-8cd9-75efda7f00d9, Sol/xhigh/read_only; identity/roster revision17 verified, no override/fallback/authorship. Overall HIGH; affected GENERAL, architecture/repetition and scope/proportionality inspected directly. No new Blocking, Important or Advisory findings. Original Important tooltip clipping is RESOLVED, including desktop final-IP warning.
+
+The single InventoryDescription owner is used by count headings, editor values and both false-only IP badges. Body ownership, fixed measured/viewport-clamped placement, above flip, modal layer, visibility/clipping suppression, focus-or-hover lifetime, listener/unmount cleanup and row navigation guard remain coherent. No global framework/dependency or budget waiver. Reviewer independently inspected all12 exact-head EN/CS desktop/mobile images and checksum equality as complete/readable.
+
+Actual clean final objects, bases/trees/full diffs/histories match review2 inventory. Complete V4/W1/C2/K1 series remain coherent, with rejected/intermediate descriptions folded into owning W commit. No obsolete unmerged approach, repeated input updates, fixups or merges. C changes only V/W locked revision/hash/time from base; versus old C525 only W metadata changes, all node/edge/follows/unrelated graph fields preserved. Effective pair is Vcc/Wce. W/C/K have no migrations; no new V migration. Original sole reversible enabled boolean migration lineage and external-consumption uncertainty remain unchanged.
+
+Native CI37763178538 and smoke37763178641 succeed at Wce.292files/1746unit cases, adopted35/deferred216; Chromium429/mobile Chrome370/mobile WebKit28 pass. Availability geometry covers desktop/mobile Chromium, not WebKit's separate touch selection. Existing act() and chunk-size warnings remain. No failure/flaky/retry summary in retained logs. These are synthetic fixtures, not live guest/API or genuine KB image proof.
+
+Accepted V expected-denial HTTP500 and W shared OPTIONS-timeout Advisories remain unresolved. Genuine CS/EN legacy networking/ip-address-list PNGs, production writer/retirement evidence, default integration and production KB publication remain outside this completed source gate. Original rollout/rollback limits retained. Reviewer performed source/evidence reads only, no local CI/tests/build/eval, writes/ref/delegation/lifecycle action. Root owns preview refresh and final interpretation.
+
+Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-05-network-ipv4-left-counter/

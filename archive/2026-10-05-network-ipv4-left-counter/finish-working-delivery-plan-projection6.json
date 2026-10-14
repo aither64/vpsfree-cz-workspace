@@ -1,0 +1,91 @@
+{
+  "schema": 1,
+  "generator": "d0b4f40708cc8b59aab7c91ae05fba695abc233c",
+  "metadata_sha256": "6e7d6ccde705c35d010162d0b8ea3de6b1b621c4bb931ce78c2476dd91981780",
+  "source": "/nix/store/kdmyxmm7sj2qs7sw7zj038669nn2kaj7-source",
+  "configuration_sha256": "0320077847810412207ff11d82ae7e9cc6e16a8c56b173333d110427c2e321f5",
+  "argv": [
+    "/nix/store/iirndnicd13h4zjr8xwwj8hq2cghpfjn-nix-2.34.8/bin/nix",
+    "eval",
+    "--impure",
+    "--no-write-lock-file",
+    "--json",
+    "path:/nix/store/kdmyxmm7sj2qs7sw7zj038669nn2kaj7-source#runtimePlan",
+    "--apply",
+    "plan: { machines = builtins.mapAttrs (_: machine: { inherit (machine) spin memory cpus kernel initrd toplevel disks; kernelOutput = builtins.dirOf machine.kernel; kernelContext = builtins.getContext machine.kernel; toplevelContext = builtins.getContext (toString machine.toplevel); } // (if machine ? diskImage then { inherit (machine) diskImage; imageContext = builtins.getContext machine.diskImage; } else {})) plan.machines; }"
+  ],
+  "started_at": "2026-10-12T20:15:00.883919+00:00",
+  "scope": "Public runtimePlan projection only; placeholders are not final credentials, instance, accepted artifact or guest closures.",
+  "exit_code": 0,
+  "projection": {
+    "machines": {
+      "node1": {
+        "cpus": 4,
+        "disks": [
+          {
+            "device": "node1-tank.img",
+            "size": "8G",
+            "type": "file"
+          }
+        ],
+        "initrd": "/nix/store/xpfj40ayii1xc6jjgi2ih06gj8sxnihr-initrd/initrd",
+        "kernel": "/nix/store/mad7zijkfkvvmp58512idxgjn5ar2mv4-linux-6.12.95/bzImage",
+        "kernelContext": {
+          "/nix/store/qrx840p32dc03nzghs904vy02hwm38fh-linux-6.12.95.drv": {
+            "outputs": [
+              "out"
+            ]
+          }
+        },
+        "kernelOutput": "/nix/store/mad7zijkfkvvmp58512idxgjn5ar2mv4-linux-6.12.95",
+        "memory": 4096,
+        "spin": "vpsadminos",
+        "toplevel": "/nix/store/pcl2820y0b7x8awjjls4c5lwvsxfdah0-vpsadminos-system-node1-26.05pre-git",
+        "toplevelContext": {
+          "/nix/store/ybzcqspzdkyx7yhkqxcp7ykzy9v3ln5b-vpsadminos-system-node1-26.05pre-git.drv": {
+            "outputs": [
+              "out"
+            ]
+          }
+        }
+      },
+      "services": {
+        "cpus": 4,
+        "diskImage": "/nix/store/1aa263jxypaca36hag11s2iy5q85ap5d-nixos-test-disk-image/nixos-test.img",
+        "disks": [],
+        "imageContext": {
+          "/nix/store/gs3vbdxyryqsbz9c3lmr3gia5gwxciiq-nixos-test-disk-image.drv": {
+            "outputs": [
+              "out"
+            ]
+          }
+        },
+        "initrd": "/nix/store/2zmfwa43l4d84y1a6akv7xrfr6mqyh74-initrd-linux-6.12.107/initrd",
+        "kernel": "/nix/store/zfi3x0y2ci656yw3xznsin34vag44g6s-linux-6.12.107/bzImage",
+        "kernelContext": {
+          "/nix/store/2fk32khdjcf8l54y8lkwv5cyb66m6zb9-linux-6.12.107.drv": {
+            "outputs": [
+              "out"
+            ]
+          }
+        },
+        "kernelOutput": "/nix/store/zfi3x0y2ci656yw3xznsin34vag44g6s-linux-6.12.107",
+        "memory": 4096,
+        "spin": "nixos",
+        "toplevel": "/nix/store/ihfsw2wz3f971g2wffgj29yq1d6kx0m6-nixos-system-vpsadmin-services-26.05pre-git",
+        "toplevelContext": {
+          "/nix/store/6k3grqysz67sqnlhb0n2nj44h04701in-nixos-system-vpsadmin-services-26.05pre-git.drv": {
+            "outputs": [
+              "out"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "finished_at": "2026-10-12T20:16:07.753536+00:00",
+  "evidence": {
+    "/home/aither/.local/state/vpsfree-kb-verification/2026-10-05-network-ipv4-left-counter-working6/candidate6-planning/projection.stdout": "77ab2da5f59a7b802e905b6f5fc83ac7bc67f9d07eeeb93c98e77b451868260f",
+    "/home/aither/.local/state/vpsfree-kb-verification/2026-10-05-network-ipv4-left-counter-working6/candidate6-planning/projection.stderr": "0c6893ecda286e31204cdfae12763cdd254a340e266a85a0a125012d98ef472a"
+  }
+}

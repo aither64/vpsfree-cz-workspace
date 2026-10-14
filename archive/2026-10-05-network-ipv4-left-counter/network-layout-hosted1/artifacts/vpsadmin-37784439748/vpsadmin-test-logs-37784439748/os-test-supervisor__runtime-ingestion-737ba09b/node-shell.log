@@ -1,0 +1,127 @@
+SHELL: 0
+
+START: 2026-10-08 16:17:34 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-08 16:17:34 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-08 16:17:34 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-08 16:17:34 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-08 16:17:34 +0200
+COMMAND: sv check nodectld
+END: 2026-10-08 16:17:34 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2821) 41s
+---
+
+START: 2026-10-08 16:17:34 +0200
+COMMAND: sv check nodectld
+END: 2026-10-08 16:17:34 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 2821) 41s
+---
+
+START: 2026-10-08 16:18:26 +0200
+COMMAND: sv -w 90 stop nodectld
+END: 2026-10-08 16:18:26 +0200
+ELAPSED: 0.43s
+STATUS: 0
+OUTPUT:
+ok: down: nodectld: 0s, normally up
+---
+
+START: 2026-10-08 16:18:30 +0200
+COMMAND: sv -w 90 start nodectld
+END: 2026-10-08 16:18:31 +0200
+ELAPSED: 0.43s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 3003) 0s
+---
+
+START: 2026-10-08 16:18:31 +0200
+COMMAND: sv check nodectld
+END: 2026-10-08 16:18:31 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 3003) 0s
+---
+
+START: 2026-10-08 16:18:31 +0200
+COMMAND: sv check nodectld
+END: 2026-10-08 16:18:31 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 3003) 0s
+---
+
+START: 2026-10-08 16:18:31 +0200
+COMMAND: sv -w 90 stop nodectld
+END: 2026-10-08 16:18:31 +0200
+ELAPSED: 0.43s
+STATUS: 0
+OUTPUT:
+ok: down: nodectld: 1s, normally up
+---
+
+START: 2026-10-08 16:19:56 +0200
+COMMAND: sv -w 90 start nodectld
+END: 2026-10-08 16:19:57 +0200
+ELAPSED: 0.43s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 3088) 1s
+---
+
+START: 2026-10-08 16:19:57 +0200
+COMMAND: sv check nodectld
+END: 2026-10-08 16:19:57 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 3088) 1s
+---
+
+START: 2026-10-08 16:19:57 +0200
+COMMAND: sv check nodectld
+END: 2026-10-08 16:19:57 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: run: nodectld: (pid 3088) 1s
+---
+
+START: 2026-10-08 16:21:15 +0200
+COMMAND: poweroff -f
+END: 2026-10-08 16:21:18 +0200
+ELAPSED: 2.45s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

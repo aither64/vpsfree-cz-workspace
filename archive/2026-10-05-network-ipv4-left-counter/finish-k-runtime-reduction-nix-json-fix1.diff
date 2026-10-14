@@ -1,0 +1,18 @@
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+index 1f67b6844827ae1114fd1af317507f9b7846f1f8..134bcaa04003b555f8607a3e695c2c21ea126355 100644
+--- a/tools/test-runtime-verify.rb
++++ b/tools/test-runtime-verify.rb
+@@ -717,8 +717,11 @@ class RuntimeVerifyTest < Minitest::Test
+       output, error, status = Open3.capture3('nix', 'derivation', 'show', value['imageDerivations'].first)
+       assert(status.success?, "native image derivation inspection refused: #{error}")
+       native = JSON.parse(output)
+-      derivations = native.fetch('derivations', native)
+-      assert_equal('2048', derivations.fetch(value['imageDerivations'].first).fetch('env').fetch('memSize'))
++      assert_equal(4, native.fetch('version'))
++      derivations = native.fetch('derivations')
++      derivation_key = File.basename(value['imageDerivations'].first)
++      assert_equal([derivation_key], derivations.keys)
++      assert_equal('2048', derivations.fetch(derivation_key).fetch('env').fetch('memSize'))
+     end
+   end
+ 

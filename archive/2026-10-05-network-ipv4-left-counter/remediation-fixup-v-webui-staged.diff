@@ -1,0 +1,25 @@
+diff --git a/tests/playwright/webui/specs/admin-cluster.spec.cjs b/tests/playwright/webui/specs/admin-cluster.spec.cjs
+index 4fa35f428..c50645a78 100644
+--- a/tests/playwright/webui/specs/admin-cluster.spec.cjs
++++ b/tests/playwright/webui/specs/admin-cluster.spec.cjs
+@@ -213,14 +213,18 @@ test.describe.serial('admin cluster browser coverage', () => {
+     await form.locator('input[name="confirm"]').check();
+     await submitForm(form, 'Disable this network');
+     await expectNotification(page, 'Changes saved');
+-    await expect(rowWithText(page, network.label)).toContainText('Disabled');
++    const enabledIcon = rowWithText(page, network.label).locator('td').filter({
++      has: page.locator(`a[href="?page=cluster&action=network_enabled&network=${network.id}"]`),
++    }).locator('img');
++    await expect(enabledIcon).toHaveCount(1);
++    await expect(enabledIcon).toHaveAttribute('src', 'template/icons/transact_fail.png');
+     await gotoCluster(page, 'network_enabled', { network: network.id });
+     form = formByAction(page, 'action=network_enabled');
+     await expect(form.locator('input[name="enabled"]')).toHaveValue('1');
+     await form.locator('input[name="confirm"]').check();
+     await submitForm(form, 'Enable this network');
+     await expectNotification(page, 'Changes saved');
+-    await expect(rowWithText(page, network.label)).toContainText('Enabled');
++    await expect(enabledIcon).toHaveAttribute('src', 'template/icons/transact_ok.png');
+     await logout(page, fixtures.admin.username);
+     await login(page, fixtures.user);
+     await gotoCluster(page, 'network_enabled', { network: network.id });

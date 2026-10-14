@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "recorded_at": "2026-10-09T18:20:51.970035+00:00",
+  "owner": "lead",
+  "status": "accepted prospective source boundary; application assignment waits for current W freeze",
+  "design": {
+    "path": "design.md",
+    "sha256_at_acceptance": "898344f997707645725ef2649681ab4d4d404ef60c966fdc825121c61da7255e",
+    "sections": [
+      "PROPOSAL: conditional historical service drain and retained final-runner shutdown ownership",
+      "PROPOSAL reconciliation: shared readiness and one-shot owned shutdown"
+    ]
+  },
+  "exact_baselines": {
+    "K": "0271532264adf5eeb33123d136d9a0663faf21b0",
+    "E": "eea5b21a9357f9b2c1cc991675e00d94f5cdbf9a",
+    "historical_runtime": "7dc4d70830e535f4559bccfa668cf65cdce1de2d"
+  },
+  "application_owners": {
+    "K": [
+      "cluster/lib/kb_runtime.rb",
+      "cluster/lib/devcluster_runner.rb",
+      "tools/test-runtime.rb",
+      "tools/test-machine.rb",
+      "tools/runtime-verify.rb",
+      "tools/test-runtime-verify.rb",
+      "tools/fixtures/fake-kb-runner.rb (only if focused existing fixture requires real readiness/shutdown records)"
+    ],
+    "E": [
+      "dev-clusters/kb/lib/portable.rb",
+      "test/kb_portable_test.rb",
+      "test/support/kb_snapshot_fixture.rb"
+    ]
+  },
+  "root_prose": [
+    "K cluster/runtime-contract.md",
+    "E dev-clusters/kb/README.md"
+  ],
+  "invariants": [
+    "one canonical ready? predicate; live? remains process liveness",
+    "non-ready shutdown phase and exact marker withdrawal deny K/E capture, including active lease",
+    "one graceful stop per started running machine; no replay, force or kill",
+    "same runner/reapers/tracker/control listener retained until machine and all retained-child exit proof",
+    "configured machine budget and finite caller wait remain distinct",
+    "final ordinary stop verified without historical service workaround",
+    "genuine 7dc public start must fully accept before two source/closure-guarded console-router-only drains",
+    "drains have finite guest and caller budgets with distinct failure attribution",
+    "one failed finite campaign ends; no missing-readiness adoption or replay"
+  ],
+  "commit_shape": "separate prospective K runtime/readiness correction and finite verifier/prepared-history unit, with owning prose; narrow E selected readiness consumer plus one canonical exact K input stream, preserving unrelated provider and D",
+  "gates": [
+    "all intended source committed",
+    "hosted exact K/E checks",
+    "affected committed independent review with full history/state lineage",
+    "paired immutable packages",
+    "fresh measured capacity and durable context before any real work"
+  ],
+  "old_frozen_packet": "finish-k-runtime-baseline-source1 preserved unchanged; insufficient by itself",
+  "operational_authorization": false,
+  "current_resources": "isolation3 A ownerless/incomplete; B lacks accepted preparation; G4/G6 and preview untouched; no stop/reset/recovery/new pair by this record"
+}

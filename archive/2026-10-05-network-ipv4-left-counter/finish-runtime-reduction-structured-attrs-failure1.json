@@ -1,0 +1,84 @@
+{
+  "kind": "source-backed diagnosis",
+  "native_payload_retained": false,
+  "evidence": {
+    "k": {
+      "id": 38061885677,
+      "head": "9df0a9cb19fdd0087c5fc7c571d9f547daf93177",
+      "conclusion": "failure",
+      "files": {
+        "full.log": {
+          "sha256": "024879afad4cfcded709c35fa607cbc720ac2667497a4a81b5a1fb2d24413014",
+          "bytes": 146738
+        },
+        "logs.zip": {
+          "sha256": "c192634e36b4a471b1f25359f0eda1199c05d94d61264e6d8ad1a48d467f3865",
+          "bytes": 64934
+        },
+        "final.json": {
+          "sha256": "466c7379451e083981e9cbf7b6d6e2d8978aec8a7dff405c6d64ea8306a83547",
+          "bytes": 15175
+        },
+        "final-jobs.json": {
+          "sha256": "836b5985f4f600d5d9547a1a4af492b36fbbbd231ed4050330da6312db431e5c",
+          "bytes": 2274
+        }
+      },
+      "verifier": {
+        "runs": 29,
+        "assertions": 314,
+        "failures": 0,
+        "errors": 1,
+        "skips": 0,
+        "error": "KeyError: key not found: memSize at tools/test-runtime-verify.rb:724"
+      }
+    },
+    "k-runtime": {
+      "id": 38061886004,
+      "head": "9df0a9cb19fdd0087c5fc7c571d9f547daf93177",
+      "conclusion": "failure",
+      "files": {
+        "full.log": {
+          "sha256": "c17b88f41c861e1cf823392229442395222cd4f8e06488dc1bef4e7b2defc740",
+          "bytes": 146852
+        },
+        "logs.zip": {
+          "sha256": "96071c3f13910d43451a927ea210476434e076f013efe15ab939847933fbdd0c",
+          "bytes": 64995
+        },
+        "final.json": {
+          "sha256": "e5617085c558753f63ede78428abd46e8de61643d75fdce0be2838ca5823a14a",
+          "bytes": 15186
+        },
+        "final-jobs.json": {
+          "sha256": "da41124a12615177aecdca7f910080ce6dd7ee8ee2851c66fd8dee92a718e5b6",
+          "bytes": 2285
+        }
+      },
+      "verifier": {
+        "runs": 29,
+        "assertions": 314,
+        "failures": 0,
+        "errors": 1,
+        "skips": 0,
+        "error": "KeyError: key not found: memSize at tools/test-runtime-verify.rb:724"
+      }
+    }
+  },
+  "contract": {
+    "nixpkgs": "5dfba6236110080a54247d6460bc2ff5dda939cc",
+    "os": "6bdf458fd9105379860234ff33d352e55844f08f",
+    "nix": "2.34.8",
+    "reason": "Pinned runInLinuxVM enables __structuredAttrs and emits the effective memory in structuredAttrs.env.QEMU_OPTS. The assertion incorrectly requested env.memSize. The source trace explains the missing field; actual native JSON was not retained.",
+    "primary": [
+      "https://raw.githubusercontent.com/NixOS/nixpkgs/5dfba6236110080a54247d6460bc2ff5dda939cc/pkgs/build-support/vm/default.nix",
+      "https://releases.nixos.org/nix/nix-2.34.8/manual/protocols/json/derivation/index.html",
+      "https://raw.githubusercontent.com/NixOS/nix/2.34.8/src/libstore/derivations.cc"
+    ]
+  },
+  "limits": [
+    "No local reproduction, eval, build or JSON experiment.",
+    "No reduced real campaign has started.",
+    "The profile and all product implementation remain unchanged."
+  ]
+}

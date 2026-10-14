@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-09T14:46:01.290263+00:00",
+  "review": "review9 progress finding, final report pending",
+  "severity": "Important",
+  "lanes": [
+    "Risk/compatibility",
+    "GENERAL"
+  ],
+  "head": "d1260ed1eb3aed125f11488cf1c8ce45ed384ad4",
+  "file": "cluster/lib/kb_runtime.rb",
+  "lines": [
+    667,
+    682,
+    685,
+    703,
+    704,
+    712,
+    714
+  ],
+  "problem": "SignalException/Interrupt after successful waitpid2 but before PID authority clear can cause cleanup to KILL an already-reaped/reused PID; acquisition and cleanup also need supported-interruption atomicity. ECHILD rescue does not cover successful-reap interruption.",
+  "root_source_confirmed": true,
+  "scope": "SSH-specific owned child; use existing Commands interruption boundary, no generic process framework or VM cleanup authority",
+  "real_operation_gate": "held",
+  "local_execution": false
+}

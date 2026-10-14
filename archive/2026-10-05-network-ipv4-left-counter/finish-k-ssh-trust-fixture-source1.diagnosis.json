@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "at": "2026-10-09T12:30:56.441429+00:00",
+  "head": "f203f0a5ce3afc0649e884bc2195188b34cbaea1",
+  "branch": "2026-10-05-network-ipv4-left-counter-kb-runtime",
+  "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsfree-kb-contracts-runtime",
+  "identity": {
+    "slug": "2026-10-05-network-ipv4-left-counter",
+    "workspace": "/home/aither/workspace/ai/vpsfree.cz",
+    "current_cwd": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter",
+    "current_login": false,
+    "markers": "both absent",
+    "current_executable": "/home/aither/bin/dev-session",
+    "current_exit": 0,
+    "current_stdout": "2026-10-05-network-ipv4-left-counter",
+    "roster_revision": 17,
+    "member": "implementer0",
+    "thread": "01a10c52-50ed-7312-9f0c-62b6ea389308",
+    "model": "gpt-6.1-sol",
+    "effort": "xhigh",
+    "purpose": "implementation",
+    "access": "workspace_write"
+  },
+  "scope": {
+    "paths": [
+      "tools/test-runtime.rb"
+    ],
+    "method": "RuntimeLifecycleTest#test_shared_ssh_discovery_deadline_reaches_existing_live_verification_once",
+    "outside_method": "byte-identical to HEAD",
+    "original_assertions": "all preserved"
+  },
+  "native_diagnosis": {
+    "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-k-ssh-trust-fixture-diagnosis1.json",
+    "sha256": "741a049e78c75bd32a23d2262891a24b3699aae137df8e9fa0de582728f3da32",
+    "reported_native": "63 runs /656 assertions /0 failures /1 error /0 skips in four exact K workflows",
+    "evidence": [
+      {
+        "path": "finish-ssh-session-hosted1/k/final.json",
+        "sha256": "33b22f2869304366b89000b4c28fc83ba0dc150a9b3cba0462d28e63f38ff17c"
+      },
+      {
+        "path": "finish-ssh-session-hosted1/k/full.log",
+        "sha256": "2a35ec15821ad42e8158ecc1dd88f66c3d640a3b5c5594cfbd4cbb351f8163c5"
+      },
+      {
+        "path": "finish-ssh-session-hosted1/k/logs.zip",
+        "sha256": "43de940521e4589aae448267eacb8613fb41f7e6a741881eb1c3b06d2f55f3a9"
+      },
+      {
+        "path": "finish-ssh-session-hosted1/k-runtime/final.json",
+        "sha256": "8db20e6072892ca0275ab12892de86773768fa61cae649e7c9c83fe9a1304621"
+      },
+      {
+        "path": "finish-ssh-session-hosted1/k-runtime/full.log",
+        "sha256": "66c539df5822fe2635baf21f7db184243432a93df56d6d71cfa5ce5f575c0b2e"
+      },
+      {
+        "path": "finish-ssh-session-hosted1/k-runtime/logs.zip",
+        "sha256": "eef0a7f4c7bbfd44566fd0f8050ff27cf46e691ece0ccec83d6c2a09d94889f0"
+      },
+      {
+        "path": "finish-ssh-session-hosted1/k-managed/final.json",
+        "sha256": "b4b61f17a4c92abd0b60745d37e7e3d0eb2d111ad88a1118fe0013a7766019b9"
+      },
+      {
+        "path": "finish-ssh-session-hosted1/k-managed/full.log",
+        "sha256": "a1ac1f518c0e2b475efb9f615a56c859ef511044974c3b281daf7c744efc1b95"
+      },
+      {
+        "path": "finish-ssh-session-hosted1/k-managed/logs.zip",
+        "sha256": "79bf884b65c1b036bbc4484be18733b9ab493f6a75324ae751c5f67d8f320d90"
+      },
+      {
+        "path": "finish-ssh-session-hosted1/k-runtime-managed/final.json",
+        "sha256": "0fd27a19065484acef4a031c066303efca8df52d81d945a02444061e61622df8"
+      },
+      {
+        "path": "finish-ssh-session-hosted1/k-runtime-managed/full.log",
+        "sha256": "03cc9796041f54372822b113fd5f049e19003294990404171d09dfe9ab216bec"
+      },
+      {
+        "path": "finish-ssh-session-hosted1/k-runtime-managed/logs.zip",
+        "sha256": "7d74f1bdf852984481170597e89f8bc90f8f59c49acc898e61c16c76e9767ffb"
+      }
+    ],
+    "no_local_reproduction": true
+  },
+  "source_cause": "The shared synthetic LocalTransportEngine initializer creates nonempty known_hosts. This new method substitutes real establish_ssh_trust, so production correctly rejects that placeholder as retained trust.",
+  "repair": "Capture the existing initializer in this method only; call it, empty only its fresh owned known_hosts, return its original credential directory. Candidate preparation therefore sees the intended fresh-trust setup. Capture the native successful key and assert the resulting trust matches it.",
+  "ordering": "Engine.start initializes credentials before software.prepare/build/start_locked/await_ready. The per-instance initializer seam executes before candidate preparation and real discovery.",
+  "credential_identity": "Software.credentials_identity hashes six SSH/TLS credential files, excluding known_hosts. The existing initializer and those six files remain untouched; only this new fixture starts known_hosts empty.",
+  "preserved": [
+    "Shared LocalTransportEngine initializer/global fixtures",
+    "Production SSH trust/key parser/headers/timeouts and readiness",
+    "Actual start, two discovery attempts, common deadline, live verification once, one build, ordinary stop and ensure cleanup",
+    "All root prose, schema/source/inputs/PNGs, other repositories and incomplete campaigns",
+    "Four-path source1 controls and all native failures"
+  ],
+  "source": {
+    "path": "tools/test-runtime.rb",
+    "sha256": "74f5eb12d9d93a32206d7a27cc090113159c5835f7d188ba009cabb48e1a9c7c",
+    "head_sha256": "21fe300654f2c2ffb803f060fa77eaafd7a500c0f45efd6a0b5e787daa334629",
+    "mode": "0o644",
+    "bytes": 72918
+  },
+  "local_checks": "None: no tests/CI/syntax/lint/formatter/eval/build/probe/process/lifecycle/Git/index/ref operations.",
+  "hosted_selection": {
+    "owner": "root",
+    "workflow": ".github/workflows/check.yml Check source lane",
+    "existing_command": "nix develop --command bin/check --allow-missing",
+    "target": "ruby tools/test-runtime.rb including the repaired method",
+    "selector_changes": false,
+    "downstream": "Machine/session and subsequent checks were unrun at failed head; exact new hosted proof still required."
+  },
+  "claim": "Source-only fixture repair, not a passing test or product-failure diagnosis.",
+  "held": true
+}

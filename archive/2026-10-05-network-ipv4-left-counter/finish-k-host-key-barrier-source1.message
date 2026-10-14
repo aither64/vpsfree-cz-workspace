@@ -1,0 +1,8 @@
+test: give the node SSH barrier a blocking pipe reader
+
+Ruby creates nonblocking pipe descriptors. The generated Bash fixture can
+therefore return EAGAIN before the parent releases the pool barrier.
+
+Set only the inherited release reader to blocking mode before spawning
+Bash, so it waits for the parent or receives EOF. Preserve the real
+generated service, existing barrier assertions and child cleanup.

@@ -1,0 +1,214 @@
+{
+  "session": "2026-10-05-network-ipv4-left-counter",
+  "member": "implementer0",
+  "settings": {
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "xhigh",
+    "purpose": "implementation",
+    "access": "workspace_write",
+    "roster_revision": 17
+  },
+  "head": "ab09bd437b310f57e4ff2453ec0432555d85eaca",
+  "branch": "2026-10-05-network-ipv4-left-counter-kb-runtime",
+  "state": "source-only draft frozen; unexecuted",
+  "accepted_design": "design.md: First direct-start failure: atomic receipt reads and recovery (2026-10-09)",
+  "native_evidence": [
+    "finish-direct-isolation1-failure1.json",
+    "finish-direct-failed-a-status1.json"
+  ],
+  "diagnosis": "G4 State#file rejects a safe lstat/open inode replacement; State#write uses atomic rename. The observed process-receipt mismatch supports that mechanism but does not establish exact syscall scheduling in the failed real run.",
+  "production_delta": "Only State#file: max three full ancestor/named/opened checks; retry only safe dev/ino mismatch; close before retry; limit+1 matching read; immediate unsafe/missing/open/read/JSON failure. State#lock and all lifecycle/runner/schema/source behavior are unchanged.",
+  "test_methods_added": [
+    "test_atomic_rename_returns_complete_replacement_bytes_and_json",
+    "test_two_safe_replacements_close_each_descriptor_before_success",
+    "test_rename_after_open_returns_the_complete_matching_opened_snapshot",
+    "test_safe_replacement_churn_stops_after_three_closed_attempts",
+    "test_unsafe_named_files_are_refused_without_open_or_retry",
+    "test_unsafe_opened_replacements_are_refused_without_read_or_retry",
+    "test_symlink_replacement_open_failure_is_not_retried",
+    "test_retry_revalidates_symlink_and_non_directory_ancestors",
+    "test_foreign_uid_in_either_snapshot_is_not_a_retry_condition",
+    "test_growth_after_matching_fstat_keeps_the_limit_plus_one_bound",
+    "test_missing_invalid_json_and_io_errors_are_not_retried",
+    "test_atomic_empty_zero_limit_snapshot_remains_valid",
+    "test_lock_open_identity_remains_strict_and_closes_on_replacement",
+    "test_process_receipt_rename_during_readiness_does_not_replay_prepare_build_or_spawn",
+    "test_public_stop_reads_retained_g4_schema_two_launch_without_selecting_software"
+  ],
+  "test_boundaries": {
+    "atomic_records": "13 methods with real private files and actual rename; complete new/old snapshots, two replacements then success, three-attempt churn, descriptor closure, path/mode/type/UID/size refusal, no I/O/JSON/missing retry, bounded growth and zero-limit behavior, strict lock identity.",
+    "readiness": "Existing LocalTransportEngine and real fake-runner/control path, forced process receipt rename while starting, one preparation/build/spawn/run, normal ready/stop and complete child exit.",
+    "retained_stop": "Actual public CLI stop against synthetic G4-revision schema-2 launch and real fake-runner/control completion; no Software selection, preserved immutable receipts and credentials. This is not incomplete real-campaign recovery or packaged G4/VM proof."
+  },
+  "hosted_selection": {
+    "workflow": ".github/workflows/check.yml",
+    "job": "Check/check",
+    "existing_source_step": "nix develop --command bin/check --allow-missing",
+    "affected_existing_suite": "ruby tools/test-runtime.rb",
+    "selectors_changed": false,
+    "next_gates_owner": "lead",
+    "later_gates": "Exact K/E composition and affected committed-source review before new package preparation or corrected real campaign."
+  },
+  "excluded_lead_docs": [
+    {
+      "path": "README.md",
+      "sha256": "368e7dd08cbae18807ef3909853dc598287c8177adcc8b7b2487a9f4d15a9342",
+      "head_sha256": "3013b0248c092e37e929795f12f1be7b0d226dbcf61a4da0c4754eca0426161a",
+      "bytes": 14831,
+      "mode": "0o644",
+      "head_identical": false,
+      "owner": "lead",
+      "excluded_from_implementer_diff": true
+    },
+    {
+      "path": "cluster/runtime-contract.md",
+      "sha256": "7971cd41567a60834a659a6732acf9cf26baffd27903a109b131c24287eca687",
+      "head_sha256": "6b871fb0a44dc74b16cfa981caff4d6fa5d443195107338c708443df5d7d2a20",
+      "bytes": 20372,
+      "mode": "0o644",
+      "head_identical": false,
+      "owner": "lead",
+      "excluded_from_implementer_diff": true
+    },
+    {
+      "path": "docs/webui-change-workflow.md",
+      "sha256": "f0bcd05dc6e0150eba497534b7c529e0c6d4aa8ae94e04f1650158c03b48b5b7",
+      "head_sha256": "5306b43780bca26754bb53a8852194bfeb6b9df9c7dfea2dd79b65c917fa35dd",
+      "bytes": 16091,
+      "mode": "0o644",
+      "head_identical": false,
+      "owner": "lead",
+      "excluded_from_implementer_diff": true
+    }
+  ],
+  "protected_head_identical": [
+    {
+      "path": "cluster/lib/kb_runtime.rb",
+      "sha256": "d1b37d90382fe952962a44ddf904e2376d7db43861876884a08a879a4111299e",
+      "head_sha256": "d1b37d90382fe952962a44ddf904e2376d7db43861876884a08a879a4111299e",
+      "bytes": 34705,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "cluster/lib/devcluster_runner.rb",
+      "sha256": "7e18f6a3af5079d3bc74f730cd565794ce180e1cb9e2b3fa7a2a1a59f4435b0d",
+      "head_sha256": "7e18f6a3af5079d3bc74f730cd565794ce180e1cb9e2b3fa7a2a1a59f4435b0d",
+      "bytes": 9978,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "cluster/lib/kb_resources.rb",
+      "sha256": "031c3176682be4aaa180bb20a2ec5f05553e49d1a61014ff4cc3abc1bc0869f3",
+      "head_sha256": "031c3176682be4aaa180bb20a2ec5f05553e49d1a61014ff4cc3abc1bc0869f3",
+      "bytes": 4686,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "cluster/lib/kb_process.rb",
+      "sha256": "7edd4d53a823b486a5147b1c0f391950b761511765ed780820e3b9316f0097a9",
+      "head_sha256": "7edd4d53a823b486a5147b1c0f391950b761511765ed780820e3b9316f0097a9",
+      "bytes": 2367,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "cluster/launcher.rb",
+      "sha256": "dd5bf03c4a28fb9a70a3625151105b0640adde44184d8a42b6f946505e47b6e3",
+      "head_sha256": "dd5bf03c4a28fb9a70a3625151105b0640adde44184d8a42b6f946505e47b6e3",
+      "bytes": 6597,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "tools/fixtures/fake-kb-runner.rb",
+      "sha256": "6a24097ddb4b8a3d28ec8dbc5ca9eab33d2f54442639144ebd267242711760d3",
+      "head_sha256": "6a24097ddb4b8a3d28ec8dbc5ca9eab33d2f54442639144ebd267242711760d3",
+      "bytes": 2490,
+      "mode": "0o755",
+      "head_identical": true
+    },
+    {
+      "path": "tools/runtime-verify.rb",
+      "sha256": "c9c98d3bdbb9fc7319415b9f4a784cfa91437c298ba829a55576ae212c863943",
+      "head_sha256": "c9c98d3bdbb9fc7319415b9f4a784cfa91437c298ba829a55576ae212c863943",
+      "bytes": 37471,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "flake.nix",
+      "sha256": "30aa26e0014d35b4c2bc68484d2df12fb12e6248e9556e9549d2b4f7064e74e4",
+      "head_sha256": "30aa26e0014d35b4c2bc68484d2df12fb12e6248e9556e9549d2b4f7064e74e4",
+      "bytes": 10977,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "flake.lock",
+      "sha256": "b37f63bf8c040c4ac5c8f5eb83ab5243f57dc1821d36ddc62b6d2483aca4effa",
+      "head_sha256": "b37f63bf8c040c4ac5c8f5eb83ab5243f57dc1821d36ddc62b6d2483aca4effa",
+      "bytes": 6125,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "captures.json",
+      "sha256": "f16308506fd741978392ba50fb0183b43697fe80a3f96386b1d3424da7f3044d",
+      "head_sha256": "f16308506fd741978392ba50fb0183b43697fe80a3f96386b1d3424da7f3044d",
+      "bytes": 145369,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "contract/navigation.yml",
+      "sha256": "2eda6c2a1b2b4e4c22b05291a25f96b8b672c8158d738cc72c1a8f23f39f85e0",
+      "head_sha256": "2eda6c2a1b2b4e4c22b05291a25f96b8b672c8158d738cc72c1a8f23f39f85e0",
+      "bytes": 21777,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "contract/pages.yml",
+      "sha256": "56bad2e19f35e98016a3fbcdedf205e0400993b1ac01300a2cc8057a3f6e2bab",
+      "head_sha256": "56bad2e19f35e98016a3fbcdedf205e0400993b1ac01300a2cc8057a3f6e2bab",
+      "bytes": 25744,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "cluster/default-config.json",
+      "sha256": "82f78b5c3749ae864b6f58a5bc731afbcdaa13a43017ec9413a40f27ef54da8e",
+      "head_sha256": "82f78b5c3749ae864b6f58a5bc731afbcdaa13a43017ec9413a40f27ef54da8e",
+      "bytes": 7404,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": ".github/workflows/check.yml",
+      "sha256": "8063c87a49fa10069d03b2365932891b7dbb9acfaabc9d4e1bfea224ff4f9d89",
+      "head_sha256": "8063c87a49fa10069d03b2365932891b7dbb9acfaabc9d4e1bfea224ff4f9d89",
+      "bytes": 1049,
+      "mode": "0o644",
+      "head_identical": true
+    },
+    {
+      "path": "runner/capture.cjs",
+      "sha256": "6b3a329f1ed821568ca4ca8fb7e9c60b28111dc38ddf368afab42142b550ffff",
+      "head_sha256": "6b3a329f1ed821568ca4ca8fb7e9c60b28111dc38ddf368afab42142b550ffff",
+      "bytes": 5868,
+      "mode": "0o755",
+      "head_identical": true
+    }
+  ],
+  "operations_run": "Read-only source/Git metadata and exclusive tracking receipt creation only; no checks, suites, syntax, lint, formatter, eval, build, process probe, lifecycle, index/ref mutation, commit or publication.",
+  "recovery_boundary": "Retained real G4 A complete=false state, claims, processes, disks, socket and all campaign evidence remain untouched. No stop/recovery/cleanup is proposed for that incomplete snapshot.",
+  "gaps": [
+    "All new tests are unexecuted; no repair pass claim.",
+    "Fake transports do not prove VM boot, guest health, package behavior or real campaign recovery."
+  ],
+  "deviations": [],
+  "portal": "https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-05-network-ipv4-left-counter/"
+}

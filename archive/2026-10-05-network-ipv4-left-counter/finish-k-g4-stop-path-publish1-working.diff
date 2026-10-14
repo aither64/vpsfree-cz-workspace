@@ -1,0 +1,13 @@
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index 2c15e74b5f3307b07fd8d87a1e268eef336bee94..1a93e4f5924cf2d582ae2ff7a1cf530280b93e7b 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -862,7 +862,7 @@ class RuntimeLifecycleTest < Minitest::Test
+ 
+   def test_public_stop_reads_retained_g4_schema_two_launch_without_selecting_software
+     original_runtime = ENV['XDG_RUNTIME_DIR']
+-    Dir.mktmpdir do |directory|
++    Dir.mktmpdir('kb-g4-', '/tmp') do |directory|
+       runtime = File.join(directory, 'runtime')
+       Dir.mkdir(runtime, 0o700)
+       ENV['XDG_RUNTIME_DIR'] = runtime

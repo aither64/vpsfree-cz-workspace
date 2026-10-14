@@ -1,0 +1,1 @@
+import{j as s}from"./vendor-react-MGxsW2Ms.js";import{u as a}from"./appMode-58oMVEad.js";import{f as r}from"./vendor-router-DcykSWjp.js";import"./index-9k6D__El.js";function n(){const{basePath:e}=a();return s.jsx(r,{to:`${e}/user-namespaces/namespaces`,replace:!0})}export{n as AdminUserNamespacesIndexPage};

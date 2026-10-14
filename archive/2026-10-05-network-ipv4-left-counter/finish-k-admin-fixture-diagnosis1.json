@@ -1,0 +1,15 @@
+{
+  "head": "68aa33b451a14eb7bf4b2f1a090a8e5a2f80b52e",
+  "snapshot": "finish-k-direct-verifier-source1",
+  "inspection": "source only; no guest request or reproduction",
+  "cause": "New inventoryApi authenticates default cluster.account() = test-user1; config level1 maps to user, while provisioning resource actions require admin and member Network.Index excludes disabled pools.",
+  "owners": [
+    "fixtures/prepare.cjs#inventoryApi",
+    "lib/connection.cjs#Connection.account",
+    "lib/browser.cjs#login",
+    "V api/models/user.rb#role_for_level",
+    "V Network.Create/Update, LocationNetwork.Index/Create, IpAddress.Create"
+  ],
+  "disposition": "Architect designs explicit dedicated synthetic admin provisioning credentials; ordinary member remains final capture account. No schema/role bypass/guest DB mutation authorized.",
+  "old_packet": "Preserved source-only immutable preparation; not launched or certified."
+}

@@ -1,0 +1,1 @@
+function t(e){return String(e??"").trim().toLowerCase()}function o(e){const r=t(e.source);if(r==="external_source"||r==="external"||r==="secondary_source")return!0;const n=t(e.type??e.zone_type);return n==="secondary_type"||n==="secondary"}function s(e){return o(e)?"primary_type":"secondary_type"}export{s as d,o as i};

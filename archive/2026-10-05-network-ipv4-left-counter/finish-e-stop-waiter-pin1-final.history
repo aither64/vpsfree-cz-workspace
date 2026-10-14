@@ -1,0 +1,35 @@
+commit 69f2fa00f70c3067363bc239174902b2b00749dc
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 17:10:47 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Fri Oct 9 23:28:05 2026 +0200
+
+    flake: pin portable KB and streaming workspace runtimes
+    
+    Select published runtimes for managed KB capture. The standalone engine
+    provides immutable source metadata, and the generic dispatcher keeps its
+    generation guard throughout a streamed lease.
+    
+    Retain the engine's own dependency graph and the existing vpsAdmin and
+    vpsAdminOS input selections.
+
+commit 2c1d3e86435292303f9c2f3f3386dc90e6b9efd0
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 17:10:47 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Fri Oct 9 23:28:05 2026 +0200
+
+    kb: add an optional managed cluster provider
+    
+    Enable the provider when siteConfig.clusterDefaults.kb is configured.
+    Delegate lifecycle operations to the pinned standalone engine and use its
+    matching read validators for owned snapshots. Preserve creation provenance
+    across compatible package transitions.
+    
+    Route capture leases through public dispatch, translating only the managed
+    descriptor digest. Removal inventory avoids recursively locking the session;
+    omitting KB defaults retains the existing provider set.
+    
+    Use the selected engine readiness predicate, including its exact run-ready
+    marker, before exporting a capture connection. A live draining runner retains
+    management ownership without granting capture readiness.

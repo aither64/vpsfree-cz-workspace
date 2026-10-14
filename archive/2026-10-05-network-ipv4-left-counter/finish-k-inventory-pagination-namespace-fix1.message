@@ -1,0 +1,9 @@
+capture: put pagination limits in resource inputs
+
+HaveAPI 0.29.8 declares list limits as ordinary resource parameters.
+Global metadata does not limit these queries, so large network inventories
+can bypass the fixture's existing truncation refusal.
+
+Use each singular resource namespace for filters and limits. Model the
+actual pagination contract and cover bounded large selections and ignored
+flat or metadata aliases without changing provisioning safeguards.

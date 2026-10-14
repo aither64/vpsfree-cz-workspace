@@ -1,0 +1,73 @@
+{
+  "evidence": "source inspection only; all new tests and captures unexecuted",
+  "unit": {
+    "path": "src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx",
+    "declared_cases_expected": 28,
+    "retained_cases": 4,
+    "matrix": [
+      "Cold stalled OPTIONS: first two locations settle AbortError; later one-at-a-time batches; no GET; late shared cache warm",
+      "Metadata at 11s leaves 1s for GET; exact 12s abort timestamps; no accepted late rows",
+      "Late resolve/reject at both stages; handled rejection; no continuation/cache publication",
+      "Warm metadata plus stalled GET; timeout cleanup; already-aborted invocation before shared lookup",
+      "Listener and timer cleanup on GET success/rejection/parent cancellation",
+      "Parent cancel and last-observer unmount x metadata/GET x late resolve/reject",
+      "Distinct-key shared metadata cancellation isolation and same-key remaining observer",
+      "Both five-minute caches reused; settled metadata failure retry vs bounded pending rejoin; fresh recovery budget",
+      "Partial failure with later-location progression; actual useQuery manual-list selection survives late suggestion",
+      "All four original server-before-limit, stale disabled guard, old-API omission and genuine metadata-error cases retained"
+    ]
+  },
+  "browser": {
+    "path": "e2e/specs/admin/network_availability.spec.ts",
+    "title": "suggestion timeout preserves shared discovery, retry and manual filtering",
+    "languages": [
+      "en",
+      "cs"
+    ],
+    "tags": [
+      "@pr-smoke",
+      "@pr-smoke-mobile"
+    ],
+    "existing_cases_retained": 6,
+    "new_cases": 2,
+    "boundary": "Actual IpAddressesPage and adapters with realistic synthetic OPTIONS metadata, paused browser clock and controlled response gates; no live API proof",
+    "scenario": [
+      "stalled OPTIONS and loading",
+      "12s caller timeout with no late priority GET",
+      "late shared metadata serves only later batch; partial rows and retry",
+      "retry uses warm shared metadata; controlled priority GET remains pending",
+      "manual addr filter uses separate list while suggestion finishes",
+      "clear filter shows all cached recovered suggestions without new OPTIONS or GET"
+    ],
+    "screenshots": [
+      "ip-suggestions-timeout-{language}.png",
+      "ip-suggestions-manual-{language}.png",
+      "ip-suggestions-recovered-{language}.png"
+    ],
+    "screenshot_status": "producer drafted; no captures exist for this change"
+  },
+  "hosted_selectors": {
+    "unit_focus": "npm test -- src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx",
+    "ci": {
+      "workflow": ".github/workflows/ci.yml",
+      "retained_commands": [
+        "npm run ci:quick",
+        "npm run ci:tests",
+        "npm run build",
+        "npm audit --omit=dev --audit-level=critical",
+        "npm audit --omit=dev --audit-level=high --prefix bff",
+        "npm run test:scripts:browser"
+      ]
+    },
+    "browser": {
+      "workflow": ".github/workflows/e2e-smoke.yml",
+      "retained_commands": [
+        "npm run e2e:pr:desktop",
+        "npm run e2e:pr:mobile",
+        "npm run e2e:touch:webkit"
+      ],
+      "focused_selection": "existing adopted e2e/specs/admin/network_availability.spec.ts, bilingual new title, chromium/mobile-chrome via existing smoke tags; unchanged WebKit job retained"
+    }
+  },
+  "execution": "No local CI/tests/syntax/format/build/eval/browser/runtime or hosted launch. Parent selects exact committed-head hosted commands."
+}

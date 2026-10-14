@@ -1,0 +1,9 @@
+runtime: pass owned listeners to virtiofsd
+
+Use the configured daemon's listening-FD API for both K machine classes so
+new runs do not leave companion pidfiles after process shutdown. Retain
+private directory/socket inode proof and refuse replaced or unsafe paths
+before exact cleanup while preserving OSVM daemon tracking and reapers.
+
+Old pidfile namespaces remain strict refusals; this adds no adoption or
+cleanup route for retained runs and changes no persistent schema.

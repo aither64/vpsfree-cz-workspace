@@ -1,0 +1,51 @@
+commit ce856841a65d72648d03b6cba1748dd7dd9af048
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:13:47 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Thu Oct 8 12:23:19 2026 +0200
+
+    networking: manage network availability and inventory
+    
+    Add administrator availability controls with current capability metadata.
+    Keep disabled owned addresses visible without assignment actions and use
+    optional enabled-network filters for new assignment selectors.
+    
+    Display authoritative available and owned-unassigned network counts with
+    bilingual keyboard descriptions. Keep the editor's owned total separate
+    and new statistics optional for older APIs. Warn only on explicit disabled
+    state in desktop and mobile admin IP flags, preserving service links.
+    
+    Document REQ-071 and the REQ-050 extension with the API and workflow
+    contracts, synthetic unit coverage and bilingual browser scenarios.
+
+ docs/design/API_CONTRACTS.md                       |  48 ++-
+ docs/design/EVIDENCE_MATRIX.md                     |   5 +-
+ docs/design/REQUIREMENTS.md                        |   8 +-
+ docs/design/WORKFLOWS.md                           |  24 ++
+ docs/work-log/2026-10-06-network-availability.md   | 138 +++++++++
+ e2e/specs/admin/network_availability.spec.ts       | 339 +++++++++++++++++++++
+ scripts/e2e-type-coverage.test.mjs                 |   6 +-
+ scripts/fixtures/e2e-type-coverage.json            |   1 +
+ scripts/fixtures/structural-debt-ledger.json       |   8 +-
+ src/i18n/locales/cs/admin/ip_addresses.ts          |   2 +
+ src/i18n/locales/cs/adminCluster/networks.ts       |  17 +-
+ src/i18n/locales/en/admin/ip_addresses.ts          |   2 +
+ src/i18n/locales/en/adminCluster/networks.ts       |  15 +-
+ src/lib/api/ipAddresses.ts                         |   9 +
+ src/lib/api/networks.test.ts                       |  34 ++-
+ src/lib/api/networks.ts                            |  24 ++
+ .../app/admin/IpAddressesPage.correctness.test.tsx |  31 +-
+ src/pages/app/admin/cluster/NetworksPage.test.tsx  | 236 ++++++++++++++
+ src/pages/app/admin/cluster/NetworksPage.tsx       |  76 ++++-
+ .../admin/ipAddresses/IpAddressesListMobile.tsx    |   6 +
+ .../app/admin/ipAddresses/IpAddressesListTable.tsx |   6 +
+ .../useProgressiveSuggestedIpQueries.test.tsx      |  92 ++++++
+ .../useProgressiveSuggestedIpQueries.ts            |  17 +-
+ .../app/admin/networking/InventoryDescription.tsx  |  81 +++++
+ .../networking/UserNetworkAddressActions.test.tsx  |  49 +++
+ .../app/networking/UserNetworkAddressActions.tsx   |  34 +++
+ src/pages/app/networking/UserNetworkPage.tsx       |  24 +-
+ .../networking/fetchAssignableIpAddresses.test.ts  |  23 +-
+ .../app/networking/fetchAssignableIpAddresses.ts   |   9 +-
+ tsconfig.e2e.json                                  |   1 +
+ 30 files changed, 1299 insertions(+), 66 deletions(-)

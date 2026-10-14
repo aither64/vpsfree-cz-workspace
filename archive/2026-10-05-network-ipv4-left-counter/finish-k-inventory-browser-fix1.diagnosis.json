@@ -1,0 +1,106 @@
+{
+  "session": "2026-10-05-network-ipv4-left-counter",
+  "member": "implementer0",
+  "repository": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsfree-kb-contracts-runtime",
+  "head": "e45520e27ced8c1eb28def9995bb2aea4a58fd1d",
+  "branch": "2026-10-05-network-ipv4-left-counter-kb-runtime",
+  "path_count": 1,
+  "path": "tools/test-ip-inventory.cjs",
+  "index_empty": true,
+  "native_evidence": {
+    "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-corrected-hosted2/k/logs.zip": {
+      "sha256": "1ccc9f2a5db1018ecf8a41d4e93ede076feaf8c72fcbb5b3e5bda33b72fb2cde",
+      "bytes": 67554
+    },
+    "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-k-generator-source-log2.txt": {
+      "sha256": "70f04714bde3008344ede82cd7f17cb2c7493eff52a2f5c2ecb9fb0ca7d58a3f",
+      "bytes": 101706
+    },
+    "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-k-inventory-browser-diagnosis1.json": {
+      "sha256": "995a330b57e67c52e36605d14e465674dbe7a4991fdd2d0d07f3da05dc740bb9",
+      "bytes": 1309
+    }
+  },
+  "native_hosted_run": 37830677336,
+  "native_inventory_result": {
+    "tests": 25,
+    "passed": 24,
+    "failed": 1,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "native_failure": {
+    "example": "first inventory preparation creates the tiny VPS in the proved member browser before explicit admin registration",
+    "log_lines": "778-789",
+    "error": "TypeError: details.count is not a function",
+    "site": "lib/webui.cjs:113 -> fixtures/prepare.cjs:91 -> prepareFixtures:620 -> tools/test-ip-inventory.cjs:310"
+  },
+  "native_prior_gates": {
+    "runtime": [
+      29,
+      223
+    ],
+    "closure": [
+      12,
+      51
+    ],
+    "pinned_driver": [
+      4,
+      20
+    ],
+    "verifier": [
+      18,
+      113
+    ]
+  },
+  "source_diagnosis": "The test fake returned a radio first() wrapper for every row locator, including the details ancestor. The actual helper requires details.count and evaluates an existing details element before radio check. No product or live browser failure is diagnosed.",
+  "correction": "Only the first-creation fake getByText row shape is replaced. It explicitly distinguishes radio and details selectors, models count/evaluate and invokes the actual details-opening callback before radio check. The real creation/helper path is unchanged.",
+  "inspected_real_helper_surface": {
+    "goto/preparePage": "page.goto/addStyleTag/evaluate remain present; caller keeps identity/order assertions.",
+    "environment/location": "newvps-step1.count intentionally models the existing skipped environment stage; location row first/locator/check remains present.",
+    "selectRadioByRowText": "Explicit template text/exact/tr ancestor; radio first/count/check; distinct details count/evaluate invokes the real callback and requires open before check.",
+    "submitLast": "buttons count/nth/click remain present with existing location/template/resources/submit stage progression.",
+    "resources/final form": "input fill, hostname, namespace count/option evaluateAll/selectOption, no-user-data check, boot count/isChecked/setChecked remain present.",
+    "completion": "waitForLoadState, veid URL and running-state read retain their original shape."
+  },
+  "scope_proof": "Entire source equals HEAD except this single fake locator block. All original case definitions and identity/resource/order/no-effects assertions are retained; no skipped case, helper bypass, production injection or stub of createVpsIn. Native 25-case selection is unchanged.",
+  "unchanged_owning_sources": {
+    "fixtures/prepare.cjs": {
+      "sha256": "7db4d48049afd4a6fb8eaf4d095a9e3f520e30d90c2e007cb08763900c7bda0b",
+      "byte_identical_to_head": true
+    },
+    "lib/webui.cjs": {
+      "sha256": "50873a59d35fc06eb75810ffb71893d839199a6f52904356828585344d1cb077",
+      "byte_identical_to_head": true
+    },
+    "tools/runtime-verify.rb": {
+      "sha256": "c9c98d3bdbb9fc7319415b9f4a784cfa91437c298ba829a55576ae212c863943",
+      "byte_identical_to_head": true
+    },
+    "cluster/runtime-contract.md": {
+      "sha256": "6b871fb0a44dc74b16cfa981caff4d6fa5d443195107338c708443df5d7d2a20",
+      "byte_identical_to_head": true
+    },
+    "flake.nix": {
+      "sha256": "30aa26e0014d35b4c2bc68484d2df12fb12e6248e9556e9549d2b4f7064e74e4",
+      "byte_identical_to_head": true
+    },
+    "flake.lock": {
+      "sha256": "b37f63bf8c040c4ac5c8f5eb83ab5243f57dc1821d36ddc62b6d2483aca4effa",
+      "byte_identical_to_head": true
+    },
+    "captures.json": {
+      "sha256": "f16308506fd741978392ba50fb0183b43697fe80a3f96386b1d3424da7f3044d",
+      "byte_identical_to_head": true
+    }
+  },
+  "checks_run": [],
+  "local_reproduction": false,
+  "git_mutations": false,
+  "runtime_operations": false,
+  "hosted_selection": ".github/workflows/check.yml Check/check -> nix develop --command bin/check --allow-missing on the root-published corrected head. Native downstream export/Node/contract gates remain unrun until the stop-first sequence proceeds.",
+  "readiness": "Frozen source-only correction for parent inspection and hosted verification; no corrected-source pass claim.",
+  "blockers": [],
+  "design_deviations": []
+}

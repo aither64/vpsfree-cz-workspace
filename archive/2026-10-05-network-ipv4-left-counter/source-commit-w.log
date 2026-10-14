@@ -1,0 +1,72 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui' is dirty
+436d8e3eec1b22d760fe6e1e6329dcdbe23bc20ca90dfae8563a9866bf23e312  /home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/commit-w.paths
+1ae7808f2a1411a50d753f214cff424ede16c0c2ac5401d682787d1706455c8b  /home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/commit-w.message
+ docs/design/API_CONTRACTS.md                       |  26 ++++-
+ docs/design/EVIDENCE_MATRIX.md                     |   5 +-
+ docs/design/REQUIREMENTS.md                        |   8 +-
+ docs/design/WORKFLOWS.md                           |  17 ++++
+ docs/work-log/2026-10-06-network-availability.md   |  52 ++++++++++
+ e2e/specs/admin/network_availability.spec.ts       | 111 +++++++++++++++++++++
+ scripts/fixtures/e2e-type-coverage.json            |   1 +
+ scripts/fixtures/structural-debt-ledger.json       |   8 +-
+ src/i18n/locales/cs/adminCluster/networks.ts       |   3 +
+ src/i18n/locales/en/adminCluster/networks.ts       |   3 +
+ src/lib/api/ipAddresses.ts                         |   9 ++
+ src/lib/api/networks.test.ts                       |  21 +++-
+ src/lib/api/networks.ts                            |  22 ++++
+ src/pages/app/admin/cluster/NetworksPage.test.tsx  |  92 +++++++++++++++++
+ src/pages/app/admin/cluster/NetworksPage.tsx       |  36 +++++++
+ .../useProgressiveSuggestedIpQueries.ts            |   2 +-
+ .../networking/UserNetworkAddressActions.test.tsx  |  49 +++++++++
+ .../app/networking/UserNetworkAddressActions.tsx   |  34 +++++++
+ src/pages/app/networking/UserNetworkPage.tsx       |  24 ++---
+ .../networking/fetchAssignableIpAddresses.test.ts  |  23 ++++-
+ .../app/networking/fetchAssignableIpAddresses.ts   |   9 +-
+ tsconfig.e2e.json                                  |   1 +
+ 22 files changed, 519 insertions(+), 37 deletions(-)
+[dev/network-enabled 811742f5] networking: manage network availability
+ 22 files changed, 519 insertions(+), 37 deletions(-)
+ create mode 100644 docs/work-log/2026-10-06-network-availability.md
+ create mode 100644 e2e/specs/admin/network_availability.spec.ts
+ create mode 100644 src/pages/app/admin/cluster/NetworksPage.test.tsx
+ create mode 100644 src/pages/app/networking/UserNetworkAddressActions.test.tsx
+ create mode 100644 src/pages/app/networking/UserNetworkAddressActions.tsx
+commit 811742f50cce2b7724784d0a674c8d4d5dcb6273
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:13:47 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 6 15:13:47 2026 +0200
+
+    networking: manage network availability
+    
+    Add administrator availability controls with current capability metadata and
+    show disabled owned addresses without assignment actions. Available selectors
+    request the optional enabled-network filter and revalidate cached results.
+    
+    Keep unknown state and unsupported fields compatible with older APIs. Record
+    REQ-071 and the REQ-050 extension with scoped API and workflow documentation,
+    synthetic unit coverage and prepared bilingual browser scenarios.
+
+ docs/design/API_CONTRACTS.md                       |  26 ++++-
+ docs/design/EVIDENCE_MATRIX.md                     |   5 +-
+ docs/design/REQUIREMENTS.md                        |   8 +-
+ docs/design/WORKFLOWS.md                           |  17 ++++
+ docs/work-log/2026-10-06-network-availability.md   |  52 ++++++++++
+ e2e/specs/admin/network_availability.spec.ts       | 111 +++++++++++++++++++++
+ scripts/fixtures/e2e-type-coverage.json            |   1 +
+ scripts/fixtures/structural-debt-ledger.json       |   8 +-
+ src/i18n/locales/cs/adminCluster/networks.ts       |   3 +
+ src/i18n/locales/en/adminCluster/networks.ts       |   3 +
+ src/lib/api/ipAddresses.ts                         |   9 ++
+ src/lib/api/networks.test.ts                       |  21 +++-
+ src/lib/api/networks.ts                            |  22 ++++
+ src/pages/app/admin/cluster/NetworksPage.test.tsx  |  92 +++++++++++++++++
+ src/pages/app/admin/cluster/NetworksPage.tsx       |  36 +++++++
+ .../useProgressiveSuggestedIpQueries.ts            |   2 +-
+ .../networking/UserNetworkAddressActions.test.tsx  |  49 +++++++++
+ .../app/networking/UserNetworkAddressActions.tsx   |  34 +++++++
+ src/pages/app/networking/UserNetworkPage.tsx       |  24 ++---
+ .../networking/fetchAssignableIpAddresses.test.ts  |  23 ++++-
+ .../app/networking/fetchAssignableIpAddresses.ts   |   9 +-
+ tsconfig.e2e.json                                  |   1 +
+ 22 files changed, 519 insertions(+), 37 deletions(-)

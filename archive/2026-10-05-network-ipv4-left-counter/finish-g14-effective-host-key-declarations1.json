@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "at": "2026-10-11T10:03:42.410734+00:00",
+  "generator": "725c325e8b4971931e5d16df86bafa8584358ecb",
+  "selected_node_toplevel": "/nix/store/wgd3z7bipn2z5sdnsf8s59gmcj7sfhbv-vpsadminos-system-node1-26.05pre-git",
+  "effective_keys": [
+    {
+      "path": "/etc/ssh/ssh_host_rsa_key",
+      "type": "rsa",
+      "bits": 4096
+    },
+    {
+      "path": "/etc/ssh/ssh_host_ed25519_key",
+      "type": "ed25519"
+    }
+  ],
+  "facts": [
+    {
+      "relative_path": "etc/ssh/sshd_config",
+      "resolved": "/nix/store/7qb8l7ja5qrlwvj35iz1mz89rvn56dcg-sshd.conf-final",
+      "sha256": "c22400a7afe2d2149d13132fd3e1fd16f623ab181280b25a7ac7bb224de2db1e",
+      "host_key_declarations_only": [
+        "HostKey /etc/ssh/ssh_host_rsa_key",
+        "HostKey /etc/ssh/ssh_host_ed25519_key"
+      ]
+    },
+    {
+      "relative_path": "etc/runit/services/sshd/run",
+      "resolved": "/nix/store/8abh8vqv7ids1ykm5awrv34hnpk5ww2k-sv-sshd-run",
+      "sha256": "eedcad46acee0c166c056fbd9aab39d98b8ba0c29f11e3d3bb023695a7ac54b8",
+      "host_key_declarations_only": [
+        "if ! [ -f \"/etc/ssh/ssh_host_rsa_key\" ]; then",
+        "ssh-keygen \\",
+        "-t \"rsa\" \\",
+        "-b 4096 \\",
+        "-f \"/etc/ssh/ssh_host_rsa_key\" \\",
+        "-N \"\"",
+        "if ! [ -f \"/etc/ssh/ssh_host_ed25519_key\" ]; then",
+        "ssh-keygen \\",
+        "-t \"ed25519\" \\",
+        "-f \"/etc/ssh/ssh_host_ed25519_key\" \\",
+        "-N \"\"",
+        "exec /nix/store/28hprrw9sdi4iarzyxa3r1a22b3dq5pn-openssh-10.5p1/bin/sshd -D -f /etc/ssh/sshd_config"
+      ]
+    }
+  ],
+  "limits": "Read-only exact immutable selected node closure. No key contents/private inputs/guest command/SSH scan/eval/build. Confirms compiled paths/types/generation parameters; no historical guest syscall claim."
+}

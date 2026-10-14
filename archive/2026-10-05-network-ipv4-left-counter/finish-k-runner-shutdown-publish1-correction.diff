@@ -1,0 +1,370 @@
+diff --git a/cluster/lib/devcluster_runner.rb b/cluster/lib/devcluster_runner.rb
+index b0b1606d208fb04ed40bc8fadae72cb1c632e4be..d78d824018fea8fa5752ff393c101ba64d759009 100644
+--- a/cluster/lib/devcluster_runner.rb
++++ b/cluster/lib/devcluster_runner.rb
+@@ -212,9 +212,9 @@ module DevClusters
+         complete = exited
+         publish.call
+         File.unlink(ready_path) if File.exist?(ready_path)
+-        server.close
+         control_thread.kill
+         control_thread.join
++        server.close
+         File.unlink(control_path)
+         signal_writer.close unless signal_writer.closed?
+         signal_reader.close unless signal_reader.closed?
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index af18d41296a31f0e5e46ecccc9ebf234f13954ba..05e46ee0b8fa72cd5c87ef17aa4740a8e16a8a83 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -81,11 +81,13 @@ bind probe precedes launch and closes before QEMU binds. The durable claim spans
+ that handoff, but cannot reserve the port against unrelated host software.
+ 
+ Stop requests shutdown through the recorded runner's validated control socket.
+-The runner gracefully shuts down and reaps its machines. An unresponsive or
+-ambiguous orphan remains recorded with its paths and claims; no PID search,
+-process-group kill or force option substitutes for ownership. Reset requires a
+-stopped, proven instance and removes only its owned tree. Old rooted closures
+-remain until that owned reset.
++The runner gracefully shuts down and reaps its machines. It joins its control
++thread before closing the listener and removing its own control socket. Unknown
++socket-directory entries still prevent the engine from marking the run stopped.
++An unresponsive or ambiguous orphan remains recorded with its paths and claims;
++no PID search, process-group kill or force option substitutes for ownership.
++Reset requires a stopped, proven instance and removes only its owned tree.
++Old rooted closures remain until that owned reset.
+ 
+ Legacy `.devcluster/clusters` and old slug-only global socket directories are
+ outside schema 2. The launcher neither adopts nor deletes them. Create a fresh
+diff --git a/tools/test-machine.rb b/tools/test-machine.rb
+index d36483878a1beaefb3ab3bab2539d444ce543086..947522495a2c67e4c8899a2989d52e2fad11b0f4 100644
+--- a/tools/test-machine.rb
++++ b/tools/test-machine.rb
+@@ -157,6 +157,8 @@ class RunnerSessionTest < Minitest::Test
+   def test_setsid_failure_refuses_before_machine_creation_or_live_tuple_publication
+     with_runner(mode: 'session-failure') do |context|
+       out, error, status = Open3.capture3(*runner_argv(context))
++      File.write(context[:log], out, mode: 'wb', perm: 0o600)
++      File.write(context[:error], error, mode: 'wb', perm: 0o600)
+       refute(status.success?)
+       assert_empty(out)
+       assert_includes(error, 'injected setsid refusal')
+@@ -168,6 +170,128 @@ class RunnerSessionTest < Minitest::Test
+     end
+   end
+ 
++  def test_public_stop_quiesces_the_real_listener_before_close_and_removes_its_namespace
++    with_runner(mode: 'accept-barrier') do |context|
++      with_controller(context) do |pid, input, output|
++        observe_runner(context, output, pid)
++        input.write('.')
++        input.flush
++        status = Process.waitpid2(pid).last
++        context[:controller_reaped] = true
++        assert(status.success?)
++        assert_retained_runner(context)
++        shutdown(context)
++        barrier = JSON.parse(File.read(File.join(context[:record]['state_dir'], 'listener-close.json')))
++        assert_equal(2, barrier['accepts'])
++        assert_equal(false, barrier['control_alive'])
++        refute(File.exist?(context[:record]['socket_dir']))
++        refute(File.exist?(File.join(context[:record]['socket_dir'], 'control.sock')))
++      end
++    end
++  end
++
++  def test_primary_assertion_and_secondary_cleanup_failure_keep_original_error_and_private_evidence
++    context = nil
++    original = nil
++    original_backtrace = nil
++    _out, diagnostic = capture_io do
++      raised = assert_raises(Minitest::Assertion) do
++        with_runner do |fixture|
++          context = fixture
++          with_controller(fixture) do |pid, _input, output|
++            observe_runner(fixture, output, pid)
++            File.write(File.join(fixture[:record]['socket_dir'], 'unrelated'), 'untouched', mode: 'wb', perm: 0o600)
++            begin
++              flunk('primary fixture assertion token=private-example')
++            rescue Minitest::Assertion => error
++              original = error
++              original_backtrace = error.backtrace.dup
++              raise
++            end
++          end
++        end
++      end
++      assert_same(original, raised)
++      assert_equal(original_backtrace, raised.backtrace)
++    end
++    assert_equal(1, context[:shutdown_attempts])
++    evidence = retained_evidence(context, diagnostic)
++    assert_equal('Minitest::Assertion', evidence['primary']['class'])
++    assert_match(/unrecognized retained socket contents/, evidence['secondary']['message'])
++    assert_equal(original_backtrace, evidence['primary']['backtrace'])
++    assert_equal(true, evidence['processes']['complete'])
++    assert_equal(true, evidence['gone'])
++    assert_equal('starting', evidence['phase']['phase'])
++    assert_equal([{ 'name' => 'unrelated', 'type' => 'file' }], evidence['socket_entries'])
++    assert_equal(0, evidence['claims_count'])
++    assert_match(/secondary cleanup/, diagnostic)
++    refute_includes(diagnostic, 'private-example')
++  end
++
++  def test_primary_failure_survives_successful_public_cleanup
++    context = nil
++    original = nil
++    _out, diagnostic = capture_io do
++      raised = assert_raises(Minitest::Assertion) do
++        with_runner do |fixture|
++          context = fixture
++          with_controller(fixture) do |pid, _input, output|
++            observe_runner(fixture, output, pid)
++            begin
++              flunk('first fixture failure')
++            rescue Minitest::Assertion => error
++              original = error
++              raise
++            end
++          end
++        end
++      end
++      assert_same(original, raised)
++    end
++    evidence = retained_evidence(context, diagnostic)
++    assert_nil(evidence['secondary'])
++    assert_equal('stopped', evidence['phase']['phase'])
++    assert_equal(true, evidence['processes']['complete'])
++    assert_equal(true, evidence['gone'])
++    assert_nil(evidence['socket_entries'])
++    assert_equal(0, evidence['claims_count'])
++    assert_equal(1, context[:shutdown_attempts])
++  end
++
++  def test_explicit_failed_stop_is_not_repeated_and_preserves_an_unrelated_socket_entry
++    context = nil
++    _out, diagnostic = capture_io do
++      with_runner do |fixture|
++        context = fixture
++        with_controller(fixture) do |pid, input, output|
++          observe_runner(fixture, output, pid)
++          input.write('.')
++          input.flush
++          status = Process.waitpid2(pid).last
++          fixture[:controller_reaped] = true
++          assert(status.success?)
++          leftover = File.join(fixture[:record]['socket_dir'], 'unrelated')
++          File.write(leftover, 'untouched', mode: 'wb', perm: 0o600)
++          inode = File.stat(leftover).ino
++          error = assert_raises(KbRuntime::Error) { shutdown(fixture) }
++          assert_match(/unrecognized retained socket contents/, error.message)
++          assert_equal('untouched', File.read(leftover))
++          assert_equal(inode, File.stat(leftover).ino)
++          refute(File.exist?(File.join(fixture[:record]['socket_dir'], 'control.sock')))
++          assert(fixture[:engine].gone?(fixture[:record]))
++          assert(fixture[:engine].process_record(fixture[:record])['complete'])
++          assert_empty(Dir.glob(File.join(fixture[:engine].resources.root, '*.json')))
++          assert_equal('starting', fixture[:engine].phase['phase'])
++        end
++      end
++    end
++    assert_equal(1, context[:shutdown_attempts])
++    evidence = retained_evidence(context, diagnostic)
++    assert_match(/unrecognized retained socket contents/, evidence['primary']['message'])
++    assert_nil(evidence['secondary'])
++    assert_equal([{ 'name' => 'unrelated', 'type' => 'file' }], evidence['socket_entries'])
++  end
++
+   private
+ 
+   def with_runner(mode: 'normal')
+@@ -203,12 +327,104 @@ class RunnerSessionTest < Minitest::Test
+         log: File.join(directory, 'runner.log'), error: File.join(directory, 'controller-error.log'),
+         engine: KbRuntime::Engine.new(state:, software: nil, controller: [], resources:) }
+       context[:claims] = Dir.glob(File.join(resources.root, '*.json')).to_h { |path| [path, File.binread(path)] }
+-      yield context
+-    ensure
+-      if context && File.exist?(state.path("processes-#{record['run_id']}.json")) && context[:engine].phase['phase'] != 'stopped'
+-        context[:engine].stop(timeout: 5)
++      primary = nil
++      secondary = nil
++      begin
++        yield context
++      rescue StandardError, Minitest::Assertion => error
++        primary = error
++      ensure
++        if !context[:shutdown_attempted] && File.exist?(state.path("processes-#{record['run_id']}.json"))
++          begin
++            context[:shutdown_attempted] = true
++            context[:shutdown_attempts] = 1
++            context[:engine].stop(timeout: 5) unless context[:engine].phase['phase'] == 'stopped'
++          rescue StandardError, Minitest::Assertion => error
++            secondary = error
++          end
++        end
++        failure = primary || context[:shutdown_error] || secondary
++        if failure
++          cleanup_error = primary ? secondary : nil
++          retain_failure(context, failure, cleanup_error)
++        end
+       end
++      raise primary if primary
++      raise secondary if secondary
++    end
++  end
++
++  def retain_failure(context, primary, secondary)
++    directory = Dir.mktmpdir('kb-runner-evidence-', '/tmp')
++    logs = %i[log error].filter_map do |key|
++      source = context.fetch(key)
++      next unless File.file?(source)
++      target = File.join(directory, File.basename(source))
++      FileUtils.copy_file(source, target)
++      File.chmod(0o600, target)
++      { 'name' => File.basename(target), 'sha256' => Digest::SHA256.file(target).hexdigest, 'bytes' => File.size(target) }
++    end
++    sockets = context[:record].fetch('socket_dir')
++    entries = if File.directory?(sockets)
++                Dir.children(sockets).sort.first(32).map do |name|
++                  info = File.lstat(File.join(sockets, name))
++                  { 'name' => name, 'type' => info.ftype }
++                end
++              end
++    process_path = context[:state].path("processes-#{context[:record]['run_id']}.json")
++    processes = context[:state].read(process_path) if File.exist?(process_path)
++    listener_path = File.join(context[:record]['state_dir'], 'listener-close.json')
++    details = { 'primary' => exception_details(primary), 'secondary' => exception_details(secondary), 'logs' => logs,
++      'phase' => context[:engine].phase, 'processes' => processes&.slice('complete', 'run_id', 'artifact_id'),
++      'gone' => processes && context[:engine].gone?(context[:record]),
++      'listener_close' => File.file?(listener_path) ? JSON.parse(File.read(listener_path)) : nil,
++      'socket_entries' => entries, 'socket_entries_truncated' => File.directory?(sockets) && Dir.children(sockets).length > 32,
++      'claims_count' => Dir.glob(File.join(context[:engine].resources.root, '*.json')).length }
++    path = File.join(directory, 'failure.json')
++    File.write(path, JSON.pretty_generate(details), mode: 'wb', perm: 0o600)
++    context[:evidence] = path
++    hash = Digest::SHA256.file(path).hexdigest
++    warn "Runner fixture failed: #{failure_excerpt(primary)}; evidence=#{path} sha256=#{hash}"
++    warn "Runner fixture secondary cleanup: #{failure_excerpt(secondary)}" if secondary
++    logs.each do |log|
++      source = File.join(directory, log['name'])
++      lines = File.readlines(source).grep(/\b(?:[\w:]*Error|failed|refusal)\b/).last(2)
++      next if lines.empty?
++      excerpt = redact_failure(lines.join(' ').gsub(/[\r\n]/, ' ')).byteslice(0, 768)
++      warn "Runner fixture native #{log['name']}: #{excerpt}; sha256=#{log['sha256']}"
++    end
++  rescue StandardError => error
++    warn "Runner fixture diagnostic retention failed: #{failure_excerpt(error)}"
++  end
++
++  def exception_details(error)
++    error && { 'class' => error.class.name, 'message' => error.message, 'backtrace' => error.backtrace }
++  end
++
++  def failure_excerpt(error)
++    value = "#{error.class}: #{error.message.to_s.lines.first.to_s.strip} #{Array(error.backtrace).first(3).join(' ')}"
++    redact_failure(value).byteslice(0, 768)
++  end
++
++  def redact_failure(value)
++    value.gsub(/((?:token|password|secret|credential)\s*[=:]\s*)\S+/i, '\\1[redacted]')
++  end
++
++  def retained_evidence(context, diagnostic)
++    path = context.fetch(:evidence)
++    assert(File.file?(path))
++    assert_equal(0o700, File.stat(File.dirname(path)).mode & 0o777)
++    assert_equal(0o600, File.stat(path).mode & 0o777)
++    assert_includes(diagnostic, path)
++    assert_includes(diagnostic, Digest::SHA256.file(path).hexdigest)
++    refute(File.exist?(context[:log]), 'deleted fixture log must not be cited as retained evidence')
++    details = JSON.parse(File.read(path))
++    details['logs'].each do |log|
++      retained = File.join(File.dirname(path), log['name'])
++      assert_equal(0o600, File.stat(retained).mode & 0o777)
++      assert_equal(log['sha256'], Digest::SHA256.file(retained).hexdigest)
+     end
++    details
+   end
+ 
+   def runner_argv(context)
+@@ -261,8 +477,7 @@ class RunnerSessionTest < Minitest::Test
+ 
+   def observe_runner(context, output, controller_pid)
+     text = Timeout.timeout(5) { output.gets }
+-    diagnostics = [context[:log], context[:error]].select { |path| File.exist?(path) }.map { |path| File.read(path) }.join("\n")
+-    refute_nil(text, diagnostics.empty? ? 'controller did not start' : diagnostics)
++    refute_nil(text, 'controller did not start; native diagnostics will be retained privately')
+     controller = JSON.parse(text)
+     assert_equal(controller_pid, controller['controller_pid'])
+     assert_equal(controller_pid, controller['group'])
+@@ -292,13 +507,21 @@ class RunnerSessionTest < Minitest::Test
+   end
+ 
+   def shutdown(context)
+-    context[:engine].stop(timeout: 5)
++    context[:shutdown_attempted] = true
++    context[:shutdown_attempts] = context.fetch(:shutdown_attempts, 0) + 1
++    begin
++      context[:engine].stop(timeout: 5)
++    rescue StandardError, Minitest::Assertion => error
++      context[:shutdown_error] = error
++      raise
++    end
+     assert_equal('stopped', context[:engine].phase['phase'])
+     assert(context[:engine].process_record(context[:record])['complete'])
+     assert(context[:engine].gone?(context[:record]))
+     assert_empty(Dir.glob(File.join(context[:engine].resources.root, '*.json')))
+     assert(File.exist?(File.join(context[:record]['state_dir'], 'finalized')))
+     assert(File.exist?(File.join(context[:record]['state_dir'], 'cleaned')))
++    refute(File.exist?(context[:record]['socket_dir']))
+   end
+ 
+   def runner_program
+@@ -314,6 +537,39 @@ class RunnerSessionTest < Minitest::Test
+       elsif mode == 'session-failure'
+         Process.define_singleton_method(:setsid) { raise Errno::EPERM, 'injected setsid refusal' }
+       end
++      if mode == 'accept-barrier'
++        class ListenerBarrier
++          def initialize(server, directory)
++            @server = server
++            @directory = directory
++            @accepts = 0
++            @entered = Queue.new
++          end
++          def accept
++            @accepts += 1
++            if @accepts == 2
++              @control_thread = Thread.current
++              @entered << true
++            end
++            @server.accept
++          end
++          def wait_for_next_accept
++            Timeout.timeout(5) { @entered.pop }
++          end
++          def close
++            alive = @control_thread.alive?
++            File.write(File.join(@directory, 'listener-close.json'), JSON.generate('accepts' => @accepts,
++              'control_alive' => alive), mode: 'wb', perm: 0o600)
++            @server.close
++            @control_thread.join if alive
++          end
++        end
++        directory = ARGV[ARGV.index('--state-dir') + 1]
++        original_server = UNIXServer.method(:new)
++        UNIXServer.define_singleton_method(:new) do |path|
++          $shutdown_listener = ListenerBarrier.new(original_server.call(path), directory)
++        end
++      end
+       class SessionMachine
+         def initialize(directory)
+           @directory = directory
+@@ -331,6 +587,7 @@ class RunnerSessionTest < Minitest::Test
+             'group' => Process.getpgrp, 'fds' => fds), mode: 'wb', perm: 0o600)
+         end
+         def stop(timeout:)
++          $shutdown_listener.wait_for_next_accept if $shutdown_listener
+           @writer.close
+           Process.wait(@child)
+         end

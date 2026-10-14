@@ -1,0 +1,52 @@
+diff --git a/e2e/specs/admin/network_availability.spec.ts b/e2e/specs/admin/network_availability.spec.ts
+index 9c1eb81095642c4518a8a828919589b94c8c9f6b..250b6d515d0fef8863e2686bde72b4548e51de7e 100644
+--- a/e2e/specs/admin/network_availability.spec.ts
++++ b/e2e/specs/admin/network_availability.spec.ts
+@@ -247,7 +247,7 @@ for (const language of ['en', 'cs'] as const) {
+     const progress = page.getByTestId('admin.ip_addresses.suggested.loading');
+     try {
+       await page.goto('/admin/ip-addresses');
+-      await expect.poll(() => capabilityCalls).toBe(1);
++      await expect.poll(async () => { await page.clock.runFor(50); return capabilityCalls; }).toBe(1);
+       await expect(page.getByTestId('admin.ip_addresses.loading')).toBeVisible();
+       expect(suggestions).toEqual([]);
+       await page.clock.runFor(12_001);
+diff --git a/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx b/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx
+index de27677fea321f6e43fb769ada3181d0f7909f64..aaeb9e361887851c3c9be51c0f037c823dbfc993 100644
+--- a/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx
++++ b/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx
+@@ -297,7 +297,7 @@ describe('suggestion caller budget with the real QueryClient', () => {
+     expect(vi.mocked(fetchIpAddresses).mock.calls.every(([options]) => options?.signal?.aborted === false)).toBe(true);
+   });
+ 
+-  it('reuses both five-minute caches without a new capability or address request', async () => {
++  it('reuses both five-minute caches and refetches after their freshness expires', async () => {
+     const client = queryClient();
+     const first = renderSuggestions(client);
+     await advance(1);
+@@ -308,8 +308,23 @@ describe('suggestion caller budget with the real QueryClient', () => {
+     expect(second.result.current.isLoading).toBe(false);
+     expect(fetchIpAddressIndexCapability).toHaveBeenCalledTimes(1);
+     expect(fetchIpAddresses).toHaveBeenCalledTimes(3);
+-    expect(client.getQueryCache().find({ queryKey: suggestionKey(), exact: true })?.options.staleTime).toBe(5 * 60_000);
+-    expect(client.getQueryCache().find({ queryKey: capabilityKey, exact: true })?.options.staleTime).toBe(5 * 60_000);
++    const capability = client.getQueryCache().find({ queryKey: capabilityKey, exact: true });
++    const suggestion = client.getQueryCache().find({ queryKey: suggestionKey(), exact: true });
++    if (!capability || !suggestion) throw new Error('Warm capability and suggestion caches must be present');
++    const updatedAt = { capability: capability.state.dataUpdatedAt, suggestion: suggestion.state.dataUpdatedAt };
++    second.unmount();
++    await advance(60_001);
++    expect(client.getQueryCache().find({ queryKey: capabilityKey, exact: true })).toBe(capability);
++    expect(client.getQueryCache().find({ queryKey: suggestionKey(), exact: true })).toBe(suggestion);
++    expect(capability.state.dataUpdatedAt).toBe(updatedAt.capability);
++    expect(suggestion.state.dataUpdatedAt).toBe(updatedAt.suggestion);
++    const expired = renderSuggestions(client);
++    await advance(1);
++    expect(expired.result.current.isLoading).toBe(false);
++    expect(fetchIpAddressIndexCapability).toHaveBeenCalledTimes(2);
++    expect(fetchIpAddresses).toHaveBeenCalledTimes(6);
++    expect(capability.state.dataUpdatedAt).toBeGreaterThan(updatedAt.capability + 5 * 60_000);
++    expect(suggestion.state.dataUpdatedAt).toBeGreaterThan(updatedAt.suggestion + 5 * 60_000);
+   });
+ 
+   it('retries a settled metadata failure normally with a fresh discovery and caller budget', async () => {

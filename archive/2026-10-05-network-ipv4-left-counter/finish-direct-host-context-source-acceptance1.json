@@ -1,0 +1,34 @@
+{
+  "schema": 1,
+  "at": "2026-10-09T11:50:17.336766+00:00",
+  "scope": "Accepted ordinary user-service operation context; preparation only, no transient unit or VM launched",
+  "design": "design.md / Ordinary user-service context for the next direct campaign",
+  "accepted_properties": {
+    "Type": "exec",
+    "ExitType": "cgroup",
+    "RemainAfterExit": true,
+    "Restart": "no",
+    "CollectMode": "inactive",
+    "KillMode": "control-group",
+    "OOMPolicy": "continue"
+  },
+  "host_facts": "finish-direct-host-context-facts1.json",
+  "existing_manager_lifetime": "finish-direct-user-manager-lifetime1.json",
+  "existing_linger": true,
+  "startup_gate": "exact unit active/running, MainPID=current wrapper PID/start, InvocationID/current cgroup before verifier spawn",
+  "native_failure_is_failure_even_if_unit_active": true,
+  "gates_still_pending": [
+    "corrected source freeze/commit",
+    "exact new K/E hosted checks",
+    "affected independent committed review",
+    "new immutable packages/kernel/config capacity",
+    "fresh disjoint campaign resources"
+  ],
+  "retention": "both old incomplete campaigns remain untouched; no systemctl stop/kill/restart/group signals or cleanup",
+  "source_of_contract": [
+    "https://raw.githubusercontent.com/systemd/systemd/v260/man/systemd-run.xml",
+    "https://raw.githubusercontent.com/systemd/systemd/v260/man/systemd.service.xml",
+    "https://raw.githubusercontent.com/systemd/systemd/v260/man/systemd.kill.xml",
+    "https://raw.githubusercontent.com/systemd/systemd/v260/src/core/service.c"
+  ]
+}

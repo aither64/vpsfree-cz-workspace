@@ -1,0 +1,433 @@
+diff --git a/docs/work-log/2026-10-06-network-availability.md b/docs/work-log/2026-10-06-network-availability.md
+index 0a2dcac67fa421099562d2b0074fa867f3b77e41..bd4741150628a6125ee083323bc6276c166ec0da 100644
+--- a/docs/work-log/2026-10-06-network-availability.md
++++ b/docs/work-log/2026-10-06-network-availability.md
+@@ -102,3 +102,23 @@ follow-up, as requested by the user.
+ Earlier results above describe earlier source snapshots. Hosted checks and
+ rendered evidence for the final rebased feature head are pending; no deployment
+ or live API result is claimed.
++
++Hosted checks passed at `a9d0b5e9402faafef937894f50463da3c27e8935`, including
++the affected unit cases and desktop/mobile smoke. Visual inspection found that
++the table's scrolling container clipped the count descriptions despite passing
++visibility assertions. The disabled-IP description had the same presentation
++boundary.
++
++Count and editor labels and the desktop/mobile disabled badge now share a small
++inventory-description component. It places the description directly under the
++document body, measures its position within the viewport and keeps it open while
++the trigger is focused or hovered. Placement follows scrolling and resizing;
++descriptions for offscreen triggers are hidden. Existing labels, IDs, counts and
++row actions remain unchanged.
++
++The bilingual browser cases now check the full text bounds and clipping, table
++edges, the editor's modal layer and the final disabled row or card on the last
++page. They also exercise placement above a trigger near the viewport bottom and
++preserve focus/hover behavior without navigating the row. These correction
++checks are prepared for hosted execution; local CI remains excluded. Synthetic
++browser evidence does not certify a live API or deployment.
+diff --git a/e2e/specs/admin/network_availability.spec.ts b/e2e/specs/admin/network_availability.spec.ts
+index 1e9a797d25e85068304c5ece2e76ebb4b048d357..9fc52f3019081f9eb3cca04120dce04cac6aec96 100644
+--- a/e2e/specs/admin/network_availability.spec.ts
++++ b/e2e/specs/admin/network_availability.spec.ts
+@@ -1,7 +1,53 @@
+-import { expect, test } from '@playwright/test';
++import { expect, test, type Locator, type Page } from '@playwright/test';
+ 
+ import { bootstrapVpsAdminWindow, installHaveApiMock, setUiSettingsLocalStorage } from '../../fixtures';
+ 
++async function expectUnclippedDescription(page: Page, trigger: Locator, description: string) {
++  const id = await trigger.getAttribute('aria-describedby');
++  if (!id) throw new Error('Inventory trigger has no description ID');
++  const tooltip = page.locator(`#${id}`);
++  await expect(trigger).toHaveAttribute('title', description);
++  await expect(trigger).toHaveAccessibleDescription(description);
++  await expect(tooltip).toHaveCount(1);
++  await expect(tooltip).toHaveAttribute('role', 'tooltip');
++  await expect(tooltip).toBeVisible();
++  await expect(tooltip).toHaveText(description);
++  const geometry = await tooltip.evaluate((node, triggerId) => {
++    const box = node.getBoundingClientRect();
++    const anchor = document.querySelector(`[aria-describedby="${triggerId}"]`)?.getBoundingClientRect();
++    if (!anchor) throw new Error('Inventory description has no trigger');
++    const range = document.createRange();
++    range.selectNodeContents(node);
++    const textBoxes = Array.from(range.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0);
++    const clippingAncestors: string[] = [];
++    for (let parent = node.parentElement; parent; parent = parent.parentElement) {
++      const style = getComputedStyle(parent);
++      const bounds = parent.getBoundingClientRect();
++      const left = bounds.left + parent.clientLeft;
++      const top = bounds.top + parent.clientTop;
++      if ((['hidden', 'clip', 'auto', 'scroll'].includes(style.overflowX)
++          && (box.left < left - 1 || box.right > left + parent.clientWidth + 1))
++        || (['hidden', 'clip', 'auto', 'scroll'].includes(style.overflowY)
++          && (box.top < top - 1 || box.bottom > top + parent.clientHeight + 1))) {
++        clippingAncestors.push(parent.tagName);
++      }
++    }
++    return {
++      bodyPortal: node.parentElement === document.body,
++      position: getComputedStyle(node).position,
++      clippingAncestors,
++      insideViewport: box.left >= 0 && box.top >= 0 && box.right <= window.innerWidth && box.bottom <= window.innerHeight,
++      fullText: textBoxes.length > 0 && textBoxes.every((text) => text.left >= box.left && text.right <= box.right && text.top >= box.top && text.bottom <= box.bottom),
++      selfClipped: node.scrollWidth > node.clientWidth + 1 || node.scrollHeight > node.clientHeight + 1,
++      anchor: { top: anchor.top, bottom: anchor.bottom },
++      popup: { top: box.top, bottom: box.bottom, height: box.height },
++      viewport: { width: window.innerWidth, height: window.innerHeight },
++    };
++  }, id);
++  expect(geometry).toMatchObject({ bodyPortal: true, position: 'fixed', clippingAncestors: [], insideViewport: true, fullText: true, selfClipped: false });
++  return { tooltip, geometry };
++}
++
+ for (const language of ['en', 'cs'] as const) {
+   test(`@pr-smoke @pr-smoke-mobile network availability retains service context and rejected drafts (${language})`, async ({ page }, testInfo) => {
+     await bootstrapVpsAdminWindow(page, { sessionToken: 'TEST' });
+@@ -54,10 +100,38 @@ for (const language of ['en', 'cs'] as const) {
+       ? "Registered addresses or prefixes with no owner or interface assignment, and not reserved by an operation. Disabled networks contribute zero. Use on a particular VPS also depends on location, network purpose and user limits."
+       : "Evidované adresy nebo prefixy bez vlastníka a bez přiřazení k rozhraní, které nejsou rezervované probíhající operací. V zakázané síti je tento počet nulový. Použití na konkrétním VPS závisí také na lokaci, účelu sítě a limitech uživatele.";
+     const countLabel = page.locator('[aria-describedby="network-count-available"]');
++    const countTooltip = page.locator('#network-count-available');
++    const viewport = page.viewportSize();
++    if (!viewport) throw new Error('Browser project requires a viewport');
++    const tableScroll = page.getByTestId('admin.cluster.networks.table').locator('.overflow-x-auto');
++    expect(await tableScroll.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);
++    await tableScroll.evaluate((node) => { node.scrollLeft = node.scrollWidth; });
++    await expect.poll(() => tableScroll.evaluate((node) => node.scrollLeft)).toBeGreaterThan(0);
++    await countLabel.scrollIntoViewIfNeeded();
+     await countLabel.focus();
+     await expect(countLabel).toBeFocused();
+-    await expect(countLabel).toHaveAccessibleDescription(countDescription);
+-    await expect(page.locator('#network-count-available')).toBeVisible();
++    await expectUnclippedDescription(page, countLabel, countDescription);
++    await countLabel.hover();
++    await page.mouse.move(0, 0);
++    await expect(countTooltip).toBeVisible(); // Pointer departure preserves focus.
++    await countLabel.evaluate((node) => (node as HTMLElement).blur());
++    await expect(countTooltip).toBeHidden();
++    await countLabel.hover();
++    await expectUnclippedDescription(page, countLabel, countDescription);
++    await countLabel.focus();
++    await countLabel.evaluate((node) => (node as HTMLElement).blur());
++    await expect(countTooltip).toBeVisible(); // Blur preserves hover.
++    await page.mouse.move(0, 0);
++    await expect(countTooltip).toBeHidden();
++    await countLabel.focus();
++    await tableScroll.evaluate((node) => { node.scrollLeft -= 8; });
++    await expectUnclippedDescription(page, countLabel, countDescription);
++    await page.setViewportSize({ width: viewport.width - 16, height: viewport.height });
++    await expectUnclippedDescription(page, countLabel, countDescription);
++    await page.setViewportSize(viewport);
++    await tableScroll.evaluate((node) => { node.scrollLeft = node.scrollWidth; });
++    await countLabel.scrollIntoViewIfNeeded();
++    await expectUnclippedDescription(page, countLabel, countDescription);
+     await page.screenshot({ path: testInfo.outputPath(`network-counts-${language}.png`), fullPage: true });
+     await page.getByTestId('admin.cluster.networks.row.101.edit').click();
+     const editor = page.getByTestId('admin.cluster.networks.editor');
+@@ -67,6 +141,20 @@ for (const language of ['en', 'cs'] as const) {
+     await expect(editor.locator('[aria-describedby="network-editor-assigned"]')).toContainText(language === 'en' ? 'Assigned' : 'Přiřazené');
+     await expect(editor.getByTestId('admin.cluster.networks.editor.owned_total')).toHaveText('5');
+     await expect(editor.locator('[aria-describedby="network-editor-owned"]')).toContainText(language === 'en' ? 'Owned total' : 'Vlastněné celkem');
++    const editorLabel = editor.locator('[aria-describedby="network-editor-owned"]');
++    await editorLabel.focus();
++    const editorDescription = language === 'en'
++      ? 'All addresses or prefixes owned by users, including those assigned to an interface.'
++      : 'Všechny adresy nebo prefixy vlastněné uživateli, včetně těch přiřazených k rozhraní.';
++    const { tooltip: editorTooltip } = await expectUnclippedDescription(page, editorLabel, editorDescription);
++    const modalLayer = await editor.evaluate((node) => {
++      for (let parent = node.parentElement; parent; parent = parent.parentElement) {
++        if (getComputedStyle(parent).position === 'fixed') return Number(getComputedStyle(parent).zIndex);
++      }
++      throw new Error('Editor has no fixed modal layer');
++    });
++    expect(await editorTooltip.evaluate((node) => Number(getComputedStyle(node).zIndex))).toBeGreaterThan(modalLayer);
++    await page.screenshot({ path: testInfo.outputPath(`network-editor-counts-${language}.png`), fullPage: true });
+     await expect(toggle).toBeVisible();
+     await expect(toggle).toBeChecked();
+     expect(capabilityMethods).toEqual(['PUT']);
+@@ -79,6 +167,7 @@ for (const language of ['en', 'cs'] as const) {
+     await expect(toggle).not.toBeChecked();
+     await page.getByTestId('admin.cluster.networks.editor.save').click();
+     await expect(editor).toBeHidden();
++    await expect(page.locator('#network-editor-owned')).toHaveCount(0);
+     await expect(page.getByTestId('admin.cluster.networks.row.101.enabled')).toHaveText(language === 'en' ? 'Disabled' : 'Zakázáno');
+     await page.getByTestId('admin.cluster.networks.row.101.edit').click();
+     await toggle.check();
+@@ -158,9 +247,10 @@ for (const language of ['en', 'cs'] as const) {
+   test(`@pr-smoke @pr-smoke-mobile admin IP flags preserve disabled assignments and warn only for false (${language})`, async ({ page }, testInfo) => {
+     await bootstrapVpsAdminWindow(page, { sessionToken: 'TEST' });
+     await setUiSettingsLocalStorage(page, { language });
+-    const ips = [false, true, undefined].map((enabled, index) => ({
++    const ips = Array.from({ length: 28 }, (_, index) => ({
+       id: 101 + index, addr: `192.0.2.${101 + index}`, prefix: 32, routed: true,
+-      network: { id: 11 + index, address: '192.0.2.0', prefix: 24, role: 'private_access', enabled },
++      network: { id: 11 + index, address: '192.0.2.0', prefix: 24, role: 'private_access',
++        enabled: index === 27 ? false : index === 26 ? undefined : true },
+       network_interface: { id: 51 + index, vps: { id: 1, hostname: 'existing-service' } },
+     }));
+     await installHaveApiMock(page, {
+@@ -170,25 +260,70 @@ for (const language of ['en', 'cs'] as const) {
+         'GET ip_addresses': () => ({ ip_addresses: ips }),
+       },
+     });
+-    await page.goto('/admin/ip-addresses?vps=1');
++    await page.goto('/admin/ip-addresses?vps=1&limit=25&order=asc');
+     const visible = (id: number) => page.locator(`[data-testid="admin.ip_addresses.row.${id}"]:visible, [data-testid="admin.ip_addresses.card.${id}"]:visible`);
+     const warning = language === 'en' ? 'Network disabled' : 'Síť zakázána';
+     const description = language === 'en'
+       ? "This network is disabled for new allocations and assignments. Existing assignments remain usable."
+       : "Síť je zakázaná pro nové přidělování a přiřazování adres. Existující přiřazené adresy zůstávají použitelné.";
+-    const disabled = visible(101);
++    const pagination = page.locator('[data-testid="admin.ip_addresses.pagination.desktop"]:visible, [data-testid="admin.ip_addresses.pagination.mobile"]:visible');
++    await pagination.locator('[data-testid$=".page.2"]').click();
++    await expect(pagination.locator('[data-testid$=".next"]')).toBeDisabled();
++    const displayed = page.locator('tr[data-testid^="admin.ip_addresses.row."]:visible, div[data-testid^="admin.ip_addresses.card."]:visible');
++    await expect(displayed).toHaveCount(3);
++    await expect(displayed.last()).toHaveAttribute('data-testid', /\.128$/);
++    const disabled = visible(128);
+     await expect(disabled.getByText(warning, { exact: true })).toBeVisible();
+     const flag = disabled.locator('[aria-describedby]');
++    await expect(flag).toHaveAttribute('data-row-no-nav', 'true');
+     await flag.focus();
+     await expect(flag).toBeFocused();
+-    await expect(flag).toHaveAccessibleDescription(description);
+-    await expect(disabled.getByRole('tooltip')).toBeVisible();
+-    await expect(disabled.getByRole('link', { name: '192.0.2.101/32' })).toHaveAttribute('href', '/admin/ip-addresses/101');
+-    await expect(disabled.locator('[data-testid$=".action.route"]')).toHaveAttribute('href', '/admin/ip-addresses/101#route');
+-    for (const id of [102, 103]) {
++    const { tooltip } = await expectUnclippedDescription(page, flag, description);
++    await flag.hover();
++    await page.mouse.move(0, 0);
++    await expect(tooltip).toBeVisible();
++    await flag.evaluate((node) => (node as HTMLElement).blur());
++    await expect(tooltip).toBeHidden();
++    await flag.hover();
++    await expectUnclippedDescription(page, flag, description);
++    await flag.focus();
++    await flag.evaluate((node) => (node as HTMLElement).blur());
++    await expect(tooltip).toBeVisible();
++    await page.mouse.move(0, 0);
++    await expect(tooltip).toBeHidden();
++    const listUrl = page.url();
++    await flag.click();
++    await expect(page).toHaveURL(listUrl);
++    await flag.press('Enter');
++    await expect(page).toHaveURL(listUrl);
++    await flag.press('Space');
++    await expect(page).toHaveURL(listUrl);
++    await expect(disabled.getByRole('link', { name: '192.0.2.128/32' })).toHaveAttribute('href', '/admin/ip-addresses/128');
++    await expect(disabled.locator('[data-testid$=".action.route"]')).toHaveAttribute('href', '/admin/ip-addresses/128#route');
++    for (const id of [126, 127]) {
+       await expect(visible(id)).toBeVisible();
+       await expect(visible(id).getByText(warning, { exact: true })).toHaveCount(0);
+     }
++    const viewport = page.viewportSize();
++    if (!viewport) throw new Error('Browser project requires a viewport');
++    await flag.evaluate((node) => node.scrollIntoView({ block: 'center', inline: 'nearest' }));
++    await flag.focus();
++    const initial = await expectUnclippedDescription(page, flag, description);
++    const bottomHeight = Math.max(320, Math.ceil(initial.geometry.anchor.bottom + 24));
++    await page.setViewportSize({ width: viewport.width, height: bottomHeight });
++    await flag.evaluate((node) => node.scrollIntoView({ block: 'end', inline: 'nearest' }));
++    await flag.focus();
++    const nearBottom = await expectUnclippedDescription(page, flag, description);
++    expect(nearBottom.geometry.anchor.bottom + 8 + nearBottom.geometry.popup.height).toBeGreaterThan(nearBottom.geometry.viewport.height - 12);
++    expect(nearBottom.geometry.popup.bottom).toBeLessThanOrEqual(nearBottom.geometry.anchor.top);
++    const scrollBefore = await page.evaluate(() => window.scrollY);
++    await page.evaluate(() => window.scrollBy(0, 16));
++    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollBefore);
++    await expectUnclippedDescription(page, flag, description);
++    await page.setViewportSize({ width: viewport.width - 16, height: bottomHeight + 24 });
++    await expectUnclippedDescription(page, flag, description);
++    await page.setViewportSize({ width: viewport.width, height: bottomHeight });
++    await expectUnclippedDescription(page, flag, description);
+     await page.screenshot({ path: testInfo.outputPath(`admin-ip-flags-${language}.png`), fullPage: true });
+   });
+ }
+diff --git a/src/pages/app/admin/cluster/NetworksPage.test.tsx b/src/pages/app/admin/cluster/NetworksPage.test.tsx
+index 73646212bbde8e91f761d0325508e867068abd9b..0daa5f6e319f953dc3ed2408a53bf89c5b59d531 100644
+--- a/src/pages/app/admin/cluster/NetworksPage.test.tsx
++++ b/src/pages/app/admin/cluster/NetworksPage.test.tsx
+@@ -44,7 +44,7 @@ beforeEach(() => {
+   vi.mocked(fetchNetworkWriteCapability).mockResolvedValue({ data: capability, envelope: { status: true, response: capability } });
+   vi.mocked(updateNetwork).mockResolvedValue({ data: network } as never);
+ });
+-afterEach(() => { state.language = 'en'; });
++afterEach(() => { state.language = 'en'; vi.restoreAllMocks(); });
+ 
+ describe('network availability editor', () => {
+   it.each(['en', 'cs'] as const)('renders %s identity/counts and retains a rejected disable draft', async (language) => {
+@@ -68,6 +68,14 @@ describe('network availability editor', () => {
+ 
+   it.each(['en', 'cs'] as const)('shows authoritative %s counts with keyboard descriptions and a distinct editor total', async (language) => {
+     state.language = language;
++    // JSDOM has no layout; browser scenarios verify actual clipping and bounds.
++    const originalRect = HTMLElement.prototype.getBoundingClientRect;
++    let triggerTop = 20;
++    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
++      if (this.hasAttribute('aria-describedby')) return new DOMRect(20, triggerTop, 120, 20);
++      if (this.getAttribute('role') === 'tooltip') return new DOMRect(20, 48, 288, 100);
++      return originalRect.call(this);
++    });
+     renderPage();
+     const row = await screen.findByTestId('admin.cluster.networks.row.101');
+     expect(within(row).getByTestId('admin.cluster.networks.row.101.available_to_users')).toHaveTextContent(/^0$/);
+@@ -83,16 +91,43 @@ describe('network availability editor', () => {
+     for (const [name, translations] of Object.entries(descriptions)) {
+       const description = translations[language];
+       const label = screen.getByTitle(description);
+-      label.focus();
++      act(() => label.focus());
+       expect(label).toHaveFocus();
+       expect(label).toHaveAccessibleDescription(description);
+-      expect(document.getElementById(`network-count-${name}`)).toHaveAttribute('role', 'tooltip');
++      const tooltip = document.getElementById(`network-count-${name}`);
++      expect(tooltip).toHaveAttribute('role', 'tooltip');
++      expect(tooltip?.parentElement).toBe(document.body);
++      expect(tooltip).toBeVisible();
++      fireEvent.mouseEnter(label);
++      fireEvent.mouseLeave(label);
++      expect(tooltip).toBeVisible();
++      act(() => label.blur());
++      expect(tooltip).not.toBeVisible();
++      fireEvent.mouseEnter(label);
++      expect(tooltip).toBeVisible();
++      act(() => label.focus());
++      act(() => label.blur());
++      expect(tooltip).toBeVisible();
++      fireEvent.mouseLeave(label);
++      expect(tooltip).not.toBeVisible();
++      act(() => label.focus());
++      triggerTop = window.innerHeight + 20;
++      fireEvent.scroll(window);
++      expect(tooltip).not.toBeVisible();
++      triggerTop = 20;
++      fireEvent.scroll(window);
++      expect(tooltip).toBeVisible();
++      act(() => label.blur());
+     }
+     fireEvent.click(within(row).getByTestId('admin.cluster.networks.row.101.edit'));
+     const editor = await screen.findByRole('dialog');
+     expect(within(editor).getByTestId('admin.cluster.networks.editor.owned_total')).toHaveTextContent(/^5$/);
+-    const totalLabel = editor.querySelector('[aria-describedby="network-editor-owned"]');
++    const totalLabel = editor.querySelector<HTMLElement>('[aria-describedby="network-editor-owned"]');
+     expect(totalLabel).toHaveTextContent(language === 'en' ? 'Owned total' : 'Vlastněné celkem');
++    act(() => totalLabel?.focus());
++    const totalTooltip = document.getElementById('network-editor-owned');
++    expect(totalTooltip?.parentElement).toBe(document.body);
++    expect(totalTooltip).toBeVisible();
+     expect(totalLabel).toHaveAccessibleDescription(language === 'en'
+       ? 'All addresses or prefixes owned by users, including those assigned to an interface.'
+       : 'Všechny adresy nebo prefixy vlastněné uživateli, včetně těch přiřazených k rozhraní.');
+diff --git a/src/pages/app/admin/cluster/NetworksPage.tsx b/src/pages/app/admin/cluster/NetworksPage.tsx
+index d8569696f7e77eba8bd76a2a038e9b25d8752045..aee447ff55223776545b68e7240369ca0857a422 100644
+--- a/src/pages/app/admin/cluster/NetworksPage.tsx
++++ b/src/pages/app/admin/cluster/NetworksPage.tsx
+@@ -47,6 +47,7 @@ import {
+   type NetworkSplitAccess,
+ } from '../../../../lib/api/networks';
+ import { normalizeLegacyNetworkSearch } from './networkFilterSemantics';
++import { InventoryDescription } from '../networking/InventoryDescription';
+ 
+ function locLabel(l: Location | null | undefined): string {
+   const x: any = l ?? {};
+@@ -113,17 +114,6 @@ function purposeOptions(t: (k: string) => string): SelectOption[] {
+   ];
+ }
+ 
+-function NetworkCountLabel(props: { label: string; description: string; id: string }) {
+-  return (
+-    <span tabIndex={0} title={props.description} aria-describedby={props.id} className="group relative inline-flex cursor-help">
+-      {props.label}
+-      <span id={props.id} role="tooltip" className="pointer-events-none absolute top-full left-0 z-50 mt-2 hidden w-72 whitespace-normal rounded-md border border-border bg-surface p-2 text-left text-xs font-normal text-fg shadow-lg group-hover:block group-focus:block">
+-        {props.description}
+-      </span>
+-    </span>
+-  );
+-}
+-
+ export function NetworksPage() {
+   const [searchParams, setSearchParams] = useSearchParams();
+   const search = searchParams.toString();
+@@ -666,10 +656,10 @@ function NetworksContent() {
+               <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('admin.cluster.networks.col.purpose')}</th>
+               <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('admin.cluster.networks.col.managed')}</th>
+               <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('admin.cluster.networks.enabled')}</th>
+-              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><NetworkCountLabel label={t('admin.cluster.networks.col.used')} description={t('admin.cluster.networks.tooltip.used')} id="network-count-used" /></th>
+-              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><NetworkCountLabel label={t('admin.cluster.networks.col.assigned')} description={t('admin.cluster.networks.tooltip.assigned')} id="network-count-assigned" /></th>
+-              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><NetworkCountLabel label={t('admin.cluster.networks.col.owned_unassigned')} description={t('admin.cluster.networks.tooltip.owned_unassigned')} id="network-count-owned_unassigned" /></th>
+-              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><NetworkCountLabel label={t('admin.cluster.networks.col.available')} description={t('admin.cluster.networks.tooltip.available')} id="network-count-available" /></th>
++              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><InventoryDescription label={t('admin.cluster.networks.col.used')} description={t('admin.cluster.networks.tooltip.used')} id="network-count-used" /></th>
++              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><InventoryDescription label={t('admin.cluster.networks.col.assigned')} description={t('admin.cluster.networks.tooltip.assigned')} id="network-count-assigned" /></th>
++              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><InventoryDescription label={t('admin.cluster.networks.col.owned_unassigned')} description={t('admin.cluster.networks.tooltip.owned_unassigned')} id="network-count-owned_unassigned" /></th>
++              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><InventoryDescription label={t('admin.cluster.networks.col.available')} description={t('admin.cluster.networks.tooltip.available')} id="network-count-available" /></th>
+               <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('common.location')}</th>
+               <th className="px-3 py-2 text-right text-xs font-semibold text-muted">{t('admin.cluster.networks.col.locations')}</th>
+               <th className="px-3 py-2 text-right text-xs font-semibold text-muted">{t('common.actions')}</th>
+@@ -798,7 +788,7 @@ function NetworksContent() {
+ 
+           {editor?.network ? (
+             <div className="text-sm text-muted">
+-              {netLabel(editor.network)} (#{editor.network.id}) · <NetworkCountLabel label={t('admin.cluster.networks.col.assigned')} description={t('admin.cluster.networks.tooltip.assigned')} id="network-editor-assigned" />: <span data-testid="admin.cluster.networks.editor.assigned">{editor.network.assigned ?? '—'}</span> · <NetworkCountLabel label={t('admin.cluster.networks.editor.owned_total')} description={t('admin.cluster.networks.tooltip.owned_total')} id="network-editor-owned" />: <span data-testid="admin.cluster.networks.editor.owned_total">{editor.network.owned ?? '—'}</span>
++              {netLabel(editor.network)} (#{editor.network.id}) · <InventoryDescription label={t('admin.cluster.networks.col.assigned')} description={t('admin.cluster.networks.tooltip.assigned')} id="network-editor-assigned" />: <span data-testid="admin.cluster.networks.editor.assigned">{editor.network.assigned ?? '—'}</span> · <InventoryDescription label={t('admin.cluster.networks.editor.owned_total')} description={t('admin.cluster.networks.tooltip.owned_total')} id="network-editor-owned" />: <span data-testid="admin.cluster.networks.editor.owned_total">{editor.network.owned ?? '—'}</span>
+             </div>
+           ) : null}
+           {capabilityQ.isError ? (
+diff --git a/src/pages/app/admin/ipAddresses/IpAddressesListMobile.tsx b/src/pages/app/admin/ipAddresses/IpAddressesListMobile.tsx
+index 0963239de9fd3857e4f23e1ebc7f4a30848b0a8e..88a2a602959e4d1e173354bdf1ccb69a474e085d 100644
+--- a/src/pages/app/admin/ipAddresses/IpAddressesListMobile.tsx
++++ b/src/pages/app/admin/ipAddresses/IpAddressesListMobile.tsx
+@@ -15,6 +15,7 @@ import { clsx } from '../../../../components/ui/clsx';
+ import { toneSurfaceClass } from '../../../../components/ui/tone';
+ 
+ import { IpAddressRowActions } from './IpAddressRowActions';
++import { InventoryDescription } from '../networking/InventoryDescription';
+ import {
+   ifaceLabel,
+   environmentLabel,
+@@ -98,12 +99,9 @@ export function IpAddressesListMobile({ pageData, ipDetailBasePath, basePath, na
+                     {isPrivateIp(ip) ? <Badge variant="neutral">{t('admin.ip_addresses.chip.private')}</Badge> : null}
+                     {isRoutedIp(ip) ? <Badge variant="black">{t('admin.ip.routed_badge')}</Badge> : null}
+                     {ip.network?.enabled === false ? (
+-                      <span data-row-no-nav tabIndex={0} title={t('admin.ip_addresses.chip.network_disabled.help')} aria-describedby={`admin-ip-card-${id}-network-disabled`} className="group relative inline-flex cursor-help">
+-                        <Badge variant="warn">{t('admin.ip_addresses.chip.network_disabled')}</Badge>
+-                        <span id={`admin-ip-card-${id}-network-disabled`} role="tooltip" className="pointer-events-none absolute top-full right-0 z-50 mt-2 hidden w-64 whitespace-normal rounded-md border border-border bg-surface p-2 text-left text-xs text-fg shadow-lg group-hover:block group-focus:block">
+-                          {t('admin.ip_addresses.chip.network_disabled.help')}
+-                        </span>
+-                      </span>
++                      <InventoryDescription rowNoNav id={`admin-ip-card-${id}-network-disabled`}
++                        description={t('admin.ip_addresses.chip.network_disabled.help')}
++                        label={<Badge variant="warn">{t('admin.ip_addresses.chip.network_disabled')}</Badge>} />
+                     ) : null}
+                   </div>
+                 </div>
+diff --git a/src/pages/app/admin/ipAddresses/IpAddressesListTable.tsx b/src/pages/app/admin/ipAddresses/IpAddressesListTable.tsx
+index 0042d55f7a256e8e48429a593c291900f3372f74..28c2c4cb53181bcef43fb48a0ef2a4e870850b78 100644
+--- a/src/pages/app/admin/ipAddresses/IpAddressesListTable.tsx
++++ b/src/pages/app/admin/ipAddresses/IpAddressesListTable.tsx
+@@ -13,6 +13,7 @@ import { TableCard } from '../../../../components/ui/TableCard';
+ import { TableRowLink } from '../../../../components/ui/TableRowLink';
+ 
+ import { IpAddressRowActions } from './IpAddressRowActions';
++import { InventoryDescription } from '../networking/InventoryDescription';
+ import {
+   ifaceLabel,
+   environmentLabel,
+@@ -177,12 +178,9 @@ export function IpAddressesListTable({ pageData, ipDetailBasePath, basePath, na,
+                   {isPrivateIp(ip) ? <Badge variant="neutral">{t('admin.ip_addresses.chip.private')}</Badge> : null}
+                   {isRoutedIp(ip) ? <Badge variant="black">{t('admin.ip.routed_badge')}</Badge> : null}
+                   {ip.network?.enabled === false ? (
+-                    <span data-row-no-nav tabIndex={0} title={t('admin.ip_addresses.chip.network_disabled.help')} aria-describedby={`admin-ip-row-${id}-network-disabled`} className="group relative inline-flex cursor-help">
+-                      <Badge variant="warn">{t('admin.ip_addresses.chip.network_disabled')}</Badge>
+-                      <span id={`admin-ip-row-${id}-network-disabled`} role="tooltip" className="pointer-events-none absolute top-full right-0 z-50 mt-2 hidden w-64 whitespace-normal rounded-md border border-border bg-surface p-2 text-left text-xs text-fg shadow-lg group-hover:block group-focus:block">
+-                        {t('admin.ip_addresses.chip.network_disabled.help')}
+-                      </span>
+-                    </span>
++                    <InventoryDescription rowNoNav id={`admin-ip-row-${id}-network-disabled`}
++                      description={t('admin.ip_addresses.chip.network_disabled.help')}
++                      label={<Badge variant="warn">{t('admin.ip_addresses.chip.network_disabled')}</Badge>} />
+                   ) : null}
+                 </div>
+               </td>

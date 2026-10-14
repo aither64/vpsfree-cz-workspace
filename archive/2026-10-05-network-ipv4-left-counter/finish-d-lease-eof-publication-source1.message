@@ -1,0 +1,7 @@
+tests: publish complete provider EOF markers
+
+Streaming consumers use marker existence as their synchronization barrier.
+Write and close the literal EOF payload at a sibling temporary path, then
+rename it at all three existing synthetic-provider EOF sites. This prevents
+readers from observing an empty, newly created marker while preserving the
+actual stdin EOF boundary, cleanup guards and production lease behavior.

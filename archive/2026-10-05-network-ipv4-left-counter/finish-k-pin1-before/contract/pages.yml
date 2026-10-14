@@ -1,0 +1,655 @@
+---
+schema: 2
+repository: vpsfreecz/vpsfree-kb-contracts
+revisions:
+  vpsadmin: 5d5527a67315c18b595345aa6996d7724c1ed071
+  vpsadminos: 6bdf458fd9105379860234ff33d352e55844f08f
+pages:
+  firewall:
+    test:
+      suite: kb/firewall
+      source: tests/suite/kb/firewall.nix
+    variants:
+      cs:
+        id: navody:server:firewall
+        counterpart: manuals:server:firewall
+        source: contract/pages/navody-server-firewall.txt
+      en:
+        id: manuals:server:firewall
+        counterpart: navody:server:firewall
+        source: contract/pages/manuals-server-firewall.txt
+    samples:
+      configure-iptables:
+        path: tests/fixtures/firewall/configure-iptables.sh
+        sha256: 9838eaf0e7ae0ef636c7903e6ed3893632d16330408d096e36fa46ecc5f34d51
+        display_variants:
+          cs:
+            comments:
+              4: '# Nainstaluj nástroje pro příkazovou řádku a trvalé ukládání pravidel.'
+              8: '# Při nahrazování současných pravidel ponech provoz povolený.'
+              16: '# Odstraň současná pravidla filtru a uživatelsky definované řetězce.'
+              22: '# Vstup IPv4: zahoď neplatné pakety, zachovej navázaný provoz a otevři služby.'
+              29: '# Vstup IPv6: použij stejná pravidla a zachovej funkční řídicí provoz IPv6.'
+              36: '# Zahoď ostatní vstupní a předávaný provoz, místní odchozí provoz ponech povolený.'
+              42: '# Ulož pravidla a zobraz výslednou politiku vstupu.'
+          en:
+            comments:
+              4: '# Install the command-line tools and boot-time persistence.'
+              8: '# Keep traffic allowed while replacing the current rules.'
+              16: '# Remove the current filter rules and user-defined chains.'
+              22: '# IPv4 input: drop invalid packets, keep established traffic, and open services.'
+              29: '# IPv6 input: apply the same policy and keep IPv6 control traffic working.'
+              36: '# Drop other input and forwarded traffic; keep locally generated output allowed.'
+              42: '# Persist the rules and display the resulting input policy.'
+        tests:
+        - iptables
+      nftables-config:
+        path: tests/fixtures/firewall/nftables.conf
+        sha256: 0f7945f4de309994250de65e10928a213407086b6597316f5ae143ab060dd3a3
+        display_variants:
+          cs:
+            comments:
+              3: '# Nahraď celou současnou sadu pravidel.'
+              10: '    # Nejprve zpracuj stav, povol loopback, zachovej řídicí provoz a otevři služby.'
+              19: '    # Tento jednoduchý firewall nepředává žádný provoz.'
+              24: '    # Povol veškerý provoz vytvořený na VPS.'
+          en:
+            comments:
+              3: '# Replace the complete current ruleset.'
+              10: '    # Handle state first, trust loopback, keep control traffic, and open services.'
+              19: '    # This simple host firewall does not forward traffic.'
+              24: '    # Locally generated traffic is unrestricted.'
+        tests:
+        - nftables
+      enable-nftables:
+        path: tests/fixtures/firewall/enable-nftables.sh
+        sha256: cc0e9b385c8027a5b2430f1a2ebbbacd302e502a5d094c3e0b6483cd48dffbb1
+        display_variants:
+          cs:
+            comments:
+              4: '# Nainstaluj nftables.'
+              8: '# Před použitím zkontroluj celou konfiguraci.'
+              11: '# Načti konfiguraci nyní i při startu a pak zobraz výsledek.'
+          en:
+            comments:
+              4: '# Install nftables.'
+              8: '# Validate the complete configuration before applying it.'
+              11: '# Load the configuration now and at boot, then display the result.'
+        tests:
+        - nftables
+      configure-ufw:
+        path: tests/fixtures/firewall/configure-ufw.sh
+        sha256: f8ff59a953019b195fc7aa2e4664412a88ebb586258fa48b8f29e911baa01cd5
+        tests:
+        - ufw
+      configure-firewalld:
+        path: tests/fixtures/firewall/configure-firewalld.sh
+        sha256: 4dfc3a7695aac36d2b850e75d835368f7a31164ac3df37664d1e1ff572f0616f
+        tests:
+        - firewalld
+      nixos-firewall:
+        path: tests/fixtures/firewall/nixos-firewall.nix
+        sha256: f4a7b9acb4d42fac175ed7865ab8073b3ceb645baa6bc29f927c61201ce01ebb
+        language: nix
+        tests:
+        - nixos
+      test-nixos-firewall:
+        path: tests/fixtures/firewall/test-nixos-firewall.sh
+        sha256: 73d35ce2970db6341700c21d1ae44f78f49d8832ce0145b3bdca911963650cd7
+        tests:
+        - nixos
+      switch-nixos-firewall:
+        path: tests/fixtures/firewall/switch-nixos-firewall.sh
+        sha256: 63f91d83b244565b993afc7373f108bb4f9b402fcd84a148b8df78a524019c45
+        tests:
+        - nixos
+    sections:
+      basics:
+        claims:
+        - platform-does-not-add-shared-vps-firewall
+        - distribution-defaults-differ
+        - firewall-is-optional-defense-in-depth
+        - input-output-and-forward-process-distinct-traffic
+        - terminal-rules-are-evaluated-in-order-before-default-policy
+        - state-tracking-preserves-established-connections
+        - ipv4-and-ipv6-both-require-policy
+        - use-exactly-one-firewall-manager
+        - simple-rules-exclude-docker-vpn-and-routing
+        tests: []
+        samples: []
+        localizations:
+          cs:
+            heading: Jak pravidla fungují
+            fingerprint: 330f4e4935ce8ca275f273ff2d33629e69cc50d80e571da8b843cc5a25e6ad3f
+          en:
+            heading: How rules work
+            fingerprint: 50280702be06a396463068724113e76542f613c5aaab79733668cca6fa1d38a7
+      iptables:
+        claims:
+        - current-debian-iptables-uses-nftables-backend
+        - iptables-and-ip6tables-manage-separate-address-families
+        - accepting-policies-precede-rule-replacement
+        - loopback-icmp-established-and-selected-tcp-services-are-accepted
+        - input-and-forward-default-to-drop-output-to-accept
+        - netfilter-persistent-restores-both-address-families
+        tests:
+        - iptables
+        samples:
+        - configure-iptables
+        localizations:
+          cs:
+            heading: Jednoduchý firewall pomocí iptables
+            fingerprint: 7e30b450a806e212228361271c4634941289c96191709ec3c5b33e34fb9800bc
+          en:
+            heading: A simple firewall with iptables
+            fingerprint: baca42e9f8963960985649fa5503fd74d7ed2287743e9c1453280beac4996ff5
+      nftables:
+        claims:
+        - inet-table-filters-ipv4-and-ipv6
+        - nftables-input-and-forward-default-to-drop
+        - nftables-output-defaults-to-accept
+        - nft-check-validates-before-application
+        - nftables-service-loads-rules-at-boot
+        tests:
+        - nftables
+        samples:
+        - nftables-config
+        - enable-nftables
+        localizations:
+          cs:
+            heading: Nativní nftables
+            fingerprint: e09783b02b2680ba920083ad75b6fe61292a117a56d162f28926281f5d5bee53
+          en:
+            heading: Native nftables
+            fingerprint: 9b9726989d157a0d7b84d05ce52413a695855bc4b6c86d53c9ceda83ff3d17e8
+      ufw:
+        claims:
+        - ufw-manages-dual-stack-stateful-filtering
+        - ufw-allows-selected-tcp-services
+        - ufw-retains-built-in-loopback-and-control-traffic-rules
+        - ufw-existing-user-rules-remain-in-effect
+        - ufw-defaults-apply-to-otherwise-unmatched-traffic
+        - ufw-policy-persists-after-restart
+        tests:
+        - ufw
+        samples:
+        - configure-ufw
+        localizations:
+          cs:
+            heading: UFW na Debianu a Ubuntu
+            fingerprint: c90cbc4aaca6a5a8f1767716fab12a67d3a161f925feb8644723620ac3a82ce9
+          en:
+            heading: UFW on Debian and Ubuntu
+            fingerprint: b62d3d37936ac66579ac131bc75e17a2152ca1588f50878a8da852f99090ad77
+      firewalld:
+        claims:
+        - firewalld-zones-bind-rules-to-interfaces
+        - firewalld-permanent-services-require-reload
+        - public-zone-allows-ssh-http-and-https
+        - firewalld-example-preserves-existing-zone-target-and-rules
+        - firewalld-example-leaves-outgoing-traffic-unrestricted
+        - firewalld-policy-persists-after-restart
+        tests:
+        - firewalld
+        samples:
+        - configure-firewalld
+        localizations:
+          cs:
+            heading: firewalld na Fedoře a distribucích rodiny RHEL
+            fingerprint: a0006b16c68a5f55a118a03f3f14bdc688b3a4a32ec5475c286405012d756067
+          en:
+            heading: firewalld on Fedora and the RHEL family
+            fingerprint: 5feaa1a8cad0e5450330393a0d03e66f5b860b3382badbfe7291476fb7af70e8
+      nixos:
+        claims:
+        - nixos-firewall-is-enabled-by-default
+        - nixos-open-ports-are-declarative
+        - nixos-example-allows-selected-tcp-and-established-connections
+        - nixos-built-in-rules-retain-control-traffic
+        - nixos-default-policy-drops-other-new-input
+        - nixos-example-leaves-outgoing-traffic-unrestricted
+        - nixos-test-activation-is-not-the-persistent-generation
+        - nixos-switch-persists-firewall-policy
+        tests:
+        - nixos
+        samples:
+        - nixos-firewall
+        - test-nixos-firewall
+        - switch-nixos-firewall
+        localizations:
+          cs:
+            heading: NixOS
+            fingerprint: 52925bf596ff152a461d7eb5db9fda9824d9d5df2caf82883246f88f4686f8bd
+          en:
+            heading: NixOS
+            fingerprint: 9cc707707ec31f81c3a990c082a8329643ccabffc4267fee8c341e93b29ec756
+      containers:
+        claims:
+        - container-published-ports-may-bypass-frontend-expectations
+        - publish-only-intentionally-public-container-ports
+        tests: []
+        samples: []
+        localizations:
+          cs:
+            heading: Docker a jiné kontejnery
+            fingerprint: 7ca03dbdd69856d4e72c4c727873aab9a2f76bdd8971c9215be09f3dcc200a57
+          en:
+            heading: Docker and other containers
+            fingerprint: 71d60174819f9fe2ea7e65f75d073f30583d4d49cbcedbe1b7118797130280d5
+      recovery:
+        claims:
+        - keep-original-ssh-session-open
+        - remote-console-does-not-depend-on-vps-networking
+        - start-menu-run-shell-allows-offline-repair
+        - manager-specific-temporary-disable-is-preferred-to-blind-flush
+        tests: []
+        samples: []
+        localizations:
+          cs:
+            heading: Když se odřízneš
+            fingerprint: 9fb4584b4d100b694cd9faf28fe939b15d1327870a6d34a4a5e6c5777135b753
+          en:
+            heading: If you lock yourself out
+            fingerprint: ce80c78e50625fa9979bc1af83774afb6fd5a1f90c4a171748a1a9c181c6dafc
+  kvm:
+    test:
+      suite: kb/kvm
+      source: tests/suite/kb/kvm.nix
+    variants:
+      cs:
+        id: navody:vps:kvm
+        counterpart: manuals:vps:kvm
+        source: contract/pages/navody-vps-kvm.txt
+      en:
+        id: manuals:vps:kvm
+        counterpart: navody:vps:kvm
+        source: contract/pages/manuals-vps-kvm.txt
+    captures:
+    - vps-details/feature-settings
+    - vps-details/datasets
+    samples:
+      install-libvirt:
+        path: tests/fixtures/kvm/install-libvirt.sh
+        sha256: 1e34d628c256504ad75351579a52680414a677c8d7012eead47995ee388e87c4
+        tests:
+        - libvirt
+      configure-storage-pool:
+        path: tests/fixtures/kvm/configure-storage-pool.sh
+        sha256: '084d6aedf300b10ef0275d20949bcebac4a72777201b02fed7d08adb36dba642'
+        tests:
+        - storage
+      configure-nat-port-forwards:
+        path: tests/fixtures/kvm/configure-nat-port-forwards.sh
+        sha256: 2d3de08932f8f9aa8675b4ba98cd917699ea485617891960604f239853d7ab2d
+        display_variants:
+          cs:
+            comments:
+              172: '# RODINA PROTOKOL VEŘEJNÁ_IP VEŘEJNÝ_PORT IP_DOMÉNY PORT_DOMÉNY'
+          en:
+            comments:
+              172: '# FAMILY PROTOCOL PUBLIC_IP PUBLIC_PORT GUEST_IP GUEST_PORT'
+        tests:
+        - networking
+      configure-routed-network:
+        path: tests/fixtures/kvm/configure-routed-network.sh
+        sha256: 5c39d649181b155ca48b01efc454dc9e98082d4e2bcbb2b6c0c7d18ae80dad5e
+        tests:
+        - networking
+      mount-readonly-iso:
+        path: tests/fixtures/kvm/mount-readonly-iso.sh
+        sha256: 9c85085d0df9f0b2b499218800e247fba3ef38eac6236e467ab21c3a280b87e4
+        tests:
+        - nfs-locking
+    sections:
+      libvirt:
+        claims:
+        - kvm-is-direct-not-nested
+        - kvm-and-tun-default-enabled
+        - debian-latest-template
+        - debian-packages-start-libvirt-automatically
+        - libvirt-system-connection
+        - direct-kvm-capabilities-without-test-domain
+        tests:
+        - platform-defaults
+        - libvirt
+        samples:
+        - install-libvirt
+        localizations:
+          cs:
+            heading: Instalace libvirt
+            fingerprint: 1b8659425ab6fff152e2f55cf16a2c7d3f8314769a17cc44a0c5672fc82995ca
+          en:
+            heading: Installing libvirt
+            fingerprint: 7916133f9aa9a003f71fc4565794f73fba63395c19a349cb1d25e388ffe3d1df
+      storage:
+        claims:
+        - subdataset-recommended-property-boundary
+        - mounted-subdataset-is-persistent-libvirt-pool
+        - compression-enabled-and-recordsize-128k-maximum-default
+        - raw-default-and-qcow2-feature-choice
+        tests:
+        - storage
+        samples:
+        - configure-storage-pool
+        localizations:
+          cs:
+            heading: Diskové obrazy a ZFS
+            fingerprint: 6b9bd250e91f1b2ae56e8c920a5e846f11d9ff411237989c6b435db4ec96294f
+          en:
+            heading: Disk images and ZFS
+            fingerprint: 06c8ba46b88c445361c3b4e05899f1a7f58b42e1c12bdbeae27ff125acc594aa
+      networking:
+        claims:
+        - outer-veth-is-routed-and-must-not-be-bridged
+        - networking-topologies-have-explicit-tradeoffs
+        - explicit-dual-stack-nat44-and-nat66-network
+        - dual-stack-nat-coexists-with-default-libvirt-network
+        - persistent-dual-stack-port-forwards
+        - public-ipv4-routed-via-private-vps-address
+        - delegated-ipv6-64-routed-via-primary-vps-64
+        - ipv4-and-ipv6-forwarding-enabled-persistently
+        - open-forwarding-leaves-filtering-to-vps-firewall
+        - routed-public-addresses-use-no-libvirt-nat
+        tests:
+        - networking
+        samples:
+        - configure-nat-port-forwards
+        - configure-routed-network
+        localizations:
+          cs:
+            heading: Síť virtuálních strojů
+            fingerprint: 8b7ef93de74e5e0ab822fe9c655568576b1a7fb5f4366385278422d1cad03a83
+          en:
+            heading: Virtual-machine networking
+            fingerprint: 33bb85537af3d518aaed35382d700ba9697cf2b436ac2bc4d4604a0011b81c0d
+      nfs-installer-iso:
+        claims:
+        - nfs-lock-failure-is-conditional
+        - nolock-only-for-single-client-readonly-nfsv3-iso
+        tests:
+        - nfs-locking
+        samples:
+        - mount-readonly-iso
+        localizations:
+          cs:
+            heading: Instalační ISO na NFS
+            fingerprint: e2f4bcbccffc76647e0cacade6f702cc671ee2995bd0829cb85c4134be85a129
+          en:
+            heading: Installer ISO on NFS
+            fingerprint: 0d66dd29e1c70c0e4aef11615d5af3108b506e5632d003deb736b9c11703fc77
+  guix:
+    test:
+      suite: kb/guix
+      source: tests/suite/kb/guix.nix
+    variants:
+      cs:
+        id: navody:distribuce:guix
+        counterpart: manuals:distributions:guix
+        source: contract/pages/navody-distribuce-guix.txt
+      en:
+        id: manuals:distributions:guix
+        counterpart: navody:distribuce:guix
+        source: contract/pages/manuals-distributions-guix.txt
+    samples:
+      reconfigure-system:
+        path: tests/fixtures/guix/reconfigure-system.sh
+        sha256: 5382792467c9556cf370843fa0f16394c9aecf571ca532bf8679055b2f88035f
+        display_variants:
+          cs:
+            comments:
+              4: '# Použij revizi Guixu, která sestavila aktivní systémovou generaci.'
+          en:
+            comments:
+              4: '# Use the Guix revision that built the active system generation.'
+        tests:
+        - reconfigure
+      deploy-system:
+        path: tests/fixtures/guix/deploy-system.scm
+        sha256: 0c6b1549ec7121820eb31a999f25b7b43f32f04e5521d99c3dfae83a7167a14b
+        language: scheme
+        display_variants:
+          cs:
+            comments:
+              1: ';; Načti udržovanou integraci kontejnerů vpsAdminOS.'
+              12: '       ;; Tyto soubory jsou na stroji, ze kterého spouštíš guix deploy.'
+              17: '       ;; Sestav seznam služeb dříve, než jej přiřadíš zpožděně vyhodnocovanému poli.'
+              47: '            ;; Nahraď adresu a hostitelský klíč údaji cílové VPS.'
+              55: '            ;; vpsAdminOS poskytuje jádro a používá zástupný kořen /dev/null.'
+              56: '            ;; Guix proto nemůže provést kontroly souborového systému a initrd určené pro fyzický stroj.'
+          en:
+            comments:
+              1: ';; Load the maintained vpsAdminOS container integration.'
+              12: '       ;; These files belong to the machine from which you run guix deploy.'
+              17: '       ;; Build the service list before assigning the delayed services field.'
+              47: '            ;; Replace the address and host key with those of your target VPS.'
+              55: '            ;; vpsAdminOS supplies the kernel and exposes a dummy /dev/null root.'
+              56: "            ;; Guix's bare-metal file-system/initrd checks cannot inspect it."
+        tests:
+        - reconfigure
+    sections:
+      template:
+        claims:
+        - template-ships-system-and-vpsadminos-module
+        - platform-module-defines-container-boot-filesystems-and-networking
+        - host-supplies-kernel
+        tests:
+        - reconfigure
+        samples: []
+        localizations:
+          cs:
+            heading: Jak funguje šablona
+            fingerprint: 417774c9b82071cb3b31f129097b527c0a5a20ee509e6ebe315a9ba4613fc431
+          en:
+            heading: How the template works
+            fingerprint: bfdbff495e896e779a1a930ba48aea7dc353bbb2157d9763d78e638ab31fc525
+      configuration:
+        claims:
+        - system-scm-is-member-editable
+        - vpsadminos-module-load-path-is-required
+        - reconfigure-creates-and-activates-generation
+        tests:
+        - reconfigure
+        samples:
+        - reconfigure-system
+        localizations:
+          cs:
+            heading: Úprava konfigurace
+            fingerprint: 6cd1ee1b126eaf8e64635efd9b36e7912fe876ff926c818cc8f31ae8baef9770
+          en:
+            heading: Editing the configuration
+            fingerprint: b040551a40d3b68d4b61da9864f50fc2f5a55a928bdbe3713064378b41f7bab0
+      updates:
+        claims:
+        - reconfigure-does-not-require-guix-pull
+        - channel-updates-are-intentional-separate-operations
+        tests: []
+        samples: []
+        localizations:
+          cs:
+            heading: Aktualizace Guixu
+            fingerprint: 125bb4628bdd05382f88599267625ff5445042abc1d615c77d7f506861c79024
+          en:
+            heading: Updating Guix
+            fingerprint: affb1d8b0264942451c62cbafbbe153bb317afa0cf5e5aba353beed655cc813c
+      network-ssh:
+        claims:
+        - networking-is-generated-by-vpsadminos
+        - default-template-permits-root-ssh
+        tests:
+        - reconfigure
+        samples: []
+        localizations:
+          cs:
+            heading: Síť a SSH
+            fingerprint: a0c9c3d4c85dbca4f93ac2b7413e26d1376478d66658d1cd1b3bad6cd52555bb
+          en:
+            heading: Network and SSH
+            fingerprint: 4b5c829a685bcf8a82a43c3f7304e3eaac34c42600738b66eb8c5d9b5329bc23
+      deployment:
+        claims:
+        - deploy-configuration-loads-platform-module
+        - deploy-authenticates-with-pinned-host-key
+        - deploy-keeps-root-ssh-key-only
+        - deploy-authorizes-controller-signing-key
+        - deploy-disables-bare-metal-checks-and-blocks-downgrades
+        tests:
+        - reconfigure
+        samples:
+        - deploy-system
+        localizations:
+          cs:
+            heading: Nasazení pomocí guix deploy
+            fingerprint: b9fed0f3c18e2de92d4911694718d53d31a9682a4f96e3601a792a4ec3084f73
+          en:
+            heading: Deploying with guix deploy
+            fingerprint: 3c4ffeca3cdec74f5ab560e334902d110a29bd4ab250c15f5612eae84bbd8b5a
+      recovery:
+        claims:
+        - reconfiguration-keeps-older-generations
+        - start-menu-can-boot-older-guix-generation
+        tests: []
+        samples: []
+        localizations:
+          cs:
+            heading: Generace a obnova
+            fingerprint: 3c05e6d5f1b3ed5a8d103e747b0df8b5aad5ea5ac86da7648a428fc3c8e4c1fb
+          en:
+            heading: Generations and recovery
+            fingerprint: 013584fb633f223acd644a8066489882f1ed25350ed722cbf03b9f0eaa62bc3d
+  gre:
+    test:
+      suite: kb/gre
+      source: tests/suite/kb/gre.nix
+    variants:
+      cs:
+        id: navody:server:gre
+        counterpart: manuals:server:gre
+        source: contract/pages/navody-server-gre.txt
+      en:
+        id: manuals:server:gre
+        counterpart: navody:server:gre
+        source: contract/pages/manuals-server-gre.txt
+    samples:
+      transient-a:
+        path: tests/fixtures/gre/configure-transient-a.sh
+        sha256: d3db14a62f6a2c44489fe0a08ffb081c72b56f2a894031a2fc60f81ecbfc9e83
+        tests:
+        - tunnel
+      transient-b:
+        path: tests/fixtures/gre/configure-transient-b.sh
+        sha256: 711b5485c287d429ea212d18bfd9eeefb083fe29b28414fc0bbef15fea3cba10
+        tests:
+        - tunnel
+      interfaces-a:
+        path: tests/fixtures/gre/interfaces-a
+        sha256: 0746ae8457802a9f6b8bbda6c4b6a66d96a84d87c1dd17c23fca106656b948f9
+        tests:
+        - tunnel
+      interfaces-b:
+        path: tests/fixtures/gre/interfaces-b
+        sha256: 7a0365aa5e7dd7050eedf39403d98c0e1c13ccf5c5dc011d6dff5f642bf9f475
+        tests:
+        - tunnel
+      ping-a:
+        path: tests/fixtures/gre/ping-a.sh
+        sha256: 9eb7f1e26c2c68acefea12878d647d62b8038da3872d8176127c4e49a0d0f343
+        display_variants:
+          cs:
+            comments:
+              2: '# Na VPS A'
+          en:
+            comments:
+              2: '# On VPS A'
+        tests:
+        - tunnel
+      ping-b:
+        path: tests/fixtures/gre/ping-b.sh
+        sha256: 6bbdf28bfced6dd0e866ecf1180c08b18fd9b6331fb77fffa92411fa08c2f117
+        display_variants:
+          cs:
+            comments:
+              2: '# Na VPS B'
+          en:
+            comments:
+              2: '# On VPS B'
+        tests:
+        - tunnel
+    sections:
+      prerequisites:
+        claims:
+        - gre-uses-ip-protocol-47
+        - gre-is-not-encrypted-or-authenticated
+        - trusted-vpsfree-internal-only
+        - source-address-ownership-enforced
+        - wireguard-for-public-internet
+        tests: []
+        samples: []
+        localizations:
+          cs:
+            heading: Než začneš
+            fingerprint: 9b995be6a53e05fdb081e8fef0e0fa730b055332f483e248e1b7d4bef562b00c
+          en:
+            heading: Before you begin
+            fingerprint: 07cb89d0a554e0522630c388c4665359616c3d9bcfa443bc88f2a62e940e26a6
+      transient:
+        claims:
+        - transient-commands-create-matching-gre-endpoints
+        - tunnel-addresses-use-a-private-30
+        - tunnel-mtu-is-1476
+        tests:
+        - tunnel
+        samples:
+        - transient-a
+        - transient-b
+        - ping-a
+        - ping-b
+        localizations:
+          cs:
+            heading: Okamžité nastavení
+            fingerprint: 4dec5f4b3d94bae363702965668549b501472f4a382522a12f3f31e1619f1052
+          en:
+            heading: Immediate configuration
+            fingerprint: 2a340fc9c6f01c9a70472956f650a274c4bde7af7240414e66fe50822f43582b
+      debian-ifupdown:
+        claims:
+        - debian-template-uses-ifupdown
+        - ifupdown-tunnel-addresses-are-inner-addresses
+        - ifupdown-local-and-endpoint-are-outer-addresses
+        - ifupdown-configuration-survives-restart
+        tests:
+        - tunnel
+        samples:
+        - interfaces-a
+        - interfaces-b
+        localizations:
+          cs:
+            heading: Trvalé nastavení v Debianu
+            fingerprint: ab534614514766977553a74439f84c0fe149e162dbc5c206c8b3906849109c41
+          en:
+            heading: Persistent Debian configuration
+            fingerprint: 213704c2a20f8a9c655db740f72598412faef86d702521a4e5df7fcaffe4b30d
+      other-network-managers:
+        claims:
+        - network-manager-specific-configuration-is-linked-upstream
+        tests: []
+        samples: []
+        localizations:
+          cs:
+            heading: Jiné správce sítě
+            fingerprint: d5c5e8cfc40b67bcbdb1a81466f1e85323477717333cdd769874675e5b9c133c
+          en:
+            heading: Other network managers
+            fingerprint: b644d8cfbea1eedfc7d71742e69d39a58bbbc211f6bc94a6795b68f2297ef79e
+      troubleshooting:
+        claims:
+        - gre-over-ipv4-reduces-mtu
+        - troubleshooting-checks-outer-addresses-firewall-and-endpoints
+        tests: []
+        samples: []
+        localizations:
+          cs:
+            heading: MTU a řešení problémů
+            fingerprint: 831f8af0dceacc65dbf8546c7aec29448c86733c019df4d1aacec3caf9bec5d3
+          en:
+            heading: MTU and troubleshooting
+            fingerprint: 68a0b0fbbe8692a89962c02de804a3bef96f44b804f8ef8d25198f1544196b19

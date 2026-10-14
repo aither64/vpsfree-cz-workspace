@@ -1,0 +1,59 @@
+{
+  "at": "2026-10-11T11:16:41.063395+00:00",
+  "source_only": true,
+  "baseline": "2c3d49fedc98e512a64874ccb77134dbdb93f692",
+  "failure_record": {
+    "path": "finish-host-key-composition-barrier-failure1.json",
+    "sha256": "7f38286bcb35478d73f3614999cfd3d1ba53817cf99124fe9dbc110be81ea4e7"
+  },
+  "native_logs": [
+    {
+      "path": "finish-host-key-composition-hosted1/k/full.log",
+      "sha256": "097b2560e8c47a2a9d3b7f42c8a4a02b3cedf5b5be6c7c6d465beb0ef2a92278",
+      "bytes": 148954,
+      "source": "2c3d49fedc98e512a64874ccb77134dbdb93f692",
+      "suite": "10 runs/342 assertions/1 failure/0 errors/0 skips",
+      "excerpt_lines": [
+        923,
+        924,
+        927
+      ]
+    },
+    {
+      "path": "finish-host-key-composition-hosted1/k-runtime/full.log",
+      "sha256": "b99045a0cff0d355fd2b0b5b58129c31309c0e764dfd1c40891b658bfee5976e",
+      "bytes": 148956,
+      "source": "2c3d49fedc98e512a64874ccb77134dbdb93f692",
+      "suite": "10 runs/342 assertions/1 failure/0 errors/0 skips",
+      "excerpt_lines": [
+        922,
+        923,
+        926
+      ]
+    }
+  ],
+  "native_cause_limits": "Both retained raw checks report Bash EAGAIN at the pool-release barrier. Ruby source establishes inherited nonblocking descriptors; no local reproduction or guest/product failure is claimed.",
+  "primary_sources": [
+    {
+      "url": "https://raw.githubusercontent.com/ruby/ruby/v3_4_9/io.c",
+      "lines": [
+        "404-432",
+        "6990-6998",
+        "11268-11284"
+      ],
+      "boundary": "IO.pipe delegates to rb_pipe and rb_cloexec_pipe; pipe2 uses O_CLOEXEC|O_NONBLOCK."
+    },
+    {
+      "url": "https://raw.githubusercontent.com/ruby/ruby/v3_4_9/ext/io/nonblock/nonblock.c",
+      "lines": [
+        "67-81",
+        "83-107",
+        "130-142",
+        "187-199"
+      ],
+      "boundary": "io/nonblock exposes nonblock=; false clears O_NONBLOCK on the descriptor, including the inherited open description."
+    }
+  ],
+  "correction": "Require io/nonblock and set release_input.nonblock=false immediately after acquisition, before existing spawn mapping to FD4.",
+  "unchanged": "No production, source policy, storage guard, method/assertion, timeout, reaper, dependency, workflow, prose or other repository change."
+}

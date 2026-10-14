@@ -1,0 +1,213 @@
+diff --git a/flake.nix b/flake.nix
+index 70dcb82..9e7ca86 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -3,7 +3,7 @@
+ 
+   inputs = {
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+-    dev-workspace.url = "github:aither64/dev-workspace/6a972b9ab01077611b2c60e0fc726c185e050315";
++    dev-workspace.url = "github:aither64/dev-workspace/9fe491218e35a3250f2a72c203c2cecc3cb7ae16";
+     devcluster-vpsadminos.url = "github:vpsfreecz/vpsadminos/15802517e2d92dda4ddc07ebac3d1d7ea087b430";
+     devcluster-vpsadmin = {
+       url = "github:vpsfreecz/vpsadmin/5c76e3290481b297dcd0baa76d246133f0353d8f";
+@@ -59,6 +59,14 @@
+         pkgs.callPackage ./nix/organization-tools.nix {
+           src = self;
+           runtimeContract = dev-workspace.lib.runtimeContract;
++          kbRuntimePackage =
++            if siteConfig.clusterDefaults ? kb then
++              inputs.kb-runtime.packages.${pkgs.stdenv.hostPlatform.system}.kb-runtime
++            else null;
++          kbSourceMetadata =
++            if siteConfig.clusterDefaults ? kb then
++              inputs.kb-runtime.packages.${pkgs.stdenv.hostPlatform.system}.runtime-source
++            else null;
+           inherit siteConfig;
+         };
+       mkPackage =
+@@ -107,6 +115,11 @@
+                   label = "vpsAdminOS";
+                   command = "${tools}/bin/vpsadminos-devcluster";
+                 };
++              } // lib.optionalAttrs (validatedSiteConfig.clusterDefaults ? kb) {
++                kb = {
++                  label = "KB";
++                  command = "${tools}/bin/kb-devcluster";
++                };
+               };
+             };
+           }
+@@ -144,6 +157,15 @@
+         inherit pkgs;
+         siteConfig = testSiteConfig;
+       };
++      testKbSiteConfig = testSiteConfig // {
++        clusterDefaults = testSiteConfig.clusterDefaults // {
++          kb = ./test/fixtures/kb-config.json;
++        };
++      };
++      testKbPackage = mkPackage {
++        inherit pkgs;
++        siteConfig = testKbSiteConfig;
++      };
+       devclusterCheck = pkgs.writeShellApplication {
+         name = "devcluster-check";
+         runtimeInputs = [
+@@ -188,6 +210,22 @@
+             };
+           }
+         )
++        (
++          testSiteConfig
++          // {
++            clusterDefaults = testSiteConfig.clusterDefaults // {
++              kb = "/tmp/mutable-kb.json";
++            };
++          }
++        )
++        (
++          testSiteConfig
++          // {
++            clusterDefaults = testSiteConfig.clusterDefaults // {
++              kb = ./test/fixtures/not-object.json;
++            };
++          }
++        )
+         (
+           testSiteConfig
+           // {
+@@ -251,6 +289,27 @@
+       checks.${system} = {
+         compatibility-package = testCompatibilityPackage;
+         package = testPackage;
++        kb-provider-package = testKbPackage;
++        kb-provider-contract = pkgs.runCommand "vpsfree-kb-provider-contract" { } ''
++          ${pkgs.jq}/bin/jq -e '
++            [.clusterProviders[] | { id, label }] == [
++              { id: "kb", label: "KB" },
++              { id: "vpsadmin", label: "vpsAdmin" },
++              { id: "vpsadminos", label: "vpsAdminOS" }
++            ]
++          ' ${testKbPackage}/share/dev-workspace/extensions.json >/dev/null
++          for provider in kb vpsadmin vpsadminos; do
++            command=$(${pkgs.jq}/bin/jq -er --arg provider "$provider" \
++              '.clusterProviders[] | select(.id == $provider) | .command' \
++              ${testKbPackage}/share/dev-workspace/extensions.json)
++            test -x "$command"
++            test -x ${testKbPackage}/libexec/workspace-portal/"$provider"-devcluster
++          done
++          ${pkgs.coreutils}/bin/env -i HOME="$TMPDIR" PATH=/empty \
++            ${testKbPackage}/libexec/workspace-portal/kb-devcluster --help >/dev/null
++          test ! -e ${testPackage}/libexec/workspace-portal/kb-devcluster
++          touch "$out"
++        '';
+         package-metadata = pkgs.runCommand "vpsfree-dev-workspace-package-metadata" { } ''
+           ${pkgs.jq}/bin/jq -e \
+             --arg router ${nixpkgs.lib.escapeShellArg dev-workspace.lib.hostPaths.routerSocket} \
+@@ -338,6 +397,11 @@
+               cd source
+               patchShebangs bin dev-clusters
+               ${testEnvironment}
++              unset RUBYOPT RUBYLIB GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH
++              export GEM_HOME=$(${pkgs.ruby}/bin/ruby --disable-gems -rrubygems -e 'print Gem.default_dir')
++              export GEM_PATH="$GEM_HOME"
++              export VPSFREE_KB_ENGINE_METADATA=${inputs.kb-runtime.packages.${system}.runtime-source}
++              export DEV_WORKSPACE_HOST_SOURCE=${dev-workspace}
+               export RUNTIME_AUTHORITY_CORPUS=${dev-workspace.lib.runtimeAuthorityCorpus}
+               ruby test/devcluster_status_test.rb
+               ruby test/devcluster_commands_test.rb
+@@ -346,6 +410,13 @@
+               ruby test/devcluster_maintenance_test.rb
+               ruby test/devcluster_store_roots_test.rb
+               ruby test/devcluster_storage_profile_test.rb
++              ruby test/kb_devcluster_test.rb
++              ruby test/kb_guards_test.rb
++              ruby test/kb_connection_test.rb
++              ruby test/kb_lease_test.rb
++              ruby test/kb_cli_test.rb
++              ruby test/kb_portable_test.rb
++              ruby test/kb_public_dispatch_test.rb
+               ruby test/kb_cleanup_test.rb
+               ruby test/kb_contract_tools_test.rb
+               ruby test/kb_page_test.rb
+diff --git a/nix/organization-tools.nix b/nix/organization-tools.nix
+index 567bf7c..63f867a 100644
+--- a/nix/organization-tools.nix
++++ b/nix/organization-tools.nix
+@@ -8,6 +8,8 @@
+   gnused,
+   iproute2,
+   jq,
++  kbRuntimePackage ? null,
++  kbSourceMetadata ? null,
+   lib,
+   makeWrapper,
+   nix,
+@@ -25,6 +27,7 @@
+ let
+   kb = siteConfig.kb or { };
+   clusters = siteConfig.clusterDefaults or { };
++  kbProviderEnabled = clusters ? kb;
+   clusterConfigurations = builtins.mapAttrs (
+     name: value:
+     builtins.path {
+@@ -73,6 +76,8 @@ let
+ in
+ assert lib.assertMsg authorityPolicyValid
+   "the namespace migration must be reviewed for the selected runtime authority policy";
++assert lib.assertMsg (!kbProviderEnabled || (kbRuntimePackage != null && kbSourceMetadata != null))
++  "the KB provider requires its exact published portable engine input";
+ stdenvNoCC.mkDerivation {
+   pname = "vpsfree-dev-workspace-tools";
+   version = "0.1.0";
+@@ -141,6 +146,21 @@ stdenvNoCC.mkDerivation {
+       --prefix PATH : ${lib.escapeShellArg clusterRuntimePath} \
+       --set VPSADMINOS_DEVCLUSTER_DEFAULT_CONFIG ${lib.escapeShellArg (toString clusterConfigurations.vpsadminos)}
+ 
++    ${lib.optionalString kbProviderEnabled ''
++      install -m644 ${clusterConfigurations.kb} \
++        "$out/share/vpsfree-dev-workspace/dev-clusters/kb/default-config.json"
++      substituteInPlace "$out/share/vpsfree-dev-workspace/dev-clusters/kb/bin/devcluster" \
++        --replace-fail '#!/usr/bin/env ruby' '#!${ruby}/bin/ruby'
++      makeWrapper "$out/share/vpsfree-dev-workspace/dev-clusters/kb/bin/devcluster" \
++        "$out/bin/kb-devcluster" \
++        --prefix PATH : ${lib.escapeShellArg clusterRuntimePath} \
++        --set VPSFREE_KB_ENGINE ${kbRuntimePackage}/bin/vpsfree-kb-devcluster \
++        --set VPSFREE_KB_ENGINE_METADATA ${kbSourceMetadata} \
++        --set VPSFREE_KB_DEFAULT_CONFIG ${lib.escapeShellArg (toString clusterConfigurations.kb)} \
++        --set DEVCLUSTER_RUNTIME_CONTRACT \
++          "$out/share/vpsfree-dev-workspace/dev-clusters/runtime-contract.json"
++    ''}
++
+     runHook postInstall
+   '';
+ 
+@@ -176,6 +196,14 @@ stdenvNoCC.mkDerivation {
+     done
+     DEVCLUSTER_WORKSPACE="$TMPDIR/workspace" "$out/bin/vpsadmin-devcluster" --help >/dev/null
+     DEVCLUSTER_WORKSPACE="$TMPDIR/workspace" "$out/bin/vpsadminos-devcluster" --help >/dev/null
++    ${if kbProviderEnabled then ''
++      ${diffutils}/bin/cmp ${clusterConfigurations.kb} \
++        "$out/share/vpsfree-dev-workspace/dev-clusters/kb/default-config.json"
++      ${coreutils}/bin/env -i HOME="$TMPDIR" PATH=/empty "$out/bin/kb-devcluster" --help >/dev/null
++      test ! -e "$TMPDIR/workspace/.dev-clusters/kb"
++    '' else ''
++      test ! -e "$out/bin/kb-devcluster"
++    ''}
+     ${coreutils}/bin/env -i HOME="$TMPDIR" PATH=/empty \
+       "$out/bin/vpsfree-dev-workspace-migrate" --help >/dev/null
+   '';
+diff --git a/nix/site-config.nix b/nix/site-config.nix
+index 8e0029e..dd8bcc4 100644
+--- a/nix/site-config.nix
++++ b/nix/site-config.nix
+@@ -38,7 +38,7 @@ let
+         (kb.stagingUsername or null)
+       ]
+     )
+-    && hasExactKeys clusters [ "vpsadmin" "vpsadminos" ] [ ]
++    && hasExactKeys clusters [ "vpsadmin" "vpsadminos" ] [ "kb" ]
+     && builtins.all validJsonObject (builtins.attrValues clusters);
+ in
+ assert lib.assertMsg valid "vpsFree development workspace site configuration is invalid";

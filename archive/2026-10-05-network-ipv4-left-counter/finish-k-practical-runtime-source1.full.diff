@@ -1,0 +1,800 @@
+diff --git a/cluster/nix/test.nix b/cluster/nix/test.nix
+index c5a2d6a3d16969fe208d6592fa9622ba2a506795..fb466d96e546ff54057fa3fcdb767cae50ea4374 100644
+--- a/cluster/nix/test.nix
++++ b/cluster/nix/test.nix
+@@ -1380,7 +1380,7 @@ let
+           sourceId = notificationTemplatesSourceId;
+         };
+       }
+-      ++ lib.optional (topology == "single" && serviceMemoryMiB == 2048) {
++      ++ lib.optional (topology == "single" && builtins.elem serviceMemoryMiB [ 2048 4096 ]) {
+         # Keep the dedicated small fixture's concurrency and SQL workspace bounded.
+         services.mysql.settings.mysqld = {
+           innodb_buffer_pool_size = lib.mkForce "256M";
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index e0fa3c2d4790dd39df3966a637ab2298c4ed7f56..4ed8149dd163e42534de9c6647c842c45babd752 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -326,8 +326,17 @@ Other managed KB page suites retain their test-runner route.
+ 
+ Prepare the packages from a clean exact Git-flake revision after source checks
+ and independent review. Supply one private disk-backed campaign root, one
+-explicit configuration and a private capacity receipt. Run the required real
+-phase, then the optional capture phase against the same inputs:
++explicit configuration and a private capacity receipt.
++
++For long campaign paths, set `TMPDIR` to a short, existing canonical directory
++owned by the caller with mode `0700`. The verifier passes it to child commands
++so Chromium can create its UNIX sockets. Invalid explicit paths refuse before
++commands start. When `TMPDIR` is unset, commands use the campaign's `temporary`
++directory. Keep the selected directory until child and browser cleanup finishes;
++it does not bound Nix builder scratch.
++
++Run the required real phase, then the optional capture phase against the same
++inputs:
+ 
+ ```sh
+ vpsfree-kb-verify --root "$ROOT" --config "$CONFIG" \
+@@ -345,10 +354,11 @@ A completed runtime receipt is required for capture. Each completed phase is
+ immutable. An incomplete or failed attempt retains its native stage evidence
+ and owned state and refuses replay. It supplies no cleanup authority.
+ 
+-The qualification uses one `single` cluster with a 2 GiB services guest and
+-2 GiB node1. Set `services.memoryMiB` and `nodes.node1.memoryMiB` to 2048,
+-`services.rootDiskMiB` to 8192 and `nodes.node1.tankDiskGiB` to 8. The services
+-image and its independent writable copy are each 8 GiB. The image-finalization
++The qualification uses one `single` cluster. Set `services.memoryMiB` and
++`nodes.node1.memoryMiB` independently to 2048 or 4096. A 4096/4096 configuration
++provides 4 GiB per guest. Set `services.rootDiskMiB` to 8192 and
++`nodes.node1.tankDiskGiB` to 8. The services image and its independent writable
++copy are each 8 GiB. The image-finalization
+ builder also uses `services.memoryMiB` and finishes before runtime guests start.
+ Configure explicit local loopback TCP forwarding and an integer multicast port,
+ disable dedicated DNS guests, use QEMU's `10.0.2.3` resolver and `example.test`
+@@ -357,15 +367,15 @@ must pass a real qualification; they are not measured sufficient minima for
+ all fixtures or workloads. The general runtime configuration remains separate
+ from this verifier profile.
+ 
+-For `single` topology with `services.memoryMiB` set to 2048, the services
++For `single` topology with `services.memoryMiB` set to 2048 or 4096, the services
+ workload uses a 256M MySQL buffer pool and 64 connections. Join, sort and read
+ buffers are 1M, 2M and 1M; temporary and heap tables are limited to 16M each.
+ The API uses one worker with one to four threads. The nested WebUI's dynamic
+ PHP pool has at most four children, starts one and keeps one to two spare.
+ Only the base and DNS-record Prometheus export timers are disabled; their
+ service definitions and the essential scheduler, supervisor and maintenance
+-tasks remain available. Other topologies and the normal 4096 MiB configuration
+-retain their inherited workload settings. These limits reduce the dedicated
++tasks remain available. Other topologies and services RAM values outside those
++two choices retain their inherited workload settings. These limits reduce the dedicated
+ fixture's concurrency and SQL workspace; excess work may queue or spill to disk.
+ They are qualification targets, not a total memory bound or a sustained-fit
+ guarantee. They create a distinct guest artifact and do not alter retained
+@@ -405,11 +415,13 @@ another instance automatically. Failed public commands retain native argv,
+ exit/signal and diagnostic output privately beneath the campaign root. Artifact
+ exports exclude this evidence.
+ 
+-Before start or resume, capacity admission includes the 4 GiB guest RAM and
+-shared-memory demand plus separately assessed positive overhead. For example,
+-2 GiB RAM and 1 GiB shared-memory margins require 6 GiB available RAM and 5 GiB
+-free shared memory. Initial start assesses construction and runtime/browser
+-phases separately and uses their peak. The builder finishes before guests start.
++Before start or resume, capacity admission includes both guests' configured RAM
++and shared-memory demand plus separately assessed positive overhead. With
++2 GiB RAM and 1 GiB shared-memory margins, a 2048/2048 configuration requires
++6 GiB available RAM and 5 GiB free shared memory; 4096/4096 requires 10 GiB and
++9 GiB. Initial start assesses construction and runtime/browser phases separately
++and uses their peak. A 4096 MiB services configuration also selects a 4 GiB
++builder, which finishes before guests start.
+ 
+ Live capture first attests the same resumed guests and their continuity. Its
+ fresh availability check requires only the additional runtime/browser margins,
+diff --git a/docs/webui-change-workflow.md b/docs/webui-change-workflow.md
+index f3c62b6abee0790df6e6a28cb2711cad5fa550f1..7f3e215d6c252eb6acf21a5f1b4b8f37612d896a 100644
+--- a/docs/webui-change-workflow.md
++++ b/docs/webui-change-workflow.md
+@@ -124,9 +124,11 @@ The committed generator source must already pin the affected vpsAdmin revision.
+ The [direct verifier](../cluster/runtime-contract.md#verification-and-limits)
+ also exercises the private connection selector and writable-CWD output default.
+ Its reduced real-runtime route qualifies one final-source `single`/local
+-instance: services and node1 each use 2048 MiB RAM, the services image and root
+-copy each use 8192 MiB, and the tank is 8 GiB. The builder also follows the
+-services RAM setting. These are unqualified targets until measured preparation
++instance: services and node1 each accept 2048 or 4096 MiB RAM, the services
++image and root copy each use 8192 MiB, and the tank is 8 GiB. Both services RAM
++choices retain the compact SQL/API/PHP workload. A 4096/4096 configuration
++provides 8 GiB total guest RAM. The builder follows services RAM and finishes
++before the guests start. These are unqualified targets until measured preparation
+ and public start succeed. The required `runtime-smoke` phase checks attested
+ connection/lease and ordinary stop/resume; `bilingual-capture` reuses that
+ resumed instance. Historical upgrade and two-root tests are separate deferred
+diff --git a/fixtures/prepare.cjs b/fixtures/prepare.cjs
+index fb9611977833c0aa1ac64816c7d8fcc67b1c4d9f..5aff1fde2be35fa185e49189ce9f45a9bd680a0b 100644
+--- a/fixtures/prepare.cjs
++++ b/fixtures/prepare.cjs
+@@ -96,7 +96,12 @@ async function createVpsIn(
+   form = page.locator('form[name="newvps-step3"]');
+   if (resources) {
+     for (const [name, value] of Object.entries(resources)) {
+-      await form.locator(`input[name="${name}"]`).fill(String(value));
++      const control = form.locator(`input[name="${name}"]`);
++      const count = await control.count();
++      // The pinned member form omits zero-allocated swap; submission defaults it to 0.
++      if (name === 'swap' && value === 0 && count === 0) continue;
++      if (count !== 1) throw new Error(`Expected one ${name} resource control, found ${count}`);
++      await control.fill(String(value));
+     }
+   }
+   await submitLast(form);
+diff --git a/tools/runtime-verify.rb b/tools/runtime-verify.rb
+index fdf51ae840157fbdd3d681aa245a01bf5469f87f..7bb9ff8273b04845d4e663afa17f6262a50238bd 100644
+--- a/tools/runtime-verify.rb
++++ b/tools/runtime-verify.rb
+@@ -24,8 +24,17 @@ module KbVerify
+         directory = environment.fetch('XDG_RUNTIME_DIR')
+         KbRuntime::State.new(directory, 'runtime-check').private_directory(directory)
+       end
++      temporary = File.join(root, 'temporary')
++      if ENV.key?('TMPDIR')
++        directory = ENV.fetch('TMPDIR')
++        state = KbRuntime::State.new(directory, 'temporary-check')
++        unless state.private_directory(directory) && File.realpath(directory) == directory
++          raise Error, 'TMPDIR must name an existing canonical private directory'
++        end
++        temporary = directory
++      end
+       @environment = environment.merge('PATH' => selection.fetch('path'), 'LANG' => 'C.UTF-8',
+-        'TMPDIR' => File.join(root, 'temporary'), 'NODE_PATH' => selection.fetch('node_path'),
++        'TMPDIR' => temporary, 'NODE_PATH' => selection.fetch('node_path'),
+         'PLAYWRIGHT_BROWSERS_PATH' => selection.fetch('browsers'), 'FONTCONFIG_FILE' => selection.fetch('fonts'),
+         'NIX_SSL_CERT_FILE' => selection.fetch('certificates'), 'SSL_CERT_FILE' => selection.fetch('certificates'),
+         'GEM_HOME' => selection.fetch('gem_home'), 'GEM_PATH' => selection.fetch('gem_home'),
+@@ -154,12 +163,12 @@ module KbVerify
+           raise Error, 'inventory account role, identity or namespace differs'
+         end
+       end
+-      unless config.dig('services', 'memoryMiB') == 2048 && config.dig('services', 'rootDiskMiB') == 8192 &&
+-          config.fetch('nodes').keys == ['node1'] && config.dig('nodes', 'node1', 'memoryMiB') == 2048 &&
++      unless [2048, 4096].include?(config.dig('services', 'memoryMiB')) && config.dig('services', 'rootDiskMiB') == 8192 &&
++          config.fetch('nodes').keys == ['node1'] && [2048, 4096].include?(config.dig('nodes', 'node1', 'memoryMiB')) &&
+           config.dig('nodes', 'node1', 'tankDiskGiB') == 8 && config.dig('topologies', 'single') == ['node1'] &&
+           config.dig('dns', 'enable') == false && config.dig('resolver', 'mode') == 'cluster' &&
+           config.dig('resolver', 'upstreamNameservers') == ['10.0.2.3']
+-        raise Error, 'verification requires the explicit two-2-GiB-guest/8-GiB-image-root-tank configuration'
++        raise Error, 'verification requires two guests with 2048 or 4096 MiB each and an 8 GiB image, root and tank'
+       end
+       %w[domains tmpDomains].each do |name|
+         raise Error, 'verification TLS domains must use example.test' unless config.fetch(name).values.all? { |domain| domain.end_with?('.example.test') }
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index 1e928b5e0c581931127fd3964c0c9b3e862c27f1..86832dc0232efd36a5be72cb1792fdbf9e3a6e1a 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -10,7 +10,7 @@ const { spawn } = require('node:child_process');
+ const { createInterface } = require('node:readline');
+ const crypto = require('node:crypto');
+ const { Connection } = require('../lib/connection.cjs');
+-const { assertInventoryMember, ensureIpInventory, inventoryIdentity,
++const { assertInventoryMember, createVpsIn, ensureIpInventory, inventoryIdentity,
+   INVENTORY_POOL, INVENTORY_RESOURCES, prepareFixtures } = require('../fixtures/prepare.cjs');
+ const { heldController, observeLeaseState } = require('./verify-live-lease.cjs');
+ 
+@@ -358,16 +358,9 @@ test('pool identity collision refuses before any mutation', async () => {
+   assert(calls.every(([method]) => method === 'GET'));
+ });
+ 
+-test('first inventory preparation creates the tiny VPS in the proved member browser before explicit admin registration', async (t) => {
++function memberCreationPage(calls, resourceCounts = {}) {
+   let stage = 'location';
+   const entries = [];
+-  const inventory = fixture({ missing: true });
+-  const calls = mockInventoryTransport(t, async (call) => {
+-    if (call.resource === 'users/current') return { response: currentUser(call.login) };
+-    assert.equal(call.login, 'test-admin');
+-    if (call.method === 'POST' && call.resource === 'ip_addresses') assert.equal(call.body.ip_address.user, 2);
+-    return { response: await inventory.api(call.method, call.resource, call.body) };
+-  });
+   const form = (name) => ({
+     count: async () => name === 'newvps-step1' ? 0 : 1,
+     locator: (selector) => {
+@@ -388,6 +381,15 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+           selectOption: async (value) => { assert.equal(value, '1'); },
+         };
+       }
++      const resource = /^input\[name="(cpu|memory|swap|diskspace)"\]$/.exec(selector)?.[1];
++      if (resource) {
++        const count = Object.hasOwn(resourceCounts, resource) ? resourceCounts[resource] : 1;
++        return { count: async () => count, fill: async (value) => {
++          assert.equal(stage, 'resources');
++          assert.equal(count, 1, 'an absent or ambiguous resource must not be filled');
++          entries.push([selector, value, stage]);
++        } };
++      }
+       return {
+         count: async () => 1, nth: () => ({ click: async () => { entries.push(['submit', stage]); stage = stage === 'location' ? 'template' : stage === 'template' ? 'resources' : 'submit'; } }),
+         fill: async (value) => entries.push([selector, value, stage]),
+@@ -441,6 +443,18 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+       return value;
+     },
+   };
++  return { page, entries };
++}
++
++test('first inventory preparation creates the tiny VPS in the proved member browser before explicit admin registration', async (t) => {
++  const inventory = fixture({ missing: true });
++  const calls = mockInventoryTransport(t, async (call) => {
++    if (call.resource === 'users/current') return { response: currentUser(call.login) };
++    assert.equal(call.login, 'test-admin');
++    if (call.method === 'POST' && call.resource === 'ip_addresses') assert.equal(call.body.ip_address.user, 2);
++    return { response: await inventory.api(call.method, call.resource, call.body) };
++  });
++  const { page, entries } = memberCreationPage(calls);
+   await withInventoryConnection(recordedAccounts(), async (cluster, _abort, root) => {
+     const invocationRoot = path.join(root, 'invocation');
+     fs.mkdirSync(invocationRoot, { mode: 0o700 });
+@@ -453,6 +467,92 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+   for (const [name, value] of Object.entries(INVENTORY_RESOURCES)) {
+     assert(entries.some(([selector, actual, at]) => selector === `input[name="${name}"]` && actual === String(value) && at === 'resources'));
+   }
++  assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++    [['submit', 'location'], ['submit', 'template'], ['submit', 'resources'], ['submit', 'submit']]);
++});
++
++test('missing swap with numeric zero completes member preparation without a swap fill before explicit admin provisioning', async (t) => {
++  const inventory = fixture({ missing: true });
++  const calls = mockInventoryTransport(t, async (call) => {
++    if (call.resource === 'users/current') return { response: currentUser(call.login) };
++    assert.equal(call.login, 'test-admin');
++    return { response: await inventory.api(call.method, call.resource, call.body) };
++  });
++  const { page, entries } = memberCreationPage(calls, { swap: 0 });
++  await withInventoryConnection(recordedAccounts(), async (cluster, _abort, root) => {
++    const invocationRoot = path.join(root, 'invocation');
++    fs.mkdirSync(invocationRoot, { mode: 0o700 });
++    const result = await prepareFixtures({ cluster, page, language: 'cs', required: ['ip-inventory'], invocationRoot });
++    assert.deepEqual(result.inventoryMember, { id: 2, login: 'test-user1' });
++    assert.equal(cluster.account().login, 'test-user1');
++    assert.equal(result.inventoryVpsId, 10);
++    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(invocationRoot, 'fixtures.json'))), result);
++  });
++  assert(!entries.some(([selector]) => selector === 'input[name="swap"]'));
++  for (const [name, value] of Object.entries(INVENTORY_RESOURCES).filter(([name]) => name !== 'swap')) {
++    assert(entries.some(([selector, actual, at]) => selector === `input[name="${name}"]` && actual === String(value) && at === 'resources'));
++  }
++  assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++    [['submit', 'location'], ['submit', 'template'], ['submit', 'resources'], ['submit', 'submit']]);
++  assert.deepEqual(calls.filter((call) => call.method !== 'GET').map((call) => [call.login, call.method, call.resource]),
++    [['test-admin', 'POST', 'ip_addresses'], ['test-admin', 'PUT', 'networks/5']]);
++});
++
++test('a present nonzero swap control receives its exact requested value before final submission', async (t) => {
++  const calls = mockInventoryTransport(t, async (call) => {
++    assert.equal(call.resource, 'users/current');
++    return { response: currentUser(call.login) };
++  });
++  const { page, entries } = memberCreationPage(calls);
++  await withInventoryConnection(recordedAccounts(), async (cluster) => {
++    const { member } = await inventoryIdentity(cluster);
++    await assertInventoryMember(page, member);
++    assert.equal(await createVpsIn(page, member.id, 'ip-inventory', true, 'Production', 'Praha',
++      { ...INVENTORY_RESOURCES, swap: 128 }), 10);
++  });
++  assert(entries.some(([selector, value, at]) => selector === 'input[name="swap"]' && value === '128' && at === 'resources'));
++  assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++    [['submit', 'location'], ['submit', 'template'], ['submit', 'resources'], ['submit', 'submit']]);
++  assert.deepEqual(calls.map((call) => [call.login, call.method, call.resource]),
++    [['test-user1', 'GET', 'users/current'], ['test-admin', 'GET', 'users/current']]);
++});
++
++for (const [name, value, count] of [['swap', 128, 0], ['swap', '0', 0],
++  ['cpu', 1, 0], ['memory', 1024, 0], ['diskspace', 4096, 0],
++  ['cpu', 0, 0], ['memory', 0, 0], ['diskspace', 0, 0], ['swap', 0, 2], ['cpu', 1, 2]]) {
++  test(`resource control ${name} count ${count} requested ${JSON.stringify(value)} refuses before submission`, async (t) => {
++    const calls = mockInventoryTransport(t, async (call) => {
++      assert.equal(call.resource, 'users/current');
++      return { response: currentUser(call.login) };
++    });
++    const { page, entries } = memberCreationPage(calls, { [name]: count });
++    await withInventoryConnection(recordedAccounts(), async (cluster) => {
++      const { member } = await inventoryIdentity(cluster);
++      await assertInventoryMember(page, member);
++      await assert.rejects(createVpsIn(page, member.id, 'ip-inventory', true, 'Production', 'Praha',
++        { ...INVENTORY_RESOURCES, [name]: value }), (error) => {
++        assert.equal(error.message, `Expected one ${name} resource control, found ${count}`);
++        return true;
++      });
++    });
++    assert(!entries.some(([selector]) => selector === `input[name="${name}"]`));
++    assert(!entries.some(([selector]) => selector === 'input[name="hostname"]'));
++    assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++      [['submit', 'location'], ['submit', 'template']]);
++    assert.deepEqual(calls.map((call) => [call.login, call.method, call.resource]),
++      [['test-user1', 'GET', 'users/current'], ['test-admin', 'GET', 'users/current']]);
++  });
++}
++
++test('a nonzero resulting swap refuses inventory provisioning before any mutation', async () => {
++  const inventory = fixture({ missing: true });
++  const api = async (...args) => {
++    const result = await inventory.api(...args);
++    if (result.vps) result.vps.swap = 1;
++    return result;
++  };
++  await assert.rejects(ensureIpInventory(api, { userId: 2, vpsId: 10 }), /Unexpected inventory VPS owner, identity or resources/);
++  assert.deepEqual(inventory.calls, [['GET', 'vpses/10', undefined]]);
+ });
+ 
+ test('only the IP-list fixture token changes, other fixture contracts are retained', () => {
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+index 1a6d58e6e16ea374cae862760b685c2a25382001..5d8e4693357d6b2a32480197644af71ae0db240b 100644
+--- a/tools/test-runtime-verify.rb
++++ b/tools/test-runtime-verify.rb
+@@ -96,7 +96,7 @@ class RuntimeVerifyTest < Minitest::Test
+     %w[memory root tank nodes dns resolver domain bind port].each do |wrong|
+       candidate = configuration
+       case wrong
+-      when 'memory' then candidate['services']['memoryMiB'] = 4096
++      when 'memory' then candidate['services']['memoryMiB'] = 8192
+       when 'root' then candidate['services']['rootDiskMiB'] = 12288
+       when 'tank' then candidate['nodes']['node1']['tankDiskGiB'] = 16
+       when 'nodes' then candidate['nodes']['node2'] = candidate['nodes']['node1'].dup
+@@ -114,6 +114,39 @@ class RuntimeVerifyTest < Minitest::Test
+     with_campaign(config: candidate) { |campaign| assert_equal(candidate, campaign.config) }
+   end
+ 
++  def test_each_guest_independently_accepts_2048_or_4096_and_rejects_other_values
++    [2048, 4096].repeated_permutation(2) do |services, node|
++      candidate = configuration
++      candidate['services']['memoryMiB'] = services
++      candidate['nodes']['node1']['memoryMiB'] = node
++      with_campaign(config: candidate) do |campaign|
++        assert_equal(candidate, campaign.config)
++        assert_equal(candidate, campaign.inputs.fetch('configuration'))
++        assert_equal(Digest::SHA256.file(File.join(File.dirname(campaign.root), 'config.json')).hexdigest,
++          campaign.inputs.fetch('configuration_sha256'))
++        assert_equal(8192, campaign.config.dig('services', 'rootDiskMiB'))
++        assert_equal(8, campaign.config.dig('nodes', 'node1', 'tankDiskGiB'))
++        requirements = campaign.memory_requirements(assessment(campaign), 'start')
++        assert_equal((services + node) * 1024**2, requirements.fetch('guest_bytes'))
++        assert_equal(services * 1024**2, requirements.fetch('builder_bytes'))
++        %w[start resume].each do |operation|
++          expected = campaign.memory_requirements(assessment(campaign), operation)
++          assert_equal((services + node) * 1024**2 + 2 * KbVerify::GIB, expected.fetch('ram_bytes'))
++          assert_equal((services + node) * 1024**2 + KbVerify::GIB, expected.fetch('shm_bytes'))
++        end
++        capture = campaign.memory_requirements(assessment(campaign), 'capture')
++        assert_equal(2 * KbVerify::GIB, capture.fetch('ram_bytes'))
++        assert_equal(KbVerify::GIB, capture.fetch('shm_bytes'))
++      end
++    end
++    %w[services node1].product([0, 1024, 3072, 4095, 8192, '4096', nil]).each do |machine, value|
++      candidate = configuration
++      target = machine == 'services' ? candidate['services'] : candidate['nodes']['node1']
++      target['memoryMiB'] = value
++      assert_raises(KbVerify::Error) { with_campaign(config: candidate) { flunk('unsupported memory admitted') } }
++    end
++  end
++
+   def test_explicit_admin_and_members_refuse_missing_duplicate_role_auth_identity_and_namespace
+     %w[missing duplicate role password identity namespace member].each do |wrong|
+       candidate = configuration
+@@ -812,6 +845,93 @@ class RuntimeVerifyTest < Minitest::Test
+     end
+   end
+ 
++  def test_4096_guests_use_ten_nine_fresh_admission_and_two_one_incremental_live_capture
++    candidate = configuration
++    candidate['services']['memoryMiB'] = candidate['nodes']['node1']['memoryMiB'] = 4096
++    with_campaign(config: candidate) do |campaign|
++      campaign.initialize_campaign
++      fake_measurements(campaign)
++      available = { 'ram_available' => 10 * KbVerify::GIB, 'shm_available' => 9 * KbVerify::GIB }
++      campaign.define_singleton_method(:host_capacity) { available.dup }
++      input_before = Marshal.load(Marshal.dump(campaign.inputs))
++      %w[configuration source].each do |wrong|
++        stale = Marshal.load(Marshal.dump(assessment(campaign)))
++        if wrong == 'configuration'
++          stale['bindings']['configuration']['services']['memoryMiB'] = 2048
++          stale['bindings']['configuration']['nodes']['node1']['memoryMiB'] = 2048
++          stale['bindings']['configuration_sha256'] = Digest::SHA256.hexdigest(JSON.pretty_generate(stale['bindings']['configuration']) + "\n")
++        else
++          stale['bindings']['source']['revision'] = 'b' * 40
++        end
++        write_assessment(campaign, stale)
++        refusal = assert_raises(KbVerify::Error) { campaign.capacity('start') }
++        assert_equal('capacity receipt does not match campaign/source/packages/configuration', refusal.message)
++        assert_equal(input_before, campaign.inputs)
++        assert_empty(Dir.glob(campaign.file('receipts/capacity-*.json')))
++      end
++      write_assessment(campaign, assessment(campaign))
++      %w[start resume].each do |operation|
++        %w[ram_available shm_available].each do |resource|
++          original = available.fetch(resource)
++          available[resource] = original - 1
++          assert_raises(KbVerify::Error) { campaign.capacity(operation) }
++          available[resource] = original
++          assert_empty(Dir.glob(campaign.file('receipts/capacity-*.json')))
++        end
++      end
++      admitted = []
++      %w[start resume].each do |operation|
++        before = Dir.glob(campaign.file('receipts/capacity-*.json'))
++        campaign.capacity(operation)
++        path = (Dir.glob(campaign.file('receipts/capacity-*.json')) - before).fetch(0)
++        receipt = campaign.read(path.delete_prefix("#{campaign.root}/"))
++        assert_equal(operation, receipt.fetch('operation'))
++        assert_equal(available, receipt.fetch('host'))
++        assert_equal(8 * KbVerify::GIB, receipt.dig('memory_requirements', 'guest_bytes'))
++        assert_equal(4 * KbVerify::GIB, receipt.dig('memory_requirements', 'builder_bytes'))
++        assert_equal(10 * KbVerify::GIB, receipt.dig('memory_requirements', 'ram_bytes'))
++        assert_equal(9 * KbVerify::GIB, receipt.dig('memory_requirements', 'shm_bytes'))
++        assert_equal(6 * KbVerify::GIB, receipt.dig('memory_requirements', 'phase_requirements', 'construction', 'ram_bytes'))
++        assert_equal(5 * KbVerify::GIB, receipt.dig('memory_requirements', 'phase_requirements', 'construction', 'shm_bytes'))
++        assert_equal(24 * KbVerify::GIB, receipt.fetch('intrinsic_output_envelope_bytes'))
++        assert_equal(campaign.inputs, receipt.dig('assessment', 'bindings'))
++        assert_equal(Digest::SHA256.file(File.join(File.dirname(campaign.root), 'capacity.json')).hexdigest, receipt.fetch('receipt_sha256'))
++        admitted << receipt
++      end
++      growth = ->(receipt) { receipt.fetch('filesystems').map { |entry| [entry.fetch('device'), entry.fetch('remaining_growth_bytes')] } }
++      assert_equal(growth.call(admitted[0]), growth.call(admitted[1]), 'resume adds no second image charge')
++      assert_equal(admitted[0].dig('remaining_growth', 'image_bytes'), admitted[1].dig('remaining_growth', 'image_bytes'))
++      assert_equal(KbVerify::GIB, admitted[0].fetch('filesystems').fetch(0).fetch('construction_overlap_bytes'))
++      assert_equal(0, admitted[1].fetch('filesystems').fetch(0).fetch('construction_overlap_bytes'))
++      # Current availability already excludes the 8 GiB admitted to the live pair.
++      available.transform_values! { |bytes| bytes - 8 * KbVerify::GIB }
++      before = Dir.glob(campaign.file('receipts/capacity-*.json'))
++      campaign.capacity('capture')
++      path = (Dir.glob(campaign.file('receipts/capacity-*.json')) - before).fetch(0)
++      captured = campaign.read(path.delete_prefix("#{campaign.root}/"))
++      assert_equal('capture', captured.fetch('operation'))
++      assert_equal(available, captured.fetch('host'))
++      assert_equal(8 * KbVerify::GIB, captured.dig('memory_requirements', 'guest_bytes'))
++      assert_equal(2 * KbVerify::GIB, captured.dig('memory_requirements', 'ram_bytes'))
++      assert_equal(KbVerify::GIB, captured.dig('memory_requirements', 'shm_bytes'))
++      assert_equal(24 * KbVerify::GIB, captured.fetch('intrinsic_output_envelope_bytes'))
++      paths = Dir.glob(campaign.file('receipts/capacity-*.json')).sort
++      %w[start resume].each { |operation| assert_raises(KbVerify::Error) { campaign.capacity(operation) } }
++      %w[ram_available shm_available].each do |resource|
++        original = available.fetch(resource)
++        available[resource] = original - 1
++        assert_raises(KbVerify::Error) { campaign.capacity('capture') }
++        available[resource] = original
++      end
++      assert_equal(paths, Dir.glob(campaign.file('receipts/capacity-*.json')).sort)
++      assert_equal(input_before, campaign.inputs)
++      construction = assessment(campaign)
++      construction['resource_overheads']['construction']['ram_bytes'] = 7 * KbVerify::GIB
++      assert_equal(11 * KbVerify::GIB, campaign.memory_requirements(construction, 'start').fetch('ram_bytes'))
++      assert_equal(10 * KbVerify::GIB, campaign.memory_requirements(construction, 'resume').fetch('ram_bytes'))
++    end
++  end
++
+   def test_sparse_future_growth_physical_inode_dedup_and_resume_do_not_add_an_image
+     with_campaign do |campaign|
+       campaign.initialize_campaign
+@@ -841,12 +961,16 @@ class RuntimeVerifyTest < Minitest::Test
+     end
+   end
+ 
+-  def test_public_nix_projection_has_two_2048_runtime_guests_and_actual_2048_image_builder_with_unchanged_kernels
++  def test_public_nix_projection_has_supported_runtime_guests_and_matching_image_builder_with_unchanged_kernels
+     Dir.mktmpdir do |directory|
+       reduced = configuration
+-      normal = Marshal.load(Marshal.dump(reduced))
+-      normal['services']['memoryMiB'] = 4096
+-      normal['nodes']['node1']['memoryMiB'] = 4096
++      practical = Marshal.load(Marshal.dump(reduced))
++      practical['services']['memoryMiB'] = 4096
++      practical['nodes']['node1']['memoryMiB'] = 4096
++      mixed_node = Marshal.load(Marshal.dump(reduced))
++      mixed_node['nodes']['node1']['memoryMiB'] = 4096
++      mixed_services = Marshal.load(Marshal.dump(reduced))
++      mixed_services['services']['memoryMiB'] = 4096
+       source = File.expand_path('..', __dir__)
+       reference = "git+file://#{source}"
+       environment = ENV.keys.grep(/\AVPSADMIN_(?:DEVCLUSTER|KB)_/).to_h { |name| [name, nil] }
+@@ -946,107 +1070,112 @@ class RuntimeVerifyTest < Minitest::Test
+         end
+         projected
+       end
+-      value = project.call('reduced', reduced)
+-      baseline = project.call('baseline', normal)
+-      assert_equal(%w[node1 services], value['machines'].keys.sort)
+-      assert_equal([2048, 2048], value['machines'].values.map { |machine| machine['memory'] })
+-      assert_equal([4, 4], value['machines'].values.map { |machine| machine['cpus'] })
+-      assert_equal(baseline['machines'].transform_values { |machine| machine['kernel'] }, value['machines'].transform_values { |machine| machine['kernel'] })
+-      value['machines'].each_value { |machine| assert_match(%r{\A/nix/store/[a-z0-9]{32}-.+/bzImage\z}, machine['kernel']) }
+-      assert_equal('8G', value.dig('machines', 'node1', 'disks').first.fetch('size'))
+-      workload = value.fetch('workload')
++      baseline = project.call('inherited-large', practical, 'screenshots')
+       inherited = baseline.fetch('workload')
+-      mysql = { 'innodb_buffer_pool_size' => '256M', 'max_connections' => 64,
+-        'join_buffer_size' => '1M', 'sort_buffer_size' => '2M', 'read_buffer_size' => '1M',
+-        'tmp_table_size' => '16M', 'max_heap_table_size' => '16M' }
+-      normal_mysql = mysql.merge('innodb_buffer_pool_size' => '1024M', 'max_connections' => 200,
+-        'join_buffer_size' => '256M', 'sort_buffer_size' => '512M', 'read_buffer_size' => '128M',
+-        'tmp_table_size' => '96M', 'max_heap_table_size' => '1024M')
+-      fpm = { 'pm' => 'dynamic', 'pm.max_children' => 4, 'pm.start_servers' => 1,
+-        'pm.min_spare_servers' => 1, 'pm.max_spare_servers' => 2, 'pm.max_requests' => 500 }
+-      normal_fpm = fpm.merge('pm.max_children' => 32, 'pm.start_servers' => 2,
+-        'pm.min_spare_servers' => 2, 'pm.max_spare_servers' => 5)
+-      [[workload, mysql, fpm, 1, 4], [inherited, normal_mysql, normal_fpm, 2, 8]].each do |profile, sql, pool, workers, threads|
+-        sql.each do |key, expected|
+-          assert_equal(expected, profile.fetch('mysql').fetch(key), key)
+-          rendered = profile.fetch('mysqlConfig').lines.filter_map do |line|
+-            match = line.match(/\A\s*#{Regexp.escape(key)}\s*=\s*(.*?)\s*\z/)
+-            match[1] if match
+-          end
+-          assert_equal([expected.to_s], rendered, "generated MySQL #{key}")
+-        end
+-        assert_equal({ 'workers' => workers, 'threads' => { 'min' => 1, 'max' => threads } }, profile.fetch('api'))
+-        assert_equal(["workers #{workers}"], profile.fetch('pumaConfig').lines.map(&:strip).grep(/\Aworkers /))
+-        assert_equal(["threads 1, #{threads}"], profile.fetch('pumaConfig').lines.map(&:strip).grep(/\Athreads /))
+-        pool.each do |key, expected|
+-          assert_equal(expected, profile.fetch('fpm').fetch(key), key)
+-          rendered = profile.fetch('fpmConfig').lines.filter_map do |line|
+-            match = line.match(/\A\s*#{Regexp.escape(key)}\s*=\s*(.*?)\s*\z/)
+-            match[1] if match
+-          end
+-          assert_equal([expected.to_s], rendered, "generated nested WebUI #{key}")
+-        end
+-      end
+-      assert_equal(inherited.fetch('mysql').reject { |key, _| mysql.key?(key) }, workload.fetch('mysql').reject { |key, _| mysql.key?(key) })
+-      assert_equal(inherited.fetch('fpm').reject { |key, _| fpm.key?(key) }, workload.fetch('fpm').reject { |key, _| fpm.key?(key) })
+-      metrics = %w[prometheus-export-base prometheus-export-dns-records]
+-      metric_timers = metrics.map { |name| "vpsadmin-api-#{name}" }
+-      expected_tasks = Marshal.load(Marshal.dump(inherited.fetch('tasks')))
+-      metrics.each do |name|
+-        assert_equal(true, expected_tasks.fetch(name).fetch('timerEnabled'))
+-        assert_equal(true, workload.fetch('tasks').fetch(name).fetch('enable'))
+-        expected_tasks.fetch(name)['timerEnabled'] = false
+-        assert_includes(workload.fetch('units'), "vpsadmin-api-#{name}.service")
+-        refute_includes(workload.fetch('units'), "vpsadmin-api-#{name}.timer")
+-      end
+-      assert_equal(expected_tasks, workload.fetch('tasks'))
+-      assert_equal(inherited.fetch('timers') - metric_timers, workload.fetch('timers'))
+-      assert_equal(inherited.fetch('units') - metric_timers.map { |name| "#{name}.timer" }, workload.fetch('units'))
+-      assert_equal(inherited.fetch('webuiUnits'), workload.fetch('webuiUnits'))
+-      %w[mysql rabbitmq redis-vpsadmin vpsadmin-api vpsadmin-scheduler vpsadmin-supervisor].each do |name|
+-        assert_includes(workload.fetch('units'), "#{name}.service")
+-      end
+-      %w[auth-tokens user-sessions incident-reports dataset-expansion-run].each do |name|
+-        task = workload.fetch('tasks').fetch(name)
+-        assert_equal(true, task.fetch('enable'))
+-        assert_equal(true, task.fetch('timerEnabled'))
+-        assert_includes(workload.fetch('units'), "vpsadmin-api-#{name}.service")
+-        assert_includes(workload.fetch('units'), "vpsadmin-api-#{name}.timer")
+-      end
+-      assert_includes(workload.fetch('webuiUnits'), 'phpfpm-vpsadmin-webui.service')
+-      assert_includes(workload.fetch('webuiUnits'), 'vpsadmin-webui-prune-sessions.timer')
+-      other = project.call('other-topology', reduced, 'screenshots').fetch('workload')
++      other = project.call('inherited-small', reduced, 'screenshots').fetch('workload')
+       %w[mysql mysqlConfig api pumaConfig fpm fpmConfig tasks timers units webuiUnits].each do |key|
+         assert_equal(inherited.fetch(key), other.fetch(key), "inherited #{key} outside single topology")
+       end
+-      assert_equal(1, value['imageDerivations'].size)
+-      output, error, status = Open3.capture3('nix', 'derivation', 'show', value['imageDerivations'].first)
+-      assert(status.success?, "native image derivation inspection refused: #{error}")
+-      native = JSON.parse(output)
+-      assert_equal(4, native.fetch('version'))
+-      derivations = native.fetch('derivations')
+-      derivation_key = File.basename(value['imageDerivations'].first)
+-      assert_equal([derivation_key], derivations.keys)
+-      record = derivations.fetch(derivation_key)
+-      context = "selected image #{derivation_key}: keys=#{record.keys.sort.inspect}"
+-      assert(record.key?('structuredAttrs'), context)
+-      attributes = record.fetch('structuredAttrs')
+-      context += "; structured keys=#{attributes.keys.sort.inspect}"
+-      assert(attributes.key?('env'), context)
+-      builder_environment = attributes.fetch('env')
+-      context += "; structured env keys=#{builder_environment.keys.sort.inspect}"
+-      assert(builder_environment.key?('QEMU_OPTS'), context)
+-      tokens = Shellwords.split(builder_environment.fetch('QEMU_OPTS'))
+-      option_values = lambda do |flag|
+-        tokens.each_cons(2).filter_map { |option, value| value if option == flag }
++      [['reduced', reduced, 2048, 2048], ['practical', practical, 4096, 4096],
++        ['mixed-node', mixed_node, 2048, 4096], ['mixed-services', mixed_services, 4096, 2048]].each do |name, config, services_memory, node_memory|
++        value = project.call(name, config)
++        assert_equal(%w[node1 services], value['machines'].keys.sort)
++        assert_equal({ 'services' => services_memory, 'node1' => node_memory }, value['machines'].transform_values { |machine| machine['memory'] })
++        assert_equal([4, 4], value['machines'].values.map { |machine| machine['cpus'] })
++        kernels = value['machines'].keys.to_h { |machine| [machine, baseline.fetch('machines').fetch(machine).fetch('kernel')] }
++        assert_equal(kernels, value['machines'].transform_values { |machine| machine['kernel'] })
++        value['machines'].each_value { |machine| assert_match(%r{\A/nix/store/[a-z0-9]{32}-.+/bzImage\z}, machine['kernel']) }
++        assert_equal('8G', value.dig('machines', 'node1', 'disks').first.fetch('size'))
++        workload = value.fetch('workload')
++        inherited = baseline.fetch('workload')
++        mysql = { 'innodb_buffer_pool_size' => '256M', 'max_connections' => 64,
++          'join_buffer_size' => '1M', 'sort_buffer_size' => '2M', 'read_buffer_size' => '1M',
++          'tmp_table_size' => '16M', 'max_heap_table_size' => '16M' }
++        normal_mysql = mysql.merge('innodb_buffer_pool_size' => '1024M', 'max_connections' => 200,
++          'join_buffer_size' => '256M', 'sort_buffer_size' => '512M', 'read_buffer_size' => '128M',
++          'tmp_table_size' => '96M', 'max_heap_table_size' => '1024M')
++        fpm = { 'pm' => 'dynamic', 'pm.max_children' => 4, 'pm.start_servers' => 1,
++          'pm.min_spare_servers' => 1, 'pm.max_spare_servers' => 2, 'pm.max_requests' => 500 }
++        normal_fpm = fpm.merge('pm.max_children' => 32, 'pm.start_servers' => 2,
++          'pm.min_spare_servers' => 2, 'pm.max_spare_servers' => 5)
++        [[workload, mysql, fpm, 1, 4], [inherited, normal_mysql, normal_fpm, 2, 8]].each do |profile, sql, pool, workers, threads|
++          sql.each do |key, expected|
++            assert_equal(expected, profile.fetch('mysql').fetch(key), key)
++            rendered = profile.fetch('mysqlConfig').lines.filter_map do |line|
++              match = line.match(/\A\s*#{Regexp.escape(key)}\s*=\s*(.*?)\s*\z/)
++              match[1] if match
++            end
++            assert_equal([expected.to_s], rendered, "generated MySQL #{key}")
++          end
++          assert_equal({ 'workers' => workers, 'threads' => { 'min' => 1, 'max' => threads } }, profile.fetch('api'))
++          assert_equal(["workers #{workers}"], profile.fetch('pumaConfig').lines.map(&:strip).grep(/\Aworkers /))
++          assert_equal(["threads 1, #{threads}"], profile.fetch('pumaConfig').lines.map(&:strip).grep(/\Athreads /))
++          pool.each do |key, expected|
++            assert_equal(expected, profile.fetch('fpm').fetch(key), key)
++            rendered = profile.fetch('fpmConfig').lines.filter_map do |line|
++              match = line.match(/\A\s*#{Regexp.escape(key)}\s*=\s*(.*?)\s*\z/)
++              match[1] if match
++            end
++            assert_equal([expected.to_s], rendered, "generated nested WebUI #{key}")
++          end
++        end
++        assert_equal(inherited.fetch('mysql').reject { |key, _| mysql.key?(key) }, workload.fetch('mysql').reject { |key, _| mysql.key?(key) })
++        assert_equal(inherited.fetch('fpm').reject { |key, _| fpm.key?(key) }, workload.fetch('fpm').reject { |key, _| fpm.key?(key) })
++        metrics = %w[prometheus-export-base prometheus-export-dns-records]
++        metric_timers = metrics.map { |name| "vpsadmin-api-#{name}" }
++        expected_tasks = Marshal.load(Marshal.dump(inherited.fetch('tasks')))
++        metrics.each do |name|
++          assert_equal(true, expected_tasks.fetch(name).fetch('timerEnabled'))
++          assert_equal(true, workload.fetch('tasks').fetch(name).fetch('enable'))
++          expected_tasks.fetch(name)['timerEnabled'] = false
++          assert_includes(workload.fetch('units'), "vpsadmin-api-#{name}.service")
++          refute_includes(workload.fetch('units'), "vpsadmin-api-#{name}.timer")
++        end
++        assert_equal(expected_tasks, workload.fetch('tasks'))
++        assert_equal(inherited.fetch('timers') - metric_timers, workload.fetch('timers'))
++        assert_equal(inherited.fetch('units') - metric_timers.map { |name| "#{name}.timer" }, workload.fetch('units'))
++        assert_equal(inherited.fetch('webuiUnits'), workload.fetch('webuiUnits'))
++        %w[mysql rabbitmq redis-vpsadmin vpsadmin-api vpsadmin-scheduler vpsadmin-supervisor].each do |name|
++          assert_includes(workload.fetch('units'), "#{name}.service")
++        end
++        %w[auth-tokens user-sessions incident-reports dataset-expansion-run].each do |name|
++          task = workload.fetch('tasks').fetch(name)
++          assert_equal(true, task.fetch('enable'))
++          assert_equal(true, task.fetch('timerEnabled'))
++          assert_includes(workload.fetch('units'), "vpsadmin-api-#{name}.service")
++          assert_includes(workload.fetch('units'), "vpsadmin-api-#{name}.timer")
++        end
++        assert_includes(workload.fetch('webuiUnits'), 'phpfpm-vpsadmin-webui.service')
++        assert_includes(workload.fetch('webuiUnits'), 'vpsadmin-webui-prune-sessions.timer')
++        assert_equal(1, value['imageDerivations'].size)
++        output, error, status = Open3.capture3('nix', 'derivation', 'show', value['imageDerivations'].first)
++        assert(status.success?, "native image derivation inspection refused: #{error}")
++        native = JSON.parse(output)
++        assert_equal(4, native.fetch('version'))
++        derivations = native.fetch('derivations')
++        derivation_key = File.basename(value['imageDerivations'].first)
++        assert_equal([derivation_key], derivations.keys)
++        record = derivations.fetch(derivation_key)
++        context = "selected image #{derivation_key}: keys=#{record.keys.sort.inspect}"
++        assert(record.key?('structuredAttrs'), context)
++        attributes = record.fetch('structuredAttrs')
++        context += "; structured keys=#{attributes.keys.sort.inspect}"
++        assert(attributes.key?('env'), context)
++        builder_environment = attributes.fetch('env')
++        context += "; structured env keys=#{builder_environment.keys.sort.inspect}"
++        assert(builder_environment.key?('QEMU_OPTS'), context)
++        tokens = Shellwords.split(builder_environment.fetch('QEMU_OPTS'))
++        option_values = lambda do |flag|
++          tokens.each_cons(2).filter_map { |option, value| value if option == flag }
++        end
++        sizes = option_values.call('-m')
++        objects = option_values.call('-object').select { |value| value.start_with?('memory-backend-') }
++        backends = option_values.call('-machine').flat_map { |value| value.split(',').grep(/\Amemory-backend=/) }
++        context += "; memory=#{sizes.inspect}; memory objects=#{objects.inspect}; memory backends=#{backends.inspect}"
++        assert_equal([services_memory.to_s], sizes, context)
++        assert_equal(["memory-backend-memfd,id=mem,size=#{services_memory}M,share=on"], objects, context)
++        assert_equal(['memory-backend=mem'], backends, context)
+       end
+-      sizes = option_values.call('-m')
+-      objects = option_values.call('-object').select { |value| value.start_with?('memory-backend-') }
+-      backends = option_values.call('-machine').flat_map { |value| value.split(',').grep(/\Amemory-backend=/) }
+-      context += "; memory=#{sizes.inspect}; memory objects=#{objects.inspect}; memory backends=#{backends.inspect}"
+-      assert_equal(['2048'], sizes, context)
+-      assert_equal(['memory-backend-memfd,id=mem,size=2048M,share=on'], objects, context)
+-      assert_equal(['memory-backend=mem'], backends, context)
+     end
+   end
+ 
+@@ -1070,6 +1199,96 @@ class RuntimeVerifyTest < Minitest::Test
+     end
+   end
+ 
++  def test_explicit_short_private_tmpdir_reaches_real_owned_child_with_selected_environment_and_scrubbing
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      keys = %w[TMPDIR PATH LANG NODE_PATH PLAYWRIGHT_BROWSERS_PATH FONTCONFIG_FILE NIX_SSL_CERT_FILE
++        SSL_CERT_FILE GEM_HOME GEM_PATH NIX_CONFIG RUBYOPT NODE_OPTIONS BUNDLE_GEMFILE
++        VPSADMIN_DEVCLUSTER_VPSADMIN_SOURCE DEV_SESSION_SLUG DEV_SESSION_WORKSPACE]
++      previous = keys.to_h { |key| [key, ENV[key]] }
++      Dir.mktmpdir('kb-t-', '/tmp') do |directory|
++        directory = File.realpath(directory)
++        injected = { 'TMPDIR' => directory, 'RUBYOPT' => '-r/nonexistent-synthetic-override',
++          'NODE_OPTIONS' => '--nonexistent-synthetic-override', 'BUNDLE_GEMFILE' => '/wrong/Gemfile',
++          'VPSADMIN_DEVCLUSTER_VPSADMIN_SOURCE' => '/wrong/source',
++          'DEV_SESSION_SLUG' => 'synthetic-foreign-session', 'DEV_SESSION_WORKSPACE' => '/wrong/workspace' }
++        ENV.update(injected)
++        commands = KbVerify::Commands.new(campaign.selection, campaign.root)
++        argv = [RbConfig.ruby, '-e', 'STDOUT.write(Marshal.dump(ENV.to_h.slice(*ARGV)))', *keys]
++        output, error, code = commands.call(argv, cwd: campaign.file('work'), stage: 'synthetic/short-tmpdir')
++        assert_equal(0, code)
++        assert_equal('', error)
++        observed = Marshal.load(output)
++        assert_equal(directory, observed.fetch('TMPDIR'))
++        assert_operator(directory.bytesize, :<, campaign.file('temporary').bytesize)
++        assert_equal('C.UTF-8', observed.fetch('LANG'))
++        { 'PATH' => 'path', 'NODE_PATH' => 'node_path', 'PLAYWRIGHT_BROWSERS_PATH' => 'browsers',
++          'FONTCONFIG_FILE' => 'fonts', 'NIX_SSL_CERT_FILE' => 'certificates',
++          'SSL_CERT_FILE' => 'certificates', 'GEM_HOME' => 'gem_home', 'GEM_PATH' => 'gem_home' }.each do |key, selected|
++          assert_equal(campaign.selection.fetch(selected), observed.fetch(key), key)
++        end
++        assert_equal(commands.environment.fetch('NIX_CONFIG'), observed.fetch('NIX_CONFIG'))
++        assert_includes(observed.fetch('NIX_CONFIG'), "max-jobs = 1\n")
++        assert_includes(observed.fetch('NIX_CONFIG'), "cores = 1\n")
++        (injected.keys - ['TMPDIR']).each { |key| refute(observed.key?(key), key) }
++        record = JSON.parse(File.read(Dir.glob(campaign.file('diagnostics/*/command.json')).fetch(0)))
++        assert(record.fetch('complete'))
++        assert(record.fetch('accepted'))
++        assert_equal(0, record.fetch('exit_code'))
++        assert_equal(argv, record.fetch('argv'))
++        assert_equal('synthetic/short-tmpdir', record.fetch('stage'))
++        assert_raises(Errno::ECHILD) { Process.waitpid(record.fetch('pid'), Process::WNOHANG) }
++      end
++    ensure
++      previous&.each { |key, value| ENV[key] = value }
++    end
++  end
++
++  def test_absent_tmpdir_keeps_campaign_temporary_default_without_creating_it
++    with_campaign do |campaign|
++      previous = ENV.delete('TMPDIR')
++      commands = KbVerify::Commands.new(campaign.selection, campaign.root)
++      assert_equal(campaign.file('temporary'), commands.environment.fetch('TMPDIR'))
++      refute(File.exist?(campaign.root))
++      refute(File.exist?(campaign.file('temporary')))
++    ensure
++      ENV['TMPDIR'] = previous
++    end
++  end
++
++  def test_explicit_unsafe_missing_empty_or_noncanonical_tmpdir_refuses_without_fallback_or_creation
++    with_campaign do |campaign|
++      previous = ENV['TMPDIR']
++      Dir.mktmpdir('kb-t-', '/tmp') do |base|
++        base = File.realpath(base)
++        safe = File.join(base, 'safe')
++        public_directory = File.join(base, 'public')
++        ordinary_file = File.join(base, 'file')
++        link = File.join(base, 'link')
++        missing = File.join(base, 'missing')
++        Dir.mkdir(safe, 0o700)
++        Dir.mkdir(File.join(safe, 'child'), 0o700)
++        Dir.mkdir(public_directory, 0o755)
++        File.chmod(0o755, public_directory)
++        File.write(ordinary_file, 'synthetic', perm: 0o600)
++        File.symlink(safe, link)
++        ['', missing, public_directory, ordinary_file, link, File.join(link, 'child'),
++          File.join(safe, '..', 'safe'), "#{safe}/", 'relative-missing-tmpdir'].each do |directory|
++          ENV['TMPDIR'] = directory
++          assert_raises(KbRuntime::Error, KbVerify::Error) { KbVerify::Commands.new(campaign.selection, campaign.root) }
++          refute(File.exist?(campaign.file('temporary')))
++          refute(File.exist?(missing))
++        end
++        assert_equal(safe, File.readlink(link))
++        assert_equal(0o755, File.stat(public_directory).mode & 0o777)
++        assert_equal('synthetic', File.read(ordinary_file))
++        refute(File.exist?(campaign.root))
++      end
++    ensure
++      ENV['TMPDIR'] = previous
++    end
++  end
++
+   def test_failed_native_phase_keeps_private_stdout_stderr_exact_exit_and_stage_without_replay
+     with_campaign do |campaign|
+       argv = [RbConfig.ruby, '-e', 'STDOUT.write("native output"); STDERR.write("native error"); exit 23']

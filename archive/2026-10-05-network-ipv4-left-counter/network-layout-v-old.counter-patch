@@ -1,0 +1,226 @@
+diff --git a/api/lib/vpsadmin/api/locales/cs.yml b/api/lib/vpsadmin/api/locales/cs.yml
+index b91b6ac29afd699c394db8e7cdb92e8d35c5999c..8fb862c6a95f2c959418958871a91423d9afde7f 100644
+--- a/api/lib/vpsadmin/api/locales/cs.yml
++++ b/api/lib/vpsadmin/api/locales/cs.yml
+@@ -261,6 +261,12 @@ cs:
+         label: Dostupné
+       available_space:
+         label: Dostupné místo
++      available_to_users:
++        description: Evidované adresy nebo prefixy bez vlastníka a bez přiřazení k
++          rozhraní, které nejsou rezervované probíhající operací. V zakázané síti
++          je tento počet nulový. Použití na konkrétním VPS závisí také na lokaci,
++          účelu sítě a limitech uživatele.
++        label: Volné pro uživatele
+       bcc:
+         label: Bcc
+       before_available:
+@@ -1427,6 +1433,12 @@ cs:
+       owned:
+         description: Počet IP adres vlastněných některými uživateli
+         label: Vlastněno
++      owned_unassigned:
++        description: Adresy nebo prefixy vlastněné uživateli, které nejsou přiřazené
++          k žádnému rozhraní. Jiný uživatel je nemůže převzít. Počet zahrnuje i rezervované
++          adresy a zakázané sítě; přiřazení vyžaduje povolenou síť a nesmí mu bránit
++          rezervace.
++        label: Vlastněné, nepřiřazené
+       packets:
+         label: Pakety
+       packets_in:
+diff --git a/api/lib/vpsadmin/api/locales/en.yml b/api/lib/vpsadmin/api/locales/en.yml
+index 0e7a771bd3d31575c1c0345be32505cd050b2ecd..09b1f10a204b84927e494698223858452749049b 100644
+--- a/api/lib/vpsadmin/api/locales/en.yml
++++ b/api/lib/vpsadmin/api/locales/en.yml
+@@ -262,6 +262,10 @@ en:
+         label: Available
+       available_space:
+         label: Available_space
++      available_to_users:
++        description: Registered unowned, unassigned and unreserved addresses or prefixes;
++          zero when the network is disabled
++        label: Available to users
+       bcc:
+         label: Bcc
+       before_available:
+@@ -1432,6 +1436,10 @@ en:
+       owned:
+         description: Number of IP addresses owned by some users
+         label: Owned
++      owned_unassigned:
++        description: User-owned addresses or prefixes without an interface assignment,
++          including reserved entries and disabled networks
++        label: Owned, not assigned
+       packets:
+         label: Packets
+       packets_in:
+diff --git a/api/lib/vpsadmin/api/resources/network.rb b/api/lib/vpsadmin/api/resources/network.rb
+index dfd80a68de5825cf9b5c68f0a5c41209c40b924e..ae75a69658cf8a33131e354cdbcc10b3d7963f5a 100644
+--- a/api/lib/vpsadmin/api/resources/network.rb
++++ b/api/lib/vpsadmin/api/resources/network.rb
+@@ -9,6 +9,10 @@ module VpsAdmin::API::Resources
+       integer :assigned, desc: 'Number of IP addresses assigned to VPSes'
+       integer :owned, desc: 'Number of IP addresses owned by some users'
+       integer :taken, desc: 'Number of owned and assigned IP addresses'
++      integer :available_to_users, label: 'Available to users',
++                                   desc: 'Registered unowned, unassigned and unreserved addresses or prefixes; zero when the network is disabled'
++      integer :owned_unassigned, label: 'Owned, not assigned',
++                                 desc: 'User-owned addresses or prefixes without an interface assignment, including reserved entries and disabled networks'
+     end
+ 
+     params(:common) do
+diff --git a/api/models/network.rb b/api/models/network.rb
+index 7f1a7304164faf3e01826b7c4955ac58fe9bdd97..2b9df965b6e1531629c6ae7ea8751cc90285838c 100644
+--- a/api/models/network.rb
++++ b/api/models/network.rb
+@@ -123,6 +123,16 @@ class Network < ApplicationRecord
+     ).count
+   end
+ 
++  def available_to_users
++    return 0 unless enabled?
++
++    ip_addresses.where(user_id: nil, network_interface_id: nil).unreserved.count
++  end
++
++  def owned_unassigned
++    ip_addresses.where.not(user_id: nil).where(network_interface_id: nil).count
++  end
++
+   # Changing quota semantics requires an explicit conversion of existing IPs.
+   # Registration takes this same SQL row lock before adding the first address.
+   def preserve_allocation_resource
+diff --git a/api/spec/api/resources/ip_address_spec.rb b/api/spec/api/resources/ip_address_spec.rb
+index 4af9a8e686b69eaf0319f1dc9d530da83e7461bc..030404d6d948ebd9b267554c48d70c800843491e 100644
+--- a/api/spec/api/resources/ip_address_spec.rb
++++ b/api/spec/api/resources/ip_address_spec.rb
+@@ -240,6 +240,10 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+         expect(assigned.fetch('network')).to include('id' => SpecSeed.network_v4.id, 'enabled' => false)
+         owned = ip_list.find { |row| row['id'] == index_data[:ip_user_owned].id }
+         expect(owned.fetch('network')).to include('enabled' => false)
++        [assigned, owned].each do |row|
++          expect(row.fetch('network')).not_to have_key('available_to_users')
++          expect(row.fetch('network')).not_to have_key('owned_unassigned')
++        end
+         expect(index_data[:ip_user_owned].network_interface_id).to be_nil
+       end
+ 
+@@ -249,10 +253,14 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+         owned = create_ip!(addr: '192.0.2.16', network: SpecSeed.network_v4, user: SpecSeed.support)
+         assigned = create_ip!(addr: '192.0.2.17', network: SpecSeed.network_v4, netif:)
+ 
+-        as(SpecSeed.support) { json_get index_path }
++        as(SpecSeed.support) { json_get index_path, _meta: { includes: 'network' } }
+ 
+         expect_status(200)
+         expect(ip_list.map { |row| row['id'] }).to contain_exactly(enabled_free.id, owned.id, assigned.id)
++        ip_list.each do |row|
++          expect(row.fetch('network')).not_to have_key('available_to_users')
++          expect(row.fetch('network')).not_to have_key('owned_unassigned')
++        end
+       end
+ 
+       it 'preserves admin inventory and exact disabled filters' do
+diff --git a/api/spec/api/resources/network_read_spec.rb b/api/spec/api/resources/network_read_spec.rb
+index 977a826401a2e4de4b651e6e5f01a715e4293a16..a7cde125665e46a6a8a3f8fe7b6671427af25665 100644
+--- a/api/spec/api/resources/network_read_spec.rb
++++ b/api/spec/api/resources/network_read_spec.rb
+@@ -45,6 +45,76 @@ RSpec.describe 'VpsAdmin::API::Resources::Network' do
+     expect(last_response.status).to eq(code), message
+   end
+ 
++  describe 'inventory counters' do
++    include CoreResourceSpecHelpers
++
++    let(:counter_locks) { [] }
++    let(:stock) do
++      export = create_export!(user: SpecSeed.user)
++      interface = NetworkInterface.create!(export:, name: 'eth0', kind: :veth_routed)
++      rows = [
++        [nil, nil], [nil, nil], [SpecSeed.user, nil], [SpecSeed.other_user, nil],
++        [nil, interface], [SpecSeed.user, interface]
++      ].each_with_index.map do |(user, netif), offset|
++        IpAddress.create!(
++          network: ipv4_network, ip_addr: "192.0.2.#{220 + offset}", prefix: 32,
++          size: 1, user:, network_interface: netif,
++          charged_environment: user && SpecSeed.environment
++        )
++      end
++      ipv6_network.update!(split_prefix: 64)
++      prefix = IpAddress.create!(network: ipv6_network, ip_addr: '2001:db8::', prefix: 64, size: 1)
++      counter_locks << rows[1].acquire_lock(rows[1])
++      counter_locks << rows[3].acquire_lock(rows[3])
++      { rows:, prefix: }
++    end
++
++    before { stock }
++    after { counter_locks.each(&:release) }
++
++    it 'returns authoritative allocation-row counts on admin Index and Show' do
++      expected = {
++        'available_to_users' => 1, 'owned_unassigned' => 2,
++        'used' => 6, 'assigned' => 2, 'owned' => 3, 'taken' => 4
++      }
++      as(SpecSeed.admin) { json_get index_path }
++      expect_status(200)
++      expect(nets.find { |row| row['id'] == ipv4_network.id }).to include(expected)
++      expect(nets.find { |row| row['id'] == ipv6_network.id }).to include(
++        'available_to_users' => 1, 'owned_unassigned' => 0, 'used' => 1
++      )
++      expect(stock[:prefix].prefix).to eq(64)
++
++      as(SpecSeed.admin) { json_get show_path(ipv4_network.id) }
++      expect_status(200)
++      expect(net_obj).to include(expected)
++      expect(net_obj['size']).to eq(ipv4_network.size)
++    end
++
++    it 'reports zero availability when disabled while retaining reserved owned detached rows' do
++      ipv4_network.update!(enabled: false)
++      as(SpecSeed.admin) { json_get show_path(ipv4_network.id) }
++      expect_status(200)
++      expect(net_obj).to include('available_to_users' => 0, 'owned_unassigned' => 2)
++      expect(ResourceLock.where(id: counter_locks.map(&:id)).count).to eq(2)
++    end
++
++    %i[user support].each do |actor|
++      it "does not expose admin counters on #{actor} Index or Show" do
++        as(SpecSeed.public_send(actor)) { json_get index_path }
++        expect_status(200)
++        nets.each do |row|
++          expect(row).not_to have_key('available_to_users')
++          expect(row).not_to have_key('owned_unassigned')
++        end
++        as(SpecSeed.public_send(actor)) { json_get show_path(ipv4_network.id) }
++        expect_status(200)
++        expect(net_obj).not_to have_key('available_to_users')
++        expect(net_obj).not_to have_key('owned_unassigned')
++      end
++    end
++  end
++
+   describe 'Index' do
+     context 'with a disabled network' do
+       before { ipv4_network.update!(enabled: false) }
+diff --git a/docs/ip-locking.md b/docs/ip-locking.md
+index addff4ed36d7faf1e55a9744a39502e42ab9e3c5..528e4172d22ea551b65805cac8ce8efca5e5a637 100644
+--- a/docs/ip-locking.md
++++ b/docs/ip-locking.md
+@@ -61,6 +61,17 @@ pagination use the same restricted query. Direct `Show` access and included
+ associations keep their existing permissions, including access to disabled
+ networks and addresses. List visibility does not permit a new assignment.
+ 
++Administrators receive two read-only network counts. `available_to_users` counts
++registered allocations without an owner, interface assignment or resource
++reservation, and is zero when the network is disabled. `owned_unassigned` counts
++owned allocations without an interface, including reserved allocations and
++disabled networks. Each registered address or prefix contributes one row.
++`used` is registered stock and `size` is theoretical capacity; `assigned` includes
++VPS and export interfaces, and `owned` also includes assigned allocations. An
++allocation can contribute to both `assigned` and `owned`. These inventory counts
++do not determine whether an allocation is allowed on a particular VPS.
++Older APIs omit the new fields; the UIs display a dash instead of deriving them.
++
+ New automatic allocations, explicit assignments of detached addresses, new IP
+ ownership, ownership transfers and owned registration require an enabled network.
+ Changing a VPS owner also changes the effective owner of its assigned addresses

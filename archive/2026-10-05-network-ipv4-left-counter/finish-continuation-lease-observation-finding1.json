@@ -1,0 +1,20 @@
+{
+  "schema": 1,
+  "at": "2026-10-11T07:52:04.946870+00:00",
+  "head": "22e2fb772f69ec1f5e32e3a8d314ab3ffb63d3cd",
+  "path": "tools/verify-live-lease.cjs",
+  "source_sha256": "1bbd9ac24c117d51f8de0c2b82b7d41916da60aa2383659d69128f96ef53ec38",
+  "severity": "Important",
+  "lanes": [
+    "general",
+    "risk/evidence correctness"
+  ],
+  "finding": "The retained-state test compares inode and bytes for the active process receipt, while the live runner atomically replaces that receipt on each tracker pass. Healthy publication can therefore fail the public lease rejection invariance test.",
+  "source_supported": true,
+  "native_reproduction": false,
+  "affected_consumer": "Campaign.runtime_smoke -> tools/verify-live-lease.cjs main",
+  "required_boundary": "Keep protected-file invariance; validate the one exact current process receipt as an evolving same-run snapshot rather than fixed pathname inode. No broad ignore, ownership/lifecycle/protocol weakening or failed-campaign replay.",
+  "design_owner": "architect0, retained Astra/xhigh",
+  "source_edit_started": false,
+  "operation_started": false
+}

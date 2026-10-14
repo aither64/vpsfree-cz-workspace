@@ -1,0 +1,275 @@
+diff --git a/cluster/lib/kb_runtime.rb b/cluster/lib/kb_runtime.rb
+index 765e35c0dd33fecb33b745b7aaf495eb2dd5abf7..b1f585d6642084f10ee4ac2f4623d5d14eb5d881 100644
+--- a/cluster/lib/kb_runtime.rb
++++ b/cluster/lib/kb_runtime.rb
+@@ -660,18 +660,20 @@ module KbRuntime
+     # This SSH-only child has one waitpid owner, not a detached reaper. Its PID
+     # remains signal authority until reaped; no guest or runner is signalled.
+     def ssh_keyscan(endpoint, timeout:, deadline:)
+-      output, output_writer = IO.pipe
+-      error, error_writer = IO.pipe
+-      streams = { output => ''.b, error => ''.b }
++      output = output_writer = error = error_writer = pid = status = nil
+       environment = ENV.keys.grep(/\A(?:VPSADMIN_(?:DEVCLUSTER|KB)_|NIX_|SSH_)/).to_h { |name| [name, nil] }
+-      pid = Process.spawn(environment, 'ssh-keyscan', '-T', timeout.to_s, '-p', endpoint.fetch('port').to_s,
+-        endpoint.fetch('host'), in: File::NULL, out: output_writer, err: error_writer, close_others: true)
++      Thread.handle_interrupt(SignalException => :never) do
++        output, output_writer = IO.pipe
++        error, error_writer = IO.pipe
++        pid = Process.spawn(environment, 'ssh-keyscan', '-T', timeout.to_s, '-p', endpoint.fetch('port').to_s,
++          endpoint.fetch('host'), in: File::NULL, out: output_writer, err: error_writer, close_others: true)
++      end
++      streams = { output => ''.b, error => ''.b }
+       output_writer.close
+       error_writer.close
+       pending = streams.keys.dup
+       expired = false
+       truncated = false
+-      status = nil
+       until status && pending.empty?
+         remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+         if remaining <= 0 || truncated
+@@ -679,10 +681,19 @@ module KbRuntime
+           break
+         end
+         if pid
+-          waited = Process.waitpid2(pid, Process::WNOHANG)
+-          if waited
+-            status = waited.last
+-            pid = nil
++          # A successful wait ends signal authority before a pending supported
++          # interruption can enter cleanup. ECHILD also invalidates authority.
++          Thread.handle_interrupt(SignalException => :never) do
++            begin
++              waited = Process.waitpid2(pid, Process::WNOHANG)
++              if waited
++                status = waited.last
++                pid = nil
++              end
++            rescue Errno::ECHILD
++              pid = nil
++              raise
++            end
+           end
+         end
+         next if pending.empty? && status
+@@ -698,22 +709,37 @@ module KbRuntime
+           end
+         end
+       end
+-      if pid
+-        Process.kill('KILL', pid)
+-        status = Process.waitpid2(pid).last
+-        pid = nil
++      Thread.handle_interrupt(SignalException => :never) do
++        begin
++          if pid
++            Process.kill('KILL', pid)
++            status = Process.waitpid2(pid).last
++            pid = nil
++          end
++        rescue Errno::ECHILD
++          pid = nil
++          raise
++        ensure
++          [output, output_writer, error, error_writer].compact.each { |stream| stream.close unless stream.closed? }
++        end
+       end
+       { stdout: streams.fetch(output), stderr: streams.fetch(error), exitstatus: status.exitstatus,
+         termsig: status.termsig, deadline: expired, truncated: }
+-    rescue Errno::ECHILD
+-      pid = nil
+-      raise
+     ensure
+-      if pid
+-        Process.kill('KILL', pid)
+-        Process.waitpid2(pid)
++      Thread.handle_interrupt(SignalException => :never) do
++        begin
++          if pid
++            Process.kill('KILL', pid)
++            status = Process.waitpid2(pid).last
++            pid = nil
++          end
++        rescue Errno::ECHILD
++          pid = nil
++          raise
++        ensure
++          [output, output_writer, error, error_writer].compact.each { |stream| stream.close unless stream.closed? }
++        end
+       end
+-      [output, output_writer, error, error_writer].compact.each { |stream| stream.close unless stream.closed? }
+     end
+ 
+     def ssh_host_keys(output, endpoint)
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index 45af4893e6580b02c65228f8d56625b19d71cfe1..a049332462d6c89df42b5ab068ec8b1ff2012417 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -519,8 +519,166 @@ class SshDiscoveryTest < Minitest::Test
+     end
+   end
+ 
++  def test_interrupt_after_real_polling_reap_cannot_signal_the_reaped_pid
++    with_interrupted_scan(interrupt_at: :poll) do |engine, observed|
++      assert_raises(Interrupt) { run_interrupted_scan(engine) }
++      assert_equal([:poll], observed[:queued])
++      assert_equal([observed[:child]], observed[:reaped])
++      assert_empty(observed[:signals])
++      assert_scan_child_released(observed)
++    end
++  end
++
++  def test_interrupt_after_real_spawn_retains_pid_until_exact_child_cleanup
++    with_interrupted_scan(interrupt_at: :spawn) do |engine, observed|
++      assert_raises(Interrupt) { run_interrupted_scan(engine) }
++      assert_equal([:spawn], observed[:queued])
++      assert_equal([['KILL', observed[:child]]], observed[:signals])
++      assert_scan_child_released(observed)
++    end
++  end
++
++  def test_interrupt_after_either_real_pipe_acquisition_closes_every_returned_endpoint
++    [1, 2].each do |pipe_index|
++      with_interrupted_scan(interrupt_at: :pipe, pipe_index:) do |engine, observed|
++        assert_raises(Interrupt) { run_interrupted_scan(engine) }
++        assert_equal([:pipe], observed[:queued])
++        assert_equal([['KILL', observed[:child]]], observed[:signals])
++        assert_scan_child_released(observed)
++      end
++    end
++  end
++
++  def test_interrupt_after_deadline_terminal_reap_has_no_second_signal
++    with_interrupted_scan(interrupt_at: :terminal) do |engine, observed|
++      assert_raises(Interrupt) { run_interrupted_scan(engine, remaining: 0.2) }
++      assert_equal([:terminal], observed[:queued])
++      assert_equal([['KILL', observed[:child]]], observed[:signals])
++      assert_equal(Signal.list.fetch('KILL'), observed[:statuses].last.termsig)
++      assert_scan_child_released(observed)
++    end
++  end
++
++  def test_second_interrupt_during_ensure_terminal_reap_cannot_skip_endpoint_closure
++    with_interrupted_scan(interrupt_at: :spawn, second_interrupt: true) do |engine, observed|
++      assert_raises(Interrupt) { run_interrupted_scan(engine) }
++      assert_equal([:spawn, :terminal], observed[:queued])
++      assert_equal([['KILL', observed[:child]]], observed[:signals])
++      assert_scan_child_released(observed)
++    end
++  end
++
++  def test_echild_invalidates_signal_authority_with_and_without_pending_interrupt
++    [false, true].each do |interrupt|
++      with_interrupted_scan(interrupt_at: interrupt ? :echild : nil, echild: true) do |engine, observed|
++        assert_raises(interrupt ? Interrupt : Errno::ECHILD) { run_interrupted_scan(engine) }
++        assert_equal(interrupt ? [:echild] : [], observed[:queued])
++        assert_empty(observed[:signals])
++        assert_scan_child_released(observed)
++      end
++    end
++  end
++
+   private
+ 
++  def run_interrupted_scan(engine, remaining: 5)
++    Timeout.timeout(10) do
++      engine.ssh_keyscan(two_endpoints['services'], timeout: 1,
++        deadline: Process.clock_gettime(Process::CLOCK_MONOTONIC) + remaining)
++    end
++  end
++
++  def assert_scan_child_released(observed)
++    assert_equal([observed[:child]], observed[:reaped], 'the real child must be reaped exactly once')
++    assert_equal(4, observed[:pipes].length)
++    observed[:pipes].each { |stream| assert(stream.closed?, 'every acquired pipe endpoint must close') }
++    assert_empty(observed[:post_reap_signals], 'never signal a reaped PID, even in a failing regression')
++    assert_raises(Errno::ECHILD) { Process.waitpid(observed[:child], Process::WNOHANG) }
++  end
++
++  def with_interrupted_scan(interrupt_at:, pipe_index: 1, echild: false, second_interrupt: false)
++    engine = KbRuntime::Engine.new(state: KbRuntime::State.new('/not-created', 'ssh-capture'), software: nil, controller: [])
++    spawn_child = Process.method(:spawn)
++    wait_child = Process.method(:waitpid2)
++    signal_child = Process.method(:kill)
++    acquire_pipe = IO.method(:pipe)
++    target = Thread.current
++    observed = { child: nil, pipes: [], reaped: [], statuses: [], signals: [], post_reap_signals: [], queued: [] }
++    enqueue = lambda do |boundary|
++      observed[:queued] << boundary
++      # Queue supported asynchronous delivery from another thread after the
++      # real acquisition/reap but before the wrapper returns to its caller.
++      Thread.new { target.raise(Interrupt, "queued at #{boundary}") }.join
++    end
++    pipe_count = 0
++    pipe = lambda do |*args|
++      endpoints = acquire_pipe.call(*args)
++      observed[:pipes].concat(endpoints)
++      pipe_count += 1
++      enqueue.call(:pipe) if interrupt_at == :pipe && pipe_count == pipe_index
++      endpoints
++    end
++    program = interrupt_at == :poll || echild ? 'exit 0' : 'sleep 30'
++    spawn = lambda do |environment, _command, *_args, **options|
++      observed[:child] = spawn_child.call(environment, RbConfig.ruby, '-e', program, **options)
++      enqueue.call(:spawn) if interrupt_at == :spawn
++      observed[:child]
++    end
++    wait = lambda do |pid, *flags|
++      result = wait_child.call(pid, *flags)
++      if result
++        observed[:reaped] << pid
++        observed[:statuses] << result.last
++        if echild
++          # Produce native ECHILD from this same already-reaped test child;
++          # no competing reaper or unrelated PID is involved.
++          begin
++            wait_child.call(pid, Process::WNOHANG)
++          rescue Errno::ECHILD
++            enqueue.call(:echild) if interrupt_at == :echild
++            raise
++          end
++          flunk('a second native wait unexpectedly succeeded')
++        elsif flags == [Process::WNOHANG] && interrupt_at == :poll
++          enqueue.call(:poll)
++        elsif flags.empty? && (interrupt_at == :terminal || second_interrupt)
++          enqueue.call(:terminal)
++        end
++      end
++      result
++    end
++    kill = lambda do |signal, pid|
++      if observed[:reaped].include?(pid)
++        observed[:post_reap_signals] << [signal, pid]
++        raise 'refused post-reap signal in test fixture'
++      end
++      assert_equal(observed[:child], pid, 'only the retained owned child can be signalled')
++      observed[:signals] << [signal, pid]
++      signal_child.call(signal, pid)
++    end
++    IO.stub(:pipe, pipe) do
++      Process.stub(:spawn, spawn) do
++        Process.stub(:waitpid2, wait) do
++          Process.stub(:kill, kill) { yield engine, observed }
++        end
++      end
++    end
++  ensure
++    # Saved native methods provide bounded fixture cleanup on assertion failure.
++    # This sole parent never sends a signal after one of its successful waits.
++    begin
++      if observed && observed[:child] && !observed[:reaped].include?(observed[:child])
++        result = wait_child.call(observed[:child], Process::WNOHANG)
++        unless result
++          signal_child.call('KILL', observed[:child])
++          wait_child.call(observed[:child])
++        end
++      end
++    ensure
++      observed&.fetch(:pipes)&.each { |stream| stream.close unless stream.closed? }
++    end
++  end
++
+   def two_endpoints
+     { 'services' => { 'host' => '127.0.0.1', 'port' => 10022, 'user' => 'root' },
+       'node1' => { 'host' => '127.0.0.1', 'port' => 10023, 'user' => 'root' } }

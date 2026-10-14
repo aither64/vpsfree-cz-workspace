@@ -1,0 +1,9 @@
+test: wait for the authenticated shutdown acknowledgement
+
+The delayed-shutdown fixture polled the operation lock used by public
+stop. That probe could deny the waiter admission and hide its error
+behind a synchronization timeout.
+
+Observe the existing authenticated control call on this fixture instance,
+return its handoff unchanged, and surface waiter errors at the barrier.
+Keep the public stop, five-second guards and delayed-child assertions.

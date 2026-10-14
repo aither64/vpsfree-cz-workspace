@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "native_record": {
+    "schema": 1,
+    "recorded_at": "2026-10-11T08:57:43.263351+00:00",
+    "kind": "native_failure_source_diagnosis",
+    "head": "94ea02cafcf6e7830439069a10f2c5d4597f6223",
+    "run_id": 38125306206,
+    "log_sha256": "cef3310dbee5ba302b5282e662cc6e1278d729ae20dbaf9e101193c4009baa74",
+    "seed": 13236,
+    "test": "RuntimeLifecycleTest#test_public_stop_reads_retained_g4_schema_two_launch_without_selecting_software",
+    "native_error": "KbRuntime::Error: duplicate requested host resource",
+    "counts": {
+      "runs": 99,
+      "assertions": 1227,
+      "failures": 0,
+      "errors": 1,
+      "skips": 0
+    },
+    "same_head_other_check": {
+      "run_id": 38125302478,
+      "conclusion": "success"
+    },
+    "source_mechanism": "Separate ephemeral TCP selections close the first probe before the second; reused port creates identical TCP resource requests. Native port values are not retained.",
+    "status": "bounded fixture correction assigned; no local reproduction/no passing repair",
+    "scope": [
+      "tools/test-runtime.rb fixture config and unused TCP helper only"
+    ],
+    "brief_sha256": "cfd9b0899f42c59aa6c7db9e3739eeda9a0bb94096c8e44e6674191ec57ac5b2",
+    "operation_admission": false
+  },
+  "evidence": [
+    {
+      "path": "finish-lease-observation-fixture-ports1-diagnosis.json",
+      "sha256": "5bf42c546a38a6a30cf513552abaafd31a3366e617822996a6e89cf7afe4f088"
+    },
+    {
+      "path": "finish-lease-observation-fixture-ports1-brief.txt",
+      "sha256": "cfd9b0899f42c59aa6c7db9e3739eeda9a0bb94096c8e44e6674191ec57ac5b2"
+    },
+    {
+      "path": "finish-lease-observation-hosted1/k/full.log",
+      "sha256": "cef3310dbee5ba302b5282e662cc6e1278d729ae20dbaf9e101193c4009baa74"
+    },
+    {
+      "path": "finish-lease-observation-hosted1/k/logs.zip",
+      "sha256": "353078e2029180d1f11ae75c519c77a8e87e2869aa91a54c81abf870baff9245"
+    },
+    {
+      "path": "finish-lease-observation-hosted1/k/final.json",
+      "sha256": "56c13d356f2ee7437115559ea649f60df484ad812453998edfb3c5bdd1783d2d"
+    },
+    {
+      "path": "finish-lease-observation-hosted1/runtime-k/full.log",
+      "sha256": "11cf2e2204fdaa1eccdb2dd235b04a4ae08621a29af1f457283cfc3949a4d694"
+    },
+    {
+      "path": "finish-lease-observation-hosted1/runtime-k/logs.zip",
+      "sha256": "a7a9a6cab1fc7bb0af5076fb508035410c32ead6ee8a42490a0553c5d8038ec3"
+    },
+    {
+      "path": "finish-lease-observation-hosted1/runtime-k/final.json",
+      "sha256": "304c1d7621f68159cb8742aef38e5c543cd0762cba5ca77c29c8d9f80478c13d"
+    }
+  ],
+  "source_supported": true,
+  "native_reproduction": false,
+  "causal_limit": "Native duplicate port values and exact reuse scheduling are not retained; same-head pass remains valid baseline evidence.",
+  "repair_limit": "Simultaneous probes prevent selecting the same listening TCP endpoint within config, but do not reserve against unrelated activity after close.",
+  "local_execution": "None; source reads/edits and static preservation/hash inventory only.",
+  "packet_preparation_error": "First inventory expected headSha/databaseId; stopped before writes. Corrected to retained REST head_sha/id fields.",
+  "material_deviation": null
+}

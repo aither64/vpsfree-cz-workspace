@@ -1,0 +1,69 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin' is dirty
+Successfully installed bundler-4.0.22
+1 gem installed
+Bundle complete! 7 Gemfile dependencies, 48 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+fa5d7743b6cab784f39faa6a1aacdec85b65a4ef849aa7954e91327d565b9f6e  /home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/commit-v-webui.paths
+405daa419ff5f5dc9374921b202fc0a5e03616da3adc115bd0d60a0eb4b2ba66  /home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/commit-v-webui.message
+ .../playwright/webui/specs/admin-cluster.spec.cjs  |  33 ++++++++
+ webui/forms/cluster.forms.php                      |  44 +++++++++++
+ webui/forms/networking.forms.php                   |  17 +++-
+ .../lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.mo | Bin 149746 -> 150374 bytes
+ .../lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po |  79 ++++++++++++-------
+ webui/lang/locale/vpsAdmin.pot                     |  61 ++++++++++-----
+ webui/lib/functions.lib.php                        |   4 +
+ webui/pages/page_cluster.php                       |  23 ++++++
+ webui/tests/Regression/CsrfStateFormsTest.php      |  15 ++++
+ webui/tests/Regression/NetworkAvailabilityTest.php |  86 +++++++++++++++++++++
+ 10 files changed, 309 insertions(+), 53 deletions(-)
+Running pre-commit hooks
+Run Nixfmt...................................................[Nixfmt] OK
+Run MigrationSpecs...................................[MigrationSpecs] OK
+Run VpsadminWebuiI18n.............................[VpsadminWebuiI18n] OK
+Fix non compliant PHP files..............................[PhpCsFixer] OK
+Run VpsadminApiI18n.................................[VpsadminApiI18n] OK
+
+✓ All pre-commit hooks passed
+
+Running commit-msg hooks
+Check subject line................................[SingleLineSubject] OK
+Check for trailing periods in subject................[TrailingPeriod] OK
+Check text width..........................................[TextWidth] WARNING
+Commit message subject must be <= 60 characters
+Line 3 of commit message has > 72 characters
+Line 4 of commit message has > 72 characters
+Line 7 of commit message has > 72 characters
+Line 8 of commit message has > 72 characters
+
+⚠ All commit-msg hooks passed, but with warnings
+
+[2026-10-05-network-ipv4-left-counter 6b3628af6] webui: expose network availability and enabled address selectors
+ 10 files changed, 309 insertions(+), 53 deletions(-)
+ create mode 100644 webui/tests/Regression/NetworkAvailabilityTest.php
+commit 6b3628af665049dc095ba985ef0fbe8a22286863
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:10:41 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 6 15:10:41 2026 +0200
+
+    webui: expose network availability and enabled address selectors
+    
+    Show enabled state in network and owned-address inventory. Add a confirmed
+    administrator POST form and exclude disabled pools from available selectors
+    when the API advertises support. Keep old API requests compatible.
+    
+    Detached owned addresses in disabled networks remain visible with assignment
+    controls unavailable, including stale assignment forms. Preserve controls for
+    existing service and cover confirmation, CSRF and selector behavior.
+
+ .../playwright/webui/specs/admin-cluster.spec.cjs  |  33 ++++++++
+ webui/forms/cluster.forms.php                      |  44 +++++++++++
+ webui/forms/networking.forms.php                   |  17 +++-
+ .../lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.mo | Bin 149746 -> 150374 bytes
+ .../lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po |  79 ++++++++++++-------
+ webui/lang/locale/vpsAdmin.pot                     |  61 ++++++++++-----
+ webui/lib/functions.lib.php                        |   4 +
+ webui/pages/page_cluster.php                       |  23 ++++++
+ webui/tests/Regression/CsrfStateFormsTest.php      |  15 ++++
+ webui/tests/Regression/NetworkAvailabilityTest.php |  86 +++++++++++++++++++++
+ 10 files changed, 309 insertions(+), 53 deletions(-)

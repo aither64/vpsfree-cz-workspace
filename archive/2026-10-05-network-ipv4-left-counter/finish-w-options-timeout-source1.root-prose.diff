@@ -1,0 +1,107 @@
+diff --git a/docs/design/API_CONTRACTS.md b/docs/design/API_CONTRACTS.md
+index 084eaa30173895b14b0923363d9231ef633f7355..b557bed94439aca01ed5aa7acbbeb364e183c3be 100644
+--- a/docs/design/API_CONTRACTS.md
++++ b/docs/design/API_CONTRACTS.md
+@@ -142,6 +142,20 @@ Free-IP suggestions apply the advertised network availability filter before the
+ 50-row limit and reject explicitly disabled rows in stale responses. A successful
+ capability response from an older API omits the unsupported filter.
+ 
++Each suggestion query has one 12-second budget covering shared capability
++discovery and its address request. Expiry settles that suggestion as an error
++and allows later locations to load. It cannot start an address request after
++late metadata or accept late address results. The shared capability request and
++its five-minute cache remain available to other callers; a suggestion timeout
++does not cancel or invalidate them. Capability failures are errors, not evidence
++of an older API or an empty pool.
++
++Explicit retry starts a new suggestion budget. It reuses successful cached
++metadata, retries a settled failed lookup, or joins an existing pending lookup.
++Joining a stalled lookup is still bounded for that caller; retry does not force
++a second shared OPTIONS request. The budget applies per query, not to the whole
++page. Priority locations load first and later locations continue progressively.
++
+ Administrator network create/edit checks the relevant action's `enabled` input
+ metadata before displaying or sending the availability control. An edit also
+ requires a known current boolean state. Omitted fields preserve server state;
+diff --git a/docs/design/REQUIREMENTS.md b/docs/design/REQUIREMENTS.md
+index b437a087e0f755000f7d3375ba2d5a59cf53c542..c460174e0a5a7d2e97a00511aca187872c1e1611 100644
+--- a/docs/design/REQUIREMENTS.md
++++ b/docs/design/REQUIREMENTS.md
+@@ -81,7 +81,7 @@ The Acceptance column describes what must be checked, not a claim it all passed.
+ | REQ-047 | Preserve backup filters when switching tabs. | Owner/location/other filters survive appropriate tab changes; no stale response overwrites current selection. | P; [PR497](https://github.com/Kerrycek/clankerdev/pull/497) | Delivered |
+ | REQ-048 | Support dataset/NAS/snapshot/download/export/restore workflows. | Quota vs usage distinguished; local/remote restore sources explicit; task results and failure/cleanup verifiable. | C/U; [datasets](../../src/lib/api/datasets.ts), [exports](../../src/lib/api/exports.ts) | Baseline; certification scope recorded separately |
+ | REQ-049 | Support DNS zones/records/transfers/DNSSEC/TSIG safely. | Validate actual record/API rules; preserve zone context and errors; secrets scrubbed; saved record is not proof of published DNS. | C/U; [DNS](../../src/lib/api/dns.ts), [secret scrubber](../../src/lib/api/dnsSecretScrubber.ts) | Baseline |
+-| REQ-050 | Preserve network interfaces, addresses, resolvers and admin IP inventory. | Scope and address family accurate; the VPS overview displays every loaded address with its prefix and copy action, wrapping long IPv6 values without a three-address preview limit. VPS assignment includes purpose `any` and all API-authorized location associations (including staging), without inferring availability from primary location; cached detached IPs must be revalidated, including supported network availability. Disabled owned addresses remain visible but cannot be assigned; admin desktop/mobile IP flags warn only on explicit disabled state. Destructive detach requires target review; history obeys REQ-043. | C; network availability request 2026-10-06; [networking](../../src/lib/api/networking.ts), [IP addresses](../../src/lib/api/ipAddresses.ts) | Baseline; staging private IPv4 availability delivered in PR6; network availability prepared, not deployed; fixture evidence only; [release 718cf759](../work-log/2026-09-30-three-site-release.md) |
++| REQ-050 | Preserve network interfaces, addresses, resolvers and admin IP inventory. | Scope and address family accurate; the VPS overview displays every loaded address with its prefix and copy action, wrapping long IPv6 values without a three-address preview limit. VPS assignment includes purpose `any` and all API-authorized location associations (including staging), without inferring availability from primary location; cached detached IPs must be revalidated, including supported network availability. Disabled owned addresses remain visible but cannot be assigned; admin desktop/mobile IP flags warn only on explicit disabled state. Each free-IP suggestion query has one 12-second budget across capability discovery and address loading; timeout settles errors and permits later locations, without cancelling shared metadata or publishing late results. Explicit retry is bounded and manual filters remain separate. Destructive detach requires target review; history obeys REQ-043. | C; network availability request 2026-10-06; [networking](../../src/lib/api/networking.ts), [IP addresses](../../src/lib/api/ipAddresses.ts); [issue30](https://github.com/vpsfreecz/vpsadmin-webui/issues/30) | Baseline; staging private IPv4 availability delivered in PR6; network availability prepared, not deployed; fixture evidence only; suggestion timeout fix [in preparation](../work-log/2026-10-09-ip-suggestions-timeout.md); [release 718cf759](../work-log/2026-09-30-three-site-release.md) |
+ | REQ-051 | Provide transactions, monitoring, incidents and OOM views. | Distinguish planned/running/failed/completed; display API-provided localized operation labels as primary titles in the selected UI language, falling back to technical names only when labels are missing; filter ownership; keep long identifiers usable on mobile; incident lists fit the content width with wrapping text and no horizontal table scroll; creating an incident from a VPS-filtered list preserves that VPS and returning preserves list filters. | C; [monitoring](../../src/lib/api/monitoring.ts), [OOM](../../src/lib/api/oom.ts) | Localized item labels and language negotiation prepared in the [follow-up](../work-log/2026-10-06-transaction-api-labels.md). Delivered: PR11 API operation names and PR14 incident width; [operation evidence](../work-log/2026-10-03-transaction-operation-names.md); [release f123a7fb](../work-log/2026-10-03-three-site-release.md) |
+ | REQ-052 | Preserve member payments and administrator finance. | Admin-only finance gates; recent payments in a member overview link directly to their incoming-payment detail when a source exists; incoming payments are default finance destination; review mutations retained on failure; embedded PNG and reviewed external HTTPS payment QR codes remain visible after HTML sanitization and deployment CSP checks, without replacing decoded images on scroll/session activity. | C/P; [PR490](https://github.com/Kerrycek/clankerdev/pull/490), [finance routes](../../src/routes/adminFinanceRoutes.tsx) | Baseline; external QR CSP follow-up [prepared](../work-log/2026-10-04-payment-qr-csp.md); embedded PNG payment QR fix delivered in PR15; [release f123a7fb](../work-log/2026-10-03-three-site-release.md) |
+ | REQ-053 | Preserve mail/content/help-box administration. | Templates/translations/recipients/mailboxes/news/help boxes retain scope, validation and in-context failure recovery. | C; [mailer](../../src/lib/api/mailer.ts), [help boxes](../../src/lib/api/helpBoxes.ts) | Baseline |
+diff --git a/docs/design/WORKFLOWS.md b/docs/design/WORKFLOWS.md
+index be6105f7aa7a4fc543499c897c064122dca0ad3c..c92c58fd7a0563c06e193b4301990f417afd7184 100644
+--- a/docs/design/WORKFLOWS.md
++++ b/docs/design/WORKFLOWS.md
+@@ -199,6 +199,13 @@ when supported and revalidate cached addresses with the same criteria. Capabilit
+ or candidate errors stay visible. Older APIs receive neither unsupported fields
+ nor a fabricated disabled state. Backend enforcement remains authoritative.
+ 
++Free-IP suggestions have a 12-second budget per query, including capability
++discovery. A timed-out query shows the existing error or partial-results state
++and allows later locations to load. Retry gives failed queries a fresh budget;
++it preserves shared metadata for other callers. A still-pending shared lookup
++may be joined again and time out again. Manual filters continue to use their
++separate address list, so late suggestion results cannot replace that list.
++
+ The network list shows registered stock, interface assignments, owned unassigned
+ allocations and stock available to users. Count descriptions distinguish
+ registered inventory from eligibility for a particular VPS. Missing additive
+diff --git a/docs/work-log/2026-10-09-ip-suggestions-timeout.md b/docs/work-log/2026-10-09-ip-suggestions-timeout.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..0bc31ff13b2562fbbfce210a3b59295f90cf781d
+--- /dev/null
++++ b/docs/work-log/2026-10-09-ip-suggestions-timeout.md
+@@ -0,0 +1,45 @@
++# Free-IP suggestion timeout
++
++## Request and cause
++
++[Issue30](https://github.com/vpsfreecz/vpsadmin-webui/issues/30) records a stalled
++shared OPTIONS request that can keep administrator IP suggestions loading.
++The existing 12-second suggestion timer covers the address transport, but its
++query waits for shared capability discovery without observing that timer.
++This change extends REQ-050's suggestion-loading contract.
++
++## Accepted change
++
++Each suggestion query keeps one 12-second budget across capability discovery
++and the address request. A caller-local abort-aware wait settles on expiry or
++cancellation and consumes late promise settlement. Checks before lookup, before
++the address request and before returning rows prevent late work or publication.
++Timeout uses an ordinary error so later locations can progress.
++
++Shared capability discovery and its five-minute cache remain available to other
++callers. Explicit retry starts a fresh budget and may rejoin a still-pending
++shared lookup. It does not force that lookup to restart. Successful older-API
++metadata still omits the unsupported availability filter; discovery errors are
++not treated as older-API support or an empty pool. The server filter and local
++disabled-row guard remain in place. Manual filters retain their separate list.
++
++The query plan, limits, priorities and existing error/retry interface are
++unchanged. This budget is per query; progressive loading of several locations
++can take longer than 12 seconds. Assignment capability discovery is a separate
++caller and is outside this fix.
++
++## Verification and release state
++
++The implementation and affected tests are being prepared on
++`dev/ip-suggestions-timeout`, based on current main
++`7152729dcde326e00d16b5af0a46d0f60b431dbb`. The planned tests use the real
++QueryClient with fake time to cover shared metadata, late results, cancellation,
++cache reuse, retries, progressive loading and manual-filter isolation. English
++and Czech browser scenarios belong to the existing adopted network-availability
++spec and select desktop and mobile smoke projects.
++
++No checks or browser captures have run for this change. Exact committed-head
++hosted checks, independent review and screenshot inspection are pending.
++Synthetic browser fixtures will not certify a live API or deployment.
++The separate legacy PHP KB screenshots and portable-runtime verification remain
++pending in the [development session](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-05-network-ipv4-left-counter/).

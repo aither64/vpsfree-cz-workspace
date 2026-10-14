@@ -1,0 +1,1 @@
+import{r as t,j as n}from"./vendor-react-MGxsW2Ms.js";const o=t.createContext(null);function s(e){const r=e.mode==="admin"?"/admin":"/app";return n.jsx(o.Provider,{value:{mode:e.mode,basePath:r},children:e.children})}function i(){const e=t.useContext(o);if(!e)throw new Error("useAppMode must be used within AppModeProvider");return e}export{s as A,i as u};

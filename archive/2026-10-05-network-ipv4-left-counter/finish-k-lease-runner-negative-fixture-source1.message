@@ -1,0 +1,9 @@
+test: distinguish invalid and changed lease runners
+
+A guessed neighboring PID can identify a valid same-argv fork, so it
+cannot deterministically exercise native runner refusal. Use the owned
+different-argv child for that case and a pipe-held Ruby fork for the
+separate unchanged-runner invariant.
+
+Keep malformed-record refusals strict and restore the original runner
+after checking the exact identity mismatch.

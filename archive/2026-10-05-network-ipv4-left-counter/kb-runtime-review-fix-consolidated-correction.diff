@@ -1,0 +1,1213 @@
+diff --git a/bin/check b/bin/check
+index 73d3b73c343daa17091b2c6cd50bb08abb202244..bc8d2622d7b76d4dfa1740ecd54ac9f5df5f2a33 100755
+--- a/bin/check
++++ b/bin/check
+@@ -58,6 +58,7 @@ ruby -c tools/test-capture-export.rb
+ ruby tools/test-capture-export.rb
+ node tools/test-connection.cjs
+ node tools/test-artifacts.cjs
++node tools/test-capture-lease.cjs
+ ruby -c cluster/seed-production-shape.rb
+ ruby -c tools/check-contract.rb
+ ruby -c tools/check-kb-annotations.rb
+diff --git a/cluster/artifact-lock.rb b/cluster/artifact-lock.rb
+index 0438dd0b0576f1464fb91d34eab5d445e0f5bbf6..7e98b25f277188c9002085549da39cf931acbcd8 100644
+--- a/cluster/artifact-lock.rb
++++ b/cluster/artifact-lock.rb
+@@ -5,26 +5,32 @@ require 'json'
+ require 'fileutils'
+ 
+ root = File.expand_path(ARGV.fetch(0))
+-raise 'artifact root must not be in the Nix store' if root.start_with?('/nix/store/')
++raise 'artifact root must not be in the Nix store' if root == '/nix/store' || root.start_with?('/nix/store/')
+ current = root
+ loop do
+   raise 'symlink in artifact root' if File.symlink?(current)
+   break if current == '/'
+   current = File.dirname(current)
+ end
+-raise 'artifact root must be an owned writable directory' unless File.directory?(root) && File.stat(root).uid == Process.uid && File.writable?(root)
++raise 'artifact root must be an owned writable directory' unless File.directory?(root) && File.stat(root).uid == Process.uid && File.writable?(root) && (File.stat(root).mode & 0o022).zero?
+ temporary = File.join(root, 'tmp')
+ Dir.mkdir(temporary, 0o700) unless File.exist?(temporary)
+ raise 'unsafe artifact temporary directory' unless !File.symlink?(temporary) && File.directory?(temporary) && File.stat(temporary).uid == Process.uid && (File.stat(temporary).mode & 0o022).zero?
+ lock_path = File.join(temporary, 'capture.lock')
+-begin
+-  File.open(lock_path, File::WRONLY | File::CREAT | File::EXCL | File::NOFOLLOW, 0o600) {}
+-rescue Errno::EEXIST
+-  # Existing captures/validators share the same persistent lock.
++inherited = ARGV[1] == '--inherited-fd'
++raise 'artifact descriptor must be explicitly inherited as fd3' if inherited && (ARGV[2] != '3' || ARGV.length != 3)
++unless inherited
++  begin
++    File.open(lock_path, File::WRONLY | File::CREAT | File::EXCL | File::NOFOLLOW, 0o600) {}
++  rescue Errno::EEXIST
++    # Existing captures/validators share the same persistent lock.
++  end
+ end
+ stat = File.lstat(lock_path)
+ raise 'unsafe artifact lock' unless stat.file? && !stat.symlink? && stat.uid == Process.uid && (stat.mode & 0o777) == 0o600
+-File.open(lock_path, File::RDWR | File::NOFOLLOW) do |lock|
++lock = inherited ? File.for_fd(3, 'r+', autoclose: true) : File.open(lock_path, File::RDWR | File::NOFOLLOW)
++begin
++  raise 'unsafe artifact descriptor' unless lock.stat.file? && lock.stat.uid == Process.uid && (lock.stat.mode & 0o777) == 0o600
+   raise 'artifact lock changed while opening' unless [lock.stat.dev, lock.stat.ino] == [stat.dev, stat.ino]
+   lock.flock(File::LOCK_EX)
+   if ARGV[1] == '--exec'
+@@ -37,4 +43,8 @@ File.open(lock_path, File::RDWR | File::NOFOLLOW) do |lock|
+   $stdout.puts(JSON.generate('schema' => 1, 'kind' => 'kb-artifact-lock'))
+   $stdout.flush
+   $stdin.read
++ensure
++  # Closing duplicates preserves the shared flock until the last writer closes.
++  # Never LOCK_UN: capture and validator children retain this same description.
++  lock.close
+ end
+diff --git a/cluster/lib/kb_runtime.rb b/cluster/lib/kb_runtime.rb
+index ca29762011f613e2fbe06570b37d93db0654df74..f40c7ef4dc93831e35de94b95c4e8d0f65cddbb5 100644
+--- a/cluster/lib/kb_runtime.rb
++++ b/cluster/lib/kb_runtime.rb
+@@ -187,7 +187,11 @@ module KbRuntime
+       state.transaction do
+         old = launch
+         identity = state.identity
+-        requested(config, topology, network, identity, SecureRandom.uuid)
++        replacement = requested(config, topology, network, identity, SecureRandom.uuid)
++        endpoints = ->(record) { record.fetch('endpoints').transform_values { |endpoint| endpoint.slice('host', 'port') } }
++        unless endpoints.call(replacement) == endpoints.call(old)
++          raise Error, 'update requires unchanged SSH endpoints for retained host-key trust'
++        end
+         if File.exist?(state.path('update.json'))
+           operation = state.read(state.path('update.json'))
+           candidate = state.read(state.path("candidate-#{operation.fetch('artifact_id')}.json"))
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index 870dc446d8cab8f51b57d6fafa1e37e6e826b78c..2de3b7a5325e98d76c8425ed3b0f8d8bc3d3b016 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -89,8 +89,10 @@ Missing roots fail rather than being recreated. An unresolved update refuses
+ resume and cannot fall back to an older artifact.
+ 
+ `update` prevalidates the replacement configuration, disk layout and TLS names
+-under one held operation, then attests the old live runner and guests. It journals
+-the candidate and becomes non-ready before building its rooted closures. Build
++under one held operation, then attests the old live runner and guests. Updates
++require the same resolved SSH hosts and ports because retained host-key trust is
++not rebound. The engine journals the candidate and becomes non-ready before
++building its rooted closures. Build
+ failure preserves the old processes, claims and disks. Retrying requires the same
+ selected source and requested configuration.
+ 
+@@ -168,7 +170,15 @@ original inventory always come from the selected source. A store or unwritable
+ output root fails before connection or fixture work.
+ 
+ An artifact lock serializes captures and validation for each output root. It is
+-acquired before the cluster lease. Each invocation uses a private directory under
++acquired before reading retained results or acquiring the cluster lease. Capture
++keeps the locked file descriptor in the writing process and passes the same open
++file description only to its artifact-lock helper. Both processes close their
++copies without explicitly unlocking. If the helper dies during synchronous
++publication, the writer still holds the lock until browser, SSH and controller
++cleanup finishes. Observed helper loss cancels capture and prevents further
++publication. Validation's writing child also retains its lock if the wrapper dies.
++
++Each invocation uses a private directory under
+ `outputRoot/tmp` for CLI authentication, fixture metadata, transcripts and staged
+ PNGs. Canonical screenshots remain under `screenshots/{cs,en}/TOPIC/VIEW.png`.
+ No source or credential path is derived from an artifact directory.
+diff --git a/lib/artifacts.cjs b/lib/artifacts.cjs
+index c8232cebc90631372bf6fcc4eca2822f4d55f44f..8dfbeced140bcd07b4485709dc56c48ae655a423 100644
+--- a/lib/artifacts.cjs
++++ b/lib/artifacts.cjs
+@@ -32,6 +32,51 @@ function artifactPath(root, relative) {
+   return absolute;
+ }
+ 
++function openArtifactLock(root) {
++  root = path.resolve(root);
++  if (root === '/nix/store' || root.startsWith('/nix/store/')) throw new Error('Artifact root must not be in the Nix store');
++  for (let ancestor = root; ; ancestor = path.dirname(ancestor)) {
++    const stat = fs.lstatSync(ancestor, { throwIfNoEntry: false });
++    if (stat && (!stat.isDirectory() || stat.isSymbolicLink())) throw new Error('Unsafe artifact root ancestor');
++    if (ancestor === path.dirname(ancestor)) break;
++  }
++  const safeDirectory = (directory) => {
++    const stat = fs.lstatSync(directory);
++    if (!stat.isDirectory() || stat.isSymbolicLink() || stat.uid !== process.getuid() || (stat.mode & 0o022)) {
++      throw new Error('Artifact directory is not safely owned');
++    }
++    fs.accessSync(directory, fs.constants.W_OK);
++  };
++  safeDirectory(root);
++  const temporary = path.join(root, 'tmp');
++  try { fs.mkdirSync(temporary, { mode: 0o700 }); }
++  catch (error) { if (error.code !== 'EEXIST') throw error; }
++  safeDirectory(temporary);
++  const filename = path.join(temporary, 'capture.lock');
++  const safeFile = (stat) => {
++    if (!stat.isFile() || stat.isSymbolicLink() || stat.uid !== process.getuid() || (stat.mode & 0o777) !== 0o600) {
++      throw new Error('Artifact lock is not a private owned regular file');
++    }
++  };
++  let fd;
++  try {
++    try { fd = fs.openSync(filename, fs.constants.O_RDWR | fs.constants.O_CREAT | fs.constants.O_EXCL | fs.constants.O_NOFOLLOW, 0o600); }
++    catch (error) {
++      if (error.code !== 'EEXIST') throw error;
++      safeFile(fs.lstatSync(filename));
++      fd = fs.openSync(filename, fs.constants.O_RDWR | fs.constants.O_NOFOLLOW);
++    }
++    const opened = fs.fstatSync(fd);
++    const named = fs.lstatSync(filename);
++    safeFile(opened); safeFile(named);
++    if (opened.dev !== named.dev || opened.ino !== named.ino) throw new Error('Artifact lock changed while opening');
++    return fd;
++  } catch (error) {
++    if (fd !== undefined) fs.closeSync(fd);
++    throw error;
++  }
++}
++
+ function atomicJson(filename, value) {
+   const temporary = `${filename}.${crypto.randomUUID()}.tmp`;
+   fs.writeFileSync(temporary, `${JSON.stringify(value, null, 2)}\n`, { mode: 0o600, flag: 'wx' });
+@@ -61,7 +106,9 @@ function validProvenance(value, source) {
+ }
+ 
+ class Artifacts {
+-  constructor({ sourceRoot, outputRoot, manifest, source, invocation = true }) {
++  constructor({ sourceRoot, outputRoot, manifest, source, invocation = true, assertLive = () => {} }) {
++    this.assertLive = assertLive;
++    this.assertLive();
+     this.sourceRoot = sourceRoot;
+     this.outputRoot = path.resolve(outputRoot);
+     if (this.outputRoot.startsWith('/nix/store/') || !fs.existsSync(this.outputRoot)) throw new Error('Output root must be an existing writable directory outside the store');
+@@ -113,6 +160,7 @@ class Artifacts {
+   }
+ 
+   stage(asset) {
++    this.assertLive();
+     const source = this.manifest.assets.find((row) => row.id === asset.id)?.variants[asset.language];
+     const candidate = this.candidate.assets.find((row) => row.id === asset.id)?.variants[asset.language];
+     if (!source || source.review_status !== 'pending' || candidate?.review_status !== 'pending') throw new Error('Protected capture cannot be overwritten');
+@@ -122,6 +170,7 @@ class Artifacts {
+   }
+ 
+   finish(results) {
++    this.assertLive();
+     if (new Set(results.map((row) => `${row.language}:${row.id}`)).size !== results.length) throw new Error('Duplicate capture publication');
+     for (const row of results) this.validateResult(row, this.invocationRoot);
+     const replacing = new Set(results.map((row) => `${row.language}:${row.id}`));
+@@ -129,13 +178,16 @@ class Artifacts {
+     for (const row of results) {
+       const filename = artifactPath(this.outputRoot, row.output);
+       fs.mkdirSync(path.dirname(filename), { recursive: true });
++      this.assertLive();
+       fs.renameSync(artifactPath(this.invocationRoot, row.output), filename);
+     }
+     // Interruption after bitmap publication leaves a stale hash and cannot certify it.
++    this.assertLive();
+     atomicJson(this.receiptPath, this.receipt);
++    this.assertLive();
+     atomicJson(this.resultsPath, merged);
+     return results;
+   }
+ }
+ 
+-module.exports = { readJsonFile, validProvenance, Artifacts, artifactPath, atomicJson, canonical, contract, sha };
++module.exports = { readJsonFile, validProvenance, Artifacts, artifactPath, openArtifactLock, atomicJson, canonical, contract, sha };
+diff --git a/lib/browser.cjs b/lib/browser.cjs
+index d55e91025dd389afe19814a82593d7b8828e26cb..d69ddc857e0650f34e21fdd42eeac917b37a3b43 100644
+--- a/lib/browser.cjs
++++ b/lib/browser.cjs
+@@ -95,8 +95,11 @@ async function launchBrowser(cluster, viewport, language = 'cs') {
+       proxy: { server: `http://127.0.0.1:${address.port}` },
+     });
+   } catch (error) { await closeServer(proxy); throw error; }
++  const onLoss = () => { browser.close().catch(() => {}); };
++  cluster.lease.signal.addEventListener('abort', onLoss, { once: true });
+   let context;
+   try {
++    cluster.assertLease();
+     context = await browser.newContext({
+       baseURL: cluster.webuiBaseUrl,
+       ignoreHTTPSErrors: true,
+@@ -107,11 +110,9 @@ async function launchBrowser(cluster, viewport, language = 'cs') {
+     cluster.assertLease();
+   } catch (error) {
+     try { await browser.close(); } finally { await closeServer(proxy); }
++    cluster.lease.signal.removeEventListener('abort', onLoss);
+     throw error;
+   }
+-  const onLoss = () => { browser.close().catch(() => {}); };
+-  cluster.lease.signal.addEventListener('abort', onLoss, { once: true });
+-
+   return {
+     browser,
+     context,
+diff --git a/lib/capture-session.cjs b/lib/capture-session.cjs
+index 0c154b028bb1fbb79cd530a3ef6eb6e15eb7dc30..e1d7d4346b1b368e56dcdf32f035f1038a48ba6f 100644
+--- a/lib/capture-session.cjs
++++ b/lib/capture-session.cjs
+@@ -121,6 +121,7 @@ class CaptureSession {
+ 
+   async shot(page, checkpoint, locators, options = {}) {
+     if (!this.wants(checkpoint)) return;
++    this.artifacts.assertLive();
+     const asset = this.asset(checkpoint);
+     const output = this.artifacts.stage(asset);
+     if (asset.review_status !== 'pending' && fs.existsSync(output)) {
+@@ -134,6 +135,7 @@ class CaptureSession {
+     const clip = options.clip || await unionBox(targets, options.padding);
+     fs.mkdirSync(path.dirname(output), { recursive: true });
+ 
++    this.artifacts.assertLive();
+     await page.screenshot({
+       path: output,
+       clip,
+@@ -141,6 +143,7 @@ class CaptureSession {
+       maskColor: '#d8dee9',
+     });
+ 
++    this.artifacts.assertLive();
+     const contents = fs.readFileSync(output);
+     this.seen.add(checkpoint);
+     this.results.push({
+@@ -203,6 +206,7 @@ class CaptureSession {
+   }
+ 
+   finish() {
++    this.artifacts.assertLive();
+     const missing = this.assets
+       .map((asset) => asset.checkpoint)
+       .filter((checkpoint) => !this.seen.has(checkpoint));
+diff --git a/lib/connection.cjs b/lib/connection.cjs
+index 76d9a549752c1227e67ac2cf394497006ea769d8..2a4b83c45c94a5f3aeb1eaca1bce586aec57eeef 100644
+--- a/lib/connection.cjs
++++ b/lib/connection.cjs
+@@ -65,8 +65,11 @@ function readConnection(filename, required = []) {
+   return { value, digest: crypto.createHash('sha256').update(bytes).digest('hex') };
+ }
+ 
+-async function openLease(argv, expected, { timeout = 120000, cleanupGrace = 500 } = {}) {
+-  const child = spawn(argv[0], argv.slice(1), { stdio: ['pipe', 'pipe', 'pipe'] });
++async function openLease(argv, expected, { timeout = 120000, cleanupGrace = 500, signal, inheritedFd } = {}) {
++  signal?.throwIfAborted();
++  const child = spawn(argv[0], argv.slice(1), {
++    stdio: ['pipe', 'pipe', 'pipe', ...(inheritedFd === undefined ? [] : [inheritedFd])],
++  });
+   const abort = new AbortController();
+   let closing = false;
+   let ready = false;
+@@ -123,10 +126,16 @@ async function openLease(argv, expected, { timeout = 120000, cleanupGrace = 500
+   child.stdout.on('error', () => loseProtocol('Capture controller protocol failed; fixture activity is cancelled'));
+   child.stderr.on('error', () => {}); // Diagnostic loss alone is not lease loss.
+   child.stderr.resume();
++  const cancelReadiness = () => loseProtocol(
++    'Capture lease acquisition cancelled by its enclosing lease',
++  );
++  signal?.addEventListener('abort', cancelReadiness, { once: true });
++  if (signal?.aborted) cancelReadiness();
+   await new Promise((resolve, reject) => {
+     let buffered = '';
+     const timer = setTimeout(() => reject(new Error('Capture controller readiness timed out')), timeout);
+     rejectReadiness = (error) => { clearTimeout(timer); reject(error); };
++    if (signal?.aborted) { rejectReadiness(signal.reason); return; }
+     const fail = () => { clearTimeout(timer); reject(new Error('Capture controller failed before readiness')); };
+     child.once('error', fail);
+     child.once('close', () => { if (!ready) fail(); });
+@@ -149,7 +158,8 @@ async function openLease(argv, expected, { timeout = 120000, cleanupGrace = 500
+         reject(new Error('Capture lease readiness identity differs'));
+       }
+     });
+-  }).catch(async (error) => { await shutdown(); throw error; });
++  }).catch(async (error) => { await shutdown(); throw error; })
++    .finally(() => signal?.removeEventListener('abort', cancelReadiness));
+   rejectReadiness = null;
+   return {
+     signal: abort.signal,
+diff --git a/runner/capture.cjs b/runner/capture.cjs
+index d53b6a61efefc17d52134863e46de3e50af9fd28..2e17096d263e7f68c20d8fc411e61bae346b989b 100755
+--- a/runner/capture.cjs
++++ b/runner/capture.cjs
+@@ -7,7 +7,7 @@ const { prepareFixtures } = require('../fixtures/prepare.cjs');
+ const { launchBrowser, login } = require('../lib/browser.cjs');
+ const { CaptureSession } = require('../lib/capture-session.cjs');
+ const { Connection, readConnection, openLease } = require('../lib/connection.cjs');
+-const { Artifacts } = require('../lib/artifacts.cjs');
++const { Artifacts, openArtifactLock } = require('../lib/artifacts.cjs');
+ const { execFileSync } = require('child_process');
+ const { parseArgs, usage } = require('./args.cjs');
+ 
+@@ -27,18 +27,26 @@ async function main({ argv = process.argv.slice(2), sourceMetadata, defaultOutpu
+   if (options.help) { process.stdout.write(usage); return; }
+   const outputRoot = path.resolve(options.outputRoot || defaultOutputRoot);
+   process.stdout.write(`Source: ${repoRoot}\nOutput: ${outputRoot}\n`);
+-  const artifactLease = await openLease(['ruby', path.join(repoRoot, 'cluster/artifact-lock.rb'), outputRoot],
+-    { schema: 1, kind: 'kb-artifact-lock' });
++  const artifactFd = openArtifactLock(outputRoot);
++  let artifactLease;
+   let lease;
+   let capture;
++  const assertLive = () => {
++    artifactLease.assertLive();
++    if (lease) lease.assertLive();
++  };
+   try {
++    artifactLease = await openLease(
++      ['ruby', path.join(repoRoot, 'cluster/artifact-lock.rb'), outputRoot, '--inherited-fd', '3'],
++      { schema: 1, kind: 'kb-artifact-lock' }, { inheritedFd: artifactFd });
++    assertLive();
+     const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'captures.json')));
+     const expected = sourceMetadata || JSON.parse(execFileSync('ruby',
+       [path.join(repoRoot, 'cluster/source-metadata.rb'), '--checkout', repoRoot], { encoding: 'utf8' }));
+     if (manifest.vpsadmin_commit !== pinnedVpsadminCommit() || expected.inputs.vpsadmin.rev !== manifest.vpsadmin_commit) {
+       throw new Error('Inventory, pinned input and immutable K source disagree');
+     }
+-    const artifacts = new Artifacts({ sourceRoot: repoRoot, outputRoot, manifest, source: expected });
++    const artifacts = new Artifacts({ sourceRoot: repoRoot, outputRoot, manifest, source: expected, assertLive });
+     const session = new CaptureSession({ assets: manifest.assets, checkpoint: options.checkpoint,
+       language: options.language, repoRoot, scenario: options.scenario, artifacts });
+     if (session.assets.length === 0) throw new Error('No inventory entries match the request');
+@@ -55,11 +63,19 @@ async function main({ argv = process.argv.slice(2), sourceMetadata, defaultOutpu
+       '--run-id', value.run_id, '--artifact-id', value.artifact_id, '--artifact-sha256', value.artifact_sha256,
+       '--descriptor-sha256', digest],
+       { schema: 1, instance_id: value.instance_id, run_id: value.run_id,
+-        artifact_id: value.artifact_id, artifact_sha256: value.artifact_sha256, descriptor_sha256: digest });
+-    const cluster = new Connection(value, lease);
++        artifact_id: value.artifact_id, artifact_sha256: value.artifact_sha256, descriptor_sha256: digest },
++    { signal: artifactLease.signal });
++    // Both locks must remain live. Keep the cluster controller until browser/SSH
++    // cleanup completes; an artifact failure only cancels its pending handshake.
++    const cluster = new Connection(value, {
++      signal: AbortSignal.any([artifactLease.signal, lease.signal]),
++      assertLive,
++    });
+     session.provenance = await cluster.verify(expected);
+     capture = await launchBrowser(cluster, options.viewport, options.language);
++    cluster.assertLease();
+     const page = await capture.context.newPage();
++    cluster.assertLease();
+     await login(page, cluster, options.language);
+     cluster.assertLease();
+     const fixtures = await prepareFixtures({ cluster, page, language: options.language, required,
+@@ -74,11 +90,21 @@ async function main({ argv = process.argv.slice(2), sourceMetadata, defaultOutpu
+     }
+     cluster.assertLease();
+     const results = session.finish();
++    cluster.assertLease();
+     process.stdout.write(`Captured ${results.length} checkpoint(s)\n`);
+   } finally {
+     // Complete browser/SSH cleanup before EOF releases the capture gate.
+-    try { if (capture) await capture.close(); } finally {
+-      try { if (lease) await lease.close(); } finally { await artifactLease.close(); }
++    try { if (capture) await capture.close(); }
++    finally {
++      try { if (lease) await lease.close(); }
++      finally {
++        try { if (artifactLease) await artifactLease.close(); }
++        finally {
++          // Close only: LOCK_UN on either duplicate would release the shared
++          // flock before this writer finishes publication and all cleanup.
++          fs.closeSync(artifactFd);
++        }
++      }
+     }
+   }
+ }
+diff --git a/tools/test-artifacts.cjs b/tools/test-artifacts.cjs
+index 19ac4507b85c1c1aa31fd2385bf0122504f39490..c668aed70e2e79d3477ce6dc81b7a691cc85f135 100644
+--- a/tools/test-artifacts.cjs
++++ b/tools/test-artifacts.cjs
+@@ -109,3 +109,202 @@ test('strict full-inventory validation uses immutable PNG fallback for unchanged
+     assert.throws(() => validationBundle(value.sourceRoot, value.outputRoot, false), /verified result/);
+   } finally { clean(value); }
+ });
++
++const { spawn } = require('node:child_process');
++const { once } = require('node:events');
++const { setTimeout: delay } = require('node:timers/promises');
++const { openLease } = require('../lib/connection.cjs');
++const { openArtifactLock } = require('../lib/artifacts.cjs');
++const lockHelper = path.resolve(__dirname, '../cluster/artifact-lock.rb');
++const lockReady = { schema: 1, kind: 'kb-artifact-lock' };
++async function waitFile(filename) {
++  const deadline = Date.now() + 4000;
++  while (!fs.existsSync(filename)) {
++    if (Date.now() > deadline) throw new Error(`Owned lock fixture did not reach ${path.basename(filename)}`);
++    await delay(10);
++  }
++}
++function compete(root, started) {
++  return openLease(['ruby', '-e', `
++    File.write(${JSON.stringify(started)}, Process.pid.to_s)
++    ARGV.replace([${JSON.stringify(root)}]); load ${JSON.stringify(lockHelper)}
++  `], lockReady, { timeout: 8000 });
++}
++
++for (const abnormal of [false, true]) {
++  test(`${abnormal ? 'abnormal' : 'normal'} artifact helper exit cannot unlock the writer descriptor or leak it to an unrelated child`, { timeout: 10000 }, async () => {
++    const value = fixture();
++    const pidFile = path.join(value.root, 'helper.pid');
++    let fd = openArtifactLock(value.outputRoot);
++    let helper;
++    let contender;
++    let pending;
++    let peer;
++    let peerExit;
++    try {
++      helper = await openLease(['ruby', '-e', `
++        File.write(${JSON.stringify(pidFile)}, Process.pid.to_s)
++        ARGV.replace([${JSON.stringify(value.outputRoot)}, '--inherited-fd', '3']); load ${JSON.stringify(lockHelper)}
++      `], lockReady, { inheritedFd: fd, timeout: 4000 });
++      if (abnormal) {
++        const pid = Number(fs.readFileSync(pidFile));
++        const stat = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
++        assert.equal(Number(stat.slice(stat.lastIndexOf(')') + 2).split(' ')[1]), process.pid);
++        process.kill(pid, 'SIGKILL');
++        if (!helper.signal.aborted) await once(helper.signal, 'abort');
++        await assert.rejects(helper.close(), /cleanup failed/);
++      } else { await helper.close(); }
++      const independentRoot = path.join(value.root, 'independent');
++      fs.mkdirSync(independentRoot);
++      const independentFd = openArtifactLock(independentRoot);
++      try {
++        const independent = await openLease(['ruby', lockHelper, independentRoot, '--inherited-fd', '3'], lockReady, { inheritedFd: independentFd, timeout: 4000 });
++        await independent.close();
++      } finally { fs.closeSync(independentFd); }
++      const identity = fs.fstatSync(fd);
++      peer = spawn(process.execPath, ['-e', `
++        const fs = require('fs');
++        const leaked = fs.readdirSync('/proc/self/fd').some((fd) => {
++          try { const stat = fs.fstatSync(Number(fd)); return stat.dev === ${identity.dev} && stat.ino === ${identity.ino}; }
++          catch (_) { return false; }
++        });
++        console.log(JSON.stringify({ leaked }));
++        process.stdin.resume(); process.stdin.on('end', () => process.exit(0));
++      `], { stdio: ['pipe', 'pipe', 'pipe'] });
++      peer.stderr.resume(); peerExit = once(peer, 'close');
++      const [bytes] = await once(peer.stdout, 'data');
++      assert.equal(JSON.parse(bytes).leaked, false);
++      let acquired = false;
++      pending = compete(value.outputRoot, path.join(value.root, 'contender.pid')).then((lease) => { contender = lease; acquired = true; return lease; });
++      await waitFile(path.join(value.root, 'contender.pid'));
++      await delay(100);
++      assert.equal(acquired, false, 'helper close/death must not LOCK_UN the shared description');
++      fs.closeSync(fd); fd = undefined;
++      await pending;
++      contender.assertLive();
++      assert.equal(peer.exitCode, null, 'unrelated child remains alive but cannot retain the lock');
++    } finally {
++      if (fd !== undefined) fs.closeSync(fd);
++      if (helper) { try { await helper.close(); } catch (_) { /* Expected abnormal child status. */ } }
++      if (pending) await pending.catch(() => {});
++      if (contender) await contender.close();
++      if (peer) { peer.stdin.end(); await peerExit; }
++      clean(value);
++    }
++  });
++}
++
++test('writer death and helper stdin EOF release the last description without foreign cleanup', { timeout: 10000 }, async () => {
++  const value = fixture();
++  const pidFile = path.join(value.root, 'orphan-helper.pid');
++  const readyFile = path.join(value.root, 'writer-ready');
++  const writer = spawn(process.execPath, ['-e', `
++    const fs = require('fs');
++    const { openArtifactLock } = require(${JSON.stringify(path.resolve(__dirname, '../lib/artifacts.cjs'))});
++    const { openLease } = require(${JSON.stringify(path.resolve(__dirname, '../lib/connection.cjs'))});
++    const fd = openArtifactLock(${JSON.stringify(value.outputRoot)});
++    openLease(['ruby', '-e', ${JSON.stringify(`File.write(${JSON.stringify(pidFile)}, Process.pid.to_s)
++      ARGV.replace([${JSON.stringify(value.outputRoot)}, '--inherited-fd', '3']); load ${JSON.stringify(lockHelper)}`)}],
++      ${JSON.stringify(lockReady)}, { inheritedFd: fd }).then(() => {
++        fs.writeFileSync(${JSON.stringify(readyFile)}, 'ready'); process.stdin.resume();
++      }).catch((error) => { console.error(error); process.exitCode = 1; });
++  `], { stdio: ['pipe', 'pipe', 'pipe'] });
++  writer.stdout.resume(); writer.stderr.resume();
++  const writerExit = once(writer, 'close');
++  let contender;
++  try {
++    await waitFile(readyFile);
++    writer.kill('SIGKILL');
++    await writerExit;
++    contender = await compete(value.outputRoot, path.join(value.root, 'contender.pid'));
++    contender.assertLive();
++    const pid = Number(fs.readFileSync(pidFile));
++    let stat;
++    try { stat = fs.readFileSync(`/proc/${pid}/stat`, 'utf8'); }
++    catch (error) { if (error.code !== 'ENOENT') throw error; }
++    if (stat) assert.equal(stat.slice(stat.lastIndexOf(')') + 2).split(' ')[0], 'Z', 'exited orphan may await init reaping');
++  } finally {
++    writer.stdin.end();
++    if (writer.exitCode === null && writer.signalCode === null) writer.kill('SIGKILL');
++    await writerExit;
++    if (contender) await contender.close();
++    clean(value);
++  }
++});
++
++test('validator writing child retains exclusion after its artifact-lock wrapper dies', { timeout: 10000 }, async () => {
++  const value = fixture();
++  const readyFile = path.join(value.root, 'validator-ready');
++  const releaseFile = path.join(value.root, 'validator-release');
++  const wrapper = spawn('ruby', [lockHelper, value.outputRoot, '--exec', process.execPath, '-e', `
++    const fs = require('fs');
++    fs.writeFileSync(${JSON.stringify(readyFile)}, String(process.pid));
++    setInterval(() => {
++      if (fs.existsSync(${JSON.stringify(releaseFile)})) process.exit(0);
++    }, 10);
++  `], { stdio: ['ignore', 'pipe', 'pipe'] });
++  wrapper.stdout.resume(); wrapper.stderr.resume();
++  const wrapperClose = once(wrapper, 'close');
++  const wrapperExit = once(wrapper, 'exit');
++  let pending;
++  let contender;
++  try {
++    await waitFile(readyFile);
++    wrapper.kill('SIGKILL');
++    await wrapperExit;
++    let acquired = false;
++    pending = compete(value.outputRoot, path.join(value.root, 'contender.pid')).then((lease) => { contender = lease; acquired = true; return lease; });
++    await waitFile(path.join(value.root, 'contender.pid'));
++    await delay(100);
++    assert.equal(acquired, false, 'writing child retains validator wrapper same-description authority');
++    fs.writeFileSync(releaseFile, 'finish owned validator writer');
++    await wrapperClose;
++    await pending;
++    contender.assertLive();
++  } finally {
++    fs.writeFileSync(releaseFile, 'finish owned validator writer');
++    if (wrapper.exitCode === null && wrapper.signalCode === null) wrapper.kill('SIGKILL');
++    await wrapperClose;
++    if (pending) await pending.catch(() => {});
++    if (contender) await contender.close();
++    clean(value);
++  }
++});
++
++test('writer open rejects unsafe paths/modes and helper rejects inherited descriptor/path mismatch without truncation', async () => {
++  const value = fixture();
++  let fd;
++  let otherFd;
++  try {
++    fs.chmodSync(value.outputRoot, 0o777);
++    assert.throws(() => openArtifactLock(value.outputRoot), /safely owned/);
++    assert.equal(fs.existsSync(path.join(value.outputRoot, 'tmp')), false);
++    fs.chmodSync(value.outputRoot, 0o755);
++    fs.mkdirSync(path.join(value.outputRoot, 'tmp'), { mode: 0o777 });
++    fs.chmodSync(path.join(value.outputRoot, 'tmp'), 0o777);
++    assert.throws(() => openArtifactLock(value.outputRoot), /safely owned/);
++    fs.chmodSync(path.join(value.outputRoot, 'tmp'), 0o700);
++    const lock = path.join(value.outputRoot, 'tmp/capture.lock');
++    fs.writeFileSync(lock, 'retained lock bytes', { mode: 0o644 });
++    assert.throws(() => openArtifactLock(value.outputRoot), /private owned/);
++    fs.chmodSync(lock, 0o600);
++    fd = openArtifactLock(value.outputRoot);
++    assert.equal(fs.readFileSync(lock, 'utf8'), 'retained lock bytes');
++    const alias = path.join(value.root, 'alias');
++    fs.symlinkSync(value.outputRoot, alias);
++    assert.throws(() => openArtifactLock(alias), /ancestor/);
++    const other = path.join(value.root, 'other');
++    fs.mkdirSync(other);
++    otherFd = openArtifactLock(other);
++    await assert.rejects(openLease(['ruby', lockHelper, other, '--inherited-fd', '3'], lockReady, { inheritedFd: fd, timeout: 4000 }));
++    assert.equal(fs.readFileSync(lock, 'utf8'), 'retained lock bytes');
++    fs.closeSync(fd); fd = undefined;
++    fs.unlinkSync(lock);
++    fs.symlinkSync(path.join(other, 'tmp/capture.lock'), lock);
++    assert.throws(() => openArtifactLock(value.outputRoot), /private owned/);
++  } finally {
++    if (fd !== undefined) fs.closeSync(fd);
++    if (otherFd !== undefined) fs.closeSync(otherFd);
++    clean(value);
++  }
++});
+diff --git a/tools/test-capture-lease.cjs b/tools/test-capture-lease.cjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..a264870372ee6b68568deef8f58c696b7d6334c5
+--- /dev/null
++++ b/tools/test-capture-lease.cjs
+@@ -0,0 +1,426 @@
++const assert = require('node:assert/strict');
++const crypto = require('node:crypto');
++const fs = require('node:fs');
++const os = require('node:os');
++const path = require('node:path');
++const Module = require('node:module');
++const { test } = require('node:test');
++const { spawn } = require('node:child_process');
++const { once } = require('node:events');
++const { setTimeout: delay } = require('node:timers/promises');
++const { openLease } = require('../lib/connection.cjs');
++
++const repoRoot = path.resolve(__dirname, '..');
++const runs = new Map();
++const artifactRuns = new Map();
++const clip = { x: 0, y: 0, width: 1, height: 1 };
++const deferred = () => {
++  let resolve;
++  const promise = new Promise((done) => { resolve = done; });
++  return { promise, resolve };
++};
++async function bounded(promise) {
++  let timer;
++  try {
++    return await Promise.race([promise, new Promise((_, reject) => {
++      timer = setTimeout(() => reject(new Error('Capture fixture boundary timed out')), 4000);
++    })]);
++  } finally { clearTimeout(timer); }
++}
++async function waitFile(filename) {
++  const deadline = Date.now() + 4000;
++  while (!fs.existsSync(filename)) {
++    if (Date.now() >= deadline) throw new Error(`Fixture did not reach ${path.basename(filename)}`);
++    await delay(10);
++  }
++}
++
++// Keep main, Connection, browser supervision, CaptureSession, Artifacts and the
++// actual Ruby flock controller. Only guest transport, browser implementation
++// and scenario/fixture contents are synthetic; no VM or Chromium is launched.
++const originalLoad = Module._load;
++Module._load = function load(request, parent, isMain) {
++  if (request === 'playwright') return { chromium: { async launch() {
++    let run;
++    return {
++      async newContext({ baseURL, locale }) {
++        run = runs.get(new URL(baseURL).hostname);
++        run.browserOpened += 1;
++        const page = {
++          async goto() { assert.equal(run.browserClosed, false); },
++          locator() { return { first() { return this; }, async count() { return 1; },
++            async getAttribute() { return locale.slice(0, 2); }, async waitFor() {} }; },
++          async addStyleTag() { assert.equal(run.browserClosed, false); },
++          async evaluate() { assert.equal(run.browserClosed, false); },
++          async screenshot({ path: filename }) {
++            assert.equal(run.browserClosed, false);
++            fs.writeFileSync(filename, run.contents);
++          },
++          url() { return `${baseURL}?page=networking&action=ip_addresses`; },
++        };
++        return { async newPage() { return page; } };
++      },
++      async close() {
++        if (run) {
++          run.browserClosed = true; run.browserGone.resolve();
++          if (run.cleanupRelease) {
++            fs.writeFileSync(run.cleanupEntered, 'browser cleanup holds writer descriptor');
++            await waitFile(run.cleanupRelease);
++          }
++        }
++      },
++    };
++  } } };
++  return originalLoad.call(this, request, parent, isMain);
++};
++function substitute(relative, exports) {
++  const filename = require.resolve(relative);
++  require.cache[filename] = { id: filename, filename, loaded: true, exports };
++}
++substitute('../fixtures/prepare.cjs', { async prepareFixtures({ cluster }) {
++  cluster.assertLease();
++  const run = runs.get(new URL(cluster.webuiBaseUrl).hostname);
++  run.fixtures += 1;
++  await cluster.ssh('services', ['fixture-check']);
++  return {};
++} });
++substitute('../scenarios/networking.cjs', { async run(args) {
++  const run = runs.get(new URL(args.cluster.webuiBaseUrl).hostname);
++  if (run.scenario) return run.scenario(args);
++  await args.session.shot(args.page, 'networking/ip-address-list', [], { clip });
++} });
++const connectionModule = require('../lib/connection.cjs');
++connectionModule.openLease = async (argv, expected, options) => {
++  let run;
++  if (argv[1] === path.join(repoRoot, 'cluster/artifact-lock.rb')) {
++    run = artifactRuns.get(argv[2]);
++    const script = `
++      File.write(${JSON.stringify(run.artifactPid)}, Process.pid.to_s)
++      ${run.stderrOnly ? "$stderr.reopen(File::NULL, 'w'); $stderr.close" : ''}
++      Thread.new do
++        sleep 0.01 until File.exist?(${JSON.stringify(run.loseArtifact)})
++        $stdout.reopen(File::NULL, 'w'); $stdout.close
++      end
++      ${run.artifactFailure === 'before' ? "$stdout.reopen(File::NULL, 'w'); $stdout.close" : ''}
++      ${run.artifactFailure === 'window' ? `
++        output = $stdout
++        output.define_singleton_method(:puts) do |*args|
++          super(*args); flush; reopen(File::NULL, 'w'); close
++        end
++      ` : ''}
++      ARGV.replace(${JSON.stringify(argv.slice(2))})
++      load ${JSON.stringify(argv[1])}
++    `;
++    argv = [argv[0], '-e', script];
++  }
++  const lease = await openLease(argv, expected, { timeout: 4000, cleanupGrace: 200, ...options });
++  if (run) {
++    run.artifactLease = lease;
++    if (run.acquiredFile) fs.writeFileSync(run.acquiredFile, 'artifact readiness acquired');
++  }
++  return lease;
++};
++const { main, pinnedVpsadminCommit } = require('../runner/capture.cjs');
++Module._load = originalLoad;
++connectionModule.openLease = openLease;
++
++const source = { schema: 1, revision: 'a'.repeat(40), source: '/nix/store/synthetic-k-source',
++  lock_sha256: 'b'.repeat(64), inputs: { vpsadmin: { rev: pinnedVpsadminCommit() } } };
++const oldPath = process.env.PATH;
++const oldChromium = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
++
++function fixture(root = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-capture-lease-'))) {
++  const outputRoot = path.join(root, 'output');
++  const executables = path.join(root, 'bin');
++  fs.mkdirSync(outputRoot, { recursive: true }); fs.mkdirSync(executables, { recursive: true });
++  fs.writeFileSync(path.join(executables, 'ssh'), `#!${process.execPath}
++    const fs = require('fs'), path = require('path');
++    const args = process.argv.slice(2);
++    const root = path.dirname(args[args.indexOf('-i') + 1]);
++    const value = JSON.parse(fs.readFileSync(path.join(root, 'transport.json')));
++    const lock = fs.statSync(path.join(path.dirname(root), 'output/tmp/capture.lock'));
++    const leaked = fs.readdirSync('/proc/self/fd').some((fd) => {
++      try { const stat = fs.fstatSync(Number(fd)); return stat.dev === lock.dev && stat.ino === lock.ino; }
++      catch (_) { return false; }
++    });
++    fs.writeFileSync(path.join(root, 'ssh-lock-leaked'), JSON.stringify(leaked));
++    const command = args.at(-1);
++    if (command.includes('stall')) {
++      fs.writeFileSync(path.join(root, 'ssh.pid'), String(process.pid));
++      setInterval(() => {
++        if (fs.existsSync(path.join(root, 'fixture-cleanup'))) process.exit(0);
++      }, 20);
++    } else if (command.includes('/etc/vpsfree-kb-capture.json')) {
++      process.stdout.write(JSON.stringify(value.guest_identity));
++    } else if (command.includes('/run/current-system')) {
++      process.stdout.write(value.machine_toplevels.services);
++    }
++  `, { mode: 0o700 });
++  process.env.PATH = `${executables}:${oldPath}`;
++  process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE = process.execPath; // Fake chromium never executes it.
++  return { root, outputRoot, clean() {
++    process.env.PATH = oldPath;
++    if (oldChromium === undefined) delete process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE;
++    else process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE = oldChromium;
++    fs.rmSync(root, { recursive: true });
++    runs.clear(); artifactRuns.clear();
++  } };
++}
++function runFixture(value, contents, { pending = false, stderrOnly = false, artifactFailure } = {}) {
++  const run_id = crypto.randomUUID();
++  const directory = path.join(value.root, run_id);
++  fs.mkdirSync(directory, { mode: 0o700 });
++  const run = { contents, directory, fixtures: 0, browserOpened: 0, browserClosed: false,
++    browserGone: deferred(), cancelled: deferred(), continueAfterCompetitor: deferred(), stderrOnly, artifactFailure,
++    artifactPid: path.join(directory, 'artifact.pid'), loseArtifact: path.join(directory, 'lose-artifact'),
++    clusterPid: path.join(directory, 'cluster.pid'), clusterEof: path.join(directory, 'cluster-eof') };
++  const instance_id = crypto.randomUUID();
++  const artifact_id = crypto.randomUUID();
++  const guest_identity = { schema: 1, instance_id, artifact_id, config_input_sha256: 'd'.repeat(64), source };
++  const artifact = { schema: 1, instance_id, artifact_id, source, guest_identity,
++    config_input_sha256: guest_identity.config_input_sha256, config_sha256: 'c'.repeat(64),
++    machine_toplevels: { services: `/nix/store/${'0'.repeat(32)}-synthetic-system` } };
++  const artifact_json = `${JSON.stringify(artifact, null, 2)}\n`;
++  const controller = `
++    const fs = require('fs');
++    const lock = fs.statSync(${JSON.stringify(path.join(value.outputRoot, 'tmp/capture.lock'))});
++    const leaked = fs.readdirSync('/proc/self/fd').some((fd) => {
++      try { const stat = fs.fstatSync(Number(fd)); return stat.dev === lock.dev && stat.ino === lock.ino; }
++      catch (_) { return false; }
++    });
++    fs.writeFileSync(${JSON.stringify(path.join(directory, 'cluster-lock-leaked'))}, JSON.stringify(leaked));
++    fs.writeFileSync(${JSON.stringify(run.clusterPid)}, String(process.pid));
++    const args = process.argv.slice(1);
++    const identity = Object.fromEntries(Array.from({length: args.length / 2}, (_, i) =>
++      [args[i * 2].slice(2).replaceAll('-', '_'), args[i * 2 + 1]]));
++    ${pending ? '' : 'console.log(JSON.stringify({schema: 1, ...identity}));'}
++    process.stderr.end();
++    process.stdin.resume(); process.stdin.on('end', () => {
++      fs.writeFileSync(${JSON.stringify(run.clusterEof)}, 'EOF'); process.exit(0);
++    });
++  `;
++  for (const name of ['key', 'known-hosts', 'ca']) fs.writeFileSync(path.join(directory, name), '{}', { mode: 0o600 });
++  fs.writeFileSync(path.join(directory, 'accounts'), JSON.stringify({ users: [{ login: 'test-user1', password: 'synthetic' }] }), { mode: 0o600 });
++  fs.writeFileSync(path.join(directory, 'transport.json'), JSON.stringify(artifact), { mode: 0o600 });
++  const services = Object.fromEntries(['webui', 'api', 'console'].map((name) => [name, {
++    url: `https://${run_id}.example.test/${name === 'webui' ? '' : name}`,
++    connect_host: '127.0.0.1', connect_port: 14043,
++  }]));
++  const descriptor = { schema: 1, kind: 'vpsfree-kb-connection', owner_id: `uid:${process.getuid()}`,
++    instance_id, run_id, artifact_id, artifact_sha256: crypto.createHash('sha256').update(artifact_json).digest('hex'),
++    capabilities: ['capture-lease-v1', 'ssh', 'base-vps', 'traffic-samples'],
++    accounts_file: 'accounts', tls: { ca_file: 'ca' }, services,
++    machines: { services: { host: '127.0.0.1', port: 14022, user: 'root', private_key: 'key', known_hosts: 'known-hosts' } },
++    provenance: { source, artifact, artifact_json, guest_identity,
++      config_sha256: artifact.config_sha256, machine_toplevels: artifact.machine_toplevels },
++    control: { argv: [process.execPath, '-e', controller, '--'] },
++  };
++  run.connection = path.join(directory, 'connection.json');
++  fs.writeFileSync(run.connection, JSON.stringify(descriptor), { mode: 0o600 });
++  runs.set(new URL(services.webui.url).hostname, run);
++  return run;
++}
++async function capture(value, run, language) {
++  artifactRuns.set(value.outputRoot, run);
++  return main({ argv: ['--connection', run.connection, '--language', language,
++    '--checkpoint', 'networking/ip-address-list', '--output-root', value.outputRoot], sourceMetadata: source });
++}
++function published(value) {
++  return ['tmp/capture-source.json', 'tmp/capture-results.json',
++    'screenshots/cs/networking/ip-address-list.png', 'screenshots/en/networking/ip-address-list.png']
++    .filter((relative) => fs.existsSync(path.join(value.outputRoot, relative)))
++    .map((relative) => [relative, fs.readFileSync(path.join(value.outputRoot, relative))]);
++}
++function assertGone(filename) {
++  assert.throws(() => process.kill(Number(fs.readFileSync(filename)), 0), { code: 'ESRCH' });
++}
++
++if (!['--publication-worker', '--competitor-worker'].includes(process.argv[2])) {
++test('artifact-controller loss cancels actual capture and prevents stale publication over a competing writer', { timeout: 10000 }, async () => {
++  const value = fixture();
++  let firstOutcome;
++  let competing;
++  const first = runFixture(value, 'stale-first-en');
++  try {
++    await capture(value, runFixture(value, 'successful-cs'), 'cs');
++    first.scenario = async ({ cluster, page, session }) => {
++      await session.shot(page, 'networking/ip-address-list', [], { clip });
++      try { await cluster.ssh('services', ['stall']); }
++      catch (error) {
++        await bounded(first.browserGone.promise);
++        assertGone(path.join(first.directory, 'ssh.pid'));
++        assert.throws(() => cluster.account(), /no longer live/);
++        assert.throws(() => cluster.route(cluster.apiUrl), /no longer live/);
++        first.cancelled.resolve();
++        await first.continueAfterCompetitor.promise;
++        assert.throws(() => session.finish(), /no longer live/);
++        assert.throws(() => session.artifacts.finish(session.results), /no longer live/);
++        assert.throws(() => session.artifacts.stage(session.assets[0]), /no longer live/);
++        throw error;
++      }
++      throw new Error('Lost artifact lease failed to cancel leased SSH');
++    };
++    firstOutcome = capture(value, first, 'en').then(() => null, (error) => error);
++    await waitFile(path.join(first.directory, 'ssh.pid'));
++    fs.writeFileSync(first.loseArtifact, 'close protocol');
++    await bounded(first.cancelled.promise);
++    assert.equal(first.browserClosed, true);
++    assert.equal(fs.existsSync(first.clusterEof), false, 'cluster gate stays held until browser/SSH cleanup and unwind');
++    const beforeCompetitor = published(value);
++    const competitor = runFixture(value, 'successful-competitor-en');
++    let competitorReady = false;
++    competing = capture(value, competitor, 'en').then(() => { competitorReady = true; });
++    await waitFile(competitor.artifactPid);
++    await delay(100);
++    assert.equal(competitorReady, false);
++    assert.equal(competitor.artifactLease, undefined, 'competitor cannot read retained results before first writer cleanup');
++    assert.deepEqual(published(value), beforeCompetitor);
++    first.continueAfterCompetitor.resolve();
++    assert.match((await firstOutcome).message, /no longer live/);
++    await competing;
++    const rows = JSON.parse(fs.readFileSync(path.join(value.outputRoot, 'tmp/capture-results.json')));
++    assert.deepEqual(rows.map((row) => row.language).sort(), ['cs', 'en']);
++    assert.equal(fs.readFileSync(path.join(value.outputRoot, 'screenshots/en/networking/ip-address-list.png'), 'utf8'), 'successful-competitor-en');
++    assertGone(first.artifactPid); assertGone(first.clusterPid);
++    assert.equal(fs.readFileSync(first.clusterEof, 'utf8'), 'EOF');
++  } finally {
++    first.continueAfterCompetitor.resolve();
++    fs.writeFileSync(path.join(first.directory, 'fixture-cleanup'), 'stop owned fixture transport');
++    if (first.artifactLease && !first.artifactLease.signal.aborted) fs.writeFileSync(first.loseArtifact, 'cleanup fixture');
++    if (firstOutcome) await firstOutcome;
++    if (competing) await competing.catch(() => {});
++    value.clean();
++  }
++});
++
++test('artifact loss cancels pending cluster acquisition before fixtures or browser work and reaps the controller', { timeout: 10000 }, async () => {
++  const value = fixture();
++  const pending = runFixture(value, 'must-not-publish', { pending: true });
++  let outcome;
++  try {
++    outcome = capture(value, pending, 'cs').then(() => null, (error) => error);
++    await waitFile(pending.clusterPid);
++    fs.writeFileSync(pending.loseArtifact, 'close protocol');
++    assert.match((await outcome).message, /enclosing lease/);
++    assert.equal(pending.fixtures, 0); assert.equal(pending.browserOpened, 0);
++    assert.equal(fs.existsSync(path.join(value.outputRoot, 'tmp/capture-results.json')), false);
++    assertGone(pending.artifactPid); assertGone(pending.clusterPid);
++    assert.equal(fs.readFileSync(pending.clusterEof, 'utf8'), 'EOF');
++    await capture(value, runFixture(value, 'successful-next-cs'), 'cs');
++    assert.equal(fs.readFileSync(path.join(value.outputRoot, 'screenshots/cs/networking/ip-address-list.png'), 'utf8'), 'successful-next-cs');
++  } finally {
++    if (pending.artifactLease && !pending.artifactLease.signal.aborted) fs.writeFileSync(pending.loseArtifact, 'cleanup fixture');
++    if (outcome) await outcome;
++    value.clean();
++  }
++});
++
++test('sequential CS and EN orchestration preserves both rows despite diagnostic stderr EOF', { timeout: 10000 }, async () => {
++  const value = fixture();
++  try {
++    for (const language of ['cs', 'en']) {
++      const run = runFixture(value, `successful-${language}`, { stderrOnly: true });
++      await capture(value, run, language);
++      assert.equal(run.fixtures, 1); assert.equal(run.browserOpened, 1);
++      assert.equal(run.browserClosed, true);
++      assert.equal(run.artifactLease.signal.aborted, false);
++      assert.equal(JSON.parse(fs.readFileSync(path.join(run.directory, 'ssh-lock-leaked'))), false);
++      assert.equal(JSON.parse(fs.readFileSync(path.join(run.directory, 'cluster-lock-leaked'))), false);
++      assertGone(run.artifactPid); assertGone(run.clusterPid);
++    }
++    const rows = JSON.parse(fs.readFileSync(path.join(value.outputRoot, 'tmp/capture-results.json')));
++    assert.deepEqual(rows.map((row) => row.language).sort(), ['cs', 'en']);
++    for (const row of rows) assert.equal(row.sha256, crypto.createHash('sha256').update(`successful-${row.language}`).digest('hex'));
++  } finally { value.clean(); }
++});
++
++for (const artifactFailure of ['before', 'window']) {
++  test(`artifact loss ${artifactFailure === 'before' ? 'before readiness' : 'in its readiness window'} closes the writer descriptor before next capture`, { timeout: 10000 }, async () => {
++    const value = fixture();
++    try {
++      const failed = runFixture(value, 'must-not-publish', { artifactFailure, pending: true });
++      await assert.rejects(capture(value, failed, 'cs'), /controller|lease|protocol/i);
++      assert.equal(failed.fixtures, 0); assert.equal(failed.browserOpened, 0);
++      assert.equal(fs.existsSync(path.join(value.outputRoot, 'tmp/capture-results.json')), false);
++      assertGone(failed.artifactPid);
++      await capture(value, runFixture(value, 'successful-next-cs'), 'cs');
++    } finally { value.clean(); }
++  });
++}
++
++test('helper death while actual PNG publication blocks the event loop cannot admit a competitor until final writer close', { timeout: 15000 }, async () => {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-publication-block-'));
++  const writer = spawn(process.execPath, [__filename, '--publication-worker', root], { stdio: ['ignore', 'pipe', 'pipe'] });
++  let errorOutput = '';
++  writer.stdout.resume(); writer.stderr.on('data', (bytes) => { errorOutput += bytes; });
++  const writerExit = once(writer, 'close');
++  let competitor;
++  let competitorExit;
++  let competitorError = '';
++  try {
++    await waitFile(path.join(root, 'publication-paused'));
++    const receipt = JSON.parse(fs.readFileSync(path.join(root, 'publication-paused')));
++    const stat = fs.readFileSync(`/proc/${receipt.helper_pid}/stat`, 'utf8');
++    assert.equal(Number(stat.slice(stat.lastIndexOf(')') + 2).split(' ')[1]), writer.pid);
++    // The writer cannot dispatch child exit/abort while synchronously blocked;
++    // this still-unreaped helper PID remains its exact owned child here.
++    process.kill(receipt.helper_pid, 'SIGKILL');
++    competitor = spawn(process.execPath, [__filename, '--competitor-worker', root], { stdio: ['ignore', 'pipe', 'pipe'] });
++    competitor.stdout.resume(); competitor.stderr.on('data', (bytes) => { competitorError += bytes; });
++    competitorExit = once(competitor, 'close');
++    await waitFile(path.join(root, 'competitor-artifact.pid'));
++    await delay(100);
++    assert.equal(fs.existsSync(path.join(root, 'competitor-acquired')), false, 'helper death cannot release writer authority during synchronous publication');
++    fs.writeFileSync(path.join(root, 'release-publication'), 'resume owned writer');
++    await waitFile(path.join(root, 'cleanup-entered'));
++    await delay(100);
++    assert.equal(fs.existsSync(path.join(root, 'competitor-acquired')), false, 'writer retains authority through cleanup');
++    fs.writeFileSync(path.join(root, 'release-cleanup'), 'finish owned cleanup');
++    const [writerCode] = await writerExit;
++    assert.equal(writerCode, 1, errorOutput);
++    assert.match(errorOutput, /controller cleanup failed/i);
++    const [competitorCode] = await competitorExit;
++    assert.equal(competitorCode, 0, competitorError);
++    assert.equal(fs.existsSync(path.join(root, 'competitor-acquired')), true);
++    const rows = JSON.parse(fs.readFileSync(path.join(root, 'output/tmp/capture-results.json')));
++    assert.equal(rows.length, 1);
++    assert.equal(rows[0].sha256, crypto.createHash('sha256').update('successful-competitor-cs').digest('hex'));
++    assert.equal(fs.readFileSync(path.join(root, 'output/screenshots/cs/networking/ip-address-list.png'), 'utf8'), 'successful-competitor-cs');
++    assertGone(path.join(root, 'first-artifact.pid'));
++  } finally {
++    fs.writeFileSync(path.join(root, 'release-publication'), 'resume owned writer');
++    fs.writeFileSync(path.join(root, 'release-cleanup'), 'finish owned cleanup');
++    await writerExit;
++    if (competitorExit) await competitorExit;
++    fs.rmSync(root, { recursive: true });
++  }
++});
++} else {
++  const root = process.argv[3];
++  const value = fixture(root);
++  const competing = process.argv[2] === '--competitor-worker';
++  const run = runFixture(value, competing ? 'successful-competitor-cs' : 'synchronous-first-cs');
++  run.artifactPid = path.join(root, competing ? 'competitor-artifact.pid' : 'first-artifact.pid');
++  if (competing) run.acquiredFile = path.join(root, 'competitor-acquired');
++  if (!competing) {
++    run.cleanupEntered = path.join(root, 'cleanup-entered');
++    run.cleanupRelease = path.join(root, 'release-cleanup');
++    const rename = fs.renameSync;
++    fs.renameSync = function publicationBoundary(from, to) {
++      if (to.endsWith('screenshots/cs/networking/ip-address-list.png')) {
++        fs.writeFileSync(path.join(root, 'publication-paused'), JSON.stringify({
++          helper_pid: Number(fs.readFileSync(run.artifactPid)), writer_pid: process.pid,
++        }));
++        const deadline = Date.now() + 10000;
++        while (!fs.existsSync(path.join(root, 'release-publication'))) {
++          if (Date.now() > deadline) throw new Error('Synchronous publication fixture release timed out');
++          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
++        }
++      }
++      return rename(from, to);
++    };
++  }
++  capture(value, run, 'cs').then(() => { process.exitCode = 0; }, (error) => {
++    process.stderr.write(`${error.stack || error}\n`); process.exitCode = 1;
++  });
++}
+diff --git a/tools/test-connection.cjs b/tools/test-connection.cjs
+index 9f10888cdce7c44a453ac74d489c4b2da370f909..1e7ef1a68c8ce3cf216315ea71baabd2e57538f7 100644
+--- a/tools/test-connection.cjs
++++ b/tools/test-connection.cjs
+@@ -204,3 +204,51 @@ test('local and external descriptors enforce the same required capabilities and
+     assert.throws(() => readConnection(file, ['base-vps']), /private/);
+   } finally { fs.rmSync(root, { recursive: true }); }
+ });
++
++test('an enclosing lease cancels pending readiness and reaps only the newly spawned controller', async () => {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-enclosing-lease-'));
++  const pidFile = path.join(root, 'pid');
++  const eofFile = path.join(root, 'eof');
++  const enclosing = new AbortController();
++  let pending;
++  try {
++    const alreadyLost = new AbortController();
++    alreadyLost.abort(new Error('already lost'));
++    await assert.rejects(openLease([process.execPath, '-e', `require('fs').writeFileSync(${JSON.stringify(pidFile)}, 'unexpected')`],
++      expected, { signal: alreadyLost.signal }), /already lost/);
++    assert.equal(fs.existsSync(pidFile), false, 'already-lost parent must not spawn a controller');
++    pending = openLease([process.execPath, '-e', `
++      const fs = require('fs'); fs.writeFileSync(${JSON.stringify(pidFile)}, String(process.pid));
++      process.stderr.end(); process.stdin.resume(); process.stdin.on('end', () => {
++        fs.writeFileSync(${JSON.stringify(eofFile)}, 'EOF'); process.exit(0);
++      });
++    `], expected, { signal: enclosing.signal, timeout: 2000, cleanupGrace: 200 });
++    const deadline = Date.now() + 1500;
++    while (!fs.existsSync(pidFile)) {
++      if (Date.now() > deadline) throw new Error('Owned readiness fixture failed to start');
++      await new Promise((resolve) => setTimeout(resolve, 10));
++    }
++    enclosing.abort(new Error('artifact authority lost'));
++    await assert.rejects(pending, /enclosing lease/);
++    assert.equal(fs.readFileSync(eofFile, 'utf8'), 'EOF');
++    assert.throws(() => process.kill(Number(fs.readFileSync(pidFile)), 0), { code: 'ESRCH' });
++  } finally {
++    enclosing.abort(new Error('owned fixture cleanup'));
++    if (pending) await pending.catch(() => {});
++    fs.rmSync(root, { recursive: true });
++  }
++});
++
++test('acquired cluster readiness leaves enclosing cancellation to capture cleanup rather than releasing its controller early', async () => {
++  const enclosing = new AbortController();
++  const lease = await openLease([process.execPath, '-e', `
++    console.log(${JSON.stringify(JSON.stringify(expected))});
++    process.stdin.resume(); process.stdin.on('end', () => process.exit(0));
++  `], expected, { signal: enclosing.signal });
++  try {
++    enclosing.abort(new Error('artifact authority lost'));
++    lease.assertLive();
++    assert.equal(lease.signal.aborted, false, 'capture composite cancels work while controller survives until cleanup');
++    await lease.close();
++  } finally { await lease.close(); }
++});
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index c0965704d50f7079a71f9a006f235528f18dc386..7b490385995ae600383304b83643731ea74c7b01 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -1,6 +1,7 @@
+ # frozen_string_literal: true
+ 
+ require 'minitest/autorun'
++require 'minitest/mock'
+ require 'tmpdir'
+ require_relative '../cluster/lib/kb_runtime'
+ 
+@@ -161,6 +162,38 @@ class RuntimeTest < Minitest::Test
+     socket&.close
+   end
+ 
++  def test_retained_ssh_trust_accepts_the_same_endpoint_and_key_but_refuses_rebinding
++    Dir.mktmpdir do |directory|
++      state = KbRuntime::State.new(File.join(directory, 'state'), 'trust')
++      state.transaction(create: true) { state.initialize_identity }
++      state.private_directory(state.path('credentials'), create: true)
++      known = File.join(state.path('credentials'), 'known_hosts')
++      File.write(known, '', mode: 'wb', perm: 0o600)
++      engine = KbRuntime::Engine.new(state:, software: nil, controller: [])
++      endpoint = { 'host' => '127.0.0.1', 'port' => 10_022 }
++      key = 'AAAAC3NzaC1lZDI1NTE5AAAAIAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC'
++      scan = lambda do |command, *args|
++        assert_equal('ssh-keyscan', command)
++        assert_equal(%w[-T 5 -p], args.take(3))
++        "[#{args.last}]:#{args[3]} ssh-ed25519 #{key}"
++      end
++      KbRuntime::Software.stub(:command, scan) do
++        record = { 'endpoints' => { 'services' => endpoint } }
++        engine.establish_ssh_trust(record)
++        retained = File.binread(known)
++        engine.establish_ssh_trust(record)
++        assert_equal(retained, File.binread(known))
++        [endpoint.merge('port' => 20_022), endpoint.merge('host' => '127.0.0.2')].each do |changed|
++          assert_raises(KbRuntime::Error) { engine.establish_ssh_trust('endpoints' => { 'services' => changed }) }
++          assert_equal(retained, File.binread(known))
++        end
++        key = 'a-different-guest-key'
++        assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record) }
++        assert_equal(retained, File.binread(known))
++      end
++    end
++  end
++
+   def test_capture_gate_makes_status_busy_without_mutating_receipts
+     Dir.mktmpdir do |directory|
+       state = KbRuntime::State.new(File.join(directory, 'state'), 'example')
+@@ -298,6 +331,50 @@ class RuntimeLifecycleTest < Minitest::Test
+       resources: KbRuntime::Resources.new(state, root: claims))
+   end
+ 
++  def retained_files(value)
++    [value.state.directory, value.resources.root].flat_map do |root|
++      Dir.glob(File.join(root, '**', '*')).select { |path| File.file?(path) }
++    end.to_h { |path| [path, [File.stat(path).ino, File.binread(path)]] }
++  end
++
++  %w[host port network].each do |change|
++    define_method("test_update_rejects_changed_ssh_#{change}_before_any_retained_state_mutation") do
++      Dir.mktmpdir do |directory|
++        value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++        requested = config
++        begin
++          value.start(config: requested, network: 'local', timeout: 5)
++          old = value.launch
++          retained = retained_files(value)
++          candidate = Marshal.load(Marshal.dump(requested))
++          network = 'local'
++          case change
++          when 'host'
++            candidate['local']['bindAddress'] = '127.0.0.2'
++          when 'port'
++            candidate['local']['ports']['services']['ssh'] = old['endpoints']['services']['port'] == 20_022 ? 20_023 : 20_022
++          when 'network'
++            network = 'bridge'
++            candidate['services']['ip'] = '192.0.2.20'
++            candidate['network'] = { 'dedicated' => true, 'bridge' => 'test-br' }
++          end
++          value.software.metadata['revision'] = 'b' * 40
++          error = assert_raises(KbRuntime::Error) { value.update(config: candidate, topology: 'single', network:, timeout: 5) }
++          assert_match(/unchanged SSH endpoints/, error.message)
++          assert_equal(retained, retained_files(value), 'preflight must preserve files, credentials, journal and claims')
++          assert_equal(old, value.launch)
++          assert_equal('ready', value.phase['phase'])
++          refute(File.exist?(value.state.path('update.json')))
++          assert_equal(old['credential_identity'], KbRuntime::Software.credentials_identity(value.state.path('credentials')))
++          assert_equal(1, value.software.builds)
++          assert(value.live?(old))
++        ensure
++          value.stop(timeout: 5) if File.exist?(value.state.path('phase.json'))
++        end
++      end
++    end
++  end
++
+   def test_two_same_slug_runs_have_disjoint_resources_and_cleanup_only_their_own_instance
+     Dir.mktmpdir do |directory|
+       claims = File.join(directory, 'claims')

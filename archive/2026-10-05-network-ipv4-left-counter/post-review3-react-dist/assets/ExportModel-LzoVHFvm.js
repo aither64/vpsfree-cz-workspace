@@ -1,0 +1,19 @@
+function o(e){if(typeof e=="number")return Number.isSafeInteger(e)&&e>0?e:null;if(typeof e!="string")return null;const t=/^#?(\d+)$/.exec(e.trim());if(!t?.[1])return null;const s=Number(t[1]);return Number.isSafeInteger(s)&&s>0?s:null}function h(e,t){return t===void 0?!0:o(e?.user?.id)===t}function l(e){if(!e||typeof e!="object")return"—";const t=e,s=t.full_name??t.name??t.label;if(s!=null&&String(s).trim())return String(s);const n=t.id;return n!=null?`#${n}`:"—"}function f(e){const t=l(e?.dataset),s=e?.snapshot;return s&&typeof s=="object"&&o(s.id)?`${t} · ${l(s)}`:t}function b(e){const t=e?.snapshot;if(t&&typeof t=="object"){const n=t,r=o(n.id);if(r)return String(n.label??n.name??`snapshot-${r}`)}const s=e?.dataset;if(s&&typeof s=="object"){const n=s,r=o(n.id);return String(n.name??n.full_name??n.label??(r?`dataset-${r}`:"export"))}return"export"}function _(e){const t=e?.host_ip_address;if(t&&typeof t=="object"){const s=t;return String(s.addr??(s.id?`#${s.id}`:"—"))}return"—"}function y(e){const t=e?.ip_address;if(t&&typeof t=="object"){const s=t;return String(s.addr??(s.id?`#${s.id}`:"#?"))}return"#?"}function $(e){return e.enabled===!1?"warn":"ok"}function w(e){return{datasetId:e===null?"":String(e),sourceType:"dataset",snapshotId:"",allVps:!0,rw:!0,sync:!0,subtreeCheck:!1,rootSquash:!1,threads:"8",enabled:!0}}function g(e){return{all_vps:!!e.all_vps,rw:!!e.rw,sync:!!e.sync,subtree_check:!!e.subtree_check,root_squash:!!e.root_squash,threads:String(e.threads??8),enabled:!!(e.enabled??!0)}}function c(e){const t=e.trim();if(!/^\d+$/.test(t))return;const s=Number(t);return Number.isSafeInteger(s)&&s>0?s:void 0}function k(e,t){const s=[];return o(e.datasetId)||s.push("dataset_required"),e.sourceType==="snapshot"&&!o(e.snapshotId)&&s.push("snapshot_required"),t&&e.threads.trim()&&!c(e.threads)&&s.push("threads_invalid"),{ok:s.length===0,issues:s}}function v(e,t){const s=c(e.threads);return{dataset:e.sourceType==="dataset"?o(e.datasetId)??void 0:void 0,snapshot:e.sourceType==="snapshot"?o(e.snapshotId)??void 0:void 0,all_vps:e.allVps,rw:e.rw,sync:e.sync,subtree_check:e.subtreeCheck,root_squash:e.rootSquash,threads:t?s:void 0,enabled:e.enabled}}function B(e,t){const s=c(e.threads);return{all_vps:e.all_vps,rw:e.rw,sync:e.sync,subtree_check:e.subtree_check,root_squash:e.root_squash,threads:t?s:void 0,enabled:e.enabled}}function S(e,t,s){const n=[],r=o(e.threads)??0,a=c(t.threads)??0,u=[["enabled",!!(e.enabled??!0),t.enabled],["all_vps",!!e.all_vps,t.all_vps],["rw",!!e.rw,t.rw],["sync",!!e.sync,t.sync],["subtree_check",!!e.subtree_check,t.subtree_check],["root_squash",!!e.root_squash,t.root_squash]];for(const[p,i,d]of u)i!==d&&n.push({field:p,before:i,after:d});return s&&r!==a&&n.push({field:"threads",before:r,after:a}),n}function q(e,t){const s=[],n=[["rw",!!e.rw,t.rw],["sync",!!e.sync,t.sync],["subtree_check",!!e.subtree_check,t.subtree_check],["root_squash",!!e.root_squash,t.root_squash]];for(const[r,a,u]of n)a!==u&&s.push({field:r,before:a,after:u});return s}function I(e,t){return String(e||"").trim().toLowerCase().replace(/[^a-z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,48)||`export-${t}`}function T(e,t,s){return`sudo mkdir -p ${s}
+sudo mount -t nfs ${e}:${t} ${s}`}function N(e,t,s,n){return`${e}:${t} ${s} nfs ${n?"rw":"ro"},defaults 0 0`}function j(e,t,s,n){const r=s.replace(/^\//,"").replace(/\//g,"-");return`[Unit]
+Description=Mount ${e}:${t}
+After=network-online.target
+Wants=network-online.target
+
+[Mount]
+What=${e}:${t}
+Where=${s}
+Type=nfs
+Options=${n?"rw,defaults":"ro,defaults"}
+
+[Install]
+WantedBy=multi-user.target
+# file: /etc/systemd/system/${r}.mount`}function C(e,t,s,n){return`fileSystems."${s}" = {
+  device = "${e}:${t}";
+  fsType = "nfs";
+  options = ${n?'[ "rw" "defaults" ]':'[ "ro" "defaults" ]'};
+};`}export{$ as a,v as b,_ as c,w as d,h as e,I as f,b as g,y as h,g as i,B as j,j as k,S as l,q as m,T as n,N as o,o as p,C as q,l as r,f as s,k as v};

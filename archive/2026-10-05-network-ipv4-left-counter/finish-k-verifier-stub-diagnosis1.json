@@ -1,0 +1,41 @@
+{
+  "run": 37826386600,
+  "generator": "8ebc58c24ddbf13a9bf0d0c2c3425275c194adf9",
+  "native_log": "finish-hosted-recovery1/k/run-logs.zip",
+  "extracted_source_step": "finish-k-generator-source-log1.txt",
+  "runtime": {
+    "runs": 29,
+    "assertions": 223,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "closure": {
+    "runs": 12,
+    "assertions": 51,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "driver": {
+    "runs": 4,
+    "assertions": 20,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0
+  },
+  "verifier": {
+    "runs": 18,
+    "assertions": 11,
+    "failures": 2,
+    "errors": 15,
+    "skips": 0,
+    "seed": 51401
+  },
+  "first_error": "test_installed_layout_resolves_matching_predecessor_outputs_without_assuming_path_order: __minitest_stub__new missing",
+  "cause_from_source_and_log": "with_campaign stubs Software.new, then predecessor-layout case nests another stub of the same method. Inner stub overwrites/removes the alias needed by outer restoration; subsequent tests see missing new. Source-supported diagnosis without local reproduction.",
+  "repair_scope": "tools/test-runtime-verify.rb only; no nested same-method stub, preserve exact metadata/output-order and all assertions",
+  "downstream_gates": "not run after stop-first verifier failure",
+  "rerun_requested": false,
+  "local_ci": false
+}

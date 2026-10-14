@@ -1,0 +1,32 @@
+{
+  "status": "SOURCE_ONLY_UNRUN",
+  "owner_method": "test_public_nix_projection_has_two_2048_runtime_guests_and_actual_2048_image_builder_with_unchanged_kernels",
+  "profiles": [
+    "single 2048MiB reduced",
+    "single 4096MiB inherited",
+    "screenshots 2048MiB inherited"
+  ],
+  "cases": [
+    "All seven exact reduced MySQL settings and inherited normal values; actual generated INI text",
+    "API one worker/threads 1..4 and inherited two workers/threads 1..8; exact generated Puma payload",
+    "Actual nested WebUI dynamic FPM 4/1/1/2 plus unchanged 500-request recycle; inherited 32/2/2/5; generated payload",
+    "Exactly two metrics timer leaves and generated units absent, both service definitions still enabled",
+    "All other task definitions/config/timer selection and enabled units preserved against normal profile",
+    "API/MySQL/RabbitMQ/Redis/scheduler/supervisor, auth/session/incident/dataset and WebUI session units present",
+    "Non-single profile retains merged settings and generated files",
+    "Original 2x2048MiB runtime/CPU/tank/kernel and exact native 2048MiB image-builder derivation assertions retained"
+  ],
+  "native_projection_boundary": {
+    "module_evaluation": "Existing pinned NixOS eval-config pattern and selected cluster/nix/test.nix; no hand-built service",
+    "mysql": "Selected services.mysql.configFile.text, actual writeText generation argument exposed by pinned INI generator",
+    "puma_fpm": "Exact name-selected writeText derivations from effective ExecStart contexts; native format4 exact basename set/env.text",
+    "no_application_package_build": "Inspect derivation payloads; do not readFile dependent built outputs",
+    "fallbacks": "None"
+  },
+  "hosted_selectors": [
+    "nix develop --command ruby tools/test-runtime-verify.rb",
+    "nix develop --command bin/check --allow-missing"
+  ],
+  "selectors_changed": false,
+  "local_execution": false
+}

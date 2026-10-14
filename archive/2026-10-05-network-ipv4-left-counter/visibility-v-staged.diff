@@ -1,0 +1,496 @@
+diff --git a/api/lib/vpsadmin/api/resources/ip_address.rb b/api/lib/vpsadmin/api/resources/ip_address.rb
+index 7817c669e..68c8758ea 100644
+--- a/api/lib/vpsadmin/api/resources/ip_address.rb
++++ b/api/lib/vpsadmin/api/resources/ip_address.rb
+@@ -178,6 +178,11 @@ class VpsAdmin::API::Resources::IpAddress < HaveAPI::Resource
+ 
+       if current_user.role != :admin
+         ips = self.class.resource.user_visible_scope(current_user, ips)
++        ips = ips.where(
++          'networks.enabled = ? OR ip_addresses.user_id = ?
++            OR ip_addresses.network_interface_id IS NOT NULL',
++          true, current_user.id
++        )
+       end
+ 
+       ips
+diff --git a/api/lib/vpsadmin/api/resources/network.rb b/api/lib/vpsadmin/api/resources/network.rb
+index f842c3efd..dfd80a68d 100644
+--- a/api/lib/vpsadmin/api/resources/network.rb
++++ b/api/lib/vpsadmin/api/resources/network.rb
+@@ -65,6 +65,7 @@ module VpsAdmin::API::Resources
+         q = q.where(purpose: ::Network.purposes[input[:purpose]]) if input[:purpose]
+         q = q.where(purpose: ::Network.purposes_for_use(input[:usable_for])) if input[:usable_for]
+         q = q.where(enabled: input[:enabled]) if input.has_key?(:enabled)
++        q = q.where(enabled: true) unless current_user.role == :admin
+         q
+       end
+ 
+diff --git a/api/spec/api/resources/host_ip_address_spec.rb b/api/spec/api/resources/host_ip_address_spec.rb
+index f322dfd3f..11d99b9e5 100644
+--- a/api/spec/api/resources/host_ip_address_spec.rb
++++ b/api/spec/api/resources/host_ip_address_spec.rb
+@@ -99,6 +99,29 @@ RSpec.describe 'VpsAdmin::API::Resources::HostIpAddress' do
+   end
+ 
+   describe 'Index' do
++    it 'retains disabled assigned hosts and their included allocation details' do
++      _vps, netif = create_vps_with_netif!(user: SpecSeed.user)
++      network = SpecSeed.network_v4
++      ip = create_ip_address!(network:, ip_addr: '192.0.2.29', prefix: 32, size: 1, netif:)
++      host = create_host_ip!(ip_address: ip, ip_addr: ip.ip_addr)
++      network.update!(enabled: false)
++
++      as(SpecSeed.user) do
++        json_get index_path, host_ip_address: { network: network.id },
++                             _meta: { includes: 'ip_address__network' }
++      end
++      expect_status(200)
++      expect(host_list.map { |row| row['id'] }).to eq([host.id])
++      expect(host_list.first.dig('ip_address', 'network')).to include('id' => network.id, 'enabled' => false)
++
++      as(SpecSeed.user) { json_get show_path(host.id), _meta: { includes: 'ip_address__network' } }
++      expect_status(200)
++      expect(host_obj.dig('ip_address', 'network')).to include('id' => network.id, 'enabled' => false)
++
++      as(SpecSeed.other_user) { json_get show_path(host.id) }
++      expect_status(404)
++    end
++
+     context 'with network purpose filters' do
+       let(:purpose_records) do
+         _vps, netif = create_vps_with_netif!(user: SpecSeed.user)
+diff --git a/api/spec/api/resources/ip_address_assignment_spec.rb b/api/spec/api/resources/ip_address_assignment_spec.rb
+index 31911fd8f..a9ede0e16 100644
+--- a/api/spec/api/resources/ip_address_assignment_spec.rb
++++ b/api/spec/api/resources/ip_address_assignment_spec.rb
+@@ -203,6 +203,30 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddressAssignment' do
+   end
+ 
+   describe 'Index' do
++    it 'preserves active and historical disabled-network associations within owner permissions' do
++      SpecSeed.network_v4.update!(enabled: false)
++      SpecSeed.network_v6.update!(enabled: false)
++
++      as(SpecSeed.user) { json_get index_path, _meta: { includes: 'ip_address__network' } }
++      expect_status(200)
++      expect(assignment_ids).to contain_exactly(
++        assignment_user_active_v4.id, assignment_user_inactive_v4.id, assignment_user_active_v6.id
++      )
++      expect(assignments.to_h { |row| [row.fetch('id'), resource_id(row.fetch('ip_address'))] }).to eq(
++        assignment_user_active_v4.id => assignment_user_active_v4.ip_address_id,
++        assignment_user_inactive_v4.id => assignment_user_inactive_v4.ip_address_id,
++        assignment_user_active_v6.id => assignment_user_active_v6.ip_address_id
++      )
++
++      as(SpecSeed.user) { json_get index_path, ip_address_assignment: { active: true } }
++      expect_status(200)
++      expect(assignment_ids).to contain_exactly(assignment_user_active_v4.id, assignment_user_active_v6.id)
++
++      as(SpecSeed.user) { json_get show_path(assignment_other_active_v6.id) }
++      expect(last_response.status).to be_in([200, 403, 404])
++      expect(json['status']).to be(false)
++    end
++
+     it 'rejects unauthenticated access' do
+       json_get index_path
+ 
+diff --git a/api/spec/api/resources/ip_address_spec.rb b/api/spec/api/resources/ip_address_spec.rb
+index 33910f1cc..4af9a8e68 100644
+--- a/api/spec/api/resources/ip_address_spec.rb
++++ b/api/spec/api/resources/ip_address_spec.rb
+@@ -219,6 +219,172 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+       }
+     end
+ 
++    context 'with disabled free inventory' do
++      let(:enabled_free) { create_ip!(addr: '2001:db8::10', network: SpecSeed.network_v6) }
++
++      before do
++        index_data
++        enabled_free
++        SpecSeed.network_v4.update!(enabled: false)
++      end
++
++      it 'retains owned and accessible nonowned assigned addresses with disabled network details' do
++        as(SpecSeed.user) { json_get index_path, _meta: { includes: 'network' } }
++
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to contain_exactly(
++          index_data[:ip_user_owned].id, index_data[:ip_user_routed].id, enabled_free.id
++        )
++        assigned = ip_list.find { |row| row['id'] == index_data[:ip_user_routed].id }
++        expect(assigned['user']).to be_nil
++        expect(assigned.fetch('network')).to include('id' => SpecSeed.network_v4.id, 'enabled' => false)
++        owned = ip_list.find { |row| row['id'] == index_data[:ip_user_owned].id }
++        expect(owned.fetch('network')).to include('enabled' => false)
++        expect(index_data[:ip_user_owned].network_interface_id).to be_nil
++      end
++
++      it 'uses the same visibility rule for support' do
++        vps = create_vps!(user: SpecSeed.support, node: SpecSeed.node, hostname: 'support-vps')
++        netif = create_netif!(vps:)
++        owned = create_ip!(addr: '192.0.2.16', network: SpecSeed.network_v4, user: SpecSeed.support)
++        assigned = create_ip!(addr: '192.0.2.17', network: SpecSeed.network_v4, netif:)
++
++        as(SpecSeed.support) { json_get index_path }
++
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to contain_exactly(enabled_free.id, owned.id, assigned.id)
++      end
++
++      it 'preserves admin inventory and exact disabled filters' do
++        as(SpecSeed.admin) { json_get index_path }
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to contain_exactly(*index_data.values.map(&:id), enabled_free.id)
++
++        as(SpecSeed.admin) { json_get index_path, ip_address: { network_enabled: false } }
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to match_array(index_data.values.map(&:id))
++      end
++
++      it 'intersects explicit availability and network filters with permissions' do
++        as(SpecSeed.user) do
++          json_get index_path, ip_address: { network: SpecSeed.network_v4.id, network_enabled: false }
++        end
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to contain_exactly(
++          index_data[:ip_user_owned].id, index_data[:ip_user_routed].id
++        )
++
++        as(SpecSeed.user) { json_get index_path, ip_address: { network_enabled: true } }
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to eq([enabled_free.id])
++
++        as(SpecSeed.support) { json_get index_path, ip_address: { network_enabled: false } }
++        expect_status(200)
++        expect(ip_list).to be_empty
++      end
++
++      it 'does not reveal hidden free or foreign addresses through exact filters' do
++        %i[ip_free ip_other_owned ip_other_routed].each do |key|
++          as(SpecSeed.user) do
++            json_get index_path, ip_address: { addr: index_data.fetch(key).ip_addr, network_enabled: false }
++          end
++          expect_status(200)
++          expect(ip_list).to be_empty
++        end
++      end
++
++      it 'retains accessible assignment filters without admitting foreign assignments' do
++        own = index_data[:ip_user_routed]
++
++        as(SpecSeed.user) do
++          json_get index_path, ip_address: { vps: own.network_interface.vps_id, network_enabled: false }
++        end
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to eq([own.id])
++
++        as(SpecSeed.user) do
++          json_get index_path, ip_address: { network_interface: own.network_interface_id, assigned_to_interface: true }
++        end
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to eq([own.id])
++
++        as(SpecSeed.user) do
++          json_get index_path, ip_address: { network_enabled: false, assigned_to_interface: true }
++        end
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to eq([own.id])
++      end
++
++      it 'counts visible rows and traverses all visible pages' do
++        expected_ids = [index_data[:ip_user_owned].id, index_data[:ip_user_routed].id, enabled_free.id]
++        as(SpecSeed.user) { json_get index_path, ip_address: { limit: 1 }, _meta: { count: true } }
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to eq(expected_ids.take(1))
++        expect(json.dig('response', '_meta', 'total_count')).to be_nil
++
++        version = api_version
++        params = { ip_address: { limit: 1 }, _meta: { count: true } }
++        context = HaveAPI::Context.new(
++          app.settings.api_server, version:, path: index_path, input: params, user: SpecSeed.user, endpoint: true
++        )
++        action = VpsAdmin::API::Resources::IpAddress::Index.new(nil, version, {}, params, context)
++        expect(action.authorized?(SpecSeed.user)).to be(true)
++        action.validate!
++        expect(action.input[:limit]).to eq(1)
++        expect(action.count).to eq(expected_ids.length)
++
++        expected_ids.each_with_index do |cursor, index|
++          as(SpecSeed.user) { json_get index_path, ip_address: { limit: 1, from_id: cursor } }
++          expect_status(200)
++          expect(ip_list.map { |row| row['id'] }).to eq(expected_ids.drop(index + 1).take(1))
++        end
++
++        as(SpecSeed.admin) { json_get index_path, ip_address: { limit: 1 }, _meta: { count: true } }
++        expect_status(200)
++        expect(ip_list.length).to eq(1)
++        expect(json.dig('response', '_meta', 'total_count')).to eq(index_data.length + 1)
++      end
++
++      it 'preserves purpose and location restrictions for retained addresses' do
++        SpecSeed.network_v4.location_networks.update_all(userpick: false)
++        as(SpecSeed.user) do
++          json_get index_path, ip_address: { location: SpecSeed.location.id, network_enabled: false }
++        end
++        expect_status(200)
++        expect(ip_list).to be_empty
++
++        as(SpecSeed.user) do
++          json_get index_path, ip_address: { network_enabled: false, purpose: 'export' }
++        end
++        expect_status(200)
++        expect(ip_list).to be_empty
++
++        as(SpecSeed.user) do
++          json_get index_path, ip_address: { network_enabled: false, role: 'public_access', usable_for: 'vps' }
++        end
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to contain_exactly(
++          index_data[:ip_user_owned].id, index_data[:ip_user_routed].id
++        )
++      end
++
++      it 'retains disabled owned private addresses without making non-userpick inventory visible' do
++        network = create_non_userpick_network!
++        network.update!(enabled: false, role: :private_access)
++        owned = create_ip!(addr: network.address.sub(/\.0\z/, '.21'), network:, user: SpecSeed.user)
++        free = create_ip!(addr: network.address.sub(/\.0\z/, '.22'), network:)
++
++        as(SpecSeed.user) do
++          json_get index_path, ip_address: { network: network.id, role: 'private_access', network_enabled: false }
++        end
++        expect_status(200)
++        expect(ip_list.map { |row| row['id'] }).to eq([owned.id])
++
++        as(SpecSeed.user) { json_get show_path(free.id) }
++        expect_status(404)
++      end
++    end
++
+     context 'with network purpose filters' do
+       let(:purpose_records) do
+         purpose_networks.transform_values do |network|
+@@ -338,6 +504,29 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+       }
+     end
+ 
++    it 'preserves disabled free, owned and assigned details without widening permissions' do
++      data = show_data
++      SpecSeed.network_v4.update!(enabled: false)
++
++      %i[ip_free ip_user_owned ip_user_routed].each do |key|
++        as(SpecSeed.user) { json_get show_path(data.fetch(key).id), _meta: { includes: 'network' } }
++        expect_status(200)
++        expect(ip_obj['id']).to eq(data.fetch(key).id)
++        expect(ip_obj.fetch('network')).to include('id' => SpecSeed.network_v4.id)
++        expect(ip_obj.dig('network', '_meta', 'resolved')).to be(false)
++      end
++
++      as(SpecSeed.user) { json_get vpath("/networks/#{SpecSeed.network_v4.id}") }
++      expect_status(200)
++      expect(json.dig('response', 'network')).to include('id' => SpecSeed.network_v4.id, 'enabled' => false)
++
++      %i[ip_other_owned ip_other_routed].each do |key|
++        as(SpecSeed.user) { json_get show_path(data.fetch(key).id), _meta: { includes: 'network' } }
++        expect_status(404)
++        expect(json['status']).to be(false)
++      end
++    end
++
+     it 'rejects unauthenticated access' do
+       json_get show_path(show_data[:ip_free].id)
+ 
+diff --git a/api/spec/api/resources/network_interface_spec.rb b/api/spec/api/resources/network_interface_spec.rb
+index c1a901e5e..4437a2915 100644
+--- a/api/spec/api/resources/network_interface_spec.rb
++++ b/api/spec/api/resources/network_interface_spec.rb
+@@ -389,11 +389,12 @@ RSpec.describe 'VpsAdmin::API::Resources::NetworkInterface' do
+       end
+     end
+ 
+-    it 'expands host details for an export owner without widening direct IP access' do
++    it 'expands disabled host details for an export owner without widening direct IP access' do
+       network = SpecSeed.network_v4
+       own_ip = IpAddress.create!(network: network, network_interface: netif,
+                                  ip_addr: '192.0.2.231', prefix: 32, size: 1)
+       host = HostIpAddress.create!(ip_address: own_ip, ip_addr: own_ip.ip_addr)
++      network.update!(enabled: false)
+ 
+       as(SpecSeed.user) { json_get vpath("/ip_addresses/#{own_ip.id}") }
+       expect_status(404)
+@@ -403,20 +404,23 @@ RSpec.describe 'VpsAdmin::API::Resources::NetworkInterface' do
+ 
+       as(SpecSeed.user) do
+         json_get vpath('/host_ip_addresses'), host_ip_address: { network: network.id },
+-                                              _meta: { includes: 'ip_address__network_interface__vps' }
++                                              _meta: { includes: 'ip_address__network,ip_address__network_interface__vps' }
+       end
+       expect_status(200)
+       row = json.dig('response', 'host_ip_addresses').find { |item| item['id'] == host.id }
+       expect(row.dig('ip_address', 'network_interface')).to include('id' => netif.id, 'vps' => nil)
++      expect(row.dig('ip_address', 'network')).to include('id' => network.id, 'enabled' => false)
+ 
+       [SpecSeed.user, SpecSeed.admin].each do |actor|
+         as(actor) do
+           json_get vpath("/host_ip_addresses/#{host.id}"),
+-                   _meta: { includes: 'ip_address__network_interface__vps' }
++                   _meta: { includes: 'ip_address__network,ip_address__network_interface__vps' }
+         end
+         expect_status(200)
+         expect(json.dig('response', 'host_ip_address', 'ip_address', 'network_interface'))
+           .to include('id' => netif.id, 'vps' => nil)
++        expect(json.dig('response', 'host_ip_address', 'ip_address', 'network'))
++          .to include('id' => network.id, 'enabled' => false)
+       end
+ 
+       as(SpecSeed.other_user) { json_get vpath("/host_ip_addresses/#{host.id}") }
+@@ -430,7 +434,7 @@ RSpec.describe 'VpsAdmin::API::Resources::NetworkInterface' do
+       expect(json.dig('response', 'host_ip_addresses').map { |item| item['id'] }).not_to include(host.id)
+     end
+ 
+-    it 'expands export interfaces in compatible IP and host address lists' do
++    it 'expands disabled owned export interfaces in compatible IP and host address lists' do
+       network = Network.create!(
+         label: 'Export on any-purpose network', address: '198.51.100.0', prefix: 24,
+         ip_version: 4, role: :public_access, purpose: :any, managed: false,
+@@ -440,6 +444,7 @@ RSpec.describe 'VpsAdmin::API::Resources::NetworkInterface' do
+                              ip_addr: '198.51.100.20', prefix: 32, size: 1,
+                              charged_environment: SpecSeed.environment)
+       host = HostIpAddress.create!(ip_address: ip, ip_addr: ip.ip_addr)
++      network.update!(enabled: false)
+ 
+       [SpecSeed.user, SpecSeed.admin].each do |actor|
+         as(actor) do
+diff --git a/api/spec/api/resources/network_read_spec.rb b/api/spec/api/resources/network_read_spec.rb
+index fe6c6be5d..977a82640 100644
+--- a/api/spec/api/resources/network_read_spec.rb
++++ b/api/spec/api/resources/network_read_spec.rb
+@@ -46,6 +46,83 @@ RSpec.describe 'VpsAdmin::API::Resources::Network' do
+   end
+ 
+   describe 'Index' do
++    context 'with a disabled network' do
++      before { ipv4_network.update!(enabled: false) }
++
++      %i[user support].each do |actor|
++        it "lists only enabled networks for #{actor}" do
++          as(SpecSeed.public_send(actor)) { json_get index_path }
++
++          expect_status(200)
++          expect(nets.map { |row| row['id'] }).to contain_exactly(ipv6_network.id)
++        end
++
++        it "intersects an explicit disabled filter for #{actor}" do
++          as(SpecSeed.public_send(actor)) { json_get index_path, network: { enabled: false } }
++
++          expect_status(200)
++          expect(nets).to be_empty
++        end
++      end
++
++      it 'preserves admin inventory and exact availability filters' do
++        as(SpecSeed.admin) { json_get index_path }
++        expect_status(200)
++        expect(nets.map { |row| row['id'] }).to contain_exactly(ipv4_network.id, ipv6_network.id)
++
++        as(SpecSeed.admin) { json_get index_path, network: { enabled: false } }
++        expect_status(200)
++        expect(nets.map { |row| row['id'] }).to eq([ipv4_network.id])
++
++        as(SpecSeed.admin) { json_get index_path, network: { enabled: true } }
++        expect_status(200)
++        expect(nets.map { |row| row['id'] }).to eq([ipv6_network.id])
++      end
++
++      it 'filters before counting and traversing pages' do
++        next_network = Network.create!(
++          label: 'Enabled pagination network', address: '203.0.113.0', prefix: 24,
++          ip_version: 4, role: :private_access, purpose: :any, managed: false,
++          split_access: :no_access, split_prefix: 32, primary_location: SpecSeed.location
++        )
++
++        as(SpecSeed.user) { json_get index_path, network: { limit: 1 }, _meta: { count: true } }
++        expect_status(200)
++        expect(nets.map { |row| row['id'] }).to eq([ipv6_network.id])
++        expect(json.dig('response', '_meta', 'total_count')).to eq(2)
++
++        as(SpecSeed.user) { json_get index_path, network: { limit: 1, from_id: ipv6_network.id } }
++        expect_status(200)
++        expect(nets.map { |row| row['id'] }).to eq([next_network.id])
++
++        as(SpecSeed.user) { json_get index_path, network: { limit: 1, from_id: next_network.id } }
++        expect_status(200)
++        expect(nets).to be_empty
++      end
++
++      it 'preserves location and purpose filter intersections' do
++        as(SpecSeed.user) do
++          json_get index_path, network: { location: SpecSeed.location.id, usable_for: 'vps' }
++        end
++        expect_status(200)
++        expect(nets).to be_empty
++
++        as(SpecSeed.user) do
++          json_get index_path, network: { location: SpecSeed.other_location.id, purpose: 'vps', enabled: true }
++        end
++        expect_status(200)
++        expect(nets.map { |row| row['id'] }).to eq([ipv6_network.id])
++      end
++
++      it 'lists a network again after it is enabled' do
++        ipv4_network.update!(enabled: true)
++        as(SpecSeed.user) { json_get index_path }
++
++        expect_status(200)
++        expect(nets.map { |row| row['id'] }).to contain_exactly(ipv4_network.id, ipv6_network.id)
++      end
++    end
++
+     context 'with network purpose filters' do
+       let(:purpose_records) { purpose_networks }
+ 
+@@ -151,6 +228,18 @@ RSpec.describe 'VpsAdmin::API::Resources::Network' do
+   end
+ 
+   describe 'Show' do
++    %i[user support].each do |actor|
++      it "preserves disabled network details for #{actor}" do
++        ipv4_network.update!(enabled: false)
++        as(SpecSeed.public_send(actor)) { json_get show_path(ipv4_network.id) }
++
++        expect_status(200)
++        expect(net_obj).to include('id' => ipv4_network.id, 'enabled' => false)
++        expect(net_obj).not_to have_key('label')
++        expect(net_obj).not_to have_key('managed')
++      end
++    end
++
+     it 'rejects unauthenticated access' do
+       json_get show_path(ipv4_network.id)
+ 
+diff --git a/docs/ip-locking.md b/docs/ip-locking.md
+index 7766c054d..addff4ed3 100644
+--- a/docs/ip-locking.md
++++ b/docs/ip-locking.md
+@@ -51,10 +51,15 @@ the existing node protocol and stored resource-lock format.
+ ## Network availability
+ 
+ `Network.enabled` controls new allocations and assignments. It defaults to true;
+-only administrators can change it. Disabled networks remain visible in ordinary
+-inventory queries. `Network.Index` accepts an exact `enabled` filter, and
+-`IpAddress.Index` accepts `network_enabled` for availability selectors. Neither
+-filter changes ownership, assignment or visibility rules.
++only administrators can change it. Non-admin network lists show enabled networks.
++Their IP lists retain addresses from enabled networks, their own detached
++addresses, and assigned addresses they already have permission to read.
++Disabled free inventory is hidden. Administrators retain the full inventory.
++`Network.Index` accepts an exact `enabled` filter, and `IpAddress.Index` accepts
++`network_enabled`; these filters only narrow the caller's list. Counts and
++pagination use the same restricted query. Direct `Show` access and included
++associations keep their existing permissions, including access to disabled
++networks and addresses. List visibility does not permit a new assignment.
+ 
+ New automatic allocations, explicit assignments of detached addresses, new IP
+ ownership, ownership transfers and owned registration require an enabled network.

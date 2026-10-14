@@ -1,0 +1,21 @@
+diff --git a/tools/test-node-ssh.rb b/tools/test-node-ssh.rb
+index 29d8bba673c20d1cecd8f2f4d711760d45be69bb..1d49ef7ae17c54083f610ee6a1610e9c873cfe32 100644
+--- a/tools/test-node-ssh.rb
++++ b/tools/test-node-ssh.rb
+@@ -8,6 +8,7 @@ require 'json'
+ require 'digest'
+ require 'shellwords'
+ require 'timeout'
++require 'io/nonblock'
+ 
+ class NodeSshTest < Minitest::Test
+   NODE_KEY = '/tank/.vpsfree-kb-ssh/ssh_host_ed25519_key'
+@@ -397,6 +398,8 @@ class NodeSshTest < Minitest::Test
+   def with_child(fixture)
+     notification, notify = IO.pipe
+     release_input, release = IO.pipe
++    # Bash must block until the parent releases this barrier.
++    release_input.nonblock = false
+     error = File.open(fixture.fetch(:error), File::WRONLY | File::CREAT | File::EXCL, 0o600)
+     pid = Process.spawn(start_environment(fixture), executable('bash'), fixture.fetch(:script), 'held',
+       3 => notify, 4 => release_input, out: File::NULL, err: error, close_others: true)

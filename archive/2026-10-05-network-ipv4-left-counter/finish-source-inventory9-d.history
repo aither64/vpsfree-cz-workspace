@@ -1,0 +1,44 @@
+commit 730d33e12a01a738e16fec4c51cd9ce4a19c69c4
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 10:15:43 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Thu Oct 8 21:52:46 2026 +0200
+
+    cluster: mediate capture leases through the generation guard
+    
+    Relay capture-lease input, readiness and diagnostics through dispatcher-owned
+    pipes. Retain the selected package-generation guard through provider exit and
+    reaping, and cancel the owned child when the caller or protocol is lost.
+    
+    Close the downstream protocol pipe promptly on provider stdout EOF, even if
+    that provider is still running. Diagnostic stderr closure leaves the lease
+    usable. Other provider commands retain buffered dispatch and exit behavior.
+
+commit d2d64f2e2a2167a1171e2bca17fe99ff2375d231
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 16:43:01 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Thu Oct 8 21:52:46 2026 +0200
+
+    portal: check reconciliation deadline after proof
+    
+    Check the caller's original context after journal and response proof, before
+    accepting lifecycle reconciliation. Slow proof must not commit authority after
+    the fresh-owner deadline has expired.
+    
+    Keep the upstream contention retry and acceptance behavior, and extract its
+    loop for deterministic progress-conflict, cancellation and no-op coverage.
+
+commit b1ec1bf1c3bc6413b066816ca58468b67ad5e5a6
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Thu Oct 8 22:02:34 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Thu Oct 8 22:02:34 2026 +0200
+
+    portal: model completed deletion in force retry tests
+    
+    Remove each force-retry fixture journal before its fake command
+    reports success, matching the deletion completion side effect. Prove
+    fresh reconciliation preserves the completed receipt and retry
+    identity. A retained matching journal must still pause a completed
+    receipt without changing its identity.

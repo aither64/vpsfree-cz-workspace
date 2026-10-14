@@ -1,0 +1,56 @@
+{
+  "test_status": "UNEXECUTED; source-only static inspection",
+  "method_inventory": {
+    "tools/test-machine.rb": {
+      "baseline_declared_methods": 12,
+      "current_declared_methods": 15,
+      "added_methods": [
+        "test_caller_expiry_retains_one_shutdown_and_tracks_late_children_until_reapers_complete",
+        "test_signal_withdraws_ready_marker_and_repeated_control_only_waits_for_the_same_shutdown",
+        "test_queued_shutdown_at_the_ensure_boundary_does_not_replace_primary_failure"
+      ],
+      "renamed_or_extended_prior_methods": [],
+      "interpretation": "static method inventory only; no execution/assertion counts claimed"
+    },
+    "tools/test-runtime-verify.rb": {
+      "baseline_declared_methods": 19,
+      "current_declared_methods": 24,
+      "added_methods": [
+        "test_only_exact_published_7dc_predecessor_is_accepted_before_campaign_mutation",
+        "test_each_failed_historical_drain_prevents_the_following_mutation_and_replay",
+        "test_router_drain_uses_completed_public_attestation_and_exact_clean_result",
+        "test_public_command_observer_expiry_keeps_native_exit_and_unknown_remote_cancellation",
+        "test_native_guest_timeout_is_not_an_observer_expiry",
+        "test_failed_native_phase_keeps_private_stdout_stderr_exact_exit_and_stage_without_replay"
+      ],
+      "renamed_or_extended_prior_methods": [
+        "test_failed_native_command_keeps_private_stdout_stderr_exact_exit_and_stage"
+      ],
+      "interpretation": "static method inventory only; no execution/assertion counts claimed"
+    },
+    "tools/test-runtime.rb": {
+      "baseline_declared_methods": 79,
+      "current_declared_methods": 83,
+      "added_methods": [
+        "test_missing_ready_marker_denies_status_connection_update_and_capture_without_effects",
+        "test_foreign_and_unsafe_ready_markers_keep_their_strict_refusal",
+        "test_readiness_loss_cancels_an_acquired_capture_and_prevents_late_handshake",
+        "test_marker_withdrawn_during_initial_attestation_never_reports_ready"
+      ],
+      "renamed_or_extended_prior_methods": [],
+      "interpretation": "static method inventory only; no execution/assertion counts claimed"
+    }
+  },
+  "hosted_selection": {
+    "workflow": ".github/workflows/check.yml",
+    "source_job": "check",
+    "command": "nix develop --command bin/check --allow-missing",
+    "focused_test_owners": [
+      "ruby tools/test-runtime.rb",
+      "ruby tools/test-machine.rb",
+      "ruby tools/test-runtime-verify.rb"
+    ],
+    "execution_owner": "lead selects hosted exact committed source; implementer does not launch"
+  },
+  "retained_cases": "prior trust/identity/physical lease/unknown socket/interruption/handoff and source/credential continuity owners remain selected"
+}

@@ -1,0 +1,128 @@
+1:  718c031f7 ! 1:  fc4f01a02 api: add network availability admission controls
+    @@ api/spec/migrations/20261006120000_add_network_enabled_spec.rb (new)
+     +end
+     
+      ## api/spec/models/ip_ownership_concurrency_spec.rb ##
+    +@@ api/spec/models/ip_ownership_concurrency_spec.rb: require 'timeout'
+    + 
+    + RSpec.describe Network do
+    +   let(:committed) { {} }
+    ++  let(:connection_threads) { [] }
+    + 
+    +   before do
+    +     unlock_transaction_signer!
+    +     connection_thread do
+    ++      seed_network = SpecSeed.network_v4
+    ++      committed[:seed_network_id] = seed_network.id
+    ++      committed[:seed_enabled] = seed_network.enabled
+    ++      committed[:seed_ips] = IpAddress.where(network: seed_network).order(:id).map(&:attributes)
+    ++      committed[:seed_versions] = PaperTrail::Version.where(item_type: 'Network', item_id: seed_network.id).pluck(:id)
+    +       config = SpecSeed.user.environment_user_configs.find_by!(environment: SpecSeed.environment)
+    +       committed[:config_id] = config.id
+    +       committed[:uses] = ClusterResourceUse.where(class_name: 'EnvironmentUserConfig', row_id: config.id).map(&:attributes)
+    +@@ api/spec/models/ip_ownership_concurrency_spec.rb: RSpec.describe Network do
+    +       committed[:usage] = config.reload.ipv4
+    +       network = SpecSeed.network_v4.dup
+    +       network.update!(address: '198.51.100.0')
+    +-      LocationNetwork.create!(network:, location: SpecSeed.location, autopick: true, userpick: true)
+    +       committed[:network_id] = network.id
+    ++      LocationNetwork.create!(network:, location: SpecSeed.location, autopick: true, userpick: true)
+    +     end.value
+    +   end
+    + 
+    +   def connection_thread(&block)
+    +-    Thread.new do
+    ++    thread = Thread.new do
+    +       ActiveRecord::Base.connection_pool.with_connection do
+    +         with_current_context do |session|
+    +           block.call
+    +@@ api/spec/models/ip_ownership_concurrency_spec.rb: RSpec.describe Network do
+    +         end
+    +       end
+    +     end
+    ++    connection_threads << thread
+    ++    thread
+    +   end
+    + 
+    +   after do
+    ++    # A failed join must not skip the other worker or committed-fixture cleanup.
+    ++    thread_error = nil
+    ++    connection_threads.each do |thread|
+    ++      thread.join(25) || thread.kill.join
+    ++    rescue StandardError, RSpec::Expectations::ExpectationNotMetError => e
+    ++      thread_error ||= e
+    ++    end
+    ++    restoration_errors = []
+    +     connection_thread do
+    +       ips = IpAddress.where(id: [committed[:ip_id], committed[:second_ip_id]]).or(IpAddress.where(network_id: committed[:network_id]))
+    +       ids = ips.pluck(:id)
+    ++      host_ids = HostIpAddress.where(ip_address_id: ids).pluck(:id)
+    ++      locks = ResourceLock.where(resource: 'IpAddress', row_id: ids)
+    ++                          .or(ResourceLock.where(resource: 'HostIpAddress', row_id: host_ids))
+    ++                          .or(ResourceLock.where(resource: 'Network', row_id: committed[:network_id]))
+    ++      leaked_locks = locks.pluck(:resource, :row_id)
+    ++      locks.delete_all
+    +       HostIpAddress.where(ip_address_id: ids).delete_all
+    +       ips.delete_all
+    +       LocationNetwork.where(network_id: committed[:network_id]).delete_all
+    +       described_class.where(id: committed[:network_id]).delete_all
+    +       PaperTrail::Version.where(item_type: 'IpAddress', item_id: ids).delete_all
+    +       PaperTrail::Version.where(item_type: 'Network', item_id: committed[:network_id]).delete_all
+    ++      if committed[:seed_network_id]
+    ++        described_class.where(id: committed[:seed_network_id]).update_all(enabled: committed[:seed_enabled])
+    ++        PaperTrail::Version.where(item_type: 'Network', item_id: committed[:seed_network_id])
+    ++                           .where.not(id: committed[:seed_versions]).delete_all
+    ++      end
+    +       [[committed[:config_id], committed[:uses]], [committed[:extra_config_id], committed[:extra_uses]]].each do |id, uses|
+    +         next unless uses
+    + 
+    +         ClusterResourceUse.where(class_name: 'EnvironmentUserConfig', row_id: id)
+    +                           .where.not(id: uses.map { |attrs| attrs['id'] }).delete_all
+    +         uses.each { |attrs| ClusterResourceUse.where(id: attrs['id']).update_all(attrs) }
+    ++        actual = ClusterResourceUse.where(class_name: 'EnvironmentUserConfig', row_id: id).order(:id).map(&:attributes)
+    ++        expected = uses.sort_by { |attrs| attrs['id'] }
+    ++        if actual != expected
+    ++          restoration_errors << "EnvironmentUserConfig ##{id} usage was not restored: expected #{expected.inspect}, got #{actual.inspect}"
+    ++        end
+    ++      end
+    ++      restoration_errors << "Fixture reservations survived workers: #{leaked_locks.inspect}" unless leaked_locks.empty?
+    ++      remaining_ids = IpAddress.where(id: ids).pluck(:id)
+    ++      restoration_errors << "Fixture allocations survived cleanup: #{remaining_ids.inspect}" unless remaining_ids.empty?
+    ++      remaining_hosts = HostIpAddress.where(ip_address_id: ids).pluck(:id)
+    ++      restoration_errors << "Fixture host addresses survived cleanup: #{remaining_hosts.inspect}" unless remaining_hosts.empty?
+    ++      if described_class.exists?(id: committed[:network_id])
+    ++        restoration_errors << "Fixture network ##{committed[:network_id]} survived cleanup"
+    ++      end
+    ++      if committed[:seed_network_id]
+    ++        if described_class.find(committed[:seed_network_id]).enabled != committed[:seed_enabled]
+    ++          restoration_errors << "Seed network ##{committed[:seed_network_id]} availability was not restored"
+    ++        end
+    ++        actual = IpAddress.where(network_id: committed[:seed_network_id]).order(:id).map(&:attributes)
+    ++        if actual != committed[:seed_ips]
+    ++          restoration_errors << "Seed allocations were not restored: expected #{committed[:seed_ips].inspect}, got #{actual.inspect}"
+    ++        end
+    +       end
+    +     end.value
+    ++    unless restoration_errors.empty?
+    ++      restoration_errors << "Worker failed: #{thread_error.class}: #{thread_error.message}" if thread_error
+    ++      raise "Committed fixture restoration failed:\n#{restoration_errors.join("\n")}"
+    ++    end
+    ++    raise thread_error if thread_error
+    +   end
+    + 
+    +   it 'rejects a role change waiting behind the first direct registration' do
+     @@ api/spec/models/ip_ownership_concurrency_spec.rb: RSpec.describe Network do
+          workers&.each { |thread| thread.join(25) || thread.kill.join }
+        end
+    @@ api/spec/models/ip_ownership_concurrency_spec.rb: RSpec.describe Network do
+     +    workers = ids.map do |id|
+     +      connection_thread do
+     +        TransactionChain.transaction do
+    -+          chain = TransactionChain.create!(name: 'parallel-network-admission', state: :staged,
+    -+                                           size: 0, user: User.current, user_session: UserSession.current)
+    -+          chain.global_locks = []
+    ++          chain = build_transaction_chain!(name: 'parallel-network-admission')
+     +          ip = IpAddress.find(id)
+     +          ip.lock_for_new_use!(chain)
+     +          ip.ensure_pickable!(user: SpecSeed.user, location: SpecSeed.location, ip_v: 4, role: :public_access,
+2:  30603a832 = 2:  be136b6c0 webui: expose network availability and enabled address selectors

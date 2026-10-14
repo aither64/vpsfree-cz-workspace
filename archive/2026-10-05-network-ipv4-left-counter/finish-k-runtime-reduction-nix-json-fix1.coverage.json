@@ -1,0 +1,21 @@
+{
+  "test_owner": "tools/test-runtime-verify.rb",
+  "affected_case": "test_public_nix_projection_has_two_2048_runtime_guests_and_actual_2048_image_builder_with_unchanged_kernels",
+  "status": "source-only; corrected case UNRUN",
+  "required_assertions": [
+    "native version is exactly 4",
+    "derivations keys are exactly the requested derivation basename",
+    "that derivation env.memSize is 2048"
+  ],
+  "preserved": [
+    "native command and projection inputs",
+    "two 2048-MiB runtime guests",
+    "unchanged locked kernels",
+    "four CPUs per guest",
+    "8G node tank",
+    "exactly one image derivation",
+    "every other method/byte"
+  ],
+  "hosted_selector": "nix develop --command bin/check --allow-missing",
+  "no_route_workflow_or_dependency_change": true
+}

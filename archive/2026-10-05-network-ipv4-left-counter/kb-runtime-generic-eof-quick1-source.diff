@@ -1,0 +1,167 @@
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index 1116a6c..4dc2c99 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -483,6 +483,11 @@ controller loss. A request accepted before loss may already have taken effect.
+ This transport does not change provider catalogs, state schemas, package
+ transition policy or command exit mapping.
+ 
++Protocol stdout EOF ends a lease even if the provider is still running. The
++dispatcher closes the caller's protocol output promptly and keeps the generation
++guard while it closes provider input and reaps the child. Closing diagnostic
++stderr alone does not end the lease.
++
+ The package constructor also accepts `userNamespace` and `routerSocket` for a
+ deployment-specific compatibility generation. `userNamespace` selects the
+ default user config, state, runtime and profile paths, including portal
+diff --git a/libexec/workspace-host b/libexec/workspace-host
+index b71937a..1134ac2 100755
+--- a/libexec/workspace-host
++++ b/libexec/workspace-host
+@@ -2958,6 +2958,8 @@ module DevWorkspaceHost
+     # Mediate the peer channels while the caller holds the generation guard.
+     # The provider gets new pipes, never the original peer or authority FDs.
+     def system_env_streaming!(environment, *argv)
++      raise Error, 'development cluster protocol output must support close' unless @out.respond_to?(:close) && @out.respond_to?(:closed?)
++
+       child_input, input = IO.pipe
+       output, child_output = IO.pipe
+       errors, child_errors = IO.pipe
+@@ -2966,16 +2968,24 @@ module DevWorkspaceHost
+                 unsetenv_others: true), status: nil }
+       [child_input, child_output, child_errors].each(&:close)
+       events = Queue.new
+-      pumps = [[output, @out], [errors, @err]].map do |source, destination|
++      pumps = [[output, @out, true], [errors, @err, false]].map do |source, destination, protocol|
+         Thread.new do
+           loop do
+             destination.write(source.readpartial(16 * 1024))
+             destination.flush if destination.respond_to?(:flush)
+           end
+         rescue EOFError
+-          nil
++          events << [:protocol_eof, nil] if protocol
+         rescue StandardError => error
+           events << [:error, error]
++        ensure
++          if protocol
++            begin
++              destination.close unless destination.closed?
++            rescue StandardError => error
++              events << [:error, error]
++            end
++          end
+         end
+       end
+       peer = Thread.new do
+diff --git a/test/workspace_host/commands_and_locks_test.rb b/test/workspace_host/commands_and_locks_test.rb
+index ab5da30..a4423b2 100644
+--- a/test/workspace_host/commands_and_locks_test.rb
++++ b/test/workspace_host/commands_and_locks_test.rb
+@@ -210,6 +210,76 @@ class WorkspaceHostTest < Minitest::Test
+     end
+   end
+ 
++  def test_capture_lease_stdout_eof_closes_the_peer_while_input_stays_open_and_guard_covers_reap
++    with_streaming_provider do |context|
++      input, writer = IO.pipe
++      reader, output = IO.pipe
++      host = streaming_host(context, input:, out: output, err: StringIO.new)
++      result = Thread.new { host.run('alpha-devcluster', ['capture-lease', 'stdout-ready']) }
++      assert_equal('ready', JSON.parse(Timeout.timeout(5) { reader.gets })['event'])
++      writer.puts('close-output')
++      writer.flush
++      assert_nil(Timeout.timeout(5) { reader.gets }, 'protocol EOF must reach the caller before provider exit')
++      refute(writer.closed?, 'caller stdin deliberately remains open')
++      Timeout.timeout(5) { sleep 0.01 until File.exist?(context.fetch(:ended)) }
++      assert_equal('EOF', File.read(context.fetch(:ended)), 'provider stdin must close after stdout loss')
++      File.open(context.fetch(:lock), File::RDWR) do |probe|
++        refute(probe.flock(File::LOCK_EX | File::LOCK_NB), 'guard remains held during provider cleanup')
++      end
++      assert_equal(0, Timeout.timeout(5) { result.value })
++      assert(output.closed?, 'injected protocol sink is closed too')
++      assert_provider_reaped(context)
++    ensure
++      [input, writer, reader, output].compact.each { |io| io.close unless io.closed? }
++      result&.kill&.join
++    end
++  end
++
++  def test_capture_lease_stdout_eof_before_or_immediately_after_readiness_closes_injected_sink
++    %w[stdout-before stdout-same].each do |mode|
++      with_streaming_provider do |context|
++        input, writer = IO.pipe
++        output = StringIO.new
++        host = streaming_host(context, input:, out: output, err: StringIO.new)
++        assert_equal(0, Timeout.timeout(5) { host.run('alpha-devcluster', ['capture-lease', mode]) })
++        assert(output.closed?, 'StringIO closure has the same protocol meaning as pipe EOF')
++        assert_equal('EOF', File.read(context.fetch(:ended)))
++        if mode == 'stdout-before'
++          assert_empty(output.string)
++        else
++          assert_equal('ready', JSON.parse(output.string)['event'])
++        end
++        refute(writer.closed?)
++        assert_provider_reaped(context)
++      ensure
++        [input, writer].compact.each { |io| io.close unless io.closed? }
++      end
++    end
++  end
++
++  def test_capture_lease_stderr_eof_leaves_protocol_input_and_output_usable
++    with_streaming_provider do |context|
++      input, writer = IO.pipe
++      reader, output = IO.pipe
++      errors = StringIO.new
++      host = streaming_host(context, input:, out: output, err: errors)
++      result = Thread.new { host.run('alpha-devcluster', ['capture-lease', 'stderr-close']) }
++      assert_equal('ready', JSON.parse(Timeout.timeout(5) { reader.gets })['event'])
++      writer.puts('still-leased')
++      writer.flush
++      assert_equal("echo:still-leased\n", Timeout.timeout(5) { reader.gets })
++      refute(output.closed?)
++      refute(errors.closed?, 'diagnostic sink remains owned by the caller')
++      assert(result.alive?)
++      writer.close
++      assert_equal(0, Timeout.timeout(5) { result.value })
++      assert_provider_reaped(context)
++    ensure
++      [input, writer, reader, output].compact.each { |io| io.close unless io.closed? }
++      result&.kill&.join
++    end
++  end
++
+   private
+ 
+   def with_streaming_provider
+@@ -240,6 +310,13 @@ class WorkspaceHostTest < Minitest::Test
+           exit 7
+         end
+         exit 0 if ARGV[1] == 'exit'
++        if ARGV[1] == 'stdout-before'
++          STDOUT.close
++          STDIN.read
++          File.write(ENV.fetch('PROVIDER_ENDED'), 'EOF')
++          sleep 0.2
++          exit 0
++        end
+         fds = Dir.glob('/proc/self/fd/*').filter_map do |path|
+           File.readlink(path) rescue nil
+         end
+@@ -247,6 +324,15 @@ class WorkspaceHostTest < Minitest::Test
+         puts JSON.generate(event: 'ready', fds:, authority:,
+                            workspace: ENV['DEVCLUSTER_WORKSPACE'], name: ENV['DEV_WORKSPACE_NAME'])
+         warn 'provider diagnostics'
++        if %w[stdout-ready stdout-same].include?(ARGV[1])
++          STDIN.gets if ARGV[1] == 'stdout-ready'
++          STDOUT.close
++          STDIN.read
++          File.write(ENV.fetch('PROVIDER_ENDED'), 'EOF')
++          sleep 0.2
++          exit 0
++        end
++        STDERR.close if ARGV[1] == 'stderr-close'
+         if ARGV[1] == 'stall'
+           Signal.trap('TERM', 'IGNORE')
+           STDIN.read

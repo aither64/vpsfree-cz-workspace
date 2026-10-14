@@ -1,0 +1,55 @@
+{
+  "baseline_d": "b1ec1bf1c3bc6413b066816ca58468b67ad5e5a6",
+  "accepted_design": {
+    "path": "design.md",
+    "section": "6330 through end",
+    "sha256": "e1b55df38f11273d55b9327a1617aeb85b0e7ca444d370ac753a6cef5a3a9c46"
+  },
+  "acceptance": {
+    "path": "finish-d-lease-eof-publication-source-acceptance1.json",
+    "sha256": "8f3a08904df8294f3b1f5f335f02118a4bb69f4122ad0cd1e61720cac3d4e40e"
+  },
+  "native_e": {
+    "run_id": 38083114582,
+    "head": "874adbd3f477d04f0c81f52afc8d777b91814187",
+    "conclusion": "failure",
+    "summary": "flake\tRun nix flake check --print-build-logs\t2026-10-10T20:24:19.4099613Z dev-workspace> 139 runs, 1082 assertions, 1 failures, 0 errors, 3 skips",
+    "failure_excerpt": [
+      "flake\tRun nix flake check --print-build-logs\t2026-10-10T20:24:19.4069096Z dev-workspace> WorkspaceHostTest#test_capture_lease_abrupt_dispatcher_loss_closes_both_mediated_peer_channels [test/workspace_host/commands_and_locks_test.rb:150]:",
+      "flake\tRun nix flake check --print-build-logs\t2026-10-10T20:24:19.4075652Z dev-workspace> provider must observe input EOF.",
+      "flake\tRun nix flake check --print-build-logs\t2026-10-10T20:24:19.4082062Z dev-workspace> Expected: \"EOF\"",
+      "flake\tRun nix flake check --print-build-logs\t2026-10-10T20:24:19.4087465Z dev-workspace>   Actual: \"\"",
+      "flake\tRun nix flake check --print-build-logs\t2026-10-10T20:24:19.4093486Z dev-workspace> "
+    ],
+    "bindings": [
+      {
+        "path": "finish-virtiofs-listener-hosted1/e/full.log",
+        "sha256": "ac6ed4f48b09cfc77db9aec20117a5ba65afcdccea397af979b20ecbd887ac06",
+        "bytes": 233887
+      },
+      {
+        "path": "finish-virtiofs-listener-hosted1/e/logs.zip",
+        "sha256": "5ff87d44bbcefe282e7efaa32e2fc797c912ae3d2c033d02be3da1fa975a052b",
+        "bytes": 81717
+      },
+      {
+        "path": "finish-virtiofs-listener-hosted1/e/final.json",
+        "sha256": "1a9a3e3dadda9103bedc3dd594ff05d873b9af65daac2cd7755b6a88404caec8",
+        "bytes": 13122
+      },
+      {
+        "path": "finish-virtiofs-listener-hosted1/e/final-jobs.json",
+        "sha256": "016cc3e1f84a570cf5b10f30960a678b3fa273f64c20131bf008bdbb59f675f2",
+        "bytes": 2126
+      }
+    ]
+  },
+  "source_finding": "The existing consumers wait for marker existence and then read its literal EOF bytes. Direct File.write exposes a newly created path before payload write/close completes. Each of three producer sites is already after actual stdin EOF; publish_input_eof writes/closes a sibling temporary file before renaming the complete payload to the observed marker.",
+  "limits": [
+    "Source-supported race, not proved native syscall ordering or production failure.",
+    "No local reproduction or verification; all repaired tests UNRUN.",
+    "EOF marker means provider input EOF observed, not provider exit or completed cleanup.",
+    "A failed write/close/rename does not publish success; original bounded consumer wait still fails.",
+    "No process/protocol/generation/ownership/schema/dependency/workflow or runtime-state change."
+  ]
+}

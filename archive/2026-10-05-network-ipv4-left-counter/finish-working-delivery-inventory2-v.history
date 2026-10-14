@@ -1,0 +1,148 @@
+commit b0cc7a66a5bd34e8b54c80be903679c748b05327
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:09:44 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 11 16:27:31 2026 +0200
+
+    api: add network availability admission controls
+    
+    Allow administrators to disable new use of a network without interrupting
+    existing assigned addresses. Count available public IPv4 allocation rows
+    only in enabled pools and expose optional availability metadata and filters.
+    
+    Capture each operation's source and destination networks before reserving IP
+    rows, retaining that set through included allocations and retries. Recheck
+    current address identity and eligibility after reservation while preserving
+    trusted assigned-address continuity during migration, swap and restore.
+    
+    The additive enabled column defaults to true. Update all API writers before
+    disabling a network; older writers do not enforce this policy.
+
+ .../migrate/20261006120000_add_network_enabled.rb  |   5 +
+ api/db/schema.rb                                   |   3 +-
+ api/lib/vpsadmin/api/locales/cs.yml                |  10 +
+ api/lib/vpsadmin/api/locales/en.yml                |  10 +
+ api/lib/vpsadmin/api/resources/cluster.rb          |   3 +-
+ api/lib/vpsadmin/api/resources/ip_address.rb       |   9 +-
+ api/lib/vpsadmin/api/resources/network.rb          |  10 +-
+ api/lib/vpsadmin/api/resources/user.rb             |   4 +-
+ api/lib/vpsadmin/api/resources/vps.rb              |   2 +
+ api/models/ip_address.rb                           |  69 ++++++-
+ api/models/ip_release_request_address.rb           |   2 +-
+ api/models/network.rb                              |  18 +-
+ api/models/network_interface.rb                    |   1 +
+ api/models/transaction_chains/export/create.rb     |   6 +-
+ api/models/transaction_chains/ip/allocate.rb       |  39 ++--
+ api/models/transaction_chains/ip/update.rb         |   3 +
+ .../network_interface/add_route.rb                 |   2 +
+ .../transaction_chains/vps/clone/os_to_os.rb       |  27 ++-
+ api/models/transaction_chains/vps/create.rb        |  11 +-
+ api/models/transaction_chains/vps/migrate/base.rb  |  49 ++++-
+ api/models/transaction_chains/vps/swap.rb          |   9 +
+ api/models/transaction_chains/vps/update.rb        |  44 +++--
+ api/spec/api/resources/cluster_spec.rb             |  30 ++-
+ api/spec/api/resources/ip_address_spec.rb          |  87 ++++++++
+ api/spec/api/resources/network_write_spec.rb       |  65 ++++++
+ api/spec/api/resources/user_available_ips_spec.rb  |  11 ++
+ api/spec/api/resources/vps_write_spec.rb           |  39 ++++
+ .../20261006120000_add_network_enabled_spec.rb     |  29 +++
+ api/spec/models/ip_ownership_concurrency_spec.rb   | 218 ++++++++++++++++++++-
+ api/spec/models/network_registration_spec.rb       |  19 ++
+ .../transaction_chains/export/create_spec.rb       |   2 +-
+ .../models/transaction_chains/ip/allocate_spec.rb  |  77 +++++++-
+ .../models/transaction_chains/ip/update_spec.rb    |  15 ++
+ .../network_interface/add_route_spec.rb            |  14 ++
+ .../transaction_chains/vps/clone/os_to_os_spec.rb  |  24 ++-
+ .../models/transaction_chains/vps/create_spec.rb   |  22 +++
+ .../models/transaction_chains/vps/migrate_spec.rb  |   1 +
+ .../transaction_chains/vps/replace/os_spec.rb      |   3 +-
+ .../models/transaction_chains/vps/swap_spec.rb     |   2 +
+ .../models/transaction_chains/vps/update_spec.rb   | 116 +++++++++++
+ api/spec/support/core_resource_spec_helpers.rb     |  18 ++
+ docs/README.md                                     |   1 +
+ docs/ip-locking.md                                 |  65 ++++++
+ docs/upgrade-network-availability.md               |  32 +++
+ tests/suite/network/export-lifecycle.nix           |   9 +
+ .../network-interface-routes-and-host-ips.nix      |  35 ++++
+ ...ore-after-reinstall-with-descendants-remote.nix |  14 ++
+ tests/suite/vps/migrate-with-data-check.nix        |  18 ++
+ 48 files changed, 1213 insertions(+), 89 deletions(-)
+
+commit 5fdcb72bc879aa74eb0c7dd4a29814ed785b8215
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:10:41 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 11 16:27:32 2026 +0200
+
+    webui: expose network availability and inventory
+    
+    Add confirmed administrator availability controls and keep disabled owned
+    addresses visible without detached assignment actions. Enabled selectors
+    follow advertised API capabilities and remain compatible with older APIs.
+    
+    Group network identity, properties, IP usage and actions in four columns.
+    Use authoritative available and owned-unassigned counts with descriptions
+    of ownership, interface assignment and capacity. Missing statistics remain
+    unknown. Shade disabled routed-IP rows and explain them at the network
+    address, preserving existing service links and stale-form guards.
+
+ .../playwright/webui/specs/admin-cluster.spec.cjs  | 149 +++++++
+ webui/forms/cluster.forms.php                      | 113 ++++--
+ webui/forms/networking.forms.php                   |  26 +-
+ .../lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.mo | Bin 149746 -> 152604 bytes
+ .../lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po | 220 ++++++++---
+ webui/lang/locale/vpsAdmin.pot                     | 167 +++++---
+ webui/lib/functions.lib.php                        |  13 +
+ webui/pages/page_cluster.php                       |  23 ++
+ webui/public/template/css/main.css                 |  22 ++
+ webui/tests/Regression/CsrfStateFormsTest.php      |  15 +
+ webui/tests/Regression/NetworkAvailabilityTest.php | 432 +++++++++++++++++++++
+ 11 files changed, 1030 insertions(+), 150 deletions(-)
+
+commit 2dd860dfc62c316ccb73e2f85258aaf4a57e06ba
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 00:07:08 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 11 16:27:33 2026 +0200
+
+    api: restrict non-admin network and IP lists
+    
+    Disabled inventory is unavailable for new use and should be omitted from
+    member lists. Retain owned and assigned addresses within existing
+    permissions, and preserve direct Show and association access. Apply the
+    restriction before counts and pagination; admin inventory stays unchanged.
+
+ api/lib/vpsadmin/api/resources/ip_address.rb       |   5 +
+ api/lib/vpsadmin/api/resources/network.rb          |   1 +
+ api/spec/api/resources/host_ip_address_spec.rb     |  23 +++
+ .../api/resources/ip_address_assignment_spec.rb    |  24 +++
+ api/spec/api/resources/ip_address_spec.rb          | 189 +++++++++++++++++++++
+ api/spec/api/resources/network_interface_spec.rb   |  13 +-
+ api/spec/api/resources/network_read_spec.rb        |  89 ++++++++++
+ api/spec/api/resources/network_write_spec.rb       |   5 +-
+ docs/ip-locking.md                                 |  13 +-
+ 9 files changed, 351 insertions(+), 11 deletions(-)
+
+commit 939159f27b5d627930281d5fac0c0aa9ba53bfc7
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Thu Oct 8 10:30:57 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 11 16:27:33 2026 +0200
+
+    api: expose authoritative network inventory counts
+    
+    Count registered allocations available to users using the shared reservation
+    scope, and report owned allocations without an interface assignment even in
+    reserved or disabled inventory. These admin-only read-only fields distinguish
+    available inventory from theoretical capacity and overlapping ownership totals.
+    
+    The output fields are additive and require no schema migration.
+
+ api/lib/vpsadmin/api/locales/cs.yml         | 12 +++++
+ api/lib/vpsadmin/api/locales/en.yml         |  8 ++++
+ api/lib/vpsadmin/api/resources/network.rb   |  4 ++
+ api/models/network.rb                       | 10 +++++
+ api/spec/api/resources/ip_address_spec.rb   | 10 ++++-
+ api/spec/api/resources/network_read_spec.rb | 70 +++++++++++++++++++++++++++++
+ docs/ip-locking.md                          | 11 +++++
+ 7 files changed, 124 insertions(+), 1 deletion(-)

@@ -1,0 +1,146 @@
+diff --git a/tools/runtime-verify.rb b/tools/runtime-verify.rb
+index 2a111d2042b4a35bfe8968ff0ed84d00e523bccb..acdb6b16367bd68ad28bcbc4fa7abef7c7ec086d 100644
+--- a/tools/runtime-verify.rb
++++ b/tools/runtime-verify.rb
+@@ -12,7 +12,7 @@ module KbVerify
+   PHASES = %w[installed-layout isolation-continuity-update bilingual-capture].freeze
+   CREDENTIALS = %w[id_ed25519 id_ed25519.pub vpsadmin-ca.crt vpsadmin-ca.key vpsadmin-cert.crt vpsadmin-cert.key].freeze
+   GIB = 1024**3
+-  PREDECESSOR = '68aa33b451a14eb7bf4b2f1a090a8e5a2f80b52e'
++  PREDECESSOR = '7dc4d70830e535f4559bccfa668cf65cdce1de2d'
+ 
+   class Commands
+     attr_reader :environment
+@@ -129,7 +129,7 @@ module KbVerify
+         source.fetch('source') == selection.fetch('source') && File.expand_path('..', __dir__) == source.fetch('source')
+       raise Error, 'selected runtime metadata differs' unless
+         File.read(File.join(selection.fetch('runtime'), 'bin/vpsfree-kb-devcluster')).include?(selection.fetch('metadata'))
+-      raise Error, 'predecessor must be the exact published K68 Git-flake' unless predecessor_ref == "github:vpsfreecz/vpsfree-kb-contracts/#{PREDECESSOR}"
++      raise Error, 'predecessor must be the exact published 7dc4d708 Git-flake' unless predecessor_ref == "github:vpsfreecz/vpsfree-kb-contracts/#{PREDECESSOR}"
+       @state = KbRuntime::State.new(@root, 'campaign')
+       config_bytes = [config_a, config_b].map { |name| @state.file(File.expand_path(name)) }
+       @configurations = config_bytes.map { |bytes| JSON.parse(bytes) }
+@@ -515,7 +515,7 @@ module KbVerify
+       descriptor('a', source)
+       checkpoint('updating-b')
+       engine('b', 'update', '--network', 'local', '--topology', 'single', '--config', file('config-b.json'))
+-      assertions << 'final-controller stop of K68 runner, K68 resume, final-controller update'
++      assertions << 'final-controller stop of predecessor runner, genuine predecessor resume, final-controller update'
+       current = descriptor('b', source)
+       check(current.fetch('instance_id') == old.fetch('instance_id') && current.fetch('run_id') != resumed.fetch('run_id'), 'update retains instance with fresh run')
+       check(current.fetch('artifact_id') != resumed.fetch('artifact_id') && current.fetch('provenance').fetch('machine_toplevels') != resumed.fetch('provenance').fetch('machine_toplevels'), 'genuinely changed artifact and closures')
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+index 1c46e4c95a0ffeff70b65e16bd97e5d2e78af17f..bb8d4582699d7c62ee85e0cf557f0f9e5c59fe22 100644
+--- a/tools/test-runtime-verify.rb
++++ b/tools/test-runtime-verify.rb
+@@ -87,6 +87,25 @@ class RuntimeVerifyTest < Minitest::Test
+     end
+   end
+ 
++  def test_only_exact_published_7dc_predecessor_is_accepted_before_campaign_mutation
++    assert_equal('7dc4d70830e535f4559bccfa668cf65cdce1de2d', KbVerify::PREDECESSOR)
++    with_campaign do |campaign|
++      assert_equal('github:vpsfreecz/vpsfree-kb-contracts/7dc4d70830e535f4559bccfa668cf65cdce1de2d', campaign.inputs['predecessor_ref'])
++      directory = File.dirname(campaign.root)
++      ['github:vpsfreecz/vpsfree-kb-contracts/68aa33b451a14eb7bf4b2f1a090a8e5a2f80b52e',
++        "github:vpsfreecz/vpsfree-kb-contracts/#{'b' * 40}",
++        'github:vpsfreecz/vpsfree-kb-contracts/master'].each do |reference|
++        error = assert_raises(KbVerify::Error) do
++          KbVerify::Campaign.new(root: campaign.root, config_a: File.join(directory, 'config-0.json'),
++            config_b: File.join(directory, 'config-1.json'), predecessor_ref: reference,
++            capacity_receipt: File.join(directory, 'capacity.json'), selection: campaign.selection)
++        end
++        assert_equal('predecessor must be the exact published 7dc4d708 Git-flake', error.message)
++        refute(File.exist?(campaign.root))
++      end
++    end
++  end
++
+   def test_phase_receipts_bind_exact_inputs_and_truthful_failed_attempts_without_cleanup
+     with_campaign do |campaign|
+       campaign.define_singleton_method(:installed_layout) { check(true, 'synthetic installed boundary') }
+@@ -177,8 +196,8 @@ class RuntimeVerifyTest < Minitest::Test
+   def test_predecessor_uses_final_controller_stop_then_genuine_old_resume_and_final_live_update
+     with_campaign do |campaign|
+       campaign.initialize_campaign
+-      old_runtime = '/nix/store/synthetic-k68-runtime'
+-      old_source = campaign.source.merge('revision' => KbVerify::PREDECESSOR)
++      old_runtime = '/nix/store/synthetic-7dc-runtime'
++      old_source = campaign.source.merge('revision' => '7dc4d70830e535f4559bccfa668cf65cdce1de2d')
+       campaign.write('predecessor.json', { 'runtime' => old_runtime, 'source' => old_source })
+       calls = []
+       campaign.define_singleton_method(:capacity) { |_operation| }
+@@ -226,7 +245,7 @@ class RuntimeVerifyTest < Minitest::Test
+       assert_equal(current.merge('run_id' => 'final-resumed'), campaign.read('accepted-b.json'))
+       assert_includes(campaign.assertions, 'all six credentials, private accounts digest and disk identities preserved')
+       assert_includes(campaign.assertions, 'update preserves disks, six credentials, private accounts digest and sentinels')
+-      assert_includes(campaign.assertions, 'final-controller stop of K68 runner, K68 resume, final-controller update')
++      assert_includes(campaign.assertions, 'final-controller stop of predecessor runner, genuine predecessor resume, final-controller update')
+     end
+   end
+ 
+@@ -259,7 +278,7 @@ class RuntimeVerifyTest < Minitest::Test
+       calls = []
+       runtime = '/nix/store/synthetic-predecessor-runtime'
+       metadata_path = '/nix/store/synthetic-predecessor-source.json'
+-      metadata = campaign.source.merge('revision' => KbVerify::PREDECESSOR)
++      metadata = campaign.source.merge('revision' => '7dc4d70830e535f4559bccfa668cf65cdce1de2d')
+       campaign.define_singleton_method(:capacity) { |operation| calls << ['capacity', operation] }
+       campaign.define_singleton_method(:command) do |*argv, **|
+         calls << argv
+@@ -293,8 +312,10 @@ class RuntimeVerifyTest < Minitest::Test
+       end
+       assert_equal({ 'runtime' => runtime, 'metadata_path' => metadata_path, 'source' => metadata }, campaign.read('predecessor.json'))
+       assert_operator(calls.index(['capacity', 'predecessor-build']), :<, calls.index { |argv| argv.first == 'nix' })
+-      assert_includes(calls.find { |argv| argv.first == 'nix' }, "#{campaign.inputs['predecessor_ref']}#kb-runtime")
+-      assert_includes(calls.find { |argv| argv.first == 'nix' }, "#{campaign.inputs['predecessor_ref']}#runtime-source")
++      builds = calls.select { |argv| argv.first == 'nix' }
++      assert_equal(1, builds.size)
++      assert_equal(['github:vpsfreecz/vpsfree-kb-contracts/7dc4d70830e535f4559bccfa668cf65cdce1de2d#kb-runtime',
++        'github:vpsfreecz/vpsfree-kb-contracts/7dc4d70830e535f4559bccfa668cf65cdce1de2d#runtime-source'], builds.first.last(2))
+     end
+   end
+ 
+@@ -414,14 +435,17 @@ class RuntimeVerifyTest < Minitest::Test
+     end
+   end
+ 
+-  def test_failed_native_command_keeps_private_stdout_stderr_exact_exit_and_stage
++  def test_failed_native_phase_keeps_private_stdout_stderr_exact_exit_and_stage_without_replay
+     with_campaign do |campaign|
+-      campaign.initialize_campaign
+       argv = [RbConfig.ruby, '-e', 'STDOUT.write("native output"); STDERR.write("native error"); exit 23']
++      campaign.define_singleton_method(:installed_layout) do
++        checkpoint('predecessor-construction')
++        command(*argv)
++      end
+       failure = nil
+       stdout, stderr = capture_io do
+         failure = assert_raises(KbVerify::Error) do
+-          campaign.commands.call(argv, cwd: campaign.file('work'), stage: 'installed-layout/predecessor-construction')
++          campaign.run('installed-layout')
+         end
+       end
+       assert_equal('', stdout)
+@@ -439,6 +463,21 @@ class RuntimeVerifyTest < Minitest::Test
+       assert_equal('native error', File.read(File.join(File.dirname(path), 'stderr')))
+       Dir.glob(File.join(File.dirname(path), '*')).each { |name| assert_equal(0o600, File.stat(name).mode & 0o777) }
+       refute(record.key?('environment'))
++      attempt = campaign.read('receipts/installed-layout-attempt.json')
++      assert_equal('failed', attempt['stage'])
++      assert_equal(campaign.inputs, attempt['inputs'])
++      assert_equal('KbVerify::Error', attempt['error_class'])
++      refute(attempt['complete'])
++      refute(File.exist?(campaign.file('receipts/installed-layout.json')))
++      before = File.binread(campaign.file('receipts/installed-layout-attempt.json'))
++      replay = assert_raises(KbVerify::Error) { campaign.run('installed-layout') }
++      assert_equal('incomplete phase requires diagnosis; no automatic campaign replay', replay.message)
++      assert_raises(Errno::ENOENT) { campaign.run('isolation-continuity-update') }
++      refute(File.exist?(campaign.file('receipts/isolation-continuity-update-attempt.json')))
++      assert_equal(before, File.binread(campaign.file('receipts/installed-layout-attempt.json')))
++      assert_equal([path], Dir.glob(campaign.file('diagnostics/*/command.json')))
++      refute(File.exist?(campaign.file('state-a')))
++      refute(File.exist?(campaign.file('state-b')))
+     end
+   end
+ 

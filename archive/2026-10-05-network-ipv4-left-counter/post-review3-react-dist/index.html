@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f7f8fb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b1220" media="(prefers-color-scheme: dark)" />
+
+    <!--
+      Minimal bootstrap (no flash of wrong theme/language)
+
+      We only support English (default) and Czech (browser Czech → Czech).
+      UI preferences are stored in localStorage as `vpsadmin.uiSettings.v1`.
+    -->
+    <script>
+      (() => {
+        try {
+          const storageKey = 'vpsadmin.uiSettings.v1';
+          const raw = window.localStorage ? window.localStorage.getItem(storageKey) : null;
+          const html = document.documentElement;
+
+          const detectLang = () => {
+            const langs = navigator.languages || [navigator.language];
+            const hasCs = (langs || []).some((l) => String(l).toLowerCase().startsWith('cs'));
+            return hasCs ? 'cs' : 'en';
+          };
+
+          if (raw) {
+            const s = JSON.parse(raw);
+
+            const theme = s && typeof s.theme === 'string' ? s.theme : 'system';
+            if (theme === 'light' || theme === 'dark') {
+              html.setAttribute('data-theme', theme);
+              html.style.colorScheme = '';
+            } else {
+              html.removeAttribute('data-theme');
+              html.style.colorScheme = 'light dark';
+            }
+
+            const prefLang = s && typeof s.language === 'string' ? s.language : 'system';
+            const lang = prefLang === 'cs' || prefLang === 'en' ? prefLang : detectLang();
+            html.lang = lang;
+          } else {
+            html.lang = detectLang();
+            html.style.colorScheme = 'light dark';
+          }
+        } catch {
+          // ignore
+        }
+      })();
+    </script>
+    <title>vpsAdmin</title>
+    <script type="module" crossorigin src="/assets/index-CJObpI-p.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <!--
+      The build-selected BFF mode requires /config.json and /session.json before
+      React mounts. Explicit legacy/dev mode keeps optional /config.js and local
+      /config.local.js support for older standalone deployments.
+    -->
+  </body>
+</html>

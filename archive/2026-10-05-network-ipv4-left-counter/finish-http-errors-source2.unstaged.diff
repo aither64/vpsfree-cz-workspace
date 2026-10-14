@@ -1,0 +1,140 @@
+diff --git a/api/lib/vpsadmin/api/resources/network.rb b/api/lib/vpsadmin/api/resources/network.rb
+index 9bb1886bf559f809e3f1297456f9441d811af882..591d8b425d81e04691d231399b0ace1aaabb9e55 100644
+--- a/api/lib/vpsadmin/api/resources/network.rb
++++ b/api/lib/vpsadmin/api/resources/network.rb
+@@ -209,9 +209,7 @@ module VpsAdmin::API::Resources
+         }
+       rescue ActiveRecord::RecordInvalid => e
+         error!('add failed', e.record.errors.to_hash)
+-      rescue ArgumentError => e
+-        error!(e.message)
+-      rescue VpsAdmin::API::Exceptions::IpAddressInvalid => e
++      rescue ArgumentError, VpsAdmin::API::Exceptions::IpAddressInvalid => e
+         error!(e.message)
+       end
+     end
+diff --git a/api/spec/api/resources/ip_address_spec.rb b/api/spec/api/resources/ip_address_spec.rb
+index 5c74e0252d742d0fd6f23df6a6115268fd1c99c2..d18a81fcc725700bd7f0ba0d4c61e679bae5e44d 100644
+--- a/api/spec/api/resources/ip_address_spec.rb
++++ b/api/spec/api/resources/ip_address_spec.rb
+@@ -608,7 +608,7 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+ 
+         expect do
+           as(SpecSeed.admin) { json_post index_path, ip_address: owned_payload }
+-        end.not_to change { ip_admission_snapshot }
++        end.not_to(change { ip_admission_snapshot })
+ 
+         expect_disabled_network_error(locale)
+       ensure
+@@ -617,12 +617,13 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+     end
+ 
+     it 'keeps unexpected registration failures non-disclosing HTTP500 errors' do
+-      expect(IpAddress).to receive(:register).and_raise(RuntimeError, 'private registration failure')
++      allow(IpAddress).to receive(:register).and_raise(RuntimeError, 'private registration failure')
+ 
+       expect do
+         as(SpecSeed.admin) { json_post index_path, ip_address: payload }
+-      end.not_to change { ip_admission_snapshot }
++      end.not_to(change { ip_admission_snapshot })
+ 
++      expect(IpAddress).to have_received(:register)
+       expect_status(500)
+       expect(json['status']).to be(false)
+       expect(last_response.body).not_to include('private registration failure')
+@@ -743,7 +744,7 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+               user: SpecSeed.user.id, environment: SpecSeed.environment.id
+             }
+           end
+-        end.not_to change { ip_admission_snapshot }
++        end.not_to(change { ip_admission_snapshot })
+ 
+         expect_disabled_network_error(locale)
+       ensure
+@@ -752,7 +753,7 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+     end
+ 
+     it 'keeps unexpected ownership failures non-disclosing HTTP500 errors' do
+-      expect(TransactionChains::Ip::Update).to receive(:fire).and_raise(RuntimeError, 'private ownership failure')
++      allow(TransactionChains::Ip::Update).to receive(:fire).and_raise(RuntimeError, 'private ownership failure')
+ 
+       expect do
+         as(SpecSeed.admin) do
+@@ -760,8 +761,9 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+             user: SpecSeed.user.id, environment: SpecSeed.environment.id
+           }
+         end
+-      end.not_to change { ip_admission_snapshot }
++      end.not_to(change { ip_admission_snapshot })
+ 
++      expect(TransactionChains::Ip::Update).to have_received(:fire)
+       expect_status(500)
+       expect(json['status']).to be(false)
+       expect(last_response.body).not_to include('private ownership failure')
+@@ -891,7 +893,7 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+           as(SpecSeed.user) do
+             json_post assign_path(data[:ip_free].id), ip_address: { network_interface: data[:user_netif].id }
+           end
+-        end.not_to change { ip_admission_snapshot }
++        end.not_to(change { ip_admission_snapshot })
+ 
+         expect_disabled_network_error(locale)
+       ensure
+diff --git a/api/spec/api/resources/network_write_spec.rb b/api/spec/api/resources/network_write_spec.rb
+index 980226df9ff318696fb2b098cc6dae75362bee3e..0cdbb0caeac71d730abc4c58f2c6a25f94d1b6df 100644
+--- a/api/spec/api/resources/network_write_spec.rb
++++ b/api/spec/api/resources/network_write_spec.rb
+@@ -379,7 +379,7 @@ RSpec.describe 'VpsAdmin::API::Resources::Network write actions' do # rubocop:di
+               count: 2, user: SpecSeed.user.id, environment: SpecSeed.environment.id
+             }
+           end
+-        end.not_to change { ip_admission_snapshot }
++        end.not_to(change { ip_admission_snapshot })
+ 
+         expect_disabled_network_error(locale)
+       ensure
+@@ -390,12 +390,13 @@ RSpec.describe 'VpsAdmin::API::Resources::Network write actions' do # rubocop:di
+     it 'keeps unexpected addition failures non-disclosing HTTP500 errors' do
+       network = managed_net
+       allow(Network).to receive(:find).with(network.id.to_s).and_return(network)
+-      expect(network).to receive(:add_ips).and_raise(RuntimeError, 'private addition failure')
++      allow(network).to receive(:add_ips).and_raise(RuntimeError, 'private addition failure')
+ 
+       expect do
+         as(SpecSeed.admin) { json_post add_addresses_path(network.id), network: { count: 2 } }
+-      end.not_to change { ip_admission_snapshot }
++      end.not_to(change { ip_admission_snapshot })
+ 
++      expect(network).to have_received(:add_ips)
+       expect_status(500)
+       expect(json['status']).to be(false)
+       expect(last_response.body).not_to include('private addition failure')
+diff --git a/api/spec/api/resources/vps_write_spec.rb b/api/spec/api/resources/vps_write_spec.rb
+index ada2682c551b8c0c22818457320c3f194e958aec..cd18f12c042577b91a33f9479c0c86b4f071d10d 100644
+--- a/api/spec/api/resources/vps_write_spec.rb
++++ b/api/spec/api/resources/vps_write_spec.rb
+@@ -486,7 +486,7 @@ RSpec.describe 'VpsAdmin::API::Resources::VPS write actions' do # rubocop:disabl
+ 
+         expect do
+           as(SpecSeed.admin) { json_put show_path(vps.id), vps: { user: SpecSeed.other_user.id } }
+-        end.not_to change { ip_admission_snapshot }
++        end.not_to(change { ip_admission_snapshot })
+ 
+         expect_disabled_network_error(locale)
+       ensure
+@@ -496,12 +496,13 @@ RSpec.describe 'VpsAdmin::API::Resources::VPS write actions' do # rubocop:disabl
+ 
+     it 'keeps unexpected VPS transfer failures non-disclosing HTTP500 errors' do
+       vps = create_vps!(user: SpecSeed.user, node: SpecSeed.node)
+-      expect(TransactionChains::Vps::Update).to receive(:fire).and_raise(RuntimeError, 'private VPS transfer failure')
++      allow(TransactionChains::Vps::Update).to receive(:fire).and_raise(RuntimeError, 'private VPS transfer failure')
+ 
+       expect do
+         as(SpecSeed.admin) { json_put show_path(vps.id), vps: { user: SpecSeed.other_user.id } }
+-      end.not_to change { ip_admission_snapshot }
++      end.not_to(change { ip_admission_snapshot })
+ 
++      expect(TransactionChains::Vps::Update).to have_received(:fire)
+       expect_status(500)
+       expect(json['status']).to be(false)
+       expect(last_response.body).not_to include('private VPS transfer failure')

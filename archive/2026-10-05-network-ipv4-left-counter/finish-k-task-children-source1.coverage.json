@@ -1,0 +1,46 @@
+{
+  "status": "source-only; no local execution",
+  "new_runtime_cases": [
+    "test_workers_at_each_level_discover_exact_child_identities_without_threads_or_siblings",
+    "test_worker_exit_after_the_parent_list_marks_the_pass_incomplete_and_preserves_reparented_children",
+    "test_a_vanished_task_keeps_other_collected_children_and_marks_the_pass_incomplete",
+    "test_missing_child_data_for_a_live_task_is_a_refusal_not_disappearance",
+    "test_a_changed_task_set_marks_the_collected_result_incomplete_without_retrying",
+    "test_permission_malformed_task_and_malformed_child_data_refuse",
+    "test_identity_visited_set_deduplicates_cycles_and_reparenting_observations",
+    "test_recursive_exit_or_reused_pid_keeps_the_captured_identity_without_following_the_replacement",
+    "test_changed_live_identity_and_live_missing_task_directory_refuse_without_losing_captured_records",
+    "test_a_recursive_live_missing_child_file_refuses_but_keeps_other_observed_identities"
+  ],
+  "new_machine_cases": [
+    "test_quiesced_task_disappearance_resumes_tracking_before_any_finalization_or_cleanup",
+    "test_quiesced_real_worker_child_is_retained_until_exit_before_finalization_or_cleanup",
+    "test_post_cleanup_task_disappearance_resumes_tracking_without_repeating_finalization"
+  ],
+  "baseline_test_methods": {
+    "runtime": 83,
+    "machine": 15
+  },
+  "draft_test_methods": {
+    "runtime": 93,
+    "machine": 18
+  },
+  "test_boundaries": [
+    "real held worker child and recursive worker grandchild, exact identities, no sibling/thread entries",
+    "real worker exits after already-read parent list; incomplete pass, ordinary next observation, retained exited identity",
+    "ENOENT/ESRCH disappearance distinct from live missing child data; permissions and malformed IDs refuse",
+    "bounded before/after task-set changes; identity-bound recursion, cycle/duplicate/reuse exclusion",
+    "pre-quiesced incomplete pass publishes false, resumes actual tracker, no finalize/cleanup",
+    "real held worker-spawned child blocks quiesced proof and is retained through exact exit",
+    "post-cleanup incomplete pass publishes false, resumes tracker, no repeated finalize/cleanup",
+    "actual public stop, retained runner/control and claims before proof; terminal completion/namespace absence afterward"
+  ],
+  "hosted_workflow": ".github/workflows/check.yml / Check",
+  "hosted_command": "nix develop --command bin/check --allow-missing",
+  "canonical_affected_commands": [
+    "ruby tools/test-runtime.rb",
+    "ruby tools/test-machine.rb"
+  ],
+  "selectors_changed": false,
+  "runtime_or_guest_proof": false
+}

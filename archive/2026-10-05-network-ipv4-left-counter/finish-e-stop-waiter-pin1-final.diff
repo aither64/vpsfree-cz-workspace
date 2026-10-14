@@ -1,0 +1,3243 @@
+diff --git a/README.md b/README.md
+index 131d3c0861498b72eb39fb01591da6531c1ab8bd..f166e255a9bc7483fa8f413608f6791d089fa9e2 100644
+--- a/README.md
++++ b/README.md
+@@ -2,11 +2,13 @@
+ 
+ This repository adds vpsFree.cz tools to the reusable
+ [`aither64/dev-workspace`](https://github.com/aither64/dev-workspace) runtime.
+-It owns the KB commands, vpsAdmin and vpsAdminOS development-cluster providers,
++It owns the KB commands, vpsAdmin, vpsAdminOS and optional KB cluster providers,
+ Codex skills, and the one-time namespace migration helper.
+ 
+ The [vpsAdmin development cluster guide](dev-clusters/vpsadmin/README.md)
+ documents its configuration, runtime credentials, and recovery steps.
++The [managed KB cluster guide](dev-clusters/kb/README.md) explains the optional
++provider and its connection to the standalone KB runtime.
+ 
+ The generic runtime supplies the `dev-session-documentation` skill. Its
+ [session guide](https://github.com/aither64/dev-workspace/blob/master/docs/dev-sessions.md#documentation-during-development)
+@@ -48,6 +50,8 @@ vpsfree-dev-workspace.lib.mkPackage {
+     clusterDefaults = {
+       vpsadmin = ./config/vpsadmin-devcluster.json;
+       vpsadminos = ./config/vpsadminos-devcluster.json;
++      # Optional: include the managed KB cluster provider.
++      kb = ./config/kb-devcluster.json;
+     };
+   };
+ }
+@@ -55,8 +59,9 @@ vpsfree-dev-workspace.lib.mkPackage {
+ 
+ Each registered workspace keeps its portal identity and selected cluster
+ providers in the `.dev-workspace.json` file at its own root. This extension
+-exports `vpsadmin` and `vpsadminos`; a workspace can select either or both
+-only while its package is built through this extension.
++exports `vpsadmin` and `vpsadminos`. Setting `siteConfig.clusterDefaults.kb`
++also exports `kb`; omitting it preserves the existing provider set. A workspace
++can select providers only while its package includes them.
+ 
+ ## Catalog composition
+ 
+@@ -71,6 +76,8 @@ The vpsFree package must continue to provide `dev-session-handoff`,
+ other site skills. Its catalog must list the `vpsadmin` and `vpsadminos`
+ providers, whose recorded commands and portal helper executables must be
+ present in the installed package.
++When KB cluster defaults are configured, the catalog also lists `kb` and the
++package includes its fixed portable engine and public provider command.
+ 
+ The optional `userNamespace` and `routerSocket` arguments are passed to the
+ generic package constructor. They are intended for a compatibility generation
+diff --git a/dev-clusters/kb/README.md b/dev-clusters/kb/README.md
+new file mode 100644
+index 0000000000000000000000000000000000000000..f84448bc95138f9ca22146ecab1bc761a0d27b23
+--- /dev/null
++++ b/dev-clusters/kb/README.md
+@@ -0,0 +1,66 @@
++# Managed KB clusters
++
++Set `siteConfig.clusterDefaults.kb` to an immutable JSON configuration file to
++include the `kb` provider in the workspace package. A registered workspace can
++then select `kb` in `.dev-workspace.json`. Omitting the configuration preserves
++the existing provider set.
++
++The package selects one exact published KB runtime revision for the launcher,
++source receipt and read-only validators, with the runtime's own input graph.
++The [portable runtime contract](https://github.com/vpsfreecz/vpsfree-kb-contracts/blob/master/cluster/runtime-contract.md)
++owns lifecycle, prepared artifacts, source verification, resources and capture
++behavior. This adapter binds that engine to a workspace and session and
++delegates lifecycle and live checks to its fixed packaged executable.
++
++## Commands and retained state
++
++Use `kb-devcluster --workspace NAME COMMAND SLUG`. The public dispatcher holds
++the selected package generation throughout the command. Mutations and captures
++require an active session without unfinished lifecycle journals. Contention on
++a session, adapter or portable gate returns busy exit code `75`.
++
++Managed bindings live under `.dev-clusters/kb/bindings/SLUG`; the portable engine
++owns `.dev-clusters/kb/clusters/SLUG`. A binding records the engine revision at
++creation and retains it across compatible package transitions. Transition
++adoption validates management compatibility. Capture still requires a prepared
++artifact matching the selected source, and resume and update keep the portable
++runtime's prerequisites. Unbound or legacy state is refused.
++
++## Capture connections
++
++`connection SLUG` exports a private managed descriptor. It preserves the
++canonical source, artifact, endpoints and credential references and changes
++only the controller route to the public `kb-devcluster` command. Pass this
++descriptor to the shared capture engine with
++`vpsfree-kb-capture --connection /private/connection.json` and the capture
++selection options described in the portable guide.
++
++The adapter validates the current descriptor and canonical readiness, then
++translates only the descriptor digest in the readiness response. The portable
++engine's canonical descriptor stays intact.
++
++Canonical readiness uses the selected engine's `ready?` predicate, including
++the exact run-ready marker. A live runner that is draining its guests cannot
++export a capture connection. The portable lease rechecks readiness after guest
++attestation and while held. Inventory and compatible management retain their
++separate live-or-proven-exit rules; they do not grant capture readiness.
++
++The lease holds generation, session, adapter and portable guards throughout
++capture. Protocol stdout loss ends the lease; diagnostic stderr EOF alone leaves
++it active. Peer or dispatcher loss closes child input, and cleanup reaps the
++exact spawned child. The portable child receives mediated pipes and cannot
++retain the original peer channels or outer authority descriptors.
++
++## Removal inventory
++
++`cleanup-paths SLUG` reports verified owned instance, binding and recorded socket
++paths. It can inspect running, stopped or pending state using noncreating reads;
++the inventory grants no cleanup authority or proof that processes exited. The
++generic removal workflow already holds the session lock, so this query does
++not reacquire it. Reset is a separate guarded operation delegated to the
++portable engine, with its normal process-exit and capture-exclusion checks.
++
++Focused tests cover synthetic CLI and pipe boundaries separately from readers
++of the actual selected runtime snapshots. Guest behavior, package activation
++and installed managed capture require their own verification after committed
++independent review.
+diff --git a/dev-clusters/kb/bin/devcluster b/dev-clusters/kb/bin/devcluster
+new file mode 100755
+index 0000000000000000000000000000000000000000..2bd1f63484ab895bc6fd065e8a089362ddbb8a98
+--- /dev/null
++++ b/dev-clusters/kb/bin/devcluster
+@@ -0,0 +1,6 @@
++#!/usr/bin/env ruby
++# frozen_string_literal: true
++
++require_relative '../lib/cli'
++
++exit DevClusters::Kb::CLI.run(ARGV)
+diff --git a/dev-clusters/kb/lib/cli.rb b/dev-clusters/kb/lib/cli.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..bd125155c6b4a4ebef1cc0965d078b694b610a55
+--- /dev/null
++++ b/dev-clusters/kb/lib/cli.rb
+@@ -0,0 +1,132 @@
++# frozen_string_literal: true
++
++require 'optparse'
++require_relative 'guards'
++require_relative 'portable'
++require_relative 'provider'
++
++module DevClusters
++  module Kb
++    class CLI
++      USAGE = <<~TEXT.freeze
++        Usage: kb-devcluster [--workspace NAME] COMMAND SLUG [options]
++          start SLUG [--topology NAME] [--network bridge|local] [--config FILE]
++          resume SLUG [--timeout SECONDS]
++          update SLUG [--topology NAME] [--network bridge|local] [--config FILE]
++          stop SLUG [--timeout SECONDS]
++          status SLUG --json
++          connection SLUG
++          capture-lease SLUG --instance-id ID --run-id ID --artifact-id ID
++            --artifact-sha256 SHA --descriptor-sha256 SHA
++          config SLUG
++          refresh SLUG
++          ssh SLUG MACHINE -- COMMAND [ARGUMENT...]
++          reset SLUG
++          cleanup-paths SLUG
++          transition-adopt SLUG
++      TEXT
++
++      def self.run(arguments, environment: ENV, input: $stdin, output: $stdout, error: $stderr)
++        return output.write(USAGE) && 0 if arguments == ['--help'] || arguments == ['-h']
++
++        command, slug, *rest = arguments
++        raise Error, 'command and session slug are required' unless command && slug
++
++        workspace = environment.fetch('DEVCLUSTER_WORKSPACE')
++        name = environment.fetch('DEV_WORKSPACE_NAME')
++        raise Error, 'explicit registered workspace name is required' unless /\A[a-z0-9][a-z0-9-]{0,62}\z/.match?(name)
++
++        binding = Binding.new(workspace:, slug:)
++        portable = Portable.new(binding:, metadata_path: environment.fetch('VPSFREE_KB_ENGINE_METADATA'))
++        contract = JSON.parse(File.read(environment.fetch('DEVCLUSTER_RUNTIME_CONTRACT')))
++        guards = Guards.new(binding:, contract:, environment:)
++        public_argv = [File.join(environment.fetch('HOME'), 'bin/kb-devcluster'), '--workspace', name, 'capture-lease', slug]
++        provider = Provider.new(binding:, engine: environment.fetch('VPSFREE_KB_ENGINE'), portable:, public_argv:)
++
++        case command
++        when 'cleanup-paths'
++          raise Error, 'unexpected cleanup-paths arguments' unless rest.empty?
++          # The generic removal caller holds its session lock and passes no FD.
++          # This positive inventory does not enter a recursive session guard.
++          value = if binding.present?(binding.path)
++                    guards.adapter { provider.cleanup_paths }
++                  else
++                    provider.cleanup_paths
++                  end
++          output.puts(JSON.generate(value))
++        when 'transition-adopt'
++          raise Error, 'unexpected transition-adopt arguments' unless rest.empty?
++          guards.adapter { provider.transition_adopt }
++        when 'status'
++          raise Error, 'unexpected status arguments' unless rest.empty? || rest == ['--json']
++          value = binding.present?(binding.path) ? guards.adapter { provider.status } : provider.status
++          output.puts(JSON.generate(value))
++        else
++          guards.session(command) do
++            guards.adapter(create: command == 'start') do
++              case command
++              when 'start', 'update', 'resume', 'stop'
++                flags = operation_flags(command, rest, environment)
++                value = command == 'start' ? provider.start(*flags) : provider.existing(command, *flags)
++                output.write(value)
++              when 'connection'
++                raise Error, 'unexpected connection arguments' unless rest.empty?
++                output.write(provider.connection)
++              when 'capture-lease'
++                request = lease_request(rest)
++                provider.capture_lease(request, input:, output:, error:)
++              when 'config', 'refresh'
++                raise Error, "unexpected #{command} arguments" unless rest.empty?
++                output.write(provider.existing(command))
++              when 'ssh'
++                machine, *remote = rest
++                raise Error, 'machine and explicit -- separator are required' unless machine && remote.shift == '--'
++                output.write(provider.existing(command, machine, '--', *remote))
++              when 'reset'
++                raise Error, 'unexpected reset arguments' unless rest.empty?
++                output.write(provider.reset)
++              else
++                raise Error, "unsupported command: #{command}"
++              end
++            end
++          end
++        end
++        0
++      rescue Busy => failure
++        error.puts(failure.message)
++        75
++      rescue Error, KeyError, OptionParser::ParseError, JSON::ParserError, SystemCallError => failure
++        error.puts("error: #{failure.message}")
++        1
++      end
++
++      def self.operation_flags(command, arguments, environment)
++        values = {}
++        parser = OptionParser.new do |options|
++          options.on('--timeout SECONDS', Integer) { |v| values['--timeout'] = v.to_s }
++          if %w[start update].include?(command)
++            options.on('--topology NAME') { |v| values['--topology'] = v }
++            options.on('--network MODE') { |v| values['--network'] = v }
++            options.on('--config FILE') { |v| values['--config'] = v }
++          end
++        end
++        parser.parse!(arguments)
++        raise Error, 'unexpected lifecycle arguments' unless arguments.empty?
++        values['--config'] ||= environment.fetch('VPSFREE_KB_DEFAULT_CONFIG') if %w[start update].include?(command)
++        values.to_a.flatten
++      end
++
++      def self.lease_request(arguments)
++        value = {}
++        parser = OptionParser.new do |options|
++          %w[instance_id run_id artifact_id artifact_sha256 descriptor_sha256].each do |key|
++            options.on("--#{key.tr('_', '-')} VALUE") { |entry| value[key] = entry }
++          end
++        end
++        parser.parse!(arguments)
++        raise Error, 'unexpected capture-lease arguments' unless arguments.empty?
++        value
++      end
++    end
++  end
++end
+diff --git a/dev-clusters/kb/lib/connection.rb b/dev-clusters/kb/lib/connection.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..812f56c1af240a8dec83fb0088650d8f8ba0b0fb
+--- /dev/null
++++ b/dev-clusters/kb/lib/connection.rb
+@@ -0,0 +1,53 @@
++# frozen_string_literal: true
++
++require 'digest'
++require_relative 'managed'
++
++module DevClusters
++  module Kb
++    # Constructed only after the selected engine validates the full canonical
++    # descriptor. There is no alternate digest accepted by the portable engine.
++    class Connection
++      IDENTITY_FIELDS = %w[instance_id run_id artifact_id artifact_sha256].freeze
++      attr_reader :canonical_sha256, :managed_sha256, :bytes, :value
++
++      def initialize(canonical_bytes:, public_argv:)
++        @canonical_sha256 = Digest::SHA256.hexdigest(canonical_bytes)
++        @value = JSON.parse(canonical_bytes)
++        raise Error, 'unsupported canonical descriptor' unless @value.is_a?(Hash) && @value['schema'] == 1 && @value['kind'] == 'vpsfree-kb-connection'
++        raise Error, 'canonical controller is missing' unless @value.fetch('control').keys == ['argv']
++
++        managed = @value.merge('control' => { 'argv' => public_argv })
++        @bytes = JSON.generate(sorted(managed)) + "\n"
++        @managed_sha256 = Digest::SHA256.hexdigest(@bytes)
++      rescue JSON::ParserError, KeyError
++        raise Error, 'invalid canonical descriptor'
++      end
++
++      def sorted(value)
++        case value
++        when Hash
++          value.keys.sort.to_h { |key| [key, sorted(value.fetch(key))] }
++        when Array
++          value.map { |item| sorted(item) }
++        else
++          value
++        end
++      end
++
++      def canonical_readiness
++        { 'schema' => 1, **value.slice(*IDENTITY_FIELDS), 'descriptor_sha256' => canonical_sha256 }
++      end
++
++      def require_request!(request)
++        expected = value.slice(*IDENTITY_FIELDS).merge('descriptor_sha256' => managed_sha256)
++        raise Error, 'managed lease request differs from the current descriptor' unless request == expected
++      end
++
++      def lease_arguments
++        IDENTITY_FIELDS.flat_map { |key| ["--#{key.tr('_', '-')}", value.fetch(key)] } +
++          ['--descriptor-sha256', canonical_sha256]
++      end
++    end
++  end
++end
+diff --git a/dev-clusters/kb/lib/guards.rb b/dev-clusters/kb/lib/guards.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..6058138fd45b50bbff7c5b28b24c73d4584d3c07
+--- /dev/null
++++ b/dev-clusters/kb/lib/guards.rb
+@@ -0,0 +1,125 @@
++# frozen_string_literal: true
++
++require_relative 'managed'
++
++module DevClusters
++  module Kb
++    # Session guards precede the adapter and portable engine locks. Inventory
++    # callers already hold the session lock and must not recursively acquire it.
++    class Guards
++      def initialize(binding:, contract:, environment: ENV)
++        @binding, @contract, @environment = binding, contract, environment
++        unless contract['trackingMaxBytes'].is_a?(Integer) && contract['trackingMaxBytes'].positive? &&
++               contract.dig('clusterProvider', 'statusBusyExitCode') == 75 &&
++               contract['lifecycleJournals'].is_a?(Array) &&
++               contract['lifecycleJournals'].map { |row| row['command'] }.sort == %w[archive delete revive] &&
++               contract['lifecycleJournals'].all? { |row| row.keys.sort == %w[command name] && SLUG.match?(row['name'].to_s) }
++          raise Error, 'unsupported workspace runtime contract'
++        end
++      end
++
++      def active_session!
++        path = File.join(@binding.workspace, 'work', @binding.slug, 'state.md')
++        @binding.check_ancestors(File.dirname(path))
++        stat = File.lstat(path)
++        unless stat.file? && !stat.symlink? && stat.size <= @contract.fetch('trackingMaxBytes')
++          raise Error, 'unsafe or missing active session state'
++        end
++        header = File.open(path, File::RDONLY | File::NOFOLLOW) { |stream| stream.each_line.take(3).map(&:chomp) }
++        raise Error, 'development session is not active' unless header == ['---', 'lifecycle: active', '---']
++        archive = File.join(@binding.workspace, 'archive', @binding.slug)
++        @binding.check_ancestors(File.dirname(archive))
++        raise Error, 'development session also exists in the archive' if @binding.present?(archive)
++      end
++
++      def lifecycle_allowed!(command)
++        @contract.fetch('lifecycleJournals').each do |row|
++          path = File.join(@binding.workspace, 'worktrees', '.locks', "#{@binding.slug}.#{row['name']}.json")
++          next unless @binding.present?(path)
++
++          @binding.read_file(path, limit: @contract.fetch('trackingMaxBytes'))
++          unless command == 'reset' && @environment['DEV_SESSION_LIFECYCLE_OPERATION'] == row['name'] &&
++                 %w[archive delete].include?(row['command'])
++            raise Error, 'development session has an unfinished lifecycle operation'
++          end
++          inherited_session_lock!
++        end
++      end
++
++      def session_lock_path
++        name = @environment['DEV_WORKSPACE_NAME']
++        raise Error, 'explicit registered workspace selection is required' unless /\A[a-z0-9][a-z0-9-]{0,62}\z/.match?(name.to_s)
++
++        runtime = @environment['DEV_WORKSPACES_RUNTIME_DIR'] ||
++                  File.join(@environment['XDG_RUNTIME_DIR'] || "/run/user/#{Process.uid}", 'dev-workspaces')
++        authority = File.join(runtime, name, 'authority', "#{@binding.slug}.lock")
++        fallback = File.join(@binding.workspace, 'worktrees', '.locks', "#{@binding.slug}.lock")
++        [authority, fallback]
++      end
++
++      def inherited_session_lock!
++        descriptor = Integer(@environment.fetch('DEV_SESSION_LIFECYCLE_LOCK_FD', ''), 10)
++        path = @environment['DEV_SESSION_LIFECYCLE_LOCK_PATH']
++        raise Error, 'foreign lifecycle session lock' unless descriptor >= 3 && session_lock_path.include?(path)
++
++        @binding.read_file(path, limit: 0)
++        stream = File.for_fd(descriptor, autoclose: false)
++        stat = File.lstat(path)
++        raise Error, 'lifecycle lock descriptor differs' unless [stat.dev, stat.ino] == [stream.stat.dev, stream.stat.ino]
++
++        File.open(path, File::RDWR | File::NOFOLLOW) do |probe|
++          raise Error, 'lifecycle session lock is not held exclusively' if probe.flock(File::LOCK_SH | File::LOCK_NB)
++        end
++        raise Error, 'lifecycle session lock is not owned' unless stream.flock(File::LOCK_EX | File::LOCK_NB)
++        true
++      rescue ArgumentError, Errno::EBADF
++        raise Error, 'lifecycle session lock is unavailable'
++      end
++
++      def session(command)
++        inherited = command == 'reset' && @environment.key?('DEV_SESSION_LIFECYCLE_LOCK_FD')
++        if inherited
++          inherited_session_lock!
++          lifecycle_allowed!(command)
++          yield
++        else
++          path = session_lock_path.find { |candidate| @binding.present?(candidate) }
++          raise Error, 'session lock is unavailable; start the development session first' unless path
++
++          @binding.read_file(path, limit: 0)
++          File.open(path, File::RDWR | File::NOFOLLOW) do |stream|
++            raise Busy, 'development session is changing' unless stream.flock(File::LOCK_SH | File::LOCK_NB)
++            active_session!
++            lifecycle_allowed!(command)
++            yield
++          end
++        end
++      end
++
++      def adapter(create: false)
++        root = File.join(@binding.workspace, '.dev-clusters', '.locks')
++        if create
++          @binding.private_directory(root, create: true)
++        elsif !@binding.private_directory(root)
++          raise Error, 'adapter lock inventory is absent'
++        end
++        path = File.join(root, "kb-#{@binding.slug}.lock")
++        if create && !@binding.present?(path)
++          begin
++            File.open(path, File::WRONLY | File::CREAT | File::EXCL | File::NOFOLLOW, 0o600) {}
++          rescue Errno::EEXIST
++            # Validate the concurrent initializer below.
++          end
++        end
++        @binding.read_file(path, limit: 0)
++        stat = File.lstat(path)
++        File.open(path, File::RDWR | File::NOFOLLOW) do |stream|
++          raise Error, 'adapter lock changed during open' unless [stream.stat.dev, stream.stat.ino] == [stat.dev, stat.ino]
++          raise Busy, 'managed KB cluster is changing' unless stream.flock(File::LOCK_EX | File::LOCK_NB)
++
++          yield
++        end
++      end
++    end
++  end
++end
+diff --git a/dev-clusters/kb/lib/lease.rb b/dev-clusters/kb/lib/lease.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..baf30847e5c0cad6745066e0ece04ba8a413a49c
+--- /dev/null
++++ b/dev-clusters/kb/lib/lease.rb
+@@ -0,0 +1,153 @@
++# frozen_string_literal: true
++
++require 'json'
++require_relative 'managed'
++
++module DevClusters
++  module Kb
++    # One managed lease translates only the descriptor digest. The dispatcher
++    # owns its child PID until waitpid reaps it, including cancellation.
++    class Lease
++      MAX_READINESS = 8192
++
++      def initialize(argv:, canonical:, managed:, input: $stdin, output: $stdout, error: $stderr)
++        @argv, @canonical, @managed = argv, canonical, managed
++        @input, @output, @error = input, output, error
++        @pid = nil
++      end
++
++      def now
++        Process.clock_gettime(Process::CLOCK_MONOTONIC)
++      end
++
++      def reap
++        return @status unless @pid
++
++        result = Process.waitpid2(@pid, Process::WNOHANG)
++        if result
++          @status = result.last
++          @pid = nil
++        end
++        @status
++      end
++
++      def await_exit(seconds)
++        deadline = now + seconds
++        loop do
++          return true if reap
++          return false if now >= deadline
++
++          sleep 0.02
++        end
++      end
++
++      def cleanup
++        @child_input&.close unless @child_input&.closed?
++        return unless @pid
++        return if await_exit(2)
++
++        %w[TERM KILL].each do |signal|
++          Process.kill(signal, @pid) if @pid
++          return if await_exit(2)
++        end
++        raise Error, 'KB lease child did not exit within cleanup budget'
++      end
++
++      def close_output
++        return if @output.closed?
++
++        # Ruby protects standard streams from closing their underlying FD.
++        # Reopening deliberately detaches this protocol pipe before close.
++        @output.reopen(File::NULL, 'w') if @output.is_a?(IO) && @output.fileno <= 2
++        @output.close
++      end
++
++      def run
++        child_read, @child_input = IO.pipe
++        child_output, child_write = IO.pipe
++        child_error, error_write = IO.pipe
++        @pid = Process.spawn(*@argv, in: child_read, out: child_write, err: error_write, close_others: true)
++        [child_read, child_write, error_write].each(&:close)
++        deadline = now + 5
++        buffer = +''
++        pending_input = +''
++        ready = false
++        peer_closed = false
++        protocol_lost = false
++        diagnostics_open = true
++        loop do
++          readable = [child_output]
++          readable << child_error if diagnostics_open
++          readable << @input unless peer_closed
++          writable = pending_input.empty? || @child_input.closed? ? [] : [@child_input]
++          readers, writers = IO.select(readable, writable, nil, 0.05)
++          if readers&.include?(@input)
++            chunk = @input.read_nonblock(1024, exception: false)
++            if chunk.nil?
++              peer_closed = true
++              @child_input.close
++              raise Error, 'capture peer ended before readiness' unless ready
++              break
++            elsif chunk != :wait_readable
++              pending_input << chunk
++              raise Error, 'capture input exceeds lease buffer' if pending_input.bytesize > MAX_READINESS
++            end
++          end
++          if writers&.include?(@child_input)
++            written = @child_input.write_nonblock(pending_input, exception: false)
++            pending_input = pending_input.byteslice(written..) if written.is_a?(Integer)
++          end
++          if readers&.include?(child_error)
++            chunk = child_error.read_nonblock(4096, exception: false)
++            if chunk.nil?
++              diagnostics_open = false
++            elsif chunk != :wait_readable
++              @error.write(chunk)
++              @error.flush
++            end
++          end
++          if readers&.include?(child_output)
++            # Drain available bytes and observe EOF independently of parsing.
++            # A ready record and EOF in one read window cannot publish a lease.
++            loop do
++              chunk = child_output.read_nonblock(MAX_READINESS + 1, exception: false)
++              break if chunk == :wait_readable
++              if chunk.nil?
++                protocol_lost = true
++                break
++              end
++              raise Error, 'unexpected additional KB lease protocol output' if ready
++              buffer << chunk
++              raise Error, 'KB lease readiness exceeds limit' if buffer.bytesize > MAX_READINESS
++            end
++          end
++          raise Error, 'KB lease protocol ended' if protocol_lost
++          raise Error, 'KB lease child exited' if reap
++          if !ready && buffer.include?("\n")
++            line, rest = buffer.split("\n", 2)
++            raise Error, 'extra KB lease readiness output' unless rest.empty?
++            value = JSON.parse(line)
++            raise Error, 'KB canonical lease readiness differs' unless value == @canonical
++            @output.write(JSON.generate(value.merge('descriptor_sha256' => @managed)) + "\n")
++            @output.flush
++            ready = true
++            buffer.clear
++          end
++          raise Error, 'KB lease readiness deadline reached' if !ready && now >= deadline
++        end
++        close_output
++        cleanup
++        raise Error, 'KB lease child failed after peer EOF' unless @status&.success?
++        true
++      rescue JSON::ParserError, IOError, SystemCallError => error
++        raise Error, "KB lease transport failed: #{error.message}"
++      ensure
++        close_output
++        cleanup
++        [child_read, child_write, error_write, child_output, child_error, @child_input].compact.each do |stream|
++          stream.close unless stream.closed?
++        end
++      end
++    end
++  end
++end
+diff --git a/dev-clusters/kb/lib/managed.rb b/dev-clusters/kb/lib/managed.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..d1898c81b7642c65781c6926e3f4184a3acbdbee
+--- /dev/null
++++ b/dev-clusters/kb/lib/managed.rb
+@@ -0,0 +1,137 @@
++# frozen_string_literal: true
++
++require 'fileutils'
++require 'json'
++require 'securerandom'
++
++module DevClusters
++  module Kb
++    Error = Class.new(StandardError)
++    Busy = Class.new(Error)
++    SLUG = /\A[a-zA-Z0-9][a-zA-Z0-9_-]{0,127}\z/
++    REVISION = /\A[0-9a-f]{40}\z/
++
++    # The managed binding records workspace meaning outside portable K state.
++    class Binding
++      attr_reader :workspace, :slug, :state_root, :path, :record_directory
++
++      def initialize(workspace:, slug:)
++        raise Error, 'invalid KB session slug' unless slug.is_a?(String) && SLUG.match?(slug)
++
++        @workspace = File.expand_path(workspace)
++        check_ancestors(@workspace)
++        raise Error, 'workspace path is not canonical' unless File.realpath(@workspace) == @workspace
++
++        @slug = slug
++        @state_root = File.join(@workspace, '.dev-clusters', 'kb')
++        @record_directory = File.join(@state_root, 'bindings', slug)
++        @path = File.join(@record_directory, 'binding.json')
++      end
++
++      def cluster_directory
++        File.join(state_root, 'clusters', slug)
++      end
++
++      def present?(path)
++        File.lstat(path)
++        true
++      rescue Errno::ENOENT
++        false
++      end
++
++      def check_ancestors(path)
++        current = File.expand_path(path)
++        loop do
++          raise Error, "symlink in managed state path: #{current}" if File.symlink?(current)
++          raise Error, "invalid managed state ancestor: #{current}" if File.exist?(current) && !File.directory?(current)
++          break if current == '/'
++
++          current = File.dirname(current)
++        end
++      end
++
++      def private_directory(path, create: false)
++        check_ancestors(path)
++        unless present?(path)
++          return false unless create
++
++          parent = File.dirname(path)
++          private_directory(parent, create: true) unless File.directory?(parent)
++          begin
++            Dir.mkdir(path, 0o700)
++          rescue Errno::EEXIST
++            # Validate the concurrent initializer below.
++          end
++        end
++        stat = File.lstat(path)
++        unless stat.directory? && stat.uid == Process.uid && (stat.mode & 0o777) == 0o700
++          raise Error, "unsafe managed private directory: #{path}"
++        end
++        true
++      end
++
++      def read_file(path, limit: 8192)
++        check_ancestors(File.dirname(path))
++        stat = File.lstat(path)
++        unless stat.file? && !stat.symlink? && stat.uid == Process.uid && (stat.mode & 0o777) == 0o600 && stat.size <= limit
++          raise Error, "unsafe managed private file: #{path}"
++        end
++        File.open(path, File::RDONLY | File::NOFOLLOW) do |stream|
++          raise Error, 'managed file changed during open' unless [stream.stat.dev, stream.stat.ino] == [stat.dev, stat.ino]
++
++          bytes = stream.read(limit + 1) || ''
++          raise Error, 'managed file exceeds limit' if bytes.bytesize > limit
++
++          bytes
++        end
++      end
++
++      def read
++        private_directory(state_root) || raise(Error, 'managed KB state is absent')
++        private_directory(File.dirname(path)) || raise(Error, 'managed KB binding inventory is absent')
++        private_directory(record_directory) || raise(Error, 'managed KB binding is absent')
++        value = JSON.parse(read_file(path))
++        expected = %w[schema workspace slug provider portable_schema engine_revision]
++        unless value.is_a?(Hash) && value.keys.sort == expected.sort && value['schema'] == 1 &&
++               value['workspace'] == workspace && value['slug'] == slug && value['provider'] == 'kb' &&
++               value['portable_schema'] == 2 && REVISION.match?(value['engine_revision'].to_s)
++          raise Error, 'unsupported or foreign managed KB binding'
++        end
++        value
++      rescue JSON::ParserError
++        raise Error, 'invalid managed KB binding JSON'
++      end
++
++      def create(engine_revision:)
++        raise Error, 'KB engine revision is not exact' unless engine_revision.is_a?(String) && REVISION.match?(engine_revision)
++        raise Error, 'managed KB state already exists without a new binding' if present?(cluster_directory) || present?(path)
++
++        private_directory(state_root, create: true)
++        private_directory(record_directory, create: true)
++        value = { 'schema' => 1, 'workspace' => workspace, 'slug' => slug, 'provider' => 'kb',
++                  'portable_schema' => 2, 'engine_revision' => engine_revision }
++        write_bytes(path, JSON.generate(value) + "\n")
++        read
++      end
++
++      def write_bytes(path, bytes)
++        raise Error, 'invalid managed record path' unless File.dirname(path) == record_directory
++        private_directory(record_directory) || raise(Error, 'managed KB binding directory is absent')
++        read_file(path, limit: 2 * 1024 * 1024) if present?(path)
++        temporary = "#{path}.#{SecureRandom.hex(12)}"
++        begin
++          File.open(temporary, File::WRONLY | File::CREAT | File::EXCL | File::NOFOLLOW, 0o600) do |stream|
++            stream.write(bytes)
++            stream.flush
++            stream.fsync
++          end
++          File.rename(temporary, path)
++          File.open(File.dirname(path), &:fsync)
++        ensure
++          File.unlink(temporary) if File.exist?(temporary)
++        end
++        bytes
++      end
++    end
++  end
++end
+diff --git a/dev-clusters/kb/lib/portable.rb b/dev-clusters/kb/lib/portable.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..c7ea3d2d0038d9387678a1c7103e0fb514cb9427
+--- /dev/null
++++ b/dev-clusters/kb/lib/portable.rb
+@@ -0,0 +1,132 @@
++# frozen_string_literal: true
++
++require 'digest'
++require_relative 'managed'
++
++module DevClusters
++  module Kb
++    # Read-only validation uses the exact selected engine's own receipt rules.
++    # Lifecycle and live attestation are always performed by its packaged CLI.
++    class Portable
++      def initialize(binding:, metadata_path:)
++        @binding, @metadata_path = binding, metadata_path
++        metadata = JSON.parse(File.read(metadata_path))
++        source = metadata.fetch('source')
++        raise Error, 'packaged immutable KB source is required' unless source.start_with?('/nix/store/') && File.directory?(source)
++
++        require File.join(source, 'cluster', 'lib', 'kb_runtime')
++        begin
++          @software = KbRuntime::Software.new(metadata)
++          @state = KbRuntime::State.new(binding.state_root, binding.slug)
++          @engine = KbRuntime::Engine.new(state: @state, software: @software, controller: [])
++        rescue KbRuntime::Error => error
++          raise Error, error.message
++        end
++      rescue JSON::ParserError, KeyError, SystemCallError => error
++        raise Error, "invalid packaged KB metadata: #{error.message}"
++      end
++
++      def revision
++        @software.metadata.fetch('revision')
++      end
++
++      def snapshot
++        @binding.read
++        @state.transaction(create: false, wait: false) do
++          @state.identity
++          yield
++        end
++      rescue KbRuntime::Busy => error
++        raise Busy, error.message
++      rescue KbRuntime::Error => error
++        raise Error, error.message
++      rescue KeyError, SystemCallError => error
++        raise Error, "invalid owned KB snapshot: #{error.message}"
++      end
++
++      def validate_record(record, run)
++        raise Error, 'invalid recorded run identity' unless KbRuntime::State::UUID.match?(run.to_s)
++
++        @engine.validate_launch(record, run)
++        expected = @engine.resources.socket_dir(record.fetch('instance_id'), run)
++        raise Error, 'recorded socket namespace differs' unless record['socket_dir'] == expected
++
++        record
++      end
++
++      def canonical
++        snapshot do
++          record = validate_record(@engine.launch, @engine.phase.fetch('run_id'))
++          raise Error, 'managed KB cluster is not ready' unless @engine.ready?(record)
++
++          validate_artifact(record)
++          bytes = @state.file(@state.path('connection.json'))
++          value = JSON.parse(bytes)
++          argv = value.fetch('control').fetch('argv')
++          suffix = ['--state-root', @state.root, 'capture-lease', @state.slug]
++          prefix = [File.join(@software.source, 'cluster', 'launcher.rb'), '--software-metadata', @metadata_path]
++          unless argv.is_a?(Array) && argv.size == 8 && argv.first.is_a?(String) && argv.first.start_with?('/nix/store/') &&
++                 argv.first.end_with?('/bin/ruby') && argv[1, 3] == prefix && argv.last(4) == suffix
++            raise Error, 'canonical controller is not the selected packaged engine'
++          end
++          expected = @engine.descriptor(record).merge('control' => { 'argv' => argv })
++          raise Error, 'canonical descriptor differs from the owned launch' unless value == expected
++
++          [bytes, value]
++        end
++      rescue JSON::ParserError, KeyError => error
++        raise Error, "invalid canonical KB descriptor: #{error.message}"
++      end
++
++      def validate_artifact(record, selected: true)
++        artifact = @engine.artifact(record)
++        validator = if selected
++                      @engine
++                    else
++                      # Creation provenance is retained. Selected code validates
++                      # the original artifact without granting capture readiness.
++                      original = KbRuntime::Software.new(artifact.fetch('source'))
++                      KbRuntime::Engine.new(state: @state, software: original, controller: [])
++                    end
++        validator.validate_prepared(artifact)
++        artifact.each do |key, value|
++          next if key == 'schema' # artifact schema 1, launch identity schema 2
++
++          raise Error, "launch #{key} differs from its artifact" unless record[key] == value
++        end
++        artifact
++      end
++
++      def inventory
++        snapshot do
++          paths = [@state.directory, @binding.record_directory]
++          Dir.children(@state.directory).sort.each do |name|
++            next unless name.start_with?('reservation-', 'launch-') && name.end_with?('.json')
++
++            run = name.delete_prefix('reservation-').delete_prefix('launch-').delete_suffix('.json')
++            record = validate_record(@state.read(@state.path(name)), run)
++            paths << record.fetch('socket_dir')
++          end
++          { 'schema' => 1, 'paths' => paths.uniq }
++        end
++      end
++
++      def transition_adopt
++        snapshot do
++          record = validate_record(@engine.launch, @engine.phase.fetch('run_id'))
++          artifact = validate_artifact(record, selected: false)
++          unless artifact['schema'] == 1 && artifact.fetch('guest_identity')['schema'] == 1 &&
++                 record.fetch('source') == artifact.fetch('source') && (@engine.live?(record) || @engine.gone?(record))
++            raise Error, 'incompatible or ambiguous retained KB engine state'
++          end
++          inventory_records = Dir.children(@state.directory).grep(/\A(?:reservation|launch)-.*\.json\z/)
++          inventory_records.each do |name|
++            run = name.delete_prefix('reservation-').delete_prefix('launch-').delete_suffix('.json')
++            validate_record(@state.read(@state.path(name)), run)
++          end
++          true
++        end
++      end
++    end
++  end
++end
+diff --git a/dev-clusters/kb/lib/provider.rb b/dev-clusters/kb/lib/provider.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..408eabfe28978ea8000fed043dd534d5d6d4e2d0
+--- /dev/null
++++ b/dev-clusters/kb/lib/provider.rb
+@@ -0,0 +1,137 @@
++# frozen_string_literal: true
++
++require 'open3'
++require_relative 'managed'
++require_relative 'connection'
++require_relative 'lease'
++
++module DevClusters
++  module Kb
++    class Provider
++      def initialize(binding:, engine:, portable: nil, public_argv: nil)
++        unless engine.is_a?(String) && engine.start_with?('/') && File.file?(engine) && File.executable?(engine)
++          raise Error, 'packaged KB engine is unavailable'
++        end
++
++        @binding = binding
++        @engine = engine
++        @portable, @public_argv = portable, public_argv
++      end
++
++      def invoke(command, *arguments)
++        output, error, status = Open3.capture3(@engine, '--state-root', @binding.state_root,
++          command, @binding.slug, *arguments, close_others: true)
++        raise Busy, 'KB cluster is changing' if status.exitstatus == 75
++        raise Error, "KB engine #{command} failed: #{error.strip}" unless status.success?
++
++        output
++      end
++
++      def start(*arguments)
++        if @binding.present?(@binding.path)
++          @binding.read
++        else
++          @binding.create(engine_revision: @portable.revision)
++        end
++        invoke('start', *arguments)
++      end
++
++      def existing(command, *arguments)
++        @binding.read
++        invoke(command, *arguments)
++      end
++
++      def managed_connection
++        canonical, = @portable.canonical
++        Connection.new(canonical_bytes: canonical, public_argv: @public_argv)
++      end
++
++      def connection
++        value = managed_connection
++        @binding.write_bytes(File.join(@binding.record_directory, 'connection.json'), value.bytes)
++      end
++
++      def capture_lease(request, input: $stdin, output: $stdout, error: $stderr)
++        value = managed_connection
++        value.require_request!(request)
++        # canonical's noncreating snapshot has returned and released K locks.
++        # The fixed CLI acquires its own gate and rechecks the exact C digest.
++        Lease.new(argv: [@engine, '--state-root', @binding.state_root, 'capture-lease', @binding.slug,
++                        *value.lease_arguments], canonical: value.canonical_readiness,
++                  managed: value.managed_sha256, input:, output:, error:).run
++      end
++
++      def cleanup_paths
++        unless @binding.present?(@binding.path)
++          if @binding.present?(@binding.cluster_directory) || @binding.present?(@binding.record_directory)
++            raise Error, 'partial or unbound managed KB state'
++          end
++          return { 'schema' => 1, 'paths' => [] }
++        end
++        @portable.inventory
++      end
++
++      def transition_adopt
++        @binding.read
++        @portable.transition_adopt
++      end
++
++      def reset
++        @binding.read
++        files = Dir.children(@binding.record_directory).sort
++        raise Error, 'unknown managed KB binding files' unless (files - %w[binding.json connection.json]).empty?
++        files.each { |name| @binding.read_file(File.join(@binding.record_directory, name), limit: 2 * 1024 * 1024) }
++        invoke('stop') if @binding.present?(@binding.cluster_directory)
++        invoke('reset') if @binding.present?(@binding.cluster_directory)
++        raise Error, 'KB reset left its owned instance in place' if @binding.present?(@binding.cluster_directory)
++
++        files.each { |name| File.unlink(File.join(@binding.record_directory, name)) }
++        Dir.rmdir(@binding.record_directory)
++        File.open(File.dirname(@binding.record_directory), &:fsync)
++        ''
++      end
++
++      def engine_json(command, *arguments)
++        output, error, status = Open3.capture3(
++          'timeout', '--kill-after=1', '4', @engine,
++          '--state-root', @binding.state_root, command, @binding.slug, *arguments,
++          close_others: true
++        )
++        raise Busy, 'KB cluster is changing' if status.exitstatus == 75 || status.exitstatus == 124
++        raise Error, "KB engine #{command} failed: #{error.strip}" unless status.success?
++        raise Error, 'KB engine response exceeds limit' if output.bytesize > 2 * 1024 * 1024
++
++        JSON.parse(output)
++      rescue JSON::ParserError
++        raise Error, 'KB engine response is invalid JSON'
++      end
++
++      def status
++        unless @binding.present?(@binding.path)
++          if @binding.present?(@binding.cluster_directory) || @binding.present?(@binding.record_directory)
++            raise Error, 'KB state exists without its managed binding'
++          end
++
++          return { 'schema' => 2, 'kind' => 'kb', 'found' => false }
++        end
++        @binding.read
++        value = engine_json('status', '--json')
++        unless value.is_a?(Hash) && value['schema'] == 2 && [true, false].include?(value['found'])
++          raise Error, 'KB engine status has an unsupported schema'
++        end
++        return { 'schema' => 2, 'kind' => 'kb', 'found' => false } unless value['found']
++
++        ready = value['ready'] == true
++        state = if ready
++                  'running'
++                elsif value['state'] == 'stopped'
++                  'stopped'
++                else
++                  'stale'
++                end
++        { 'schema' => 2, 'kind' => 'kb', 'found' => true, 'state' => state, 'ready' => ready,
++          'commands' => [], 'services' => [] }
++      end
++    end
++  end
++end
+diff --git a/flake.lock b/flake.lock
+index 5a583dac4ef1eb4b6fb44c82b43e441bbe89c11c..39a91fd88b985369ec0ad10b0fefed10a466885a 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -41,17 +41,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1791094073,
+-        "narHash": "sha256-Twh5X2WD88/AlCzBh8sThCaM4yVcAtBM0sdlhQP2C5E=",
++        "lastModified": 1791144036,
++        "narHash": "sha256-tsVai0aKhc5oStiZHNtHhocXg8nhjib2X21e+KjzyjY=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "32775fa7fdd9bc9b41aef74b7f195e5c3bc0f8d5",
++        "rev": "3d07cf60cfde5d117a181a9bdb6d90a5860f6f0c",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "32775fa7fdd9bc9b41aef74b7f195e5c3bc0f8d5",
++        "rev": "3d07cf60cfde5d117a181a9bdb6d90a5860f6f0c",
+         "type": "github"
+       }
+     },
+@@ -62,17 +62,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1791131661,
+-        "narHash": "sha256-N1jEjNR5Jr4elS2so0fEEaZY4bMR6emmygTA0zRZo7I=",
++        "lastModified": 1791489754,
++        "narHash": "sha256-tIXsZPLmnF6c70nOrl0KQYGdyPpYuNJlwOoYaRBf2cU=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "6a972b9ab01077611b2c60e0fc726c185e050315",
++        "rev": "b1ec1bf1c3bc6413b066816ca58468b67ad5e5a6",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "6a972b9ab01077611b2c60e0fc726c185e050315",
++        "rev": "b1ec1bf1c3bc6413b066816ca58468b67ad5e5a6",
+         "type": "github"
+       }
+     },
+@@ -222,6 +222,30 @@
+         "type": "github"
+       }
+     },
++    "home-manager_2": {
++      "inputs": {
++        "nixpkgs": [
++          "kb-runtime",
++          "vpsadmin",
++          "vpsadminos",
++          "impermanence",
++          "nixpkgs"
++        ]
++      },
++      "locked": {
++        "lastModified": 1768598210,
++        "narHash": "sha256-kkgA32s/f4jaa4UG+2f8C225Qvclxnqs76mf8zvTVPg=",
++        "owner": "nix-community",
++        "repo": "home-manager",
++        "rev": "c47b2cc64a629f8e075de52e4742de688f930dc6",
++        "type": "github"
++      },
++      "original": {
++        "owner": "nix-community",
++        "repo": "home-manager",
++        "type": "github"
++      }
++    },
+     "impermanence": {
+       "inputs": {
+         "home-manager": "home-manager",
+@@ -241,6 +265,56 @@
+         "type": "github"
+       }
+     },
++    "impermanence_2": {
++      "inputs": {
++        "home-manager": "home-manager_2",
++        "nixpkgs": "nixpkgs_5"
++      },
++      "locked": {
++        "lastModified": 1769548169,
++        "narHash": "sha256-03+JxvzmfwRu+5JafM0DLbxgHttOQZkUtDWBmeUkN8Y=",
++        "owner": "nix-community",
++        "repo": "impermanence",
++        "rev": "7b1d382faf603b6d264f58627330f9faa5cba149",
++        "type": "github"
++      },
++      "original": {
++        "owner": "nix-community",
++        "repo": "impermanence",
++        "type": "github"
++      }
++    },
++    "kb-runtime": {
++      "inputs": {
++        "nixpkgs": [
++          "kb-runtime",
++          "vpsadminos",
++          "nixpkgs"
++        ],
++        "toolsNixpkgs": "toolsNixpkgs",
++        "vpsadmin": "vpsadmin",
++        "vpsadminos": [
++          "kb-runtime",
++          "vpsadmin",
++          "vpsadminos"
++        ],
++        "vpsfStatus": "vpsfStatus"
++      },
++      "locked": {
++        "lastModified": 1791581058,
++        "narHash": "sha256-gHgYQqzHG8qNgGLE3/jPUfQPUG+KXnI/vab5/nhbTrQ=",
++        "owner": "vpsfreecz",
++        "repo": "vpsfree-kb-contracts",
++        "rev": "922e71e5eb75b6eb416bf55e39160e9a7236e654",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "repo": "vpsfree-kb-contracts",
++        "rev": "922e71e5eb75b6eb416bf55e39160e9a7236e654",
++        "type": "github"
++      }
++    },
+     "llm-agents": {
+       "inputs": {
+         "bun2nix": "bun2nix",
+@@ -279,6 +353,22 @@
+         "type": "github"
+       }
+     },
++    "netlinkrb_2": {
++      "flake": false,
++      "locked": {
++        "lastModified": 1562850306,
++        "narHash": "sha256-0bXTWUdUDr2XP+bEIfIbxXap8Niva/IoPXTxFeXXImg=",
++        "owner": "vpsfreecz",
++        "repo": "netlinkrb",
++        "rev": "d9de53d843d2586ffa5b7b404887fa801c697ddf",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "repo": "netlinkrb",
++        "type": "github"
++      }
++    },
+     "nixpkgs": {
+       "locked": {
+         "lastModified": 1790600678,
+@@ -311,6 +401,22 @@
+         "type": "github"
+       }
+     },
++    "nixpkgsUnstable_2": {
++      "locked": {
++        "lastModified": 1788179007,
++        "narHash": "sha256-hn1oU2rue2SYK8dAr8+WNZWtbsz1S2W5mnHlSEuh3bo=",
++        "owner": "NixOS",
++        "repo": "nixpkgs",
++        "rev": "34ab99075ac4f7e40cf037eef32cb1c360bb85e9",
++        "type": "github"
++      },
++      "original": {
++        "owner": "NixOS",
++        "ref": "nixos-unstable",
++        "repo": "nixpkgs",
++        "type": "github"
++      }
++    },
+     "nixpkgs_2": {
+       "locked": {
+         "lastModified": 1788405554,
+@@ -360,6 +466,38 @@
+       }
+     },
+     "nixpkgs_5": {
++      "locked": {
++        "lastModified": 1768564909,
++        "narHash": "sha256-Kell/SpJYVkHWMvnhqJz/8DqQg2b6PguxVWOuadbHCc=",
++        "owner": "nixos",
++        "repo": "nixpkgs",
++        "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
++        "type": "github"
++      },
++      "original": {
++        "owner": "nixos",
++        "ref": "nixos-unstable",
++        "repo": "nixpkgs",
++        "type": "github"
++      }
++    },
++    "nixpkgs_6": {
++      "locked": {
++        "lastModified": 1788187754,
++        "narHash": "sha256-bu1QxmXKmPuvBLN7bHP355OV9Qo13x9WCiRDH62CqRM=",
++        "owner": "NixOS",
++        "repo": "nixpkgs",
++        "rev": "5dfba6236110080a54247d6460bc2ff5dda939cc",
++        "type": "github"
++      },
++      "original": {
++        "owner": "NixOS",
++        "ref": "nixos-26.05",
++        "repo": "nixpkgs",
++        "type": "github"
++      }
++    },
++    "nixpkgs_7": {
+       "locked": {
+         "lastModified": 1789009968,
+         "narHash": "sha256-GB16oaxpsrnGNnGIE+0uYBqMRzB9X6FYDUvjvnJAYew=",
+@@ -382,7 +520,8 @@
+         "devcluster-vpsadminWebui": "devcluster-vpsadminWebui",
+         "devcluster-vpsadminos": "devcluster-vpsadminos",
+         "devcluster-vpsf-status": "devcluster-vpsf-status",
+-        "nixpkgs": "nixpkgs_5"
++        "kb-runtime": "kb-runtime",
++        "nixpkgs": "nixpkgs_7"
+       }
+     },
+     "ruby-lxc": {
+@@ -402,6 +541,23 @@
+         "type": "github"
+       }
+     },
++    "ruby-lxc_2": {
++      "flake": false,
++      "locked": {
++        "lastModified": 1780499941,
++        "narHash": "sha256-guAdOSP9MyCL3BQ1LGXAhcCoXgEU1fUE69d2ATMqUGE=",
++        "owner": "vpsfreecz",
++        "repo": "ruby-lxc",
++        "rev": "004bf35eb90d41ba60b347b5b1e73d868a4f95d9",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "ref": "2026-06-03-nixos-26-05-port",
++        "repo": "ruby-lxc",
++        "type": "github"
++      }
++    },
+     "systems": {
+       "locked": {
+         "lastModified": 1681028828,
+@@ -417,6 +573,22 @@
+         "type": "github"
+       }
+     },
++    "toolsNixpkgs": {
++      "locked": {
++        "lastModified": 1783522502,
++        "narHash": "sha256-iffAls3iaNTyJC2faYcUXSI+Gp02cDjYl+MygxKl2GI=",
++        "owner": "NixOS",
++        "repo": "nixpkgs",
++        "rev": "0bb7ec54c8483066ec9d7720e780a5caa71f8612",
++        "type": "github"
++      },
++      "original": {
++        "owner": "NixOS",
++        "ref": "nixos-unstable",
++        "repo": "nixpkgs",
++        "type": "github"
++      }
++    },
+     "treefmt-nix": {
+       "inputs": {
+         "nixpkgs": [
+@@ -438,6 +610,84 @@
+         "repo": "treefmt-nix",
+         "type": "github"
+       }
++    },
++    "vpsadmin": {
++      "inputs": {
++        "nixpkgs": [
++          "kb-runtime",
++          "vpsadmin",
++          "vpsadminos",
++          "nixpkgs"
++        ],
++        "vpsadminos": "vpsadminos"
++      },
++      "locked": {
++        "lastModified": 1791482446,
++        "narHash": "sha256-i0nxaLQrpbzgX/6hUFQgPaCjI3qTMz8y6Msnfk+HFzY=",
++        "owner": "vpsfreecz",
++        "repo": "vpsadmin",
++        "rev": "ebe4fab3d50a51bda1f94014ca95c73ba2a967a8",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "repo": "vpsadmin",
++        "rev": "ebe4fab3d50a51bda1f94014ca95c73ba2a967a8",
++        "type": "github"
++      }
++    },
++    "vpsadminos": {
++      "inputs": {
++        "impermanence": "impermanence_2",
++        "netlinkrb": "netlinkrb_2",
++        "nixpkgs": "nixpkgs_6",
++        "nixpkgsUnstable": "nixpkgsUnstable_2",
++        "ruby-lxc": "ruby-lxc_2"
++      },
++      "locked": {
++        "lastModified": 1788379445,
++        "narHash": "sha256-mDLxNpbfUmo2FRXW5MJWJ8WqKLINUru6nVHB7zN4bVo=",
++        "owner": "vpsfreecz",
++        "repo": "vpsadminos",
++        "rev": "6bdf458fd9105379860234ff33d352e55844f08f",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "repo": "vpsadminos",
++        "rev": "6bdf458fd9105379860234ff33d352e55844f08f",
++        "type": "github"
++      }
++    },
++    "vpsfStatus": {
++      "inputs": {
++        "nixpkgs": [
++          "kb-runtime",
++          "nixpkgs"
++        ],
++        "vpsadmin": [
++          "kb-runtime",
++          "vpsadmin"
++        ],
++        "vpsadminos": [
++          "kb-runtime",
++          "vpsadminos"
++        ]
++      },
++      "locked": {
++        "lastModified": 1783669700,
++        "narHash": "sha256-fiaFXRCldKuaiEFNO+TSvzrgYOCW8xOsEjDRND97Pss=",
++        "owner": "vpsfreecz",
++        "repo": "vpsf-status",
++        "rev": "29853c364e2fa072152d2de4f17e57f1e802b9f3",
++        "type": "github"
++      },
++      "original": {
++        "owner": "vpsfreecz",
++        "ref": "master",
++        "repo": "vpsf-status",
++        "type": "github"
++      }
+     }
+   },
+   "root": "root",
+diff --git a/flake.nix b/flake.nix
+index 70dcb82caaf831fc66b8f9d9877c9f1f302cc2d2..35c3624d7984b6a3e862bcf61446477966047658 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -3,7 +3,8 @@
+ 
+   inputs = {
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+-    dev-workspace.url = "github:aither64/dev-workspace/6a972b9ab01077611b2c60e0fc726c185e050315";
++    dev-workspace.url = "github:aither64/dev-workspace/b1ec1bf1c3bc6413b066816ca58468b67ad5e5a6";
++    kb-runtime.url = "github:vpsfreecz/vpsfree-kb-contracts/922e71e5eb75b6eb416bf55e39160e9a7236e654";
+     devcluster-vpsadminos.url = "github:vpsfreecz/vpsadminos/15802517e2d92dda4ddc07ebac3d1d7ea087b430";
+     devcluster-vpsadmin = {
+       url = "github:vpsfreecz/vpsadmin/5c76e3290481b297dcd0baa76d246133f0353d8f";
+@@ -59,6 +60,14 @@
+         pkgs.callPackage ./nix/organization-tools.nix {
+           src = self;
+           runtimeContract = dev-workspace.lib.runtimeContract;
++          kbRuntimePackage =
++            if siteConfig.clusterDefaults ? kb then
++              inputs.kb-runtime.packages.${pkgs.stdenv.hostPlatform.system}.kb-runtime
++            else null;
++          kbSourceMetadata =
++            if siteConfig.clusterDefaults ? kb then
++              inputs.kb-runtime.packages.${pkgs.stdenv.hostPlatform.system}.runtime-source
++            else null;
+           inherit siteConfig;
+         };
+       mkPackage =
+@@ -107,6 +116,11 @@
+                   label = "vpsAdminOS";
+                   command = "${tools}/bin/vpsadminos-devcluster";
+                 };
++              } // lib.optionalAttrs (validatedSiteConfig.clusterDefaults ? kb) {
++                kb = {
++                  label = "KB";
++                  command = "${tools}/bin/kb-devcluster";
++                };
+               };
+             };
+           }
+@@ -144,6 +158,15 @@
+         inherit pkgs;
+         siteConfig = testSiteConfig;
+       };
++      testKbSiteConfig = testSiteConfig // {
++        clusterDefaults = testSiteConfig.clusterDefaults // {
++          kb = ./test/fixtures/kb-config.json;
++        };
++      };
++      testKbPackage = mkPackage {
++        inherit pkgs;
++        siteConfig = testKbSiteConfig;
++      };
+       devclusterCheck = pkgs.writeShellApplication {
+         name = "devcluster-check";
+         runtimeInputs = [
+@@ -188,6 +211,22 @@
+             };
+           }
+         )
++        (
++          testSiteConfig
++          // {
++            clusterDefaults = testSiteConfig.clusterDefaults // {
++              kb = "/tmp/mutable-kb.json";
++            };
++          }
++        )
++        (
++          testSiteConfig
++          // {
++            clusterDefaults = testSiteConfig.clusterDefaults // {
++              kb = ./test/fixtures/not-object.json;
++            };
++          }
++        )
+         (
+           testSiteConfig
+           // {
+@@ -251,6 +290,27 @@
+       checks.${system} = {
+         compatibility-package = testCompatibilityPackage;
+         package = testPackage;
++        kb-provider-package = testKbPackage;
++        kb-provider-contract = pkgs.runCommand "vpsfree-kb-provider-contract" { } ''
++          ${pkgs.jq}/bin/jq -e '
++            [.clusterProviders[] | { id, label }] == [
++              { id: "kb", label: "KB" },
++              { id: "vpsadmin", label: "vpsAdmin" },
++              { id: "vpsadminos", label: "vpsAdminOS" }
++            ]
++          ' ${testKbPackage}/share/dev-workspace/extensions.json >/dev/null
++          for provider in kb vpsadmin vpsadminos; do
++            command=$(${pkgs.jq}/bin/jq -er --arg provider "$provider" \
++              '.clusterProviders[] | select(.id == $provider) | .command' \
++              ${testKbPackage}/share/dev-workspace/extensions.json)
++            test -x "$command"
++            test -x ${testKbPackage}/libexec/workspace-portal/"$provider"-devcluster
++          done
++          ${pkgs.coreutils}/bin/env -i HOME="$TMPDIR" PATH=/empty \
++            ${testKbPackage}/libexec/workspace-portal/kb-devcluster --help >/dev/null
++          test ! -e ${testPackage}/libexec/workspace-portal/kb-devcluster
++          touch "$out"
++        '';
+         package-metadata = pkgs.runCommand "vpsfree-dev-workspace-package-metadata" { } ''
+           ${pkgs.jq}/bin/jq -e \
+             --arg router ${nixpkgs.lib.escapeShellArg dev-workspace.lib.hostPaths.routerSocket} \
+@@ -338,6 +398,11 @@
+               cd source
+               patchShebangs bin dev-clusters
+               ${testEnvironment}
++              unset RUBYOPT RUBYLIB GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH
++              export GEM_HOME=$(${pkgs.ruby}/bin/ruby --disable-gems -rrubygems -e 'print Gem.default_dir')
++              export GEM_PATH="$GEM_HOME"
++              export VPSFREE_KB_ENGINE_METADATA=${inputs.kb-runtime.packages.${system}.runtime-source}
++              export DEV_WORKSPACE_HOST_SOURCE=${dev-workspace}
+               export RUNTIME_AUTHORITY_CORPUS=${dev-workspace.lib.runtimeAuthorityCorpus}
+               ruby test/devcluster_status_test.rb
+               ruby test/devcluster_commands_test.rb
+@@ -346,6 +411,13 @@
+               ruby test/devcluster_maintenance_test.rb
+               ruby test/devcluster_store_roots_test.rb
+               ruby test/devcluster_storage_profile_test.rb
++              ruby test/kb_devcluster_test.rb
++              ruby test/kb_guards_test.rb
++              ruby test/kb_connection_test.rb
++              ruby test/kb_lease_test.rb
++              ruby test/kb_cli_test.rb
++              ruby test/kb_portable_test.rb
++              ruby test/kb_public_dispatch_test.rb
+               ruby test/kb_cleanup_test.rb
+               ruby test/kb_contract_tools_test.rb
+               ruby test/kb_page_test.rb
+diff --git a/nix/organization-tools.nix b/nix/organization-tools.nix
+index 567bf7c0022553e18ca8c0ee68d8ced3efe51745..63f867a38bcdad314be7644864dde3885e4ee3a4 100644
+--- a/nix/organization-tools.nix
++++ b/nix/organization-tools.nix
+@@ -8,6 +8,8 @@
+   gnused,
+   iproute2,
+   jq,
++  kbRuntimePackage ? null,
++  kbSourceMetadata ? null,
+   lib,
+   makeWrapper,
+   nix,
+@@ -25,6 +27,7 @@
+ let
+   kb = siteConfig.kb or { };
+   clusters = siteConfig.clusterDefaults or { };
++  kbProviderEnabled = clusters ? kb;
+   clusterConfigurations = builtins.mapAttrs (
+     name: value:
+     builtins.path {
+@@ -73,6 +76,8 @@ let
+ in
+ assert lib.assertMsg authorityPolicyValid
+   "the namespace migration must be reviewed for the selected runtime authority policy";
++assert lib.assertMsg (!kbProviderEnabled || (kbRuntimePackage != null && kbSourceMetadata != null))
++  "the KB provider requires its exact published portable engine input";
+ stdenvNoCC.mkDerivation {
+   pname = "vpsfree-dev-workspace-tools";
+   version = "0.1.0";
+@@ -141,6 +146,21 @@ stdenvNoCC.mkDerivation {
+       --prefix PATH : ${lib.escapeShellArg clusterRuntimePath} \
+       --set VPSADMINOS_DEVCLUSTER_DEFAULT_CONFIG ${lib.escapeShellArg (toString clusterConfigurations.vpsadminos)}
+ 
++    ${lib.optionalString kbProviderEnabled ''
++      install -m644 ${clusterConfigurations.kb} \
++        "$out/share/vpsfree-dev-workspace/dev-clusters/kb/default-config.json"
++      substituteInPlace "$out/share/vpsfree-dev-workspace/dev-clusters/kb/bin/devcluster" \
++        --replace-fail '#!/usr/bin/env ruby' '#!${ruby}/bin/ruby'
++      makeWrapper "$out/share/vpsfree-dev-workspace/dev-clusters/kb/bin/devcluster" \
++        "$out/bin/kb-devcluster" \
++        --prefix PATH : ${lib.escapeShellArg clusterRuntimePath} \
++        --set VPSFREE_KB_ENGINE ${kbRuntimePackage}/bin/vpsfree-kb-devcluster \
++        --set VPSFREE_KB_ENGINE_METADATA ${kbSourceMetadata} \
++        --set VPSFREE_KB_DEFAULT_CONFIG ${lib.escapeShellArg (toString clusterConfigurations.kb)} \
++        --set DEVCLUSTER_RUNTIME_CONTRACT \
++          "$out/share/vpsfree-dev-workspace/dev-clusters/runtime-contract.json"
++    ''}
++
+     runHook postInstall
+   '';
+ 
+@@ -176,6 +196,14 @@ stdenvNoCC.mkDerivation {
+     done
+     DEVCLUSTER_WORKSPACE="$TMPDIR/workspace" "$out/bin/vpsadmin-devcluster" --help >/dev/null
+     DEVCLUSTER_WORKSPACE="$TMPDIR/workspace" "$out/bin/vpsadminos-devcluster" --help >/dev/null
++    ${if kbProviderEnabled then ''
++      ${diffutils}/bin/cmp ${clusterConfigurations.kb} \
++        "$out/share/vpsfree-dev-workspace/dev-clusters/kb/default-config.json"
++      ${coreutils}/bin/env -i HOME="$TMPDIR" PATH=/empty "$out/bin/kb-devcluster" --help >/dev/null
++      test ! -e "$TMPDIR/workspace/.dev-clusters/kb"
++    '' else ''
++      test ! -e "$out/bin/kb-devcluster"
++    ''}
+     ${coreutils}/bin/env -i HOME="$TMPDIR" PATH=/empty \
+       "$out/bin/vpsfree-dev-workspace-migrate" --help >/dev/null
+   '';
+diff --git a/nix/site-config.nix b/nix/site-config.nix
+index 8e0029eef8bcfc3c54ec91679583bc0926b4d89d..dd8bcc4f040404b0ff8cbdfe1dc97aa71c8b8378 100644
+--- a/nix/site-config.nix
++++ b/nix/site-config.nix
+@@ -38,7 +38,7 @@ let
+         (kb.stagingUsername or null)
+       ]
+     )
+-    && hasExactKeys clusters [ "vpsadmin" "vpsadminos" ] [ ]
++    && hasExactKeys clusters [ "vpsadmin" "vpsadminos" ] [ "kb" ]
+     && builtins.all validJsonObject (builtins.attrValues clusters);
+ in
+ assert lib.assertMsg valid "vpsFree development workspace site configuration is invalid";
+diff --git a/test/fixtures/kb-config.json b/test/fixtures/kb-config.json
+new file mode 100644
+index 0000000000000000000000000000000000000000..1676a5198290a7dfa07f8077a3be3106b4084ed2
+--- /dev/null
++++ b/test/fixtures/kb-config.json
+@@ -0,0 +1,306 @@
++{
++  "domains": {
++    "api": "api.example.test",
++    "adminer": "adminer.example.test",
++    "auth": "auth.example.test",
++    "console": "console.example.test",
++    "download": "download.example.test",
++    "frontend": "frontend.example.test",
++    "mailpit": "mailpit.example.test",
++    "status": "status.example.test",
++    "webCs": "web-cs.example.test",
++    "webEn": "web-en.example.test",
++    "webui": "webui.example.test"
++  },
++  "tmpDomains": {
++    "api": "api-tmp.example.test",
++    "auth": "auth-tmp.example.test",
++    "console": "console-tmp.example.test",
++    "webui": "webui-tmp.example.test"
++  },
++  "network": {
++    "bridge": "br0",
++    "gateway": "172.16.106.1"
++  },
++  "local": {
++    "bindAddress": "127.0.0.1",
++    "multicastPort": 10000,
++    "ports": {
++      "services": { "ssh": 10022, "https": 10443 },
++      "node1": { "ssh": 10122 },
++      "node2": { "ssh": 10222 },
++      "backuper1": { "ssh": 10322 },
++      "dns-primary": { "ssh": 10422 },
++      "dns-secondary": { "ssh": 10522 }
++    }
++  },
++  "resolver": {
++    "mode": "cluster",
++    "upstreamNameservers": ["172.16.9.90", "172.19.9.90"]
++  },
++  "plugins": {
++    "enabled": "all"
++  },
++  "services": {
++    "ip": "172.16.106.53",
++    "name": "vpsadmin-services",
++    "memoryMiB": 4096,
++    "cpus": 4,
++    "rootDiskMiB": 12288
++  },
++  "nodectld": {
++    "zfsTransferStartDelay": 0
++  },
++  "nodes": {
++    "node1": {
++      "id": 101,
++      "name": "node1",
++      "ip": "172.16.106.41",
++      "role": "node",
++      "location": "praha",
++      "maxVps": 30,
++      "cpus": 4,
++      "memoryMiB": 4096,
++      "tankDiskGiB": 320,
++      "swapMiB": 0,
++      "sshPort": 10122
++    },
++    "node2": {
++      "id": 102,
++      "name": "node1",
++      "ip": "172.16.106.42",
++      "role": "node",
++      "location": "playground",
++      "maxVps": 30,
++      "cpus": 4,
++      "memoryMiB": 4096,
++      "tankDiskGiB": 320,
++      "swapMiB": 0,
++      "sshPort": 10222
++    },
++    "backuper1": {
++      "id": 201,
++      "name": "backuper1",
++      "ip": "172.16.106.45",
++      "role": "storage",
++      "location": "praha-storage",
++      "maxVps": 0,
++      "cpus": 4,
++      "memoryMiB": 2048,
++      "tankDiskGiB": 320,
++      "swapMiB": 0,
++      "sshPort": 10322
++    }
++  },
++  "topologies": {
++    "single": ["node1"],
++    "dual": ["node1", "node2"],
++    "storage": ["node1", "node2", "backuper1"],
++    "screenshots": ["node1", "node2", "backuper1"]
++  },
++  "mail": {
++    "capture": {
++      "enable": true,
++      "smtpPort": 1025,
++      "webPort": 8025,
++      "webAuth": {
++        "enable": true,
++        "username": "mailpit",
++        "password": "mailpitPassword"
++      }
++    }
++  },
++  "telegram": {
++    "receiveMode": "polling",
++    "webhookPath": "/_telegram/webhook",
++    "webhookPort": 9293
++  },
++  "sms": {
++    "enable": false,
++    "port": 9876,
++    "inbound": {
++      "enable": false,
++      "webhooks": []
++    }
++  },
++  "adminer": {
++    "port": 18081,
++    "webAuth": {
++      "enable": true,
++      "username": "adminer",
++      "password": "adminerPassword"
++    }
++  },
++  "web": {
++    "environmentId": 1
++  },
++  "dns": {
++    "enable": false,
++    "servers": {
++      "dns-primary": {
++        "id": 301,
++        "name": "dev-dns-primary",
++        "serverName": "ns-hidden.example.test",
++        "ip": "172.16.106.61",
++        "hidden": true,
++        "enableUserDnsZones": true,
++        "userDnsZoneType": "primary_type",
++        "cpus": 1,
++        "memoryMiB": 1024,
++        "sshPort": 10422
++      },
++      "dns-secondary": {
++        "id": 302,
++        "name": "dev-dns-secondary",
++        "serverName": "ns-public.example.test",
++        "ip": "172.16.106.62",
++        "hidden": false,
++        "enableUserDnsZones": true,
++        "userDnsZoneType": "secondary_type",
++        "cpus": 1,
++        "memoryMiB": 1024,
++        "sshPort": 10522
++      }
++    }
++  },
++  "seed": {
++    "defaultVpsResources": {
++      "cpu": 1,
++      "memory": 1024,
++      "swap": 512,
++      "diskspace": 4096
++    },
++    "userResources": {
++      "cpu": 16,
++      "memory": 65536,
++      "swap": 32768,
++      "diskspace": 1048576,
++      "ipv4": 32,
++      "ipv4_private": 256
++    },
++    "mailRecipients": [
++      {
++        "label": "Dev admins",
++        "to": "dev-admin@example.test",
++        "templates": ["daily_report"]
++      }
++    ],
++    "users": [
++      {
++        "login": "test-user1",
++        "password": "testUser1Password",
++        "fullName": "Test User One",
++        "email": "test-user1@example.test",
++        "smsNotificationsEnabled": true,
++        "level": 1,
++        "namespace": {
++          "blockStart": 9,
++          "blockCount": 8
++        },
++        "maxVpsCount": 5
++      },
++      {
++        "login": "test-user2",
++        "password": "testUser2Password",
++        "fullName": "Test User Two",
++        "email": "test-user2@example.test",
++        "smsNotificationsEnabled": true,
++        "level": 1,
++        "namespace": {
++          "blockStart": 17,
++          "blockCount": 8
++        },
++        "maxVpsCount": 5
++      }
++    ],
++    "pools": {
++      "label": "tank",
++      "filesystem": "tank/ct",
++      "role": "hypervisor",
++      "maxDatasets": 1024,
++      "totalSpaceMiB": 20971520,
++      "availableSpaceMiB": 16777216,
++      "usedSpaceMiB": 4194304
++    },
++    "networks": [
++      {
++        "label": "Dev public IPv4",
++        "address": "198.51.100.0",
++        "prefix": 24,
++        "ipVersion": 4,
++        "role": "public_access",
++        "managed": true,
++        "splitAccess": "no_access",
++        "splitPrefix": 32,
++        "purpose": "any",
++        "autopick": true,
++        "userpick": true,
++        "reverseZone": true,
++        "addresses": [
++          "198.51.100.10",
++          "198.51.100.11",
++          "198.51.100.12",
++          "198.51.100.13",
++          "198.51.100.14",
++          "198.51.100.15",
++          "198.51.100.16",
++          "198.51.100.17",
++          "198.51.100.18",
++          "198.51.100.19"
++        ]
++      },
++      {
++        "label": "Dev public IPv6",
++        "address": "2001:db8:106::",
++        "prefix": 64,
++        "ipVersion": 6,
++        "role": "public_access",
++        "managed": true,
++        "splitAccess": "no_access",
++        "splitPrefix": 128,
++        "purpose": "any",
++        "autopick": true,
++        "userpick": true,
++        "reverseZone": false,
++        "addresses": [
++          "2001:db8:106::10",
++          "2001:db8:106::11",
++          "2001:db8:106::12",
++          "2001:db8:106::13",
++          "2001:db8:106::14",
++          "2001:db8:106::15",
++          "2001:db8:106::16",
++          "2001:db8:106::17",
++          "2001:db8:106::18",
++          "2001:db8:106::19"
++        ]
++      },
++      {
++        "label": "Dev private IPv4",
++        "address": "10.106.0.0",
++        "prefix": 24,
++        "ipVersion": 4,
++        "role": "private_access",
++        "managed": true,
++        "splitAccess": "no_access",
++        "splitPrefix": 32,
++        "purpose": "vps",
++        "autopick": true,
++        "userpick": true,
++        "reverseZone": true,
++        "addresses": [
++          "10.106.0.10",
++          "10.106.0.11",
++          "10.106.0.12",
++          "10.106.0.13",
++          "10.106.0.14",
++          "10.106.0.15",
++          "10.106.0.16",
++          "10.106.0.17",
++          "10.106.0.18",
++          "10.106.0.19"
++        ]
++      }
++    ]
++  }
++}
+diff --git a/test/kb_cli_test.rb b/test/kb_cli_test.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..17445c362b93d8197d3fedd85a6cb8a286d7a5d7
+--- /dev/null
++++ b/test/kb_cli_test.rb
+@@ -0,0 +1,207 @@
++# frozen_string_literal: true
++
++require 'minitest/autorun'
++require 'tmpdir'
++require 'timeout'
++require 'stringio'
++require 'rbconfig'
++require_relative '../dev-clusters/kb/lib/cli'
++
++# CLI/session/adapter/fixed-child composition. The portable snapshot fixture is
++# explicit; actual selected K reader behavior is covered by kb_portable_test.
++class KbCliTest < Minitest::Test
++  class Snapshot
++    attr_reader :revision, :canonical_bytes
++
++    def initialize(binding, guards, descriptor)
++      @binding, @guards = binding, guards
++      @revision = 'b' * 40
++      @canonical_bytes = JSON.generate(descriptor) + "\n"
++    end
++
++    def canonical
++      @binding.read
++      [canonical_bytes, JSON.parse(canonical_bytes)]
++    end
++
++    def inventory
++      @binding.read
++      @guards.adapter { raise 'recursive adapter lock reached' }
++    rescue DevClusters::Kb::Busy
++      { 'schema' => 1, 'paths' => [@binding.cluster_directory, @binding.record_directory] }
++    end
++
++    def transition_adopt
++      @binding.read
++      true
++    end
++  end
++
++  def with_cli
++    Dir.mktmpdir('kb-public-cli-') do |workspace|
++      slug = 'session'
++      binding = DevClusters::Kb::Binding.new(workspace:, slug:)
++      FileUtils.mkdir_p(File.join(workspace, 'work', slug))
++      File.write(File.join(workspace, 'work', slug, 'state.md'), "---\nlifecycle: active\n---\n")
++      locks = File.join(workspace, 'worktrees', '.locks')
++      FileUtils.mkdir_p(locks)
++      lock = File.join(locks, slug + '.lock')
++      File.open(lock, File::WRONLY | File::CREAT | File::EXCL, 0o600) {}
++      log = File.join(workspace, 'engine-commands.jsonl')
++      descriptor = { 'schema' => 1, 'kind' => 'vpsfree-kb-connection', 'instance_id' => SecureRandom.uuid,
++        'run_id' => SecureRandom.uuid, 'artifact_id' => SecureRandom.uuid, 'artifact_sha256' => 'a' * 64,
++        'services' => {}, 'control' => { 'argv' => ['/selected/portable-engine', 'capture-lease', slug] } }
++      canonical_sha = Digest::SHA256.hexdigest(JSON.generate(descriptor) + "\n")
++      engine = File.join(workspace, 'fixed-engine')
++      File.write(engine, <<~RUBY)
++        #!#{RbConfig.ruby}
++        require 'json'
++        File.open(#{log.inspect}, 'a') { |file| file.puts(JSON.generate(ARGV)) }
++        root, command, slug = ARGV[1, 3]
++        cluster = File.join(root, 'clusters', slug)
++        case command
++        when 'start'
++          Dir.mkdir(File.join(root, 'clusters'), 0700) unless File.directory?(File.join(root, 'clusters'))
++          Dir.mkdir(cluster, 0700)
++          print "started\n"
++        when 'status'
++          puts JSON.generate('schema' => 2, 'found' => true, 'state' => 'stopped', 'ready' => false)
++        when 'capture-lease'
++          options = ARGV.drop(4).each_slice(2).to_h
++          abort 'wrong canonical digest' unless options['--descriptor-sha256'] == #{canonical_sha.inspect}
++          identity = #{descriptor.slice(*DevClusters::Kb::Connection::IDENTITY_FIELDS).inspect}
++          puts JSON.generate(identity.merge('schema' => 1, 'descriptor_sha256' => #{canonical_sha.inspect}))
++          STDOUT.flush
++          STDIN.read
++        when 'reset'
++          Dir.rmdir(cluster)
++        else
++          print command + "\n"
++        end
++      RUBY
++      File.chmod(0o755, engine)
++      environment = { 'DEVCLUSTER_WORKSPACE' => workspace, 'DEV_WORKSPACE_NAME' => 'example',
++        'HOME' => workspace, 'XDG_RUNTIME_DIR' => File.join(workspace, 'runtime'),
++        'DEVCLUSTER_RUNTIME_CONTRACT' => ENV.fetch('DEVCLUSTER_RUNTIME_CONTRACT'),
++        'VPSFREE_KB_ENGINE_METADATA' => '/selected/metadata', 'VPSFREE_KB_ENGINE' => engine,
++        'VPSFREE_KB_DEFAULT_CONFIG' => '/selected/default-config.json' }
++      guards = DevClusters::Kb::Guards.new(binding:, contract: JSON.parse(File.read(environment['DEVCLUSTER_RUNTIME_CONTRACT'])), environment:)
++      snapshot = Snapshot.new(binding, guards, descriptor)
++      DevClusters::Kb::Portable.stub(:new, snapshot) do
++        yield binding, guards, snapshot, environment, log, lock
++      end
++    end
++  end
++
++  def run_cli(environment, *argv)
++    output, error = StringIO.new, StringIO.new
++    result = DevClusters::Kb::CLI.run(argv, environment:, output:, error:)
++    [result, output.string, error.string]
++  end
++
++  def commands(path)
++    File.exist?(path) ? File.readlines(path).map { |line| JSON.parse(line) } : []
++  end
++
++  def test_help_and_absent_inventory_status_do_not_initialize_state
++    output = StringIO.new
++    assert_equal(0, DevClusters::Kb::CLI.run(['--help'], environment: {}, output:))
++    assert_match(/^Usage:/, output.string)
++    with_cli do |binding, _guards, _snapshot, environment, log, _lock|
++      %w[status cleanup-paths].each do |command|
++        result, output, error = run_cli(environment, command, 'session')
++        assert_equal(0, result, error)
++        value = JSON.parse(output)
++        assert_equal(command == 'status' ? false : [], value.fetch(command == 'status' ? 'found' : 'paths'))
++        refute(File.exist?(binding.state_root))
++      end
++      assert_empty(commands(log))
++    end
++  end
++
++  def test_start_binds_creation_provenance_and_forwards_only_scoped_options_to_fixed_cli
++    with_cli do |binding, _guards, snapshot, environment, log, _lock|
++      result, output, error = run_cli(environment, 'start', 'session', '--network', 'local', '--topology', 'single')
++      assert_equal(0, result, error)
++      assert_equal("started\n", output)
++      assert_equal(snapshot.revision, binding.read['engine_revision'])
++      assert_equal(['--state-root', binding.state_root, 'start', 'session', '--network', 'local', '--topology', 'single', '--config', '/selected/default-config.json'], commands(log).last)
++      %w[--state-root --software-metadata --workspace].each do |flag|
++        count = commands(log).size
++        assert_equal(1, run_cli(environment, 'update', 'session', flag, '/unselected').first)
++        assert_equal(count, commands(log).size)
++      end
++      result, _output, error = run_cli(environment, 'update', 'session', '--config', '/explicit/config.json', '--timeout', '90')
++      assert_equal(0, result, error)
++      assert_equal(['--state-root', binding.state_root, 'update', 'session', '--config', '/explicit/config.json', '--timeout', '90'], commands(log).last)
++    end
++  end
++
++  def test_inventory_precedes_reset_without_recursive_session_lock_and_keeps_creation_binding
++    with_cli do |binding, _guards, _snapshot, environment, log, lock|
++      assert_equal(0, run_cli(environment, 'start', 'session').first)
++      original = File.binread(binding.path)
++      File.open(lock, 'r+') do |owner|
++        owner.flock(File::LOCK_EX)
++        result, output, error = run_cli(environment, 'cleanup-paths', 'session')
++        assert_equal(0, result, error)
++        assert_equal([binding.cluster_directory, binding.record_directory], JSON.parse(output)['paths'])
++        assert_equal(original, File.binread(binding.path))
++        assert_equal(['start'], commands(log).map { |argv| argv[2] })
++        lifecycle = environment.merge('DEV_SESSION_LIFECYCLE_OPERATION' => 'removal',
++          'DEV_SESSION_LIFECYCLE_LOCK_FD' => owner.fileno.to_s, 'DEV_SESSION_LIFECYCLE_LOCK_PATH' => lock)
++        journal = File.join(binding.workspace, 'worktrees', '.locks', 'session.removal.json')
++        File.open(journal, File::WRONLY | File::CREAT | File::EXCL, 0o600) { |file| file.write('{}') }
++        assert_equal(0, run_cli(lifecycle, 'reset', 'session').first)
++        refute(File.exist?(binding.cluster_directory))
++        refute(File.exist?(binding.record_directory))
++        assert_equal(%w[start stop reset], commands(log).map { |argv| argv[2] })
++      end
++    end
++  end
++
++  def test_session_mutation_and_pending_lifecycle_refuse_before_engine_invocation
++    with_cli do |binding, _guards, _snapshot, environment, log, lock|
++      File.open(lock, 'r+') do |owner|
++        owner.flock(File::LOCK_EX)
++        assert_equal(75, run_cli(environment, 'start', 'session').first)
++      end
++      journal = File.join(binding.workspace, 'worktrees', '.locks', 'session.archive.json')
++      File.open(journal, File::WRONLY | File::CREAT | File::EXCL, 0o600) { |file| file.write('{}') }
++      assert_equal(1, run_cli(environment, 'start', 'session').first)
++      assert_empty(commands(log))
++      refute(File.exist?(binding.path))
++    end
++  end
++
++  def test_public_managed_connection_and_full_lease_translate_only_current_digest
++    with_cli do |binding, _guards, snapshot, environment, log, _lock|
++      assert_equal(0, run_cli(environment, 'start', 'session').first)
++      result, bytes, error = run_cli(environment, 'connection', 'session')
++      assert_equal(0, result, error)
++      value = JSON.parse(bytes)
++      assert_equal([File.join(binding.workspace, 'bin/kb-devcluster'), '--workspace', 'example', 'capture-lease', 'session'], value['control']['argv'])
++      assert_equal(JSON.parse(snapshot.canonical_bytes).reject { |k, _v| k == 'control' }, value.reject { |k, _v| k == 'control' })
++      assert_equal(bytes, File.binread(File.join(binding.record_directory, 'connection.json')))
++      request = value.slice(*DevClusters::Kb::Connection::IDENTITY_FIELDS).merge('descriptor_sha256' => Digest::SHA256.hexdigest(bytes))
++      caller_input, peer_input = IO.pipe
++      peer_output, caller_output = IO.pipe
++      errors = StringIO.new
++      flags = request.flat_map { |key, entry| ["--#{key.tr('_', '-')}", entry] }
++      thread = Thread.new { DevClusters::Kb::CLI.run(['capture-lease', 'session', *flags], environment:, input: caller_input, output: caller_output, error: errors) }
++      readiness = JSON.parse(Timeout.timeout(5) { peer_output.gets })
++      assert_equal(request.merge('schema' => 1), readiness)
++      refute_equal(Digest::SHA256.hexdigest(snapshot.canonical_bytes), readiness['descriptor_sha256'])
++      assert(thread.alive?)
++      peer_input.close
++      assert_equal(0, Timeout.timeout(7) { thread.value }, errors.string)
++      assert_equal('', peer_output.read)
++      assert_equal(Digest::SHA256.hexdigest(snapshot.canonical_bytes), commands(log).last.last)
++      assert_equal(1, run_cli(environment, 'capture-lease', 'session', *flags.map { |entry| entry == request['descriptor_sha256'] ? 'stale' : entry }).first)
++      assert_equal(1, commands(log).count { |argv| argv[2] == 'capture-lease' })
++    ensure
++      [caller_input, peer_input, peer_output, caller_output].compact.each { |stream| stream.close unless stream.closed? }
++      raise 'CLI lease thread did not reap its fixed child' if thread && !thread.join(7)
++    end
++  end
++end
+diff --git a/test/kb_connection_test.rb b/test/kb_connection_test.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..f7dd065c1c13aa683e9570bb623e626f07ea07fd
+--- /dev/null
++++ b/test/kb_connection_test.rb
+@@ -0,0 +1,65 @@
++# frozen_string_literal: true
++
++require 'minitest/autorun'
++require_relative '../dev-clusters/kb/lib/connection'
++
++class KbConnectionTest < Minitest::Test
++  def descriptor
++    { 'schema' => 1, 'kind' => 'vpsfree-kb-connection',
++      'instance_id' => 'instance', 'run_id' => 'run', 'artifact_id' => 'artifact', 'artifact_sha256' => 'a' * 64,
++      'services' => { 'webui' => { 'url' => 'https://webui.example.test/', 'connect_host' => '127.0.0.1', 'connect_port' => 28443 } },
++      'machines' => { 'services' => { 'host' => '127.0.0.1', 'port' => 28022, 'private_key' => '/private/key', 'known_hosts' => '/private/known-hosts' } },
++      'provenance' => { 'source' => { 'revision' => 'b' * 40 } },
++      'control' => { 'argv' => ['/selected/engine', 'capture-lease', 'session'] } }
++  end
++
++  def public_argv
++    ['/home/test/bin/kb-devcluster', '--workspace', 'example', 'capture-lease', 'session']
++  end
++
++  def test_changes_only_public_control_and_keeps_exact_canonical_byte_digest
++    canonical = JSON.pretty_generate(descriptor) + "\n"
++    connection = DevClusters::Kb::Connection.new(canonical_bytes: canonical, public_argv:)
++    managed = JSON.parse(connection.bytes)
++    assert_equal(descriptor.reject { |key, _value| key == 'control' }, managed.reject { |key, _value| key == 'control' })
++    assert_equal({ 'argv' => public_argv }, managed.fetch('control'))
++    assert_equal(Digest::SHA256.hexdigest(canonical), connection.canonical_sha256)
++    assert_equal(Digest::SHA256.hexdigest(connection.bytes), connection.managed_sha256)
++    refute_equal(connection.canonical_sha256, connection.managed_sha256)
++    assert_equal(['/selected/engine', 'capture-lease', 'session'], connection.value.fetch('control').fetch('argv'))
++    reordered = descriptor.to_a.reverse.to_h
++    again = DevClusters::Kb::Connection.new(canonical_bytes: JSON.generate(reordered), public_argv:)
++    assert_equal(connection.bytes, again.bytes)
++    refute_equal(connection.canonical_sha256, again.canonical_sha256)
++  end
++
++  def test_request_matches_current_managed_identity_and_never_substitutes_canonical_digest
++    connection = DevClusters::Kb::Connection.new(canonical_bytes: JSON.generate(descriptor), public_argv:)
++    request = descriptor.slice(*DevClusters::Kb::Connection::IDENTITY_FIELDS).merge('descriptor_sha256' => connection.managed_sha256)
++    connection.require_request!(request)
++    %w[instance_id run_id artifact_id artifact_sha256 descriptor_sha256].each do |key|
++      assert_raises(DevClusters::Kb::Error) { connection.require_request!(request.merge(key => 'stale')) }
++    end
++    assert_raises(DevClusters::Kb::Error) do
++      connection.require_request!(request.merge('descriptor_sha256' => connection.canonical_sha256))
++    end
++    assert_equal(connection.canonical_sha256, connection.lease_arguments.last)
++    refute_includes(connection.lease_arguments, connection.managed_sha256)
++    assert_equal(connection.canonical_sha256, connection.canonical_readiness.fetch('descriptor_sha256'))
++  end
++
++  def test_current_source_artifact_endpoint_or_binding_selection_changes_invalidate_managed_digest
++    original = DevClusters::Kb::Connection.new(canonical_bytes: JSON.generate(descriptor), public_argv:)
++    candidates = [
++      descriptor.merge('artifact_id' => 'replacement'),
++      descriptor.merge('provenance' => { 'source' => { 'revision' => 'c' * 40 } }),
++      descriptor.merge('services' => { 'webui' => { 'url' => 'https://other.example.test/', 'connect_host' => '127.0.0.1', 'connect_port' => 28444 } })
++    ]
++    candidates.each do |value|
++      changed = DevClusters::Kb::Connection.new(canonical_bytes: JSON.generate(value), public_argv:)
++      refute_equal(original.managed_sha256, changed.managed_sha256)
++    end
++    changed_binding = DevClusters::Kb::Connection.new(canonical_bytes: JSON.generate(descriptor), public_argv: [public_argv.first, '--workspace', 'other', 'capture-lease', 'session'])
++    refute_equal(original.managed_sha256, changed_binding.managed_sha256)
++  end
++end
+diff --git a/test/kb_devcluster_test.rb b/test/kb_devcluster_test.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..80f938e05c0b041d09f7715741a76ee44dc5b999
+--- /dev/null
++++ b/test/kb_devcluster_test.rb
+@@ -0,0 +1,134 @@
++# frozen_string_literal: true
++
++require 'minitest/autorun'
++require 'tmpdir'
++require_relative '../dev-clusters/kb/lib/managed'
++require_relative '../dev-clusters/kb/lib/provider'
++
++class KbDevclusterTest < Minitest::Test
++  def test_binding_keeps_workspace_meaning_outside_the_portable_cluster_tree
++    Dir.mktmpdir do |workspace|
++      binding = DevClusters::Kb::Binding.new(workspace:, slug: 'same-session')
++      value = binding.create(engine_revision: 'a' * 40)
++      assert_equal(File.join(workspace, '.dev-clusters', 'kb'), binding.state_root)
++      assert_equal(workspace, value.fetch('workspace'))
++      assert_equal('kb', value.fetch('provider'))
++      assert_equal(2, value.fetch('portable_schema'))
++      refute(File.exist?(binding.cluster_directory), 'only K initializes its portable cluster directory')
++      assert_equal(0o600, File.stat(binding.path).mode & 0o777)
++      assert_equal(0o700, File.stat(File.dirname(binding.path)).mode & 0o777)
++      assert_equal(value, binding.read)
++    end
++  end
++
++  def test_a_copied_binding_cannot_select_another_workspace_or_session
++    Dir.mktmpdir do |directory|
++      workspaces = %w[first second].map { |name| File.join(directory, name) }
++      workspaces.each { |path| Dir.mkdir(path) }
++      bindings = workspaces.map { |workspace| DevClusters::Kb::Binding.new(workspace:, slug: 'same-session') }
++      bindings.each { |binding| binding.create(engine_revision: 'a' * 40) }
++      FileUtils.cp(bindings.first.path, bindings.last.path)
++      assert_raises(DevClusters::Kb::Error) { bindings.last.read }
++      other_session = DevClusters::Kb::Binding.new(workspace: workspaces.first, slug: 'other-session')
++      other_session.create(engine_revision: 'a' * 40)
++      FileUtils.cp(bindings.first.path, other_session.path)
++      assert_raises(DevClusters::Kb::Error) { other_session.read }
++      assert_equal('same-session', bindings.first.read.fetch('slug'))
++    end
++  end
++
++  def test_existing_unbound_portable_or_legacy_state_is_not_adopted
++    Dir.mktmpdir do |workspace|
++      binding = DevClusters::Kb::Binding.new(workspace:, slug: 'session')
++      FileUtils.mkdir_p(binding.cluster_directory)
++      sentinel = File.join(binding.cluster_directory, 'sentinel')
++      File.write(sentinel, 'keep')
++      assert_raises(DevClusters::Kb::Error) { binding.create(engine_revision: 'a' * 40) }
++      assert_equal('keep', File.read(sentinel))
++      refute(File.exist?(binding.path))
++    end
++  end
++
++  def test_read_only_binding_lookup_does_not_initialize_missing_state
++    Dir.mktmpdir do |workspace|
++      binding = DevClusters::Kb::Binding.new(workspace:, slug: 'session')
++      assert_raises(DevClusters::Kb::Error) { binding.read }
++      refute(File.exist?(binding.state_root))
++    end
++  end
++
++  def test_binding_rejects_unsupported_schema_and_private_path_mistakes
++    Dir.mktmpdir do |workspace|
++      binding = DevClusters::Kb::Binding.new(workspace:, slug: 'session')
++      original = binding.create(engine_revision: 'a' * 40)
++      File.write(binding.path, JSON.generate(original.merge('portable_schema' => 3)))
++      assert_raises(DevClusters::Kb::Error) { binding.read }
++      File.write(binding.path, JSON.generate(original))
++      File.chmod(0o644, binding.path)
++      assert_raises(DevClusters::Kb::Error) { binding.read }
++      File.chmod(0o600, binding.path)
++      File.rename(binding.path, binding.path + '.retained')
++      File.symlink(binding.path + '.retained', binding.path)
++      assert_raises(DevClusters::Kb::Error) { binding.read }
++      assert_equal(original, JSON.parse(File.read(binding.path + '.retained')))
++    end
++  end
++
++  def test_status_translates_portable_phases_without_claiming_failed_update_readiness
++    Dir.mktmpdir do |workspace|
++      binding = DevClusters::Kb::Binding.new(workspace:, slug: 'session')
++      binding.create(engine_revision: 'a' * 40)
++      response = File.join(workspace, 'engine-status.json')
++      arguments = File.join(workspace, 'engine-arguments.json')
++      engine = File.join(workspace, 'engine')
++      File.write(engine, <<~RUBY)
++        #!#{RbConfig.ruby}
++        require 'json'
++        File.write(#{arguments.inspect}, JSON.generate(ARGV))
++        print File.read(#{response.inspect})
++      RUBY
++      File.chmod(0o755, engine)
++      provider = DevClusters::Kb::Provider.new(binding:, engine:)
++      {
++        'ready' => ['running', true], 'stopped' => ['stopped', false],
++        'updating' => ['stale', false], 'failed' => ['stale', false]
++      }.each do |phase, (state, ready)|
++        File.write(response, JSON.generate('schema' => 2, 'found' => true, 'state' => phase, 'ready' => ready))
++        status = provider.status
++        assert_equal(state, status.fetch('state'))
++        assert_equal(ready, status.fetch('ready'))
++        assert_equal([], status.fetch('services'))
++        assert_equal('kb', status.fetch('kind'))
++      end
++      assert_equal(['--state-root', binding.state_root, 'status', 'session', '--json'], JSON.parse(File.read(arguments)))
++    end
++  end
++
++  def test_missing_status_is_read_only_and_existing_unbound_state_is_refused
++    Dir.mktmpdir do |workspace|
++      binding = DevClusters::Kb::Binding.new(workspace:, slug: 'session')
++      engine = File.join(workspace, 'engine')
++      File.write(engine, "#!#{RbConfig.ruby}\nabort 'unexpected engine invocation'\n")
++      File.chmod(0o755, engine)
++      provider = DevClusters::Kb::Provider.new(binding:, engine:)
++      assert_equal({ 'schema' => 2, 'kind' => 'kb', 'found' => false }, provider.status)
++      refute(File.exist?(binding.state_root))
++      FileUtils.mkdir_p(binding.cluster_directory)
++      assert_raises(DevClusters::Kb::Error) { provider.status }
++      assert(File.directory?(binding.cluster_directory))
++    end
++  end
++
++  def test_busy_engine_status_preserves_portal_busy_contract
++    Dir.mktmpdir do |workspace|
++      binding = DevClusters::Kb::Binding.new(workspace:, slug: 'session')
++      binding.create(engine_revision: 'a' * 40)
++      engine = File.join(workspace, 'engine')
++      File.write(engine, "#!#{RbConfig.ruby}\nexit 75\n")
++      File.chmod(0o755, engine)
++      provider = DevClusters::Kb::Provider.new(binding:, engine:)
++      assert_raises(DevClusters::Kb::Busy) { provider.status }
++      assert_equal('a' * 40, binding.read.fetch('engine_revision'))
++    end
++  end
++end
+diff --git a/test/kb_guards_test.rb b/test/kb_guards_test.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..190864b320b785227e2a4f54d23e06cb69ce3568
+--- /dev/null
++++ b/test/kb_guards_test.rb
+@@ -0,0 +1,79 @@
++# frozen_string_literal: true
++
++require 'minitest/autorun'
++require 'tmpdir'
++require_relative '../dev-clusters/kb/lib/guards'
++
++class KbGuardsTest < Minitest::Test
++  def contract
++    JSON.parse(File.read(ENV.fetch('DEVCLUSTER_RUNTIME_CONTRACT')))
++  end
++
++  def with_guard
++    Dir.mktmpdir('kb-guards-') do |workspace|
++      binding = DevClusters::Kb::Binding.new(workspace:, slug: 'session')
++      FileUtils.mkdir_p(File.join(workspace, 'work', 'session'))
++      File.write(File.join(workspace, 'work', 'session', 'state.md'), "---\nlifecycle: active\n---\n")
++      FileUtils.mkdir_p(File.join(workspace, 'worktrees', '.locks'))
++      lock = File.join(workspace, 'worktrees', '.locks', 'session.lock')
++      File.open(lock, File::WRONLY | File::CREAT | File::EXCL, 0o600) {}
++      environment = { 'DEV_WORKSPACE_NAME' => 'example', 'XDG_RUNTIME_DIR' => File.join(workspace, 'runtime') }
++      guards = DevClusters::Kb::Guards.new(binding:, contract:, environment:)
++      yield binding, guards, environment, lock
++    end
++  end
++
++  def test_active_session_and_lifecycle_journals_are_checked_before_mutation
++    with_guard do |binding, guards, _environment, _lock|
++      reached = false
++      guards.session('start') { reached = true }
++      assert(reached)
++      journal = File.join(binding.workspace, 'worktrees', '.locks', 'session.removal.json')
++      File.open(journal, File::WRONLY | File::CREAT | File::EXCL, 0o600) { |stream| stream.write('{}') }
++      assert_raises(DevClusters::Kb::Error) { guards.session('capture-lease') { flunk('lease reached with pending deletion') } }
++      File.unlink(journal)
++      File.write(File.join(binding.workspace, 'work', 'session', 'state.md'), "---\nlifecycle: complete\n---\n")
++      assert_raises(DevClusters::Kb::Error) { guards.session('start') { flunk('inactive session started') } }
++    end
++  end
++
++  def test_session_guard_refuses_a_held_mutation_lock_without_waiting
++    with_guard do |_binding, guards, _environment, lock|
++      File.open(lock, 'r+') do |owner|
++        owner.flock(File::LOCK_EX)
++        assert_raises(DevClusters::Kb::Busy) { guards.session('start') { flunk('crossed session exclusion') } }
++      end
++    end
++  end
++
++  def test_adapter_read_is_noncreating_and_busy_read_preserves_files
++    with_guard do |binding, guards, _environment, _lock|
++      before = Dir.glob(File.join(binding.workspace, '**', '*'), File::FNM_DOTMATCH).sort
++      assert_raises(DevClusters::Kb::Error) { guards.adapter { flunk('absent adapter lock was created') } }
++      assert_equal(before, Dir.glob(File.join(binding.workspace, '**', '*'), File::FNM_DOTMATCH).sort)
++      guards.adapter(create: true) do
++        another = DevClusters::Kb::Guards.new(binding:, contract:, environment: { 'DEV_WORKSPACE_NAME' => 'example' })
++        assert_raises(DevClusters::Kb::Busy) { another.adapter { flunk('crossed adapter exclusion') } }
++      end
++      guards.adapter { assert(File.exist?(File.join(binding.workspace, '.dev-clusters', '.locks', 'kb-session.lock'))) }
++    end
++  end
++
++  def test_lifecycle_reset_reuses_only_exact_exclusive_inherited_session_descriptor
++    with_guard do |binding, guards, environment, lock|
++      File.open(lock, 'r+') do |owner|
++        owner.flock(File::LOCK_EX)
++        environment.merge!('DEV_SESSION_LIFECYCLE_OPERATION' => 'removal',
++                           'DEV_SESSION_LIFECYCLE_LOCK_FD' => owner.fileno.to_s, 'DEV_SESSION_LIFECYCLE_LOCK_PATH' => lock)
++        journal = File.join(binding.workspace, 'worktrees', '.locks', 'session.removal.json')
++        File.open(journal, File::WRONLY | File::CREAT | File::EXCL, 0o600) { |stream| stream.write('{}') }
++        reached = false
++        guards.session('reset') { reached = true }
++        assert(reached)
++        assert_raises(DevClusters::Kb::Error) { guards.session('start') { flunk('inherited lifecycle lock permitted start') } }
++        environment['DEV_SESSION_LIFECYCLE_LOCK_PATH'] = File.join(binding.workspace, 'foreign.lock')
++        assert_raises(DevClusters::Kb::Error) { guards.session('reset') { flunk('foreign inherited lock accepted') } }
++      end
++    end
++  end
++end
+diff --git a/test/kb_lease_test.rb b/test/kb_lease_test.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..241309400bd5380a8d29ce52f2aa24da3c7191ba
+--- /dev/null
++++ b/test/kb_lease_test.rb
+@@ -0,0 +1,279 @@
++# frozen_string_literal: true
++
++require 'minitest/autorun'
++require 'tmpdir'
++require 'timeout'
++require 'stringio'
++require 'rbconfig'
++require_relative '../dev-clusters/kb/lib/lease'
++
++class KbLeaseTest < Minitest::Test
++  def teardown
++    Array(@lease_threads).each do |thread|
++      raise 'lease fixture did not finish owned-child cleanup' unless thread.join(7)
++    end
++  end
++
++  def canonical
++    { 'schema' => 1, 'instance_id' => 'instance', 'run_id' => 'run', 'artifact_id' => 'artifact',
++      'artifact_sha256' => 'a' * 64, 'descriptor_sha256' => 'c' * 64 }
++  end
++
++  def with_engine(mode)
++    Dir.mktmpdir('kb-lease-test-') do |directory|
++      executable = File.join(directory, 'engine')
++      pid_path = File.join(directory, 'pid')
++      cleanup_path = File.join(directory, 'cleanup')
++      release_path = File.join(directory, 'cleanup-release')
++      fd_path = File.join(directory, 'fds.json')
++      File.write(executable, <<~RUBY)
++        #!#{RbConfig.ruby}
++        require 'json'
++        File.write(#{pid_path.inspect}, Process.pid.to_s)
++        File.write(#{fd_path.inspect}, JSON.generate(Dir.glob('/proc/self/fd/*').filter_map { |path| File.readlink(path) rescue nil }))
++        readiness = #{canonical.inspect}
++        mode = #{mode.inspect}
++        if mode == 'stderr-eof'
++          STDERR.reopen(File::NULL, 'w')
++          STDERR.close
++        end
++        unless mode == 'before-eof'
++          readiness['descriptor_sha256'] = 'wrong' if mode == 'wrong-digest'
++          readiness['extra'] = true if mode == 'extra-field'
++          STDOUT.write(mode == 'malformed' ? "{invalid}\n" : JSON.generate(readiness) + "\n")
++          STDOUT.write("extra\n") if mode == 'extra-output'
++          STDOUT.flush
++        end
++        if %w[before-eof ready-eof].include?(mode)
++          STDOUT.reopen(File::NULL, 'w')
++          STDOUT.close
++        end
++        STDIN.read
++        File.write(#{cleanup_path.inspect}, 'input ended')
++        sleep 0.01 until File.exist?(#{release_path.inspect}) if mode == 'ready-eof'
++      RUBY
++      File.chmod(0o755, executable)
++      yield executable, pid_path, cleanup_path, fd_path, directory
++    end
++  end
++
++  def pipes
++    caller_input, peer_input = IO.pipe
++    peer_output, caller_output = IO.pipe
++    yield caller_input, peer_input, peer_output, caller_output
++  ensure
++    [caller_input, peer_input, peer_output, caller_output].compact.each { |stream| stream.close unless stream.closed? }
++  end
++
++  def start_lease(engine, input, output)
++    result = Queue.new
++    thread = Thread.new do
++      lease = DevClusters::Kb::Lease.new(argv: [engine], canonical:, managed: 'm' * 64, input:, output:, error: StringIO.new)
++      begin
++        result << lease.run
++      rescue StandardError => error
++        result << error
++      end
++    end
++    (@lease_threads ||= []) << thread
++    [thread, result]
++  end
++
++  def wait_file(path)
++    Timeout.timeout(5) { sleep 0.01 until File.exist?(path) }
++  end
++
++  def assert_child_gone(path)
++    pid = Integer(File.read(path))
++    refute(File.exist?("/proc/#{pid}"), "owned lease child #{pid} remains")
++  end
++
++  def test_translates_only_canonical_digest_and_releases_after_peer_eof
++    with_engine('ready') do |engine, pid, cleanup, _fds, _directory|
++      pipes do |input, peer_input, peer_output, output|
++        thread, result = start_lease(engine, input, output)
++        readiness = Timeout.timeout(5) { JSON.parse(peer_output.gets) }
++        assert_equal(canonical.merge('descriptor_sha256' => 'm' * 64), readiness)
++        refute(File.exist?(cleanup))
++        peer_input.close
++        Timeout.timeout(5) { thread.join }
++        assert_equal(true, result.pop)
++        assert_equal('', peer_output.read)
++        assert_equal('input ended', File.read(cleanup))
++        assert_child_gone(pid)
++      end
++    end
++  end
++
++  def test_rejects_malformed_extra_or_noncanonical_readiness_without_publishing
++    %w[malformed extra-output extra-field wrong-digest].each do |mode|
++      with_engine(mode) do |engine, pid, _cleanup, _fds, _directory|
++        pipes do |input, _peer_input, peer_output, output|
++          thread, result = start_lease(engine, input, output)
++          assert_equal('', Timeout.timeout(5) { peer_output.read }, mode)
++          Timeout.timeout(5) { thread.join }
++          assert_instance_of(DevClusters::Kb::Error, result.pop, mode)
++          assert_child_gone(pid)
++        end
++      end
++    end
++  end
++
++  def test_stdout_eof_before_readiness_leaves_no_managed_lease_or_child
++    with_engine('before-eof') do |engine, pid, cleanup, _fds, _directory|
++      pipes do |input, _peer_input, peer_output, output|
++        thread, result = start_lease(engine, input, output)
++        assert_equal('', Timeout.timeout(5) { peer_output.read })
++        Timeout.timeout(5) { thread.join }
++        assert_instance_of(DevClusters::Kb::Error, result.pop)
++        assert_equal('input ended', File.read(cleanup))
++        assert_child_gone(pid)
++      end
++    end
++  end
++
++  def test_ready_stdout_eof_closes_protocol_before_child_cleanup_and_retains_guard
++    with_engine('ready-eof') do |engine, pid, cleanup, _fds, directory|
++      guard_path = File.join(directory, 'guard')
++      File.open(guard_path, 'w') {}
++      pipes do |input, _peer_input, peer_output, output|
++        result = Queue.new
++        thread = Thread.new do
++          File.open(guard_path, 'r+') do |guard|
++            guard.flock(File::LOCK_EX)
++            lease = DevClusters::Kb::Lease.new(argv: [engine], canonical:, managed: 'm' * 64, input:, output:, error: StringIO.new)
++            begin
++              result << lease.run
++            rescue StandardError => error
++              result << error
++            end
++          end
++        end
++        (@lease_threads ||= []) << thread
++        bytes = Timeout.timeout(5) { peer_output.read }
++        assert(bytes.empty? || JSON.parse(bytes) == canonical.merge('descriptor_sha256' => 'm' * 64))
++        wait_file(cleanup)
++        assert(File.exist?("/proc/#{Integer(File.read(pid))}"))
++        File.open(guard_path, 'r+') { |guard| refute(guard.flock(File::LOCK_EX | File::LOCK_NB)) }
++        File.write(File.join(directory, 'cleanup-release'), '')
++        Timeout.timeout(5) { thread.join }
++        assert_instance_of(DevClusters::Kb::Error, result.pop)
++        assert_child_gone(pid)
++        File.open(guard_path, 'r+') { |guard| assert(guard.flock(File::LOCK_EX | File::LOCK_NB)) }
++      end
++    end
++  end
++
++  def test_stderr_eof_alone_keeps_the_lease_usable
++    with_engine('stderr-eof') do |engine, pid, cleanup, _fds, _directory|
++      pipes do |input, peer_input, peer_output, output|
++        thread, result = start_lease(engine, input, output)
++        assert_equal('m' * 64, Timeout.timeout(5) { JSON.parse(peer_output.gets).fetch('descriptor_sha256') })
++        peer_input.write('peer remains live')
++        peer_input.flush
++        sleep 0.05
++        assert(thread.alive?)
++        refute(File.exist?(cleanup))
++        peer_input.close
++        Timeout.timeout(5) { thread.join }
++        assert_equal(true, result.pop)
++        assert_child_gone(pid)
++      end
++    end
++  end
++
++  def test_child_receives_mediated_pipes_without_peer_or_guard_descriptors
++    with_engine('ready') do |engine, pid, _cleanup, fds, directory|
++      guard_path = File.join(directory, 'generation-guard')
++      File.open(guard_path, 'w') {}
++      File.open(guard_path, 'r+') do |guard|
++        guard.close_on_exec = false
++        pipes do |input, peer_input, peer_output, output|
++          input.close_on_exec = false
++          output.close_on_exec = false
++          original = [input, output].map { |stream| File.readlink("/proc/self/fd/#{stream.fileno}") }
++          thread, result = start_lease(engine, input, output)
++          Timeout.timeout(5) { peer_output.gets }
++          inherited = JSON.parse(File.read(fds))
++          refute_includes(inherited, guard_path)
++          original.each { |target| refute_includes(inherited, target) }
++          peer_input.close
++          Timeout.timeout(5) { thread.join }
++          assert_equal(true, result.pop)
++          assert_child_gone(pid)
++        end
++      end
++    end
++  end
++
++  def test_default_stdout_subprocess_detaches_the_real_protocol_pipe
++    with_engine('ready-eof') do |engine, pid, cleanup, _fds, directory|
++      program = <<~RUBY
++        require #{File.expand_path('../dev-clusters/kb/lib/lease', __dir__).inspect}
++        begin
++          DevClusters::Kb::Lease.new(argv: [ARGV.fetch(0)], canonical: #{canonical.inspect}, managed: #{('m' * 64).inspect}).run
++        rescue DevClusters::Kb::Error
++          exit 1
++        end
++      RUBY
++      child_input, peer_input = IO.pipe
++      peer_output, child_output = IO.pipe
++      adapter = Process.spawn(RbConfig.ruby, '-e', program, engine, in: child_input, out: child_output, err: File::NULL, close_others: true)
++      child_input.close
++      child_output.close
++      Timeout.timeout(5) { peer_output.read }
++      wait_file(cleanup)
++      assert(File.exist?("/proc/#{Integer(File.read(pid))}"))
++      File.write(File.join(directory, 'cleanup-release'), '')
++      _owned, status = Timeout.timeout(5) { Process.waitpid2(adapter) }
++      adapter = nil
++      assert_equal(1, status.exitstatus)
++      assert_child_gone(pid)
++    ensure
++      [child_input, peer_input, peer_output, child_output].compact.each { |stream| stream.close unless stream.closed? }
++      if adapter
++        Process.kill('KILL', adapter)
++        Process.waitpid(adapter)
++      end
++    end
++  end
++
++  def test_abrupt_adapter_loss_ends_child_input_without_inheriting_caller_input
++    with_engine('ready') do |engine, pid, cleanup, _fds, _directory|
++      program = <<~RUBY
++        require #{File.expand_path('../dev-clusters/kb/lib/lease', __dir__).inspect}
++        DevClusters::Kb::Lease.new(argv: [ARGV.fetch(0)], canonical: #{canonical.inspect}, managed: #{('m' * 64).inspect}).run
++      RUBY
++      child_input, peer_input = IO.pipe
++      peer_output, child_output = IO.pipe
++      adapter = Process.spawn(RbConfig.ruby, '-e', program, engine, in: child_input, out: child_output, err: File::NULL, close_others: true)
++      child_input.close
++      child_output.close
++      Timeout.timeout(5) { peer_output.gets }
++      Process.kill('KILL', adapter)
++      Process.waitpid(adapter)
++      adapter = nil
++      assert_equal('', Timeout.timeout(5) { peer_output.read })
++      wait_file(cleanup)
++      Timeout.timeout(5) do
++        until process_exited?(Integer(File.read(pid)))
++          sleep 0.02
++        end
++      end
++      assert_equal('input ended', File.read(cleanup))
++    ensure
++      [child_input, peer_input, peer_output, child_output].compact.each { |stream| stream.close unless stream.closed? }
++      if adapter
++        Process.kill('KILL', adapter)
++        Process.waitpid(adapter)
++      end
++    end
++  end
++
++  def process_exited?(pid)
++    # Kernel EOF must finish the orphan even before its new parent reaps it.
++    File.read("/proc/#{pid}/stat").split[2] == 'Z'
++  rescue Errno::ENOENT
++    true
++  end
++end
+diff --git a/test/kb_portable_test.rb b/test/kb_portable_test.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..610d75c413c85924021d8dc5e657e6481d5841cd
+--- /dev/null
++++ b/test/kb_portable_test.rb
+@@ -0,0 +1,142 @@
++# frozen_string_literal: true
++
++require 'minitest/autorun'
++require 'tmpdir'
++require 'timeout'
++require 'rbconfig'
++require_relative 'support/kb_snapshot_fixture'
++
++# Actual selected K validators, with synthetic files/processes in private temp
++# roots. This does not start a cluster or assert guest/closure readiness.
++class KbPortableTest < Minitest::Test
++  include KbSnapshotFixture
++
++  def test_selected_validators_read_full_descriptor_without_mutation_and_release_locks
++    with_snapshot do |binding, portable, state, _engine, record, _artifact|
++      calls = []
++      selected_source = JSON.parse(File.read(metadata_path)).fetch('source')
++      trace = TracePoint.new(:call) do |event|
++        calls << [event.defined_class.to_s, event.method_id] if event.path.start_with?(selected_source)
++      end
++      before = files(binding.state_root)
++      canonical, value = trace.enable { portable.canonical }
++      assert_equal(JSON.parse(canonical), value)
++      assert_equal(record['run_id'], value['run_id'])
++      assert_equal('a' * 40, binding.read['engine_revision'], 'creation provenance does not become the selected revision')
++      refute_equal(binding.read['engine_revision'], portable.revision)
++      assert_equal(before, files(binding.state_root))
++      forbidden = %i[checkout prepare build verify_live ssh initialize_credentials claim release write start resume update stop reset]
++      assert_empty(calls.select { |_owner, name| forbidden.include?(name) })
++      assert_includes(calls.map(&:last), :validate_prepared)
++      assert_includes(calls.map(&:last), :descriptor)
++      assert_includes(calls.map(&:last), :ready?)
++      state.transaction(wait: false) { assert(true, 'snapshot locks are released before canonical child lease') }
++    end
++  end
++
++  def test_noncreating_busy_snapshot_preserves_exact_inventory
++    with_snapshot do |binding, portable, state, _engine, _record, _artifact|
++      before = files(binding.state_root)
++      state.lock('gate') do
++        assert_raises(DevClusters::Kb::Busy) { portable.canonical }
++        assert_raises(DevClusters::Kb::Busy) { portable.inventory }
++      end
++      assert_equal(before, files(binding.state_root))
++      File.unlink(File.join(state.root, 'locks', 'session.operation.lock'))
++      before = files(binding.state_root)
++      assert_raises(DevClusters::Kb::Error) { portable.inventory }
++      assert_equal(before, files(binding.state_root), 'missing locks are not initialized')
++    end
++  end
++
++  def test_inventory_accepts_running_stopped_and_pending_recorded_namespaces_without_exit_claims
++    with_snapshot do |binding, portable, state, engine, record, _artifact|
++      pending = record.merge('run_id' => SecureRandom.uuid)
++      pending['socket_dir'] = engine.resources.socket_dir(record['instance_id'], pending['run_id'])
++      state.write(state.path("reservation-#{pending['run_id']}.json"), pending)
++      %w[ready stopped updating].each do |phase|
++        state.write(state.path('phase.json'), { 'schema' => 1, 'phase' => phase, 'run_id' => record['run_id'] })
++        before = files(binding.state_root)
++        value = portable.inventory
++        assert_equal({ 'schema' => 1, 'paths' => [state.directory, binding.record_directory, record['socket_dir'], pending['socket_dir']].uniq.sort }, value.merge('paths' => value['paths'].sort))
++        refute_includes(value['paths'], state.root)
++        assert_equal(before, files(binding.state_root))
++      end
++      state.write(state.path("reservation-#{pending['run_id']}.json"), pending.merge('socket_dir' => '/tmp/unrecorded-socket'))
++      assert_raises(DevClusters::Kb::Error) { portable.inventory }
++    end
++  end
++
++  def test_foreign_source_endpoint_artifact_and_disk_records_never_supply_managed_readiness
++    with_snapshot do |_binding, portable, state, _engine, record, _artifact|
++      connection = File.binread(state.path('connection.json'))
++      value = JSON.parse(connection)
++      state.write(state.path('connection.json'), value.merge('services' => {}))
++      assert_raises(DevClusters::Kb::Error) { portable.canonical }
++      File.binwrite(state.path('connection.json'), connection)
++      state.write(state.path("launch-#{record['run_id']}.json"), record.merge('artifact_sha256' => '0' * 64))
++      assert_raises(DevClusters::Kb::Error) { portable.canonical }
++      state.write(state.path("launch-#{record['run_id']}.json"), record)
++      File.binwrite(state.path('fixture-root.img'), 'changed disk size')
++      assert_raises(DevClusters::Kb::Error) { portable.canonical }
++      assert_raises(DevClusters::Kb::Error) { portable.transition_adopt }
++    end
++  end
++
++  def test_compatible_management_preserves_binding_and_does_not_certify_stopped_capture
++    with_snapshot do |binding, portable, state, _engine, record, _artifact|
++      before = files(binding.state_root)
++      assert_equal(true, portable.transition_adopt)
++      assert_equal(before, files(binding.state_root))
++      state.write(state.path('phase.json'), { 'schema' => 1, 'phase' => 'stopped', 'run_id' => record['run_id'] })
++      assert_equal(true, portable.transition_adopt)
++      assert_raises(DevClusters::Kb::Error) { portable.canonical }
++      assert_equal('a' * 40, binding.read['engine_revision'])
++    end
++  end
++
++  def test_ready_marker_loss_refuses_capture_but_preserves_live_management
++    with_snapshot do |binding, portable, state, engine, record, _artifact|
++      File.unlink(state.path("ready-#{record['run_id']}.json"))
++      assert(engine.live?(record))
++      before = files(binding.state_root)
++      assert_raises(DevClusters::Kb::Error) { portable.canonical }
++      assert_equal(true, portable.transition_adopt)
++      assert_includes(portable.inventory.fetch('paths'), record['socket_dir'])
++      assert_equal(before, files(binding.state_root))
++    end
++  end
++
++  def test_foreign_or_unsafe_ready_marker_refuses_without_snapshot_mutation
++    with_snapshot do |binding, portable, state, engine, record, _artifact|
++      path = state.path("ready-#{record['run_id']}.json")
++      marker = state.read(path)
++      ['schema', 'instance_id', 'run_id', 'artifact_id', 'artifact_sha256'].each do |key|
++        state.write(path, marker.merge(key => key == 'schema' ? 2 : 'foreign'))
++        before = files(binding.state_root)
++        assert(engine.live?(record))
++        assert_raises(DevClusters::Kb::Error) { portable.canonical }
++        assert_equal(before, files(binding.state_root))
++      end
++      state.write(path, marker)
++      File.chmod(0o644, path)
++      before = files(binding.state_root)
++      assert_raises(DevClusters::Kb::Error) { portable.canonical }
++      assert_equal(before, files(binding.state_root))
++    end
++  end
++
++  def test_metadata_mismatch_and_absent_state_fail_before_any_initialization
++    Dir.mktmpdir do |workspace|
++      binding = DevClusters::Kb::Binding.new(workspace:, slug: 'session')
++      portable = DevClusters::Kb::Portable.new(binding:, metadata_path:)
++      assert_raises(DevClusters::Kb::Error) { portable.inventory }
++      refute(File.exist?(binding.state_root))
++      metadata = JSON.parse(File.read(metadata_path)).merge('lock_sha256' => '0' * 64)
++      candidate = File.join(workspace, 'mismatch.json')
++      File.write(candidate, JSON.generate(metadata))
++      assert_raises(DevClusters::Kb::Error) { DevClusters::Kb::Portable.new(binding:, metadata_path: candidate) }
++      refute(File.exist?(binding.state_root))
++    end
++  end
++end
+diff --git a/test/kb_public_dispatch_test.rb b/test/kb_public_dispatch_test.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..55c222f61fa9ce7bd86d7dd67695393b4d013d0f
+--- /dev/null
++++ b/test/kb_public_dispatch_test.rb
+@@ -0,0 +1,258 @@
++# frozen_string_literal: true
++
++require 'minitest/autorun'
++require 'stringio'
++require 'open3'
++require 'tempfile'
++require_relative 'support/kb_snapshot_fixture'
++require_relative '../dev-clusters/kb/lib/guards'
++
++# The generic dispatcher, E CLI and selected K snapshot reader are real. Only
++# the final live guest/SSH lease is replaced by a synthetic, gate-owning child.
++# This is local composition proof, not installed activation or VM proof.
++load File.join(ENV.fetch('DEV_WORKSPACE_HOST_SOURCE'), 'libexec/workspace-host')
++
++class KbPublicDispatchTest < Minitest::Test
++  include KbSnapshotFixture
++
++  def with_dispatch
++    with_snapshot do |binding, _portable, state, engine, record, _artifact|
++      workspace = binding.workspace
++      %w[repos work worktrees].each { |name| FileUtils.mkdir_p(File.join(workspace, name)) }
++      FileUtils.mkdir_p(File.join(workspace, 'work/session'))
++      File.write(File.join(workspace, 'work/session/state.md'), "---\nlifecycle: active\n---\n")
++      session_lock = File.join(workspace, 'worktrees/.locks/session.lock')
++      FileUtils.mkdir_p(File.dirname(session_lock))
++      File.open(session_lock, File::WRONLY | File::CREAT | File::EXCL, 0o600) {}
++      registry = File.join(workspace, 'registry.json')
++      DevWorkspaceHost::Registry.new(registry).register(name: 'example', root: workspace,
++        hostname: 'workspace.example.test', aliases: [], replace: false)
++      profile = File.join(workspace, 'profile')
++      File.symlink(ENV.fetch('DEV_WORKSPACE_HOST_SOURCE'), profile)
++      pid_file = File.join(workspace, 'lease-child.pid')
++      ended = File.join(workspace, 'lease-ended')
++      release = File.join(workspace, 'lease-release')
++      fds = File.join(workspace, 'lease-fds.json')
++      fixed = File.join(workspace, 'selected-lease-fixture')
++      File.write(fixed, <<~RUBY)
++        #!#{RbConfig.ruby}
++        require 'json'
++        require 'digest'
++        require #{File.join(JSON.parse(File.read(metadata_path)).fetch('source'), 'cluster/lib/kb_state').inspect}
++        root, command, slug = ARGV[1, 3]
++        abort 'unexpected fixed CLI operation' unless command == 'capture-lease'
++        options = ARGV.drop(4).each_slice(2).to_h
++        state = KbRuntime::State.new(root, slug)
++        state.lock('gate', wait: false) do
++          descriptor = state.file(state.path('connection.json'))
++          value = JSON.parse(descriptor)
++          expected = value.slice('instance_id', 'run_id', 'artifact_id', 'artifact_sha256')
++          wanted = expected.to_h { |key, entry| ['--' + key.tr('_', '-'), entry] }
++          wanted['--descriptor-sha256'] = Digest::SHA256.hexdigest(descriptor)
++          abort 'canonical child request differs' unless options == wanted
++          File.write(#{pid_file.inspect}, Process.pid.to_s)
++          File.write(#{fds.inspect}, JSON.generate(Dir.glob('/proc/self/fd/*').filter_map { |path| File.readlink(path) rescue nil }))
++          puts JSON.generate(expected.merge('schema' => 1, 'descriptor_sha256' => wanted['--descriptor-sha256']))
++          STDOUT.flush
++          command = STDIN.gets
++          if command == "close-protocol\n"
++            STDOUT.reopen(File::NULL, 'w')
++            STDOUT.close
++          elsif command == "close-diagnostics\n"
++            STDERR.reopen(File::NULL, 'w')
++            STDERR.close
++          end
++          STDIN.read
++          File.write(#{ended.inspect}, 'owned input EOF')
++          sleep 0.01 until File.exist?(#{release.inspect}) if command == "close-protocol\n"
++        end
++      RUBY
++      File.chmod(0o755, fixed)
++      provider = File.join(workspace, 'selected-adapter')
++      File.write(provider, <<~RUBY)
++        #!#{RbConfig.ruby}
++        require #{File.expand_path('../dev-clusters/kb/lib/cli', __dir__).inspect}
++        exit DevClusters::Kb::CLI.run(ARGV)
++      RUBY
++      File.chmod(0o755, provider)
++      catalog = File.join(workspace, 'extensions.json')
++      File.write(catalog, JSON.generate('schema' => 1, 'commands' => [], 'skills' => [],
++        'clusterProviders' => [{ 'id' => 'kb', 'label' => 'KB', 'command' => provider }]))
++      environment = { 'HOME' => workspace, 'PATH' => ENV.fetch('PATH'),
++        'DEV_WORKSPACES_CONFIG' => registry, 'DEV_WORKSPACES_STATE' => File.join(workspace, 'host-state'),
++        'DEV_WORKSPACES_PROFILE' => profile, 'DEV_WORKSPACES_EXTENSION_CATALOG' => catalog,
++        'DEV_WORKSPACES_RUNTIME_DIR' => File.join(workspace, 'host-runtime'),
++        'VPSFREE_KB_ENGINE_METADATA' => metadata_path, 'VPSFREE_KB_ENGINE' => fixed,
++        'DEVCLUSTER_RUNTIME_CONTRACT' => ENV.fetch('DEVCLUSTER_RUNTIME_CONTRACT'),
++        'DEV_WORKSPACE_HOST_MODE' => 'kb-devcluster' }
++      guards = DevClusters::Kb::Guards.new(binding:, contract: JSON.parse(File.read(environment['DEVCLUSTER_RUNTIME_CONTRACT'])),
++        environment: environment.merge('DEV_WORKSPACE_NAME' => 'example'))
++      guards.adapter(create: true) {}
++      begin
++        yield binding, state, engine, record, environment, { pid: pid_file, ended:, release:, fds:, session_lock:,
++          generation_lock: File.join(workspace, 'host-state/transition.lock') }
++      ensure
++        File.write(release, '')
++        if File.exist?(pid_file)
++          owned_child = Integer(File.read(pid_file))
++          Timeout.timeout(7) { sleep 0.02 while KbRuntime::ProcessIdentity.read(owned_child) }
++        end
++      end
++    end
++  end
++
++  def dispatcher
++    File.join(ENV.fetch('DEV_WORKSPACE_HOST_SOURCE'), 'libexec/workspace-host')
++  end
++
++  def managed(environment)
++    output, error, result = Open3.capture3(environment, RbConfig.ruby, dispatcher,
++      '--workspace', 'example', 'connection', 'session', close_others: true)
++    assert(result.success?, error)
++    [output, JSON.parse(output)]
++  end
++
++  def lease_flags(bytes, value)
++    request = value.slice('instance_id', 'run_id', 'artifact_id', 'artifact_sha256')
++      .merge('descriptor_sha256' => Digest::SHA256.hexdigest(bytes))
++    request.flat_map { |key, entry| ["--#{key.tr('_', '-')}", entry] }
++  end
++
++  def start_dispatch(environment, flags)
++    input, writer = IO.pipe
++    reader, output = IO.pipe
++    diagnostics = Tempfile.new('kb-dispatch-diagnostics')
++    pid = Process.spawn(environment, RbConfig.ruby, dispatcher, '--workspace', 'example',
++      'capture-lease', 'session', *flags, in: input, out: output, err: diagnostics, close_others: true)
++    input.close
++    output.close
++    yield pid, writer, reader, diagnostics
++  ensure
++    [input, writer, reader, output].compact.each { |stream| stream.close unless stream.closed? }
++    if pid
++      owned = begin
++        Process.waitpid(pid, Process::WNOHANG).nil?
++      rescue Errno::ECHILD
++        false
++      end
++      if owned
++        Process.kill('KILL', pid)
++        Process.waitpid(pid)
++      end
++    end
++    diagnostics&.close!
++  end
++
++  def wait_file(path)
++    Timeout.timeout(5) { sleep 0.01 until File.exist?(path) }
++  end
++
++  def test_public_connection_uses_selected_reader_and_keeps_canonical_bytes_untouched
++    with_dispatch do |binding, state, _engine, _record, environment, _paths|
++      original = File.binread(state.path('connection.json'))
++      bytes, value = managed(environment)
++      assert_equal([File.join(binding.workspace, 'bin/kb-devcluster'), '--workspace', 'example', 'capture-lease', 'session'], value['control']['argv'])
++      assert_equal(JSON.parse(original).reject { |key, _| key == 'control' }, value.reject { |key, _| key == 'control' })
++      assert_equal(original, File.binread(state.path('connection.json')))
++      assert_equal(bytes, File.binread(File.join(binding.record_directory, 'connection.json')))
++      assert_equal('a' * 40, binding.read['engine_revision'])
++    end
++  end
++
++  def test_public_lease_holds_all_guards_until_canonical_child_is_reaped_after_protocol_loss
++    with_dispatch do |binding, state, _engine, _record, environment, paths|
++      bytes, value = managed(environment)
++      start_dispatch(environment, lease_flags(bytes, value)) do |pid, writer, reader, diagnostics|
++        ready = JSON.parse(Timeout.timeout(5) { reader.gets })
++        assert_equal(Digest::SHA256.hexdigest(bytes), ready['descriptor_sha256'])
++        refute_equal(Digest::SHA256.file(state.path('connection.json')).hexdigest, ready['descriptor_sha256'])
++        writer.puts('close-protocol')
++        writer.flush
++        assert_nil(Timeout.timeout(5) { reader.gets }, 'managed protocol EOF reaches caller before cleanup')
++        refute(writer.closed?, 'caller input remains open')
++        wait_file(paths[:ended])
++        assert_nil(Process.waitpid(pid, Process::WNOHANG), 'dispatcher still owns provider cleanup')
++        [paths[:generation_lock], paths[:session_lock], File.join(binding.workspace, '.dev-clusters/.locks/kb-session.lock')].each do |path|
++          File.open(path, 'r+') { |probe| refute(probe.flock(File::LOCK_EX | File::LOCK_NB), path) }
++        end
++        assert_raises(KbRuntime::Busy) { state.lock('gate', wait: false) { flunk('private lease gate released early') } }
++        child = Integer(File.read(paths[:pid]))
++        assert(File.exist?("/proc/#{child}"))
++        received = JSON.parse(File.read(paths[:fds]))
++        [paths[:generation_lock], paths[:session_lock], File.join(binding.workspace, '.dev-clusters/.locks/kb-session.lock')].each { |path| refute_includes(received, path) }
++        [writer, reader].each { |stream| refute_includes(received, File.readlink("/proc/self/fd/#{stream.fileno}")) }
++        File.write(paths[:release], '')
++        _owned, status = Timeout.timeout(7) { Process.waitpid2(pid) }
++        assert_equal(1, status.exitstatus)
++        refute(File.exist?("/proc/#{child}"), 'fixed child was reaped')
++        diagnostics.rewind
++        assert_includes(diagnostics.read, 'KB lease protocol ended')
++        state.lock('gate', wait: false) { assert(true) }
++      end
++    end
++  end
++
++  def test_public_stderr_eof_does_not_end_lease_and_peer_eof_releases_it
++    with_dispatch do |_binding, state, _engine, _record, environment, paths|
++      bytes, value = managed(environment)
++      start_dispatch(environment, lease_flags(bytes, value)) do |pid, writer, reader, _diagnostics|
++        assert_equal(Digest::SHA256.hexdigest(bytes), JSON.parse(Timeout.timeout(5) { reader.gets })['descriptor_sha256'])
++        writer.puts('close-diagnostics')
++        writer.flush
++        assert_raises(KbRuntime::Busy) { state.lock('gate', wait: false) { flunk('live private lease released') } }
++        refute(File.exist?(paths[:ended]))
++        writer.close
++        assert_equal('', Timeout.timeout(5) { reader.read })
++        _owned, status = Timeout.timeout(7) { Process.waitpid2(pid) }
++        assert(status.success?)
++        assert_equal('owned input EOF', File.read(paths[:ended]))
++        refute(File.exist?("/proc/#{Integer(File.read(paths[:pid]))}"))
++      end
++    end
++  end
++
++  def test_cleanup_inventory_runs_before_reset_without_reacquiring_generic_session_lock
++    with_dispatch do |binding, state, _engine, record, environment, paths|
++      File.open(paths[:session_lock], 'r+') do |owner|
++        owner.flock(File::LOCK_EX)
++        original = files(binding.state_root)
++        output, error, status = Open3.capture3(environment, RbConfig.ruby, dispatcher,
++          '--workspace', 'example', 'cleanup-paths', 'session', close_others: true)
++        assert(status.success?, error)
++        assert_equal([state.directory, binding.record_directory, record['socket_dir']].sort, JSON.parse(output)['paths'].sort)
++        assert_equal(original, files(binding.state_root))
++        refute(File.exist?(paths[:pid]), 'inventory never starts the live child')
++      end
++    end
++  end
++
++  def test_public_dispatcher_loss_ends_adapter_and_private_child_while_caller_input_stays_open
++    with_dispatch do |binding, state, _engine, _record, environment, paths|
++      bytes, value = managed(environment)
++      start_dispatch(environment, lease_flags(bytes, value)) do |pid, writer, reader, _diagnostics|
++        assert_equal(Digest::SHA256.hexdigest(bytes), JSON.parse(Timeout.timeout(5) { reader.gets })['descriptor_sha256'])
++        children = KbRuntime::ProcessIdentity.children(pid)
++        assert_equal(1, children.size, 'dispatcher owns exactly its selected adapter')
++        adapter = KbRuntime::ProcessIdentity.read(children.first)
++        child = KbRuntime::ProcessIdentity.read(Integer(File.read(paths[:pid])))
++        refute_nil(adapter)
++        refute_nil(child)
++        assert_nil(Process.waitpid(pid, Process::WNOHANG), 'dispatcher remains an unreaped owned child')
++        Process.kill('KILL', pid)
++        _owned, status = Timeout.timeout(5) { Process.waitpid2(pid) }
++        assert(status.signaled?)
++        assert_nil(Timeout.timeout(5) { reader.gets }, 'caller sees dispatcher loss')
++        refute(writer.closed?, 'original caller input remains open')
++        wait_file(paths[:ended])
++        Timeout.timeout(7) do
++          sleep 0.02 until KbRuntime::ProcessIdentity.gone?(adapter) && KbRuntime::ProcessIdentity.gone?(child)
++        end
++        assert_equal('owned input EOF', File.read(paths[:ended]))
++        [paths[:generation_lock], paths[:session_lock], File.join(binding.workspace, '.dev-clusters/.locks/kb-session.lock')].each do |path|
++          File.open(path, 'r+') { |probe| assert(probe.flock(File::LOCK_EX | File::LOCK_NB), path) }
++        end
++        state.lock('gate', wait: false) { assert(true, 'private capture gate ends after kernel pipe loss') }
++      end
++    end
++  end
++end
+diff --git a/test/support/kb_snapshot_fixture.rb b/test/support/kb_snapshot_fixture.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..d05fc962c0a9ba05521d0031665cfc469ef3cd25
+--- /dev/null
++++ b/test/support/kb_snapshot_fixture.rb
+@@ -0,0 +1,98 @@
++# frozen_string_literal: true
++
++require 'tmpdir'
++require 'timeout'
++require 'rbconfig'
++require_relative '../../dev-clusters/kb/lib/portable'
++
++
++# Synthetic private state/process fixture using the exact selected K readers.
++module KbSnapshotFixture
++  def metadata_path
++    ENV.fetch('VPSFREE_KB_ENGINE_METADATA')
++  end
++
++  def with_snapshot
++    Dir.mktmpdir('kb-adapter-snapshot-') do |workspace|
++      binding = DevClusters::Kb::Binding.new(workspace:, slug: 'session')
++      binding.create(engine_revision: 'a' * 40)
++      portable = DevClusters::Kb::Portable.new(binding:, metadata_path:)
++      state = KbRuntime::State.new(binding.state_root, binding.slug)
++      software = KbRuntime::Software.new(JSON.parse(File.read(metadata_path)))
++      engine = KbRuntime::Engine.new(state:, software:, controller: [RbConfig.ruby,
++        File.join(software.source, 'cluster/launcher.rb'), '--software-metadata', metadata_path])
++      state.transaction(create: true) { state.initialize_identity }
++      credentials = state.path('credentials')
++      state.private_directory(credentials, create: true)
++      %w[id_ed25519 id_ed25519.pub known_hosts vpsadmin-ca.crt vpsadmin-ca.key vpsadmin-cert.crt vpsadmin-cert.key].each do |name|
++        File.open(File.join(credentials, name), File::WRONLY | File::CREAT | File::EXCL, 0o600) { |file| file.write('synthetic fixture') }
++      end
++      id = state.identity
++      artifact_id, run_id = SecureRandom.uuid, SecureRandom.uuid
++      config = { 'domains' => { 'webui' => 'webui.example.test' },
++        'local' => { 'ports' => { 'services' => { 'https' => 28443 } } } }
++      input = state.path('fixture-input.json')
++      state.write(input, config)
++      build_inputs = { 'topology' => 'single', 'network' => 'local' }
++      input_sha = Digest::SHA256.hexdigest(KbRuntime::Software.canonical_json(build_inputs.merge('config' => config)))
++      layout = { 'services' => { 'spin' => 'nixos', 'root_image' => true, 'disks' => [] } }
++      disk = state.path('fixture-root.img')
++      File.open(disk, File::WRONLY | File::CREAT | File::EXCL, 0o600) { |file| file.write('sentinel') }
++      runner = state.path('fixture-runner.rb')
++      File.open(runner, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
++        file.write("STDOUT.puts('ready'); STDOUT.flush; STDIN.read\n")
++      end
++      artifact = { 'schema' => 1, 'instance_id' => id['instance_id'], 'artifact_id' => artifact_id,
++        'source' => software.metadata, 'topology' => 'single', 'network' => 'local',
++        'input_path' => input, 'config_path' => input, 'config_sha256' => Digest::SHA256.file(input).hexdigest,
++        'config_input_sha256' => input_sha, 'build_inputs' => build_inputs,
++        'guest_identity' => { 'schema' => 1, 'source' => software.metadata, 'instance_id' => id['instance_id'],
++          'artifact_id' => artifact_id, 'config_input_sha256' => input_sha }, 'layout' => layout,
++        'credential_identity' => KbRuntime::Software.credentials_identity(credentials), 'runner' => runner,
++        'runner_identity' => { 'executable' => RbConfig.ruby, 'entrypoint' => runner },
++        'machine_toplevels' => { 'services' => "/nix/store/#{'0' * 32}-synthetic-toplevel" } }
++      state.write(state.path("artifact-#{artifact_id}.json"), artifact)
++      state.write(state.path("prepared-#{artifact_id}.json"), { 'schema' => 1, 'complete' => true,
++        'instance_id' => id['instance_id'], 'artifact_id' => artifact_id, 'kind' => 'initial', 'layout' => layout })
++      state.write(state.path('disks-services.json'), { 'schema' => 1, 'complete' => true,
++        'instance_id' => id['instance_id'], 'layout' => layout['services'],
++        'disks' => { 'root' => KbRuntime::DiskPreparation.new(state, artifact).identity(disk) } })
++      record = artifact.merge(id).merge('run_id' => run_id, 'boot_id' => KbRuntime::ProcessIdentity.boot_id,
++        'artifact_sha256' => engine.artifact_digest(artifact), 'state_dir' => state.directory,
++        'socket_dir' => engine.resources.socket_dir(id['instance_id'], run_id),
++        'endpoints' => { 'services' => { 'host' => '127.0.0.1', 'port' => 28022, 'user' => 'root' } })
++      input_reader, writer = IO.pipe
++      reader, output_writer = IO.pipe
++      argv = %w[config state-dir sock-dir run-id instance-id artifact-id artifact-sha256].flat_map do |key|
++        value = { 'config' => record['config_path'], 'state-dir' => record['state_dir'], 'sock-dir' => record['socket_dir'] }[key] || record[key.tr('-', '_')]
++        ["--#{key}", value]
++      end
++      pid = Process.spawn(RbConfig.ruby, runner, *argv, in: input_reader, out: output_writer, err: File::NULL, close_others: true)
++      input_reader.close
++      output_writer.close
++      raise 'synthetic runner handshake failed' unless Timeout.timeout(5) { reader.gets } == "ready\n"
++      process = KbRuntime::ProcessIdentity.read(pid)
++      raise 'synthetic runner tuple differs' unless KbRuntime::ProcessIdentity.runner_matches?(process, record)
++      state.write(state.path("launch-#{run_id}.json"), record)
++      state.write(state.path("processes-#{run_id}.json"), record.slice('instance_id', 'run_id', 'artifact_id', 'artifact_sha256').merge('runner' => process, 'children' => [], 'complete' => false))
++      state.write(state.path('phase.json'), { 'schema' => 1, 'phase' => 'ready', 'run_id' => run_id })
++      state.write(state.path("ready-#{run_id}.json"), record.slice('instance_id', 'run_id', 'artifact_id', 'artifact_sha256').merge('schema' => 1))
++      state.write(state.path('accounts.json'), { 'users' => [] })
++      state.write(state.path('connection.json'), engine.descriptor(record))
++      yield binding, portable, state, engine, record, artifact
++    ensure
++      writer&.close unless writer&.closed?
++      Timeout.timeout(5) { Process.waitpid(pid) } if pid
++      [input_reader, writer, reader, output_writer].compact.each { |stream| stream.close unless stream.closed? }
++    end
++  end
++
++  def files(root)
++    Dir.glob(File.join(root, '**', '*'), File::FNM_DOTMATCH).sort.filter_map do |path|
++      next if %w[. ..].include?(File.basename(path))
++      stat = File.lstat(path)
++      [path, [stat.mode, stat.ino, stat.size, stat.file? ? File.binread(path) : nil]]
++    end.to_h
++  end
++
++end

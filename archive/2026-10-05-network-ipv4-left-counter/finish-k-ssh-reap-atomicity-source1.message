@@ -1,0 +1,10 @@
+runtime: make SSH child authority interruption-safe
+
+Mask supported interruptions across pipe and PID acquisition and each
+wait/status/PID-invalidation transition. Cleanup must retain an unreaped
+child and must never signal its numeric PID after a successful reap or
+ECHILD. Close acquired endpoints before leaving protected cleanup.
+
+Keep the ordinary discovery loop interruptible and preserve native scan
+results, deadlines and output limits. Only the SSH-specific child is owned;
+this grants no guest or runner cleanup authority.

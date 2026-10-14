@@ -1,0 +1,123 @@
+{
+  "schema": 1,
+  "at": "2026-10-09T12:14:33.511444+00:00",
+  "head": "7dc4d70830e535f4559bccfa668cf65cdce1de2d",
+  "branch": "2026-10-05-network-ipv4-left-counter-kb-runtime",
+  "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsfree-kb-contracts-runtime",
+  "identity": {
+    "slug": "2026-10-05-network-ipv4-left-counter",
+    "workspace": "/home/aither/workspace/ai/vpsfree.cz",
+    "current_command": "/home/aither/bin/dev-session current",
+    "current_cwd": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter",
+    "current_login": false,
+    "paired_markers": "both absent",
+    "native_exit": 0,
+    "native_stdout": "2026-10-05-network-ipv4-left-counter",
+    "prior_refusal": "current failed from workspace-root CWD; supported exact tracking CWD resolves it without lifecycle mutation",
+    "roster_revision": 17,
+    "address": "implementer0",
+    "thread": "01a10c52-50ed-7312-9f0c-62b6ea389308",
+    "model": "gpt-6.1-sol",
+    "effort": "xhigh",
+    "purpose": "implementation",
+    "access": "workspace_write"
+  },
+  "design": {
+    "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/design.md",
+    "section": "G6 SSH discovery failure: diagnosis and bounded proposal (2026-10-09)",
+    "line": 3422,
+    "sha256": "a191b3666375ed7e4df817f3a373c8c985817c146db4ab92b178444a40eaaf07"
+  },
+  "scope": [
+    "cluster/lib/kb_runtime.rb",
+    "cluster/lib/devcluster_runner.rb",
+    "tools/test-runtime.rb",
+    "tools/test-machine.rb"
+  ],
+  "excluded_root_prose": {
+    "path": "cluster/runtime-contract.md",
+    "sha256": "0e48690be13fba9b1ff669591df813790033db28c84291c0ffe3b2e7239c1c54",
+    "receipt": "finish-k-ssh-session-root-prose2.json"
+  },
+  "source_changes": [
+    "Pass one await_ready absolute monotonic deadline into per-machine SSH discovery; integer floor allowance in 1..5, refuse before any scan with sub-second budget, never accept late success.",
+    "Revalidate recorded launch/current run and live runner before attempts and acceptance; all endpoints must yield structurally valid SSH keyscan data before first known_hosts write; retained trust stays unchanged.",
+    "SSH-specific sole waitpid owner captures at most 16KiB per native stream and supervises/reaps only its unreaped child; cleared SSH/source override environment and closed unrelated descriptors.",
+    "Private immutable 0600 per-run/per-machine diagnostics retain base64 native streams, status/signal/attempt/elapsed/bound facts. Public errors reference location/status without raw native data. Before-scan refusal has no invented diagnostic.",
+    "Same-PID runner setsid before argument processing/machine creation/live tuple; already-own-session leader is a no-op and setsid refusal creates no machine.",
+    "Existing runtime and pinned machine suites cover synthetic readiness cases, actual confined SSH-capture children, and real runner session/control/shutdown using a test-owned machine child."
+  ],
+  "new_test_methods": {
+    "tools/test-runtime.rb": [
+      "test_delayed_keys_succeed_within_the_original_deadline",
+      "test_permanent_transport_failure_retains_native_private_diagnostics",
+      "test_all_endpoints_share_one_deadline_and_integer_scan_allowance",
+      "test_subsecond_remaining_allowance_refuses_before_scanning_next_endpoint",
+      "test_expired_deadline_has_no_scan_or_trust_write",
+      "test_late_success_is_not_accepted",
+      "test_runner_loss_after_scan_refuses_acceptance_without_retry",
+      "test_foreign_launch_identity_refuses_before_scan",
+      "test_malformed_wrong_endpoint_and_invalid_wire_keys_refuse_immediately",
+      "test_retained_valid_key_mismatch_neither_retries_nor_rewrites",
+      "test_second_endpoint_failure_does_not_publish_first_endpoint_trust",
+      "test_tool_invocation_failure_is_immediate_and_private",
+      "test_signalled_keyscan_refuses_immediately_without_retry",
+      "test_stderr_banner_does_not_replace_or_enter_known_hosts",
+      "test_bridge_endpoint_accepts_complete_keyscan_key_types_without_forwarding_prefix",
+      "test_truncated_native_capture_refuses_instead_of_accepting_partial_keys",
+      "test_ssh_specific_capture_preserves_native_streams_status_argv_and_clears_overrides",
+      "test_scan_deadline_and_output_bound_reap_only_the_owned_child",
+      "test_shared_ssh_discovery_deadline_reaches_existing_live_verification_once"
+    ],
+    "tools/test-machine.rb": [
+      "test_runner_survives_controlled_parent_exit_with_distinct_session_and_no_guard_fds",
+      "test_test_owned_parent_group_signal_does_not_end_the_runner_session",
+      "test_already_own_session_leader_does_not_call_setsid_again",
+      "test_setsid_failure_refuses_before_machine_creation_or_live_tuple_publication"
+    ]
+  },
+  "new_test_count": 23,
+  "native_evidence": [
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-direct-isolation2-failure1.json",
+      "sha256": "a7c485cc34df9a0f31bbc29262e3517045c8dc1179a368763a1bc3b7abbe8756"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-direct-ssh-console-summary1.json",
+      "sha256": "da3959b6e4e81e3ac6ae939a17257e411f7933fac20d34138e7f4892a66f440d"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-direct-ssh-lifecycle-summary1.json",
+      "sha256": "9b2a67b7e2a0f865e8f715c80f139c90fb5c7048dbafc205403a1f606acb14a7"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-k-ssh-session-source-acceptance1.json",
+      "sha256": "47ca42c60b17a7806a8d93f986134b26a3b259078db26836ed952606159a4c92"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-k-ssh-session-root-prose1.json",
+      "sha256": "7fb256f270fb503718fa3f20a7389b6054fe4315cc6000e5f9a878d4ce8e108c"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-k-ssh-session-root-prose2.json",
+      "sha256": "a55f4a53b94c9ae99797c78e699940e17181dd5a164bb69742f6ccc0af671424"
+    }
+  ],
+  "historical_cause": "SSH transport endpoint cause and later runner disappearance remain unresolved; source readiness/session gaps are not a historical failure diagnosis.",
+  "local_verification": {
+    "tests": "not run",
+    "syntax": "not run",
+    "lint": "not run",
+    "build_evaluation": "not run",
+    "process_network_probes": "not run"
+  },
+  "operations": "No Git/index/ref/lifecycle/probe/VM/package actions performed; old campaigns, predecessor K68, other repositories and private state untouched.",
+  "compatibility": "No state/protocol/schema/input or cleanup authority change; strict SSH authentication and guest source/toplevel checks unchanged. Separate session does not escape cgroups or prove genuine predecessor lifetime.",
+  "protected_bytes": "Only four assigned owners plus root doc differ from HEAD; all other tracked paths, including generic Software.command, State/resources/closure/machine, inputs/captures/navigation/PNGs, remain HEAD-identical.",
+  "gaps": [
+    "New tests have not executed; no claimed host/guest/predecessor/cgroup proof.",
+    "Exact committed K/E hosted checks and affected independent review precede package/real verification.",
+    "Durable ordinary-host operation context and fresh capacity including both retained campaign growth budgets remain root-owned prerequisites."
+  ],
+  "packet_status": "source-only frozen for root inspection; no operation wrapper"
+}

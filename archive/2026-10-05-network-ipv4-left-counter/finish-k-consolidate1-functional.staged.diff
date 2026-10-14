@@ -1,0 +1,3331 @@
+diff --git a/.github/workflows/check.yml b/.github/workflows/check.yml
+index 6fb8e0237d637aa2b1c073765421bdc4d118b52c..32d8e8730b6216280def34b18267b5a3e2655794 100644
+--- a/.github/workflows/check.yml
++++ b/.github/workflows/check.yml
+@@ -4,6 +4,12 @@ on:
+   pull_request:
+   push:
+   workflow_dispatch:
++    inputs:
++      strict:
++        description: Check the full committed screenshot inventory
++        type: boolean
++        required: false
++        default: false
+ 
+ permissions:
+   contents: read
+@@ -18,9 +24,16 @@ jobs:
+         uses: actions/checkout@v7
+ 
+       - name: Install upstream Nix
++        # Retain v22 so source and strict runs share the existing installer setup;
++        # qualify installer upgrades separately from this media-mode change.
+         uses: DeterminateSystems/nix-installer-action@v22
+         with:
+           determinate: false
+ 
+-      - name: Run repository checks
++      - name: Run strict repository checks
++        if: github.event_name == 'workflow_dispatch' && inputs.strict == true
++        run: nix develop --command bin/check
++
++      - name: Run source repository checks
++        if: github.event_name != 'workflow_dispatch' || inputs.strict != true
+         run: nix develop --command bin/check --allow-missing
+diff --git a/README.md b/README.md
+index f360b513891037456bf6a2bef85bb04f504c71d2..c82983d16472f4c36b07e494161edbf7eaa15901 100644
+--- a/README.md
++++ b/README.md
+@@ -42,11 +42,13 @@ state and `--output-root` selects capture artifacts. Code and
+ source provenance stay bound to the package. An optional external environment
+ can supply a private `--connection` descriptor under the runtime contract.
+ 
+-The isolated `runtime/standalone` suite verifies the installed tools on a
+-disposable NixOS host. It requires the `standalone-test-config` profile from the
+-same exact committed source, nested KVM and sufficient disk, RAM and shared
+-memory. See [standalone verification](cluster/runtime-contract.md#verification-and-limits)
+-for the commands, capacity checks and exported evidence.
++The `runtime-verify` package provides `vpsfree-kb-verify` for direct verification
++on an ordinary Linux/Nix/KVM host. It drives the installed public tools through
++source/path checks, two-root isolation, predecessor resume and changed-source
++update, then bilingual capture. It requires explicit private roots,
++configurations, an immutable predecessor reference and capacity evidence.
++See [verification and limits](cluster/runtime-contract.md#verification-and-limits)
++for the phases, capacity assessment, recovery and exported evidence.
+ 
+ The capture command verifies the live cluster's prepared source and system
+ closures, reads its generated test accounts, creates or reuses only fixtures
+@@ -68,6 +70,22 @@ implementations.
+ The nodes use sparse 320 GiB tank images so the production-sized fixture
+ packages pass pool-capacity checks without allocating that space up front.
+ 
++The `networking/ip-address-list` checkpoint instead uses the `ip-inventory`
++fixture: one real VPS with 1 CPU, 1024 MiB RAM and 4096 MiB disk, its enabled
++assigned address, and an owned detached address from a dedicated documentation
++pool. The fixture provisions that address while the pool is enabled, then
++disables only that pool. Reruns validate the same allocation without enabling
++the pool or charging again. Other checkpoints retain their full fixtures and
++the primary address pools remain enabled.
++
++This fixture requires explicit `test-user1` (level 1) and `test-admin` (level 99)
++entries in the dedicated configuration's `seed.users`. Supply disposable test
++credentials and synthetic `example.test` identities. The administrator keeps
++its seeded namespace (`blockStart: 1`, `blockCount: 8`); member namespaces must
++be disjoint. API provisioning uses the recorded administrator account, while
++VPS creation and screenshots use the ordinary member. Both API identities and
++the browser's member identity are checked before mutations or capture.
++
+ Use `--scenario NAME` to recapture a functional group or
+ `--checkpoint TOPIC/VIEW` for one asset. Run `bin/devcluster --help` for cluster
+ lifecycle and inspection commands.
+diff --git a/bin/check b/bin/check
+index bc8d2622d7b76d4dfa1740ecd54ac9f5df5f2a33..a036bbecda4837281be6561e07c5c1b5ec12a65b 100755
+--- a/bin/check
++++ b/bin/check
+@@ -33,14 +33,6 @@ bash -n bin/validate bin/capture bin/contact-sheet bin/devcluster test-runner.sh
+ shellcheck bin/validate bin/capture bin/contact-sheet bin/devcluster test-runner.sh "${shell_fixtures[@]}"
+ jq empty captures.json cluster/default-config.json fixtures/production-shape.json
+ nix-instantiate --parse cluster/nix/test.nix >/dev/null
+-nix-instantiate --parse nix/standalone-profile.nix >/dev/null
+-nix-instantiate --eval --read-write-mode --strict --json tools/test-standalone-profile.nix >/dev/null
+-nix-instantiate --eval --strict --json tools/standalone-scripts.nix | ruby -rjson -ropen3 -e '
+-  JSON.parse(STDIN.read).each do |name, source|
+-    out, err, status = Open3.capture3(RbConfig.ruby, "-c", stdin_data: source)
+-    abort "#{name}: #{out}#{err}" unless status.success?
+-  end
+-'
+ while IFS= read -r -d '' nix_test; do
+   nix-instantiate --parse "$nix_test" >/dev/null
+ done < <(find tests -type f -name '*.nix' -print0 | sort -z)
+@@ -53,7 +45,11 @@ done
+ ruby tools/test-runtime.rb
+ ruby tools/test-closure.rb
+ ruby tools/test-machine.rb
+-ruby -c tests/runner/extensions/kb_capture_artifacts.rb
++ruby -c tools/capture-export.rb
++ruby -c tools/runtime-verify.rb
++ruby -c tools/test-runtime-verify.rb
++ruby tools/test-runtime-verify.rb
++node tools/test-ip-inventory.cjs
+ ruby -c tools/test-capture-export.rb
+ ruby tools/test-capture-export.rb
+ node tools/test-connection.cjs
+diff --git a/captures.json b/captures.json
+index c4f789a317ea042b52f3134f6ae6f2b46b4bfac7..bc0eaf0cd5a8ef1522f9ab78c11fe8641afa7071 100644
+--- a/captures.json
++++ b/captures.json
+@@ -1224,8 +1224,7 @@
+       "checkpoint": "networking/ip-address-list",
+       "driver": "webui",
+       "fixtures": [
+-        "base-vps",
+-        "traffic-samples"
++        "ip-inventory"
+       ],
+       "description": "Current routable-address list",
+       "viewport": {
+diff --git a/cluster/launcher.rb b/cluster/launcher.rb
+index 235a130bcdc005e319a544671b7518abeb711764..91b756b42cad9fc3c342f8460df1c87e463596a0 100644
+--- a/cluster/launcher.rb
++++ b/cluster/launcher.rb
+@@ -42,12 +42,12 @@ module KbRuntime
+         config = JSON.parse(File.read(options[:config]))
+         defaults = JSON.parse(File.read(File.join(source_root, 'cluster', 'default-config.json')))
+         merged = resolve_config(defaults, config, options[:network], options[:topology])
+-        engine.public_send(command, config: merged, topology: options[:topology], network: options[:network], timeout: options[:timeout])
+-        puts JSON.generate(engine.status)
++        completed = engine.public_send(command, config: merged, topology: options[:topology], network: options[:network], timeout: options[:timeout])
++        puts JSON.generate(completion_status(completed))
+       when 'resume'
+         raise Error, 'resume accepts no replacement config, topology or network' if options[:config] || options[:topology_supplied] || options[:network_supplied]
+-        engine.resume(timeout: options[:timeout])
+-        puts JSON.generate(engine.status)
++        completed = engine.resume(timeout: options[:timeout])
++        puts JSON.generate(completion_status(completed))
+       when 'stop'
+         engine.stop(timeout: options[:timeout])
+       when 'reset'
+@@ -94,6 +94,11 @@ module KbRuntime
+       1
+     end
+ 
++    def self.completion_status(descriptor)
++      { 'schema' => 2, 'found' => true, 'state' => 'ready', 'ready' => true,
++        'instance_id' => descriptor.fetch('instance_id'), 'run_id' => descriptor.fetch('run_id') }
++    end
++
+     def self.resolve_config(defaults, requested, network, topology)
+       raise Error, 'cluster configuration must be an object' unless requested.is_a?(Hash)
+       effective = deep_merge(defaults, requested)
+diff --git a/cluster/lib/kb_runtime.rb b/cluster/lib/kb_runtime.rb
+index f40c7ef4dc93831e35de94b95c4e8d0f65cddbb5..fdc0bf0fe9725984bfe76705183461bd4ab95fd0 100644
+--- a/cluster/lib/kb_runtime.rb
++++ b/cluster/lib/kb_runtime.rb
+@@ -103,7 +103,7 @@ module KbRuntime
+     end
+ 
+     def start(config:, topology: 'single', network: 'bridge', timeout: 900)
+-      state.transaction(create: true) do
++      state.transaction(create: true, wait: false) do
+         identity = state.initialize_identity
+         raise Error, 'start requires a fresh instance; use resume or the recorded update' if File.exist?(state.path('phase.json'))
+         run_id = SecureRandom.uuid
+@@ -173,7 +173,7 @@ module KbRuntime
+     end
+ 
+     def resume(timeout: 900)
+-      state.transaction do
++      state.transaction(wait: false) do
+         raise Error, 'pending update must be retried explicitly' if File.exist?(state.path('update.json'))
+         raise Error, 'resume requires proven stopped state' unless phase['phase'] == 'stopped' && gone?(launch)
+         accepted = state.read(state.path('accepted-artifact.json'))
+@@ -184,7 +184,7 @@ module KbRuntime
+     end
+ 
+     def update(config:, topology:, network:, timeout: 900)
+-      state.transaction do
++      state.transaction(wait: false) do
+         old = launch
+         identity = state.identity
+         replacement = requested(config, topology, network, identity, SecureRandom.uuid)
+@@ -376,7 +376,7 @@ module KbRuntime
+     end
+ 
+     def stop(timeout: 120)
+-      state.transaction do
++      state.transaction(wait: false) do
+         if %w[preparing building].include?(phase['phase']) && !File.exist?(state.path('update.json'))
+           run_id = phase.fetch('run_id')
+           raise Error, 'unexpected spawn during artifact preparation' if File.exist?(state.path("spawn-#{run_id}.json"))
+@@ -424,7 +424,7 @@ module KbRuntime
+     end
+ 
+     def reset
+-      state.transaction do
++      state.transaction(wait: false) do
+         state.identity
+         if File.exist?(state.path('phase.json'))
+           current = phase
+@@ -542,7 +542,7 @@ module KbRuntime
+     def capabilities(record)
+       values = %w[capture-lease-v1 ssh account public-key]
+       if record.fetch('endpoints').key?('node1')
+-        values += %w[base-vps snapshot ssh-host-key nixos-generations traffic-samples kvm-storage]
++        values += %w[ip-inventory base-vps snapshot ssh-host-key nixos-generations traffic-samples kvm-storage]
+       end
+       values -= %w[base-vps snapshot ssh-host-key nixos-generations traffic-samples kvm-storage] unless record.fetch('endpoints').key?('backuper1')
+       values << 'second-vps' if record.fetch('endpoints').key?('node2')
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index 2de3b7a5325e98d76c8425ed3b0f8d8bc3d3b016..11477b989541572bfe6c8388ad03b51b78f6ce12 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -33,6 +33,14 @@ Readiness belongs to that exact run. A stale PID or ready file cannot authorize
+ cleanup. Status reports busy (exit 75) when a lifecycle operation or capture owns
+ the gate.
+ 
++Public `start`, `resume`, `update`, `stop` and `reset` refuse gate or operation
++contention with exit 75. Retry explicitly after the holder releases its lock;
++these commands do not queue a mutation behind a capture. A fresh start may
++create empty persistent lock infrastructure before admission, but initializes
++no instance until both locks are held. Successful start, resume and update
++output describes the verified run at operation completion. Use `status` for a
++fresh guarded snapshot afterward.
++
+ The per-user resource registry claims the complete requested set under one short
+ lock. Its durable records remain after controller loss. Only positive process
+ exit proof permits release. The registry coordinates KB instances; a host bind
+@@ -202,51 +210,111 @@ raw transcripts are not part of a generated evidence carryback.
+ 
+ ## Verification and limits
+ 
+-Fast runtime/connection/artifact tests use isolated roots and fake VM transports;
+-they do not certify live KVM or workspace activation. The `runtime/standalone`
+-external-test suite installs the named KB packages in a disposable NixOS machine,
+-without a workspace registry, package or session variables.
++Fast runtime, connection, artifact and verifier tests use isolated roots and
++fake transports. They do not certify installed packages, live guests or captures.
++The `runtime-verify` package provides `vpsfree-kb-verify` for real verification
++on an ordinary Linux/Nix/KVM host. It drives the installed public launcher,
++capture and validator from its own immutable source. It launches no outer VM
++and needs no development workspace, session command or provider activation.
++Other managed KB page suites retain their test-runner route.
+ 
+-Use an exact clean Git-flake revision to build `standalone-test-config`. This
+-immutable profile carries the original source receipt and matching runtime and
+-capture packages through the test runner's path-based source evaluation. The
+-test framework validates the profile's source, revision, lock and metadata before
+-using its packages. A standalone run without a valid profile refuses before VM
+-startup; the other KB suites keep their existing invocation route.
++Prepare the packages from a clean exact Git-flake revision after source checks
++and independent review. Supply a private disk-backed campaign root, two explicit
++configurations, an exact published predecessor reference and a private capacity
++receipt. Invoke each phase separately, in this order:
+ 
+ ```sh
+-PROFILE=$(nix build --no-link --print-out-paths "$K_REF#standalone-test-config")
+-nix run "$K_REF#test-runner" -- test --jobs 1 --state-dir "$TEST_STATE" \
+-  --test-config "$PROFILE" 'runtime/standalone#installed-layout'
++vpsfree-kb-verify --root "$ROOT" --config-a "$CONFIG_A" --config-b "$CONFIG_B" \
++  --predecessor-ref "$PREDECESSOR_REF" --capacity-receipt "$CAPACITY_RECEIPT" \
++  --phase installed-layout
++vpsfree-kb-verify --root "$ROOT" --config-a "$CONFIG_A" --config-b "$CONFIG_B" \
++  --predecessor-ref "$PREDECESSOR_REF" --capacity-receipt "$CAPACITY_RECEIPT" \
++  --phase isolation-continuity-update
++vpsfree-kb-verify --root "$ROOT" --config-a "$CONFIG_A" --config-b "$CONFIG_B" \
++  --predecessor-ref "$PREDECESSOR_REF" --capacity-receipt "$CAPACITY_RECEIPT" \
++  --phase bilingual-capture
+ ```
+ 
+-Set `K_REF` to the exact committed Git-flake reference and `TEST_STATE` to fresh
+-test-owned runner state. Run `two-instances`, `resume-update` and
+-`bilingual-capture` separately, replacing the final selector and state path for
+-each invocation. Keep the same source profile throughout.
+-
+-The outer VM needs functioning nested KVM, 32 GiB RAM, eight CPUs, a 128 GiB root
+-disk and 24 GiB shared memory. Its nested cases check available RAM, shared
+-memory and at least 96 GiB free disk space before building their clusters. With
+-the runner's default 8 GiB reserves, host admission needs at least 40 GiB
+-available RAM and 40 GiB free shared memory. Plan for at least 272 GiB host disk
+-space for the built root image, writable copy and 16 GiB reserve, plus uncached
+-closures and build working space. Measure each filesystem; sparse-image savings
+-do not establish capacity. Insufficient capacity refuses the run.
+-
+-The isolated fixtures use explicit local ports, QEMU's `10.0.2.3` DNS endpoint
+-and `example.test` domains. The builder uses the pinned OS cache and key, but
+-that configuration alone does not prove the expected kernel is available.
+-An unexpected local kernel build requires investigation; resource overrides,
+-weaker assertions and CPU-emulation fallbacks do not supply runtime proof.
+-
+-The bilingual case captures CS and EN into one explicit output root different
+-from CWD, then updates and strictly validates that inventory. Before VM cleanup,
+-the test exports only the two PNGs, candidate inventory, merged results and
+-source receipt to `state_dir/artifacts`. Inspect and validate that bundle before
+-carrying approved artifacts back to a checkout. The resume/update case checks
+-all six credential identities, retained root/data sentinels and disk identities,
+-fresh live run identity and the actual changed system closures.
++The predecessor's runtime and source metadata come from the same immutable
++reference. Later phases require matching completed campaign receipts. An
++incomplete phase retains its stage evidence and owned state; it cannot silently
++become another campaign or authorize cleanup.
++Failed public commands retain their native exit and diagnostic output privately
++under the campaign root. The refusal identifies that evidence; it is excluded
++from the artifact export.
++
++The direct profile uses two `single` clusters with the same slug in distinct
++roots. Each has a 4 GiB services guest, a 4 GiB node, a 12 GiB services root and
++a 16 GiB node tank. Configure local loopback forwarding with disjoint TCP and
++integer multicast ports, disable dedicated DNS guests, use QEMU's `10.0.2.3`
++resolver and `example.test` domains. Conflicts refuse rather than selecting
++different resources. Keep B's configuration, disk layout, SSH endpoints and TLS
++names unchanged between source versions.
++
++Both configurations must include explicit disposable `test-user1` (level 1)
++and `test-admin` (level 99) accounts from the initial start. Use synthetic
++`example.test` identities, preserve the administrator's seeded namespace
++(`blockStart: 1`, `blockCount: 8`) and keep member namespaces disjoint. The
++verifier rejects missing, duplicate or incompatible account entries before
++lifecycle work. Keep B's account configuration unchanged through predecessor
++resume and update; compare its private accounts-file digest without exposing
++credentials.
++
++The continuity phase starts A from the final package and B from the predecessor.
++It proves predecessor stop/resume, then a genuinely changed-source update of B
++through the final public command. All six credential files, disk identities and
++root/data sentinels must survive; run/artifact identities and actual guest system
++closures must change as specified by update. A remains healthy during that work.
++After proving final-code isolation, the verifier stops and resets only A,
++rechecks B, and proves final-code resume without rebuilding its artifact. Public
++lease contention and peer-loss cases must release their guards correctly. B
++remains available for captures; completion does not imply its cleanup.
++
++Before admission, require working KVM, at least 24 GiB available RAM and 18 GiB
++free shared memory. Peak guest RAM/shared memory is 16 GiB for both clusters,
++then 8 GiB for B alone. There is no emulation fallback or nested-KVM requirement.
++Three retained 12 GiB service images, two writable roots and two full 16 GiB
++tanks, with a 16 GiB host reserve, form a 108 GiB worst eventual output envelope.
++This is not a fixed free-disk floor. Measure current allocation, remaining copies
++and sparse growth, missing closures and build requirements per filesystem.
++Existing apparent sparse-file lengths do not erase unallocated growth.
++
++The required capacity receipt binds source/package identities, predecessor,
++configuration digests, campaign root and actual state/store/builder filesystems.
++Record realized paths, known remaining construction, effective concurrency,
++kernel-cache evidence, reserves and measured headroom. Builder scratch may be
++unknown: NAR/download sizes do not bound it, and an invented allowance supplies
++no proof. The verifier checks receipt identity and fresh capacity before
++predecessor construction and each lifecycle build/start/resume/update. Package
++preparation itself precedes verifier invocation and needs its own assessment.
++
++The operator must establish substantial headroom and live reserve monitoring
++through each public build-and-launch operation. The receipt does not prove a
++monitor is running or reserve capacity against other host activity. Client
++`TMPDIR` does not establish the daemon's build filesystem. Cancellation has
++latency; there is no exact future-peak guarantee or public post-build launch
++pause. Stop unexpected kernel compilation and investigate its cache prerequisite.
++Do not reclaim foreign state/store, resize retained disks or bypass guest import,
++ZFS/template or quota admission. Preserve unrelated running clusters.
++
++The bilingual phase selects only `networking/ip-address-list` and its
++`ip-inventory` fixture. This uses one real 1 CPU, 1 GiB RAM, 4 GiB disk VPS,
++its enabled assigned address, and a dedicated disabled documentation pool with
++an owned detached address. Other capture concepts retain their full fixtures.
++CS and EN use one explicit output root different from the invocation directory,
++exercising both cluster and private connection selectors. An EN recapture from
++the output directory also proves the packaged writable-CWD default. The results
++contain exactly the two language/ID rows from one immutable generator source.
++
++Installed validation first updates the candidate inventory and then strictly
++checks the full inventory, without `--allow-missing`. Unchanged assets may come
++from immutable source. Under the physical artifact lock, export only the two
++`screenshots/{cs,en}/networking/ip-address-list.png` files, `captures.json`,
++`tmp/capture-results.json` and `tmp/capture-source.json`, with checksums. Exclude
++connections, credentials, accounts, CLI homes and raw transcripts. Validate and
++review both images before carryback; preserve the generating revision when a
++later commit records them. Native tooltip title/focus assertions do not establish
++that a browser-native tooltip appears in a PNG.
+ 
+ The optional workspace integration is documented by its provider in
+ vpsfree-dev-workspace. Source publication does not install or activate it.
+diff --git a/docs/webui-change-workflow.md b/docs/webui-change-workflow.md
+index cee2342fc8ca08e83d78ca9f50c1ec76ff57a3d0..8fbc3ab6e8c580369009cf0bfc80d1624d2468f3 100644
+--- a/docs/webui-change-workflow.md
++++ b/docs/webui-change-workflow.md
+@@ -99,11 +99,46 @@ bin/check
+ bin/devcluster stop FEATURE-SLUG
+ ```
+ 
++For only `networking/ip-address-list`, use an explicit `single` configuration
++with the `ip-inventory` capability and matching committed runtime, capture and
++validation packages. This fixture needs services and node1; it does not require
++the full storage/traffic fixture. Keep both languages in one private output
++directory. Include explicit disposable `test-user1` (level 1) and `test-admin`
++(level 99) entries in `seed.users`, with synthetic `example.test` identities.
++Keep the administrator's seeded namespace (`blockStart: 1`, `blockCount: 8`)
++and member namespaces disjoint. The fixture proves both recorded API accounts,
++uses the administrator only for inventory provisioning, and keeps the browser
++in the ordinary member's session throughout VPS creation and capture:
++
++```sh
++vpsfree-kb-devcluster start FEATURE-SLUG --topology single --config /path/to/dedicated-config.json --state-root /path/to/private-state
++vpsfree-kb-capture --cluster FEATURE-SLUG --state-root /path/to/private-state --language cs --checkpoint networking/ip-address-list --output-root /path/to/capture-output
++vpsfree-kb-capture --cluster FEATURE-SLUG --state-root /path/to/private-state --language en --checkpoint networking/ip-address-list --output-root /path/to/capture-output
++vpsfree-kb-validate --update --output-root /path/to/capture-output
++vpsfree-kb-validate --output-root /path/to/capture-output
++```
++
++The committed generator source must already pin the affected vpsAdmin revision.
++The [direct verifier](../cluster/runtime-contract.md#verification-and-limits)
++also exercises the private connection selector and writable-CWD output default.
++Its capacity and owned-state recovery requirements apply before real work.
++Review the gray disabled row and enabled assigned row in both images; native
++title/focus assertions accompany the images without claiming a native tooltip
++popup was captured. Other screenshot concepts keep their existing fixtures.
++
+ Inspect changed images, crops, fonts, fixture data, and the contact sheet. Keep
+ the existing semantic filename for the same screenshot concept. Introduce a new
+ concept only when the documented intent changes. Screenshot generation never
+ uploads media.
+ 
++Hosted `Check` runs on pushes and pull requests use `--allow-missing` while
++media is being prepared. After committing and publishing the accepted media,
++run that workflow manually with `strict` enabled against the exact feature
++revision. It then runs `nix develop --command bin/check` over the full committed
++inventory. Confirm the run's checkout SHA and strict step; a permissive source
++check does not replace this result. Strict exported-output validation and visual
++review remain separate requirements.
++
+ ## 5. Prepare KB candidates
+ 
+ From the vpsFree.cz coordination workspace, fetch every accessible production
+diff --git a/fixtures/prepare.cjs b/fixtures/prepare.cjs
+index cfde5a066bcefe818fee766c6cb75a4dfc952467..953ed4c4c857e304c97af4b2e2b65f801c4f1c94 100644
+--- a/fixtures/prepare.cjs
++++ b/fixtures/prepare.cjs
+@@ -1,5 +1,6 @@
+ const fs = require('fs');
+ const path = require('path');
++const https = require('https');
+ 
+ const { datasetIdsFromHrefs } = require('../lib/dataset-links.cjs');
+ const { fixturesFor } = require('../lib/i18n.cjs');
+@@ -67,6 +68,7 @@ async function createVpsIn(
+   boot,
+   environmentLabel,
+   locationLabel,
++  resources,
+ ) {
+   await goto(page, `/?page=adminvps&action=new-step-1&user=${userId}`);
+   const environmentForm = page.locator('form[name="newvps-step1"]');
+@@ -92,6 +94,11 @@ async function createVpsIn(
+   await preparePage(page);
+ 
+   form = page.locator('form[name="newvps-step3"]');
++  if (resources) {
++    for (const [name, value] of Object.entries(resources)) {
++      await form.locator(`input[name="${name}"]`).fill(String(value));
++    }
++  }
+   await submitLast(form);
+   await page.waitForLoadState('domcontentloaded');
+   await preparePage(page);
+@@ -443,11 +450,177 @@ async function networkInterface(cluster, node, vpsId) {
+   return interfaces[0];
+ }
+ 
++// The dedicated inventory fixture uses ordinary authenticated resource actions.
++// Its HTTPS destination still comes exclusively from the leased descriptor.
++function inventoryApi(cluster, login) {
++  return async (method, resource, body) => {
++    cluster.assertLease();
++    const url = new URL(`v1/${resource}`, cluster.apiUrl);
++    const endpoint = cluster.route(url);
++    const account = cluster.account(login);
++    const bytes = body === undefined ? null : JSON.stringify(body);
++    return new Promise((resolve, reject) => {
++      const request = https.request({
++        hostname: endpoint.host, port: endpoint.port, servername: url.hostname,
++        path: `${url.pathname}${url.search}`, method,
++        ca: fs.readFileSync(cluster.caPath), signal: cluster.lease.signal,
++        headers: {
++          Host: url.host, Accept: 'application/json',
++          Authorization: `Basic ${Buffer.from(`${account.login}:${account.password}`).toString('base64')}`,
++          ...(bytes ? { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bytes) } : {}),
++        },
++      }, (response) => {
++        let data = '';
++        response.setEncoding('utf8');
++        response.on('data', (chunk) => {
++          data += chunk;
++          if (data.length > 2 * 1024 * 1024) request.destroy(new Error('Inventory response exceeds limit'));
++        });
++        response.on('error', reject);
++        response.on('end', () => {
++          try {
++            cluster.assertLease();
++            const value = JSON.parse(data);
++            if (response.statusCode !== 200 || value.status !== true) throw new Error('Inventory resource action failed');
++            resolve(value.response);
++          } catch (error) { reject(error); }
++        });
++      });
++      request.setTimeout(30000, () => request.destroy(new Error('Inventory resource action timed out')));
++      request.on('error', reject);
++      request.end(bytes);
++    });
++  };
++}
++
++function inventoryAccounts(cluster) {
++  cluster.assertLease();
++  const required = [['test-admin', 99, 1], ['test-user1', 1, 9], ['test-user2', 1, 17]];
++  for (const [login, level, blockStart] of required) {
++    const matches = cluster.accounts.filter((account) => account.login === login);
++    if (matches.length !== 1) throw new Error('Missing or duplicate inventory account');
++    const account = matches[0];
++    if (account.level !== level || typeof account.password !== 'string' || !account.password
++        || typeof account.fullName !== 'string' || !account.fullName.trim()
++        || account.email !== `${login}@example.test`
++        || account.namespace?.blockStart !== blockStart || account.namespace?.blockCount !== 8) {
++      throw new Error('Inventory account role, identity or namespace differs');
++    }
++  }
++}
++
++async function inventoryIdentity(cluster) {
++  inventoryAccounts(cluster);
++  const memberApi = inventoryApi(cluster, 'test-user1');
++  const adminApi = inventoryApi(cluster, 'test-admin');
++  const member = (await memberApi('GET', 'users/current')).user;
++  const admin = (await adminApi('GET', 'users/current')).user;
++  if (member?.login !== 'test-user1' || member.level !== 1 || !Number.isInteger(member.id) || member.id <= 0
++      || admin?.login !== 'test-admin' || admin.level !== 99 || !Number.isInteger(admin.id) || admin.id <= 0
++      || member.id === admin.id) {
++    throw new Error('Inventory API identities or roles differ');
++  }
++  return { member: { id: member.id, login: member.login }, adminApi };
++}
++
++async function assertInventoryMember(page, member) {
++  const profile = page.locator('[data-vpsadmin-doc-id="member.edit-profile"]');
++  const logbox = page.locator('#logbox-submit');
++  if (!member || member.login !== 'test-user1' || !Number.isInteger(member.id) || member.id <= 0
++      || await profile.count() !== 1 || await logbox.count() !== 1
++      || await page.locator('a[href*="action=regain_admin"]').count() !== 0) {
++    throw new Error('Inventory browser is not the proved ordinary member');
++  }
++  const href = await profile.getAttribute('href');
++  const login = (await logbox.getAttribute('value'))?.match(/\(([^()]*)\)\s*⯆?\s*$/)?.[1];
++  if (!href || new URL(href, page.url()).searchParams.get('id') !== String(member.id) || login !== member.login) {
++    throw new Error('Inventory browser identity differs from the proved member');
++  }
++}
++
++const INVENTORY_POOL = { label: 'Documentation disabled inventory', address: '203.0.113.0',
++  prefix: 24, ip_version: 4, role: 'public_access', managed: true,
++  split_access: 'no_access', split_prefix: 32, purpose: 'vps' };
++const INVENTORY_IP = '203.0.113.10';
++const INVENTORY_RESOURCES = { cpu: 1, memory: 1024, swap: 0, diskspace: 4096 };
++const resourceId = (value) => value && typeof value === 'object' ? value.id : value;
++
++async function ensureIpInventory(api, { userId, vpsId }) {
++  const vps = (await api('GET', `vpses/${vpsId}`)).vps;
++  if (resourceId(vps.user) !== userId || vps.hostname !== 'ip-inventory'
++      || Object.entries(INVENTORY_RESOURCES).some(([key, value]) => Number(vps[key]) !== value)) {
++    throw new Error('Unexpected inventory VPS owner, identity or resources');
++  }
++  const node = (await api('GET', `nodes/${resourceId(vps.node)}`)).node;
++  const locationId = resourceId(node.location);
++  const location = (await api('GET', `locations/${locationId}`)).location;
++  const networks = (await api('GET', 'networks?limit=1000')).networks;
++  if (networks.length === 1000) throw new Error('Inventory network selection is truncated');
++  for (const address of ['198.51.100.0', '2001:db8:106::']) {
++    const primary = networks.filter((network) => network.address === address);
++    if (primary.length !== 1 || primary[0].enabled !== true) throw new Error('Primary inventory pool is not enabled');
++  }
++  const matching = networks.filter((network) => network.address === INVENTORY_POOL.address
++    || network.label === INVENTORY_POOL.label);
++  if (matching.length > 1) throw new Error('Dedicated inventory network identity collision');
++  let pool = matching[0];
++  if (pool && Object.entries(INVENTORY_POOL).some(([key, value]) => pool[key] !== value)) {
++    throw new Error('Unexpected dedicated inventory network');
++  }
++  if (!pool) pool = (await api('POST', 'networks', { network: { ...INVENTORY_POOL, enabled: true } })).network;
++  let locations = (await api('GET', `location_networks?network=${pool.id}&limit=1000`)).location_networks;
++  if (locations.length > 1 || (locations.length === 1 && resourceId(locations[0].location) !== locationId)) {
++    throw new Error('Unexpected dedicated inventory location');
++  }
++  if (locations.length === 0) {
++    if (pool.enabled !== true) throw new Error('Disabled inventory pool is incomplete');
++    locations = [(await api('POST', 'location_networks', { location_network: {
++      network: pool.id, location: locationId, primary: false, priority: 100, autopick: false, userpick: false,
++    } })).location_network];
++  }
++  if (locations[0].primary !== false || locations[0].autopick !== false || locations[0].userpick !== false) {
++    throw new Error('Dedicated inventory location is unexpectedly pickable');
++  }
++  const addresses = (await api('GET', `ip_addresses?network=${pool.id}&limit=1000`)).ip_addresses;
++  if (addresses.length > 1) throw new Error('Dedicated inventory pool has unexpected addresses');
++  let ip = addresses[0];
++  if (!ip) {
++    if (pool.enabled !== true) throw new Error('Disabled inventory pool is incomplete');
++    ip = (await api('POST', 'ip_addresses', { ip_address: {
++      addr: `${INVENTORY_IP}/32`, network: pool.id, user: userId, location: locationId,
++    } })).ip_address;
++  }
++  if (ip.addr !== INVENTORY_IP || ip.prefix !== 32 || resourceId(ip.network) !== pool.id
++      || resourceId(ip.user) !== userId || ip.network_interface !== null
++      || resourceId(ip.charged_environment) !== resourceId(location.environment)) {
++    throw new Error('Unexpected dedicated inventory address ownership, charge or assignment');
++  }
++  const assigned = (await api('GET', `ip_addresses?vps=${vpsId}&version=4&limit=1000`)).ip_addresses;
++  if (!assigned.some((entry) => entry.addr.startsWith('198.51.100.') && resourceId(entry.user) === userId)) {
++    throw new Error('Inventory VPS has no real enabled assigned IPv4 address');
++  }
++  if (pool.enabled === true) {
++    pool = (await api('PUT', `networks/${pool.id}`, { network: { enabled: false } })).network;
++  }
++  if (pool.enabled !== false) throw new Error('Dedicated inventory network did not become disabled');
++  return { inventoryVpsId: vpsId, disabledIpId: ip.id, disabledNetworkId: pool.id, disabledAddress: INVENTORY_IP };
++}
++
+ async function prepareFixtures({ cluster, language, page, required, invocationRoot }) {
+   const requiredSet = new Set(required);
+   const fixtureLabels = fixturesFor(language);
+-  const userId = await findUserId(page, 'test-user1');
+   const fixtures = {};
++  let userId;
++  if (requiredSet.has('ip-inventory')) {
++    const { member, adminApi } = await inventoryIdentity(cluster);
++    userId = member.id;
++    await assertInventoryMember(page, member);
++    let inventoryVps = await findOwnedVps(page, 'ip-inventory');
++    await assertInventoryMember(page, member);
++    if (!inventoryVps) inventoryVps = await createVpsIn(page, userId, 'ip-inventory', true, 'Production', 'Praha', INVENTORY_RESOURCES);
++    await waitForRunning(page, inventoryVps);
++    Object.assign(fixtures, { inventoryMember: member }, await ensureIpInventory(adminApi, { userId, vpsId: inventoryVps }));
++  } else userId = await findUserId(page, 'test-user1');
+   let datasetId;
+   let node;
+   let vpsId;
+@@ -526,4 +699,5 @@ async function prepareFixtures({ cluster, language, page, required, invocationRo
+   return fixtures;
+ }
+ 
+-module.exports = { generateTrafficSamples, prepareFixtures };
++module.exports = { assertInventoryMember, createVpsIn, ensureIpInventory, generateTrafficSamples, inventoryAccounts,
++  inventoryApi, inventoryIdentity, INVENTORY_POOL, INVENTORY_IP, INVENTORY_RESOURCES, prepareFixtures };
+diff --git a/flake.nix b/flake.nix
+index 4fb618f65813462f032f315394b1a2d89b1341f1..a53703e53fe13cbbc2d2f41769599480a35882e9 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -157,20 +157,29 @@
+         ];
+       };
+ 
+-      standaloneProfile = import ./nix/standalone-profile.nix;
+-      standaloneTestConfig = toolPkgs.writeText "vpsfree-kb-standalone-test-config.nix" ''
+-        {
+-          kbStandalone = {
+-            schema = 1;
+-            revision = ${builtins.toJSON (standaloneProfile.cleanRevision self)};
+-            source = ${builtins.toJSON (toString self)};
+-            lockSha256 = ${builtins.toJSON (builtins.hashFile "sha256" ./flake.lock)};
+-            sourceMetadata = ${builtins.toJSON (toString sourceMetadata)};
+-            runtimePackage = ${builtins.toJSON (toString runtimePackage)};
+-            capturePackage = ${builtins.toJSON (toString capturePackage)};
+-          };
+-        }
+-      '';
++      verifySelection = toolPkgs.writeText "vpsfree-kb-verify-selection.json" (builtins.toJSON {
++        source = toString self;
++        metadata = toString sourceMetadata;
++        runtime = toString runtimePackage;
++        capture = toString capturePackage;
++        path = lib.makeBinPath (runtimeTools ++ [ toolPkgs.nodejs toolPkgs.cacert ]);
++        node_path = "${toolPkgs.playwright-test}/lib/node_modules";
++        browsers = toString toolPkgs.playwright-driver.browsers;
++        fonts = toString fontConfig;
++        certificates = "${toolPkgs.cacert}/etc/ssl/certs/ca-bundle.crt";
++        gem_home = "${toolPkgs.ruby}/${toolPkgs.ruby.gemPath}";
++      });
++      verifyPackage = toolPkgs.writeShellApplication {
++        name = "vpsfree-kb-verify";
++        runtimeInputs = runtimeTools;
++        text = ''
++          unset RUBYOPT RUBYLIB GEM_HOME GEM_PATH
++          for name in "''${!BUNDLE_@}"; do unset "$name"; done
++          export GEM_HOME=${toolPkgs.ruby}/${toolPkgs.ruby.gemPath}
++          export GEM_PATH="$GEM_HOME"
++          exec ruby ${self}/tools/runtime-verify.rb --selection ${verifySelection} "$@"
++        '';
++      };
+ 
+       # Reuse the Git-filtered flake source. Resolving the checkout as a plain
+       # path would also import ignored .devcluster VM disks into the Nix store.
+@@ -180,7 +189,6 @@
+       '';
+ 
+       testSuiteArgs = {
+-        kbStandalone = null;
+         inherit
+           lib
+           vpsadmin
+@@ -189,19 +197,10 @@
+           ;
+       };
+ 
+-      withTestFrameworkDefaults =
+-        args:
+-        args // {
+-          pkgsPath = args.pkgsPath or nixpkgs.outPath;
+-          suiteArgs = (args.suiteArgs or testSuiteArgs) // {
+-            kbStandalone = if (args.testConfig or { }) ? kbStandalone then
+-              standaloneProfile.validate {
+-                source = self.outPath;
+-                record = args.testConfig.kbStandalone;
+-              }
+-            else null;
+-          };
+-        };
++      withTestFrameworkDefaults = args: args // {
++        pkgsPath = args.pkgsPath or nixpkgs.outPath;
++        suiteArgs = args.suiteArgs or testSuiteArgs;
++      };
+     in
+     {
+       runtimePlan = clusterConfig.config;
+@@ -212,7 +211,7 @@
+         kb-runtime = runtimePackage;
+         capture = capturePackage;
+         runtime-source = sourceMetadata;
+-        standalone-test-config = standaloneTestConfig;
++        runtime-verify = verifyPackage;
+         test-runner = testRunner;
+         default = clusterConfig.json;
+       };
+@@ -224,6 +223,7 @@
+         };
+         kb-runtime = { type = "app"; program = "${runtimePackage}/bin/vpsfree-kb-devcluster"; };
+         capture = { type = "app"; program = "${capturePackage}/bin/vpsfree-kb-capture"; };
++        runtime-verify = { type = "app"; program = "${verifyPackage}/bin/vpsfree-kb-verify"; };
+         test-runner = {
+           type = "app";
+           program = "${testRunner}/bin/test-runner";
+diff --git a/nix/standalone-profile.nix b/nix/standalone-profile.nix
+deleted file mode 100644
+index 9686573aaa91d2d20a73613acfa0d47b8fd92b60..0000000000000000000000000000000000000000
+--- a/nix/standalone-profile.nix
++++ /dev/null
+@@ -1,32 +0,0 @@
+-let
+-  revisionValid = value: builtins.isString value && builtins.match "[0-9a-f]{40}" value != null;
+-  storePath = value: builtins.match "/nix/store/[a-z0-9]{32}-[^/]+" (toString value) != null;
+-  fail = message: throw "KB standalone test profile: ${message}";
+-in
+-{
+-  cleanRevision = source:
+-    if source ? rev && revisionValid source.rev && !(source ? dirtyRev) && !(source ? dirtyShortRev)
+-    then source.rev
+-    else fail "build standalone-test-config from an exact clean Git-flake revision";
+-
+-  validate = { source, record }:
+-    if !builtins.isAttrs record || (record.schema or null) != 1 then
+-      fail "unsupported kbStandalone schema"
+-    else if !revisionValid (record.revision or null) then
+-      fail "a full committed revision is required"
+-    else if toString (record.source or "") != toString source then
+-      fail "source differs from the evaluated immutable test source"
+-    else if (record.lockSha256 or null) != builtins.hashFile "sha256" (source + "/flake.lock") then
+-      fail "lock digest differs from the evaluated source"
+-    else if !(storePath (record.sourceMetadata or "")) ||
+-            !(storePath (record.runtimePackage or "")) || !(storePath (record.capturePackage or "")) then
+-      fail "metadata and package outputs must be immutable store paths"
+-    else
+-      let
+-        metadata = builtins.fromJSON (builtins.readFile record.sourceMetadata);
+-      in
+-      if (metadata.schema or null) != 1 || (metadata.revision or null) != record.revision ||
+-         (metadata.source or null) != toString source || (metadata.lock_sha256 or null) != record.lockSha256 then
+-        fail "metadata identity differs from the profile"
+-      else record;
+-}
+diff --git a/runner/validate.rb b/runner/validate.rb
+index 904d16b9c9c501e2142b9872c26c609a40bae886..09ed0038c5316215f51302177efc6a9878947449 100644
+--- a/runner/validate.rb
++++ b/runner/validate.rb
+@@ -50,7 +50,7 @@ errors << "expected 61 English page references, found #{references.fetch('en')}"
+ end
+ 
+ allowed_fixtures = %w[
+-  account base-vps kvm-storage nixos-generations public-key second-vps snapshot
++  account base-vps ip-inventory kvm-storage nixos-generations public-key second-vps snapshot
+   ssh-host-key traffic-samples
+ ]
+ allowed_statuses = %w[pending reviewed uploaded]
+diff --git a/scenarios/networking.cjs b/scenarios/networking.cjs
+index 92bdbb3c2bfa82a644f2e659874a73e8b358d7ed..313f59924307268d45ec1610a3734b450c5f0e9c 100644
+--- a/scenarios/networking.cjs
++++ b/scenarios/networking.cjs
+@@ -2,44 +2,76 @@ const { expect } = require('@playwright/test');
+ const { renderTerminal, runTrafficMonitor } = require('../lib/terminal.cjs');
+ const { goto } = require('../lib/webui.cjs');
+ const { label } = require('../lib/i18n.cjs');
++const { assertInventoryMember } = require('../fixtures/prepare.cjs');
+ 
+ async function run({ cluster, fixtures, language, page, proxyUrl, sourceRoot, invocationRoot, session }) {
+   const vps = fixtures.vpsId;
+ 
+-  await goto(page, `/?page=adminvps&action=info&veid=${vps}`);
+-  await session.locator(
+-    page,
+-    'traffic/vps-monthly-transfers',
+-    page.locator('form', { hasText: label(language, 'transfersIn') }).first(),
+-  );
+-  const routedAddressForm = page.locator(
+-    'form[action*="action=iproute_select"]',
+-  );
+-  await expect(routedAddressForm.locator('option[value="ipv6"]')).toHaveCount(1);
+-  await session.locator(page, 'networking/routed-addresses', routedAddressForm);
++  if (['traffic/vps-monthly-transfers', 'networking/routed-addresses', 'networking/interface-addresses']
++    .some((checkpoint) => session.wants(checkpoint))) {
++    await goto(page, `/?page=adminvps&action=info&veid=${vps}`);
++    await session.locator(
++      page,
++      'traffic/vps-monthly-transfers',
++      page.locator('form', { hasText: label(language, 'transfersIn') }).first(),
++    );
++    const routedAddressForm = page.locator(
++      'form[action*="action=iproute_select"]',
++    );
++    await expect(routedAddressForm.locator('option[value="ipv6"]')).toHaveCount(1);
++    await session.locator(page, 'networking/routed-addresses', routedAddressForm);
+ 
+-  const interfaceAddressForm = page.locator(
+-    'form[action*="action=hostaddr_add"]',
+-  );
+-  await expect(
+-    interfaceAddressForm.locator('select[name="hostaddr_public_v6"]'),
+-  ).toHaveCount(1);
+-  await session.locator(page, 'networking/interface-addresses', interfaceAddressForm);
+-  await goto(page, fixtures.reverseRecordRoute);
+-  await session.locator(
+-    page,
+-    'reverse-dns/configure-reverse-record',
+-    page.locator('#content-in'),
+-  );
++    const interfaceAddressForm = page.locator(
++      'form[action*="action=hostaddr_add"]',
++    );
++    await expect(
++      interfaceAddressForm.locator('select[name="hostaddr_public_v6"]'),
++    ).toHaveCount(1);
++    await session.locator(page, 'networking/interface-addresses', interfaceAddressForm);
++  }
++  if (session.wants('reverse-dns/configure-reverse-record')) {
++    await goto(page, fixtures.reverseRecordRoute);
++    await session.locator(
++      page,
++      'reverse-dns/configure-reverse-record',
++      page.locator('#content-in'),
++    );
++  }
+ 
+-  await goto(page, '/?page=networking&action=ip_addresses');
+-  await session.locator(page, 'networking/ip-address-list', page.locator('#content-in'));
++  if (session.wants('networking/ip-address-list')) {
++    await goto(page, '/?page=networking&action=ip_addresses&list=1&limit=100');
++    await assertInventoryMember(page, fixtures.inventoryMember);
++    const table = page.locator('#content-in table').last();
++    const disabled = table.locator('tr', { hasText: `${fixtures.disabledAddress}/32` });
++    await expect(disabled).toHaveCount(1);
++    await expect(disabled).toHaveCSS('background-color', 'rgb(166, 166, 166)');
++    const address = disabled.locator('span[tabindex="0"]', { hasText: '203.0.113.0/24' });
++    await expect(address).toHaveAttribute('title', language === 'cs'
++      ? 'Síť je zakázaná pro nové přidělování a přiřazování adres. Existující přiřazené adresy zůstávají použitelné.'
++      : 'This network is disabled for new allocations and assignments. Existing assignments remain usable.');
++    await address.focus();
++    await expect(address).toBeFocused();
++    await expect(disabled.locator('a[href*="action=route_edit"]')).toHaveCount(1);
++    await expect(disabled.locator('a[href*="action=assignments"]')).toHaveCount(1);
++    await expect(disabled.locator('a[href*="action=route_assign"]')).toHaveCount(0);
++    await expect(table.locator('th', { hasText: /^(Enabled|Povoleno)$/ })).toHaveCount(0);
++    const assigned = table.locator(`a[href*="action=info"][href*="veid=${fixtures.inventoryVpsId}"]`).first();
++    await expect(assigned).toBeVisible();
++    await expect(assigned.locator('xpath=ancestor::tr[1]')).not.toHaveCSS('background-color', 'rgb(166, 166, 166)');
++    // Native title semantics are asserted separately; PNGs do not certify the
++    // browser's native tooltip popup. Capture the actual contrasting rows.
++    await session.locator(page, 'networking/ip-address-list', page.locator('#content-in'));
++  }
+ 
+-  await goto(page, '/?page=networking&action=traffic');
+-  await session.locator(page, 'traffic/monthly-traffic', page.locator('#content-in'));
++  if (session.wants('traffic/monthly-traffic')) {
++    await goto(page, '/?page=networking&action=traffic');
++    await session.locator(page, 'traffic/monthly-traffic', page.locator('#content-in'));
++  }
+ 
+-  await goto(page, '/?page=networking&action=live');
+-  await session.locator(page, 'traffic/live-monitor-web', page.locator('#content-in'));
++  if (session.wants('traffic/live-monitor-web')) {
++    await goto(page, '/?page=networking&action=live');
++    await session.locator(page, 'traffic/live-monitor-web', page.locator('#content-in'));
++  }
+ 
+   if (session.wants('traffic/live-monitor-cli')) {
+     const output = await runTrafficMonitor({ cluster, fixtures, proxyUrl, sourceRoot, invocationRoot });
+diff --git a/tests/all-tests.nix b/tests/all-tests.nix
+index a88fce3d6a7d3d2f7213cb674ef1104571e2e431..049627073e116c13b91c742c4a8a1afbfcdd42fe 100644
+--- a/tests/all-tests.nix
++++ b/tests/all-tests.nix
+@@ -21,7 +21,6 @@ let
+   };
+ in
+ testLib.makeTests [
+-  "runtime/standalone"
+   "kb/firewall"
+   "kb/gre"
+   "kb/guix"
+diff --git a/tests/fixtures/runtime-profile/flake.lock b/tests/fixtures/runtime-profile/flake.lock
+deleted file mode 100644
+index 1a5aa45732b1ca59a8a78fdec11103eb4e543559..0000000000000000000000000000000000000000
+--- a/tests/fixtures/runtime-profile/flake.lock
++++ /dev/null
+@@ -1 +0,0 @@
+-{"nodes":{"root":{"inputs":{}}},"root":"root","version":7}
+diff --git a/tests/runner/extensions/kb_capture_artifacts.rb b/tests/runner/extensions/kb_capture_artifacts.rb
+deleted file mode 100644
+index 6f99b94a7c02798207f7e46a7d2a32f901637a42..0000000000000000000000000000000000000000
+--- a/tests/runner/extensions/kb_capture_artifacts.rb
++++ /dev/null
+@@ -1,45 +0,0 @@
+-# frozen_string_literal: true
+-
+-require 'digest'
+-require 'fileutils'
+-require 'shellwords'
+-require 'test-runner/hook'
+-
+-module KbCaptureArtifacts
+-  OUTPUT_ROOT = '/tmp/kb-capture-evidence'
+-  FILES = %w[
+-    screenshots/cs/networking/ip-address-list.png
+-    screenshots/en/networking/ip-address-list.png
+-    captures.json
+-    tmp/capture-results.json
+-    tmp/capture-source.json
+-  ].freeze
+-
+-  def self.export(machine, state_dir)
+-    destination = File.join(state_dir, 'artifacts', 'kb-runtime-standalone', 'bilingual-capture')
+-    raise 'KB capture evidence destination already exists' if File.exist?(destination)
+-
+-    FileUtils.mkdir_p(destination)
+-    FILES.each do |relative|
+-      source = File.join(OUTPUT_ROOT, relative)
+-      _, output = machine.succeeds("sha256sum -- #{Shellwords.escape(source)}")
+-      expected = output.split.first
+-      raise 'invalid guest artifact hash' unless /\A[0-9a-f]{64}\z/.match?(expected.to_s)
+-
+-      pulled = machine.pull_file(source)
+-      raise "pulled artifact hash differs: #{relative}" unless Digest::SHA256.file(pulled).hexdigest == expected
+-
+-      target = File.join(destination, relative)
+-      FileUtils.mkdir_p(File.dirname(target))
+-      FileUtils.copy_file(pulled, target)
+-      raise "retained artifact hash differs: #{relative}" unless Digest::SHA256.file(target).hexdigest == expected
+-    end
+-    destination
+-  end
+-end
+-
+-TestRunner::Hook.subscribe(:after_test_script_run) do |test:, script:, script_result:, machines:, state_dir:, **|
+-  next unless test.path == 'runtime/standalone' && script.name == 'bilingual-capture' && script_result.successful?
+-
+-  KbCaptureArtifacts.export(machines.fetch('machine'), state_dir)
+-end
+diff --git a/tests/suite/runtime/standalone.nix b/tests/suite/runtime/standalone.nix
+deleted file mode 100644
+index 353dc47ea2e6b611f8ff8f7ea75d36c517d4f418..0000000000000000000000000000000000000000
+--- a/tests/suite/runtime/standalone.nix
++++ /dev/null
+@@ -1,250 +0,0 @@
+-import ../../make-test.nix (
+-  {
+-    pkgs,
+-    lib,
+-    kbStandalone ? null,
+-    ...
+-  }:
+-  let
+-    profile = if kbStandalone == null then
+-      throw "KB standalone tests require --test-config from the exact clean Git-flake standalone-test-config output"
+-    else kbStandalone;
+-    quote = value: "'${lib.replaceStrings [ "\\" "'" ] [ "\\\\" "\\'" ] value}'";
+-    common = ''
+-      require 'json'
+-      require 'shellwords'
+-
+-      ENGINE = 'vpsfree-kb-devcluster'
+-      SOURCE = ${quote (toString profile.source)}
+-      EXPECTED_SOURCE = JSON.parse(File.read(${quote (toString profile.sourceMetadata)}))
+-
+-      def run(command, timeout: 900)
+-        machine.succeeds("env -u DEV_SESSION_SLUG -u DEV_SESSION_WORKSPACE -u DEVCLUSTER_WORKSPACE " \
+-          "sh -c #{Shellwords.escape("cd /tmp/kb-ordinary && #{command}")}", timeout:).last
+-      end
+-
+-      def configuration(name, topology, port)
+-        script = <<~RUBY
+-          require 'json'
+-          config = JSON.parse(File.read('#{SOURCE}/cluster/default-config.json'))
+-          config['dns']['enable'] = false if config['dns']
+-          config['resolver'] = { 'mode' => 'cluster', 'upstreamNameservers' => ['10.0.2.3'] }
+-          %w[domains tmpDomains].each do |group|
+-            config.fetch(group).each_key { |key| config[group][key] = "#{key.downcase}-#{group.downcase}.example.test" }
+-          end
+-          machines = ['services', *config.fetch('topologies').fetch('#{topology}')]
+-          config['local'] = {
+-            'bindAddress' => '127.0.0.1', 'multicastPort' => #{port + 20},
+-            'ports' => machines.each_with_index.to_h { |entry, index| [entry, { 'ssh' => #{port} + index }] }
+-          }
+-          config['local']['ports']['services']['https'] = #{port + 10}
+-          File.write('/tmp/kb-ordinary/#{name}.json', JSON.generate(config))
+-        RUBY
+-        machine.succeeds("ruby -e #{Shellwords.escape(script)}")
+-        "/tmp/kb-ordinary/#{name}.json"
+-      end
+-
+-      def require_nested_capacity(memory_kib, shm_kib)
+-        machine.succeeds('test -r /dev/kvm && test -w /dev/kvm')
+-        # KVM_GET_API_VERSION proves that the outer guest can actually open KVM.
+-        machine.succeeds("ruby -e 'f=File.open(\"/dev/kvm\", \"r+\"); abort unless f.ioctl(0xAE00)==12'")
+-        available = machine.succeeds("awk '/^MemAvailable:/ { print $2 }' /proc/meminfo").last.strip.to_i
+-        shared = machine.succeeds("df -Pk /dev/shm | awk 'NR==2 { print $4 }'").last.strip.to_i
+-        expect(available).to be >= memory_kib
+-        expect(shared).to be >= shm_kib
+-      end
+-
+-      def expect_initial_source(descriptor)
+-        expect(descriptor.fetch('provenance').fetch('source')).to eq(EXPECTED_SOURCE)
+-        descriptor.fetch('provenance').fetch('machine_toplevels').each do |name, closure|
+-          expect(run("#{ENGINE} --state-root #{@cluster_root} ssh #{@cluster_slug} #{name} -- readlink -f /run/current-system").strip).to eq(closure)
+-        end
+-      end
+-
+-      before(:all) do
+-        machine.start
+-        machine.wait_for_boot
+-        machine.succeeds('mkdir -m 700 /tmp/kb-ordinary')
+-        free_kib = machine.succeeds("df -Pk /tmp/kb-ordinary | awk 'NR==2 { print $4 }'").last.strip.to_i
+-        expect(free_kib).to be >= 96 * 1024 * 1024
+-        machine.succeeds('test ! -e /tmp/kb-ordinary/work && ! command -v dev-session && ! command -v workspace-host')
+-      end
+-    '';
+-  in
+-  {
+-    name = "kb-runtime-standalone";
+-    description = "Installed standalone KB tools without workspace runtime or session state";
+-    machine = {
+-      spin = "nixos";
+-      memory = 32768;
+-      cpus = 8;
+-      diskSize = 131072;
+-      config = {
+-        environment.systemPackages = [ profile.runtimePackage profile.capturePackage pkgs.ruby pkgs.git pkgs.jq ];
+-        nix.settings.experimental-features = [ "nix-command" "flakes" ];
+-        nix.settings.extra-substituters = [ "https://cache.vpsadminos.org" ];
+-        nix.settings.extra-trusted-public-keys = [ "cache.vpsadminos.org:wpIJlNZQIhS+0gFf1U3MC9sLZdLW3sh5qakOWGDoDrE=" ];
+-        boot.kernelModules = [ "kvm-intel" "kvm-amd" ];
+-        boot.extraModprobeConfig = ''
+-          options kvm_intel nested=1
+-          options kvm_amd nested=1
+-        '';
+-        fileSystems."/dev/shm".options = [ "size=24G" ];
+-      };
+-    };
+-    testScripts = {
+-      installed-layout = {
+-        tags = [ "kb-runtime-launcher" ];
+-        description = "Package defaults, read-only source and writable artifact layout";
+-        script = common + ''
+-          describe 'installed standalone entrypoints' do
+-            it 'does not need session discovery and never writes to its store source' do
+-              before = machine.succeeds("sha256sum #{SOURCE}/captures.json #{SOURCE}/flake.lock")
+-              result = JSON.parse(run("#{ENGINE} status nonexistent --json"))
+-              expect(result.fetch('found')).to be(false)
+-              machine.succeeds('test ! -e /tmp/kb-ordinary/.devcluster')
+-              run('vpsfree-kb-capture --help')
+-              # Invalid dedicated descriptor fails after choosing writable CWD
+-              # artifacts and before any remote/fixture call.
+-              machine.fails("cd /tmp/kb-ordinary && vpsfree-kb-capture --connection /tmp/absent-connection --language en")
+-              machine.succeeds('test -d /tmp/kb-ordinary/tmp')
+-              machine.succeeds('mkdir -m 700 /tmp/kb-explicit-output')
+-              machine.fails("cd /tmp/kb-ordinary && vpsfree-kb-capture --connection /tmp/absent-connection --language cs --output-root /tmp/kb-explicit-output")
+-              machine.succeeds('test -d /tmp/kb-explicit-output/tmp')
+-              expect(machine.succeeds("sha256sum #{SOURCE}/captures.json #{SOURCE}/flake.lock")).to eq(before)
+-            end
+-          end
+-        '';
+-      };
+-      two-instances = {
+-        tags = [ "kb-runtime-launcher" "nested-kvm" ];
+-        description = "Two real minimal clusters with the same slug and disjoint explicit local resources";
+-        script = common + ''
+-          describe 'real standalone isolation' do
+-            it 'keeps independently owned processes, disks, sockets, ports and reset state' do
+-              require_nested_capacity(20 * 1024 * 1024, 18 * 1024 * 1024)
+-              first = configuration('first', 'single', 24000)
+-              second = configuration('second', 'single', 24100)
+-              root_a = '/tmp/kb-ordinary/first-state'
+-              root_b = '/tmp/kb-ordinary/second-state'
+-              begin
+-                run("#{ENGINE} --state-root #{root_a} start shared-slug --network local --config #{first}")
+-                run("#{ENGINE} --state-root #{root_b} start shared-slug --network local --config #{second}")
+-                descriptors = [root_a, root_b].map { |root| JSON.parse(run("#{ENGINE} --state-root #{root} connection shared-slug")) }
+-                [root_a, root_b].zip(descriptors).each do |root, descriptor|
+-                  @cluster_root, @cluster_slug = root, 'shared-slug'
+-                  expect_initial_source(descriptor)
+-                end
+-                expect(descriptors[0].fetch('instance_id')).not_to eq(descriptors[1].fetch('instance_id'))
+-                expect(descriptors[0].fetch('machines')).not_to eq(descriptors[1].fetch('machines'))
+-                run("#{ENGINE} --state-root #{root_a} stop shared-slug")
+-                run("#{ENGINE} --state-root #{root_a} reset shared-slug")
+-                expect(JSON.parse(run("#{ENGINE} --state-root #{root_b} status shared-slug --json")).fetch('ready')).to be(true)
+-                run("#{ENGINE} --state-root #{root_b} ssh shared-slug services -- test -e /etc/vpsfree-kb-capture.json")
+-              ensure
+-                [root_a, root_b].each do |root|
+-                  machine.succeeds("if test -f #{root}/clusters/shared-slug/phase.json; then #{ENGINE} --state-root #{root} stop shared-slug; fi", timeout: 300)
+-                end
+-              end
+-            end
+-          end
+-        '';
+-      };
+-      resume-update = {
+-        tags = [ "kb-runtime-launcher" "nested-kvm" ];
+-        description = "Cold resume and exact changed-source preparation preserve owned root and data disks";
+-        script = common + ''
+-          describe 'prepared boot artifacts' do
+-            it 'resumes without rebuild and imports a genuine committed candidate through the old guest' do
+-              require_nested_capacity(12 * 1024 * 1024, 10 * 1024 * 1024)
+-              config = configuration('update', 'single', 24300)
+-              root = '/tmp/kb-ordinary/update-state'
+-              slug = 'update-test'
+-              prefix = "#{ENGINE} --state-root #{root}"
+-              begin
+-                run("#{prefix} start #{slug} --network local --config #{config}")
+-                old = JSON.parse(run("#{prefix} connection #{slug}"))
+-                @cluster_root, @cluster_slug = root, slug
+-                expect_initial_source(old)
+-                run("#{prefix} ssh #{slug} services -- sh -c 'printf root-sentinel > /root/kb-root-sentinel'")
+-                run("#{prefix} ssh #{slug} node1 -- sh -c 'printf data-sentinel > /tank/kb-data-sentinel'")
+-                credential_paths = %w[id_ed25519 id_ed25519.pub vpsadmin-ca.crt vpsadmin-ca.key vpsadmin-cert.crt vpsadmin-cert.key].map { |name| "#{root}/clusters/#{slug}/credentials/#{name}" }
+-                credentials = run("sha256sum #{credential_paths.join(' ')}")
+-                disk_inodes = run("stat -c '%n %i %s' #{root}/clusters/#{slug}/disks/services-root.img #{root}/clusters/#{slug}/disks/node1-tank.img")
+-                run("#{prefix} stop #{slug}")
+-                run("#{prefix} resume #{slug}")
+-                resumed = JSON.parse(run("#{prefix} connection #{slug}"))
+-                expect(resumed.fetch('run_id')).not_to eq(old.fetch('run_id'))
+-                expect(resumed.fetch('artifact_id')).to eq(old.fetch('artifact_id'))
+-                expect(resumed.fetch('artifact_sha256')).to eq(old.fetch('artifact_sha256'))
+-                expect(resumed.fetch('provenance').fetch('machine_toplevels')).to eq(old.fetch('provenance').fetch('machine_toplevels'))
+-                expect_initial_source(resumed)
+-                expect(run("sha256sum #{credential_paths.join(' ')}")).to eq(credentials)
+-                expect(run("stat -c '%n %i %s' #{root}/clusters/#{slug}/disks/services-root.img #{root}/clusters/#{slug}/disks/node1-tank.img")).to eq(disk_inodes)
+-                expect(run("#{prefix} ssh #{slug} services -- cat /root/kb-root-sentinel").strip).to eq('root-sentinel')
+-                expect(run("#{prefix} ssh #{slug} node1 -- cat /tank/kb-data-sentinel").strip).to eq('data-sentinel')
+-
+-                # Construct an actual committed immutable K fixture, with the
+-                # same lock and runtime code and a distinct source identity.
+-                run("cp -a #{SOURCE} /tmp/kb-ordinary/candidate && chmod -R u+w /tmp/kb-ordinary/candidate")
+-                run("printf 'isolated update source fixture\\n' > candidate/runtime-source-fixture.txt")
+-                run("printf 'runtime: create isolated source fixture\\n' > candidate-commit.message")
+-                run("git -C candidate init -b source-test && git -C candidate add -- . && git -C candidate -c user.name=KB-test -c user.email=kb@example.test commit -F /tmp/kb-ordinary/candidate-commit.message")
+-                run("umask 077; ruby candidate/cluster/source-metadata.rb --checkout /tmp/kb-ordinary/candidate > /tmp/kb-ordinary/candidate-source.json")
+-                candidate = JSON.parse(run('cat candidate-source.json'))
+-                expect(candidate.fetch('revision')).not_to eq(old.fetch('provenance').fetch('source').fetch('revision'))
+-                expect(candidate.fetch('lock_sha256')).to eq(old.fetch('provenance').fetch('source').fetch('lock_sha256'))
+-                run("#{prefix} --software-metadata /tmp/kb-ordinary/candidate-source.json update #{slug} --network local --config #{config}", timeout: 1800)
+-                current = JSON.parse(run("#{prefix} connection #{slug}"))
+-                expect(current.fetch('run_id')).not_to eq(resumed.fetch('run_id'))
+-                expect(current.fetch('artifact_id')).not_to eq(resumed.fetch('artifact_id'))
+-                expect(current.fetch('provenance').fetch('source')).to eq(candidate)
+-                expect(current.fetch('provenance').fetch('machine_toplevels')).not_to eq(resumed.fetch('provenance').fetch('machine_toplevels'))
+-                expect(run("#{prefix} ssh #{slug} services -- cat /root/kb-root-sentinel").strip).to eq('root-sentinel')
+-                expect(run("#{prefix} ssh #{slug} node1 -- cat /tank/kb-data-sentinel").strip).to eq('data-sentinel')
+-                expect(run("stat -c '%n %i %s' #{root}/clusters/#{slug}/disks/services-root.img #{root}/clusters/#{slug}/disks/node1-tank.img")).to eq(disk_inodes)
+-                expect(run("sha256sum #{credential_paths.join(' ')}")).to eq(credentials)
+-                current.fetch('provenance').fetch('machine_toplevels').each do |name, closure|
+-                  expect(run("#{prefix} ssh #{slug} #{name} -- readlink -f /run/current-system").strip).to eq(closure)
+-                end
+-              ensure
+-                machine.succeeds("if test -f #{root}/clusters/#{slug}/phase.json; then #{prefix} stop #{slug}; fi", timeout: 300)
+-              end
+-            end
+-          end
+-        '';
+-      };
+-      bilingual-capture = {
+-        tags = [ "kb-runtime-launcher" "nested-kvm" "kb-capture" ];
+-        description = "Installed matching source capture and validation with full screenshot fixture topology";
+-        script = common + ''
+-          describe 'standalone bilingual checkpoint' do
+-            it 'retains Czech and English artifacts and validates the full source inventory' do
+-              require_nested_capacity(22 * 1024 * 1024, 20 * 1024 * 1024)
+-              config = configuration('screenshots', 'screenshots', 24200)
+-              root = '/tmp/kb-ordinary/capture-state'
+-              output = '/tmp/kb-capture-evidence'
+-              machine.succeeds("mkdir -m 700 #{output}")
+-              begin
+-                run("#{ENGINE} --state-root #{root} start screenshots --network local --topology screenshots --config #{config}")
+-                @cluster_root, @cluster_slug = root, 'screenshots'
+-                expect_initial_source(JSON.parse(run("#{ENGINE} --state-root #{root} connection screenshots")))
+-                %w[cs en].each do |language|
+-                  run("vpsfree-kb-capture --state-root #{root} --cluster screenshots --language #{language} --checkpoint networking/ip-address-list --output-root #{output}", timeout: 1800)
+-                end
+-                run("vpsfree-kb-validate --output-root #{output} --update")
+-                run("vpsfree-kb-validate --output-root #{output}")
+-                rows = JSON.parse(run("cat #{output}/tmp/capture-results.json"))
+-                expect(rows.map { |row| [row.fetch('language'), row.fetch('id')] }.sort).to eq([
+-                  ['cs', 'networking/ip-address-list'], ['en', 'networking/ip-address-list']
+-                ])
+-              ensure
+-                machine.succeeds("if test -f #{root}/clusters/screenshots/phase.json; then #{ENGINE} --state-root #{root} stop screenshots; fi", timeout: 300)
+-              end
+-            end
+-          end
+-        '';
+-      };
+-    };
+-  }
+-)
+diff --git a/tools/capture-export.rb b/tools/capture-export.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..b9a7eda62df38c2ff2b17a2e28aee6ca3da12691
+--- /dev/null
++++ b/tools/capture-export.rb
+@@ -0,0 +1,48 @@
++# frozen_string_literal: true
++
++require 'digest'
++require 'fileutils'
++require_relative '../cluster/lib/kb_state'
++
++module KbCaptureArtifacts
++  FILES = %w[
++    screenshots/cs/networking/ip-address-list.png
++    screenshots/en/networking/ip-address-list.png
++    captures.json
++    tmp/capture-results.json
++    tmp/capture-source.json
++  ].freeze
++
++  def self.export(output_root, destination)
++    output_root = File.realpath(output_root)
++    state = KbRuntime::State.new(output_root, 'export')
++    state.private_directory(output_root) || raise('output root is absent')
++    lock_path = File.join(output_root, 'tmp/capture.lock')
++    state.file(lock_path, limit: 0)
++    expected_lock = File.lstat(lock_path)
++    File.open(lock_path, File::RDWR | File::NOFOLLOW) do |lock|
++      raise 'artifact lock identity changed' unless [lock.stat.dev, lock.stat.ino] == [expected_lock.dev, expected_lock.ino]
++      lock.flock(File::LOCK_EX)
++      raise 'KB capture evidence destination already exists' if File.exist?(destination) || File.symlink?(destination)
++      state.private_directory(File.dirname(destination)) || raise('export parent is not private')
++      Dir.mkdir(destination, 0o700)
++      hashes = {}
++      FILES.each do |relative|
++        source = File.join(output_root, relative)
++        state.check_ancestors(File.dirname(source))
++        stat = File.lstat(source)
++        raise 'unsafe source artifact' unless stat.file? && !stat.symlink? && stat.uid == Process.uid && (stat.mode & 0o022).zero?
++        target = File.join(destination, relative)
++        FileUtils.mkdir_p(File.dirname(target), mode: 0o700)
++        File.open(source, File::RDONLY | File::NOFOLLOW) do |input|
++          raise 'source artifact changed while opening' unless [input.stat.dev, input.stat.ino] == [stat.dev, stat.ino]
++          File.open(target, File::WRONLY | File::CREAT | File::EXCL | File::NOFOLLOW, 0o600) { |output| IO.copy_stream(input, output); output.flush; output.fsync }
++        end
++        expected = Digest::SHA256.file(source).hexdigest
++        raise "retained artifact hash differs: #{relative}" unless Digest::SHA256.file(target).hexdigest == expected
++        hashes[relative] = expected
++      end
++      { 'files' => hashes, 'destination' => File.realpath(destination) }
++    end
++  end
++end
+diff --git a/tools/runtime-verify.rb b/tools/runtime-verify.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..8f6443e27c813c7c24324f9280098ab65873e288
+--- /dev/null
++++ b/tools/runtime-verify.rb
+@@ -0,0 +1,616 @@
++#!/usr/bin/env ruby
++# frozen_string_literal: true
++
++require 'optparse'
++require 'open3'
++require 'shellwords'
++require_relative '../cluster/lib/kb_source'
++require_relative 'capture-export'
++
++module KbVerify
++  Error = Class.new(StandardError)
++  PHASES = %w[installed-layout isolation-continuity-update bilingual-capture].freeze
++  CREDENTIALS = %w[id_ed25519 id_ed25519.pub vpsadmin-ca.crt vpsadmin-ca.key vpsadmin-cert.crt vpsadmin-cert.key].freeze
++  GIB = 1024**3
++  PREDECESSOR = '68aa33b451a14eb7bf4b2f1a090a8e5a2f80b52e'
++
++  class Commands
++    attr_reader :environment
++
++    def initialize(selection, root)
++      @root = root
++      environment = ENV.to_h.slice('HOME', 'USER', 'LOGNAME', 'XDG_RUNTIME_DIR')
++      if environment['XDG_RUNTIME_DIR']
++        directory = environment.fetch('XDG_RUNTIME_DIR')
++        KbRuntime::State.new(directory, 'runtime-check').private_directory(directory)
++      end
++      @environment = environment.merge('PATH' => selection.fetch('path'), 'LANG' => 'C.UTF-8',
++        'TMPDIR' => File.join(root, 'temporary'), 'NODE_PATH' => selection.fetch('node_path'),
++        'PLAYWRIGHT_BROWSERS_PATH' => selection.fetch('browsers'), 'FONTCONFIG_FILE' => selection.fetch('fonts'),
++        'NIX_SSL_CERT_FILE' => selection.fetch('certificates'), 'SSL_CERT_FILE' => selection.fetch('certificates'),
++        'GEM_HOME' => selection.fetch('gem_home'), 'GEM_PATH' => selection.fetch('gem_home'),
++        'NIX_CONFIG' => "experimental-features = nix-command flakes\nextra-substituters = https://cache.vpsadminos.org\nextra-trusted-public-keys = cache.vpsadminos.org:wpIJlNZQIhS+0gFf1U3MC9sLZdLW3sh5qakOWGDoDrE=\n")
++    end
++
++    def call(argv, cwd:, accepted: [0], input: '', stage: nil)
++      state = KbRuntime::State.new(@root, 'diagnostics')
++      state.private_directory(@root) || raise(Error, 'command campaign root is absent')
++      directory = File.join(@root, 'diagnostics')
++      state.private_directory(directory, create: true)
++      directory = File.join(directory, SecureRandom.hex(12))
++      state.private_directory(directory, create: true)
++      record = { 'schema' => 1, 'argv' => argv, 'cwd' => cwd, 'stage' => stage,
++        'owner_uid' => Process.uid, 'started_at' => Time.now.utc.iso8601, 'complete' => false }
++      native = File.join(directory, 'command.json')
++      reader, writer = IO.pipe
++      output = File.open(File.join(directory, 'stdout'), File::WRONLY | File::CREAT | File::EXCL | File::NOFOLLOW, 0o600)
++      error = File.open(File.join(directory, 'stderr'), File::WRONLY | File::CREAT | File::EXCL | File::NOFOLLOW, 0o600)
++      status = nil
++      pid = nil
++      Thread.handle_interrupt(SignalException => :never) do
++        pid = Process.spawn(environment, *argv, chdir: cwd, in: reader, out: output, err: error,
++          unsetenv_others: true, close_others: true)
++        record['pid'] = pid
++      end
++      reader.close
++      state.write(native, record)
++      writer.write(input)
++      writer.close
++      loop do
++        # This is the sole reaper. Record the result and clear authority together
++        # before an interrupt can signal an already-reaped/reused process ID.
++        Thread.handle_interrupt(SignalException => :never) do
++          result = Process.waitpid2(pid, Process::WNOHANG)
++          if result
++            status = result.last
++            pid = nil
++          end
++        end
++        break if status
++        sleep 0.05
++      end
++      record.merge!('complete' => true, 'exit_code' => status.exitstatus, 'signal' => status.termsig,
++        'accepted' => accepted.include?(status.exitstatus), 'finished_at' => Time.now.utc.iso8601)
++      state.write(native, record)
++      raise Error, "verification command refused (#{status.exitstatus || "signal #{status.termsig}"}); private diagnostics: #{native}" unless record['accepted']
++      [File.binread(File.join(directory, 'stdout')), File.binread(File.join(directory, 'stderr')), status.exitstatus]
++    rescue SignalException
++      Thread.handle_interrupt(SignalException => :never) do
++        status = reap_interrupted(pid) if pid
++        pid = nil
++        record.merge!('interrupted' => true, 'complete' => !status.nil?, 'exit_code' => status&.exitstatus,
++          'signal' => status&.termsig, 'cleanup_scope' => 'spawned public command only', 'finished_at' => Time.now.utc.iso8601)
++        state.write(native, record)
++      end
++      raise
++    rescue StandardError => failure
++      raise unless native && record
++      Thread.handle_interrupt(SignalException => :never) do
++        status = reap_interrupted(pid) if pid
++        pid = nil
++        unless record['complete']
++          record.merge!('failure_class' => failure.class.name, 'failure_message' => failure.message,
++            'complete' => !status.nil?, 'exit_code' => status&.exitstatus, 'signal' => status&.termsig,
++            'finished_at' => Time.now.utc.iso8601)
++          state.write(native, record)
++        end
++      end
++      raise Error, "verification command failed; private diagnostics: #{native}"
++
++    ensure
++      [reader, writer, output, error].compact.each { |stream| stream.close unless stream.closed? }
++    end
++
++    def reap_interrupted(pid)
++      # The sole parent/reaper retains PID authority until its own wait. These
++      # signals do not certify exit of a daemon builder or a detached VM runner.
++      Process.kill('TERM', pid)
++      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10
++      loop do
++        result = Process.waitpid2(pid, Process::WNOHANG)
++        return result.last if result
++        if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
++          Process.kill('KILL', pid)
++          return Process.waitpid2(pid).last
++        end
++        sleep 0.05
++      end
++    end
++
++  end
++
++  class Campaign
++    attr_reader :root, :selection, :source, :commands, :configurations, :inputs, :assertions
++
++    def initialize(root:, config_a:, config_b:, predecessor_ref:, capacity_receipt:, selection:, commands: nil)
++      @root, @selection = File.expand_path(root), selection
++      @source = KbRuntime::Software.new(JSON.parse(File.read(selection.fetch('metadata')))).metadata
++      raise Error, 'verifier source must be its own immutable package source' unless
++        source.fetch('source') == selection.fetch('source') && File.expand_path('..', __dir__) == source.fetch('source')
++      raise Error, 'selected runtime metadata differs' unless
++        File.read(File.join(selection.fetch('runtime'), 'bin/vpsfree-kb-devcluster')).include?(selection.fetch('metadata'))
++      raise Error, 'predecessor must be the exact published K68 Git-flake' unless predecessor_ref == "github:vpsfreecz/vpsfree-kb-contracts/#{PREDECESSOR}"
++      @state = KbRuntime::State.new(@root, 'campaign')
++      config_bytes = [config_a, config_b].map { |name| @state.file(File.expand_path(name)) }
++      @configurations = config_bytes.map { |bytes| JSON.parse(bytes) }
++      @capacity_receipt = File.expand_path(capacity_receipt)
++      configurations.each { |config| validate_config(config) }
++      tcp = configurations.flat_map { |config| config.fetch('local').fetch('ports').values.flat_map(&:values) }
++      udp = configurations.map { |config| config.fetch('local').fetch('multicastPort') }
++      raise Error, 'campaign configurations overlap TCP or UDP resources' unless tcp.uniq == tcp && udp.uniq == udp
++      @inputs = { 'source' => source, 'selection' => selection, 'configurations' => configurations,
++        'predecessor_ref' => predecessor_ref, 'root' => @root,
++        'configuration_sha256' => config_bytes.map { |bytes| Digest::SHA256.hexdigest(bytes) } }
++      @commands = commands || Commands.new(selection, @root)
++      @assertions = []
++    end
++
++    def validate_config(config)
++      users = config.fetch('seed').fetch('users')
++      raise Error, 'inventory verification requires explicit account entries' unless users.is_a?(Array)
++      [['test-admin', 99, 1], ['test-user1', 1, 9], ['test-user2', 1, 17]].each do |login, level, block_start|
++        matches = users.select { |entry| entry['login'] == login }
++        raise Error, 'missing or duplicate inventory account' unless matches.size == 1
++        account = matches.first
++        unless account['level'] == level && account['password'].is_a?(String) && !account['password'].empty? &&
++            account['fullName'].is_a?(String) && !account['fullName'].strip.empty? && account['email'] == "#{login}@example.test" &&
++            account['namespace'] == { 'blockStart' => block_start, 'blockCount' => 8 }
++          raise Error, 'inventory account role, identity or namespace differs'
++        end
++      end
++      unless config.dig('services', 'memoryMiB') == 4096 && config.dig('services', 'rootDiskMiB') == 12288 &&
++          config.dig('nodes', 'node1', 'memoryMiB') == 4096 && config.dig('nodes', 'node1', 'tankDiskGiB') == 16 &&
++          config.dig('topologies', 'single') == ['node1'] && config.dig('dns', 'enable') == false &&
++          config.dig('resolver', 'mode') == 'cluster' && config.dig('resolver', 'upstreamNameservers') == ['10.0.2.3']
++        raise Error, 'verification requires the explicit single 12-GiB-root/16-GiB-tank configuration'
++      end
++      %w[domains tmpDomains].each do |name|
++        raise Error, 'verification TLS domains must use example.test' unless config.fetch(name).values.all? { |domain| domain.end_with?('.example.test') }
++      end
++      local = config.fetch('local')
++      values = [local.fetch('multicastPort'), *local.fetch('ports').values.flat_map(&:values)]
++      unless local['bindAddress'] == '127.0.0.1' && local.fetch('ports').keys.sort == %w[node1 services] &&
++          local.fetch('ports').fetch('services').keys.sort == %w[https ssh] && local.fetch('ports').fetch('node1').keys == ['ssh'] &&
++          values.all? { |port| port.is_a?(Integer) && port.between?(1, 65535) }
++        raise Error, 'verification requires explicit dedicated loopback TCP and multicast UDP ports'
++      end
++    end
++
++    def check(condition, name)
++      raise Error, "assertion failed: #{name}" unless condition
++      assertions << name
++    end
++
++    def file(name)
++      File.join(root, name)
++    end
++
++    def read(name)
++      @state.read(file(name))
++    end
++
++    def write(name, value, immutable: false)
++      @state.write(file(name), value, immutable:)
++    end
++
++    def initialize_campaign
++      capacity_assessment
++      @state.private_directory(root, create: true)
++      if File.exist?(file('campaign.json'))
++        identity = read('campaign.json')
++        unless identity['schema'] == 1 && identity['owner_uid'] == Process.uid && identity['root'] == File.realpath(root) && identity['inputs'] == inputs
++          raise Error, 'campaign identity, selected packages or inputs differ'
++        end
++      else
++        raise Error, 'nonempty root has no verification campaign identity' unless Dir.empty?(root)
++        write('campaign.json', { 'schema' => 1, 'owner_uid' => Process.uid, 'root' => File.realpath(root),
++          'campaign_id' => SecureRandom.uuid, 'inputs' => inputs }, immutable: true)
++      end
++      %w[temporary work output receipts].each { |name| @state.private_directory(file(name), create: true) }
++      configurations.each_with_index do |config, index|
++        name = "config-#{index == 0 ? 'a' : 'b'}.json"
++        File.exist?(file(name)) ? check(read(name) == config, 'retained explicit configuration') : write(name, config, immutable: true)
++      end
++    end
++
++    def run(phase)
++      @phase = nil
++      raise Error, 'unknown verification phase' unless PHASES.include?(phase)
++      initialize_campaign
++      lock = File.open(file('verify.lock'), File::RDWR | File::CREAT | File::NOFOLLOW, 0o600)
++      @state.file(file('verify.lock'), limit: 0)
++      named = File.lstat(file('verify.lock'))
++      raise Error, 'campaign lock identity changed' unless [lock.stat.dev, lock.stat.ino] == [named.dev, named.ino]
++      raise Error, 'verification campaign is already running' unless lock.flock(File::LOCK_EX | File::LOCK_NB)
++      PHASES.take(PHASES.index(phase)).each do |prior|
++        receipt = read("receipts/#{prior}.json")
++        check(receipt['complete'] == true && receipt['inputs'] == inputs, "completed #{prior} prerequisite")
++      end
++      raise Error, 'completed verification phase is immutable' if File.exist?(file("receipts/#{phase}.json"))
++      raise Error, 'incomplete phase requires diagnosis; no automatic campaign replay' if File.exist?(file("receipts/#{phase}-attempt.json"))
++      @phase = phase
++      checkpoint('started')
++      public_send(phase.tr('-', '_'))
++      write("receipts/#{phase}.json", { 'schema' => 1, 'phase' => phase, 'complete' => true,
++        'inputs' => inputs, 'assertions' => assertions, 'finished_at' => Time.now.utc.iso8601 }, immutable: true)
++    rescue StandardError => error
++      checkpoint('failed', 'error_class' => error.class.name) if @phase
++      raise
++    ensure
++      lock&.close
++    end
++
++    def checkpoint(stage, detail = {})
++      @stage = stage
++      write("receipts/#{@phase}-attempt.json", { 'schema' => 1, 'phase' => @phase, 'complete' => false,
++        'stage' => stage, 'inputs' => inputs, 'assertions' => assertions, 'time' => Time.now.utc.iso8601 }.merge(detail))
++    end
++
++    def command(*argv, cwd: file('work'), accepted: [0])
++      output, _error, code = commands.call(argv, cwd:, accepted:, stage: [@phase, @stage].compact.join('/'))
++      [output, code]
++    end
++
++    def engine(which, action, *args, accepted: [0])
++      if %w[start resume update].include?(action)
++        target = which == 'a' ? 'a' : (which == 'old' ? 'b-predecessor' : 'b-final')
++        capacity("#{action}-#{target}")
++      end
++      package = which == 'old' ? read('predecessor.json').fetch('runtime') : selection.fetch('runtime')
++      command(File.join(package, 'bin/vpsfree-kb-devcluster'), '--state-root', file("state-#{which == 'a' ? 'a' : 'b'}"), action, 'same-slug', *args, accepted:)
++    end
++
++    def installed_layout
++      check(File.realpath(root) == root && !root.start_with?('/nix/store/'), 'ordinary private writable campaign root')
++      _, repository_code = command('git', '-C', root, 'rev-parse', '--is-inside-work-tree', accepted: [0, 128])
++      check(repository_code == 128, 'ordinary campaign is outside a Git checkout')
++      before = source_hashes
++      result, = command(File.join(selection.fetch('runtime'), 'bin/vpsfree-kb-devcluster'), 'status', 'nonexistent', '--json')
++      check(JSON.parse(result)['found'] == false, 'public status reports missing state')
++      check(!File.exist?(file('work/.devcluster')), 'status does not initialize state')
++      command(File.join(selection.fetch('capture'), 'bin/vpsfree-kb-capture'), '--help')
++      %w[work output].each do |directory|
++        args = ['--connection', file('absent-connection'), '--language', 'en']
++        args += ['--output-root', file('output')] if directory == 'output'
++        _, code = command(File.join(selection.fetch('capture'), 'bin/vpsfree-kb-capture'), *args, accepted: [1])
++        check(code == 1 && File.directory?(file("#{directory}/tmp")), 'packaged capture writable defaults and explicit output precede connection refusal')
++      end
++      check(source_hashes == before, 'installed layout leaves immutable source unchanged')
++      capacity('predecessor-build')
++      checkpoint('predecessor-construction')
++      paths, = command('nix', 'build', '--no-link', '--print-out-paths', '--no-write-lock-file',
++        "#{inputs.fetch('predecessor_ref')}#kb-runtime", "#{inputs.fetch('predecessor_ref')}#runtime-source")
++      outputs = paths.lines.map(&:strip)
++      check(outputs.size == 2 && outputs.uniq.size == 2 && outputs.all? { |path| path.start_with?('/nix/store/') }, 'predecessor outputs resolved together')
++      runtime = outputs.find { |path| File.file?(File.join(path, 'bin/vpsfree-kb-devcluster')) }
++      metadata_path = outputs.find { |path| File.file?(path) }
++      check(runtime && metadata_path, 'predecessor runtime and metadata output shapes')
++      metadata = KbRuntime::Software.new(JSON.parse(File.read(metadata_path))).metadata
++      check(metadata.fetch('revision') == PREDECESSOR && metadata.fetch('revision') != source.fetch('revision'), 'genuine predecessor differs from final source')
++      check(File.read(File.join(runtime, 'bin/vpsfree-kb-devcluster')).include?(metadata_path), 'predecessor executable embeds its own metadata')
++      write('predecessor.json', { 'runtime' => runtime, 'metadata_path' => metadata_path, 'source' => metadata }, immutable: true)
++    end
++
++    def source_hashes
++      %w[captures.json flake.lock].to_h { |name| [name, Digest::SHA256.file(File.join(source.fetch('source'), name)).hexdigest] }
++    end
++
++    # The receipt records an operator assessment, not a reservation or an exact
++    # bound on Nix builder scratch. Every admission consumes a fresh snapshot.
++    def capacity_assessment
++      bytes = @state.file(@capacity_receipt)
++      value = JSON.parse(bytes)
++      raise Error, 'capacity receipt does not match campaign/source/packages/configurations' unless
++        value['schema'] == 1 && value['bindings'] == inputs
++      observed = Time.iso8601(value.fetch('observed_at'))
++      raise Error, 'capacity observation is in the future' if observed > Time.now
++      plan = value.fetch('build_plan')
++      unless plan['scratch_bound'] == 'unknown' && plan['assessment'].is_a?(String) && !plan['assessment'].strip.empty? &&
++          plan['daemon_scratch_evidence'].is_a?(String) && !plan['daemon_scratch_evidence'].strip.empty? &&
++          plan['max_jobs'].is_a?(Integer) && plan['max_jobs'].positive? &&
++          plan['cores'].is_a?(Integer) && plan['cores'].positive? &&
++          plan['derivations'].is_a?(Array) && plan['derivations'].all? { |entry| entry.is_a?(String) && !entry.empty? } &&
++          plan['kernel_substitutions'].is_a?(Array) && !plan['kernel_substitutions'].empty? &&
++          plan['kernel_substitutions'].all? { |entry| entry.is_a?(String) && !entry.strip.empty? }
++        raise Error, 'capacity receipt requires explicit construction, concurrency, kernel and unknown-scratch evidence'
++      end
++      %w[allocated_bytes apparent_bytes].each { |name| nonnegative_bytes(value.fetch('owned_output').fetch(name)) }
++      %w[realized_paths missing_paths filesystems].each { |name| raise Error, "capacity receipt lacks #{name}" unless value[name].is_a?(Array) }
++      [value, Digest::SHA256.hexdigest(bytes)]
++    rescue ArgumentError
++      raise Error, 'invalid capacity observation time'
++    end
++
++    def nonnegative_bytes(value)
++      raise Error, 'capacity byte count must be a nonnegative integer' unless value.is_a?(Integer) && value >= 0
++      value
++    end
++
++    def existing_ancestor(path)
++      path = File.expand_path(path)
++      @state.check_ancestors(path)
++      path = File.dirname(path) until File.exist?(path)
++      path
++    end
++
++    def filesystem(path)
++      existing = existing_ancestor(path)
++      target, = command('findmnt', '-n', '-o', 'TARGET', '-T', existing)
++      type, = command('findmnt', '-n', '-o', 'FSTYPE', '-T', existing)
++      available, = command('df', '-B1', '--output=avail', existing)
++      { 'path' => File.expand_path(path), 'device' => File.stat(existing).dev,
++        'mountpoint' => target.strip, 'fstype' => type.strip, 'available_bytes' => Integer(available.lines.last.strip) }
++    end
++
++    def host_capacity
++      File.open('/dev/kvm', 'r+') { |device| raise Error, 'actual KVM API unavailable' unless device.ioctl(0xAE00) == 12 }
++      ram = Integer(File.read('/proc/meminfo').match(/^MemAvailable:\s+(\d+)/)[1]) * 1024
++      shm, = command('df', '-B1', '--output=avail', '/dev/shm')
++      { 'ram_available' => ram, 'shm_available' => Integer(shm.lines.last.strip) }
++    end
++
++    def allocation(path)
++      stat = File.lstat(path)
++      raise Error, 'capacity path is not an ordinary file or directory' unless (stat.file? || stat.directory?) && !stat.symlink?
++      allocated, = command('du', '-s', '-B1', path)
++      apparent, = command('du', '-s', '-B1', '--apparent-size', path)
++      { 'path' => path, 'device' => stat.dev, 'allocated_bytes' => Integer(allocated.split.first),
++        'apparent_bytes' => Integer(apparent.split.first) }
++    end
++
++    def remaining_growth(operation)
++      configs = Dir.glob(file('state-*/clusters/same-slug/result-config-*'))
++      images = configs.filter_map { |path| JSON.parse(File.read(path)).fetch('machines').fetch('services')['diskImage'] }.uniq
++      # Immutable service images consume store space; root copies and tank writes
++      # consume campaign space. Sparse extents are still future growth, even when
++      # File.size already reports the configured capacity. No reflink is assumed.
++      images = images.uniq { |path| stat = File.stat(path); [stat.dev, stat.ino] }
++      realized_images = images.map { |path| allocation(path) }
++      image_growth = [36 * GIB - realized_images.sum { |entry| entry.fetch('allocated_bytes') }, 0].max
++      roots = operation == 'resume-b-final' ? ['b'] : %w[a b]
++      retained_disks = []
++      disk_growth = roots.sum do |which|
++        { 'services-root.img' => 12 * GIB, 'node1-tank.img' => 16 * GIB }.sum do |name, size|
++          path = file("state-#{which}/clusters/same-slug/disks/#{name}")
++          entry = File.exist?(path) ? allocation(path) : nil
++          retained_disks << entry if entry
++          allocated = entry ? entry.fetch('allocated_bytes') : 0
++          [size - allocated, 0].max
++        end
++      end
++      { 'image_bytes' => image_growth, 'disk_bytes' => disk_growth, 'realized_images' => realized_images, 'retained_disks' => retained_disks }
++    end
++
++    def capacity(operation)
++      value, digest = capacity_assessment
++      roles = value.fetch('roles')
++      raise Error, 'capacity roles must name campaign, store and actual daemon scratch' unless roles.keys.sort == %w[builder_scratch state_images store]
++      paths = { 'state_images' => root, 'store' => '/nix/store', 'builder_scratch' => roles.fetch('builder_scratch').fetch('path') }
++      snapshots = paths.to_h do |role, path|
++        expected = roles.fetch(role)
++        raise Error, 'capacity filesystem path must be canonical and absolute' unless path == File.expand_path(path)
++        actual = filesystem(path)
++        raise Error, "capacity filesystem binding changed: #{role}" unless expected == actual.reject { |key, _| key == 'available_bytes' }
++        [role, actual]
++      end
++      check(!%w[tmpfs ramfs].include?(snapshots.fetch('state_images').fetch('fstype')), 'campaign images use disk-backed filesystem')
++      host = host_capacity
++      check(host.fetch('ram_available') >= 24 * GIB, '24 GiB available host RAM')
++      check(host.fetch('shm_available') >= 18 * GIB, '18 GiB available shared memory')
++      devices = snapshots.values.map { |entry| entry.fetch('device') }.uniq
++      budgets = value.fetch('filesystems')
++      unless budgets.map { |entry| entry.fetch('device') }.uniq.size == budgets.size && budgets.map { |entry| entry.fetch('device') }.sort == devices.sort
++        raise Error, 'capacity assessment must budget each shared filesystem once'
++      end
++      growth = remaining_growth(operation)
++      check(growth.fetch('realized_images').all? { |entry| entry['device'] == snapshots.fetch('store').fetch('device') }, 'service images remain on the bound store filesystem')
++      check(growth.fetch('retained_disks').all? { |entry| entry['device'] == snapshots.fetch('state_images').fetch('device') }, 'retained disks remain on the bound campaign filesystem')
++      charges = Hash.new(0)
++      charges[snapshots.fetch('state_images').fetch('device')] += growth.fetch('disk_bytes')
++      charges[snapshots.fetch('store').fetch('device')] += growth.fetch('image_bytes')
++      realized = value.fetch('realized_paths').uniq.map do |path|
++        raise Error, 'realized capacity path must be an immutable store path' unless path.start_with?('/nix/store/') && path == File.expand_path(path)
++        allocation(path)
++      end
++      missing = value.fetch('missing_paths').group_by { |entry| entry.fetch('path') }.map do |path, entries|
++        raise Error, 'conflicting repeated missing path evidence' unless entries.uniq.size == 1
++        entry = entries.first
++        raise Error, 'missing closure must be an immutable store path' unless path.start_with?('/nix/store/') && path == File.expand_path(path)
++        raise Error, 'missing path kind must identify closure or budgeted service image' unless %w[closure service-image].include?(entry.fetch('kind'))
++        nonnegative_bytes(entry.fetch('nar_size'))
++        nonnegative_bytes(entry.fetch('download_size')) unless entry['download_size'].nil?
++        # NAR size is a known estimate, not a claim about builder/FS peaks. A
++        # service image already belongs to the three-image extent budget above.
++        charges[snapshots.fetch('store').fetch('device')] += entry.fetch('nar_size') if entry.fetch('kind') == 'closure' && !File.exist?(path)
++        entry.merge('currently_realized' => File.exist?(path))
++      end
++      raise Error, 'receipt lists more than the three planned service images' if missing.count { |entry| entry['kind'] == 'service-image' } > 3
++      fresh = budgets.map do |budget|
++        device = budget.fetch('device')
++        reserve = nonnegative_bytes(budget.fetch('reserve_bytes'))
++        headroom = nonnegative_bytes(budget.fetch('build_headroom_bytes'))
++        raise Error, 'operator-assessed build headroom must be positive' unless headroom.positive?
++        raise Error, 'campaign reserve must retain 16 GiB' if device == snapshots.fetch('state_images').fetch('device') && reserve < 16 * GIB
++        nonnegative_bytes(budget.fetch('observed_available_bytes'))
++        available = snapshots.values.select { |entry| entry['device'] == device }.map { |entry| entry.fetch('available_bytes') }.min
++        remaining = charges.fetch(device, 0)
++        check(available >= remaining + reserve + headroom, 'fresh filesystem growth, reserve and assessed headroom')
++        { 'device' => device, 'available_bytes' => available, 'remaining_growth_bytes' => remaining,
++          'reserve_bytes' => reserve, 'available_build_headroom_bytes' => available - remaining - reserve,
++          'assessed_build_headroom_bytes' => headroom }
++      end
++      policy = value.fetch('build_plan')
++      if commands.respond_to?(:environment)
++        commands.environment['NIX_CONFIG'] = commands.environment.fetch('NIX_CONFIG').lines.reject { |line| line.match?(/\A(?:max-jobs|cores) =/) }.join +
++          "max-jobs = #{policy.fetch('max_jobs')}\ncores = #{policy.fetch('cores')}\n"
++      end
++      write("receipts/capacity-#{SecureRandom.hex(12)}.json", { 'schema' => 1, 'operation' => operation,
++        'receipt_sha256' => digest, 'assessment' => value, 'measured_at' => Time.now.utc.iso8601,
++        'host' => host, 'filesystems' => fresh, 'owned_output' => allocation(root), 'realized_paths' => realized,
++        'remaining_growth' => growth, 'known_missing_paths' => missing,
++        'scratch_bound' => 'unknown', 'owned_output_worst_envelope' => 108 * GIB }, immutable: true)
++    end
++
++    def descriptor(which, metadata)
++      out, = engine(which, 'connection')
++      value = JSON.parse(out)
++      check(value.dig('provenance', 'source') == metadata, "#{which} exact prepared source")
++      value.fetch('provenance').fetch('machine_toplevels').each do |machine, closure|
++        identity, = engine(which, 'ssh', machine, '--', 'cat', '/etc/vpsfree-kb-capture.json')
++        check(JSON.parse(identity) == value.fetch('provenance').fetch('guest_identity'), "#{which}/#{machine} live guest identity")
++        running, = engine(which, 'ssh', machine, '--', 'readlink', '-f', '/run/current-system')
++        check(running.strip == closure, "#{which}/#{machine} actual system closure")
++      end
++      value
++    end
++
++    def identities
++      directory = file('state-b/clusters/same-slug')
++      files = CREDENTIALS.to_h { |name| [name, Digest::SHA256.file(File.join(directory, 'credentials', name)).hexdigest] }
++      disks = %w[services-root.img node1-tank.img].to_h do |name|
++        path = File.join(directory, 'disks', name)
++        stat = File.lstat(path)
++        check(stat.file? && !stat.symlink? && stat.uid == Process.uid, 'owned retained disk')
++        [name, { 'device' => stat.dev, 'inode' => stat.ino, 'size' => stat.size }]
++      end
++      accounts = Digest::SHA256.hexdigest(@state.file(File.join(directory, 'accounts.json')))
++      { 'credentials' => files, 'disks' => disks, 'accounts_sha256' => accounts }
++    end
++
++    def sentinels(which)
++      { 'services' => '/root/kb-root-sentinel', 'node1' => '/tank/kb-data-sentinel' }.to_h do |machine, path|
++        output, = engine(which, 'ssh', machine, '--', 'sha256sum', path)
++        [machine, output.split.first]
++      end
++    end
++
++    def continuity(previous, current, identity, sentinel)
++      check(current.fetch('instance_id') == previous.fetch('instance_id'), 'retained instance identity')
++      check(current.fetch('run_id') != previous.fetch('run_id'), 'fresh live run identity')
++      check(current.fetch('artifact_id') == previous.fetch('artifact_id') && current.fetch('artifact_sha256') == previous.fetch('artifact_sha256'), 'cold resume reuses accepted artifact')
++      check(current.fetch('provenance').fetch('machine_toplevels') == previous.fetch('provenance').fetch('machine_toplevels'), 'cold resume does not rebuild closures')
++      check(identities == identity, 'all six credentials, private accounts digest and disk identities preserved')
++      check(sentinels('b') == sentinel, 'root/data sentinels preserved')
++    end
++
++    def isolation_continuity_update
++      checkpoint('starting-a')
++      engine('a', 'start', '--network', 'local', '--topology', 'single', '--config', file('config-a.json'))
++      a = descriptor('a', source)
++      checkpoint('starting-predecessor-b')
++      old_source = read('predecessor.json').fetch('source')
++      engine('old', 'start', '--network', 'local', '--topology', 'single', '--config', file('config-b.json'))
++      old = descriptor('old', old_source)
++      isolation(a, old)
++      { 'services' => '/root/kb-root-sentinel', 'node1' => '/tank/kb-data-sentinel' }.each do |machine, path|
++        engine('old', 'ssh', machine, '--', 'sh', '-c', 'test ! -e "$1"; printf "%s" "$2" > "$1"', 'sh', path, read('campaign.json').fetch('campaign_id'))
++      end
++      identity, sentinel = identities, sentinels('old')
++      write('continuity-b.json', { 'identities' => identity, 'sentinels' => sentinel }, immutable: true)
++      engine('old', 'stop')
++      engine('old', 'resume')
++      resumed = descriptor('old', old_source)
++      continuity(old, resumed, identity, sentinel)
++      descriptor('a', source)
++      checkpoint('updating-b')
++      engine('b', 'update', '--network', 'local', '--topology', 'single', '--config', file('config-b.json'))
++      current = descriptor('b', source)
++      check(current.fetch('instance_id') == old.fetch('instance_id') && current.fetch('run_id') != resumed.fetch('run_id'), 'update retains instance with fresh run')
++      check(current.fetch('artifact_id') != resumed.fetch('artifact_id') && current.fetch('provenance').fetch('machine_toplevels') != resumed.fetch('provenance').fetch('machine_toplevels'), 'genuinely changed artifact and closures')
++      check(identities == identity && sentinels('b') == sentinel, 'update preserves disks, six credentials, private accounts digest and sentinels')
++      preparation(current)
++      isolation(descriptor('a', source), current)
++      checkpoint('resetting-only-a')
++      engine('a', 'stop')
++      engine('a', 'reset')
++      check(!File.exist?(file('state-a/clusters/same-slug')), 'only owned A tree reset')
++      current = descriptor('b', source)
++      engine('b', 'stop')
++      engine('b', 'resume')
++      final = descriptor('b', source)
++      continuity(current, final, identity, sentinel)
++      write('accepted-b.json', final, immutable: true)
++      checkpoint('public-lease-proof')
++      command('node', File.join(source.fetch('source'), 'tools/verify-live-lease.cjs'), file('accepted-b.json'),
++        selection.fetch('metadata'), selection.fetch('runtime'), file('state-b'), file('config-b.json'))
++      assertions << 'public lease lifecycle exclusion, EOF/interruption, reacquisition, wrong-source refusal and routing'
++    end
++
++    def isolation(first, second)
++      check(first.fetch('instance_id') != second.fetch('instance_id'), 'same slug has independent instances')
++      check(first.fetch('machines') != second.fetch('machines'), 'two roots have disjoint SSH endpoints')
++      records = %w[a b].map do |name|
++        phase = @state.read(file("state-#{name}/clusters/same-slug/phase.json"))
++        @state.read(file("state-#{name}/clusters/same-slug/launch-#{phase.fetch('run_id')}.json"))
++      end
++      check(records.map { |record| record.fetch('state_root') }.uniq.size == 2 && records.map { |record| record.fetch('socket_dir') }.uniq.size == 2, 'distinct roots and sockets')
++      claims = records.map { |record| record.fetch('resource_claims') }
++      check((claims[0] & claims[1]).empty? && claims.all? { |set| set.any? { |claim| claim['kind'] == 'udp' } }, 'TCP/UDP claims are disjoint')
++    end
++
++    def preparation(descriptor)
++      artifact = descriptor.fetch('artifact_id')
++      summary = @state.read(file("state-b/clusters/same-slug/prepared-#{artifact}.json"))
++      check(summary['complete'] == true && summary['kind'] == 'import', 'candidate import completed before new boot')
++      proof = @state.read(file("state-b/clusters/same-slug/prepared-#{artifact}-services.json"))
++      check(proof['complete'] == true && proof['artifact_sha256'] == descriptor.fetch('artifact_sha256'), 'exact candidate preparation receipt')
++      gcroot, = engine('b', 'ssh', 'services', '--', 'readlink', '-f', proof.fetch('guest_root'))
++      check(gcroot.strip == proof.fetch('toplevel'), 'candidate guest GC root retained')
++      actual, = engine('b', 'ssh', 'services', '--', 'nix', 'path-info', '--recursive', '--json', proof.fetch('toplevel'))
++      value = JSON.parse(actual)
++      value = value.to_h { |entry| [entry.fetch('path'), entry] } if value.is_a?(Array)
++      normalized = value.transform_values { |entry| { 'narHash' => entry.fetch('narHash'), 'narSize' => entry.fetch('narSize'), 'references' => entry.fetch('references').sort } }
++      check(normalized == proof.fetch('closure'), 'live candidate closure content and references')
++    end
++
++    def bilingual_capture
++      descriptor('b', source)
++      before = source_hashes
++      output = file('output')
++      capture = File.join(selection.fetch('capture'), 'bin/vpsfree-kb-capture')
++      command(capture, '--cluster', 'same-slug', '--state-root', file('state-b'), '--language', 'cs', '--checkpoint', 'networking/ip-address-list', '--output-root', output)
++      value, = engine('b', 'connection')
++      write('capture-connection.json', JSON.parse(value))
++      command(capture, '--connection', file('capture-connection.json'), '--language', 'en', '--checkpoint', 'networking/ip-address-list', '--output-root', output)
++      command(capture, '--connection', file('capture-connection.json'), '--language', 'en', '--checkpoint', 'networking/ip-address-list', cwd: output)
++      validate = File.join(selection.fetch('capture'), 'bin/vpsfree-kb-validate')
++      command(validate, '--update', '--output-root', output)
++      command(validate, '--output-root', output)
++      rows = JSON.parse(File.read(File.join(output, 'tmp/capture-results.json')))
++      check(rows.map { |row| [row.fetch('language'), row.fetch('id')] }.sort == [['cs', 'networking/ip-address-list'], ['en', 'networking/ip-address-list']], 'exact bilingual results')
++      check(rows.all? { |row| row.dig('provenance', 'source') == source }, 'both captures bind final immutable source')
++      check(source_hashes == before, 'capture/validation leave source immutable')
++      write('receipts/export.json', KbCaptureArtifacts.export(output, file('export')), immutable: true)
++      assertions << 'strict installed full-inventory validation and five-file physical-lock checksum export'
++    end
++  end
++
++  def self.run(argv)
++    options = {}
++    parser = OptionParser.new do |value|
++      value.banner = 'Usage: vpsfree-kb-verify --root DIR --config-a FILE --config-b FILE --predecessor-ref EXACT-REF --capacity-receipt FILE --phase PHASE'
++      %w[root config-a config-b predecessor-ref capacity-receipt phase selection].each do |name|
++        value.on("--#{name} VALUE") do |argument|
++          key = name.tr('-', '_').to_sym
++          raise Error, "duplicate option: --#{name}" if options.key?(key)
++          options[key] = argument
++        end
++      end
++      value.on('--help') { puts value; return 0 }
++    end
++    parser.parse!(argv)
++    raise Error, 'unexpected positional arguments' unless argv.empty?
++    phase = options.delete(:phase) || raise(Error, '--phase is required')
++    selected = options.delete(:selection) || raise(Error, 'use the packaged verifier with its fixed source selection')
++    %i[root config_a config_b predecessor_ref capacity_receipt].each { |name| options.fetch(name) }
++    options[:selection] = JSON.parse(File.read(selected))
++    Campaign.new(**options).run(phase)
++    puts JSON.generate('phase' => phase, 'complete' => true)
++    0
++  rescue Error, KbRuntime::Error, KeyError, OptionParser::ParseError, JSON::ParserError, SystemCallError => error
++    warn "Verification refused: #{error.message}"
++    1
++  end
++end
++
++exit KbVerify.run(ARGV) if $PROGRAM_NAME == __FILE__
+diff --git a/tools/standalone-scripts.nix b/tools/standalone-scripts.nix
+deleted file mode 100644
+index 01a763b8f2184bdd42f26c4da5b48d92ab770bc0..0000000000000000000000000000000000000000
+--- a/tools/standalone-scripts.nix
++++ /dev/null
+@@ -1,19 +0,0 @@
+-# Render only the Ruby scenario bodies; no machine configuration or VM is built.
+-let
+-  test = import ../tests/suite/runtime/standalone.nix {
+-    testFramework = {
+-      sourcePath = "/fixture/not-evaluated";
+-      makeTest = testFn: _args: testFn {
+-        pkgs = { ruby = "/fixture/ruby"; git = "/fixture/git"; jq = "/fixture/jq"; };
+-        lib.replaceStrings = builtins.replaceStrings;
+-        kbStandalone = {
+-          source = "/fixture/source";
+-          sourceMetadata = "/fixture/source.json";
+-          runtimePackage = "/fixture/runtime";
+-          capturePackage = "/fixture/capture";
+-        };
+-      };
+-    };
+-  };
+-in
+-builtins.mapAttrs (_name: script: script.script) test.testScripts
+diff --git a/tools/test-capture-export.rb b/tools/test-capture-export.rb
+index 9056e155c838645883cc81ad934c2eac02155a10..6947e771fa401cb98345a0c9aba9197d23c062bc 100644
+--- a/tools/test-capture-export.rb
++++ b/tools/test-capture-export.rb
+@@ -4,11 +4,8 @@ require 'minitest/autorun'
+ require 'tmpdir'
+ require 'digest'
+ require 'fileutils'
+-require 'shellwords'
+-require 'test-runner/hook'
+ require 'osvm'
+-TestRunner::Hook.register(:after_test_script_run)
+-require_relative '../tests/runner/extensions/kb_capture_artifacts'
++require_relative 'capture-export'
+ 
+ class CaptureEvidenceExportTest < Minitest::Test
+   def test_pinned_machine_succeeds_returns_status_and_output_without_a_vm
+@@ -16,88 +13,74 @@ class CaptureEvidenceExportTest < Minitest::Test
+     shell.define_singleton_method(:succeeds) { |_command, timeout:| [0, 'fixture output'] }
+     machine = OsVm::Machine.allocate
+     machine.define_singleton_method(:command_shell) { |_name| shell }
+-    result = machine.succeeds('not executed', timeout: 1)
+-    assert_equal([0, 'fixture output'], result)
+-    assert_equal('fixture output', result.last)
++    assert_equal([0, 'fixture output'], machine.succeeds('not executed', timeout: 1))
+     source, = machine.method(:succeeds).source_location
+     assert(source.start_with?(ENV.fetch('VPSADMIN_KB_OSVM_SOURCE') + '/'))
+   end
+ 
+-  class Machine
+-    attr_reader :pulled
+-    attr_accessor :corrupt
+-
+-    def initialize(directory)
+-      @directory, @pulled = directory, []
+-    end
+-
+-    def succeeds(command)
+-      path = Shellwords.split(command).last
+-      [0, "#{Digest::SHA256.file(local(path)).hexdigest}  #{path}\n"]
+-    end
+-
+-    def pull_file(path)
+-      @pulled << path
+-      result = File.join(@directory, 'pulled')
+-      File.write(result, @corrupt ? 'corrupt' : File.binread(local(path)))
+-      result
+-    end
+-
+-    def local(path)
+-      File.join(@directory, path.delete_prefix(KbCaptureArtifacts::OUTPUT_ROOT + '/'))
+-    end
+-  end
+-
+-  def with_machine
+-    Dir.mktmpdir('kb-evidence-') do |directory|
+-      machine = Machine.new(directory)
++  def with_output
++    Dir.mktmpdir('kb-evidence-') do |root|
++      File.chmod(0o700, root)
+       (KbCaptureArtifacts::FILES + ['credentials/id_ed25519', 'connection.json', 'tmp/transcript.log']).each do |relative|
+-        file = File.join(directory, relative)
+-        FileUtils.mkdir_p(File.dirname(file))
+-        File.write(file, "fixture #{relative}")
++        file = File.join(root, 'output', relative)
++        FileUtils.mkdir_p(File.dirname(file), mode: 0o700)
++        File.write(file, "fixture #{relative}", perm: 0o600)
+       end
+-      yield machine, File.join(directory, 'runner-state')
++      File.write(File.join(root, 'output/tmp/capture.lock'), '', perm: 0o600)
++      yield File.join(root, 'output'), File.join(root, 'export')
+     end
+   end
+ 
+-  def invoke(machine, state_dir, success:, suite: 'runtime/standalone', script: 'bilingual-capture')
+-    result = Struct.new(:successful?).new(success)
+-    TestRunner::Hook.call(:after_test_script_run, kwargs: {
+-      test: Struct.new(:path).new(suite), script: Struct.new(:name).new(script),
+-      script_result: result, machines: { 'machine' => machine }, state_dir:
+-    })
+-  end
+-
+-  def test_success_exports_only_allowlisted_relative_paths_and_verifies_each_hash
+-    with_machine do |machine, state_dir|
+-      invoke(machine, state_dir, success: true)
+-      destination = File.join(state_dir, 'artifacts/kb-runtime-standalone/bilingual-capture')
++  def test_exports_only_five_allowlisted_files_and_verifies_their_hashes
++    with_output do |output, destination|
++      result = KbCaptureArtifacts.export(output, destination)
+       actual = Dir.glob(File.join(destination, '**/*')).select { |path| File.file?(path) }.map { |path| path.delete_prefix(destination + '/') }
+       assert_equal(KbCaptureArtifacts::FILES.sort, actual.sort)
+-      assert_equal(KbCaptureArtifacts::FILES.map { |name| "#{KbCaptureArtifacts::OUTPUT_ROOT}/#{name}" }, machine.pulled)
++      assert_equal(KbCaptureArtifacts::FILES.sort, result.fetch('files').keys.sort)
+       KbCaptureArtifacts::FILES.each do |relative|
+         assert_equal("fixture #{relative}", File.read(File.join(destination, relative)))
++        assert_equal(Digest::SHA256.file(File.join(destination, relative)).hexdigest, result['files'][relative])
+       end
+-      assert_raises(RuntimeError) { invoke(machine, state_dir, success: true) }
++      assert_raises(RuntimeError) { KbCaptureArtifacts.export(output, destination) }
+     end
+   end
+ 
+-  def test_failed_or_other_scripts_do_not_pull_any_evidence
+-    with_machine do |machine, state_dir|
+-      invoke(machine, state_dir, success: false)
+-      invoke(machine, state_dir, success: true, script: 'installed-layout')
+-      invoke(machine, state_dir, success: true, suite: 'kb/firewall')
+-      assert_empty(machine.pulled)
+-      refute(File.exist?(state_dir))
++  def test_symlink_or_existing_destination_cannot_export_or_overwrite
++    with_output do |output, destination|
++      target = File.join(output, KbCaptureArtifacts::FILES.first)
++      File.unlink(target)
++      File.symlink(File.join(output, 'credentials/id_ed25519'), target)
++      assert_raises(RuntimeError) { KbCaptureArtifacts.export(output, destination) }
++      refute(File.exist?(File.join(destination, KbCaptureArtifacts::FILES.first)))
+     end
+   end
+ 
+-  def test_transfer_hash_mismatch_fails_before_retaining_that_file
+-    with_machine do |machine, state_dir|
+-      machine.corrupt = true
+-      error = assert_raises(RuntimeError) { invoke(machine, state_dir, success: true) }
+-      assert_match(/pulled artifact hash differs/, error.message)
+-      refute(File.exist?(File.join(state_dir, 'artifacts/kb-runtime-standalone/bilingual-capture', KbCaptureArtifacts::FILES.first)))
++  def test_export_waits_for_physical_output_lock_and_copies_after_release
++    with_output do |output, destination|
++      reader, ready = IO.pipe
++      release, writer = IO.pipe
++      pid = fork do
++        reader.close; writer.close
++        File.open(File.join(output, 'tmp/capture.lock'), File::RDWR) do |lock|
++          lock.flock(File::LOCK_EX)
++          ready.write('held'); ready.close
++          release.read
++        end
++        exit! 0
++      end
++      ready.close; release.close
++      assert_equal('held', reader.read)
++      exported = Thread.new { KbCaptureArtifacts.export(output, destination) }
++      refute(exported.join(0.1), 'independent lock holder must exclude export')
++      refute(File.exist?(destination))
++      writer.close
++      Process.wait(pid); pid = nil
++      assert_equal(KbCaptureArtifacts::FILES.sort, exported.value.fetch('files').keys.sort)
++    ensure
++      writer&.close unless writer&.closed?
++      reader&.close unless reader&.closed?
++      Process.wait(pid) if pid
++      exported&.join
+     end
+   end
+ end
+diff --git a/tools/test-capture-lease.cjs b/tools/test-capture-lease.cjs
+index a264870372ee6b68568deef8f58c696b7d6334c5..afc39cc9424c68c50980f2fe25904e97c5808fb5 100644
+--- a/tools/test-capture-lease.cjs
++++ b/tools/test-capture-lease.cjs
+@@ -208,7 +208,7 @@ function runFixture(value, contents, { pending = false, stderrOnly = false, arti
+   }]));
+   const descriptor = { schema: 1, kind: 'vpsfree-kb-connection', owner_id: `uid:${process.getuid()}`,
+     instance_id, run_id, artifact_id, artifact_sha256: crypto.createHash('sha256').update(artifact_json).digest('hex'),
+-    capabilities: ['capture-lease-v1', 'ssh', 'base-vps', 'traffic-samples'],
++    capabilities: ['capture-lease-v1', 'ssh', 'base-vps', 'traffic-samples', 'ip-inventory'],
+     accounts_file: 'accounts', tls: { ca_file: 'ca' }, services,
+     machines: { services: { host: '127.0.0.1', port: 14022, user: 'root', private_key: 'key', known_hosts: 'known-hosts' } },
+     provenance: { source, artifact, artifact_json, guest_identity,
+@@ -236,6 +236,23 @@ function assertGone(filename) {
+ }
+ 
+ if (!['--publication-worker', '--competitor-worker'].includes(process.argv[2])) {
++test('actual capture refuses missing IP inventory capability before cluster work or publication', async () => {
++  const value = fixture();
++  const run = runFixture(value, 'must-not-publish');
++  try {
++    const descriptor = JSON.parse(fs.readFileSync(run.connection));
++    descriptor.capabilities = descriptor.capabilities.filter((name) => name !== 'ip-inventory');
++    fs.writeFileSync(run.connection, JSON.stringify(descriptor));
++    await assert.rejects(capture(value, run, 'en'), /capabilities/);
++    assert.equal(run.fixtures, 0);
++    assert.equal(run.browserOpened, 0);
++    assert.equal(fs.existsSync(run.clusterPid), false);
++    assert.equal(fs.existsSync(path.join(value.outputRoot, 'tmp/capture-results.json')), false);
++    assert.equal(fs.existsSync(path.join(value.outputRoot, 'screenshots/en/networking/ip-address-list.png')), false);
++    assertGone(run.artifactPid);
++  } finally { value.clean(); }
++});
++
+ test('artifact-controller loss cancels actual capture and prevents stale publication over a competing writer', { timeout: 10000 }, async () => {
+   const value = fixture();
+   let firstOutcome;
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..ffbb5106e534d2e49d846d8fa0659986d1494471
+--- /dev/null
++++ b/tools/test-ip-inventory.cjs
+@@ -0,0 +1,377 @@
++const assert = require('node:assert/strict');
++const test = require('node:test');
++const fs = require('node:fs');
++const path = require('node:path');
++const os = require('node:os');
++const https = require('node:https');
++const { EventEmitter } = require('node:events');
++const { PassThrough } = require('node:stream');
++const { Connection } = require('../lib/connection.cjs');
++const { assertInventoryMember, ensureIpInventory,
++  INVENTORY_POOL, INVENTORY_RESOURCES, prepareFixtures } = require('../fixtures/prepare.cjs');
++const { heldController } = require('./verify-live-lease.cjs');
++
++const recordedAccounts = () => [['test-admin', 99, 1], ['test-user1', 1, 9], ['test-user2', 1, 17]].map(([login, level, blockStart]) => ({
++  login, level, password: `synthetic-${login}`, fullName: `Synthetic ${login}`,
++  email: `${login}@example.test`, namespace: { blockStart, blockCount: 8 },
++}));
++
++async function withInventoryConnection(accounts, work) {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-inventory-accounts-'));
++  const filename = path.join(root, 'accounts.json');
++  const ca = path.join(root, 'ca');
++  fs.writeFileSync(filename, JSON.stringify({ users: accounts }), { mode: 0o600 });
++  fs.writeFileSync(ca, 'synthetic CA', { mode: 0o600 });
++  const abort = new AbortController();
++  const cluster = new Connection({ accounts_file: filename, tls: { ca_file: ca },
++    services: { api: { url: 'https://api.example.test/', connect_host: '127.0.0.1', connect_port: 16443 } },
++  }, { signal: abort.signal, assertLive() { abort.signal.throwIfAborted(); } });
++  try { await work(cluster, abort, root); }
++  finally { fs.rmSync(root, { recursive: true }); }
++}
++
++function mockInventoryTransport(t, respond) {
++  const calls = [];
++  t.mock.method(https, 'request', (options, callback) => {
++    const [login, password] = Buffer.from(options.headers.Authorization.slice(6), 'base64').toString().split(':');
++    assert.equal(password, `synthetic-${login}`);
++    assert.equal(options.hostname, '127.0.0.1');
++    assert.equal(options.port, 16443);
++    assert.equal(options.servername, 'api.example.test');
++    assert.equal(options.headers.Host, 'api.example.test');
++    assert.equal(options.ca.toString(), 'synthetic CA');
++    assert.equal(options.headers.Cookie, undefined);
++    assert(options.signal instanceof AbortSignal);
++    const request = new EventEmitter();
++    request.setTimeout = () => request;
++    request.destroy = (error) => request.emit('error', error);
++    request.end = (bytes) => {
++      const call = { login, method: options.method, resource: options.path.replace(/^\/v1\//, ''), body: bytes ? JSON.parse(bytes) : undefined };
++      calls.push(call);
++      Promise.resolve().then(() => respond(call)).then((result) => {
++        const response = new PassThrough();
++        response.statusCode = result.statusCode || 200;
++        callback(response);
++        response.end(JSON.stringify(result.denied ? { status: false } : { status: true, response: result.response }));
++      }).catch((error) => request.emit('error', error));
++    };
++    return request;
++  });
++  return calls;
++}
++
++function currentUser(login) {
++  return { user: { login, id: login === 'test-admin' ? 1 : 2, level: login === 'test-admin' ? 99 : 1 } };
++}
++
++function memberPage({ id = 2, login = 'test-user1', admin = false, impersonated = false } = {}) {
++  return {
++    url: () => 'https://webui.example.test/?page=networking',
++    locator(selector) {
++      if (selector === '[data-vpsadmin-doc-id="member.edit-profile"]') return { count: async () => admin ? 0 : 1, getAttribute: async () => `?page=adminm&section=members&action=edit&id=${id}` };
++      if (selector === '#logbox-submit') return { count: async () => 1, getAttribute: async () => `Log out (${login}) ⯆` };
++      if (selector.includes('regain_admin')) return { count: async () => impersonated ? 1 : 0 };
++      if (selector.includes('logout')) return { count: async () => 1 };
++      throw new Error(`Unexpected member-identity selector ${selector}`);
++    },
++  };
++}
++
++test('actual inventory preparation proves both API identities and admin-only disabled rerun without admin browser navigation', async (t) => {
++  const existing = fixture({ disabled: true });
++  const calls = mockInventoryTransport(t, async (call) => {
++    if (call.resource === 'users/current') return { response: currentUser(call.login) };
++    assert.equal(call.login, 'test-admin', 'only the explicit administrator reads/provisions dedicated inventory');
++    assert.equal(call.method, 'GET', 'disabled rerun cannot reenable, register or charge');
++    return { response: await existing.api(call.method, call.resource, call.body) };
++  });
++  await withInventoryConnection(recordedAccounts(), async (cluster, _abort, root) => {
++    const navigation = [];
++    const page = memberPage();
++    const identityLocator = page.locator.bind(page);
++    page.goto = async (route) => {
++      assert(!route.includes('page=adminm'), 'inventory cannot discover a user through administrator navigation');
++      assert.equal(calls[0]?.resource, 'users/current');
++      assert.equal(calls[1]?.resource, 'users/current');
++      navigation.push(route);
++    };
++    page.addStyleTag = async () => {};
++    page.evaluate = async () => {};
++    page.locator = (selector) => {
++      if (selector === '#content-in tr') return { evaluateAll: async () => ['https://webui.example.test/?page=adminvps&action=info&veid=10'] };
++      if (selector === '#content-in') return { innerText: async () => 'Running' };
++      return identityLocator(selector);
++    };
++    const invocationRoot = path.join(root, 'invocation');
++    fs.mkdirSync(invocationRoot, { mode: 0o700 });
++    const result = await prepareFixtures({ cluster, page, language: 'en', required: ['ip-inventory'], invocationRoot });
++    assert.deepEqual(result.inventoryMember, { id: 2, login: 'test-user1' });
++    assert.deepEqual(calls.slice(0, 2).map((call) => [call.login, call.resource]), [['test-user1', 'users/current'], ['test-admin', 'users/current']]);
++    assert.equal(result.inventoryVpsId, 10);
++    assert.equal(navigation.length, 2, 'only owned VPS discovery and running-state reads are needed');
++    assert.equal(cluster.account().login, 'test-user1', 'default browser account remains the ordinary member');
++    await assertInventoryMember(page, result.inventoryMember);
++    const retained = fs.readFileSync(path.join(invocationRoot, 'fixtures.json'), 'utf8');
++    assert(!retained.includes('password') && !retained.includes('test-admin'), 'fixture metadata contains only member identity, never admin credentials');
++  });
++});
++
++for (const wrong of ['missing', 'duplicate', 'role', 'namespace', 'password']) {
++  test(`recorded inventory account ${wrong} refuses before HTTP or browser mutation`, async (t) => {
++    const accounts = recordedAccounts();
++    const admin = accounts[0];
++    if (wrong === 'missing') accounts.shift();
++    if (wrong === 'duplicate') accounts.push({ ...admin });
++    if (wrong === 'role') admin.level = 1;
++    if (wrong === 'namespace') admin.namespace.blockStart = 9;
++    if (wrong === 'password') delete admin.password;
++    const calls = mockInventoryTransport(t, () => assert.fail('invalid accounts must precede HTTP'));
++    await withInventoryConnection(accounts, async (cluster) => {
++      const page = { locator() { assert.fail('invalid accounts must precede browser work'); } };
++      await assert.rejects(prepareFixtures({ cluster, page, language: 'en', required: ['ip-inventory'] }), /account/);
++    });
++    assert.equal(calls.length, 0);
++  });
++}
++
++for (const wrong of ['denied', 'login', 'role', 'same-id', 'lease-loss']) {
++  test(`public current-user ${wrong} refuses before VPS or inventory mutation`, async (t) => {
++    let abort;
++    const calls = mockInventoryTransport(t, (call) => {
++      assert.equal(call.method, 'GET'); assert.equal(call.resource, 'users/current');
++      const response = currentUser(call.login);
++      if (call.login === 'test-admin') {
++        if (wrong === 'denied') return { statusCode: 403, denied: true };
++        if (wrong === 'login') response.user.login = 'other';
++        if (wrong === 'role') response.user.level = 1;
++        if (wrong === 'same-id') response.user.id = 2;
++        if (wrong === 'lease-loss') abort.abort(new Error('synthetic lease loss'));
++      }
++      return { response };
++    });
++    await withInventoryConnection(recordedAccounts(), async (cluster, signal) => {
++      abort = signal;
++      const page = { locator() { assert.fail('identity failure must precede browser work'); } };
++      await assert.rejects(prepareFixtures({ cluster, page, language: 'cs', required: ['ip-inventory'] }));
++    });
++    assert.equal(calls.length, 2);
++  });
++}
++
++test('an already lost enclosing lease refuses before account authentication or browser work', async (t) => {
++  const calls = mockInventoryTransport(t, () => assert.fail('lost lease cannot authenticate a fixture account'));
++  await withInventoryConnection(recordedAccounts(), async (cluster, abort) => {
++    abort.abort(new Error('synthetic lease loss'));
++    const page = { locator() { assert.fail('lost lease cannot use the member browser'); } };
++    await assert.rejects(prepareFixtures({ cluster, page, language: 'en', required: ['ip-inventory'] }), /lease loss/);
++  });
++  assert.equal(calls.length, 0);
++});
++
++test('logout alone cannot admit an administrator, impersonation or wrong member session', async () => {
++  const member = { id: 2, login: 'test-user1' };
++  await assertInventoryMember(memberPage(), member);
++  for (const page of [memberPage({ admin: true, id: 1, login: 'test-admin' }), memberPage({ impersonated: true }),
++    memberPage({ id: 3 }), memberPage({ login: 'test-user2' })]) {
++    assert.equal(await page.locator('#logout a[href*="action=logout"]').count(), 1);
++    await assert.rejects(assertInventoryMember(page, member), /browser/);
++    page.goto = async () => {};
++    page.addStyleTag = async () => {};
++    page.evaluate = async () => {};
++    const scenario = require('../scenarios/networking.cjs');
++    await assert.rejects(scenario.run({ page, fixtures: { inventoryMember: member }, session: {
++      wants: (checkpoint) => checkpoint === 'networking/ip-address-list',
++      locator() { assert.fail('wrong browser identity cannot publish an inventory image'); },
++    } }), /browser/);
++  }
++});
++
++function fixture({ disabled = false, missing = false, assigned = false, owner = 2, networkMissing = false, locationMissing = false } = {}) {
++  const pool = { ...INVENTORY_POOL, id: 5, enabled: !disabled };
++  let ip = missing ? null : { id: 90, addr: '203.0.113.10', prefix: 32, network: { id: 5 },
++    user: { id: owner }, network_interface: assigned ? { id: 12 } : null, charged_environment: { id: 1 } };
++  const calls = [];
++  const api = async (method, resource, body) => {
++    calls.push([method, resource, body]);
++    if (resource === 'vpses/10') return { vps: { ...INVENTORY_RESOURCES, id: 10, hostname: 'ip-inventory', user: { id: 2 }, node: { id: 101 } } };
++    if (resource === 'nodes/101') return { node: { location: { id: 1 } } };
++    if (resource === 'locations/1') return { location: { environment: { id: 1 } } };
++    if (resource === 'networks?limit=1000') return { networks: [...(networkMissing ? [] : [pool]), { address: '198.51.100.0', enabled: true }, { address: '2001:db8:106::', enabled: true }] };
++    if (resource === 'location_networks?network=5&limit=1000') return { location_networks: locationMissing ? [] : [{ location: { id: 1 }, primary: false, autopick: false, userpick: false }] };
++    if (resource === 'ip_addresses?network=5&limit=1000') return { ip_addresses: ip ? [ip] : [] };
++    if (resource === 'ip_addresses?vps=10&version=4&limit=1000') return { ip_addresses: [{ addr: '198.51.100.10', user: { id: 2 } }] };
++    if (method === 'POST' && resource === 'networks') { networkMissing = false; return { network: pool }; }
++    if (method === 'POST' && resource === 'location_networks') {
++      locationMissing = false;
++      return { location_network: { ...body.location_network, location: { id: body.location_network.location } } };
++    }
++    if (method === 'POST' && resource === 'ip_addresses') {
++      ip = { id: 90, addr: '203.0.113.10', prefix: 32, network: { id: 5 }, user: { id: body.ip_address.user }, network_interface: null, charged_environment: { id: 1 } };
++      return { ip_address: ip };
++    }
++    if (method === 'PUT' && resource === 'networks/5') { pool.enabled = body.network.enabled; return { network: pool }; }
++    throw new Error(`Unexpected fixture action ${method} ${resource}`);
++  };
++  return { api, calls, pool };
++}
++
++test('first provision uses public owned registration while enabled then disables only the dedicated pool', async () => {
++  const { api, calls } = fixture({ missing: true });
++  const value = await ensureIpInventory(api, { userId: 2, vpsId: 10 });
++  assert.equal(value.disabledAddress, '203.0.113.10');
++  assert.deepEqual(calls.filter(([method]) => method !== 'GET'), [
++    ['POST', 'ip_addresses', { ip_address: { addr: '203.0.113.10/32', network: 5, user: 2, location: 1 } }],
++    ['PUT', 'networks/5', { network: { enabled: false } }],
++  ]);
++  calls.length = 0;
++  await ensureIpInventory(api, { userId: 2, vpsId: 10 });
++  assert(calls.every(([method]) => method === 'GET'), 'rerun must not reenable, allocate or charge again');
++});
++
++test('a fresh dedicated public pool and location are provisioned before the owned address and disable', async () => {
++  const { api, calls } = fixture({ networkMissing: true, locationMissing: true, missing: true });
++  await ensureIpInventory(api, { userId: 2, vpsId: 10 });
++  assert.deepEqual(calls.filter(([method]) => method !== 'GET').map(([method, resource]) => [method, resource]), [
++    ['POST', 'networks'], ['POST', 'location_networks'], ['POST', 'ip_addresses'], ['PUT', 'networks/5'],
++  ]);
++  assert.deepEqual(calls.find(([method, resource]) => method === 'POST' && resource === 'networks')[2],
++    { network: { ...INVENTORY_POOL, enabled: true } });
++});
++
++test('an existing disabled owned detached fixture performs no writes', async () => {
++  const { api, calls } = fixture({ disabled: true });
++  await ensureIpInventory(api, { userId: 2, vpsId: 10 });
++  assert(calls.every(([method]) => method === 'GET'));
++});
++
++for (const options of [{ disabled: true, missing: true }, { owner: 3 }, { assigned: true }]) {
++  test(`unexpected fixture state refuses without adoption: ${JSON.stringify(options)}`, async () => {
++    const { api, calls } = fixture(options);
++    await assert.rejects(ensureIpInventory(api, { userId: 2, vpsId: 10 }));
++    assert(calls.every(([method]) => method === 'GET'));
++  });
++}
++
++test('pool identity collision refuses before any mutation', async () => {
++  const { api, calls, pool } = fixture();
++  pool.label = 'foreign pool';
++  await assert.rejects(ensureIpInventory(api, { userId: 2, vpsId: 10 }), /Unexpected dedicated/);
++  assert(calls.every(([method]) => method === 'GET'));
++});
++
++test('first inventory preparation creates the tiny VPS in the proved member browser before explicit admin registration', async (t) => {
++  let stage = 'location';
++  const entries = [];
++  const inventory = fixture({ missing: true });
++  const calls = mockInventoryTransport(t, async (call) => {
++    if (call.resource === 'users/current') return { response: currentUser(call.login) };
++    assert.equal(call.login, 'test-admin');
++    if (call.method === 'POST' && call.resource === 'ip_addresses') assert.equal(call.body.ip_address.user, 2);
++    return { response: await inventory.api(call.method, call.resource, call.body) };
++  });
++  const form = (name) => ({
++    count: async () => name === 'newvps-step1' ? 0 : 1,
++    locator: (selector) => ({
++      count: async () => 1, nth: () => ({ click: async () => { entries.push(['submit', stage]); stage = stage === 'location' ? 'template' : stage === 'template' ? 'resources' : 'submit'; } }),
++      fill: async (value) => entries.push([selector, value, stage]),
++      check: async () => {}, isChecked: async () => true,
++      evaluateAll: async () => [{ value: '1', disabled: false, label: 'Namespace' }],
++      selectOption: async () => {}, setChecked: async () => {},
++    }),
++    getByText: () => ({ first: () => ({ locator: () => ({ locator: () => ({ first: () => ({ count: async () => 1, check: async () => {} }) }), count: async () => 0 }) }) }),
++  });
++  const identityLocator = memberPage().locator;
++  const page = {
++    goto: async (route) => {
++      assert(!route.includes('page=adminm'));
++      assert.equal(calls[0]?.resource, 'users/current');
++      assert.equal(calls[1]?.resource, 'users/current');
++      if (route.includes('action=new-step-1')) assert(route.endsWith('&user=2'));
++    }, addStyleTag: async () => {}, evaluate: async () => {}, waitForLoadState: async () => {},
++    url: () => 'https://webui.example.test/?veid=10',
++    locator: (selector) => {
++      if (selector === '#content-in tr') return { evaluateAll: async () => [] };
++      if (selector === '#content-in') return { innerText: async () => 'Running' };
++      if (selector.includes('member.edit-profile') || selector === '#logbox-submit' || selector.includes('regain_admin')) {
++        return identityLocator(selector);
++      }
++      if (selector === 'form[name="newvps-step1"]') return form('newvps-step1');
++      const value = form('normal');
++      value.locator = (selector2, options) => {
++        if (selector2 === 'tr') return { first: () => ({ locator: () => ({ check: async () => {} }) }) };
++        return form('normal').locator(selector2, options);
++      };
++      return value;
++    },
++  };
++  await withInventoryConnection(recordedAccounts(), async (cluster, _abort, root) => {
++    const invocationRoot = path.join(root, 'invocation');
++    fs.mkdirSync(invocationRoot, { mode: 0o700 });
++    const result = await prepareFixtures({ cluster, page, language: 'en', required: ['ip-inventory'], invocationRoot });
++    assert.deepEqual(result.inventoryMember, { id: 2, login: 'test-user1' });
++    assert.equal(cluster.account().login, 'test-user1');
++    assert.deepEqual(calls.filter((call) => call.method !== 'GET').map((call) => [call.login, call.method, call.resource]),
++      [['test-admin', 'POST', 'ip_addresses'], ['test-admin', 'PUT', 'networks/5']]);
++  });
++  for (const [name, value] of Object.entries(INVENTORY_RESOURCES)) {
++    assert(entries.some(([selector, actual, at]) => selector === `input[name="${name}"]` && actual === String(value) && at === 'resources'));
++  }
++});
++
++test('only the IP-list fixture token changes, other fixture contracts are retained', () => {
++  const root = path.resolve(__dirname, '..');
++  const manifest = JSON.parse(fs.readFileSync(path.join(root, 'captures.json')));
++  const selected = manifest.assets.filter((asset) => asset.fixtures.includes('ip-inventory'));
++  assert.deepEqual(selected.map((asset) => asset.id), ['networking/ip-address-list']);
++  assert.deepEqual(selected[0].fixtures, ['ip-inventory']);
++  assert(manifest.assets.some((asset) => asset.fixtures.includes('base-vps')));
++});
++
++test('verifier supervises its exact controller for ordinary EOF and interruption, leaving no child', async () => {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-verifier-controller-'));
++  const provider = path.join(root, 'provider.cjs');
++  const value = { instance_id: 'i', run_id: 'r', artifact_id: 'a', artifact_sha256: 's' };
++  const expected = { schema: 1, ...value, descriptor_sha256: 'd' };
++  fs.writeFileSync(provider, `process.stdout.write(${JSON.stringify(JSON.stringify(expected) + '\n')}); process.stdin.resume(); process.stdin.on('end', () => process.exit(0));`);
++  value.control = { argv: [process.execPath, provider] };
++  try {
++    for (const interrupt of [false, true]) await heldController(value, 'd', interrupt, async (lease) => { lease.assertLive(); });
++  } finally { fs.rmSync(root, { recursive: true }); }
++});
++
++
++test('malformed controller readiness reaps its owned child without starting work', async () => {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-verifier-bad-controller-'));
++  const provider = path.join(root, 'provider.cjs');
++  const marker = path.join(root, 'exited');
++  fs.writeFileSync(provider, `const fs = require('node:fs'); process.on('exit', () => fs.writeFileSync(${JSON.stringify(marker)}, 'exited')); process.stdout.write('not JSON\\n'); process.stdin.resume(); process.stdin.on('end', () => process.exit(0));`);
++  const value = { instance_id: 'i', run_id: 'r', artifact_id: 'a', artifact_sha256: 's', control: { argv: [process.execPath, provider] } };
++  try {
++    await assert.rejects(heldController(value, 'd', false, async () => assert.fail('invalid readiness must not start work')));
++    assert.equal(fs.readFileSync(marker, 'utf8'), 'exited');
++  } finally { fs.rmSync(root, { recursive: true }); }
++});
++
++test('actual controller stdout loss cancels acquired work and leaves no live child', async () => {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-verifier-lost-controller-'));
++  const provider = path.join(root, 'provider.cjs');
++  const trigger = path.join(root, 'trigger');
++  const marker = path.join(root, 'exited');
++  fs.writeFileSync(trigger, 'wait');
++  const value = { instance_id: 'i', run_id: 'r', artifact_id: 'a', artifact_sha256: 's' };
++  const expected = { schema: 1, ...value, descriptor_sha256: 'd' };
++  fs.writeFileSync(provider, `const fs = require('node:fs'); process.on('exit', () => fs.writeFileSync(${JSON.stringify(marker)}, 'exited')); const watcher = fs.watch(${JSON.stringify(trigger)}, () => { fs.closeSync(1); watcher.close(); }); process.stdout.write(${JSON.stringify(JSON.stringify(expected) + '\n')}); process.stdin.resume(); process.stdin.on('end', () => process.exit(0));`);
++  value.control = { argv: [process.execPath, provider] };
++  try {
++    await heldController(value, 'd', false, async (lease) => {
++      lease.assertLive();
++      fs.writeFileSync(trigger, 'close protocol');
++      await new Promise((resolve, reject) => {
++        const timer = setTimeout(() => reject(new Error('controller must expose actual protocol loss')), 5000);
++        lease.signal.addEventListener('abort', () => { clearTimeout(timer); resolve(); }, { once: true });
++      });
++      assert.throws(() => lease.assertLive(), /lost/);
++    });
++    assert.equal(fs.readFileSync(marker, 'utf8'), 'exited');
++  } finally { fs.rmSync(root, { recursive: true }); }
++});
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..991cf41494791a9c831e308782a530a3e9511ec3
+--- /dev/null
++++ b/tools/test-runtime-verify.rb
+@@ -0,0 +1,414 @@
++# frozen_string_literal: true
++require 'minitest/autorun'
++require 'minitest/mock'
++require 'tmpdir'
++require 'timeout'
++require_relative 'runtime-verify'
++
++class RuntimeVerifyTest < Minitest::Test
++  def configuration(port)
++    { 'services' => { 'memoryMiB' => 4096, 'rootDiskMiB' => 12288 },
++      'nodes' => { 'node1' => { 'memoryMiB' => 4096, 'tankDiskGiB' => 16 } },
++      'topologies' => { 'single' => ['node1'] }, 'dns' => { 'enable' => false },
++      'resolver' => { 'mode' => 'cluster', 'upstreamNameservers' => ['10.0.2.3'] },
++      'seed' => { 'users' => [['test-admin', 99, 1], ['test-user1', 1, 9], ['test-user2', 1, 17]].map do |login, level, block_start|
++        { 'login' => login, 'password' => "synthetic-#{login}", 'fullName' => "Synthetic #{login}",
++          'email' => "#{login}@example.test", 'level' => level, 'namespace' => { 'blockStart' => block_start, 'blockCount' => 8 } }
++      end },
++      'domains' => { 'api' => 'api.example.test' }, 'tmpDomains' => { 'api' => 'api-tmp.example.test' },
++      'local' => { 'bindAddress' => '127.0.0.1', 'multicastPort' => port + 20,
++        'ports' => { 'services' => { 'ssh' => port, 'https' => port + 10 }, 'node1' => { 'ssh' => port + 1 } } } }
++  end
++
++  def with_campaign(config_a: configuration(24000), config_b: configuration(24100))
++    Dir.mktmpdir do |directory|
++      files = [config_a, config_b].each_with_index.map do |config, index|
++        file = File.join(directory, "config-#{index}.json")
++        File.write(file, JSON.generate(config), perm: 0o600)
++        file
++      end
++      metadata = File.join(directory, 'metadata.json')
++      File.write(metadata, JSON.generate('schema' => 1, 'revision' => 'a' * 40, 'source' => File.expand_path('..', __dir__)))
++      selection = { 'metadata' => metadata, 'source' => File.expand_path('..', __dir__), 'path' => '/nix/store/tools/bin',
++        'runtime' => File.join(directory, 'runtime'), 'capture' => '/nix/store/capture', 'node_path' => '/nix/store/node_modules',
++        'browsers' => '/nix/store/browser', 'fonts' => '/nix/store/fonts', 'certificates' => '/nix/store/ca',
++        'gem_home' => '/nix/store/ruby/lib/ruby/gems' }
++      FileUtils.mkdir_p(File.join(selection['runtime'], 'bin'))
++      File.write(File.join(selection['runtime'], 'bin/vpsfree-kb-devcluster'), metadata)
++      software = Struct.new(:metadata).new(JSON.parse(File.read(metadata)))
++      KbRuntime::Software.stub(:new, software) do
++        campaign = KbVerify::Campaign.new(root: File.join(directory, 'campaign'), config_a: files[0], config_b: files[1],
++          predecessor_ref: "github:vpsfreecz/vpsfree-kb-contracts/#{KbVerify::PREDECESSOR}", capacity_receipt: File.join(directory, 'capacity.json'), selection:)
++        write_assessment(campaign, assessment(campaign))
++        yield campaign
++      end
++    end
++  end
++
++  def assessment(campaign)
++    roles = { 'state_images' => campaign.root, 'store' => '/nix/store', 'builder_scratch' => '/tmp' }.transform_values do |path|
++      { 'path' => path, 'device' => 10, 'mountpoint' => '/', 'fstype' => 'ext4' }
++    end
++    { 'schema' => 1, 'bindings' => campaign.inputs, 'observed_at' => Time.now.utc.iso8601,
++      'roles' => roles, 'owned_output' => { 'allocated_bytes' => 0, 'apparent_bytes' => 0 },
++      'realized_paths' => [], 'missing_paths' => [],
++      'filesystems' => [{ 'device' => 10, 'reserve_bytes' => 16 * KbVerify::GIB,
++        'build_headroom_bytes' => 4 * KbVerify::GIB, 'observed_available_bytes' => 200 * KbVerify::GIB }],
++      'build_plan' => { 'scratch_bound' => 'unknown', 'max_jobs' => 1, 'cores' => 1,
++        'assessment' => 'Synthetic capacity fixture, not a host-capacity claim.',
++        'daemon_scratch_evidence' => 'Synthetic declared daemon scratch directory.',
++        'derivations' => ['synthetic cluster-config/runner construction plan'],
++        'kernel_substitutions' => ['synthetic pinned-cache substitution evidence'] } }
++  end
++
++  def write_assessment(campaign, value)
++    File.write(File.join(File.dirname(campaign.root), 'capacity.json'), JSON.generate(value), perm: 0o600)
++  end
++
++  def fake_measurements(campaign, available: 200 * KbVerify::GIB)
++    campaign.define_singleton_method(:filesystem) do |path|
++      { 'path' => path, 'device' => 10, 'mountpoint' => '/', 'fstype' => 'ext4', 'available_bytes' => available }
++    end
++    campaign.define_singleton_method(:host_capacity) do
++      { 'ram_available' => 30 * KbVerify::GIB, 'shm_available' => 24 * KbVerify::GIB }
++    end
++    campaign.define_singleton_method(:allocation) do |path|
++      stat = File.lstat(path)
++      { 'path' => path, 'device' => 10, 'allocated_bytes' => stat.blocks * 512, 'apparent_bytes' => stat.size }
++    end
++  end
++
++  def test_phase_prerequisites_do_not_infer_ownership_or_launch
++    with_campaign do |campaign|
++      campaign.define_singleton_method(:command) { |*_args, **| flunk('prerequisite refusal must precede commands') }
++      assert_raises(Errno::ENOENT) { campaign.run('bilingual-capture') }
++      refute(File.exist?(campaign.file('state-b')))
++      refute(File.exist?(campaign.file('receipts/bilingual-capture-attempt.json')))
++    end
++  end
++
++  def test_phase_receipts_bind_exact_inputs_and_truthful_failed_attempts_without_cleanup
++    with_campaign do |campaign|
++      campaign.define_singleton_method(:installed_layout) { check(true, 'synthetic installed boundary') }
++      campaign.run('installed-layout')
++      receipt = campaign.read('receipts/installed-layout.json')
++      assert(receipt['complete'])
++      assert_equal(campaign.inputs, receipt['inputs'])
++      assert_raises(KbVerify::Error) { campaign.run('installed-layout') }
++      campaign.define_singleton_method(:isolation_continuity_update) { checkpoint('old-run-retained'); raise KbVerify::Error, 'synthetic import failure' }
++      assert_raises(KbVerify::Error) { campaign.run('isolation-continuity-update') }
++      assert_equal('failed', campaign.read('receipts/isolation-continuity-update-attempt.json')['stage'])
++      refute(File.exist?(campaign.file('receipts/isolation-continuity-update.json')))
++      assert_raises(KbVerify::Error) { campaign.run('isolation-continuity-update') }
++    end
++  end
++
++  def test_nonempty_unowned_root_is_never_adopted_or_cleaned
++    with_campaign do |campaign|
++      Dir.mkdir(campaign.root, 0o700)
++      File.write(campaign.file('foreign'), 'retain')
++      assert_raises(KbVerify::Error) { campaign.initialize_campaign }
++      assert_equal('retain', File.read(campaign.file('foreign')))
++      refute(File.exist?(campaign.file('campaign.json')))
++    end
++  end
++
++  def test_changed_campaign_configuration_cannot_replace_identity
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      before = File.binread(campaign.file('campaign.json'))
++      campaign.inputs['configurations'][1]['local']['multicastPort'] += 1
++      assert_raises(KbVerify::Error) { campaign.initialize_campaign }
++      assert_equal(before, File.binread(campaign.file('campaign.json')))
++    end
++  end
++
++  def test_overlapping_ports_and_production_capacity_defaults_refuse_before_root_creation
++    assert_raises(KbVerify::Error) { with_campaign(config_b: configuration(24000)) {} }
++    config = configuration(24100)
++    config['nodes']['node1']['tankDiskGiB'] = 320
++    assert_raises(KbVerify::Error) { with_campaign(config_b: config) {} }
++  end
++
++  def test_inventory_accounts_are_explicit_in_both_initial_configs_before_any_campaign_mutation
++    %i[config_a config_b].each do |which|
++      %w[missing duplicate role password identity namespace member].each do |wrong|
++        candidate = configuration(which == :config_a ? 24000 : 24100)
++        users = candidate.fetch('seed').fetch('users')
++        admin = users.find { |account| account['login'] == 'test-admin' }
++        case wrong
++        when 'missing' then users.delete(admin)
++        when 'duplicate' then users << admin.dup
++        when 'role' then admin['level'] = 1
++        when 'password' then admin.delete('password')
++        when 'identity' then admin['email'] = 'not-synthetic.invalid'
++        when 'namespace' then admin['namespace']['blockStart'] = 9
++        when 'member' then users.find { |account| account['login'] == 'test-user1' }['level'] = 99
++        end
++        assert_raises(KbVerify::Error) { with_campaign(**{ which => candidate }) { flunk('invalid account prerequisites cannot admit a campaign') } }
++      end
++    end
++  end
++
++  def test_private_accounts_digest_is_part_of_the_resume_and_update_identity
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      directory = campaign.file('state-b/clusters/same-slug')
++      FileUtils.mkdir_p(File.join(directory, 'credentials'), mode: 0o700)
++      FileUtils.mkdir_p(File.join(directory, 'disks'), mode: 0o700)
++      KbVerify::CREDENTIALS.each { |name| File.write(File.join(directory, 'credentials', name), name, perm: 0o600) }
++      %w[services-root.img node1-tank.img].each { |name| File.write(File.join(directory, 'disks', name), name, perm: 0o600) }
++      accounts = File.join(directory, 'accounts.json')
++      File.write(accounts, JSON.generate('users' => campaign.configurations[1].fetch('seed').fetch('users')), perm: 0o600)
++      before = campaign.identities
++      assert_equal(Digest::SHA256.file(accounts).hexdigest, before['accounts_sha256'])
++      assert_equal(KbVerify::CREDENTIALS.sort, before['credentials'].keys.sort)
++      File.write(accounts, JSON.generate('users' => []), perm: 0o600)
++      refute_equal(before['accounts_sha256'], campaign.identities['accounts_sha256'])
++      descriptor = { 'instance_id' => 'same-instance', 'run_id' => 'old-run', 'artifact_id' => 'same-artifact',
++        'artifact_sha256' => 'same-digest', 'provenance' => { 'machine_toplevels' => { 'services' => 'same-closure' } } }
++      campaign.define_singleton_method(:sentinels) { |_which| { 'services' => 'same-sentinel' } }
++      assert_raises(KbVerify::Error) do
++        campaign.continuity(descriptor, descriptor.merge('run_id' => 'new-run'), before, { 'services' => 'same-sentinel' })
++      end
++    end
++  end
++
++  def test_selected_tools_scrub_inherited_workspace_and_source_overrides
++    with_campaign do |campaign|
++      name = 'VPSADMIN_DEVCLUSTER_VPSADMIN_SOURCE'
++      previous = ENV[name]
++      ENV[name] = '/wrong/source'
++      environment = KbVerify::Commands.new(campaign.selection, campaign.root).environment
++      refute(environment.key?(name))
++      refute(environment.key?('DEV_SESSION_SLUG'))
++      refute(environment.key?('RUBYOPT'))
++      assert_equal(campaign.selection['path'], environment['PATH'])
++      assert_equal(campaign.selection['browsers'], environment['PLAYWRIGHT_BROWSERS_PATH'])
++      assert_equal(campaign.selection['gem_home'], environment['GEM_HOME'])
++      assert_equal(environment['GEM_HOME'], environment['GEM_PATH'])
++    ensure
++      ENV[name] = previous
++    end
++  end
++
++  def test_cli_missing_arguments_and_unknown_phase_refuse_without_execution
++    assert_equal(1, KbVerify.run([]))
++    with_campaign { |campaign| assert_raises(KbVerify::Error) { campaign.run('other') }; refute(File.exist?(campaign.root)) }
++  end
++
++  def test_installed_layout_resolves_matching_predecessor_outputs_without_assuming_path_order
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      calls = []
++      runtime = '/nix/store/synthetic-predecessor-runtime'
++      metadata_path = '/nix/store/synthetic-predecessor-source.json'
++      metadata = campaign.source.merge('revision' => KbVerify::PREDECESSOR)
++      campaign.define_singleton_method(:capacity) { |operation| calls << ['capacity', operation] }
++      campaign.define_singleton_method(:command) do |*argv, **|
++        calls << argv
++        case argv[0]
++        when 'git' then ['', 128]
++        when /vpsfree-kb-devcluster/ then ['{"found":false}', 0]
++        when /vpsfree-kb-capture/
++          unless argv.include?('--help')
++            target = argv.include?('--output-root') ? file('output') : file('work')
++            FileUtils.mkdir_p(File.join(target, 'tmp'))
++          end
++          ['', argv.include?('--help') ? 0 : 1]
++        when 'nix' then ["#{metadata_path}\n#{runtime}\n", 0]
++        else flunk("unexpected command #{argv}")
++        end
++      end
++      original_file = File.method(:file?)
++      original_read = File.method(:read)
++      file = ->(name) { [metadata_path, "#{runtime}/bin/vpsfree-kb-devcluster"].include?(name) || original_file.call(name) }
++      read = lambda do |name, *arguments|
++        case name
++        when metadata_path then JSON.generate(metadata)
++        when "#{runtime}/bin/vpsfree-kb-devcluster" then metadata_path
++        else original_read.call(name, *arguments)
++        end
++      end
++      File.stub(:file?, file) do
++        File.stub(:read, read) do
++          KbRuntime::Software.stub(:new, ->(value) { Struct.new(:metadata).new(value) }) { campaign.installed_layout }
++        end
++      end
++      assert_equal({ 'runtime' => runtime, 'metadata_path' => metadata_path, 'source' => metadata }, campaign.read('predecessor.json'))
++      assert_operator(calls.index(['capacity', 'predecessor-build']), :<, calls.index { |argv| argv.first == 'nix' })
++      assert_includes(calls.find { |argv| argv.first == 'nix' }, "#{campaign.inputs['predecessor_ref']}#kb-runtime")
++      assert_includes(calls.find { |argv| argv.first == 'nix' }, "#{campaign.inputs['predecessor_ref']}#runtime-source")
++    end
++  end
++
++  def test_missing_or_wrong_identity_capacity_receipt_refuses_before_root_or_build
++    %w[missing source selection configurations root predecessor_ref].each do |wrong|
++      with_campaign do |campaign|
++        value = assessment(campaign)
++        if wrong == 'missing'
++          File.unlink(File.join(File.dirname(campaign.root), 'capacity.json'))
++        else
++          key = wrong == 'configurations' ? 'configuration_sha256' : wrong
++          value['bindings'] = Marshal.load(Marshal.dump(campaign.inputs))
++          value['bindings'][key] = 'mismatch'
++          write_assessment(campaign, value)
++        end
++        campaign.define_singleton_method(:command) { |*_args, **| flunk('refusal must precede a command') }
++        assert_raises(KbVerify::Error, Errno::ENOENT) { campaign.run('installed-layout') }
++        refute(File.exist?(campaign.root))
++      end
++    end
++  end
++
++  def test_actual_filesystem_binding_and_fresh_space_cannot_be_waived_by_old_receipt
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      fake_measurements(campaign)
++      value = assessment(campaign)
++      value['roles']['store']['device'] = 20
++      write_assessment(campaign, value)
++      assert_raises(KbVerify::Error) { campaign.capacity('predecessor-build') }
++      write_assessment(campaign, assessment(campaign))
++      fake_measurements(campaign, available: 100 * KbVerify::GIB)
++      assert_raises(KbVerify::Error) { campaign.capacity('predecessor-build') }
++      assert_empty(Dir.glob(campaign.file('receipts/capacity-*.json')))
++    end
++  end
++
++  def test_shared_filesystem_and_duplicate_missing_path_are_charged_once_with_unknown_scratch
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      fake_measurements(campaign)
++      value = assessment(campaign)
++      missing = { 'path' => '/nix/store/synthetic-kb-missing-closure', 'kind' => 'closure', 'nar_size' => 2 * KbVerify::GIB, 'download_size' => nil }
++      image = { 'path' => '/nix/store/synthetic-kb-missing-image', 'kind' => 'service-image', 'nar_size' => 12 * KbVerify::GIB, 'download_size' => KbVerify::GIB }
++      value['missing_paths'] = [missing, missing.dup, image]
++      write_assessment(campaign, value)
++      campaign.capacity('predecessor-build')
++      receipt = campaign.read(Dir.glob(campaign.file('receipts/capacity-*.json')).fetch(0).delete_prefix("#{campaign.root}/"))
++      assert_equal(1, receipt['filesystems'].size)
++      assert_equal(94 * KbVerify::GIB, receipt['filesystems'][0]['remaining_growth_bytes'])
++      assert_equal('unknown', receipt['scratch_bound'])
++      assert_equal(2, receipt['known_missing_paths'].size)
++      assert_equal(Digest::SHA256.file(File.join(File.dirname(campaign.root), 'capacity.json')).hexdigest, receipt['receipt_sha256'])
++      assert_includes(campaign.commands.environment['NIX_CONFIG'], 'max-jobs = 1')
++      assert_equal(108 * KbVerify::GIB, receipt['owned_output_worst_envelope'])
++    end
++  end
++
++  def test_sparse_apparent_disk_size_does_not_erase_remaining_growth
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      fake_measurements(campaign)
++      directory = campaign.file('state-b/clusters/same-slug/disks')
++      FileUtils.mkdir_p(directory)
++      disk = File.join(directory, 'node1-tank.img')
++      File.open(disk, 'w', 0o600) { |stream| stream.truncate(16 * KbVerify::GIB) }
++      stat = File.stat(disk)
++      remaining = campaign.remaining_growth('resume-b-final')
++      assert_equal(16 * KbVerify::GIB, stat.size)
++      assert_equal(28 * KbVerify::GIB - stat.blocks * 512, remaining['disk_bytes'])
++      assert_operator(remaining['disk_bytes'], :>, 12 * KbVerify::GIB)
++    end
++  end
++
++  def test_capacity_precedes_predecessor_construction_and_every_build_or_launch_command
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      campaign.define_singleton_method(:capacity) { |operation| raise KbVerify::Error, "capacity refused #{operation}" }
++      commands = []
++      campaign.define_singleton_method(:command) do |*argv, **|
++        commands << argv
++        case argv[0]
++        when 'git' then ['', 128]
++        when /vpsfree-kb-devcluster/ then ['{"found":false}', 0]
++        when /vpsfree-kb-capture/
++          unless argv.include?('--help')
++            target = argv.include?('--output-root') ? file('output') : file('work')
++            FileUtils.mkdir_p(File.join(target, 'tmp'))
++          end
++          ['', argv.include?('--help') ? 0 : 1]
++        else flunk("unexpected command #{argv}")
++        end
++      end
++      assert_raises(KbVerify::Error) { campaign.installed_layout }
++      refute(commands.any? { |argv| argv.first == 'nix' })
++      commands.clear
++      [%w[a start], %w[old start], %w[old resume], %w[b update], %w[b resume]].each do |which, action|
++        assert_raises(KbVerify::Error) { campaign.engine(which, action) }
++      end
++      assert_empty(commands)
++    end
++  end
++
++  def test_assessment_rejects_invented_scratch_bound_and_rechecks_ram_and_shm
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      value = assessment(campaign)
++      value['build_plan']['scratch_bound'] = 8 * KbVerify::GIB
++      write_assessment(campaign, value)
++      assert_raises(KbVerify::Error) { campaign.capacity_assessment }
++      write_assessment(campaign, assessment(campaign))
++      fake_measurements(campaign)
++      campaign.define_singleton_method(:host_capacity) { { 'ram_available' => 23 * KbVerify::GIB, 'shm_available' => 24 * KbVerify::GIB } }
++      assert_raises(KbVerify::Error) { campaign.capacity('start-a') }
++      campaign.define_singleton_method(:host_capacity) { { 'ram_available' => 30 * KbVerify::GIB, 'shm_available' => 17 * KbVerify::GIB } }
++      assert_raises(KbVerify::Error) { campaign.capacity('start-a') }
++    end
++  end
++
++  def test_failed_native_command_keeps_private_stdout_stderr_exact_exit_and_stage
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      argv = [RbConfig.ruby, '-e', 'STDOUT.write("native output"); STDERR.write("native error"); exit 23']
++      failure = nil
++      stdout, stderr = capture_io do
++        failure = assert_raises(KbVerify::Error) do
++          campaign.commands.call(argv, cwd: campaign.file('work'), stage: 'installed-layout/predecessor-construction')
++        end
++      end
++      assert_equal('', stdout)
++      assert_equal('', stderr)
++      path = Dir.glob(campaign.file('diagnostics/*/command.json')).fetch(0)
++      assert_includes(failure.message, path)
++      record = JSON.parse(File.read(path))
++      assert_equal(argv, record['argv'])
++      assert_equal(23, record['exit_code'])
++      assert_nil(record['signal'])
++      assert(record['complete'])
++      refute(record['accepted'])
++      assert_equal('installed-layout/predecessor-construction', record['stage'])
++      assert_equal('native output', File.read(File.join(File.dirname(path), 'stdout')))
++      assert_equal('native error', File.read(File.join(File.dirname(path), 'stderr')))
++      Dir.glob(File.join(File.dirname(path), '*')).each { |name| assert_equal(0o600, File.stat(name).mode & 0o777) }
++      refute(record.key?('environment'))
++    end
++  end
++
++  def test_interruption_reaps_only_spawned_public_command_and_retains_native_signal_evidence
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      marker = campaign.file('work/child-ready')
++      argv = [RbConfig.ruby, '-e', 'File.write(ARGV[0], Process.pid.to_s); sleep 60', marker]
++      owner = Thread.new do
++        campaign.commands.call(argv, cwd: campaign.file('work'), stage: 'synthetic/interruption')
++      rescue Interrupt
++        :interrupted
++      end
++      Timeout.timeout(5) { sleep 0.01 until File.exist?(marker) }
++      owner.raise(Interrupt)
++      assert_equal(:interrupted, Timeout.timeout(15) { owner.value })
++      record = JSON.parse(File.read(Dir.glob(campaign.file('diagnostics/*/command.json')).fetch(0)))
++      assert(record['complete'])
++      assert(record['interrupted'])
++      assert_equal(Integer(File.read(marker)), record['pid'])
++      assert_equal(Signal.list.fetch('TERM'), record['signal'])
++      assert_equal('spawned public command only', record['cleanup_scope'])
++    ensure
++      owner&.raise(Interrupt) if owner&.alive?
++      owner&.join
++    end
++  end
++
++end
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index 7b490385995ae600383304b83643731ea74c7b01..5d3d4259758827fe29822558f495568c26104774 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -4,6 +4,7 @@ require 'minitest/autorun'
+ require 'minitest/mock'
+ require 'tmpdir'
+ require_relative '../cluster/lib/kb_runtime'
++require_relative '../cluster/launcher'
+ 
+ class RuntimeTest < Minitest::Test
+   def test_empty_private_lock_file_is_valid_but_nonempty_zero_limit_file_is_rejected
+@@ -98,6 +99,20 @@ class RuntimeTest < Minitest::Test
+     end
+   end
+ 
++  def test_ip_inventory_is_available_on_single_without_enabling_storage_dependent_fixtures
++    state = KbRuntime::State.new('/not-created', 'capabilities')
++    engine = KbRuntime::Engine.new(state: state, software: nil, controller: [])
++    single = engine.capabilities('endpoints' => { 'services' => {}, 'node1' => {} })
++    assert_includes(single, 'ip-inventory')
++    refute_includes(single, 'base-vps')
++    refute_includes(single, 'snapshot')
++    services_only = engine.capabilities('endpoints' => { 'services' => {} })
++    refute_includes(services_only, 'ip-inventory')
++    complete = engine.capabilities('endpoints' => { 'services' => {}, 'node1' => {}, 'node2' => {}, 'backuper1' => {} })
++    assert_includes(complete, 'base-vps')
++    assert_includes(complete, 'second-vps')
++  end
++
+   def test_udp_is_claimed_by_actual_port_across_different_names_and_roots
+     Dir.mktmpdir do |directory|
+       states = %w[first second].map { |name| KbRuntime::State.new(File.join(directory, name), name) }
+@@ -306,6 +321,125 @@ class RuntimeLifecycleTest < Minitest::Test
+     socket&.close
+   end
+ 
++  def with_cross_process_holder(state, kind)
++    reader, ready = IO.pipe
++    release, writer = IO.pipe
++    pid = fork do
++      reader.close; writer.close
++      state.lock(kind, create: true) do
++        ready.write('held'); ready.close
++        release.read
++      end
++      exit! 0
++    end
++    ready.close; release.close
++    assert_equal('held', Timeout.timeout(5) { reader.read })
++    yield
++  ensure
++    writer&.close unless writer&.closed?
++    reader&.close unless reader&.closed?
++    if pid
++      Process.wait(pid)
++      assert_equal(0, $?.exitstatus)
++    end
++  end
++
++  def test_all_five_public_lifecycle_requests_refuse_real_gate_contention_before_mutation_or_queued_work
++    Dir.mktmpdir do |directory|
++      value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++      requested = config
++      begin
++        value.start(config: requested, network: 'local', timeout: 5)
++        before = retained_files(value)
++        builds = value.software.builds
++        with_cross_process_holder(value.state, 'gate') do
++          %w[start resume update stop reset].each do |action|
++            config_path = File.join(directory, 'request-config.json')
++            File.write(config_path, JSON.generate(requested), perm: 0o600)
++            args = ['--state-root', value.state.root, action, value.state.slug]
++            args += ['--config', config_path, '--network', 'local', '--topology', 'single'] if %w[start update].include?(action)
++            output, result = IO.pipe
++            pid = fork do
++              output.close
++              KbRuntime::Software.stub(:checkout, value.software) do
++                KbRuntime::Engine.stub(:new, value) do
++                  code = nil
++                  _stdout, error = capture_io { code = KbRuntime::CLI.run(args) }
++                  result.write(JSON.generate('code' => code, 'error' => error))
++                  result.close
++                  exit! code
++                end
++              end
++            end
++            result.close
++            begin
++              response = JSON.parse(Timeout.timeout(5) { output.read })
++              assert_equal(75, response.fetch('code'), action)
++              assert_includes(response.fetch('error'), 'busy', action)
++              Process.wait(pid); pid = nil
++              assert_equal(75, $?.exitstatus, action)
++              assert_equal(before, retained_files(value), action)
++              assert_equal(builds, value.software.builds)
++            ensure
++              if pid
++                Process.kill('TERM', pid)
++                Process.wait(pid)
++              end
++              output.close
++            end
++          end
++        end
++        assert_equal(before, retained_files(value), 'released holder must not run queued work')
++        value.stop(timeout: 5)
++        assert_equal('stopped', value.phase['phase'], 'explicit retry succeeds')
++        value.resume(timeout: 5)
++        assert(value.status['ready'])
++      ensure
++        value.stop(timeout: 5) if File.exist?(value.state.path('phase.json'))
++      end
++    end
++  end
++
++  def test_operation_contention_releases_the_gate_and_fresh_start_has_no_preparation_effects
++    Dir.mktmpdir do |directory|
++      value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++      requested = config
++      with_cross_process_holder(value.state, 'operation') do
++        assert_raises(KbRuntime::Busy) { value.start(config: requested, network: 'local', timeout: 5) }
++        refute(File.exist?(value.state.directory), 'competing start cannot initialize identity')
++        assert_equal(0, value.software.builds)
++        assert_empty(Dir.glob(File.join(value.resources.root, '*.json')))
++        value.state.lock('gate', wait: false) { assert(true, 'failed operation acquisition immediately releases gate') }
++      end
++      begin
++        value.start(config: requested, network: 'local', timeout: 5)
++        assert(value.status['ready'])
++        assert_equal(1, value.software.builds)
++      ensure
++        value.stop(timeout: 5) if File.exist?(value.state.path('phase.json'))
++      end
++    end
++  end
++
++  def test_noncontended_preparation_keeps_ownership_across_long_work
++    Dir.mktmpdir do |directory|
++      value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++      original = value.software.method(:build)
++      value.software.define_singleton_method(:build) do |*args|
++        sleep 0.1
++        value.state.lock('gate', wait: false) { raise 'operation lost gate' }
++      rescue KbRuntime::Busy
++        original.call(*args)
++      end
++      begin
++        value.start(config: config, network: 'local', timeout: 5)
++        assert(value.status['ready'])
++      ensure
++        value.stop(timeout: 5) if File.exist?(value.state.path('phase.json'))
++      end
++    end
++  end
++
+   def test_local_multicast_requires_an_explicit_integer_but_bridge_does_not
+     Dir.mktmpdir do |directory|
+       value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
+@@ -571,3 +705,38 @@ class RuntimeLifecycleTest < Minitest::Test
+     end
+   end
+ end
++
++class LifecycleCompletionFormattingTest < Minitest::Test
++  def test_start_resume_update_use_completed_descriptor_without_fresh_status_lock
++    descriptor = { 'instance_id' => SecureRandom.uuid, 'run_id' => SecureRandom.uuid }
++    %w[start resume update].each do |action|
++      Dir.mktmpdir do |directory|
++        state = KbRuntime::State.new(File.join(directory, 'state'), 'example')
++        state.transaction(create: true) { state.initialize_identity }
++        config = File.join(directory, 'config.json')
++        File.write(config, JSON.generate('local' => { 'multicastPort' => 10000 }, 'topologies' => { 'single' => [] }))
++        entered, release = Queue.new, Queue.new
++        holder = nil
++        engine = Object.new
++        engine.define_singleton_method(action) do |**_|
++          holder = Thread.new { state.lock('gate') { entered << true; release.pop } }
++          entered.pop
++          descriptor
++        end
++        engine.define_singleton_method(:status) { raise KbRuntime::Busy, 'post-success gate belongs to capture' }
++        KbRuntime::Software.stub(:checkout, nil) do
++          KbRuntime::Engine.stub(:new, engine) do
++            args = ['--state-root', state.root, action, 'example']
++            args += ['--network', 'local', '--config', config] unless action == 'resume'
++            output, = capture_io { assert_equal(0, KbRuntime::CLI.run(args)) }
++            assert_equal({ 'schema' => 2, 'found' => true, 'state' => 'ready', 'ready' => true,
++              'instance_id' => descriptor['instance_id'], 'run_id' => descriptor['run_id'] }, JSON.parse(output))
++          end
++        end
++      ensure
++        release << true if holder
++        holder&.join
++      end
++    end
++  end
++end
+diff --git a/tools/test-standalone-profile.nix b/tools/test-standalone-profile.nix
+deleted file mode 100644
+index 47bcb7dd7ff8e618c170e4af707d5cbf21e5918e..0000000000000000000000000000000000000000
+--- a/tools/test-standalone-profile.nix
++++ /dev/null
+@@ -1,41 +0,0 @@
+-let
+-  validator = import ../nix/standalone-profile.nix;
+-  source = builtins.path { path = ../tests/fixtures/runtime-profile; name = "kb-profile-test-source"; };
+-  revision = "0123456789abcdef0123456789abcdef01234567";
+-  metadata = {
+-    schema = 1;
+-    inherit revision;
+-    # Synthetic JSON stores an identity string, not a toFile dependency. The
+-    # record retains the typed source path for actual lock reads and comparison.
+-    source = builtins.unsafeDiscardStringContext (toString source);
+-    lock_sha256 = builtins.hashFile "sha256" (source + "/flake.lock");
+-  };
+-  record = {
+-    schema = 1;
+-    inherit revision source;
+-    lockSha256 = metadata.lock_sha256;
+-    sourceMetadata = builtins.toFile "kb-profile-test-metadata.json" (builtins.toJSON metadata);
+-    runtimePackage = "/nix/store/00000000000000000000000000000000-test-runtime";
+-    capturePackage = "/nix/store/11111111111111111111111111111111-test-capture";
+-  };
+-  accepted = value: (builtins.tryEval (builtins.deepSeq value true)).success;
+-  validate = value: validator.validate { inherit source; record = value; };
+-  require = condition: if condition then true else throw "standalone profile regression failed";
+-in
+-{
+-  pathReevaluation = require (validate record == record);
+-  missingRevision = require (!(accepted (validate (builtins.removeAttrs record [ "revision" ]))));
+-  wrongRevision = require (!(accepted (validate (record // { revision = "not-a-revision"; }))));
+-  wrongSource = require (!(accepted (validate (record // { source = "/different-source"; }))));
+-  wrongLock = require (!(accepted (validate (record // { lockSha256 = "wrong"; }))));
+-  wrongMetadataRevision = require (!(accepted (validate (record // {
+-    sourceMetadata = builtins.toFile "kb-profile-test-wrong-metadata.json" (builtins.toJSON (metadata // { revision = "1111111111111111111111111111111111111111"; }));
+-  }))));
+-  wrongMetadataSource = require (!(accepted (validate (record // {
+-    sourceMetadata = builtins.toFile "kb-profile-test-other-source.json" (builtins.toJSON (metadata // { source = "/different-source"; }));
+-  }))));
+-  mutablePackage = require (!(accepted (validate (record // { runtimePackage = "/tmp/runtime"; }))));
+-  missingGitRevision = require (!(accepted (validator.cleanRevision { outPath = source; })));
+-  dirtyGitRevision = require (!(accepted (validator.cleanRevision { rev = revision; dirtyRev = revision; })));
+-  cleanGitRevision = require (validator.cleanRevision { rev = revision; outPath = source; } == revision);
+-}
+diff --git a/tools/verify-live-lease.cjs b/tools/verify-live-lease.cjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f586681d7d2d621c8dc4b4c7684f3e0cc035523
+--- /dev/null
++++ b/tools/verify-live-lease.cjs
+@@ -0,0 +1,143 @@
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const path = require('node:path');
++const crypto = require('node:crypto');
++const { spawn, execFileSync } = require('node:child_process');
++const { isDeepStrictEqual } = require('node:util');
++const { Connection, readConnection } = require('../lib/connection.cjs');
++
++// A verifier controller is an explicitly spawned, unreaped child. It grants no
++// authority over guests, unrelated processes or a controller found by PID scan.
++async function heldController(value, digest, interrupt, work) {
++  const expected = { schema: 1, instance_id: value.instance_id, run_id: value.run_id,
++    artifact_id: value.artifact_id, artifact_sha256: value.artifact_sha256, descriptor_sha256: digest };
++  const argv = [...value.control.argv, '--instance-id', value.instance_id, '--run-id', value.run_id,
++    '--artifact-id', value.artifact_id, '--artifact-sha256', value.artifact_sha256, '--descriptor-sha256', digest];
++  const child = spawn(argv[0], argv.slice(1), { stdio: ['pipe', 'pipe', 'pipe'] });
++  child.stderr.resume();
++  child.stdin.on('error', () => {});
++  let closed = false;
++  let failed;
++  const exited = new Promise((resolve) => {
++    child.once('error', (error) => { failed = error; });
++    child.once('close', (code, signal) => { closed = true; resolve({ code, signal }); });
++  });
++  const abort = new AbortController();
++  const lost = () => abort.abort(new Error('Owned verifier controller protocol ended'));
++  child.stdout.on('end', lost);
++  child.stdout.on('close', lost);
++  child.stdout.on('error', lost);
++  child.once('close', lost);
++  const lease = { signal: abort.signal, assertLive() {
++    if (closed || failed || abort.signal.aborted) throw new Error('Owned verifier controller is lost');
++  } };
++  try {
++    await new Promise((resolve, reject) => {
++      let buffer = '';
++      const timer = setTimeout(() => reject(new Error('Public lease readiness deadline')), 120000);
++      const end = () => { clearTimeout(timer); reject(new Error('Public lease ended before readiness')); };
++      abort.signal.addEventListener('abort', end, { once: true });
++      child.once('error', (error) => { clearTimeout(timer); reject(error); });
++      let ready = false;
++      child.stdout.on('data', (chunk) => {
++        if (ready) { lost(); return; }
++        buffer += chunk;
++        if (buffer.length > 65536) { clearTimeout(timer); reject(new Error('Public lease readiness exceeds limit')); return; }
++        const index = buffer.indexOf('\n');
++        if (index < 0) return;
++        clearTimeout(timer);
++        abort.signal.removeEventListener('abort', end);
++        try { assert.deepEqual(JSON.parse(buffer.slice(0, index)), expected); assert.equal(buffer.slice(index + 1), ''); ready = true; resolve(); }
++        catch (error) { reject(error); }
++      });
++    });
++    lease.assertLive();
++    await work(lease);
++  } finally {
++    const signalOwned = (signal) => {
++      if (!closed && child.exitCode === null && child.signalCode === null) child.kill(signal);
++    };
++    const wait = async (milliseconds) => {
++      let timer;
++      try { return await Promise.race([exited, new Promise((resolve) => { timer = setTimeout(() => resolve(null), milliseconds); })]); }
++      finally { clearTimeout(timer); }
++    };
++    if (interrupt) signalOwned('SIGTERM');
++    if (!child.stdin.destroyed) child.stdin.end();
++    let result = await wait(10000);
++    if (!result) { signalOwned('SIGTERM'); result = await wait(2000); }
++    if (!result) { signalOwned('SIGKILL'); result = await wait(2000); }
++    // No PID scan, process-group signal, detached waiter or background cleanup.
++    // Every signal uses only this still-unreaped ChildProcess handle.
++    assert(result && closed, 'exact spawned controller must be reaped before return');
++    if (!interrupt) assert.equal(result.code, 0, 'ordinary lease EOF must exit successfully');
++  }
++}
++
++function retained(root, additional = []) {
++  const value = {};
++  const walk = (directory) => {
++    for (const name of fs.readdirSync(directory)) {
++      const filename = path.join(directory, name);
++      const stat = fs.lstatSync(filename);
++      if (stat.isDirectory()) { walk(filename); continue; }
++      if (stat.isFile() && !filename.endsWith('.img') && !filename.endsWith('.log')) {
++        value[filename] = [stat.ino, crypto.createHash('sha256').update(fs.readFileSync(filename)).digest('hex')];
++      }
++    }
++  };
++  walk(root);
++  for (const filename of additional) {
++    const stat = fs.lstatSync(filename);
++    assert(stat.isFile() && !stat.isSymbolicLink() && stat.uid === process.getuid() && (stat.mode & 0o777) === 0o600);
++    value[filename] = [stat.ino, crypto.createHash('sha256').update(fs.readFileSync(filename)).digest('hex')];
++  }
++  return value;
++}
++
++async function main(argv) {
++  const [descriptorPath, metadataPath, runtimePackage, stateRoot, configPath] = argv;
++  const { value, digest } = readConnection(descriptorPath, ['ip-inventory']);
++  const source = JSON.parse(fs.readFileSync(metadataPath));
++  const engine = path.join(runtimePackage, 'bin/vpsfree-kb-devcluster');
++  for (const interrupt of [false, true, false]) {
++    await heldController(value, digest, interrupt, async (lease) => {
++      const connection = new Connection(value, lease);
++      await connection.verify(source);
++      const actual = connection.route(connection.apiUrl);
++      assert.deepEqual(actual, { host: value.services.api.connect_host, port: value.services.api.connect_port });
++      assert.throws(() => connection.route('https://unrelated.example.test/'));
++      let ssh = 0;
++      const method = connection.ssh.bind(connection);
++      connection.ssh = async (...args) => { ssh += 1; return method(...args); };
++      await assert.rejects(connection.verify({ ...source, revision: '0'.repeat(40) }), /Expected K source/);
++      assert.equal(ssh, 0, 'wrong source must fail before SSH or fixtures');
++      const directory = path.join(stateRoot, 'clusters/same-slug');
++      const launch = JSON.parse(fs.readFileSync(path.join(directory, `launch-${value.run_id}.json`)));
++      assert.equal(launch.instance_id, value.instance_id);
++      assert.equal(launch.run_id, value.run_id);
++      const claim = path.join(path.dirname(launch.socket_dir), 'reservations', `${value.instance_id}-${value.run_id}.json`);
++      const reservation = JSON.parse(fs.readFileSync(claim));
++      assert.equal(reservation.state_root, stateRoot);
++      assert.equal(reservation.instance_id, value.instance_id);
++      assert.equal(reservation.run_id, value.run_id);
++      const before = retained(stateRoot, [claim]);
++      for (const command of ['stop', 'update', 'reset']) {
++        const args = ['--state-root', stateRoot, command, 'same-slug'];
++        if (command === 'update') args.push('--network', 'local', '--config', configPath);
++        lease.assertLive();
++        let code;
++        try { execFileSync(engine, args, { stdio: ['ignore', 'pipe', 'pipe'], timeout: 10000 }); code = 0; }
++        catch (error) { if (error.signal) throw error; code = error.status; }
++        assert.equal(code, 75, `public ${command} must refuse before lease release`);
++        lease.assertLive();
++        assert(isDeepStrictEqual(retained(stateRoot, [claim]), before), 'lease rejection leaves state/credentials/claims unchanged');
++      }
++    });
++  }
++  const current = JSON.parse(execFileSync(engine, ['--state-root', stateRoot, 'connection', 'same-slug']));
++  assert.equal(current.run_id, value.run_id);
++  process.stdout.write('Public lease proof complete\n');
++}
++module.exports = { heldController, main, retained };
++if (require.main === module) main(process.argv.slice(2)).catch((error) => { process.stderr.write(`${error.message}\n`); process.exitCode = 1; });

@@ -1,0 +1,809 @@
+{
+  "schema": 1,
+  "old": "9f75a28e60885fd063dc16c1abe18f4386432835",
+  "base": "3e5dc4681b0343ec236c3f3dfc0d6f725577c376",
+  "old_provider_patch_sha256": "f4f39cba8accc7cf02f6c0768ac29fad2dfe614bd96c35d07ab1e58c8864106d",
+  "old_provider_message": "kb: add an optional managed cluster provider\n\nEnable the provider when siteConfig.clusterDefaults.kb is configured.\nDelegate lifecycle operations to the pinned standalone engine and use its\nmatching read validators for owned snapshots. Preserve creation provenance\nacross compatible package transitions.\n\nRoute capture leases through public dispatch, translating only the managed\ndescriptor digest. Removal inventory avoids recursively locking the session;\nomitting KB defaults retains the existing provider set.\n\nUse the selected engine readiness predicate, including its exact run-ready\nmarker, before exporting a capture connection. A live draining runner retains\nmanagement ownership without granting capture readiness.",
+  "old_lock": {
+    "nodes": {
+      "bun2nix": {
+        "inputs": {
+          "flake-parts": [
+            "dev-workspace",
+            "llm-agents",
+            "flake-parts"
+          ],
+          "nixpkgs": [
+            "dev-workspace",
+            "llm-agents",
+            "nixpkgs"
+          ],
+          "systems": [
+            "dev-workspace",
+            "llm-agents",
+            "systems"
+          ],
+          "treefmt-nix": [
+            "dev-workspace",
+            "llm-agents",
+            "treefmt-nix"
+          ]
+        },
+        "locked": {
+          "lastModified": 1790001035,
+          "narHash": "sha256-1/SLBjSYBzDdDhvLQ83wrzBakyS/xNGgtxHGNuveOEQ=",
+          "owner": "Mic92",
+          "repo": "bun2nix",
+          "rev": "07a5bfc8ac36c5370199343fa620b69f63186e33",
+          "type": "github"
+        },
+        "original": {
+          "owner": "Mic92",
+          "ref": "llm-agents",
+          "repo": "bun2nix",
+          "type": "github"
+        }
+      },
+      "codex-web": {
+        "flake": false,
+        "locked": {
+          "lastModified": 1791651687,
+          "narHash": "sha256-FFedM3OjjvzO4QGKd1sJwaZjN1pit3APo1gWyAwlPqM=",
+          "owner": "aither64",
+          "repo": "codex-web",
+          "rev": "7aff1632ee97c177e68c8bc45258abe055a087dd",
+          "type": "github"
+        },
+        "original": {
+          "owner": "aither64",
+          "repo": "codex-web",
+          "rev": "7aff1632ee97c177e68c8bc45258abe055a087dd",
+          "type": "github"
+        }
+      },
+      "dev-workspace": {
+        "inputs": {
+          "codex-web": "codex-web",
+          "llm-agents": "llm-agents",
+          "nixpkgs": "nixpkgs_2"
+        },
+        "locked": {
+          "lastModified": 1791728861,
+          "narHash": "sha256-jXTcInNnHGPU0bqZNLg9dCeW1vVpWH2BBG9PAczgOQM=",
+          "owner": "aither64",
+          "repo": "dev-workspace",
+          "rev": "0a422d1fa9fb2077932a8062ee1d948c9f4f2177",
+          "type": "github"
+        },
+        "original": {
+          "owner": "aither64",
+          "repo": "dev-workspace",
+          "rev": "0a422d1fa9fb2077932a8062ee1d948c9f4f2177",
+          "type": "github"
+        }
+      },
+      "devcluster-vpsadmin": {
+        "inputs": {
+          "nixpkgs": [
+            "devcluster-vpsadmin",
+            "vpsadminos",
+            "nixpkgs"
+          ],
+          "vpsadminos": [
+            "devcluster-vpsadminos"
+          ]
+        },
+        "locked": {
+          "lastModified": 1790686487,
+          "narHash": "sha256-R8Fi7PyyMGsdx8804NLNng/RWkJ1Io9si43N9ClUm18=",
+          "owner": "vpsfreecz",
+          "repo": "vpsadmin",
+          "rev": "5c76e3290481b297dcd0baa76d246133f0353d8f",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "repo": "vpsadmin",
+          "rev": "5c76e3290481b297dcd0baa76d246133f0353d8f",
+          "type": "github"
+        }
+      },
+      "devcluster-vpsadminWebui": {
+        "inputs": {
+          "nixpkgs": [
+            "devcluster-vpsadminos",
+            "nixpkgs"
+          ],
+          "vpsadmin": [
+            "devcluster-vpsadmin"
+          ]
+        },
+        "locked": {
+          "lastModified": 1790685797,
+          "narHash": "sha256-/lP+kojPzRPQiiBbuHZB6zNG86+1TySxWmHOBS7hWgo=",
+          "owner": "vpsfreecz",
+          "repo": "vpsadmin-webui",
+          "rev": "534caa83a5f97d2b40b4a126886649b14dc9e8d3",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "repo": "vpsadmin-webui",
+          "rev": "534caa83a5f97d2b40b4a126886649b14dc9e8d3",
+          "type": "github"
+        }
+      },
+      "devcluster-vpsadminos": {
+        "inputs": {
+          "impermanence": "impermanence",
+          "netlinkrb": "netlinkrb",
+          "nixpkgs": "nixpkgs_4",
+          "nixpkgsUnstable": "nixpkgsUnstable",
+          "ruby-lxc": "ruby-lxc"
+        },
+        "locked": {
+          "lastModified": 1789205372,
+          "narHash": "sha256-fbKoi1+fQOAduD7cE1gnYtPQfoqK6VnbThnoDIOmlrw=",
+          "owner": "vpsfreecz",
+          "repo": "vpsadminos",
+          "rev": "15802517e2d92dda4ddc07ebac3d1d7ea087b430",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "repo": "vpsadminos",
+          "rev": "15802517e2d92dda4ddc07ebac3d1d7ea087b430",
+          "type": "github"
+        }
+      },
+      "devcluster-vpsf-status": {
+        "inputs": {
+          "nixpkgs": [
+            "devcluster-vpsadminos",
+            "nixpkgs"
+          ],
+          "vpsadmin": [
+            "devcluster-vpsadmin"
+          ],
+          "vpsadminos": [
+            "devcluster-vpsadminos"
+          ]
+        },
+        "locked": {
+          "lastModified": 1788260265,
+          "narHash": "sha256-4iun0P87K5kKG2vYi6Beio/1iWlHmNYFjD8Hlg2qGgk=",
+          "owner": "vpsfreecz",
+          "repo": "vpsf-status",
+          "rev": "587cd65bb02e6dddea7f6b6409e42a15f36ab4fb",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "ref": "master",
+          "repo": "vpsf-status",
+          "type": "github"
+        }
+      },
+      "flake-parts": {
+        "inputs": {
+          "nixpkgs-lib": [
+            "dev-workspace",
+            "llm-agents",
+            "nixpkgs"
+          ]
+        },
+        "locked": {
+          "lastModified": 1788450739,
+          "narHash": "sha256-glZLQlzIn1fXH6PazR2iUmTo7kzzyYSshrWhLS9TqCU=",
+          "owner": "hercules-ci",
+          "repo": "flake-parts",
+          "rev": "31729ca8cbdb4fa927b34e5f4353e6a83f39e993",
+          "type": "github"
+        },
+        "original": {
+          "owner": "hercules-ci",
+          "repo": "flake-parts",
+          "type": "github"
+        }
+      },
+      "home-manager": {
+        "inputs": {
+          "nixpkgs": [
+            "devcluster-vpsadminos",
+            "impermanence",
+            "nixpkgs"
+          ]
+        },
+        "locked": {
+          "lastModified": 1768598210,
+          "narHash": "sha256-kkgA32s/f4jaa4UG+2f8C225Qvclxnqs76mf8zvTVPg=",
+          "owner": "nix-community",
+          "repo": "home-manager",
+          "rev": "c47b2cc64a629f8e075de52e4742de688f930dc6",
+          "type": "github"
+        },
+        "original": {
+          "owner": "nix-community",
+          "repo": "home-manager",
+          "type": "github"
+        }
+      },
+      "home-manager_2": {
+        "inputs": {
+          "nixpkgs": [
+            "kb-runtime",
+            "vpsadmin",
+            "vpsadminos",
+            "impermanence",
+            "nixpkgs"
+          ]
+        },
+        "locked": {
+          "lastModified": 1768598210,
+          "narHash": "sha256-kkgA32s/f4jaa4UG+2f8C225Qvclxnqs76mf8zvTVPg=",
+          "owner": "nix-community",
+          "repo": "home-manager",
+          "rev": "c47b2cc64a629f8e075de52e4742de688f930dc6",
+          "type": "github"
+        },
+        "original": {
+          "owner": "nix-community",
+          "repo": "home-manager",
+          "type": "github"
+        }
+      },
+      "impermanence": {
+        "inputs": {
+          "home-manager": "home-manager",
+          "nixpkgs": "nixpkgs_3"
+        },
+        "locked": {
+          "lastModified": 1769548169,
+          "narHash": "sha256-03+JxvzmfwRu+5JafM0DLbxgHttOQZkUtDWBmeUkN8Y=",
+          "owner": "nix-community",
+          "repo": "impermanence",
+          "rev": "7b1d382faf603b6d264f58627330f9faa5cba149",
+          "type": "github"
+        },
+        "original": {
+          "owner": "nix-community",
+          "repo": "impermanence",
+          "type": "github"
+        }
+      },
+      "impermanence_2": {
+        "inputs": {
+          "home-manager": "home-manager_2",
+          "nixpkgs": "nixpkgs_5"
+        },
+        "locked": {
+          "lastModified": 1769548169,
+          "narHash": "sha256-03+JxvzmfwRu+5JafM0DLbxgHttOQZkUtDWBmeUkN8Y=",
+          "owner": "nix-community",
+          "repo": "impermanence",
+          "rev": "7b1d382faf603b6d264f58627330f9faa5cba149",
+          "type": "github"
+        },
+        "original": {
+          "owner": "nix-community",
+          "repo": "impermanence",
+          "type": "github"
+        }
+      },
+      "kb-runtime": {
+        "inputs": {
+          "nixpkgs": [
+            "kb-runtime",
+            "vpsadminos",
+            "nixpkgs"
+          ],
+          "toolsNixpkgs": "toolsNixpkgs",
+          "vpsadmin": "vpsadmin",
+          "vpsadminos": [
+            "kb-runtime",
+            "vpsadmin",
+            "vpsadminos"
+          ],
+          "vpsfStatus": "vpsfStatus"
+        },
+        "locked": {
+          "lastModified": 1791740684,
+          "narHash": "sha256-xgJ0oE4Z2OCTiYbjbvgCyBSta42TX7uaMqJw1U9qFfc=",
+          "owner": "vpsfreecz",
+          "repo": "vpsfree-kb-contracts",
+          "rev": "f467934d3f678abc8b552f89805636d4d910438a",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "repo": "vpsfree-kb-contracts",
+          "rev": "f467934d3f678abc8b552f89805636d4d910438a",
+          "type": "github"
+        }
+      },
+      "llm-agents": {
+        "inputs": {
+          "bun2nix": "bun2nix",
+          "flake-parts": "flake-parts",
+          "nixpkgs": "nixpkgs",
+          "systems": "systems",
+          "treefmt-nix": "treefmt-nix"
+        },
+        "locked": {
+          "lastModified": 1790893833,
+          "narHash": "sha256-w2jmp0z4qTRKC4nlMG0okmRZgDZ2No0IlDL6Aef/tzI=",
+          "owner": "numtide",
+          "repo": "llm-agents.nix",
+          "rev": "6334544a4bfd921086a252caccc6c1c6eb1d18c7",
+          "type": "github"
+        },
+        "original": {
+          "owner": "numtide",
+          "repo": "llm-agents.nix",
+          "type": "github"
+        }
+      },
+      "netlinkrb": {
+        "flake": false,
+        "locked": {
+          "lastModified": 1562850306,
+          "narHash": "sha256-0bXTWUdUDr2XP+bEIfIbxXap8Niva/IoPXTxFeXXImg=",
+          "owner": "vpsfreecz",
+          "repo": "netlinkrb",
+          "rev": "d9de53d843d2586ffa5b7b404887fa801c697ddf",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "repo": "netlinkrb",
+          "type": "github"
+        }
+      },
+      "netlinkrb_2": {
+        "flake": false,
+        "locked": {
+          "lastModified": 1562850306,
+          "narHash": "sha256-0bXTWUdUDr2XP+bEIfIbxXap8Niva/IoPXTxFeXXImg=",
+          "owner": "vpsfreecz",
+          "repo": "netlinkrb",
+          "rev": "d9de53d843d2586ffa5b7b404887fa801c697ddf",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "repo": "netlinkrb",
+          "type": "github"
+        }
+      },
+      "nixpkgs": {
+        "locked": {
+          "lastModified": 1790600678,
+          "narHash": "sha256-6k3n7X2UsZ6tAlWTz99RimiZab+17tMUrw9sRUcELiA=",
+          "owner": "NixOS",
+          "repo": "nixpkgs",
+          "rev": "f45c6f04c2f013f004bf94e284e95d72898d9393",
+          "type": "github"
+        },
+        "original": {
+          "owner": "NixOS",
+          "ref": "nixpkgs-unstable",
+          "repo": "nixpkgs",
+          "type": "github"
+        }
+      },
+      "nixpkgsUnstable": {
+        "locked": {
+          "lastModified": 1789006805,
+          "narHash": "sha256-xB8mKMOx1IA9vTDNLmJZ6n4wCMq/cuWBBOzGCRnqxrU=",
+          "owner": "NixOS",
+          "repo": "nixpkgs",
+          "rev": "8ce4ef6cb6f871616146b9fe26d2a5ae594e94fe",
+          "type": "github"
+        },
+        "original": {
+          "owner": "NixOS",
+          "ref": "nixos-unstable",
+          "repo": "nixpkgs",
+          "type": "github"
+        }
+      },
+      "nixpkgsUnstable_2": {
+        "locked": {
+          "lastModified": 1788179007,
+          "narHash": "sha256-hn1oU2rue2SYK8dAr8+WNZWtbsz1S2W5mnHlSEuh3bo=",
+          "owner": "NixOS",
+          "repo": "nixpkgs",
+          "rev": "34ab99075ac4f7e40cf037eef32cb1c360bb85e9",
+          "type": "github"
+        },
+        "original": {
+          "owner": "NixOS",
+          "ref": "nixos-unstable",
+          "repo": "nixpkgs",
+          "type": "github"
+        }
+      },
+      "nixpkgs_2": {
+        "locked": {
+          "lastModified": 1788405554,
+          "narHash": "sha256-r2f1oUwixlgq9zOdYLqJLfS/lWBT60/IITjhTKI59JU=",
+          "owner": "NixOS",
+          "repo": "nixpkgs",
+          "rev": "a5cc6f2c37bf518436dc8d1c288ccd0c43c2f4c4",
+          "type": "github"
+        },
+        "original": {
+          "owner": "NixOS",
+          "ref": "nixos-26.05",
+          "repo": "nixpkgs",
+          "type": "github"
+        }
+      },
+      "nixpkgs_3": {
+        "locked": {
+          "lastModified": 1768564909,
+          "narHash": "sha256-Kell/SpJYVkHWMvnhqJz/8DqQg2b6PguxVWOuadbHCc=",
+          "owner": "nixos",
+          "repo": "nixpkgs",
+          "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+          "type": "github"
+        },
+        "original": {
+          "owner": "nixos",
+          "ref": "nixos-unstable",
+          "repo": "nixpkgs",
+          "type": "github"
+        }
+      },
+      "nixpkgs_4": {
+        "locked": {
+          "lastModified": 1789114715,
+          "narHash": "sha256-ugpsyk3NM2s87vXfUiIIiibbJ4Pp0JPS5p/3mfs+q+c=",
+          "owner": "NixOS",
+          "repo": "nixpkgs",
+          "rev": "21a67dc470149f337cecafbe965d8d252a390518",
+          "type": "github"
+        },
+        "original": {
+          "owner": "NixOS",
+          "ref": "nixos-26.05",
+          "repo": "nixpkgs",
+          "type": "github"
+        }
+      },
+      "nixpkgs_5": {
+        "locked": {
+          "lastModified": 1768564909,
+          "narHash": "sha256-Kell/SpJYVkHWMvnhqJz/8DqQg2b6PguxVWOuadbHCc=",
+          "owner": "nixos",
+          "repo": "nixpkgs",
+          "rev": "e4bae1bd10c9c57b2cf517953ab70060a828ee6f",
+          "type": "github"
+        },
+        "original": {
+          "owner": "nixos",
+          "ref": "nixos-unstable",
+          "repo": "nixpkgs",
+          "type": "github"
+        }
+      },
+      "nixpkgs_6": {
+        "locked": {
+          "lastModified": 1788187754,
+          "narHash": "sha256-bu1QxmXKmPuvBLN7bHP355OV9Qo13x9WCiRDH62CqRM=",
+          "owner": "NixOS",
+          "repo": "nixpkgs",
+          "rev": "5dfba6236110080a54247d6460bc2ff5dda939cc",
+          "type": "github"
+        },
+        "original": {
+          "owner": "NixOS",
+          "ref": "nixos-26.05",
+          "repo": "nixpkgs",
+          "type": "github"
+        }
+      },
+      "nixpkgs_7": {
+        "locked": {
+          "lastModified": 1789009968,
+          "narHash": "sha256-GB16oaxpsrnGNnGIE+0uYBqMRzB9X6FYDUvjvnJAYew=",
+          "owner": "NixOS",
+          "repo": "nixpkgs",
+          "rev": "d58a46e3bc02d91ebe04667f8397752a749c0024",
+          "type": "github"
+        },
+        "original": {
+          "owner": "NixOS",
+          "ref": "nixos-26.05",
+          "repo": "nixpkgs",
+          "type": "github"
+        }
+      },
+      "root": {
+        "inputs": {
+          "dev-workspace": "dev-workspace",
+          "devcluster-vpsadmin": "devcluster-vpsadmin",
+          "devcluster-vpsadminWebui": "devcluster-vpsadminWebui",
+          "devcluster-vpsadminos": "devcluster-vpsadminos",
+          "devcluster-vpsf-status": "devcluster-vpsf-status",
+          "kb-runtime": "kb-runtime",
+          "nixpkgs": "nixpkgs_7"
+        }
+      },
+      "ruby-lxc": {
+        "flake": false,
+        "locked": {
+          "lastModified": 1780499941,
+          "narHash": "sha256-guAdOSP9MyCL3BQ1LGXAhcCoXgEU1fUE69d2ATMqUGE=",
+          "owner": "vpsfreecz",
+          "repo": "ruby-lxc",
+          "rev": "004bf35eb90d41ba60b347b5b1e73d868a4f95d9",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "ref": "2026-06-03-nixos-26-05-port",
+          "repo": "ruby-lxc",
+          "type": "github"
+        }
+      },
+      "ruby-lxc_2": {
+        "flake": false,
+        "locked": {
+          "lastModified": 1780499941,
+          "narHash": "sha256-guAdOSP9MyCL3BQ1LGXAhcCoXgEU1fUE69d2ATMqUGE=",
+          "owner": "vpsfreecz",
+          "repo": "ruby-lxc",
+          "rev": "004bf35eb90d41ba60b347b5b1e73d868a4f95d9",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "ref": "2026-06-03-nixos-26-05-port",
+          "repo": "ruby-lxc",
+          "type": "github"
+        }
+      },
+      "systems": {
+        "locked": {
+          "lastModified": 1681028828,
+          "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+          "owner": "nix-systems",
+          "repo": "default",
+          "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+          "type": "github"
+        },
+        "original": {
+          "owner": "nix-systems",
+          "repo": "default",
+          "type": "github"
+        }
+      },
+      "toolsNixpkgs": {
+        "locked": {
+          "lastModified": 1783522502,
+          "narHash": "sha256-iffAls3iaNTyJC2faYcUXSI+Gp02cDjYl+MygxKl2GI=",
+          "owner": "NixOS",
+          "repo": "nixpkgs",
+          "rev": "0bb7ec54c8483066ec9d7720e780a5caa71f8612",
+          "type": "github"
+        },
+        "original": {
+          "owner": "NixOS",
+          "ref": "nixos-unstable",
+          "repo": "nixpkgs",
+          "type": "github"
+        }
+      },
+      "treefmt-nix": {
+        "inputs": {
+          "nixpkgs": [
+            "dev-workspace",
+            "llm-agents",
+            "nixpkgs"
+          ]
+        },
+        "locked": {
+          "lastModified": 1786901030,
+          "narHash": "sha256-WSFCsDSE5ffgD2MqzkM2CYjeFiKhRF/dJUN8uedb6YE=",
+          "owner": "numtide",
+          "repo": "treefmt-nix",
+          "rev": "27b3b12a8e6375f28ebe122f07d230ca5459bbfa",
+          "type": "github"
+        },
+        "original": {
+          "owner": "numtide",
+          "repo": "treefmt-nix",
+          "type": "github"
+        }
+      },
+      "vpsadmin": {
+        "inputs": {
+          "nixpkgs": [
+            "kb-runtime",
+            "vpsadmin",
+            "vpsadminos",
+            "nixpkgs"
+          ],
+          "vpsadminos": "vpsadminos"
+        },
+        "locked": {
+          "lastModified": 1791728853,
+          "narHash": "sha256-3YDInHVVj5ke4aL8fjCYsNOK6S/r5W3LidG96V2/81g=",
+          "owner": "vpsfreecz",
+          "repo": "vpsadmin",
+          "rev": "939159f27b5d627930281d5fac0c0aa9ba53bfc7",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "repo": "vpsadmin",
+          "rev": "939159f27b5d627930281d5fac0c0aa9ba53bfc7",
+          "type": "github"
+        }
+      },
+      "vpsadminos": {
+        "inputs": {
+          "impermanence": "impermanence_2",
+          "netlinkrb": "netlinkrb_2",
+          "nixpkgs": "nixpkgs_6",
+          "nixpkgsUnstable": "nixpkgsUnstable_2",
+          "ruby-lxc": "ruby-lxc_2"
+        },
+        "locked": {
+          "lastModified": 1788379445,
+          "narHash": "sha256-mDLxNpbfUmo2FRXW5MJWJ8WqKLINUru6nVHB7zN4bVo=",
+          "owner": "vpsfreecz",
+          "repo": "vpsadminos",
+          "rev": "6bdf458fd9105379860234ff33d352e55844f08f",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "repo": "vpsadminos",
+          "rev": "6bdf458fd9105379860234ff33d352e55844f08f",
+          "type": "github"
+        }
+      },
+      "vpsfStatus": {
+        "inputs": {
+          "nixpkgs": [
+            "kb-runtime",
+            "nixpkgs"
+          ],
+          "vpsadmin": [
+            "kb-runtime",
+            "vpsadmin"
+          ],
+          "vpsadminos": [
+            "kb-runtime",
+            "vpsadminos"
+          ]
+        },
+        "locked": {
+          "lastModified": 1783669700,
+          "narHash": "sha256-fiaFXRCldKuaiEFNO+TSvzrgYOCW8xOsEjDRND97Pss=",
+          "owner": "vpsfreecz",
+          "repo": "vpsf-status",
+          "rev": "29853c364e2fa072152d2de4f17e57f1e802b9f3",
+          "type": "github"
+        },
+        "original": {
+          "owner": "vpsfreecz",
+          "ref": "master",
+          "repo": "vpsf-status",
+          "type": "github"
+        }
+      }
+    },
+    "root": "root",
+    "version": 7
+  },
+  "unchanged_handwritten_blobs": [
+    "100644 blob 84921561720d67138f27d97b07ed8fa15dfc1c38\t.github/workflows/check.yml",
+    "100644 blob 614e6e61a791e919f67d05e3213c48af81da2147\t.github/workflows/host-migration.yml",
+    "100644 blob 406209b0252f6e3bbc628c5f5c5ee8afd7834e43\tAGENTS.md",
+    "100644 blob 8eeb8cafa12b87099daf5da718f6ef13bca374d2\tLICENSE",
+    "100644 blob f166e255a9bc7483fa8f413608f6791d089fa9e2\tREADME.md",
+    "100755 blob 35097ee6c94760876ae319dd3389bb692b01982f\tbin/kb-cleanup",
+    "100755 blob 960c9d2ff66e4f1c74e82e393250f0f1adecd538\tbin/kb-contract-build",
+    "100755 blob e0766fb1c5b86a77d99af0dce1121e007a728ff8\tbin/kb-contract-fetch",
+    "100755 blob d08cfd3a77b5eb0a7270a662aae2a97133f6d206\tbin/kb-contract-manifest",
+    "100755 blob bb54e92cd69409228936e23da2b05df9cb41b5d4\tbin/kb-contract-reconcile",
+    "100755 blob 8de4261b9951364815e5caf50201d73dac1b92f8\tbin/kb-page",
+    "100755 blob c4b4b274addc1f932c2f02a24adc80c96882696b\tbin/kb-release",
+    "100755 blob 20f2561e698df7f02b95060323d57a54b6e14df6\tbin/kb-stage",
+    "100755 blob 2aade901df2a01ea6d49730dbe0e247394290068\tbin/vpsfree-dev-workspace-migrate",
+    "100644 blob f84448bc95138f9ca22146ecab1bc761a0d27b23\tdev-clusters/kb/README.md",
+    "100755 blob 2bd1f63484ab895bc6fd065e8a089362ddbb8a98\tdev-clusters/kb/bin/devcluster",
+    "100644 blob bd125155c6b4a4ebef1cc0965d078b694b610a55\tdev-clusters/kb/lib/cli.rb",
+    "100644 blob 812f56c1af240a8dec83fb0088650d8f8ba0b0fb\tdev-clusters/kb/lib/connection.rb",
+    "100644 blob 6058138fd45b50bbff7c5b28b24c73d4584d3c07\tdev-clusters/kb/lib/guards.rb",
+    "100644 blob baf30847e5c0cad6745066e0ece04ba8a413a49c\tdev-clusters/kb/lib/lease.rb",
+    "100644 blob d1898c81b7642c65781c6926e3f4184a3acbdbee\tdev-clusters/kb/lib/managed.rb",
+    "100644 blob c7ea3d2d0038d9387678a1c7103e0fb514cb9427\tdev-clusters/kb/lib/portable.rb",
+    "100644 blob 408eabfe28978ea8000fed043dd534d5d6d4e2d0\tdev-clusters/kb/lib/provider.rb",
+    "100644 blob 83807640942fb0f45d1e42ec481c17ebc9d79404\tdev-clusters/lib/devcluster_runner.rb",
+    "100644 blob d33cece535c1c5046dfd1770aac550cda0e21d9e\tdev-clusters/lib/runner.nix",
+    "100644 blob ee0a6b9fa429e7ad7290e407d73944b827b6fbd1\tdev-clusters/lib/runtime.sh",
+    "100644 blob 2a7fb02d809b8f9ef47a7716f4b2a4931b7a5564\tdev-clusters/lib/shutdown.json",
+    "100644 blob ad3b235e2078fac88dc0a095ef7a4b6a9c3d982b\tdev-clusters/vpsadmin/README.md",
+    "100755 blob 781f642c6f063aec71fefd9e15467439189aa711\tdev-clusters/vpsadmin/bin/devcluster",
+    "100644 blob 33c42f0cf804c055c24c683729e1f07b5f7e7384\tdev-clusters/vpsadmin/flake.nix",
+    "100755 blob df96252040f4596b5b9b9c67f36e6043a092950a\tdev-clusters/vpsadmin/lib/devcluster-runner.rb",
+    "100644 blob 931d2d78349d44c6c9e562ad36374a9db0d0874f\tdev-clusters/vpsadmin/lib/maintenance.rb",
+    "100644 blob 88fcf01c24b9cb49eb59c73f307f8e9b8ac1f763\tdev-clusters/vpsadmin/lib/storage_profile.rb",
+    "100644 blob 812441b6a0127e7bfffeb999281527db97675e7e\tdev-clusters/vpsadmin/nix/storage-profile-provision.rb",
+    "100644 blob 6ba1c98944e89a9ba559e7f113014c4e00ee7e92\tdev-clusters/vpsadmin/nix/storage-profile.nix",
+    "100644 blob bd727ca8d6487cfd3b64cc16d207369e2c491fd2\tdev-clusters/vpsadmin/nix/storage-profile/config.rb",
+    "100644 blob 3ea74b6d2c0d3cf02efe7bed4ef4f2710d0e3b1d\tdev-clusters/vpsadmin/nix/storage-profile/dataset_plans.rb",
+    "100644 blob f6b7b5d1061614785849dc7c6497f65cb7f5c1f2\tdev-clusters/vpsadmin/nix/storage-profile/hooks.rb",
+    "100644 blob fc505ca1f23f1ceb5c189d5f9ff6e69f102e48f7\tdev-clusters/vpsadmin/nix/test.nix",
+    "100644 blob 70ca286eb135ce19aeec6f3c417984d5e1df7742\tdev-clusters/vpsadmin/nix/webui-oauth-seed.rb",
+    "100755 blob b409b7e18ac6cac6596c807110b1927ed02c4ccc\tdev-clusters/vpsadmin/tests/run-storage-profile-api-specs.sh",
+    "100644 blob 627abcaaefb66e7d5b0b448c8b89cbb87653fb3c\tdev-clusters/vpsadmin/tests/storage-profile-acceptance.rb",
+    "100644 blob d417573f345d4fab1274a1d036f7f9449084858f\tdev-clusters/vpsadminos/README.md",
+    "100755 blob 3f68d72320129cc7f159f2bab6bc030870a5295e\tdev-clusters/vpsadminos/bin/devcluster",
+    "100644 blob 56288d1ff8194595885aa2e98ad6d4e1f46e4109\tdev-clusters/vpsadminos/flake.nix",
+    "100755 blob fc2b57c87aafcf1d5b6752de1122abccd0e5ad1d\tdev-clusters/vpsadminos/lib/devcluster-runner.rb",
+    "100644 blob 4c458ffcc1eb84f1f79cfdca62a5dcddd35aaf7b\tdev-clusters/vpsadminos/nix/test.nix",
+    "100644 blob e9d830ee9e3c43e7c0d5bb73fe0512a1904f1b88\tdocs/namespace-migration.md",
+    "100644 blob f1f1659ee003581e0e598be013a8a5667913ba4e\tdocs/test-recovery-inventory-20260911.tsv",
+    "100644 blob a45fb3dea0d3ffd44ad53e86aa1d7fe453bcb0d1\tflake.lock",
+    "100644 blob 5a492a5d4ff3760cbd2895e64c31f95fb1117b37\tflake.nix",
+    "100644 blob 6a93dedb59664ec206b02850382b08f4baf43651\tlib/kb_cleanup.rb",
+    "100644 blob c29f3276b8427086982ba37f9258bf0a5d013bb3\tlib/kb_contract_files.rb",
+    "100644 blob a7fd1a2a8200e889ef6441aa48a1d34a262fce90\tlib/kb_managed_pages.rb",
+    "100644 blob f418df7bee47e8873e8c62ed03f867c221d8758b\tlib/kb_release.rb",
+    "100644 blob 3ece3cf3cf7a72fd1fbd381abbdb680bfc7b6a5f\tlib/kb_stage.rb",
+    "100644 blob 8c0b89a197ef363dc7d35a92b649290448b25903\tnix/host-paths.json",
+    "100644 blob 63f867a38bcdad314be7644864dde3885e4ee3a4\tnix/organization-tools.nix",
+    "100644 blob dd8bcc4f040404b0ff8cbdfe1dc97aa71c8b8378\tnix/site-config.nix",
+    "100644 blob 1d80383b2a7854e1f9a7be89e2f1ad65298356b6\tnix/tests/host-migration.nix",
+    "100644 blob 1a8ab23613c2d9aa8c534a7743e37b818a4c5edf\tnix/tests/retained-services-maintenance.nix",
+    "100644 blob e3ecf1a2cbf8fe139243ed2d3e93f778a780cbb4\tskills/dev-session-handoff/SKILL.md",
+    "100644 blob fa8bfebd6b5a9263841892a7962b19b2e1767f53\tskills/humanizer-cs/LICENSE",
+    "100644 blob 85217532af2c00c68a50e6dab18de8901eb3bc6e\tskills/humanizer-cs/SKILL.md",
+    "100644 blob d7c490b2fd060079b41b88424c7da10246dcc67b\tskills/humanizer-cs/agents/openai.yaml",
+    "100644 blob 625297fb778f32eb39d3a5b97e3e3b611b7304d6\tskills/humanizer-en/LICENSE",
+    "100644 blob 72ebe7de2225bd58c2a510a5cc344e9f4810417c\tskills/humanizer-en/SKILL.md",
+    "100644 blob 5f3c49a515460ddc50c1dd996c011bf8b7f9e281\tskills/humanizer-en/agents/openai.yaml",
+    "100644 blob 4e39e348a453d13f58b84302144ddf064d2d9aa2\tskills/mandatory-change-review/SKILL.md",
+    "100644 blob 38a7c5e38fc2711c4464004a141eaceb197d69cf\tskills/mandatory-change-review/agents/openai.yaml",
+    "100644 blob cbc82079c95ba9ff5f7a604ac8e1c892eda290be\tskills/mandatory-change-review/references/architecture-review.md",
+    "100644 blob fdfac0ad9c8cb4ef2dcf5d31601c5035cd961c2a\tskills/mandatory-change-review/references/general-review.md",
+    "100644 blob 6e8f275e1e7e6e18d75fc110a1d483aec8ba53ba\tskills/mandatory-change-review/references/risk-review.md",
+    "100644 blob 2f94d0054a8506b0e77c8d1e8a5436ae4214773e\tskills/mandatory-change-review/references/scope-review.md",
+    "100644 blob ea8c960934cbfbb2b8e89694005a8f0f7a75b55e\tskills/vpsfree-user-facing-writing/SKILL.md",
+    "100644 blob 59903ce7d266435129fb2e5493768798e085a871\tskills/vpsfree-user-facing-writing/agents/openai.yaml",
+    "100644 blob 7b7b1be71efda423f56e621a2ba6185e4e63a2c1\tskills/vpsfree-user-facing-writing/references/sources.md",
+    "100644 blob f63065221a7ca2eea108915cb81f787916e004c2\ttest/devcluster_commands_test.rb",
+    "100644 blob 01dd6f0894e47e13fd59c1a44c11fb4916d5ebc0\ttest/devcluster_maintenance_test.rb",
+    "100644 blob 8ce723b8d385cdf781d874436427e0ddf2ccafac\ttest/devcluster_nix_smoke.rb",
+    "100644 blob 6f6b7219ac263890f39e461846e4be019dd9d1df\ttest/devcluster_runner_test.rb",
+    "100644 blob c34c5a686d6656322c97f1138732cb751cb669d0\ttest/devcluster_status_test.rb",
+    "100644 blob 80b67cc5a9a68634727119dcbc0e740e5e952b94\ttest/devcluster_storage_profile_test.rb",
+    "100644 blob f04892907e1931ebd1199806c72f008f0af8cb6f\ttest/devcluster_store_roots_test.rb",
+    "100644 blob d65a6237f307ca913afc196cc9ff7a07b69f6f5d\ttest/devcluster_webui_seed_test.rb",
+    "100644 blob 1676a5198290a7dfa07f8077a3be3106b4084ed2\ttest/fixtures/kb-config.json",
+    "100644 blob fe51488c7066f6687ef680d6bfaa4f7768ef205c\ttest/fixtures/not-object.json",
+    "100644 blob 064b78d6b1aae2fcbfb5e57827ac4d0013a93da6\ttest/fixtures/vpsadmin-config.json",
+    "100644 blob 42e88332f8c5164937a3900ec7b77c4249dd7585\ttest/fixtures/vpsadminos-config.json",
+    "100644 blob f96cf6df837a5ff36116ad98b28e3800055652fd\ttest/kb_cleanup_test.rb",
+    "100644 blob 17445c362b93d8197d3fedd85a6cb8a286d7a5d7\ttest/kb_cli_test.rb",
+    "100644 blob f7dd065c1c13aa683e9570bb623e626f07ea07fd\ttest/kb_connection_test.rb",
+    "100644 blob f8bbe863666619aeeb27cc2b69a1691edf2cfa5b\ttest/kb_contract_tools_test.rb",
+    "100644 blob 80f938e05c0b041d09f7715741a76ee44dc5b999\ttest/kb_devcluster_test.rb",
+    "100644 blob 190864b320b785227e2a4f54d23e06cb69ce3568\ttest/kb_guards_test.rb",
+    "100644 blob 241309400bd5380a8d29ce52f2aa24da3c7191ba\ttest/kb_lease_test.rb",
+    "100644 blob 57247af45b93c0102bd852a54736b9e1d1fc422b\ttest/kb_page_test.rb",
+    "100644 blob 610d75c413c85924021d8dc5e657e6481d5841cd\ttest/kb_portable_test.rb",
+    "100644 blob 55c222f61fa9ce7bd86d7dd67695393b4d013d0f\ttest/kb_public_dispatch_test.rb",
+    "100644 blob ebb0f81be7bf4e22f9fac647fffde54f77941db5\ttest/kb_stage_test.rb",
+    "100644 blob d1b943b312764097e5fa4d880f71e1d2ed333099\ttest/migration_test.rb",
+    "100644 blob 9c5f19865a27a39f78a5dc70c236574321f4f90f\ttest/retained-services-maintenance/devcluster-runner.rb",
+    "100644 blob 313bf4c302841629ae852228a9483471fc0c2298\ttest/skill_policy_test.rb",
+    "100644 blob d05fc962c0a9ba05521d0031665cfc469ef3cd25\ttest/support/kb_snapshot_fixture.rb",
+    "100644 blob e162cd237ea265505edfeb7ed7220cd30e0340d2\ttest/vpsadmin_storage_profile_spec.rb"
+  ]
+}

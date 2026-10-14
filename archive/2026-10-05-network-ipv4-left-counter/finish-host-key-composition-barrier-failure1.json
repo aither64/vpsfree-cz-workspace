@@ -1,0 +1,47 @@
+{
+  "at": "2026-10-11T11:13:18.799762+00:00",
+  "head": "2c3d49fedc98e512a64874ccb77134dbdb93f692",
+  "failures": {
+    "k": {
+      "full_log_sha256": "097b2560e8c47a2a9d3b7f42c8a4a02b3cedf5b5be6c7c6d465beb0ef2a92278",
+      "excerpts": [
+        {
+          "line": 923,
+          "excerpt": "check\tRun source repository checks\t2026-10-11T11:09:25.1753686Z NodeSshTest#test_pool_completion_barrier_prevents_generation_until_released [tools/test-node-ssh.rb:160]:"
+        },
+        {
+          "line": 924,
+          "excerpt": "check\tRun source repository checks\t2026-10-11T11:09:25.1755378Z /tmp/kb-node-ssh-20261011-36996-ur4p1b/run: line 8: read: 0: read error: Resource temporarily unavailable"
+        },
+        {
+          "line": 927,
+          "excerpt": "check\tRun source repository checks\t2026-10-11T11:09:25.1756368Z 10 runs, 342 assertions, 1 failures, 0 errors, 0 skips"
+        }
+      ]
+    },
+    "k-runtime": {
+      "full_log_sha256": "b99045a0cff0d355fd2b0b5b58129c31309c0e764dfd1c40891b658bfee5976e",
+      "excerpts": [
+        {
+          "line": 922,
+          "excerpt": "check\tRun source repository checks\t2026-10-11T11:09:03.7478290Z NodeSshTest#test_pool_completion_barrier_prevents_generation_until_released [tools/test-node-ssh.rb:160]:"
+        },
+        {
+          "line": 923,
+          "excerpt": "check\tRun source repository checks\t2026-10-11T11:09:03.7479005Z /tmp/kb-node-ssh-20261011-36682-l4gal3/run: line 8: read: 0: read error: Resource temporarily unavailable"
+        },
+        {
+          "line": 926,
+          "excerpt": "check\tRun source repository checks\t2026-10-11T11:09:03.7479512Z 10 runs, 342 assertions, 1 failures, 0 errors, 0 skips"
+        }
+      ]
+    }
+  },
+  "finding": "Generated shell waitForService fixture read inherits nonblocking Ruby pipe; actual shell stderr reports EAGAIN. Production composed configuration evaluates; all ten cases reach shell checks, one barrier success case fails in both jobs.",
+  "cause_limits": "Source-supported with native EAGAIN, no local reproduction; no guest failure or resource insufficiency claim",
+  "source_references": [
+    "https://raw.githubusercontent.com/ruby/ruby/v3_4_9/io.c",
+    "https://raw.githubusercontent.com/ruby/ruby/v3_4_9/ext/io/nonblock/nonblock.c"
+  ],
+  "small_fix": "Only test-node-ssh.rb: require io/nonblock and release_input.nonblock=false before passing FD4 to Bash; preserve all tests/shell/body/bounds and assertions. No product change."
+}

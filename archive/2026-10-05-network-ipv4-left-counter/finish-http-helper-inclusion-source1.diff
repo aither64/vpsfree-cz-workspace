@@ -1,0 +1,39 @@
+diff --git a/api/spec/api/resources/ip_address_spec.rb b/api/spec/api/resources/ip_address_spec.rb
+index d18a81fcc725700bd7f0ba0d4c61e679bae5e44d..8e60a3ae74cff94d585830d90350ee9b4d21e1b1 100644
+--- a/api/spec/api/resources/ip_address_spec.rb
++++ b/api/spec/api/resources/ip_address_spec.rb
+@@ -3,6 +3,8 @@
+ require 'securerandom'
+ 
+ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
++  include CoreResourceSpecHelpers
++
+   before do
+     header 'Accept', 'application/json'
+     SpecSeed.network_v4
+diff --git a/api/spec/api/resources/network_write_spec.rb b/api/spec/api/resources/network_write_spec.rb
+index 0cdbb0caeac71d730abc4c58f2c6a25f94d1b6df..580180a1a7e7581d0d293ed1ec524eca46b3b7f6 100644
+--- a/api/spec/api/resources/network_write_spec.rb
++++ b/api/spec/api/resources/network_write_spec.rb
+@@ -3,6 +3,8 @@
+ require 'securerandom'
+ 
+ RSpec.describe 'VpsAdmin::API::Resources::Network write actions' do # rubocop:disable RSpec/DescribeClass
++  include CoreResourceSpecHelpers
++
+   let(:ipv4_network) { SpecSeed.network_v4 }
+   let(:ipv6_network) { SpecSeed.network_v6 }
+ 
+diff --git a/api/spec/api/resources/vps_write_spec.rb b/api/spec/api/resources/vps_write_spec.rb
+index cd18f12c042577b91a33f9479c0c86b4f071d10d..df67085a95bb81aa7564c3954a5b509b8e92794e 100644
+--- a/api/spec/api/resources/vps_write_spec.rb
++++ b/api/spec/api/resources/vps_write_spec.rb
+@@ -3,6 +3,8 @@
+ require 'securerandom'
+ 
+ RSpec.describe 'VpsAdmin::API::Resources::VPS write actions' do # rubocop:disable RSpec/DescribeClass
++  include CoreResourceSpecHelpers
++
+   before do
+     header 'Accept', 'application/json'
+     SpecSeed.location

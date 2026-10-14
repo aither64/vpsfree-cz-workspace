@@ -1,0 +1,71 @@
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index 7dbc2b6fb85fb046facea6ae61f278aee5ed899d..5d996ee8d786dfe9efc1734b4072fddab353b8a1 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -501,6 +501,24 @@ async function withLeaseObservation(work) {
+           input.close
+           reader.close
+           respond.call(JSON.parse(output.readline))
++        when 'alternate-runner'
++          input, writer = IO.pipe
++          output, reader = IO.pipe
++          pid = Process.fork do
++            writer.close
++            output.close
++            children.each { |_pid, child_writer, child_output| child_writer.close; child_output.close }
++            reader.puts(JSON.generate(KbRuntime::ProcessIdentity.read(Process.pid)))
++            reader.flush
++            reader.close
++            input.read
++            input.close
++            exit! 0
++          end
++          children << [pid, writer, output]
++          input.close
++          reader.close
++          respond.call(JSON.parse(output.readline))
+         when 'child-exec'
+           _pid, writer, output = children.first
+           writer.puts('exec')
+@@ -632,6 +650,8 @@ test('lease observation rejects foreign receipt IDs, malformed identities and ch
+     const observation = fixture.observe();
+     const before = observation.snapshot();
+     const child = await fixture.request('child');
++    assert.notEqual(child.pid, fixture.record.runner.pid);
++    assert.notDeepEqual(child.argv, fixture.record.runner.argv);
+     const malformed = [
+       ...['instance_id', 'run_id', 'artifact_id'].map((field) => ({ ...fixture.record, [field]: crypto.randomUUID() })),
+       { ...fixture.record, artifact_sha256: '0'.repeat(64) }, { ...fixture.record, schema: 2 }, { ...fixture.record, complete: true },
+@@ -641,13 +661,31 @@ test('lease observation rejects foreign receipt IDs, malformed identities and ch
+       { ...fixture.record, children: [{ ...child, start_ticks: 'invalid' }] },
+       { ...fixture.record, children: [fixture.record.runner] },
+       ...['pid', 'start_ticks', 'boot_id', 'owner_uid', 'executable', 'argv'].map((field) => ({ ...fixture.record,
+-        runner: { ...fixture.record.runner, [field]: field === 'argv' ? ['wrong-runner-argv'] :
++        runner: { ...fixture.record.runner, [field]: field === 'pid' ? child.pid : field === 'argv' ? ['wrong-runner-argv'] :
+           typeof fixture.record.runner[field] === 'number' ? fixture.record.runner[field] + 1 : `${fixture.record.runner[field]}-wrong` } })),
+     ];
+     for (const record of malformed) {
+       await fixture.request('publish', { record });
+       assert.throws(() => observation.assertUnchanged(before), /observation refused/);
+     }
++    const alternate = await fixture.request('alternate-runner');
++    assert.notEqual(alternate.pid, fixture.record.runner.pid);
++    assert.notEqual(alternate.pid, child.pid);
++    assert.equal(alternate.executable, fixture.record.runner.executable);
++    assert.deepEqual(alternate.argv, fixture.record.runner.argv);
++    assert.equal(alternate.boot_id, fixture.record.runner.boot_id);
++    assert.equal(alternate.owner_uid, fixture.record.runner.owner_uid);
++    await fixture.request('publish', { record: { ...fixture.record, runner: alternate } });
++    const alternateObservation = fixture.observe();
++    alternateObservation.assertUnchanged(alternateObservation.snapshot());
++    assert.throws(() => observation.assertUnchanged(before), (error) => {
++      assert(error instanceof assert.AssertionError);
++      assert.equal(error.code, 'ERR_ASSERTION');
++      assert.match(error.message, /^authenticated runner must remain unchanged(?:\n|$)/);
++      assert.deepEqual(error.actual, alternate);
++      assert.deepEqual(error.expected, fixture.record.runner);
++      return true;
++    });
+     await fixture.request('publish', { record: fixture.record });
+     observation.assertUnchanged(before);
+   });

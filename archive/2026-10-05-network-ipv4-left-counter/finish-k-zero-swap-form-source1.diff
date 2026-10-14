@@ -1,0 +1,177 @@
+diff --git a/fixtures/prepare.cjs b/fixtures/prepare.cjs
+index fb9611977833c0aa1ac64816c7d8fcc67b1c4d9f..5aff1fde2be35fa185e49189ce9f45a9bd680a0b 100644
+--- a/fixtures/prepare.cjs
++++ b/fixtures/prepare.cjs
+@@ -96,7 +96,12 @@ async function createVpsIn(
+   form = page.locator('form[name="newvps-step3"]');
+   if (resources) {
+     for (const [name, value] of Object.entries(resources)) {
+-      await form.locator(`input[name="${name}"]`).fill(String(value));
++      const control = form.locator(`input[name="${name}"]`);
++      const count = await control.count();
++      // The pinned member form omits zero-allocated swap; submission defaults it to 0.
++      if (name === 'swap' && value === 0 && count === 0) continue;
++      if (count !== 1) throw new Error(`Expected one ${name} resource control, found ${count}`);
++      await control.fill(String(value));
+     }
+   }
+   await submitLast(form);
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index 1e928b5e0c581931127fd3964c0c9b3e862c27f1..86832dc0232efd36a5be72cb1792fdbf9e3a6e1a 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -10,7 +10,7 @@ const { spawn } = require('node:child_process');
+ const { createInterface } = require('node:readline');
+ const crypto = require('node:crypto');
+ const { Connection } = require('../lib/connection.cjs');
+-const { assertInventoryMember, ensureIpInventory, inventoryIdentity,
++const { assertInventoryMember, createVpsIn, ensureIpInventory, inventoryIdentity,
+   INVENTORY_POOL, INVENTORY_RESOURCES, prepareFixtures } = require('../fixtures/prepare.cjs');
+ const { heldController, observeLeaseState } = require('./verify-live-lease.cjs');
+ 
+@@ -358,16 +358,9 @@ test('pool identity collision refuses before any mutation', async () => {
+   assert(calls.every(([method]) => method === 'GET'));
+ });
+ 
+-test('first inventory preparation creates the tiny VPS in the proved member browser before explicit admin registration', async (t) => {
++function memberCreationPage(calls, resourceCounts = {}) {
+   let stage = 'location';
+   const entries = [];
+-  const inventory = fixture({ missing: true });
+-  const calls = mockInventoryTransport(t, async (call) => {
+-    if (call.resource === 'users/current') return { response: currentUser(call.login) };
+-    assert.equal(call.login, 'test-admin');
+-    if (call.method === 'POST' && call.resource === 'ip_addresses') assert.equal(call.body.ip_address.user, 2);
+-    return { response: await inventory.api(call.method, call.resource, call.body) };
+-  });
+   const form = (name) => ({
+     count: async () => name === 'newvps-step1' ? 0 : 1,
+     locator: (selector) => {
+@@ -388,6 +381,15 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+           selectOption: async (value) => { assert.equal(value, '1'); },
+         };
+       }
++      const resource = /^input\[name="(cpu|memory|swap|diskspace)"\]$/.exec(selector)?.[1];
++      if (resource) {
++        const count = Object.hasOwn(resourceCounts, resource) ? resourceCounts[resource] : 1;
++        return { count: async () => count, fill: async (value) => {
++          assert.equal(stage, 'resources');
++          assert.equal(count, 1, 'an absent or ambiguous resource must not be filled');
++          entries.push([selector, value, stage]);
++        } };
++      }
+       return {
+         count: async () => 1, nth: () => ({ click: async () => { entries.push(['submit', stage]); stage = stage === 'location' ? 'template' : stage === 'template' ? 'resources' : 'submit'; } }),
+         fill: async (value) => entries.push([selector, value, stage]),
+@@ -441,6 +443,18 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+       return value;
+     },
+   };
++  return { page, entries };
++}
++
++test('first inventory preparation creates the tiny VPS in the proved member browser before explicit admin registration', async (t) => {
++  const inventory = fixture({ missing: true });
++  const calls = mockInventoryTransport(t, async (call) => {
++    if (call.resource === 'users/current') return { response: currentUser(call.login) };
++    assert.equal(call.login, 'test-admin');
++    if (call.method === 'POST' && call.resource === 'ip_addresses') assert.equal(call.body.ip_address.user, 2);
++    return { response: await inventory.api(call.method, call.resource, call.body) };
++  });
++  const { page, entries } = memberCreationPage(calls);
+   await withInventoryConnection(recordedAccounts(), async (cluster, _abort, root) => {
+     const invocationRoot = path.join(root, 'invocation');
+     fs.mkdirSync(invocationRoot, { mode: 0o700 });
+@@ -453,6 +467,92 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+   for (const [name, value] of Object.entries(INVENTORY_RESOURCES)) {
+     assert(entries.some(([selector, actual, at]) => selector === `input[name="${name}"]` && actual === String(value) && at === 'resources'));
+   }
++  assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++    [['submit', 'location'], ['submit', 'template'], ['submit', 'resources'], ['submit', 'submit']]);
++});
++
++test('missing swap with numeric zero completes member preparation without a swap fill before explicit admin provisioning', async (t) => {
++  const inventory = fixture({ missing: true });
++  const calls = mockInventoryTransport(t, async (call) => {
++    if (call.resource === 'users/current') return { response: currentUser(call.login) };
++    assert.equal(call.login, 'test-admin');
++    return { response: await inventory.api(call.method, call.resource, call.body) };
++  });
++  const { page, entries } = memberCreationPage(calls, { swap: 0 });
++  await withInventoryConnection(recordedAccounts(), async (cluster, _abort, root) => {
++    const invocationRoot = path.join(root, 'invocation');
++    fs.mkdirSync(invocationRoot, { mode: 0o700 });
++    const result = await prepareFixtures({ cluster, page, language: 'cs', required: ['ip-inventory'], invocationRoot });
++    assert.deepEqual(result.inventoryMember, { id: 2, login: 'test-user1' });
++    assert.equal(cluster.account().login, 'test-user1');
++    assert.equal(result.inventoryVpsId, 10);
++    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(invocationRoot, 'fixtures.json'))), result);
++  });
++  assert(!entries.some(([selector]) => selector === 'input[name="swap"]'));
++  for (const [name, value] of Object.entries(INVENTORY_RESOURCES).filter(([name]) => name !== 'swap')) {
++    assert(entries.some(([selector, actual, at]) => selector === `input[name="${name}"]` && actual === String(value) && at === 'resources'));
++  }
++  assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++    [['submit', 'location'], ['submit', 'template'], ['submit', 'resources'], ['submit', 'submit']]);
++  assert.deepEqual(calls.filter((call) => call.method !== 'GET').map((call) => [call.login, call.method, call.resource]),
++    [['test-admin', 'POST', 'ip_addresses'], ['test-admin', 'PUT', 'networks/5']]);
++});
++
++test('a present nonzero swap control receives its exact requested value before final submission', async (t) => {
++  const calls = mockInventoryTransport(t, async (call) => {
++    assert.equal(call.resource, 'users/current');
++    return { response: currentUser(call.login) };
++  });
++  const { page, entries } = memberCreationPage(calls);
++  await withInventoryConnection(recordedAccounts(), async (cluster) => {
++    const { member } = await inventoryIdentity(cluster);
++    await assertInventoryMember(page, member);
++    assert.equal(await createVpsIn(page, member.id, 'ip-inventory', true, 'Production', 'Praha',
++      { ...INVENTORY_RESOURCES, swap: 128 }), 10);
++  });
++  assert(entries.some(([selector, value, at]) => selector === 'input[name="swap"]' && value === '128' && at === 'resources'));
++  assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++    [['submit', 'location'], ['submit', 'template'], ['submit', 'resources'], ['submit', 'submit']]);
++  assert.deepEqual(calls.map((call) => [call.login, call.method, call.resource]),
++    [['test-user1', 'GET', 'users/current'], ['test-admin', 'GET', 'users/current']]);
++});
++
++for (const [name, value, count] of [['swap', 128, 0], ['swap', '0', 0],
++  ['cpu', 1, 0], ['memory', 1024, 0], ['diskspace', 4096, 0],
++  ['cpu', 0, 0], ['memory', 0, 0], ['diskspace', 0, 0], ['swap', 0, 2], ['cpu', 1, 2]]) {
++  test(`resource control ${name} count ${count} requested ${JSON.stringify(value)} refuses before submission`, async (t) => {
++    const calls = mockInventoryTransport(t, async (call) => {
++      assert.equal(call.resource, 'users/current');
++      return { response: currentUser(call.login) };
++    });
++    const { page, entries } = memberCreationPage(calls, { [name]: count });
++    await withInventoryConnection(recordedAccounts(), async (cluster) => {
++      const { member } = await inventoryIdentity(cluster);
++      await assertInventoryMember(page, member);
++      await assert.rejects(createVpsIn(page, member.id, 'ip-inventory', true, 'Production', 'Praha',
++        { ...INVENTORY_RESOURCES, [name]: value }), (error) => {
++        assert.equal(error.message, `Expected one ${name} resource control, found ${count}`);
++        return true;
++      });
++    });
++    assert(!entries.some(([selector]) => selector === `input[name="${name}"]`));
++    assert(!entries.some(([selector]) => selector === 'input[name="hostname"]'));
++    assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++      [['submit', 'location'], ['submit', 'template']]);
++    assert.deepEqual(calls.map((call) => [call.login, call.method, call.resource]),
++      [['test-user1', 'GET', 'users/current'], ['test-admin', 'GET', 'users/current']]);
++  });
++}
++
++test('a nonzero resulting swap refuses inventory provisioning before any mutation', async () => {
++  const inventory = fixture({ missing: true });
++  const api = async (...args) => {
++    const result = await inventory.api(...args);
++    if (result.vps) result.vps.swap = 1;
++    return result;
++  };
++  await assert.rejects(ensureIpInventory(api, { userId: 2, vpsId: 10 }), /Unexpected inventory VPS owner, identity or resources/);
++  assert.deepEqual(inventory.calls, [['GET', 'vpses/10', undefined]]);
+ });
+ 
+ test('only the IP-list fixture token changes, other fixture contracts are retained', () => {

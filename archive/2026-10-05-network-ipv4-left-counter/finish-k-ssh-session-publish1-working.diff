@@ -1,0 +1,975 @@
+diff --git a/cluster/lib/devcluster_runner.rb b/cluster/lib/devcluster_runner.rb
+index af0620c9374fd5894710f62f5cdc2a779865bc05..b0b1606d208fb04ed40bc8fadae72cb1c632e4be 100644
+--- a/cluster/lib/devcluster_runner.rb
++++ b/cluster/lib/devcluster_runner.rb
+@@ -27,6 +27,7 @@ module DevClusters
+     end
+ 
+     def run
++      establish_session
+       command = @argv.shift
+ 
+       case command
+@@ -42,6 +43,10 @@ module DevClusters
+ 
+     attr_reader :hash_base, :priority_machines
+ 
++    def establish_session
++      Process.setsid unless Process.getsid(0) == Process.pid
++    end
++
+     def start
+       opts = {
+         timeout: 900
+diff --git a/cluster/lib/kb_runtime.rb b/cluster/lib/kb_runtime.rb
+index fdc0bf0fe9725984bfe76705183461bd4ab95fd0..0985b7d2b20badf084b246903b22e2f0bae00d6c 100644
+--- a/cluster/lib/kb_runtime.rb
++++ b/cluster/lib/kb_runtime.rb
+@@ -3,6 +3,7 @@
+ require 'timeout'
+ require 'socket'
+ require 'shellwords'
++require 'base64'
+ require_relative 'kb_state'
+ require_relative 'kb_process'
+ require_relative 'kb_resources'
+@@ -319,7 +320,7 @@ module KbRuntime
+             ready_record = state.read(ready)
+             raise Error, 'foreign readiness receipt' unless %w[instance_id run_id artifact_id artifact_sha256].all? { |key| ready_record[key] == built[key] } && live?(built)
+             set_phase('verifying', run_id)
+-            establish_ssh_trust(built)
++            establish_ssh_trust(built, deadline:)
+             verify_live(built)
+             refresh(built)
+             if initial
+@@ -511,19 +512,157 @@ module KbRuntime
+       out
+     end
+ 
+-    def establish_ssh_trust(record)
++    def establish_ssh_trust(record, deadline:)
+       known = File.join(state.path('credentials'), 'known_hosts')
+       retained = state.file(known)
+-      keys = record.fetch('endpoints').values.map do |endpoint|
+-        Software.command('ssh-keyscan', '-T', '5', '-p', endpoint.fetch('port').to_s, endpoint.fetch('host'))
+-      end.join("\n")
+-      raise Error, 'no dedicated SSH host keys received' if keys.empty?
++      discovery = SecureRandom.hex(6)
++      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
++      keys = record.fetch('endpoints').flat_map do |machine, endpoint|
++        attempt = 0
++        status = 'not-run'
++        diagnostic = 'none'
++        loop do
++          assert_ssh_runner(record)
++          remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
++          if remaining < 1
++            elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
++            raise Error, "SSH discovery deadline on #{machine} #{endpoint['host']}:#{endpoint['port']}; attempts=#{attempt} elapsed=#{elapsed.round(3)} status=#{status} diagnostics=#{diagnostic}"
++          end
++          attempt += 1
++          diagnostic = state.path("ssh-#{record.fetch('run_id')}-#{discovery}-#{machine}-#{attempt}.json")
++          begin
++            result = ssh_keyscan(endpoint, timeout: [5, remaining.floor].min, deadline:)
++          rescue SystemCallError, IOError => error
++            result = { stdout: '', stderr: error.message.byteslice(0, 16 * 1024), exitstatus: nil, termsig: nil,
++              deadline: false, truncated: error.message.bytesize > 16 * 1024, invocation_error: error.class.name }
++          end
++          status = result[:invocation_error] || (result[:termsig] ? "signal-#{result[:termsig]}" : "exit-#{result[:exitstatus]}")
++          state.write(diagnostic, { 'schema' => 1, 'run_id' => record.fetch('run_id'), 'machine' => machine,
++            'endpoint' => endpoint, 'attempt' => attempt, 'elapsed' => Process.clock_gettime(Process::CLOCK_MONOTONIC) - started,
++            'exitstatus' => result[:exitstatus], 'termsig' => result[:termsig], 'deadline' => result[:deadline],
++            'truncated' => result[:truncated], 'invocation_error' => result[:invocation_error],
++            'stdout_base64' => Base64.strict_encode64(result.fetch(:stdout)),
++            'stderr_base64' => Base64.strict_encode64(result.fetch(:stderr)) }, immutable: true)
++          context = "#{machine} #{endpoint['host']}:#{endpoint['port']}; status=#{status} diagnostics=#{diagnostic}"
++          raise Error, "SSH keyscan invocation failed on #{context}" if result[:invocation_error]
++          assert_ssh_runner(record)
++          raise Error, "SSH discovery deadline on #{context}" if result[:deadline] || Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
++          raise Error, "SSH keyscan terminated on #{context}" if result[:termsig]
++          raise Error, "SSH keyscan output exceeds its bound on #{context}" if result[:truncated]
++          begin
++            found = ssh_host_keys(result.fetch(:stdout), endpoint)
++          rescue Error
++            raise Error, "invalid SSH host key data on #{context}"
++          end
++          if !retained.empty? && !found.all? { |key| retained.lines.include?("#{key}\n") }
++            raise Error, "SSH host keys changed; retained trust is not replaced on #{context}"
++          end
++          break found if result[:exitstatus] == 0 && !found.empty?
++
++          sleep [0.1, [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0].max].min
++        end
++      end
++      raise Error, 'no dedicated SSH endpoints recorded' if keys.empty?
++      assert_ssh_runner(record)
++      raise Error, 'SSH discovery deadline before trust publication' if Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+       # First-contact trust is restricted to this explicitly owned fresh launch.
+-      if retained.empty?
+-        File.write(known, "#{keys}\n")
+-      else
+-        raise Error, 'SSH host keys changed; retained trust is not replaced' unless keys.lines.all? { |key| retained.lines.include?("#{key.strip}\n") }
++      File.write(known, "#{keys.uniq.join("\n")}\n") if retained.empty?
++    end
++
++    def assert_ssh_runner(record)
++      validate_launch(record, phase.fetch('run_id'))
++      raise Error, 'runner is not the recorded live run during SSH discovery' unless live?(record)
++    end
++
++    # This SSH-only child has one waitpid owner, not a detached reaper. Its PID
++    # remains signal authority until reaped; no guest or runner is signalled.
++    def ssh_keyscan(endpoint, timeout:, deadline:)
++      output, output_writer = IO.pipe
++      error, error_writer = IO.pipe
++      streams = { output => ''.b, error => ''.b }
++      environment = ENV.keys.grep(/\A(?:VPSADMIN_(?:DEVCLUSTER|KB)_|NIX_|SSH_)/).to_h { |name| [name, nil] }
++      pid = Process.spawn(environment, 'ssh-keyscan', '-T', timeout.to_s, '-p', endpoint.fetch('port').to_s,
++        endpoint.fetch('host'), in: File::NULL, out: output_writer, err: error_writer, close_others: true)
++      output_writer.close
++      error_writer.close
++      pending = streams.keys.dup
++      expired = false
++      truncated = false
++      status = nil
++      until status && pending.empty?
++        remaining = deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
++        if remaining <= 0 || truncated
++          expired = remaining <= 0
++          break
++        end
++        if pid
++          waited = Process.waitpid2(pid, Process::WNOHANG)
++          if waited
++            status = waited.last
++            pid = nil
++          end
++        end
++        next if pending.empty? && status
++        readable = IO.select(pending, nil, nil, [0.1, remaining].min)&.first || []
++        readable.each do |stream|
++          bytes = stream.read_nonblock(4096, exception: false)
++          if bytes.nil?
++            pending.delete(stream)
++          elsif bytes != :wait_readable
++            limit = 16 * 1024 - streams.fetch(stream).bytesize
++            streams[stream] << bytes.byteslice(0, limit)
++            truncated ||= bytes.bytesize > limit
++          end
++        end
++      end
++      if pid
++        Process.kill('KILL', pid)
++        status = Process.waitpid2(pid).last
++        pid = nil
++      end
++      { stdout: streams.fetch(output), stderr: streams.fetch(error), exitstatus: status.exitstatus,
++        termsig: status.termsig, deadline: expired, truncated: }
++    rescue Errno::ECHILD
++      pid = nil
++      raise
++    ensure
++      if pid
++        Process.kill('KILL', pid)
++        Process.waitpid2(pid)
++      end
++      [output, output_writer, error, error_writer].compact.each { |stream| stream.close unless stream.closed? }
++    end
++
++    def ssh_host_keys(output, endpoint)
++      raise Error, 'non-ASCII SSH host key data' unless output.ascii_only?
++      host = endpoint.fetch('port') == 22 ? endpoint.fetch('host') : "[#{endpoint.fetch('host')}]:#{endpoint.fetch('port')}"
++      output.lines.filter_map do |line|
++        next if line.strip.empty? || line.start_with?('#')
++        fields = line.split
++        raise Error, 'wrong SSH host key endpoint or format' unless fields.length == 3 && fields.first == host
++        bytes = Base64.strict_decode64(fields.last)
++        parts = []
++        until bytes.empty?
++          raise Error, 'invalid SSH key length' if bytes.bytesize < 4
++          size = bytes.unpack1('N')
++          raise Error, 'invalid SSH key field' unless size.positive? && size <= bytes.bytesize - 4
++          parts << bytes.byteslice(4, size)
++          bytes = bytes.byteslice(4 + size..)
++        end
++        valid = case fields[1]
++                when 'ssh-ed25519' then parts.length == 2 && parts.last.bytesize == 32
++                when 'ssh-rsa' then parts.length == 3
++                when /\Aecdsa-sha2-nistp(256|384|521)\z/
++                  curve = "nistp#{Regexp.last_match(1)}"
++                  length = { 'nistp256' => 65, 'nistp384' => 97, 'nistp521' => 133 }.fetch(curve)
++                  parts.length == 3 && parts[1] == curve && parts.last.bytesize == length && parts.last.getbyte(0) == 4
++                else false
++                end
++        raise Error, 'invalid SSH host key' unless valid && parts.first == fields[1]
++        fields.join(' ')
+       end
++    rescue ArgumentError
++      raise Error, 'invalid SSH host key encoding'
+     end
+ 
+     def verify_live(record)
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index 303a29e58bcc35d546701b1c674ac5af39fdd0cb..af18d41296a31f0e5e46ecccc9ebf234f13954ba 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -36,9 +36,28 @@ up to three attempts. Other failures and continued replacement refuse access.
+ A successful read returns one complete validated snapshot; owner locks and
+ receipt identity checks still govern consistency across records.
+ 
+-Readiness belongs to that exact run. A stale PID or ready file cannot authorize
+-cleanup. Status reports busy (exit 75) when a lifecycle operation or capture owns
+-the gate.
++Before creating machines or publishing its live tuple, the runner establishes
++its own POSIX session without forking. Its recorded PID, executable and argument
++vector stay the same. Session establishment failure refuses before machine
++creation. The separate session protects the run from inherited terminal and
++process-group signals; a containing cgroup, supervisor or host failure can still
++end it. Complete ownership and exit evidence remain required for cleanup.
++
++Readiness belongs to that exact run. The runner's boot marker confirms its test
++shell. The engine separately waits for valid SSH host keys from every recorded
++machine within one absolute readiness deadline. Empty or unavailable key
++discovery may wait within that budget. Invalid or wrong-endpoint keys, runner
++identity loss and retained-key mismatch refuse immediately. Initial trust is
++written only after all machines succeed; retained trust is never replaced or
++expanded to accept a changed key. Strict authentication and guest source/system
++closure checks remain separate requirements.
++
++Failed discovery attempts identify the machine, endpoint and private native
++diagnostic path. An exhausted budget may refuse before a scan starts. Bounded
++command output and status stay under the owned run, outside artifact exports. A failed verification leaves the run non-ready with its claims
++and evidence. It does not replay lifecycle work or authorize orphan cleanup.
++A stale PID or ready file cannot authorize cleanup. Status reports busy (exit 75)
++when a lifecycle operation or capture owns the gate.
+ 
+ Public `start`, `resume`, `update`, `stop` and `reset` refuse gate or operation
+ contention with exit 75. Retry explicitly after the holder releases its lock;
+diff --git a/tools/test-machine.rb b/tools/test-machine.rb
+index 1e16643cb8b0e80f54816f793b4047513fcdfc68..d36483878a1beaefb3ab3bab2539d444ce543086 100644
+--- a/tools/test-machine.rb
++++ b/tools/test-machine.rb
+@@ -4,8 +4,10 @@ require 'minitest/autorun'
+ require 'tmpdir'
+ require 'open3'
+ require 'rbconfig'
++require 'timeout'
+ require_relative '../cluster/lib/kb_machine'
+ require_relative '../cluster/lib/kb_source'
++require_relative '../cluster/lib/kb_runtime'
+ 
+ class PreparedMachineTest < Minitest::Test
+   def configuration(image, suffix)
+@@ -104,3 +106,247 @@ class PreparedMachineTest < Minitest::Test
+     end
+   end
+ end
++
++class RunnerSessionTest < Minitest::Test
++  def test_runner_survives_controlled_parent_exit_with_distinct_session_and_no_guard_fds
++    with_runner do |context|
++      with_controller(context) do |pid, input, output|
++        observe_runner(context, output, pid)
++        input.write('.')
++        input.flush
++        status = Process.waitpid2(pid).last
++        context[:controller_reaped] = true
++        assert(status.success?)
++        assert_retained_runner(context)
++        shutdown(context)
++      end
++    end
++  end
++
++  def test_test_owned_parent_group_signal_does_not_end_the_runner_session
++    with_runner do |context|
++      with_controller(context) do |pid, _input, output|
++        observe_runner(context, output, pid)
++        assert_equal(pid, Process.getpgid(pid))
++        refute_equal(Process.getpgrp, pid)
++        Process.kill('TERM', -pid)
++        status = Process.waitpid2(pid).last
++        context[:controller_reaped] = true
++        assert_equal(Signal.list.fetch('TERM'), status.termsig)
++        assert_retained_runner(context)
++        shutdown(context)
++      end
++    end
++  end
++
++  def test_already_own_session_leader_does_not_call_setsid_again
++    with_runner(mode: 'own-session') do |context|
++      with_controller(context) do |pid, input, output|
++        observe_runner(context, output, pid)
++        input.write('.')
++        input.flush
++        status = Process.waitpid2(pid).last
++        context[:controller_reaped] = true
++        assert(status.success?)
++        assert_retained_runner(context)
++        shutdown(context)
++      end
++    end
++  end
++
++  def test_setsid_failure_refuses_before_machine_creation_or_live_tuple_publication
++    with_runner(mode: 'session-failure') do |context|
++      out, error, status = Open3.capture3(*runner_argv(context))
++      refute(status.success?)
++      assert_empty(out)
++      assert_includes(error, 'injected setsid refusal')
++      refute(File.exist?(context[:marker]))
++      refute(File.exist?(context[:state].path("processes-#{context[:record]['run_id']}.json")))
++      refute(File.exist?(context[:state].path("ready-#{context[:record]['run_id']}.json")))
++      assert_equal('starting', context[:engine].phase['phase'])
++      assert_equal(context[:claims], Dir.glob(File.join(context[:engine].resources.root, '*.json')).to_h { |path| [path, File.binread(path)] })
++    end
++  end
++
++  private
++
++  def with_runner(mode: 'normal')
++    Dir.mktmpdir('kb-session-', '/tmp') do |directory|
++      state = KbRuntime::State.new(File.join(directory, 'state'), 'session-test')
++      identity = state.transaction(create: true) { state.initialize_identity }
++      resources = KbRuntime::Resources.new(state, root: File.join(directory, 'claims'))
++      record = identity.merge('run_id' => SecureRandom.uuid, 'artifact_id' => SecureRandom.uuid,
++        'boot_id' => KbRuntime::ProcessIdentity.boot_id, 'network_id' => 'synthetic-network', 'resource_claims' => [])
++      record['state_dir'] = state.path('disks')
++      record['socket_dir'] = resources.socket_dir(record['instance_id'], record['run_id'])
++      state.private_directory(record['state_dir'], create: true)
++      state.private_directory(record['socket_dir'], create: true)
++      config = state.path('config.json')
++      state.write(config, { 'machines' => {} })
++      record['config_path'] = config
++      artifact = state.path("artifact-#{record['artifact_id']}.json")
++      state.write(artifact, { 'schema' => 1, 'instance_id' => record['instance_id'], 'artifact_id' => record['artifact_id'] })
++      record['artifact_sha256'] = Digest::SHA256.file(artifact).hexdigest
++      entrypoint = File.join(directory, 'runner-fixture.rb')
++      load_paths = File.join(directory, 'load-paths.json')
++      File.write(load_paths, JSON.generate($LOAD_PATH), mode: 'wb', perm: 0o600)
++      File.write(entrypoint, runner_program, mode: 'wb', perm: 0o600)
++      record['runner_identity'] = { 'executable' => RbConfig.ruby, 'entrypoint' => entrypoint }
++      record['runner'] = entrypoint
++      state.write(state.path("launch-#{record['run_id']}.json"), record, immutable: true)
++      state.write(state.path("spawn-#{record['run_id']}.json"), { 'stage' => 'spawned' })
++      state.write(state.path('phase.json'), { 'phase' => 'starting', 'run_id' => record['run_id'] })
++      resources.claim(record)
++      context = { state:, record:, entrypoint:, load_paths:, mode:,
++        marker: File.join(record['state_dir'], 'machine.json'),
++        generation: File.join(directory, 'generation.lock'),
++        log: File.join(directory, 'runner.log'), error: File.join(directory, 'controller-error.log'),
++        engine: KbRuntime::Engine.new(state:, software: nil, controller: [], resources:) }
++      context[:claims] = Dir.glob(File.join(resources.root, '*.json')).to_h { |path| [path, File.binread(path)] }
++      yield context
++    ensure
++      if context && File.exist?(state.path("processes-#{record['run_id']}.json")) && context[:engine].phase['phase'] != 'stopped'
++        context[:engine].stop(timeout: 5)
++      end
++    end
++  end
++
++  def runner_argv(context)
++    record = context[:record]
++    [RbConfig.ruby, context[:entrypoint], context[:load_paths], context[:mode], 'start',
++      '--config', record['config_path'], '--state-dir', record['state_dir'], '--sock-dir', record['socket_dir'],
++      '--launch-file', context[:state].path("launch-#{record['run_id']}.json"), '--state-root', context[:state].root,
++      '--slug', context[:state].slug, '--instance-id', record['instance_id'], '--run-id', record['run_id'],
++      '--artifact-id', record['artifact_id'], '--artifact-sha256', record['artifact_sha256'], '--timeout', '5']
++  end
++
++  def with_controller(context)
++    input, input_writer = IO.pipe
++    output_reader, output = IO.pipe
++    program = <<~RUBY
++      require 'json'
++      require 'timeout'
++      require #{File.expand_path('../cluster/lib/kb_state', __dir__).inspect}
++      state = KbRuntime::State.new(ARGV.shift, ARGV.shift)
++      generation_path = ARGV.shift
++      ready = ARGV.shift
++      log = File.open(ARGV.shift, File::WRONLY | File::CREAT | File::EXCL, 0o600)
++      STDOUT.sync = true
++      state.lock('gate', wait: false) do |gate|
++        state.lock('operation', wait: false) do |operation|
++          File.open(generation_path, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |generation|
++            generation.flock(File::LOCK_EX)
++            [gate, operation, generation].each { |stream| stream.close_on_exec = false }
++            pid = Process.spawn(*ARGV, in: File::NULL, out: log, err: log, close_others: true)
++            Timeout.timeout(5) { sleep 0.01 until File.exist?(ready) }
++            puts JSON.generate('controller_pid' => Process.pid, 'runner_pid' => pid, 'session' => Process.getsid(0), 'group' => Process.getpgrp)
++            STDIN.read(1)
++          end
++        end
++      end
++    RUBY
++    error = File.open(context[:error], File::WRONLY | File::CREAT | File::EXCL, 0o600)
++    pid = Process.spawn(RbConfig.ruby, '-e', program, context[:state].root, context[:state].slug,
++      context[:generation], context[:state].path("ready-#{context[:record]['run_id']}.json"), context[:log],
++      *runner_argv(context), in: input, out: output, err: error, pgroup: true, close_others: true)
++    error.close
++    input.close
++    output.close
++    yield pid, input_writer, output_reader
++  ensure
++    input_writer&.close unless input_writer&.closed?
++    Process.waitpid(pid) if pid && !context[:controller_reaped]
++    [input, input_writer, output_reader, output, error].compact.each { |stream| stream.close unless stream.closed? }
++  end
++
++  def observe_runner(context, output, controller_pid)
++    text = Timeout.timeout(5) { output.gets }
++    diagnostics = [context[:log], context[:error]].select { |path| File.exist?(path) }.map { |path| File.read(path) }.join("\n")
++    refute_nil(text, diagnostics.empty? ? 'controller did not start' : diagnostics)
++    controller = JSON.parse(text)
++    assert_equal(controller_pid, controller['controller_pid'])
++    assert_equal(controller_pid, controller['group'])
++    proof = context[:engine].process_record(context[:record])
++    assert_equal(controller['runner_pid'], proof['runner']['pid'])
++    assert_equal(context[:record]['boot_id'], proof['runner']['boot_id'])
++    assert_equal(Process.uid, proof['runner']['owner_uid'])
++    assert(KbRuntime::ProcessIdentity.runner_matches?(proof['runner'], context[:record]))
++    context[:runner] = proof['runner']
++    context[:children] = proof['children']
++    marker = JSON.parse(File.read(context[:marker]))
++    assert_equal(proof['runner']['pid'], marker['session'])
++    assert_equal(proof['runner']['pid'], marker['group'])
++    refute_equal(controller['session'], marker['session'])
++    guard_paths = %w[gate operation].map { |kind| File.join(context[:state].root, 'locks', "#{context[:state].slug}.#{kind}.lock") }
++    (guard_paths + [context[:generation]]).each { |path| refute_includes(marker['fds'], path) }
++    assert_equal(1, proof['children'].length)
++    assert_equal(marker['session'], Process.getsid(proof['children'].first['pid']))
++  end
++
++  def assert_retained_runner(context)
++    assert_equal(context[:runner], KbRuntime::ProcessIdentity.read(context[:runner]['pid']))
++    assert_equal(context[:children], context[:engine].process_record(context[:record])['children'])
++    assert(context[:children].all? { |child| KbRuntime::ProcessIdentity.matches?(child) })
++    assert_equal(context[:runner]['pid'], Process.getsid(context[:runner]['pid']))
++    assert_equal(context[:runner]['pid'], Process.getpgid(context[:runner]['pid']))
++  end
++
++  def shutdown(context)
++    context[:engine].stop(timeout: 5)
++    assert_equal('stopped', context[:engine].phase['phase'])
++    assert(context[:engine].process_record(context[:record])['complete'])
++    assert(context[:engine].gone?(context[:record]))
++    assert_empty(Dir.glob(File.join(context[:engine].resources.root, '*.json')))
++    assert(File.exist?(File.join(context[:record]['state_dir'], 'finalized')))
++    assert(File.exist?(File.join(context[:record]['state_dir'], 'cleaned')))
++  end
++
++  def runner_program
++    <<~RUBY
++      require 'json'
++      require 'rbconfig'
++      $LOAD_PATH.replace(JSON.parse(File.read(ARGV.shift)))
++      require #{File.expand_path('../cluster/lib/devcluster_runner', __dir__).inspect}
++      mode = ARGV.shift
++      if mode == 'own-session'
++        Process.setsid
++        Process.define_singleton_method(:setsid) { raise 'setsid called twice' }
++      elsif mode == 'session-failure'
++        Process.define_singleton_method(:setsid) { raise Errno::EPERM, 'injected setsid refusal' }
++      end
++      class SessionMachine
++        def initialize(directory)
++          @directory = directory
++        end
++        def start(wait_for_boot:)
++          reader, @writer = IO.pipe
++          @child = Process.spawn(RbConfig.ruby, '-e', 'STDIN.read', in: reader, close_others: true)
++          reader.close
++        end
++        def wait_for_boot(timeout:)
++          fds = Dir.children('/proc/self/fd').filter_map do |name|
++            File.readlink('/proc/self/fd/' + name) rescue nil
++          end
++          File.write(File.join(@directory, 'machine.json'), JSON.generate('session' => Process.getsid(0),
++            'group' => Process.getpgrp, 'fds' => fds), mode: 'wb', perm: 0o600)
++        end
++        def stop(timeout:)
++          @writer.close
++          Process.wait(@child)
++        end
++        def finalize
++          File.write(File.join(@directory, 'finalized'), '', mode: 'wb', perm: 0o600)
++        end
++        def cleanup
++          File.write(File.join(@directory, 'cleaned'), '', mode: 'wb', perm: 0o600)
++        end
++      end
++      class SessionRunner < DevClusters::OsVmRunner
++        def build_machines(opts)
++          [MachineState.new(name: 'services', machine: SessionMachine.new(opts[:state_dir]))]
++        end
++      end
++      exit SessionRunner.run(ARGV, hash_base: 'synthetic-network')
++    RUBY
++  end
++end
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index 1a93e4f5924cf2d582ae2ff7a1cf530280b93e7b..7fac890bdf580c2ded11798ed28d9ee1c4e4fc77 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -180,31 +180,36 @@ class RuntimeTest < Minitest::Test
+   def test_retained_ssh_trust_accepts_the_same_endpoint_and_key_but_refuses_rebinding
+     Dir.mktmpdir do |directory|
+       state = KbRuntime::State.new(File.join(directory, 'state'), 'trust')
+-      state.transaction(create: true) { state.initialize_identity }
++      identity = state.transaction(create: true) { state.initialize_identity }
++      run_id = SecureRandom.uuid
++      state.write(state.path('phase.json'), { 'phase' => 'verifying', 'run_id' => run_id })
+       state.private_directory(state.path('credentials'), create: true)
+       known = File.join(state.path('credentials'), 'known_hosts')
+       File.write(known, '', mode: 'wb', perm: 0o600)
+       engine = KbRuntime::Engine.new(state:, software: nil, controller: [])
+       endpoint = { 'host' => '127.0.0.1', 'port' => 10_022 }
+-      key = 'AAAAC3NzaC1lZDI1NTE5AAAAIAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC'
+-      scan = lambda do |command, *args|
+-        assert_equal('ssh-keyscan', command)
+-        assert_equal(%w[-T 5 -p], args.take(3))
+-        "[#{args.last}]:#{args[3]} ssh-ed25519 #{key}"
+-      end
+-      KbRuntime::Software.stub(:command, scan) do
+-        record = { 'endpoints' => { 'services' => endpoint } }
+-        engine.establish_ssh_trust(record)
+-        retained = File.binread(known)
+-        engine.establish_ssh_trust(record)
+-        assert_equal(retained, File.binread(known))
+-        [endpoint.merge('port' => 20_022), endpoint.merge('host' => '127.0.0.2')].each do |changed|
+-          assert_raises(KbRuntime::Error) { engine.establish_ssh_trust('endpoints' => { 'services' => changed }) }
++      key = Base64.strict_encode64([11].pack('N') + 'ssh-ed25519' + [32].pack('N') + "\x02" * 32)
++      scan = lambda do |target, timeout:, deadline:|
++        assert_equal(5, timeout)
++        assert_operator(deadline, :>, Process.clock_gettime(Process::CLOCK_MONOTONIC))
++        { stdout: "[#{target['host']}]:#{target['port']} ssh-ed25519 #{key}", stderr: '',
++          exitstatus: 0, termsig: nil, deadline: false, truncated: false }
++      end
++      engine.stub(:live?, true) do
++        engine.stub(:ssh_keyscan, scan) do
++          record = identity.merge('run_id' => run_id, 'endpoints' => { 'services' => endpoint })
++          engine.establish_ssh_trust(record, deadline: Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10)
++          retained = File.binread(known)
++          engine.establish_ssh_trust(record, deadline: Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10)
++          assert_equal(retained, File.binread(known))
++          [endpoint.merge('port' => 20_022), endpoint.merge('host' => '127.0.0.2')].each do |changed|
++            assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record.merge('endpoints' => { 'services' => changed }), deadline: Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10) }
++            assert_equal(retained, File.binread(known))
++          end
++          key = Base64.strict_encode64([11].pack('N') + 'ssh-ed25519' + [32].pack('N') + 'x' * 32)
++          assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10) }
+           assert_equal(retained, File.binread(known))
+         end
+-        key = 'a-different-guest-key'
+-        assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record) }
+-        assert_equal(retained, File.binread(known))
+       end
+     end
+   end
+@@ -229,6 +234,345 @@ class RuntimeTest < Minitest::Test
+   end
+ end
+ 
++class SshDiscoveryTest < Minitest::Test
++  def test_delayed_keys_succeed_within_the_original_deadline
++    with_discovery do |engine, record, known, clock|
++      results = [{ stdout: '', exitstatus: 1, stderr: 'not listening', elapsed: 0.2 },
++        { stdout: key(record['endpoints']['services']), elapsed: 0.2 }]
++      with_scans(engine, clock, results) do |calls|
++        engine.establish_ssh_trust(record, deadline: 105.0)
++        assert_equal(2, calls.length)
++        assert_equal([105.0, 105.0], calls.map { |call| call[:deadline] })
++        assert_equal([5, 4], calls.map { |call| call[:timeout] })
++        assert_equal("#{key(record['endpoints']['services'])}\n", File.binread(known))
++      end
++    end
++  end
++
++  def test_permanent_transport_failure_retains_native_private_diagnostics
++    with_discovery do |engine, record, known, clock|
++      native = { stdout: '', stderr: "native private banner\n", exitstatus: 23, elapsed: 1.0 }
++      with_scans(engine, clock, [native, native]) do |calls|
++        error = assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: 103.0) }
++        assert_equal(2, calls.length)
++        assert_match(/services 127\.0\.0\.1:10022/, error.message)
++        assert_match(/attempts=2 .*status=exit-23 diagnostics=/, error.message)
++        refute_includes(error.message, 'native private banner')
++        assert_equal('', File.binread(known))
++        diagnostics(engine).each do |path, value|
++          assert_equal(0o600, File.stat(path).mode & 0o777)
++          assert_equal(record['run_id'], value['run_id'])
++          assert_equal('services', value['machine'])
++          assert_equal(record['endpoints']['services'], value['endpoint'])
++          assert_equal(23, value['exitstatus'])
++          assert_nil(value['termsig'])
++          assert_equal('', Base64.strict_decode64(value['stdout_base64']))
++          assert_equal(native[:stderr], Base64.strict_decode64(value['stderr_base64']))
++          assert_includes(error.message, path) if value['attempt'] == 2
++        end
++        assert_equal(2, diagnostics(engine).length)
++      end
++    end
++  end
++
++  def test_all_endpoints_share_one_deadline_and_integer_scan_allowance
++    with_discovery(endpoints: two_endpoints) do |engine, record, known, clock|
++      results = [{ stdout: key(two_endpoints['services']), elapsed: 3.2 },
++        { stdout: key(two_endpoints['node1']), elapsed: 0.2 }]
++      with_scans(engine, clock, results) do |calls|
++        engine.establish_ssh_trust(record, deadline: 105.0)
++        assert_equal([5, 1], calls.map { |call| call[:timeout] })
++        assert_equal([105.0, 105.0], calls.map { |call| call[:deadline] })
++        assert_equal(two_endpoints.values, calls.map { |call| call[:endpoint] })
++        assert_equal(two_endpoints.values.map { |endpoint| "#{key(endpoint)}\n" }.join, File.binread(known))
++      end
++    end
++  end
++
++  def test_subsecond_remaining_allowance_refuses_before_scanning_next_endpoint
++    with_discovery(endpoints: two_endpoints) do |engine, record, known, clock|
++      with_scans(engine, clock, [{ stdout: key(two_endpoints['services']), elapsed: 4.5 }]) do |calls|
++        error = assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: 105.0) }
++        assert_equal(1, calls.length)
++        assert_match(/node1 .*attempts=0 .*status=not-run/, error.message)
++        assert_equal('', File.binread(known), 'one successful endpoint must not publish partial trust')
++        assert_equal(1, diagnostics(engine).length)
++      end
++    end
++  end
++
++  def test_expired_deadline_has_no_scan_or_trust_write
++    with_discovery do |engine, record, known, clock|
++      before = [File.stat(known).ino, File.binread(known)]
++      with_scans(engine, clock, []) do |calls|
++        assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: clock.now) }
++        assert_empty(calls)
++        assert_empty(diagnostics(engine))
++        assert_equal(before, [File.stat(known).ino, File.binread(known)])
++      end
++    end
++  end
++
++  def test_late_success_is_not_accepted
++    with_discovery do |engine, record, known, clock|
++      with_scans(engine, clock, [{ stdout: key(record['endpoints']['services']), elapsed: 5.0 }]) do |calls|
++        assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: 105.0) }
++        assert_equal(1, calls.length)
++        assert_equal('', File.binread(known))
++        assert_equal(1, diagnostics(engine).length)
++      end
++    end
++  end
++
++  def test_runner_loss_after_scan_refuses_acceptance_without_retry
++    with_discovery do |engine, record, known, _clock|
++      live = true
++      calls = 0
++      engine.define_singleton_method(:live?) { |_record| live }
++      scan = lambda do |_endpoint, **_options|
++        calls += 1
++        live = false
++        native(stdout: key(record['endpoints']['services']))
++      end
++      engine.stub(:ssh_keyscan, scan) do
++        error = assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: 105.0) }
++        assert_match(/recorded live run/, error.message)
++      end
++      assert_equal(1, calls)
++      assert_equal('', File.binread(known))
++    end
++  end
++
++  def test_foreign_launch_identity_refuses_before_scan
++    with_discovery do |engine, record, known, clock|
++      with_scans(engine, clock, []) do |calls|
++        assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record.merge('instance_id' => SecureRandom.uuid), deadline: 105.0) }
++        assert_empty(calls)
++        assert_equal('', File.binread(known))
++      end
++    end
++  end
++
++  def test_malformed_wrong_endpoint_and_invalid_wire_keys_refuse_immediately
++    endpoint = two_endpoints['services']
++    malformed = ['not key data', key(endpoint.merge('port' => 10023)),
++      "[127.0.0.1]:10022 ssh-ed25519 invalid-base64", "#{key(endpoint)} extra",
++      "#{key(endpoint)}\nwrong endpoint", key(endpoint).sub('ssh-ed25519', 'ssh-rsa')]
++    malformed.each do |output|
++      with_discovery do |engine, record, known, clock|
++        with_scans(engine, clock, [{ stdout: output }]) do |calls|
++          error = assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: 105.0) }
++          assert_match(/invalid SSH host key data/, error.message)
++          refute_includes(error.message, output)
++          assert_equal(1, calls.length)
++          assert_equal('', File.binread(known))
++          assert_equal(output, Base64.strict_decode64(diagnostics(engine).values.first['stdout_base64']))
++        end
++      end
++    end
++  end
++
++  def test_retained_valid_key_mismatch_neither_retries_nor_rewrites
++    retained = "#{key(two_endpoints['services'], 'a')}\n"
++    with_discovery(retained:) do |engine, record, known, clock|
++      before = [File.stat(known).ino, File.binread(known)]
++      with_scans(engine, clock, [{ stdout: key(record['endpoints']['services'], 'b') }]) do |calls|
++        error = assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: 105.0) }
++        assert_match(/retained trust is not replaced/, error.message)
++        assert_equal(1, calls.length)
++        assert_equal(before, [File.stat(known).ino, File.binread(known)])
++      end
++    end
++  end
++
++  def test_second_endpoint_failure_does_not_publish_first_endpoint_trust
++    with_discovery(endpoints: two_endpoints) do |engine, record, known, clock|
++      results = [{ stdout: key(two_endpoints['services']) },
++        { stdout: '', exitstatus: 1, elapsed: 1.0 }, { stdout: '', exitstatus: 1, elapsed: 1.0 }]
++      with_scans(engine, clock, results) do |calls|
++        assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: 103.0) }
++        assert_equal([two_endpoints['services'], two_endpoints['node1'], two_endpoints['node1']], calls.map { |call| call[:endpoint] })
++        assert_equal('', File.binread(known))
++        assert_equal(%w[services node1 node1].sort, diagnostics(engine).values.map { |value| value['machine'] }.sort)
++      end
++    end
++  end
++
++  def test_tool_invocation_failure_is_immediate_and_private
++    with_discovery do |engine, record, known, clock|
++      with_scans(engine, clock, [Errno::ENOENT.new('private executable detail')]) do |calls|
++        error = assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: 105.0) }
++        assert_match(/invocation failed.*status=Errno::ENOENT diagnostics=/, error.message)
++        refute_includes(error.message, 'private executable detail')
++        assert_equal(1, calls.length)
++        assert_equal('', File.binread(known))
++        value = diagnostics(engine).values.first
++        assert_equal('Errno::ENOENT', value['invocation_error'])
++        assert_includes(Base64.strict_decode64(value['stderr_base64']), 'private executable detail')
++      end
++    end
++  end
++
++  def test_signalled_keyscan_refuses_immediately_without_retry
++    with_discovery do |engine, record, known, clock|
++      with_scans(engine, clock, [{ exitstatus: nil, termsig: Signal.list.fetch('TERM') }]) do |calls|
++        error = assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: 105.0) }
++        assert_match(/terminated.*status=signal-15 diagnostics=/, error.message)
++        assert_equal(1, calls.length)
++        assert_equal('', File.binread(known))
++      end
++    end
++  end
++
++  def test_stderr_banner_does_not_replace_or_enter_known_hosts
++    with_discovery do |engine, record, known, clock|
++      stdout = "# keyscan comment\n#{key(record['endpoints']['services'])}\n"
++      with_scans(engine, clock, [{ stdout:, stderr: 'private diagnostic banner' }]) do |calls|
++        engine.establish_ssh_trust(record, deadline: 105.0)
++        assert_equal(1, calls.length)
++        assert_equal("#{key(record['endpoints']['services'])}\n", File.binread(known))
++        assert_equal('private diagnostic banner', Base64.strict_decode64(diagnostics(engine).values.first['stderr_base64']))
++      end
++    end
++  end
++
++  def test_bridge_endpoint_accepts_complete_keyscan_key_types_without_forwarding_prefix
++    endpoint = { 'host' => '192.0.2.20', 'port' => 22, 'user' => 'root' }
++    fields = lambda do |parts|
++      Base64.strict_encode64(parts.map { |part| [part.bytesize].pack('N') + part }.join)
++    end
++    keys = [
++      "#{endpoint['host']} ssh-ed25519 #{fields.call(['ssh-ed25519', 'k' * 32])}",
++      "#{endpoint['host']} ssh-rsa #{fields.call(['ssh-rsa', "\x01\x00\x01", "\x00\x80" + 'n' * 255])}",
++      "#{endpoint['host']} ecdsa-sha2-nistp256 #{fields.call(['ecdsa-sha2-nistp256', 'nistp256', "\x04" + 'p' * 64])}"
++    ]
++    with_discovery(endpoints: { 'services' => endpoint }) do |engine, record, known, clock|
++      with_scans(engine, clock, [{ stdout: keys.join("\n") }]) do |calls|
++        engine.establish_ssh_trust(record, deadline: 105.0)
++        assert_equal(1, calls.length)
++        assert_equal(endpoint, calls.first[:endpoint])
++        assert_equal("#{keys.join("\n")}\n", File.binread(known))
++      end
++    end
++  end
++
++  def test_truncated_native_capture_refuses_instead_of_accepting_partial_keys
++    with_discovery do |engine, record, known, clock|
++      with_scans(engine, clock, [{ stdout: key(record['endpoints']['services']), truncated: true }]) do |calls|
++        assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record, deadline: 105.0) }
++        assert_equal(1, calls.length)
++        assert_equal('', File.binread(known))
++      end
++    end
++  end
++
++  def test_ssh_specific_capture_preserves_native_streams_status_argv_and_clears_overrides
++    state = KbRuntime::State.new('/not-created', 'ssh-capture')
++    engine = KbRuntime::Engine.new(state:, software: nil, controller: [])
++    saved = ENV['SSH_AUTH_SOCK']
++    ENV['SSH_AUTH_SOCK'] = '/not-used/agent'
++    original = Process.method(:spawn)
++    child = nil
++    spawn = lambda do |environment, command, *args, **options|
++      assert_equal('ssh-keyscan', command)
++      assert_equal(['-T', '1', '-p', '10022', '127.0.0.1'], args)
++      assert_nil(environment['SSH_AUTH_SOCK'])
++      assert_equal(File::NULL, options[:in])
++      assert_equal(true, options[:close_others])
++      child = original.call(environment, RbConfig.ruby, '-e', 'STDOUT.write("native keys"); STDERR.write("native error"); exit 7', **options)
++    end
++    result = Process.stub(:spawn, spawn) do
++      engine.ssh_keyscan(two_endpoints['services'], timeout: 1, deadline: Process.clock_gettime(Process::CLOCK_MONOTONIC) + 5)
++    end
++    assert_equal('native keys', result[:stdout])
++    assert_equal('native error', result[:stderr])
++    assert_equal(7, result[:exitstatus])
++    assert_nil(result[:termsig])
++    refute(result[:deadline])
++    refute(result[:truncated])
++    assert_raises(Errno::ECHILD) { Process.waitpid(child, Process::WNOHANG) }
++  ensure
++    ENV['SSH_AUTH_SOCK'] = saved
++  end
++
++  def test_scan_deadline_and_output_bound_reap_only_the_owned_child
++    [:deadline, :output].each do |kind|
++      engine = KbRuntime::Engine.new(state: KbRuntime::State.new('/not-created', 'ssh-capture'), software: nil, controller: [])
++      original = Process.method(:spawn)
++      child = nil
++      program = kind == :output ? 'STDOUT.sync=true; STDOUT.write("x" * 30_000); sleep 30' : 'STDERR.sync=true; STDERR.write("waiting"); sleep 30'
++      spawn = lambda do |environment, _command, *_args, **options|
++        child = original.call(environment, RbConfig.ruby, '-e', program, **options)
++      end
++      remaining = kind == :deadline ? 0.2 : 5
++      result = Timeout.timeout(10) do
++        Process.stub(:spawn, spawn) do
++          engine.ssh_keyscan(two_endpoints['services'], timeout: 1, deadline: Process.clock_gettime(Process::CLOCK_MONOTONIC) + remaining)
++        end
++      end
++      assert_equal(kind == :deadline, result[:deadline])
++      assert_equal(kind == :output, result[:truncated])
++      assert_equal(Signal.list.fetch('KILL'), result[:termsig])
++      assert_operator(result[:stdout].bytesize, :<=, 16 * 1024)
++      assert_operator(result[:stderr].bytesize, :<=, 16 * 1024)
++      assert_raises(Errno::ECHILD) { Process.waitpid(child, Process::WNOHANG) }
++    end
++  end
++
++  private
++
++  def two_endpoints
++    { 'services' => { 'host' => '127.0.0.1', 'port' => 10022, 'user' => 'root' },
++      'node1' => { 'host' => '127.0.0.1', 'port' => 10023, 'user' => 'root' } }
++  end
++
++  def key(endpoint, fill = 'k')
++    wire = [11].pack('N') + 'ssh-ed25519' + [32].pack('N') + fill * 32
++    "[#{endpoint['host']}]:#{endpoint['port']} ssh-ed25519 #{Base64.strict_encode64(wire)}"
++  end
++
++  def native(**values)
++    { stdout: '', stderr: '', exitstatus: 0, termsig: nil, deadline: false, truncated: false }.merge(values)
++  end
++
++  def with_discovery(endpoints: { 'services' => { 'host' => '127.0.0.1', 'port' => 10022, 'user' => 'root' } }, retained: '')
++    Dir.mktmpdir do |directory|
++      state = KbRuntime::State.new(File.join(directory, 'state'), 'ssh-discovery')
++      identity = state.transaction(create: true) { state.initialize_identity }
++      record = identity.merge('run_id' => SecureRandom.uuid, 'endpoints' => endpoints)
++      state.write(state.path('phase.json'), { 'phase' => 'verifying', 'run_id' => record['run_id'] })
++      state.private_directory(state.path('credentials'), create: true)
++      known = File.join(state.path('credentials'), 'known_hosts')
++      File.write(known, retained, mode: 'wb', perm: 0o600)
++      engine = KbRuntime::Engine.new(state:, software: nil, controller: [])
++      engine.define_singleton_method(:live?) { |seen| seen == record }
++      clock = Struct.new(:now).new(100.0)
++      engine.define_singleton_method(:sleep) { |seconds| clock.now += seconds }
++      Process.stub(:clock_gettime, ->(_kind) { clock.now }) { yield engine, record, known, clock }
++    end
++  end
++
++  def with_scans(engine, clock, results)
++    calls = []
++    scan = lambda do |endpoint, timeout:, deadline:|
++      calls << { endpoint:, timeout:, deadline: }
++      assert_operator(timeout, :>=, 1)
++      assert_operator(timeout, :<=, 5)
++      assert_operator(timeout, :<=, (deadline - clock.now).floor)
++      item = results.shift
++      refute_nil(item, 'unexpected extra keyscan')
++      raise item if item.is_a?(Exception)
++      clock.now += item.fetch(:elapsed, 0)
++      native(**item.reject { |name, _value| name == :elapsed })
++    end
++    engine.stub(:ssh_keyscan, scan) { yield calls }
++  end
++
++  def diagnostics(engine)
++    Dir.glob(File.join(engine.state.directory, 'ssh-*.json')).sort.to_h { |path| [path, engine.state.read(path)] }
++  end
++end
++
+ class AtomicRecordReadTest < Minitest::Test
+   def test_atomic_rename_returns_complete_replacement_bytes_and_json
+     %i[file read].each do |method|
+@@ -595,7 +939,7 @@ class LocalTransportEngine < KbRuntime::Engine
+     state.path('credentials')
+   end
+ 
+-  def establish_ssh_trust(_record); end
++  def establish_ssh_trust(_record, deadline:); end
+   def verify_live(record)
+     raise KbRuntime::Error, 'fake runner is not live' unless live?(record)
+     true
+@@ -790,6 +1134,50 @@ class RuntimeLifecycleTest < Minitest::Test
+     end.to_h { |path| [path, [File.stat(path).ino, File.binread(path)]] }
+   end
+ 
++  def test_shared_ssh_discovery_deadline_reaches_existing_live_verification_once
++    Dir.mktmpdir do |directory|
++      value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++      attempts = 0
++      verifications = 0
++      deadlines = []
++      value.define_singleton_method(:establish_ssh_trust) do |record, deadline:|
++        KbRuntime::Engine.instance_method(:establish_ssh_trust).bind_call(self, record, deadline:)
++      end
++      original_verify = value.method(:verify_live)
++      value.define_singleton_method(:verify_live) do |record|
++        verifications += 1
++        original_verify.call(record)
++      end
++      scan = lambda do |endpoint, timeout:, deadline:|
++        attempts += 1
++        deadlines << deadline
++        assert_operator(timeout, :>=, 1)
++        assert_operator(timeout, :<=, 5)
++        assert_equal('verifying', value.phase['phase'])
++        output = if attempts == 1
++                   ''
++                 else
++                   wire = [11].pack('N') + 'ssh-ed25519' + [32].pack('N') + 'k' * 32
++                   "[#{endpoint['host']}]:#{endpoint['port']} ssh-ed25519 #{Base64.strict_encode64(wire)}"
++                 end
++        { stdout: output, stderr: '', exitstatus: output.empty? ? 1 : 0,
++          termsig: nil, deadline: false, truncated: false }
++      end
++      begin
++        value.stub(:ssh_keyscan, scan) { value.start(config: config, network: 'local', timeout: 5) }
++        assert_equal(2, attempts)
++        assert_equal(1, deadlines.uniq.length)
++        assert_equal(1, verifications)
++        assert_equal(1, value.software.builds)
++        assert(value.status['ready'])
++        value.stop(timeout: 5)
++        assert_equal(1, verifications)
++      ensure
++        value.stop(timeout: 5) if File.exist?(value.state.path('phase.json')) && value.phase['phase'] != 'stopped'
++      end
++    end
++  end
++
+   def test_process_receipt_rename_during_readiness_does_not_replay_prepare_build_or_spawn
+     Dir.mktmpdir do |directory|
+       value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))

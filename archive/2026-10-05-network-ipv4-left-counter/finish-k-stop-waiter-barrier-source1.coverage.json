@@ -1,0 +1,25 @@
+{
+  "owner": "tools/test-machine.rb",
+  "test_method_inventory_unchanged": true,
+  "affected_existing_cases": [
+    "RunnerSessionTest#test_caller_expiry_retains_one_shutdown_and_tracks_late_children_until_reapers_complete",
+    "RunnerSessionTest#test_signal_withdraws_ready_marker_and_repeated_control_only_waits_for_the_same_shutdown"
+  ],
+  "source_boundaries": [
+    "actual private Engine#control acknowledgement after unchanged request/peer/path/response checks",
+    "exact handoff returned unchanged to real public Engine.stop(timeout: 5)",
+    "tagged original waiter error delivered to synchronization barrier without waiting for probe timeout",
+    "private per-instance wrapper removed before existing late-child release and assertions"
+  ],
+  "all_other_cases_unchanged": true,
+  "hosted_selection": {
+    "workflow": ".github/workflows/check.yml",
+    "mode": "existing source push Check",
+    "canonical_command": "nix develop --command bin/check --allow-missing",
+    "owning_suite_inside_existing_command": "ruby tools/test-machine.rb",
+    "optional_focused_hosted_owner": "ruby tools/test-machine.rb --name /test_(caller_expiry_retains_one_shutdown_and_tracks_late_children_until_reapers_complete|signal_withdraws_ready_marker_and_repeated_control_only_waits_for_the_same_shutdown)/"
+  },
+  "selector_workflow_runner_changes": false,
+  "executed_by_implementer": false,
+  "downstream_exact_E_pair_and_final_finding_disposition": "root-owned; no member polling or launch"
+}

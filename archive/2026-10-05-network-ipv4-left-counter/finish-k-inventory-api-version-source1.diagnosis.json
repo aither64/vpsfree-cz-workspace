@@ -1,0 +1,177 @@
+{
+  "schema": 1,
+  "acceptance": {
+    "path": "finish-working-delivery-api-version-design1-acceptance.json",
+    "sha256": "ba9a2b5ba7b2863bcb4d02d268c3a645daf5edf212b11fbd94a0baa11c608b49"
+  },
+  "design": {
+    "path": "design.md",
+    "section_heading": "### DIAGNOSIS / PROPOSAL: inventory API version and bounded helper qualification (2026-10-11)",
+    "section_sha256": "090e163ffbe932727156a0d5b46a45365de547aaf0c536c1946064d4987f1448"
+  },
+  "native_evidence": {
+    "finish-working-delivery-api-diagnosis1.json": {
+      "sha256": "3739a834fe3c1461d6ff5a8a5ad26d6d628e7dfb91cdb2d70b31758ff9920852",
+      "reports": [
+        {
+          "login": "test-user1",
+          "method": "GET",
+          "path": "/v1/users/current",
+          "http_status": 404,
+          "bytes": 75,
+          "sha256": "c4e1161fabacc9b1fd8217efbc5636be9d5de90951ac1ffae06ab62c84be4efe",
+          "json": true,
+          "envelope_keys": [
+            "status",
+            "response",
+            "message",
+            "errors"
+          ],
+          "status": false,
+          "message": "Action not found",
+          "error": null,
+          "errors_keys": []
+        },
+        {
+          "login": "test-admin",
+          "method": "GET",
+          "path": "/v1/users/current",
+          "http_status": 404,
+          "bytes": 75,
+          "sha256": "c4e1161fabacc9b1fd8217efbc5636be9d5de90951ac1ffae06ab62c84be4efe",
+          "json": true,
+          "envelope_keys": [
+            "status",
+            "response",
+            "message",
+            "errors"
+          ],
+          "status": false,
+          "message": "Action not found",
+          "error": null,
+          "errors_keys": []
+        }
+      ],
+      "instance_id": "271d430a-f951-4979-b115-fe66c7516e11",
+      "run_id": "5b83fc44-1224-44c5-bd23-49f10a42f7b2",
+      "artifact_id": "a3406dd9-97b0-4914-98a7-86541b5062b2",
+      "descriptor_sha256": "9d8849258152682961a1fa7a6741f3a8c17f1dcdcc64979128949a4ba6d16d46"
+    },
+    "finish-working-delivery-api-diagnosis2.json": {
+      "sha256": "b4300a7fc35ddc18983c8052748254640d870c56c64d709da3f6646bd530d06c",
+      "reports": [
+        {
+          "login": "test-user1",
+          "method": "GET",
+          "path": "/v7.0/users/current",
+          "http_status": 200,
+          "bytes": 831,
+          "sha256": "0c2fc34ef3ea4e032fde4f097bfac8f9abdebaa59ed44c258a695eef53723cd2",
+          "json": true,
+          "envelope_keys": [
+            "status",
+            "response",
+            "message",
+            "errors"
+          ],
+          "status": true,
+          "response_keys": [
+            "user",
+            "_meta"
+          ],
+          "user_keys": [
+            "id",
+            "login",
+            "full_name",
+            "email",
+            "address",
+            "time_zone",
+            "level",
+            "info",
+            "mailer_enabled",
+            "lockout",
+            "language",
+            "enable_basic_auth",
+            "enable_oauth2_auth",
+            "enable_single_sign_on",
+            "enable_new_login_notification",
+            "enable_multi_factor_auth",
+            "preferred_session_length",
+            "preferred_logout_all",
+            "last_activity_at",
+            "dokuwiki_groups",
+            "created_at",
+            "object_state",
+            "expiration_date",
+            "remind_after_date",
+            "monthly_payment",
+            "paid_until"
+          ],
+          "message": null,
+          "error": null,
+          "errors_keys": []
+        },
+        {
+          "login": "test-admin",
+          "method": "GET",
+          "path": "/v7.0/users/current",
+          "http_status": 200,
+          "bytes": 841,
+          "sha256": "ebd28c252a53f86dd56019e04ee2a80541158fb2ed00b99f2ac6e2c29ffce6a3",
+          "json": true,
+          "envelope_keys": [
+            "status",
+            "response",
+            "message",
+            "errors"
+          ],
+          "status": true,
+          "response_keys": [
+            "user",
+            "_meta"
+          ],
+          "user_keys": [
+            "id",
+            "login",
+            "full_name",
+            "email",
+            "address",
+            "time_zone",
+            "level",
+            "info",
+            "mailer_enabled",
+            "lockout",
+            "language",
+            "enable_basic_auth",
+            "enable_oauth2_auth",
+            "enable_single_sign_on",
+            "enable_new_login_notification",
+            "enable_multi_factor_auth",
+            "preferred_session_length",
+            "preferred_logout_all",
+            "last_activity_at",
+            "dokuwiki_groups",
+            "created_at",
+            "object_state",
+            "expiration_date",
+            "remind_after_date",
+            "monthly_payment",
+            "paid_until"
+          ],
+          "message": null,
+          "error": null,
+          "errors_keys": []
+        }
+      ],
+      "instance_id": "271d430a-f951-4979-b115-fe66c7516e11",
+      "run_id": "5b83fc44-1224-44c5-bd23-49f10a42f7b2",
+      "artifact_id": "a3406dd9-97b0-4914-98a7-86541b5062b2",
+      "descriptor_sha256": "9d8849258152682961a1fa7a6741f3a8c17f1dcdcc64979128949a4ba6d16d46"
+    }
+  },
+  "established": "Both exact accounts received 404/status:false at v1 and 200/status:true at v7.0 under the same descriptor/public lease.",
+  "correction": "One fixed selected API 7.0 prefix, no route discovery, fallback or retry. Action diagnostics use capped method and pathname plus native numeric HTTP status; no body/query/auth/account values.",
+  "compatibility": "The selected V input declares API 7.0. Changing this fixture changes its source digest; unchanged older guest artifacts cannot be relabeled as matching captures.",
+  "deviations_or_blockers": [],
+  "limits": "Prospective source only. Campaign2 and all private state untouched. No real helper/capture/lifecycle authorization or success claim."
+}

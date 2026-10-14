@@ -1,0 +1,271 @@
+diff --git a/cluster/lib/devcluster_runner.rb b/cluster/lib/devcluster_runner.rb
+index 5dbf3fec051b5655206ed09019ed50a6fe252ce7..3057804f6ec007f42529c21be2a4ce3559efa7ee 100644
+--- a/cluster/lib/devcluster_runner.rb
++++ b/cluster/lib/devcluster_runner.rb
+@@ -180,9 +180,12 @@ module DevClusters
+               expected = { 'schema' => 1, 'instance_id' => opts[:instance_id], 'run_id' => opts[:run_id], 'command' => 'stop' }
+               raise KbRuntime::Error, 'control identity differs' unless value == expected
+               first = latch_shutdown.call
+-              peer.puts(JSON.generate('schema' => 1, 'run_id' => opts[:run_id], 'accepted' => true))
+-              peer.flush
+-              signal_trap.call if first
++              begin
++                peer.puts(JSON.generate('schema' => 1, 'run_id' => opts[:run_id], 'accepted' => true))
++                peer.flush
++              ensure
++                signal_trap.call if first
++              end
+             rescue StandardError
+               # Invalid local requests never acquire shutdown authority.
+             ensure
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index a4266501126ec3bd7fb3c2f3e4937afd70d0560f..d79774855c5e7c87bc4481bd61a80efbdfebdc41 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -93,6 +93,9 @@ After authenticating the owned paths and peer, the controller marks the run
+ `stopping` before sending the request. The runner withdraws readiness and issues
+ at most one graceful stop per started, running machine. Repeated authenticated
+ requests acknowledge the same shutdown and wait; they do not repeat poweroff.
++Once a valid request starts shutdown, the runner continues even if its reply
++cannot reach the caller. A missing reply does not prove that shutdown was
++rejected; a later public stop can wait for the same drain.
+ 
+ The runner uses its configured machine operation budget, normally 900 seconds.
+ The CLI's `--timeout` bounds the controller's observation after acknowledgement;
+diff --git a/tools/test-machine.rb b/tools/test-machine.rb
+index 751ce7be2e859d199b65571de82245e7ed789e19..f36679feda4107028006d53f753572d75cf0e363 100644
+--- a/tools/test-machine.rb
++++ b/tools/test-machine.rb
+@@ -537,6 +537,141 @@ class RunnerSessionTest < Minitest::Test
+     assert_equal([{ 'name' => 'unrelated', 'type' => 'file' }], evidence['socket_entries'])
+   end
+ 
++  def test_first_valid_stop_notifies_once_when_its_acknowledgement_hits_a_closed_client
++    with_runner(mode: 'ack-loss') do |context|
++      ack_server = UNIXServer.new(File.join(context[:state].root, 'ack.sock'))
++      drain_server = UNIXServer.new(File.join(context[:state].root, 'ack-drain.sock'))
++      [ack_server, drain_server].each { |server| File.chmod(0o600, server.path) }
++      log = File.open(context[:log], File::WRONLY | File::CREAT | File::EXCL, 0o600)
++      first = ack = drain = waiter = pid = owned_tuple = nil
++      ack_released = false
++      reap = lambda do
++        Timeout.timeout(5) do
++          loop do
++            waited = Thread.handle_interrupt(Exception => :never) do
++              result = Process.waitpid2(pid, Process::WNOHANG)
++              pid = nil if result
++              result
++            end
++            break waited.last if waited
++            Thread.pass
++          end
++        end
++      end
++      context[:shutdown_attempted] = true
++      begin
++        # This test retains the sole waitpid owner. Even failure cleanup cannot
++        # signal a reused PID: the directly spawned child has not been reaped.
++        pid = Process.spawn(*runner_argv(context), in: File::NULL, out: log, err: log, close_others: true)
++        owned_tuple = KbRuntime::ProcessIdentity.read(pid)
++        assert(KbRuntime::ProcessIdentity.runner_matches?(owned_tuple, context[:record]))
++        Timeout.timeout(5) do
++          Thread.pass until File.exist?(context[:state].path("ready-#{context[:record]['run_id']}.json"))
++        end
++        proof = context[:engine].process_record(context[:record])
++        assert_equal(owned_tuple, proof['runner'])
++        assert_equal(pid, proof['runner']['pid'])
++        context[:runner] = proof['runner']
++        context[:children] = proof['children']
++        assert_equal(1, proof['children'].length)
++        context[:engine].set_phase('ready', context[:record]['run_id'])
++        assert(context[:engine].ready?(context[:record]))
++        request = { 'schema' => 1, 'instance_id' => context[:record]['instance_id'],
++          'run_id' => context[:record]['run_id'], 'command' => 'stop' }
++        control_path = File.join(context[:record]['socket_dir'], 'control.sock')
++        invalid = UNIXSocket.new(control_path)
++        invalid.puts(JSON.generate(request.merge('run_id' => SecureRandom.uuid)))
++        assert_equal('', Timeout.timeout(5) { invalid.read }, 'an invalid request receives no acknowledgement')
++        invalid.close
++        assert(context[:engine].ready?(context[:record]), 'invalid requests cannot latch or notify')
++        refute(File.exist?(File.join(context[:record]['state_dir'], 'stop-calls.jsonl')))
++
++        first = UNIXSocket.new(control_path)
++        first.puts(JSON.generate(request))
++        ack = Timeout.timeout(5) { ack_server.accept }
++        assert_equal({ 'stage' => 'latched', 'ordinal' => 1 }, JSON.parse(Timeout.timeout(5) { ack.gets }))
++        refute(context[:engine].ready?(context[:record]))
++        refute(File.exist?(context[:state].path("ready-#{context[:record]['run_id']}.json")))
++        refute(File.exist?(File.join(context[:record]['state_dir'], 'stop-calls.jsonl')), 'the actual first reply is still blocked')
++        first.shutdown(Socket::SHUT_RDWR)
++        first.close
++        ack.puts('reply')
++        ack_released = true
++        failure = JSON.parse(Timeout.timeout(5) { ack.gets })
++        assert_equal('reply-failed', failure['stage'])
++        assert_equal(1, failure['ordinal'])
++        assert_equal('Errno::EPIPE', failure['class'], 'the underlying real socket write must fail')
++        assert_includes(%w[puts flush], failure['operation'])
++        assert_equal(failure, JSON.parse(File.read(File.join(context[:record]['state_dir'], 'ack-native.json'))))
++        drain = Timeout.timeout(5) { drain_server.accept }
++        stopped = JSON.parse(Timeout.timeout(5) { drain.gets })
++        assert_equal('stop', stopped['stage'])
++        assert_equal(proof['children'].first['pid'], stopped['child'])
++        assert_equal(5, stopped['timeout'])
++        assert_retained_runner(context)
++        refute(context[:engine].process_record(context[:record])['complete'])
++        assert_equal(context[:claims], Dir.glob(File.join(context[:engine].resources.root, '*.json')).to_h { |path| [path, File.binread(path)] })
++        refute(File.exist?(File.join(context[:record]['state_dir'], 'finalized')))
++        refute(File.exist?(File.join(context[:record]['state_dir'], 'cleaned')))
++
++        waiter = Thread.new do
++          context[:engine].stop(timeout: 5)
++          :stopped
++        rescue StandardError => error
++          error
++        end
++        later_reply = File.join(context[:record]['state_dir'], 'ack-success-2.json')
++        Timeout.timeout(5) { Thread.pass until File.exist?(later_reply) }
++        assert_equal({ 'stage' => 'reply-delivered', 'ordinal' => 2 }, JSON.parse(File.read(later_reply)))
++        assert(waiter.alive?, 'the later public stop waits for the existing live child')
++        assert_equal('stopping', context[:engine].phase['phase'])
++        assert_retained_runner(context)
++        refute(context[:engine].process_record(context[:record])['complete'])
++        assert_equal(context[:claims], Dir.glob(File.join(context[:engine].resources.root, '*.json')).to_h { |path| [path, File.binread(path)] })
++        assert_equal(1, File.readlines(File.join(context[:record]['state_dir'], 'stop-calls.jsonl')).length)
++        drain.puts('release')
++        assert_equal(:stopped, Timeout.timeout(5) { waiter.value })
++        assert_shutdown(context)
++        assert_equal(1, File.readlines(File.join(context[:record]['state_dir'], 'stop-calls.jsonl')).length)
++        assert_equal(proof['children'], context[:engine].process_record(context[:record])['children'])
++        status = reap.call
++        assert(status.success?, 'the same directly owned runner exits normally')
++      ensure
++        primary = $!
++        cleanup_error = nil
++        begin
++          first&.close unless first&.closed?
++          if primary && ack && !ack.closed? && !ack_released
++            begin
++              ack.puts('reply')
++            rescue IOError, SystemCallError => error
++              cleanup_error = error
++              context[:drain_cleanup_error] = error
++            end
++          end
++          if pid && primary && !drain && KbRuntime::ProcessIdentity.matches?(owned_tuple)
++            unless owned_tuple['pid'] == pid && KbRuntime::ProcessIdentity.runner_matches?(owned_tuple, context[:record])
++              raise KbRuntime::Error, 'synthetic unreaped runner identity differs during failure cleanup'
++            end
++            Process.kill('TERM', pid)
++          end
++          if pid && owned_tuple && !KbRuntime::ProcessIdentity.gone?(owned_tuple)
++            drain ||= Timeout.timeout(5) { drain_server.accept }
++            drain.puts('release') unless drain.closed?
++          end
++          reap.call if pid
++        rescue StandardError => error
++          cleanup_error ||= error
++          context[:drain_cleanup_error] ||= error
++        ensure
++          [invalid, first, ack, drain, ack_server, drain_server, log].compact.each { |stream| stream.close unless stream.closed? }
++          waiter&.join(5)
++        end
++        raise cleanup_error if cleanup_error && !primary
++      end
++    end
++  end
++
+   private
+ 
+   def with_runner(mode: 'normal')
+@@ -1029,6 +1164,90 @@ class RunnerSessionTest < Minitest::Test
+         end
+         at_exit { $task_proof&.close_proof }
+       end
++      if mode == 'ack-loss'
++        directory = ARGV[ARGV.index('--state-dir') + 1]
++        root = File.dirname(File.dirname(File.dirname(directory)))
++        write_reply = lambda do |name, value|
++          path = File.join(directory, name)
++          File.write(path + '.tmp', JSON.generate(value), mode: 'wb', perm: 0o600)
++          File.rename(path + '.tmp', path)
++        end
++        original_server = UNIXServer.method(:new)
++        ordinal = 0
++        UNIXServer.define_singleton_method(:new) do |path|
++          server = original_server.call(path)
++          accept = server.method(:accept)
++          server.define_singleton_method(:accept) do
++            peer = accept.call
++            native_puts, native_flush, native_close = peer.method(:puts), peer.method(:flush), peer.method(:close)
++            reply = observer = nil
++            failed = lambda do |error, operation|
++              value = { 'stage' => 'reply-failed', 'ordinal' => reply, 'class' => error.class.name,
++                'operation' => operation }
++              write_reply.call('ack-native.json', value)
++              warn 'Ack reply failed: ' + JSON.generate(value)
++              observer.puts(JSON.generate(value)) if observer
++            end
++            peer.define_singleton_method(:puts) do |*values|
++              unless reply
++                ordinal += 1
++                reply = ordinal
++                if reply == 1
++                  observer = UNIXSocket.new(File.join(root, 'ack.sock'))
++                  observer.puts(JSON.generate('stage' => 'latched', 'ordinal' => reply))
++                  command = Timeout.timeout(5) { observer.gets }
++                  raise 'unexpected reply barrier command' unless command && command.strip == 'reply'
++                end
++              end
++              begin
++                native_puts.call(*values)
++              rescue IOError, SystemCallError => error
++                failed.call(error, 'puts')
++                raise
++              end
++            end
++            peer.define_singleton_method(:flush) do
++              begin
++                result = native_flush.call
++              rescue IOError, SystemCallError => error
++                failed.call(error, 'flush')
++                raise
++              else
++                write_reply.call('ack-success-' + reply.to_s + '.json', { 'stage' => 'reply-delivered', 'ordinal' => reply })
++                result
++              end
++            end
++            peer.define_singleton_method(:close) do
++              begin
++                observer&.close unless observer&.closed?
++              ensure
++                native_close.call
++              end
++            end
++            peer
++          end
++          server
++        end
++        class AckLossMachine < SessionMachine
++          def stop(timeout:)
++            File.open(File.join(@directory, 'stop-calls.jsonl'), 'a', 0o600) { |file| file.puts(JSON.generate('timeout' => timeout)) }
++            @drain = UNIXSocket.new(File.join(File.dirname(File.dirname(File.dirname(@directory))), 'ack-drain.sock'))
++            @drain.puts(JSON.generate('stage' => 'stop', 'child' => @child, 'timeout' => timeout))
++            @commands = Thread.new do
++              command = @drain.gets
++              raise 'unexpected acknowledgement drain command' unless command.nil? || command.strip == 'release'
++            ensure
++              @writer.close unless @writer.closed?
++              @reaper.join
++            end
++          end
++        end
++        class SessionRunner
++          def build_machines(opts)
++            [MachineState.new(name: 'services', machine: AckLossMachine.new(opts[:state_dir]))]
++          end
++        end
++      end
+       exit SessionRunner.run(ARGV, hash_base: 'synthetic-network')
+     RUBY
+   end

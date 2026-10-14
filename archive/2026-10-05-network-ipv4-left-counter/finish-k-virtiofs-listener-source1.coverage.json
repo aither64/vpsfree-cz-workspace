@@ -1,0 +1,65 @@
+{
+  "status": "UNRUN; source-only static inspection",
+  "new_methods": [
+    "test_both_machine_classes_pass_only_the_listener_for_all_three_shares",
+    "test_selected_pinned_virtiofsd_consumes_the_real_listener_without_pidfiles",
+    "test_spawn_failure_retains_only_its_created_listener_until_exact_cleanup",
+    "test_partial_start_keeps_the_first_owned_daemon_and_never_unlinks_a_preexisting_pidfile",
+    "test_preexisting_socket_file_symlink_and_directory_are_never_unlinked_for_bind",
+    "test_supported_interruption_after_real_spawn_retains_pid_and_closes_parent_listener",
+    "test_supported_interruption_after_listener_acquisition_closes_every_parent_descriptor",
+    "test_interruption_queued_during_cleanup_closes_all_pins_before_delivery",
+    "test_cleanup_refuses_replaced_socket_with_original_inode_still_pinned",
+    "test_cleanup_refuses_replaced_private_parent_with_original_directory_pinned",
+    "test_cleanup_refuses_unsafe_socket_type_mode_and_uid_before_any_unlink",
+    "test_cleanup_refuses_unsafe_parent_mode_type_symlink_and_uid",
+    "test_absent_owned_paths_are_idempotent_but_reappearance_never_gains_authority",
+    "test_public_stop_reaps_machine_owned_listener_daemons_and_retires_the_namespace",
+    "test_public_stop_preserves_unknown_pidfile_and_refuses_stopped_even_after_daemons_exit"
+  ],
+  "retained_methods": [
+    "test_exact_upstream_driver_keeps_root_and_data_but_boots_new_kernel_init_and_toplevel",
+    "test_missing_retained_root_is_not_recreated",
+    "test_unrecorded_root_is_not_adopted_or_replaced",
+    "test_explicit_multicast_port_survives_separate_osvm_processes",
+    "test_runner_survives_controlled_parent_exit_with_distinct_session_and_no_guard_fds",
+    "test_test_owned_parent_group_signal_does_not_end_the_runner_session",
+    "test_already_own_session_leader_does_not_call_setsid_again",
+    "test_setsid_failure_refuses_before_machine_creation_or_live_tuple_publication",
+    "test_public_stop_quiesces_the_real_listener_before_close_and_removes_its_namespace",
+    "test_caller_expiry_retains_one_shutdown_and_tracks_late_children_until_reapers_complete",
+    "test_signal_withdraws_ready_marker_and_repeated_control_only_waits_for_the_same_shutdown",
+    "test_queued_shutdown_at_the_ensure_boundary_does_not_replace_primary_failure",
+    "test_quiesced_task_disappearance_resumes_tracking_before_any_finalization_or_cleanup",
+    "test_quiesced_real_worker_child_is_retained_until_exit_before_finalization_or_cleanup",
+    "test_post_cleanup_task_disappearance_resumes_tracking_without_repeating_finalization",
+    "test_primary_assertion_and_secondary_cleanup_failure_keep_original_error_and_private_evidence",
+    "test_primary_failure_survives_successful_public_cleanup",
+    "test_explicit_failed_stop_is_not_repeated_and_preserves_an_unrelated_socket_entry",
+    "test_first_valid_stop_notifies_once_when_its_acknowledgement_hits_a_closed_client"
+  ],
+  "original_whole_file_reconstruction_sha256": "c1b015ba0d3ad46232cb3a5efa7912e9ce4c697f5e0ff251b752dd280259f5e0",
+  "original_all_19_methods_and_helpers_byte_identical": true,
+  "new_method_count": 15,
+  "declared_cases": [
+    "both K classes, all three shares, actual inherited listeners and no guard/path-proof FD inheritance",
+    "selected guest-pinned native virtiofsd sandbox-none FD API and vhost-user GET_FEATURES; no skips or QEMU/guest",
+    "public stop with original OSVM QEMU reaper, inherited daemon stop/wait, complete/gone/stopped/claims released/namespace absent",
+    "native spawn failure and partial startup retain ordinary PID authority; no pidfile adoption",
+    "queued supported interruption during listener/spawn acquisition and cleanup closes owned parent/pin FDs",
+    "socket and private-parent replacement/type/symlink/mode/UID refusal before unlink",
+    "idempotent absent paths and retired-path reappearance refusal",
+    "preexisting companion pidfile and unknown .sock.pid preserved; strict public stopped refusal"
+  ],
+  "hosted_selectors": [
+    "nix develop --command ruby tools/test-machine.rb",
+    "nix develop --command bin/check --allow-missing"
+  ],
+  "boundaries": [
+    "no local test/check/process/probe/build or lifecycle action",
+    "sandbox-none is test-only; production sandbox/cache/share/QEMU options retain upstream selection",
+    "partial-start daemon ownership stays in OSVM PID array; test cleanup uses the existing stop/wait owner, no additional reaper or compensating lifecycle route",
+    "native host daemon proof does not certify production sandbox or guests",
+    "old namespaces are not migrated/adopted/cleaned"
+  ]
+}

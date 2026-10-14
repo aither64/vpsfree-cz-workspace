@@ -1,0 +1,1 @@
+import{j as e}from"./vendor-react-MGxsW2Ms.js";import{P as t}from"./PageContainer-CIW71Xo5.js";import{c as i}from"./main-LDE_lf6r.js";function r(a){return e.jsx(t,{variant:a.variant,testId:a.testId,children:e.jsxs("div",{className:i(a.compact?"space-y-2":"space-y-6",a.className),children:[a.banner,a.header,a.tabs,a.children]})})}export{r as D};

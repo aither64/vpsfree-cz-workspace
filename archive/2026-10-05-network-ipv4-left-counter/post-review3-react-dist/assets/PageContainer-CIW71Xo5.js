@@ -1,0 +1,1 @@
+import{j as t}from"./vendor-react-MGxsW2Ms.js";import{c as n}from"./main-LDE_lf6r.js";function c(a){const e=a.variant??"default";return t.jsx("div",{"data-testid":a.testId,className:n("mx-auto w-full",e==="wide"?"max-w-screen-2xl":e==="narrow"?"max-w-screen-lg":"max-w-screen-xl",a.className),children:a.children})}export{c as P};

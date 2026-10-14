@@ -1,0 +1,2891 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index c62dd79..82b7424 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -45,12 +45,14 @@ informal singular forms (`tykání`), for example `můžeš`, `potřebuješ`,
+ `nainstaluj`, and `použij`. Do not use formal `vy` or plural imperatives as a
+ polite form; use plural only when genuinely addressing multiple people.
+ 
+-Before writing or editing user-facing prose, read and apply the workspace skill
+-at `../../../skills/vpsfree-user-facing-writing/SKILL.md` from this initiative
+-worktree. The standard workspace layout defined by the top-level `AGENTS.md`
+-makes that the canonical copy; if it is unavailable, stop and report the
+-missing workspace dependency instead of silently skipping it. Apply the skill
+-directly after technical facts are settled and before committing. Do not hand
++Before writing or editing user-facing prose, read and apply the
++`vpsfree-user-facing-writing` skill from the active agent's configured skill
++catalog. Resolve its `SKILL.md` through that catalog rather than assuming a
++workspace checkout layout. If the skill is unavailable, stop and report the
++missing writing guidance instead of silently skipping it.
++
++Apply the skill directly after technical facts are settled and before committing.
++Do not hand
+ the main rewrite to a context-poor subagent; use a fresh agent only to review
+ the finished result. In Czech pages, translate human-readable comments in
+ scripts and configuration examples while preserving executable lines,
+@@ -75,3 +77,6 @@ or revision counters in them; Git and DokuWiki retain revision history. Never
+ reuse or overwrite a legacy production media ID during the initial migration.
+ After publication, a refreshed capture updates the same canonical media ID so
+ existing pages do not require reference-only edits.
++
++Before changing launcher, capture runtime or provider integration, read
++`cluster/runtime-contract.md` for its ownership, source and lease contracts.
+diff --git a/README.md b/README.md
+index 4160ac8..de08210 100644
+--- a/README.md
++++ b/README.md
+@@ -13,25 +13,38 @@ repository is required.
+ 
+ ## Quick start
+ 
+-Enter the pinned shell, start an isolated cluster, and run the captures:
++From a committed checkout, enter the pinned shell, start an isolated cluster,
++and run the captures:
+ 
+ ```sh
+ nix develop
+-bin/devcluster start kb-captures --topology screenshots
++bin/devcluster start kb-captures --topology screenshots --config /path/to/dedicated-config.json
+ bin/capture --cluster kb-captures --language en
+ bin/validate --update
+ bin/validate
+ bin/devcluster stop kb-captures
+ ```
+ 
+-Bridge networking is the default. Use `--network local` when another bridge
+-cluster is active or bridge privileges are unavailable. Runtime state,
+-certificates, SSH keys, logs, and generated cluster configuration are stored in
+-the ignored `.devcluster/` directory.
+-
+-The capture command reads the cluster's generated test accounts, verifies the
+-pinned vpsAdmin revision, creates or reuses only fixtures owned by this
+-repository, selects the requested locale and the exact `Debian (latest)` VPS
++Bridge networking is the default and requires explicitly dedicated addresses.
++Local networking requires explicit forwarding ports and a multicast UDP port
++that other instances do not use.
++See the [portable runtime contract](cluster/runtime-contract.md) for configuration,
++ownership, source proof, update and recovery. Runtime state, certificates, SSH
++keys, logs and generated configuration stay in the ignored `.devcluster/v2` tree.
++
++The named `kb-runtime` and `capture` flake packages provide
++`vpsfree-kb-devcluster`, `vpsfree-kb-capture` and `vpsfree-kb-validate` for a
++standalone Linux/Nix host. They use the same engine and capture code as the
++checkout commands and require no development workspace or session tool. Packaged
++state defaults to `.devcluster/v2` beneath the invocation directory; capture
++output defaults to that directory itself. `--state-root` selects owned cluster
++state and `--output-root` selects capture artifacts. Code and
++source provenance stay bound to the package. An optional external environment
++can supply a private `--connection` descriptor under the runtime contract.
++
++The capture command verifies the live cluster's prepared source and system
++closures, reads its generated test accounts, creates or reuses only fixtures
++owned by this repository, selects the requested locale and the exact `Debian (latest)` VPS
+ template, and writes PNG files under
+ `screenshots/<language>/<topic>/`. Fixtures can create the two documentation
+ VPSes (`vps` and `playground-vps`), a mounted `data` subdataset, a `nas`
+diff --git a/bin/check b/bin/check
+index 59adcb0..725dde8 100755
+--- a/bin/check
++++ b/bin/check
+@@ -2,14 +2,17 @@
+ set -euo pipefail
+ 
+ validate_args=()
+-if [[ ${1-} == --allow-missing ]]; then
+-  validate_args+=(--allow-missing)
+-  shift
+-fi
+-if (( $# > 0 )); then
+-  echo "Usage: bin/check [--allow-missing]" >&2
+-  exit 1
+-fi
++while (( $# > 0 )); do
++  case "$1" in
++    --allow-missing) validate_args+=(--allow-missing); shift ;;
++    --output-root)
++      [[ $# -ge 2 ]] || exit 1
++      validate_args+=(--output-root "$(realpath -m -- "$2")")
++      shift 2
++      ;;
++    *) echo "Usage: bin/check [--allow-missing] [--output-root DIR]" >&2; exit 1 ;;
++  esac
++done
+ 
+ repo_dir=$(cd -- "$(dirname -- "$0")/.." && pwd)
+ cd "$repo_dir"
+@@ -26,8 +29,8 @@ node tools/check-provenance.cjs
+ node tools/check-dataset-links.cjs
+ node tools/check-i18n.cjs
+ mapfile -d '' shell_fixtures < <(find tests/fixtures -type f -name '*.sh' -print0 | sort -z)
+-bash -n bin/capture bin/contact-sheet bin/devcluster test-runner.sh "${shell_fixtures[@]}"
+-shellcheck bin/capture bin/contact-sheet bin/devcluster test-runner.sh "${shell_fixtures[@]}"
++bash -n bin/validate bin/capture bin/contact-sheet bin/devcluster test-runner.sh "${shell_fixtures[@]}"
++shellcheck bin/validate bin/capture bin/contact-sheet bin/devcluster test-runner.sh "${shell_fixtures[@]}"
+ jq empty captures.json cluster/default-config.json fixtures/production-shape.json
+ nix-instantiate --parse cluster/nix/test.nix >/dev/null
+ while IFS= read -r -d '' nix_test; do
+@@ -36,7 +39,14 @@ done < <(find tests -type f -name '*.nix' -print0 | sort -z)
+ tests_meta=$(mktemp)
+ trap 'rm -f "$tests_meta"' EXIT
+ nix eval .#testsMeta.x86_64-linux --json >"$tests_meta"
+-ruby -c bin/validate
++for ruby_source in runner/validate*.rb cluster/launcher.rb cluster/source-metadata.rb cluster/artifact-lock.rb cluster/lib/kb_*.rb cluster/lib/devcluster_runner.rb tools/test-runtime.rb tools/test-closure.rb tools/test-machine.rb tools/fixtures/fake-kb-runner.rb; do
++  ruby -c "$ruby_source"
++done
++ruby tools/test-runtime.rb
++ruby tools/test-closure.rb
++ruby tools/test-machine.rb
++node tools/test-connection.cjs
++node tools/test-artifacts.cjs
+ ruby -c cluster/seed-production-shape.rb
+ ruby -c tools/check-contract.rb
+ ruby -c tools/check-kb-annotations.rb
+diff --git a/bin/devcluster b/bin/devcluster
+index 6adfe6b..15634bc 100755
+--- a/bin/devcluster
++++ b/bin/devcluster
+@@ -1,1243 +1,5 @@
+ #!/usr/bin/env bash
+ set -euo pipefail
+ 
+-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+-REPO_ROOT="$(cd -- "$SCRIPT_DIR/.." && pwd)"
+-CLUSTER_DIR="$REPO_ROOT"
+-STATE_ROOT="$REPO_ROOT/.devcluster"
+-CERT_DIR="$STATE_ROOT/certs/default"
+-SSH_DIR="$STATE_ROOT/ssh"
+-SSH_KEY="$SSH_DIR/id_ed25519"
+-DEFAULT_CONFIG_FILE="$REPO_ROOT/cluster/default-config.json"
+-
+-usage() {
+-  cat <<'EOF'
+-Usage:
+-  devcluster start <slug> [--topology single|dual|storage] [--network bridge|local] [--force] [--sudo]
+-  devcluster stop <slug>
+-  devcluster status <slug>
+-  devcluster gcroots [--cleanup] [<slug>...]
+-  devcluster urls <slug>
+-  devcluster config <slug>
+-  devcluster refresh <slug>
+-  devcluster update <slug> [services|node1|node2|backuper1|all]
+-  devcluster restart <slug> <machine> <service>
+-  devcluster ssh <slug> <machine> [ssh-options...] [-- <remote-command>...]
+-  devcluster reset <slug>
+-  devcluster cert init [--force]
+-  devcluster cert import <cert-dir> [--force]
+-  devcluster cert show-ca
+-EOF
+-}
+-
+-die() {
+-  printf 'error: %s\n' "$*" >&2
+-  exit 1
+-}
+-
+-need_cmd() {
+-  command -v "$1" >/dev/null 2>&1 || die "missing required command: $1"
+-}
+-
+-cluster_dir() {
+-  printf '%s/clusters/%s\n' "$STATE_ROOT" "$1"
+-}
+-
+-pid_file() {
+-  printf '%s/runner.pid\n' "$(cluster_dir "$1")"
+-}
+-
+-ready_file() {
+-  printf '%s/ready\n' "$(cluster_dir "$1")"
+-}
+-
+-socket_dir() {
+-  local digest
+-  digest="$(printf '%s' "$1" | sha256sum | cut -c1-12)"
+-  printf '/tmp/vpsfree-devcluster-%s\n' "$digest"
+-}
+-
+-topology_file() {
+-  printf '%s/topology\n' "$(cluster_dir "$1")"
+-}
+-
+-network_file() {
+-  printf '%s/network\n' "$(cluster_dir "$1")"
+-}
+-
+-cluster_config_file() {
+-  printf '%s/config.json\n' "$(cluster_dir "$1")"
+-}
+-
+-config_json_for_slug() {
+-  local slug="$1"
+-  local cfg
+-  cfg="$(cluster_config_file "$slug")"
+-
+-  if [ -f "$cfg" ]; then
+-    printf '%s\n' "$cfg"
+-  else
+-    printf '%s\n' "$DEFAULT_CONFIG_FILE"
+-  fi
+-}
+-
+-json_get_file() {
+-  local file="$1"
+-  local filter="$2"
+-  jq -r "$filter" "$file"
+-}
+-
+-config_get() {
+-  local slug="$1"
+-  local filter="$2"
+-  json_get_file "$(config_json_for_slug "$slug")" "$filter"
+-}
+-
+-cert_config_for_slug() {
+-  local slug="${1:-}"
+-
+-  if [ -n "$slug" ]; then
+-    config_json_for_slug "$slug"
+-  else
+-    printf '%s\n' "${VPSADMIN_DEVCLUSTER_CERT_CONFIG:-$DEFAULT_CONFIG_FILE}"
+-  fi
+-}
+-
+-ensure_cluster_config() {
+-  local slug="$1"
+-  local cfg
+-  cfg="$(cluster_config_file "$slug")"
+-
+-  need_cmd jq
+-  mkdir -p "$(cluster_dir "$slug")"
+-
+-  if [ ! -f "$cfg" ]; then
+-    cp "$DEFAULT_CONFIG_FILE" "$cfg"
+-  fi
+-
+-  local tmp
+-  tmp="$(mktemp)"
+-  jq -s '.[0] * .[1]' "$DEFAULT_CONFIG_FILE" "$cfg" > "$tmp"
+-  mv "$tmp" "$cfg"
+-
+-  jq -e . "$cfg" >/dev/null
+-}
+-
+-result_link() {
+-  printf '%s/result-config\n' "$(cluster_dir "$1")"
+-}
+-
+-config_path() {
+-  readlink -f "$(result_link "$1")"
+-}
+-
+-list_cluster_slugs() {
+-  local dir
+-  [ -d "$STATE_ROOT/clusters" ] || return 0
+-
+-  for dir in "$STATE_ROOT"/clusters/*; do
+-    [ -d "$dir" ] || continue
+-    basename "$dir"
+-  done | sort
+-}
+-
+-remove_result_link() {
+-  local slug="$1"
+-  local link
+-  link="$(result_link "$slug")"
+-
+-  if [ -L "$link" ] || [ -e "$link" ]; then
+-    rm -f -- "$link"
+-    printf 'removed GC root: %s\n' "$link"
+-  fi
+-}
+-
+-machine_ip() {
+-  local slug="$1"
+-  local machine="$2"
+-
+-  case "$machine" in
+-    services) config_get "$slug" '.services.ip' ;;
+-    *)
+-      local ip
+-      ip="$(
+-        jq -r --arg machine "$machine" '
+-          .nodes[$machine].ip // .dns.servers[$machine].ip // empty
+-        ' "$(config_json_for_slug "$slug")"
+-      )"
+-      [ -n "$ip" ] || die "unknown machine '$machine'"
+-      printf '%s\n' "$ip"
+-      ;;
+-  esac
+-}
+-
+-topology_machines() {
+-  local slug="$1"
+-  local topology="$2"
+-  local cfg
+-  cfg="$(config_json_for_slug "$slug")"
+-
+-  if ! jq -e --arg topology "$topology" '.topologies[$topology] | type == "array"' "$cfg" >/dev/null; then
+-    die "unknown topology '$topology'"
+-  fi
+-
+-  printf 'services\n'
+-  jq -r --arg topology "$topology" '.topologies[$topology][]' "$cfg"
+-  jq -r '
+-    if .dns.enable == true then
+-      (.dns.servers // {}) | keys[]
+-    else
+-      empty
+-    end
+-  ' "$cfg"
+-}
+-
+-machine_ssh_port() {
+-  local slug="$1"
+-  local machine="$2"
+-
+-  case "$machine" in
+-    services)
+-      printf '10022\n'
+-      return
+-      ;;
+-  esac
+-
+-  local port
+-  port="$(
+-    jq -r --arg machine "$machine" '
+-      .nodes[$machine].sshPort // .dns.servers[$machine].sshPort // empty
+-    ' "$(config_json_for_slug "$slug")"
+-  )"
+-
+-  [ -n "$port" ] || die "unknown machine '$machine'"
+-  printf '%s\n' "$port"
+-}
+-
+-machine_known() {
+-  local slug="$1"
+-  local machine="$2"
+-
+-  case "$machine" in
+-    services) return 0 ;;
+-  esac
+-
+-  jq -e --arg machine "$machine" '
+-    (.nodes | has($machine)) or ((.dns.servers // {}) | has($machine))
+-  ' "$(config_json_for_slug "$slug")" >/dev/null
+-}
+-
+-is_running() {
+-  local pid="$1"
+-  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
+-}
+-
+-cluster_running() {
+-  local slug="$1"
+-  local pid_path
+-  pid_path="$(pid_file "$slug")"
+-  [ -f "$pid_path" ] && is_running "$(cat "$pid_path")"
+-}
+-
+-kill_socket_processes() {
+-  local slug="$1"
+-  local sock_dir pid
+-  sock_dir="$(socket_dir "$slug")"
+-
+-  while IFS= read -r pid; do
+-    [ -n "$pid" ] || continue
+-    [ "$pid" = "$$" ] && continue
+-    kill -TERM "$pid" 2>/dev/null || true
+-  done < <(pgrep -f "$sock_dir" || true)
+-
+-  sleep 2
+-
+-  while IFS= read -r pid; do
+-    [ -n "$pid" ] || continue
+-    [ "$pid" = "$$" ] && continue
+-    kill -KILL "$pid" 2>/dev/null || true
+-  done < <(pgrep -f "$sock_dir" || true)
+-}
+-
+-ensure_ssh_key() {
+-  mkdir -p "$SSH_DIR"
+-
+-  if [ ! -f "$SSH_KEY" ]; then
+-    need_cmd ssh-keygen
+-    ssh-keygen -t ed25519 -N '' -C 'vpsfree-devcluster' -f "$SSH_KEY" >/dev/null
+-  fi
+-}
+-
+-write_cert_ext() {
+-  local path="$1"
+-  local cert_cfg="${2:-${VPSADMIN_DEVCLUSTER_CERT_CONFIG:-$DEFAULT_CONFIG_FILE}}"
+-  local webui_domain
+-
+-  need_cmd jq
+-  webui_domain="$(cert_common_name "$cert_cfg")"
+-
+-  cat > "$path" <<EOF
+-authorityKeyIdentifier=keyid,issuer
+-basicConstraints=CA:FALSE
+-keyUsage = digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment
+-extendedKeyUsage = serverAuth
+-subjectAltName = @alt_names
+-
+-[ req_distinguished_name ]
+-C  = CZ
+-ST = Czech Republic
+-L  = Prague
+-O  = vpsFree.cz
+-CN = $webui_domain
+-
+-[alt_names]
+-$(cert_required_domains "$cert_cfg" | awk '{ printf "DNS.%d = %s\n", NR, $0 }')
+-EOF
+-}
+-
+-cert_common_name() {
+-  local cert_cfg="$1"
+-  jq -r '.domains.webui // (.domains | values[0])' "$cert_cfg"
+-}
+-
+-cert_required_domains() {
+-  local cert_cfg="$1"
+-  jq -r '
+-    [
+-      (.domains | values[]),
+-      (.tmpDomains | values[])
+-    ]
+-    | map(select(. != null and . != ""))
+-    | unique[]
+-  ' "$cert_cfg"
+-}
+-
+-cert_missing_domains() {
+-  local cert_cfg="$1"
+-  local cert="$CERT_DIR/vpsadmin-cert.crt"
+-  local san status=0 domain
+-
+-  san="$(openssl x509 -in "$cert" -noout -ext subjectAltName 2>/dev/null || true)"
+-
+-  while IFS= read -r domain; do
+-    [ -n "$domain" ] || continue
+-    if ! grep -F "DNS:$domain" <<<"$san" >/dev/null; then
+-      printf '%s\n' "$domain"
+-      status=1
+-    fi
+-  done < <(cert_required_domains "$cert_cfg")
+-
+-  return "$status"
+-}
+-
+-cert_reissue_server() {
+-  local cert_cfg="${1:-${VPSADMIN_DEVCLUSTER_CERT_CONFIG:-$DEFAULT_CONFIG_FILE}}"
+-  local -a passin_args=(-passin pass:)
+-
+-  if [ -n "${VPSADMIN_DEVCLUSTER_CA_PASSPHRASE:-}" ]; then
+-    passin_args=(-passin env:VPSADMIN_DEVCLUSTER_CA_PASSPHRASE)
+-  fi
+-
+-  need_cmd openssl
+-  [ -f "$CERT_DIR/vpsadmin-ca.crt" ] || die "CA certificate not found; run 'devcluster cert init'"
+-  [ -f "$CERT_DIR/vpsadmin-ca.key" ] || die "CA key not found; cannot reissue server certificate"
+-
+-  if ! openssl pkey -in "$CERT_DIR/vpsadmin-ca.key" -noout "${passin_args[@]}" >/dev/null 2>&1; then
+-    return 2
+-  fi
+-
+-  if [ ! -f "$CERT_DIR/vpsadmin-cert.key" ]; then
+-    openssl genrsa -out "$CERT_DIR/vpsadmin-cert.key" 2048 >/dev/null 2>&1
+-  fi
+-
+-  write_cert_ext "$CERT_DIR/vpsadmin-cert.ext" "$cert_cfg"
+-  openssl req -new \
+-    -key "$CERT_DIR/vpsadmin-cert.key" \
+-    -out "$CERT_DIR/vpsadmin-cert.csr" \
+-    -subj "/CN=$(cert_common_name "$cert_cfg")" >/dev/null 2>&1
+-
+-  local -a serial_args=(-CAcreateserial)
+-  if [ -f "$CERT_DIR/vpsadmin-ca.srl" ]; then
+-    serial_args=(-CAserial "$CERT_DIR/vpsadmin-ca.srl")
+-  fi
+-
+-  local tmp_cert="$CERT_DIR/vpsadmin-cert.crt.tmp"
+-  openssl x509 -req \
+-    -in "$CERT_DIR/vpsadmin-cert.csr" \
+-    -CA "$CERT_DIR/vpsadmin-ca.crt" \
+-    -CAkey "$CERT_DIR/vpsadmin-ca.key" \
+-    "${passin_args[@]}" \
+-    "${serial_args[@]}" \
+-    -out "$tmp_cert" \
+-    -days 3650 -sha256 \
+-    -extfile "$CERT_DIR/vpsadmin-cert.ext" >/dev/null 2>&1
+-  mv "$tmp_cert" "$CERT_DIR/vpsadmin-cert.crt"
+-}
+-
+-ensure_cert_domains() {
+-  local cert_cfg="$1"
+-  local missing
+-  missing="$(cert_missing_domains "$cert_cfg" || true)"
+-  if [ -z "$missing" ]; then
+-    return 0
+-  fi
+-
+-  printf 'Reissuing server certificate to cover missing domains:\n%s\n' "$missing"
+-  if cert_reissue_server "$cert_cfg"; then
+-    return
+-  fi
+-
+-  printf 'Existing CA key cannot sign unattended; generating a fresh devcluster CA\n'
+-  cert_init --force
+-
+-  missing="$(cert_missing_domains "$cert_cfg" || true)"
+-  if [ -n "$missing" ]; then
+-    printf 'Reissuing server certificate to cover missing domains:\n%s\n' "$missing"
+-    cert_reissue_server "$cert_cfg"
+-  fi
+-}
+-
+-cert_init() {
+-  local force=0
+-  while [ $# -gt 0 ]; do
+-    case "$1" in
+-      --force) force=1 ;;
+-      *) usage; exit 2 ;;
+-    esac
+-    shift
+-  done
+-
+-  need_cmd openssl
+-  mkdir -p "$CERT_DIR"
+-
+-  if [ "$force" -ne 1 ] && [ -f "$CERT_DIR/vpsadmin-cert.crt" ]; then
+-    die "certificate already exists in $CERT_DIR; use --force to replace it"
+-  fi
+-
+-  rm -f "$CERT_DIR"/vpsadmin-ca.* "$CERT_DIR"/vpsadmin-cert.*
+-  openssl genrsa -out "$CERT_DIR/vpsadmin-ca.key" 2048 >/dev/null 2>&1
+-  openssl req -x509 -new -nodes \
+-    -key "$CERT_DIR/vpsadmin-ca.key" \
+-    -sha256 -days 3650 \
+-    -subj "/C=CZ/ST=Czech Republic/L=Prague/O=vpsFree.cz/CN=vpsadmin-devcluster-ca" \
+-    -out "$CERT_DIR/vpsadmin-ca.crt" >/dev/null 2>&1
+-  openssl genrsa -out "$CERT_DIR/vpsadmin-cert.key" 2048 >/dev/null 2>&1
+-  write_cert_ext "$CERT_DIR/vpsadmin-cert.ext"
+-  openssl req -new \
+-    -key "$CERT_DIR/vpsadmin-cert.key" \
+-    -out "$CERT_DIR/vpsadmin-cert.csr" \
+-    -subj "/CN=$(cert_common_name "${VPSADMIN_DEVCLUSTER_CERT_CONFIG:-$DEFAULT_CONFIG_FILE}")" >/dev/null 2>&1
+-  openssl x509 -req \
+-    -in "$CERT_DIR/vpsadmin-cert.csr" \
+-    -CA "$CERT_DIR/vpsadmin-ca.crt" \
+-    -CAkey "$CERT_DIR/vpsadmin-ca.key" \
+-    -CAcreateserial \
+-    -out "$CERT_DIR/vpsadmin-cert.crt" \
+-    -days 3650 -sha256 \
+-    -extfile "$CERT_DIR/vpsadmin-cert.ext" >/dev/null 2>&1
+-
+-  cert_show_ca
+-}
+-
+-cert_import() {
+-  local force=0 src=""
+-  while [ $# -gt 0 ]; do
+-    case "$1" in
+-      --force) force=1 ;;
+-      --source)
+-        shift
+-        [ $# -gt 0 ] || die "missing certificate directory after --source"
+-        src="$1"
+-        ;;
+-      --*) usage; exit 2 ;;
+-      *)
+-        [ -z "$src" ] || {
+-          usage
+-          exit 2
+-        }
+-        src="$1"
+-        ;;
+-    esac
+-    shift
+-  done
+-
+-  src="${src:-${VPSADMIN_DEVCLUSTER_CERT_IMPORT_DIR:-}}"
+-  [ -n "$src" ] || die "missing certificate directory"
+-  [ -d "$src" ] || die "$src not found"
+-
+-  local required
+-  for required in \
+-    vpsadmin-ca.crt \
+-    vpsadmin-ca.key \
+-    vpsadmin-cert.crt \
+-    vpsadmin-cert.key
+-  do
+-    [ -f "$src/$required" ] || die "$src/$required not found"
+-  done
+-
+-  mkdir -p "$CERT_DIR"
+-
+-  if [ "$force" -ne 1 ] && [ -f "$CERT_DIR/vpsadmin-cert.crt" ]; then
+-    die "certificate already exists in $CERT_DIR; use --force to replace it"
+-  fi
+-
+-  rm -f "$CERT_DIR"/vpsadmin-ca.* "$CERT_DIR"/vpsadmin-cert.*
+-  cp "$src"/vpsadmin-ca.crt "$src"/vpsadmin-ca.key "$CERT_DIR"/
+-  cp "$src"/vpsadmin-cert.crt "$src"/vpsadmin-cert.key "$CERT_DIR"/
+-
+-  local optional
+-  for optional in vpsadmin-ca.srl vpsadmin-cert.csr vpsadmin-cert.ext; do
+-    if [ -f "$src/$optional" ]; then
+-      cp "$src/$optional" "$CERT_DIR"/
+-    fi
+-  done
+-
+-  local cert_cfg="${VPSADMIN_DEVCLUSTER_CERT_CONFIG:-$DEFAULT_CONFIG_FILE}"
+-  ensure_cert_domains "$cert_cfg"
+-  cert_show_ca
+-}
+-
+-cert_show_ca() {
+-  [ -f "$CERT_DIR/vpsadmin-ca.crt" ] || die "CA certificate not found; run 'devcluster cert init'"
+-
+-  printf 'CA certificate: %s\n' "$CERT_DIR/vpsadmin-ca.crt"
+-  if command -v openssl >/dev/null 2>&1; then
+-    openssl x509 -in "$CERT_DIR/vpsadmin-ca.crt" -noout -subject -fingerprint -sha256
+-  fi
+-}
+-
+-ensure_certs() {
+-  local slug="${1:-}"
+-  local cert_cfg
+-  cert_cfg="$(cert_config_for_slug "$slug")"
+-
+-  if [ -f "$CERT_DIR/vpsadmin-cert.crt" ] && [ -f "$CERT_DIR/vpsadmin-cert.key" ]; then
+-    ensure_cert_domains "$cert_cfg"
+-    return
+-  fi
+-
+-  if [ -n "${VPSADMIN_DEVCLUSTER_CERT_IMPORT_DIR:-}" ]; then
+-    cert_import
+-  else
+-    cert_init
+-  fi
+-
+-  ensure_cert_domains "$cert_cfg"
+-}
+-
+-nix_common_env() {
+-  local slug="$1"
+-  local topology="$2"
+-  local network="$3"
+-
+-  export VPSADMIN_DEVCLUSTER_SLUG="$slug"
+-  export VPSADMIN_DEVCLUSTER_TOPOLOGY="$topology"
+-  export VPSADMIN_DEVCLUSTER_NETWORK="$network"
+-  export VPSADMIN_DEVCLUSTER_CERT_DIR="$CERT_DIR"
+-  export VPSADMIN_DEVCLUSTER_CONFIG_FILE
+-  VPSADMIN_DEVCLUSTER_CONFIG_FILE="$(cluster_config_file "$slug")"
+-  export VPSADMIN_DEVCLUSTER_SSH_PUBKEY="$SSH_KEY.pub"
+-  export VPSADMIN_DEVCLUSTER_VPSADMIN_SOURCE=""
+-  export VPSADMIN_DEVCLUSTER_VPSADMINOS_SOURCE=""
+-  export VPSADMIN_DEVCLUSTER_HAVEAPI_SOURCE=""
+-  export VPSADMIN_DEVCLUSTER_CONFIG_SOURCE=""
+-  export VPSADMIN_DEVCLUSTER_NOTIFICATION_TEMPLATES_SOURCE=""
+-  export VPSADMIN_DEVCLUSTER_WEB_SOURCE=""
+-  export VPSADMIN_DEVCLUSTER_VPSF_STATUS_SOURCE=""
+-  export VPSADMIN_DEVCLUSTER_VPSADMIN_GO_CLIENT_SOURCE=""
+-  export VPSADMIN_DEVCLUSTER_TELEGRAM_SECRETS=""
+-  export VPSADMIN_DEVCLUSTER_TELEGRAM_ENABLE=0
+-}
+-
+-build_config() {
+-  local slug="$1"
+-  local topology="$2"
+-  local network="$3"
+-  local dir
+-  dir="$(cluster_dir "$slug")"
+-  mkdir -p "$dir"
+-  ensure_cluster_config "$slug"
+-
+-  nix_common_env "$slug" "$topology" "$network"
+-
+-  nix build \
+-    --impure \
+-    --out-link "$(result_link "$slug")" \
+-    "git+file://$CLUSTER_DIR#cluster-config"
+-}
+-
+-ssh_opts() {
+-  local slug="$1"
+-  local machine="${2:-}"
+-  printf -- '-i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null -o LogLevel=ERROR' "$SSH_KEY"
+-
+-  if [ -n "$machine" ] && [ "$(cluster_network "$slug")" = "local" ]; then
+-    printf ' -p %s' "$(machine_ssh_port "$slug" "$machine")"
+-  fi
+-}
+-
+-scp_opts() {
+-  local slug="$1"
+-  local machine="${2:-}"
+-  printf -- '-i %s -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o GlobalKnownHostsFile=/dev/null -o LogLevel=ERROR' "$SSH_KEY"
+-
+-  if [ -n "$machine" ] && [ "$(cluster_network "$slug")" = "local" ]; then
+-    printf ' -P %s' "$(machine_ssh_port "$slug" "$machine")"
+-  fi
+-}
+-
+-machine_host() {
+-  local slug="$1"
+-  local machine="$2"
+-
+-  if [ "$(cluster_network "$slug")" = "local" ]; then
+-    printf '127.0.0.1\n'
+-  else
+-    machine_ip "$slug" "$machine"
+-  fi
+-}
+-
+-ssh_cmd() {
+-  local slug="$1"
+-  local machine="$2"
+-  shift 2
+-  local host
+-  host="$(machine_host "$slug" "$machine")"
+-  # shellcheck disable=SC2046
+-  # shellcheck disable=SC2029
+-  ssh $(ssh_opts "$slug" "$machine") "root@$host" "$@"
+-}
+-
+-wait_for_seeded_pool() {
+-  local slug="$1"
+-  local pool_fs
+-  pool_fs="$(config_get "$slug" '.seed.pools.filesystem')"
+-
+-  printf 'Waiting for services seed to publish pool %s\n' "$pool_fs"
+-  ssh_cmd "$slug" services sh -s -- "$pool_fs" <<'EOF'
+-set -eu
+-pool_fs="$1"
+-
+-for _ in $(seq 1 180); do
+-  if systemctl is-active --quiet vpsadmin-api.service \
+-    && mysql -N -B vpsadmin -e 'SELECT filesystem FROM pools' 2>/dev/null | grep -Fx "$pool_fs" >/dev/null; then
+-    exit 0
+-  fi
+-
+-  sleep 1
+-done
+-
+-echo "pool $pool_fs was not seeded in time" >&2
+-exit 1
+-EOF
+-}
+-
+-refresh_nodes_after_seed() {
+-  local slug="$1"
+-  local topology pool_fs cfg
+-  topology="$(cluster_topology "$slug")"
+-  pool_fs="$(config_get "$slug" '.seed.pools.filesystem')"
+-  cfg="$(config_json_for_slug "$slug")"
+-
+-  wait_for_seeded_pool "$slug"
+-
+-  local machine role
+-  while IFS= read -r machine; do
+-    [ "$machine" != "services" ] || continue
+-
+-    role="$(jq -r --arg machine "$machine" '.nodes[$machine].role // empty' "$cfg")"
+-    [ "$role" = "node" ] || continue
+-
+-    printf 'Preparing %s pool runtime and restarting nodectld\n' "$machine"
+-    ssh_cmd "$slug" "$machine" sh -s -- "$pool_fs" <<'EOF'
+-set -eu
+-pool_fs="$1"
+-pool_name="${pool_fs%%/*}"
+-
+-for _ in $(seq 1 180); do
+-  zpool list -H "$pool_name" >/dev/null 2>&1 && break
+-  sleep 1
+-done
+-
+-if ! zpool list -H "$pool_name" >/dev/null 2>&1; then
+-  echo "pool $pool_name was not ready in time" >&2
+-  zpool list || true
+-  exit 1
+-fi
+-
+-for ds in \
+-  "$pool_fs/vpsadmin" \
+-  "$pool_fs/vpsadmin/config" \
+-  "$pool_fs/vpsadmin/download" \
+-  "$pool_fs/vpsadmin/mount"
+-do
+-  zfs list -H "$ds" >/dev/null 2>&1 || zfs create -p "$ds"
+-done
+-
+-mkdir -p "/$pool_fs/vpsadmin/config/vps"
+-pool_parent="$(dirname "$pool_fs")"
+-[ "$pool_parent" != "." ] || pool_parent="$pool_fs"
+-mkdir -p "/$pool_parent/hook/ct"
+-
+-for _ in $(seq 1 180); do
+-  if test -S /run/osctl/osctld.sock \
+-    && osctl pool list -H -o name 2>/dev/null | grep -Fx "$pool_name" >/dev/null \
+-    && osctl --pool "$pool_name" group show /default >/dev/null 2>&1; then
+-    break
+-  fi
+-  sleep 1
+-done
+-
+-if ! test -S /run/osctl/osctld.sock \
+-  || ! osctl --pool "$pool_name" group show /default >/dev/null 2>&1; then
+-  echo "osctld pool $pool_name and group /default were not ready in time" >&2
+-  exit 1
+-fi
+-
+-add_pool_device() {
+-  err="$(mktemp)"
+-  if osctl --pool "$pool_name" group devices add -p /default "$@" 2>"$err"; then
+-    rm -f "$err"
+-    return 0
+-  fi
+-
+-  if grep -q 'device already exists' "$err"; then
+-    rm -f "$err"
+-    return 0
+-  fi
+-
+-  cat "$err" >&2
+-  rm -f "$err"
+-  return 1
+-}
+-
+-add_pool_device char 10 200 rwm /dev/net/tun
+-add_pool_device char 10 229 rwm /dev/fuse
+-add_pool_device char 108 0 rwm /dev/ppp
+-add_pool_device char 10 232 rwm /dev/kvm
+-
+-sv restart nodectld >/dev/null
+-for _ in $(seq 1 90); do
+-  if sv check nodectld >/dev/null 2>&1 \
+-    && test -S /run/nodectl/nodectld.sock \
+-    && nodectl status 2>/dev/null | grep -q 'State: running'; then
+-    exit 0
+-  fi
+-
+-  sleep 1
+-done
+-
+-nodectl status
+-exit 1
+-EOF
+-  done < <(topology_machines "$slug" "$topology")
+-}
+-
+-cluster_topology() {
+-  local slug="$1"
+-  if [ -f "$(topology_file "$slug")" ]; then
+-    cat "$(topology_file "$slug")"
+-  else
+-    printf 'single\n'
+-  fi
+-}
+-
+-cluster_network() {
+-  local slug="$1"
+-  if [ -f "$(network_file "$slug")" ]; then
+-    cat "$(network_file "$slug")"
+-  else
+-    printf 'bridge\n'
+-  fi
+-}
+-
+-start_cluster() {
+-  local slug="${1:-}"
+-  [ -n "$slug" ] || die "missing slug"
+-  shift
+-
+-  local topology="single"
+-  local network="${VPSADMIN_DEVCLUSTER_NETWORK:-bridge}"
+-  local force=0
+-  local use_sudo="${VPSADMIN_DEVCLUSTER_USE_SUDO:-0}"
+-
+-  while [ $# -gt 0 ]; do
+-    case "$1" in
+-      --topology)
+-        topology="${2:-}"
+-        [ -n "$topology" ] || die "--topology requires a value"
+-        shift 2
+-        ;;
+-      --network)
+-        network="${2:-}"
+-        [ -n "$network" ] || die "--network requires a value"
+-        shift 2
+-        ;;
+-      --force)
+-        force=1
+-        shift
+-        ;;
+-      --sudo)
+-        use_sudo=1
+-        shift
+-        ;;
+-      *)
+-        usage
+-        exit 2
+-        ;;
+-    esac
+-  done
+-
+-  ensure_cluster_config "$slug"
+-  topology_machines "$slug" "$topology" >/dev/null
+-  case "$network" in
+-    bridge|local) ;;
+-    *) die "unknown network mode '$network'" ;;
+-  esac
+-
+-  local pid_path
+-  pid_path="$(pid_file "$slug")"
+-  if [ -f "$pid_path" ] && is_running "$(cat "$pid_path")"; then
+-    die "cluster '$slug' is already running with PID $(cat "$pid_path")"
+-  fi
+-
+-  local service_ip
+-  service_ip="$(machine_ip "$slug" services)"
+-  if [ "$network" = "bridge" ] && [ "$force" -ne 1 ] && ping -c 1 -W 1 "$service_ip" >/dev/null 2>&1; then
+-    die "$service_ip responds; stop the existing dev frontend or use --force"
+-  fi
+-
+-  kill_socket_processes "$slug"
+-  ensure_ssh_key
+-  ensure_certs "$slug"
+-
+-  build_config "$slug" "$topology" "$network"
+-  printf '%s\n' "$topology" > "$(topology_file "$slug")"
+-  printf '%s\n' "$network" > "$(network_file "$slug")"
+-
+-  local dir log ready sock_dir
+-  dir="$(cluster_dir "$slug")"
+-  log="$dir/runner.log"
+-  ready="$(ready_file "$slug")"
+-  sock_dir="$(socket_dir "$slug")"
+-  rm -f "$ready" "$pid_path"
+-  rm -rf "$sock_dir"
+-  mkdir -p "$sock_dir"
+-  printf '\n=== devcluster start %s ===\n' "$(date -Is)" >>"$log"
+-
+-  local -a command=(
+-    nix run
+-    --impure
+-    "git+file://$CLUSTER_DIR#runner"
+-    --
+-    start
+-    --config "$(config_path "$slug")"
+-    --state-dir "$dir/state"
+-    --sock-dir "$sock_dir"
+-    --pid-file "$pid_path"
+-    --ready-file "$ready"
+-  )
+-
+-  if [ "$use_sudo" = "1" ]; then
+-    command=(sudo -E "${command[@]}")
+-  fi
+-
+-  (
+-    cd "$REPO_ROOT"
+-    exec nohup setsid "${command[@]}"
+-  ) >>"$log" 2>&1 &
+-
+-  local launcher_pid=$!
+-  printf 'launcher pid: %s\n' "$launcher_pid" >>"$log"
+-
+-  printf 'Starting cluster %s (%s, %s network), log: %s\n' "$slug" "$topology" "$network" "$log"
+-
+-  for _ in $(seq 1 900); do
+-    if [ -f "$ready" ]; then
+-      refresh_nodes_after_seed "$slug"
+-      urls_cluster "$slug"
+-      return
+-    fi
+-
+-    if [ -f "$pid_path" ] && ! is_running "$(cat "$pid_path")"; then
+-      die "runner exited before becoming ready; see $log"
+-    fi
+-
+-    if [ ! -f "$pid_path" ] && ! is_running "$launcher_pid"; then
+-      die "launcher exited before cluster became ready; see $log"
+-    fi
+-
+-    sleep 1
+-  done
+-
+-  die "timed out waiting for cluster readiness; see $log"
+-}
+-
+-stop_cluster() {
+-  local slug="${1:-}"
+-  [ -n "$slug" ] || die "missing slug"
+-
+-  local pid_path pid
+-  pid_path="$(pid_file "$slug")"
+-  if [ ! -f "$pid_path" ]; then
+-    rm -f "$(ready_file "$slug")"
+-    kill_socket_processes "$slug"
+-    remove_result_link "$slug"
+-    printf 'cluster %s was not running\n' "$slug"
+-    return
+-  fi
+-
+-  pid="$(cat "$pid_path")"
+-
+-  if ! is_running "$pid"; then
+-    rm -f "$pid_path" "$(ready_file "$slug")"
+-    kill_socket_processes "$slug"
+-    remove_result_link "$slug"
+-    printf 'cluster %s was not running\n' "$slug"
+-    return
+-  fi
+-
+-  kill -TERM "$pid" 2>/dev/null || true
+-
+-  for _ in $(seq 1 120); do
+-    is_running "$pid" || {
+-      kill_socket_processes "$slug"
+-      remove_result_link "$slug"
+-      printf 'cluster %s stopped\n' "$slug"
+-      return
+-    }
+-    sleep 1
+-  done
+-
+-  kill -KILL "$pid" 2>/dev/null || true
+-  kill_socket_processes "$slug"
+-  remove_result_link "$slug"
+-  printf 'cluster %s killed after timeout\n' "$slug"
+-}
+-
+-status_cluster() {
+-  local slug="${1:-}"
+-  [ -n "$slug" ] || die "missing slug"
+-
+-  local pid_path
+-  pid_path="$(pid_file "$slug")"
+-
+-  local running=0
+-  if [ -f "$pid_path" ] && is_running "$(cat "$pid_path")"; then
+-    running=1
+-    printf 'cluster: %s\nstatus: running\npid: %s\n' "$slug" "$(cat "$pid_path")"
+-  else
+-    printf 'cluster: %s\nstatus: stopped\n' "$slug"
+-  fi
+-
+-  [ -f "$(topology_file "$slug")" ] && printf 'topology: %s\n' "$(cluster_topology "$slug")"
+-  [ -f "$(network_file "$slug")" ] && printf 'network: %s\n' "$(cluster_network "$slug")"
+-  if [ -f "$(ready_file "$slug")" ]; then
+-    if [ "$running" = "1" ]; then
+-      printf 'ready: yes\n'
+-    else
+-      printf 'ready: stale\n'
+-    fi
+-  fi
+-
+-  if [ -L "$(result_link "$slug")" ]; then
+-    printf 'gcroot: %s\n' "$(result_link "$slug")"
+-  fi
+-}
+-
+-gcroots_cluster() {
+-  local cleanup=0
+-  local -a slugs=()
+-
+-  while [ $# -gt 0 ]; do
+-    case "$1" in
+-      --cleanup)
+-        cleanup=1
+-        ;;
+-      --*)
+-        usage
+-        exit 2
+-        ;;
+-      *)
+-        slugs+=("$1")
+-        ;;
+-    esac
+-    shift
+-  done
+-
+-  if [ "${#slugs[@]}" -eq 0 ]; then
+-    mapfile -t slugs < <(list_cluster_slugs)
+-  fi
+-
+-  local slug link target state
+-  for slug in "${slugs[@]}"; do
+-    link="$(result_link "$slug")"
+-
+-    if cluster_running "$slug"; then
+-      state="running"
+-    elif [ -f "$(ready_file "$slug")" ]; then
+-      state="stopped-stale-ready"
+-    else
+-      state="stopped"
+-    fi
+-
+-    if [ ! -L "$link" ] && [ ! -e "$link" ]; then
+-      printf '%s %s no-gcroot\n' "$slug" "$state"
+-      continue
+-    fi
+-
+-    target="$(readlink -f "$link" 2>/dev/null || true)"
+-
+-    if [ "$cleanup" = "1" ] && [ "$state" != "running" ]; then
+-      remove_result_link "$slug"
+-    else
+-      printf '%s %s %s' "$slug" "$state" "$link"
+-      [ -n "$target" ] && printf ' -> %s' "$target"
+-      printf '\n'
+-    fi
+-  done
+-}
+-
+-urls_cluster() {
+-  local slug="${1:-}"
+-  [ -n "$slug" ] || die "missing slug"
+-  ensure_cluster_config "$slug"
+-  local api_domain adminer_domain auth_domain console_domain webui_domain web_cs_domain web_en_domain mailpit_domain status_domain
+-  local adminer_user adminer_password mailpit_user mailpit_password
+-  api_domain="$(config_get "$slug" '.domains.api')"
+-  adminer_domain="$(config_get "$slug" '.domains.adminer')"
+-  auth_domain="$(config_get "$slug" '.domains.auth')"
+-  console_domain="$(config_get "$slug" '.domains.console')"
+-  webui_domain="$(config_get "$slug" '.domains.webui')"
+-  web_cs_domain="$(config_get "$slug" '.domains.webCs')"
+-  web_en_domain="$(config_get "$slug" '.domains.webEn')"
+-  mailpit_domain="$(config_get "$slug" '.domains.mailpit')"
+-  status_domain="$(config_get "$slug" '.domains.status')"
+-  adminer_user="$(config_get "$slug" '.adminer.webAuth.username')"
+-  adminer_password="$(config_get "$slug" '.adminer.webAuth.password')"
+-  mailpit_user="$(config_get "$slug" '.mail.capture.webAuth.username')"
+-  mailpit_password="$(config_get "$slug" '.mail.capture.webAuth.password')"
+-
+-  cat <<EOF
+-Cluster: $slug
+-Config:  $(cluster_config_file "$slug")
+-Web UI:  https://$webui_domain/
+-Web CS:  https://$web_cs_domain/
+-Web EN:  https://$web_en_domain/
+-API:     https://$api_domain/
+-Auth:    https://$auth_domain/
+-Console: https://$console_domain/
+-Mailpit: https://$mailpit_domain/
+-Status:  https://$status_domain/
+-Adminer: https://$adminer_domain/
+-
+-Admin login: test-admin
+-Admin password: testAdminPassword
+-User login: test-user1
+-User password: testUser1Password
+-User login: test-user2
+-User password: testUser2Password
+-Adminer login: $adminer_user
+-Adminer password: $adminer_password
+-Adminer DB system: MySQL
+-Adminer DB server: 127.0.0.1
+-Adminer DB user: vpsadmin
+-Adminer DB password: testMariadbApiPassword
+-Mailpit login: $mailpit_user
+-Mailpit password: $mailpit_password
+-CA: $CERT_DIR/vpsadmin-ca.crt
+-EOF
+-
+-  if [ "$(cluster_network "$slug")" = "local" ]; then
+-    cat <<EOF
+-
+-Local network forwards:
+-  HTTPS: 127.0.0.1:10443 -> services:443
+-EOF
+-    while IFS= read -r machine; do
+-      printf '  SSH %-10s 127.0.0.1:%s\n' "$machine:" "$(machine_ssh_port "$slug" "$machine")"
+-    done < <(topology_machines "$slug" "$(cluster_topology "$slug")")
+-
+-    cat <<EOF
+-
+-Local browser URLs require these hostnames to resolve to 127.0.0.1 and use
+-port 10443:
+-  https://$webui_domain:10443/
+-  https://$web_cs_domain:10443/
+-  https://$web_en_domain:10443/
+-  https://$api_domain:10443/
+-  https://$auth_domain:10443/
+-  https://$console_domain:10443/
+-  https://$mailpit_domain:10443/
+-  https://$status_domain:10443/
+-  https://$adminer_domain:10443/
+-EOF
+-  fi
+-}
+-
+-config_cluster() {
+-  local slug="${1:-}"
+-  [ -n "$slug" ] || die "missing slug"
+-
+-  ensure_cluster_config "$slug"
+-  printf 'Config: %s\n' "$(cluster_config_file "$slug")"
+-  cat "$(cluster_config_file "$slug")"
+-}
+-
+-update_cluster() {
+-  local slug="${1:-}"
+-  [ -n "$slug" ] || die "missing slug"
+-  local target="${2:-all}"
+-  local topology
+-  topology="$(cluster_topology "$slug")"
+-  local network
+-  network="$(cluster_network "$slug")"
+-
+-  ensure_ssh_key
+-  ensure_certs "$slug"
+-  build_config "$slug" "$topology" "$network"
+-
+-  need_cmd jq
+-
+-  local machines=()
+-  if [ "$target" = "all" ]; then
+-    mapfile -t machines < <(topology_machines "$slug" "$topology")
+-  else
+-    machines=("$target")
+-  fi
+-
+-  local cfg
+-  cfg="$(config_path "$slug")"
+-
+-  local services_updated=0
+-  for machine in "${machines[@]}"; do
+-    local host toplevel opts
+-    host="$(machine_host "$slug" "$machine")"
+-    toplevel="$(jq -r --arg machine "$machine" '.machines[$machine].toplevel // empty' "$cfg")"
+-    [ -n "$toplevel" ] || die "no toplevel found for $machine in $cfg"
+-    opts="$(ssh_opts "$slug" "$machine")"
+-
+-    printf 'Updating %s (%s) to %s\n' "$machine" "$host" "$toplevel"
+-    NIX_SSHOPTS="$opts" nix copy --to "ssh://root@$host" "$toplevel"
+-    # shellcheck disable=SC2086
+-    ssh $opts "root@$host" "$toplevel/bin/switch-to-configuration" switch
+-
+-    if [ "$machine" = "services" ]; then
+-      services_updated=1
+-      # shellcheck disable=SC2086
+-      ssh $opts "root@$host" '
+-        if systemctl cat vpsadmin-devcluster-seed.service >/dev/null 2>&1; then
+-          systemctl restart vpsadmin-api.service
+-        fi
+-      '
+-    fi
+-  done
+-
+-  if [ "$services_updated" = "1" ]; then
+-    refresh_nodes_after_seed "$slug"
+-  fi
+-}
+-
+-restart_service() {
+-  local slug="${1:-}"
+-  local machine="${2:-}"
+-  local service="${3:-}"
+-  [ -n "$slug" ] || die "missing slug"
+-  [ -n "$machine" ] || die "missing machine"
+-  [ -n "$service" ] || die "missing service"
+-
+-  if [ "$machine" = "services" ]; then
+-    ssh_cmd "$slug" "$machine" systemctl restart "$service"
+-  else
+-    ssh_cmd "$slug" "$machine" "sv restart '$service' || sv restart '/run/service/$service' || systemctl restart '$service'"
+-  fi
+-}
+-
+-ssh_cluster() {
+-  local slug="${1:-}"
+-  local machine="${2:-}"
+-  [ -n "$slug" ] || die "missing slug"
+-  [ -n "$machine" ] || die "missing machine"
+-  shift 2
+-
+-  local -a ssh_extra=()
+-  local -a remote_cmd=()
+-  local remote=0
+-
+-  while [ $# -gt 0 ]; do
+-    if [ "$1" = "--" ] && [ "$remote" -eq 0 ]; then
+-      remote=1
+-      shift
+-      continue
+-    fi
+-
+-    if [ "$remote" -eq 1 ]; then
+-      remote_cmd+=("$1")
+-    else
+-      ssh_extra+=("$1")
+-    fi
+-    shift
+-  done
+-
+-  local host
+-  local -a base_opts
+-  host="$(machine_host "$slug" "$machine")"
+-  read -r -a base_opts <<<"$(ssh_opts "$slug" "$machine")"
+-  exec ssh "${base_opts[@]}" "${ssh_extra[@]}" "root@$host" "${remote_cmd[@]}"
+-}
+-
+-reset_cluster() {
+-  local slug="${1:-}"
+-  [ -n "$slug" ] || die "missing slug"
+-
+-  if [ -f "$(pid_file "$slug")" ] && is_running "$(cat "$(pid_file "$slug")")"; then
+-    stop_cluster "$slug"
+-  fi
+-
+-  kill_socket_processes "$slug"
+-  remove_result_link "$slug"
+-  rm -rf "$(cluster_dir "$slug")"
+-  rm -rf "$(socket_dir "$slug")"
+-  printf 'cluster %s state removed\n' "$slug"
+-}
+-
+-main() {
+-  local cmd="${1:-}"
+-  [ -n "$cmd" ] || {
+-    usage
+-    exit 2
+-  }
+-  shift
+-
+-  case "$cmd" in
+-    start) start_cluster "$@" ;;
+-    stop) stop_cluster "$@" ;;
+-    status) status_cluster "$@" ;;
+-    gcroots) gcroots_cluster "$@" ;;
+-    urls) urls_cluster "$@" ;;
+-    config) config_cluster "$@" ;;
+-    refresh) refresh_nodes_after_seed "$@" ;;
+-    update) update_cluster "$@" ;;
+-    restart) restart_service "$@" ;;
+-    ssh) ssh_cluster "$@" ;;
+-    reset) reset_cluster "$@" ;;
+-    cert)
+-      local sub="${1:-}"
+-      [ -n "$sub" ] || {
+-        usage
+-        exit 2
+-      }
+-      shift
+-      case "$sub" in
+-        init) cert_init "$@" ;;
+-        import) cert_import "$@" ;;
+-        show-ca) cert_show_ca "$@" ;;
+-        *) usage; exit 2 ;;
+-      esac
+-      ;;
+-    -h|--help|help) usage ;;
+-    *) usage; exit 2 ;;
+-  esac
+-}
+-
+-main "$@"
++repo_dir=$(cd -- "$(dirname -- "$0")/.." && pwd)
++exec ruby "$repo_dir/cluster/launcher.rb" "$@"
+diff --git a/bin/validate b/bin/validate
+index a8c2319..b872224 100755
+--- a/bin/validate
++++ b/bin/validate
+@@ -1,237 +1,4 @@
+-#!/usr/bin/env ruby
+-# frozen_string_literal: true
+-
+-require 'digest'
+-require 'json'
+-
+-ROOT = File.expand_path('..', __dir__)
+-MANIFEST_PATH = File.join(ROOT, 'captures.json')
+-RESULTS_PATH = File.join(ROOT, 'tmp/capture-results.json')
+-UPDATE = ARGV.delete('--update')
+-ALLOW_MISSING = ARGV.delete('--allow-missing')
+-abort "Unknown arguments: #{ARGV.join(' ')}" unless ARGV.empty?
+-
+-manifest = JSON.parse(File.read(MANIFEST_PATH))
+-assets = manifest.fetch('assets')
+-errors = []
+-languages = %w[cs en]
+-
+-errors << "expected schema 5, found #{manifest['schema'].inspect}" unless manifest['schema'] == 5
+-errors << "invalid top-level vpsAdmin commit" \
+-  unless manifest.fetch('vpsadmin_commit', '').match?(/\A[0-9a-f]{40}\z/)
+-errors << "expected 60 concepts, found #{assets.length}" unless assets.length == 60
+-variant_count = assets.sum { |asset| asset.fetch('variants').length }
+-errors << "expected 120 variants, found #{variant_count}" unless variant_count == 120
+-references = languages.to_h do |language|
+-  [language, assets.sum { |asset| asset.dig('variants', language, 'wiki', 'source_pages')&.length.to_i }]
+-end
+-errors << "expected 66 Czech page references, found #{references.fetch('cs')}" \
+-  unless references.fetch('cs') == 66
+-errors << "expected 61 English page references, found #{references.fetch('en')}" \
+-  unless references.fetch('en') == 61
+-
+-%w[id checkpoint].each do |field|
+-  duplicates = assets.group_by { |asset| asset.fetch(field) }
+-                     .select { |_value, matches| matches.length > 1 }.keys
+-  errors << "duplicate #{field}: #{duplicates.join(', ')}" unless duplicates.empty?
+-end
+-
+-allowed_fixtures = %w[
+-  account base-vps kvm-storage nixos-generations public-key second-vps snapshot
+-  ssh-host-key traffic-samples
+-]
+-allowed_statuses = %w[pending reviewed uploaded]
+-actual = {}
+-outputs = []
+-media_ids = []
+-legacy_ids = languages.to_h { |language| [language, []] }
+-
+-assets.each do |asset|
+-  id = asset.fetch('id')
+-  topic = asset.fetch('topic')
+-  checkpoint = asset.fetch('checkpoint')
+-  slug = checkpoint.split('/').last
+-  errors << "#{id}: ID must be semantic" \
+-    unless id.match?(/\A[a-z0-9-]+\/[a-z][a-z0-9-]*\z/)
+-  errors << "#{id}: checkpoint must equal ID" unless checkpoint == id
+-  errors << "#{id}: unsupported driver #{asset['driver']}" \
+-    unless %w[webui console cli].include?(asset['driver'])
+-  errors << "#{id}: missing scenario module" \
+-    unless File.exist?(File.join(ROOT, 'scenarios', "#{asset.fetch('scenario')}.cjs"))
+-  unknown_fixtures = asset.fetch('fixtures') - allowed_fixtures
+-  errors << "#{id}: unknown fixtures #{unknown_fixtures.join(', ')}" unless unknown_fixtures.empty?
+-  variant_languages = asset.fetch('variants').keys.sort
+-  errors << "#{id}: variants must be cs and en" unless variant_languages == languages
+-
+-  languages.each do |language|
+-    variant = asset.dig('variants', language)
+-    next unless variant
+-
+-    key = "#{language}:#{id}"
+-    expected_output = "screenshots/#{language}/#{topic}/#{slug}.png"
+-    expected_media = [language, 'screenshots', 'vpsadmin', topic, "#{slug}.png"].join(':')
+-    outputs << variant.fetch('output')
+-    media_ids << variant.dig('wiki', 'media_id')
+-    errors << "#{key}: unexpected output #{variant['output']}" \
+-      unless variant['output'] == expected_output
+-    errors << "#{key}: unexpected media ID" \
+-      unless variant.dig('wiki', 'media_id') == expected_media
+-    errors << "#{key}: invalid review status #{variant['review_status'].inspect}" \
+-      unless allowed_statuses.include?(variant['review_status'])
+-    if language == 'cs' && variant.dig('wiki', 'source_pages')&.empty? != false
+-      errors << "#{key}: has no source pages"
+-    end
+-    [variant['legacy'], *variant.fetch('legacy_aliases', [])].compact.each do |legacy|
+-      unless %w[media_id revision md5 sha256].all? { |field| legacy.key?(field) }
+-        errors << "#{key}: incomplete legacy media identity"
+-      end
+-      legacy_ids.fetch(language) << legacy['media_id']
+-    end
+-
+-    file = File.join(ROOT, variant.fetch('output'))
+-    unless File.exist?(file)
+-      errors << "#{key}: missing #{variant['output']}" unless ALLOW_MISSING
+-      next
+-    end
+-
+-    data = File.binread(file)
+-    errors << "#{key}: not a PNG" unless data.start_with?("\x89PNG\r\n\x1a\n".b)
+-    width, height = data.byteslice(16, 8)&.unpack('NN')
+-    errors << "#{key}: invalid dimensions" unless width&.positive? && height&.positive?
+-    actual[key] = {
+-      'dimensions' => { 'width' => width, 'height' => height },
+-      'sha256' => Digest::SHA256.hexdigest(data)
+-    }
+-  end
+-end
+-
+-duplicate_outputs = outputs.tally.select { |_output, count| count > 1 }.keys
+-errors << "duplicate outputs: #{duplicate_outputs.join(', ')}" unless duplicate_outputs.empty?
+-duplicate_media_ids = media_ids.tally.select { |_id, count| count > 1 }.keys
+-errors << "duplicate media IDs: #{duplicate_media_ids.join(', ')}" unless duplicate_media_ids.empty?
+-legacy_ids.each do |language, ids|
+-  duplicates = ids.tally.select { |_id, count| count > 1 }.keys
+-  errors << "duplicate #{language} legacy media IDs: #{duplicates.join(', ')}" unless duplicates.empty?
+-end
+-
+-unless ALLOW_MISSING
+-  actual.group_by { |_key, values| values.fetch('sha256') }.each_value do |matches|
+-    concepts = matches.map { |key, _values| key.split(':', 2).last }.uniq
+-    next if concepts.length == 1
+-
+-    errors << "identical PNGs for unrelated concepts: #{matches.map(&:first).join(', ')}"
+-  end
+-end
+-
+-results = []
+-if UPDATE
+-  if File.exist?(RESULTS_PATH)
+-    results = JSON.parse(File.read(RESULTS_PATH))
+-  else
+-    errors << "capture results are missing: #{RESULTS_PATH}"
+-  end
+-
+-  duplicate_results = results.group_by { |item| [item.fetch('language'), item.fetch('id')] }
+-                             .select { |_key, matches| matches.length > 1 }.keys
+-  errors << "duplicate capture results: #{duplicate_results.join(', ')}" unless duplicate_results.empty?
+-
+-  assets_by_id = assets.to_h { |asset| [asset.fetch('id'), asset] }
+-  results.each do |result|
+-    asset = assets_by_id[result.fetch('id')]
+-    language = result.fetch('language')
+-    variant = asset&.dig('variants', language)
+-    unless asset && variant
+-      errors << "unexpected capture result: #{language}:#{result.fetch('id')}"
+-      next
+-    end
+-
+-    %w[checkpoint driver].each do |field|
+-      errors << "#{language}:#{asset['id']}: capture result #{field} differs" \
+-        unless result[field] == asset[field]
+-    end
+-    errors << "#{language}:#{asset['id']}: capture result output differs" \
+-      unless result['output'] == variant['output']
+-    values = actual["#{language}:#{asset.fetch('id')}"]
+-    errors << "#{language}:#{asset['id']}: capture result file is missing" unless values
+-    if values && result['sha256'] != values['sha256']
+-      errors << "#{language}:#{asset['id']}: capture result SHA-256 differs from file"
+-    end
+-    if variant['review_status'] != 'pending' && values && variant['sha256'] != values['sha256']
+-      errors << "#{language}:#{asset['id']}: #{variant['review_status']} capture cannot be overwritten"
+-    end
+-  end
+-
+-  if errors.empty?
+-    results.each do |result|
+-      asset = assets_by_id.fetch(result.fetch('id'))
+-      language = result.fetch('language')
+-      variant = asset.fetch('variants').fetch(language)
+-      values = actual.fetch("#{language}:#{asset.fetch('id')}")
+-      variant['dimensions'] = values.fetch('dimensions')
+-      variant['sha256'] = values.fetch('sha256')
+-      variant['capture'] = {
+-        'driver' => result.fetch('driver'),
+-        'page' => result.fetch('page'),
+-        'runner' => 'vpsadmin-kb-captures/schema-5'
+-      }
+-    end
+-    File.write(MANIFEST_PATH, "#{JSON.pretty_generate(manifest)}\n")
+-  end
+-elsif !ALLOW_MISSING
+-  assets.each do |asset|
+-    languages.each do |language|
+-      variant = asset.dig('variants', language)
+-      values = actual["#{language}:#{asset.fetch('id')}"]
+-      next unless variant && values
+-
+-      key = "#{language}:#{asset.fetch('id')}"
+-      errors << "#{key}: dimensions differ" unless variant['dimensions'] == values['dimensions']
+-      errors << "#{key}: SHA-256 differs" unless variant['sha256'] == values['sha256']
+-      errors << "#{key}: capture provenance is missing" unless variant['capture']
+-      errors << "#{key}: capture driver differs" \
+-        if variant['capture'] && variant.dig('capture', 'driver') != asset['driver']
+-      errors << "#{key}: capture runner differs" \
+-        if variant['capture'] && variant.dig('capture', 'runner') != 'vpsadmin-kb-captures/schema-5'
+-    end
+-  end
+-end
+-
+-password = assets.find { |asset| asset.fetch('id') == 'vps-management/set-root-password' }
+-if password
+-  expected_sources = {
+-    'cs' => %w[informace:novacci navody:vps:sprava],
+-    'en' => %w[information:new_members manuals:vps:management]
+-  }
+-  languages.each do |language|
+-    variant = password.dig('variants', language)
+-    errors << "#{language}:set-root-password: unexpected source pages" \
+-      unless variant.dig('wiki', 'source_pages') == expected_sources.fetch(language)
+-    aliases = variant.fetch('legacy_aliases', []).map { |item| item.fetch('media_id') }
+-    errors << "#{language}:set-root-password: informace:details2.png is not a legacy alias" \
+-      unless aliases == ['informace:details2.png']
+-  end
+-else
+-  errors << 'set-root-password: capture is missing'
+-end
+-errors << 'vps-action-menu: obsolete capture is still present' \
+-  if assets.any? { |asset| asset.fetch('id') == 'getting-started/vps-action-menu' }
+-
+-features = assets.find { |asset| asset.fetch('id') == 'vps-management/feature-settings' }
+-expected_feature_sources = {
+-  'cs' => %w[navody:vps:sprava navody:vps:snap],
+-  'en' => %w[manuals:vps:management manuals:vps:snap]
+-}
+-expected_feature_sources.each do |language, expected_sources|
+-  unless features&.dig('variants', language, 'wiki', 'source_pages') == expected_sources
+-    errors << "#{language}:vps-management/feature-settings: page bindings differ"
+-  end
+-end
+-
+-if errors.empty?
+-  puts "Valid inventory: #{assets.length} concepts, #{variant_count} variants, " \
+-       "#{references.fetch('cs')} Czech references, #{references.fetch('en')} English references, " \
+-       "#{actual.length} PNGs"
+-else
+-  warn errors.join("\n")
+-  exit 1
+-end
++#!/usr/bin/env bash
++set -euo pipefail
++repo_dir=$(cd -- "$(dirname -- "$0")/.." && pwd)
++exec ruby "$repo_dir/runner/validate-entry.rb" "$repo_dir" - "$@"
+diff --git a/cluster/README.md b/cluster/README.md
+index a46bc53..34597e4 100644
+--- a/cluster/README.md
++++ b/cluster/README.md
+@@ -17,6 +17,11 @@ workloads.
+ Screenshot scenarios then add their labeled, idempotent VPS, dataset, mount,
+ NAS, snapshot, account, console, and traffic fixtures through the WebUI.
+ 
+-All mutable state is outside this directory in the ignored `.devcluster/`
++All mutable cluster state is outside this directory in the ignored `.devcluster/v2/`
+ tree. Do not place credentials, generated certificates, SSH keys, or VM state
+ in Git.
++
++The [portable runtime contract](runtime-contract.md) defines standalone state,
++connection leases, immutable source, capture output and recovery. The optional
++workspace provider calls this same engine and adds its own session and generation
++guards; the engine itself has no workspace dependency.
+diff --git a/cluster/default-config.json b/cluster/default-config.json
+index 260b494..91c9fe8 100644
+--- a/cluster/default-config.json
++++ b/cluster/default-config.json
+@@ -22,6 +22,18 @@
+     "bridge": "br0",
+     "gateway": "172.16.106.1"
+   },
++  "local": {
++    "bindAddress": "127.0.0.1",
++    "multicastPort": 10000,
++    "ports": {
++      "services": { "ssh": 10022, "https": 10443 },
++      "node1": { "ssh": 10122 },
++      "node2": { "ssh": 10222 },
++      "backuper1": { "ssh": 10322 },
++      "dns-primary": { "ssh": 10422 },
++      "dns-secondary": { "ssh": 10522 }
++    }
++  },
+   "resolver": {
+     "mode": "cluster",
+     "upstreamNameservers": ["172.16.9.90", "172.19.9.90"]
+diff --git a/cluster/lib/devcluster_runner.rb b/cluster/lib/devcluster_runner.rb
+index c844a7b..af0620c 100644
+--- a/cluster/lib/devcluster_runner.rb
++++ b/cluster/lib/devcluster_runner.rb
+@@ -5,6 +5,11 @@ require 'json'
+ require 'optparse'
+ require 'osvm'
+ require 'time'
++require 'socket'
++require 'timeout'
++require_relative 'kb_state'
++require_relative 'kb_process'
++require_relative 'kb_machine'
+ 
+ module DevClusters
+   class OsVmRunner
+@@ -28,7 +33,7 @@ module DevClusters
+       when 'start'
+         start
+       else
+-        warn "Usage: #{$PROGRAM_NAME} start --config PATH --state-dir DIR --sock-dir DIR --pid-file PATH --ready-file PATH"
++        warn "Usage: #{$PROGRAM_NAME} start --config PATH --state-dir DIR --sock-dir DIR --launch-file PATH --state-root DIR --slug SLUG --instance-id ID --run-id ID"
+         2
+       end
+     end
+@@ -46,20 +51,57 @@ module DevClusters
+         parser.on('--config PATH') { |v| opts[:config] = v }
+         parser.on('--state-dir DIR') { |v| opts[:state_dir] = v }
+         parser.on('--sock-dir DIR') { |v| opts[:sock_dir] = v }
+-        parser.on('--pid-file PATH') { |v| opts[:pid_file] = v }
+-        parser.on('--ready-file PATH') { |v| opts[:ready_file] = v }
++        parser.on('--launch-file PATH') { |v| opts[:launch_file] = v }
++        parser.on('--state-root PATH') { |v| opts[:state_root] = v }
++        parser.on('--slug SLUG') { |v| opts[:slug] = v }
++        parser.on('--instance-id ID') { |v| opts[:instance_id] = v }
++        parser.on('--run-id ID') { |v| opts[:run_id] = v }
++        parser.on('--artifact-id ID') { |v| opts[:artifact_id] = v }
++        parser.on('--artifact-sha256 SHA') { |v| opts[:artifact_sha256] = v }
+         parser.on('--timeout SECONDS', Integer) { |v| opts[:timeout] = v }
+       end.parse!(@argv)
+ 
+-      %i[config state_dir sock_dir pid_file ready_file].each do |key|
++      %i[config state_dir sock_dir launch_file state_root slug instance_id run_id artifact_id artifact_sha256].each do |key|
+         raise ArgumentError, "--#{key.to_s.tr('_', '-')} is required" unless opts[key]
+       end
+ 
+-      FileUtils.mkdir_p(opts[:state_dir])
+-      FileUtils.mkdir_p(opts[:sock_dir])
+-      FileUtils.mkdir_p(File.dirname(opts[:pid_file]))
+-      FileUtils.rm_f(opts[:ready_file])
+-      File.write(opts[:pid_file], "#{Process.pid}\n")
++      state = KbRuntime::State.new(opts[:state_root], opts[:slug])
++      launch = state.read(opts[:launch_file])
++      unless state.identity['instance_id'] == opts[:instance_id] && launch['instance_id'] == opts[:instance_id] && launch['run_id'] == opts[:run_id] &&
++             launch['config_path'] == opts[:config] && launch['state_dir'] == opts[:state_dir] && launch['socket_dir'] == opts[:sock_dir] &&
++             launch['artifact_id'] == opts[:artifact_id] && launch['artifact_sha256'] == opts[:artifact_sha256] &&
++             launch['boot_id'] == KbRuntime::ProcessIdentity.boot_id
++        raise KbRuntime::Error, 'runner launch identity differs'
++      end
++      state.private_directory(opts[:state_dir]) || raise(KbRuntime::Error, 'runner state is absent')
++      state.private_directory(opts[:sock_dir]) || raise(KbRuntime::Error, 'runner sockets are absent')
++      @hash_base = launch.fetch('network_id')
++      artifact_bytes = state.file(state.path("artifact-#{launch.fetch('artifact_id')}.json"))
++      raise KbRuntime::Error, 'runner artifact differs' unless Digest::SHA256.hexdigest(artifact_bytes) == launch['artifact_sha256']
++      @artifact = JSON.parse(artifact_bytes)
++      @state = state
++
++      state.lock('runner', create: true) { run_owned(opts, state, launch) }
++    end
++
++    def run_owned(opts, state, launch)
++      File.umask(0o077)
++      process_path = state.path("processes-#{opts[:run_id]}.json")
++      ready_path = state.path("ready-#{opts[:run_id]}.json")
++      runner = KbRuntime::ProcessIdentity.read(Process.pid)
++      raise KbRuntime::Error, 'runner tuple differs' unless KbRuntime::ProcessIdentity.runner_matches?(runner, launch)
++      children = {}
++      complete = false
++      mutex = Mutex.new
++      publish = proc do
++        mutex.synchronize do
++          KbRuntime::ProcessIdentity.descendants(Process.pid).each { |record| children[[record['pid'], record['start_ticks']]] = record }
++          state.write(process_path, { 'schema' => 1, 'instance_id' => opts[:instance_id], 'run_id' => opts[:run_id],
++                      'artifact_id' => opts[:artifact_id], 'artifact_sha256' => opts[:artifact_sha256],
++                      'runner' => runner, 'children' => children.values, 'complete' => complete })
++        end
++      end
++      publish.call
+ 
+       machines = build_machines(opts)
+       stopping = false
+@@ -74,11 +116,7 @@ module DevClusters
+             entry.machine.stop(timeout: 120)
+           rescue StandardError => e
+             warn "Graceful stop failed for #{entry.name}: #{e.class}: #{e.message}"
+-            begin
+-              entry.machine.kill(signal: 'TERM')
+-            rescue StandardError => kill_error
+-              warn "Kill failed for #{entry.name}: #{kill_error.class}: #{kill_error.message}"
+-            end
++            # Retain ambiguous processes and claims. A PID alone is no signal authority.
+           end
+         end
+       end
+@@ -104,9 +142,43 @@ module DevClusters
+       Signal.trap('TERM', &signal_trap)
+       Signal.trap('INT', &signal_trap)
+ 
++      control_path = File.join(opts[:sock_dir], 'control.sock')
++      raise KbRuntime::Error, 'control socket already exists' if File.exist?(control_path) || File.symlink?(control_path)
++      server = UNIXServer.new(control_path)
++      File.chmod(0o600, control_path)
++      control_thread = Thread.new do
++        loop do
++          peer = server.accept
++          begin
++            _pid, uid, = peer.getsockopt(Socket::SOL_SOCKET, Socket::SO_PEERCRED).unpack('iii')
++            request = Timeout.timeout(5) { peer.gets(8193) }
++            raise KbRuntime::Error, 'invalid control peer/request' unless uid == Process.uid && request && request.bytesize <= 8192
++            value = JSON.parse(request)
++            expected = { 'schema' => 1, 'instance_id' => opts[:instance_id], 'run_id' => opts[:run_id], 'command' => 'stop' }
++            raise KbRuntime::Error, 'control identity differs' unless value == expected
++            peer.puts(JSON.generate('schema' => 1, 'run_id' => opts[:run_id], 'accepted' => true))
++            peer.flush
++            signal_trap.call
++          rescue StandardError
++            # Invalid local requests never acquire shutdown authority.
++          ensure
++            peer.close
++          end
++        end
++      end
++      tracking_thread = Thread.new do
++        loop do
++          publish.call
++          sleep 0.05
++        end
++      end
++
+       begin
+         start_machines(machines, opts[:timeout])
+-        File.write(opts[:ready_file], "#{Time.now.utc.iso8601}\n")
++        publish.call
++        state.write(state.path("run-#{opts[:run_id]}.json"), launch.merge('processes' => state.read(process_path)), immutable: true)
++        state.write(ready_path, { 'schema' => 1, 'instance_id' => opts[:instance_id], 'run_id' => opts[:run_id],
++          'artifact_id' => opts[:artifact_id], 'artifact_sha256' => opts[:artifact_sha256] }, immutable: true)
+ 
+         loop do
+           break if stopping
+@@ -119,7 +191,12 @@ module DevClusters
+         Signal.trap('TERM', 'IGNORE')
+         Signal.trap('INT', 'IGNORE')
+         stop_all.call
++        tracking_thread.kill
++        tracking_thread.join
++        publish.call
++        exited = children.values.all? { |record| KbRuntime::ProcessIdentity.gone?(record) }
+         machines.each do |entry|
++          next unless exited
+           begin
+             entry.machine.finalize
+             entry.machine.cleanup
+@@ -127,8 +204,13 @@ module DevClusters
+             warn "Cleanup failed for #{entry.name}: #{e.class}: #{e.message}"
+           end
+         end
+-        FileUtils.rm_f(opts[:ready_file])
+-        FileUtils.rm_f(opts[:pid_file])
++        complete = exited
++        publish.call
++        File.unlink(ready_path) if File.exist?(ready_path)
++        server.close
++        control_thread.kill
++        control_thread.join
++        File.unlink(control_path)
+         signal_writer.close unless signal_writer.closed?
+         signal_reader.close unless signal_reader.closed?
+         signal_thread.kill
+@@ -154,7 +236,7 @@ module DevClusters
+             opts[:sock_dir],
+             default_timeout: opts[:timeout],
+             hash_base:
+-          )
++          ).bind_preparation(@state, @artifact)
+         )
+       end
+     end
+@@ -162,9 +244,9 @@ module DevClusters
+     def machine_class(config)
+       case config.spin
+       when 'nixos'
+-        OsVm::NixosMachine
++        KbRuntime::NixosMachine
+       when 'vpsadminos'
+-        OsVm::VpsadminosMachine
++        KbRuntime::VpsadminosMachine
+       else
+         raise "Unsupported machine spin #{config.spin.inspect}"
+       end
+diff --git a/cluster/nix/test.nix b/cluster/nix/test.nix
+index ad9ac71..c463250 100644
+--- a/cluster/nix/test.nix
++++ b/cluster/nix/test.nix
+@@ -20,6 +20,8 @@
+   vpsadminGoClientSourcePath,
+   telegramEnable,
+   telegramSecretsSourcePath,
++  instanceId ? "",
++  captureIdentityFile ? "",
+   extraModules ? { },
+   generateCertificates ? false,
+   seedPools ? true,
+@@ -1276,27 +1278,28 @@ let
+   socketNetwork = {
+     type = "socket";
+     mcast = {
+-      port = "vpsadmin-devcluster-${slug}";
++      address = "230.0.0.1";
++      port =
++        let port = devConfig.local.multicastPort;
++        in if builtins.isInt port && port >= 1 && port <= 65535 then port
++        else throw "local.multicastPort must be an integer in 1..65535";
+     };
+   };
+-  localForwardPorts = {
+-    services = {
+-      ssh = 10022;
+-      https = 10443;
+-    };
+-  }
+-  // listToAttrs (
++  localForwardPorts = devConfig.local.ports or ({
++    services = { ssh = 10022; https = 10443; };
++  } // listToAttrs (
+     map (node: nameValuePair node.machineName { ssh = node.sshPort; }) (
+       filter (node: node.sshPort != null) allNodeList
+     )
+-  );
++  ));
++  localBindAddress = devConfig.local.bindAddress or "127.0.0.1";
+   localUserNetwork =
+     machineName:
+     let
+       ports = localForwardPorts.${machineName} or { };
+       forwards =
+-        (lib.optional (ports ? https) "tcp:127.0.0.1:${toString ports.https}-:443")
+-        ++ (lib.optional (ports ? ssh) "tcp:127.0.0.1:${toString ports.ssh}-:22");
++        (lib.optional (ports ? https) "tcp:${localBindAddress}:${toString ports.https}-:443")
++        ++ (lib.optional (ports ? ssh) "tcp:${localBindAddress}:${toString ports.ssh}-:22");
+     in
+     mkUserNetwork (concatMapStringsSep ",hostfwd=" (v: v) forwards);
+   machineNetworks =
+@@ -1313,6 +1316,9 @@ let
+       ];
+ 
+   sshModule = {
++    environment.etc = optionalAttrs (captureIdentityFile != "") {
++      "vpsfree-kb-capture.json".source = builtins.path { path = captureIdentityFile; name = "kb-capture-identity.json"; };
++    };
+     services.openssh = {
+       enable = true;
+       settings.PermitRootLogin = "yes";
+diff --git a/docs/webui-change-workflow.md b/docs/webui-change-workflow.md
+index 6beb194..cee2342 100644
+--- a/docs/webui-change-workflow.md
++++ b/docs/webui-change-workflow.md
+@@ -78,14 +78,23 @@ when the semantic contract remains green.
+ 
+ Every bitmap must remain reproducible from its scenario and checkpoint. Use the
+ repository-owned development cluster and fixtures; never depend on another
+-workspace at runtime.
++workspace at runtime. Configure explicit dedicated resources using the
++[portable runtime contract](../cluster/runtime-contract.md). Packaged capture and
++validation may write to an explicit artifact root without modifying their source.
++
++Use the same committed source snapshot for the cluster, capture and validation
++commands. Capture verifies the current instance, prepared source and running
++system closures before changing fixtures. Updating a lockfile alone does not
++establish the running revision. Keep both language results in one output root,
++then update and strictly validate its candidate inventory.
+ 
+ ```sh
+ nix develop
+-bin/devcluster start FEATURE-SLUG --topology screenshots
++bin/devcluster start FEATURE-SLUG --topology screenshots --config /path/to/dedicated-config.json
+ bin/capture --cluster FEATURE-SLUG --language cs --scenario SCENARIO
+ bin/capture --cluster FEATURE-SLUG --language en --scenario SCENARIO
+ bin/validate --update
++bin/validate
+ bin/check
+ bin/devcluster stop FEATURE-SLUG
+ ```
+diff --git a/fixtures/prepare.cjs b/fixtures/prepare.cjs
+index 6647a37..cfde5a0 100644
+--- a/fixtures/prepare.cjs
++++ b/fixtures/prepare.cjs
+@@ -1,6 +1,5 @@
+ const fs = require('fs');
+ const path = require('path');
+-const { execFileSync, spawnSync } = require('child_process');
+ 
+ const { datasetIdsFromHrefs } = require('../lib/dataset-links.cjs');
+ const { fixturesFor } = require('../lib/i18n.cjs');
+@@ -359,20 +358,8 @@ async function ensureSshHostKey(cluster, page, node, vpsId) {
+     'printf "%s\\n" "$key" > "$root/etc/ssh/ssh_host_ed25519_key.pub"',
+   ].join('\n');
+   const encodedPublicKey = Buffer.from(DOCUMENTATION_HOST_PUBLIC_KEY).toString('base64');
+-  execFileSync(
+-    cluster.commandPath,
+-    cluster.sshArgs(node, [
+-      'bash', '-s', '--', String(vpsId), encodedPublicKey,
+-    ]),
+-    { input: `${script}\n`, stdio: ['pipe', 'pipe', 'pipe'] },
+-  );
+-  execFileSync(
+-    cluster.commandPath,
+-    cluster.sshArgs(node, [
+-      'nodectl', 'update', 'ssh-host-keys', String(vpsId),
+-    ]),
+-    { stdio: ['ignore', 'pipe', 'pipe'] },
+-  );
++  await cluster.ssh(node, ['bash', '-s', '--', String(vpsId), encodedPublicKey], { input: `${script}\n` });
++  await cluster.ssh(node, ['nodectl', 'update', 'ssh-host-keys', String(vpsId)]);
+ 
+   const route = `/?page=adminvps&action=info&veid=${vpsId}`;
+   const deadline = Date.now() + 2 * 60_000;
+@@ -422,7 +409,7 @@ async function ensureSnapshot(page, datasetId, snapshotLabel) {
+   };
+ }
+ 
+-function ensureNixosGenerations(cluster, node, vpsId) {
++async function ensureNixosGenerations(cluster, node, vpsId) {
+   const script = [
+     'set -eu',
+     'root=$(osctl ct show -H -o rootfs "$1")',
+@@ -435,42 +422,28 @@ function ensureNixosGenerations(cluster, node, vpsId) {
+     'touch -h -t 202501011000.00 "$root/nix/var/nix/profiles/system-1-link" || true',
+     'touch -h -t 202506011000.00 "$root/nix/var/nix/profiles/system-2-link" || true',
+   ].join('; ');
+-  execFileSync(
+-    cluster.commandPath,
+-    cluster.sshArgs(node, ['bash', '-s', '--', String(vpsId)]),
+-    { input: `${script}\n`, stdio: ['pipe', 'pipe', 'pipe'] },
+-  );
++  await cluster.ssh(node, ['bash', '-s', '--', String(vpsId)], { input: `${script}\n` });
+ }
+ 
+-function generateTrafficSamples(cluster, node, vpsId) {
+-  const result = spawnSync(cluster.commandPath, cluster.sshArgs(node, [
++async function generateTrafficSamples(cluster, node, vpsId) {
++  const output = await cluster.ssh(node, [
+     'osctl', 'ct', 'exec', String(vpsId),
+     '/bin/ping', '-c', '200', '-i', '0.02', '-W', '1', '198.51.100.1',
+-  ]), { encoding: 'utf8', timeout: 15_000 });
+-  if (result.error || ![0, 1].includes(result.status) || !result.stdout.includes('PING')) {
+-    throw new Error(
+-      `Unable to generate traffic for VPS #${vpsId}: ${result.error || result.stderr}`,
+-    );
+-  }
++  ], { accepted: [0, 1], timeout: 15_000 });
++  if (!output.includes('PING')) throw new Error(`Unable to generate fixture traffic for VPS #${vpsId}`);
+ }
+ 
+-function networkInterface(cluster, node, vpsId) {
+-  const output = execFileSync(
+-    cluster.commandPath,
+-    cluster.sshArgs(node, [
+-      'osctl', 'ct', 'exec', String(vpsId), '/bin/ls', '/sys/class/net',
+-    ]),
+-    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+-  );
++async function networkInterface(cluster, node, vpsId) {
++  const output = await cluster.ssh(node, [
++    'osctl', 'ct', 'exec', String(vpsId), '/bin/ls', '/sys/class/net',
++  ]);
+   const excluded = new Set(['erspan0', 'gre0', 'gretap0', 'ip6tnl0', 'lo', 'tunl0']);
+   const interfaces = output.trim().split(/\s+/).filter((name) => !excluded.has(name));
+-  if (interfaces.length !== 1) {
+-    throw new Error(`Expected one fixture network interface, found: ${interfaces.join(', ')}`);
+-  }
++  if (interfaces.length !== 1) throw new Error('Expected exactly one fixture network interface');
+   return interfaces[0];
+ }
+ 
+-async function prepareFixtures({ cluster, language, page, required, repoRoot }) {
++async function prepareFixtures({ cluster, language, page, required, invocationRoot }) {
+   const requiredSet = new Set(required);
+   const fixtureLabels = fixturesFor(language);
+   const userId = await findUserId(page, 'test-user1');
+@@ -494,7 +467,7 @@ async function prepareFixtures({ cluster, language, page, required, repoRoot })
+     datasetId = await rootDatasetId(page, vpsId);
+     node = await vpsNodeMachine(page, vpsId);
+     Object.assign(fixtures, { vpsId, datasetId, node, hostname: 'vps' });
+-    fixtures.networkInterface = networkInterface(cluster, node, vpsId);
++    fixtures.networkInterface = await networkInterface(cluster, node, vpsId);
+     fixtures.reverseRecordRoute = await ensureInterfaceAddress(page, vpsId);
+     fixtures.childDatasetId = await ensureChildDataset(page, vpsId, datasetId);
+     await ensureMount(page, vpsId, fixtures.childDatasetId);
+@@ -541,15 +514,15 @@ async function prepareFixtures({ cluster, language, page, required, repoRoot })
+     fixtures.snapshot = await ensureSnapshot(page, datasetId, fixtureLabels.snapshot);
+   }
+   if (requiredSet.has('nixos-generations')) {
+-    ensureNixosGenerations(cluster, node, vpsId);
++    await ensureNixosGenerations(cluster, node, vpsId);
+   }
+   if (requiredSet.has('traffic-samples')) {
+-    generateTrafficSamples(cluster, node, vpsId);
++    await generateTrafficSamples(cluster, node, vpsId);
+   }
+ 
+-  const target = path.join(repoRoot, 'tmp/fixtures.json');
++  const target = path.join(invocationRoot, 'fixtures.json');
+   fs.mkdirSync(path.dirname(target), { recursive: true });
+-  fs.writeFileSync(target, `${JSON.stringify(fixtures, null, 2)}\n`);
++  fs.writeFileSync(target, `${JSON.stringify(fixtures, null, 2)}\n`, { mode: 0o600 });
+   return fixtures;
+ }
+ 
+diff --git a/flake.nix b/flake.nix
+index 8ea6eed..9cbffa9 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -53,6 +53,8 @@
+       vpsadminGoClientSourcePath = env "VPSADMIN_DEVCLUSTER_VPSADMIN_GO_CLIENT_SOURCE" "";
+       telegramSecretsSourcePath = env "VPSADMIN_DEVCLUSTER_TELEGRAM_SECRETS" "";
+       telegramEnable = env "VPSADMIN_DEVCLUSTER_TELEGRAM_ENABLE" "0";
++      instanceId = env "VPSADMIN_KB_INSTANCE_ID" "";
++      captureIdentityFile = env "VPSADMIN_KB_CAPTURE_IDENTITY_FILE" "";
+ 
+       pkgs = import nixpkgs {
+         inherit system;
+@@ -88,6 +90,8 @@
+           vpsadminGoClientSourcePath
+           telegramEnable
+           telegramSecretsSourcePath
++          instanceId
++          captureIdentityFile
+           ;
+       };
+ 
+@@ -111,11 +115,48 @@
+       runner = pkgs.writeShellScriptBin "vpsadmin-kb-capture-cluster-runner" ''
+         export GEM_HOME=${runnerDeps}/${ruby.gemPath}
+         export GEM_PATH=${runnerDeps}/${ruby.gemPath}
+-        export RUBYLIB=${./cluster/lib}:${vpsadminos.outPath}/test-runner/lib:${vpsadminos.outPath}/osvm/lib:${vpsadminos.outPath}/libosctl/lib
++        export RUBYLIB=${self}/cluster/lib:${vpsadminos.outPath}/test-runner/lib:${vpsadminos.outPath}/osvm/lib:${vpsadminos.outPath}/libosctl/lib
+ 
+-        exec ${ruby}/bin/ruby ${./cluster/lib/runner.rb} "$@"
++        exec ${ruby}/bin/ruby ${self}/cluster/lib/runner.rb "$@"
+       '';
+ 
++      sourceMetadata = toolPkgs.runCommand "vpsfree-kb-runtime-source.json" { nativeBuildInputs = [ toolPkgs.ruby ]; } ''
++        ruby ${self}/cluster/source-metadata.rb ${self} ${lib.escapeShellArg (self.rev or "")} > "$out"
++      '';
++      runtimeTools = [ toolPkgs.coreutils toolPkgs.git toolPkgs.iputils toolPkgs.nix
++        toolPkgs.openssh toolPkgs.openssl toolPkgs.ruby toolPkgs.util-linux ];
++      runtimePackage = toolPkgs.writeShellApplication {
++        name = "vpsfree-kb-devcluster";
++        runtimeInputs = runtimeTools;
++        text = ''
++          exec ruby ${self}/cluster/launcher.rb \
++            --state-root "$PWD/.devcluster/v2" \
++            --software-metadata ${sourceMetadata} "$@"
++        '';
++      };
++      capturePackage = toolPkgs.symlinkJoin {
++        name = "vpsfree-kb-capture";
++        paths = [
++          (toolPkgs.writeShellApplication {
++            name = "vpsfree-kb-capture";
++            runtimeInputs = runtimeTools ++ [ toolPkgs.nodejs toolPkgs.vpsfree-client ];
++            text = ''
++              export NODE_PATH=${toolPkgs.playwright-test}/lib/node_modules
++              export PLAYWRIGHT_BROWSERS_PATH=${toolPkgs.playwright-driver.browsers}
++              export FONTCONFIG_FILE=${fontConfig}
++              exec node ${self}/runner/package-capture.cjs ${sourceMetadata} "$@"
++            '';
++          })
++          (toolPkgs.writeShellApplication {
++            name = "vpsfree-kb-validate";
++            runtimeInputs = runtimeTools ++ [ toolPkgs.nodejs ];
++            text = ''
++              exec ruby ${self}/runner/validate-entry.rb "$PWD" ${sourceMetadata} "$@"
++            '';
++          })
++        ];
++      };
++
+       # Reuse the Git-filtered flake source. Resolving the checkout as a plain
+       # path would also import ignored .devcluster VM disks into the Nix store.
+       testRunner = pkgs.writeShellScriptBin "test-runner" ''
+@@ -124,6 +165,9 @@
+       '';
+ 
+       testSuiteArgs = {
++        kbRuntimePackage = runtimePackage;
++        kbCapturePackage = capturePackage;
++        kbSource = self;
+         inherit
+           lib
+           vpsadmin
+@@ -141,9 +185,14 @@
+         // args;
+     in
+     {
++      runtimePlan = clusterConfig.config;
++      runtimeRunner = { executable = "${ruby}/bin/ruby"; entrypoint = "${self}/cluster/lib/runner.rb"; };
+       packages.${system} = {
+         cluster-config = clusterConfig.json;
+         inherit runner;
++        kb-runtime = runtimePackage;
++        capture = capturePackage;
++        runtime-source = sourceMetadata;
+         test-runner = testRunner;
+         default = clusterConfig.json;
+       };
+@@ -153,6 +202,8 @@
+           type = "app";
+           program = "${runner}/bin/vpsadmin-kb-capture-cluster-runner";
+         };
++        kb-runtime = { type = "app"; program = "${runtimePackage}/bin/vpsfree-kb-devcluster"; };
++        capture = { type = "app"; program = "${capturePackage}/bin/vpsfree-kb-capture"; };
+         test-runner = {
+           type = "app";
+           program = "${testRunner}/bin/test-runner";
+@@ -186,6 +237,9 @@
+           openssh
+           openssl
+           fontconfig
++          git
++          iputils
++          nix
+           liberation_ttf
+           playwright-test
+           procps
+@@ -199,6 +253,7 @@
+         NODE_PATH = "${toolPkgs.playwright-test}/lib/node_modules";
+         FONTCONFIG_FILE = fontConfig;
+         VPSADMIN_KB_VPSADMIN_SOURCE = vpsadmin.outPath;
++        VPSADMIN_KB_OSVM_SOURCE = vpsadminos.outPath;
+       };
+     };
+ }
+diff --git a/lib/browser.cjs b/lib/browser.cjs
+index 27a4e05..d55e910 100644
+--- a/lib/browser.cjs
++++ b/lib/browser.cjs
+@@ -33,7 +33,6 @@ function chromiumExecutable() {
+ }
+ 
+ async function startProxy(cluster) {
+-  const suffix = '.aitherdev.int.vpsfree.cz';
+   const proxy = http.createServer();
+   const sockets = new Set();
+   serverSockets.set(proxy, sockets);
+@@ -45,11 +44,14 @@ async function startProxy(cluster) {
+ 
+   proxy.on('connect', (request, clientSocket, head) => {
+     const target = new URL(`http://${request.url}`);
+-    const isCluster = target.hostname.endsWith(suffix);
+-    const isLocalCluster = isCluster && cluster.network === 'local';
++    let route;
++    try { route = cluster.route(`https://${target.host}/`); } catch (_error) {
++      clientSocket.end('HTTP/1.1 403 Forbidden\r\n\r\n');
++      return;
++    }
+     const serverSocket = net.connect(
+-      isLocalCluster ? 10443 : Number(target.port || 443),
+-      isLocalCluster ? '127.0.0.1' : target.hostname,
++      route.port,
++      route.host,
+       () => {
+         clientSocket.write('HTTP/1.1 200 Connection Established\r\n\r\n');
+         if (head.length > 0) {
+@@ -59,6 +61,8 @@ async function startProxy(cluster) {
+         clientSocket.pipe(serverSocket);
+       },
+     );
++    sockets.add(serverSocket);
++    serverSocket.once('close', () => sockets.delete(serverSocket));
+     serverSocket.on('error', () => clientSocket.destroy());
+     clientSocket.on('error', () => serverSocket.destroy());
+   });
+@@ -81,34 +85,46 @@ async function closeServer(server) {
+ }
+ 
+ async function launchBrowser(cluster, viewport, language = 'cs') {
++  cluster.assertLease();
+   const proxy = await startProxy(cluster);
+   const address = proxy.address();
+-  const browser = await chromium.launch({
+-    executablePath: chromiumExecutable(),
+-    headless: true,
+-    args: ['--no-sandbox'],
+-    proxy: { server: `http://127.0.0.1:${address.port}` },
+-  });
+-  const context = await browser.newContext({
+-    baseURL: cluster.webuiBaseUrl,
+-    ignoreHTTPSErrors: true,
+-    locale: language === 'cs' ? 'cs-CZ' : 'en-US',
+-    timezoneId: 'Europe/Prague',
+-    viewport,
+-  });
++  let browser;
++  try {
++    browser = await chromium.launch({
++      executablePath: chromiumExecutable(), headless: true, args: ['--no-sandbox'],
++      proxy: { server: `http://127.0.0.1:${address.port}` },
++    });
++  } catch (error) { await closeServer(proxy); throw error; }
++  let context;
++  try {
++    context = await browser.newContext({
++      baseURL: cluster.webuiBaseUrl,
++      ignoreHTTPSErrors: true,
++      locale: language === 'cs' ? 'cs-CZ' : 'en-US',
++      timezoneId: 'Europe/Prague',
++      viewport,
++    });
++    cluster.assertLease();
++  } catch (error) {
++    try { await browser.close(); } finally { await closeServer(proxy); }
++    throw error;
++  }
++  const onLoss = () => { browser.close().catch(() => {}); };
++  cluster.lease.signal.addEventListener('abort', onLoss, { once: true });
+ 
+   return {
+     browser,
+     context,
+     proxyUrl: `http://127.0.0.1:${address.port}`,
+     async close() {
+-      await browser.close();
+-      await closeServer(proxy);
++      try { await browser.close(); } finally { await closeServer(proxy); }
++      cluster.lease.signal.removeEventListener('abort', onLoss);
+     },
+   };
+ }
+ 
+ async function login(page, cluster, language) {
++  cluster.assertLease();
+   const account = cluster.account();
+   await page.goto('/', { waitUntil: 'domcontentloaded' });
+   const logout = page.locator(
+diff --git a/lib/capture-session.cjs b/lib/capture-session.cjs
+index 1288446..0c154b0 100644
+--- a/lib/capture-session.cjs
++++ b/lib/capture-session.cjs
+@@ -87,7 +87,7 @@ async function unionBox(locators, padding = 8) {
+ }
+ 
+ class CaptureSession {
+-  constructor({ assets, checkpoint, language, repoRoot, scenario }) {
++  constructor({ assets, checkpoint, language, repoRoot, scenario, artifacts, provenance }) {
+     this.language = language;
+     this.assets = assets.flatMap((asset) => {
+       const variant = asset.variants?.[language];
+@@ -98,6 +98,8 @@ class CaptureSession {
+         asset.checkpoint === checkpoint),
+     );
+     this.repoRoot = repoRoot;
++    this.artifacts = artifacts;
++    this.provenance = provenance;
+     this.results = [];
+     this.seen = new Set();
+   }
+@@ -120,7 +122,7 @@ class CaptureSession {
+   async shot(page, checkpoint, locators, options = {}) {
+     if (!this.wants(checkpoint)) return;
+     const asset = this.asset(checkpoint);
+-    const output = path.join(this.repoRoot, asset.output);
++    const output = this.artifacts.stage(asset);
+     if (asset.review_status !== 'pending' && fs.existsSync(output)) {
+       throw new Error(
+         `${asset.id}: ${asset.review_status} capture cannot be overwritten`,
+@@ -149,6 +151,7 @@ class CaptureSession {
+       output: asset.output,
+       page: sanitizeUrl(page.url()),
+       sha256: crypto.createHash('sha256').update(contents).digest('hex'),
++      ...(this.provenance ? { provenance: this.provenance } : {}),
+     });
+   }
+ 
+@@ -206,10 +209,7 @@ class CaptureSession {
+     if (missing.length > 0) {
+       throw new Error(`Missing checkpoints: ${missing.join(', ')}`);
+     }
+-    const target = path.join(this.repoRoot, 'tmp/capture-results.json');
+-    fs.mkdirSync(path.dirname(target), { recursive: true });
+-    fs.writeFileSync(target, `${JSON.stringify(this.results, null, 2)}\n`);
+-    return this.results;
++    return this.artifacts.finish(this.results);
+   }
+ }
+ 
+diff --git a/lib/console.cjs b/lib/console.cjs
+index 2dcb04e..80f5f17 100644
+--- a/lib/console.cjs
++++ b/lib/console.cjs
+@@ -1,5 +1,3 @@
+-const { execFileSync } = require('child_process');
+-
+ const { goto, preparePage, submitLast } = require('./webui.cjs');
+ 
+ async function setStartMenuTimeout(page, vpsId, timeout) {
+@@ -51,14 +49,10 @@ function canonicalGuestConsole(text, verifiedBanner = null) {
+   ].join('\n');
+ }
+ 
+-function debianConsoleBanner(cluster, node, vpsId, hostname) {
+-  const output = execFileSync(
+-    cluster.commandPath,
+-    cluster.sshArgs(node, [
+-      'osctl', 'ct', 'exec', String(vpsId), '/bin/cat', '/etc/os-release',
+-    ]),
+-    { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
+-  );
++async function debianConsoleBanner(cluster, node, vpsId, hostname) {
++  const output = await cluster.ssh(node, [
++    'osctl', 'ct', 'exec', String(vpsId), '/bin/cat', '/etc/os-release',
++  ]);
+   const id = output.match(/^ID=(?:"([^"]+)"|([^\n]+))$/m)?.slice(1).find(Boolean);
+   const version = output.match(/^VERSION_ID=(?:"([^"]+)"|([^\n]+))$/m)
+     ?.slice(1).find(Boolean);
+diff --git a/lib/dev-cluster.cjs b/lib/dev-cluster.cjs
+deleted file mode 100644
+index f61cec5..0000000
+--- a/lib/dev-cluster.cjs
++++ /dev/null
+@@ -1,66 +0,0 @@
+-const fs = require('fs');
+-const path = require('path');
+-
+-class DevCluster {
+-  constructor({ repoRoot, slug }) {
+-    this.repoRoot = repoRoot;
+-    this.slug = slug;
+-    this.configPath = path.join(
+-      repoRoot,
+-      '.devcluster/clusters',
+-      slug,
+-      'config.json',
+-    );
+-    this.config = JSON.parse(fs.readFileSync(this.configPath, 'utf8'));
+-    this.network = fs.readFileSync(
+-      path.join(path.dirname(this.configPath), 'network'),
+-      'utf8',
+-    ).trim();
+-  }
+-
+-  account(login = 'test-user1') {
+-    const account = this.config.seed.users.find((user) => user.login === login);
+-    if (!account) {
+-      throw new Error(`Unable to find ${login} in ${this.configPath}`);
+-    }
+-    return account;
+-  }
+-
+-  hostname(service) {
+-    const hostname = this.config.domains[service];
+-    if (!hostname) {
+-      throw new Error(`Unknown dev-cluster service: ${service}`);
+-    }
+-    return hostname;
+-  }
+-
+-  get webuiBaseUrl() {
+-    const port = this.network === 'local' ? ':10443' : '';
+-    return `https://${this.hostname('webui')}${port}`;
+-  }
+-
+-  get apiUrl() {
+-    return `https://${this.hostname('api')}`;
+-  }
+-
+-  get consoleBaseUrl() {
+-    return `https://${this.hostname('console')}`;
+-  }
+-
+-  get caPath() {
+-    return path.join(
+-      this.repoRoot,
+-      '.devcluster/certs/default/vpsadmin-ca.crt',
+-    );
+-  }
+-
+-  get commandPath() {
+-    return path.join(this.repoRoot, 'bin/devcluster');
+-  }
+-
+-  sshArgs(machine, command) {
+-    return ['ssh', this.slug, machine, '--', ...command];
+-  }
+-}
+-
+-module.exports = { DevCluster };
+diff --git a/lib/terminal.cjs b/lib/terminal.cjs
+index 9267968..7891e13 100644
+--- a/lib/terminal.cjs
++++ b/lib/terminal.cjs
+@@ -10,14 +10,16 @@ async function collect(child, timeout) {
+   child.stderr.on('data', (chunk) => chunks.push(chunk));
+   let timedOut = false;
+   const status = await new Promise((resolve, reject) => {
++    let transportError;
+     const timer = timeout && setTimeout(() => {
+       timedOut = true;
+       child.kill('SIGINT');
+     }, timeout);
+-    child.on('error', reject);
++    child.on('error', (error) => { transportError = error; });
+     child.on('close', (code, signal) => {
+       if (timer) clearTimeout(timer);
+-      resolve({ code, signal });
++      if (transportError) reject(new Error('CLI transport was interrupted'));
++      else resolve({ code, signal });
+     });
+   });
+   return { output: Buffer.concat(chunks).toString('utf8'), status, timedOut };
+@@ -27,28 +29,13 @@ function delay(milliseconds) {
+   return new Promise((resolve) => setTimeout(resolve, milliseconds));
+ }
+ 
+-async function monitorAttempt(command, environment) {
++async function monitorAttempt(command, environment, signal) {
+   const terminal = spawn('script', ['-q', '-f', '-c', command, '/dev/null'], {
+-    detached: true,
+     env: environment,
++    signal,
+     stdio: ['ignore', 'pipe', 'pipe'],
+   });
+-  const chunks = [];
+-  terminal.stdout.on('data', (chunk) => chunks.push(chunk));
+-  terminal.stderr.on('data', (chunk) => chunks.push(chunk));
+-  return new Promise((resolve, reject) => {
+-    const interrupt = setTimeout(() => {
+-      try { process.kill(-terminal.pid, 'SIGINT'); } catch (_error) { /* exited */ }
+-      setTimeout(() => {
+-        try { process.kill(-terminal.pid, 'SIGKILL'); } catch (_error) { /* exited */ }
+-      }, 750);
+-    }, 30_000);
+-    terminal.on('error', reject);
+-    terminal.on('close', (code, signal) => {
+-      clearTimeout(interrupt);
+-      resolve({ output: Buffer.concat(chunks).toString('utf8'), status: { code, signal } });
+-    });
+-  });
++  return collect(terminal);
+ }
+ 
+ function terminalText(output) {
+@@ -86,9 +73,9 @@ function canonicalMonitorTranscript(output, vpsId, networkInterface) {
+   return `${clean}${overlay}`;
+ }
+ 
+-async function runTrafficMonitor({ cluster, fixtures, proxyUrl, repoRoot }) {
++async function runTrafficMonitor({ cluster, fixtures, proxyUrl, sourceRoot, invocationRoot }) {
+   const account = cluster.account();
+-  const home = path.join(repoRoot, 'tmp/cli-home');
++  const home = path.join(invocationRoot, 'cli-home');
+   fs.mkdirSync(home, { recursive: true });
+ 
+   const environment = {
+@@ -99,8 +86,7 @@ async function runTrafficMonitor({ cluster, fixtures, proxyUrl, repoRoot }) {
+     HTTPS_PROXY: proxyUrl,
+     LINES: '22',
+     NO_PROXY: '',
+-    RUBYOPT: [process.env.RUBYOPT, `-r${path.join(repoRoot, 'lib/rest-client-proxy.rb')}`]
+-      .filter(Boolean).join(' '),
++    RUBYOPT: `-r${path.join(sourceRoot, 'lib/rest-client-proxy.rb')}`,
+     SSL_CERT_FILE: cluster.caPath,
+     TERM: 'xterm-256color',
+     http_proxy: proxyUrl,
+@@ -117,29 +103,31 @@ async function runTrafficMonitor({ cluster, fixtures, proxyUrl, repoRoot }) {
+     'user', 'current',
+   ], {
+     env: environment,
++    signal: cluster.lease.signal,
+     stdio: ['ignore', 'pipe', 'pipe'],
+   });
+   const authResult = await collect(authentication, 30_000);
+   if (authResult.status.code !== 0 ||
+       /Fatal API error|certificate verify failed/i.test(authResult.output)) {
+-    throw new Error(`vpsfreectl authentication failed: ${authResult.output.slice(0, 300)}`);
++    throw new Error('vpsfreectl authentication failed');
+   }
+   const config = path.join(home, '.haveapi-client.yml');
+   if (fs.existsSync(config)) fs.chmodSync(config, 0o600);
+ 
+-  const command = `vpsfreectl -u ${cluster.apiUrl} network top`;
++  const command = `timeout --signal=INT --kill-after=2s 30s vpsfreectl -u '${cluster.apiUrl.replaceAll("'", "'\"'\"'")}' network top`;
+   let lastOutput = '';
+   for (let attempt = 1; attempt <= 2; attempt += 1) {
+-    generateTrafficSamples(cluster, fixtures.node, fixtures.vpsId);
++    await generateTrafficSamples(cluster, fixtures.node, fixtures.vpsId);
+     await delay(12_000);
+-    const result = await monitorAttempt(command, environment);
++    cluster.assertLease();
++    const result = await monitorAttempt(command, environment, cluster.lease.signal);
+     lastOutput = result.output;
+     const text = terminalText(result.output);
+     const row = new RegExp(
+       `\\b${fixtures.vpsId}\\s+${fixtures.networkInterface}\\s+.*\\d`,
+     );
+     if (!/NaN/.test(text) && row.test(text)) {
+-      fs.writeFileSync(path.join(repoRoot, 'tmp/traffic-monitor.raw'), result.output);
++      fs.writeFileSync(path.join(invocationRoot, 'traffic-monitor.raw'), result.output);
+       return canonicalMonitorTranscript(
+         result.output,
+         fixtures.vpsId,
+@@ -148,7 +136,7 @@ async function runTrafficMonitor({ cluster, fixtures, proxyUrl, repoRoot }) {
+     }
+   }
+ 
+-  fs.writeFileSync(path.join(repoRoot, 'tmp/traffic-monitor.raw'), lastOutput);
++  fs.writeFileSync(path.join(invocationRoot, 'traffic-monitor.raw'), lastOutput);
+   throw new Error(
+     `vpsfreectl network top did not produce a finite ${fixtures.networkInterface} row ` +
+       `for VPS #${fixtures.vpsId}`,
+diff --git a/runner/args.cjs b/runner/args.cjs
+index 4593978..2ab5c54 100644
+--- a/runner/args.cjs
++++ b/runner/args.cjs
+@@ -17,6 +17,15 @@ function parseArgs(argv) {
+       case '--cluster':
+         options.cluster = value();
+         break;
++      case '--connection':
++        options.connection = value();
++        break;
++      case '--state-root':
++        options.stateRoot = value();
++        break;
++      case '--output-root':
++        options.outputRoot = value();
++        break;
+       case '--language':
+         options.language = value();
+         break;
+@@ -36,9 +45,8 @@ function parseArgs(argv) {
+   }
+ 
+   if (!options.help) {
+-    if (!options.cluster) {
+-      throw new Error('--cluster is required');
+-    }
++    if (Boolean(options.cluster) === Boolean(options.connection)) throw new Error('Exactly one of --cluster or --connection is required');
++    if (options.connection && options.stateRoot) throw new Error('--state-root is only valid with --cluster');
+     if (!options.language) {
+       throw new Error('--language is required');
+     }
+@@ -51,7 +59,8 @@ function parseArgs(argv) {
+ }
+ 
+ const usage = `Usage:
+-  bin/capture --cluster SLUG --language cs|en
++  bin/capture (--cluster SLUG | --connection FILE) --language cs|en
++    [--state-root DIR] [--output-root DIR]
+     [--scenario NAME] [--checkpoint SCENARIO/CHECKPOINT]
+ `;
+ 
+diff --git a/runner/capture.cjs b/runner/capture.cjs
+index d2642ea..d53b6a6 100755
+--- a/runner/capture.cjs
++++ b/runner/capture.cjs
+@@ -6,7 +6,9 @@ const path = require('path');
+ const { prepareFixtures } = require('../fixtures/prepare.cjs');
+ const { launchBrowser, login } = require('../lib/browser.cjs');
+ const { CaptureSession } = require('../lib/capture-session.cjs');
+-const { DevCluster } = require('../lib/dev-cluster.cjs');
++const { Connection, readConnection, openLease } = require('../lib/connection.cjs');
++const { Artifacts } = require('../lib/artifacts.cjs');
++const { execFileSync } = require('child_process');
+ const { parseArgs, usage } = require('./args.cjs');
+ 
+ const repoRoot = path.resolve(__dirname, '..');
+@@ -20,66 +22,70 @@ function pinnedVpsadminCommit() {
+   return revision;
+ }
+ 
+-async function main() {
+-  const options = parseArgs(process.argv.slice(2));
+-  if (options.help) {
+-    process.stdout.write(usage);
+-    return;
+-  }
+-
+-  const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'captures.json')));
+-  const session = new CaptureSession({
+-    assets: manifest.assets,
+-    checkpoint: options.checkpoint,
+-    language: options.language,
+-    repoRoot,
+-    scenario: options.scenario,
+-  });
+-  if (session.assets.length === 0) throw new Error('No inventory entries match the request');
+-
+-  const actualCommit = pinnedVpsadminCommit();
+-  if (manifest.vpsadmin_commit !== actualCommit) {
+-    throw new Error(
+-      `Inventory expects vpsAdmin ${manifest.vpsadmin_commit}, found ${actualCommit}`,
+-    );
+-  }
+-
+-  const cluster = new DevCluster({ repoRoot, slug: options.cluster });
+-  const capture = await launchBrowser(cluster, options.viewport, options.language);
+-  const page = await capture.context.newPage();
++async function main({ argv = process.argv.slice(2), sourceMetadata, defaultOutputRoot = repoRoot, defaultStateRoot = path.join(repoRoot, '.devcluster/v2') } = {}) {
++  const options = parseArgs(argv);
++  if (options.help) { process.stdout.write(usage); return; }
++  const outputRoot = path.resolve(options.outputRoot || defaultOutputRoot);
++  process.stdout.write(`Source: ${repoRoot}\nOutput: ${outputRoot}\n`);
++  const artifactLease = await openLease(['ruby', path.join(repoRoot, 'cluster/artifact-lock.rb'), outputRoot],
++    { schema: 1, kind: 'kb-artifact-lock' });
++  let lease;
++  let capture;
+   try {
+-    await login(page, cluster, options.language);
++    const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'captures.json')));
++    const expected = sourceMetadata || JSON.parse(execFileSync('ruby',
++      [path.join(repoRoot, 'cluster/source-metadata.rb'), '--checkout', repoRoot], { encoding: 'utf8' }));
++    if (manifest.vpsadmin_commit !== pinnedVpsadminCommit() || expected.inputs.vpsadmin.rev !== manifest.vpsadmin_commit) {
++      throw new Error('Inventory, pinned input and immutable K source disagree');
++    }
++    const artifacts = new Artifacts({ sourceRoot: repoRoot, outputRoot, manifest, source: expected });
++    const session = new CaptureSession({ assets: manifest.assets, checkpoint: options.checkpoint,
++      language: options.language, repoRoot, scenario: options.scenario, artifacts });
++    if (session.assets.length === 0) throw new Error('No inventory entries match the request');
+     const required = [...new Set(session.assets.flatMap((asset) => asset.fixtures))];
+-    const fixtures = await prepareFixtures({
+-      cluster,
+-      page,
+-      language: options.language,
+-      required,
+-      repoRoot,
+-    });
+-    const scenarios = [...new Set(session.assets.map((asset) => asset.scenario))];
+-    for (const scenario of scenarios) {
++    let descriptor = options.connection;
++    if (!descriptor) {
++      descriptor = path.join(artifacts.invocationRoot, 'connection.json');
++      const bytes = execFileSync('ruby', [path.join(repoRoot, 'cluster/launcher.rb'),
++        '--state-root', path.resolve(options.stateRoot || defaultStateRoot), 'connection', options.cluster]);
++      fs.writeFileSync(descriptor, bytes, { mode: 0o600, flag: 'wx' });
++    }
++    const { value, digest } = readConnection(descriptor, required);
++    lease = await openLease([...value.control.argv, '--instance-id', value.instance_id,
++      '--run-id', value.run_id, '--artifact-id', value.artifact_id, '--artifact-sha256', value.artifact_sha256,
++      '--descriptor-sha256', digest],
++      { schema: 1, instance_id: value.instance_id, run_id: value.run_id,
++        artifact_id: value.artifact_id, artifact_sha256: value.artifact_sha256, descriptor_sha256: digest });
++    const cluster = new Connection(value, lease);
++    session.provenance = await cluster.verify(expected);
++    capture = await launchBrowser(cluster, options.viewport, options.language);
++    const page = await capture.context.newPage();
++    await login(page, cluster, options.language);
++    cluster.assertLease();
++    const fixtures = await prepareFixtures({ cluster, page, language: options.language, required,
++      repoRoot, invocationRoot: artifacts.invocationRoot });
++    for (const scenario of [...new Set(session.assets.map((asset) => asset.scenario))]) {
++      cluster.assertLease();
+       process.stdout.write(`Capturing ${scenario}\n`);
+       const driver = require(path.join(repoRoot, 'scenarios', `${scenario}.cjs`));
+-      await driver.run({
+-        cluster,
+-        context: capture.context,
+-        fixtures,
+-        language: options.language,
+-        page,
+-        proxyUrl: capture.proxyUrl,
+-        repoRoot,
+-        session,
+-      });
++      await driver.run({ cluster, context: capture.context, fixtures, language: options.language,
++        page, proxyUrl: capture.proxyUrl, repoRoot, sourceRoot: repoRoot,
++        outputRoot, invocationRoot: artifacts.invocationRoot, session });
+     }
++    cluster.assertLease();
+     const results = session.finish();
+     process.stdout.write(`Captured ${results.length} checkpoint(s)\n`);
+   } finally {
+-    await capture.close();
++    // Complete browser/SSH cleanup before EOF releases the capture gate.
++    try { if (capture) await capture.close(); } finally {
++      try { if (lease) await lease.close(); } finally { await artifactLease.close(); }
++    }
+   }
+ }
+ 
+-main().catch((error) => {
++module.exports = { main, pinnedVpsadminCommit };
++
++if (require.main === module) main().catch((error) => {
+   process.stderr.write(`${error.stack || error}\n`);
+   process.exitCode = 1;
+ });
+diff --git a/scenarios/console.cjs b/scenarios/console.cjs
+index 290a3da..26aa5d2 100644
+--- a/scenarios/console.cjs
++++ b/scenarios/console.cjs
+@@ -70,7 +70,7 @@ async function run({ cluster, fixtures, language, page, session }) {
+     }
+     if (/Start Menu/.test(initial)) await send(remote.frame, 'i');
+     await waitForConsoleText(remote.frame, guestBoot);
+-    const banner = debianConsoleBanner(
++    const banner = await debianConsoleBanner(
+       cluster,
+       fixtures.node,
+       fixtures.vpsId,
+diff --git a/scenarios/networking.cjs b/scenarios/networking.cjs
+index 27a5739..92bdbb3 100644
+--- a/scenarios/networking.cjs
++++ b/scenarios/networking.cjs
+@@ -3,7 +3,7 @@ const { renderTerminal, runTrafficMonitor } = require('../lib/terminal.cjs');
+ const { goto } = require('../lib/webui.cjs');
+ const { label } = require('../lib/i18n.cjs');
+ 
+-async function run({ cluster, fixtures, language, page, proxyUrl, repoRoot, session }) {
++async function run({ cluster, fixtures, language, page, proxyUrl, sourceRoot, invocationRoot, session }) {
+   const vps = fixtures.vpsId;
+ 
+   await goto(page, `/?page=adminvps&action=info&veid=${vps}`);
+@@ -42,7 +42,7 @@ async function run({ cluster, fixtures, language, page, proxyUrl, repoRoot, sess
+   await session.locator(page, 'traffic/live-monitor-web', page.locator('#content-in'));
+ 
+   if (session.wants('traffic/live-monitor-cli')) {
+-    const output = await runTrafficMonitor({ cluster, fixtures, proxyUrl, repoRoot });
++    const output = await runTrafficMonitor({ cluster, fixtures, proxyUrl, sourceRoot, invocationRoot });
+     const terminal = await page.context().newPage();
+     try {
+       await renderTerminal(
+diff --git a/tests/all-tests.nix b/tests/all-tests.nix
+index 0496270..a88fce3 100644
+--- a/tests/all-tests.nix
++++ b/tests/all-tests.nix
+@@ -21,6 +21,7 @@ let
+   };
+ in
+ testLib.makeTests [
++  "runtime/standalone"
+   "kb/firewall"
+   "kb/gre"
+   "kb/guix"
+diff --git a/tools/contact-sheet.cjs b/tools/contact-sheet.cjs
+index 5dc1b13..888d56b 100644
+--- a/tools/contact-sheet.cjs
++++ b/tools/contact-sheet.cjs
+@@ -7,26 +7,39 @@ const { chromium } = require('playwright');
+ const { chromiumExecutable } = require('../lib/browser.cjs');
+ 
+ const repoRoot = path.resolve(__dirname, '..');
+-const group = process.argv[2];
+-const language = process.argv[3] || 'cs';
+-const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'captures.json')));
+-const assets = manifest.assets.flatMap((asset) => {
+-  const variant = asset.variants?.[language];
+-  return variant ? [{ ...asset, ...variant, language, variants: undefined }] : [];
+-}).filter((asset) => !group || asset.topic === group || asset.scenario === group);
+-if (assets.length === 0) throw new Error(`No assets match topic or scenario ${group}`);
++const { openLease } = require('../lib/connection.cjs');
++const { validationBundle } = require('../runner/validate-artifacts.cjs');
++const args = process.argv.slice(2);
++const outputIndex = args.indexOf('--output-root');
++const outputRoot = path.resolve(outputIndex < 0 ? repoRoot : args[outputIndex + 1]);
++if (outputIndex >= 0) args.splice(outputIndex, 2);
++if (args.length > 2) throw new Error('Usage: contact-sheet [GROUP] [cs|en] [--output-root DIR]');
++const [group, language = 'cs'] = args;
++if (!['cs', 'en'].includes(language)) throw new Error('Invalid contact-sheet language');
++let bundle;
++let assets;
+ 
+ async function main() {
+-  const browser = await chromium.launch({
++  const lock = await openLease(['ruby', path.join(repoRoot, 'cluster/artifact-lock.rb'), outputRoot],
++    { schema: 1, kind: 'kb-artifact-lock' });
++  let browser;
++  try {
++    bundle = validationBundle(repoRoot, outputRoot, false);
++    const manifest = bundle.manifest;
++    assets = manifest.assets.flatMap((asset) => {
++      const variant = asset.variants?.[language];
++      return variant ? [{ ...asset, ...variant, language, variants: undefined }] : [];
++    }).filter((asset) => !group || asset.topic === group || asset.scenario === group);
++    if (assets.length === 0) throw new Error('No assets match the requested contact sheet');
++    browser = await chromium.launch({
+     executablePath: chromiumExecutable(),
+     headless: true,
+     args: ['--no-sandbox'],
+   });
+   const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+-  try {
+     const cards = assets.map((asset) => ({
+       id: asset.id,
+-      image: `data:image/png;base64,${fs.readFileSync(path.join(repoRoot, asset.output)).toString('base64')}`,
++      image: `data:image/png;base64,${fs.readFileSync(bundle.files[asset.output]).toString('base64')}`,
+     }));
+     await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>
+       body { margin: 20px; background: #dfe4ea; font: 15px sans-serif; }
+@@ -48,11 +61,11 @@ async function main() {
+     }, cards);
+     await page.waitForFunction(() => Array.from(document.images).every((image) => image.complete));
+     await page.screenshot({
+-      path: path.join(repoRoot, 'tmp', `contact-sheet-${language}-${group || 'all'}.png`),
++      path: path.join(outputRoot, 'tmp', `contact-sheet-${language}-${group || 'all'}.png`),
+       fullPage: true,
+     });
+   } finally {
+-    await browser.close();
++    try { if (browser) await browser.close(); } finally { await lock.close(); }
+   }
+ }
+ 

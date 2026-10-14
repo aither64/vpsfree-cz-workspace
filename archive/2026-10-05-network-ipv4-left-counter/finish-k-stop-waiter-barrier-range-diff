@@ -1,0 +1,46 @@
+1:  680e0b1 = 1:  680e0b1 inputs: pin network availability vpsAdmin revision
+2:  5757fa0 ! 2:  d9cbed0 runtime: add portable KB launcher and capture leases
+    @@ tools/test-machine.rb (new)
+     +        refute(context[:engine].gone?(context[:record]), 'nil join and first child exit do not prove the late child gone')
+     +        refute(context[:engine].process_record(context[:record])['complete'])
+     +        assert_equal(1, File.readlines(File.join(context[:record]['state_dir'], 'stop-calls.jsonl')).length)
+    -+        waiter = Thread.new do
+    -+          context[:engine].stop(timeout: 5)
+    -+          :stopped
+    -+        rescue KbRuntime::Error => error
+    -+          error
+    -+        end
+    -+        Timeout.timeout(5) do
+    -+          loop do
+    -+            begin
+    -+              context[:state].lock('operation', wait: false) { }
+    -+            rescue KbRuntime::Busy
+    -+              break
+    -+            end
+    -+            Thread.pass
+    ++        # Observe the real acknowledgement without competing for the stop lock.
+    ++        acknowledgement = Queue.new
+    ++        control = context[:engine].method(:control)
+    ++        context[:engine].define_singleton_method(:control) do |record, command|
+    ++          handoff = control.call(record, command)
+    ++          acknowledgement << [:acknowledged, nil]
+    ++          handoff
+    ++        end
+    ++        context[:engine].singleton_class.send(:private, :control)
+    ++        begin
+    ++          waiter = Thread.new do
+    ++            context[:engine].stop(timeout: 5)
+    ++            :stopped
+    ++          rescue StandardError, Minitest::Assertion => error
+    ++            acknowledgement << [:error, error]
+    ++            error
+     +          end
+    ++          outcome, error = Timeout.timeout(5) { acknowledgement.pop }
+    ++          raise error if outcome == :error
+    ++          assert_equal(:acknowledged, outcome)
+    ++        ensure
+    ++          context[:engine].singleton_class.send(:remove_method, :control)
+     +        end
+     +        peer.puts('finish')
+     +        assert_equal('finished', JSON.parse(Timeout.timeout(5) { peer.gets })['stage'])
+3:  09229a7 = 3:  922e71e verify: prepare the finite 7dc runtime upgrade

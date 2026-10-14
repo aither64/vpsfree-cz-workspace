@@ -1,0 +1,207 @@
+diff --git a/api/models/transaction_chains/vps/update.rb b/api/models/transaction_chains/vps/update.rb
+index a24025fcf..d103ac25c 100644
+--- a/api/models/transaction_chains/vps/update.rb
++++ b/api/models/transaction_chains/vps/update.rb
+@@ -218,10 +218,21 @@ module TransactionChains
+     def chown_vps(vps, orig_user)
+       db_changes = { vps => { user_id: vps.user_id } }
+ 
+-      reserved_ips = vps.ip_addresses.order(:id).to_a
++      datasets = vps.dataset_in_pool.dataset.subtree.to_a
++      chown_exports = datasets.flat_map do |ds|
++        ds.dataset_in_pools.flat_map { |dip| dip.exports.to_a }
++      end
++      vps_ips = vps.ip_addresses.to_a
++      export_ips = chown_exports.flat_map { |ex| ex.ip_addresses.to_a }
++      transferred_exports = chown_exports.reject { |ex| ex.user_id == vps.user_id }
++      new_owner_ip_ids = (vps_ips + transferred_exports.flat_map { |ex| ex.ip_addresses.to_a }).map(&:id)
++      reserved_ips = (vps_ips + export_ips).uniq(&:id).sort_by(&:id)
+       ::IpAddress.lock_networks_for_use!(reserved_ips)
+       ::IpAddress.lock_all_current!(self, reserved_ips)
+-      reserved_ips.each(&:ensure_network_enabled!)
++      reserved_ips.each do |ip|
++        ip.ensure_admission_network!
++        ip.ensure_network_enabled! if new_owner_ip_ids.include?(ip.id)
++      end
+       ::HostIpAddress.lock_all_with_ips!(self, reserved_ips.flat_map { |ip| ip.host_ip_addresses.to_a })
+ 
+       # VPS and all related objects must be given to the target user:
+@@ -242,11 +253,8 @@ module TransactionChains
+       use_chain(UserNamespaceMap::Use, args: [vps, new_userns_map])
+       db_changes[vps][:user_namespace_map_id] = new_userns_map.id
+ 
+-      datasets = []
+-
+       # Transfer dataset cluster resources
+-      vps.dataset_in_pool.dataset.subtree.each do |ds|
+-        datasets << ds
++      datasets.each do |ds|
+         db_changes[ds] = { user_id: vps.user_id }
+ 
+         dip = ds.primary_dataset_in_pool!
+@@ -304,24 +312,16 @@ module TransactionChains
+       end
+ 
+       # Transfer exports of the VPS's own datasets / snapshots
+-      chown_exports = []
+-
+-      datasets.each do |ds|
+-        ds.dataset_in_pools.each do |dip|
+-          dip.exports.each do |ex|
+-            # Remove hosts belonging to the original user
+-            hosts_to_delete = ex.export_hosts.to_a.reject do |host|
+-              host.ip_address.network_interface.vps_id == vps.id
+-            end
+-
+-            use_chain(Export::DelHosts, args: [ex, hosts_to_delete]) if hosts_to_delete.any?
++      chown_exports.each do |ex|
++        # Remove hosts belonging to the original user
++        hosts_to_delete = ex.export_hosts.to_a.reject do |host|
++          host.ip_address.network_interface.vps_id == vps.id
++        end
+ 
+-            # Add hosts belonging to the target user
+-            add_hosts_to_chowned_export(ex, vps.user) if ex.all_vps
++        use_chain(Export::DelHosts, args: [ex, hosts_to_delete]) if hosts_to_delete.any?
+ 
+-            chown_exports << ex
+-          end
+-        end
++        # Add hosts belonging to the target user
++        add_hosts_to_chowned_export(ex, vps.user) if ex.all_vps
+       end
+ 
+       if chown_exports.any?
+diff --git a/api/spec/models/transaction_chains/vps/update_spec.rb b/api/spec/models/transaction_chains/vps/update_spec.rb
+index 26e03967f..1fa532968 100644
+--- a/api/spec/models/transaction_chains/vps/update_spec.rb
++++ b/api/spec/models/transaction_chains/vps/update_spec.rb
+@@ -53,6 +53,32 @@ RSpec.describe TransactionChains::Vps::Update do
+     user.environment_user_configs.find_by!(environment: environment)
+   end
+ 
++  def create_update_export_fixture(dataset, vps, subdataset:)
++    if subdataset
++      dataset, dip = create_dataset_with_pool!(
++        user: user, pool: vps.dataset_in_pool.pool, parent: dataset,
++        name: "update-child-#{SecureRandom.hex(4)}"
++      )
++      allocate_dip_diskspace!(dip, user: user, value: 1024)
++    end
++    backup_dip = DatasetInPool.create!(
++      dataset: dataset, pool: create_pool!(node: SpecSeed.node, role: :backup),
++      confirmed: DatasetInPool.confirmed(:confirmed)
++    )
++    network = create_private_network!(address: '203.0.113.0')
++    ip = create_ipv4_address_in_network!(network: network, location: SpecSeed.location)
++    export, netif, = create_export_for_dataset!(dataset_in_pool: backup_dip, host_ip: ip)
++    ip.update!(network_interface: netif)
++    [export, ip]
++  end
++
++  def prepare_chown_user
++    other_user = SpecSeed.other_user
++    ensure_numeric_resources!(user: other_user, environment: SpecSeed.environment)
++    create_user_namespace_map!(user: other_user)
++    other_user
++  end
++
+   def user_cluster_resource_for(user, resource, environment = SpecSeed.environment)
+     UserClusterResource.joins(:cluster_resource).find_by!(
+       user: user,
+@@ -238,6 +264,80 @@ RSpec.describe TransactionChains::Vps::Update do
+     expect(ip.network_interface_id).to eq(vps.network_interfaces.first.id)
+   end
+ 
++  [false, true].each do |subdataset|
++    context "with an export on the #{subdataset ? 'child' : 'root'} dataset's backup pool" do
++      it 'reserves enabled export endpoints with the VPS allocations before queuing ownership transfer' do
++        dataset, vps = create_update_vps_fixture
++        export, endpoint = create_update_export_fixture(dataset, vps, subdataset: subdataset)
++        other_user = prepare_chown_user
++        vps_ip = create_ip_address!(network: SpecSeed.network_v4, location: SpecSeed.location,
++                                    network_interface: vps.network_interfaces.first)
++        environment_config_for(user).reallocate_resource!(
++          :ipv4, vps_ip.size, user: user, save: true,
++                              confirmed: ClusterResourceUse.confirmed(:confirmed)
++        )
++        events = []
++        allow(Network).to receive(:lock_for_admission!).and_wrap_original do |original, ids|
++          events << [:networks, ids.sort]
++          original.call(ids)
++        end
++        allow_any_instance_of(IpAddress).to receive(:lock_current!).and_wrap_original do |original, *args, **kwargs| # rubocop:disable RSpec/AnyInstance
++          events << [:ip, original.receiver.id]
++          original.call(*args, **kwargs)
++        end
++
++        chain, = described_class.fire(vps, { user_id: other_user.id })
++
++        export_confirmation = confirmations_for(chain).find do |row|
++          row.class_name == 'Export' && row.row_pks == { 'id' => export.id }
++        end
++        expect(export_confirmation.attr_changes).to include('user_id' => other_user.id)
++        expect(events.first).to eq([:networks, [vps_ip.network_id, endpoint.network_id].sort])
++        expect(events.count { |event| event.first == :networks }).to eq(1)
++        expect(events.select { |event| event.first == :ip }.first(2).map(&:last))
++          .to eq([vps_ip.id, endpoint.id].sort)
++        expect(chain.locks.map { |row| [row.resource, row.row_id] }).to include(
++          ['IpAddress', endpoint.id], ['HostIpAddress', endpoint.host_ip_addresses.first.id]
++        )
++        expect(export.reload).to have_attributes(user_id: user.id, enabled: true)
++        expect(endpoint.reload.network_interface_id).to eq(export.network_interface.id)
++      end
++
++      it 'rejects a disabled endpoint before queuing ownership or resource changes' do
++        dataset, vps = create_update_vps_fixture
++        export, endpoint = create_update_export_fixture(dataset, vps, subdataset: subdataset)
++        other_user = prepare_chown_user
++        endpoint.network.update!(enabled: false)
++        original_uses = ClusterResourceUse.order(:id).pluck(:id, :value, :confirmed)
++
++        expect { described_class.fire(vps, { user_id: other_user.id }) }
++          .to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++
++        expect(vps.reload.user_id).to eq(user.id)
++        expect(dataset.reload.user_id).to eq(user.id)
++        expect(export.reload).to have_attributes(user_id: user.id, enabled: true)
++        expect(endpoint.reload.network_interface_id).to eq(export.network_interface.id)
++        expect(ClusterResourceUse.order(:id).pluck(:id, :value, :confirmed)).to eq(original_uses)
++        expect(ResourceLock.where(resource: 'IpAddress', row_id: endpoint.id)).to be_empty
++      end
++    end
++  end
++
++  it 'retains a running same-owner VPS and its existing export on a disabled endpoint network' do
++    dataset, vps = create_update_vps_fixture
++    export, endpoint = create_update_export_fixture(dataset, vps, subdataset: true)
++    set_vps_running!(vps)
++    endpoint.network.update!(enabled: false)
++
++    chain, updated_vps = described_class.fire(vps, { user_id: user.id })
++
++    expect(chain).to be_nil
++    expect(updated_vps.reload.user_id).to eq(user.id)
++    expect(export.reload).to have_attributes(user_id: user.id, enabled: true)
++    expect(endpoint.reload.network_interface_id).to eq(export.network_interface.id)
++    expect(vps.vps_current_status.is_running).to be(true)
++  end
++
+   it 'delegates enable_network changes and map mode changes to the expected transactions' do
+     _dataset, vps = create_update_vps_fixture
+ 
+diff --git a/docs/ip-locking.md b/docs/ip-locking.md
+index 8889e2f81..7766c054d 100644
+--- a/docs/ip-locking.md
++++ b/docs/ip-locking.md
+@@ -58,7 +58,9 @@ filter changes ownership, assignment or visibility rules.
+ 
+ New automatic allocations, explicit assignments of detached addresses, new IP
+ ownership, ownership transfers and owned registration require an enabled network.
+-Changing a VPS owner also changes the effective owner of its assigned addresses.
++Changing a VPS owner also changes the effective owner of its assigned addresses
++and any export endpoints transferred with its datasets. Preparation captures
++these endpoints together with the VPS addresses before reserving any IP row.
+ Keeping the same owner, disowning an address and releasing an address remain possible.
+ Unowned inventory registration remains possible. Existing assigned service and
+ host-address management within an assigned prefix continue. Internal migration,

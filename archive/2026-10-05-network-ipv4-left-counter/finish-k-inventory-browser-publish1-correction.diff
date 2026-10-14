@@ -1,0 +1,32 @@
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index ffbb5106e534d2e49d846d8fa0659986d1494471..a7c2a2e382903fb4460323fa65b02b6bbca5b4bc 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -278,7 +278,26 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+       evaluateAll: async () => [{ value: '1', disabled: false, label: 'Namespace' }],
+       selectOption: async () => {}, setChecked: async () => {},
+     }),
+-    getByText: () => ({ first: () => ({ locator: () => ({ locator: () => ({ first: () => ({ count: async () => 1, check: async () => {} }) }), count: async () => 0 }) }) }),
++    getByText: (text, options) => {
++      assert.equal(text, 'Debian (latest)');
++      assert.equal(options.exact, true);
++      const details = { open: false };
++      return { first: () => ({ locator: (ancestor) => {
++        assert.equal(ancestor, 'xpath=ancestor::tr[1]');
++        return { locator: (selector) => {
++          if (selector === 'xpath=ancestor::details[1]') {
++            return { count: async () => 1, evaluate: async (callback) => {
++              callback(details);
++              assert.equal(details.open, true);
++            } };
++          }
++          assert.equal(selector, 'input[type="radio"][name="os_template"]:not([disabled])');
++          return { first: () => ({ count: async () => 1, check: async () => {
++            assert.equal(details.open, true, 'the template details must open before checking its radio');
++          } }) };
++        } };
++      } }) };
++    },
+   });
+   const identityLocator = memberPage().locator;
+   const page = {

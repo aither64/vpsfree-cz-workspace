@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "review_finding": {
+    "severity": "Important",
+    "reviewer": "reviewer0",
+    "exact_head": "8de1776588e374e39e3ba6c7595158c6b7d25225",
+    "canonical_direct_remediation_brief": "finish-k-inventory-api-diagnostic-fix1-brief.md",
+    "brief_sha256": "8b7272cb607dff0b5f27427993b9cbcea3b0c498a0172b145d9f100f69a429e1",
+    "review_packet": "finish-working-delivery-api-version-review-packet1.md",
+    "review_packet_sha256": "9b13bbf940ea3d45512e8fac206073dbd6bc4d81fbdc3b2ab54a649fb73ec00b"
+  },
+  "accepted_API_design": {
+    "acceptance": "finish-working-delivery-api-version-design1-acceptance.json",
+    "acceptance_sha256": "ba9a2b5ba7b2863bcb4d02d268c3a645daf5edf212b11fbd94a0baa11c608b49",
+    "section_sha256": "090e163ffbe932727156a0d5b46a45365de547aaf0c536c1946064d4987f1448"
+  },
+  "source_cause": "JSON.parse ran before HTTP refusal; its SyntaxError message/stack could expose response text. Invalid object/response shapes could escape the intended envelope boundary.",
+  "correction": "Refuse non-200 before parsing; locally replace parse failure and invalid success envelope with fixed Error without cause. Preserve lease errors and all existing transport/API boundaries.",
+  "new_fixed_diagnostic": "Inventory resource response is invalid",
+  "limits": "No local reproduction, check or runtime operation. Current campaign/private resources untouched. Root owns step9 disposition and hosted evidence.",
+  "deviations_or_blockers": []
+}

@@ -1,0 +1,32 @@
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+index 134bcaa04003b555f8607a3e695c2c21ea126355..c5a7ad6eb467b1a59b9a52a1dc45c9a354c96da8 100644
+--- a/tools/test-runtime-verify.rb
++++ b/tools/test-runtime-verify.rb
+@@ -721,7 +721,26 @@ class RuntimeVerifyTest < Minitest::Test
+       derivations = native.fetch('derivations')
+       derivation_key = File.basename(value['imageDerivations'].first)
+       assert_equal([derivation_key], derivations.keys)
+-      assert_equal('2048', derivations.fetch(derivation_key).fetch('env').fetch('memSize'))
++      record = derivations.fetch(derivation_key)
++      context = "selected image #{derivation_key}: keys=#{record.keys.sort.inspect}"
++      assert(record.key?('structuredAttrs'), context)
++      attributes = record.fetch('structuredAttrs')
++      context += "; structured keys=#{attributes.keys.sort.inspect}"
++      assert(attributes.key?('env'), context)
++      builder_environment = attributes.fetch('env')
++      context += "; structured env keys=#{builder_environment.keys.sort.inspect}"
++      assert(builder_environment.key?('QEMU_OPTS'), context)
++      tokens = Shellwords.split(builder_environment.fetch('QEMU_OPTS'))
++      option_values = lambda do |flag|
++        tokens.each_cons(2).filter_map { |option, value| value if option == flag }
++      end
++      sizes = option_values.call('-m')
++      objects = option_values.call('-object').select { |value| value.start_with?('memory-backend-') }
++      backends = option_values.call('-machine').flat_map { |value| value.split(',').grep(/\Amemory-backend=/) }
++      context += "; memory=#{sizes.inspect}; memory objects=#{objects.inspect}; memory backends=#{backends.inspect}"
++      assert_equal(['2048'], sizes, context)
++      assert_equal(['memory-backend-memfd,id=mem,size=2048M,share=on'], objects, context)
++      assert_equal(['memory-backend=mem'], backends, context)
+     end
+   end
+ 

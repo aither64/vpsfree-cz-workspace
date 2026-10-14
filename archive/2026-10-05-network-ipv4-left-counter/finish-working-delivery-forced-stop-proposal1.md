@@ -1,0 +1,11 @@
+# Concrete decision: release the stuck disposable screenshot environment
+
+Ordinary original-G87d public stop --timeout900 failed after901s. Exact current named evidence at finish-working-delivery-services-qemu-disposition1.json proves services QEMU PID879704, UID1000, boot0104034e-3a15-4772-aa62-aac7ee4ff6ef/start1104427345, belongs to instance271d430a-f951-4979-b115-fe66c7516e11/run5b83fc44-1224-44c5-bd23-49f10a42f7b2. Same original runner is retained; node has exited and services plus six owned filesystem daemons remain. No memory-exhaustion cause established.
+
+Proposed, NOT yet authorized: run finish-working-delivery-services-qemu-stop1.py --approved-by-user. It opens a Linux pidfd, then freshly checks the full native recorded tuple, exact runner/launch/run/phase and owned services-root binding before sending only SIGTERM to that one services QEMU. PID reuse cannot retarget the pinned process handle. No KILL, unit/group/runner/virtiofs signals or parent reaping. The existing runner/OSVM reaper must handle its own descendants; if they do not reach complete/all-recorded-gone, stop and retain state.
+
+Only after the original public stop succeeds and exact complete/gone/socket/claim proof is preserved, proposed public reset targets this one owned cluster under campaign2/state, slug same-slug. Preserve immutable failed Campaign/native evidence privately outside the removed cluster. No other campaign, preview, session, unit or ref retirement. Reset deletes this disposable test cluster's disks/credentials; it is not qualification success.
+
+Then continue the approved screenshot plan with one fresh corrected-source cluster after its source/package gates and measured admission. Same fixed2GiB+2GiB guests, sequential2GiB builder,24GiB output envelope; no overlapping old guests, upscale, automatic retry or historical/two-root campaign. This conditional follow-on is a new explicit operation decision, not a replay of the failed Campaign. Source fixture correction does not relabel the old generator.
+
+User confirmation is required because the accepted plan excludes forced recovery and automatic reset. Current instruction to continue did not explicitly approve this concrete destructive test-environment action. No action is performed merely because this proposal or its read-only preparation is ready.

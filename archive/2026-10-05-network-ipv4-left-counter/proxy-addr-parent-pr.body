@@ -1,0 +1,22 @@
+The BFF production dependency audit fails because its existing lockfile selects
+proxy-addr 2.0.7, affected by
+[GHSA-jqcg-44mw-7w3h](https://github.com/advisories/GHSA-jqcg-44mw-7w3h).
+Update that transitive dependency to the patched 2.0.8 and regenerate the owning
+BFF npm dependency hash. Preserve the Express constraint, other dependency
+versions and the existing loopback proxy setting. The frontend lock and hash
+remain unchanged.
+
+Both production dependency audits now report zero vulnerabilities. Verification
+passed 57 BFF tests, 14 package/policy tests, 43 focused bootstrap/OAuth unit
+tests, and the complete quality/type gate. The documentation audit checked 68
+documents and 70 requirement IDs. Both immutable Nix packages and the
+provenance, source-content and package-content checks passed at the exact
+committed candidate. Their matching metadata reports the full revision with
+dirty=false; the installed BFF contains proxy-addr 2.0.8.
+
+This is a separate maintenance prerequisite for the network availability PR
+#19; it contains no network feature changes. It implements the package integrity
+and work-log requirements REQ-068/REQ-064. The
+[session portal](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-05-network-ipv4-left-counter/)
+records exact revisions and verification evidence. The patch is unmerged and
+undeployed; deployed exploitability has not been assessed.

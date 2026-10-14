@@ -1,0 +1,1 @@
+import{m as t}from"./main-LDE_lf6r.js";async function s(){return t({method:"GET",path:"/cluster/full_stats"})}async function n(){return t({method:"GET",path:"/cluster"})}async function r(e){return t({method:"POST",path:"/cluster/set_maintenance",namespace:"cluster",params:{lock:e.lock,reason:e.reason}})}export{n as a,s as f,r as s};

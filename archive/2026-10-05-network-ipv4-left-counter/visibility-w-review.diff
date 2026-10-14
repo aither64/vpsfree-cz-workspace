@@ -1,0 +1,1276 @@
+diff --git a/docs/design/API_CONTRACTS.md b/docs/design/API_CONTRACTS.md
+index 5d2b6b2e..e5372d95 100644
+--- a/docs/design/API_CONTRACTS.md
++++ b/docs/design/API_CONTRACTS.md
+@@ -1,6 +1,6 @@
+ # API contracts and compatibility
+ 
+-Requirements: REQ-018–023, 035–055, 059. Source of request details is the checked
++Requirements: REQ-018–023, 035–055, 059, 071. Source of request details is the checked
+ adapter plus the matching deployed backend revision, not a guessed legacy form.
+ [Adapter inventory](IMPLEMENTATION_INVENTORY.md) gives all current entry points.
+ 
+@@ -42,7 +42,7 @@ a search of the whole collection.
+ | Collection | Supported filter boundary | Source / regression entry point |
+ | --- | --- | --- |
+ | Exports | Owner (`user`); no global text, dataset, snapshot, host or state filter in this adapter. Detail-by-ID is a separate request. | [adapter](../../src/lib/api/exports.ts), [fixture contract](../../e2e/specs/app/exports_filter_contract.spec.ts) |
+-| Networks | `location` and `purpose`; do not forward text, IP-version, role or managed-state filters merely because those attributes exist on a network. | [adapter](../../src/lib/api/networks.ts), [URL/filter fixture](../../e2e/specs/admin/cluster_networks_filter_contract.spec.ts) |
++| Networks | `location`, `purpose` and optional exact `enabled` when supported by the API. The current list search exposes location/purpose only. Do not forward text, IP-version, role or managed-state filters merely because those attributes exist on a network. | [adapter](../../src/lib/api/networks.ts), [adapter tests](../../src/lib/api/networks.test.ts), [URL/filter fixture](../../e2e/specs/admin/cluster_networks_filter_contract.spec.ts) |
+ | Migration plans | `state` and `user`; no free-text query. This does not limit the separate destination-node picker for a VPS migration. | [adapter](../../src/lib/api/migrations.ts), [fixture contract](../../e2e/specs/admin/migration_plans_filter_contract.spec.ts) |
+ | Transaction items | `transaction_chain`, `node`, `type`, `success`, `done`; no item-name/text search. Transaction **chains** have a different contract which does accept `name`, as well as state, object and user/session filters. | [both adapters](../../src/lib/api/transactions.ts), [item-filter fixture](../../e2e/specs/app/transaction_items_filter_accessibility.spec.ts) |
+ | User namespaces / maps | No text or label search. Namespaces support `size`; maps support `user_namespace`. Owner filtering, and namespace `block_count`, are exposed only in admin scope with admin fields enabled and no fixed owner. Removing an invalid/disallowed URL filter resets cursor/page. | [scope/URL rules](../../src/components/userNamespaces/userNamespaceFilterSemantics.ts), [fixture contract](../../e2e/specs/app/user_namespace_filter_contract.spec.ts) |
+@@ -130,9 +130,32 @@ locations. Non-admin requests also honor `userpick` and address visibility.
+ locations. Do not apply a second primary-location/environment filter in the UI.
+ An export-only network is not compatible with VPS allocation.
+ 
+-This is separate from backend PR #44 and frontend IP-history cursor work.
+-The assignment fix changes no backend behavior. API validation remains the final
+-authority for ownership, quota, concurrent reservations and successful assignment.
++With network availability support, assignment requests also send
++`network_enabled=true` when `IpAddress.Index` metadata advertises that filter.
++Cached detached addresses are revalidated with the same availability criteria.
++Explicitly disabled addresses are excluded from assignment selectors but remain
++visible in owned inventory, with assignment unavailable. Missing `enabled` is
++unknown: older APIs receive no unsupported filter and no fabricated disabled
++state. Capability lookup failures remain visible instead of broadening selection.
++
++Free-IP suggestions apply the advertised network availability filter before the
++50-row limit and reject explicitly disabled rows in stale responses. A successful
++capability response from an older API omits the unsupported filter.
++
++Administrator network create/edit checks the relevant action's `enabled` input
++metadata before displaying or sending the availability control. An edit also
++requires a known current boolean state. Omitted fields preserve server state;
++false is sent explicitly when disabling. The dialog shows network identity and
++existing assigned/owned counts. Disabled networks remain in ordinary lists.
++A failed capability lookup shows the error and a retry action. Cached capability
++data cannot authorize availability writes while a lookup is pending, fetching
++or errored. Other fields remain editable.
++
++These additions use the enforcing backend's network availability contract and
++are separate from backend PR #44 and IP-history cursor work. API validation
++remains the final authority for ownership, quota, network availability, concurrent
++reservations and successful assignment. Admission accepted before disable may
++finish afterward; existing assigned service continues.
+ 
+ ## Dev deletion configuration limitation
+ 
+diff --git a/docs/design/EVIDENCE_MATRIX.md b/docs/design/EVIDENCE_MATRIX.md
+index 2b0b09e2..4b39539f 100644
+--- a/docs/design/EVIDENCE_MATRIX.md
++++ b/docs/design/EVIDENCE_MATRIX.md
+@@ -1,7 +1,7 @@
+ # Requirement evidence matrix
+ 
+ Review baseline: UI/BFF `3f31fce5cd58f3ace204c27e917b85527bfc08c0`, 2026-10-03.
+-This maps **all 70 register IDs**, including policy/non-runtime requirements. A
++This maps **all 71 register IDs**, including policy/non-runtime requirements. A
+ verification entry is a reproducible review starting point, **not** proof that
+ all acceptance criteria passed. A source link is not a test and a fixture does
+ not establish API behavior. For broad requirements use the linked action catalog
+@@ -69,7 +69,7 @@ Not every test file in this matrix necessarily ran in that PR-selected browser r
+ | REQ-047 | [Backup tabs/filters](../../e2e/specs/app/backup_center.spec.ts) | Preserve owner/location filters, late response races | Delivered per PR497 |
+ | REQ-048 | [Storage actions](../../e2e/specs/app/dataset_snapshot_confirm_workflows.spec.ts) | Create/rollback/delete/download, lost response, owner scope | Fixtures; actual restored contents require live proof |
+ | REQ-049 | [DNS contract](../../e2e/specs/app/dns_ttl_contract.spec.ts) | Inherited/null TTL and constraints; types use separate model suite | Historical unit model verification; publication not rerun |
+-| REQ-050 | [Networking scope](../../e2e/specs/app/vps_network_destructive_feedback.spec.ts) | Detach target, address family/owner and retained error | Fixture coverage; assignment cursor blocker independent |
++| REQ-050 | [Networking scope](../../e2e/specs/app/vps_network_destructive_feedback.spec.ts), [assignment selector tests](../../src/pages/app/networking/fetchAssignableIpAddresses.test.ts) | Detach target, address family/owner, detached-address revalidation and disabled-network visibility | Synthetic fixture/unit entry points; assignment cursor blocker independent; live availability proof separate |
+ | REQ-051 | [Operations surfaces](../../e2e/specs/app/transaction_chain_detail_page.spec.ts), [refresh/stale-lock contract](ARCHITECTURE.md#refresh-cache-and-stale-lock-information) | Chain/item/action distinction, bounded shell samples and unreliable-refresh TTL; monitoring/OOM separate cases | Source/test inventory; no whole-domain live certification or refresh-latency guarantee |
+ | REQ-052 | [Finance gates](../../e2e/specs/app/admin_user_finance_role.spec.ts) | Role denial for global/user finance; assignment/bulk tests separate | Fixture/source |
+ | REQ-053 | [Mail/content](../../e2e/specs/admin/mailer_template_crud_safety.spec.ts) | Safe template preview, errors; recipients/handlers separate suites | Fixture/source; real outbound mail not sent |
+@@ -90,6 +90,7 @@ Not every test file in this matrix necessarily ran in that PR-selected browser r
+ | REQ-068 | [Packaging](PACKAGING.md), [flake](../../flake.nix) | Separate immutable frontend/BFF, Gitless audit and matching clean provenance | Builds/source/package checks in release receipt; no new release from this docs port |
+ | REQ-069 | [NixOS service](NIXOS_SERVICE.md), [module](../../nixos/modules/webui.nix) | Private state, systemd credentials, routing, trusted edge, callback boundary, PHP coexistence | Dry activation and health checks recorded; real login/VM certification separate |
+ | REQ-070 | [Cold search](../../e2e/specs/app/global_search_cold_start.spec.ts) | Cold IP/DNS search, owner scope and visible lookup failures | Canonical PR5 fixtures; authenticated live search not certified |
++| REQ-071 | [Network adapter tests](../../src/lib/api/networks.test.ts), [availability workflow](WORKFLOWS.md#network-availability) | Explicit false, omitted fields, metadata capability, both toggle directions and retained errors | Prepared source and synthetic test entry points; execution and deployment evidence recorded separately |
+ 
+ ## Critical acceptance cases
+ 
+diff --git a/docs/design/REQUIREMENTS.md b/docs/design/REQUIREMENTS.md
+index 6ecfe350..6fd47a59 100644
+--- a/docs/design/REQUIREMENTS.md
++++ b/docs/design/REQUIREMENTS.md
+@@ -81,7 +81,7 @@ The Acceptance column describes what must be checked, not a claim it all passed.
+ | REQ-047 | Preserve backup filters when switching tabs. | Owner/location/other filters survive appropriate tab changes; no stale response overwrites current selection. | P; [PR497](https://github.com/Kerrycek/clankerdev/pull/497) | Delivered |
+ | REQ-048 | Support dataset/NAS/snapshot/download/export/restore workflows. | Quota vs usage distinguished; local/remote restore sources explicit; task results and failure/cleanup verifiable. | C/U; [datasets](../../src/lib/api/datasets.ts), [exports](../../src/lib/api/exports.ts) | Baseline; certification scope recorded separately |
+ | REQ-049 | Support DNS zones/records/transfers/DNSSEC/TSIG safely. | Validate actual record/API rules; preserve zone context and errors; secrets scrubbed; saved record is not proof of published DNS. | C/U; [DNS](../../src/lib/api/dns.ts), [secret scrubber](../../src/lib/api/dnsSecretScrubber.ts) | Baseline |
+-| REQ-050 | Preserve network interfaces, addresses, resolvers and admin IP inventory. | Scope and address family accurate; VPS assignment includes purpose `any` and all API-authorized location associations (including staging), without inferring availability from primary location; cached detached IPs must be revalidated. Destructive detach requires target review; history obeys REQ-043. | C; [networking](../../src/lib/api/networking.ts), [IP addresses](../../src/lib/api/ipAddresses.ts) | Baseline; staging private IPv4 availability delivered in PR6; fixture evidence; [release 718cf759](../work-log/2026-09-30-three-site-release.md) |
++| REQ-050 | Preserve network interfaces, addresses, resolvers and admin IP inventory. | Scope and address family accurate; VPS assignment includes purpose `any` and all API-authorized location associations (including staging), without inferring availability from primary location; cached detached IPs must be revalidated, including supported network availability. Disabled owned addresses remain visible but cannot be assigned. Destructive detach requires target review; history obeys REQ-043. | C; network availability request 2026-10-06; [networking](../../src/lib/api/networking.ts), [IP addresses](../../src/lib/api/ipAddresses.ts) | Baseline; staging private IPv4 availability delivered in PR6; network availability prepared, not deployed; fixture evidence only; [release 718cf759](../work-log/2026-09-30-three-site-release.md) |
+ | REQ-051 | Provide transactions, monitoring, incidents and OOM views. | Distinguish planned/running/failed/completed; display API-provided operation names as primary titles; filter ownership; keep long identifiers usable on mobile; incident lists fit the content width with wrapping text and no horizontal table scroll. | C; [monitoring](../../src/lib/api/monitoring.ts), [OOM](../../src/lib/api/oom.ts) | Delivered: PR11 API operation names and PR14 incident width; [operation evidence](../work-log/2026-10-03-transaction-operation-names.md); [release f123a7fb](../work-log/2026-10-03-three-site-release.md) |
+ | REQ-052 | Preserve member payments and administrator finance. | Admin-only finance gates; incoming payments are default finance destination; review mutations retained on failure; embedded PNG and reviewed external HTTPS payment QR codes remain visible after HTML sanitization and deployment CSP checks. | C/P; [PR490](https://github.com/Kerrycek/clankerdev/pull/490), [finance routes](../../src/routes/adminFinanceRoutes.tsx) | Baseline; external QR CSP follow-up [prepared](../work-log/2026-10-04-payment-qr-csp.md); embedded PNG payment QR fix delivered in PR15; [release f123a7fb](../work-log/2026-10-03-three-site-release.md) |
+ | REQ-053 | Preserve mail/content/help-box administration. | Templates/translations/recipients/mailboxes/news/help boxes retain scope, validation and in-context failure recovery. | C; [mailer](../../src/lib/api/mailer.ts), [help boxes](../../src/lib/api/helpBoxes.ts) | Baseline |
+@@ -112,3 +112,9 @@ The Acceptance column describes what must be checked, not a claim it all passed.
+ | ID | Requirement and reason | Acceptance | Source / implementation evidence | Status |
+ | --- | --- | --- | --- | --- |
+ | REQ-070 | Find IP addresses and DNS zones without first visiting their lists. | Cold header/palette queries use current API data; My view preserves ownership including VPS-assigned IPs; administrative DNS hits are not silently dropped after eight results; empty results do not hide a failed relevant lookup. | Maintainer report 2026-09-30; [search contract](WORKFLOWS.md#global-search), [cold-start fixtures](../../e2e/specs/app/global_search_cold_start.spec.ts) | Delivered: PR5; cold-start fixture evidence; authenticated live search not certified; [release 718cf759](../work-log/2026-09-30-three-site-release.md) |
++
++## Network availability
++
++| ID | Requirement and reason | Acceptance | Source / implementation evidence | Status |
++| --- | --- | --- | --- | --- |
++| REQ-071 | Let administrators stop new use of a network while retaining existing service and inventory. | Show known enabled state and assigned/owned counts; support both toggling directions through the normal API update; explain detached-address restrictions and already accepted operations; omit unsupported controls and fields on older APIs; preserve errors and drafts. | Accepted network availability request 2026-10-06; [API contract](API_CONTRACTS.md#vps-address-availability), [network editor](../../src/pages/app/admin/cluster/NetworksPage.tsx) | Prepared, not deployed; synthetic tests do not certify backend admission or running services |
+diff --git a/docs/design/WORKFLOWS.md b/docs/design/WORKFLOWS.md
+index 575f1b45..e3a73fec 100644
+--- a/docs/design/WORKFLOWS.md
++++ b/docs/design/WORKFLOWS.md
+@@ -163,6 +163,23 @@ locks and assignability when executing the existing assignment action. Candidate
+ availability is not a reservation or a guarantee of quota. The selector continues
+ to offer a bounded first page, not a claim to enumerate the entire pool.
+ 
++### Network availability
++
++Administrators edit availability in Cluster → Networks (REQ-071). The list keeps
++disabled networks visible and shows an unknown state when an older API omits the
++field. The editor shows network identity and existing assigned/owned counts. The
++availability control appears only when the relevant action advertises `enabled`;
++an edit also needs a known current value. Disabling sends explicit false and
++re-enabling sends true. Rejected updates retain the draft and display the error.
++
++Disabling prevents new allocations and assignments, including detached owned
++addresses. Existing service continues, and operations accepted before disable
++may finish. Member inventory retains disabled owned addresses with assignment
++unavailable (REQ-050). Assignment selectors request `network_enabled=true` only
++when supported and revalidate cached addresses with the same criteria. Capability
++or candidate errors stay visible. Older APIs receive neither unsupported fields
++nor a fabricated disabled state. Backend enforcement remains authoritative.
++
+ ## Account profile and user administration
+ 
+ **Intent:** members manage profile, mail/security preferences, keys, sessions, MFA,
+diff --git a/docs/work-log/2026-10-06-network-availability.md b/docs/work-log/2026-10-06-network-availability.md
+new file mode 100644
+index 00000000..428b4eb8
+--- /dev/null
++++ b/docs/work-log/2026-10-06-network-availability.md
+@@ -0,0 +1,80 @@
++# Network availability controls
++
++## Request and contract
++
++The accepted network availability request adds an administrator-controlled
++enabled state while preserving existing service and inventory. This change
++implements REQ-071 and extends detached-address revalidation in REQ-050.
++Public/private classification remains the API network role. No address-range
++classification is introduced.
++
++The owning vpsAdmin change adds `Network.enabled`, disabled-network admission
++guards and the shared enabled public IPv4 statistic. This frontend consumes the
++additive state and action metadata; it does not compute the public counter.
++Administrator create/edit sends availability only when supported. Assignment
++selectors request the optional `network_enabled` filter and reject explicitly
++disabled cached addresses. Owned disabled addresses remain visible.
++
++Older APIs receive no unsupported input fields or filters. Missing state is
++unknown, and capability failures remain errors. The backend remains responsible
++for current admission checks, ownership, reservations and quota. Previously
++accepted operations may finish after disable; existing service continues.
++
++## Documentation and terminology
++
++Updated the network filter and assignment contracts, networking workflow,
++requirements and evidence matrix. Adapter inventory is regenerated as part of
++verification. The authoritative locked Czech terminology source is vpsAdmin
++`a65a4dfeb92a59df4a80a737a20bcbf8558793ff`; deployment configuration can override
++that input and requires a separate effective-revision check.
++
++## Structural debt disposition
++
++On 2026-10-06 the root lead reviewed the small address-action extraction and
++disabled-network badges in `UserNetworkPage`. Assigned VPS links remain
++available; the new guard applies to detached assignment actions. The existing
++ledger entry now records the reviewed modified source hash and lowers its
++measured allowance from 691 to 683 lines. The historical baseline, original debt
++source revision and removal condition of at most 500 lines remain unchanged.
++This creates no new exception or increased budget.
++
++## Verification and release state
++
++Initial verification passed 42 tests in five synthetic unit files, including
++bilingual network-editor cases and disabled-address actions. The full ci:quick
++gate, adapter inventory and documentation audits passed.
++
++Review corrections apply the advertised enabled filter before the 50-row
++suggestion limit and retain the local stale-response guard. Capability lookup
++failures show an error and a retry action. Cached metadata cannot authorize
++availability writes while a lookup is pending, fetching or failed; other fields
++remain editable.
++
++After these corrections, six focused synthetic unit files passed with 51 tests.
++They cover filtering before the suggestion limit, older APIs, stale responses,
++capability failures and retries, and omission of availability writes while
++metadata is unconfirmed. The full ci:quick gate passed again, including lint,
++formatting, localization audits and application, tooling, adopted browser and
++BFF type checks. The design audit checked 68 documents and 71 requirement IDs.
++At that checkpoint, browser scenarios had not run and rendered evidence was pending.
++
++Synthetic fixtures are not a live API or deployment proof. Backend
++admission/concurrency tests belong to the separate vpsAdmin change. No
++integration, deployment or default-interface cutover is claimed.
++
++Browser verification then exposed a NixOS launch failure in the cached generic
++Linux browser and incomplete action metadata in the toggle fixtures. Chromium
++from the locked nixpkgs input launched successfully. The existing old-API and
++disabled-inventory browser cases passed; both toggle cases failed before the
++fixture advertised a usable control. The fixtures now retain HaveAPI action
++method, scope, input and output metadata and assert OPTIONS selects PUT. The
++full ci:quick gate passed after this test-only correction. Desktop and mobile
++toggle verification was rerun with the corrected metadata fixtures.
++
++The corrected browser suite passed all four cases on desktop and all four on
++mobile with Chromium from the locked nixpkgs input. The English and Czech
++captures show the implemented network editor and availability help. These are
++synthetic fixtures. The production build passed, with a chunk-size
++warning. Logs and the four reviewed captures are available in the
++[development session](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-05-network-ipv4-left-counter/).
++No live API, deployment or default-interface cutover is claimed.
+diff --git a/e2e/specs/admin/network_availability.spec.ts b/e2e/specs/admin/network_availability.spec.ts
+new file mode 100644
+index 00000000..b3e62f5e
+--- /dev/null
++++ b/e2e/specs/admin/network_availability.spec.ts
+@@ -0,0 +1,135 @@
++import { expect, test } from '@playwright/test';
++
++import { bootstrapVpsAdminWindow, installHaveApiMock, setUiSettingsLocalStorage } from '../../fixtures';
++
++for (const language of ['en', 'cs'] as const) {
++  test(`@pr-smoke @pr-smoke-mobile network availability retains service context and rejected drafts (${language})`, async ({ page }, testInfo) => {
++    await bootstrapVpsAdminWindow(page, { sessionToken: 'TEST' });
++    await setUiSettingsLocalStorage(page, { language });
++    let enabled = true;
++    let rejectNext = true;
++    const writes: boolean[] = [];
++    const capabilityMethods: string[] = [];
++    const network = () => ({
++      id: 101, label: 'Retained service', address: '192.0.2.0', prefix: 24,
++      ip_version: 4, role: 'public_access', purpose: 'vps', managed: true,
++      enabled, split_access: 'no_access', split_prefix: 32, assigned: 3, owned: 5,
++    });
++    await installHaveApiMock(page, {
++      user: { id: 1, login: 'admin', level: 100 },
++      handlers: {
++        'GET locations': () => ({ locations: [] }),
++        'GET networks': () => ({ networks: [network()] }),
++        'OPTIONS networks/101': (ctx) => {
++          expect(ctx.method).toBe('OPTIONS');
++          expect(ctx.searchParams.get('method')).toBe('PUT');
++          capabilityMethods.push(ctx.searchParams.get('method') ?? '');
++          return {
++            method: 'PUT', scope: 'network#update',
++            input: { namespace: 'network', layout: 'object', parameters: { enabled: { type: 'Boolean' } } },
++            output: { namespace: 'network', layout: 'object', parameters: {} },
++          };
++        },
++        'PUT networks/101': (ctx) => {
++          const input = ctx.reqJson as { network: { enabled: boolean } };
++          expect(typeof input.network.enabled).toBe('boolean');
++          writes.push(input.network.enabled);
++          if (rejectNext) {
++            rejectNext = false;
++            return { status: false, message: 'Allocation policy rejected', response: null };
++          }
++          enabled = input.network.enabled;
++          return { network: network() };
++        },
++      },
++    });
++    await page.goto('/admin/cluster/networks');
++    await page.getByTestId('admin.cluster.networks.row.101.edit').click();
++    const editor = page.getByTestId('admin.cluster.networks.editor');
++    const toggle = page.getByTestId('admin.cluster.networks.editor.enabled').getByRole('checkbox');
++    await expect(editor).toContainText('192.0.2.0/24 (#101)');
++    await expect(editor).toContainText(language === 'en' ? 'Assigned: 3' : 'Přiřazeno: 3');
++    await expect(editor).toContainText(language === 'en' ? 'Owned: 5' : 'Vlastněno: 5');
++    await expect(toggle).toBeVisible();
++    await expect(toggle).toBeChecked();
++    expect(capabilityMethods).toEqual(['PUT']);
++    await expect(editor).toContainText(language === 'en' ? 'Existing service continues' : 'Stávající provoz pokračuje');
++    await toggle.uncheck();
++    // Captures show the implemented UI with synthetic API fixtures.
++    await page.screenshot({ path: testInfo.outputPath(`network-availability-${language}.png`), fullPage: true });
++    await page.getByTestId('admin.cluster.networks.editor.save').click();
++    await expect(editor).toContainText('Allocation policy rejected');
++    await expect(toggle).not.toBeChecked();
++    await page.getByTestId('admin.cluster.networks.editor.save').click();
++    await expect(editor).toBeHidden();
++    await expect(page.getByTestId('admin.cluster.networks.row.101.enabled')).toHaveText(language === 'en' ? 'Disabled' : 'Zakázáno');
++    await page.getByTestId('admin.cluster.networks.row.101.edit').click();
++    await toggle.check();
++    await page.getByTestId('admin.cluster.networks.editor.save').click();
++    await expect(editor).toBeHidden();
++    await expect(page.getByTestId('admin.cluster.networks.row.101.enabled')).toHaveText(language === 'en' ? 'Enabled' : 'Povoleno');
++    expect(writes).toEqual([false, false, true]);
++  });
++}
++
++test('@pr-smoke @pr-smoke-mobile older APIs keep unknown state and omit unsupported availability fields', async ({ page }) => {
++  await bootstrapVpsAdminWindow(page, { sessionToken: 'TEST' });
++  await setUiSettingsLocalStorage(page, { language: 'en' });
++  let saved = false;
++  const capabilityMethods: string[] = [];
++  const network = { id: 101, address: '192.0.2.0', prefix: 24, ip_version: 4, role: 'public_access',
++    purpose: 'vps', managed: true, split_access: 'no_access', split_prefix: 32 };
++  await installHaveApiMock(page, {
++    user: { id: 1, login: 'admin', level: 100 },
++    handlers: {
++      'GET locations': () => ({ locations: [] }),
++      'GET networks': () => ({ networks: [network] }),
++      'OPTIONS networks/101': (ctx) => {
++        expect(ctx.method).toBe('OPTIONS');
++        expect(ctx.searchParams.get('method')).toBe('PUT');
++        capabilityMethods.push(ctx.searchParams.get('method') ?? '');
++        return {
++          method: 'PUT', scope: 'network#update',
++          input: { namespace: 'network', layout: 'object', parameters: { managed: { type: 'Boolean' } } },
++          output: { namespace: 'network', layout: 'object', parameters: {} },
++        };
++      },
++      'PUT networks/101': (ctx) => {
++        expect((ctx.reqJson as { network: object }).network).not.toHaveProperty('enabled');
++        saved = true;
++        return { network };
++      },
++    },
++  });
++  await page.goto('/admin/cluster/networks');
++  await expect(page.getByTestId('admin.cluster.networks.row.101.enabled')).not.toHaveText('Disabled');
++  await page.getByTestId('admin.cluster.networks.row.101.edit').click();
++  await expect(page.getByTestId('admin.cluster.networks.editor.label')).toBeVisible();
++  await expect.poll(() => capabilityMethods).toEqual(['PUT']);
++  await expect(page.getByTestId('admin.cluster.networks.editor.enabled')).toHaveCount(0);
++  await page.getByTestId('admin.cluster.networks.editor.save').click();
++  await expect(page.getByTestId('admin.cluster.networks.editor')).toBeHidden();
++  expect(saved).toBe(true);
++});
++
++test('@pr-smoke @pr-smoke-mobile disabled detached owned addresses stay visible without assignment', async ({ page }) => {
++  await bootstrapVpsAdminWindow(page, { sessionToken: 'TEST' });
++  await setUiSettingsLocalStorage(page, { language: 'en' });
++  const ip = { id: 102, addr: '192.0.2.10', prefix: 32, user: { id: 7 },
++    network: { id: 11, enabled: false, ip_version: 4, role: 'public_access', purpose: 'vps' },
++    network_interface: null };
++  await installHaveApiMock(page, {
++    user: { id: 7, login: 'member', level: 1 },
++    handlers: {
++      'GET vpses': () => ({ vpses: [] }),
++      'GET ip_addresses': () => ({ ip_addresses: [ip] }),
++      'GET ip_address_assignments': () => ({ ip_address_assignments: [] }),
++      'GET user_cluster_resources': () => ({ user_cluster_resources: [] }),
++    },
++  });
++  await page.goto('/app/networking');
++  const visible = page.locator('[data-testid="network.user.ip.row.102"]:visible, [data-testid="network.user.ip.card.102"]:visible');
++  await expect(visible).toContainText('192.0.2.10');
++  await expect(visible).toContainText('Disabled');
++  await expect(visible.getByTestId('network.user.ip.102.assign')).toBeDisabled();
++});
+diff --git a/scripts/fixtures/e2e-type-coverage.json b/scripts/fixtures/e2e-type-coverage.json
+index 7a4e8bf4..d4dfd9c1 100644
+--- a/scripts/fixtures/e2e-type-coverage.json
++++ b/scripts/fixtures/e2e-type-coverage.json
+@@ -11,6 +11,7 @@
+     "e2e/fixtures/url.ts",
+     "e2e/fixtures/vpsadmin-window.ts",
+     "e2e/helpers/horizontalOverflow.ts",
++    "e2e/specs/admin/network_availability.spec.ts",
+     "e2e/specs/admin/registration_reason_presets.spec.ts",
+     "e2e/specs/admin/requests_operations_smoke.spec.ts",
+     "e2e/specs/app/admin_default_review_queue.spec.ts",
+diff --git a/scripts/fixtures/structural-debt-ledger.json b/scripts/fixtures/structural-debt-ledger.json
+index 9a2b26f6..efff6473 100644
+--- a/scripts/fixtures/structural-debt-ledger.json
++++ b/scripts/fixtures/structural-debt-ledger.json
+@@ -4,7 +4,7 @@
+     "status": "accepted",
+     "acceptedBy": "2026-09-27-newadmin-integration lead, adoption source hash review"
+   },
+-  "note": "Only inherited exceptions for source files byte-identical to their recorded source revisions. An exact source edit or measured improvement requires review/removal; the historical baseline remains unchanged.",
++  "note": "Inherited exceptions retain their original debt source revisions. Except for the reviewed UserNetworkPage change documented in its rationale, source bytes match those revisions. An exact source edit or measured improvement requires review/removal; the historical baseline remains unchanged.",
+   "exceptions": [
+     {
+       "path": "src/components/layout/ActionStatesPanel.tsx",
+@@ -416,10 +416,10 @@
+       "path": "src/pages/app/networking/UserNetworkPage.tsx",
+       "rule": "crossed-500",
+       "sourceRevision": "e7ce3d73e799fc60e5933fe23bdb3a979eb4d6b9",
+-      "contentHash": "cea89b2cc98b4211c675f1d83426f8bc7a56558baa96d40bf25d818ec3031468",
++      "contentHash": "046865da62cc7c0cbf14db481e918e507edf6cf73ecab81daf0fced586b170f4",
+       "old": 0,
+-      "allowance": 691,
+-      "rationale": "At the recorded source revision, this file already contained user network detail and configuration; extract the coherent section with focused behavior coverage before removing this exception.",
++      "allowance": 683,
++      "rationale": "This entry retains the inherited debt origin. On 2026-10-06 the root lead reviewed the limited address-action extraction and disabled-network badges: assigned VPS links remain available, detached disabled addresses cannot be assigned, and the measured allowance decreases from 691 to 683 lines. The current content hash identifies those reviewed modified bytes, not the historical source. Extract the remaining coherent section with focused behavior coverage before removing this exception.",
+       "owner": "WebUI collection and page refactor implementer",
+       "removeWhen": {
+         "metric": "lines",
+diff --git a/src/i18n/locales/cs/adminCluster/networks.ts b/src/i18n/locales/cs/adminCluster/networks.ts
+index 840c6a37..f6860e1b 100644
+--- a/src/i18n/locales/cs/adminCluster/networks.ts
++++ b/src/i18n/locales/cs/adminCluster/networks.ts
+@@ -1,5 +1,8 @@
+ // Admin cluster locale chunk: networks
+ export const csAdminCluster_networks = {
++  "admin.cluster.networks.enabled": "Povoleno",
++  "admin.cluster.networks.disabled": "Zakázáno",
++  "admin.cluster.networks.enabled.help": "Zakázání sítě brání novému přidělování a přiřazování IP adres. Stávající provoz pokračuje a již přijaté operace mohou doběhnout. Nepřiřazené adresy s vlastníkem lze přiřadit až po opětovném povolení sítě.",
+   "admin.cluster.networks.action.create": "Vytvořit síť",
+   "admin.cluster.networks.col.assigned": "Přiřazeno",
+   "admin.cluster.networks.col.free": "Volné",
+diff --git a/src/i18n/locales/en/adminCluster/networks.ts b/src/i18n/locales/en/adminCluster/networks.ts
+index 85fbbcc6..9d850ba7 100644
+--- a/src/i18n/locales/en/adminCluster/networks.ts
++++ b/src/i18n/locales/en/adminCluster/networks.ts
+@@ -1,5 +1,8 @@
+ // Admin cluster locale chunk: networks
+ export const enAdminCluster_networks = {
++  "admin.cluster.networks.enabled": "Enabled",
++  "admin.cluster.networks.disabled": "Disabled",
++  "admin.cluster.networks.enabled.help": "Disabling prevents new allocations and assignments. Existing service continues, and operations already accepted may finish. Detached owned addresses cannot be assigned until the network is enabled again.",
+   "admin.cluster.networks.action.create": "Create network",
+   "admin.cluster.networks.col.assigned": "Assigned",
+   "admin.cluster.networks.col.free": "Free",
+diff --git a/src/lib/api/ipAddresses.ts b/src/lib/api/ipAddresses.ts
+index 839316e9..f139cb9c 100644
+--- a/src/lib/api/ipAddresses.ts
++++ b/src/lib/api/ipAddresses.ts
+@@ -11,6 +11,7 @@ export interface Network {
+   ip_version?: number;
+   role?: string;
+   purpose?: string;
++  enabled?: boolean;
+   primary_location?: {
+     id?: number;
+     label?: string;
+@@ -52,6 +53,7 @@ export async function fetchIpAddresses(opts?: {
+   user?: number | null;
+   networkInterface?: number;
+   assignedToInterface?: boolean;
++  networkEnabled?: boolean;
+   order?: string;
+   count?: boolean;
+   signal?: AbortSignal;
+@@ -73,6 +75,7 @@ export async function fetchIpAddresses(opts?: {
+   if (opts?.user !== undefined) params['user'] = opts.user;
+   if (opts?.networkInterface !== undefined) params['network_interface'] = opts.networkInterface;
+   if (opts?.assignedToInterface !== undefined) params['assigned_to_interface'] = opts.assignedToInterface;
++  if (opts?.networkEnabled !== undefined) params['network_enabled'] = opts.networkEnabled;
+   if (opts?.order) params['order'] = opts.order;
+ 
+   const res = await haveApiCall<IpAddress[]>({
+@@ -90,6 +93,12 @@ export async function fetchIpAddresses(opts?: {
+   return { ...res, data: expectArray<IpAddress>(res.data, 'ip_addresses') };
+ }
+ 
++export async function fetchIpAddressIndexCapability() {
++  return haveApiCall<{ input?: { parameters?: Record<string, unknown> } }>({
++    method: 'OPTIONS', path: '/ip_addresses?method=GET',
++  });
++}
++
+ export async function fetchIpAddress(ipAddressId: number, opts?: { includes?: string }) {
+   return haveApiCall<IpAddress>({
+     method: 'GET',
+diff --git a/src/lib/api/networks.test.ts b/src/lib/api/networks.test.ts
+index 4d0fe9a4..164fb84f 100644
+--- a/src/lib/api/networks.test.ts
++++ b/src/lib/api/networks.test.ts
+@@ -1,16 +1,31 @@
+ import { describe, expect, test, vi } from 'vitest';
+ 
+-import { fetchNetworks } from './networks';
++import { fetchNetworks, updateNetwork, networkEnabledWritable } from './networks';
+ 
+ function mockFetchOk(response: unknown) {
+-  return vi.fn().mockResolvedValue({
++  return vi.fn<typeof fetch>().mockResolvedValue({
+     ok: true,
+     headers: new Headers({ 'content-type': 'application/json' }),
+     json: async () => ({ status: true, response }),
+-  });
++  } as Response);
+ }
+ 
+ describe('networks API wrappers', () => {
++  test('requires advertised enabled write support', () => {
++    expect(networkEnabledWritable()).toBe(false);
++    expect(networkEnabledWritable({ input: { parameters: { managed: {} } } })).toBe(false);
++    expect(networkEnabledWritable({ input: { parameters: { enabled: {} } } })).toBe(true);
++  });
++
++  test('serializes false explicitly and preserves omission on unrelated updates', async () => {
++    const fetchMock = mockFetchOk({ network: { id: 101, enabled: false } });
++    globalThis.fetch = fetchMock as unknown as typeof fetch;
++    await updateNetwork({ id: 101, enabled: false });
++    await updateNetwork({ id: 101, label: 'Inventory' });
++    const writes = fetchMock.mock.calls.filter(([, init]) => init?.method === 'PUT');
++    expect(JSON.parse(String(writes[0]?.[1]?.body))).toEqual({ network: { enabled: false } });
++    expect(JSON.parse(String(writes[1]?.[1]?.body))).toEqual({ network: { label: 'Inventory' } });
++  });
+   test('fetchNetworks forwards only filters supported by Network.Index', async () => {
+     const fetchMock = mockFetchOk({ networks: [{ id: 101, purpose: 'vps' }] });
+     globalThis.fetch = fetchMock as unknown as typeof fetch;
+diff --git a/src/lib/api/networks.ts b/src/lib/api/networks.ts
+index d6920a26..29252d80 100644
+--- a/src/lib/api/networks.ts
++++ b/src/lib/api/networks.ts
+@@ -14,6 +14,7 @@ export interface Network {
+   prefix?: number;
+   role?: NetworkRole | string;
+   managed?: boolean;
++  enabled?: boolean;
+   split_access?: NetworkSplitAccess | string;
+   split_prefix?: number;
+   purpose?: NetworkPurpose | string;
+@@ -36,6 +37,7 @@ export async function fetchNetworks(opts?: {
+   fromId?: number;
+   locationId?: number;
+   purpose?: NetworkPurpose;
++  enabled?: boolean;
+ }) {
+   const params: Record<string, unknown> = {};
+ 
+@@ -44,6 +46,7 @@ export async function fetchNetworks(opts?: {
+ 
+   if (opts?.locationId !== undefined) params['location'] = opts.locationId;
+   if (opts?.purpose) params['purpose'] = opts.purpose;
++  if (opts?.enabled !== undefined) params['enabled'] = opts.enabled;
+ 
+   const res = await haveApiCall<Network[]>({
+     method: 'GET',
+@@ -64,6 +67,21 @@ export async function fetchNetwork(id: number) {
+   });
+ }
+ 
++export interface NetworkWriteCapability {
++  input?: { parameters?: Record<string, unknown> };
++}
++
++export function networkEnabledWritable(capability?: NetworkWriteCapability): boolean {
++  return Object.prototype.hasOwnProperty.call(capability?.input?.parameters ?? {}, 'enabled');
++}
++
++export async function fetchNetworkWriteCapability(id?: number) {
++  return haveApiCall<NetworkWriteCapability>({
++    method: 'OPTIONS',
++    path: id === undefined ? '/networks?method=POST' : `/networks/${id}?method=PUT`,
++  });
++}
++
+ export async function createNetwork(opts: {
+   label?: string;
+   ipVersion: 4 | 6;
+@@ -71,6 +89,7 @@ export async function createNetwork(opts: {
+   prefix: number;
+   role: NetworkRole;
+   managed: boolean;
++  enabled?: boolean;
+   splitAccess: NetworkSplitAccess;
+   splitPrefix: number;
+   purpose: NetworkPurpose;
+@@ -88,6 +107,7 @@ export async function createNetwork(opts: {
+     purpose: opts.purpose,
+     add_ip_addresses: Boolean(opts.addIpAddresses),
+   };
++  if (opts.enabled !== undefined) params['enabled'] = opts.enabled;
+ 
+   return haveApiCall<Network>({
+     method: 'POST',
+@@ -105,6 +125,7 @@ export async function updateNetwork(opts: {
+   prefix?: number;
+   role?: NetworkRole;
+   managed?: boolean;
++  enabled?: boolean;
+   splitAccess?: NetworkSplitAccess;
+   splitPrefix?: number;
+   purpose?: NetworkPurpose;
+@@ -117,6 +138,7 @@ export async function updateNetwork(opts: {
+   if (opts.prefix !== undefined) params['prefix'] = opts.prefix;
+   if (opts.role !== undefined) params['role'] = opts.role;
+   if (opts.managed !== undefined) params['managed'] = opts.managed;
++  if (opts.enabled !== undefined) params['enabled'] = opts.enabled;
+   if (opts.splitAccess !== undefined) params['split_access'] = opts.splitAccess;
+   if (opts.splitPrefix !== undefined) params['split_prefix'] = opts.splitPrefix;
+   if (opts.purpose !== undefined) params['purpose'] = opts.purpose;
+diff --git a/src/pages/app/admin/cluster/NetworksPage.test.tsx b/src/pages/app/admin/cluster/NetworksPage.test.tsx
+new file mode 100644
+index 00000000..2d99111f
+--- /dev/null
++++ b/src/pages/app/admin/cluster/NetworksPage.test.tsx
+@@ -0,0 +1,159 @@
++// i18n-ignore-file
++import React from 'react';
++import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
++import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
++import { createMemoryRouter, RouterProvider } from 'react-router-dom';
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
++
++import { I18nProvider } from '../../../../app/i18n';
++import { fetchLocations } from '../../../../lib/api/infra';
++import { fetchNetworks, fetchNetworkWriteCapability, updateNetwork } from '../../../../lib/api/networks';
++import { NetworksPage } from './NetworksPage';
++
++const state = vi.hoisted(() => ({ language: 'en' as 'en' | 'cs' }));
++vi.mock('../../../../app/uiSettings', () => ({ useUiSettings: () => ({ settings: { language: state.language } }) }));
++vi.mock('../../../../app/toasts', () => ({ useToasts: () => ({ pushToast: vi.fn() }) }));
++vi.mock('../../../../components/layout/ChromeContext', () => ({ useChrome: () => ({ trackActionState: vi.fn() }) }));
++vi.mock('../../../../lib/api/infra', () => ({ fetchLocations: vi.fn() }));
++vi.mock('../../../../lib/api/networks', async (importOriginal) => ({
++  ...await importOriginal<typeof import('../../../../lib/api/networks')>(),
++  fetchNetworks: vi.fn(), fetchNetworkWriteCapability: vi.fn(), updateNetwork: vi.fn(), createNetwork: vi.fn(),
++}));
++
++const network = {
++  id: 101, label: 'Retained service', address: '192.0.2.0', prefix: 24,
++  ip_version: 4, role: 'public_access', purpose: 'vps', managed: true,
++  enabled: true, split_access: 'no_access', split_prefix: 32, assigned: 3, owned: 5,
++};
++
++function renderPage() {
++  const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
++  const router = createMemoryRouter([{ path: '/admin/cluster/networks', element: <NetworksPage /> }], {
++    initialEntries: ['/admin/cluster/networks'],
++  });
++  render(<QueryClientProvider client={client}><I18nProvider><RouterProvider router={router} /></I18nProvider></QueryClientProvider>);
++  return client;
++}
++
++beforeEach(() => {
++  vi.clearAllMocks();
++  vi.mocked(fetchLocations).mockResolvedValue({ data: [] } as never);
++  vi.mocked(fetchNetworks).mockResolvedValue({ data: [network] } as never);
++  const capability = { input: { parameters: { enabled: {} } } };
++  vi.mocked(fetchNetworkWriteCapability).mockResolvedValue({ data: capability, envelope: { status: true, response: capability } });
++  vi.mocked(updateNetwork).mockResolvedValue({ data: network } as never);
++});
++afterEach(() => { state.language = 'en'; });
++
++describe('network availability editor', () => {
++  it.each(['en', 'cs'] as const)('renders %s identity/counts and retains a rejected disable draft', async (language) => {
++    state.language = language;
++    vi.mocked(updateNetwork).mockRejectedValueOnce(new Error('Allocation policy rejected'));
++    renderPage();
++    fireEvent.click(await screen.findByTestId('admin.cluster.networks.row.101.edit'));
++    const availability = await screen.findByTestId('admin.cluster.networks.editor.enabled');
++    expect(screen.getByRole('dialog')).toHaveTextContent('192.0.2.0/24 (#101)');
++    expect(screen.getByRole('dialog')).toHaveTextContent(language === 'en' ? 'Assigned: 3' : 'Přiřazeno: 3');
++    expect(availability).toHaveTextContent(language === 'en' ? 'Existing service continues' : 'Stávající provoz pokračuje');
++    fireEvent.click(within(availability).getByRole('checkbox'));
++    fireEvent.click(screen.getByTestId('admin.cluster.networks.editor.save'));
++    await waitFor(() => expect(updateNetwork).toHaveBeenCalledWith(expect.objectContaining({ id: 101, enabled: false })));
++    expect(await screen.findByText('Allocation policy rejected')).toBeInTheDocument();
++    expect(within(availability).getByRole('checkbox')).not.toBeChecked();
++    expect(screen.getByRole('dialog')).toBeVisible();
++    fireEvent.click(screen.getByTestId('admin.cluster.networks.editor.save'));
++    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
++  });
++
++  it('re-enables a disabled network explicitly', async () => {
++    vi.mocked(fetchNetworks).mockResolvedValue({ data: [{ ...network, enabled: false }] } as never);
++    renderPage();
++    expect(await screen.findByTestId('admin.cluster.networks.row.101.enabled')).toHaveTextContent('Disabled');
++    fireEvent.click(screen.getByTestId('admin.cluster.networks.row.101.edit'));
++    fireEvent.click(within(await screen.findByTestId('admin.cluster.networks.editor.enabled')).getByRole('checkbox'));
++    fireEvent.click(screen.getByTestId('admin.cluster.networks.editor.save'));
++    await waitFor(() => expect(updateNetwork).toHaveBeenCalledWith(expect.objectContaining({ enabled: true })));
++  });
++
++  it('omits unavailable controls and payload fields for an older API', async () => {
++    const capability = { input: { parameters: { managed: {} } } };
++    vi.mocked(fetchNetworkWriteCapability).mockResolvedValue({ data: capability, envelope: { status: true, response: capability } });
++    const { enabled: _enabled, ...oldNetwork } = network;
++    vi.mocked(fetchNetworks).mockResolvedValue({ data: [oldNetwork] } as never);
++    renderPage();
++    const status = await screen.findByTestId('admin.cluster.networks.row.101.enabled');
++    expect(status).not.toHaveTextContent('Disabled');
++    fireEvent.click(screen.getByTestId('admin.cluster.networks.row.101.edit'));
++    await waitFor(() => expect(fetchNetworkWriteCapability).toHaveBeenCalledWith(101));
++    expect(screen.queryByTestId('admin.cluster.networks.editor.enabled')).not.toBeInTheDocument();
++    fireEvent.click(screen.getByTestId('admin.cluster.networks.editor.save'));
++    await waitFor(() => expect(updateNetwork).toHaveBeenCalled());
++    expect(vi.mocked(updateNetwork).mock.calls[0]?.[0]).not.toHaveProperty('enabled');
++    expect(screen.queryByTestId('admin.cluster.networks.editor.capability_error')).not.toBeInTheDocument();
++  });
++
++  it.each(['en', 'cs'] as const)('shows an initial %s capability failure and retries without losing the editor draft', async (language) => {
++    state.language = language;
++    vi.mocked(fetchNetworkWriteCapability).mockRejectedValueOnce(new Error('Capability unavailable'));
++    renderPage();
++    fireEvent.click(await screen.findByTestId('admin.cluster.networks.row.101.edit'));
++    fireEvent.change(screen.getByTestId('admin.cluster.networks.editor.label'), { target: { value: 'Draft label' } });
++    const error = await screen.findByTestId('admin.cluster.networks.editor.capability_error');
++    expect(error).toHaveTextContent('Capability unavailable');
++    expect(screen.queryByTestId('admin.cluster.networks.editor.enabled')).not.toBeInTheDocument();
++    fireEvent.click(within(error).getByRole('button', { name: language === 'en' ? 'Retry' : 'Zkusit znovu' }));
++    const availability = await screen.findByTestId('admin.cluster.networks.editor.enabled');
++    expect(within(availability).getByRole('checkbox')).toBeEnabled();
++    expect(screen.queryByTestId('admin.cluster.networks.editor.capability_error')).not.toBeInTheDocument();
++    expect(screen.getByTestId('admin.cluster.networks.editor.label')).toHaveValue('Draft label');
++  });
++
++  it('omits availability writes while the initial capability lookup is pending', async () => {
++    vi.mocked(fetchNetworkWriteCapability).mockImplementation(() => new Promise(() => {}));
++    renderPage();
++    fireEvent.click(await screen.findByTestId('admin.cluster.networks.row.101.edit'));
++    fireEvent.change(screen.getByTestId('admin.cluster.networks.editor.label'), { target: { value: 'Draft label' } });
++    fireEvent.click(screen.getByTestId('admin.cluster.networks.editor.save'));
++    await waitFor(() => expect(updateNetwork).toHaveBeenCalled());
++    expect(vi.mocked(updateNetwork).mock.calls[0]?.[0]).toMatchObject({ label: 'Draft label' });
++    expect(vi.mocked(updateNetwork).mock.calls[0]?.[0]).not.toHaveProperty('enabled');
++  });
++
++  it('disables a cached availability control while refetching and after failure, then restores its draft on retry', async () => {
++    const client = renderPage();
++    fireEvent.click(await screen.findByTestId('admin.cluster.networks.row.101.edit'));
++    const availability = await screen.findByTestId('admin.cluster.networks.editor.enabled');
++    const checkbox = within(availability).getByRole('checkbox');
++    fireEvent.click(checkbox);
++    let rejectLookup!: (error: Error) => void;
++    vi.mocked(fetchNetworkWriteCapability).mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectLookup = reject; }));
++    act(() => { void client.refetchQueries({ queryKey: ['network-write-capability', 'edit', 101] }); });
++    await waitFor(() => expect(checkbox).toBeDisabled());
++    await act(async () => { rejectLookup(new Error('Refetch unavailable')); });
++    const error = await screen.findByTestId('admin.cluster.networks.editor.capability_error');
++    expect(error).toHaveTextContent('Refetch unavailable');
++    expect(checkbox).toBeDisabled();
++    expect(checkbox).not.toBeChecked();
++    fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
++    await waitFor(() => expect(checkbox).toBeEnabled());
++    expect(checkbox).not.toBeChecked();
++    fireEvent.click(screen.getByTestId('admin.cluster.networks.editor.save'));
++    await waitFor(() => expect(updateNetwork).toHaveBeenCalledWith(expect.objectContaining({ enabled: false })));
++  });
++
++  it('keeps unrelated editing usable without sending availability from an errored cached capability', async () => {
++    const client = renderPage();
++    fireEvent.click(await screen.findByTestId('admin.cluster.networks.row.101.edit'));
++    const availability = await screen.findByTestId('admin.cluster.networks.editor.enabled');
++    fireEvent.click(within(availability).getByRole('checkbox'));
++    vi.mocked(fetchNetworkWriteCapability).mockRejectedValueOnce(new Error('Refetch unavailable'));
++    await act(async () => { await client.refetchQueries({ queryKey: ['network-write-capability', 'edit', 101] }); });
++    await screen.findByTestId('admin.cluster.networks.editor.capability_error');
++    expect(within(availability).getByRole('checkbox')).toBeDisabled();
++    fireEvent.change(screen.getByTestId('admin.cluster.networks.editor.label'), { target: { value: 'Draft label' } });
++    fireEvent.click(screen.getByTestId('admin.cluster.networks.editor.save'));
++    await waitFor(() => expect(updateNetwork).toHaveBeenCalled());
++    expect(vi.mocked(updateNetwork).mock.calls[0]?.[0]).toMatchObject({ label: 'Draft label' });
++    expect(vi.mocked(updateNetwork).mock.calls[0]?.[0]).not.toHaveProperty('enabled');
++  });
++});
+diff --git a/src/pages/app/admin/cluster/NetworksPage.tsx b/src/pages/app/admin/cluster/NetworksPage.tsx
+index c07d2b78..94a14997 100644
+--- a/src/pages/app/admin/cluster/NetworksPage.tsx
++++ b/src/pages/app/admin/cluster/NetworksPage.tsx
+@@ -38,6 +38,8 @@ import { parseNonNegativeInt, parsePositiveInt } from '../../../../lib/parse';
+ import {
+   createNetwork,
+   fetchNetworks,
++  fetchNetworkWriteCapability,
++  networkEnabledWritable,
+   updateNetwork,
+   type Network,
+   type NetworkPurpose,
+@@ -74,6 +76,7 @@ type FormState = {
+   prefix: string;
+   role: NetworkRole;
+   managed: boolean;
++  enabled: boolean;
+   splitAccess: NetworkSplitAccess;
+   splitPrefix: string;
+   purpose: NetworkPurpose;
+@@ -93,6 +96,7 @@ function initForm(n?: Network): FormState {
+     prefix,
+     role: (x.role as NetworkRole) ?? 'public_access',
+     managed: typeof x.managed === 'boolean' ? x.managed : true,
++    enabled: typeof x.enabled === 'boolean' ? x.enabled : true,
+     splitAccess: (x.split_access as NetworkSplitAccess) ?? 'no_access',
+     splitPrefix,
+     purpose: (x.purpose as NetworkPurpose) ?? 'any',
+@@ -384,6 +388,15 @@ function NetworksContent() {
+ 
+   const [editor, setEditor] = useState<EditorState>(null);
+   const [form, setForm] = useState<FormState>(() => initForm());
++  const capabilityQ = useQuery({
++    queryKey: ['network-write-capability', editor?.mode, editor?.network?.id],
++    enabled: Boolean(editor),
++    queryFn: async () => (await fetchNetworkWriteCapability(editor?.network?.id)).data,
++    staleTime: 0,
++  });
++  const hasEnabledControl = networkEnabledWritable(capabilityQ.data)
++    && (editor?.mode === 'create' || typeof editor?.network?.enabled === 'boolean');
++  const canManageEnabled = hasEnabledControl && capabilityQ.isSuccess && !capabilityQ.isFetching;
+ 
+   const openCreate = () => {
+     createM.reset();
+@@ -412,6 +425,7 @@ function NetworksContent() {
+         prefix: prefixNum,
+         role: form.role,
+         managed: form.managed,
++        ...(canManageEnabled ? { enabled: form.enabled } : {}),
+         splitAccess: form.splitAccess,
+         splitPrefix: splitPrefixNum,
+         purpose: form.purpose,
+@@ -451,6 +465,7 @@ function NetworksContent() {
+         prefix: prefixNum,
+         role: form.role,
+         managed: form.managed,
++        ...(canManageEnabled ? { enabled: form.enabled } : {}),
+         splitAccess: form.splitAccess,
+         splitPrefix: splitPrefixNum,
+         purpose: form.purpose,
+@@ -639,6 +654,7 @@ function NetworksContent() {
+               <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('admin.cluster.networks.col.role')}</th>
+               <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('admin.cluster.networks.col.purpose')}</th>
+               <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('admin.cluster.networks.col.managed')}</th>
++              <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('admin.cluster.networks.enabled')}</th>
+               <th className="px-3 py-2 text-right text-xs font-semibold text-muted">{t('admin.cluster.networks.col.used')}</th>
+               <th className="px-3 py-2 text-right text-xs font-semibold text-muted">{t('admin.cluster.networks.col.assigned')}</th>
+               <th className="px-3 py-2 text-right text-xs font-semibold text-muted">{t('admin.cluster.networks.col.owned')}</th>
+@@ -694,6 +710,11 @@ function NetworksContent() {
+                       {managedVal ? t('admin.cluster.networks.managed.true') : t('admin.cluster.networks.managed.false')}
+                     </Badge>
+                   </td>
++                  <td className="px-3 py-2" data-testid={`admin.cluster.networks.row.${id}.enabled`}>
++                    {typeof n.enabled === 'boolean'
++                      ? <Badge variant={n.enabled ? 'ok' : 'warn'}>{t(n.enabled ? 'admin.cluster.networks.enabled' : 'admin.cluster.networks.disabled')}</Badge>
++                      : t('common.na')}
++                  </td>
+                   <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums">{used ?? '—'}</td>
+                   <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums">{assigned ?? '—'}</td>
+                   <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums">{owned ?? '—'}</td>
+@@ -770,6 +791,34 @@ function NetworksContent() {
+             {t('admin.cluster.networks.editor.notice.body')}
+           </Alert>
+ 
++          {editor?.network ? (
++            <div className="text-sm text-muted">
++              {netLabel(editor.network)} (#{editor.network.id}) · {t('admin.cluster.networks.col.assigned')}: {editor.network.assigned ?? '—'} · {t('admin.cluster.networks.col.owned')}: {editor.network.owned ?? '—'}
++            </div>
++          ) : null}
++          {capabilityQ.isError ? (
++            <Alert variant="danger" title={t('common.error')} testId="admin.cluster.networks.editor.capability_error">
++              {formatErrorMessage(capabilityQ.error)}
++              <Button
++                variant="secondary"
++                onClick={() => capabilityQ.refetch()}
++                disabled={capabilityQ.isFetching}
++              >
++                {t('common.retry')}
++              </Button>
++            </Alert>
++          ) : null}
++          {hasEnabledControl ? (
++            <SwitchRow
++              label={t('admin.cluster.networks.enabled')}
++              description={t('admin.cluster.networks.enabled.help')}
++              checked={form.enabled}
++              onChange={(enabled) => setForm((p) => ({ ...p, enabled }))}
++              disabled={busy || !canManageEnabled}
++              testId="admin.cluster.networks.editor.enabled"
++            />
++          ) : null}
++
+           <div>
+             <div className="text-xs font-semibold text-muted">{t('common.label')}</div>
+             <div className="mt-1">
+diff --git a/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx b/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx
+new file mode 100644
+index 00000000..3926081a
+--- /dev/null
++++ b/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx
+@@ -0,0 +1,92 @@
++// i18n-ignore-file
++import React from 'react';
++import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
++import { renderHook, waitFor } from '@testing-library/react';
++import { beforeEach, describe, expect, it, vi } from 'vitest';
++
++import { fetchIpAddresses, fetchIpAddressIndexCapability, type IpAddress } from '../../../../lib/api/ipAddresses';
++import { useProgressiveSuggestedIpQueries } from './useProgressiveSuggestedIpQueries';
++
++vi.mock('../../../../lib/api/ipAddresses', () => ({
++  fetchIpAddresses: vi.fn(), fetchIpAddressIndexCapability: vi.fn(),
++}));
++
++const locations = [{ id: 10, label: 'Prague', environment: { id: 1, label: 'Production' } }];
++function ip(id: number, enabled?: boolean): IpAddress {
++  return {
++    id, addr: `192.0.2.${id}`, prefix: 32,
++    network: { id: 100 + id, enabled, ip_version: 4, role: 'public_access',
++      primary_location: { id: 10 } },
++  };
++}
++
++function renderSuggestions() {
++  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
++  const wrapper = ({ children }: { children: React.ReactNode }) => (
++    <QueryClientProvider client={client}>{children}</QueryClientProvider>
++  );
++  return renderHook(() => useProgressiveSuggestedIpQueries(locations, true), { wrapper });
++}
++
++beforeEach(() => {
++  vi.resetAllMocks();
++  const capability = { input: { parameters: { network_enabled: {} } } };
++  vi.mocked(fetchIpAddressIndexCapability).mockResolvedValue({
++    data: capability, envelope: { status: true, response: capability },
++  });
++});
++
++describe('suggested IP availability', () => {
++  it('filters disabled pools before the bounded server page so enabled suggestions are not starved', async () => {
++    const rows = [...Array.from({ length: 50 }, (_, index) => ip(index + 1, false)), ip(51, true)];
++    vi.mocked(fetchIpAddresses).mockImplementation(async (opts) => {
++      const candidates = opts?.version === 4 && opts.role === 'public_access' ? rows : [];
++      const filtered = opts?.networkEnabled ? candidates.filter((row) => row.network?.enabled) : candidates;
++      return { data: filtered.slice(0, opts?.limit), envelope: { status: true } };
++    });
++    const { result } = renderSuggestions();
++    await waitFor(() => expect(result.current.isLoading).toBe(false));
++    expect(result.current.data.map((row) => row.id)).toEqual([51]);
++    expect(fetchIpAddressIndexCapability).toHaveBeenCalledTimes(1);
++    expect(fetchIpAddresses).toHaveBeenCalledWith(expect.objectContaining({
++      version: 4, role: 'public_access', limit: 50, networkEnabled: true,
++    }));
++  });
++
++  it('keeps the local stale-response guard even when the server filter is advertised', async () => {
++    vi.mocked(fetchIpAddresses).mockImplementation(async (opts) => ({
++      data: opts?.version === 4 && opts.role === 'public_access' ? [ip(1, false), ip(2, true)] : [],
++      envelope: { status: true },
++    }));
++    const { result } = renderSuggestions();
++    await waitFor(() => expect(result.current.isLoading).toBe(false));
++    expect(result.current.data.map((row) => row.id)).toEqual([2]);
++  });
++
++  it('omits the unsupported filter after a successful older-API capability response', async () => {
++    const capability = { input: { parameters: {} } };
++    vi.mocked(fetchIpAddressIndexCapability).mockResolvedValue({
++      data: capability, envelope: { status: true, response: capability },
++    });
++    vi.mocked(fetchIpAddresses).mockImplementation(async (opts) => ({
++      data: opts?.version === 4 && opts.role === 'public_access' ? [ip(1), ip(2, false)] : [],
++      envelope: { status: true },
++    }));
++    const { result } = renderSuggestions();
++    await waitFor(() => expect(result.current.isLoading).toBe(false));
++    expect(result.current.data.map((row) => row.id)).toEqual([1]);
++    expect(fetchIpAddresses).toHaveBeenCalledTimes(3);
++    for (const [opts] of vi.mocked(fetchIpAddresses).mock.calls) {
++      expect(opts).toMatchObject({ limit: 50 });
++      expect(opts).not.toHaveProperty('networkEnabled');
++    }
++  });
++
++  it('reports a failed capability lookup rather than treating it as an older API', async () => {
++    vi.mocked(fetchIpAddressIndexCapability).mockRejectedValue(new Error('Capability unavailable'));
++    const { result } = renderSuggestions();
++    await waitFor(() => expect(result.current.isLoading).toBe(false));
++    expect(result.current.error).toEqual(new Error('Capability unavailable'));
++    expect(fetchIpAddresses).not.toHaveBeenCalled();
++  });
++});
+diff --git a/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.ts b/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.ts
+index 6cb48139..ae2de74b 100644
+--- a/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.ts
++++ b/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.ts
+@@ -1,7 +1,7 @@
+ import { useEffect, useMemo, useState } from 'react';
+-import { useQueries } from '@tanstack/react-query';
++import { useQueries, useQueryClient } from '@tanstack/react-query';
+ 
+-import { fetchIpAddresses, type IpAddress } from '../../../../lib/api/ipAddresses';
++import { fetchIpAddresses, fetchIpAddressIndexCapability, type IpAddress } from '../../../../lib/api/ipAddresses';
+ import type { Location as InfraLocation } from '../../../../lib/api/infra';
+ 
+ import {
+@@ -35,6 +35,7 @@ export function useProgressiveSuggestedIpQueries(
+   locations: InfraLocation[],
+   enabled: boolean
+ ) {
++  const queryClient = useQueryClient();
+   const queryPlan = useMemo(() => buildSuggestedIpQueryPlan(locations), [locations]);
+   const progressKey = `${enabled ? 'visible' : 'hidden'}:${locations
+     .map((item) => item.id)
+@@ -58,6 +59,15 @@ export function useProgressiveSuggestedIpQueries(
+       queryFn: async ({ signal }: { signal: AbortSignal }) => {
+         const timedSignal = createRequestTimeoutSignal(signal);
+         try {
++          const capability = await queryClient.fetchQuery({
++            queryKey: ['ip-address-index-capability'],
++            queryFn: async () => (await fetchIpAddressIndexCapability()).data,
++            staleTime: 5 * 60_000,
++            retry: 0,
++          });
++          const supportsEnabled = Object.prototype.hasOwnProperty.call(
++            capability?.input?.parameters ?? {}, 'network_enabled'
++          );
+           return (
+             await fetchIpAddresses({
+               limit: SUGGESTED_IP_QUERY_LIMIT,
+@@ -66,12 +76,13 @@ export function useProgressiveSuggestedIpQueries(
+               role: query.role,
+               user: null,
+               assignedToInterface: false,
++              ...(supportsEnabled ? { networkEnabled: true } : {}),
+               order: 'asc',
+               purpose: 'vps',
+               includes: 'network__primary_location__environment',
+               signal: timedSignal.signal,
+             })
+-          ).data;
++          ).data.filter((ip) => ip.network?.enabled !== false);
+         } finally {
+           timedSignal.cleanup();
+         }
+diff --git a/src/pages/app/networking/UserNetworkAddressActions.test.tsx b/src/pages/app/networking/UserNetworkAddressActions.test.tsx
+new file mode 100644
+index 00000000..82c02a02
+--- /dev/null
++++ b/src/pages/app/networking/UserNetworkAddressActions.test.tsx
+@@ -0,0 +1,49 @@
++// i18n-ignore-file
++import React from 'react';
++import { cleanup, fireEvent, render, screen } from '@testing-library/react';
++import { MemoryRouter } from 'react-router-dom';
++import { afterEach, describe, expect, it, vi } from 'vitest';
++
++import type { IpAddress } from '../../../lib/api/ipAddresses';
++import { UserNetworkAddressActions } from './UserNetworkAddressActions';
++
++vi.mock('../../../app/i18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }));
++afterEach(cleanup);
++
++function renderActions(ip: IpAddress, assigned = false) {
++  const onAssign = vi.fn();
++  render(
++    <MemoryRouter>
++      <UserNetworkAddressActions ip={ip} assigned={assigned} vpsId={assigned ? 7 : null}
++        basePath="/app" onAssign={onAssign} />
++    </MemoryRouter>,
++  );
++  return onAssign;
++}
++
++describe('owned network address actions', () => {
++  it('prevents disabled detached assignment and explains the retained address', () => {
++    const onAssign = renderActions({ id: 42, network: { id: 12, enabled: false } });
++    const button = screen.getByTestId('network.user.ip.42.assign');
++    expect(button).toBeDisabled();
++    expect(button).toHaveAttribute('title', 'admin.cluster.networks.enabled.help');
++    fireEvent.click(button);
++    expect(onAssign).not.toHaveBeenCalled();
++  });
++
++  it.each([true, undefined])('retains assignment for enabled or unknown state (%s)', (enabled) => {
++    const ip = { id: 42, network: { id: 12, enabled } };
++    const onAssign = renderActions(ip);
++    const button = screen.getByTestId('network.user.ip.42.assign');
++    expect(button).not.toBeDisabled();
++    fireEvent.click(button);
++    expect(onAssign).toHaveBeenCalledWith(ip);
++  });
++
++  it('keeps an assigned VPS link usable while its network is disabled', () => {
++    const onAssign = renderActions({ id: 42, network: { id: 12, enabled: false } }, true);
++    expect(screen.getByRole('link')).toHaveAttribute('href', '/app/vps/7/network');
++    expect(screen.queryByTestId('network.user.ip.42.assign')).not.toBeInTheDocument();
++    expect(onAssign).not.toHaveBeenCalled();
++  });
++});
+diff --git a/src/pages/app/networking/UserNetworkAddressActions.tsx b/src/pages/app/networking/UserNetworkAddressActions.tsx
+new file mode 100644
+index 00000000..07b89e6e
+--- /dev/null
++++ b/src/pages/app/networking/UserNetworkAddressActions.tsx
+@@ -0,0 +1,34 @@
++import React from 'react';
++
++import { useI18n } from '../../../app/i18n';
++import { Button } from '../../../components/ui/Button';
++import type { IpAddress } from '../../../lib/api/ipAddresses';
++
++export function UserNetworkAddressActions(props: {
++  ip: IpAddress;
++  assigned: boolean;
++  vpsId: number | null;
++  basePath: string;
++  onAssign: (ip: IpAddress) => void;
++}) {
++  const { t } = useI18n();
++  if (props.assigned && props.vpsId) {
++    return (
++      <Button to={`${props.basePath}/vps/${props.vpsId}/network`} variant="secondary" size="sm">
++        {t('network.user.action.open_vps')}
++      </Button>
++    );
++  }
++  return (
++    <Button
++      variant="primary"
++      size="sm"
++      testId={`network.user.ip.${props.ip.id}.assign`}
++      disabled={props.ip.network?.enabled === false}
++      title={props.ip.network?.enabled === false ? t('admin.cluster.networks.enabled.help') : undefined}
++      onClick={() => props.onAssign(props.ip)}
++    >
++      {t('network.user.action.assign')}
++    </Button>
++  );
++}
+diff --git a/src/pages/app/networking/UserNetworkPage.tsx b/src/pages/app/networking/UserNetworkPage.tsx
+index ddaaca85..d10104a2 100644
+--- a/src/pages/app/networking/UserNetworkPage.tsx
++++ b/src/pages/app/networking/UserNetworkPage.tsx
+@@ -20,6 +20,7 @@ import { LoadingState } from '../../../components/ui/LoadingState';
+ import { Select } from '../../../components/ui/Select';
+ import { StatusDot } from '../../../components/ui/StatusDot';
+ import { TableCard } from '../../../components/ui/TableCard';
++import { UserNetworkAddressActions } from './UserNetworkAddressActions';
+ import type { ResourceRef } from '../../../lib/api/appTypes';
+ import { fetchIpAddress, fetchIpAddresses, type IpAddress } from '../../../lib/api/ipAddresses';
+ import type { NetworkInterface } from '../../../lib/api/networkInterfaces';
+@@ -437,22 +438,9 @@ export function UserNetworkPage() {
+ 
+   const rowActions = (ip: IpAddress) => {
+     const vpsId = assignedVpsByIpId.get(ip.id) ?? ipVpsId(ip);
+-    if ((assignedIpIds.has(ip.id) || isAssignedIp(ip)) && vpsId) {
+-      return (
+-        <Button to={`${basePath}/vps/${vpsId}/network`} variant="secondary" size="sm">
+-          {t('network.user.action.open_vps')}
+-        </Button>
+-      );
+-    }
+     return (
+-      <Button
+-        variant="primary"
+-        size="sm"
+-        testId={`network.user.ip.${ip.id}.assign`}
+-        onClick={() => openAssignment(ip)}
+-      >
+-        {t('network.user.action.assign')}
+-      </Button>
++      <UserNetworkAddressActions ip={ip} assigned={assignedIpIds.has(ip.id) || isAssignedIp(ip)}
++        vpsId={vpsId} basePath={basePath} onAssign={openAssignment} />
+     );
+   };
+ 
+@@ -592,6 +580,7 @@ export function UserNetworkPage() {
+                         <span>{t('network.user.field.location')}: {locationLabel(ip)}</span>
+                         <span>{t('network.user.field.vps')}: {vps?.hostname ?? (vpsId ? `#${vpsId}` : '—')}</span>
+                         <span>{t('network.user.field.interface')}: {interfaceName(ip)}</span>
++                        {ip.network?.enabled === false ? <Badge variant="warn">{t('admin.cluster.networks.disabled')}</Badge> : null}
+                       </div>
+                       <div className="flex justify-end">{rowActions(ip)}</div>
+                     </div>
+@@ -620,7 +609,10 @@ export function UserNetworkPage() {
+                   return (
+                     <tr key={ip.id} data-testid={`network.user.ip.row.${ip.id}`} className="border-b border-border/60 last:border-0">
+                       <td className="px-4 py-3"><StatusDot variant={assigned ? 'ok' : 'warn'} /></td>
+-                      <td className="px-4 py-3 font-mono text-sm font-medium">{ipAddressLabel(ip)}</td>
++                      <td className="px-4 py-3 font-mono text-sm font-medium">
++                        {ipAddressLabel(ip)}
++                        {ip.network?.enabled === false ? <Badge variant="warn">{t('admin.cluster.networks.disabled')}</Badge> : null}
++                      </td>
+                       <td className="px-4 py-3">
+                         <Badge variant={assignableIpKind(ip) === 'ipv4_private' ? 'neutral' : 'info'}>
+                           {t(kindTranslationKey(assignableIpKind(ip)))}
+diff --git a/src/pages/app/networking/fetchAssignableIpAddresses.test.ts b/src/pages/app/networking/fetchAssignableIpAddresses.test.ts
+index af0795c9..7ece6f2d 100644
+--- a/src/pages/app/networking/fetchAssignableIpAddresses.test.ts
++++ b/src/pages/app/networking/fetchAssignableIpAddresses.test.ts
+@@ -1,8 +1,8 @@
+ import { beforeEach, describe, expect, test, vi } from 'vitest';
+-import { fetchIpAddresses, type IpAddress } from '../../../lib/api/ipAddresses';
++import { fetchIpAddresses, fetchIpAddressIndexCapability, type IpAddress } from '../../../lib/api/ipAddresses';
+ import { fetchAssignableIpAddresses } from './fetchAssignableIpAddresses';
+ 
+-vi.mock('../../../lib/api/ipAddresses', () => ({ fetchIpAddresses: vi.fn() }));
++vi.mock('../../../lib/api/ipAddresses', () => ({ fetchIpAddresses: vi.fn(), fetchIpAddressIndexCapability: vi.fn() }));
+ const fetchAddresses = vi.mocked(fetchIpAddresses);
+ const ip: IpAddress = {
+   id: 42, addr: '10.108.0.42', prefix: 32,
+@@ -12,7 +12,10 @@ const ip: IpAddress = {
+ function respond(rows: IpAddress[]) {
+   fetchAddresses.mockResolvedValueOnce({ data: rows, meta: {}, envelope: { status: true } });
+ }
+-beforeEach(() => vi.resetAllMocks());
++beforeEach(() => {
++  vi.resetAllMocks();
++  vi.mocked(fetchIpAddressIndexCapability).mockResolvedValue({ data: { input: { parameters: { network_enabled: {} } } }, meta: {}, envelope: { status: true } });
++});
+ 
+ describe('assignment candidates', () => {
+   test('trusts secondary-location availability and requests compatible network purposes', async () => {
+@@ -22,6 +25,7 @@ describe('assignment candidates', () => {
+     expect(fetchAddresses).toHaveBeenCalledWith(expect.objectContaining({
+       location: 11, version: 4, role: 'private_access', usableFor: 'vps',
+       assignedToInterface: false, signal,
++      networkEnabled: true,
+     }));
+     expect(fetchAddresses.mock.calls[0]?.[0]).not.toHaveProperty('purpose');
+   });
+@@ -58,4 +62,17 @@ describe('assignment candidates', () => {
+     respond([{ ...ip, network: { ...ip.network!, role: 'public_access' } }]);
+     expect(await fetchAssignableIpAddresses(11, 'ipv4_private')).toEqual([]);
+   });
++
++  test('omits disabled listed and cached owned allocations', async () => {
++    const disabled = { ...ip, network: { ...ip.network!, enabled: false }, user: { id: 1 } };
++    respond([disabled]);
++    expect(await fetchAssignableIpAddresses(11, 'ipv4_private', [disabled])).toEqual([]);
++  });
++
++  test('keeps old APIs usable without sending an unsupported availability filter', async () => {
++    vi.mocked(fetchIpAddressIndexCapability).mockResolvedValue({ data: { input: { parameters: {} } }, meta: {}, envelope: { status: true } });
++    respond([ip]);
++    expect(await fetchAssignableIpAddresses(11, 'ipv4_private')).toEqual([ip]);
++    expect(fetchAddresses.mock.calls[0]?.[0]).not.toHaveProperty('networkEnabled');
++  });
+ });
+diff --git a/src/pages/app/networking/fetchAssignableIpAddresses.ts b/src/pages/app/networking/fetchAssignableIpAddresses.ts
+index babcc777..31b89976 100644
+--- a/src/pages/app/networking/fetchAssignableIpAddresses.ts
++++ b/src/pages/app/networking/fetchAssignableIpAddresses.ts
+@@ -1,4 +1,4 @@
+-import { fetchIpAddresses, type IpAddress } from '../../../lib/api/ipAddresses';
++import { fetchIpAddresses, fetchIpAddressIndexCapability, type IpAddress } from '../../../lib/api/ipAddresses';
+ import {
+   assignableIpKindQuery,
+   isAssignedIp,
+@@ -14,11 +14,16 @@ export async function fetchAssignableIpAddresses(
+   extraIps: IpAddress[] = [],
+   signal?: AbortSignal
+ ): Promise<IpAddress[]> {
++  const capability = await fetchIpAddressIndexCapability();
++  const supportsEnabled = Object.prototype.hasOwnProperty.call(
++    capability.data?.input?.parameters ?? {}, 'network_enabled'
++  );
+   const filters = {
+     location,
+     ...assignableIpKindQuery(kind),
+     usableFor: 'vps' as const,
+     assignedToInterface: false,
++    ...(supportsEnabled ? { networkEnabled: true } : {}),
+     includes: 'network__primary_location__environment,network_interface,user,vps',
+     signal,
+   };
+@@ -37,6 +42,6 @@ export async function fetchAssignableIpAddresses(
+     return response.data.filter((row) => row.id === ip.id);
+   }));
+   return uniqueIpAddresses([...verified.flat(), ...listed]).filter((ip) => (
+-    !isAssignedIp(ip) && matchesAssignableIpKind(ip, kind)
++    !isAssignedIp(ip) && matchesAssignableIpKind(ip, kind) && ip.network?.enabled !== false
+   ));
+ }
+diff --git a/tsconfig.e2e.json b/tsconfig.e2e.json
+index eccb6fac..5a304774 100644
+--- a/tsconfig.e2e.json
++++ b/tsconfig.e2e.json
+@@ -14,6 +14,7 @@
+     "e2e/fixtures/url.ts",
+     "e2e/fixtures/vpsadmin-window.ts",
+     "e2e/helpers/horizontalOverflow.ts",
++    "e2e/specs/admin/network_availability.spec.ts",
+     "e2e/specs/admin/registration_reason_presets.spec.ts",
+     "e2e/specs/admin/requests_operations_smoke.spec.ts",
+     "e2e/specs/app/admin_default_review_queue.spec.ts",

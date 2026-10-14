@@ -1,0 +1,48 @@
+{
+  "session": "2026-10-05-network-ipv4-left-counter",
+  "member": "implementer0",
+  "settings": {
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "xhigh",
+    "purpose": "implementation",
+    "access": "workspace_write",
+    "roster_revision": 17
+  },
+  "head": "25539d837dea07f868b807db79dca436ab5075f7",
+  "branch": "2026-10-05-network-ipv4-left-counter-kb-runtime",
+  "scope": [
+    "tools/test-runtime.rb"
+  ],
+  "source_state": "frozen source-only correction; unexecuted",
+  "native_evidence": [
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-atomic-unselected-managed-failure1.log",
+      "sha256": "013b86ef9f501b01feaf4c16831ca5540e57643d88be4f048da442f1a43e91f7",
+      "bytes": 26066
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-atomic-k-check-state1.json",
+      "sha256": "f1e9ac69611ea60715947e2c2ae763205b56c3f2f5431b01023b5a68e3bcc9db",
+      "bytes": 1472
+    }
+  ],
+  "native_managed_run": 37915315928,
+  "canonical_check_snapshot_run": 37915315937,
+  "canonical_check_snapshot_is_terminal": false,
+  "native_runtime_result": {
+    "runs": 44,
+    "assertions": 377,
+    "failures": 0,
+    "errors": 1,
+    "skips": 0,
+    "seed": 7757
+  },
+  "failure": "Only the new retained-G4 public-stop fixture errored during start at tools/test-runtime.rb:872 through the mandatory 100-byte Resources#socket_dir guard; other43 cases reached passes on this old head.",
+  "diagnosis": "Default Dir.mktmpdir can inherit a long Nix TMPDIR prefix. This fixture adds runtime/vpsfree-kb/run-<digest>/control.sock beneath it. Native trace and owning source establish the path-budget cause; no local reproduction or product defect is claimed.",
+  "correction": "Only this method uses Dir.mktmpdir('kb-g4-', '/tmp'); unique private root and 0700 runtime child/XDG authority remain. No global TMPDIR override, path-limit change, skip or timeout change.",
+  "preserved": "Every assertion, all other test methods, State/resources/guard/runner/source schemas/pins/docs/workflows/protected artifacts remain unchanged. Private G4 evidence and G5 configurations are untouched.",
+  "verification": "No local CI, test, syntax, lint, formatter, eval, build, process probe, runtime/lifecycle, index/ref/commit/push operation. Existing hosted Check/check source selection remains nix develop --command bin/check --allow-missing; parent owns fresh canonical proof, exact pair and required review.",
+  "limits": "No corrected-test pass or incomplete-G4 cleanup certification. Prior44/377 result belongs only to the failed25539d source.",
+  "deviations": [],
+  "index_empty": true
+}

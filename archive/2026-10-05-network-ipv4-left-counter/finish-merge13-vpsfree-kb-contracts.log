@@ -1,0 +1,117 @@
+$ git rev-parse HEAD
+ce2c8cd9358c3636e5d39343e595df813a0b197f
+$ git status --porcelain
+$ git ls-remote origin refs/heads/master refs/heads/2026-10-05-network-ipv4-left-counter
+ce2c8cd9358c3636e5d39343e595df813a0b197f	refs/heads/2026-10-05-network-ipv4-left-counter
+873758fd6aec0c03f50a94600e0ceab97946f255	refs/heads/master
+$ git merge-base --is-ancestor 873758fd6aec0c03f50a94600e0ceab97946f255 ce2c8cd9358c3636e5d39343e595df813a0b197f
+$ git worktree add --detach /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/integration13-vpsfree-kb-contracts 873758fd6aec0c03f50a94600e0ceab97946f255
+HEAD is now at 873758f contract: pin reviewed VPS deletion error fix
+Preparing worktree (detached HEAD 873758f)
+$ git merge --ff-only ce2c8cd9358c3636e5d39343e595df813a0b197f
+Updating 873758f..ce2c8cd
+Fast-forward
+ .github/workflows/check.yml      |   15 +-
+ AGENTS.md                        |   17 +-
+ README.md                        |   64 +-
+ bin/check                        |   42 +-
+ bin/devcluster                   | 1242 +-----------------
+ bin/validate                     |  241 +---
+ captures.json                    |    5 +-
+ cluster/README.md                |    7 +-
+ cluster/artifact-lock.rb         |   50 +
+ cluster/default-config.json      |   12 +
+ cluster/launcher.rb              |  129 ++
+ cluster/lib/devcluster_runner.rb |  316 ++++-
+ cluster/lib/kb_closure.rb        |  127 ++
+ cluster/lib/kb_disks.rb          |   49 +
+ cluster/lib/kb_machine.rb        |  196 +++
+ cluster/lib/kb_process.rb        |  132 ++
+ cluster/lib/kb_resources.rb      |  116 ++
+ cluster/lib/kb_runtime.rb        |  906 +++++++++++++
+ cluster/lib/kb_source.rb         |  166 +++
+ cluster/lib/kb_state.rb          |  166 +++
+ cluster/nix/test.nix             |  125 +-
+ cluster/runtime-contract.md      |  493 +++++++
+ cluster/source-metadata.rb       |   29 +
+ contract/navigation.yml          |    2 +-
+ contract/pages.yml               |    2 +-
+ docs/webui-change-workflow.md    |   60 +-
+ fixtures/prepare.cjs             |  256 +++-
+ flake.lock                       |    8 +-
+ flake.nix                        |  104 +-
+ lib/artifacts.cjs                |  193 +++
+ lib/browser.cjs                  |   59 +-
+ lib/capture-session.cjs          |   16 +-
+ lib/connection.cjs               |  271 ++++
+ lib/console.cjs                  |   14 +-
+ lib/dev-cluster.cjs              |   66 -
+ lib/terminal.cjs                 |   48 +-
+ runner/args.cjs                  |   17 +-
+ runner/capture.cjs               |  130 +-
+ runner/package-capture.cjs       |    5 +
+ runner/validate-artifacts.cjs    |   53 +
+ runner/validate-entry.rb         |   15 +
+ runner/validate.rb               |  257 ++++
+ scenarios/console.cjs            |    2 +-
+ scenarios/networking.cjs         |   86 +-
+ tools/capture-export.rb          |   48 +
+ tools/contact-sheet.cjs          |   39 +-
+ tools/fixtures/fake-kb-runner.rb |   87 ++
+ tools/runtime-verify.rb          |  734 +++++++++++
+ tools/test-artifacts.cjs         |  310 +++++
+ tools/test-capture-export.rb     |   86 ++
+ tools/test-capture-lease.cjs     |  443 +++++++
+ tools/test-closure.rb            |  257 ++++
+ tools/test-connection.cjs        |  254 ++++
+ tools/test-ip-inventory.cjs      | 1463 +++++++++++++++++++++
+ tools/test-machine.rb            | 1865 ++++++++++++++++++++++++++
+ tools/test-node-ssh.rb           |  441 +++++++
+ tools/test-runtime-verify.rb     | 1363 +++++++++++++++++++
+ tools/test-runtime.rb            | 2698 ++++++++++++++++++++++++++++++++++++++
+ tools/verify-live-lease.cjs      |  271 ++++
+ 59 files changed, 14775 insertions(+), 1893 deletions(-)
+ create mode 100644 cluster/artifact-lock.rb
+ create mode 100644 cluster/launcher.rb
+ create mode 100644 cluster/lib/kb_closure.rb
+ create mode 100644 cluster/lib/kb_disks.rb
+ create mode 100644 cluster/lib/kb_machine.rb
+ create mode 100644 cluster/lib/kb_process.rb
+ create mode 100644 cluster/lib/kb_resources.rb
+ create mode 100644 cluster/lib/kb_runtime.rb
+ create mode 100644 cluster/lib/kb_source.rb
+ create mode 100644 cluster/lib/kb_state.rb
+ create mode 100644 cluster/runtime-contract.md
+ create mode 100644 cluster/source-metadata.rb
+ create mode 100644 lib/artifacts.cjs
+ create mode 100644 lib/connection.cjs
+ delete mode 100644 lib/dev-cluster.cjs
+ create mode 100644 runner/package-capture.cjs
+ create mode 100644 runner/validate-artifacts.cjs
+ create mode 100644 runner/validate-entry.rb
+ create mode 100644 runner/validate.rb
+ create mode 100644 tools/capture-export.rb
+ create mode 100755 tools/fixtures/fake-kb-runner.rb
+ create mode 100644 tools/runtime-verify.rb
+ create mode 100644 tools/test-artifacts.cjs
+ create mode 100644 tools/test-capture-export.rb
+ create mode 100644 tools/test-capture-lease.cjs
+ create mode 100644 tools/test-closure.rb
+ create mode 100644 tools/test-connection.cjs
+ create mode 100644 tools/test-ip-inventory.cjs
+ create mode 100644 tools/test-machine.rb
+ create mode 100644 tools/test-node-ssh.rb
+ create mode 100644 tools/test-runtime-verify.rb
+ create mode 100644 tools/test-runtime.rb
+ create mode 100644 tools/verify-live-lease.cjs
+$ git rev-parse HEAD
+ce2c8cd9358c3636e5d39343e595df813a0b197f
+$ git status --porcelain
+$ git diff --check 873758fd6aec0c03f50a94600e0ceab97946f255 ce2c8cd9358c3636e5d39343e595df813a0b197f
+$ git push origin HEAD:refs/heads/master
+To github.com:vpsfreecz/vpsfree-kb-contracts.git
+   873758f..ce2c8cd  HEAD -> master
+$ git ls-remote origin refs/heads/master
+ce2c8cd9358c3636e5d39343e595df813a0b197f	refs/heads/master
+$ git fetch origin
+$ git worktree remove /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/integration13-vpsfree-kb-contracts

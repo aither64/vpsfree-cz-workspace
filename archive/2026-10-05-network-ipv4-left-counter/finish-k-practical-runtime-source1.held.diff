@@ -1,0 +1,274 @@
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index e0fa3c2d4790dd39df3966a637ab2298c4ed7f56..4ed8149dd163e42534de9c6647c842c45babd752 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -326,8 +326,17 @@ Other managed KB page suites retain their test-runner route.
+ 
+ Prepare the packages from a clean exact Git-flake revision after source checks
+ and independent review. Supply one private disk-backed campaign root, one
+-explicit configuration and a private capacity receipt. Run the required real
+-phase, then the optional capture phase against the same inputs:
++explicit configuration and a private capacity receipt.
++
++For long campaign paths, set `TMPDIR` to a short, existing canonical directory
++owned by the caller with mode `0700`. The verifier passes it to child commands
++so Chromium can create its UNIX sockets. Invalid explicit paths refuse before
++commands start. When `TMPDIR` is unset, commands use the campaign's `temporary`
++directory. Keep the selected directory until child and browser cleanup finishes;
++it does not bound Nix builder scratch.
++
++Run the required real phase, then the optional capture phase against the same
++inputs:
+ 
+ ```sh
+ vpsfree-kb-verify --root "$ROOT" --config "$CONFIG" \
+@@ -345,10 +354,11 @@ A completed runtime receipt is required for capture. Each completed phase is
+ immutable. An incomplete or failed attempt retains its native stage evidence
+ and owned state and refuses replay. It supplies no cleanup authority.
+ 
+-The qualification uses one `single` cluster with a 2 GiB services guest and
+-2 GiB node1. Set `services.memoryMiB` and `nodes.node1.memoryMiB` to 2048,
+-`services.rootDiskMiB` to 8192 and `nodes.node1.tankDiskGiB` to 8. The services
+-image and its independent writable copy are each 8 GiB. The image-finalization
++The qualification uses one `single` cluster. Set `services.memoryMiB` and
++`nodes.node1.memoryMiB` independently to 2048 or 4096. A 4096/4096 configuration
++provides 4 GiB per guest. Set `services.rootDiskMiB` to 8192 and
++`nodes.node1.tankDiskGiB` to 8. The services image and its independent writable
++copy are each 8 GiB. The image-finalization
+ builder also uses `services.memoryMiB` and finishes before runtime guests start.
+ Configure explicit local loopback TCP forwarding and an integer multicast port,
+ disable dedicated DNS guests, use QEMU's `10.0.2.3` resolver and `example.test`
+@@ -357,15 +367,15 @@ must pass a real qualification; they are not measured sufficient minima for
+ all fixtures or workloads. The general runtime configuration remains separate
+ from this verifier profile.
+ 
+-For `single` topology with `services.memoryMiB` set to 2048, the services
++For `single` topology with `services.memoryMiB` set to 2048 or 4096, the services
+ workload uses a 256M MySQL buffer pool and 64 connections. Join, sort and read
+ buffers are 1M, 2M and 1M; temporary and heap tables are limited to 16M each.
+ The API uses one worker with one to four threads. The nested WebUI's dynamic
+ PHP pool has at most four children, starts one and keeps one to two spare.
+ Only the base and DNS-record Prometheus export timers are disabled; their
+ service definitions and the essential scheduler, supervisor and maintenance
+-tasks remain available. Other topologies and the normal 4096 MiB configuration
+-retain their inherited workload settings. These limits reduce the dedicated
++tasks remain available. Other topologies and services RAM values outside those
++two choices retain their inherited workload settings. These limits reduce the dedicated
+ fixture's concurrency and SQL workspace; excess work may queue or spill to disk.
+ They are qualification targets, not a total memory bound or a sustained-fit
+ guarantee. They create a distinct guest artifact and do not alter retained
+@@ -405,11 +415,13 @@ another instance automatically. Failed public commands retain native argv,
+ exit/signal and diagnostic output privately beneath the campaign root. Artifact
+ exports exclude this evidence.
+ 
+-Before start or resume, capacity admission includes the 4 GiB guest RAM and
+-shared-memory demand plus separately assessed positive overhead. For example,
+-2 GiB RAM and 1 GiB shared-memory margins require 6 GiB available RAM and 5 GiB
+-free shared memory. Initial start assesses construction and runtime/browser
+-phases separately and uses their peak. The builder finishes before guests start.
++Before start or resume, capacity admission includes both guests' configured RAM
++and shared-memory demand plus separately assessed positive overhead. With
++2 GiB RAM and 1 GiB shared-memory margins, a 2048/2048 configuration requires
++6 GiB available RAM and 5 GiB free shared memory; 4096/4096 requires 10 GiB and
++9 GiB. Initial start assesses construction and runtime/browser phases separately
++and uses their peak. A 4096 MiB services configuration also selects a 4 GiB
++builder, which finishes before guests start.
+ 
+ Live capture first attests the same resumed guests and their continuity. Its
+ fresh availability check requires only the additional runtime/browser margins,
+diff --git a/docs/webui-change-workflow.md b/docs/webui-change-workflow.md
+index f3c62b6abee0790df6e6a28cb2711cad5fa550f1..7f3e215d6c252eb6acf21a5f1b4b8f37612d896a 100644
+--- a/docs/webui-change-workflow.md
++++ b/docs/webui-change-workflow.md
+@@ -124,9 +124,11 @@ The committed generator source must already pin the affected vpsAdmin revision.
+ The [direct verifier](../cluster/runtime-contract.md#verification-and-limits)
+ also exercises the private connection selector and writable-CWD output default.
+ Its reduced real-runtime route qualifies one final-source `single`/local
+-instance: services and node1 each use 2048 MiB RAM, the services image and root
+-copy each use 8192 MiB, and the tank is 8 GiB. The builder also follows the
+-services RAM setting. These are unqualified targets until measured preparation
++instance: services and node1 each accept 2048 or 4096 MiB RAM, the services
++image and root copy each use 8192 MiB, and the tank is 8 GiB. Both services RAM
++choices retain the compact SQL/API/PHP workload. A 4096/4096 configuration
++provides 8 GiB total guest RAM. The builder follows services RAM and finishes
++before the guests start. These are unqualified targets until measured preparation
+ and public start succeed. The required `runtime-smoke` phase checks attested
+ connection/lease and ordinary stop/resume; `bilingual-capture` reuses that
+ resumed instance. Historical upgrade and two-root tests are separate deferred
+diff --git a/fixtures/prepare.cjs b/fixtures/prepare.cjs
+index fb9611977833c0aa1ac64816c7d8fcc67b1c4d9f..5aff1fde2be35fa185e49189ce9f45a9bd680a0b 100644
+--- a/fixtures/prepare.cjs
++++ b/fixtures/prepare.cjs
+@@ -96,7 +96,12 @@ async function createVpsIn(
+   form = page.locator('form[name="newvps-step3"]');
+   if (resources) {
+     for (const [name, value] of Object.entries(resources)) {
+-      await form.locator(`input[name="${name}"]`).fill(String(value));
++      const control = form.locator(`input[name="${name}"]`);
++      const count = await control.count();
++      // The pinned member form omits zero-allocated swap; submission defaults it to 0.
++      if (name === 'swap' && value === 0 && count === 0) continue;
++      if (count !== 1) throw new Error(`Expected one ${name} resource control, found ${count}`);
++      await control.fill(String(value));
+     }
+   }
+   await submitLast(form);
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index 1e928b5e0c581931127fd3964c0c9b3e862c27f1..86832dc0232efd36a5be72cb1792fdbf9e3a6e1a 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -10,7 +10,7 @@ const { spawn } = require('node:child_process');
+ const { createInterface } = require('node:readline');
+ const crypto = require('node:crypto');
+ const { Connection } = require('../lib/connection.cjs');
+-const { assertInventoryMember, ensureIpInventory, inventoryIdentity,
++const { assertInventoryMember, createVpsIn, ensureIpInventory, inventoryIdentity,
+   INVENTORY_POOL, INVENTORY_RESOURCES, prepareFixtures } = require('../fixtures/prepare.cjs');
+ const { heldController, observeLeaseState } = require('./verify-live-lease.cjs');
+ 
+@@ -358,16 +358,9 @@ test('pool identity collision refuses before any mutation', async () => {
+   assert(calls.every(([method]) => method === 'GET'));
+ });
+ 
+-test('first inventory preparation creates the tiny VPS in the proved member browser before explicit admin registration', async (t) => {
++function memberCreationPage(calls, resourceCounts = {}) {
+   let stage = 'location';
+   const entries = [];
+-  const inventory = fixture({ missing: true });
+-  const calls = mockInventoryTransport(t, async (call) => {
+-    if (call.resource === 'users/current') return { response: currentUser(call.login) };
+-    assert.equal(call.login, 'test-admin');
+-    if (call.method === 'POST' && call.resource === 'ip_addresses') assert.equal(call.body.ip_address.user, 2);
+-    return { response: await inventory.api(call.method, call.resource, call.body) };
+-  });
+   const form = (name) => ({
+     count: async () => name === 'newvps-step1' ? 0 : 1,
+     locator: (selector) => {
+@@ -388,6 +381,15 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+           selectOption: async (value) => { assert.equal(value, '1'); },
+         };
+       }
++      const resource = /^input\[name="(cpu|memory|swap|diskspace)"\]$/.exec(selector)?.[1];
++      if (resource) {
++        const count = Object.hasOwn(resourceCounts, resource) ? resourceCounts[resource] : 1;
++        return { count: async () => count, fill: async (value) => {
++          assert.equal(stage, 'resources');
++          assert.equal(count, 1, 'an absent or ambiguous resource must not be filled');
++          entries.push([selector, value, stage]);
++        } };
++      }
+       return {
+         count: async () => 1, nth: () => ({ click: async () => { entries.push(['submit', stage]); stage = stage === 'location' ? 'template' : stage === 'template' ? 'resources' : 'submit'; } }),
+         fill: async (value) => entries.push([selector, value, stage]),
+@@ -441,6 +443,18 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+       return value;
+     },
+   };
++  return { page, entries };
++}
++
++test('first inventory preparation creates the tiny VPS in the proved member browser before explicit admin registration', async (t) => {
++  const inventory = fixture({ missing: true });
++  const calls = mockInventoryTransport(t, async (call) => {
++    if (call.resource === 'users/current') return { response: currentUser(call.login) };
++    assert.equal(call.login, 'test-admin');
++    if (call.method === 'POST' && call.resource === 'ip_addresses') assert.equal(call.body.ip_address.user, 2);
++    return { response: await inventory.api(call.method, call.resource, call.body) };
++  });
++  const { page, entries } = memberCreationPage(calls);
+   await withInventoryConnection(recordedAccounts(), async (cluster, _abort, root) => {
+     const invocationRoot = path.join(root, 'invocation');
+     fs.mkdirSync(invocationRoot, { mode: 0o700 });
+@@ -453,6 +467,92 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+   for (const [name, value] of Object.entries(INVENTORY_RESOURCES)) {
+     assert(entries.some(([selector, actual, at]) => selector === `input[name="${name}"]` && actual === String(value) && at === 'resources'));
+   }
++  assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++    [['submit', 'location'], ['submit', 'template'], ['submit', 'resources'], ['submit', 'submit']]);
++});
++
++test('missing swap with numeric zero completes member preparation without a swap fill before explicit admin provisioning', async (t) => {
++  const inventory = fixture({ missing: true });
++  const calls = mockInventoryTransport(t, async (call) => {
++    if (call.resource === 'users/current') return { response: currentUser(call.login) };
++    assert.equal(call.login, 'test-admin');
++    return { response: await inventory.api(call.method, call.resource, call.body) };
++  });
++  const { page, entries } = memberCreationPage(calls, { swap: 0 });
++  await withInventoryConnection(recordedAccounts(), async (cluster, _abort, root) => {
++    const invocationRoot = path.join(root, 'invocation');
++    fs.mkdirSync(invocationRoot, { mode: 0o700 });
++    const result = await prepareFixtures({ cluster, page, language: 'cs', required: ['ip-inventory'], invocationRoot });
++    assert.deepEqual(result.inventoryMember, { id: 2, login: 'test-user1' });
++    assert.equal(cluster.account().login, 'test-user1');
++    assert.equal(result.inventoryVpsId, 10);
++    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(invocationRoot, 'fixtures.json'))), result);
++  });
++  assert(!entries.some(([selector]) => selector === 'input[name="swap"]'));
++  for (const [name, value] of Object.entries(INVENTORY_RESOURCES).filter(([name]) => name !== 'swap')) {
++    assert(entries.some(([selector, actual, at]) => selector === `input[name="${name}"]` && actual === String(value) && at === 'resources'));
++  }
++  assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++    [['submit', 'location'], ['submit', 'template'], ['submit', 'resources'], ['submit', 'submit']]);
++  assert.deepEqual(calls.filter((call) => call.method !== 'GET').map((call) => [call.login, call.method, call.resource]),
++    [['test-admin', 'POST', 'ip_addresses'], ['test-admin', 'PUT', 'networks/5']]);
++});
++
++test('a present nonzero swap control receives its exact requested value before final submission', async (t) => {
++  const calls = mockInventoryTransport(t, async (call) => {
++    assert.equal(call.resource, 'users/current');
++    return { response: currentUser(call.login) };
++  });
++  const { page, entries } = memberCreationPage(calls);
++  await withInventoryConnection(recordedAccounts(), async (cluster) => {
++    const { member } = await inventoryIdentity(cluster);
++    await assertInventoryMember(page, member);
++    assert.equal(await createVpsIn(page, member.id, 'ip-inventory', true, 'Production', 'Praha',
++      { ...INVENTORY_RESOURCES, swap: 128 }), 10);
++  });
++  assert(entries.some(([selector, value, at]) => selector === 'input[name="swap"]' && value === '128' && at === 'resources'));
++  assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++    [['submit', 'location'], ['submit', 'template'], ['submit', 'resources'], ['submit', 'submit']]);
++  assert.deepEqual(calls.map((call) => [call.login, call.method, call.resource]),
++    [['test-user1', 'GET', 'users/current'], ['test-admin', 'GET', 'users/current']]);
++});
++
++for (const [name, value, count] of [['swap', 128, 0], ['swap', '0', 0],
++  ['cpu', 1, 0], ['memory', 1024, 0], ['diskspace', 4096, 0],
++  ['cpu', 0, 0], ['memory', 0, 0], ['diskspace', 0, 0], ['swap', 0, 2], ['cpu', 1, 2]]) {
++  test(`resource control ${name} count ${count} requested ${JSON.stringify(value)} refuses before submission`, async (t) => {
++    const calls = mockInventoryTransport(t, async (call) => {
++      assert.equal(call.resource, 'users/current');
++      return { response: currentUser(call.login) };
++    });
++    const { page, entries } = memberCreationPage(calls, { [name]: count });
++    await withInventoryConnection(recordedAccounts(), async (cluster) => {
++      const { member } = await inventoryIdentity(cluster);
++      await assertInventoryMember(page, member);
++      await assert.rejects(createVpsIn(page, member.id, 'ip-inventory', true, 'Production', 'Praha',
++        { ...INVENTORY_RESOURCES, [name]: value }), (error) => {
++        assert.equal(error.message, `Expected one ${name} resource control, found ${count}`);
++        return true;
++      });
++    });
++    assert(!entries.some(([selector]) => selector === `input[name="${name}"]`));
++    assert(!entries.some(([selector]) => selector === 'input[name="hostname"]'));
++    assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
++      [['submit', 'location'], ['submit', 'template']]);
++    assert.deepEqual(calls.map((call) => [call.login, call.method, call.resource]),
++      [['test-user1', 'GET', 'users/current'], ['test-admin', 'GET', 'users/current']]);
++  });
++}
++
++test('a nonzero resulting swap refuses inventory provisioning before any mutation', async () => {
++  const inventory = fixture({ missing: true });
++  const api = async (...args) => {
++    const result = await inventory.api(...args);
++    if (result.vps) result.vps.swap = 1;
++    return result;
++  };
++  await assert.rejects(ensureIpInventory(api, { userId: 2, vpsId: 10 }), /Unexpected inventory VPS owner, identity or resources/);
++  assert.deepEqual(inventory.calls, [['GET', 'vpses/10', undefined]]);
+ });
+ 
+ test('only the IP-list fixture token changes, other fixture contracts are retained', () => {

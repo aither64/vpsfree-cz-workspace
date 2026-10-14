@@ -1,0 +1,97 @@
+diff --git a/docs/work-log/2026-10-06-network-availability.md b/docs/work-log/2026-10-06-network-availability.md
+index 941d5bcd..2bf4f356 100644
+--- a/docs/work-log/2026-10-06-network-availability.md
++++ b/docs/work-log/2026-10-06-network-availability.md
+@@ -56,8 +56,17 @@ capability failures and retries, and omission of availability writes while
+ metadata is unconfirmed. The full ci:quick gate passed again, including lint,
+ formatting, localization audits and application, tooling, adopted browser and
+ BFF type checks. The design audit checked 68 documents and 71 requirement IDs.
+-Browser scenarios have not run; rendered and deployment evidence remain pending.
++At that checkpoint, browser scenarios had not run and rendered evidence was pending.
+ 
+ Synthetic fixtures are not a live API or deployment proof. Backend
+ admission/concurrency tests belong to the separate vpsAdmin change. No
+ integration, deployment or default-interface cutover is claimed.
++
++Browser verification then exposed a NixOS launch failure in the cached generic
++Linux browser and incomplete action metadata in the toggle fixtures. Chromium
++from the locked nixpkgs input launched successfully. The existing old-API and
++disabled-inventory browser cases passed; both toggle cases failed before the
++fixture advertised a usable control. The fixtures now retain HaveAPI action
++method, scope, input and output metadata and assert OPTIONS selects PUT. The
++full ci:quick gate passed after this test-only correction. Desktop and mobile
++toggle verification remains pending; no deployment is claimed.
+diff --git a/e2e/specs/admin/network_availability.spec.ts b/e2e/specs/admin/network_availability.spec.ts
+index 020c9430..b3e62f5e 100644
+--- a/e2e/specs/admin/network_availability.spec.ts
++++ b/e2e/specs/admin/network_availability.spec.ts
+@@ -9,6 +9,7 @@ for (const language of ['en', 'cs'] as const) {
+     let enabled = true;
+     let rejectNext = true;
+     const writes: boolean[] = [];
++    const capabilityMethods: string[] = [];
+     const network = () => ({
+       id: 101, label: 'Retained service', address: '192.0.2.0', prefix: 24,
+       ip_version: 4, role: 'public_access', purpose: 'vps', managed: true,
+@@ -19,7 +20,16 @@ for (const language of ['en', 'cs'] as const) {
+       handlers: {
+         'GET locations': () => ({ locations: [] }),
+         'GET networks': () => ({ networks: [network()] }),
+-        'OPTIONS networks/101': () => ({ input: { parameters: { enabled: {} } } }),
++        'OPTIONS networks/101': (ctx) => {
++          expect(ctx.method).toBe('OPTIONS');
++          expect(ctx.searchParams.get('method')).toBe('PUT');
++          capabilityMethods.push(ctx.searchParams.get('method') ?? '');
++          return {
++            method: 'PUT', scope: 'network#update',
++            input: { namespace: 'network', layout: 'object', parameters: { enabled: { type: 'Boolean' } } },
++            output: { namespace: 'network', layout: 'object', parameters: {} },
++          };
++        },
+         'PUT networks/101': (ctx) => {
+           const input = ctx.reqJson as { network: { enabled: boolean } };
+           expect(typeof input.network.enabled).toBe('boolean');
+@@ -40,6 +50,9 @@ for (const language of ['en', 'cs'] as const) {
+     await expect(editor).toContainText('192.0.2.0/24 (#101)');
+     await expect(editor).toContainText(language === 'en' ? 'Assigned: 3' : 'Přiřazeno: 3');
+     await expect(editor).toContainText(language === 'en' ? 'Owned: 5' : 'Vlastněno: 5');
++    await expect(toggle).toBeVisible();
++    await expect(toggle).toBeChecked();
++    expect(capabilityMethods).toEqual(['PUT']);
+     await expect(editor).toContainText(language === 'en' ? 'Existing service continues' : 'Stávající provoz pokračuje');
+     await toggle.uncheck();
+     // Captures show the implemented UI with synthetic API fixtures.
+@@ -63,6 +76,7 @@ test('@pr-smoke @pr-smoke-mobile older APIs keep unknown state and omit unsuppor
+   await bootstrapVpsAdminWindow(page, { sessionToken: 'TEST' });
+   await setUiSettingsLocalStorage(page, { language: 'en' });
+   let saved = false;
++  const capabilityMethods: string[] = [];
+   const network = { id: 101, address: '192.0.2.0', prefix: 24, ip_version: 4, role: 'public_access',
+     purpose: 'vps', managed: true, split_access: 'no_access', split_prefix: 32 };
+   await installHaveApiMock(page, {
+@@ -70,7 +84,16 @@ test('@pr-smoke @pr-smoke-mobile older APIs keep unknown state and omit unsuppor
+     handlers: {
+       'GET locations': () => ({ locations: [] }),
+       'GET networks': () => ({ networks: [network] }),
+-      'OPTIONS networks/101': () => ({ input: { parameters: { managed: {} } } }),
++      'OPTIONS networks/101': (ctx) => {
++        expect(ctx.method).toBe('OPTIONS');
++        expect(ctx.searchParams.get('method')).toBe('PUT');
++        capabilityMethods.push(ctx.searchParams.get('method') ?? '');
++        return {
++          method: 'PUT', scope: 'network#update',
++          input: { namespace: 'network', layout: 'object', parameters: { managed: { type: 'Boolean' } } },
++          output: { namespace: 'network', layout: 'object', parameters: {} },
++        };
++      },
+       'PUT networks/101': (ctx) => {
+         expect((ctx.reqJson as { network: object }).network).not.toHaveProperty('enabled');
+         saved = true;
+@@ -82,6 +105,7 @@ test('@pr-smoke @pr-smoke-mobile older APIs keep unknown state and omit unsuppor
+   await expect(page.getByTestId('admin.cluster.networks.row.101.enabled')).not.toHaveText('Disabled');
+   await page.getByTestId('admin.cluster.networks.row.101.edit').click();
+   await expect(page.getByTestId('admin.cluster.networks.editor.label')).toBeVisible();
++  await expect.poll(() => capabilityMethods).toEqual(['PUT']);
+   await expect(page.getByTestId('admin.cluster.networks.editor.enabled')).toHaveCount(0);
+   await page.getByTestId('admin.cluster.networks.editor.save').click();
+   await expect(page.getByTestId('admin.cluster.networks.editor')).toBeHidden();

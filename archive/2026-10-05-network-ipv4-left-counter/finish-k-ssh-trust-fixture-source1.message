@@ -1,0 +1,7 @@
+tests: initialize fresh SSH trust in lifecycle fixture
+
+The real discovery method correctly rejects the shared synthetic trust
+placeholder. Initialize the new lifecycle fixture through its existing
+credential setup, then leave only its fresh known_hosts empty before
+candidate preparation. Preserve the shared fixture and retained-trust guard,
+and assert that successful discovery publishes the expected fixture key.

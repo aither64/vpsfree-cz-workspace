@@ -1,0 +1,443 @@
+{
+  description = "vpsFree.cz extensions for reusable development workspaces";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    dev-workspace.url = "github:aither64/dev-workspace/b1ec1bf1c3bc6413b066816ca58468b67ad5e5a6";
+    kb-runtime.url = "github:vpsfreecz/vpsfree-kb-contracts/09229a735be3887e8078e4c00216f8b63613dcf5";
+    devcluster-vpsadminos.url = "github:vpsfreecz/vpsadminos/15802517e2d92dda4ddc07ebac3d1d7ea087b430";
+    devcluster-vpsadmin = {
+      url = "github:vpsfreecz/vpsadmin/5c76e3290481b297dcd0baa76d246133f0353d8f";
+      inputs.vpsadminos.follows = "devcluster-vpsadminos";
+    };
+    devcluster-vpsadminWebui = {
+      url = "github:vpsfreecz/vpsadmin-webui/534caa83a5f97d2b40b4a126886649b14dc9e8d3";
+      inputs.nixpkgs.follows = "devcluster-vpsadminos/nixpkgs";
+      inputs.vpsadmin.follows = "devcluster-vpsadmin";
+    };
+    devcluster-vpsf-status = {
+      url = "github:vpsfreecz/vpsf-status/master";
+      inputs.nixpkgs.follows = "devcluster-vpsadminos/nixpkgs";
+      inputs.vpsadmin.follows = "devcluster-vpsadmin";
+      inputs.vpsadminos.follows = "devcluster-vpsadminos";
+    };
+  };
+
+  outputs =
+    inputs@{
+      self,
+      nixpkgs,
+      dev-workspace,
+      ...
+    }:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs { inherit system; };
+      lib = nixpkgs.lib;
+      validateSiteConfig = import ./nix/site-config.nix { inherit lib; };
+      migrationHostPaths = builtins.fromJSON (builtins.readFile ./nix/host-paths.json);
+      hostPathContractMatches = migrationHostPaths == dev-workspace.lib.hostPaths;
+      skillNames = builtins.attrNames (
+        nixpkgs.lib.filterAttrs (
+          name: type: type == "directory" && builtins.pathExists "${self}/skills/${name}/SKILL.md"
+        ) (builtins.readDir ./skills)
+      );
+      commandNames = [
+        "kb-cleanup"
+        "kb-contract-build"
+        "kb-contract-fetch"
+        "kb-contract-manifest"
+        "kb-contract-reconcile"
+        "kb-page"
+        "kb-release"
+        "kb-stage"
+      ];
+      mkOrganizationTools =
+        {
+          pkgs,
+          siteConfig,
+        }:
+        pkgs.callPackage ./nix/organization-tools.nix {
+          src = self;
+          runtimeContract = dev-workspace.lib.runtimeContract;
+          kbRuntimePackage =
+            if siteConfig.clusterDefaults ? kb then
+              inputs.kb-runtime.packages.${pkgs.stdenv.hostPlatform.system}.kb-runtime
+            else null;
+          kbSourceMetadata =
+            if siteConfig.clusterDefaults ? kb then
+              inputs.kb-runtime.packages.${pkgs.stdenv.hostPlatform.system}.runtime-source
+            else null;
+          inherit siteConfig;
+        };
+      mkPackage =
+        {
+          activationEnvironmentAliases ? [ ],
+          pkgs,
+          routerSocket ? dev-workspace.lib.hostPaths.routerSocket,
+          siteConfig,
+          teamConfig ? null,
+          userNamespace ? "dev-workspaces",
+        }:
+        let
+          validatedSiteConfig = validateSiteConfig siteConfig;
+          tools = mkOrganizationTools {
+            inherit pkgs;
+            siteConfig = validatedSiteConfig;
+          };
+        in
+        (dev-workspace.lib.mkPackage (
+          {
+            inherit
+              activationEnvironmentAliases
+              pkgs
+              routerSocket
+              userNamespace
+              ;
+            extensions = {
+              commands = builtins.listToAttrs (
+                map (name: {
+                  inherit name;
+                  value = "${tools}/bin/${name}";
+                }) commandNames
+              );
+              skills = builtins.listToAttrs (
+                map (name: {
+                  inherit name;
+                  value = "${self}/skills/${name}";
+                }) skillNames
+              );
+              clusterProviders = {
+                vpsadmin = {
+                  label = "vpsAdmin";
+                  command = "${tools}/bin/vpsadmin-devcluster";
+                };
+                vpsadminos = {
+                  label = "vpsAdminOS";
+                  command = "${tools}/bin/vpsadminos-devcluster";
+                };
+              } // lib.optionalAttrs (validatedSiteConfig.clusterDefaults ? kb) {
+                kb = {
+                  label = "KB";
+                  command = "${tools}/bin/kb-devcluster";
+                };
+              };
+            };
+          }
+          // lib.optionalAttrs (teamConfig != null) { inherit teamConfig; }
+        )).overrideAttrs
+          (previous: {
+            postInstall = (previous.postInstall or "") + ''
+              ln -s ${tools}/bin/vpsfree-dev-workspace-migrate \
+                "$out/libexec/vpsfree-dev-workspace-migrate"
+            '';
+          });
+      testSiteConfig = {
+        kb = {
+          cz = {
+            url = "https://kb-cz.example.test";
+            tokenPath = "/credentials/kb-cz-token";
+            stagingUrl = "https://kb-cz-staging.example.test";
+            stagingPasswordPath = "/credentials/kb-cz-staging-password";
+          };
+          org = {
+            url = "https://kb-org.example.test";
+            tokenPath = "/credentials/kb-org-token";
+            stagingUrl = "https://kb-org-staging.example.test";
+            stagingPasswordPath = "/credentials/kb-org-staging-password";
+          };
+          stagingUsername = "developer";
+          stageContainerctl = "/run/current-system/sw/bin/containerctl";
+        };
+        clusterDefaults = {
+          vpsadmin = ./test/fixtures/vpsadmin-config.json;
+          vpsadminos = ./test/fixtures/vpsadminos-config.json;
+        };
+      };
+      testPackage = mkPackage {
+        inherit pkgs;
+        siteConfig = testSiteConfig;
+      };
+      testKbSiteConfig = testSiteConfig // {
+        clusterDefaults = testSiteConfig.clusterDefaults // {
+          kb = ./test/fixtures/kb-config.json;
+        };
+      };
+      testKbPackage = mkPackage {
+        inherit pkgs;
+        siteConfig = testKbSiteConfig;
+      };
+      devclusterCheck = pkgs.writeShellApplication {
+        name = "devcluster-check";
+        runtimeInputs = [
+          pkgs.ruby
+          pkgs.nix
+          pkgs.openssh
+        ];
+        text = ''
+          exec ruby ${./test/devcluster_nix_smoke.rb} \
+            ${
+              mkOrganizationTools {
+                inherit pkgs;
+                siteConfig = testSiteConfig;
+              }
+            } \
+            ${inputs.devcluster-vpsadmin} \
+            ${inputs.devcluster-vpsadminos} \
+            ${inputs.devcluster-vpsf-status} \
+            ${inputs.devcluster-vpsadminWebui} "$@"
+        '';
+      };
+      devclusterMaintenanceCheck = import ./nix/tests/retained-services-maintenance.nix {
+        inherit inputs pkgs;
+        organizationTools = mkOrganizationTools {
+          inherit pkgs;
+          siteConfig = testSiteConfig;
+        };
+      };
+      testCompatibilityPackage = mkPackage {
+        activationEnvironmentAliases = [ "VPSFREE_WORKSPACE_ACTIVATION" ];
+        inherit pkgs;
+        routerSocket = "/run/previous-workspace-router/router.sock";
+        siteConfig = testSiteConfig;
+        userNamespace = "previous-workspaces";
+      };
+      rejectedSiteConfigs = [
+        (
+          testSiteConfig
+          // {
+            clusterDefaults = testSiteConfig.clusterDefaults // {
+              vpsadmin = "/tmp/mutable-vpsadmin.json";
+            };
+          }
+        )
+        (
+          testSiteConfig
+          // {
+            clusterDefaults = testSiteConfig.clusterDefaults // {
+              kb = "/tmp/mutable-kb.json";
+            };
+          }
+        )
+        (
+          testSiteConfig
+          // {
+            clusterDefaults = testSiteConfig.clusterDefaults // {
+              kb = ./test/fixtures/not-object.json;
+            };
+          }
+        )
+        (
+          testSiteConfig
+          // {
+            clusterDefaults = testSiteConfig.clusterDefaults // {
+              vpsadmin = ./test/fixtures/not-object.json;
+            };
+          }
+        )
+        (
+          testSiteConfig
+          // {
+            workspaceConfigurations.example-workspace = ./test/fixtures/not-object.json;
+          }
+        )
+      ];
+      invalidSiteConfigsRejected = builtins.all (
+        siteConfig: !(builtins.tryEval (builtins.deepSeq (validateSiteConfig siteConfig) true)).success
+      ) rejectedSiteConfigs;
+      testEnvironment = ''
+        export LANG=C.UTF-8
+        export LC_ALL=C.UTF-8
+        export VPSFREE_KB_CZ_URL=https://kb-cz.example.test
+        export VPSFREE_KB_CZ_TOKEN_PATH=/credentials/kb-cz-token
+        export VPSFREE_KB_CZ_STAGING_URL=https://kb-cz-staging.example.test
+        export VPSFREE_KB_CZ_STAGING_PASSWORD_PATH=/credentials/kb-cz-staging-password
+        export VPSFREE_KB_ORG_URL=https://kb-org.example.test
+        export VPSFREE_KB_ORG_TOKEN_PATH=/credentials/kb-org-token
+        export VPSFREE_KB_ORG_STAGING_URL=https://kb-org-staging.example.test
+        export VPSFREE_KB_ORG_STAGING_PASSWORD_PATH=/credentials/kb-org-staging-password
+        export VPSFREE_KB_STAGING_USERNAME=developer
+        export KB_STAGE_CONTAINERCTL=/run/current-system/sw/bin/containerctl
+        export VPSADMIN_DEVCLUSTER_DEFAULT_CONFIG=$PWD/test/fixtures/vpsadmin-config.json
+        export VPSADMINOS_DEVCLUSTER_DEFAULT_CONFIG=$PWD/test/fixtures/vpsadminos-config.json
+        export DEVCLUSTER_RUNTIME_CONTRACT=${dev-workspace.lib.runtimeContract}
+        export DEV_WORKSPACE_RUNTIME_CONTRACT=${dev-workspace.lib.runtimeContract}
+      '';
+    in
+    assert invalidSiteConfigsRejected;
+    assert hostPathContractMatches;
+    {
+      lib = {
+        inherit mkPackage;
+        # Explicit fixture outputs stay lazy and are not ordinary flake checks.
+        retainedServicesFixtureConfigs = devclusterMaintenanceCheck.configs;
+      };
+      apps.${system} = {
+        devcluster-check = {
+          type = "app";
+          program = "${devclusterCheck}/bin/devcluster-check";
+        };
+        devcluster-maintenance-check = {
+          type = "app";
+          program = "${devclusterMaintenanceCheck.app}/bin/devcluster-maintenance-check";
+        };
+      };
+      packages.${system}.host-migration-test = import ./nix/tests/host-migration.nix {
+        inherit pkgs;
+        devWorkspace = dev-workspace;
+        migrationPackage = testPackage;
+      };
+      checks.${system} = {
+        compatibility-package = testCompatibilityPackage;
+        package = testPackage;
+        kb-provider-package = testKbPackage;
+        kb-provider-contract = pkgs.runCommand "vpsfree-kb-provider-contract" { } ''
+          ${pkgs.jq}/bin/jq -e '
+            [.clusterProviders[] | { id, label }] == [
+              { id: "kb", label: "KB" },
+              { id: "vpsadmin", label: "vpsAdmin" },
+              { id: "vpsadminos", label: "vpsAdminOS" }
+            ]
+          ' ${testKbPackage}/share/dev-workspace/extensions.json >/dev/null
+          for provider in kb vpsadmin vpsadminos; do
+            command=$(${pkgs.jq}/bin/jq -er --arg provider "$provider" \
+              '.clusterProviders[] | select(.id == $provider) | .command' \
+              ${testKbPackage}/share/dev-workspace/extensions.json)
+            test -x "$command"
+            test -x ${testKbPackage}/libexec/workspace-portal/"$provider"-devcluster
+          done
+          ${pkgs.coreutils}/bin/env -i HOME="$TMPDIR" PATH=/empty \
+            ${testKbPackage}/libexec/workspace-portal/kb-devcluster --help >/dev/null
+          test ! -e ${testPackage}/libexec/workspace-portal/kb-devcluster
+          touch "$out"
+        '';
+        package-metadata = pkgs.runCommand "vpsfree-dev-workspace-package-metadata" { } ''
+          ${pkgs.jq}/bin/jq -e \
+            --arg router ${nixpkgs.lib.escapeShellArg dev-workspace.lib.hostPaths.routerSocket} \
+            '.activationEnvironmentAliases == [] and
+             .userNamespace == "dev-workspaces" and
+             .routerSocket == $router' \
+            ${testPackage}/share/dev-workspace/package.json >/dev/null
+          ${pkgs.jq}/bin/jq -e \
+            '.activationEnvironmentAliases == ["VPSFREE_WORKSPACE_ACTIVATION"] and
+             .userNamespace == "previous-workspaces" and
+             .routerSocket == "/run/previous-workspace-router/router.sock"' \
+            ${testCompatibilityPackage}/share/dev-workspace/package.json >/dev/null
+          ${pkgs.jq}/bin/jq -e \
+            '[.commands[].name] == [
+              "kb-cleanup",
+              "kb-contract-build",
+              "kb-contract-fetch",
+              "kb-contract-manifest",
+              "kb-contract-reconcile",
+              "kb-page",
+              "kb-release",
+              "kb-stage"
+            ]' \
+          ${testPackage}/share/dev-workspace/extensions.json >/dev/null
+          ${pkgs.jq}/bin/jq -e '
+            [.skills[].name] as $skills |
+            [
+              "dev-session-handoff",
+              "humanizer-cs",
+              "humanizer-en",
+              "mandatory-change-review",
+              "vpsfree-user-facing-writing"
+            ] | all(. as $skill | $skills | index($skill) != null)
+          ' \
+          ${testPackage}/share/dev-workspace/extensions.json >/dev/null
+          for skill in \
+            dev-session-handoff \
+            humanizer-cs \
+            humanizer-en \
+            mandatory-change-review \
+            vpsfree-user-facing-writing; do
+            test -d ${testPackage}/share/codex/skills/"$skill"
+          done
+          ${pkgs.jq}/bin/jq -e '
+            [.clusterProviders[] | { id, label }] == [
+              { id: "vpsadmin", label: "vpsAdmin" },
+              { id: "vpsadminos", label: "vpsAdminOS" }
+            ]
+          ' ${testPackage}/share/dev-workspace/extensions.json >/dev/null
+          for provider in vpsadmin vpsadminos; do
+            command=$(${pkgs.jq}/bin/jq -er \
+              --arg provider "$provider" \
+              '.clusterProviders[] | select(.id == $provider) | .command' \
+              ${testPackage}/share/dev-workspace/extensions.json)
+            test -x "$command"
+            test -x ${testPackage}/libexec/workspace-portal/"$provider"-devcluster
+          done
+          test ! -e ${testPackage}/bin/vpsfree-dev-workspace-migrate
+          test -x ${testPackage}/libexec/vpsfree-dev-workspace-migrate
+          touch "$out"
+        '';
+        rejects-invalid-site-config =
+          pkgs.runCommand "vpsfree-dev-workspace-rejects-invalid-site-config" { }
+            ''
+              touch "$out"
+            '';
+        tests =
+          pkgs.runCommand "vpsfree-dev-workspace-tests"
+            {
+              nativeBuildInputs = [
+                pkgs.bash
+                pkgs.coreutils
+                pkgs.git
+                pkgs.jq
+                pkgs.nix
+                pkgs.openssl
+                pkgs.ruby
+                pkgs.tmux
+                pkgs.util-linux
+              ];
+            }
+            ''
+              cp -R ${self} source
+              chmod -R u+w source
+              cd source
+              patchShebangs bin dev-clusters
+              ${testEnvironment}
+              unset RUBYOPT RUBYLIB GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH
+              export GEM_HOME=$(${pkgs.ruby}/bin/ruby --disable-gems -rrubygems -e 'print Gem.default_dir')
+              export GEM_PATH="$GEM_HOME"
+              export VPSFREE_KB_ENGINE_METADATA=${inputs.kb-runtime.packages.${system}.runtime-source}
+              export DEV_WORKSPACE_HOST_SOURCE=${dev-workspace}
+              export RUNTIME_AUTHORITY_CORPUS=${dev-workspace.lib.runtimeAuthorityCorpus}
+              ruby test/devcluster_status_test.rb
+              ruby test/devcluster_commands_test.rb
+              ruby test/devcluster_webui_seed_test.rb
+              ruby test/devcluster_runner_test.rb
+              ruby test/devcluster_maintenance_test.rb
+              ruby test/devcluster_store_roots_test.rb
+              ruby test/devcluster_storage_profile_test.rb
+              ruby test/kb_devcluster_test.rb
+              ruby test/kb_guards_test.rb
+              ruby test/kb_connection_test.rb
+              ruby test/kb_lease_test.rb
+              ruby test/kb_cli_test.rb
+              ruby test/kb_portable_test.rb
+              ruby test/kb_public_dispatch_test.rb
+              ruby test/kb_cleanup_test.rb
+              ruby test/kb_contract_tools_test.rb
+              ruby test/kb_page_test.rb
+              ruby test/kb_stage_test.rb
+              ruby test/migration_test.rb
+              ruby test/skill_policy_test.rb
+              touch "$out"
+            '';
+        organization-source = pkgs.runCommand "vpsfree-dev-workspace-source" { } ''
+          first=aither
+          if grep -RilE "$first"'dev' ${self} --exclude-dir=.git > matches; then
+            cat matches >&2
+            exit 1
+          fi
+          if ${pkgs.findutils}/bin/find ${self} -printf '%P\n' | grep -iE "$first"'dev' > matches; then
+            cat matches >&2
+            exit 1
+          fi
+          touch "$out"
+        '';
+      };
+    };
+}

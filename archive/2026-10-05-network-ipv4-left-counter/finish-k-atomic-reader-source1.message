@@ -1,0 +1,10 @@
+runtime: read atomic receipts through bounded safe replacements
+
+Atomic receipt publication can replace a file between lstat and open.
+Recheck both safe snapshots for at most three attempts, closing a mismatched
+descriptor before retrying and retaining the bounded read on success.
+Unsafe files and I/O failures still refuse immediately; lock identity and
+lifecycle requests remain unchanged.
+
+Cover actual rename interleavings, descriptor cleanup, readiness without
+replaying preparation or spawn, and ordinary stop of retained schema-2 state.

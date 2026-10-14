@@ -1,0 +1,31 @@
+$ git rev-parse HEAD
+fea04c6de25448751239099eca7101c43cb495c2
+$ git status --porcelain
+$ git ls-remote origin refs/heads/master refs/heads/2026-10-05-network-ipv4-left-counter
+fea04c6de25448751239099eca7101c43cb495c2	refs/heads/2026-10-05-network-ipv4-left-counter
+7c07b540a5e45cac4b39351f713cf3528e4df614	refs/heads/master
+$ git merge-base --is-ancestor 7c07b540a5e45cac4b39351f713cf3528e4df614 fea04c6de25448751239099eca7101c43cb495c2
+$ git worktree add --detach /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/integration13-dev-workspace 7c07b540a5e45cac4b39351f713cf3528e4df614
+HEAD is now at 7c07b54 tests: allow retirement deadlines before interruption
+Preparing worktree (detached HEAD 7c07b54)
+$ git merge --ff-only fea04c6de25448751239099eca7101c43cb495c2
+Updating 7c07b54..fea04c6
+Fast-forward
+ docs/workspace-portal.md                       |  20 ++
+ libexec/workspace-host                         | 130 +++++++-
+ portal/internal/web/operation_state.go         |  11 +
+ portal/internal/web/operation_state_test.go    | 157 ++++++++-
+ portal/internal/web/server_test.go             |  49 ++-
+ test/workspace_host/commands_and_locks_test.rb | 430 +++++++++++++++++++++++++
+ 6 files changed, 785 insertions(+), 12 deletions(-)
+$ git rev-parse HEAD
+fea04c6de25448751239099eca7101c43cb495c2
+$ git status --porcelain
+$ git diff --check 7c07b540a5e45cac4b39351f713cf3528e4df614 fea04c6de25448751239099eca7101c43cb495c2
+$ git push origin HEAD:refs/heads/master
+To github.com:aither64/dev-workspace.git
+   7c07b54..fea04c6  HEAD -> master
+$ git ls-remote origin refs/heads/master
+fea04c6de25448751239099eca7101c43cb495c2	refs/heads/master
+$ git fetch origin
+$ git worktree remove /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/integration13-dev-workspace

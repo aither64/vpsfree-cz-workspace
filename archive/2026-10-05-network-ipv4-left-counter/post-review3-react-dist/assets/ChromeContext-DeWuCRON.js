@@ -1,0 +1,1 @@
+import{r,j as o}from"./vendor-react-MGxsW2Ms.js";const t=r.createContext(null);function s(e){return o.jsx(t.Provider,{value:e.value,children:e.children})}function u(){const e=r.useContext(t);if(!e)throw new Error("useChrome must be used within ChromeContextProvider");return e}export{s as C,u};

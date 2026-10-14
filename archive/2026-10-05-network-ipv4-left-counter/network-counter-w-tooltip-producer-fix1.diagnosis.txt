@@ -1,0 +1,38 @@
+Bounded W browser fixture and screenshot producer correction
+
+Source/native evidence at W1eb3f8d97f9091ec643ff63c2d0e4bb259e81a16:
+Hosted smoke37759370863 desktop EN/CS failed the resize recheck at old
+spec324 (case247, visibility helper13). Native log1140/1273 identifies324;
+summary1381-1384 records2failures/427passes. Earlier focus/hover/full-text,
+near-bottom flip and window-scroll assertions completed. No local browser
+reproduction or new result is claimed.
+
+EN trace call3341 resolves visible at1280x658; call3345 changes to1264x682.
+Before3357 document scrollTop remains65 and tooltip is hidden. The failure
+image shows row126 at the viewport bottom, not focused final128.
+IpAddressesFilters.tsx116 uses xl four-column quick filters; actual installed
+Tailwind theme.css282 selects xl80rem/1280px. The fixture crosses that
+breakpoint, stacks the filters and moves final128 offscreen. Production
+suppression is correct and remains byte-identical.
+
+After both viewport mutations, scroll the final trigger into view, prove full
+viewport intersection and retained focus, then run unchanged full geometry.
+All prior lifetime/flip/scroll/no-navigation assertions and fixture rows remain.
+
+Retained mobile EN/CS full-page flag images omit the focused open hint despite
+preceding passing geometry. Old327 uses fullPage:true. Installed Playwright
+screenshotter uses a document rectangle from0,0 for full-page capture
+(coreBundle.js20864-20870), while current-viewport capture uses a viewport
+rectangle and Chromium's current visualViewport.pageX/pageY (36833-36849).
+The old full-page image does not prove the scrolled fixed hint. This is
+source/artifact evidence; no browser-internal scroll mechanism is reproduced
+or claimed. Only required flag screenshot now uses fullPage:false, with focus
+and full geometry immediately before and after. Count/editor images unchanged.
+
+Root-owned work-log paragraph is already modified independently; it is recorded
+separately in status/metadata, excluded from implementer's one-path diff/freeze
+and left untouched. Root owns consolidation/publication/hosted verification and
+pins. All original images/traces/logs and previous source packets preserved.
+No local CI/tests/syntax/formatter/Nix/build/runtime/Git mutation executed.
+
+https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-05-network-ipv4-left-counter/

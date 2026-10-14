@@ -1,0 +1,30 @@
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index a75f89719e8ca74a20c708ad8c3a04c7031b99a6..c399f28eea20ab28b618b1c40b66fde78201374d 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -1553,17 +1553,14 @@ end
+ 
+ class RuntimeLifecycleTest < Minitest::Test
+   def config
+-    { 'topologies' => { 'single' => [] }, 'services' => {}, 'nodes' => {},
+-      'local' => { 'bindAddress' => '127.0.0.1', 'multicastPort' => free_udp_port, 'ports' => { 'services' => { 'ssh' => free_port, 'https' => free_port } } },
+-      'domains' => { 'api' => 'api.example.test', 'webui' => 'webui.example.test', 'console' => 'console.example.test' },
+-      'seed' => { 'users' => [] } }
+-  end
+-
+-  def free_port
+-    server = TCPServer.new('127.0.0.1', 0)
+-    server.addr[1]
+-  ensure
+-    server&.close
++    TCPServer.open('127.0.0.1', 0) do |ssh|
++      TCPServer.open('127.0.0.1', 0) do |https|
++        { 'topologies' => { 'single' => [] }, 'services' => {}, 'nodes' => {},
++          'local' => { 'bindAddress' => '127.0.0.1', 'multicastPort' => free_udp_port, 'ports' => { 'services' => { 'ssh' => ssh.addr[1], 'https' => https.addr[1] } } },
++          'domains' => { 'api' => 'api.example.test', 'webui' => 'webui.example.test', 'console' => 'console.example.test' },
++          'seed' => { 'users' => [] } }
++      end
++    end
+   end
+ 
+   def free_udp_port

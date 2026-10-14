@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "scope": "Read-only immutable SSH unit/daemon configuration from retained exact launch; no guest/endpoint/process contact",
+  "run_id": "da99ac3a-c7aa-411d-956e-858dfb47b161",
+  "machines": [
+    {
+      "machine": "node1",
+      "toplevel": "/nix/store/s7cnzbwmr5qp0rjcch95yvf85yb5amcf-vpsadminos-system-node1-26.05pre-git",
+      "candidate_units": [
+        {
+          "relative_path": "etc/runit/services/sshd/run",
+          "source_path": "/nix/store/8abh8vqv7ids1ykm5awrv34hnpk5ww2k-sv-sshd-run",
+          "sha256": "eedcad46acee0c166c056fbd9aab39d98b8ba0c29f11e3d3bb023695a7ac54b8",
+          "bytes": 929,
+          "allowed_unit_fields": []
+        },
+        {
+          "relative_path": "etc/ssh/sshd_config",
+          "source_path": "/nix/store/7qb8l7ja5qrlwvj35iz1mz89rvn56dcg-sshd.conf-final",
+          "sha256": "c22400a7afe2d2149d13132fd3e1fd16f623ab181280b25a7ac7bb224de2db1e",
+          "bytes": 998,
+          "allowed_unit_fields": [
+            "PasswordAuthentication yes",
+            "PermitRootLogin yes",
+            "AddressFamily any",
+            "Port 22",
+            "PasswordAuthentication no"
+          ]
+        }
+      ]
+    },
+    {
+      "machine": "services",
+      "toplevel": "/nix/store/azmhnc03mw70qnp97hdaz4hn6bky20fa-nixos-system-vpsadmin-services-26.05pre-git",
+      "candidate_units": [
+        {
+          "relative_path": "etc/systemd/system/sshd.service",
+          "source_path": "/nix/store/s1h52pc75jm6czc9q2nwc8bmdbhx3fvm-unit-sshd.service/sshd.service",
+          "sha256": "730acffae85956882fce53a58695b0f6fb8b49c28687fbdc9ec15179739c93da",
+          "bytes": 1489,
+          "allowed_unit_fields": [
+            "After=network.target sshd-keygen.service",
+            "Wants=sshd-keygen.service",
+            "Type=notify-reload",
+            "WantedBy=multi-user.target"
+          ]
+        },
+        {
+          "relative_path": "etc/ssh/sshd_config",
+          "source_path": "/nix/store/mc9zyr4nv7dzhhzs6inr49y30npd04g9-sshd.conf-final",
+          "sha256": "dbf627d42c8536dd05863a7925c7c99946e7f3b26e0ccc77a3c4d6c322a130fc",
+          "bytes": 858,
+          "allowed_unit_fields": [
+            "PasswordAuthentication yes",
+            "PermitRootLogin yes",
+            "AddressFamily any",
+            "Port 22"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,1 @@
+function t(i){if(typeof i!="number"&&typeof i!="string"||typeof i=="string"&&!i.trim())return null;const r=Number(i);return Number.isSafeInteger(r)&&r>0?r:null}function n(i){return JSON.stringify([String(i.updated_at??""),String(i.label??""),String(i.user_visibility??"")])}export{n as m,t as s};

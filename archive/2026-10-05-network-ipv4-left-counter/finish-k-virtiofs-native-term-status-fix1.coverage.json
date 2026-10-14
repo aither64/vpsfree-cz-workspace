@@ -1,0 +1,19 @@
+{
+  "status": "UNRUN; source-only native test-consumer correction",
+  "test_method_count": 34,
+  "selected_method": "VirtiofsListenerTest#test_selected_pinned_virtiofsd_consumes_the_real_listener_without_pidfiles",
+  "declared_assertions": [
+    "copy of exactly three unique retained native-daemon child PIDs",
+    "real TERM only to copied owned PIDs, once each, rejecting any recorded already-reaped PID before delegation",
+    "successful real signal deliveries precede each native waitpid2; exactly the retained three PID/status pairs",
+    "each handshake-verified daemon exited with exitstatus 1 and was not signalled",
+    "existing selected daemon/FD/all-three-share/vhost-user GET_FEATURES/no-pidfile/cleanup/empty namespace/pin closure retained"
+  ],
+  "hosted_selectors": [
+    "nix develop --command ruby tools/test-machine.rb",
+    "nix develop --command bin/check --allow-missing"
+  ],
+  "execution_owner": "root; hosted only",
+  "statuses_mocked": false,
+  "production_process_api_changed": false
+}

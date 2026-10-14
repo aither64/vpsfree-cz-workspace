@@ -1,0 +1,25 @@
+diff --git a/e2e/specs/admin/network_availability.spec.ts b/e2e/specs/admin/network_availability.spec.ts
+index 9fc52f3019081f9eb3cca04120dce04cac6aec96..585fffb99d0c6e06839b2f0cff30309516d5308d 100644
+--- a/e2e/specs/admin/network_availability.spec.ts
++++ b/e2e/specs/admin/network_availability.spec.ts
+@@ -321,9 +321,19 @@ for (const language of ['en', 'cs'] as const) {
+     await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollBefore);
+     await expectUnclippedDescription(page, flag, description);
+     await page.setViewportSize({ width: viewport.width - 16, height: bottomHeight + 24 });
++    // Filter reflow across a breakpoint can move the final row out of view.
++    await flag.scrollIntoViewIfNeeded();
++    await expect(flag).toBeInViewport({ ratio: 1 });
++    await expect(flag).toBeFocused();
+     await expectUnclippedDescription(page, flag, description);
+     await page.setViewportSize({ width: viewport.width, height: bottomHeight });
++    await flag.scrollIntoViewIfNeeded();
++    await expect(flag).toBeInViewport({ ratio: 1 });
++    await expect(flag).toBeFocused();
++    await expectUnclippedDescription(page, flag, description);
++    // Keep the scrolled trigger and its fixed description in the captured viewport.
++    await page.screenshot({ path: testInfo.outputPath(`admin-ip-flags-${language}.png`), fullPage: false });
++    await expect(flag).toBeFocused();
+     await expectUnclippedDescription(page, flag, description);
+-    await page.screenshot({ path: testInfo.outputPath(`admin-ip-flags-${language}.png`), fullPage: true });
+   });
+ }

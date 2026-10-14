@@ -1,0 +1,73 @@
+diff --git a/bff/package-lock.json b/bff/package-lock.json
+index 606982c4..72a000a7 100644
+--- a/bff/package-lock.json
++++ b/bff/package-lock.json
+@@ -8,11 +8,11 @@
+       "name": "vpsadmin-webui-bff",
+       "version": "0.1.0",
+       "dependencies": {
++        "cookie": "0.7.2",
++        "cookie-signature": "1.0.7",
+         "express": "^4.22.3",
+         "express-session": "^1.17.3",
+-        "session-file-store": "^1.5.0",
+-        "cookie": "0.7.2",
+-        "cookie-signature": "1.0.7"
++        "session-file-store": "^1.5.0"
+       }
+     },
+     "node_modules/accepts": {
+@@ -676,9 +676,9 @@
+       "integrity": "sha512-A/AGNMFN3c8bOlvV9RreMdrv7jsmF9XIfDeCd87+I8RNg6s78BhJxMu69NEMHBSJFxKidViTEdruRwEk/WIKqA=="
+     },
+     "node_modules/proxy-addr": {
+-      "version": "2.0.7",
+-      "resolved": "https://registry.npmjs.org/proxy-addr/-/proxy-addr-2.0.7.tgz",
+-      "integrity": "sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==",
++      "version": "2.0.8",
++      "resolved": "https://registry.npmjs.org/proxy-addr/-/proxy-addr-2.0.8.tgz",
++      "integrity": "sha512-5nnx0yGyVUcY6t9RnWcARWtwT9F1D8O9rt08htPvnd49W1IgZtmLkhu9WfMzQj1cFxjHIO6connUNVW5k7AVyQ==",
+       "license": "MIT",
+       "dependencies": {
+         "forwarded": "0.2.0",
+@@ -686,6 +686,10 @@
+       },
+       "engines": {
+         "node": ">= 0.10"
++      },
++      "funding": {
++        "type": "opencollective",
++        "url": "https://opencollective.com/express"
+       }
+     },
+     "node_modules/qs": {
+diff --git a/docs/design/PACKAGING.md b/docs/design/PACKAGING.md
+index f934f0f0..c8219462 100644
+--- a/docs/design/PACKAGING.md
++++ b/docs/design/PACKAGING.md
+@@ -20,10 +20,8 @@ prefetch-npm-deps bff/package-lock.json
+ 
+ The recorded hashes for the current lockfiles are
+ `sha256-1AItkFu1tvJpKjFVbGC/IWky4JPfw+d+XU50egk+/TE=` and
+-`sha256-imijdRISN2eVBsYX79YBxl7zKM7Pjq3rixkKXJNDSvw=`, respectively.
+-They are used only by their corresponding derivations. The root lock changed
+-to align development-only Node declarations with the selected Node 24 major;
+-the BFF lock did not change. The root prefetch reported six bundled optional
++`sha256-m6CayVcO1z+Xuy+XlAEqVLoRFRACSNjdcn4pae1T+Dc=`, respectively.
++Each derivation uses its own hash. The root prefetch reported six bundled optional
+ dependencies nested under `@tailwindcss/oxide-wasm32-wasi` without separate
+ resolved URLs. Their WASI-only
+ placement and bundled metadata explain the warning, but only an actual x86_64
+diff --git a/packages/bff.nix b/packages/bff.nix
+index 21bf02e9..d7f748f0 100644
+--- a/packages/bff.nix
++++ b/packages/bff.nix
+@@ -13,7 +13,7 @@ pkgs.buildNpmPackage {
+   version = "0.1.0";
+   src = source + "/bff";
+   nodejs = pkgs.nodejs_24;
+-  npmDepsHash = "sha256-imijdRISN2eVBsYX79YBxl7zKM7Pjq3rixkKXJNDSvw=";
++  npmDepsHash = "sha256-m6CayVcO1z+Xuy+XlAEqVLoRFRACSNjdcn4pae1T+Dc=";
+   npmInstallFlags = [ "--omit=dev" ];
+   dontNpmBuild = true;
+ 

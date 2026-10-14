@@ -1,0 +1,35 @@
+{
+  "design_sections": [
+    4710,
+    4866
+  ],
+  "source_acceptance": "finish-direct-shutdown-owner-source-acceptance1.json",
+  "notes": [
+    "Seven application/test owners plus separately bound root prose. No source/dependency/guest/state/control/connection schema or pin change.",
+    "Proposed logical split: runtime owners kb_runtime.rb/devcluster_runner.rb/test-runtime.rb/test-machine.rb/fake-kb-runner.rb; finite-verifier owners runtime-verify.rb/test-runtime-verify.rb. Root stages the relevant documentation hunks across those independently meaningful units.",
+    "ready? is the single read-only marker/phase/current-launch/live predicate; live? remains liveness. Boot SSH/closure attestation remains separate, with a final readiness check.",
+    "The same runner/notifier/tracker/reapers remain while any started machine is running or any append-only child identity is not proved gone. Stop is attempted once per running started machine; bounded public join nil is not completion.",
+    "Repeated exact control requests acknowledge the existing drain. ShutdownRequested alone is masked during finalization; queued notification is consumed after notifier join without replacing a primary exception.",
+    "An unsafe readiness marker is not unlinked: its narrow withdrawal failure is retained while owned machines drain, then reported without replacing a primary failure. No unsafe-path cleanup authority is added.",
+    "Caller expiry releases only caller locks and leaves claims/owner/disks non-ready; eventual complete proof and ordinary socket cleanup remain mandatory.",
+    "Commands optional caller_timeout is selected only for the two historical SSH drains. Observation starts before invocation; expiry supervises only its sole-owned public command child, records native status and unknown remote cancellation, and ends the phase.",
+    "Exact predecessor is genuinely published 7dc4d70830e535f4559bccfa668cf65cdce1de2d. Old public start/resume and final public stop/update remain; both crossings require completed source/closure attestation and only console-router preparation.",
+    "Guest 360-second and caller 360-second budgets are distinct. Explicit public --timeout900 bounds observation after acknowledgement, not sequential machine waits or the entire update.",
+    "Final router health is checked after update/resume and before capture. Final ordinary stop uses no historical drain workaround.",
+    "All six credentials, accounts digest, source/artifact/closure, disk and sentinel continuity checks remain. Claim is operator-prepared K-runtime-only upgrade with unchanged V; ordinary unprepared historical stop and K68 are excluded.",
+    "No operation, private-root read, old-run recovery or passing repair claim. Old incomplete isolation3/G4/G6 and preview remain untouched.",
+    "Root prose facts/options agree with the source draft; supplied bytes remain unchanged."
+  ],
+  "evidence_references": {
+    "finish-direct-shutdown-owner-source-acceptance1.json": "33a8871a3e4291505937ad98604791a3e36f341eb15d200b17e1de75d83d78c6",
+    "finish-k-shutdown-owner-prose1.json": "c29e9f1872d53fda8aea6687edfc76fe8dcec9deecd845557d8480cd49d55aa6",
+    "finish-k-runtime-baseline-source1.controls.sha256": "654a1f2f49117b83cac8a985da5760ba577b572b4bed53c965210aa87ffcfacf",
+    "finish-k-runtime-baseline-source1.freeze.json": "77d2bbcbfc19efab2ad90e720bdde19eb4989df9bc4639d864d6f5b6eb097b63",
+    "finish-direct-isolation3-retirement-failure1.json": "4265b662cabb4376a900c07d7908629e62ade557f7b81fb5c274a83487a8a10f",
+    "finish-direct-isolation3-shutdown-log-classification1.json": "f1b1d3791759654870d4692e903e3af892f2d56495875390b04f86f99caa4dd8",
+    "finish-direct-shutdown-diagnosis-facts2.json": "7b66c62606a0969ef332ea2d95ef24f613631dd30147474a28f7014f28440b9f"
+  },
+  "historical_receipt_interpretation": "source/native motivation only; no certification of this draft",
+  "no_local_ci": true,
+  "no_operation_authorization": true
+}

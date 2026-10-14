@@ -1,0 +1,10 @@
+fixtures: use the selected inventory API version
+
+The pinned vpsAdmin server exposes API 7.0; the inventory caller's v1
+prefix refuses both current-user requests before fixture work. Select
+7.0 explicitly for the existing actions and report only bounded method,
+pathname and HTTP status on action failure.
+
+Check full wire paths before mock normalization, exercise provisioning
+through the authenticated client and retain a no-mutation 404 refusal
+that excludes response and credential values from diagnostics.

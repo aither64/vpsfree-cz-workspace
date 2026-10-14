@@ -1,0 +1,35 @@
+{
+  "at": "2026-10-10T16:19:20.376207+00:00",
+  "scope": "Read-only current ordinary-user manager/lifetime; no unit or lingering/configuration mutation",
+  "commands": {
+    "user_lifetime": {
+      "argv": [
+        "/nix/store/khnfirshq5j299s6sfj0laxj0vr7gaa6-systemd-260.2/bin/loginctl",
+        "show-user",
+        "1000",
+        "--property=Linger",
+        "--property=State",
+        "--property=RuntimePath"
+      ],
+      "exit_code": 0,
+      "stdout": "RuntimePath=/run/user/1000\nState=active\nLinger=yes\n",
+      "stderr": ""
+    },
+    "user_manager": {
+      "argv": [
+        "/nix/store/khnfirshq5j299s6sfj0laxj0vr7gaa6-systemd-260.2/bin/systemctl",
+        "--user",
+        "show",
+        "--property=Version",
+        "--property=ControlGroup",
+        "--property=DefaultTimeoutStartUSec"
+      ],
+      "exit_code": 0,
+      "stdout": "Version=260.5\nControlGroup=/user.slice/user-1000.slice/user@1000.service\nDefaultTimeoutStartUSec=1min 30s\n",
+      "stderr": ""
+    }
+  },
+  "exec_cgroup": "0::/user.slice/user-1000.slice/user@1000.service/app.slice/app-workspace\\x2dcodex.slice/workspace-codex@vpsfree-cz.service",
+  "prelaunch_recheck_required": true,
+  "service_launched": false
+}

@@ -1,0 +1,124 @@
+diff --git a/tools/runtime-verify.rb b/tools/runtime-verify.rb
+index fdf51ae840157fbdd3d681aa245a01bf5469f87f..e5ebcda94da917608dff3727d3a751baff91713f 100644
+--- a/tools/runtime-verify.rb
++++ b/tools/runtime-verify.rb
+@@ -24,8 +24,17 @@ module KbVerify
+         directory = environment.fetch('XDG_RUNTIME_DIR')
+         KbRuntime::State.new(directory, 'runtime-check').private_directory(directory)
+       end
++      temporary = File.join(root, 'temporary')
++      if ENV.key?('TMPDIR')
++        directory = ENV.fetch('TMPDIR')
++        state = KbRuntime::State.new(directory, 'temporary-check')
++        unless state.private_directory(directory) && File.realpath(directory) == directory
++          raise Error, 'TMPDIR must name an existing canonical private directory'
++        end
++        temporary = directory
++      end
+       @environment = environment.merge('PATH' => selection.fetch('path'), 'LANG' => 'C.UTF-8',
+-        'TMPDIR' => File.join(root, 'temporary'), 'NODE_PATH' => selection.fetch('node_path'),
++        'TMPDIR' => temporary, 'NODE_PATH' => selection.fetch('node_path'),
+         'PLAYWRIGHT_BROWSERS_PATH' => selection.fetch('browsers'), 'FONTCONFIG_FILE' => selection.fetch('fonts'),
+         'NIX_SSL_CERT_FILE' => selection.fetch('certificates'), 'SSL_CERT_FILE' => selection.fetch('certificates'),
+         'GEM_HOME' => selection.fetch('gem_home'), 'GEM_PATH' => selection.fetch('gem_home'),
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+index 1a6d58e6e16ea374cae862760b685c2a25382001..4cab4abca4297e56b5be66e3775f82897615a9a5 100644
+--- a/tools/test-runtime-verify.rb
++++ b/tools/test-runtime-verify.rb
+@@ -1070,6 +1070,96 @@ class RuntimeVerifyTest < Minitest::Test
+     end
+   end
+ 
++  def test_explicit_short_private_tmpdir_reaches_real_owned_child_with_selected_environment_and_scrubbing
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      keys = %w[TMPDIR PATH LANG NODE_PATH PLAYWRIGHT_BROWSERS_PATH FONTCONFIG_FILE NIX_SSL_CERT_FILE
++        SSL_CERT_FILE GEM_HOME GEM_PATH NIX_CONFIG RUBYOPT NODE_OPTIONS BUNDLE_GEMFILE
++        VPSADMIN_DEVCLUSTER_VPSADMIN_SOURCE DEV_SESSION_SLUG DEV_SESSION_WORKSPACE]
++      previous = keys.to_h { |key| [key, ENV[key]] }
++      Dir.mktmpdir('kb-t-', '/tmp') do |directory|
++        directory = File.realpath(directory)
++        injected = { 'TMPDIR' => directory, 'RUBYOPT' => '-r/nonexistent-synthetic-override',
++          'NODE_OPTIONS' => '--nonexistent-synthetic-override', 'BUNDLE_GEMFILE' => '/wrong/Gemfile',
++          'VPSADMIN_DEVCLUSTER_VPSADMIN_SOURCE' => '/wrong/source',
++          'DEV_SESSION_SLUG' => 'synthetic-foreign-session', 'DEV_SESSION_WORKSPACE' => '/wrong/workspace' }
++        ENV.update(injected)
++        commands = KbVerify::Commands.new(campaign.selection, campaign.root)
++        argv = [RbConfig.ruby, '-e', 'STDOUT.write(Marshal.dump(ENV.to_h.slice(*ARGV)))', *keys]
++        output, error, code = commands.call(argv, cwd: campaign.file('work'), stage: 'synthetic/short-tmpdir')
++        assert_equal(0, code)
++        assert_equal('', error)
++        observed = Marshal.load(output)
++        assert_equal(directory, observed.fetch('TMPDIR'))
++        assert_operator(directory.bytesize, :<, campaign.file('temporary').bytesize)
++        assert_equal('C.UTF-8', observed.fetch('LANG'))
++        { 'PATH' => 'path', 'NODE_PATH' => 'node_path', 'PLAYWRIGHT_BROWSERS_PATH' => 'browsers',
++          'FONTCONFIG_FILE' => 'fonts', 'NIX_SSL_CERT_FILE' => 'certificates',
++          'SSL_CERT_FILE' => 'certificates', 'GEM_HOME' => 'gem_home', 'GEM_PATH' => 'gem_home' }.each do |key, selected|
++          assert_equal(campaign.selection.fetch(selected), observed.fetch(key), key)
++        end
++        assert_equal(commands.environment.fetch('NIX_CONFIG'), observed.fetch('NIX_CONFIG'))
++        assert_includes(observed.fetch('NIX_CONFIG'), "max-jobs = 1\n")
++        assert_includes(observed.fetch('NIX_CONFIG'), "cores = 1\n")
++        (injected.keys - ['TMPDIR']).each { |key| refute(observed.key?(key), key) }
++        record = JSON.parse(File.read(Dir.glob(campaign.file('diagnostics/*/command.json')).fetch(0)))
++        assert(record.fetch('complete'))
++        assert(record.fetch('accepted'))
++        assert_equal(0, record.fetch('exit_code'))
++        assert_equal(argv, record.fetch('argv'))
++        assert_equal('synthetic/short-tmpdir', record.fetch('stage'))
++        assert_raises(Errno::ECHILD) { Process.waitpid(record.fetch('pid'), Process::WNOHANG) }
++      end
++    ensure
++      previous&.each { |key, value| ENV[key] = value }
++    end
++  end
++
++  def test_absent_tmpdir_keeps_campaign_temporary_default_without_creating_it
++    with_campaign do |campaign|
++      previous = ENV.delete('TMPDIR')
++      commands = KbVerify::Commands.new(campaign.selection, campaign.root)
++      assert_equal(campaign.file('temporary'), commands.environment.fetch('TMPDIR'))
++      refute(File.exist?(campaign.root))
++      refute(File.exist?(campaign.file('temporary')))
++    ensure
++      ENV['TMPDIR'] = previous
++    end
++  end
++
++  def test_explicit_unsafe_missing_empty_or_noncanonical_tmpdir_refuses_without_fallback_or_creation
++    with_campaign do |campaign|
++      previous = ENV['TMPDIR']
++      Dir.mktmpdir('kb-t-', '/tmp') do |base|
++        base = File.realpath(base)
++        safe = File.join(base, 'safe')
++        public_directory = File.join(base, 'public')
++        ordinary_file = File.join(base, 'file')
++        link = File.join(base, 'link')
++        missing = File.join(base, 'missing')
++        Dir.mkdir(safe, 0o700)
++        Dir.mkdir(File.join(safe, 'child'), 0o700)
++        Dir.mkdir(public_directory, 0o755)
++        File.chmod(0o755, public_directory)
++        File.write(ordinary_file, 'synthetic', perm: 0o600)
++        File.symlink(safe, link)
++        ['', missing, public_directory, ordinary_file, link, File.join(link, 'child'),
++          File.join(safe, '..', 'safe'), "#{safe}/", 'relative-missing-tmpdir'].each do |directory|
++          ENV['TMPDIR'] = directory
++          assert_raises(KbRuntime::Error, KbVerify::Error) { KbVerify::Commands.new(campaign.selection, campaign.root) }
++          refute(File.exist?(campaign.file('temporary')))
++          refute(File.exist?(missing))
++        end
++        assert_equal(safe, File.readlink(link))
++        assert_equal(0o755, File.stat(public_directory).mode & 0o777)
++        assert_equal('synthetic', File.read(ordinary_file))
++        refute(File.exist?(campaign.root))
++      end
++    ensure
++      ENV['TMPDIR'] = previous
++    end
++  end
++
+   def test_failed_native_phase_keeps_private_stdout_stderr_exact_exit_and_stage_without_replay
+     with_campaign do |campaign|
+       argv = [RbConfig.ruby, '-e', 'STDOUT.write("native output"); STDERR.write("native error"); exit 23']

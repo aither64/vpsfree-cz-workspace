@@ -1,0 +1,36 @@
+{
+  "run": 37830677336,
+  "head": "e45520e27ced8c1eb28def9995bb2aea4a58fd1d",
+  "log": "finish-k-generator-source-log2.txt",
+  "log_sha256": "70f04714bde3008344ede82cd7f17cb2c7493eff52a2f5c2ecb9fb0ca7d58a3f",
+  "zip": "finish-corrected-hosted2/k/logs.zip",
+  "zip_sha256": "1ccc9f2a5db1018ecf8a41d4e93ede076feaf8c72fcbb5b3e5bda33b72fb2cde",
+  "passed": {
+    "runtime": [
+      29,
+      223
+    ],
+    "closure": [
+      12,
+      51
+    ],
+    "pinned_driver": [
+      4,
+      20
+    ],
+    "verifier": [
+      18,
+      113
+    ]
+  },
+  "inventory_node": {
+    "tests": 25,
+    "passed": 24,
+    "failed": 1,
+    "errors": "TypeError: details.count is not a function",
+    "site": "tools/test-ip-inventory.cjs:262 first preparation browser fixture -> lib/webui.cjs:113 selectRadioByRowText"
+  },
+  "diagnosis": "The fake row.locator returns only a first() wrapper for every selector. The production helper additionally asks row.locator(xpath=ancestor::details[1]).count(). That fake locator lacks count; no application change or live browser defect is established. Preserve actual helper, wizard/resource/identity/order assertions; repair its owned fake selector shape.",
+  "unrun": "export and downstream connection/artifact/capture/browser/contract gates after stop-first",
+  "local_execution": false
+}

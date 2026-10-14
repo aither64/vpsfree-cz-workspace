@@ -1,0 +1,1 @@
+import{j as d}from"./vendor-react-MGxsW2Ms.js";import{c as i}from"./main-LDE_lf6r.js";function c(t){const a=t.variant??"default";return d.jsx("div",{"data-testid":t.testId,className:i("grid grid-cols-1 gap-4","md:grid-cols-12",t.className),children:t.children})}export{c as S};

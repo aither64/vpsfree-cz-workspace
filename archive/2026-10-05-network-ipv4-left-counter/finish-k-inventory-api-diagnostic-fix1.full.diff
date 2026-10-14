@@ -1,0 +1,88 @@
+diff --git a/fixtures/prepare.cjs b/fixtures/prepare.cjs
+index fc45cbfd0ec1f9fb04ec406c9dda3c8992190c88..fb9611977833c0aa1ac64816c7d8fcc67b1c4d9f 100644
+--- a/fixtures/prepare.cjs
++++ b/fixtures/prepare.cjs
+@@ -483,10 +483,16 @@ function inventoryApi(cluster, login) {
+         response.on('end', () => {
+           try {
+             cluster.assertLease();
+-            const value = JSON.parse(data);
+-            if (response.statusCode !== 200 || value.status !== true) {
++            if (response.statusCode !== 200) {
+               throw new Error(`Inventory resource action failed: ${method.slice(0, 8)} ${url.pathname.slice(0, 128)} (HTTP ${response.statusCode})`);
+             }
++            let value;
++            try { value = JSON.parse(data); }
++            catch { throw new Error('Inventory resource response is invalid'); }
++            if (!value || typeof value !== 'object' || Array.isArray(value) || value.status !== true
++                || !value.response || typeof value.response !== 'object' || Array.isArray(value.response)) {
++              throw new Error('Inventory resource response is invalid');
++            }
+             resolve(value.response);
+           } catch (error) { reject(error); }
+         });
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index 7815cd00726f4832118ac3ba78850c0e4a10ae8f..1e928b5e0c581931127fd3964c0c9b3e862c27f1 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -62,7 +62,8 @@ function mockInventoryTransport(t, respond) {
+         const response = new PassThrough();
+         response.statusCode = result.statusCode || 200;
+         callback(response);
+-        response.end(JSON.stringify(result.denied ? { status: false, ...result.failure } : { status: true, response: result.response }));
++        response.end(result.raw === undefined
++          ? JSON.stringify(result.denied ? { status: false, ...result.failure } : { status: true, response: result.response }) : result.raw);
+       }).catch((error) => request.emit('error', error));
+     };
+     return request;
+@@ -154,6 +155,50 @@ test('inventory HTTP 404 refuses before browser or mutation without leaking diag
+     [['test-user1', 'GET', '/v7.0/users/current']], 'no fallback, second identity request or provisioning mutation follows refusal');
+ });
+ 
++const responseSecret = 'synthetic-response-boundary-secret';
++for (const [label, statusCode, raw] of [
++  ['malformed HTTP404', 404, responseSecret],
++  ['malformed HTTP200', 200, responseSecret],
++  ['null envelope', 200, JSON.stringify(null)],
++  ['array envelope', 200, JSON.stringify([responseSecret])],
++  ['primitive envelope', 200, JSON.stringify(responseSecret)],
++  ['false success status', 200, JSON.stringify({ status: false, response: { private: responseSecret } })],
++  ['non-boolean success status', 200, JSON.stringify({ status: 'true', response: { private: responseSecret } })],
++  ['missing response', 200, JSON.stringify({ status: true, message: responseSecret })],
++  ['null response', 200, JSON.stringify({ status: true, response: null, message: responseSecret })],
++  ['array response', 200, JSON.stringify({ status: true, response: [responseSecret] })],
++  ['primitive response', 200, JSON.stringify({ status: true, response: responseSecret })],
++]) {
++  test(`inventory ${label} has bounded private diagnostics before browser or mutation`, async (t) => {
++    const accounts = recordedAccounts();
++    const calls = mockInventoryTransport(t, () => ({ statusCode, raw }));
++    await withInventoryConnection(accounts, async (cluster, _abort, root) => {
++      const page = {
++        locator() { assert.fail('invalid response must precede browser work'); },
++        goto() { assert.fail('invalid response must precede browser navigation'); },
++      };
++      const invocationRoot = path.join(root, 'invocation');
++      await assert.rejects(prepareFixtures({ cluster, page, language: 'en', required: ['ip-inventory'], invocationRoot }), (error) => {
++        assert.equal(error.constructor, Error);
++        assert.equal(error.message, statusCode === 404
++          ? 'Inventory resource action failed: GET /v7.0/users/current (HTTP 404)' : 'Inventory resource response is invalid');
++        assert.equal(error.cause, undefined, 'no parser cause or response excerpt is retained');
++        assert(error.message.length < 192);
++        assert.equal(typeof error.stack, 'string');
++        assert(error.stack.length < 4096);
++        for (const value of [responseSecret, ...accounts.flatMap((account) => [account.login, account.password])]) {
++          assert(!error.message.includes(value), 'error message excludes response and account values');
++          assert(!error.stack.includes(value), 'error stack excludes response and account values');
++        }
++        return true;
++      });
++      assert.equal(fs.existsSync(invocationRoot), false, 'invalid response cannot publish fixture metadata');
++    });
++    assert.deepEqual(calls.map((call) => [call.login, call.method, call.wirePath]),
++      [['test-user1', 'GET', '/v7.0/users/current']], 'no follow-on identity request, fallback or provisioning follows refusal');
++  });
++}
++
+ for (const wrong of ['missing', 'duplicate', 'role', 'namespace', 'password']) {
+   test(`recorded inventory account ${wrong} refuses before HTTP or browser mutation`, async (t) => {
+     const accounts = recordedAccounts();

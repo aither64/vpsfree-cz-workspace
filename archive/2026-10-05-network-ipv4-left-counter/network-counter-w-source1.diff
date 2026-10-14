@@ -1,0 +1,589 @@
+diff --git a/docs/design/API_CONTRACTS.md b/docs/design/API_CONTRACTS.md
+index e5372d951cd83f0066b80db45f2e34c92af738a3..148c0881ff1a5eb31cbdb38331ade3897711b4e7 100644
+--- a/docs/design/API_CONTRACTS.md
++++ b/docs/design/API_CONTRACTS.md
+@@ -151,6 +151,21 @@ A failed capability lookup shows the error and a retry action. Cached capability
+ data cannot authorize availability writes while a lookup is pending, fetching
+ or errored. Other fields remain editable.
+ 
++Administrator Network responses may include `available_to_users` and
++`owned_unassigned`. The first counts registered allocations without an owner,
++interface or operation reservation and is zero on disabled networks. The second
++counts owned allocations without an interface, including reserved entries and
++disabled networks. Each address or prefix counts once. These are inventory
++totals; allocation still depends on location, purpose, quota and current
++reservations. They are read-only and absent from non-admin responses.
++
++The network list displays `used` as registered stock, `assigned` as interface
++assignments (including VPS and exports), and the two new counts independently.
++The editor displays total `owned`, including assigned entries. Older APIs may
++omit the new counts; a dash represents unknown data without a derived fallback.
++Admin IP flags warn only when the included network explicitly reports
++`enabled=false`; true or missing state adds no warning or extra request.
++
+ These additions use the enforcing backend's network availability contract and
+ are separate from backend PR #44 and IP-history cursor work. API validation
+ remains the final authority for ownership, quota, network availability, concurrent
+diff --git a/docs/design/EVIDENCE_MATRIX.md b/docs/design/EVIDENCE_MATRIX.md
+index 4b39539f5575088195e4dccf90837cdf39ae6e5d..6b5c34487a58652d17999b54dbc11f1bbbc288e6 100644
+--- a/docs/design/EVIDENCE_MATRIX.md
++++ b/docs/design/EVIDENCE_MATRIX.md
+@@ -90,7 +90,7 @@ Not every test file in this matrix necessarily ran in that PR-selected browser r
+ | REQ-068 | [Packaging](PACKAGING.md), [flake](../../flake.nix) | Separate immutable frontend/BFF, Gitless audit and matching clean provenance | Builds/source/package checks in release receipt; no new release from this docs port |
+ | REQ-069 | [NixOS service](NIXOS_SERVICE.md), [module](../../nixos/modules/webui.nix) | Private state, systemd credentials, routing, trusted edge, callback boundary, PHP coexistence | Dry activation and health checks recorded; real login/VM certification separate |
+ | REQ-070 | [Cold search](../../e2e/specs/app/global_search_cold_start.spec.ts) | Cold IP/DNS search, owner scope and visible lookup failures | Canonical PR5 fixtures; authenticated live search not certified |
+-| REQ-071 | [Network adapter tests](../../src/lib/api/networks.test.ts), [availability workflow](WORKFLOWS.md#network-availability) | Explicit false, omitted fields, metadata capability, both toggle directions and retained errors | Prepared source and synthetic test entry points; execution and deployment evidence recorded separately |
++| REQ-071 | [Network adapter tests](../../src/lib/api/networks.test.ts), [availability workflow](WORKFLOWS.md#network-availability) | Explicit false, optional authoritative counters, keyboard descriptions, distinct owned total, metadata capability, both toggle directions and retained errors | Synthetic unit/browser coverage; final-head execution and deployment evidence recorded separately |
+ 
+ ## Critical acceptance cases
+ 
+diff --git a/docs/design/REQUIREMENTS.md b/docs/design/REQUIREMENTS.md
+index 6fd47a596c801470d043028e04bc99215e0cae65..d4c66698d2039d2a827be7f0a14a513429042f05 100644
+--- a/docs/design/REQUIREMENTS.md
++++ b/docs/design/REQUIREMENTS.md
+@@ -81,7 +81,7 @@ The Acceptance column describes what must be checked, not a claim it all passed.
+ | REQ-047 | Preserve backup filters when switching tabs. | Owner/location/other filters survive appropriate tab changes; no stale response overwrites current selection. | P; [PR497](https://github.com/Kerrycek/clankerdev/pull/497) | Delivered |
+ | REQ-048 | Support dataset/NAS/snapshot/download/export/restore workflows. | Quota vs usage distinguished; local/remote restore sources explicit; task results and failure/cleanup verifiable. | C/U; [datasets](../../src/lib/api/datasets.ts), [exports](../../src/lib/api/exports.ts) | Baseline; certification scope recorded separately |
+ | REQ-049 | Support DNS zones/records/transfers/DNSSEC/TSIG safely. | Validate actual record/API rules; preserve zone context and errors; secrets scrubbed; saved record is not proof of published DNS. | C/U; [DNS](../../src/lib/api/dns.ts), [secret scrubber](../../src/lib/api/dnsSecretScrubber.ts) | Baseline |
+-| REQ-050 | Preserve network interfaces, addresses, resolvers and admin IP inventory. | Scope and address family accurate; VPS assignment includes purpose `any` and all API-authorized location associations (including staging), without inferring availability from primary location; cached detached IPs must be revalidated, including supported network availability. Disabled owned addresses remain visible but cannot be assigned. Destructive detach requires target review; history obeys REQ-043. | C; network availability request 2026-10-06; [networking](../../src/lib/api/networking.ts), [IP addresses](../../src/lib/api/ipAddresses.ts) | Baseline; staging private IPv4 availability delivered in PR6; network availability prepared, not deployed; fixture evidence only; [release 718cf759](../work-log/2026-09-30-three-site-release.md) |
++| REQ-050 | Preserve network interfaces, addresses, resolvers and admin IP inventory. | Scope and address family accurate; VPS assignment includes purpose `any` and all API-authorized location associations (including staging), without inferring availability from primary location; cached detached IPs must be revalidated, including supported network availability. Disabled owned addresses remain visible but cannot be assigned; admin desktop/mobile IP flags warn only on explicit disabled state. Destructive detach requires target review; history obeys REQ-043. | C; network availability request 2026-10-06; [networking](../../src/lib/api/networking.ts), [IP addresses](../../src/lib/api/ipAddresses.ts) | Baseline; staging private IPv4 availability delivered in PR6; network availability prepared, not deployed; fixture evidence only; [release 718cf759](../work-log/2026-09-30-three-site-release.md) |
+ | REQ-051 | Provide transactions, monitoring, incidents and OOM views. | Distinguish planned/running/failed/completed; display API-provided operation names as primary titles; filter ownership; keep long identifiers usable on mobile; incident lists fit the content width with wrapping text and no horizontal table scroll. | C; [monitoring](../../src/lib/api/monitoring.ts), [OOM](../../src/lib/api/oom.ts) | Delivered: PR11 API operation names and PR14 incident width; [operation evidence](../work-log/2026-10-03-transaction-operation-names.md); [release f123a7fb](../work-log/2026-10-03-three-site-release.md) |
+ | REQ-052 | Preserve member payments and administrator finance. | Admin-only finance gates; incoming payments are default finance destination; review mutations retained on failure; embedded PNG and reviewed external HTTPS payment QR codes remain visible after HTML sanitization and deployment CSP checks. | C/P; [PR490](https://github.com/Kerrycek/clankerdev/pull/490), [finance routes](../../src/routes/adminFinanceRoutes.tsx) | Baseline; external QR CSP follow-up [prepared](../work-log/2026-10-04-payment-qr-csp.md); embedded PNG payment QR fix delivered in PR15; [release f123a7fb](../work-log/2026-10-03-three-site-release.md) |
+ | REQ-053 | Preserve mail/content/help-box administration. | Templates/translations/recipients/mailboxes/news/help boxes retain scope, validation and in-context failure recovery. | C; [mailer](../../src/lib/api/mailer.ts), [help boxes](../../src/lib/api/helpBoxes.ts) | Baseline |
+@@ -117,4 +117,4 @@ The Acceptance column describes what must be checked, not a claim it all passed.
+ 
+ | ID | Requirement and reason | Acceptance | Source / implementation evidence | Status |
+ | --- | --- | --- | --- | --- |
+-| REQ-071 | Let administrators stop new use of a network while retaining existing service and inventory. | Show known enabled state and assigned/owned counts; support both toggling directions through the normal API update; explain detached-address restrictions and already accepted operations; omit unsupported controls and fields on older APIs; preserve errors and drafts. | Accepted network availability request 2026-10-06; [API contract](API_CONTRACTS.md#vps-address-availability), [network editor](../../src/pages/app/admin/cluster/NetworksPage.tsx) | Prepared, not deployed; synthetic tests do not certify backend admission or running services |
++| REQ-071 | Let administrators stop new use of a network while retaining existing service and inventory. | Show known enabled state, registered/assigned stock and authoritative available/owned-unassigned counts with descriptions; distinguish the editor owned total and missing statistics; support both toggling directions through the normal API update; explain detached-address restrictions and already accepted operations; omit unsupported controls and fields on older APIs; preserve errors and drafts. | Accepted network availability request 2026-10-06; [API contract](API_CONTRACTS.md#vps-address-availability), [network editor](../../src/pages/app/admin/cluster/NetworksPage.tsx) | Prepared, not deployed; synthetic tests do not certify backend admission or running services |
+diff --git a/docs/design/WORKFLOWS.md b/docs/design/WORKFLOWS.md
+index e3a73fec3e5e3fd51b0fa641e0aa3125acb9561c..64e6af558b83f26b4921072306b1af859ebf0b50 100644
+--- a/docs/design/WORKFLOWS.md
++++ b/docs/design/WORKFLOWS.md
+@@ -180,6 +180,13 @@ when supported and revalidate cached addresses with the same criteria. Capabilit
+ or candidate errors stay visible. Older APIs receive neither unsupported fields
+ nor a fabricated disabled state. Backend enforcement remains authoritative.
+ 
++The network list shows registered stock, interface assignments, owned unassigned
++allocations and stock available to users. Count descriptions distinguish
++registered inventory from eligibility for a particular VPS. Missing additive
++statistics show a dash. The editor retains a separate owned total, including assignments.
++Admin IP desktop and mobile flags add a Network disabled warning only for an
++explicit false state. Existing rows, service links and actions remain visible.
++
+ ## Account profile and user administration
+ 
+ **Intent:** members manage profile, mail/security preferences, keys, sessions, MFA,
+diff --git a/docs/work-log/2026-10-06-network-availability.md b/docs/work-log/2026-10-06-network-availability.md
+index 428b4eb82786529f23cea919cd9147759ba42a35..0a2dcac67fa421099562d2b0074fa867f3b77e41 100644
+--- a/docs/work-log/2026-10-06-network-availability.md
++++ b/docs/work-log/2026-10-06-network-availability.md
+@@ -78,3 +78,27 @@ synthetic fixtures. The production build passed, with a chunk-size
+ warning. Logs and the four reviewed captures are available in the
+ [development session](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-05-network-ipv4-left-counter/).
+ No live API, deployment or default-interface cutover is claimed.
++
++## Counter and inventory refinement (2026-10-08)
++
++The accepted follow-up uses the API's additive `available_to_users` and
++`owned_unassigned` statistics. The list keeps its layout and replaces ambiguous
++Free/Owned values with available stock and owned unassigned allocations.
++Registered stock and interface assignments retain their existing source fields;
++assignments include export interfaces. The editor retains a separate owned total.
++Bilingual descriptions explain ownership and assignment overlap, reservations
++and eligibility for a particular VPS. Missing new fields display a dash.
++
++Admin IP desktop and mobile flags warn only on an explicitly disabled network.
++They retain assigned/private/routed flags, rows and actions, without extra
++network requests. The PHP list refinement belongs to the owning vpsAdmin change;
++the pending KB image scope remains the existing bilingual IP-list checkpoint.
++
++The authoritative locked terminology input remains
++`a65a4dfeb92a59df4a80a737a20bcbf8558793ff`. At this source-preparation checkpoint,
++new unit and bilingual desktop/mobile smoke assertions and screenshot outputs
++are prepared. Local CI, suites, builds, VMs and captures have not run for this
++follow-up, as requested by the user.
++Earlier results above describe earlier source snapshots. Hosted checks and
++rendered evidence for the final rebased feature head are pending; no deployment
++or live API result is claimed.
+diff --git a/e2e/specs/admin/network_availability.spec.ts b/e2e/specs/admin/network_availability.spec.ts
+index b3e62f5e4910f575cde564415e5d164358e57aba..1e9a797d25e85068304c5ece2e76ebb4b048d357 100644
+--- a/e2e/specs/admin/network_availability.spec.ts
++++ b/e2e/specs/admin/network_availability.spec.ts
+@@ -13,7 +13,8 @@ for (const language of ['en', 'cs'] as const) {
+     const network = () => ({
+       id: 101, label: 'Retained service', address: '192.0.2.0', prefix: 24,
+       ip_version: 4, role: 'public_access', purpose: 'vps', managed: true,
+-      enabled, split_access: 'no_access', split_prefix: 32, assigned: 3, owned: 5,
++      enabled, split_access: 'no_access', split_prefix: 32, assigned: 3, owned: 5, used: 9, size: 256, taken: 7,
++      available_to_users: 0, owned_unassigned: 2,
+     });
+     await installHaveApiMock(page, {
+       user: { id: 1, login: 'admin', level: 100 },
+@@ -44,12 +45,28 @@ for (const language of ['en', 'cs'] as const) {
+       },
+     });
+     await page.goto('/admin/cluster/networks');
++    const row = page.getByTestId('admin.cluster.networks.row.101');
++    await expect(row.getByTestId('admin.cluster.networks.row.101.available_to_users')).toHaveText('0');
++    await expect(row.getByTestId('admin.cluster.networks.row.101.owned_unassigned')).toHaveText('2');
++    await expect(row.getByTestId('admin.cluster.networks.row.101.assigned')).toHaveText('3');
++    await expect(row.getByTestId('admin.cluster.networks.row.101.used')).toHaveText('9');
++    const countDescription = language === 'en'
++      ? "Registered addresses or prefixes with no owner or interface assignment, and not reserved by an operation. Disabled networks contribute zero. Use on a particular VPS also depends on location, network purpose and user limits."
++      : "Evidované adresy nebo prefixy bez vlastníka a bez přiřazení k rozhraní, které nejsou rezervované probíhající operací. V zakázané síti je tento počet nulový. Použití na konkrétním VPS závisí také na lokaci, účelu sítě a limitech uživatele.";
++    const countLabel = page.locator('[aria-describedby="network-count-available"]');
++    await countLabel.focus();
++    await expect(countLabel).toBeFocused();
++    await expect(countLabel).toHaveAccessibleDescription(countDescription);
++    await expect(page.locator('#network-count-available')).toBeVisible();
++    await page.screenshot({ path: testInfo.outputPath(`network-counts-${language}.png`), fullPage: true });
+     await page.getByTestId('admin.cluster.networks.row.101.edit').click();
+     const editor = page.getByTestId('admin.cluster.networks.editor');
+     const toggle = page.getByTestId('admin.cluster.networks.editor.enabled').getByRole('checkbox');
+     await expect(editor).toContainText('192.0.2.0/24 (#101)');
+-    await expect(editor).toContainText(language === 'en' ? 'Assigned: 3' : 'Přiřazeno: 3');
+-    await expect(editor).toContainText(language === 'en' ? 'Owned: 5' : 'Vlastněno: 5');
++    await expect(editor.getByTestId('admin.cluster.networks.editor.assigned')).toHaveText('3');
++    await expect(editor.locator('[aria-describedby="network-editor-assigned"]')).toContainText(language === 'en' ? 'Assigned' : 'Přiřazené');
++    await expect(editor.getByTestId('admin.cluster.networks.editor.owned_total')).toHaveText('5');
++    await expect(editor.locator('[aria-describedby="network-editor-owned"]')).toContainText(language === 'en' ? 'Owned total' : 'Vlastněné celkem');
+     await expect(toggle).toBeVisible();
+     await expect(toggle).toBeChecked();
+     expect(capabilityMethods).toEqual(['PUT']);
+@@ -78,7 +95,8 @@ test('@pr-smoke @pr-smoke-mobile older APIs keep unknown state and omit unsuppor
+   let saved = false;
+   const capabilityMethods: string[] = [];
+   const network = { id: 101, address: '192.0.2.0', prefix: 24, ip_version: 4, role: 'public_access',
+-    purpose: 'vps', managed: true, split_access: 'no_access', split_prefix: 32 };
++    purpose: 'vps', managed: true, split_access: 'no_access', split_prefix: 32,
++    size: 256, used: 9, taken: 7, owned: 5 };
+   await installHaveApiMock(page, {
+     user: { id: 1, login: 'admin', level: 100 },
+     handlers: {
+@@ -103,6 +121,8 @@ test('@pr-smoke @pr-smoke-mobile older APIs keep unknown state and omit unsuppor
+   });
+   await page.goto('/admin/cluster/networks');
+   await expect(page.getByTestId('admin.cluster.networks.row.101.enabled')).not.toHaveText('Disabled');
++  await expect(page.getByTestId('admin.cluster.networks.row.101.available_to_users')).toHaveText('—');
++  await expect(page.getByTestId('admin.cluster.networks.row.101.owned_unassigned')).toHaveText('—');
+   await page.getByTestId('admin.cluster.networks.row.101.edit').click();
+   await expect(page.getByTestId('admin.cluster.networks.editor.label')).toBeVisible();
+   await expect.poll(() => capabilityMethods).toEqual(['PUT']);
+@@ -133,3 +153,42 @@ test('@pr-smoke @pr-smoke-mobile disabled detached owned addresses stay visible
+   await expect(visible).toContainText('Disabled');
+   await expect(visible.getByTestId('network.user.ip.102.assign')).toBeDisabled();
+ });
++
++for (const language of ['en', 'cs'] as const) {
++  test(`@pr-smoke @pr-smoke-mobile admin IP flags preserve disabled assignments and warn only for false (${language})`, async ({ page }, testInfo) => {
++    await bootstrapVpsAdminWindow(page, { sessionToken: 'TEST' });
++    await setUiSettingsLocalStorage(page, { language });
++    const ips = [false, true, undefined].map((enabled, index) => ({
++      id: 101 + index, addr: `192.0.2.${101 + index}`, prefix: 32, routed: true,
++      network: { id: 11 + index, address: '192.0.2.0', prefix: 24, role: 'private_access', enabled },
++      network_interface: { id: 51 + index, vps: { id: 1, hostname: 'existing-service' } },
++    }));
++    await installHaveApiMock(page, {
++      user: { id: 1, login: 'admin', level: 100 },
++      handlers: {
++        'GET locations': () => ({ locations: [] }),
++        'GET ip_addresses': () => ({ ip_addresses: ips }),
++      },
++    });
++    await page.goto('/admin/ip-addresses?vps=1');
++    const visible = (id: number) => page.locator(`[data-testid="admin.ip_addresses.row.${id}"]:visible, [data-testid="admin.ip_addresses.card.${id}"]:visible`);
++    const warning = language === 'en' ? 'Network disabled' : 'Síť zakázána';
++    const description = language === 'en'
++      ? "This network is disabled for new allocations and assignments. Existing assignments remain usable."
++      : "Síť je zakázaná pro nové přidělování a přiřazování adres. Existující přiřazené adresy zůstávají použitelné.";
++    const disabled = visible(101);
++    await expect(disabled.getByText(warning, { exact: true })).toBeVisible();
++    const flag = disabled.locator('[aria-describedby]');
++    await flag.focus();
++    await expect(flag).toBeFocused();
++    await expect(flag).toHaveAccessibleDescription(description);
++    await expect(disabled.getByRole('tooltip')).toBeVisible();
++    await expect(disabled.getByRole('link', { name: '192.0.2.101/32' })).toHaveAttribute('href', '/admin/ip-addresses/101');
++    await expect(disabled.locator('[data-testid$=".action.route"]')).toHaveAttribute('href', '/admin/ip-addresses/101#route');
++    for (const id of [102, 103]) {
++      await expect(visible(id)).toBeVisible();
++      await expect(visible(id).getByText(warning, { exact: true })).toHaveCount(0);
++    }
++    await page.screenshot({ path: testInfo.outputPath(`admin-ip-flags-${language}.png`), fullPage: true });
++  });
++}
+diff --git a/src/i18n/locales/cs/admin/ip_addresses.ts b/src/i18n/locales/cs/admin/ip_addresses.ts
+index ab6ed2a526b82c9e40ee384eb2197470e5145336..4bad0b54e0fa8540d5fb18df875ede02194423fa 100644
+--- a/src/i18n/locales/cs/admin/ip_addresses.ts
++++ b/src/i18n/locales/cs/admin/ip_addresses.ts
+@@ -93,4 +93,6 @@ export const csAdmin_ip_addresses = {
+   "admin.ip_addresses.smart.suggest.open.secondary": "Otevřít detail",
+   "admin.ip_addresses.subtitle": "Procházej, vyhledávej a filtruj alokace IP adres (admin).",
+   "admin.ip_addresses.title": "IP adresy",
++  "admin.ip_addresses.chip.network_disabled": "Síť zakázána",
++  "admin.ip_addresses.chip.network_disabled.help": "Síť je zakázaná pro nové přidělování a přiřazování adres. Existující přiřazené adresy zůstávají použitelné.",
+ } as const;
+diff --git a/src/i18n/locales/cs/adminCluster/networks.ts b/src/i18n/locales/cs/adminCluster/networks.ts
+index f6860e1b1011a57af669b75b9aba34236304958a..271b4dc7b40baf98d92fb9113099b4e4bf555f5c 100644
+--- a/src/i18n/locales/cs/adminCluster/networks.ts
++++ b/src/i18n/locales/cs/adminCluster/networks.ts
+@@ -4,15 +4,13 @@ export const csAdminCluster_networks = {
+   "admin.cluster.networks.disabled": "Zakázáno",
+   "admin.cluster.networks.enabled.help": "Zakázání sítě brání novému přidělování a přiřazování IP adres. Stávající provoz pokračuje a již přijaté operace mohou doběhnout. Nepřiřazené adresy s vlastníkem lze přiřadit až po opětovném povolení sítě.",
+   "admin.cluster.networks.action.create": "Vytvořit síť",
+-  "admin.cluster.networks.col.assigned": "Přiřazeno",
+-  "admin.cluster.networks.col.free": "Volné",
++  "admin.cluster.networks.col.assigned": "Přiřazené",
+   "admin.cluster.networks.col.locations": "Lokace",
+   "admin.cluster.networks.col.managed": "Správa",
+   "admin.cluster.networks.col.network": "Síť",
+-  "admin.cluster.networks.col.owned": "Vlastněno",
+   "admin.cluster.networks.col.purpose": "Účel",
+   "admin.cluster.networks.col.role": "Role",
+-  "admin.cluster.networks.col.used": "Použito",
++  "admin.cluster.networks.col.used": "Evidované ve vpsAdmin",
+   "admin.cluster.networks.create.button": "Přidat síť",
+   "admin.cluster.networks.create.title": "Přidat síť",
+   "admin.cluster.networks.edit.title": "Upravit síť",
+@@ -67,4 +65,12 @@ export const csAdminCluster_networks = {
+   "admin.cluster.networks.title": "Sítě",
+   "admin.cluster.networks.toast.created": "Síť vytvořena",
+   "admin.cluster.networks.toast.saved": "Síť uložena",
++  "admin.cluster.networks.col.owned_unassigned": "Vlastněné, nepřiřazené",
++  "admin.cluster.networks.col.available": "Volné pro uživatele",
++  "admin.cluster.networks.editor.owned_total": "Vlastněné celkem",
++  "admin.cluster.networks.tooltip.assigned": "Adresy nebo prefixy přiřazené k síťovým rozhraním, včetně rozhraní VPS a exportů. Tyto adresy mohou zároveň mít vlastníka.",
++  "admin.cluster.networks.tooltip.used": "Adresy nebo prefixy evidované ve vpsAdmin, včetně vlastněných a přiřazených.",
++  "admin.cluster.networks.tooltip.owned_unassigned": "Adresy nebo prefixy vlastněné uživateli, které nejsou přiřazené k žádnému rozhraní. Jiný uživatel je nemůže převzít. Počet zahrnuje i rezervované adresy a zakázané sítě; přiřazení vyžaduje povolenou síť a nesmí mu bránit rezervace.",
++  "admin.cluster.networks.tooltip.available": "Evidované adresy nebo prefixy bez vlastníka a bez přiřazení k rozhraní, které nejsou rezervované probíhající operací. V zakázané síti je tento počet nulový. Použití na konkrétním VPS závisí také na lokaci, účelu sítě a limitech uživatele.",
++  "admin.cluster.networks.tooltip.owned_total": "Všechny adresy nebo prefixy vlastněné uživateli, včetně těch přiřazených k rozhraní.",
+ } as const;
+diff --git a/src/i18n/locales/en/admin/ip_addresses.ts b/src/i18n/locales/en/admin/ip_addresses.ts
+index 390e656b5a938ad3ea0e67577b04ae7e65ebaaf1..f7c16ef33fe594ea4c611401476ecdff02533c24 100644
+--- a/src/i18n/locales/en/admin/ip_addresses.ts
++++ b/src/i18n/locales/en/admin/ip_addresses.ts
+@@ -93,4 +93,6 @@ export const enAdmin_ip_addresses = {
+   "admin.ip_addresses.smart.suggest.open.secondary": "Open the detail page",
+   "admin.ip_addresses.subtitle": "Browse, search and filter address allocations (admin).",
+   "admin.ip_addresses.title": "IP addresses",
++  "admin.ip_addresses.chip.network_disabled": "Network disabled",
++  "admin.ip_addresses.chip.network_disabled.help": "This network is disabled for new allocations and assignments. Existing assignments remain usable.",
+ } as const;
+diff --git a/src/i18n/locales/en/adminCluster/networks.ts b/src/i18n/locales/en/adminCluster/networks.ts
+index 9d850ba7ff847655b786043783caf7e053d86886..1f809e8d2e373d400279a3a8fade49a6bd46b621 100644
+--- a/src/i18n/locales/en/adminCluster/networks.ts
++++ b/src/i18n/locales/en/adminCluster/networks.ts
+@@ -5,14 +5,12 @@ export const enAdminCluster_networks = {
+   "admin.cluster.networks.enabled.help": "Disabling prevents new allocations and assignments. Existing service continues, and operations already accepted may finish. Detached owned addresses cannot be assigned until the network is enabled again.",
+   "admin.cluster.networks.action.create": "Create network",
+   "admin.cluster.networks.col.assigned": "Assigned",
+-  "admin.cluster.networks.col.free": "Free",
+   "admin.cluster.networks.col.locations": "Locations",
+   "admin.cluster.networks.col.managed": "Managed",
+   "admin.cluster.networks.col.network": "Network",
+-  "admin.cluster.networks.col.owned": "Owned",
+   "admin.cluster.networks.col.purpose": "Purpose",
+   "admin.cluster.networks.col.role": "Role",
+-  "admin.cluster.networks.col.used": "Used",
++  "admin.cluster.networks.col.used": "Registered in vpsAdmin",
+   "admin.cluster.networks.create.button": "Add network",
+   "admin.cluster.networks.create.title": "Add network",
+   "admin.cluster.networks.edit.title": "Edit network",
+@@ -67,4 +65,12 @@ export const enAdminCluster_networks = {
+   "admin.cluster.networks.title": "Networks",
+   "admin.cluster.networks.toast.created": "Network created",
+   "admin.cluster.networks.toast.saved": "Network saved",
++  "admin.cluster.networks.col.owned_unassigned": "Owned, not assigned",
++  "admin.cluster.networks.col.available": "Available to users",
++  "admin.cluster.networks.editor.owned_total": "Owned total",
++  "admin.cluster.networks.tooltip.assigned": "Addresses or prefixes attached to network interfaces, including VPS and export interfaces. These entries can also have an owner.",
++  "admin.cluster.networks.tooltip.used": "Addresses or prefixes registered in vpsAdmin, including owned and assigned entries.",
++  "admin.cluster.networks.tooltip.owned_unassigned": "Addresses or prefixes held by users but not assigned to any interface. Other users cannot take them. Includes reserved entries and disabled networks; assignment still requires an enabled network and no conflicting reservation.",
++  "admin.cluster.networks.tooltip.available": "Registered addresses or prefixes with no owner or interface assignment, and not reserved by an operation. Disabled networks contribute zero. Use on a particular VPS also depends on location, network purpose and user limits.",
++  "admin.cluster.networks.tooltip.owned_total": "All addresses or prefixes owned by users, including those assigned to an interface.",
+ } as const;
+diff --git a/src/lib/api/networks.test.ts b/src/lib/api/networks.test.ts
+index 164fb84f696f788697997deba0252e6fa4c1fdc8..f88dbd87a18e926718db372cdd29a1593dfd99b1 100644
+--- a/src/lib/api/networks.test.ts
++++ b/src/lib/api/networks.test.ts
+@@ -26,6 +26,19 @@ describe('networks API wrappers', () => {
+     expect(JSON.parse(String(writes[0]?.[1]?.body))).toEqual({ network: { enabled: false } });
+     expect(JSON.parse(String(writes[1]?.[1]?.body))).toEqual({ network: { label: 'Inventory' } });
+   });
++  test('keeps authoritative zero and optional missing network counts without a client fallback', async () => {
++    const rows = [
++      { id: 101, available_to_users: 0, owned_unassigned: 2, owned: 5, size: 256, used: 9, taken: 7 },
++      { id: 102, owned: 5, size: 256, used: 9, taken: 7 },
++    ];
++    globalThis.fetch = mockFetchOk({ networks: rows });
++    const result = await fetchNetworks();
++    expect(result.data).toEqual(rows);
++    expect(result.data[0]?.available_to_users).toBe(0);
++    expect(result.data[1]).not.toHaveProperty('available_to_users');
++    expect(result.data[1]).not.toHaveProperty('owned_unassigned');
++  });
++
+   test('fetchNetworks forwards only filters supported by Network.Index', async () => {
+     const fetchMock = mockFetchOk({ networks: [{ id: 101, purpose: 'vps' }] });
+     globalThis.fetch = fetchMock as unknown as typeof fetch;
+diff --git a/src/lib/api/networks.ts b/src/lib/api/networks.ts
+index 29252d80509234af06f6d1f2ac062fa3cf47cf02..2aa44bf0e84402a83b36b309b4006c0ed32c25c0 100644
+--- a/src/lib/api/networks.ts
++++ b/src/lib/api/networks.ts
+@@ -25,6 +25,8 @@ export interface Network {
+   assigned?: number;
+   owned?: number;
+   taken?: number;
++  available_to_users?: number;
++  owned_unassigned?: number;
+   locations_count?: number;
+ 
+   primary_location?: Location | null;
+diff --git a/src/pages/app/admin/IpAddressesPage.correctness.test.tsx b/src/pages/app/admin/IpAddressesPage.correctness.test.tsx
+index 61f92e93cc525a800dcf0843a830a3f1c2ad28c4..9a65bd676a0c84a880a4a98d337eb1132ae62c10 100644
+--- a/src/pages/app/admin/IpAddressesPage.correctness.test.tsx
++++ b/src/pages/app/admin/IpAddressesPage.correctness.test.tsx
+@@ -1,7 +1,7 @@
+ // i18n-ignore-file
+ import React from 'react';
+ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+-import { render, screen, waitFor } from '@testing-library/react';
++import { render, screen, waitFor, within } from '@testing-library/react';
+ import { createMemoryRouter, RouterProvider } from 'react-router-dom';
+ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+ 
+@@ -92,6 +92,35 @@ describe('IP address inventory', () => {
+     expect(fetchIpAddresses).not.toHaveBeenCalled();
+   });
+ 
++  it.each(['en', 'cs'] as const)('keeps %s disabled-network warnings limited to false in both inventories', async (language) => {
++    state.language = language;
++    const rows = [false, true, undefined].map((enabled, index) => ({
++      id: 101 + index, addr: `192.0.2.${101 + index}`, prefix: 32, routed: true,
++      network: { id: 11 + index, address: '192.0.2.0', prefix: 24, role: 'private_access', enabled },
++      network_interface: { id: 51 + index, vps: { id: 1, hostname: 'existing-service' } },
++    }));
++    vi.mocked(fetchIpAddresses).mockResolvedValue({ data: rows, meta: { total_count: 3 } } as never);
++    renderPage();
++    const description = language === 'en'
++      ? "This network is disabled for new allocations and assignments. Existing assignments remain usable."
++      : "Síť je zakázaná pro nové přidělování a přiřazování adres. Existující přiřazené adresy zůstávají použitelné.";
++    const label = language === 'en' ? 'Network disabled' : 'Síť zakázána';
++    for (const prefix of ['row', 'card']) {
++      const disabled = await screen.findByTestId(`admin.ip_addresses.${prefix}.101`);
++      expect(within(disabled).getByText(label, { exact: true })).toBeInTheDocument();
++      const flag = within(disabled).getByTitle(description);
++      flag.focus();
++      expect(flag).toHaveFocus();
++      expect(flag).toHaveAccessibleDescription(description);
++      expect(within(disabled).getByRole('link', { name: '192.0.2.101/32' })).toHaveAttribute('href', '/admin/ip-addresses/101');
++      expect(within(disabled).getByTestId(`admin.ip_addresses.${prefix}.101.action.route`)).toHaveAttribute('href', '/admin/ip-addresses/101#route');
++      for (const id of [102, 103]) {
++        expect(within(screen.getByTestId(`admin.ip_addresses.${prefix}.${id}`)).queryByText(label, { exact: true })).not.toBeInTheDocument();
++      }
++    }
++    expect(fetchIpAddresses).toHaveBeenCalledTimes(1);
++  });
++
+   it('resets an unsafe cursor URL before issuing a fresh traversal', async () => {
+     vi.mocked(fetchIpAddresses).mockResolvedValue({ data: [], meta: { total_count: 0 } } as never);
+     renderPage('/admin/ip-addresses?vps=1&from_id=90');
+diff --git a/src/pages/app/admin/cluster/NetworksPage.test.tsx b/src/pages/app/admin/cluster/NetworksPage.test.tsx
+index 2d99111fdaab48ec92d88ba3f9ebf34ab6656445..73646212bbde8e91f761d0325508e867068abd9b 100644
+--- a/src/pages/app/admin/cluster/NetworksPage.test.tsx
++++ b/src/pages/app/admin/cluster/NetworksPage.test.tsx
+@@ -23,7 +23,8 @@ vi.mock('../../../../lib/api/networks', async (importOriginal) => ({
+ const network = {
+   id: 101, label: 'Retained service', address: '192.0.2.0', prefix: 24,
+   ip_version: 4, role: 'public_access', purpose: 'vps', managed: true,
+-  enabled: true, split_access: 'no_access', split_prefix: 32, assigned: 3, owned: 5,
++  enabled: true, split_access: 'no_access', split_prefix: 32, assigned: 3, owned: 5, used: 9, size: 256, taken: 7,
++  available_to_users: 0, owned_unassigned: 2,
+ };
+ 
+ function renderPage() {
+@@ -53,7 +54,7 @@ describe('network availability editor', () => {
+     fireEvent.click(await screen.findByTestId('admin.cluster.networks.row.101.edit'));
+     const availability = await screen.findByTestId('admin.cluster.networks.editor.enabled');
+     expect(screen.getByRole('dialog')).toHaveTextContent('192.0.2.0/24 (#101)');
+-    expect(screen.getByRole('dialog')).toHaveTextContent(language === 'en' ? 'Assigned: 3' : 'Přiřazeno: 3');
++    expect(within(screen.getByRole('dialog')).getByTestId('admin.cluster.networks.editor.assigned')).toHaveTextContent(/^3$/);
+     expect(availability).toHaveTextContent(language === 'en' ? 'Existing service continues' : 'Stávající provoz pokračuje');
+     fireEvent.click(within(availability).getByRole('checkbox'));
+     fireEvent.click(screen.getByTestId('admin.cluster.networks.editor.save'));
+@@ -65,6 +66,47 @@ describe('network availability editor', () => {
+     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+   });
+ 
++  it.each(['en', 'cs'] as const)('shows authoritative %s counts with keyboard descriptions and a distinct editor total', async (language) => {
++    state.language = language;
++    renderPage();
++    const row = await screen.findByTestId('admin.cluster.networks.row.101');
++    expect(within(row).getByTestId('admin.cluster.networks.row.101.available_to_users')).toHaveTextContent(/^0$/);
++    expect(within(row).getByTestId('admin.cluster.networks.row.101.owned_unassigned')).toHaveTextContent(/^2$/);
++    expect(within(row).getByTestId('admin.cluster.networks.row.101.assigned')).toHaveTextContent(/^3$/);
++    expect(within(row).getByTestId('admin.cluster.networks.row.101.used')).toHaveTextContent(/^9$/);
++    const descriptions = {
++      available: {"en": "Registered addresses or prefixes with no owner or interface assignment, and not reserved by an operation. Disabled networks contribute zero. Use on a particular VPS also depends on location, network purpose and user limits.", "cs": "Evidované adresy nebo prefixy bez vlastníka a bez přiřazení k rozhraní, které nejsou rezervované probíhající operací. V zakázané síti je tento počet nulový. Použití na konkrétním VPS závisí také na lokaci, účelu sítě a limitech uživatele."},
++      owned_unassigned: {"en": "Addresses or prefixes held by users but not assigned to any interface. Other users cannot take them. Includes reserved entries and disabled networks; assignment still requires an enabled network and no conflicting reservation.", "cs": "Adresy nebo prefixy vlastněné uživateli, které nejsou přiřazené k žádnému rozhraní. Jiný uživatel je nemůže převzít. Počet zahrnuje i rezervované adresy a zakázané sítě; přiřazení vyžaduje povolenou síť a nesmí mu bránit rezervace."},
++      assigned: {"en": "Addresses or prefixes attached to network interfaces, including VPS and export interfaces. These entries can also have an owner.", "cs": "Adresy nebo prefixy přiřazené k síťovým rozhraním, včetně rozhraní VPS a exportů. Tyto adresy mohou zároveň mít vlastníka."},
++      used: {"en": "Addresses or prefixes registered in vpsAdmin, including owned and assigned entries.", "cs": "Adresy nebo prefixy evidované ve vpsAdmin, včetně vlastněných a přiřazených."},
++    };
++    for (const [name, translations] of Object.entries(descriptions)) {
++      const description = translations[language];
++      const label = screen.getByTitle(description);
++      label.focus();
++      expect(label).toHaveFocus();
++      expect(label).toHaveAccessibleDescription(description);
++      expect(document.getElementById(`network-count-${name}`)).toHaveAttribute('role', 'tooltip');
++    }
++    fireEvent.click(within(row).getByTestId('admin.cluster.networks.row.101.edit'));
++    const editor = await screen.findByRole('dialog');
++    expect(within(editor).getByTestId('admin.cluster.networks.editor.owned_total')).toHaveTextContent(/^5$/);
++    const totalLabel = editor.querySelector('[aria-describedby="network-editor-owned"]');
++    expect(totalLabel).toHaveTextContent(language === 'en' ? 'Owned total' : 'Vlastněné celkem');
++    expect(totalLabel).toHaveAccessibleDescription(language === 'en'
++      ? 'All addresses or prefixes owned by users, including those assigned to an interface.'
++      : 'Všechny adresy nebo prefixy vlastněné uživateli, včetně těch přiřazených k rozhraní.');
++  });
++
++  it('renders unknown new statistics even when old fields could produce plausible free counts', async () => {
++    const { available_to_users: _available, owned_unassigned: _unassigned, ...oldNetwork } = network;
++    vi.mocked(fetchNetworks).mockResolvedValue({ data: [oldNetwork] } as never);
++    renderPage();
++    expect(await screen.findByTestId('admin.cluster.networks.row.101.available_to_users')).toHaveTextContent(/^—$/);
++    expect(screen.getByTestId('admin.cluster.networks.row.101.owned_unassigned')).toHaveTextContent(/^—$/);
++    expect(screen.getByTestId('admin.cluster.networks.row.101.used')).toHaveTextContent(/^9$/);
++  });
++
+   it('re-enables a disabled network explicitly', async () => {
+     vi.mocked(fetchNetworks).mockResolvedValue({ data: [{ ...network, enabled: false }] } as never);
+     renderPage();
+@@ -78,7 +120,7 @@ describe('network availability editor', () => {
+   it('omits unavailable controls and payload fields for an older API', async () => {
+     const capability = { input: { parameters: { managed: {} } } };
+     vi.mocked(fetchNetworkWriteCapability).mockResolvedValue({ data: capability, envelope: { status: true, response: capability } });
+-    const { enabled: _enabled, ...oldNetwork } = network;
++    const { enabled: _enabled, available_to_users: _available, owned_unassigned: _unassigned, ...oldNetwork } = network;
+     vi.mocked(fetchNetworks).mockResolvedValue({ data: [oldNetwork] } as never);
+     renderPage();
+     const status = await screen.findByTestId('admin.cluster.networks.row.101.enabled');
+diff --git a/src/pages/app/admin/cluster/NetworksPage.tsx b/src/pages/app/admin/cluster/NetworksPage.tsx
+index 94a149977ff215e0777bd8a0d3dbe9246818ce91..d8569696f7e77eba8bd76a2a038e9b25d8752045 100644
+--- a/src/pages/app/admin/cluster/NetworksPage.tsx
++++ b/src/pages/app/admin/cluster/NetworksPage.tsx
+@@ -113,6 +113,17 @@ function purposeOptions(t: (k: string) => string): SelectOption[] {
+   ];
+ }
+ 
++function NetworkCountLabel(props: { label: string; description: string; id: string }) {
++  return (
++    <span tabIndex={0} title={props.description} aria-describedby={props.id} className="group relative inline-flex cursor-help">
++      {props.label}
++      <span id={props.id} role="tooltip" className="pointer-events-none absolute top-full left-0 z-50 mt-2 hidden w-72 whitespace-normal rounded-md border border-border bg-surface p-2 text-left text-xs font-normal text-fg shadow-lg group-hover:block group-focus:block">
++        {props.description}
++      </span>
++    </span>
++  );
++}
++
+ export function NetworksPage() {
+   const [searchParams, setSearchParams] = useSearchParams();
+   const search = searchParams.toString();
+@@ -655,10 +666,10 @@ function NetworksContent() {
+               <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('admin.cluster.networks.col.purpose')}</th>
+               <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('admin.cluster.networks.col.managed')}</th>
+               <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('admin.cluster.networks.enabled')}</th>
+-              <th className="px-3 py-2 text-right text-xs font-semibold text-muted">{t('admin.cluster.networks.col.used')}</th>
+-              <th className="px-3 py-2 text-right text-xs font-semibold text-muted">{t('admin.cluster.networks.col.assigned')}</th>
+-              <th className="px-3 py-2 text-right text-xs font-semibold text-muted">{t('admin.cluster.networks.col.owned')}</th>
+-              <th className="px-3 py-2 text-right text-xs font-semibold text-muted">{t('admin.cluster.networks.col.free')}</th>
++              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><NetworkCountLabel label={t('admin.cluster.networks.col.used')} description={t('admin.cluster.networks.tooltip.used')} id="network-count-used" /></th>
++              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><NetworkCountLabel label={t('admin.cluster.networks.col.assigned')} description={t('admin.cluster.networks.tooltip.assigned')} id="network-count-assigned" /></th>
++              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><NetworkCountLabel label={t('admin.cluster.networks.col.owned_unassigned')} description={t('admin.cluster.networks.tooltip.owned_unassigned')} id="network-count-owned_unassigned" /></th>
++              <th className="px-3 py-2 text-right text-xs font-semibold text-muted"><NetworkCountLabel label={t('admin.cluster.networks.col.available')} description={t('admin.cluster.networks.tooltip.available')} id="network-count-available" /></th>
+               <th className="px-3 py-2 text-left text-xs font-semibold text-muted">{t('common.location')}</th>
+               <th className="px-3 py-2 text-right text-xs font-semibold text-muted">{t('admin.cluster.networks.col.locations')}</th>
+               <th className="px-3 py-2 text-right text-xs font-semibold text-muted">{t('common.actions')}</th>
+@@ -672,16 +683,10 @@ function NetworksContent() {
+               const purposeVal = String(n.purpose ?? '');
+               const managedVal = Boolean(n.managed);
+ 
+-              const size = typeof n.size === 'number' ? n.size : undefined;
+               const used = typeof n.used === 'number' ? n.used : undefined;
+               const assigned = typeof n.assigned === 'number' ? n.assigned : undefined;
+-              const owned = typeof n.owned === 'number' ? n.owned : undefined;
+-              const taken = typeof n.taken === 'number' ? n.taken : undefined;
+-
+-              const free =
+-                typeof size === 'number' && typeof taken === 'number' && Number.isFinite(size) && Number.isFinite(taken)
+-                  ? Math.max(0, size - taken)
+-                  : undefined;
++              const ownedUnassigned = typeof n.owned_unassigned === 'number' ? n.owned_unassigned : undefined;
++              const available = typeof n.available_to_users === 'number' ? n.available_to_users : undefined;
+ 
+               return (
+                 <tr key={id} data-testid={`admin.cluster.networks.row.${id}`}>
+@@ -715,10 +720,10 @@ function NetworksContent() {
+                       ? <Badge variant={n.enabled ? 'ok' : 'warn'}>{t(n.enabled ? 'admin.cluster.networks.enabled' : 'admin.cluster.networks.disabled')}</Badge>
+                       : t('common.na')}
+                   </td>
+-                  <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums">{used ?? '—'}</td>
+-                  <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums">{assigned ?? '—'}</td>
+-                  <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums">{owned ?? '—'}</td>
+-                  <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums">{free ?? '—'}</td>
++                  <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums" data-testid={`admin.cluster.networks.row.${id}.used`}>{used ?? '—'}</td>
++                  <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums" data-testid={`admin.cluster.networks.row.${id}.assigned`}>{assigned ?? '—'}</td>
++                  <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums" data-testid={`admin.cluster.networks.row.${id}.owned_unassigned`}>{ownedUnassigned ?? '—'}</td>
++                  <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums" data-testid={`admin.cluster.networks.row.${id}.available_to_users`}>{available ?? '—'}</td>
+                   <td className="px-3 py-2 text-muted">{locLabel((n as any).primary_location ?? null)}</td>
+                   <td className="px-3 py-2 text-right font-mono text-xs text-muted tabular-nums">{(n as any).locations_count ?? '—'}</td>
+                   <td className="px-3 py-2 text-right">
+@@ -793,7 +798,7 @@ function NetworksContent() {
+ 
+           {editor?.network ? (
+             <div className="text-sm text-muted">
+-              {netLabel(editor.network)} (#{editor.network.id}) · {t('admin.cluster.networks.col.assigned')}: {editor.network.assigned ?? '—'} · {t('admin.cluster.networks.col.owned')}: {editor.network.owned ?? '—'}
++              {netLabel(editor.network)} (#{editor.network.id}) · <NetworkCountLabel label={t('admin.cluster.networks.col.assigned')} description={t('admin.cluster.networks.tooltip.assigned')} id="network-editor-assigned" />: <span data-testid="admin.cluster.networks.editor.assigned">{editor.network.assigned ?? '—'}</span> · <NetworkCountLabel label={t('admin.cluster.networks.editor.owned_total')} description={t('admin.cluster.networks.tooltip.owned_total')} id="network-editor-owned" />: <span data-testid="admin.cluster.networks.editor.owned_total">{editor.network.owned ?? '—'}</span>
+             </div>
+           ) : null}
+           {capabilityQ.isError ? (
+diff --git a/src/pages/app/admin/ipAddresses/IpAddressesListMobile.tsx b/src/pages/app/admin/ipAddresses/IpAddressesListMobile.tsx
+index 0c31f301ab0b44738562b39cea0c5a576f9df295..0963239de9fd3857e4f23e1ebc7f4a30848b0a8e 100644
+--- a/src/pages/app/admin/ipAddresses/IpAddressesListMobile.tsx
++++ b/src/pages/app/admin/ipAddresses/IpAddressesListMobile.tsx
+@@ -97,6 +97,14 @@ export function IpAddressesListMobile({ pageData, ipDetailBasePath, basePath, na
+                     </Badge>
+                     {isPrivateIp(ip) ? <Badge variant="neutral">{t('admin.ip_addresses.chip.private')}</Badge> : null}
+                     {isRoutedIp(ip) ? <Badge variant="black">{t('admin.ip.routed_badge')}</Badge> : null}
++                    {ip.network?.enabled === false ? (
++                      <span data-row-no-nav tabIndex={0} title={t('admin.ip_addresses.chip.network_disabled.help')} aria-describedby={`admin-ip-card-${id}-network-disabled`} className="group relative inline-flex cursor-help">
++                        <Badge variant="warn">{t('admin.ip_addresses.chip.network_disabled')}</Badge>
++                        <span id={`admin-ip-card-${id}-network-disabled`} role="tooltip" className="pointer-events-none absolute top-full right-0 z-50 mt-2 hidden w-64 whitespace-normal rounded-md border border-border bg-surface p-2 text-left text-xs text-fg shadow-lg group-hover:block group-focus:block">
++                          {t('admin.ip_addresses.chip.network_disabled.help')}
++                        </span>
++                      </span>
++                    ) : null}
+                   </div>
+                 </div>
+ 
+diff --git a/src/pages/app/admin/ipAddresses/IpAddressesListTable.tsx b/src/pages/app/admin/ipAddresses/IpAddressesListTable.tsx
+index 19e67348c9338babe098668c33c74d01ab6b784d..0042d55f7a256e8e48429a593c291900f3372f74 100644
+--- a/src/pages/app/admin/ipAddresses/IpAddressesListTable.tsx
++++ b/src/pages/app/admin/ipAddresses/IpAddressesListTable.tsx
+@@ -176,6 +176,14 @@ export function IpAddressesListTable({ pageData, ipDetailBasePath, basePath, na,
+                   </Badge>
+                   {isPrivateIp(ip) ? <Badge variant="neutral">{t('admin.ip_addresses.chip.private')}</Badge> : null}
+                   {isRoutedIp(ip) ? <Badge variant="black">{t('admin.ip.routed_badge')}</Badge> : null}
++                  {ip.network?.enabled === false ? (
++                    <span data-row-no-nav tabIndex={0} title={t('admin.ip_addresses.chip.network_disabled.help')} aria-describedby={`admin-ip-row-${id}-network-disabled`} className="group relative inline-flex cursor-help">
++                      <Badge variant="warn">{t('admin.ip_addresses.chip.network_disabled')}</Badge>
++                      <span id={`admin-ip-row-${id}-network-disabled`} role="tooltip" className="pointer-events-none absolute top-full right-0 z-50 mt-2 hidden w-64 whitespace-normal rounded-md border border-border bg-surface p-2 text-left text-xs text-fg shadow-lg group-hover:block group-focus:block">
++                        {t('admin.ip_addresses.chip.network_disabled.help')}
++                      </span>
++                    </span>
++                  ) : null}
+                 </div>
+               </td>
+               <td className="px-3 py-2 text-xs text-muted">{createdAt ? formatDateTime(createdAt) : na}</td>

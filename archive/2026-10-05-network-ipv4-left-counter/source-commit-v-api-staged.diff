@@ -1,0 +1,1700 @@
+diff --git a/api/db/migrate/20261006120000_add_network_enabled.rb b/api/db/migrate/20261006120000_add_network_enabled.rb
+new file mode 100644
+index 000000000..ebdae14a3
+--- /dev/null
++++ b/api/db/migrate/20261006120000_add_network_enabled.rb
+@@ -0,0 +1,5 @@
++class AddNetworkEnabled < ActiveRecord::Migration[8.1]
++  def change
++    add_column :networks, :enabled, :boolean, null: false, default: true
++  end
++end
+diff --git a/api/db/schema.rb b/api/db/schema.rb
+index e427aa3ab..47bef8836 100644
+--- a/api/db/schema.rb
++++ b/api/db/schema.rb
+@@ -10,7 +10,7 @@
+ #
+ # It's strongly recommended that you check this file into your version control system.
+ 
+-ActiveRecord::Schema[8.1].define(version: 2026_09_14_190000) do
++ActiveRecord::Schema[8.1].define(version: 2026_10_06_120000) do
+   create_table "auth_tokens", id: { type: :integer, unsigned: true }, charset: "utf8mb3", collation: "utf8mb3_czech_ci", force: :cascade do |t|
+     t.string "api_ip_addr", limit: 46
+     t.string "api_ip_ptr"
+@@ -957,6 +957,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_14_190000) do
+     t.integer "role", null: false
+     t.integer "split_access", default: 0, null: false
+     t.integer "split_prefix", null: false
++    t.boolean "enabled", default: true, null: false
+     t.index ["address", "prefix"], name: "index_networks_on_address_and_prefix", unique: true
+     t.index ["purpose"], name: "index_networks_on_purpose"
+   end
+diff --git a/api/lib/vpsadmin/api/locales/cs.yml b/api/lib/vpsadmin/api/locales/cs.yml
+index b9aa9cd76..b91b6ac29 100644
+--- a/api/lib/vpsadmin/api/locales/cs.yml
++++ b/api/lib/vpsadmin/api/locales/cs.yml
+@@ -664,6 +664,11 @@ cs:
+       enable_user_dns_zones:
+         label: Povolit DNS zóny uživatelů
+       enabled:
++        choices:
++          'false':
++            label: Zakázáno
++          'true':
++            label: Povoleno
+         label: Povoleno
+       entity_id:
+         description: Filtrovat hlášení podle ID entity
+@@ -1266,6 +1271,8 @@ cs:
+         label: Namespace
+       network:
+         label: Síť
++      network_enabled:
++        label: Síť povolena
+       network_interface:
+         label: Síťové rozhraní
+       networks:
+@@ -2389,6 +2396,7 @@ cs:
+         keep_disabled: Současná pravidla neumožňují ponechat IP adresy na základě
+           důvodu od uživatele.
+         owner_changed: U některé vybrané IP adresy se změnil vlastník nebo přidělení.
++      network_disabled: Síť je zakázaná pro nové přidělování a přiřazování IP adres.
+       object_not_found: Objekt nebyl nalezen
+       object_not_found_lower: objekt nebyl nalezen
+       object_with_attribute_not_found: objekt %{resource} = %{id} nebyl nalezen
+@@ -3058,6 +3066,8 @@ cs:
+             label: Adresa
+           count:
+             description: Počet přidaných IP adres
++          enabled:
++            description: Povolit nové přidělování a přiřazování IP adres
+           environment:
+             description: Prostředí, kterému jsou adresy účtovány
+           id:
+diff --git a/api/lib/vpsadmin/api/locales/en.yml b/api/lib/vpsadmin/api/locales/en.yml
+index e5185e609..0e7a771bd 100644
+--- a/api/lib/vpsadmin/api/locales/en.yml
++++ b/api/lib/vpsadmin/api/locales/en.yml
+@@ -664,6 +664,11 @@ en:
+       enable_user_dns_zones:
+         label: Enable_user_dns_zones
+       enabled:
++        choices:
++          'false':
++            label: 'false'
++          'true':
++            label: 'true'
+         label: Enabled
+       entity_id:
+         description: Filter outages by entity ID
+@@ -1271,6 +1276,8 @@ en:
+         label: Namespace
+       network:
+         label: Network
++      network_enabled:
++        label: Network enabled
+       network_interface:
+         label: NetworkInterface
+       networks:
+@@ -2393,6 +2400,7 @@ en:
+         invalid_record: Check the campaign settings or retention reason.
+         keep_disabled: The current policy does not allow keeping IPs with a user reason.
+         owner_changed: The owner or allocation of a selected IP has changed.
++      network_disabled: This network is disabled for new allocations and assignments.
+       object_not_found: Object not found
+       object_not_found_lower: object not found
+       object_with_attribute_not_found: object %{resource} = %{id} not found
+@@ -3063,6 +3071,8 @@ en:
+             label: Address
+           count:
+             description: Number of added IP addresses
++          enabled:
++            description: Allow new allocations and assignments
+           environment:
+             description: Environment to which the addresses are charged
+           id:
+diff --git a/api/lib/vpsadmin/api/resources/cluster.rb b/api/lib/vpsadmin/api/resources/cluster.rb
+index 99d3b3949..890a46e14 100644
+--- a/api/lib/vpsadmin/api/resources/cluster.rb
++++ b/api/lib/vpsadmin/api/resources/cluster.rb
+@@ -64,10 +64,11 @@ class VpsAdmin::API::Resources::Cluster < HaveAPI::Resource
+             ::Vps.object_states[:suspended]
+           ]
+         ).count,
+-        ipv4_left: ::IpAddress.joins(:network).where(
++        ipv4_left: ::IpAddress.unreserved.joins(:network).where(
+           user: nil,
+           network_interface: nil,
+           networks: {
++            enabled: true,
+             ip_version: 4,
+             role: ::Network.roles[:public_access]
+           }
+diff --git a/api/lib/vpsadmin/api/resources/ip_address.rb b/api/lib/vpsadmin/api/resources/ip_address.rb
+index 2c0709433..7817c669e 100644
+--- a/api/lib/vpsadmin/api/resources/ip_address.rb
++++ b/api/lib/vpsadmin/api/resources/ip_address.rb
+@@ -20,6 +20,7 @@ class VpsAdmin::API::Resources::IpAddress < HaveAPI::Resource
+                                              value_label: :login,
+                                              nullable: true
+     bool :assigned_to_interface, label: 'Assigned to interface'
++    bool :network_enabled, label: 'Network enabled'
+     string :role, choices: ::Network.roles.keys
+     string :purpose, choices: ::Network.purposes.keys
+     string :usable_for, choices: %w[vps export], label: 'Usable for',
+@@ -94,7 +95,7 @@ class VpsAdmin::API::Resources::IpAddress < HaveAPI::Resource
+     authorize do |u|
+       allow if u.role == :admin
+       input whitelist: %i[location network version role purpose usable_for addr prefix vps
+-                          network_interface assigned_to_interface order
++                          network_interface assigned_to_interface network_enabled order
+                           limit from_id includes]
+       allow
+     end
+@@ -157,6 +158,7 @@ class VpsAdmin::API::Resources::IpAddress < HaveAPI::Resource
+       end
+ 
+       ips = ips.where(networks: { ip_version: input[:version] }) if input[:version]
++      ips = ips.where(networks: { enabled: input[:network_enabled] }) if input.has_key?(:network_enabled)
+ 
+       ips = ips.where(networks: { role: ::Network.roles[input[:role]] }) if input[:role]
+ 
+diff --git a/api/lib/vpsadmin/api/resources/network.rb b/api/lib/vpsadmin/api/resources/network.rb
+index 9c954d499..f842c3efd 100644
+--- a/api/lib/vpsadmin/api/resources/network.rb
++++ b/api/lib/vpsadmin/api/resources/network.rb
+@@ -18,6 +18,7 @@ module VpsAdmin::API::Resources
+       integer :prefix
+       string :role, choices: ::Network.roles.keys
+       bool :managed
++      bool :enabled, label: 'Enabled', desc: 'Allow new allocations and assignments'
+       string :split_access, choices: ::Network.split_accesses.keys
+       integer :split_prefix
+       string :purpose, choices: ::Network.purposes.keys
+@@ -35,7 +36,7 @@ module VpsAdmin::API::Resources
+ 
+       input do
+         resource Location
+-        use :common, include: %i[purpose]
++        use :common, include: %i[purpose enabled]
+         string :usable_for, choices: %w[vps export], label: 'Usable for',
+                             desc: 'Filter by compatible network purpose, including networks with purpose any'
+       end
+@@ -47,7 +48,7 @@ module VpsAdmin::API::Resources
+       authorize do |u|
+         allow if u.role == :admin
+         output whitelist: %i[
+-          id address prefix ip_version role split_access split_prefix purpose
++          id address prefix ip_version role split_access split_prefix purpose enabled
+         ]
+         allow
+       end
+@@ -63,6 +64,7 @@ module VpsAdmin::API::Resources
+ 
+         q = q.where(purpose: ::Network.purposes[input[:purpose]]) if input[:purpose]
+         q = q.where(purpose: ::Network.purposes_for_use(input[:usable_for])) if input[:usable_for]
++        q = q.where(enabled: input[:enabled]) if input.has_key?(:enabled)
+         q
+       end
+ 
+@@ -85,7 +87,7 @@ module VpsAdmin::API::Resources
+       authorize do |u|
+         allow if u.role == :admin
+         output whitelist: %i[
+-          id address prefix ip_version role split_access split_prefix purpose
++          id address prefix ip_version role split_access split_prefix purpose enabled
+         ]
+         allow
+       end
+diff --git a/api/lib/vpsadmin/api/resources/user.rb b/api/lib/vpsadmin/api/resources/user.rb
+index 77d7d82b3..20df78fa8 100644
+--- a/api/lib/vpsadmin/api/resources/user.rb
++++ b/api/lib/vpsadmin/api/resources/user.rb
+@@ -305,18 +305,18 @@ class VpsAdmin::API::Resources::User < HaveAPI::Resource
+ 
+     def count_addrs(ip_v:, role:)
+       q = ::IpAddress
++          .unreserved
+           .joins(network: :location_networks)
+-          .joins("LEFT JOIN resource_locks rl ON rl.resource = 'IpAddress' AND rl.row_id = ip_addresses.id")
+           .where(
+             ip_addresses: { user_id: @user.id },
+             networks: {
++              enabled: true,
+               ip_version: ip_v,
+               role: ::Network.roles[role],
+               purpose: [::Network.purposes[:any], ::Network.purposes[:vps]]
+             }
+           )
+           .where('ip_addresses.network_interface_id IS NULL')
+-          .where('rl.id IS NULL')
+ 
+       q = if @address_location
+             shared_networks = @location.any_shared_networks_with_primary(
+diff --git a/api/models/ip_address.rb b/api/models/ip_address.rb
+index ff36670c8..de60b6f8b 100644
+--- a/api/models/ip_address.rb
++++ b/api/models/ip_address.rb
+@@ -17,6 +17,51 @@ class IpAddress < ApplicationRecord
+ 
+   include Lockable
+ 
++  scope :unreserved, lambda {
++    where("NOT EXISTS (SELECT 1 FROM resource_locks rl WHERE rl.resource = 'IpAddress' AND rl.row_id = ip_addresses.id)")
++  }
++
++  # Capture network identities before IP row locks, then verify them again after
++  # reservation. Never acquire a different pool late in a locked batch.
++  def self.lock_networks_for_use!(ips, extra_network_ids: [])
++    identities = where(id: ips.map(&:id)).pluck(:id, :network_id).to_h
++    networks = ::Network.lock_for_admission!(identities.values + extra_network_ids)
++    ips.each { |ip| ip.remember_admission_network(networks[identities[ip.id]]) }
++    networks
++  end
++
++  def remember_admission_network(network)
++    @admission_network = network
++  end
++
++  def self.bind_admission_networks!(ips, networks)
++    ips.each { |ip| ip.remember_admission_network(networks[ip.network_id]) }
++  end
++
++  def lock_for_new_use!(chain, networks: nil)
++    if networks
++      self.class.bind_admission_networks!([self], networks)
++    else
++      self.class.lock_networks_for_use!([self])
++    end
++    lock_current!(chain)
++    ensure_network_enabled!
++  end
++
++  def ensure_admission_network!
++    unless @admission_network && network_id == @admission_network.id
++      raise VpsAdmin::API::Exceptions::IpAddressInUse,
++            'IP address network changed during allocation'
++    end
++
++    self.network = @admission_network
++  end
++
++  def ensure_network_enabled!
++    ensure_admission_network!
++    network.ensure_enabled!
++  end
++
+   # Reserve parents in a consistent order before reserving their host records.
+   def self.lock_all_current!(chain, ips)
+     ordered = ips.uniq(&:id).sort_by(&:id)
+@@ -73,6 +118,7 @@ class IpAddress < ApplicationRecord
+ 
+     transaction do
+       params[:network].lock_for_registration!
++      params[:network].ensure_enabled! if params[:user]
+       if params[:user] && (params[:allocate].nil? || params[:allocate])
+         user_env = params[:user].environment_user_configs.find_by!(
+           environment: charged_environment
+@@ -165,9 +211,21 @@ class IpAddress < ApplicationRecord
+   # @option opts [Array<::Network>] :except_networks
+   # @option opts [Environment] :allocation_environment require compatible owned charges for automatic VPS allocation
+   def self.pick_addr!(opts)
+-    pick_scope(opts)
+-      .joins("LEFT JOIN resource_locks rl ON rl.resource = 'IpAddress' AND rl.row_id = ip_addresses.id")
+-      .where('rl.id IS NULL').take!
++    ids = candidate_network_ids(opts)
++    networks = ::Network.lock_for_admission!(ids)
++    pick_from_admitted_networks!(opts, networks)
++  end
++
++  # Internal preparation may reuse a map held by this SQL transaction. It must
++  # not expand its pool set after any source IP rows have been locked.
++  def self.pick_from_admitted_networks!(opts, networks)
++    pick_scope(opts).where(network_id: networks.keys).unreserved.take!.tap do |ip|
++      ip.remember_admission_network(networks[ip.network_id])
++    end
++  end
++
++  def self.candidate_network_ids(opts)
++    pick_scope(opts).reorder(nil).distinct.pluck(:network_id)
+   end
+ 
+   # Share selection criteria with the current check made after reservation.
+@@ -179,6 +237,7 @@ class IpAddress < ApplicationRecord
+             .joins(network: :location_networks)
+             .where(
+               networks: {
++                enabled: true,
+                 ip_version: opts[:ip_v],
+                 role: ::Network.roles[opts[:role]]
+               }
+@@ -233,7 +292,9 @@ class IpAddress < ApplicationRecord
+ 
+   def ensure_pickable!(opts)
+     ensure_charge_environment!
+-    return if self.class.pick_scope(opts).where(id:).lock.exists?
++    # The IP row is already exclusively locked. A joined FOR UPDATE would
++    # upgrade the pool's shared admission lock and deadlock sibling allocations.
++    return if self.class.pick_scope(opts).where(id:).lock('LOCK IN SHARE MODE').exists?
+ 
+     raise VpsAdmin::API::Exceptions::IpAddressInUse,
+           'IP address is no longer available for this allocation'
+diff --git a/api/models/ip_release_request_address.rb b/api/models/ip_release_request_address.rb
+index 16cd413b1..889654b29 100644
+--- a/api/models/ip_release_request_address.rb
++++ b/api/models/ip_release_request_address.rb
+@@ -57,7 +57,7 @@ class IpReleaseRequestAddress < ApplicationRecord
+     return if ip_release_campaign.closed_at || released_at || excluded_at || release_in_progress?
+ 
+     ip = IpAddress.find_by(id: ip_address_id)
+-    ip.id if ip && original_allocation?(ip) && ip.free?
++    ip.id if ip && original_allocation?(ip) && ip.free? && ip.network.enabled?
+   end
+ 
+   def location_label
+diff --git a/api/models/network.rb b/api/models/network.rb
+index 55d22f473..7f1a73041 100644
+--- a/api/models/network.rb
++++ b/api/models/network.rb
+@@ -14,7 +14,7 @@ class Network < ApplicationRecord
+   enum :purpose, %i[any vps export]
+ 
+   validates :address, :prefix, :role, :split_prefix, :purpose, presence: true
+-  validates :managed, inclusion: { in: [true, false] }
++  validates :managed, :enabled, inclusion: { in: [true, false] }
+   validates :address, uniqueness: { scope: :prefix }
+   validates :ip_version, inclusion: {
+     in: [4, 6],
+@@ -28,6 +28,21 @@ class Network < ApplicationRecord
+     [purposes.fetch('any'), purposes.fetch(purpose)]
+   end
+ 
++  # Lock pools before current IP rows. Shared admission locks serialize against
++  # disabling/registration without serializing allocations within the same pool.
++  def self.lock_for_admission!(ids)
++    ids.uniq.sort.to_h do |id|
++      [id, where(id:).lock('LOCK IN SHARE MODE').take!]
++    end
++  end
++
++  def ensure_enabled!
++    return if enabled?
++
++    raise VpsAdmin::API::Exceptions::IpAddressInvalid,
++          VpsAdmin::API::I18n.t('errors.network_disabled')
++  end
++
+   # @param attrs [Hash]
+   # @param opts [Hash]
+   # @option opts [Boolean] add_ips
+@@ -157,6 +172,7 @@ class Network < ApplicationRecord
+     ips = []
+     self.class.transaction do
+       lock_for_registration!
++      ensure_enabled! if opts[:user]
+       last_ip = ip_addresses.order("#{ip_order('ip_addr')} DESC").lock.take
+       subsize = subnet_size
+ 
+diff --git a/api/models/network_interface.rb b/api/models/network_interface.rb
+index 130974ed6..0755ff293 100644
+--- a/api/models/network_interface.rb
++++ b/api/models/network_interface.rb
+@@ -123,6 +123,7 @@ class NetworkInterface < ApplicationRecord
+ 
+   def validate_route_assignment!(ip, is_user:)
+     ip.network.reload(lock: 'LOCK IN SHARE MODE')
++    ip.network.ensure_enabled!
+     locnet = ip.network.location_networks.where(
+       location_id: vps.node.location_id
+     ).lock('LOCK IN SHARE MODE').take
+diff --git a/api/models/transaction_chains/export/create.rb b/api/models/transaction_chains/export/create.rb
+index 09df466de..3be6076c3 100644
+--- a/api/models/transaction_chains/export/create.rb
++++ b/api/models/transaction_chains/export/create.rb
+@@ -129,13 +129,15 @@ module TransactionChains
+ 
+     def pick_ip_address(user, location)
+       selection = { user:, location:, ip_v: 4, role: :private_access, purpose: :export }
++      candidate_network_ids = ::IpAddress.candidate_network_ids(selection)
++      admission_networks = ::Network.lock_for_admission!(candidate_network_ids)
+ 
+       loop do
+         ip = nil
+ 
+         ::IpAddress.transaction do
+-          ip = ::IpAddress.pick_addr!(selection)
+-          ip.lock_current!(self)
++          ip = ::IpAddress.pick_from_admitted_networks!(selection, admission_networks)
++          ip.lock_for_new_use!(self, networks: admission_networks)
+           ip.ensure_pickable!(selection)
+         end
+ 
+diff --git a/api/models/transaction_chains/ip/allocate.rb b/api/models/transaction_chains/ip/allocate.rb
+index aa1e515af..5ad473238 100644
+--- a/api/models/transaction_chains/ip/allocate.rb
++++ b/api/models/transaction_chains/ip/allocate.rb
+@@ -8,27 +8,42 @@ module TransactionChains
+       raise NotImplementedError
+     end
+ 
+-    def allocate_to_netif(r, netif, n, strict: true, host_addrs: false, address_location: nil)
++    # Shared with containing VPS batches so destination pool discovery uses
++    # exactly the allocator's owner, location and family policy.
++    def self.selection_for(resource_name, vps, address_location: nil)
++      name = resource_name.to_s
++      {
++        user: vps.user,
++        location: vps.node.location,
++        ip_v: name == 'ipv6' ? 6 : 4,
++        role: name.end_with?('_private') ? :private_access : :public_access,
++        purpose: :vps,
++        allocation_environment: vps.node.location.environment,
++        address_location:
++      }
++    end
++
++    def allocate_to_netif(r, netif, n, strict: true, host_addrs: false, address_location: nil,
++                          admission_networks: nil, candidate_network_ids: nil)
+       return n if n == 0
+ 
+       ips = []
+       v = r.name == 'ipv6' ? 6 : 4
+ 
+-      selection = {
+-        user: netif.vps.user,
+-        location: netif.vps.node.location,
+-        ip_v: v,
+-        role: r.name.end_with?('_private') ? :private_access : :public_access,
+-        purpose: :vps,
+-        allocation_environment: netif.vps.node.location.environment,
+-        address_location:
+-      }
++      selection = self.class.selection_for(r.name, netif.vps, address_location:)
++      if admission_networks
++        raise ArgumentError, 'candidate network IDs required with held admission networks' unless candidate_network_ids
++      else
++        candidate_network_ids = ::IpAddress.candidate_network_ids(selection)
++        admission_networks = ::Network.lock_for_admission!(candidate_network_ids)
++      end
++      candidates = admission_networks.slice(*candidate_network_ids)
+ 
+       loop do
+         begin
+           ::IpAddress.transaction do
+-            ip = ::IpAddress.pick_addr!(selection)
+-            ip.lock_current!(self)
++            ip = ::IpAddress.pick_from_admitted_networks!(selection, candidates)
++            ip.lock_for_new_use!(self, networks: candidates)
+             ip.ensure_pickable!(selection)
+ 
+             ips << ip
+diff --git a/api/models/transaction_chains/ip/update.rb b/api/models/transaction_chains/ip/update.rb
+index 0bb48689a..2700b7589 100644
+--- a/api/models/transaction_chains/ip/update.rb
++++ b/api/models/transaction_chains/ip/update.rb
+@@ -8,11 +8,14 @@ module TransactionChains
+     # @option opts [User] user
+     # @option opts [Environment] environment
+     def link_chain(ip, opts)
++      ::IpAddress.lock_networks_for_use!([ip]) if opts[:user]
+       ip.lock_current!(self)
+       @ip = ip
+ 
+       return unless opts.has_key?(:user) && ip.user != opts[:user]
+ 
++      ip.ensure_network_enabled! if opts[:user]
++
+       vps = ip.network_interface&.vps
+       if vps && vps.node.location.environment.user_ip_ownership
+         raise VpsAdmin::API::Exceptions::IpAddressInUse, 'cannot chown IP while it belongs to a VPS'
+diff --git a/api/models/transaction_chains/network_interface/add_route.rb b/api/models/transaction_chains/network_interface/add_route.rb
+index 0976a4b9e..4acc7e988 100644
+--- a/api/models/transaction_chains/network_interface/add_route.rb
++++ b/api/models/transaction_chains/network_interface/add_route.rb
+@@ -27,8 +27,10 @@ module TransactionChains
+       ips_arr = ips.to_a
+       parents = ips_arr.dup
+       parents << opts[:via].ip_address if opts[:via]
++      ::IpAddress.lock_networks_for_use!(parents)
+       ::IpAddress.lock_all_current!(self, parents)
+       ips_arr.each do |ip|
++        ip.ensure_network_enabled!
+         ip.ensure_charge_environment!
+         netif.validate_route_assignment!(ip, is_user: opts[:actor].role != :admin) if opts[:actor]
+         unless ip.free? && (!ip.user_id || ip.user_id == netif.vps.user_id)
+diff --git a/api/models/transaction_chains/vps/clone/os_to_os.rb b/api/models/transaction_chains/vps/clone/os_to_os.rb
+index 4c323b596..62cd7c084 100644
+--- a/api/models/transaction_chains/vps/clone/os_to_os.rb
++++ b/api/models/transaction_chains/vps/clone/os_to_os.rb
+@@ -439,6 +439,18 @@ module TransactionChains
+     end
+ 
+     def clone_network_interfaces(vps, dst_vps, attrs)
++      netifs = vps.network_interfaces.to_a
++      ip_counts = netifs.to_h { |netif| [netif.id, clone_ip_address_counts(netif)] }
++      candidate_network_ids = netifs.flat_map do |netif|
++        ip_counts.fetch(netif.id).flat_map do |resource, count|
++          next [] if count <= 0 || (resource == :ipv6 && !dst_vps.node.location.has_ipv6)
++
++          ::IpAddress.candidate_network_ids(
++            Ip::Allocate.selection_for(resource, dst_vps, address_location: attrs[:address_location])
++          )
++        end
++      end.uniq
++      admission_networks = ::Network.lock_for_admission!(candidate_network_ids)
+       sums = {
+         ipv4: 0,
+         ipv4_private: 0,
+@@ -446,13 +458,14 @@ module TransactionChains
+       }
+ 
+       # Allocate addresses to interfaces
+-      vps.network_interfaces.each do |netif|
++      netifs.each do |netif|
+         dst_netif = use_chain(
+           NetworkInterface.chain_for(netif.kind, :Clone),
+           args: [netif, dst_vps]
+         )
+ 
+-        sums.merge!(clone_ip_addresses(netif, dst_netif, attrs)) do |_key, old_val, new_val|
++        sums.merge!(clone_ip_addresses(dst_netif, attrs, ips: ip_counts.fetch(netif.id),
++                                                         admission_networks:, candidate_network_ids:)) do |_key, old_val, new_val|
+           old_val + new_val
+         end
+       end
+@@ -484,8 +497,8 @@ module TransactionChains
+     # Clone IP addresses.
+     # Allocates the equal number (or how many are available) of
+     # IP addresses.
+-    def clone_ip_addresses(netif, dst_netif, attrs)
+-      ips = {
++    def clone_ip_address_counts(netif)
++      {
+         ipv4: netif.ip_addresses.joins(:network).where(
+           networks: {
+             ip_version: 4,
+@@ -504,7 +517,9 @@ module TransactionChains
+           networks: { ip_version: 6 }
+         ).count
+       }
++    end
+ 
++    def clone_ip_addresses(dst_netif, attrs, ips:, admission_networks:, candidate_network_ids:)
+       versions = %i[ipv4 ipv4_private]
+       versions << :ipv6 if dst_netif.vps.node.location.has_ipv6
+ 
+@@ -521,7 +536,9 @@ module TransactionChains
+           kwargs: {
+             strict: false,
+             host_addrs: true,
+-            address_location: attrs[:address_location]
++            address_location: attrs[:address_location],
++            admission_networks:,
++            candidate_network_ids:
+           },
+           method: :allocate_to_netif
+         )
+diff --git a/api/models/transaction_chains/vps/create.rb b/api/models/transaction_chains/vps/create.rb
+index 987a00d64..fc87846d5 100644
+--- a/api/models/transaction_chains/vps/create.rb
++++ b/api/models/transaction_chains/vps/create.rb
+@@ -203,6 +203,13 @@ module TransactionChains
+       # Add IP addresses
+       versions = %i[ipv4 ipv4_private]
+       versions << :ipv6 if vps.node.location.has_ipv6
++      versions.select! { |version| opts[version] && opts[version] > 0 }
++      candidate_network_ids = versions.flat_map do |version|
++        ::IpAddress.candidate_network_ids(
++          Ip::Allocate.selection_for(version, vps, address_location: opts[:address_location])
++        )
++      end.uniq
++      admission_networks = ::Network.lock_for_admission!(candidate_network_ids)
+ 
+       ip_resources = []
+       user_env = vps.user.environment_user_configs.find_by!(
+@@ -221,7 +228,9 @@ module TransactionChains
+           ],
+           kwargs: {
+             host_addrs: true,
+-            address_location: opts[:address_location]
++            address_location: opts[:address_location],
++            admission_networks:,
++            candidate_network_ids:
+           },
+           method: :allocate_to_netif
+         )
+diff --git a/api/models/transaction_chains/vps/migrate/base.rb b/api/models/transaction_chains/vps/migrate/base.rb
+index 7144b8b3c..56c2bfbe1 100644
+--- a/api/models/transaction_chains/vps/migrate/base.rb
++++ b/api/models/transaction_chains/vps/migrate/base.rb
+@@ -39,7 +39,8 @@ module TransactionChains
+ 
+     protected
+ 
+-    attr_reader :opts, :vps_user, :datasets, :resources_changes, :maintenance_windows
++    attr_reader :opts, :vps_user, :datasets, :resources_changes, :maintenance_windows,
++                :admission_networks, :replacement_network_ids
+     attr_accessor :userns_map
+ 
+     def setup(vps, dst_node, opts)
+@@ -48,6 +49,7 @@ module TransactionChains
+                               transfer_ips: false,
+                               resources: nil,
+                               handle_ips: true,
++                              admission_networks: nil,
+                               reallocate_ips: true,
+                               swap: :enforce,
+                               maintenance_window: true,
+@@ -64,7 +66,29 @@ module TransactionChains
+       # Keep addresses reserved through temporary detach confirmations and
+       # rollback. Swap includes this setup for both VPSes in its outer chain.
+       reserved_ips = vps.ip_addresses.order(:id).to_a
++      @replacement_network_ids =
++        if @opts[:handle_ips] && @opts[:replace_ips] && !@opts[:transfer_ips] &&
++           vps.node.location_id != dst_node.location_id
++          reserved_ips.flat_map do |ip|
++            ::IpAddress.candidate_network_ids(
++              replacement_selection(ip, vps.user, dst_node.location)
++            )
++          end
++        else
++          []
++        end
++      # Swap supplies the union locked before either source IP batch. Ordinary
++      # migration locks only source and actually needed replacement pools here.
++      @admission_networks = opts[:admission_networks]
++      if @admission_networks
++        ::IpAddress.bind_admission_networks!(reserved_ips, @admission_networks)
++      else
++        @admission_networks = ::IpAddress.lock_networks_for_use!(
++          reserved_ips, extra_network_ids: @replacement_network_ids
++        )
++      end
+       ::IpAddress.lock_all_current!(self, reserved_ips)
++      reserved_ips.each(&:ensure_admission_network!)
+       ::HostIpAddress.lock_all_with_ips!(self, reserved_ips.flat_map { |ip| ip.host_ip_addresses.to_a })
+       lock(vps.dataset_in_pool)
+       concerns(:affect, [vps.class.name, vps.id])
+@@ -572,19 +596,24 @@ module TransactionChains
+     end
+ 
+     def pick_replacement_ip(source_ip)
+-      selection = {
+-        user: dst_vps.user,
+-        location: dst_vps.node.location,
++      selection = replacement_selection(source_ip, dst_vps.user, dst_vps.node.location)
++      networks = admission_networks.slice(*replacement_network_ids)
++      replacement = ::IpAddress.pick_from_admitted_networks!(selection, networks)
++      replacement.lock_for_new_use!(self, networks:)
++      replacement.ensure_pickable!(selection)
++      ::HostIpAddress.lock_all_with_ips!(self, replacement.host_ip_addresses.to_a)
++      replacement
++    end
++
++    def replacement_selection(source_ip, user, location)
++      {
++        user:,
++        location:,
+         ip_v: source_ip.network.ip_version,
+         role: source_ip.network.role.to_sym,
+         purpose: source_ip.network.purpose.to_sym,
+-        allocation_environment: dst_vps.node.location.environment
++        allocation_environment: location.environment
+       }
+-      replacement = ::IpAddress.pick_addr!(selection)
+-      replacement.lock_current!(self)
+-      replacement.ensure_pickable!(selection)
+-      ::HostIpAddress.lock_all_with_ips!(self, replacement.host_ip_addresses.to_a)
+-      replacement
+     end
+ 
+     # Transfer number of `ips` belonging to `user` from `src_env` to `dst_env`.
+diff --git a/api/models/transaction_chains/vps/swap.rb b/api/models/transaction_chains/vps/swap.rb
+index 2dd5891e4..2f7beee4d 100644
+--- a/api/models/transaction_chains/vps/swap.rb
++++ b/api/models/transaction_chains/vps/swap.rb
+@@ -24,6 +24,13 @@ module TransactionChains
+ 
+       lock(primary_vps)
+       lock(secondary_vps)
++      # Both child migrations retain existing allocations. Capture and lock
++      # their network union before either child can lock a current IP row.
++      reserved_ips = (primary_vps.ip_addresses.to_a + secondary_vps.ip_addresses.to_a).uniq(&:id)
++      admission_networks = ::IpAddress.lock_networks_for_use!(reserved_ips)
++      ::IpAddress.lock_all_current!(self, reserved_ips)
++      reserved_ips.each(&:ensure_admission_network!)
++      ::HostIpAddress.lock_all_with_ips!(self, reserved_ips.flat_map { |ip| ip.host_ip_addresses.to_a })
+       concerns(:transform,
+                [secondary_vps.class.name, secondary_vps.id],
+                [primary_vps.class.name, primary_vps.id])
+@@ -131,6 +138,7 @@ module TransactionChains
+             replace_ips: false,
+             resources: opts[:resources] ? primary_resources : nil,
+             handle_ips: false,
++            admission_networks:,
+             reallocate_ips: false,
+             maintenance_window: false,
+             send_mail: false
+@@ -290,6 +298,7 @@ module TransactionChains
+             replace_ips: false,
+             resources: opts[:resources] ? secondary_resources : nil,
+             handle_ips: false,
++            admission_networks:,
+             reallocate_ips: false,
+             maintenance_window: false,
+             send_mail: false
+diff --git a/api/models/transaction_chains/vps/update.rb b/api/models/transaction_chains/vps/update.rb
+index 32e794327..a24025fcf 100644
+--- a/api/models/transaction_chains/vps/update.rb
++++ b/api/models/transaction_chains/vps/update.rb
+@@ -219,7 +219,9 @@ module TransactionChains
+       db_changes = { vps => { user_id: vps.user_id } }
+ 
+       reserved_ips = vps.ip_addresses.order(:id).to_a
++      ::IpAddress.lock_networks_for_use!(reserved_ips)
+       ::IpAddress.lock_all_current!(self, reserved_ips)
++      reserved_ips.each(&:ensure_network_enabled!)
+       ::HostIpAddress.lock_all_with_ips!(self, reserved_ips.flat_map { |ip| ip.host_ip_addresses.to_a })
+ 
+       # VPS and all related objects must be given to the target user:
+diff --git a/api/spec/api/resources/cluster_spec.rb b/api/spec/api/resources/cluster_spec.rb
+index 7b71af9f3..457726db9 100644
+--- a/api/spec/api/resources/cluster_spec.rb
++++ b/api/spec/api/resources/cluster_spec.rb
+@@ -180,22 +180,32 @@ RSpec.describe 'VpsAdmin::API::Resources::Cluster' do
+       expect(cluster_obj['ipv4_left']).to be_a(Integer)
+     end
+ 
+-    it 'returns correct ipv4_left' do
++    it 'counts enabled public IPv4 inventory once and excludes ownership, assignment and reservations' do
++      Network.update_all(enabled: false)
++      network_v4.update!(enabled: true, purpose: :export)
+       create_ip!(addr: '192.0.2.200', network: network_v4)
+       create_ip!(addr: '192.0.2.201', network: network_v4)
+       create_ip!(addr: '192.0.2.202', network: network_v4, user: SpecSeed.user)
+-
+-      json_get public_stats_path
++      fixture = create_netif_vps_fixture!(user: SpecSeed.user)
++      create_ip!(addr: '192.0.2.203', network: network_v4, netif: fixture[:netif])
++      reserved = create_ip!(addr: '192.0.2.204', network: network_v4)
++      LocationNetwork.find_or_create_by!(network: network_v4, location: SpecSeed.other_location)
++      disabled = network_v4.dup
++      disabled.update!(address: '198.51.100.0', enabled: false)
++      create_ip!(addr: '198.51.100.10', network: disabled)
++      private_network = create_private_network!(location: SpecSeed.location)
++      create_ipv4_address_in_network!(network: private_network, location: SpecSeed.location)
++      ipv6_network = SpecSeed.network_v6
++      ipv6_network.update!(enabled: true)
++      create_ip!(addr: '2001:db8::200', network: ipv6_network)
++
++      reserved.acquire_lock do
++        json_get public_stats_path
++      end
+ 
+       expect_status(200)
+ 
+-      expected = IpAddress.joins(:network).where(
+-        user: nil,
+-        network_interface: nil,
+-        networks: { ip_version: 4, role: Network.roles[:public_access] }
+-      ).count
+-
+-      expect(cluster_obj['ipv4_left']).to eq(expected)
++      expect(cluster_obj['ipv4_left']).to eq(2)
+     end
+ 
+     it 'works for authenticated users as well' do
+diff --git a/api/spec/api/resources/network_write_spec.rb b/api/spec/api/resources/network_write_spec.rb
+index 51b0be732..d6bceda1d 100644
+--- a/api/spec/api/resources/network_write_spec.rb
++++ b/api/spec/api/resources/network_write_spec.rb
+@@ -113,6 +113,34 @@ RSpec.describe 'VpsAdmin::API::Resources::Network write actions' do # rubocop:di
+     expect(IpAddress.count).to eq(count)
+   end
+ 
++  it 'preserves disabled state on unrelated updates and supports both toggle directions' do
++    basic_authorize SpecSeed.admin.login, SpecSeed::PASSWORD
++    expect(ipv4_network.enabled).to be(true)
++    json_put(show_path(ipv4_network.id), network: { enabled: false })
++    expect(json['status']).to be(true)
++    expect(ipv4_network.reload.enabled).to be(false)
++    json_put(show_path(ipv4_network.id), network: { label: 'Retired pool' })
++    expect(json['status']).to be(true)
++    expect(ipv4_network.reload.enabled).to be(false)
++    json_put(show_path(ipv4_network.id), network: { enabled: true })
++    expect(json['status']).to be(true)
++    expect(ipv4_network.reload.enabled).to be(true)
++  end
++
++  it 'rejects member writes while retaining readable disabled inventory and exact filters' do
++    ipv4_network.update!(enabled: false)
++    basic_authorize SpecSeed.user.login, SpecSeed::PASSWORD
++    json_put(show_path(ipv4_network.id), network: { enabled: true })
++    expect_status(403)
++    get show_path(ipv4_network.id)
++    expect_status(200)
++    expect(net_obj['enabled']).to be(false)
++    get index_path, network: { enabled: false }
++    expect_status(200)
++    expect(json.dig('response', 'networks').map { |network| network['id'] }).to include(ipv4_network.id)
++    expect(json.dig('response', 'networks').map { |network| network['enabled'] }).to all(be(false))
++  end
++
+   it 'rejects a charge environment without an owner atomically' do
+     basic_authorize SpecSeed.admin.login, SpecSeed::PASSWORD
+     count = IpAddress.count
+diff --git a/api/spec/api/resources/user_available_ips_spec.rb b/api/spec/api/resources/user_available_ips_spec.rb
+index f655167e3..e376efe2d 100644
+--- a/api/spec/api/resources/user_available_ips_spec.rb
++++ b/api/spec/api/resources/user_available_ips_spec.rb
+@@ -162,6 +162,17 @@ RSpec.describe 'VpsAdmin::API::Resources::User' do
+       expect(response_obj['ipv4']).to eq(2)
+     end
+ 
++    it 'excludes disabled owned inventory and preserves its ownership' do
++      ip = create_ip!(addr: '192.0.2.215', network: SpecSeed.network_v4, user: SpecSeed.user)
++      SpecSeed.network_v4.update!(enabled: false)
++      as(SpecSeed.user) do
++        json_get available_ips_path(SpecSeed.user.id), user: { location: SpecSeed.location.id }
++      end
++      expect_status(200)
++      expect(response_obj['ipv4']).to eq(0)
++      expect(ip.reload.user_id).to eq(SpecSeed.user.id)
++    end
++
+     it 'rejects address_location without shared networks' do
+       vps_location = create_location!
+ 
+diff --git a/api/spec/migrations/20261006120000_add_network_enabled_spec.rb b/api/spec/migrations/20261006120000_add_network_enabled_spec.rb
+new file mode 100644
+index 000000000..80250c141
+--- /dev/null
++++ b/api/spec/migrations/20261006120000_add_network_enabled_spec.rb
+@@ -0,0 +1,29 @@
++require_relative '../migration_helper'
++
++MigrationSpecSupport.require_migration('20261006120000_add_network_enabled')
++
++RSpec.describe AddNetworkEnabled do
++  before do
++    define_schema do
++      create_table(:networks) { |t| t.string :address }
++    end
++  end
++
++  it 'enables existing and new networks by default and persists false' do
++    existing = insert_row(:networks, address: '192.0.2.0')
++    migrate_up!
++    expect(column(:networks, :enabled).null).to be(false)
++    expect(rows(:networks).first['enabled']).to eq(1)
++    insert_row(:networks, address: '198.51.100.0')
++    connection.execute("UPDATE networks SET enabled = 0 WHERE id = #{existing}")
++    expect(rows(:networks).map { |row| row['enabled'] }).to eq([0, 1])
++  end
++
++  it 'removes only the availability column on schema rollback' do
++    insert_row(:networks, address: '192.0.2.0')
++    migrate_up!
++    migrate_down!
++    expect(column_exists?(:networks, :enabled)).to be(false)
++    expect(rows(:networks).first['address']).to eq('192.0.2.0')
++  end
++end
+diff --git a/api/spec/models/ip_ownership_concurrency_spec.rb b/api/spec/models/ip_ownership_concurrency_spec.rb
+index d04fa7483..48fc77349 100644
+--- a/api/spec/models/ip_ownership_concurrency_spec.rb
++++ b/api/spec/models/ip_ownership_concurrency_spec.rb
+@@ -96,6 +96,160 @@ RSpec.describe Network do
+     workers&.each { |thread| thread.join(25) || thread.kill.join }
+   end
+ 
++  it 'rejects new ownership when disable commits before admission', :network_admission do
++    selected = Queue.new
++    resume = Queue.new
++    worker = connection_thread do
++      ip = IpAddress.find(committed[:ip_id])
++      selected << true
++      resume.pop
++      expect do
++        TransactionChains::Ip::Update.fire(ip, user: SpecSeed.other_user, environment: SpecSeed.environment)
++      end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled for new allocations/)
++    end
++    Timeout.timeout(10) { selected.pop }
++    connection_thread { IpAddress.find(committed[:ip_id]).network.update!(enabled: false) }.value
++    resume << true
++    Timeout.timeout(20) { worker.value }
++    connection_thread { expect(IpAddress.find(committed[:ip_id]).user_id).to eq(SpecSeed.user.id) }.value
++  ensure
++    resume << true if resume
++    worker&.join(25) || worker&.kill&.join
++    connection_thread { IpAddress.find(committed[:ip_id]).network.update!(enabled: true) }.value
++  end
++
++  it 'lets admitted ownership finish before a waiting disable', :network_admission do
++    connection_thread do
++      config = SpecSeed.other_user.environment_user_configs.find_by!(environment: SpecSeed.environment)
++      committed[:extra_config_id] = config.id
++      committed[:extra_uses] = ClusterResourceUse.where(class_name: 'EnvironmentUserConfig', row_id: config.id).map(&:attributes)
++    end.value
++    admitted = Queue.new
++    disabling = Queue.new
++    resume = Queue.new
++    allow_any_instance_of(IpAddress).to receive(:ensure_network_enabled!).and_wrap_original do |original| # rubocop:disable RSpec/AnyInstance
++      result = original.call
++      if Thread.current[:network_admission] == :own
++        Thread.current[:network_admission] = nil
++        admitted << true
++        resume.pop
++      end
++      result
++    end
++    workers = []
++    workers << connection_thread do
++      Thread.current[:network_admission] = :own
++      TransactionChains::Ip::Update.fire(IpAddress.find(committed[:ip_id]),
++                                         user: SpecSeed.other_user, environment: SpecSeed.environment)
++    end
++    Timeout.timeout(10) { admitted.pop }
++    workers << connection_thread do
++      network = IpAddress.find(committed[:ip_id]).network
++      disabling << true
++      network.update!(enabled: false)
++    end
++    Timeout.timeout(10) { disabling.pop }
++    expect(workers.last.join(0.1)).to be_nil
++    resume << true
++    Timeout.timeout(20) { workers.each(&:value) }
++    connection_thread do
++      ip = IpAddress.find(committed[:ip_id])
++      expect(ip.user_id).to eq(SpecSeed.other_user.id)
++      expect(ip.network.enabled?).to be(false)
++    end.value
++  ensure
++    resume << true if resume
++    workers&.each { |thread| thread.join(25) || thread.kill.join }
++    connection_thread { IpAddress.find(committed[:ip_id]).network.update!(enabled: true) }.value
++  end
++
++  it 'allows parallel admissions in one pool without upgrading network locks', :network_admission do
++    ids = connection_thread do
++      network = described_class.find(committed[:network_id])
++      network.add_ips(2).map(&:id)
++    end.value
++    ready = Queue.new
++    resume = Queue.new
++    workers = ids.map do |id|
++      connection_thread do
++        TransactionChain.transaction do
++          chain = TransactionChain.create!(name: 'parallel-network-admission', state: :staged,
++                                           size: 0, user: User.current, user_session: UserSession.current)
++          chain.global_locks = []
++          ip = IpAddress.find(id)
++          ip.lock_for_new_use!(chain)
++          ip.ensure_pickable!(user: SpecSeed.user, location: SpecSeed.location, ip_v: 4, role: :public_access,
++                              purpose: :vps)
++          ready << id
++          resume.pop
++          raise ActiveRecord::Rollback
++        end
++      end
++    end
++    # Both must pass the authoritative joined policy read while the other holds
++    # a shared network lock and a different exclusive IP row lock.
++    admitted_ids = Timeout.timeout(10) { ids.map { ready.pop } }
++    expect(admitted_ids.sort).to eq(ids.sort)
++    ids.each { resume << true }
++    Timeout.timeout(20) { workers.each(&:value) }
++  ensure
++    ids&.each { resume << true } if resume
++    workers&.each { |thread| thread.join(25) || thread.kill.join }
++  end
++
++  it 'serializes owned registration before a waiting disable', :network_admission do
++    registered = Queue.new
++    disabling = Queue.new
++    resume = Queue.new
++    allow_any_instance_of(described_class).to receive(:ensure_enabled!).and_wrap_original do |original| # rubocop:disable RSpec/AnyInstance
++      result = original.call
++      if Thread.current[:network_admission] == :register
++        Thread.current[:network_admission] = nil
++        registered << true
++        resume.pop
++      end
++      result
++    end
++    workers = []
++    workers << connection_thread do
++      Thread.current[:network_admission] = :register
++      network = described_class.find(committed[:network_id])
++      IpAddress.register(IPAddress.parse('198.51.100.1'), network:, user: SpecSeed.user,
++                                                          environment: SpecSeed.environment, prefix: 32, size: 1)
++    end
++    Timeout.timeout(10) { registered.pop }
++    workers << connection_thread do
++      network = described_class.find(committed[:network_id])
++      disabling << true
++      network.update!(enabled: false)
++    end
++    Timeout.timeout(10) { disabling.pop }
++    expect(workers.last.join(0.1)).to be_nil
++    resume << true
++    Timeout.timeout(20) { workers.each(&:value) }
++    connection_thread do
++      expect(described_class.find(committed[:network_id]).enabled?).to be(false)
++      expect(IpAddress.find_by!(network_id: committed[:network_id], ip_addr: '198.51.100.1').user_id)
++        .to eq(SpecSeed.user.id)
++    end.value
++  ensure
++    resume << true if resume
++    workers&.each { |thread| thread.join(25) || thread.kill.join }
++  end
++
++  it 'rejects owned registration after disable commits without changing quota', :network_admission do
++    connection_thread do
++      network = described_class.find(committed[:network_id])
++      network.update!(enabled: false)
++      expect do
++        IpAddress.register(IPAddress.parse('198.51.100.1'), network:, user: SpecSeed.user,
++                                                            environment: SpecSeed.environment, prefix: 32, size: 1)
++      end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled for new allocations/)
++      expect(IpAddress.where(network:)).to be_empty
++      expect(EnvironmentUserConfig.find(committed[:config_id]).ipv4).to eq(committed[:usage])
++    end.value
++  end
++
+   it 'charges additions to the new resource after a concurrent empty-network role change' do
+     locked = Queue.new
+     attempted = Queue.new
+@@ -144,7 +298,7 @@ RSpec.describe Network do
+   it 'reloads a migration replacement selected before a concurrent disown' do
+     selected = Queue.new
+     resume = Queue.new
+-    allow(IpAddress).to receive(:pick_addr!) do
++    allow(IpAddress).to receive(:pick_from_admitted_networks!) do
+       ip = IpAddress.find(committed[:ip_id])
+       expect(ip.user_id).to eq(SpecSeed.user.id)
+       selected << true
+@@ -159,7 +313,11 @@ RSpec.describe Network do
+           user: User.current, user_session: UserSession.current
+         )
+         migration.global_locks = []
+-        allow(migration).to receive(:dst_vps).and_return(Vps.new(user: SpecSeed.user, node: SpecSeed.node))
++        networks = described_class.lock_for_admission!([IpAddress.find(committed[:ip_id]).network_id])
++        allow(migration).to receive_messages(
++          dst_vps: Vps.new(user: SpecSeed.user, node: SpecSeed.node),
++          admission_networks: networks, replacement_network_ids: networks.keys
++        )
+         replacement = migration.send(:pick_replacement_ip, IpAddress.find(committed[:ip_id]))
+         expect(replacement.user_id).to be_nil
+         expect(replacement.charged_environment_id).to be_nil
+diff --git a/api/spec/models/network_registration_spec.rb b/api/spec/models/network_registration_spec.rb
+index e2503f80e..b61217530 100644
+--- a/api/spec/models/network_registration_spec.rb
++++ b/api/spec/models/network_registration_spec.rb
+@@ -3,6 +3,25 @@ require 'spec_helper'
+ RSpec.describe Network do
+   around { |example| with_current_context { example.run } }
+ 
++  it 'permits disabled unowned inventory but rejects owned registration and batch additions atomically' do
++    network = SpecSeed.network_v4
++    network.update!(enabled: false)
++    ip = IpAddress.register(IPAddress.parse('192.0.2.249'), network:, prefix: 32, size: 1)
++    expect(ip.user_id).to be_nil
++    expect(network.add_ips(1)).not_to be_empty
++    before = network.ip_addresses.count
++    usage = SpecSeed.user.environment_user_configs.find_by!(environment: SpecSeed.environment).ipv4
++    expect do
++      IpAddress.register(IPAddress.parse('192.0.2.250'), network:, prefix: 32, size: 1,
++                                                         user: SpecSeed.user, environment: SpecSeed.environment)
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++    expect do
++      network.add_ips(1, user: SpecSeed.user, environment: SpecSeed.environment)
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++    expect(network.ip_addresses.count).to eq(before)
++    expect(SpecSeed.user.environment_user_configs.find_by!(environment: SpecSeed.environment).ipv4).to eq(usage)
++  end
++
+   it 'retains a competing network reservation when batch lock acquisition fails' do
+     network = SpecSeed.network_v4
+     reservation = network.acquire_lock(network)
+diff --git a/api/spec/models/transaction_chains/export/create_spec.rb b/api/spec/models/transaction_chains/export/create_spec.rb
+index c3f61f44f..ce4f5a60f 100644
+--- a/api/spec/models/transaction_chains/export/create_spec.rb
++++ b/api/spec/models/transaction_chains/export/create_spec.rb
+@@ -113,7 +113,7 @@ RSpec.describe TransactionChains::Export::Create do
+       when :location
+         LocationNetwork.where(network_id: network.id).delete_all
+       end
+-      allow(IpAddress).to receive(:pick_addr!).and_return(ip)
++      allow(IpAddress).to receive_messages(candidate_network_ids: [network.id], pick_from_admitted_networks!: ip)
+ 
+       expect do
+         described_class.fire(dataset)
+diff --git a/api/spec/models/transaction_chains/ip/allocate_spec.rb b/api/spec/models/transaction_chains/ip/allocate_spec.rb
+index 7fed797e7..39ffe65e9 100644
+--- a/api/spec/models/transaction_chains/ip/allocate_spec.rb
++++ b/api/spec/models/transaction_chains/ip/allocate_spec.rb
+@@ -60,6 +60,56 @@ RSpec.describe TransactionChains::Ip::Allocate do
+     expect(fixture[:ip_addresses].map { |ip| ip.reload.charged_environment_id }).to all(eq(fixture[:environment].id))
+   end
+ 
++  it 'does not widen a multi-address batch when another pool becomes enabled after its first reservation' do
++    fixture = create_allocation_fixture(ip_count: 1)
++    later_network = create_private_network!(location: SpecSeed.location, address: '198.51.100.0', purpose: :vps)
++    later_ip = create_ipv4_address_in_network!(network: later_network, location: SpecSeed.location)
++    later_network.update!(enabled: false)
++    changed = false
++    allow_any_instance_of(IpAddress).to receive(:lock_current!).and_wrap_original do |original, *args, **kwargs| # rubocop:disable RSpec/AnyInstance
++      result = original.call(*args, **kwargs)
++      unless changed
++        changed = true
++        later_network.update!(enabled: true)
++      end
++      result
++    end
++
++    _chain, allocated = use_chain_method_in_root!(
++      described_class, method: :allocate_to_netif, args: [resource, fixture[:netif], 2], kwargs: { strict: false }
++    )
++    expect(allocated).to eq(1)
++    expect(fixture[:ip_addresses].first.reload.network_interface_id).to eq(fixture[:netif].id)
++    expect(later_ip.reload.network_interface_id).to be_nil
++    expect(later_network.reload.enabled?).to be(true)
++  end
++
++  it 'treats an empty captured destination set as no capacity even with a populated continuity map' do
++    fixture = create_allocation_fixture(ip_count: 1)
++    networks = Network.lock_for_admission!([fixture[:network].id])
++    _chain, allocated = use_chain_method_in_root!(
++      described_class, method: :allocate_to_netif, args: [resource, fixture[:netif], 1],
++                       kwargs: { strict: false, admission_networks: networks, candidate_network_ids: [] }
++    )
++    expect(allocated).to eq(0)
++    expect(fixture[:ip_addresses].first.reload.network_interface_id).to be_nil
++  end
++
++  it 'rejects a selected address outside its captured network identities' do
++    fixture = create_allocation_fixture(ip_count: 1)
++    other_network = create_private_network!(location: SpecSeed.location, address: '198.51.100.0', purpose: :vps)
++    other_ip = create_ipv4_address_in_network!(network: other_network, location: SpecSeed.location)
++    networks = Network.lock_for_admission!([fixture[:network].id])
++    allow(IpAddress).to receive(:pick_from_admitted_networks!).and_return(other_ip)
++    expect do
++      use_chain_method_in_root!(
++        described_class, method: :allocate_to_netif, args: [resource, fixture[:netif], 1],
++                         kwargs: { admission_networks: networks, candidate_network_ids: [fixture[:network].id] }
++      )
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInUse, /network changed/)
++    expect(other_ip.reload.network_interface_id).to be_nil
++  end
++
+   it 'rejects legacy owned addresses with no charge provenance' do
+     fixture = create_allocation_fixture(ip_count: 1, ownership: true)
+     ip = fixture[:ip_addresses].first
+@@ -122,7 +172,7 @@ RSpec.describe TransactionChains::Ip::Allocate do
+   it 'rejects a selected owned address whose current charge is in another environment' do
+     fixture = create_allocation_fixture(ip_count: 0, ownership: true)
+     ip = create_ipv4_address_in_network!(network: fixture[:network], location: SpecSeed.other_location, user: user)
+-    allow(IpAddress).to receive(:pick_addr!).and_return(ip)
++    allow(IpAddress).to receive_messages(candidate_network_ids: [fixture[:network].id], pick_from_admitted_networks!: ip)
+     expect do
+       use_chain_method_in_root!(described_class, method: :allocate_to_netif,
+                                                  args: [resource, fixture[:netif], 1])
+@@ -194,6 +244,29 @@ RSpec.describe TransactionChains::Ip::Allocate do
+     end.to raise_error(VpsAdmin::API::Exceptions::ConfigurationError, /no ipv4_private address available/)
+   end
+ 
++  it 'excludes disabled pools including owned detached reuse' do
++    fixture = create_allocation_fixture(ip_count: 1, ownership: true)
++    create_ipv4_address_in_network!(network: fixture[:network], location: SpecSeed.location, user: user)
++    fixture[:network].update!(enabled: false)
++    expect do
++      use_chain_method_in_root!(described_class, method: :allocate_to_netif,
++                                                 args: [resource, fixture[:netif], 1])
++    end.to raise_error(VpsAdmin::API::Exceptions::ConfigurationError, /no ipv4_private/)
++    expect(fixture[:network].ip_addresses.pluck(:network_interface_id)).to all(be_nil)
++  end
++
++  it 'rejects a stale selected address after its network is disabled' do
++    fixture = create_allocation_fixture(ip_count: 1)
++    ip = fixture[:ip_addresses].first
++    fixture[:network].update!(enabled: false)
++    allow(IpAddress).to receive_messages(candidate_network_ids: [fixture[:network].id], pick_from_admitted_networks!: ip)
++    expect do
++      use_chain_method_in_root!(described_class, method: :allocate_to_netif,
++                                                 args: [resource, fixture[:netif], 1])
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++    expect(ip.reload.network_interface_id).to be_nil
++  end
++
+   %i[owner purpose location].each do |changed|
+     it "rechecks #{changed} after reserving a previously selected address" do
+       fixture = create_allocation_fixture(ip_count: 1)
+@@ -208,7 +281,7 @@ RSpec.describe TransactionChains::Ip::Allocate do
+       when :location
+         LocationNetwork.where(network_id: network.id).delete_all
+       end
+-      allow(IpAddress).to receive(:pick_addr!).and_return(ip)
++      allow(IpAddress).to receive_messages(candidate_network_ids: [network.id], pick_from_admitted_networks!: ip)
+ 
+       expect do
+         use_chain_method_in_root!(described_class, method: :allocate_to_netif,
+diff --git a/api/spec/models/transaction_chains/ip/update_spec.rb b/api/spec/models/transaction_chains/ip/update_spec.rb
+index 755e0624c..04f01b3df 100644
+--- a/api/spec/models/transaction_chains/ip/update_spec.rb
++++ b/api/spec/models/transaction_chains/ip/update_spec.rb
+@@ -34,6 +34,21 @@ RSpec.describe TransactionChains::Ip::Update do
+     ip
+   end
+ 
++  it 'rejects new or different ownership while allowing same-owner no-op and disownership' do
++    ip = create_owned_ip
++    ip.network.update!(enabled: false)
++    expect do
++      described_class.fire(ip, user: SpecSeed.other_user, environment: SpecSeed.environment)
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++    expect(ip.reload.user_id).to eq(SpecSeed.user.id)
++    expect { described_class.fire(ip, user: SpecSeed.user, environment: SpecSeed.environment) }.not_to raise_error
++    expect { described_class.fire(ip, user: nil) }.not_to raise_error
++    expect(ip.reload.user_id).to be_nil
++    expect do
++      described_class.fire(ip, user: SpecSeed.user, environment: SpecSeed.environment)
++    end.to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++  end
++
+   it 'moves resource use from the old owner to the new owner' do
+     ip = create_owned_ip
+     before_old = resource_use_value(user: SpecSeed.user, environment: SpecSeed.environment, resource: :ipv4)
+diff --git a/api/spec/models/transaction_chains/network_interface/add_route_spec.rb b/api/spec/models/transaction_chains/network_interface/add_route_spec.rb
+index 793a83066..a7a760aba 100644
+--- a/api/spec/models/transaction_chains/network_interface/add_route_spec.rb
++++ b/api/spec/models/transaction_chains/network_interface/add_route_spec.rb
+@@ -9,6 +9,20 @@ RSpec.describe TransactionChains::NetworkInterface::AddRoute do
+ 
+   let(:user) { SpecSeed.user }
+ 
++  [nil, :admin, :user].each do |actor|
++    it "rejects disabled detached owned allocations for #{actor || 'internal'} callers" do
++      fixture = create_netif_vps_fixture!(user: user)
++      ip = create_ip_address!(user: user)
++      ip.network.update!(enabled: false)
++      actor_user = { admin: SpecSeed.admin, user: user }[actor]
++      opts = actor ? { actor: actor_user } : {}
++      expect { described_class.fire(fixture[:netif], [ip], **opts) }
++        .to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++      expect(ip.reload.user_id).to eq(user.id)
++      expect(ip.network_interface_id).to be_nil
++    end
++  end
++
+   it 'locks resources, adds routes, reallocates resources, and updates exports' do
+     fixture = create_netif_vps_fixture!(
+       user: user,
+diff --git a/api/spec/models/transaction_chains/vps/clone/os_to_os_spec.rb b/api/spec/models/transaction_chains/vps/clone/os_to_os_spec.rb
+index bc3aa5a88..d2035155b 100644
+--- a/api/spec/models/transaction_chains/vps/clone/os_to_os_spec.rb
++++ b/api/spec/models/transaction_chains/vps/clone/os_to_os_spec.rb
+@@ -670,13 +670,26 @@ RSpec.describe TransactionChains::Vps::Clone::OsToOs do
+     ipv4_use = ClusterResourceUse.for_obj(config).joins(user_cluster_resource: :cluster_resource)
+                                  .find_by!(cluster_resources: { name: 'ipv4' })
+ 
++    # The alternate primary association is real selection policy, not a
++    # rewritten allocator argument. All three families share one held union.
++    [SpecSeed.network_v4, private_network, v6_network].each do |network|
++      LocationNetwork.where(network:).update_all(primary: false)
++      LocationNetwork.find_or_create_by!(network:, location: SpecSeed.other_location).update!(primary: true, userpick: true)
++      network.update!(primary_location: SpecSeed.other_location)
++    end
++    lock_order = []
++    allow(Network).to receive(:lock_for_admission!).and_wrap_original do |original, ids|
++      lock_order << :network
++      original.call(ids)
++    end
++    allow_any_instance_of(IpAddress).to receive(:lock_current!).and_wrap_original do |original, *args, **kwargs| # rubocop:disable RSpec/AnyInstance
++      lock_order << :ip
++      original.call(*args, **kwargs)
++    end
+     seen_address_locations = []
+     allow(TransactionChains::Ip::Allocate).to receive(:use_in).and_wrap_original do |original, root_chain, opts|
+       seen_address_locations << opts.fetch(:kwargs).fetch(:address_location)
+-      forwarded = opts.dup
+-      forwarded[:kwargs] = opts.fetch(:kwargs).dup
+-      forwarded[:kwargs][:address_location] = nil
+-      original.call(root_chain, forwarded)
++      original.call(root_chain, opts)
+     end
+ 
+     chain, dst_vps = described_class.fire(
+@@ -707,6 +720,9 @@ RSpec.describe TransactionChains::Vps::Clone::OsToOs do
+     end
+     expect(ipv4_edits.map(&:attr_changes)).to eq([{ 'value' => before + 2 }])
+     expect(seen_address_locations).to all(eq(SpecSeed.other_location))
++    expect(lock_order.first).to eq(:network)
++    expect(lock_order.count(:network)).to eq(1)
++    expect(lock_order.count(:ip)).to be >= 4
+     expect(resource_edits.count).to be >= 3
+   end
+ 
+diff --git a/api/spec/models/transaction_chains/vps/create_spec.rb b/api/spec/models/transaction_chains/vps/create_spec.rb
+index 1a26cc897..0d73f98ee 100644
+--- a/api/spec/models/transaction_chains/vps/create_spec.rb
++++ b/api/spec/models/transaction_chains/vps/create_spec.rb
+@@ -42,6 +42,28 @@ RSpec.describe TransactionChains::Vps::Create do
+     [pool, vps]
+   end
+ 
++  it 'prepares all requested address families before reserving any allocation' do
++    _pool, vps = build_create_vps(os_template: create_os_template!)
++    public_ip = create_ip_address!(location: vps.node.location, addr: '192.0.2.240')
++    private_network = create_private_network!(location: vps.node.location, purpose: :vps)
++    private_ip = create_ipv4_address_in_network!(network: private_network, location: vps.node.location)
++    events = []
++    allow(Network).to receive(:lock_for_admission!).and_wrap_original do |original, ids|
++      events << [:networks, ids.sort]
++      original.call(ids)
++    end
++    allow_any_instance_of(IpAddress).to receive(:lock_current!).and_wrap_original do |original, *args, **kwargs| # rubocop:disable RSpec/AnyInstance
++      events << [:ip, original.receiver.id]
++      original.call(*args, **kwargs)
++    end
++
++    _chain, created = described_class.fire(vps, ipv4: 1, ipv4_private: 1, ipv6: 0, start: false)
++    expect(created.ip_addresses.pluck(:id)).to contain_exactly(public_ip.id, private_ip.id)
++    expect(events.first).to eq([:networks, [public_ip.network_id, private_network.id].sort])
++    expect(events.count { |event| event.first == :networks }).to eq(1)
++    expect(events.count { |event| event.first == :ip }).to be >= 2
++  end
++
+   it 'creates datasets, mounts, features, network configuration, DNS, and start in the expected order' do
+     template = create_os_template!(
+       manage_dns_resolver: true,
+diff --git a/api/spec/models/transaction_chains/vps/migrate_spec.rb b/api/spec/models/transaction_chains/vps/migrate_spec.rb
+index 18186f8e0..2a44dfcf6 100644
+--- a/api/spec/models/transaction_chains/vps/migrate_spec.rb
++++ b/api/spec/models/transaction_chains/vps/migrate_spec.rb
+@@ -82,6 +82,7 @@ RSpec.describe TransactionChains::Vps::Migrate do
+     _dataset, _dip, vps, dst_node = create_vps_migration_fixture
+     netif = create_network_interface!(vps, name: 'eth0')
+     ip = create_ip_address!(network_interface: netif)
++    ip.network.update!(enabled: false)
+     set_vps_running!(vps)
+ 
+     chain, = described_class.chain_for(vps, dst_node).fire(
+diff --git a/api/spec/models/transaction_chains/vps/replace/os_spec.rb b/api/spec/models/transaction_chains/vps/replace/os_spec.rb
+index 9fdcd2a15..346eae545 100644
+--- a/api/spec/models/transaction_chains/vps/replace/os_spec.rb
++++ b/api/spec/models/transaction_chains/vps/replace/os_spec.rb
+@@ -261,12 +261,13 @@ RSpec.describe TransactionChains::Vps::Replace::Os do
+     fixture = create_replace_fixture
+     vps = fixture.fetch(:vps)
+     netif = create_network_interface!(vps, name: 'eth0')
+-    create_ip_address!(
++    ip = create_ip_address!(
+       network: SpecSeed.network_v4,
+       location: fixture.fetch(:src_node).location,
+       network_interface: netif,
+       addr: "192.0.2.#{20 + SecureRandom.random_number(40)}"
+     )
++    ip.network.update!(enabled: false)
+ 
+     chain, dst_vps = described_class.fire(
+       vps,
+diff --git a/api/spec/models/transaction_chains/vps/swap_spec.rb b/api/spec/models/transaction_chains/vps/swap_spec.rb
+index dbbcdb0b1..de7c5431b 100644
+--- a/api/spec/models/transaction_chains/vps/swap_spec.rb
++++ b/api/spec/models/transaction_chains/vps/swap_spec.rb
+@@ -117,6 +117,8 @@ RSpec.describe TransactionChains::Vps::Swap do
+ 
+   it 'builds the expected broad migration and network-mutation subsequences for a cross-location swap' do
+     primary_vps, secondary_vps = create_swap_fixture
++    # Both migrations reuse existing assignments even when their pool is disabled.
++    SpecSeed.network_v4.update!(enabled: false)
+ 
+     chain, = described_class.fire(
+       primary_vps,
+diff --git a/api/spec/models/transaction_chains/vps/update_spec.rb b/api/spec/models/transaction_chains/vps/update_spec.rb
+index dc9f34bf9..26e03967f 100644
+--- a/api/spec/models/transaction_chains/vps/update_spec.rb
++++ b/api/spec/models/transaction_chains/vps/update_spec.rb
+@@ -222,6 +222,22 @@ RSpec.describe TransactionChains::Vps::Update do
+     end.to raise_error(ResourceLocked)
+   end
+ 
++  it 'rejects ownership transfer carrying disabled allocations even without an explicit IP owner' do
++    dataset, vps = create_update_vps_fixture
++    other_user = SpecSeed.other_user
++    ensure_numeric_resources!(user: other_user, environment: SpecSeed.environment)
++    create_user_namespace_map!(user: other_user)
++    ip = create_ip_address!(network: SpecSeed.network_v4, location: SpecSeed.location,
++                            network_interface: vps.network_interfaces.first)
++    ip.network.update!(enabled: false)
++    expect { described_class.fire(vps, { user_id: other_user.id }) }
++      .to raise_error(VpsAdmin::API::Exceptions::IpAddressInvalid, /disabled/)
++    expect(vps.reload.user_id).to eq(user.id)
++    expect(dataset.reload.user_id).to eq(user.id)
++    expect(ip.reload.user_id).to be_nil
++    expect(ip.network_interface_id).to eq(vps.network_interfaces.first.id)
++  end
++
+   it 'delegates enable_network changes and map mode changes to the expected transactions' do
+     _dataset, vps = create_update_vps_fixture
+ 
+diff --git a/docs/README.md b/docs/README.md
+index fff86a2a3..3b7d1cee5 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -10,6 +10,7 @@ These pages describe vpsAdmin for developers and operators. Start with the
+ - [IP ownership, accounting and locking](ip-locking.md)
+ - [IP ownership operations](ip-ownership-operations.md)
+ - [Upgrade to coordinated IP ownership reservations](upgrade-ip-ownership-reservations.md)
++- [Upgrade to network availability controls](upgrade-network-availability.md)
+ - [IP release campaigns](ip-release.md)
+ - [Object lifetimes](object-lifetimes.md): suspension, deletion, expiration,
+   and state transitions.
+diff --git a/docs/ip-locking.md b/docs/ip-locking.md
+index b97050d12..8889e2f81 100644
+--- a/docs/ip-locking.md
++++ b/docs/ip-locking.md
+@@ -48,6 +48,62 @@ writers. The [upgrade guide](upgrade-ip-ownership-reservations.md) describes how
+ to transition older writers and in-flight chains. The reservation protocol uses
+ the existing node protocol and stored resource-lock format.
+ 
++## Network availability
++
++`Network.enabled` controls new allocations and assignments. It defaults to true;
++only administrators can change it. Disabled networks remain visible in ordinary
++inventory queries. `Network.Index` accepts an exact `enabled` filter, and
++`IpAddress.Index` accepts `network_enabled` for availability selectors. Neither
++filter changes ownership, assignment or visibility rules.
++
++New automatic allocations, explicit assignments of detached addresses, new IP
++ownership, ownership transfers and owned registration require an enabled network.
++Changing a VPS owner also changes the effective owner of its assigned addresses.
++Keeping the same owner, disowning an address and releasing an address remain possible.
++Unowned inventory registration remains possible. Existing assigned service and
++host-address management within an assigned prefix continue. Internal migration,
++replacement, swap and restore can retain the same assigned allocations. Restore
++does not bypass admission for detached historical addresses. Taking a replacement
++address from another pool requires that destination network to be enabled.
++
++Admission takes shared current SQL reads of the relevant network rows in ID order
++before reserving and exclusively reloading IP rows. Parent IP reservations precede
++host reservations. The final check uses the reloaded IP's network identity and
++current allocation policy. A joined policy check uses shared reads so concurrent
++admissions do not upgrade their network locks to exclusive locks. Registration
++keeps its existing network-before-IP exclusive lock order. Network updates do
++not lock all allocation rows or take a chain-long network resource reservation.
++
++Migration preparation captures only its source networks and the destination
++candidates needed for replacement. Later selection is restricted to that captured
++destination set and current eligibility. Swap captures both source sets before
++either migration locks IP rows and passes the same held map to both children.
++This internal map is valid only within the preparation SQL transaction. A new
++pool cannot enter the set after IP locks; changed identity or no remaining
++capacity fails preparation through the normal reservation cleanup.
++
++VPS creation captures the destination candidates for all requested address
++families before locking any IP row. Cloning captures one destination set across
++all interfaces and address families. Each included allocation reuses that set;
++a standalone multi-address allocation captures its set before the first pick.
++Export endpoint selection also reuses its captured set when retrying a
++reservation. These helpers share their containing SQL transaction, so returning
++from a child allocation does not release its SQL locks. Candidate sets cannot
++grow during preparation.
++
++Disable and admission serialize at the network row. If disable commits first,
++new use fails or selects another enabled pool. If admission commits first, the
++accepted operation may finish after disable. Disabling does not cancel existing
++chains. Their resource reservations keep pending addresses out of availability
++counts until completion or rollback.
++
++`Cluster.PublicStats.ipv4_left` counts allocation rows that are unowned,
++unassigned and unreserved in enabled IPv4 networks with role `public_access`.
++Role is the sole public/private classification. Location associations, purpose,
++prefix size and maintenance state do not change this count, and each allocation
++row contributes at most once. See the [network availability upgrade guide](upgrade-network-availability.md)
++before disabling a network in a mixed-version installation.
++
+ ## Accounting
+ 
+ IP accounting uses `adjust_resource!(resource, delta:, ...)`. It shares
+diff --git a/docs/upgrade-network-availability.md b/docs/upgrade-network-availability.md
+new file mode 100644
+index 000000000..9916bd200
+--- /dev/null
++++ b/docs/upgrade-network-availability.md
+@@ -0,0 +1,32 @@
++# Upgrade to network availability controls
++
++This guide applies when upgrading from a schema before migration
++`20261006120000_add_network_enabled` to a version that enforces
++`Network.enabled`. The [IP locking documentation](ip-locking.md#network-availability)
++owns the admission and continuity contract.
++
++The migration adds a non-null boolean column with default true. Existing networks
++and creates that omit the field stay enabled. Updates that omit it preserve the
++current state. The migration changes no routes, owners, resource-lock format or
++node protocol and requires no coordinated node update.
++
++Apply the migration before starting the enforcing API. Replace every old API
++instance and other allocation writer before disabling any network: old writers
++ignore the column and can allocate from a disabled pool. Mixed versions are
++safe only while every network remains enabled. Review site-specific allocation
++writers as well as the normal API. Operations already accepted may finish after
++a network is disabled.
++
++Deploy the administrator interfaces after the API and refresh their normal API
++description caches. New interfaces expose controls only when action metadata
++advertises the field. An older interface can continue ordinary operations but
++cannot manage availability. Existing clients can omit the additive field; they
++need updated discovery or bindings to manage it.
++
++Re-enabling a network restores new use through the normal administrator update.
++Rolling back only the UI preserves enforcement. Rolling back to an API that
++ignores availability is unsafe while any network is disabled. Retain enforcing
++writers, or stop new-allocation writers and explicitly resolve disabled-network
++policy before restoring older code. Do not silently re-enable retired pools.
++The schema rollback removes the column and its policy; it does not remove
++addresses, ownership or assignments. Dropping it is not routine recovery.
+diff --git a/tests/suite/network/export-lifecycle.nix b/tests/suite/network/export-lifecycle.nix
+index 5b6bbfbcf..397e666d5 100644
+--- a/tests/suite/network/export-lifecycle.nix
++++ b/tests/suite/network/export-lifecycle.nix
+@@ -80,6 +80,15 @@ import ../../make-test.nix (
+           expect(runtime).not_to be_nil
+           wait_for_export_present(node, export.fetch('id'), expected_path: export.fetch('path'))
+ 
++          services.api_ruby_json(code: <<~RUBY)
++            IpAddress.find(#{Integer(runtime.fetch('ip_address_id'))}).network.update!(enabled: false)
++            puts JSON.dump(disabled: true)
++          RUBY
++          # Availability controls leave the existing export endpoint active.
++          wait_for_export_present(node, export.fetch('id'), expected_path: export.fetch('path'))
++          expect(export_runtime_row(services, export.fetch('id')).fetch('ip_address_id'))
++            .to eq(runtime.fetch('ip_address_id'))
++
+           destroyed = destroy_export(
+             services,
+             admin_user_id: admin_user_id,
+diff --git a/tests/suite/network/network-interface-routes-and-host-ips.nix b/tests/suite/network/network-interface-routes-and-host-ips.nix
+index edfa526ac..ddd944abd 100644
+--- a/tests/suite/network/network-interface-routes-and-host-ips.nix
++++ b/tests/suite/network/network-interface-routes-and-host-ips.nix
+@@ -118,6 +118,13 @@ import ../../make-test.nix (
+           )
+           wait_for_route_present(node, vps_id: vps.fetch('id'), name: 'eth1', cidr: cidr)
+ 
++          # Disabling new use leaves the existing route and host management valid.
++          services.api_ruby_json(code: <<~RUBY)
++            Network.find(IpAddress.find(#{Integer(ip.fetch('id'))}).network_id).update!(enabled: false)
++            puts JSON.dump(disabled: true)
++          RUBY
++          wait_for_route_present(node, vps_id: vps.fetch('id'), name: 'eth1', cidr: cidr)
++
+           added_host_ip = add_host_ip_to_netif(
+             services,
+             admin_user_id: admin_user_id,
+@@ -180,6 +187,34 @@ import ../../make-test.nix (
+             before_uses.fetch('ipv4_private', 0)
+           )
+           wait_for_route_absent(node, vps_id: vps.fetch('id'), name: 'eth1', cidr: cidr)
++
++          rejection = services.api_ruby_json(code: <<~RUBY)
++            #{api_session_prelude(admin_user_id)}
++            ip = IpAddress.find(#{Integer(ip.fetch('id'))})
++            begin
++              TransactionChains::NetworkInterface::AddRoute.fire(
++                NetworkInterface.find(#{Integer(created.fetch('netif_id'))}), [ip]
++              )
++              raise 'disabled network accepted a detached allocation'
++            rescue VpsAdmin::API::Exceptions::IpAddressInvalid => e
++              puts JSON.dump(rejected: true, message: e.message, assigned: ip.reload.network_interface_id)
++            end
++          RUBY
++          expect(rejection.fetch('rejected')).to be(true)
++          expect(rejection.fetch('message')).to include('disabled for new allocations')
++          expect(rejection.fetch('assigned')).to be_nil
++          wait_for_route_absent(node, vps_id: vps.fetch('id'), name: 'eth1', cidr: cidr)
++
++          services.api_ruby_json(code: <<~RUBY)
++            Network.find(IpAddress.find(#{Integer(ip.fetch('id'))}).network_id).update!(enabled: true)
++            puts JSON.dump(enabled: true)
++          RUBY
++          restored_route = add_route_to_netif(
++            services, admin_user_id: admin_user_id, netif_id: created.fetch('netif_id'), ip_id: ip.fetch('id')
++          )
++          expect_chain_done(services, restored_route, label: 're-enabled route',
++                            expected_handles: [tx_types(services).fetch('netif_add_route')])
++          wait_for_route_present(node, vps_id: vps.fetch('id'), name: 'eth1', cidr: cidr)
+         end
+       end
+     '';
+diff --git a/tests/suite/storage/restore-after-reinstall-with-descendants-remote.nix b/tests/suite/storage/restore-after-reinstall-with-descendants-remote.nix
+index 25a7ea984..c6cb2012f 100644
+--- a/tests/suite/storage/restore-after-reinstall-with-descendants-remote.nix
++++ b/tests/suite/storage/restore-after-reinstall-with-descendants-remote.nix
+@@ -122,6 +122,13 @@ import ../../make-test.nix (
+             mib: 4
+           )
+ 
++          attach_test_vps_ip(services, admin_user_id: admin_user_id, vps_id: setup.fetch('vps_id'), addr: '198.51.100.10')
++          retained_ips = services.api_ruby_json(code: <<~RUBY)
++            ips = Vps.find(#{Integer(setup.fetch('vps_id'))}).ip_addresses.order(:id).to_a
++            raise 'restore availability fixture has no assigned IPs' if ips.empty?
++            ips.map(&:network).uniq(&:id).each { |network| network.update!(enabled: false) }
++            puts JSON.dump(ids: ips.map(&:id))
++          RUBY
+           restore = rollback_dataset_to_snapshot(
+             services,
+             dataset_id: setup.fetch('dataset_id'),
+@@ -130,6 +137,13 @@ import ../../make-test.nix (
+           services.wait_for_chain_state(restore.fetch('chain_id'), state: :done)
+           wait_for_vps_running(services, setup.fetch('vps_id'))
+ 
++          after_ips = services.api_ruby_json(code: <<~RUBY)
++            ips = Vps.find(#{Integer(setup.fetch('vps_id'))}).ip_addresses.order(:id).to_a
++            puts JSON.dump(ids: ips.map(&:id), enabled: ips.map { |ip| ip.network.enabled? })
++          RUBY
++          expect(after_ips.fetch('ids')).to eq(retained_ips.fetch('ids'))
++          expect(after_ips.fetch('enabled')).to all(be(false))
++
+           expect(
+             read_dataset_text(
+               node1,
+diff --git a/tests/suite/vps/migrate-with-data-check.nix b/tests/suite/vps/migrate-with-data-check.nix
+index d77db2729..787c6eafd 100644
+--- a/tests/suite/vps/migrate-with-data-check.nix
++++ b/tests/suite/vps/migrate-with-data-check.nix
+@@ -87,6 +87,18 @@ import ../../make-test.nix (
+             mib: 4
+           )
+ 
++          attach_test_vps_ip(services, admin_user_id: admin_user_id, vps_id: vps.fetch('id'), addr: '198.51.100.10')
++          retained_ips = services.api_ruby_json(code: <<~RUBY)
++            vps = Vps.find(#{Integer(vps.fetch('id'))})
++            ips = vps.ip_addresses.order(:id).to_a
++            raise 'migration availability fixture has no assigned IPs' if ips.empty?
++            ips.map(&:network).uniq(&:id).each do |network|
++              LocationNetwork.find_or_create_by!(network: network, location: Node.find(#{Integer(node2_id)}).location)
++              network.update!(enabled: false)
++            end
++            puts JSON.dump(ids: ips.map(&:id))
++          RUBY
++
+           response = vps_migrate(
+             services,
+             vps_id: vps.fetch('id'),
+@@ -114,6 +126,12 @@ import ../../make-test.nix (
+ 
+           wait_for_vps_on_node(services, vps_id: vps.fetch('id'), node_id: node2_id, running: true)
+           expect_vps_migration_proof(node2, vps_id: vps.fetch('id'))
++          after_ips = services.api_ruby_json(code: <<~RUBY)
++            ips = Vps.find(#{Integer(vps.fetch('id'))}).ip_addresses.order(:id).to_a
++            puts JSON.dump(ids: ips.map(&:id), enabled: ips.map { |ip| ip.network.enabled? })
++          RUBY
++          expect(after_ips.fetch('ids')).to eq(retained_ips.fetch('ids'))
++          expect(after_ips.fetch('enabled')).to all(be(false))
+           expect_vps_container_absent(node1, vps_id: vps.fetch('id'))
+           dst_dataset_path = find_dataset_path_on_node(node2, info.fetch('dataset_full_name'))
+           expect(read_dataset_text(

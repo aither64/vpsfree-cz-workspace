@@ -1,0 +1,8 @@
+cluster: compose node SSH preparation after merging run
+
+The pinned runit service uses a plain string option, so an additional
+mkBefore value conflicts with the OS-owned SSH body. Extend only the node
+sshd submodule's run option with apply, keeping the storage guard before
+the original key generation and daemon execution.
+
+Retain the persistent single-Ed25519 profile and storage refusal policy.

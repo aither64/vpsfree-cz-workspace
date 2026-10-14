@@ -1,0 +1,52 @@
+diff --git a/tools/test-machine.rb b/tools/test-machine.rb
+index 562c698d7e941d7d7401796501694ea0334a6b22..190fdb47485852f7b5261ab7d8a0dbe30fc9bce4 100644
+--- a/tools/test-machine.rb
++++ b/tools/test-machine.rb
+@@ -198,15 +198,39 @@ class VirtiofsListenerTest < Minitest::Test
+         assert_equal(8, length)
+         assert_equal(8, Timeout.timeout(5) { peer.read(length) }.bytesize)
+       end
+-      statuses = []
++      owned_pids = machine.send(:virtiofsd_pids).dup.freeze
++      assert_equal(3, owned_pids.uniq.length)
++      deliveries = []
++      waits = []
++      native_kill = Process.method(:kill)
+       native_wait = Process.method(:waitpid2)
+-      Process.stub(:wait, lambda { |pid|
+-        waited, status = native_wait.call(pid)
+-        statuses << status
+-        waited
+-      }) { stop_daemons(machine) }
+-      assert_equal(3, statuses.length)
+-      statuses.each { |status| assert(status.success? || status.termsig == Signal.list.fetch('TERM'), status.inspect) }
++      Process.stub(:kill, lambda { |signal, pid|
++        assert_equal('TERM', signal)
++        assert_includes(owned_pids, pid)
++        refute_includes(deliveries, pid)
++        refute_includes(waits.map(&:first), pid)
++        result = native_kill.call(signal, pid)
++        assert_equal(1, result)
++        deliveries << pid
++        result
++      }) do
++        Process.stub(:wait, lambda { |pid|
++          assert_includes(owned_pids, pid)
++          assert_includes(deliveries, pid)
++          refute_includes(waits.map(&:first), pid)
++          waited, status = native_wait.call(pid)
++          waits << [waited, status]
++          waited
++        }) { stop_daemons(machine) }
++      end
++      assert_equal(owned_pids, deliveries)
++      assert_equal(owned_pids, waits.map(&:first))
++      # virtiofsd 1.13.3 handles TERM with _exit(1), rather than signal death.
++      waits.each do |_pid, status|
++        assert(status.exited?, status.inspect)
++        assert_equal(1, status.exitstatus, status.inspect)
++        refute(status.signaled?, status.inspect)
++      end
+       machine.cleanup
+       assert_empty(Dir.children(machine.send(:sockdir)))
+       assert_proofs_closed(machine)

@@ -1,0 +1,793 @@
+diff --git a/cluster/lib/kb_machine.rb b/cluster/lib/kb_machine.rb
+index 05b2e58dc4094299a7e996f925184521abd75a01..d96895296e8c4620b90dfd69c6fbd6b6e992afb0 100644
+--- a/cluster/lib/kb_machine.rb
++++ b/cluster/lib/kb_machine.rb
+@@ -1,9 +1,156 @@
+ # frozen_string_literal: true
+ 
+ require 'osvm'
++require 'socket'
+ require_relative 'kb_disks'
+ 
+ module KbRuntime
++  # Keep OSVM's daemon/reaper ownership, but supply the listener ourselves so
++  # virtiofsd never creates a companion pidfile in the private namespace.
++  module VirtiofsListeners
++    def initialize(...)
++      super
++      @kb_virtiofs_paths = {}
++      @kb_virtiofs_mutex = Mutex.new
++    end
++
++    def cleanup
++      @kb_virtiofs_mutex.synchronize do
++        Thread.handle_interrupt(Exception => :never) do
++          begin
++            # Do not call Machine#cleanup: its unchecked socket unlink would
++            # discard the identity proof this adapter retains.
++            @kb_virtiofs_paths.each_value { |proof| check_virtiofs_path(proof) }
++            shell_instances.each(&:cleanup)
++            @kb_virtiofs_paths.each_value do |proof|
++              File.unlink(proof.fetch(:path)) if check_virtiofs_path(proof)
++              proof[:absent] = true
++            end
++          ensure
++            @kb_virtiofs_paths.each_value do |proof|
++              proof[:refused] = true unless proof[:absent]
++              close_virtiofs_proof(proof)
++            end
++          end
++        end
++      end
++      self
++    end
++
++    protected
++
++    def start_virtiofs
++      @kb_virtiofs_mutex.synchronize do
++        shared_filesystems.each do |share, shared_path|
++          Thread.handle_interrupt(Exception => :never) do
++            listener = output = proof = nil
++            begin
++              path = virtiofs_socket_path(share)
++              raise Error, 'virtiofs listener already retained' if @kb_virtiofs_paths[path] && !@kb_virtiofs_paths[path][:absent]
++              directory = File.dirname(path)
++              proof = { path:, directory:, absent: false }
++              proof[:directory_fd] = File.open(directory, File::RDONLY | File::NOFOLLOW | 0x10000 | 0x80000) # O_DIRECTORY | O_CLOEXEC
++              proof[:directory_fd].close_on_exec = true
++              proof[:directory_identity] = virtiofs_identity(proof[:directory_fd].stat, 'directory', 0o700)
++              check_virtiofs_directory(proof)
++              [path, path + '.pid'].each do |candidate|
++                begin
++                  File.lstat(candidate)
++                rescue Errno::ENOENT
++                  next
++                end
++                raise Error, 'virtiofs listener path or pidfile already exists'
++              end
++              listener = Socket.new(Socket::AF_UNIX, Socket::SOCK_STREAM, 0)
++              listener.close_on_exec = true
++              listener.bind(Socket.sockaddr_un(path))
++              # O_PATH retains the filesystem inode, unlike the listener FD.
++              named = File.lstat(path)
++              proof[:socket_fd] = File.open(path, 0x200000 | File::NOFOLLOW | 0x80000) # O_PATH | O_CLOEXEC
++              proof[:socket_fd].close_on_exec = true
++              opened = proof[:socket_fd].stat
++              unless named.socket? && opened.socket? && named.uid == Process.uid && opened.uid == Process.uid && [named.dev, named.ino] == [opened.dev, opened.ino]
++                raise Error, 'virtiofs listener changed during acquisition'
++              end
++              @kb_virtiofs_paths[path] = proof
++              File.chmod(0o600, path)
++              proof[:socket_identity] = virtiofs_identity(proof[:socket_fd].stat, 'socket', 0o600)
++              check_virtiofs_path(proof)
++              listener.listen(Socket::SOMAXCONN)
++              output = File.open(virtiofs_log_path(share), 'w')
++              virtiofsd_pids << Process.spawn(
++                File.join(config.virtiofsd, 'bin/virtiofsd'),
++                '--fd', '3', '--shared-dir', shared_path, '--cache', 'auto',
++                3 => listener, in: :close, out: output, err: output, close_others: true
++              )
++            ensure
++              begin
++                listener&.close unless listener&.closed?
++              ensure
++                begin
++                  output&.close unless output&.closed?
++                ensure
++                  close_virtiofs_proof(proof) if proof && !@kb_virtiofs_paths.value?(proof)
++                end
++              end
++            end
++          end
++        end
++      end
++    end
++
++    def virtiofs_identity(stat, type, mode)
++      unless stat.ftype == type && stat.uid == Process.uid && (stat.mode & 0o7777) == mode
++        raise Error, 'unsafe virtiofs listener metadata'
++      end
++      [stat.dev, stat.ino, stat.ftype, stat.uid, stat.mode & 0o7777]
++    end
++
++    def check_virtiofs_directory(proof)
++      State.new(proof.fetch(:directory), 'virtiofs-path').check_ancestors(proof.fetch(:directory))
++      begin
++        named = virtiofs_identity(File.lstat(proof.fetch(:directory)), 'directory', 0o700)
++      rescue Errno::ENOENT
++        return false
++      end
++      opened = proof[:directory_fd]
++      # Closed pins belong only to retired, absent paths. They can never
++      # authorize deletion of a path that reappears after retirement.
++      raise Error, 'virtiofs directory pin is unavailable' if (!opened || opened.closed?) && !proof[:absent]
++      pinned = opened && !opened.closed? ? virtiofs_identity(opened.stat, 'directory', 0o700) : proof.fetch(:directory_identity)
++      raise Error, 'virtiofs listener directory changed' unless named == pinned && pinned == proof.fetch(:directory_identity)
++      true
++    end
++
++    def check_virtiofs_path(proof)
++      raise Error, 'virtiofs listener cleanup previously refused' if proof[:refused] || !proof[:socket_identity]
++      unless check_virtiofs_directory(proof)
++        proof[:absent] = true
++        return false
++      end
++      begin
++        named = virtiofs_identity(File.lstat(proof.fetch(:path)), 'socket', 0o600)
++      rescue Errno::ENOENT
++        proof[:absent] = true
++        return false
++      end
++      raise Error, 'virtiofs listener reappeared after removal' if proof[:absent]
++      pinned = virtiofs_identity(proof.fetch(:socket_fd).stat, 'socket', 0o600)
++      raise Error, 'virtiofs listener changed' unless named == pinned && pinned == proof.fetch(:socket_identity)
++      true
++    end
++
++    def close_virtiofs_proof(proof)
++      begin
++        stream = proof[:socket_fd]
++        stream&.close unless stream&.closed?
++      ensure
++        stream = proof[:directory_fd]
++        stream&.close unless stream&.closed?
++      end
++    end
++  end
++
+   module PreparedDisks
+     def bind_preparation(state, artifact)
+       @kb_preparation = DiskPreparation.new(state, artifact)
+@@ -39,9 +186,11 @@ module KbRuntime
+ 
+   class NixosMachine < OsVm::NixosMachine
+     include PreparedDisks
++    include VirtiofsListeners
+   end
+ 
+   class VpsadminosMachine < OsVm::VpsadminosMachine
+     include PreparedDisks
++    include VirtiofsListeners
+   end
+ end
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index 0b497dc479b985dc48619254b928bd121cb9ce53..6d472feeb1e103eb8d7f78962fb5386197ce6733 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -92,6 +92,13 @@ of root or multicast group; TCP and UDP are separate resources. A no-reuse UDP
+ bind probe precedes launch and closes before QEMU binds. The durable claim spans
+ that handoff, but cannot reserve the port against unrelated host software.
+ 
++The machine adapter creates private listening UNIX sockets for each virtiofs
++share and passes their descriptors to the configured daemon. It retains the
++socket and directory identities until cleanup and refuses replaced or unsafe
++paths. This listener route creates no pidfiles. The existing OSVM daemon
++tracking and reapers still govern process exit; unexpected directory entries,
++including retained pidfiles from earlier runs, remain a cleanup refusal.
++
+ Stop requests shutdown through the recorded runner's validated control socket.
+ After authenticating the owned paths and peer, the controller marks the run
+ `stopping` before sending the request. The runner withdraws readiness and issues
+diff --git a/flake.nix b/flake.nix
+index a53703e53fe13cbbc2d2f41769599480a35882e9..1199a319de74294ea4e191155225ec89cc87a769 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -274,6 +274,7 @@
+         FONTCONFIG_FILE = fontConfig;
+         VPSADMIN_KB_VPSADMIN_SOURCE = vpsadmin.outPath;
+         VPSADMIN_KB_OSVM_SOURCE = vpsadminos.outPath;
++        VPSADMIN_KB_VIRTIOFSD = "${pkgs.virtiofsd}";
+         shellHook = ''
+           unset RUBYOPT RUBYLIB GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_BIN BUNDLE_WITH BUNDLE_WITHOUT
+           export GEM_HOME="$(${toolPkgs.ruby}/bin/ruby --disable-gems -rrubygems -e 'print Gem.default_dir')"
+diff --git a/tools/test-machine.rb b/tools/test-machine.rb
+index cabc7ddb03bd3846e2633be794ef55746f3e127f..70537cc8f8030f4f854264c604f3f73fbe51ec5e 100644
+--- a/tools/test-machine.rb
++++ b/tools/test-machine.rb
+@@ -107,6 +107,430 @@ class PreparedMachineTest < Minitest::Test
+   end
+ end
+ 
++class VirtiofsListenerTest < Minitest::Test
++  CLASSES = [KbRuntime::NixosMachine, KbRuntime::VpsadminosMachine].freeze
++
++  def test_both_machine_classes_pass_only_the_listener_for_all_three_shares
++    CLASSES.each do |klass|
++      with_adapter(klass) do |machine, directory|
++        guard = File.open(File.join(directory, 'guard.lock'), 'w', 0o600)
++        guard.close_on_exec = false
++        machine.send(:start_virtiofs)
++        assert_equal(3, machine.send(:virtiofsd_pids).length)
++        machine.send(:shared_filesystems).each do |share, shared_path|
++          path = machine.send(:virtiofs_socket_path, share)
++          peer = UNIXSocket.new(path)
++          observed = JSON.parse(Timeout.timeout(5) { peer.gets })
++          peer.close
++          assert_equal(['--fd', '3', '--shared-dir', shared_path, '--cache', 'auto'], observed['argv'])
++          assert_equal('SOCKET', observed['listener_type'])
++          assert(observed['accepting'])
++          assert_equal(Process.uid, File.lstat(path).uid)
++          assert_equal(0o600, File.lstat(path).mode & 0o7777)
++          refute_includes(observed['fds'], guard.path)
++          machine.instance_variable_get(:@kb_virtiofs_paths).each_value do |proof|
++            [proof[:directory_fd], proof[:socket_fd]].each { |fd| assert(fd.close_on_exec?) }
++            refute_includes(observed['fds'], proof[:directory])
++            refute_includes(observed['fds'], proof[:path])
++          end
++          refute(File.exist?(path + '.pid'))
++        end
++        expected = machine.send(:shared_filesystems).keys.map { |share| machine.send(:virtiofs_socket_path, share) }
++        options = machine.send(:qemu_virtiofs_options)
++        expected.each { |path| assert(options.any? { |option| option.include?("path=#{path}") }) }
++        stop_daemons(machine)
++        machine.cleanup
++        assert_empty(Dir.children(machine.send(:sockdir)))
++        machine.cleanup
++        assert_proofs_closed(machine)
++      ensure
++        guard&.close
++      end
++    end
++  end
++
++  def test_selected_pinned_virtiofsd_consumes_the_real_listener_without_pidfiles
++    selected = ENV.fetch('VPSADMIN_KB_VIRTIOFSD')
++    assert_match(%r{\A/nix/store/[^/]+-virtiofsd-}, selected)
++    executable = File.realpath(File.join(selected, 'bin/virtiofsd'))
++    native_spawn = Process.method(:spawn)
++    mapped = []
++    peers = []
++    with_adapter(KbRuntime::NixosMachine, daemon: selected) do |machine, _directory|
++      Process.stub(:spawn, lambda { |*arguments, **options|
++        assert_equal(File.join(selected, 'bin/virtiofsd'), arguments.first)
++        assert_equal(true, options[:close_others])
++        listener = options.fetch(3)
++        mapped << File.readlink("/proc/self/fd/#{listener.fileno}")
++        # The host test isolates the selected daemon's FD API from namespace
++        # sandbox policy. Production retains its original sandbox options.
++        native_spawn.call(*arguments, '--sandbox', 'none', **options)
++      }) { machine.send(:start_virtiofs) }
++      assert_equal(3, machine.send(:virtiofsd_pids).length)
++      machine.send(:virtiofsd_pids).each_with_index do |pid, i|
++        Timeout.timeout(5) do
++          Thread.pass until File.realpath("/proc/#{pid}/exe") == executable
++        end
++        targets = Dir.children("/proc/#{pid}/fd").filter_map do |fd|
++          File.readlink("/proc/#{pid}/fd/#{fd}") rescue nil
++        end
++        assert_includes(targets, mapped[i])
++      end
++      machine.send(:shared_filesystems).each_key do |share|
++        path = machine.send(:virtiofs_socket_path, share)
++        assert(File.socket?(path))
++        refute(File.exist?(path + '.pid'))
++        log = machine.send(:virtiofs_log_path, share)
++        Timeout.timeout(5) do
++          Thread.pass until File.read(log).include?('Waiting for vhost-user socket connection')
++        end
++        peer = UNIXSocket.new(path)
++        peers << peer
++        # Native vhost-user GET_FEATURES over the inherited listener: request 1,
++        # protocol version 1, zero payload. No QEMU or guest is involved.
++        peer.write([1, 1, 0].pack('L<3'))
++        header = Timeout.timeout(5) { peer.read(12) }
++        refute_nil(header)
++        assert_equal(12, header.bytesize)
++        request, flags, length = header.unpack('L<3')
++        assert_equal(1, request)
++        assert_equal(5, flags)
++        assert_equal(8, length)
++        assert_equal(8, Timeout.timeout(5) { peer.read(length) }.bytesize)
++      end
++      statuses = []
++      native_wait = Process.method(:waitpid2)
++      Process.stub(:wait, lambda { |pid|
++        waited, status = native_wait.call(pid)
++        statuses << status
++        waited
++      }) { stop_daemons(machine) }
++      assert_equal(3, statuses.length)
++      statuses.each { |status| assert(status.success? || status.termsig == Signal.list.fetch('TERM'), status.inspect) }
++      machine.cleanup
++      assert_empty(Dir.children(machine.send(:sockdir)))
++      assert_proofs_closed(machine)
++    ensure
++      peers.each { |peer| peer.close unless peer.closed? }
++    end
++  end
++
++  def test_spawn_failure_retains_only_its_created_listener_until_exact_cleanup
++    with_adapter(KbRuntime::NixosMachine, daemon: '/nonexistent-kb-virtiofsd') do |machine, _directory|
++      listeners = []
++      native = Socket.method(:new)
++      Socket.stub(:new, lambda { |*arguments| native.call(*arguments).tap { |listener| listeners << listener } }) do
++        assert_raises(Errno::ENOENT) { machine.send(:start_virtiofs) }
++      end
++      assert_equal(1, listeners.length)
++      assert(listeners.all?(&:closed?))
++      assert_empty(machine.send(:virtiofsd_pids))
++      assert_equal(1, machine.instance_variable_get(:@kb_virtiofs_paths).length)
++      machine.cleanup
++      machine.cleanup
++      assert_empty(Dir.children(machine.send(:sockdir)))
++      assert_proofs_closed(machine)
++    end
++  end
++
++  def test_partial_start_keeps_the_first_owned_daemon_and_never_unlinks_a_preexisting_pidfile
++    with_adapter(KbRuntime::VpsadminosMachine) do |machine, _directory|
++      path = machine.send(:virtiofs_socket_path, 'vpsadmin') + '.pid'
++      File.write(path, 'foreign fixture', mode: 'wb', perm: 0o600)
++      inode = File.lstat(path).ino
++      assert_raises(KbRuntime::Error) { machine.send(:start_virtiofs) }
++      assert_equal(1, machine.send(:virtiofsd_pids).length)
++      stop_daemons(machine)
++      machine.cleanup
++      assert_equal(['foreign fixture', inode], [File.read(path), File.lstat(path).ino])
++      assert_equal([File.basename(path)], Dir.children(machine.send(:sockdir)))
++      assert_proofs_closed(machine)
++    end
++  end
++
++  def test_preexisting_socket_file_symlink_and_directory_are_never_unlinked_for_bind
++    %i[socket file symlink directory].each do |kind|
++      with_adapter(KbRuntime::NixosMachine) do |machine, directory|
++        path = machine.send(:virtiofs_socket_path, 'vmSharedDir')
++        server = nil
++        case kind
++        when :socket then server = UNIXServer.new(path)
++        when :file then File.write(path, 'foreign fixture')
++        when :symlink then File.symlink(directory, path)
++        when :directory then Dir.mkdir(path, 0o700)
++        end
++        before = File.lstat(path)
++        assert_raises(KbRuntime::Error) { machine.send(:start_virtiofs) }
++        assert_empty(machine.send(:virtiofsd_pids))
++        machine.cleanup
++        after = File.lstat(path)
++        assert_equal([before.dev, before.ino, before.ftype], [after.dev, after.ino, after.ftype])
++      ensure
++        server&.close
++      end
++    end
++  end
++
++  def test_supported_interruption_after_real_spawn_retains_pid_and_closes_parent_listener
++    interruption_at(:spawn)
++  end
++
++  def test_supported_interruption_after_listener_acquisition_closes_every_parent_descriptor
++    interruption_at(:listener)
++  end
++
++  def test_interruption_queued_during_cleanup_closes_all_pins_before_delivery
++    with_adapter(KbRuntime::NixosMachine) do |machine, _directory|
++      machine.send(:start_virtiofs)
++      stop_daemons(machine)
++      descriptor = machine.instance_variable_get(:@kb_virtiofs_paths).values.first.fetch(:socket_fd)
++      native_close = descriptor.method(:close)
++      owner = Thread.current
++      descriptor.define_singleton_method(:close) do
++        result = native_close.call
++        Thread.new { owner.raise Interrupt, 'owned cleanup interruption' }.join
++        result
++      end
++      assert_raises(Interrupt) { machine.cleanup }
++      assert_empty(Dir.children(machine.send(:sockdir)))
++      assert_proofs_closed(machine)
++      machine.cleanup
++    ensure
++      descriptor&.singleton_class&.send(:remove_method, :close)
++    end
++  end
++
++  def test_cleanup_refuses_replaced_socket_with_original_inode_still_pinned
++    with_adapter(KbRuntime::NixosMachine, cleanup_refusal: true) do |machine, _directory|
++      machine.send(:start_virtiofs)
++      stop_daemons(machine)
++      path = machine.send(:virtiofs_socket_path, 'vmSharedDir')
++      original = path + '.retained'
++      File.rename(path, original)
++      replacement = UNIXServer.new(path)
++      File.chmod(0o600, path)
++      inode = File.lstat(path).ino
++      assert_raises(KbRuntime::Error) { machine.cleanup }
++      assert_equal(inode, File.lstat(path).ino)
++      assert(File.socket?(original))
++      assert_proofs_closed(machine)
++      assert_raises(KbRuntime::Error) { machine.cleanup }
++    ensure
++      replacement&.close
++    end
++  end
++
++  def test_cleanup_refuses_replaced_private_parent_with_original_directory_pinned
++    with_adapter(KbRuntime::VpsadminosMachine, cleanup_refusal: true) do |machine, _directory|
++      machine.send(:start_virtiofs)
++      stop_daemons(machine)
++      path = machine.send(:sockdir)
++      File.rename(path, path + '.retained')
++      Dir.mkdir(path, 0o700)
++      foreign = File.join(path, 'unrelated.sock.pid')
++      File.write(foreign, 'untouched', mode: 'wb', perm: 0o600)
++      assert_raises(KbRuntime::Error) { machine.cleanup }
++      assert_equal('untouched', File.read(foreign))
++      assert_equal(3, Dir.children(path + '.retained').length)
++      assert_proofs_closed(machine)
++    end
++  end
++
++  def test_cleanup_refuses_unsafe_socket_type_mode_and_uid_before_any_unlink
++    %i[file symlink mode uid].each do |kind|
++      with_adapter(KbRuntime::NixosMachine, cleanup_refusal: true) do |machine, directory|
++        machine.send(:start_virtiofs)
++        stop_daemons(machine)
++        path = machine.send(:virtiofs_socket_path, 'vmSharedDir')
++        if %i[file symlink].include?(kind)
++          File.rename(path, path + '.retained')
++          kind == :file ? File.write(path, 'untouched') : File.symlink(directory, path)
++        elsif kind == :mode
++          File.chmod(0o660, path)
++        end
++        inode = File.lstat(path).ino
++        if kind == :uid
++          native = File.method(:lstat)
++          File.stub(:lstat, lambda { |candidate|
++            stat = native.call(candidate)
++            stat.define_singleton_method(:uid) { Process.uid + 1 } if candidate == path
++            stat
++          }) { assert_raises(KbRuntime::Error) { machine.cleanup } }
++        else
++          assert_raises(KbRuntime::Error) { machine.cleanup }
++        end
++        assert_equal(inode, File.lstat(path).ino)
++        assert_equal(3 + (%i[file symlink].include?(kind) ? 1 : 0), Dir.children(machine.send(:sockdir)).length)
++        assert_proofs_closed(machine)
++      end
++    end
++  end
++
++  def test_cleanup_refuses_unsafe_parent_mode_type_symlink_and_uid
++    %i[mode file symlink uid].each do |kind|
++      with_adapter(KbRuntime::NixosMachine, cleanup_refusal: true) do |machine, directory|
++        machine.send(:start_virtiofs)
++        stop_daemons(machine)
++        path = machine.send(:sockdir)
++        if %i[file symlink].include?(kind)
++          File.rename(path, path + '.retained')
++          kind == :file ? File.write(path, 'untouched') : File.symlink(path + '.retained', path)
++        elsif kind == :mode
++          File.chmod(0o750, path)
++        end
++        if kind == :uid
++          native = File.method(:lstat)
++          File.stub(:lstat, lambda { |candidate|
++            stat = native.call(candidate)
++            stat.define_singleton_method(:uid) { Process.uid + 1 } if candidate == path
++            stat
++          }) { assert_raises(KbRuntime::Error) { machine.cleanup } }
++        else
++          assert_raises(KbRuntime::Error) { machine.cleanup }
++        end
++        assert_proofs_closed(machine)
++        assert(File.exist?(path) || File.symlink?(path))
++      ensure
++        File.chmod(0o700, path) if kind == :mode
++      end
++    end
++  end
++
++  def test_absent_owned_paths_are_idempotent_but_reappearance_never_gains_authority
++    with_adapter(KbRuntime::NixosMachine, cleanup_refusal: true) do |machine, _directory|
++      machine.send(:start_virtiofs)
++      stop_daemons(machine)
++      path = machine.send(:virtiofs_socket_path, 'vmSharedDir')
++      File.unlink(path)
++      machine.cleanup
++      machine.cleanup
++      Dir.rmdir(machine.send(:sockdir))
++      machine.cleanup
++      Dir.mkdir(machine.send(:sockdir), 0o700)
++      replacement = UNIXServer.new(path)
++      File.chmod(0o600, path)
++      inode = File.lstat(path).ino
++      assert_raises(KbRuntime::Error) { machine.cleanup }
++      assert_equal(inode, File.lstat(path).ino)
++      assert_proofs_closed(machine)
++    ensure
++      replacement&.close
++    end
++  end
++
++  private
++
++  def with_adapter(klass, daemon: nil, cleanup_refusal: false)
++    Dir.mktmpdir('kb-vfs-', '/tmp') do |directory|
++      state = File.join(directory, 'disks')
++      sockets = File.join(directory, 'sockets')
++      [state, sockets].each { |path| Dir.mkdir(path, 0o700) }
++      daemon ||= write_daemon(directory)
++      config = { 'spin' => klass == KbRuntime::NixosMachine ? 'nixos' : 'vpsadminos',
++        'qemu' => '/not-executed', 'virtiofsd' => daemon, 'memory' => 64, 'cpus' => 1,
++        'cpu' => { 'cores' => 1, 'threads' => 1, 'sockets' => 1 }, 'disks' => [],
++        'sharedFileSystems' => { 'vpsadmin' => directory, 'vpsadminos' => directory } }
++      machine = klass.new('services', OsVm::MachineConfig.from_config(config), state, sockets)
++      machine.send(:shared_dir).setup
++      yield machine, directory
++    ensure
++      primary = $!
++      begin
++        if primary && state
++          evidence = Dir.mktmpdir('kb-virtiofs-evidence-', '/tmp')
++          Dir.glob(File.join(state, '*-fs-*.log')).each do |source|
++            target = File.join(evidence, File.basename(source))
++            FileUtils.copy_file(source, target)
++            File.chmod(0o600, target)
++            excerpt = File.binread(target, 768).gsub(/[\r\n]/, ' ')
++            warn "Virtiofs fixture native: #{excerpt}; evidence=#{target} sha256=#{Digest::SHA256.file(target).hexdigest}"
++          end
++        end
++      rescue StandardError => error
++        warn "Virtiofs fixture diagnostic retention: #{error.class}: #{error.message}"
++      end
++      begin
++        stop_daemons(machine) if machine && !machine.send(:virtiofsd_pids).empty?
++        machine&.cleanup
++      rescue StandardError, Minitest::Assertion => error
++        warn "Virtiofs fixture cleanup: #{error.class}: #{error.message}"
++        raise unless primary || cleanup_refusal
++      ensure
++        machine&.finalize
++      end
++    end
++  end
++
++  def stop_daemons(machine)
++    Timeout.timeout(5) { machine.send(:stop_virtiofs) }
++    assert_empty(machine.send(:virtiofsd_pids))
++  end
++
++  def assert_proofs_closed(machine)
++    machine.instance_variable_get(:@kb_virtiofs_paths).each_value do |proof|
++      %i[directory_fd socket_fd].each { |key| assert(proof.fetch(key).closed?) }
++    end
++  end
++
++  def interruption_at(boundary)
++    with_adapter(KbRuntime::NixosMachine) do |machine, _directory|
++      listeners = []
++      spawned = []
++      owner = Thread.current
++      native_socket = Socket.method(:new)
++      native_spawn = Process.method(:spawn)
++      socket = lambda do |*args|
++        listener = native_socket.call(*args)
++        listeners << listener
++        Thread.new { owner.raise Interrupt, 'owned listener interruption' }.join if boundary == :listener
++        listener
++      end
++      spawn = lambda do |*args, **options|
++        pid = native_spawn.call(*args, **options)
++        spawned << pid
++        Thread.new { owner.raise Interrupt, 'owned spawn interruption' }.join if boundary == :spawn
++        pid
++      end
++      Socket.stub(:new, socket) do
++        Process.stub(:spawn, spawn) { assert_raises(Interrupt) { machine.send(:start_virtiofs) } }
++      end
++      assert_equal(1, spawned.length)
++      assert_equal(spawned, machine.send(:virtiofsd_pids))
++      assert_equal(1, listeners.length)
++      assert(listeners.all?(&:closed?))
++      stop_daemons(machine)
++      machine.cleanup
++      assert_empty(Dir.children(machine.send(:sockdir)))
++      assert_proofs_closed(machine)
++    end
++  end
++
++  def write_daemon(directory)
++    package = File.join(directory, 'daemon')
++    Dir.mkdir(package, 0o700)
++    Dir.mkdir(File.join(package, 'bin'), 0o700)
++    File.write(File.join(package, 'bin/virtiofsd'), daemon_program, mode: 'wb', perm: 0o700)
++    package
++  end
++
++  def daemon_program
++    <<~RUBY
++      #!#{RbConfig.ruby}
++      require 'socket'
++      require 'json'
++      listener = Socket.for_fd(Integer(ARGV.fetch(ARGV.index('--fd') + 1)))
++      fds = Dir.children('/proc/self/fd').filter_map { |fd| File.readlink('/proc/self/fd/' + fd) rescue nil }
++      observation = { 'argv' => ARGV, 'fds' => fds, 'listener_type' => listener.stat.ftype.upcase,
++        'accepting' => listener.getsockopt(Socket::SOL_SOCKET, Socket::SO_ACCEPTCONN).int == 1 }
++      loop do
++        peer, = listener.accept
++        peer.puts(JSON.generate(observation))
++        peer.close
++      end
++    RUBY
++  end
++end
++
+ class RunnerSessionTest < Minitest::Test
+   def test_runner_survives_controlled_parent_exit_with_distinct_session_and_no_guard_fds
+     with_runner do |context|
+@@ -1259,3 +1683,154 @@ class RunnerSessionTest < Minitest::Test
+     RUBY
+   end
+ end
++
++class RunnerSessionTest
++  def test_public_stop_reaps_machine_owned_listener_daemons_and_retires_the_namespace
++    with_virtiofs_runner do
++      with_runner do |context|
++        with_controller(context) do |pid, input, output|
++          observe_virtiofs_runner(context, output, pid)
++          input.write('.'); input.flush
++          assert(Process.waitpid2(pid).last.success?)
++          context[:controller_reaped] = true
++          context[:engine].set_phase('ready', context[:record]['run_id'])
++          assert(context[:engine].ready?(context[:record]))
++          assert_equal(4, Dir.children(context[:record]['socket_dir']).length)
++          refute(Dir.children(context[:record]['socket_dir']).any? { |name| name.end_with?('.pid') })
++          shutdown(context)
++          assert_equal(context[:children], context[:engine].process_record(context[:record])['children'])
++          assert(context[:children].all? { |child| KbRuntime::ProcessIdentity.gone?(child) })
++          native = File.read(File.join(context[:record]['state_dir'], 'services-log.log'))
++          assert_includes(native, 'ACTION: qemu_exit')
++          assert_includes(native, 'STATUS: 0')
++          refute(File.exist?(context[:record]['socket_dir']))
++        end
++      end
++    end
++  end
++
++  def test_public_stop_preserves_unknown_pidfile_and_refuses_stopped_even_after_daemons_exit
++    with_virtiofs_runner do
++      with_runner do |context|
++        with_controller(context) do |pid, input, output|
++          observe_virtiofs_runner(context, output, pid)
++          input.write('.'); input.flush
++          assert(Process.waitpid2(pid).last.success?)
++          context[:controller_reaped] = true
++          path = File.join(context[:record]['socket_dir'], 'unknown.sock.pid')
++          File.write(path, 'not cleanup authority', mode: 'wb', perm: 0o600)
++          inode = File.lstat(path).ino
++          error = assert_raises(KbRuntime::Error) { shutdown(context) }
++          assert_match(/unrecognized retained socket contents/, error.message)
++          assert_equal('stopping', context[:engine].phase['phase'])
++          assert(context[:engine].gone?(context[:record]))
++          assert(context[:engine].process_record(context[:record])['complete'])
++          assert_empty(Dir.glob(File.join(context[:engine].resources.root, '*.json')))
++          assert_equal(['not cleanup authority', inode], [File.read(path), File.lstat(path).ino])
++          assert_equal(['unknown.sock.pid'], Dir.children(context[:record]['socket_dir']))
++        end
++      end
++    end
++  end
++
++  private
++
++  def observe_virtiofs_runner(context, output, controller_pid)
++    controller = JSON.parse(Timeout.timeout(5) { output.gets })
++    assert_equal(controller_pid, controller['controller_pid'])
++    proof = context[:engine].process_record(context[:record])
++    assert_equal(controller['runner_pid'], proof['runner']['pid'])
++    assert(KbRuntime::ProcessIdentity.runner_matches?(proof['runner'], context[:record]))
++    context[:runner] = proof['runner']
++    context[:children] = proof['children']
++    assert_equal(4, proof['children'].length, 'three daemons and the owned stand-in VM process')
++    assert(proof['children'].all? { |child| KbRuntime::ProcessIdentity.matches?(child) })
++    marker = JSON.parse(File.read(context[:marker]))
++    assert_equal(proof['runner']['pid'], marker['session'])
++    assert_equal(proof['runner']['pid'], marker['group'])
++    assert_equal(%w[vmSharedDir vpsadmin vpsadminos].sort, marker['shares'].keys.sort)
++    guards = %w[gate operation].map { |kind| File.join(context[:state].root, 'locks', "#{context[:state].slug}.#{kind}.lock") }
++    marker['shares'].each_value do |observed|
++      (guards + [context[:generation], context[:record]['socket_dir']]).each { |path| refute_includes(observed['fds'], path) }
++      assert_equal(['--fd', '3'], observed['argv'].first(2))
++      assert(observed['accepting'])
++    end
++  end
++
++  def with_virtiofs_runner
++    original = method(:runner_program)
++    daemon = VirtiofsListenerTest.new('fixture').send(:daemon_program)
++    addition = <<~RUBY
++      class VirtiofsSessionMachine < KbRuntime::NixosMachine
++        def initialize(directory, sockets, hash_base)
++          @directory = directory
++          package = File.join(directory, 'daemon')
++          Dir.mkdir(package, 0o700)
++          Dir.mkdir(File.join(package, 'bin'), 0o700)
++          File.write(File.join(package, 'bin/virtiofsd'), #{daemon.inspect}, mode: 'wb', perm: 0o700)
++          config = { 'spin' => 'nixos', 'qemu' => '/not-executed', 'virtiofsd' => package,
++            'memory' => 64, 'cpus' => 1, 'cpu' => { 'cores' => 1, 'threads' => 1, 'sockets' => 1 },
++            'disks' => [], 'sharedFileSystems' => { 'vpsadmin' => directory, 'vpsadminos' => directory } }
++          super('services', OsVm::MachineConfig.from_config(config), directory, sockets, hash_base:)
++        end
++        def start(wait_for_boot:)
++          shared_dir.setup
++          start_virtiofs
++          # Only the VM transport is synthetic. Keep the actual OSVM QEMU
++          # reaper, virtiofs stop/wait and K cleanup methods in this fixture.
++          Thread.handle_interrupt(Exception => :never) do
++            reader, @fixture_writer = IO.pipe
++            pid = Process.spawn(RbConfig.ruby, '-e', 'STDIN.read', in: reader, out: File::NULL, err: File::NULL, close_others: true)
++            reader.close
++            qemu_mutex.synchronize do
++              @qemu_pid = pid
++              @running = true
++              @qemu_reaper = run_qemu_reaper(pid)
++            end
++          ensure
++            reader&.close unless reader&.closed?
++          end
++        end
++        def wait_for_boot(timeout:)
++          shares = shared_filesystems.to_h do |share, _|
++            peer = UNIXSocket.new(virtiofs_socket_path(share))
++            begin
++              [share, JSON.parse(Timeout.timeout(5) { peer.gets })]
++            ensure
++              peer.close
++            end
++          end
++          File.write(File.join(@directory, 'machine.json'), JSON.generate('session' => Process.getsid(0),
++            'group' => Process.getpgrp, 'shares' => shares), mode: 'wb', perm: 0o600)
++        end
++        def stop(timeout:)
++          @fixture_writer.close unless @fixture_writer.closed?
++          join(timeout:)
++        end
++        def finalize
++          super
++          File.write(File.join(@directory, 'finalized'), '', mode: 'wb', perm: 0o600)
++        end
++        def cleanup
++          super
++          File.write(File.join(@directory, 'cleaned'), '', mode: 'wb', perm: 0o600)
++        end
++      end
++      class SessionRunner
++        def build_machines(opts)
++          [MachineState.new(name: 'services', machine: VirtiofsSessionMachine.new(opts[:state_dir], opts[:sock_dir], hash_base))]
++        end
++      end
++    RUBY
++    marker = "exit SessionRunner.run(ARGV, hash_base: 'synthetic-network')"
++    define_singleton_method(:runner_program) do
++      source = original.call
++      raise 'runner fixture entrypoint changed' unless source.scan(marker).length == 1
++      source.sub(marker, addition + marker)
++    end
++    singleton_class.send(:private, :runner_program)
++    yield
++  ensure
++    singleton_class.send(:remove_method, :runner_program)
++  end
++end

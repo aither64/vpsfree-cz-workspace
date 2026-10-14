@@ -1,0 +1,44 @@
+commit ac02810edda4be0bd0cad732d33c3f95633ca411
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: 2026-10-07T10:15:43+02:00
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: 2026-10-13T11:43:02+02:00
+
+    cluster: mediate capture leases through the generation guard
+    
+    Relay capture-lease input, readiness and diagnostics through dispatcher-owned
+    pipes. Retain the selected package-generation guard through provider exit and
+    reaping, and cancel the owned child when the caller or protocol is lost.
+    
+    Close the downstream protocol pipe promptly on provider stdout EOF, even if
+    that provider is still running. Diagnostic stderr closure leaves the lease
+    usable. Other provider commands retain buffered dispatch and exit behavior.
+
+commit da2addbff4f2fbf13de984341ad1a138d4e4d657
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: 2026-10-07T16:43:01+02:00
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: 2026-10-13T11:43:02+02:00
+
+    portal: check reconciliation deadline after proof
+    
+    Check the caller's original context after journal and response proof, before
+    accepting lifecycle reconciliation. Slow proof must not commit authority after
+    the fresh-owner deadline has expired.
+    
+    Keep the upstream contention retry and acceptance behavior, and extract its
+    loop for deterministic progress-conflict, cancellation and no-op coverage.
+
+commit fea04c6de25448751239099eca7101c43cb495c2
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: 2026-10-08T22:02:34+02:00
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: 2026-10-13T11:43:02+02:00
+
+    portal: model completed deletion in force retry tests
+    
+    Remove each force-retry fixture journal before its fake command
+    reports success, matching the deletion completion side effect. Prove
+    fresh reconciliation preserves the completed receipt and retry
+    identity. A retained matching journal must still pause a completed
+    receipt without changing its identity.

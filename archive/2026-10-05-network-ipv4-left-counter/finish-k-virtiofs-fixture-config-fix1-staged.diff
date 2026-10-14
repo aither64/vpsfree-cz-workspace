@@ -1,0 +1,23 @@
+diff --git a/tools/test-machine.rb b/tools/test-machine.rb
+index 70537cc8f8030f4f854264c604f3f73fbe51ec5e..562c698d7e941d7d7401796501694ea0334a6b22 100644
+--- a/tools/test-machine.rb
++++ b/tools/test-machine.rb
+@@ -428,6 +428,9 @@ class VirtiofsListenerTest < Minitest::Test
+       daemon ||= write_daemon(directory)
+       config = { 'spin' => klass == KbRuntime::NixosMachine ? 'nixos' : 'vpsadminos',
+         'qemu' => '/not-executed', 'virtiofsd' => daemon, 'memory' => 64, 'cpus' => 1,
++        'kernel' => '/not-executed/kernel', 'initrd' => '/not-executed/initrd',
++        'toplevel' => '/not-executed/system',
++        (klass == KbRuntime::NixosMachine ? 'diskImage' : 'squashfs') => '/not-executed/root-image',
+         'cpu' => { 'cores' => 1, 'threads' => 1, 'sockets' => 1 }, 'disks' => [],
+         'sharedFileSystems' => { 'vpsadmin' => directory, 'vpsadminos' => directory } }
+       machine = klass.new('services', OsVm::MachineConfig.from_config(config), state, sockets)
+@@ -1769,6 +1772,8 @@ class RunnerSessionTest
+           Dir.mkdir(File.join(package, 'bin'), 0o700)
+           File.write(File.join(package, 'bin/virtiofsd'), #{daemon.inspect}, mode: 'wb', perm: 0o700)
+           config = { 'spin' => 'nixos', 'qemu' => '/not-executed', 'virtiofsd' => package,
++            'kernel' => '/not-executed/kernel', 'initrd' => '/not-executed/initrd',
++            'toplevel' => '/not-executed/system', 'diskImage' => '/not-executed/root-image',
+             'memory' => 64, 'cpus' => 1, 'cpu' => { 'cores' => 1, 'threads' => 1, 'sockets' => 1 },
+             'disks' => [], 'sharedFileSystems' => { 'vpsadmin' => directory, 'vpsadminos' => directory } }
+           super('services', OsVm::MachineConfig.from_config(config), directory, sockets, hash_base:)

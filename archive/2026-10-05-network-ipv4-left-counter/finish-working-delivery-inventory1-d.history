@@ -1,0 +1,57 @@
+commit 24d198e7210547f08e8bf23f38793a4043b79377
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 10:15:43 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 11 16:27:41 2026 +0200
+
+    cluster: mediate capture leases through the generation guard
+    
+    Relay capture-lease input, readiness and diagnostics through dispatcher-owned
+    pipes. Retain the selected package-generation guard through provider exit and
+    reaping, and cancel the owned child when the caller or protocol is lost.
+    
+    Close the downstream protocol pipe promptly on provider stdout EOF, even if
+    that provider is still running. Diagnostic stderr closure leaves the lease
+    usable. Other provider commands retain buffered dispatch and exit behavior.
+
+ docs/workspace-portal.md                       |  20 ++
+ libexec/workspace-host                         | 130 +++++++-
+ test/workspace_host/commands_and_locks_test.rb | 430 +++++++++++++++++++++++++
+ 3 files changed, 578 insertions(+), 2 deletions(-)
+
+commit d7090a48689fbd9a4ed4f62e73cd79a55a9a980e
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 16:43:01 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 11 16:27:41 2026 +0200
+
+    portal: check reconciliation deadline after proof
+    
+    Check the caller's original context after journal and response proof, before
+    accepting lifecycle reconciliation. Slow proof must not commit authority after
+    the fresh-owner deadline has expired.
+    
+    Keep the upstream contention retry and acceptance behavior, and extract its
+    loop for deterministic progress-conflict, cancellation and no-op coverage.
+
+ portal/internal/web/operation_state.go      |  11 +++
+ portal/internal/web/operation_state_test.go | 148 ++++++++++++++++++++++++++++
+ 2 files changed, 159 insertions(+)
+
+commit 0a422d1fa9fb2077932a8062ee1d948c9f4f2177
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Thu Oct 8 22:02:34 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 11 16:27:41 2026 +0200
+
+    portal: model completed deletion in force retry tests
+    
+    Remove each force-retry fixture journal before its fake command
+    reports success, matching the deletion completion side effect. Prove
+    fresh reconciliation preserves the completed receipt and retry
+    identity. A retained matching journal must still pause a completed
+    receipt without changing its identity.
+
+ portal/internal/web/operation_state_test.go |  9 +++++-
+ portal/internal/web/server_test.go          | 49 +++++++++++++++++++++++------
+ 2 files changed, 48 insertions(+), 10 deletions(-)

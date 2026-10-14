@@ -1,0 +1,14 @@
+{
+  "status": "source-only; no local reproduction or passing check claim",
+  "finding": "finish-task-discovery-review1-finding1.json",
+  "lead_brief": "finish-k-stop-ack-notification-brief1.md",
+  "finding_head": "29b17bf4bb151fbbb6b693c559cb16a196fa41c5",
+  "root_review_boundary": "original committed K29b/E2ec review completed before this remediation; no certification of this new source",
+  "source_cause": "first valid request latched/withdrew readiness but reply puts/flush could raise before its sole notification; later latches returned false",
+  "remediation": "existing signal_trap.call if first in narrow ensure around only acknowledgement puts/flush; invalid request validation and existing rescue/notify/peer/identity/lifetime behavior unchanged",
+  "fixture": "new ack-loss mode only wraps actual accepted UNIXSocket puts/flush/close, blocks the first valid reply after real latch, records underlying native EPIPE, and retains the real machine child behind an owned pipe/socket barrier",
+  "failure_cleanup": "new test spawns runner directly and owns its sole waitpid. Polling wait+PID clear masked together; any fallback TERM requires the still-unreaped PID and matching exact owned runner tuple/launch. It releases only synthetic fixture child IPC, never a group or campaign resource. Existing primary/secondary failure and native private-log retention remain unchanged",
+  "scope_deviation": null,
+  "root_prose_agreement": true,
+  "all_private_campaigns_and_other_repositories_untouched": true
+}

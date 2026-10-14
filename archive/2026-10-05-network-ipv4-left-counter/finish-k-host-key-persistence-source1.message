@@ -1,0 +1,12 @@
+cluster: retain one Ed25519 host key per KB guest
+
+The node's volatile root regenerated host keys after resume. Store its
+single Ed25519 key on the mounted retained tank and refuse unavailable or
+unsafe storage before the existing OS key-generation loop can run.
+
+Use the same explicit algorithm for services and optional DNS guests on
+their retained writable roots. One advertised key avoids accepting a
+partial initial multi-algorithm set that strict retained trust later refuses.
+
+This policy requires genuinely new artifacts. It neither migrates older
+volatile or multi-key guests nor enlarges their retained client trust.

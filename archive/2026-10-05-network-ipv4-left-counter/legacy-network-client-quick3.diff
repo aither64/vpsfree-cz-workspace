@@ -1,0 +1,445 @@
+diff --git a/webui/forms/cluster.forms.php b/webui/forms/cluster.forms.php
+index 078bbcfbe..a81fe7c26 100644
+--- a/webui/forms/cluster.forms.php
++++ b/webui/forms/cluster.forms.php
+@@ -237,11 +237,11 @@ function networks_list()
+             'private_access' => 'Priv',
+         ][$n->role]);
+         $xtpl->table_td(boolean_icon($n->managed));
+-        $knownEnabled = isset($n->enabled) && is_bool($n->enabled);
++        $enabled = network_enabled_state($n);
+         $canUpdateEnabled = isset($api->network->update->getParameters('input')->enabled);
+         $xtpl->table_td(
+-            $knownEnabled
+-            ? boolean_icon($n->enabled) . ($canUpdateEnabled
++            $enabled !== null
++            ? boolean_icon($enabled) . ($canUpdateEnabled
+                 ? ' <a href="?page=cluster&action=network_enabled&network=' . $n->id . '">'
+                     . h(_('Edit')) . '</a>' : '')
+             : '-'
+@@ -283,10 +283,11 @@ function network_enabled_form($network_id)
+     global $xtpl, $api;
+ 
+     $network = $api->network->show($network_id);
++    $enabled = network_enabled_state($network);
+     $xtpl->title(_('Network availability'));
+     $xtpl->sbar_add(_('Back to networks'), '?page=cluster&action=networks');
+ 
+-    if (!isset($api->network->update->getParameters('input')->enabled) || !isset($network->enabled)) {
++    if (!isset($api->network->update->getParameters('input')->enabled) || $enabled === null) {
+         return;
+     }
+ 
+@@ -300,7 +301,7 @@ function network_enabled_form($network_id)
+         $xtpl->table_td(h($value));
+         $xtpl->table_tr();
+     }
+-    $xtpl->form_set_hidden_fields(['enabled' => $network->enabled ? '0' : '1']);
++    $xtpl->form_set_hidden_fields(['enabled' => $enabled ? '0' : '1']);
+     $xtpl->table_td(
+         h(_('Disabling prevents new allocations and assignments. Existing service continues, and operations already accepted may finish. Detached owned addresses cannot be assigned until the network is enabled again.')),
+         false,
+@@ -309,7 +310,7 @@ function network_enabled_form($network_id)
+     );
+     $xtpl->table_tr();
+     $xtpl->form_add_checkbox(_('Confirm') . ':', 'confirm', '1', false);
+-    $xtpl->form_out($network->enabled ? _('Disable this network') : _('Enable this network'));
++    $xtpl->form_out($enabled ? _('Disable this network') : _('Enable this network'));
+ }
+ 
+ function ip_list_link($page, $text, $conds)
+diff --git a/webui/forms/networking.forms.php b/webui/forms/networking.forms.php
+index e41a1609a..bb64de77e 100644
+--- a/webui/forms/networking.forms.php
++++ b/webui/forms/networking.forms.php
+@@ -153,9 +153,10 @@ function ip_address_list($page)
+     foreach ($ips as $ip) {
+         $netif = $ip->network_interface_id ? $ip->network_interface : null;
+         $vps = $netif && $netif->vps_id ? $netif->vps : null;
++        $enabled = network_enabled_state($ip->network);
+ 
+         $xtpl->table_td($ip->network->address . '/' . $ip->network->prefix);
+-        $xtpl->table_td(isset($ip->network->enabled) ? ($ip->network->enabled ? _('Enabled') : _('Disabled')) : '-');
++        $xtpl->table_td($enabled !== null ? ($enabled ? _('Enabled') : _('Disabled')) : '-');
+         $xtpl->table_td($ip->addr . '/' . $ip->prefix);
+         $xtpl->table_td(approx_number($ip->size), false, true);
+ 
+@@ -192,7 +193,7 @@ function ip_address_list($page)
+                 . '</a>'
+             );
+ 
+-        } elseif (!$netif && ($ip->network->enabled ?? true)) {
++        } elseif (!$netif && $enabled !== false) {
+             $xtpl->table_td(
+                 '<a href="?page=networking&action=route_assign&id=' . $ip->id . '&return=' . $return_url . '">'
+                 . '<img src="template/icons/vps_add.png" alt="' . _('Add to a VPS') . '" title="' . _('Add to a VPS') . '">'
+@@ -422,6 +423,7 @@ function route_edit_form($id)
+     global $xtpl, $api;
+ 
+     $ip = $api->ip_address->show($id);
++    $enabled = network_enabled_state($ip->network);
+     $netif = $ip->network_interface_id ? $ip->network_interface : null;
+     $vps = $netif && $netif->vps_id ? $netif->vps : null;
+ 
+@@ -440,7 +442,7 @@ function route_edit_form($id)
+     if ($vps) {
+         $xtpl->sbar_add(_('Remove from VPS'), '?page=networking&action=route_unassign&id=' . $ip->id . '&return=' . $return_url);
+ 
+-    } elseif (!$netif && ($ip->network->enabled ?? true)) {
++    } elseif (!$netif && $enabled !== false) {
+         $xtpl->sbar_add(_('Add to a VPS'), '?page=networking&action=route_assign&id=' . $ip->id . '&return=' . $return_url);
+     }
+ 
+@@ -451,9 +453,9 @@ function route_edit_form($id)
+     $xtpl->table_td($ip->network->address . '/' . $ip->network->prefix);
+     $xtpl->table_tr();
+ 
+-    if (isset($ip->network->enabled)) {
++    if ($enabled !== null) {
+         $xtpl->table_td(_('Network enabled') . ':');
+-        $xtpl->table_td($ip->network->enabled ? _('Enabled') : _('Disabled'));
++        $xtpl->table_td($enabled ? _('Enabled') : _('Disabled'));
+         $xtpl->table_tr();
+     }
+ 
+@@ -599,7 +601,7 @@ function route_assign_form($id)
+         $_GET['return'] ? $_GET['return'] : '?page=networking&action=ip_addresses'
+     );
+ 
+-    if (isset($ip->network->enabled) && !$ip->network->enabled) {
++    if (network_enabled_state($ip->network) === false) {
+         $xtpl->perex(_('Disabled'), _('Disabling prevents new allocations and assignments. Existing service continues, and operations already accepted may finish. Detached owned addresses cannot be assigned until the network is enabled again.'));
+         return;
+     }
+diff --git a/webui/lib/functions.lib.php b/webui/lib/functions.lib.php
+index 888789b67..51bc43d23 100644
+--- a/webui/lib/functions.lib.php
++++ b/webui/lib/functions.lib.php
+@@ -33,6 +33,15 @@ if (!defined('VPSADMIN_SERVER_TIME_ZONE')) {
+     define('VPSADMIN_SERVER_TIME_ZONE', date_default_timezone_get());
+ }
+ 
++function network_enabled_state(\HaveAPI\Client\ResourceInstance $network): ?bool
++{
++    // HaveAPI ResourceInstance exposes attributes through __get(), without __isset().
++    $attrs = $network->attributes();
++    $enabled = $attrs['enabled'] ?? null;
++
++    return is_bool($enabled) ? $enabled : null;
++}
++
+ 
+ function get_free_route_list($res, $vps, $role = null, $limit = null)
+ {
+diff --git a/webui/tests/Regression/NetworkAvailabilityTest.php b/webui/tests/Regression/NetworkAvailabilityTest.php
+index 2292956d1..162bf6e32 100644
+--- a/webui/tests/Regression/NetworkAvailabilityTest.php
++++ b/webui/tests/Regression/NetworkAvailabilityTest.php
+@@ -1,7 +1,9 @@
+ <?php
+ 
++use PHPUnit\Framework\Attributes\PreserveGlobalState;
+ use PHPUnit\Framework\TestCase;
+ 
++#[PreserveGlobalState(false)]
+ final class NetworkAvailabilityTest extends TestCase
+ {
+     public function testAvailableRouteSelectorUsesOnlyAdvertisedNetworkFilter(): void
+@@ -47,40 +49,274 @@ final class NetworkAvailabilityTest extends TestCase
+ 
+     public function testStaleDisabledOwnedAssignmentFormHasNoSubmissionControls(): void
+     {
+-        require_once dirname(__DIR__, 2) . '/forms/networking.forms.php';
++        $this->loadUi();
+         global $api, $xtpl;
+-        $_GET = ['return' => ''];
++        $api = $this->realClient(false);
++        $xtpl = $this->template();
+         $_POST = ['vps' => 4, 'network_interface' => 5];
+-        $api = (object) ['ip_address' => new class {
+-            public function show($id, $params)
+-            {
+-                return (object) ['id' => $id, 'user_id' => 1, 'network' => (object) ['enabled' => false]];
++
++        route_assign_form(3);
++
++        self::assertStringContainsString(
++            _('Disabling prevents new allocations and assignments. Existing service continues, and operations already accepted may finish. Detached owned addresses cannot be assigned until the network is enabled again.'),
++            $xtpl->text('main.perex')
++        );
++        self::assertStringNotContainsString('<form', $xtpl->text('main.table'));
++        self::assertSame(['ip_address.show'], array_column($api->requests, 'action'));
++    }
++
++    public function testNetworkEditorUsesRealClientStateAndAdvertisedCapability(): void
++    {
++        $this->loadUi();
++        global $api, $xtpl;
++
++        foreach ([[true, true], [false, true], [true, false], [false, false], [null, true]] as [$enabled, $supported]) {
++            $api = $this->realClient($enabled, $supported);
++            $xtpl = $this->template();
++            self::assertSame('PUT', $api->network->update->httpMethod());
++            self::assertSame($supported, isset($api->network->update->getParameters('input')->enabled));
++            $network = $api->network->show(7);
++            self::assertInstanceOf(\HaveAPI\Client\ResourceInstance::class, $network);
++            self::assertSame($enabled, network_enabled_state($network));
++
++            network_enabled_form(7);
++
++            $html = $xtpl->text('main.table');
++            if (!$supported || $enabled === null) {
++                self::assertStringNotContainsString('<form', $html);
++                continue;
+             }
+-        }];
+-        $xtpl = new class {
+-            public array $messages = [];
+ 
+-            public function table_title($title) {}
++            self::assertStringContainsString('action="?page=cluster&amp;action=network_enabled&amp;network=7" method="post"', $html);
++            self::assertStringContainsString('name="enabled" value="' . ($enabled ? '0' : '1') . '"', $html);
++            self::assertStringContainsString('name="confirm"', $html);
++            self::assertStringContainsString('name="csrf_token"', $html);
++            self::assertStringContainsString($enabled ? _('Disable this network') : _('Enable this network'), $html);
++            self::assertStringContainsString('192.0.2.0/24 (#7)', $html);
++        }
++    }
+ 
+-            public function sbar_add($title, $url) {}
++    public function testNetworkInventoryUsesRealClientEnabledColumn(): void
++    {
++        $this->loadUi();
++        global $api, $xtpl;
+ 
+-            public function perex($title, $message)
+-            {
+-                $this->messages[] = $message;
++        foreach ([[true, true], [false, true], [false, false], [null, false]] as [$enabled, $supported]) {
++            $api = $this->realClient($enabled, $supported);
++            $xtpl = $this->template();
++
++            networks_list();
++
++            $xpath = $this->xpath($xtpl->text('main.table'));
++            $cell = $xpath->query('//tr[td[1]="192.0.2.0/24"]/td[6]')->item(0);
++            self::assertNotNull($cell);
++            if ($enabled === null) {
++                self::assertSame('-', trim($cell->textContent));
++                self::assertSame(0, $xpath->query('.//img|.//a', $cell)->length);
++            } else {
++                self::assertSame(
++                    'template/icons/' . ($enabled ? 'transact_ok.png' : 'transact_fail.png'),
++                    $xpath->query('.//img/@src', $cell)->item(0)->nodeValue
++                );
++                self::assertSame($supported ? 1 : 0, $xpath->query('.//a[contains(@href,"action=network_enabled")]', $cell)->length);
++            }
++        }
++    }
++
++    public function testIpInventoryPreservesAssignedServiceAndFiltersDetachedActions(): void
++    {
++        $this->loadUi();
++        global $api, $xtpl;
++        $_GET['list'] = '1';
++
++        foreach ([[true, false], [false, false], [null, false], [false, true]] as [$enabled, $assigned]) {
++            $api = $this->realClient($enabled, true, $assigned);
++            $xtpl = $this->template();
++
++            ip_address_list('networking');
++
++            $xpath = $this->xpath($xtpl->text('main.table'));
++            $row = $xpath->query('//tr[td[1]="192.0.2.0/24"]')->item(0);
++            self::assertNotNull($row);
++            self::assertSame($enabled === null ? '-' : ($enabled ? _('Enabled') : _('Disabled')), trim($xpath->query('./td[2]', $row)->item(0)->textContent));
++            self::assertSame(!$assigned && $enabled !== false ? 1 : 0, $xpath->query('.//a[contains(@href,"action=route_assign")]', $row)->length);
++            self::assertSame($assigned ? 1 : 0, $xpath->query('.//a[contains(@href,"action=route_unassign")]', $row)->length);
++            self::assertSame($assigned ? 1 : 0, $xpath->query('.//a[contains(@href,"page=adminvps")]', $row)->length);
++            self::assertSame(1, $xpath->query('.//a[contains(@href,"action=route_edit")]', $row)->length);
++        }
++    }
++
++    public function testIpDetailUsesRealClientStateWithoutHidingServiceLinks(): void
++    {
++        $this->loadUi();
++        global $api, $xtpl;
++
++        foreach ([[true, false], [false, false], [null, false], [false, true]] as [$enabled, $assigned]) {
++            $api = $this->realClient($enabled, true, $assigned);
++            $xtpl = $this->template();
++
++            route_edit_form(3);
++
++            $table = $this->xpath($xtpl->text('main.table'));
++            $sidebar = $this->xpath($xtpl->text('main.sidebar'));
++            $state = $table->query('//tr[td[1]="' . _('Network enabled') . ':"]/td[2]');
++            self::assertSame($enabled === null ? 0 : 1, $state->length);
++            if ($enabled !== null) {
++                self::assertSame($enabled ? _('Enabled') : _('Disabled'), trim($state->item(0)->textContent));
+             }
++            self::assertSame(!$assigned && $enabled !== false ? 1 : 0, $sidebar->query('//a[contains(@href,"action=route_assign")]')->length);
++            self::assertSame($assigned ? 1 : 0, $sidebar->query('//a[contains(@href,"action=route_unassign")]')->length);
++            self::assertSame($assigned ? 2 : 0, $table->query('//a[contains(@href,"page=adminvps")]')->length);
++            self::assertSame($assigned ? 1 : 0, $table->query('//a[contains(@href,"action=hostaddr_unassign")]')->length);
++            self::assertSame(1, $table->query('//a[@data-vpsadmin-doc-id="networking.add-host-addresses"]')->length);
++        }
++    }
+ 
+-            public function form_create($url, $method)
++    public function testEnabledAndOldApiAssignmentFormsStillRender(): void
++    {
++        $this->loadUi();
++        global $api, $xtpl;
++
++        foreach ([true, null] as $enabled) {
++            $api = $this->realClient($enabled);
++            $xtpl = $this->template();
++
++            route_assign_form(3);
++
++            self::assertStringContainsString('action="?page=networking&amp;action=route_assign&amp;id=3&amp;return=" method="post"', $xtpl->text('main.table'));
++            self::assertStringContainsString('name="vps"', $xtpl->text('main.table'));
++            self::assertSame('', $xtpl->text('main.perex'));
++        }
++    }
++
++    private function loadUi(): void
++    {
++        $root = dirname(__DIR__, 2);
++        require_once $root . '/vendor/autoload.php';
++        require_once $root . '/lib/functions.lib.php';
++        require_once $root . '/lib/security.lib.php';
++        require_once $root . '/lib/pagination.lib.php';
++        require_once $root . '/lib/xtemplate.lib.php';
++        require_once $root . '/forms/cluster.forms.php';
++        require_once $root . '/forms/networking.forms.php';
++        $_GET = ['return' => ''];
++        $_POST = ['vps' => '', 'network_interface' => ''];
++        $_SESSION = ['is_admin' => false, 'csrf_base' => 'network-availability-test'];
++        $_SERVER['REQUEST_URI'] = '?page=networking&action=ip_addresses';
++    }
++
++    private function template(): XTemplate
++    {
++        return new XTemplate(dirname(__DIR__, 2) . '/template/template.html');
++    }
++
++    private function xpath(string $html): DOMXPath
++    {
++        $doc = new DOMDocument();
++        $doc->loadHTML('<html><body>' . $html . '</body></html>', LIBXML_NOERROR | LIBXML_NOWARNING);
++        return new DOMXPath($doc);
++    }
++
++    private function realClient(?bool $enabled, bool $supported = true, bool $assigned = false): \HaveAPI\Client
++    {
++        $client = new class ('https://api.example') extends \HaveAPI\Client {
++            public array $responses = [];
++            public array $requests = [];
++
++            public function directCall(\HaveAPI\Client\Action $action, $params = [], &$time = null)
+             {
+-                throw new RuntimeException('Disabled allocation reached assignment controls');
++                $key = $action->getResource()->getName() . '.' . $action->name();
++                $this->requests[] = ['action' => $key, 'method' => $action->httpMethod(), 'path' => $action->path(), 'params' => $params];
++                if (!array_key_exists($key, $this->responses)) {
++                    throw new RuntimeException('Unexpected API request: ' . $key);
++                }
++                $time = 0.0;
++                return (object) [
++                    'code' => 200,
++                    'body' => (object) [
++                        'status' => true,
++                        'message' => '',
++                        'errors' => (object) [],
++                        'response' => (object) [
++                            $action->getNamespace('output') => $this->responses[$key],
++                            '_meta' => (object) ['path_params' => $action->getLastArgs()],
++                        ],
++                    ],
++                ];
+             }
+         };
++        $resolved = static fn (array $attrs): object => (object) ($attrs + ['_meta' => (object) ['resolved' => true, 'path_params' => [$attrs['id']]]]);
++        $network = $resolved([
++            'id' => 7, 'address' => '192.0.2.0', 'prefix' => 24, 'label' => 'test network',
++            'role' => 'public_access', 'managed' => false, 'size' => 256,
++            'used' => 2, 'taken' => 2, 'assigned' => 1, 'owned' => 1, 'primary_location' => null,
++        ] + ($enabled === null ? [] : ['enabled' => $enabled]));
++        $user = $resolved(['id' => 1, 'login' => 'test-user']);
++        $vps = $resolved(['id' => 4, 'hostname' => 'existing-service']);
++        $netif = $resolved(['id' => 5, 'name' => 'eth0', 'vps' => $vps]);
++        $ip = $resolved([
++            'id' => 3, 'addr' => '192.0.2.3', 'prefix' => 32, 'size' => 1,
++            'network' => $network, 'user' => $user, 'network_interface' => $assigned ? $netif : null,
++        ]);
++        $host = $resolved([
++            'id' => 11, 'addr' => '192.0.2.3', 'ip_address' => $ip,
++            'reverse_record_value' => null, 'assigned' => true, 'user_created' => false,
++        ]);
++        $client->responses = [
++            'network.show' => $network, 'network.list' => [$network],
++            'ip_address.show' => $ip, 'ip_address.list' => [$ip],
++            'location.list' => [], 'host_ip_address.list' => $assigned ? [$host] : [],
++        ];
+ 
+-        route_assign_form(3);
+-
+-        self::assertCount(1, $xtpl->messages);
+-        self::assertSame(
+-            _('Disabling prevents new allocations and assignments. Existing service continues, and operations already accepted may finish. Detached owned addresses cannot be assigned until the network is enabled again.'),
+-            $xtpl->messages[0]
+-        );
++        $resourceParam = static fn (string $name, string $label = 'id'): object => (object) [
++            'type' => 'Resource', 'resource' => [$name], 'value_id' => 'id', 'value_label' => $label,
++        ];
++        $fields = [
++            'network' => [
++                'id' => 'Integer', 'address' => 'String', 'prefix' => 'Integer', 'label' => 'String',
++                'role' => 'String', 'managed' => 'Boolean', 'size' => 'Integer',
++                'used' => 'Integer', 'taken' => 'Integer', 'assigned' => 'Integer', 'owned' => 'Integer',
++                'primary_location' => $resourceParam('location', 'label'),
++            ] + ($enabled === null ? [] : ['enabled' => 'Boolean']),
++            'ip_address' => [
++                'id' => 'Integer', 'addr' => 'String', 'prefix' => 'Integer', 'size' => 'Integer',
++                'network' => $resourceParam('network', 'label'), 'user' => $resourceParam('user', 'login'),
++                'network_interface' => $resourceParam('network_interface', 'name'),
++            ],
++            'host_ip_address' => [
++                'id' => 'Integer', 'addr' => 'String', 'ip_address' => $resourceParam('ip_address', 'addr'),
++                'reverse_record_value' => 'String', 'assigned' => 'Boolean', 'user_created' => 'Boolean',
++            ],
++            'network_interface' => ['id' => 'Integer', 'name' => 'String', 'vps' => $resourceParam('vps', 'hostname')],
++            'vps' => ['id' => 'Integer', 'hostname' => 'String'],
++            'user' => ['id' => 'Integer', 'login' => 'String'],
++            'location' => ['id' => 'Integer', 'label' => 'String'],
++        ];
++        $action = static fn (string $namespace, string $method, string $path, string $layout, array $input, array $output): object => (object) [
++            'aliases' => [], 'blocking' => false, 'method' => $method, 'path' => $path,
++            'input' => (object) ['layout' => 'object', 'namespace' => $namespace, 'parameters' => (object) $input],
++            'output' => (object) ['layout' => $layout, 'namespace' => $namespace, 'parameters' => (object) $output],
++            'meta' => (object) [],
++        ];
++        $resources = [];
++        foreach ($fields as $name => $types) {
++            $parameters = array_map(static fn ($type) => is_string($type) ? (object) ['type' => $type] : $type, $types);
++            $path = '/v1/' . $name;
++            $resources[$name] = (object) [
++                'resources' => (object) [],
++                'actions' => (object) [
++                    'show' => $action($name, 'GET', $path . '/{' . $name . '_id}', 'object', [], $parameters),
++                    'list' => $action($name, 'GET', $path, 'object_list', [
++                        'from_id' => (object) ['type' => 'Integer'], 'limit' => (object) ['type' => 'Integer', 'default' => 25],
++                    ], $parameters),
++                ],
++            ];
++        }
++        $resources['network']->actions->update = $action('network', 'PUT', '/v1/network/{network_id}', 'object', $supported ? ['enabled' => (object) ['type' => 'Boolean']] : [], (array) $resources['network']->actions->show->output->parameters);
++        $client->setDescription((object) [
++            'authentication' => (object) [], 'meta' => (object) ['namespace' => '_meta'],
++            'resources' => (object) $resources,
++        ]);
++        return $client;
+     }
+ }

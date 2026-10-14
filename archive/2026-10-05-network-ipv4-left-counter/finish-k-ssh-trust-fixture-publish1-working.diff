@@ -1,0 +1,37 @@
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index 7fac890bdf580c2ded11798ed28d9ee1c4e4fc77..3d97d77d43cd64b5f91c2073a3b75ca7a98c25e9 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -1137,9 +1137,16 @@ class RuntimeLifecycleTest < Minitest::Test
+   def test_shared_ssh_discovery_deadline_reaches_existing_live_verification_once
+     Dir.mktmpdir do |directory|
+       value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++      original_credentials = value.method(:initialize_credentials)
++      value.define_singleton_method(:initialize_credentials) do |input|
++        credentials = original_credentials.call(input)
++        File.write(File.join(credentials, 'known_hosts'), '')
++        credentials
++      end
+       attempts = 0
+       verifications = 0
+       deadlines = []
++      discovered_key = nil
+       value.define_singleton_method(:establish_ssh_trust) do |record, deadline:|
+         KbRuntime::Engine.instance_method(:establish_ssh_trust).bind_call(self, record, deadline:)
+       end
+@@ -1160,6 +1167,7 @@ class RuntimeLifecycleTest < Minitest::Test
+                    wire = [11].pack('N') + 'ssh-ed25519' + [32].pack('N') + 'k' * 32
+                    "[#{endpoint['host']}]:#{endpoint['port']} ssh-ed25519 #{Base64.strict_encode64(wire)}"
+                  end
++        discovered_key = output unless output.empty?
+         { stdout: output, stderr: '', exitstatus: output.empty? ? 1 : 0,
+           termsig: nil, deadline: false, truncated: false }
+       end
+@@ -1170,6 +1178,7 @@ class RuntimeLifecycleTest < Minitest::Test
+         assert_equal(1, verifications)
+         assert_equal(1, value.software.builds)
+         assert(value.status['ready'])
++        assert_equal("#{discovered_key}\n", value.state.file(File.join(value.state.path('credentials'), 'known_hosts')))
+         value.stop(timeout: 5)
+         assert_equal(1, verifications)
+       ensure

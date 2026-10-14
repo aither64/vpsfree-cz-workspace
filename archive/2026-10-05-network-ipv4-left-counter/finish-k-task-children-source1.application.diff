@@ -1,0 +1,745 @@
+diff --git a/cluster/lib/devcluster_runner.rb b/cluster/lib/devcluster_runner.rb
+index 44f0f23cf6db61bcd2b6155e68c1637a47d557bd..5dbf3fec051b5655206ed09019ed50a6fe252ce7 100644
+--- a/cluster/lib/devcluster_runner.rb
++++ b/cluster/lib/devcluster_runner.rb
+@@ -102,7 +102,13 @@ module DevClusters
+       tracking = true
+       @started_machines = []
+       discover = proc do
+-        KbRuntime::ProcessIdentity.descendants(Process.pid).each { |record| children[[record['pid'], record['start_ticks']]] = record }
++        observation = { incomplete: false }
++        begin
++          KbRuntime::ProcessIdentity.descendants(Process.pid, observation:)
++        ensure
++          Array(observation[:records]).each { |record| children[[record['pid'], record['start_ticks']]] = record }
++        end
++        !observation[:incomplete]
+       end
+       write_processes = proc do |complete|
+         state.write(process_path, { 'schema' => 1, 'instance_id' => opts[:instance_id], 'run_id' => opts[:run_id],
+@@ -251,9 +257,9 @@ module DevClusters
+               end
+             end
+             exited = mutex.synchronize do
+-              discover.call
++              observed = discover.call
+               write_processes.call(false)
+-              @started_machines.none? { |entry| entry.machine.running? } && children.values.all? { |record| KbRuntime::ProcessIdentity.gone?(record) }
++              observed && @started_machines.none? { |entry| entry.machine.running? } && children.values.all? { |record| KbRuntime::ProcessIdentity.gone?(record) }
+             end
+             unless exited
+               sleep 0.05
+@@ -261,6 +267,16 @@ module DevClusters
+             end
+             mutex.synchronize { tracking = false }
+             tracking_thread.join
++            quiesced = mutex.synchronize do
++              observed = discover.call
++              write_processes.call(false)
++              observed && @started_machines.none? { |entry| entry.machine.running? } && children.values.all? { |record| KbRuntime::ProcessIdentity.gone?(record) }
++            end
++            unless quiesced
++              mutex.synchronize { tracking = true }
++              tracking_thread = start_tracker.call
++              next
++            end
+             unless finalized
+               @started_machines.each do |entry|
+                 begin
+@@ -273,8 +289,8 @@ module DevClusters
+               finalized = true
+             end
+             complete = mutex.synchronize do
+-              discover.call
+-              proved = @started_machines.none? { |entry| entry.machine.running? } && children.values.all? { |record| KbRuntime::ProcessIdentity.gone?(record) }
++              observed = discover.call
++              proved = observed && @started_machines.none? { |entry| entry.machine.running? } && children.values.all? { |record| KbRuntime::ProcessIdentity.gone?(record) }
+               write_processes.call(proved)
+               proved
+             end
+diff --git a/cluster/lib/kb_process.rb b/cluster/lib/kb_process.rb
+index dc8467590aa4b89011ad784fcab00917509c8876..e5a765a2b87957b84a186917287082619607622c 100644
+--- a/cluster/lib/kb_process.rb
++++ b/cluster/lib/kb_process.rb
+@@ -39,17 +39,82 @@ module KbRuntime
+       false
+     end
+ 
+-    def children(pid)
+-      File.read("/proc/#{pid}/task/#{pid}/children").split.map { |value| Integer(value) }
+-    rescue Errno::ENOENT
+-      []
++    def children(pid, observation: {})
++      raise Error, 'invalid PID' unless pid.is_a?(Integer) && pid > 1
++      directory = "/proc/#{pid}/task"
++      tasks = Dir.children(directory)
++      valid_tasks = ->(values) do
++        raise Error, 'invalid task ID' unless values.all? { |value| /\A[1-9][0-9]*\z/.match?(value) }
++        values.sort
++      end
++      tasks = valid_tasks.call(tasks)
++      found = tasks.flat_map do |task|
++        path = "#{directory}/#{task}"
++        begin
++          values = File.read("#{path}/children").split
++        rescue Errno::ENOENT, Errno::ESRCH => failure
++          begin
++            File.stat(path)
++          rescue Errno::ENOENT, Errno::ESRCH
++            observation[:incomplete] = true
++            next []
++          end
++          # Missing child data for a still-live task is not an empty list.
++          raise failure
++        end
++        raise Error, 'invalid child PID' unless values.all? { |value| /\A[1-9][0-9]*\z/.match?(value) && Integer(value) > 1 }
++        values.map { |value| Integer(value) }
++      end
++      observation[:incomplete] = true unless valid_tasks.call(Dir.children(directory)) == tasks
++      found.uniq
+     end
+ 
+-    def descendants(pid)
+-      children(pid).flat_map do |child|
+-        record = read(child)
+-        record ? [record, *descendants(child)] : []
++    def descendants(pid, observation: {})
++      records = observation[:records] = []
++      root = read(pid)
++      raise Error, 'discovery root is unavailable' unless root
++      visited = {}
++      observed = { pid => root }
++      current = lambda do |record|
++        next true if matches?(record)
++        if gone?(record)
++          observation[:incomplete] = true
++          next false
++        end
++        raise Error, 'process identity changed during discovery'
++      end
++      descend = lambda do |parent|
++        identity = [parent['boot_id'], parent['pid'], parent['start_ticks']]
++        next if visited[identity]
++        visited[identity] = true
++        next unless current.call(parent)
++        begin
++          pids = children(parent.fetch('pid'), observation:)
++        rescue Errno::ENOENT, Errno::ESRCH
++          raise if current.call(parent)
++          next
++        end
++        next unless current.call(parent)
++        pids.each do |child|
++          record = read(child)
++          unless record
++            observation[:incomplete] = true
++            next
++          end
++          previous = observed[child]
++          if previous && previous != record
++            raise Error, 'process identity changed during discovery' if current.call(previous)
++            next
++          end
++          observed[child] = record
++          child_identity = [record['boot_id'], child, record['start_ticks']]
++          next if visited[child_identity]
++          records << record
++          descend.call(record)
++        end
+       end
++      descend.call(root)
++      records
+     end
+ 
+     def runner_matches?(record, launch)
+diff --git a/tools/test-machine.rb b/tools/test-machine.rb
+index ac8faca5a44bb6cdcb76a63250728e57b995c98e..751ce7be2e859d199b65571de82245e7ed789e19 100644
+--- a/tools/test-machine.rb
++++ b/tools/test-machine.rb
+@@ -330,6 +330,111 @@ class RunnerSessionTest < Minitest::Test
+     end
+   end
+ 
++  def test_quiesced_task_disappearance_resumes_tracking_before_any_finalization_or_cleanup
++    observation_shutdown('task-proof-before')
++  end
++
++  def test_quiesced_real_worker_child_is_retained_until_exit_before_finalization_or_cleanup
++    observation_shutdown('task-proof-child')
++  end
++
++  def test_post_cleanup_task_disappearance_resumes_tracking_without_repeating_finalization
++    observation_shutdown('task-proof-after')
++  end
++
++  def observation_shutdown(mode)
++    with_runner(mode:) do |context|
++      server = UNIXServer.new(File.join(context[:state].root, 'proof.sock'))
++      File.chmod(0o600, server.path)
++      peer = nil
++      with_controller(context) do |pid, input, output|
++        observe_runner(context, output, pid)
++        input.write('.'); input.flush
++        assert(Process.waitpid2(pid).last.success?)
++        context[:controller_reaped] = true
++        Timeout.timeout(5) do
++          Thread.pass until File.exist?(File.join(context[:record]['state_dir'], 'tracker-started'))
++        end
++        context[:engine].set_phase('ready', context[:record]['run_id'])
++        assert(context[:engine].ready?(context[:record]))
++        context[:shutdown_attempted] = true
++        context[:shutdown_attempts] = 1
++        error = assert_raises(KbRuntime::Error) { context[:engine].stop(timeout: 0) }
++        assert_match(/owned shutdown incomplete/, error.message)
++        peer = Timeout.timeout(5) { server.accept }
++        barrier = JSON.parse(Timeout.timeout(5) { peer.gets })
++        assert_equal('tracker-resumed', barrier['stage'])
++        assert_equal(mode == 'task-proof-after' ? 'post-cleanup' : 'quiesced', barrier['point'])
++        assert(barrier['tracker_alive'])
++        proof = context[:engine].process_record(context[:record])
++        assert_equal(context[:runner], proof['runner'])
++        refute(proof['complete'])
++        assert(context[:engine].live?(context[:record]))
++        refute(context[:engine].gone?(context[:record]))
++        assert_equal('stopping', context[:engine].phase['phase'])
++        refute(File.exist?(context[:state].path("ready-#{context[:record]['run_id']}.json")))
++        assert_equal(context[:claims], Dir.glob(File.join(context[:engine].resources.root, '*.json')).to_h { |path| [path, File.binread(path)] })
++        events_path = File.join(context[:record]['state_dir'], 'discovery-events.jsonl')
++        events = File.readlines(events_path).map { |line| JSON.parse(line) }
++        resumed = events.index { |event| event['stage'] == 'tracker-resumed' }
++        observed = events.index { |event| event['stage'] == 'discovery' && event['point'] == barrier['point'] }
++        joined = events.index { |event| event['stage'] == 'tracker-joined' }
++        assert(joined && observed && resumed)
++        assert_operator(joined, :<, observed)
++        assert_operator(observed, :<, resumed)
++        if mode == 'task-proof-after'
++          assert(File.exist?(File.join(context[:record]['state_dir'], 'finalized')))
++          assert(File.exist?(File.join(context[:record]['state_dir'], 'cleaned')))
++          assert_operator(events.index { |event| event['stage'] == 'finalize' }, :<, observed)
++          assert_operator(events.index { |event| event['stage'] == 'cleanup' }, :<, observed)
++          assert(events[observed]['incomplete'])
++        else
++          refute(File.exist?(File.join(context[:record]['state_dir'], 'finalized')))
++          refute(File.exist?(File.join(context[:record]['state_dir'], 'cleaned')))
++          refute(events.any? { |event| %w[finalize cleanup].include?(event['stage']) })
++          assert(events[observed]['incomplete']) if mode == 'task-proof-before'
++        end
++        if mode == 'task-proof-child'
++          child = KbRuntime::ProcessIdentity.read(barrier['child'])
++          assert(child)
++          assert_includes(proof['children'], child)
++          refute_includes(proof['children'].map { |record| record['pid'] }, barrier['worker_task'])
++          assert_equal(2, proof['children'].length)
++        end
++        peer.puts('release')
++        assert_equal('released', JSON.parse(Timeout.timeout(5) { peer.gets })['stage'])
++        shutdown(context)
++        terminal = context[:engine].process_record(context[:record])
++        assert_equal(proof['children'], terminal['children'], 'retained identities cannot disappear between observations')
++        events = File.readlines(events_path).map { |line| JSON.parse(line) }
++        assert_equal(1, events.count { |event| event['stage'] == 'finalize' })
++        assert_equal(1, events.count { |event| event['stage'] == 'cleanup' })
++        assert_equal(1, File.readlines(File.join(context[:record]['state_dir'], 'stop-calls.jsonl')).length)
++        if mode != 'task-proof-after'
++          assert_operator(resumed, :<, events.index { |event| event['stage'] == 'finalize' })
++        end
++        assert_operator(events.index { |event| event['stage'] == 'finalize' }, :<, events.index { |event| event['stage'] == 'cleanup' })
++        assert(events.any? { |event| event['stage'] == 'discovery' && event['point'] == 'post-cleanup' && !event['incomplete'] })
++        assert(KbRuntime::ProcessIdentity.gone?(child)) if child
++      end
++    ensure
++      primary = $!
++      begin
++        if context[:shutdown_attempted] && !context[:engine].gone?(context[:record])
++          peer ||= Timeout.timeout(5) { server.accept }
++          peer.puts('release') unless peer.closed?
++          Timeout.timeout(5) { Thread.pass until context[:engine].gone?(context[:record]) }
++        end
++      rescue StandardError => cleanup_error
++        context[:drain_cleanup_error] = cleanup_error
++        raise unless primary
++      ensure
++        peer&.close unless peer&.closed?
++        server&.close unless server&.closed?
++      end
++    end
++  end
++
+   def test_primary_assertion_and_secondary_cleanup_failure_keep_original_error_and_private_evidence
+     context = nil
+     original = nil
+@@ -815,6 +920,115 @@ class RunnerSessionTest < Minitest::Test
+           [MachineState.new(name: 'services', machine: SessionMachine.new(opts[:state_dir]))]
+         end
+       end
++      if mode.start_with?('task-proof-')
++        class TaskProofMachine < SessionMachine
++          def stop(timeout:)
++            @proof_peer = UNIXSocket.new(File.join(File.dirname(File.dirname(File.dirname(@directory))), 'proof.sock'))
++            super
++            @stopped = true
++            event('stopped')
++          end
++          def event(stage, values = {})
++            File.open(File.join(@directory, 'discovery-events.jsonl'), 'a', 0o600) do |file|
++              file.puts(JSON.generate(values.merge('stage' => stage)))
++            end
++          end
++          def before_discovery
++            if Thread.current != Thread.main
++              unless @tracker.equal?(Thread.current)
++                @tracker = Thread.current
++                @quiesced = false
++                join = @tracker.method(:join)
++                machine = self
++                @tracker.define_singleton_method(:join) do |*args|
++                  result = join.call(*args)
++                  machine.tracker_joined if result && !alive?
++                  result
++                end
++                event('tracker-started')
++                File.write(File.join(@directory, 'tracker-started'), '', mode: 'wb', perm: 0o600)
++              end
++              return unless @stopped && !running?
++              if @resume_pending
++                value = { 'point' => @injected_point, 'tracker_alive' => Thread.current.alive?,
++                  'child' => @proof_child, 'worker_task' => @proof_worker_task }
++                event('tracker-resumed', value)
++                @proof_peer.puts(JSON.generate(value.merge('stage' => 'tracker-resumed')))
++                command = Timeout.timeout(5) { @proof_peer.gets }
++                raise 'unexpected proof barrier command' unless command.nil? || command.strip == 'release'
++                if @proof_child
++                  @proof_writer.close
++                  Process.wait(@proof_child)
++                  @proof_child = nil
++                end
++                @resume_pending = false
++                @proof_peer.puts(JSON.generate('stage' => 'released')) if command
++              end
++              return
++            end
++            return unless @stopped && !running?
++            point = @cleaned ? 'post-cleanup' : (@quiesced ? 'quiesced' : 'initial')
++            inject = !@injected && point == ($session_fixture_mode == 'task-proof-after' ? 'post-cleanup' : 'quiesced')
++            if inject && $session_fixture_mode == 'task-proof-child'
++              Thread.new do
++                reader, @proof_writer = IO.pipe
++                @proof_child = Process.spawn(RbConfig.ruby, '-e', 'STDIN.read', in: reader, close_others: true)
++                @proof_worker_task = Thread.current.native_thread_id
++                reader.close
++              end.value
++              Timeout.timeout(5) { Thread.pass while File.directory?('/proc/' + Process.pid.to_s + '/task/' + @proof_worker_task.to_s) }
++            end
++            { point:, inject: }
++          end
++          def after_discovery(pass, observation)
++            return unless pass
++            if pass[:inject]
++              @injected = true
++              @injected_point = pass[:point]
++              observation[:incomplete] = true unless $session_fixture_mode == 'task-proof-child'
++              @resume_pending = true
++            elsif @resume_pending
++              # The resumed tracker, rather than a racing main-thread pass,
++              # owns the barrier that the test will release.
++              observation[:incomplete] = true
++            end
++            event('discovery', { 'point' => pass[:point], 'incomplete' => !!observation[:incomplete],
++              'children' => observation[:records].map { |record| record['pid'] } })
++          end
++          def tracker_joined
++            @quiesced = true
++            event('tracker-joined')
++          end
++          def finalize
++            event('finalize')
++            super
++          end
++          def cleanup
++            event('cleanup')
++            super
++            @cleaned = true
++          end
++          def close_proof
++            @proof_writer&.close unless @proof_writer&.closed?
++            Timeout.timeout(5) { Process.wait(@proof_child) } if @proof_child
++            @proof_peer&.close
++          end
++        end
++        class SessionRunner
++          def build_machines(opts)
++            $task_proof = TaskProofMachine.new(opts[:state_dir])
++            [MachineState.new(name: 'services', machine: $task_proof)]
++          end
++        end
++        original_descendants = KbRuntime::ProcessIdentity.method(:descendants)
++        KbRuntime::ProcessIdentity.define_singleton_method(:descendants) do |pid, observation: {}|
++          pass = $task_proof&.before_discovery
++          records = original_descendants.call(pid, observation:)
++          $task_proof&.after_discovery(pass, observation)
++          records
++        end
++        at_exit { $task_proof&.close_proof }
++      end
+       exit SessionRunner.run(ARGV, hash_base: 'synthetic-network')
+     RUBY
+   end
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index b401b8053e5013f80d5c39e137d5a53e123e58e2..067cc98f33d5c1d7fa18af7aebc7d83a76e36ebb 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -235,6 +235,354 @@ class RuntimeTest < Minitest::Test
+   end
+ end
+ 
++class ProcessDiscoveryTest < Minitest::Test
++  def test_workers_at_each_level_discover_exact_child_identities_without_threads_or_siblings
++    child_program = <<~RUBY
++      require 'json'
++      require 'rbconfig'
++      STDOUT.sync = true
++      worker = Thread.new do
++        reader, writer = IO.pipe
++        pid = Process.spawn(RbConfig.ruby, '-e', 'STDIN.read', in: reader, out: File::NULL, err: File::NULL, close_others: true)
++        reader.close
++        puts JSON.generate('child' => Process.pid, 'child_task' => Thread.current.native_thread_id, 'grandchild' => pid)
++        STDIN.read
++      ensure
++        writer&.close unless writer&.closed?
++        Process.wait(pid) if pid
++        reader&.close unless reader&.closed?
++      end
++      worker.value
++    RUBY
++    root_program = <<~RUBY
++      require 'json'
++      require 'rbconfig'
++      STDOUT.sync = true
++      worker = Thread.new do
++        reader, writer = IO.pipe
++        response, output = IO.pipe
++        pid = Process.spawn(RbConfig.ruby, '-e', #{child_program.inspect}, in: reader, out: output, close_others: true)
++        reader.close
++        output.close
++        value = JSON.parse(response.gets || raise('nested worker handshake failed'))
++        puts JSON.generate(value.merge('root_task' => Thread.current.native_thread_id))
++        STDIN.read
++      ensure
++        writer&.close unless writer&.closed?
++        Process.wait(pid) if pid
++        [reader, response, output].compact.each { |stream| stream.close unless stream.closed? }
++      end
++      worker.value
++    RUBY
++    sibling_reader, sibling_writer = IO.pipe
++    sibling = Process.spawn(RbConfig.ruby, '-e', 'STDIN.read', in: sibling_reader, out: File::NULL, err: File::NULL, close_others: true)
++    sibling_reader.close
++    with_owned_root(root_program) do |pid, _command, response|
++      info = JSON.parse(Timeout.timeout(5) { response.gets })
++      refute_equal(pid, info['root_task'])
++      refute_equal(info['child'], info['child_task'])
++      expected = [info['child'], info['grandchild']].map { |child| KbRuntime::ProcessIdentity.read(child) }
++      assert(expected.all?)
++      observation = { incomplete: false }
++      found = KbRuntime::ProcessIdentity.descendants(pid, observation:)
++      assert_equal(expected.sort_by { |record| record['pid'] }, found.sort_by { |record| record['pid'] })
++      assert_equal(found, observation[:records])
++      refute(observation[:incomplete])
++      assert_equal(found.size, found.map { |record| [record['pid'], record['start_ticks']] }.uniq.size)
++      [pid, sibling, info['root_task'], info['child_task']].each { |excluded| refute_includes(found.map { |record| record['pid'] }, excluded) }
++      assert(KbRuntime::ProcessIdentity.matches?(KbRuntime::ProcessIdentity.read(sibling)))
++    end
++  ensure
++    sibling_writer&.close unless sibling_writer&.closed?
++    Process.wait(sibling) if sibling
++    sibling_reader&.close unless sibling_reader&.closed?
++  end
++
++  def test_worker_exit_after_the_parent_list_marks_the_pass_incomplete_and_preserves_reparented_children
++    program = <<~'RUBY'
++      require 'json'
++      require 'rbconfig'
++      require 'timeout'
++      STDOUT.sync = true
++      begin
++        first_reader, first_writer = IO.pipe
++        first = Process.spawn(RbConfig.ruby, '-e', 'STDIN.read', in: first_reader, out: File::NULL, err: File::NULL, close_others: true)
++        first_reader.close
++        exit_worker = Queue.new
++        started = Queue.new
++        held = {}
++        worker = Thread.new do
++          reader, writer = IO.pipe
++          held[:writer] = writer
++          held[:pid] = Process.spawn(RbConfig.ruby, '-e', 'STDIN.read', in: reader, out: File::NULL, err: File::NULL, close_others: true)
++          reader.close
++          held[:task] = Thread.current.native_thread_id
++          started << { 'first' => first, 'late' => held[:pid], 'task' => held[:task] }
++          exit_worker.pop
++        end
++        puts JSON.generate(started.pop)
++        while (command = STDIN.gets)
++          case command.strip
++          when 'worker-exit'
++            exit_worker << true
++            worker.value
++            Timeout.timeout(5) { Thread.pass while File.directory?("/proc/#{Process.pid}/task/#{held[:task]}") }
++            puts JSON.generate('worker_gone' => true)
++          when 'exit-first'
++            first_writer.close
++            Process.wait(first)
++            first = nil
++            puts JSON.generate('first_gone' => true)
++          else
++            raise 'unexpected fixture command'
++          end
++        end
++      ensure
++        exit_worker << true if worker&.alive?
++        worker&.join
++        first_writer&.close unless first_writer&.closed?
++        held&.fetch(:writer, nil)&.close unless held&.fetch(:writer, nil)&.closed?
++        Process.wait(first) if first
++        Process.wait(held[:pid]) if held && held[:pid]
++        first_reader&.close unless first_reader&.closed?
++      end
++    RUBY
++    with_owned_root(program) do |pid, command, response|
++      info = JSON.parse(Timeout.timeout(5) { response.gets })
++      first, late = [info['first'], info['late']].map { |child| KbRuntime::ProcessIdentity.read(child) }
++      assert(first && late)
++      read = File.method(:read)
++      list = Dir.method(:children)
++      crossed = false
++      task_directory = "/proc/#{pid}/task"
++      parent_children = "#{task_directory}/#{pid}/children"
++      ordered = lambda do |path|
++        values = list.call(path)
++        path == task_directory ? [pid.to_s, *(values - [pid.to_s])] : values
++      end
++      interleaved = lambda do |path, *args, **options|
++        bytes = read.call(path, *args, **options)
++        if path == parent_children && !crossed
++          crossed = true
++          refute_includes(bytes.split, info['late'].to_s)
++          command.puts('worker-exit')
++          assert_equal({ 'worker_gone' => true }, JSON.parse(Timeout.timeout(5) { response.gets }))
++          assert_includes(read.call(parent_children).split, info['late'].to_s, 'the child was reparented to the already-read task')
++        end
++        bytes
++      end
++      observation = { incomplete: false }
++      found = nil
++      Dir.stub(:children, ordered) do
++        File.stub(:read, interleaved) { found = KbRuntime::ProcessIdentity.descendants(pid, observation:) }
++      end
++      assert(crossed)
++      assert(observation[:incomplete], 'a vanished listed worker cannot authorize terminal proof')
++      assert_equal([first], found)
++      assert_equal(found, observation[:records])
++      next_pass = { incomplete: false }
++      discovered = KbRuntime::ProcessIdentity.descendants(pid, observation: next_pass)
++      assert_equal([first, late].sort_by { |record| record['pid'] }, discovered.sort_by { |record| record['pid'] })
++      refute(next_pass[:incomplete])
++      retained = (found + discovered).to_h { |record| [[record['pid'], record['start_ticks']], record] }
++      command.puts('exit-first')
++      assert_equal({ 'first_gone' => true }, JSON.parse(Timeout.timeout(5) { response.gets }))
++      assert(KbRuntime::ProcessIdentity.gone?(first))
++      assert(KbRuntime::ProcessIdentity.matches?(late))
++      assert_equal([late], KbRuntime::ProcessIdentity.descendants(pid))
++      assert_equal(2, retained.size, 'an exited or reparented identity is retained until its own exit proof')
++    end
++  end
++
++  def test_a_vanished_task_keeps_other_collected_children_and_marks_the_pass_incomplete
++    [Errno::ENOENT, Errno::ESRCH].each do |missing|
++      observation = { incomplete: false }
++      read = lambda do |path|
++        next '51 51' if path == '/proc/42/task/42/children'
++        raise missing, path if path == '/proc/42/task/43/children'
++        flunk("unexpected child path: #{path}")
++      end
++      disappeared = ->(path) { assert_equal('/proc/42/task/43', path); raise missing, path }
++      Dir.stub(:children, %w[42 43]) do
++        File.stub(:read, read) do
++          File.stub(:stat, disappeared) { assert_equal([51], KbRuntime::ProcessIdentity.children(42, observation:)) }
++        end
++      end
++      assert(observation[:incomplete])
++    end
++  end
++
++  def test_missing_child_data_for_a_live_task_is_a_refusal_not_disappearance
++    [Errno::ENOENT, Errno::ESRCH].each do |missing|
++      observation = { incomplete: false }
++      File.stub(:stat, ->(path) { assert_equal('/proc/42/task/42', path); Object.new }) do
++        Dir.stub(:children, ['42']) do
++          File.stub(:read, ->(path) { raise missing, path }) do
++            assert_raises(missing) { KbRuntime::ProcessIdentity.children(42, observation:) }
++          end
++        end
++      end
++      refute(observation[:incomplete])
++    end
++  end
++
++  def test_a_changed_task_set_marks_the_collected_result_incomplete_without_retrying
++    enumerations = 0
++    tasks = lambda do |path|
++      assert_equal('/proc/42/task', path)
++      enumerations += 1
++      enumerations == 1 ? %w[42 43] : ['42']
++    end
++    observation = { incomplete: false }
++    Dir.stub(:children, tasks) do
++      File.stub(:read, ->(path) { path == '/proc/42/task/42/children' ? '51' : '52' }) do
++        assert_equal([51, 52], KbRuntime::ProcessIdentity.children(42, observation:))
++      end
++    end
++    assert_equal(2, enumerations)
++    assert(observation[:incomplete])
++  end
++
++  def test_permission_malformed_task_and_malformed_child_data_refuse
++    Dir.stub(:children, ->(_path) { raise Errno::EACCES }) { assert_raises(Errno::EACCES) { KbRuntime::ProcessIdentity.children(42) } }
++    Dir.stub(:children, ['42']) do
++      File.stub(:read, ->(_path) { raise Errno::EACCES }) { assert_raises(Errno::EACCES) { KbRuntime::ProcessIdentity.children(42) } }
++    end
++    %w[../43 task -43 0 043].each do |invalid|
++      Dir.stub(:children, ['42', invalid]) do
++        File.stub(:read, ->(_path) { flunk('malformed task paths must never be opened') }) do
++          assert_raises(KbRuntime::Error) { KbRuntime::ProcessIdentity.children(42) }
++        end
++      end
++    end
++    %w[-51 +51 child 0 1 051].each do |invalid|
++      Dir.stub(:children, ['42']) do
++        File.stub(:read, "51 #{invalid}") { assert_raises(KbRuntime::Error) { KbRuntime::ProcessIdentity.children(42) } }
++      end
++    end
++  end
++
++  def test_identity_visited_set_deduplicates_cycles_and_reparenting_observations
++    records = [42, 51, 52].to_h { |pid| [pid, identity(pid)] }
++    graph = { 42 => [51, 51], 51 => [52], 52 => [51, 42] }
++    visits = []
++    children = ->(pid, **_options) { visits << pid; graph.fetch(pid) }
++    KbRuntime::ProcessIdentity.stub(:read, ->(pid) { records.fetch(pid) }) do
++      KbRuntime::ProcessIdentity.stub(:children, children) do
++        assert_equal([records[51], records[52]], KbRuntime::ProcessIdentity.descendants(42))
++      end
++    end
++    assert_equal([42, 51, 52], visits)
++  end
++
++  def test_recursive_exit_or_reused_pid_keeps_the_captured_identity_without_following_the_replacement
++    [nil, identity(51).merge('start_ticks' => 999)].each do |replacement|
++      records = { 42 => identity(42), 51 => identity(51) }
++      child_reads = 0
++      visits = []
++      read = lambda do |pid|
++        next records.fetch(42) if pid == 42
++        child_reads += 1
++        child_reads == 1 ? records.fetch(51) : replacement
++      end
++      children = ->(pid, **_options) { visits << pid; assert_equal(42, pid); [51] }
++      observation = { incomplete: false }
++      KbRuntime::ProcessIdentity.stub(:boot_id, 'synthetic-boot') do
++        KbRuntime::ProcessIdentity.stub(:read, read) do
++          KbRuntime::ProcessIdentity.stub(:children, children) do
++            assert_equal([records[51]], KbRuntime::ProcessIdentity.descendants(42, observation:))
++          end
++        end
++      end
++      assert_equal([42], visits)
++      assert(observation[:incomplete])
++    end
++  end
++
++  def test_changed_live_identity_and_live_missing_task_directory_refuse_without_losing_captured_records
++    [{'owner_uid' => Process.uid + 1}, { 'boot_id' => 'different-boot' }, { 'executable' => '/different' }, { 'argv' => ['different'] }].each do |change|
++      root, child = identity(42), identity(51)
++      calls = 0
++      read = lambda do |pid|
++        next root if pid == 42
++        calls += 1
++        calls == 1 ? child : child.merge(change)
++      end
++      observation = { incomplete: false }
++      KbRuntime::ProcessIdentity.stub(:boot_id, 'synthetic-boot') do
++        KbRuntime::ProcessIdentity.stub(:read, read) do
++          KbRuntime::ProcessIdentity.stub(:children, ->(pid, **_options) { assert_equal(42, pid); [51] }) do
++            assert_raises(KbRuntime::Error) { KbRuntime::ProcessIdentity.descendants(42, observation:) }
++          end
++        end
++      end
++      assert_equal([child], observation[:records])
++    end
++    root = identity(42)
++    observation = { incomplete: false }
++    KbRuntime::ProcessIdentity.stub(:read, root) do
++      Dir.stub(:children, ->(_path) { raise Errno::ENOENT }) do
++        assert_raises(Errno::ENOENT) { KbRuntime::ProcessIdentity.descendants(42, observation:) }
++      end
++    end
++    refute(observation[:incomplete])
++  end
++
++  def test_a_recursive_live_missing_child_file_refuses_but_keeps_other_observed_identities
++    records = [42, 51, 52].to_h { |pid| [pid, identity(pid)] }
++    lists = { '/proc/42/task' => ['42'], '/proc/51/task' => ['51'], '/proc/52/task' => ['52'] }
++    read = lambda do |path|
++      case path
++      when '/proc/42/task/42/children' then '51 52'
++      when '/proc/51/task/51/children' then ''
++      when '/proc/52/task/52/children' then raise Errno::ENOENT, path
++      else flunk("unexpected child path: #{path}")
++      end
++    end
++    observation = { incomplete: false }
++    KbRuntime::ProcessIdentity.stub(:read, ->(pid) { records.fetch(pid) }) do
++      Dir.stub(:children, ->(path) { lists.fetch(path) }) do
++        File.stub(:read, read) do
++          File.stub(:stat, ->(path) { assert_equal('/proc/52/task/52', path); Object.new }) do
++            assert_raises(Errno::ENOENT) { KbRuntime::ProcessIdentity.descendants(42, observation:) }
++          end
++        end
++      end
++    end
++    assert_equal([records[51], records[52]], observation[:records])
++    refute(observation[:incomplete], 'unsupported live data remains an error, not an ordinary exit')
++  end
++
++  def identity(pid)
++    { 'pid' => pid, 'start_ticks' => pid * 10, 'boot_id' => 'synthetic-boot', 'owner_uid' => Process.uid,
++      'executable' => RbConfig.ruby, 'argv' => ['synthetic', pid.to_s] }
++  end
++
++  def with_owned_root(program)
++    Dir.mktmpdir('kb-task-fixture-', '/tmp') do |directory|
++      input, command = IO.pipe
++      response, output = IO.pipe
++      diagnostic = File.open(File.join(directory, 'stderr'), File::WRONLY | File::CREAT | File::EXCL, 0o600)
++      pid = Process.spawn(RbConfig.ruby, '-e', program, in: input, out: output, err: diagnostic, close_others: true)
++      input.close
++      output.close
++      yield pid, command, response
++    ensure
++      primary = $!
++      command&.close unless command&.closed?
++      begin
++        status = Timeout.timeout(5) { Process.waitpid2(pid).last } if pid
++        assert(status.success?, File.read(File.join(directory, 'stderr')).byteslice(0, 2048)) if status && !primary
++      rescue StandardError, Minitest::Assertion => cleanup_error
++        raise unless primary
++        warn "Owned discovery fixture cleanup failed: #{cleanup_error.class}: #{cleanup_error.message.to_s.lines.first.to_s.strip}"
++      ensure
++        [input, command, response, output, diagnostic].compact.each { |stream| stream.close unless stream.closed? }
++      end
++    end
++  end
++end
++
+ class SshDiscoveryTest < Minitest::Test
+   def test_delayed_keys_succeed_within_the_original_deadline
+     with_discovery do |engine, record, known, clock|

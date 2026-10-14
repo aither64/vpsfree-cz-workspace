@@ -1,0 +1,30 @@
+{
+  "boundaries": [
+    "Queue supported Thread#raise(Interrupt) from a distinct joined thread after real successful polling wait, before wrapper result returns; reject/record post-reap kills without delivering a signal.",
+    "Real spawn returns while interruption is queued before PID is returned to Engine; exactly one owned child kill/reap and all pipe FDs closed.",
+    "Queue interruption at first and second real IO.pipe return; retain cleanup-visible endpoints.",
+    "Deadline terminal real wait queues interruption; no second post-reap signal and native KILL status retained.",
+    "First interruption after spawn plus second interruption during ensure terminal real wait; FD closure completes.",
+    "Native ECHILD from second wait of the same genuinely reaped child, with and without queued interruption; no subsequent signal.",
+    "No detached or competing reaper, PID reuse, process search, guest/endpoint proof or lifecycle action."
+  ],
+  "case_count": 8,
+  "existing_native_tests_preserved": [
+    "test_ssh_specific_capture_preserves_native_streams_status_argv_and_clears_overrides",
+    "test_scan_deadline_and_output_bound_reap_only_the_owned_child"
+  ],
+  "hosted_selectors": [
+    "nix develop --command ruby tools/test-runtime.rb",
+    "nix develop --command bin/check --allow-missing"
+  ],
+  "local_execution": false,
+  "new_test_methods": [
+    "test_interrupt_after_real_polling_reap_cannot_signal_the_reaped_pid",
+    "test_interrupt_after_real_spawn_retains_pid_until_exact_child_cleanup",
+    "test_interrupt_after_either_real_pipe_acquisition_closes_every_returned_endpoint",
+    "test_interrupt_after_deadline_terminal_reap_has_no_second_signal",
+    "test_second_interrupt_during_ensure_terminal_reap_cannot_skip_endpoint_closure",
+    "test_echild_invalidates_signal_authority_with_and_without_pending_interrupt"
+  ],
+  "workflow_or_selector_changes": false
+}

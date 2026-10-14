@@ -1,0 +1,18 @@
+{
+  "status": "UNRUN; source-only static inspection",
+  "added_case": "inventory HTTP 404 refuses before browser or mutation without leaking diagnostic values",
+  "existing_cases_retained": true,
+  "declared_cases": [
+    "Mock asserts complete /v7.0/ wire prefix before normalizing any inventory resource.",
+    "First two HTTP requests are exactly GET /v7.0/users/current with test-user1 followed by test-admin, retaining account/TLS/endpoint/lease assertions.",
+    "Existing disabled-rerun preparation retains all old no-write/browser/member assertions and records exact identity wire paths.",
+    "Existing fresh-pool test now drives actual inventoryIdentity/adminApi through the transport and checks all thirteen exact identity, GET, POST and PUT wire paths; original ownership/provisioning assertions remain.",
+    "404 with status:false and a synthetic secret-bearing response refuses after one member GET, before browser/navigation, provisioning or fixture metadata; error contains only bounded action context.",
+    "Existing malformed account/current-user/role/lease-loss cases, tiny VPS, rerun, process observation, barriers, physical lock and cleanup cases remain."
+  ],
+  "unchanged_hosted_selectors": [
+    "nix develop --command bin/check --allow-missing",
+    "nix develop --command node tools/test-ip-inventory.cjs"
+  ],
+  "limits": "No repaired hosted, helper qualification, browser, guest, fixture or capture success claim. Root owns operations."
+}

@@ -1,0 +1,16 @@
+{
+  "owner": "tools/test-runtime-verify.rb",
+  "case": "test_public_nix_projection_has_two_2048_runtime_guests_and_actual_2048_image_builder_with_unchanged_kernels",
+  "status": "source-only; corrected case UNRUN",
+  "assertions": [
+    "native version4 and exact requested basename key unchanged",
+    "selected record structuredAttrs.env.QEMU_OPTS required",
+    "exactly one -m 2048",
+    "exactly one memory-backend-memfd,id=mem,size=2048M,share=on object",
+    "exactly one machine memory-backend=mem binding"
+  ],
+  "parser": "existing Shellwords.split; local option-token extraction only",
+  "diagnostics": "key names and selected memory-only arguments; no whole attributes/env/config/script dump",
+  "hosted_selector": "nix develop --command bin/check --allow-missing",
+  "product_profile_commands_and_other_tests_unchanged": true
+}

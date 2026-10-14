@@ -1,0 +1,616 @@
+The following test scripts will be run:
+  admin/cluster-resource-package-assignment
+  admin/dataset-plan-lifecycle
+  admin/environment-defaults-propagation
+  admin/location-network-primary-switch
+  admin/nodectl-read-and-queue-control
+  admin/nodectl-refresh-and-runtime-state
+  admin/remote-mount-state
+  admin/scheduler-socket-control
+  alerts/incident-report-process
+  alerts/lifetime-and-daily-report
+  alerts/oom-report-notify-and-prune
+  client/snapshot-download
+  cluster/1-node
+  cluster/2-node
+  cluster/generate-migration-keys
+  cluster/node-evacuate-basic
+  cluster/node-evacuate-concurrency
+  console-router
+  dns/secondary-transfer-errors
+  dns/server-zone-lifecycle
+  dns/zone-transfer-config
+  download-mounter
+  network/export-enable-disable-hosts
+  network/export-lifecycle
+  network/network-interface-lifecycle
+  network/network-interface-routes-and-host-ips
+  network/network-interface-shaper-and-rename
+  node/register
+  pool/create
+  services-up
+  storage/backup-full-incremental
+  storage/backup-full-incremental-remote
+  storage/backup-multiple-destinations-diverged-remote
+  storage/backup-multiple-destinations-remote
+  storage/backup-remote-interrupted-recv
+  storage/backup-remote-interrupted-send
+  storage/branching-destroy
+  storage/branching-rotation
+  storage/branching-shared-snapshot-prune
+  storage/complex-destroy-order
+  storage/complex-rotation-order-pending
+  storage/dataset-destroy-after-rollback-history
+  storage/dataset-destroy-complex-history
+  storage/dataset-migrate-remote
+  storage/dataset-migrate-retain-source
+  storage/dataset-migrate-rsync-remote
+  storage/dataset-migrate-same-node
+  storage/dataset-migrate-same-node-with-exports
+  storage/group-snapshot
+  storage/history-divergence-new-tree
+  storage/repeated-rollback-branching
+  storage/restore-after-reinstall-remote
+  storage/restore-after-reinstall-with-descendants-remote
+  storage/restore-remote-interrupted-recv
+  storage/rollback-across-trees
+  storage/rollback-dependent-branch-rotation
+  storage/rollback-from-backup
+  storage/rollback-from-remote-backup
+  storage/rollback-with-descendants
+  storage/snapshot-download-full-archive
+  storage/snapshot-download-full-stream
+  storage/snapshot-download-incremental-branch-mismatch
+  storage/snapshot-download-incremental-stream
+  storage/snapshot-download-incremental-transfer
+  storage/snapshot-download-remove
+  storage/source-rotation-after-backup-prune
+  storage/topology-fixture-replay
+  storage/topology-fixture-roundtrip
+  storage/topology-reconciliation
+  storage/vps-hard-delete-after-complex-history
+  storage/vps-hard-delete-complex-history-with-descendants
+  supervisor/runtime-ingestion
+  tasks/auth-session-housekeeping
+  tasks/dataset-expansion-enforce-and-resolve
+  tasks/dns-reverse-record-check
+  tasks/prometheus-export
+  tx/chain-lifecycle
+  tx/invalid-signature
+  tx/keep-going-final-state
+  tx/manual-confirmations
+  tx/release-retry-resolve
+  tx/rollback-state-machine
+  user/create-with-initial-vps
+  user/hard-delete-cascade
+  user/soft-delete-revive-auth
+  user/suspend-resume-cascade
+  user/user-namespace-lifecycle
+  vps/autostart-monitoring
+  vps/clone-different-owner
+  vps/clone-remote
+  vps/clone-remote-consistent
+  vps/clone-remote-consistent-keep-snapshots
+  vps/clone-same-node
+  vps/clone-with-descendants-and-mounts
+  vps/create
+  vps/deploy-public-key-and-user-data
+  vps/expand-and-shrink-dataset
+  vps/hard-delete-basic
+  vps/migrate
+  vps/migrate-no-start
+  vps/migrate-skip-start
+  vps/migrate-with-data-check
+  vps/migrate-with-open-maintenance-window
+  vps/migrate-with-subdataset-mounts
+  vps/mount-lifecycle
+  vps/passwd
+  vps/reinstall
+  vps/reinstall-with-user-data-and-keys
+  vps/replace-no-start
+  vps/replace-remote
+  vps/replace-same-node
+  vps/replace-with-backups
+  vps/replace-with-backups-remote
+  vps/replace-with-descendants-and-mounts
+  vps/start-stop-restart-boot
+  vps/swap-across-locations
+  vps/update-resources-and-features
+  webui#admin-cluster
+  webui#auth
+  webui#jumpto
+  webui#misc-pages
+  webui#navigation-readonly
+  webui#networking-dns
+  webui#security-advisories
+  webui#storage-backup-export
+  webui#support-pages
+  webui#transactions
+  webui#userns
+  webui#users-admin
+  webui#users-self-service
+  webui#vps-admin-core
+  webui#vps-admin-ops
+  webui#vps-lifecycle
+  webui#vps-user-core
+  webui#vps-user-ops
+
+[2026-10-08 16:12:38 +0200] Running 135 scripts of 118 tests, at most 118 tests at a time (auto)
+[2026-10-08 16:12:38 +0200] Resource detection: memory assigned=100.0 GiB, available-at-start=99.2 GiB, reserve=8.0 GiB, limit=91.2 GiB; shm assigned=375.1 GiB, available-at-start=375.1 GiB, reserve=8.0 GiB, limit=367.1 GiB
+[2026-10-08 16:12:38 +0200] Resource limits: memory=0 MiB/91.2 GiB, shm=0 MiB/367.1 GiB, cpus=0/72, running=0
+[2026-10-08 16:12:38 +0200] State directory is /tmp/os-test-runner-19884793-37784439748-1
+[2026-10-08 16:12:38 +0200] Reserved resources for 'webui': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=24.0 GiB/91.2 GiB, shm=24.0 GiB/367.1 GiB, cpus=16/72, running=1
+[2026-10-08 16:12:38 +0200] [1/118] Running test 'webui' (#storage-backup-export, #support-pages, #users-self-service, #users-admin, #auth, #navigation-readonly, #vps-admin-core, #vps-admin-ops, #vps-user-core, #networking-dns, #misc-pages, #vps-user-ops, #transactions, #admin-cluster, #security-advisories, #vps-lifecycle, #jumpto, #userns)
+[2026-10-08 16:12:38 +0200] Reserved resources for 'cluster/node-evacuate-concurrency': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=48.0 GiB/91.2 GiB, shm=48.0 GiB/367.1 GiB, cpus=32/72, running=2
+[2026-10-08 16:12:38 +0200] [2/118] Running test 'cluster/node-evacuate-concurrency' (#default)
+[2026-10-08 16:12:38 +0200] Reserved resources for 'vps/migrate-skip-start': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=72.0 GiB/91.2 GiB, shm=72.0 GiB/367.1 GiB, cpus=48/72, running=3
+[2026-10-08 16:12:38 +0200] [3/118] Running test 'vps/migrate-skip-start' (#default)
+[2026-10-08 16:12:38 +0200] Reserved resources for 'supervisor/runtime-ingestion': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 16:12:38 +0200] [4/118] Running test 'supervisor/runtime-ingestion' (#default)
+[2026-10-08 16:12:38 +0200] Reserved resources for 'storage/topology-fixture-replay': machines=0, memory=0 MiB, shm=0 MiB, cpus=0; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=5
+[2026-10-08 16:12:38 +0200] [114/118] Running test 'storage/topology-fixture-replay' (#default)
+[2026-10-08 16:12:38 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=5; pending: dns/secondary-transfer-errors (machines=2, memory=10.0 GiB, shm=10.0 GiB, cpus=10), admin/nodectl-refresh-and-runtime-state (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12), vps/passwd (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12)
+[2026-10-08 16:12:41 +0200] [114/118] Example [1/2] 'topology fixture replay has committed fixtures to replay' succeeded in 0.0 seconds
+[2026-10-08 16:12:41 +0200] [114/118] Example [2/2] 'topology fixture replay validates synthetic-good-topology.json' succeeded in 0.01 seconds
+[2026-10-08 16:12:41 +0200] [114/118] Test 'storage/topology-fixture-replay' successful in 2.43 seconds
+[2026-10-08 16:17:38 +0200] Status: passing; 1 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 113 remaining
+[2026-10-08 16:18:31 +0200] [4/118] Example [1/11] 'supervisor status ingestion accepts a legacy node status without security evidence' succeeded in 4.59 seconds
+[2026-10-08 16:19:57 +0200] [4/118] Example [2/11] 'supervisor status ingestion retains stable and valid evidence confirmations across supervisor restarts' succeeded in 86.22 seconds
+[2026-10-08 16:20:02 +0200] [4/118] Example [3/11] 'supervisor status ingestion ingests VPS status' succeeded in 5.28 seconds
+[2026-10-08 16:20:17 +0200] [4/118] Example [4/11] 'supervisor storage ingestion ingests storage status batches and updates disk totals' succeeded in 14.63 seconds
+[2026-10-08 16:20:26 +0200] [4/118] Example [5/11] 'supervisor storage ingestion ingests dataset expansion events' succeeded in 9.55 seconds
+[2026-10-08 16:20:30 +0200] [4/118] Example [6/11] 'supervisor network ingestion ingests network monitor snapshots' succeeded in 3.83 seconds
+[2026-10-08 16:20:38 +0200] [4/118] Example [7/11] 'supervisor network ingestion ingests accounting buckets additively' succeeded in 7.72 seconds
+[2026-10-08 16:20:50 +0200] [4/118] Example [8/11] 'supervisor mount ingestion creates, updates, and deletes export mounts to match the payload' succeeded in 12.34 seconds
+[2026-10-08 16:20:59 +0200] [4/118] Example [9/11] 'supervisor mount ingestion updates VPS mount state from mount reports' succeeded in 8.32 seconds
+[2026-10-08 16:21:11 +0200] [4/118] Example [10/11] 'supervisor VPS event ingestion marks halt events and logs reboot events' succeeded in 12.84 seconds
+[2026-10-08 16:21:15 +0200] [4/118] Example [11/11] 'supervisor VPS event ingestion creates incident reports for oomd stop events' succeeded in 4.04 seconds
+[2026-10-08 16:22:38 +0200] Status: passing; 1 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 113 remaining
+[2026-10-08 16:24:21 +0200] [3/118] Example [1/1] 'VPS migration with skip_start finishes done when the destination start fails and keep-going is set' succeeded in 342.38 seconds
+[2026-10-08 16:24:48 +0200] [1/118] Example [1/1] 'webui storage backup export browser flow passes Playwright storage, backup, dataset, and export tests' succeeded in 226.65 seconds
+[2026-10-08 16:24:48 +0200] [1/118] Script 'webui#storage-backup-export' successful in 538.08 seconds
+[2026-10-08 16:24:53 +0200] [3/118] Test 'vps/migrate-skip-start' successful in 734.14 seconds
+[2026-10-08 16:24:53 +0200] Reserved resources for 'dns/secondary-transfer-errors': machines=2, memory=10.0 GiB, shm=10.0 GiB, cpus=10; pool: memory=74.0 GiB/91.2 GiB, shm=74.0 GiB/367.1 GiB, cpus=54/72, running=4
+[2026-10-08 16:24:53 +0200] [5/118] Running test 'dns/secondary-transfer-errors' (#default)
+[2026-10-08 16:24:53 +0200] Reserved resources for 'admin/nodectl-refresh-and-runtime-state': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:24:53 +0200] [6/118] Running test 'admin/nodectl-refresh-and-runtime-state' (#default)
+[2026-10-08 16:24:53 +0200] Waiting for resources: pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5; pending: vps/passwd (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12), storage/dataset-migrate-same-node-with-exports (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12), storage/branching-shared-snapshot-prune (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 16:26:27 +0200] [4/118] Test 'supervisor/runtime-ingestion' successful in 829.0 seconds
+[2026-10-08 16:26:27 +0200] Reserved resources for 'vps/passwd': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:26:27 +0200] [7/118] Running test 'vps/passwd' (#default)
+[2026-10-08 16:26:27 +0200] Waiting for resources: pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5; pending: storage/dataset-migrate-same-node-with-exports (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12), storage/branching-shared-snapshot-prune (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), cluster/generate-migration-keys (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 16:27:38 +0200] Status: passing; 3 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 5 running, 110 remaining
+[2026-10-08 16:27:53 +0200] [6/118] Example [1/1] 'nodectl refresh and runtime state refreshes node status and keeps read-only RPCs healthy' succeeded in 3.36 seconds
+[2026-10-08 16:28:12 +0200] [6/118] Test 'admin/nodectl-refresh-and-runtime-state' successful in 199.26 seconds
+[2026-10-08 16:28:12 +0200] Reserved resources for 'storage/dataset-migrate-same-node-with-exports': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:28:12 +0200] [8/118] Running test 'storage/dataset-migrate-same-node-with-exports' (#default)
+[2026-10-08 16:28:12 +0200] Waiting for resources: pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5; pending: storage/branching-shared-snapshot-prune (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), cluster/generate-migration-keys (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), tx/manual-confirmations (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12)
+[2026-10-08 16:28:13 +0200] [1/118] Example [1/1] 'webui support and status browser flow passes Playwright support and status tests' succeeded in 154.63 seconds
+[2026-10-08 16:28:13 +0200] [1/118] Script 'webui#support-pages' successful in 204.91 seconds
+[2026-10-08 16:30:30 +0200] [5/118] Example [1/2] 'DNS secondary transfer errors records every normalized transfer failure and recovery' succeeded in 81.58 seconds
+[2026-10-08 16:30:44 +0200] [5/118] Example [2/2] 'DNS secondary transfer errors prunes old transfer logs while keeping latest transfer fields' succeeded in 13.68 seconds
+[2026-10-08 16:30:57 +0200] [5/118] Test 'dns/secondary-transfer-errors' successful in 364.78 seconds
+[2026-10-08 16:30:57 +0200] Reserved resources for 'dns/server-zone-lifecycle': machines=2, memory=10.0 GiB, shm=10.0 GiB, cpus=10; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:30:57 +0200] [31/118] Running test 'dns/server-zone-lifecycle' (#default)
+[2026-10-08 16:30:57 +0200] Waiting for resources: pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5; pending: storage/branching-shared-snapshot-prune (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), cluster/generate-migration-keys (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), tx/manual-confirmations (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12)
+[2026-10-08 16:31:09 +0200] [7/118] Example [1/1] 'standalone password reset changes the root password hash and clears the saved transaction input' succeeded in 120.36 seconds
+[2026-10-08 16:31:32 +0200] [7/118] Test 'vps/passwd' successful in 304.5 seconds
+[2026-10-08 16:31:32 +0200] Reserved resources for 'tx/manual-confirmations': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:31:32 +0200] [11/118] Running test 'tx/manual-confirmations' (#default)
+[2026-10-08 16:32:09 +0200] [1/118] Example [1/1] 'webui user self-service browser flow passes Playwright user self-service tests' succeeded in 186.26 seconds
+[2026-10-08 16:32:09 +0200] [1/118] Script 'webui#users-self-service' successful in 235.96 seconds
+[2026-10-08 16:32:38 +0200] Status: passing; 6 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 5 running, 107 remaining
+[2026-10-08 16:33:20 +0200] [8/118] Example [1/1] 'same-node dataset migration with exports stops, destroys, and recreates the export on the destination dataset' succeeded in 138.42 seconds
+[2026-10-08 16:33:39 +0200] [8/118] Test 'storage/dataset-migrate-same-node-with-exports' successful in 326.75 seconds
+[2026-10-08 16:33:39 +0200] Reserved resources for 'console-router': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:33:39 +0200] [16/118] Running test 'console-router' (#default)
+[2026-10-08 16:33:39 +0200] Waiting for resources: pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5; pending: storage/branching-shared-snapshot-prune (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), cluster/generate-migration-keys (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/dataset-destroy-after-rollback-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 16:34:03 +0200] [31/118] Example [1/2] 'dns server zone lifecycle creates, updates, and destroys runtime zone state' succeeded in 58.03 seconds
+[2026-10-08 16:34:04 +0200] [11/118] Example [1/11] 'manual confirmations lists pending confirmations through nodectl' succeeded in 0.79 seconds
+[2026-10-08 16:34:05 +0200] [11/118] Example [2/11] 'manual confirmations confirms create_type on execute success' succeeded in 0.94 seconds
+[2026-10-08 16:34:06 +0200] [11/118] Example [3/11] 'manual confirmations deletes create_type rows on rollback' succeeded in 0.84 seconds
+[2026-10-08 16:34:07 +0200] [11/118] Example [4/11] 'manual confirmations deletes just_create_type rows on rollback' succeeded in 0.79 seconds
+[2026-10-08 16:34:08 +0200] [11/118] Example [5/11] 'manual confirmations restores edit_before_type rows on rollback' succeeded in 0.94 seconds
+[2026-10-08 16:34:09 +0200] [11/118] Example [6/11] 'manual confirmations applies edit_after_type rows on execute success' succeeded in 1.02 seconds
+[2026-10-08 16:34:10 +0200] [11/118] Example [7/11] 'manual confirmations deletes destroy_type rows on execute success' succeeded in 1.02 seconds
+[2026-10-08 16:34:11 +0200] [11/118] Example [8/11] 'manual confirmations keeps destroy_type rows and confirms them on rollback' succeeded in 1.11 seconds
+[2026-10-08 16:34:12 +0200] [11/118] Example [9/11] 'manual confirmations deletes just_destroy_type rows on execute success' succeeded in 1.04 seconds
+[2026-10-08 16:34:13 +0200] [11/118] Example [10/11] 'manual confirmations applies decrement_type rows on execute success' succeeded in 0.99 seconds
+[2026-10-08 16:34:14 +0200] [11/118] Example [11/11] 'manual confirmations applies increment_type rows on execute success' succeeded in 1.03 seconds
+[2026-10-08 16:34:37 +0200] [11/118] Test 'tx/manual-confirmations' successful in 185.49 seconds
+[2026-10-08 16:34:37 +0200] Reserved resources for 'storage/snapshot-download-incremental-stream': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:34:37 +0200] [17/118] Running test 'storage/snapshot-download-incremental-stream' (#default)
+[2026-10-08 16:36:03 +0200] [1/118] Example [1/1] 'webui admin member management browser flow passes Playwright admin member management tests' succeeded in 189.59 seconds
+[2026-10-08 16:36:03 +0200] [1/118] Script 'webui#users-admin' successful in 234.39 seconds
+[2026-10-08 16:37:21 +0200] [31/118] Example [2/2] 'dns server zone lifecycle serves all supported user primary-zone record types and rejects invalid values' succeeded in 198.18 seconds
+[2026-10-08 16:37:36 +0200] [31/118] Test 'dns/server-zone-lifecycle' successful in 398.57 seconds
+[2026-10-08 16:37:36 +0200] Reserved resources for 'dns/zone-transfer-config': machines=2, memory=10.0 GiB, shm=10.0 GiB, cpus=10; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:37:36 +0200] [55/118] Running test 'dns/zone-transfer-config' (#default)
+[2026-10-08 16:37:36 +0200] Waiting for resources: pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5; pending: storage/branching-shared-snapshot-prune (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), cluster/generate-migration-keys (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/dataset-destroy-after-rollback-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 16:37:38 +0200] Status: passing; 9 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 5 running, 104 remaining
+[2026-10-08 16:38:28 +0200] [2/118] Example [1/1] 'node evacuation concurrency honors plan concurrency and starts queued migrations in order' succeeded in 1187.14 seconds
+[2026-10-08 16:38:49 +0200] [16/118] Example [1/1] 'remote console router logs in through the console and runs a command' succeeded in 128.55 seconds
+[2026-10-08 16:38:59 +0200] [2/118] Test 'cluster/node-evacuate-concurrency' successful in 1580.47 seconds
+[2026-10-08 16:38:59 +0200] Reserved resources for 'storage/branching-shared-snapshot-prune': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:38:59 +0200] [9/118] Running test 'storage/branching-shared-snapshot-prune' (#default)
+[2026-10-08 16:38:59 +0200] Waiting for resources: pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5; pending: cluster/generate-migration-keys (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/dataset-destroy-after-rollback-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate-with-subdataset-mounts (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 16:39:10 +0200] [16/118] Test 'console-router' successful in 331.35 seconds
+[2026-10-08 16:39:10 +0200] Reserved resources for 'storage/snapshot-download-full-stream': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:39:10 +0200] [18/118] Running test 'storage/snapshot-download-full-stream' (#default)
+[2026-10-08 16:39:20 +0200] [17/118] Example [1/1] 'incremental stream snapshot download creates a stream from a local shared history' succeeded in 89.35 seconds
+[2026-10-08 16:39:40 +0200] [17/118] Test 'storage/snapshot-download-incremental-stream' successful in 302.65 seconds
+[2026-10-08 16:39:40 +0200] Reserved resources for 'storage/group-snapshot': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:39:40 +0200] [20/118] Running test 'storage/group-snapshot' (#default)
+[2026-10-08 16:39:50 +0200] [1/118] Example [1/1] 'webui auth browser flow passes Playwright auth tests' succeeded in 181.13 seconds
+[2026-10-08 16:39:50 +0200] [1/118] Script 'webui#auth' successful in 226.51 seconds
+[2026-10-08 16:40:21 +0200] [55/118] Example [1/1] 'dns zone transfer config adds and removes transfer peers from generated config' succeeded in 41.58 seconds
+[2026-10-08 16:40:37 +0200] [55/118] Test 'dns/zone-transfer-config' successful in 181.13 seconds
+[2026-10-08 16:40:37 +0200] Reserved resources for 'tasks/dns-reverse-record-check': machines=2, memory=10.0 GiB, shm=10.0 GiB, cpus=10; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:40:37 +0200] [95/118] Running test 'tasks/dns-reverse-record-check' (#default)
+[2026-10-08 16:40:37 +0200] Waiting for resources: pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5; pending: cluster/generate-migration-keys (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/dataset-destroy-after-rollback-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate-with-subdataset-mounts (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 16:42:17 +0200] [1/118] Example [1/1] 'webui read-only navigation browser flow passes Playwright read-only navigation tests' succeeded in 90.94 seconds
+[2026-10-08 16:42:17 +0200] [1/118] Script 'webui#navigation-readonly' successful in 147.21 seconds
+[2026-10-08 16:42:38 +0200] Status: passing; 13 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 5 running, 100 remaining
+[2026-10-08 16:43:30 +0200] [18/118] Example [1/1] 'full stream snapshot download writes a gzip-compressed ZFS send stream' succeeded in 80.03 seconds
+[2026-10-08 16:43:53 +0200] [20/118] Example [1/1] 'group snapshot creates one grouped snapshot transaction for multiple datasets' succeeded in 67.92 seconds
+[2026-10-08 16:44:02 +0200] [95/118] Example [1/2] 'DNS reverse-record task succeeds for matching live PTR answers and fails after DB-only drift' succeeded in 52.2 seconds
+[2026-10-08 16:44:13 +0200] [20/118] Test 'storage/group-snapshot' successful in 272.92 seconds
+[2026-10-08 16:44:13 +0200] Reserved resources for 'storage/rollback-from-backup': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:44:13 +0200] [21/118] Running test 'storage/rollback-from-backup' (#default)
+[2026-10-08 16:44:13 +0200] Waiting for resources: pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5; pending: cluster/generate-migration-keys (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/dataset-destroy-after-rollback-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate-with-subdataset-mounts (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 16:44:15 +0200] [18/118] Test 'storage/snapshot-download-full-stream' successful in 304.94 seconds
+[2026-10-08 16:44:15 +0200] Reserved resources for 'vps/start-stop-restart-boot': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=90.0 GiB/91.2 GiB, shm=90.0 GiB/367.1 GiB, cpus=66/72, running=5
+[2026-10-08 16:44:15 +0200] [22/118] Running test 'vps/start-stop-restart-boot' (#default)
+[2026-10-08 16:44:55 +0200] [95/118] Example [2/2] 'DNS reverse-record task releases a batch with shared ownership and quota after removing its live PTR' succeeded in 53.21 seconds
+[2026-10-08 16:45:10 +0200] [95/118] Test 'tasks/dns-reverse-record-check' successful in 272.64 seconds
+[2026-10-08 16:45:10 +0200] Reserved resources for 'services-up': machines=1, memory=8.0 GiB, shm=8.0 GiB, cpus=8; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 16:45:10 +0200] [106/118] Running test 'services-up' (#default)
+[2026-10-08 16:45:50 +0200] [9/118] Example [1/1] 'pruning a shared backup branch snapshot keeps shared SnapshotInPool metadata and continues incrementally' succeeded in 221.2 seconds
+[2026-10-08 16:46:22 +0200] [9/118] Test 'storage/branching-shared-snapshot-prune' successful in 443.32 seconds
+[2026-10-08 16:46:22 +0200] Reserved resources for 'cluster/generate-migration-keys': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 16:46:22 +0200] [10/118] Running test 'cluster/generate-migration-keys' (#default)
+[2026-10-08 16:46:22 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5; pending: storage/dataset-destroy-after-rollback-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate-with-subdataset-mounts (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/restore-remote-interrupted-recv (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 16:47:38 +0200] Status: passing; 17 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 5 running, 96 remaining
+[2026-10-08 16:50:09 +0200] [106/118] Example [1/28] 'service supervisor is running' succeeded in 149.78 seconds
+[2026-10-08 16:50:09 +0200] [106/118] Example [2/28] 'service varnish is running' succeeded in 0.08 seconds
+[2026-10-08 16:50:17 +0200] [106/118] Example [3/28] 'service scheduler is running' succeeded in 7.93 seconds
+[2026-10-08 16:50:17 +0200] [106/118] Example [4/28] 'service nginx is running' succeeded in 0.1 seconds
+[2026-10-08 16:50:18 +0200] [106/118] Example [5/28] 'service password recovery worker is running' succeeded in 0.11 seconds
+[2026-10-08 16:50:18 +0200] [106/118] Example [6/28] 'service haproxy is running' succeeded in 0.13 seconds
+[2026-10-08 16:50:18 +0200] [106/118] Example [7/28] 'service rabbitmq is running' succeeded in 0.08 seconds
+[2026-10-08 16:50:24 +0200] [106/118] Example [8/28] 'service rabbitmq is responding' succeeded in 6.21 seconds
+[2026-10-08 16:50:24 +0200] [106/118] Example [9/28] 'service redis is responding' succeeded in 0.06 seconds
+[2026-10-08 16:50:24 +0200] [106/118] Example [10/28] 'service redis is running' succeeded in 0.03 seconds
+[2026-10-08 16:50:31 +0200] [106/118] Example [11/28] 'service webui is responding directly' succeeded in 6.86 seconds
+[2026-10-08 16:50:35 +0200] [106/118] Example [12/28] 'service webui is responding through varnish/haproxy' succeeded in 3.76 seconds
+[2026-10-08 16:50:39 +0200] [106/118] Example [13/28] 'service webui serves public entrypoints and assets directly' succeeded in 4.3 seconds
+[2026-10-08 16:50:39 +0200] [106/118] Example [14/28] 'service webui does not serve private application files directly' succeeded in 0.23 seconds
+[2026-10-08 16:50:42 +0200] [21/118] Example [1/4] 'rollback from backup creates primary and backup pools and a VPS with a backup DatasetInPool' succeeded in 213.77 seconds
+[2026-10-08 16:50:48 +0200] [106/118] Example [15/28] 'service api is responding' succeeded in 8.44 seconds
+[2026-10-08 16:50:48 +0200] [106/118] Example [16/28] 'service api is running' succeeded in 0.04 seconds
+[2026-10-08 16:50:48 +0200] [106/118] Example [17/28] 'service mailer node container is running' succeeded in 0.5 seconds
+[2026-10-08 16:51:23 +0200] [106/118] Example [18/28] 'service mailer node nodectld reports running state' succeeded in 34.53 seconds
+[2026-10-08 16:51:24 +0200] [106/118] Example [19/28] 'service mailer node mailpit API is responding' succeeded in 1.26 seconds
+[2026-10-08 16:51:24 +0200] [106/118] Example [20/28] 'service mariadb is running' succeeded in 0.13 seconds
+[2026-10-08 16:51:24 +0200] [106/118] Example [21/28] 'service mariadb is responding' succeeded in 0.2 seconds
+[2026-10-08 16:51:24 +0200] [106/118] Example [22/28] 'service mariadb is set up' succeeded in 0.05 seconds
+[2026-10-08 16:51:25 +0200] [106/118] Example [23/28] 'service mariadb has built-in mail templates' succeeded in 0.18 seconds
+[2026-10-08 16:51:25 +0200] [106/118] Example [24/28] 'service mariadb is populated' succeeded in 0.2 seconds
+[2026-10-08 16:51:25 +0200] [106/118] Example [25/28] 'service console-router is responding directly' succeeded in 0.28 seconds
+[2026-10-08 16:51:25 +0200] [106/118] Example [26/28] 'service console-router is running' succeeded in 0.26 seconds
+[2026-10-08 16:51:25 +0200] [106/118] Example [27/28] 'service console-router is responding through nginx/haproxy' succeeded in 0.22 seconds
+[2026-10-08 16:51:26 +0200] [106/118] Example [28/28] 'system is running' succeeded in 0.16 seconds
+[2026-10-08 16:51:48 +0200] [106/118] Test 'services-up' successful in 397.9 seconds
+[2026-10-08 16:51:48 +0200] Waiting for resources: pool: memory=80.0 GiB/91.2 GiB, shm=80.0 GiB/367.1 GiB, cpus=56/72, running=4; pending: storage/dataset-destroy-after-rollback-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate-with-subdataset-mounts (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/restore-remote-interrupted-recv (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 16:52:38 +0200] Status: passing; 18 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 96 remaining
+[2026-10-08 16:53:32 +0200] [10/118] Example [1/1] 'cluster generate_migration_keys generates send keys on eligible pools and persists public keys' succeeded in 127.68 seconds
+[2026-10-08 16:53:40 +0200] [21/118] Example [2/4] 'rollback from backup creates three backups and then rolls back to the middle snapshot' succeeded in 178.1 seconds
+[2026-10-08 16:53:41 +0200] [21/118] Example [3/4] 'rollback from backup creates a new head branch and records restore metadata' succeeded in 0.48 seconds
+[2026-10-08 16:54:11 +0200] [21/118] Example [4/4] 'rollback from backup continues future backups on the new head branch' succeeded in 30.57 seconds
+[2026-10-08 16:54:27 +0200] [10/118] Test 'cluster/generate-migration-keys' successful in 485.0 seconds
+[2026-10-08 16:54:27 +0200] Reserved resources for 'storage/dataset-destroy-after-rollback-history': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=80.0 GiB/91.2 GiB, shm=80.0 GiB/367.1 GiB, cpus=56/72, running=4
+[2026-10-08 16:54:27 +0200] [12/118] Running test 'storage/dataset-destroy-after-rollback-history' (#default)
+[2026-10-08 16:54:27 +0200] Waiting for resources: pool: memory=80.0 GiB/91.2 GiB, shm=80.0 GiB/367.1 GiB, cpus=56/72, running=4; pending: vps/migrate-with-subdataset-mounts (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/restore-remote-interrupted-recv (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/rollback-from-remote-backup (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 16:54:40 +0200] [21/118] Test 'storage/rollback-from-backup' successful in 627.08 seconds
+[2026-10-08 16:54:40 +0200] Reserved resources for 'vps/migrate-with-subdataset-mounts': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 16:54:40 +0200] [13/118] Running test 'vps/migrate-with-subdataset-mounts' (#default)
+[2026-10-08 16:56:01 +0200] [22/118] Example [1/1] 'lifecycle actions runs start, stop, restart, and rescue boot end to end' succeeded in 524.85 seconds
+[2026-10-08 16:56:40 +0200] [22/118] Test 'vps/start-stop-restart-boot' successful in 745.05 seconds
+[2026-10-08 16:56:40 +0200] Reserved resources for 'storage/snapshot-download-full-archive': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 16:56:40 +0200] [24/118] Running test 'storage/snapshot-download-full-archive' (#default)
+[2026-10-08 16:56:40 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/restore-remote-interrupted-recv (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/rollback-from-remote-backup (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), cluster/node-evacuate-basic (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 16:57:38 +0200] Status: passing; 21 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 93 remaining
+[2026-10-08 16:59:37 +0200] [12/118] Example [1/2] 'destroying a dataset after rollback history creates a standalone remote backup dataset' succeeded in 56.65 seconds
+[2026-10-08 17:01:09 +0200] [24/118] Example [1/1] 'archive snapshot download writes a ready tarball and exposes it through the download row' succeeded in 87.16 seconds
+[2026-10-08 17:01:53 +0200] [24/118] Test 'storage/snapshot-download-full-archive' successful in 313.12 seconds
+[2026-10-08 17:01:53 +0200] Reserved resources for 'tx/chain-lifecycle': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:01:53 +0200] [26/118] Running test 'tx/chain-lifecycle' (#default)
+[2026-10-08 17:01:53 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/restore-remote-interrupted-recv (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/rollback-from-remote-backup (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), cluster/node-evacuate-basic (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:02:38 +0200] Status: passing; 22 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 92 remaining
+[2026-10-08 17:03:23 +0200] [1/118] Example [1/1] 'webui admin VPS core browser flow passes Playwright admin VPS core tests' succeeded in 1215.16 seconds
+[2026-10-08 17:03:23 +0200] [1/118] Script 'webui#vps-admin-core' successful in 1266.1 seconds
+[2026-10-08 17:04:46 +0200] [12/118] Example [2/2] 'destroying a dataset after rollback history destroys the whole dataset after repeated rollback history' succeeded in 309.09 seconds
+[2026-10-08 17:05:04 +0200] [26/118] Example [1/5] 'transaction chain lifecycle creates a storage pool' succeeded in 15.72 seconds
+[2026-10-08 17:05:17 +0200] [12/118] Test 'storage/dataset-destroy-after-rollback-history' successful in 649.43 seconds
+[2026-10-08 17:05:17 +0200] Reserved resources for 'storage/restore-remote-interrupted-recv': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:05:17 +0200] [14/118] Running test 'storage/restore-remote-interrupted-recv' (#default)
+[2026-10-08 17:05:17 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/rollback-from-remote-backup (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), cluster/node-evacuate-basic (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/replace-no-start (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:05:50 +0200] [26/118] Example [2/5] 'transaction chain lifecycle waits for the pool to become online' succeeded in 46.45 seconds
+[2026-10-08 17:06:28 +0200] [13/118] Example [1/1] 'VPS migration with subdataset mounts remaps mounted subdatasets to the destination dataset in pool' succeeded in 464.25 seconds
+[2026-10-08 17:06:32 +0200] [26/118] Example [3/5] 'transaction chain lifecycle creates a stopped VPS' succeeded in 41.87 seconds
+[2026-10-08 17:06:44 +0200] [26/118] Example [4/5] 'transaction chain lifecycle queues the start action while the vps queue is paused' succeeded in 11.94 seconds
+[2026-10-08 17:07:02 +0200] [13/118] Test 'vps/migrate-with-subdataset-mounts' successful in 741.7 seconds
+[2026-10-08 17:07:02 +0200] Reserved resources for 'storage/rollback-from-remote-backup': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:07:02 +0200] [15/118] Running test 'storage/rollback-from-remote-backup' (#default)
+[2026-10-08 17:07:02 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: cluster/node-evacuate-basic (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/replace-no-start (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate-with-open-maintenance-window (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:07:38 +0200] Status: passing; 24 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 90 remaining
+[2026-10-08 17:08:54 +0200] [26/118] Example [5/5] 'transaction chain lifecycle resumes the queue and completes the chain' succeeded in 129.86 seconds
+[2026-10-08 17:09:17 +0200] [26/118] Test 'tx/chain-lifecycle' successful in 444.33 seconds
+[2026-10-08 17:09:17 +0200] Reserved resources for 'tx/release-retry-resolve': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:09:17 +0200] [27/118] Running test 'tx/release-retry-resolve' (#default)
+[2026-10-08 17:09:17 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: cluster/node-evacuate-basic (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/replace-no-start (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate-with-open-maintenance-window (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:11:58 +0200] [27/118] Example [1/4] 'release, retry, and resolve releases chain locks and reserved ports' succeeded in 0.87 seconds
+[2026-10-08 17:11:59 +0200] [27/118] Example [2/4] 'release, retry, and resolve marks failed chains as resolved' succeeded in 0.81 seconds
+[2026-10-08 17:11:59 +0200] [27/118] Example [3/4] 'release, retry, and resolve retries a chain from a specific transaction' succeeded in 0.8 seconds
+[2026-10-08 17:12:00 +0200] [27/118] Example [4/4] 'release, retry, and resolve retries the whole chain' succeeded in 0.78 seconds
+[2026-10-08 17:12:38 +0200] Status: passing; 25 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 89 remaining
+[2026-10-08 17:12:41 +0200] [27/118] Test 'tx/release-retry-resolve' successful in 203.86 seconds
+[2026-10-08 17:12:41 +0200] Reserved resources for 'storage/snapshot-download-remove': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:12:41 +0200] [28/118] Running test 'storage/snapshot-download-remove' (#default)
+[2026-10-08 17:12:41 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: cluster/node-evacuate-basic (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/replace-no-start (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate-with-open-maintenance-window (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:12:55 +0200] [15/118] Example [1/4] 'rollback from remote backup creates a VPS with primary storage on node1 and backup storage on node2' succeeded in 132.39 seconds
+[2026-10-08 17:14:59 +0200] [14/118] Example [1/1] 'remote restore interrupted on recv cleans up rollback state when primary receive is interrupted and retry succeeds' succeeded in 381.3 seconds
+[2026-10-08 17:15:25 +0200] [15/118] Example [2/4] 'rollback from remote backup builds remote backup history and rolls back to the middle snapshot' succeeded in 150.17 seconds
+[2026-10-08 17:15:29 +0200] [15/118] Example [3/4] 'rollback from remote backup records rollback branching on the remote backup dataset' succeeded in 3.89 seconds
+[2026-10-08 17:15:30 +0200] [14/118] Test 'storage/restore-remote-interrupted-recv' successful in 612.93 seconds
+[2026-10-08 17:15:30 +0200] Reserved resources for 'cluster/node-evacuate-basic': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:15:30 +0200] [19/118] Running test 'cluster/node-evacuate-basic' (#default)
+[2026-10-08 17:15:30 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: vps/replace-no-start (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate-with-open-maintenance-window (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/branching-rotation (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:15:54 +0200] [15/118] Example [4/4] 'rollback from remote backup continues future backups on the new head branch over the remote send path' succeeded in 25.81 seconds
+[2026-10-08 17:16:23 +0200] [15/118] Test 'storage/rollback-from-remote-backup' successful in 560.95 seconds
+[2026-10-08 17:16:23 +0200] Reserved resources for 'vps/replace-no-start': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:16:23 +0200] [23/118] Running test 'vps/replace-no-start' (#default)
+[2026-10-08 17:17:03 +0200] [28/118] Example [1/1] 'snapshot download deletion removes the database row, snapshot link, and download files' succeeded in 94.95 seconds
+[2026-10-08 17:17:23 +0200] [28/118] Test 'storage/snapshot-download-remove' successful in 282.11 seconds
+[2026-10-08 17:17:23 +0200] Reserved resources for 'vps/reinstall': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:17:23 +0200] [30/118] Running test 'vps/reinstall' (#default)
+[2026-10-08 17:17:23 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: vps/migrate-with-open-maintenance-window (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/branching-rotation (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), admin/environment-defaults-propagation (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12)
+[2026-10-08 17:17:38 +0200] Status: passing; 29 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 85 remaining
+[2026-10-08 17:22:38 +0200] Status: passing; 29 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 85 remaining
+[2026-10-08 17:23:11 +0200] [30/118] Example [1/1] 'reinstall removes local snapshots, advances dataset history, and replaces the previous rootfs' succeeded in 194.75 seconds
+[2026-10-08 17:25:06 +0200] [23/118] Example [1/1] 'remote VPS replace with start=false finishes without starting the replacement on the destination' succeeded in 345.44 seconds
+[2026-10-08 17:25:28 +0200] [1/118] Example [1/1] 'webui admin VPS long operation browser flow passes Playwright admin VPS long operation tests' succeeded in 1154.46 seconds
+[2026-10-08 17:25:28 +0200] [1/118] Script 'webui#vps-admin-ops' successful in 1325.08 seconds
+[2026-10-08 17:25:33 +0200] [23/118] Test 'vps/replace-no-start' successful in 550.77 seconds
+[2026-10-08 17:25:33 +0200] Reserved resources for 'vps/migrate-with-open-maintenance-window': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:25:33 +0200] [25/118] Running test 'vps/migrate-with-open-maintenance-window' (#default)
+[2026-10-08 17:25:33 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/branching-rotation (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), admin/environment-defaults-propagation (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12), storage/backup-remote-interrupted-send (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:27:38 +0200] Status: passing; 30 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 84 remaining
+[2026-10-08 17:28:20 +0200] [19/118] Example [1/1] 'node evacuation migrates all VPSes off the source node' succeeded in 598.16 seconds
+[2026-10-08 17:28:26 +0200] [30/118] Test 'vps/reinstall' successful in 662.18 seconds
+[2026-10-08 17:28:26 +0200] Reserved resources for 'admin/environment-defaults-propagation': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:28:26 +0200] [32/118] Running test 'admin/environment-defaults-propagation' (#default)
+[2026-10-08 17:28:26 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/branching-rotation (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/backup-remote-interrupted-send (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/dataset-migrate-rsync-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:28:54 +0200] [19/118] Test 'cluster/node-evacuate-basic' successful in 804.49 seconds
+[2026-10-08 17:28:54 +0200] Reserved resources for 'storage/branching-rotation': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:28:54 +0200] [29/118] Running test 'storage/branching-rotation' (#default)
+[2026-10-08 17:31:20 +0200] [32/118] Example [1/1] 'environment default propagation updates default user config rows only' succeeded in 4.57 seconds
+[2026-10-08 17:31:38 +0200] [32/118] Test 'admin/environment-defaults-propagation' successful in 192.85 seconds
+[2026-10-08 17:31:38 +0200] Reserved resources for 'node/register': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:31:38 +0200] [35/118] Running test 'node/register' (#default)
+[2026-10-08 17:31:38 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/backup-remote-interrupted-send (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/dataset-migrate-rsync-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/vps-hard-delete-complex-history-with-descendants (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:32:38 +0200] Status: passing; 33 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 81 remaining
+[2026-10-08 17:34:37 +0200] [35/118] Example [1/5] 'node boots and imports pool' succeeded in 41.6 seconds
+[2026-10-08 17:34:37 +0200] [35/118] Example [2/5] 'node reaches services over socket network' succeeded in 0.07 seconds
+[2026-10-08 17:34:41 +0200] [29/118] Example [1/2] 'rotation on branched backup history creates a VPS with primary storage on node1 and backup storage on node2' succeeded in 154.35 seconds
+[2026-10-08 17:35:03 +0200] [35/118] Example [3/5] 'registration waits for the api server' succeeded in 25.87 seconds
+[2026-10-08 17:35:05 +0200] [35/118] Example [4/5] 'registration creates rabbitmq user' succeeded in 2.64 seconds
+[2026-10-08 17:36:28 +0200] [25/118] Example [1/1] 'VPS migration in an open maintenance window migrates to node2 and includes maintenance-window transactions' succeeded in 459.98 seconds
+[2026-10-08 17:36:59 +0200] [25/118] Test 'vps/migrate-with-open-maintenance-window' successful in 685.13 seconds
+[2026-10-08 17:36:59 +0200] Reserved resources for 'storage/backup-remote-interrupted-send': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:36:59 +0200] [33/118] Running test 'storage/backup-remote-interrupted-send' (#default)
+[2026-10-08 17:36:59 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/dataset-migrate-rsync-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/vps-hard-delete-complex-history-with-descendants (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/create (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12)
+[2026-10-08 17:37:38 +0200] Status: passing; 34 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 80 remaining
+[2026-10-08 17:39:46 +0200] [35/118] Example [5/5] 'registration registers node and starts nodectld' succeeded in 280.49 seconds
+[2026-10-08 17:40:04 +0200] [35/118] Test 'node/register' successful in 505.29 seconds
+[2026-10-08 17:40:04 +0200] Reserved resources for 'vps/create': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:40:04 +0200] [37/118] Running test 'vps/create' (#default)
+[2026-10-08 17:40:04 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/dataset-migrate-rsync-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/vps-hard-delete-complex-history-with-descendants (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/rollback-with-descendants (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:42:26 +0200] [37/118] Example [1/4] 'cluster responds to API requests' succeeded in 3.24 seconds
+[2026-10-08 17:42:38 +0200] [37/118] Example [2/4] 'cluster creates storage pool' succeeded in 12.14 seconds
+[2026-10-08 17:42:38 +0200] Status: passing; 35 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 79 remaining
+[2026-10-08 17:42:57 +0200] [29/118] Example [2/2] 'rotation on branched backup history eventually deletes unreferenced branched snapshots without deleting live parents' succeeded in 495.86 seconds
+[2026-10-08 17:43:09 +0200] [33/118] Example [1/1] 'remote backup interrupted on send fails cleanly when the sender side is interrupted and later backup still works' succeeded in 184.23 seconds
+[2026-10-08 17:43:16 +0200] [37/118] Example [3/4] 'cluster creates a VPS' succeeded in 37.86 seconds
+[2026-10-08 17:43:25 +0200] [29/118] Test 'storage/branching-rotation' successful in 871.43 seconds
+[2026-10-08 17:43:25 +0200] Reserved resources for 'storage/dataset-migrate-rsync-remote': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:43:25 +0200] [34/118] Running test 'storage/dataset-migrate-rsync-remote' (#default)
+[2026-10-08 17:43:25 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/vps-hard-delete-complex-history-with-descendants (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/rollback-with-descendants (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/clone-with-descendants-and-mounts (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:43:36 +0200] [33/118] Test 'storage/backup-remote-interrupted-send' successful in 397.64 seconds
+[2026-10-08 17:43:36 +0200] Reserved resources for 'storage/vps-hard-delete-complex-history-with-descendants': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:43:36 +0200] [36/118] Running test 'storage/vps-hard-delete-complex-history-with-descendants' (#default)
+[2026-10-08 17:44:25 +0200] [37/118] Example [4/4] 'cluster starts a VPS' succeeded in 69.11 seconds
+[2026-10-08 17:44:50 +0200] [37/118] Test 'vps/create' successful in 286.35 seconds
+[2026-10-08 17:44:50 +0200] Reserved resources for 'alerts/oom-report-notify-and-prune': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:44:50 +0200] [40/118] Running test 'alerts/oom-report-notify-and-prune' (#default)
+[2026-10-08 17:44:50 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/rollback-with-descendants (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/clone-with-descendants-and-mounts (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/rollback-dependent-branch-rotation (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:47:38 +0200] Status: passing; 38 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 76 remaining
+[2026-10-08 17:48:55 +0200] [34/118] Example [1/1] 'remote dataset migration over rsync moves the dataset with rsync-specific transactions and intact data' succeeded in 146.52 seconds
+[2026-10-08 17:49:24 +0200] [34/118] Test 'storage/dataset-migrate-rsync-remote' successful in 358.15 seconds
+[2026-10-08 17:49:24 +0200] Reserved resources for 'storage/rollback-with-descendants': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:49:24 +0200] [38/118] Running test 'storage/rollback-with-descendants' (#default)
+[2026-10-08 17:49:24 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: vps/clone-with-descendants-and-mounts (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/rollback-dependent-branch-rotation (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/topology-fixture-roundtrip (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 17:49:47 +0200] [40/118] Example [1/1] 'oom report task notifies users and prunes old reports' succeeded in 56.58 seconds
+[2026-10-08 17:50:08 +0200] [40/118] Test 'alerts/oom-report-notify-and-prune' successful in 318.11 seconds
+[2026-10-08 17:50:08 +0200] Reserved resources for 'user/suspend-resume-cascade': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:50:08 +0200] [43/118] Running test 'user/suspend-resume-cascade' (#default)
+[2026-10-08 17:50:44 +0200] [1/118] Example [1/1] 'webui user VPS core browser flow passes Playwright user VPS core tests' succeeded in 1476.74 seconds
+[2026-10-08 17:50:44 +0200] [1/118] Script 'webui#vps-user-core' successful in 1515.67 seconds
+[2026-10-08 17:52:38 +0200] Status: passing; 40 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 74 remaining
+[2026-10-08 17:57:38 +0200] Status: passing; 40 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 74 remaining
+[2026-10-08 17:58:15 +0200] [38/118] Example [1/1] 'rollback with descendants preserves descendant datasets across rollback and keeps future backups working' succeeded in 359.12 seconds
+[2026-10-08 17:58:50 +0200] [38/118] Test 'storage/rollback-with-descendants' successful in 565.99 seconds
+[2026-10-08 17:58:50 +0200] Reserved resources for 'vps/clone-with-descendants-and-mounts': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:58:50 +0200] [39/118] Running test 'vps/clone-with-descendants-and-mounts' (#default)
+[2026-10-08 17:58:50 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/rollback-dependent-branch-rotation (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/topology-fixture-roundtrip (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), client/snapshot-download (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12)
+[2026-10-08 17:59:05 +0200] [1/118] Example [1/1] 'webui networking and DNS browser flow passes Playwright networking and DNS tests' succeeded in 432.93 seconds
+[2026-10-08 17:59:05 +0200] [1/118] Script 'webui#networking-dns' successful in 500.9 seconds
+[2026-10-08 17:59:12 +0200] [36/118] Example [1/1] 'VPS hard delete after complex history with descendants removes the primary subtree while preserving detached backups until later destroy' succeeded in 751.74 seconds
+[2026-10-08 17:59:39 +0200] [36/118] Test 'storage/vps-hard-delete-complex-history-with-descendants' successful in 962.49 seconds
+[2026-10-08 17:59:39 +0200] Reserved resources for 'storage/rollback-dependent-branch-rotation': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 17:59:39 +0200] [41/118] Running test 'storage/rollback-dependent-branch-rotation' (#default)
+[2026-10-08 18:00:50 +0200] [43/118] Example [1/1] 'user suspend and resume cascade suspends VPS and DNS state, then restores originally enabled state' succeeded in 413.94 seconds
+[2026-10-08 18:01:17 +0200] [43/118] Test 'user/suspend-resume-cascade' successful in 668.62 seconds
+[2026-10-08 18:01:17 +0200] Reserved resources for 'client/snapshot-download': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 18:01:17 +0200] [44/118] Running test 'client/snapshot-download' (#default)
+[2026-10-08 18:01:17 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/topology-fixture-roundtrip (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/complex-rotation-order-pending (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), network/network-interface-lifecycle (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12)
+[2026-10-08 18:01:41 +0200] [1/118] Example [1/1] 'webui miscellaneous page browser flow passes Playwright miscellaneous page tests' succeeded in 114.62 seconds
+[2026-10-08 18:01:41 +0200] [1/118] Script 'webui#misc-pages' successful in 156.02 seconds
+[2026-10-08 18:02:38 +0200] Status: passing; 43 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 71 remaining
+[2026-10-08 18:04:25 +0200] [41/118] Example [1/4] 'rotation after rollback back to a dependent backup branch creates a VPS with primary storage on node1 and backup storage on node2' succeeded in 83.06 seconds
+[2026-10-08 18:07:13 +0200] [44/118] Example [1/1] 'snapshot download client downloads a prepared archive and can resume an interrupted file' succeeded in 102.94 seconds
+[2026-10-08 18:07:31 +0200] [44/118] Test 'client/snapshot-download' successful in 374.32 seconds
+[2026-10-08 18:07:31 +0200] Reserved resources for 'network/network-interface-lifecycle': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 18:07:31 +0200] [46/118] Running test 'network/network-interface-lifecycle' (#default)
+[2026-10-08 18:07:31 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/topology-fixture-roundtrip (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/complex-rotation-order-pending (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/source-rotation-after-backup-prune (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:07:36 +0200] [39/118] Example [1/1] 'remote VPS clone with descendants and mounts copies descendant datasets and remaps descendant mounts to the clone' succeeded in 337.01 seconds
+[2026-10-08 18:07:38 +0200] Status: passing; 44 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 70 remaining
+[2026-10-08 18:08:06 +0200] [39/118] Test 'vps/clone-with-descendants-and-mounts' successful in 556.8 seconds
+[2026-10-08 18:08:06 +0200] Reserved resources for 'storage/topology-fixture-roundtrip': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 18:08:06 +0200] [42/118] Running test 'storage/topology-fixture-roundtrip' (#default)
+[2026-10-08 18:10:19 +0200] [41/118] Example [2/4] 'rotation after rollback back to a dependent backup branch backs up snapshots on a branch that remains a ZFS clone after rollback' succeeded in 353.23 seconds
+[2026-10-08 18:10:19 +0200] [41/118] Example [3/4] 'rotation after rollback back to a dependent backup branch records appended backup snapshots as dependents of the clone origin' succeeded in 0.08 seconds
+[2026-10-08 18:10:48 +0200] [41/118] Example [4/4] 'rotation after rollback back to a dependent backup branch rotates the clone origin only after the dependent branch is gone' succeeded in 29.01 seconds
+[2026-10-08 18:11:17 +0200] [41/118] Test 'storage/rollback-dependent-branch-rotation' successful in 697.97 seconds
+[2026-10-08 18:11:17 +0200] Reserved resources for 'storage/complex-rotation-order-pending': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 18:11:17 +0200] [45/118] Running test 'storage/complex-rotation-order-pending' (#default)
+[2026-10-08 18:11:17 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/source-rotation-after-backup-prune (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/clone-remote-consistent (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), tasks/dataset-expansion-enforce-and-resolve (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12)
+[2026-10-08 18:12:27 +0200] [42/118] Example [1/2] 'topology fixture roundtrip creates a VPS with primary storage on node1 and backup storage on node2' succeeded in 90.83 seconds
+[2026-10-08 18:12:38 +0200] Status: passing; 46 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 68 remaining
+[2026-10-08 18:15:36 +0200] [45/118] Example [1/2] 'rotating a complex multi-tree backup topology creates a VPS with primary storage on node1 and backup storage on node2' succeeded in 90.23 seconds
+[2026-10-08 18:15:55 +0200] [46/118] Example [1/1] 'network interface lifecycle creates, disables, re-enables, and destroys a routed interface' succeeded in 354.49 seconds
+[2026-10-08 18:16:16 +0200] [46/118] Test 'network/network-interface-lifecycle' successful in 524.81 seconds
+[2026-10-08 18:16:16 +0200] Reserved resources for 'tasks/dataset-expansion-enforce-and-resolve': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 18:16:16 +0200] [49/118] Running test 'tasks/dataset-expansion-enforce-and-resolve' (#default)
+[2026-10-08 18:16:16 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: storage/source-rotation-after-backup-prune (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/clone-remote-consistent (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/replace-same-node (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12)
+[2026-10-08 18:17:38 +0200] Status: passing; 47 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 67 remaining
+[2026-10-08 18:19:22 +0200] [42/118] Example [2/2] 'topology fixture roundtrip captures and replays a normalized topology fixture' succeeded in 414.83 seconds
+[2026-10-08 18:19:50 +0200] [42/118] Test 'storage/topology-fixture-roundtrip' successful in 703.92 seconds
+[2026-10-08 18:19:50 +0200] Reserved resources for 'storage/source-rotation-after-backup-prune': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 18:19:50 +0200] [47/118] Running test 'storage/source-rotation-after-backup-prune' (#default)
+[2026-10-08 18:19:50 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: vps/clone-remote-consistent (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/replace-same-node (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12), storage/dataset-migrate-same-node (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12)
+[2026-10-08 18:21:54 +0200] [1/118] Example [1/1] 'webui user VPS side operation browser flow passes Playwright user VPS side operation tests' succeeded in 1132.18 seconds
+[2026-10-08 18:21:54 +0200] [1/118] Script 'webui#vps-user-ops' successful in 1213.75 seconds
+[2026-10-08 18:22:38 +0200] Status: passing; 48 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 66 remaining
+[2026-10-08 18:23:47 +0200] [1/118] Example [1/1] 'webui transactions browser flow passes Playwright transaction tests' succeeded in 66.34 seconds
+[2026-10-08 18:23:47 +0200] [1/118] Script 'webui#transactions' successful in 112.5 seconds
+[2026-10-08 18:23:52 +0200] [47/118] Example [1/3] 'source rotation after backup prune creates a dataset with primary storage on node1 and backup storage on node2' succeeded in 50.61 seconds
+[2026-10-08 18:24:44 +0200] [45/118] Example [2/2] 'rotating a complex multi-tree backup topology keeps a pending contract for dependency-safe aggressive rotation across tree switches' pending in 548.1 seconds
+[2026-10-08 18:25:12 +0200] [45/118] Test 'storage/complex-rotation-order-pending' successful in 835.46 seconds
+[2026-10-08 18:25:12 +0200] Reserved resources for 'vps/clone-remote-consistent': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4
+[2026-10-08 18:25:12 +0200] [48/118] Running test 'vps/clone-remote-consistent' (#default)
+[2026-10-08 18:25:12 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=60/72, running=4; pending: vps/replace-same-node (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12), storage/dataset-migrate-same-node (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12), storage/dataset-destroy-complex-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:25:49 +0200] [47/118] Example [2/3] 'source rotation after backup prune rotates away obsolete source snapshots after their old backup copy is pruned' succeeded in 117.07 seconds
+[2026-10-08 18:27:38 +0200] Status: passing; 49 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 65 remaining
+[2026-10-08 18:27:42 +0200] [1/118] Example [1/1] 'webui admin cluster browser flow passes Playwright admin cluster tests' succeeded in 197.89 seconds
+[2026-10-08 18:27:42 +0200] [1/118] Script 'webui#admin-cluster' successful in 235.08 seconds
+[2026-10-08 18:27:48 +0200] [47/118] Example [3/3] 'source rotation after backup prune keeps a source snapshot when newer backup copies are only in a non-head tree' succeeded in 119.26 seconds
+[2026-10-08 18:28:15 +0200] [47/118] Test 'storage/source-rotation-after-backup-prune' successful in 504.23 seconds
+[2026-10-08 18:28:15 +0200] Reserved resources for 'vps/replace-same-node': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=80.0 GiB/91.2 GiB, shm=80.0 GiB/367.1 GiB, cpus=56/72, running=4
+[2026-10-08 18:28:15 +0200] [50/118] Running test 'vps/replace-same-node' (#default)
+[2026-10-08 18:28:15 +0200] Waiting for resources: pool: memory=80.0 GiB/91.2 GiB, shm=80.0 GiB/367.1 GiB, cpus=56/72, running=4; pending: storage/dataset-migrate-same-node (machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12), storage/dataset-destroy-complex-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/backup-multiple-destinations-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:30:44 +0200] [1/118] Example [1/1] 'webui security advisory browser flow passes Playwright security advisory tests' succeeded in 144.04 seconds
+[2026-10-08 18:30:44 +0200] [1/118] Script 'webui#security-advisories' successful in 181.58 seconds
+[2026-10-08 18:32:38 +0200] Status: passing; 50 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 4 running, 64 remaining
+[2026-10-08 18:33:43 +0200] [48/118] Example [1/1] 'remote consistent VPS clone stops, syncs, and restarts the source before finishing the clone' succeeded in 342.92 seconds
+[2026-10-08 18:34:40 +0200] [48/118] Test 'vps/clone-remote-consistent' successful in 567.36 seconds
+[2026-10-08 18:34:40 +0200] Reserved resources for 'storage/dataset-migrate-same-node': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=72.0 GiB/91.2 GiB, shm=72.0 GiB/367.1 GiB, cpus=52/72, running=4
+[2026-10-08 18:34:40 +0200] [51/118] Running test 'storage/dataset-migrate-same-node' (#default)
+[2026-10-08 18:34:40 +0200] Reserved resources for 'admin/remote-mount-state': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:34:40 +0200] [56/118] Running test 'admin/remote-mount-state' (#default)
+[2026-10-08 18:34:40 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5; pending: storage/dataset-destroy-complex-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/backup-multiple-destinations-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:36:38 +0200] [49/118] Example [1/1] 'dataset expansion enforcement tasks stops an over-quota VPS and shrinks the dataset after usage drops' failed in 1023.27 seconds
+[2026-10-08 18:36:53 +0200] [50/118] Example [1/1] 'same-node VPS replace creates a replacement in another pool without remote send steps' succeeded in 357.39 seconds
+[2026-10-08 18:37:05 +0200] [49/118] Test 'tasks/dataset-expansion-enforce-and-resolve' failed after 1248.63 seconds, see /tmp/os-test-runner-19884793-37784439748-1/os-test-tasks__dataset-expansion-enforce-and-resolve-e2924ff6
+[2026-10-08 18:37:05 +0200] Reserved resources for 'admin/cluster-resource-package-assignment': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:37:05 +0200] [57/118] Running test 'admin/cluster-resource-package-assignment' (#default)
+[2026-10-08 18:37:05 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5; pending: storage/dataset-destroy-complex-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/backup-multiple-destinations-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:37:16 +0200] [50/118] Test 'vps/replace-same-node' successful in 541.49 seconds
+[2026-10-08 18:37:16 +0200] Reserved resources for 'vps/replace-with-backups': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:37:16 +0200] [58/118] Running test 'vps/replace-with-backups' (#default)
+[2026-10-08 18:37:38 +0200] Status: failed; 52 succeeded as expected, 0 failed as expected, 1 unexpectedly failed, 0 unexpectedly succeeded; 5 running, 60 remaining
+[2026-10-08 18:37:38 +0200] Unexpectedly failed test scripts: tasks/dataset-expansion-enforce-and-resolve
+[2026-10-08 18:39:50 +0200] [56/118] Example [1/1] 'remote mount_state RPC updates mount state through supervisor ingestion' succeeded in 139.2 seconds
+[2026-10-08 18:40:01 +0200] [51/118] Example [1/1] 'same-node dataset migration moves the dataset between primary pools on one node' succeeded in 148.43 seconds
+[2026-10-08 18:40:10 +0200] [56/118] Test 'admin/remote-mount-state' successful in 330.92 seconds
+[2026-10-08 18:40:10 +0200] Reserved resources for 'alerts/incident-report-process': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:40:11 +0200] [61/118] Running test 'alerts/incident-report-process' (#default)
+[2026-10-08 18:40:11 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5; pending: storage/dataset-destroy-complex-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/backup-multiple-destinations-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:40:21 +0200] [51/118] Test 'storage/dataset-migrate-same-node' successful in 341.04 seconds
+[2026-10-08 18:40:21 +0200] Reserved resources for 'alerts/lifetime-and-daily-report': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:40:21 +0200] [64/118] Running test 'alerts/lifetime-and-daily-report' (#default)
+[2026-10-08 18:40:44 +0200] [57/118] Example [1/1] 'cluster-resource package assignment updates totals and subtracts from personal packages' succeeded in 26.11 seconds
+[2026-10-08 18:41:02 +0200] [57/118] Test 'admin/cluster-resource-package-assignment' successful in 237.26 seconds
+[2026-10-08 18:41:02 +0200] Reserved resources for 'vps/update-resources-and-features': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:41:02 +0200] [66/118] Running test 'vps/update-resources-and-features' (#default)
+[2026-10-08 18:42:07 +0200] [1/118] Example [1/1] 'webui VPS lifecycle browser flow passes Playwright VPS lifecycle tests' succeeded in 642.39 seconds
+[2026-10-08 18:42:07 +0200] [1/118] Script 'webui#vps-lifecycle' successful in 683.57 seconds
+[2026-10-08 18:42:38 +0200] Status: failed; 55 succeeded as expected, 0 failed as expected, 1 unexpectedly failed, 0 unexpectedly succeeded; 5 running, 57 remaining
+[2026-10-08 18:42:38 +0200] Unexpectedly failed test scripts: tasks/dataset-expansion-enforce-and-resolve
+[2026-10-08 18:44:04 +0200] [1/118] Example [1/1] 'webui admin jumpto browser flow passes Playwright jumpto tests' succeeded in 60.13 seconds
+[2026-10-08 18:44:04 +0200] [1/118] Script 'webui#jumpto' successful in 116.9 seconds
+[2026-10-08 18:44:58 +0200] [58/118] Example [1/1] 'same-node VPS replace with backups moves backup history and keeps future backups incremental' succeeded in 268.07 seconds
+[2026-10-08 18:45:20 +0200] [58/118] Test 'vps/replace-with-backups' successful in 483.88 seconds
+[2026-10-08 18:45:20 +0200] Reserved resources for 'user/soft-delete-revive-auth': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:45:20 +0200] [67/118] Running test 'user/soft-delete-revive-auth' (#default)
+[2026-10-08 18:45:20 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5; pending: storage/dataset-destroy-complex-history (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/backup-multiple-destinations-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:45:47 +0200] [64/118] Example [1/1] 'lifetime and daily report tasks sends expiration warning and daily report mail' succeeded in 73.99 seconds
+[2026-10-08 18:46:08 +0200] [64/118] Test 'alerts/lifetime-and-daily-report' successful in 347.45 seconds
+[2026-10-08 18:46:08 +0200] Reserved resources for 'tx/keep-going-final-state': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:46:08 +0200] [70/118] Running test 'tx/keep-going-final-state' (#default)
+[2026-10-08 18:46:14 +0200] [1/118] Example [1/1] 'webui user namespace browser flow passes Playwright user namespace tests' succeeded in 78.0 seconds
+[2026-10-08 18:46:14 +0200] [1/118] Script 'webui#userns' successful in 130.39 seconds
+[2026-10-08 18:46:55 +0200] [1/118] Test 'webui' successful in 9256.2 seconds
+[2026-10-08 18:46:55 +0200] Reserved resources for 'storage/dataset-destroy-complex-history': machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:46:55 +0200] [52/118] Running test 'storage/dataset-destroy-complex-history' (#default)
+[2026-10-08 18:46:55 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5; pending: storage/backup-multiple-destinations-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/restore-after-reinstall-with-descendants-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:47:02 +0200] [66/118] Example [1/1] 'resource and feature updates updates resources, toggles features, and keeps the VPS running' succeeded in 169.28 seconds
+[2026-10-08 18:47:26 +0200] [66/118] Test 'vps/update-resources-and-features' successful in 384.67 seconds
+[2026-10-08 18:47:26 +0200] Reserved resources for 'tx/rollback-state-machine': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:47:26 +0200] [71/118] Running test 'tx/rollback-state-machine' (#default)
+[2026-10-08 18:47:38 +0200] Status: failed; 59 succeeded as expected, 0 failed as expected, 1 unexpectedly failed, 0 unexpectedly succeeded; 5 running, 53 remaining
+[2026-10-08 18:47:38 +0200] Unexpectedly failed test scripts: tasks/dataset-expansion-enforce-and-resolve
+[2026-10-08 18:48:47 +0200] [70/118] Example [1/2] 'keep-going final state keeps the synthetic chain queued while the queue is paused' succeeded in 0.08 seconds
+[2026-10-08 18:48:51 +0200] [61/118] Example [1/1] 'incident report task processes an unreported incident and stops the VPS' succeeded in 268.05 seconds
+[2026-10-08 18:49:11 +0200] [61/118] Test 'alerts/incident-report-process' successful in 540.9 seconds
+[2026-10-08 18:49:11 +0200] Reserved resources for 'vps/hard-delete-basic': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:49:11 +0200] [72/118] Running test 'vps/hard-delete-basic' (#default)
+[2026-10-08 18:49:11 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5; pending: storage/backup-multiple-destinations-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/restore-after-reinstall-with-descendants-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:49:57 +0200] [70/118] Example [2/2] 'keep-going final state keeps going after the middle failure and closes as done' succeeded in 70.25 seconds
+[2026-10-08 18:50:03 +0200] [71/118] Example [1/2] 'rollback state machine keeps the synthetic chain queued while the queue is paused' succeeded in 0.16 seconds
+[2026-10-08 18:50:16 +0200] [70/118] Test 'tx/keep-going-final-state' successful in 247.45 seconds
+[2026-10-08 18:50:16 +0200] Reserved resources for 'vps/deploy-public-key-and-user-data': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:50:16 +0200] [73/118] Running test 'vps/deploy-public-key-and-user-data' (#default)
+[2026-10-08 18:50:16 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5; pending: storage/backup-multiple-destinations-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/restore-after-reinstall-with-descendants-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:51:07 +0200] [52/118] Example [1/2] 'destroying a dataset across complex history creates a standalone remote backup dataset' succeeded in 60.27 seconds
+[2026-10-08 18:51:17 +0200] [71/118] Example [2/2] 'rollback state machine rolls the chain back and closes it as failed' succeeded in 73.46 seconds
+[2026-10-08 18:51:35 +0200] [71/118] Test 'tx/rollback-state-machine' successful in 248.75 seconds
+[2026-10-08 18:51:35 +0200] Reserved resources for 'vps/mount-lifecycle': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:51:35 +0200] [75/118] Running test 'vps/mount-lifecycle' (#default)
+[2026-10-08 18:51:35 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5; pending: storage/backup-multiple-destinations-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/restore-after-reinstall-with-descendants-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:52:38 +0200] Status: failed; 62 succeeded as expected, 0 failed as expected, 1 unexpectedly failed, 0 unexpectedly succeeded; 5 running, 50 remaining
+[2026-10-08 18:52:38 +0200] Unexpectedly failed test scripts: tasks/dataset-expansion-enforce-and-resolve
+[2026-10-08 18:53:46 +0200] [67/118] Example [1/1] 'user soft-delete, auth closure, and revive rejects auth after soft-delete and revives VPS/export state' succeeded in 269.52 seconds
+[2026-10-08 18:54:07 +0200] [72/118] Example [1/1] 'basic hard delete removes the container, root dataset, descendant dataset, and DB references' succeeded in 142.57 seconds
+[2026-10-08 18:54:08 +0200] [67/118] Test 'user/soft-delete-revive-auth' successful in 527.83 seconds
+[2026-10-08 18:54:08 +0200] Reserved resources for 'network/export-lifecycle': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:54:08 +0200] [77/118] Running test 'network/export-lifecycle' (#default)
+[2026-10-08 18:54:08 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5; pending: storage/backup-multiple-destinations-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/restore-after-reinstall-with-descendants-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)
+[2026-10-08 18:54:27 +0200] [72/118] Test 'vps/hard-delete-basic' successful in 315.33 seconds
+[2026-10-08 18:54:27 +0200] Reserved resources for 'network/network-interface-routes-and-host-ips': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:54:27 +0200] [78/118] Running test 'network/network-interface-routes-and-host-ips' (#default)
+[2026-10-08 18:55:33 +0200] [73/118] Example [1/1] 'standalone key and user-data deployment deploys the key once and writes the script payload into the guest rootfs' succeeded in 159.17 seconds
+[2026-10-08 18:56:01 +0200] [73/118] Test 'vps/deploy-public-key-and-user-data' successful in 345.88 seconds
+[2026-10-08 18:56:01 +0200] Reserved resources for 'user/hard-delete-cascade': machines=2, memory=16.0 GiB, shm=16.0 GiB, cpus=12; pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5
+[2026-10-08 18:56:01 +0200] [79/118] Running test 'user/hard-delete-cascade' (#default)
+[2026-10-08 18:56:01 +0200] Waiting for resources: pool: memory=88.0 GiB/91.2 GiB, shm=88.0 GiB/367.1 GiB, cpus=64/72, running=5; pending: storage/backup-multiple-destinations-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), vps/migrate (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16), storage/restore-after-reinstall-with-descendants-remote (machines=3, memory=24.0 GiB, shm=24.0 GiB, cpus=16)

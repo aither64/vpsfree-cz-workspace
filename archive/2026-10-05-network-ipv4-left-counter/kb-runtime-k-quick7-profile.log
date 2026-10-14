@@ -1,0 +1,18 @@
+error:
+       … while evaluating attribute 'pathReevaluation'
+         at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsfree-kb-contracts-runtime/tools/test-standalone-profile.nix:24:3:
+           23| {
+           24|   pathReevaluation = require (validate record == record);
+             |   ^
+           25|   missingRevision = require (!(accepted (validate (builtins.removeAttrs record [ "revision" ]))));
+
+       … while evaluating a branch condition
+         at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsfree-kb-contracts-runtime/tools/test-standalone-profile.nix:21:24:
+           20|   validate = value: validator.validate { inherit source; record = value; };
+           21|   require = condition: if condition then true else throw "standalone profile regression failed";
+             |                        ^
+           22| in
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: the string '{"lock_sha256":"06474c212940a7c60d71fe644230d9b98f98feee7e553dd453ec5df72d83d9d9","revision":"0123456789abcdef0123456789abcdef01234567","schema":1,"source":"/nix/store/jnhfmiws58ffjqgvs5zw5bl82i2nlnli-kb-profile-test-source"}' is not allowed to refer to a store path (such as '/nix/store/jnhfmiws58ffjqgvs5zw5bl82i2nlnli-kb-profile-test-source')

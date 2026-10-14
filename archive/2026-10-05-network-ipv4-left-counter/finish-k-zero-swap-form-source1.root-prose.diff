@@ -1,0 +1,24 @@
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index e0fa3c2d4790dd39df3966a637ab2298c4ed7f56..cb2eeb235fa063ba4078cc77eb18b2b8f2a8ae2f 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -326,8 +326,17 @@ Other managed KB page suites retain their test-runner route.
+ 
+ Prepare the packages from a clean exact Git-flake revision after source checks
+ and independent review. Supply one private disk-backed campaign root, one
+-explicit configuration and a private capacity receipt. Run the required real
+-phase, then the optional capture phase against the same inputs:
++explicit configuration and a private capacity receipt.
++
++For long campaign paths, set `TMPDIR` to a short, existing canonical directory
++owned by the caller with mode `0700`. The verifier passes it to child commands
++so Chromium can create its UNIX sockets. Invalid explicit paths refuse before
++commands start. When `TMPDIR` is unset, commands use the campaign's `temporary`
++directory. Keep the selected directory until child and browser cleanup finishes;
++it does not bound Nix builder scratch.
++
++Run the required real phase, then the optional capture phase against the same
++inputs:
+ 
+ ```sh
+ vpsfree-kb-verify --root "$ROOT" --config "$CONFIG" \

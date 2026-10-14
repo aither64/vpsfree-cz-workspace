@@ -1,0 +1,216 @@
+diff --git a/cluster/nix/test.nix b/cluster/nix/test.nix
+index 43b38d5ec678c8392509a1a58f5c45a48da197f3..c5a2d6a3d16969fe208d6592fa9622ba2a506795 100644
+--- a/cluster/nix/test.nix
++++ b/cluster/nix/test.nix
+@@ -1379,6 +1379,33 @@ let
+           paths = [ notificationTemplatesStorePath ];
+           sourceId = notificationTemplatesSourceId;
+         };
++      }
++      ++ lib.optional (topology == "single" && serviceMemoryMiB == 2048) {
++        # Keep the dedicated small fixture's concurrency and SQL workspace bounded.
++        services.mysql.settings.mysqld = {
++          innodb_buffer_pool_size = lib.mkForce "256M";
++          max_connections = lib.mkForce 64;
++          join_buffer_size = "1M";
++          sort_buffer_size = "2M";
++          read_buffer_size = "1M";
++          tmp_table_size = "16M";
++          max_heap_table_size = "16M";
++        };
++        vpsadmin.api = {
++          workers = lib.mkForce 1;
++          threads.min = lib.mkForce 1;
++          threads.max = lib.mkForce 4;
++          rake.tasks = {
++            prometheus-export-base.timer.enable = lib.mkForce false;
++            prometheus-export-dns-records.timer.enable = lib.mkForce false;
++          };
++        };
++        containers.webui.config.services.phpfpm.pools.vpsadmin-webui.settings = {
++          "pm.max_children" = lib.mkForce 4;
++          "pm.start_servers" = lib.mkForce 1;
++          "pm.min_spare_servers" = lib.mkForce 1;
++          "pm.max_spare_servers" = lib.mkForce 2;
++        };
+       };
+ 
+       boot.initrd.kernelModules = [ "virtiofs" ];
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+index 1158000b9b00c96640ae124e05c7994322cb0a22..1a6d58e6e16ea374cae862760b685c2a25382001 100644
+--- a/tools/test-runtime-verify.rb
++++ b/tools/test-runtime-verify.rb
+@@ -854,23 +854,97 @@ class RuntimeVerifyTest < Minitest::Test
+         'VPSADMIN_DEVCLUSTER_TELEGRAM_ENABLE' => '0')
+       expression = <<~NIX
+         let
+-          plan = (builtins.getFlake #{JSON.generate(reference)}).runtimePlan;
++          f = builtins.getFlake #{JSON.generate(reference)};
++          inherit (f.inputs) vpsadmin vpsadminos vpsfStatus nixpkgs;
++          pkgs = import nixpkgs {
++            system = "x86_64-linux";
++            overlays = import (vpsadminos.outPath + "/os/overlays") {
++              inherit (vpsadminos.inputs) netlinkrb ruby-lxc;
++            };
++          };
++          inherit (pkgs) lib;
++          plan = f.runtimePlan;
+           imageContext = builtins.getContext plan.machines.services.diskImage;
++          test = (import (f.outPath + "/cluster/nix/test.nix") {
++            inherit lib vpsadmin vpsadminos vpsfStatus;
++            slug = "services-profile";
++            topology = builtins.getEnv "VPSADMIN_DEVCLUSTER_TOPOLOGY";
++            networkMode = "local";
++            bridgeHelper = ""; certDir = f.outPath + "/cluster";
++            clusterConfigFile = builtins.getEnv "VPSADMIN_DEVCLUSTER_CONFIG_FILE";
++            sshPubKey = f.outPath + "/cluster/placeholder-authorized-key.pub";
++            vpsadminSourcePath = vpsadmin.outPath;
++            vpsadminosSourcePath = vpsadminos.outPath;
++            haveapiSourcePath = ""; configSourcePath = "";
++            notificationTemplatesSourcePath = ""; webSourcePath = "";
++            vpsfStatusSourcePath = ""; vpsadminGoClientSourcePath = "";
++            telegramEnable = "0"; telegramSecretsSourcePath = "";
++          }) { inherit pkgs; };
++          services = (import (nixpkgs.outPath + "/nixos/lib/eval-config.nix") {
++            system = "x86_64-linux";
++            specialArgs = { inherit vpsadminos; };
++            modules = [
++              (nixpkgs.outPath + "/nixos/modules/virtualisation/qemu-vm.nix")
++              (vpsadminos.outPath + "/tests/configs/nixos/test-vm.nix")
++              (vpsadminos.outPath + "/tests/configs/nixos/base.nix")
++              test.machines.services.config
++            ];
++          }).config;
++          webui = services.containers.webui.config;
++          configurationDerivation = name: command:
++            let
++              matches = builtins.filter (path: lib.hasSuffix ("-" + name + ".drv") path)
++                (builtins.attrNames (builtins.getContext command));
++            in
++              assert builtins.length matches == 1;
++              builtins.head matches;
++          enabledUnits = c: builtins.attrNames (lib.filterAttrs (_: unit: unit.enable) c.systemd.units);
+         in {
+           machines = builtins.mapAttrs (_: machine: {
+             inherit (machine) memory kernel cpus;
+             disks = machine.disks;
+           }) plan.machines;
+           imageDerivations = builtins.filter (name: builtins.match ".*[.]drv" name != null) (builtins.attrNames imageContext);
++          workload = {
++            mysql = services.services.mysql.settings.mysqld;
++            mysqlConfig = services.services.mysql.configFile.text;
++            api = { inherit (services.vpsadmin.api) workers threads; };
++            pumaDerivation = configurationDerivation "puma.rb" services.systemd.services.vpsadmin-api.serviceConfig.ExecStart;
++            fpm = webui.services.phpfpm.pools.vpsadmin-webui.settings;
++            fpmDerivation = configurationDerivation "phpfpm-vpsadmin-webui.conf" webui.systemd.services.phpfpm-vpsadmin-webui.serviceConfig.ExecStart;
++            tasks = builtins.mapAttrs (_: task: {
++              inherit (task) enable rake;
++              config = task.timer.config or { };
++              timerEnabled = task.timer.enable;
++            }) services.vpsadmin.api.rake.tasks;
++            timers = builtins.attrNames services.systemd.timers;
++            units = enabledUnits services;
++            webuiUnits = enabledUnits webui;
++          };
+         }
+       NIX
+-      project = lambda do |name, config|
++      project = lambda do |name, config, topology = 'single'|
+         input = File.join(directory, "#{name}.json")
+         File.write(input, JSON.generate(config), perm: 0o600)
+-        output, error, status = Open3.capture3(environment.merge('VPSADMIN_DEVCLUSTER_CONFIG_FILE' => input),
++        output, error, status = Open3.capture3(environment.merge('VPSADMIN_DEVCLUSTER_CONFIG_FILE' => input,
++          'VPSADMIN_DEVCLUSTER_TOPOLOGY' => topology),
+           'nix', 'eval', '--impure', '--json', '--expr', expression, chdir: source)
+         assert(status.success?, "public runtimePlan projection refused: #{error}")
+-        JSON.parse(output)
++        projected = JSON.parse(output)
++        workload = projected.fetch('workload')
++        files = %w[puma fpm].to_h { |kind| [kind, workload.fetch("#{kind}Derivation")] }
++        # Inspect the actual writeText payloads without constructing application packages.
++        output, error, status = Open3.capture3('nix', 'derivation', 'show', *files.values)
++        assert(status.success?, "native generated service configuration inspection refused: #{error}")
++        native = JSON.parse(output)
++        assert_equal(4, native.fetch('version'))
++        records = native.fetch('derivations')
++        assert_equal(files.values.map { |path| File.basename(path) }.sort, records.keys.sort)
++        files.each do |kind, path|
++          record = records.fetch(File.basename(path))
++          workload["#{kind}Config"] = record.fetch('env').fetch('text')
++        end
++        projected
+       end
+       value = project.call('reduced', reduced)
+       baseline = project.call('baseline', normal)
+@@ -880,6 +954,71 @@ class RuntimeVerifyTest < Minitest::Test
+       assert_equal(baseline['machines'].transform_values { |machine| machine['kernel'] }, value['machines'].transform_values { |machine| machine['kernel'] })
+       value['machines'].each_value { |machine| assert_match(%r{\A/nix/store/[a-z0-9]{32}-.+/bzImage\z}, machine['kernel']) }
+       assert_equal('8G', value.dig('machines', 'node1', 'disks').first.fetch('size'))
++      workload = value.fetch('workload')
++      inherited = baseline.fetch('workload')
++      mysql = { 'innodb_buffer_pool_size' => '256M', 'max_connections' => 64,
++        'join_buffer_size' => '1M', 'sort_buffer_size' => '2M', 'read_buffer_size' => '1M',
++        'tmp_table_size' => '16M', 'max_heap_table_size' => '16M' }
++      normal_mysql = mysql.merge('innodb_buffer_pool_size' => '1024M', 'max_connections' => 200,
++        'join_buffer_size' => '256M', 'sort_buffer_size' => '512M', 'read_buffer_size' => '128M',
++        'tmp_table_size' => '96M', 'max_heap_table_size' => '1024M')
++      fpm = { 'pm' => 'dynamic', 'pm.max_children' => 4, 'pm.start_servers' => 1,
++        'pm.min_spare_servers' => 1, 'pm.max_spare_servers' => 2, 'pm.max_requests' => 500 }
++      normal_fpm = fpm.merge('pm.max_children' => 32, 'pm.start_servers' => 2,
++        'pm.min_spare_servers' => 2, 'pm.max_spare_servers' => 5)
++      [[workload, mysql, fpm, 1, 4], [inherited, normal_mysql, normal_fpm, 2, 8]].each do |profile, sql, pool, workers, threads|
++        sql.each do |key, expected|
++          assert_equal(expected, profile.fetch('mysql').fetch(key), key)
++          rendered = profile.fetch('mysqlConfig').lines.filter_map do |line|
++            match = line.match(/\A\s*#{Regexp.escape(key)}\s*=\s*(.*?)\s*\z/)
++            match[1] if match
++          end
++          assert_equal([expected.to_s], rendered, "generated MySQL #{key}")
++        end
++        assert_equal({ 'workers' => workers, 'threads' => { 'min' => 1, 'max' => threads } }, profile.fetch('api'))
++        assert_equal(["workers #{workers}"], profile.fetch('pumaConfig').lines.map(&:strip).grep(/\Aworkers /))
++        assert_equal(["threads 1, #{threads}"], profile.fetch('pumaConfig').lines.map(&:strip).grep(/\Athreads /))
++        pool.each do |key, expected|
++          assert_equal(expected, profile.fetch('fpm').fetch(key), key)
++          rendered = profile.fetch('fpmConfig').lines.filter_map do |line|
++            match = line.match(/\A\s*#{Regexp.escape(key)}\s*=\s*(.*?)\s*\z/)
++            match[1] if match
++          end
++          assert_equal([expected.to_s], rendered, "generated nested WebUI #{key}")
++        end
++      end
++      assert_equal(inherited.fetch('mysql').reject { |key, _| mysql.key?(key) }, workload.fetch('mysql').reject { |key, _| mysql.key?(key) })
++      assert_equal(inherited.fetch('fpm').reject { |key, _| fpm.key?(key) }, workload.fetch('fpm').reject { |key, _| fpm.key?(key) })
++      metrics = %w[prometheus-export-base prometheus-export-dns-records]
++      metric_timers = metrics.map { |name| "vpsadmin-api-#{name}" }
++      expected_tasks = Marshal.load(Marshal.dump(inherited.fetch('tasks')))
++      metrics.each do |name|
++        assert_equal(true, expected_tasks.fetch(name).fetch('timerEnabled'))
++        assert_equal(true, workload.fetch('tasks').fetch(name).fetch('enable'))
++        expected_tasks.fetch(name)['timerEnabled'] = false
++        assert_includes(workload.fetch('units'), "vpsadmin-api-#{name}.service")
++        refute_includes(workload.fetch('units'), "vpsadmin-api-#{name}.timer")
++      end
++      assert_equal(expected_tasks, workload.fetch('tasks'))
++      assert_equal(inherited.fetch('timers') - metric_timers, workload.fetch('timers'))
++      assert_equal(inherited.fetch('units') - metric_timers.map { |name| "#{name}.timer" }, workload.fetch('units'))
++      assert_equal(inherited.fetch('webuiUnits'), workload.fetch('webuiUnits'))
++      %w[mysql rabbitmq redis-vpsadmin vpsadmin-api vpsadmin-scheduler vpsadmin-supervisor].each do |name|
++        assert_includes(workload.fetch('units'), "#{name}.service")
++      end
++      %w[auth-tokens user-sessions incident-reports dataset-expansion-run].each do |name|
++        task = workload.fetch('tasks').fetch(name)
++        assert_equal(true, task.fetch('enable'))
++        assert_equal(true, task.fetch('timerEnabled'))
++        assert_includes(workload.fetch('units'), "vpsadmin-api-#{name}.service")
++        assert_includes(workload.fetch('units'), "vpsadmin-api-#{name}.timer")
++      end
++      assert_includes(workload.fetch('webuiUnits'), 'phpfpm-vpsadmin-webui.service')
++      assert_includes(workload.fetch('webuiUnits'), 'vpsadmin-webui-prune-sessions.timer')
++      other = project.call('other-topology', reduced, 'screenshots').fetch('workload')
++      %w[mysql mysqlConfig api pumaConfig fpm fpmConfig tasks timers units webuiUnits].each do |key|
++        assert_equal(inherited.fetch(key), other.fetch(key), "inherited #{key} outside single topology")
++      end
+       assert_equal(1, value['imageDerivations'].size)
+       output, error, status = Open3.capture3('nix', 'derivation', 'show', value['imageDerivations'].first)
+       assert(status.success?, "native image derivation inspection refused: #{error}")

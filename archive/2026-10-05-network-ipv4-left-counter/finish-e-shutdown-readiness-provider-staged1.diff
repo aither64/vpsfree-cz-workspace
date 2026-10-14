@@ -1,0 +1,92 @@
+diff --git a/dev-clusters/kb/README.md b/dev-clusters/kb/README.md
+index 372757d622cac86648c2ee77284e70a32b12232f..f84448bc95138f9ca22146ecab1bc761a0d27b23 100644
+--- a/dev-clusters/kb/README.md
++++ b/dev-clusters/kb/README.md
+@@ -39,6 +39,12 @@ The adapter validates the current descriptor and canonical readiness, then
+ translates only the descriptor digest in the readiness response. The portable
+ engine's canonical descriptor stays intact.
+ 
++Canonical readiness uses the selected engine's `ready?` predicate, including
++the exact run-ready marker. A live runner that is draining its guests cannot
++export a capture connection. The portable lease rechecks readiness after guest
++attestation and while held. Inventory and compatible management retain their
++separate live-or-proven-exit rules; they do not grant capture readiness.
++
+ The lease holds generation, session, adapter and portable guards throughout
+ capture. Protocol stdout loss ends the lease; diagnostic stderr EOF alone leaves
+ it active. Peer or dispatcher loss closes child input, and cleanup reaps the
+diff --git a/dev-clusters/kb/lib/portable.rb b/dev-clusters/kb/lib/portable.rb
+index 7f2724420c1326a64cf7b356f0ddd98bf2689fcc..c7ea3d2d0038d9387678a1c7103e0fb514cb9427 100644
+--- a/dev-clusters/kb/lib/portable.rb
++++ b/dev-clusters/kb/lib/portable.rb
+@@ -57,7 +57,7 @@ module DevClusters
+       def canonical
+         snapshot do
+           record = validate_record(@engine.launch, @engine.phase.fetch('run_id'))
+-          raise Error, 'managed KB cluster is not ready' unless @engine.phase['phase'] == 'ready' && @engine.live?(record)
++          raise Error, 'managed KB cluster is not ready' unless @engine.ready?(record)
+ 
+           validate_artifact(record)
+           bytes = @state.file(@state.path('connection.json'))
+diff --git a/test/kb_portable_test.rb b/test/kb_portable_test.rb
+index 54cd458299dcaac4765c7d6845ffcfb9dcf7adbe..610d75c413c85924021d8dc5e657e6481d5841cd 100644
+--- a/test/kb_portable_test.rb
++++ b/test/kb_portable_test.rb
+@@ -29,6 +29,7 @@ class KbPortableTest < Minitest::Test
+       assert_empty(calls.select { |_owner, name| forbidden.include?(name) })
+       assert_includes(calls.map(&:last), :validate_prepared)
+       assert_includes(calls.map(&:last), :descriptor)
++      assert_includes(calls.map(&:last), :ready?)
+       state.transaction(wait: false) { assert(true, 'snapshot locks are released before canonical child lease') }
+     end
+   end
+@@ -94,6 +95,37 @@ class KbPortableTest < Minitest::Test
+     end
+   end
+ 
++  def test_ready_marker_loss_refuses_capture_but_preserves_live_management
++    with_snapshot do |binding, portable, state, engine, record, _artifact|
++      File.unlink(state.path("ready-#{record['run_id']}.json"))
++      assert(engine.live?(record))
++      before = files(binding.state_root)
++      assert_raises(DevClusters::Kb::Error) { portable.canonical }
++      assert_equal(true, portable.transition_adopt)
++      assert_includes(portable.inventory.fetch('paths'), record['socket_dir'])
++      assert_equal(before, files(binding.state_root))
++    end
++  end
++
++  def test_foreign_or_unsafe_ready_marker_refuses_without_snapshot_mutation
++    with_snapshot do |binding, portable, state, engine, record, _artifact|
++      path = state.path("ready-#{record['run_id']}.json")
++      marker = state.read(path)
++      ['schema', 'instance_id', 'run_id', 'artifact_id', 'artifact_sha256'].each do |key|
++        state.write(path, marker.merge(key => key == 'schema' ? 2 : 'foreign'))
++        before = files(binding.state_root)
++        assert(engine.live?(record))
++        assert_raises(DevClusters::Kb::Error) { portable.canonical }
++        assert_equal(before, files(binding.state_root))
++      end
++      state.write(path, marker)
++      File.chmod(0o644, path)
++      before = files(binding.state_root)
++      assert_raises(DevClusters::Kb::Error) { portable.canonical }
++      assert_equal(before, files(binding.state_root))
++    end
++  end
++
+   def test_metadata_mismatch_and_absent_state_fail_before_any_initialization
+     Dir.mktmpdir do |workspace|
+       binding = DevClusters::Kb::Binding.new(workspace:, slug: 'session')
+diff --git a/test/support/kb_snapshot_fixture.rb b/test/support/kb_snapshot_fixture.rb
+index 8479d9e96f6d1cf428adc788c7ecebb7aa67397f..d05fc962c0a9ba05521d0031665cfc469ef3cd25 100644
+--- a/test/support/kb_snapshot_fixture.rb
++++ b/test/support/kb_snapshot_fixture.rb
+@@ -76,6 +76,7 @@ module KbSnapshotFixture
+       state.write(state.path("launch-#{run_id}.json"), record)
+       state.write(state.path("processes-#{run_id}.json"), record.slice('instance_id', 'run_id', 'artifact_id', 'artifact_sha256').merge('runner' => process, 'children' => [], 'complete' => false))
+       state.write(state.path('phase.json'), { 'schema' => 1, 'phase' => 'ready', 'run_id' => run_id })
++      state.write(state.path("ready-#{run_id}.json"), record.slice('instance_id', 'run_id', 'artifact_id', 'artifact_sha256').merge('schema' => 1))
+       state.write(state.path('accounts.json'), { 'users' => [] })
+       state.write(state.path('connection.json'), engine.descriptor(record))
+       yield binding, portable, state, engine, record, artifact

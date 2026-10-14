@@ -1,0 +1,6 @@
+specs: avoid address collisions in network fixtures
+
+The network fixture helper derived a host address from a row ID.
+That value can wrap onto an existing globally unique IP address.
+Choose an unused address within the fixture's /24 before registering it,
+keeping registration and allocation checks unchanged.

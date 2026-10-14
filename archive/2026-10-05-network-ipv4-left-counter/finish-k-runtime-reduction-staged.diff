@@ -1,0 +1,2306 @@
+diff --git a/README.md b/README.md
+index 454909a5841f66874498db94a91e130746b3ea90..29f7998521a9892291ae4a704b89598875f0ad3d 100644
+--- a/README.md
++++ b/README.md
+@@ -43,12 +43,18 @@ source provenance stay bound to the package. An optional external environment
+ can supply a private `--connection` descriptor under the runtime contract.
+ 
+ The `runtime-verify` package provides `vpsfree-kb-verify` for direct verification
+-on an ordinary Linux/Nix/KVM host. It drives the installed public tools through
+-source/path checks, two-root isolation, predecessor resume and changed-source
+-update, then bilingual capture. It requires explicit private roots,
+-configurations, an immutable predecessor reference and capacity evidence.
+-See [verification and limits](cluster/runtime-contract.md#verification-and-limits)
+-for the phases, capacity assessment, recovery and exported evidence.
++on an ordinary Linux/Nix/KVM host. Its `runtime-smoke` phase uses one dedicated
++single-node cluster for public start, attested connection and lease checks,
++then stop and same-source resume. The reduced qualification profile uses 2 GiB
++RAM per guest, one 8 GiB services image and writable root, and an 8 GiB node
++tank: 4 GiB guest RAM and 24 GiB eventual new disk output. The image builder
++uses the services memory setting too. These values are qualification targets,
++not established minimum requirements. Closure downloads, build staging and
++host reserves are assessed separately. Supply one private configuration and an
++identity-bound capacity receipt. The optional `bilingual-capture` phase uses
++that same resumed instance. See
++[verification and limits](cluster/runtime-contract.md#verification-and-limits)
++for the phases, capacity assessment, failure handling and exported evidence.
+ 
+ The capture command verifies the live cluster's prepared source and system
+ closures, reads its generated test accounts, creates or reuses only fixtures
+diff --git a/cluster/nix/test.nix b/cluster/nix/test.nix
+index c463250db0ffcf0a715d896b8d110558c5c9762f..a143d20c6c669ee43079334cfa8cd72f5153feb5 100644
+--- a/cluster/nix/test.nix
++++ b/cluster/nix/test.nix
+@@ -1367,6 +1367,8 @@ let
+       };
+     in
+     {
++      virtualisation.memorySize = lib.mkForce serviceMemoryMiB;
++
+       imports = [
+         sshModule
+         vpsfStatusModule
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index d79774855c5e7c87bc4481bd61a80efbdfebdc41..d775e94fcf509241c0ee0bf245abbfaa1334fa87 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -300,120 +300,117 @@ and needs no development workspace, session command or provider activation.
+ Other managed KB page suites retain their test-runner route.
+ 
+ Prepare the packages from a clean exact Git-flake revision after source checks
+-and independent review. Supply a private disk-backed campaign root, two explicit
+-configurations, an exact published predecessor reference and a private capacity
+-receipt. Invoke each phase separately, in this order:
++and independent review. Supply one private disk-backed campaign root, one
++explicit configuration and a private capacity receipt. Run the required real
++phase, then the optional capture phase against the same inputs:
+ 
+ ```sh
+-vpsfree-kb-verify --root "$ROOT" --config-a "$CONFIG_A" --config-b "$CONFIG_B" \
+-  --predecessor-ref "$PREDECESSOR_REF" --capacity-receipt "$CAPACITY_RECEIPT" \
+-  --phase installed-layout
+-vpsfree-kb-verify --root "$ROOT" --config-a "$CONFIG_A" --config-b "$CONFIG_B" \
+-  --predecessor-ref "$PREDECESSOR_REF" --capacity-receipt "$CAPACITY_RECEIPT" \
+-  --phase isolation-continuity-update
+-vpsfree-kb-verify --root "$ROOT" --config-a "$CONFIG_A" --config-b "$CONFIG_B" \
+-  --predecessor-ref "$PREDECESSOR_REF" --capacity-receipt "$CAPACITY_RECEIPT" \
+-  --phase bilingual-capture
++vpsfree-kb-verify --root "$ROOT" --config "$CONFIG" \
++  --capacity-receipt "$CAPACITY_RECEIPT" --phase runtime-smoke
++vpsfree-kb-verify --root "$ROOT" --config "$CONFIG" \
++  --capacity-receipt "$CAPACITY_RECEIPT" --phase bilingual-capture
+ ```
+ 
+-The predecessor's runtime and source metadata come from the same immutable
+-reference, fixed to
+-`github:vpsfreecz/vpsfree-kb-contracts/7dc4d70830e535f4559bccfa668cf65cdce1de2d`.
+-This experiment verifies that exact K-runtime upgrade and live artifact/import/
+-closure continuity. Both versions use the same vpsAdmin pin; it does not verify
+-a vpsAdmin upgrade or compatibility with other predecessor revisions.
+-
+-The predecessor performs one SSH host-key scan per endpoint and has no readiness
+-retry. Its runner also inherits its parent's POSIX session and can leave its
+-control socket after shutdown. Run this finite experiment in a durable ordinary
+-host service that retains descendants after the controller exits. Use the final
+-public controller for stop and update, with its live authenticated shutdown
+-handoff. A failed start cannot be resumed as an accepted artifact. Preserve a
+-native failure and stop the experiment; do not patch the predecessor, replay the
+-failed campaign or substitute host-key trust.
+-
+-Later phases require matching completed campaign receipts. An
+-incomplete phase retains its stage evidence and owned state; it cannot silently
+-become another campaign or authorize cleanup.
+-Failed public commands retain their native exit and diagnostic output privately
+-under the campaign root. The refusal identifies that evidence; it is excluded
+-from the artifact export.
+-
+-The direct profile uses two `single` clusters with the same slug in distinct
+-roots. Each has a 4 GiB services guest, a 4 GiB node, a 12 GiB services root and
+-a 16 GiB node tank. Configure local loopback forwarding with disjoint TCP and
+-integer multicast ports, disable dedicated DNS guests, use QEMU's `10.0.2.3`
+-resolver and `example.test` domains. Conflicts refuse rather than selecting
+-different resources. Keep B's configuration, disk layout, SSH endpoints and TLS
+-names unchanged between source versions.
+-
+-Both configurations must include explicit disposable `test-admin` (level 99),
+-`test-user1` and `test-user2` (both level 1) accounts from the initial start.
+-Give each account a full name, a password and an email of `LOGIN@example.test`.
+-Each namespace has `blockCount: 8`; set `blockStart` to 1 for `test-admin`,
+-9 for `test-user1` and 17 for `test-user2`. The verifier rejects missing,
+-duplicate or incompatible account entries before lifecycle work. Keep B's
+-account configuration unchanged through predecessor resume and update; compare
+-its private accounts-file digest without exposing credentials.
+-
+-The continuity phase starts A from the final package and B from the predecessor.
+-It uses the final public controller to stop the predecessor runner, resumes B
+-with the genuine predecessor package, then updates B through the final public
+-command. This does not certify the predecessor's own stop implementation.
+-Both historical shutdown crossings require explicit service preparation through
+-the genuine predecessor's public SSH command. In the same guarded remote script,
+-the verifier checks the attested guest identity digest and current system
+-closure, then stops only `vpsadmin-console-router.service`. It requires the
+-loaded unit to be inactive/dead, with `MainPID=0` and `Result=success`. RabbitMQ,
+-SSH and the guest store remain running. Preparation occurs before the first
+-final-controller stop and again after genuine predecessor resume, before update.
+-
+-Each preparation has a 360-second guest command budget and a separate
+-360-second caller observation budget, including transport. Native command
+-failure and caller expiry remain distinct. Expiry does not prove cancellation
+-of a remote job. Any failed preparation ends the finite campaign; stop or
+-update must not follow it. Final boot must restore the normally enabled router
+-before capture. The final runner's ordinary stop is also verified without this
+-historical preparation.
+-
+-The resulting upgrade claim includes this explicit guest-service preparation.
+-It does not certify ordinary unprepared historical shutdown. The predecessor's
+-first SSH scan and service drain may still fail; preserve that failure rather
+-than repeat the campaign for a different timing outcome.
+-All six credential files, disk identities and
+-root/data sentinels must survive; run/artifact identities and actual guest system
+-closures must change as specified by update. A remains healthy during that work.
+-After proving final-code isolation, the verifier stops and resets only A,
+-rechecks B, and proves final-code resume without rebuilding its artifact. Public
+-lease contention and peer-loss cases must release their guards correctly. B
+-remains available for captures; completion does not imply its cleanup.
+-
+-Before admission, require working KVM, at least 24 GiB available RAM and 18 GiB
+-free shared memory. Peak guest RAM/shared memory is 16 GiB for both clusters,
+-then 8 GiB for B alone. There is no emulation fallback or nested-KVM requirement.
+-Three retained 12 GiB service images, two writable roots and two full 16 GiB
+-tanks, with a 16 GiB host reserve, form a 108 GiB worst eventual output envelope.
+-This is not a fixed free-disk floor. Measure current allocation, remaining copies
+-and sparse growth, missing closures and build requirements per filesystem.
+-Existing apparent sparse-file lengths do not erase unallocated growth.
+-
+-The required capacity receipt binds source/package identities, predecessor,
+-configuration digests, campaign root and actual state/store/builder filesystems.
+-Record realized paths, known remaining construction, effective concurrency,
+-kernel-cache evidence, reserves and measured headroom. Builder scratch may be
+-unknown: NAR/download sizes do not bound it, and an invented allowance supplies
+-no proof. The verifier checks receipt identity and fresh capacity before
+-predecessor construction and each lifecycle build/start/resume/update. Package
+-preparation itself precedes verifier invocation and needs its own assessment.
+-
+-The operator must establish substantial headroom and live reserve monitoring
+-through each public build-and-launch operation. The receipt does not prove a
+-monitor is running or reserve capacity against other host activity. Client
+-`TMPDIR` does not establish the daemon's build filesystem. Cancellation has
+-latency; there is no exact future-peak guarantee or public post-build launch
+-pause. Stop unexpected kernel compilation and investigate its cache prerequisite.
+-Do not reclaim foreign state/store, resize retained disks or bypass guest import,
+-ZFS/template or quota admission. Preserve unrelated running clusters.
++`installed-layout` is an optional package/path check. It constructs no
++predecessor package and is not a prerequisite for `runtime-smoke`. Campaign kind
++`single-runtime-v1` binds the selected source and tools, raw configuration digest,
++canonical root and capacity evidence. Old campaign roots and obsolete argument
++combinations refuse; the verifier does not migrate or reinterpret their receipts.
++A completed runtime receipt is required for capture. Each completed phase is
++immutable. An incomplete or failed attempt retains its native stage evidence
++and owned state and refuses replay. It supplies no cleanup authority.
++
++The qualification uses one `single` cluster with a 2 GiB services guest and
++2 GiB node1. Set `services.memoryMiB` and `nodes.node1.memoryMiB` to 2048,
++`services.rootDiskMiB` to 8192 and `nodes.node1.tankDiskGiB` to 8. The services
++image and its independent writable copy are each 8 GiB. The image-finalization
++builder also uses `services.memoryMiB` and finishes before runtime guests start.
++Configure explicit local loopback TCP forwarding and an integer multicast port,
++disable dedicated DNS guests, use QEMU's `10.0.2.3` resolver and `example.test`
++domains. Conflicts refuse rather than selecting other resources. These targets
++must pass a real qualification; they are not measured sufficient minima for
++all fixtures or workloads. The general runtime configuration remains separate
++from this verifier profile.
++
++Include disposable `test-admin` (level 99), `test-user1` and `test-user2`
++(both level 1) accounts from the initial start. Give each a full name, a password
++and an email of `LOGIN@example.test`. Each namespace has `blockCount: 8`;
++set `blockStart` to 1 for `test-admin`, 9 for `test-user1` and 17 for `test-user2`.
++The verifier rejects missing, duplicate or incompatible entries before lifecycle
++work. Keep the initial configuration unchanged and compare the private
++accounts-file digest without exposing credentials.
++
++The runtime phase starts the final-source public package, obtains its attested
++connection and verifies both guest identity records and actual system closures.
++It checks real TLS/API current-user identity and member PHP access, public lease
++contention, peer loss and reacquisition. Wrong-source refusal must precede SSH;
++contended stop, update and reset must return 75 without queued mutation.
++Dedicated services-root and node-ZFS sentinels are written through public SSH.
++Ordinary public stop must establish complete exit. Same-source public resume
++must retain the accepted artifact, all six credentials, accounts digest, disk
++identities and sentinel contents, with a fresh run ID and no new image or build.
++The final attestation checks source, closures, trust and readiness again.
++Completion leaves that resumed instance available for optional captures.
++
++This one-instance qualification does not establish two-live-cluster isolation,
++historical resume/update, closure import or a vpsAdmin upgrade. Recorded source
++and synthetic process/lock tests retain their scoped evidence; deferred real
++upgrade campaigns are not counted as passing tests.
++
++The public stop/resume observation budget is 900 seconds. It is separate from
++the runner's per-machine operation budget and does not bound all sequential
++machine work or grant force authority. A native build, readiness, capacity,
++lease or lifecycle failure ends the finite qualification. Preserve the exact
++failure and state; do not resize, upscale, substitute a configuration or launch
++another instance automatically. Failed public commands retain native argv,
++exit/signal and diagnostic output privately beneath the campaign root. Artifact
++exports exclude this evidence.
++
++Capacity admission derives the 4 GiB guest RAM/shared-memory demand from the
++validated configuration and adds separately assessed positive overhead. For
++example, 2 GiB RAM and 1 GiB shared-memory margins require 6 GiB available RAM
++and 5 GiB free shared memory. Assess construction and runtime/browser phases
++separately and use their peak, rather than summing a builder that has already
++exited with running guests. Require working KVM; no emulation or nested VM is
++part of this qualification.
++
++The intrinsic eventual new disk output is one 8 GiB image, one 8 GiB writable
++root and one 8 GiB sparse tank. The receipt reports this 24 GiB extent separately
++from missing closures, construction staging/import overlap, assessed build
++headroom and retained-host reserves. Deduct actual allocated blocks once per
++file/inode/filesystem and retain sparse future growth. Resume creates no second
++image. Previously allocated files already reduce measured free space; their
++unallocated possible growth remains a separate protected host obligation.
++Keep at least the existing 16 GiB base reserve plus assessed retained growth.
++There is no universal free-disk floor for this test.
++
++The required capacity receipt binds source/package identities, the configuration
++digest, campaign root and actual state/store/builder filesystems. Record realized
++paths, known missing construction, effective concurrency, exact kernel-cache
++evidence and assessed headroom. The qualification uses one build job and one
++core through normal Nix configuration. Builder scratch remains explicitly
++unknown: NAR/download sizes and a client `TMPDIR` do not bound it or identify
++the daemon build filesystem. Package preparation precedes verifier invocation
++and needs its own assessment. Refresh actual RAM/shm/filesystem admission before
++build/start and resume; the receipt does not reserve resources against other
++host activity or certify monitoring.
++
++Public runtime-plan and derivation projection can reject an oversized payload
++and prove selected memory/image/kernel facts. Placeholder planning inputs are
++not the eventual guest identity or full closure. The fixed-size image build
++inside public start is the final exact payload-fit gate before runtime reserve
++and spawn; there is no private preparation substitute or public post-build
++launch pause. Keep assessed construction headroom and live reserve monitoring,
++stop unexpected kernel compilation and investigate its cache prerequisite.
++Do not reclaim foreign state/store or bypass ZFS/template/quota admission.
++
++Once ready, record image/root lengths and allocated blocks, services free bytes
++and inodes, node ZFS available space and memory pressure. Require 1 GiB services
++free space before fixtures. Before capture, assess tank headroom for the selected
++template, metadata and the real 4 GiB VPS quota. Boot success alone does not
++qualify capture resources. If the reduced target is inadequate, stop advancing
++and retain the measured failure. An optional capture failure does not erase a
++separately completed lifecycle receipt, but it leaves media acceptance pending.
+ 
+ The bilingual phase selects only `networking/ip-address-list` and its
+ `ip-inventory` fixture. This uses one real 1 CPU, 1 GiB RAM, 4 GiB disk VPS,
+diff --git a/docs/webui-change-workflow.md b/docs/webui-change-workflow.md
+index ef56b3595c94b4196a1e800158f7393c76f782c8..f3c62b6abee0790df6e6a28cb2711cad5fa550f1 100644
+--- a/docs/webui-change-workflow.md
++++ b/docs/webui-change-workflow.md
+@@ -123,7 +123,16 @@ vpsfree-kb-validate --output-root /path/to/capture-output
+ The committed generator source must already pin the affected vpsAdmin revision.
+ The [direct verifier](../cluster/runtime-contract.md#verification-and-limits)
+ also exercises the private connection selector and writable-CWD output default.
+-Its capacity and owned-state recovery requirements apply before real work.
++Its reduced real-runtime route qualifies one final-source `single`/local
++instance: services and node1 each use 2048 MiB RAM, the services image and root
++copy each use 8192 MiB, and the tank is 8 GiB. The builder also follows the
++services RAM setting. These are unqualified targets until measured preparation
++and public start succeed. The required `runtime-smoke` phase checks attested
++connection/lease and ordinary stop/resume; `bilingual-capture` reuses that
++resumed instance. Historical upgrade and two-root tests are separate deferred
++coverage. Capacity admission accounts closures, temporary build costs and
++retained-host obligations separately from the 24 GiB new disk extent. Its
++capacity and owned-state failure requirements apply before real work.
+ Review the gray disabled row and enabled assigned row in both images; native
+ title/focus assertions accompany the images without claiming a native tooltip
+ popup was captured. Other screenshot concepts keep their existing fixtures.
+diff --git a/tools/runtime-verify.rb b/tools/runtime-verify.rb
+index 320575be8f424264985ed676bc6374f0d67c5a30..874d1cb522da97db40ca08f7b195762cc79a7b69 100644
+--- a/tools/runtime-verify.rb
++++ b/tools/runtime-verify.rb
+@@ -9,10 +9,10 @@ require_relative 'capture-export'
+ 
+ module KbVerify
+   Error = Class.new(StandardError)
+-  PHASES = %w[installed-layout isolation-continuity-update bilingual-capture].freeze
++  PHASES = %w[installed-layout runtime-smoke bilingual-capture].freeze
++  KIND = 'single-runtime-v1'
+   CREDENTIALS = %w[id_ed25519 id_ed25519.pub vpsadmin-ca.crt vpsadmin-ca.key vpsadmin-cert.crt vpsadmin-cert.key].freeze
+   GIB = 1024**3
+-  PREDECESSOR = '7dc4d70830e535f4559bccfa668cf65cdce1de2d'
+ 
+   class Commands
+     attr_reader :environment
+@@ -29,13 +29,10 @@ module KbVerify
+         'PLAYWRIGHT_BROWSERS_PATH' => selection.fetch('browsers'), 'FONTCONFIG_FILE' => selection.fetch('fonts'),
+         'NIX_SSL_CERT_FILE' => selection.fetch('certificates'), 'SSL_CERT_FILE' => selection.fetch('certificates'),
+         'GEM_HOME' => selection.fetch('gem_home'), 'GEM_PATH' => selection.fetch('gem_home'),
+-        'NIX_CONFIG' => "experimental-features = nix-command flakes\nextra-substituters = https://cache.vpsadminos.org\nextra-trusted-public-keys = cache.vpsadminos.org:wpIJlNZQIhS+0gFf1U3MC9sLZdLW3sh5qakOWGDoDrE=\n")
++        'NIX_CONFIG' => "experimental-features = nix-command flakes\nextra-substituters = https://cache.vpsadminos.org\nextra-trusted-public-keys = cache.vpsadminos.org:wpIJlNZQIhS+0gFf1U3MC9sLZdLW3sh5qakOWGDoDrE=\nmax-jobs = 1\ncores = 1\n")
+     end
+ 
+-    def call(argv, cwd:, accepted: [0], input: '', stage: nil, caller_timeout: nil)
+-      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+-      raise Error, 'invalid public command observation budget' if caller_timeout && (!caller_timeout.is_a?(Numeric) || !caller_timeout.finite? || caller_timeout <= 0)
+-      deadline = caller_timeout && started + caller_timeout
++    def call(argv, cwd:, accepted: [0], input: '', stage: nil)
+       state = KbRuntime::State.new(@root, 'diagnostics')
+       state.private_directory(@root) || raise(Error, 'command campaign root is absent')
+       directory = File.join(@root, 'diagnostics')
+@@ -44,7 +41,6 @@ module KbVerify
+       state.private_directory(directory, create: true)
+       record = { 'schema' => 1, 'argv' => argv, 'cwd' => cwd, 'stage' => stage,
+         'owner_uid' => Process.uid, 'started_at' => Time.now.utc.iso8601, 'complete' => false }
+-      record['caller_timeout_seconds'] = caller_timeout if caller_timeout
+       native = File.join(directory, 'command.json')
+       reader, writer = IO.pipe
+       output = File.open(File.join(directory, 'stdout'), File::WRONLY | File::CREAT | File::EXCL | File::NOFOLLOW, 0o600)
+@@ -70,21 +66,8 @@ module KbVerify
+             pid = nil
+           end
+         end
+-        if deadline && Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
+-          Thread.handle_interrupt(SignalException => :never) do
+-            status = reap_interrupted(pid) if pid
+-            pid = nil
+-            record.merge!('observer_expired' => true, 'accepted' => false, 'complete' => !status.nil?,
+-              'exit_code' => status&.exitstatus, 'signal' => status&.termsig,
+-              'elapsed_seconds' => Process.clock_gettime(Process::CLOCK_MONOTONIC) - started,
+-              'cleanup_scope' => 'spawned public command only', 'remote_cancellation' => 'unknown',
+-              'finished_at' => Time.now.utc.iso8601)
+-            state.write(native, record)
+-          end
+-          raise Error, "public command observer expired; remote cancellation unknown; private diagnostics: #{native}"
+-        end
+         break if status
+-        sleep(deadline ? [0.05, [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0].max].min : 0.05)
++        sleep 0.05
+       end
+       record.merge!('complete' => true, 'exit_code' => status.exitstatus, 'signal' => status.termsig,
+         'accepted' => accepted.include?(status.exitstatus), 'finished_at' => Time.now.utc.iso8601)
+@@ -112,7 +95,6 @@ module KbVerify
+           state.write(native, record)
+         end
+       end
+-      raise failure if record['observer_expired']
+       raise Error, "verification command failed; private diagnostics: #{native}"
+ 
+     ensure
+@@ -138,27 +120,23 @@ module KbVerify
+   end
+ 
+   class Campaign
+-    attr_reader :root, :selection, :source, :commands, :configurations, :inputs, :assertions
++    attr_reader :root, :selection, :source, :commands, :config, :inputs, :assertions
+ 
+-    def initialize(root:, config_a:, config_b:, predecessor_ref:, capacity_receipt:, selection:, commands: nil)
++    def initialize(root:, config:, capacity_receipt:, selection:, commands: nil)
+       @root, @selection = File.expand_path(root), selection
+       @source = KbRuntime::Software.new(JSON.parse(File.read(selection.fetch('metadata')))).metadata
+       raise Error, 'verifier source must be its own immutable package source' unless
+         source.fetch('source') == selection.fetch('source') && File.expand_path('..', __dir__) == source.fetch('source')
+       raise Error, 'selected runtime metadata differs' unless
+         File.read(File.join(selection.fetch('runtime'), 'bin/vpsfree-kb-devcluster')).include?(selection.fetch('metadata'))
+-      raise Error, 'predecessor must be the exact published 7dc4d708 Git-flake' unless predecessor_ref == "github:vpsfreecz/vpsfree-kb-contracts/#{PREDECESSOR}"
+       @state = KbRuntime::State.new(@root, 'campaign')
+-      config_bytes = [config_a, config_b].map { |name| @state.file(File.expand_path(name)) }
+-      @configurations = config_bytes.map { |bytes| JSON.parse(bytes) }
++      @config_bytes = @state.file(File.expand_path(config))
++      @config = JSON.parse(@config_bytes)
++      validate_config(@config)
+       @capacity_receipt = File.expand_path(capacity_receipt)
+-      configurations.each { |config| validate_config(config) }
+-      tcp = configurations.flat_map { |config| config.fetch('local').fetch('ports').values.flat_map(&:values) }
+-      udp = configurations.map { |config| config.fetch('local').fetch('multicastPort') }
+-      raise Error, 'campaign configurations overlap TCP or UDP resources' unless tcp.uniq == tcp && udp.uniq == udp
+-      @inputs = { 'source' => source, 'selection' => selection, 'configurations' => configurations,
+-        'predecessor_ref' => predecessor_ref, 'root' => @root,
+-        'configuration_sha256' => config_bytes.map { |bytes| Digest::SHA256.hexdigest(bytes) } }
++      @inputs = { 'kind' => KIND, 'source' => source, 'selection' => selection, 'configuration' => @config,
++        'configuration_sha256' => Digest::SHA256.hexdigest(@config_bytes), 'root' => @root,
++        'capacity_receipt' => @capacity_receipt }
+       @commands = commands || Commands.new(selection, @root)
+       @assertions = []
+     end
+@@ -176,20 +154,22 @@ module KbVerify
+           raise Error, 'inventory account role, identity or namespace differs'
+         end
+       end
+-      unless config.dig('services', 'memoryMiB') == 4096 && config.dig('services', 'rootDiskMiB') == 12288 &&
+-          config.dig('nodes', 'node1', 'memoryMiB') == 4096 && config.dig('nodes', 'node1', 'tankDiskGiB') == 16 &&
+-          config.dig('topologies', 'single') == ['node1'] && config.dig('dns', 'enable') == false &&
+-          config.dig('resolver', 'mode') == 'cluster' && config.dig('resolver', 'upstreamNameservers') == ['10.0.2.3']
+-        raise Error, 'verification requires the explicit single 12-GiB-root/16-GiB-tank configuration'
++      unless config.dig('services', 'memoryMiB') == 2048 && config.dig('services', 'rootDiskMiB') == 8192 &&
++          config.fetch('nodes').keys == ['node1'] && config.dig('nodes', 'node1', 'memoryMiB') == 2048 &&
++          config.dig('nodes', 'node1', 'tankDiskGiB') == 8 && config.dig('topologies', 'single') == ['node1'] &&
++          config.dig('dns', 'enable') == false && config.dig('resolver', 'mode') == 'cluster' &&
++          config.dig('resolver', 'upstreamNameservers') == ['10.0.2.3']
++        raise Error, 'verification requires the explicit two-2-GiB-guest/8-GiB-image-root-tank configuration'
+       end
+       %w[domains tmpDomains].each do |name|
+         raise Error, 'verification TLS domains must use example.test' unless config.fetch(name).values.all? { |domain| domain.end_with?('.example.test') }
+       end
+       local = config.fetch('local')
+-      values = [local.fetch('multicastPort'), *local.fetch('ports').values.flat_map(&:values)]
++      tcp = local.fetch('ports').values.flat_map(&:values)
++      values = [local.fetch('multicastPort'), *tcp]
+       unless local['bindAddress'] == '127.0.0.1' && local.fetch('ports').keys.sort == %w[node1 services] &&
+           local.fetch('ports').fetch('services').keys.sort == %w[https ssh] && local.fetch('ports').fetch('node1').keys == ['ssh'] &&
+-          values.all? { |port| port.is_a?(Integer) && port.between?(1, 65535) }
++          values.all? { |port| port.is_a?(Integer) && port.between?(1, 65535) } && tcp.uniq == tcp
+         raise Error, 'verification requires explicit dedicated loopback TCP and multicast UDP ports'
+       end
+     end
+@@ -212,22 +192,31 @@ module KbVerify
+     end
+ 
+     def initialize_campaign
++      identity = nil
++      if File.exist?(root)
++        @state.private_directory(root)
++        if File.exist?(file('campaign.json'))
++          identity = read('campaign.json')
++          unless identity['schema'] == 1 && identity['kind'] == KIND && identity['owner_uid'] == Process.uid &&
++              identity['root'] == File.realpath(root) && identity['inputs'] == inputs
++            raise Error, 'campaign kind, identity, selected packages or inputs differ'
++          end
++        elsif !Dir.empty?(root)
++          raise Error, 'nonempty root has no verification campaign identity'
++        end
++      end
+       capacity_assessment
+       @state.private_directory(root, create: true)
+-      if File.exist?(file('campaign.json'))
+-        identity = read('campaign.json')
+-        unless identity['schema'] == 1 && identity['owner_uid'] == Process.uid && identity['root'] == File.realpath(root) && identity['inputs'] == inputs
+-          raise Error, 'campaign identity, selected packages or inputs differ'
+-        end
+-      else
++      unless identity
+         raise Error, 'nonempty root has no verification campaign identity' unless Dir.empty?(root)
+-        write('campaign.json', { 'schema' => 1, 'owner_uid' => Process.uid, 'root' => File.realpath(root),
+-          'campaign_id' => SecureRandom.uuid, 'inputs' => inputs }, immutable: true)
++        write('campaign.json', { 'schema' => 1, 'kind' => KIND, 'owner_uid' => Process.uid,
++          'root' => File.realpath(root), 'campaign_id' => SecureRandom.uuid, 'inputs' => inputs }, immutable: true)
+       end
+       %w[temporary work output receipts].each { |name| @state.private_directory(file(name), create: true) }
+-      configurations.each_with_index do |config, index|
+-        name = "config-#{index == 0 ? 'a' : 'b'}.json"
+-        File.exist?(file(name)) ? check(read(name) == config, 'retained explicit configuration') : write(name, config, immutable: true)
++      if File.exist?(file('config.json'))
++        check(@state.file(file('config.json')) == @config_bytes, 'retained exact raw configuration')
++      else
++        File.open(file('config.json'), File::WRONLY | File::CREAT | File::EXCL | File::NOFOLLOW, 0o600) { |stream| stream.write(@config_bytes) }
+       end
+     end
+ 
+@@ -240,42 +229,51 @@ module KbVerify
+       named = File.lstat(file('verify.lock'))
+       raise Error, 'campaign lock identity changed' unless [lock.stat.dev, lock.stat.ino] == [named.dev, named.ino]
+       raise Error, 'verification campaign is already running' unless lock.flock(File::LOCK_EX | File::LOCK_NB)
+-      PHASES.take(PHASES.index(phase)).each do |prior|
+-        receipt = read("receipts/#{prior}.json")
+-        check(receipt['complete'] == true && receipt['inputs'] == inputs, "completed #{prior} prerequisite")
++      if phase == 'bilingual-capture'
++        check_receipt('runtime-smoke')
++      end
++      if File.exist?(file("receipts/#{phase}.json"))
++        check_receipt(phase)
++        return if phase == 'installed-layout'
++        raise Error, 'completed verification phase is immutable'
+       end
+-      raise Error, 'completed verification phase is immutable' if File.exist?(file("receipts/#{phase}.json"))
+-      raise Error, 'incomplete phase requires diagnosis; no automatic campaign replay' if File.exist?(file("receipts/#{phase}-attempt.json"))
++      incomplete = PHASES.any? do |name|
++        File.exist?(file("receipts/#{name}-attempt.json")) && !File.exist?(file("receipts/#{name}.json"))
++      end
++      raise Error, 'incomplete phase requires diagnosis; no automatic campaign replay' if incomplete
+       @phase = phase
+       checkpoint('started')
+       public_send(phase.tr('-', '_'))
+-      write("receipts/#{phase}.json", { 'schema' => 1, 'phase' => phase, 'complete' => true,
++      write("receipts/#{phase}.json", { 'schema' => 1, 'kind' => KIND, 'phase' => phase, 'complete' => true,
+         'inputs' => inputs, 'assertions' => assertions, 'finished_at' => Time.now.utc.iso8601 }, immutable: true)
+     rescue StandardError => error
+-      checkpoint('failed', 'error_class' => error.class.name) if @phase
++      checkpoint('failed', 'failed_stage' => @stage, 'error_class' => error.class.name) if @phase
+       raise
+     ensure
+       lock&.close
+     end
+ 
++    def check_receipt(phase)
++      receipt = read("receipts/#{phase}.json")
++      check(receipt['schema'] == 1 && receipt['kind'] == KIND && receipt['phase'] == phase &&
++        receipt['complete'] == true && receipt['inputs'] == inputs, "completed #{phase} same-input prerequisite")
++    end
++
+     def checkpoint(stage, detail = {})
+       @stage = stage
+-      write("receipts/#{@phase}-attempt.json", { 'schema' => 1, 'phase' => @phase, 'complete' => false,
++      write("receipts/#{@phase}-attempt.json", { 'schema' => 1, 'kind' => KIND, 'phase' => @phase, 'complete' => false,
+         'stage' => stage, 'inputs' => inputs, 'assertions' => assertions, 'time' => Time.now.utc.iso8601 }.merge(detail))
+     end
+ 
+-    def command(*argv, cwd: file('work'), accepted: [0], input: '', caller_timeout: nil)
+-      output, _error, code = commands.call(argv, cwd:, accepted:, input:, caller_timeout:, stage: [@phase, @stage].compact.join('/'))
++    def command(*argv, cwd: file('work'), accepted: [0], input: '')
++      output, _error, code = commands.call(argv, cwd:, accepted:, input:, stage: [@phase, @stage].compact.join('/'))
+       [output, code]
+     end
+ 
+-    def engine(which, action, *args, accepted: [0], input: '', caller_timeout: nil)
+-      if %w[start resume update].include?(action)
+-        target = which == 'a' ? 'a' : (which == 'old' ? 'b-predecessor' : 'b-final')
+-        capacity("#{action}-#{target}")
+-      end
+-      package = which == 'old' ? read('predecessor.json').fetch('runtime') : selection.fetch('runtime')
+-      command(File.join(package, 'bin/vpsfree-kb-devcluster'), '--state-root', file("state-#{which == 'a' ? 'a' : 'b'}"), action, 'same-slug', *args, accepted:, input:, caller_timeout:)
++    def engine(action, *args, accepted: [0], input: '')
++      capacity(action) if %w[start resume].include?(action)
++      command(File.join(selection.fetch('runtime'), 'bin/vpsfree-kb-devcluster'), '--state-root', file('state'),
++        action, 'same-slug', *args, accepted:, input:)
+     end
+ 
+     def installed_layout
+@@ -283,9 +281,9 @@ module KbVerify
+       _, repository_code = command('git', '-C', root, 'rev-parse', '--is-inside-work-tree', accepted: [0, 128])
+       check(repository_code == 128, 'ordinary campaign is outside a Git checkout')
+       before = source_hashes
+-      result, = command(File.join(selection.fetch('runtime'), 'bin/vpsfree-kb-devcluster'), 'status', 'nonexistent', '--json')
++      result, = engine('status')
+       check(JSON.parse(result)['found'] == false, 'public status reports missing state')
+-      check(!File.exist?(file('work/.devcluster')), 'status does not initialize state')
++      check(!File.exist?(file('state')) && !File.exist?(file('work/.devcluster')), 'status does not initialize state')
+       command(File.join(selection.fetch('capture'), 'bin/vpsfree-kb-capture'), '--help')
+       %w[work output].each do |directory|
+         args = ['--connection', file('absent-connection'), '--language', 'en']
+@@ -294,44 +292,49 @@ module KbVerify
+         check(code == 1 && File.directory?(file("#{directory}/tmp")), 'packaged capture writable defaults and explicit output precede connection refusal')
+       end
+       check(source_hashes == before, 'installed layout leaves immutable source unchanged')
+-      capacity('predecessor-build')
+-      checkpoint('predecessor-construction')
+-      paths, = command('nix', 'build', '--no-link', '--print-out-paths', '--no-write-lock-file',
+-        "#{inputs.fetch('predecessor_ref')}#kb-runtime", "#{inputs.fetch('predecessor_ref')}#runtime-source")
+-      outputs = paths.lines.map(&:strip)
+-      check(outputs.size == 2 && outputs.uniq.size == 2 && outputs.all? { |path| path.start_with?('/nix/store/') }, 'predecessor outputs resolved together')
+-      runtime = outputs.find { |path| File.file?(File.join(path, 'bin/vpsfree-kb-devcluster')) }
+-      metadata_path = outputs.find { |path| File.file?(path) }
+-      check(runtime && metadata_path, 'predecessor runtime and metadata output shapes')
+-      metadata = KbRuntime::Software.new(JSON.parse(File.read(metadata_path))).metadata
+-      check(metadata.fetch('revision') == PREDECESSOR && metadata.fetch('revision') != source.fetch('revision'), 'genuine predecessor differs from final source')
+-      check(File.read(File.join(runtime, 'bin/vpsfree-kb-devcluster')).include?(metadata_path), 'predecessor executable embeds its own metadata')
+-      write('predecessor.json', { 'runtime' => runtime, 'metadata_path' => metadata_path, 'source' => metadata }, immutable: true)
+     end
+ 
+     def source_hashes
+       %w[captures.json flake.lock].to_h { |name| [name, Digest::SHA256.file(File.join(source.fetch('source'), name)).hexdigest] }
+     end
+ 
+-    # The receipt records an operator assessment, not a reservation or an exact
+-    # bound on Nix builder scratch. Every admission consumes a fresh snapshot.
++    # These are separately assessed sequential peaks, not a sum of a builder
++    # which has exited and guests which have not yet started.
++    def memory_requirements(value, operation)
++      guest_bytes = (config.fetch('services').fetch('memoryMiB') + config.fetch('nodes').fetch('node1').fetch('memoryMiB')) * 1024**2
++      builder_bytes = config.fetch('services').fetch('memoryMiB') * 1024**2
++      overhead = value.fetch('resource_overheads')
++      phases = %w[construction runtime_browser].to_h do |name|
++        assessed = overhead.fetch(name)
++        ram = positive_bytes(assessed.fetch('ram_bytes'))
++        shm = positive_bytes(assessed.fetch('shm_bytes'))
++        raise Error, 'resource overhead requires an explicit assessment' unless assessed['assessment'].is_a?(String) && !assessed['assessment'].strip.empty?
++        base = name == 'construction' ? builder_bytes : guest_bytes
++        [name, { 'ram_bytes' => base + ram, 'shm_bytes' => base + shm }]
++      end
++      selected = operation == 'start' ? phases.values : [phases.fetch('runtime_browser')]
++      { 'guest_bytes' => guest_bytes, 'builder_bytes' => builder_bytes, 'phase_requirements' => phases,
++        'ram_bytes' => selected.map { |entry| entry['ram_bytes'] }.max,
++        'shm_bytes' => selected.map { |entry| entry['shm_bytes'] }.max }
++    end
++
+     def capacity_assessment
+       bytes = @state.file(@capacity_receipt)
+       value = JSON.parse(bytes)
+-      raise Error, 'capacity receipt does not match campaign/source/packages/configurations' unless
+-        value['schema'] == 1 && value['bindings'] == inputs
++      raise Error, 'capacity receipt does not match campaign/source/packages/configuration' unless
++        value['schema'] == 1 && value['kind'] == KIND && value['bindings'] == inputs
+       observed = Time.iso8601(value.fetch('observed_at'))
+       raise Error, 'capacity observation is in the future' if observed > Time.now
+       plan = value.fetch('build_plan')
+       unless plan['scratch_bound'] == 'unknown' && plan['assessment'].is_a?(String) && !plan['assessment'].strip.empty? &&
+           plan['daemon_scratch_evidence'].is_a?(String) && !plan['daemon_scratch_evidence'].strip.empty? &&
+-          plan['max_jobs'].is_a?(Integer) && plan['max_jobs'].positive? &&
+-          plan['cores'].is_a?(Integer) && plan['cores'].positive? &&
+-          plan['derivations'].is_a?(Array) && plan['derivations'].all? { |entry| entry.is_a?(String) && !entry.empty? } &&
++          plan['max_jobs'] == 1 && plan['cores'] == 1 && plan['derivations'].is_a?(Array) &&
++          plan['derivations'].all? { |entry| entry.is_a?(String) && !entry.empty? } &&
+           plan['kernel_substitutions'].is_a?(Array) && !plan['kernel_substitutions'].empty? &&
+           plan['kernel_substitutions'].all? { |entry| entry.is_a?(String) && !entry.strip.empty? }
+-        raise Error, 'capacity receipt requires explicit construction, concurrency, kernel and unknown-scratch evidence'
++        raise Error, 'capacity receipt requires one job/core and explicit construction, kernel and unknown-scratch evidence'
+       end
++      memory_requirements(value, 'start')
+       %w[allocated_bytes apparent_bytes].each { |name| nonnegative_bytes(value.fetch('owned_output').fetch(name)) }
+       %w[realized_paths missing_paths filesystems].each { |name| raise Error, "capacity receipt lacks #{name}" unless value[name].is_a?(Array) }
+       [value, Digest::SHA256.hexdigest(bytes)]
+@@ -344,6 +347,12 @@ module KbVerify
+       value
+     end
+ 
++    def positive_bytes(value)
++      nonnegative_bytes(value)
++      raise Error, 'assessed resource headroom must be positive' unless value.positive?
++      value
++    end
++
+     def existing_ancestor(path)
+       path = File.expand_path(path)
+       @state.check_ancestors(path)
+@@ -370,33 +379,39 @@ module KbVerify
+     def allocation(path)
+       stat = File.lstat(path)
+       raise Error, 'capacity path is not an ordinary file or directory' unless (stat.file? || stat.directory?) && !stat.symlink?
+-      allocated, = command('du', '-s', '-B1', path)
+-      apparent, = command('du', '-s', '-B1', '--apparent-size', path)
+-      { 'path' => path, 'device' => stat.dev, 'allocated_bytes' => Integer(allocated.split.first),
+-        'apparent_bytes' => Integer(apparent.split.first) }
+-    end
+-
+-    def remaining_growth(operation)
+-      configs = Dir.glob(file('state-*/clusters/same-slug/result-config-*'))
+-      images = configs.filter_map { |path| JSON.parse(File.read(path)).fetch('machines').fetch('services')['diskImage'] }.uniq
+-      # Immutable service images consume store space; root copies and tank writes
+-      # consume campaign space. Sparse extents are still future growth, even when
+-      # File.size already reports the configured capacity. No reflink is assumed.
+-      images = images.uniq { |path| stat = File.stat(path); [stat.dev, stat.ino] }
+-      realized_images = images.map { |path| allocation(path) }
+-      image_growth = [36 * GIB - realized_images.sum { |entry| entry.fetch('allocated_bytes') }, 0].max
+-      roots = operation == 'resume-b-final' ? ['b'] : %w[a b]
+-      retained_disks = []
+-      disk_growth = roots.sum do |which|
+-        { 'services-root.img' => 12 * GIB, 'node1-tank.img' => 16 * GIB }.sum do |name, size|
+-          path = file("state-#{which}/clusters/same-slug/disks/#{name}")
+-          entry = File.exist?(path) ? allocation(path) : nil
+-          retained_disks << entry if entry
+-          allocated = entry ? entry.fetch('allocated_bytes') : 0
+-          [size - allocated, 0].max
+-        end
++      if stat.file?
++        allocated, apparent = stat.blocks * 512, stat.size
++      else
++        output, = command('du', '-s', '-B1', path)
++        allocated = Integer(output.split.first)
++        output, = command('du', '-s', '-B1', '--apparent-size', path)
++        apparent = Integer(output.split.first)
+       end
+-      { 'image_bytes' => image_growth, 'disk_bytes' => disk_growth, 'realized_images' => realized_images, 'retained_disks' => retained_disks }
++      { 'path' => path, 'device' => stat.dev, 'inode' => stat.ino, 'allocated_bytes' => allocated, 'apparent_bytes' => apparent }
++    end
++
++    def image_paths
++      Dir.glob(file('state/clusters/same-slug/result-config-*')).filter_map do |path|
++        @state.private_directory(File.dirname(path))
++        resolved = File.realpath(path)
++        raise Error, 'built configuration must remain an immutable store file' unless resolved.start_with?('/nix/store/') && File.file?(resolved)
++        JSON.parse(File.read(resolved)).fetch('machines').fetch('services')['diskImage']
++      end.uniq
++    end
++
++    def remaining_growth
++      images = image_paths.map do |path|
++        raise Error, 'service image must remain an immutable store path' unless path.start_with?('/nix/store/') && path == File.expand_path(path)
++        allocation(path)
++      end.uniq { |entry| [entry.fetch('device'), entry.fetch('inode')] }
++      raise Error, 'single runtime campaign has more than one service image' if images.size > 1
++      image_growth = [8 * GIB - images.sum { |entry| entry.fetch('allocated_bytes') }, 0].max
++      disks = %w[services-root.img node1-tank.img].filter_map do |name|
++        path = file("state/clusters/same-slug/disks/#{name}")
++        File.exist?(path) ? allocation(path) : nil
++      end.uniq { |entry| [entry.fetch('device'), entry.fetch('inode')] }
++      disk_growth = 16 * GIB - disks.sum { |entry| [entry.fetch('allocated_bytes'), 8 * GIB].min }
++      { 'image_bytes' => image_growth, 'disk_bytes' => disk_growth, 'realized_images' => images, 'retained_disks' => disks }
+     end
+ 
+     def capacity(operation)
+@@ -413,15 +428,16 @@ module KbVerify
+       end
+       check(!%w[tmpfs ramfs].include?(snapshots.fetch('state_images').fetch('fstype')), 'campaign images use disk-backed filesystem')
+       host = host_capacity
+-      check(host.fetch('ram_available') >= 24 * GIB, '24 GiB available host RAM')
+-      check(host.fetch('shm_available') >= 18 * GIB, '18 GiB available shared memory')
++      demand = memory_requirements(value, operation)
++      check(host.fetch('ram_available') >= demand.fetch('ram_bytes'), 'fresh host RAM covers the assessed phase peak')
++      check(host.fetch('shm_available') >= demand.fetch('shm_bytes'), 'fresh shared memory covers the assessed phase peak')
+       devices = snapshots.values.map { |entry| entry.fetch('device') }.uniq
+       budgets = value.fetch('filesystems')
+       unless budgets.map { |entry| entry.fetch('device') }.uniq.size == budgets.size && budgets.map { |entry| entry.fetch('device') }.sort == devices.sort
+         raise Error, 'capacity assessment must budget each shared filesystem once'
+       end
+-      growth = remaining_growth(operation)
+-      check(growth.fetch('realized_images').all? { |entry| entry['device'] == snapshots.fetch('store').fetch('device') }, 'service images remain on the bound store filesystem')
++      growth = remaining_growth
++      check(growth.fetch('realized_images').all? { |entry| entry['device'] == snapshots.fetch('store').fetch('device') }, 'service image remains on the bound store filesystem')
+       check(growth.fetch('retained_disks').all? { |entry| entry['device'] == snapshots.fetch('state_images').fetch('device') }, 'retained disks remain on the bound campaign filesystem')
+       charges = Hash.new(0)
+       charges[snapshots.fetch('state_images').fetch('device')] += growth.fetch('disk_bytes')
+@@ -429,7 +445,7 @@ module KbVerify
+       realized = value.fetch('realized_paths').uniq.map do |path|
+         raise Error, 'realized capacity path must be an immutable store path' unless path.start_with?('/nix/store/') && path == File.expand_path(path)
+         allocation(path)
+-      end
++      end.uniq { |entry| [entry.fetch('device'), entry.fetch('inode')] }
+       missing = value.fetch('missing_paths').group_by { |entry| entry.fetch('path') }.map do |path, entries|
+         raise Error, 'conflicting repeated missing path evidence' unless entries.uniq.size == 1
+         entry = entries.first
+@@ -437,118 +453,74 @@ module KbVerify
+         raise Error, 'missing path kind must identify closure or budgeted service image' unless %w[closure service-image].include?(entry.fetch('kind'))
+         nonnegative_bytes(entry.fetch('nar_size'))
+         nonnegative_bytes(entry.fetch('download_size')) unless entry['download_size'].nil?
+-        # NAR size is a known estimate, not a claim about builder/FS peaks. A
+-        # service image already belongs to the three-image extent budget above.
+         charges[snapshots.fetch('store').fetch('device')] += entry.fetch('nar_size') if entry.fetch('kind') == 'closure' && !File.exist?(path)
+         entry.merge('currently_realized' => File.exist?(path))
+       end
+-      raise Error, 'receipt lists more than the three planned service images' if missing.count { |entry| entry['kind'] == 'service-image' } > 3
++      raise Error, 'receipt lists more than the one planned service image' if missing.count { |entry| entry['kind'] == 'service-image' } > 1
+       fresh = budgets.map do |budget|
+         device = budget.fetch('device')
+         reserve = nonnegative_bytes(budget.fetch('reserve_bytes'))
+-        headroom = nonnegative_bytes(budget.fetch('build_headroom_bytes'))
+-        raise Error, 'operator-assessed build headroom must be positive' unless headroom.positive?
+-        raise Error, 'campaign reserve must retain 16 GiB' if device == snapshots.fetch('state_images').fetch('device') && reserve < 16 * GIB
++        retained = nonnegative_bytes(budget.fetch('retained_growth_bytes'))
++        headroom = positive_bytes(budget.fetch('build_headroom_bytes'))
++        overlap = nonnegative_bytes(budget.fetch('construction_overlap_bytes'))
++        unless budget['construction_overlap_assessment'].is_a?(String) && !budget['construction_overlap_assessment'].strip.empty?
++          raise Error, 'construction staging/import overlap requires an explicit assessment'
++        end
++        overlap = 0 unless operation == 'start'
++        raise Error, 'campaign base reserve must retain 16 GiB' if device == snapshots.fetch('state_images').fetch('device') && reserve < 16 * GIB
+         nonnegative_bytes(budget.fetch('observed_available_bytes'))
+         available = snapshots.values.select { |entry| entry['device'] == device }.map { |entry| entry.fetch('available_bytes') }.min
+         remaining = charges.fetch(device, 0)
+-        check(available >= remaining + reserve + headroom, 'fresh filesystem growth, reserve and assessed headroom')
++        check(available >= remaining + reserve + retained + headroom + overlap, 'fresh filesystem growth, retained reserve, assessed headroom and construction overlap')
+         { 'device' => device, 'available_bytes' => available, 'remaining_growth_bytes' => remaining,
+-          'reserve_bytes' => reserve, 'available_build_headroom_bytes' => available - remaining - reserve,
++          'reserve_bytes' => reserve, 'retained_growth_bytes' => retained, 'construction_overlap_bytes' => overlap,
++          'available_build_headroom_bytes' => available - remaining - reserve - retained - overlap,
+           'assessed_build_headroom_bytes' => headroom }
+       end
+-      policy = value.fetch('build_plan')
+-      if commands.respond_to?(:environment)
+-        commands.environment['NIX_CONFIG'] = commands.environment.fetch('NIX_CONFIG').lines.reject { |line| line.match?(/\A(?:max-jobs|cores) =/) }.join +
+-          "max-jobs = #{policy.fetch('max_jobs')}\ncores = #{policy.fetch('cores')}\n"
+-      end
+-      write("receipts/capacity-#{SecureRandom.hex(12)}.json", { 'schema' => 1, 'operation' => operation,
++      write("receipts/capacity-#{SecureRandom.hex(12)}.json", { 'schema' => 1, 'kind' => KIND, 'operation' => operation,
+         'receipt_sha256' => digest, 'assessment' => value, 'measured_at' => Time.now.utc.iso8601,
+-        'host' => host, 'filesystems' => fresh, 'owned_output' => allocation(root), 'realized_paths' => realized,
+-        'remaining_growth' => growth, 'known_missing_paths' => missing,
+-        'scratch_bound' => 'unknown', 'owned_output_worst_envelope' => 108 * GIB }, immutable: true)
++        'host' => host, 'memory_requirements' => demand, 'filesystems' => fresh, 'owned_output' => allocation(root),
++        'realized_paths' => realized, 'remaining_growth' => growth, 'known_missing_paths' => missing,
++        'scratch_bound' => 'unknown', 'intrinsic_output_envelope_bytes' => 24 * GIB }, immutable: true)
+     end
+ 
+-    def descriptor(which, metadata)
+-      out, = engine(which, 'connection')
++    def descriptor
++      out, = engine('connection')
+       value = JSON.parse(out)
+-      check(value.dig('provenance', 'source') == metadata, "#{which} exact prepared source")
+-      observations = {}
++      check(value.dig('provenance', 'source') == source, 'exact final prepared source')
++      check(value.fetch('machines').keys.sort == %w[node1 services], 'one services/node1 runtime')
+       value.fetch('provenance').fetch('machine_toplevels').each do |machine, closure|
+-        identity, = engine(which, 'ssh', machine, '--', 'cat', '/etc/vpsfree-kb-capture.json')
+-        check(JSON.parse(identity) == value.fetch('provenance').fetch('guest_identity'), "#{which}/#{machine} live guest identity")
+-        running, = engine(which, 'ssh', machine, '--', 'readlink', '-f', '/run/current-system')
+-        check(running.strip == closure, "#{which}/#{machine} actual system closure")
+-        observations[machine] = { 'identity_sha256' => Digest::SHA256.hexdigest(identity), 'closure' => closure }
++        identity, = engine('ssh', machine, '--', 'cat', '/etc/vpsfree-kb-capture.json')
++        check(JSON.parse(identity) == value.fetch('provenance').fetch('guest_identity'), "#{machine} live guest identity")
++        running, = engine('ssh', machine, '--', 'readlink', '-f', '/run/current-system')
++        check(running.strip == closure, "#{machine} actual system closure")
+       end
+-      @guest_observations ||= {}
+-      @guest_observations[[which, value.fetch('run_id')]] = { 'descriptor' => JSON.parse(JSON.generate(value)), 'machines' => observations }
+       value
+     end
+ 
+-    def historical_router_drain(value)
+-      proof = @guest_observations&.fetch(['old', value.fetch('run_id')], nil)
+-      check(proof && proof.fetch('descriptor') == value && value.dig('provenance', 'source', 'revision') == PREDECESSOR,
+-        'historical drain follows exact predecessor descriptor/source attestation')
+-      service = proof.fetch('machines').fetch('services')
+-      script = <<~SH
+-        set -eu
+-        test "$(sha256sum /etc/vpsfree-kb-capture.json | cut -d ' ' -f 1)" = "$1"
+-        test "$(readlink -f /run/current-system)" = "$2"
+-        timeout 360 systemctl stop vpsadmin-console-router.service
+-        systemctl show vpsadmin-console-router.service --property=LoadState,ActiveState,SubState,MainPID,Result
+-      SH
+-      checkpoint('draining-predecessor-console-router', 'run_id' => value.fetch('run_id'))
+-      output, = engine('old', 'ssh', 'services', '--', 'sh', '-s', '--', service.fetch('identity_sha256'),
+-        service.fetch('closure'), input: script, caller_timeout: 360)
+-      properties = router_properties(output)
+-      check(properties == { 'LoadState' => 'loaded', 'ActiveState' => 'inactive', 'SubState' => 'dead',
+-        'MainPID' => '0', 'Result' => 'success' }, 'historical console router clean inactive result')
+-      write("receipts/router-drain-#{value.fetch('run_id')}.json", { 'schema' => 1,
+-        'source' => value.fetch('provenance').fetch('source'), 'run_id' => value.fetch('run_id'),
+-        'artifact_id' => value.fetch('artifact_id'), 'artifact_sha256' => value.fetch('artifact_sha256'),
+-        'unit' => 'vpsadmin-console-router.service', 'properties' => properties,
+-        'guard' => service, 'output_sha256' => Digest::SHA256.hexdigest(output),
+-        'guest_timeout_seconds' => 360, 'caller_timeout_seconds' => 360 }, immutable: true)
+-      assertions << 'operator-prepared 7dc K-runtime-only crossing; unchanged V; ordinary historical stop and K68 excluded'
+-    end
+-
+-    def router_properties(output)
+-      entries = output.lines.map { |line| line.chomp.split('=', 2) }
+-      check(entries.all? { |entry| entry.size == 2 } && entries.map(&:first).sort == %w[ActiveState LoadState MainPID Result SubState],
+-        'exact console router service properties')
+-      entries.to_h
+-    end
+-
+-    def restored_router(value)
+-      output, = engine('b', 'ssh', 'services', '--', 'systemctl', 'show', 'vpsadmin-console-router.service',
+-        '--property=LoadState,ActiveState,SubState,MainPID,Result')
+-      properties = router_properties(output)
+-      check(properties.slice('LoadState', 'ActiveState', 'SubState', 'Result') ==
+-        { 'LoadState' => 'loaded', 'ActiveState' => 'active', 'SubState' => 'running', 'Result' => 'success' } &&
+-        /\A[1-9][0-9]*\z/.match?(properties.fetch('MainPID')), 'final boot restores healthy console router')
+-      write("receipts/router-health-#{value.fetch('run_id')}-#{SecureRandom.hex(6)}.json", { 'schema' => 1,
+-        'source' => value.fetch('provenance').fetch('source'), 'run_id' => value.fetch('run_id'),
+-        'artifact_id' => value.fetch('artifact_id'), 'unit' => 'vpsadmin-console-router.service',
+-        'properties' => properties, 'output_sha256' => Digest::SHA256.hexdigest(output) }, immutable: true)
+-    end
+-
+     def identities
+-      directory = file('state-b/clusters/same-slug')
+-      files = CREDENTIALS.to_h { |name| [name, Digest::SHA256.file(File.join(directory, 'credentials', name)).hexdigest] }
++      directory = file('state/clusters/same-slug')
++      credentials = CREDENTIALS.to_h { |name| [name, Digest::SHA256.hexdigest(@state.file(File.join(directory, 'credentials', name)))] }
+       disks = %w[services-root.img node1-tank.img].to_h do |name|
+         path = File.join(directory, 'disks', name)
+         stat = File.lstat(path)
+-        check(stat.file? && !stat.symlink? && stat.uid == Process.uid, 'owned retained disk')
++        check(stat.file? && !stat.symlink? && stat.uid == Process.uid && stat.size == 8 * GIB, 'owned retained 8-GiB disk')
+         [name, { 'device' => stat.dev, 'inode' => stat.ino, 'size' => stat.size }]
+       end
+       accounts = Digest::SHA256.hexdigest(@state.file(File.join(directory, 'accounts.json')))
+-      { 'credentials' => files, 'disks' => disks, 'accounts_sha256' => accounts }
++      artifacts = Dir.glob(File.join(directory, 'artifact-*.json')).to_h { |path| [File.basename(path), Digest::SHA256.hexdigest(@state.file(path))] }
++      images = image_paths.uniq.map do |path|
++        stat = File.stat(path)
++        check(stat.file? && stat.size == 8 * GIB, 'one fixed 8-GiB immutable image')
++        { 'path' => path, 'device' => stat.dev, 'inode' => stat.ino, 'size' => stat.size }
++      end.uniq { |entry| [entry['device'], entry['inode']] }
++      check(images.size == 1 && artifacts.size == 1, 'one image and one accepted artifact')
++      { 'credentials' => credentials, 'disks' => disks, 'accounts_sha256' => accounts, 'artifacts' => artifacts, 'images' => images }
+     end
+ 
+-    def sentinels(which)
++    def sentinels
+       { 'services' => '/root/kb-root-sentinel', 'node1' => '/tank/kb-data-sentinel' }.to_h do |machine, path|
+-        output, = engine(which, 'ssh', machine, '--', 'sha256sum', path)
++        output, = engine('ssh', machine, '--', 'sha256sum', path)
+         [machine, output.split.first]
+       end
+     end
+@@ -558,97 +530,144 @@ module KbVerify
+       check(current.fetch('run_id') != previous.fetch('run_id'), 'fresh live run identity')
+       check(current.fetch('artifact_id') == previous.fetch('artifact_id') && current.fetch('artifact_sha256') == previous.fetch('artifact_sha256'), 'cold resume reuses accepted artifact')
+       check(current.fetch('provenance').fetch('machine_toplevels') == previous.fetch('provenance').fetch('machine_toplevels'), 'cold resume does not rebuild closures')
+-      check(identities == identity, 'all six credentials, private accounts digest and disk identities preserved')
+-      check(sentinels('b') == sentinel, 'root/data sentinels preserved')
+-    end
+-
+-    def isolation_continuity_update
+-      checkpoint('starting-a')
+-      engine('a', 'start', '--network', 'local', '--topology', 'single', '--config', file('config-a.json'))
+-      a = descriptor('a', source)
+-      checkpoint('starting-predecessor-b')
+-      old_source = read('predecessor.json').fetch('source')
+-      engine('old', 'start', '--network', 'local', '--topology', 'single', '--config', file('config-b.json'))
+-      old = descriptor('old', old_source)
+-      isolation(a, old)
+-      { 'services' => '/root/kb-root-sentinel', 'node1' => '/tank/kb-data-sentinel' }.each do |machine, path|
+-        engine('old', 'ssh', machine, '--', 'sh', '-c', 'test ! -e "$1"; printf "%s" "$2" > "$1"', 'sh', path, read('campaign.json').fetch('campaign_id'))
++      check(identities == identity, 'six credentials, accounts, disks, artifact and image identities preserved')
++      check(sentinels == sentinel, 'root/data sentinels preserved')
++    end
++
++    def read_smoke(connection_path)
++      script = <<~'JS'
++        const fs = require('node:fs');
++        const path = require('node:path');
++        const { Connection, openLease, readConnection } = require(path.join(process.argv[3], 'lib/connection.cjs'));
++        const { launchBrowser, login } = require(path.join(process.argv[3], 'lib/browser.cjs'));
++        const { goto } = require(path.join(process.argv[3], 'lib/webui.cjs'));
++        const { inventoryIdentity, assertInventoryMember } = require(path.join(process.argv[3], 'fixtures/prepare.cjs'));
++        async function main() {
++          const { value, digest } = readConnection(process.argv[1], ['ip-inventory']);
++          const source = JSON.parse(fs.readFileSync(process.argv[2]));
++          const expected = { schema: 1, instance_id: value.instance_id, run_id: value.run_id,
++            artifact_id: value.artifact_id, artifact_sha256: value.artifact_sha256, descriptor_sha256: digest };
++          const argv = [...value.control.argv, '--instance-id', value.instance_id, '--run-id', value.run_id,
++            '--artifact-id', value.artifact_id, '--artifact-sha256', value.artifact_sha256, '--descriptor-sha256', digest];
++          const lease = await openLease(argv, expected);
++          let browser;
++          try {
++            const connection = new Connection(value, lease);
++            await connection.verify(source);
++            const { member } = await inventoryIdentity(connection);
++            browser = await launchBrowser(connection, { width: 1280, height: 800 }, 'en');
++            const page = await browser.context.newPage();
++            await login(page, connection, 'en');
++            await goto(page, '/?page=adminvps&action=list');
++            await assertInventoryMember(page, member);
++            lease.assertLive();
++            process.stdout.write(JSON.stringify({ member, api_tls_verified: true, php_member_read: true,
++              page: '/?page=adminvps&action=list', instance_id: value.instance_id, run_id: value.run_id }) + '\n');
++          } finally {
++            try { if (browser) await browser.close(); } finally { await lease.close(); }
++          }
++        }
++        main().catch((error) => { process.stderr.write(`${error.message}\n`); process.exitCode = 1; });
++      JS
++      output, = command('node', '-e', script, connection_path, selection.fetch('metadata'), source.fetch('source'))
++      value = JSON.parse(output)
++      check(value['api_tls_verified'] == true && value['php_member_read'] == true && value.dig('member', 'login') == 'test-user1', 'real TLS/API identity and ordinary member PHP read')
++      write('receipts/read-smoke.json', value, immutable: true)
++    end
++
++    def resources(value, capture: false)
++      observations = {}
++      %w[services node1].each do |machine|
++        script = <<~SH
++          set -eu
++          printf 'available_memory_bytes=%s\n' "$(awk '/^MemAvailable:/ {printf "%.0f", $2 * 1024}' /proc/meminfo)"
++          if test -r /proc/pressure/memory; then cat /proc/pressure/memory; fi
++        SH
++        if machine == 'services'
++          script += "printf 'available_bytes=%s\\n' \"$(df -B1 --output=avail / | tail -n 1 | tr -d ' ')\"\n"
++          script += "printf 'available_inodes=%s\\n' \"$(df -i --output=iavail / | tail -n 1 | tr -d ' ')\"\n"
++        else
++          script += "printf 'tank_available_bytes=%s\\n' \"$(zfs get -Hp -o value available tank)\"\n"
++        end
++        output, = engine('ssh', machine, '--', 'sh', '-s', input: script)
++        numeric = output.lines.filter_map do |line|
++          match = /\A([a-z_]+)=([0-9]+)\n?\z/.match(line)
++          [match[1], Integer(match[2])] if match
++        end.to_h
++        required = machine == 'services' ? %w[available_memory_bytes available_bytes available_inodes] : %w[available_memory_bytes tank_available_bytes]
++        check(numeric.keys.sort == required.sort, "#{machine} real resource observations")
++        observations[machine] = numeric.merge('pressure' => output.lines.reject { |line| /\A[a-z_]+=[0-9]+\n?\z/.match?(line) }.join)
++      end
++      check(observations.fetch('services').fetch('available_bytes') >= GIB, '1 GiB services writable headroom before fixtures')
++      if capture
++        assessment = capacity_assessment.first.fetch('capture_assessment')
++        check(assessment['assessment'].is_a?(String) && !assessment['assessment'].strip.empty?, 'explicit template/quota/memory assessment')
++        services = observations.fetch('services')
++        node = observations.fetch('node1')
++        check(services.fetch('available_inodes') >= positive_bytes(assessment.fetch('minimum_free_inodes')), 'assessed services inode headroom')
++        check(services.fetch('available_memory_bytes') >= positive_bytes(assessment.fetch('services_memory_bytes')) &&
++          node.fetch('available_memory_bytes') >= positive_bytes(assessment.fetch('node_memory_bytes')), 'assessed live guest memory headroom')
++        check(node.fetch('tank_available_bytes') >= 4 * GIB + positive_bytes(assessment.fetch('template_metadata_bytes')), 'real 4-GiB quota plus assessed template/metadata headroom')
+       end
+-      identity, sentinel = identities, sentinels('old')
+-      write('continuity-b.json', { 'identities' => identity, 'sentinels' => sentinel }, immutable: true)
+-      historical_router_drain(old)
+-      checkpoint('final-controller-stop-of-predecessor-b')
+-      engine('b', 'stop', '--timeout', '900')
+-      engine('old', 'resume')
+-      resumed = descriptor('old', old_source)
+-      continuity(old, resumed, identity, sentinel)
+-      descriptor('a', source)
+-      historical_router_drain(resumed)
+-      checkpoint('updating-b')
+-      engine('b', 'update', '--timeout', '900', '--network', 'local', '--topology', 'single', '--config', file('config-b.json'))
+-      assertions << 'final-controller stop of predecessor runner, genuine predecessor resume, final-controller update'
+-      current = descriptor('b', source)
+-      restored_router(current)
+-      check(current.fetch('instance_id') == old.fetch('instance_id') && current.fetch('run_id') != resumed.fetch('run_id'), 'update retains instance with fresh run')
+-      check(current.fetch('artifact_id') != resumed.fetch('artifact_id') && current.fetch('provenance').fetch('machine_toplevels') != resumed.fetch('provenance').fetch('machine_toplevels'), 'genuinely changed artifact and closures')
+-      check(identities == identity && sentinels('b') == sentinel, 'update preserves disks, six credentials, private accounts digest and sentinels')
+-      preparation(current)
+-      isolation(descriptor('a', source), current)
+-      checkpoint('resetting-only-a')
+-      engine('a', 'stop', '--timeout', '900')
+-      engine('a', 'reset')
+-      check(!File.exist?(file('state-a/clusters/same-slug')), 'only owned A tree reset')
+-      current = descriptor('b', source)
+-      engine('b', 'stop', '--timeout', '900')
+-      engine('b', 'resume')
+-      final = descriptor('b', source)
+-      restored_router(final)
+-      continuity(current, final, identity, sentinel)
+-      write('accepted-b.json', final, immutable: true)
++      write("receipts/resources-#{value.fetch('run_id')}-#{SecureRandom.hex(6)}.json", { 'schema' => 1, 'kind' => KIND,
++        'run_id' => value.fetch('run_id'), 'artifact_id' => value.fetch('artifact_id'), 'source' => source,
++        'capture_admitted' => capture, 'observations' => observations, 'output_allocations' => remaining_growth }, immutable: true)
++    end
++
++    def runtime_smoke
++      checkpoint('starting-final-runtime')
++      engine('start', '--timeout', '900', '--network', 'local', '--topology', 'single', '--config', file('config.json'))
++      first = descriptor
++      write('smoke-connection.json', first, immutable: true)
++      resources(first)
++      checkpoint('member-read-smoke')
++      read_smoke(file('smoke-connection.json'))
+       checkpoint('public-lease-proof')
+-      command('node', File.join(source.fetch('source'), 'tools/verify-live-lease.cjs'), file('accepted-b.json'),
+-        selection.fetch('metadata'), selection.fetch('runtime'), file('state-b'), file('config-b.json'))
++      command('node', File.join(source.fetch('source'), 'tools/verify-live-lease.cjs'), file('smoke-connection.json'),
++        selection.fetch('metadata'), selection.fetch('runtime'), file('state'), file('config.json'))
+       assertions << 'public lease lifecycle exclusion, EOF/interruption, reacquisition, wrong-source refusal and routing'
+-    end
+-
+-    def isolation(first, second)
+-      check(first.fetch('instance_id') != second.fetch('instance_id'), 'same slug has independent instances')
+-      check(first.fetch('machines') != second.fetch('machines'), 'two roots have disjoint SSH endpoints')
+-      records = %w[a b].map do |name|
+-        phase = @state.read(file("state-#{name}/clusters/same-slug/phase.json"))
+-        @state.read(file("state-#{name}/clusters/same-slug/launch-#{phase.fetch('run_id')}.json"))
++      checkpoint('continuity-baseline')
++      { 'services' => '/root/kb-root-sentinel', 'node1' => '/tank/kb-data-sentinel' }.each do |machine, path|
++        engine('ssh', machine, '--', 'sh', '-c', 'set -e; test ! -e "$1"; printf "%s" "$2" > "$1"', 'sh', path, read('campaign.json').fetch('campaign_id'))
+       end
+-      check(records.map { |record| record.fetch('state_root') }.uniq.size == 2 && records.map { |record| record.fetch('socket_dir') }.uniq.size == 2, 'distinct roots and sockets')
+-      claims = records.map { |record| record.fetch('resource_claims') }
+-      check((claims[0] & claims[1]).empty? && claims.all? { |set| set.any? { |claim| claim['kind'] == 'udp' } }, 'TCP/UDP claims are disjoint')
+-    end
+-
+-    def preparation(descriptor)
+-      artifact = descriptor.fetch('artifact_id')
+-      summary = @state.read(file("state-b/clusters/same-slug/prepared-#{artifact}.json"))
+-      check(summary['complete'] == true && summary['kind'] == 'import', 'candidate import completed before new boot')
+-      proof = @state.read(file("state-b/clusters/same-slug/prepared-#{artifact}-services.json"))
+-      check(proof['complete'] == true && proof['artifact_sha256'] == descriptor.fetch('artifact_sha256'), 'exact candidate preparation receipt')
+-      gcroot, = engine('b', 'ssh', 'services', '--', 'readlink', '-f', proof.fetch('guest_root'))
+-      check(gcroot.strip == proof.fetch('toplevel'), 'candidate guest GC root retained')
+-      actual, = engine('b', 'ssh', 'services', '--', 'nix', 'path-info', '--recursive', '--json', proof.fetch('toplevel'))
+-      value = JSON.parse(actual)
+-      value = value.to_h { |entry| [entry.fetch('path'), entry] } if value.is_a?(Array)
+-      normalized = value.transform_values { |entry| { 'narHash' => entry.fetch('narHash'), 'narSize' => entry.fetch('narSize'), 'references' => entry.fetch('references').sort } }
+-      check(normalized == proof.fetch('closure'), 'live candidate closure content and references')
++      identity, sentinel = identities, sentinels
++      write('continuity.json', { 'identities' => identity, 'sentinels' => sentinel }, immutable: true)
++      checkpoint('ordinary-public-stop')
++      engine('stop', '--timeout', '900')
++      result, = engine('status')
++      stopped = JSON.parse(result)
++      check(stopped['found'] == true && stopped['state'] == 'stopped' && stopped['ready'] == false, 'ordinary public stop completed')
++      proof = read("state/clusters/same-slug/processes-#{first.fetch('run_id')}.json")
++      check(proof['schema'] == 1 && proof['complete'] == true &&
++        %w[instance_id run_id artifact_id artifact_sha256].all? { |key| proof[key] == first.fetch(key) }, 'retained complete exit receipt')
++      checkpoint('same-artifact-public-resume')
++      engine('resume', '--timeout', '900')
++      resumed = descriptor
++      continuity(first, resumed, identity, sentinel)
++      resources(resumed)
++      write('accepted-runtime.json', resumed, immutable: true)
++      assertions << 'one final-source start/stop/resume; no historical upgrade or two-cluster claim'
+     end
+ 
+     def bilingual_capture
+-      restored_router(descriptor('b', source))
++      current = descriptor
++      check(current == read('accepted-runtime.json'), 'capture uses the same completed resumed runtime')
++      baseline = read('continuity.json')
++      check(identities == baseline.fetch('identities') && sentinels == baseline.fetch('sentinels'), 'capture retains smoke continuity')
++      checkpoint('capture-resource-admission')
++      capacity('capture')
++      resources(current, capture: true)
+       before = source_hashes
+       output = file('output')
+       capture = File.join(selection.fetch('capture'), 'bin/vpsfree-kb-capture')
+-      command(capture, '--cluster', 'same-slug', '--state-root', file('state-b'), '--language', 'cs', '--checkpoint', 'networking/ip-address-list', '--output-root', output)
+-      value, = engine('b', 'connection')
++      checkpoint('bilingual-ip-inventory')
++      command(capture, '--cluster', 'same-slug', '--state-root', file('state'), '--language', 'cs', '--checkpoint', 'networking/ip-address-list', '--output-root', output)
++      value, = engine('connection')
+       write('capture-connection.json', JSON.parse(value))
+       command(capture, '--connection', file('capture-connection.json'), '--language', 'en', '--checkpoint', 'networking/ip-address-list', '--output-root', output)
+       command(capture, '--connection', file('capture-connection.json'), '--language', 'en', '--checkpoint', 'networking/ip-address-list', cwd: output)
+       validate = File.join(selection.fetch('capture'), 'bin/vpsfree-kb-validate')
++      checkpoint('strict-validation-export')
+       command(validate, '--update', '--output-root', output)
+       command(validate, '--output-root', output)
+       rows = JSON.parse(File.read(File.join(output, 'tmp/capture-results.json')))
+@@ -663,8 +682,8 @@ module KbVerify
+   def self.run(argv)
+     options = {}
+     parser = OptionParser.new do |value|
+-      value.banner = 'Usage: vpsfree-kb-verify --root DIR --config-a FILE --config-b FILE --predecessor-ref EXACT-REF --capacity-receipt FILE --phase PHASE'
+-      %w[root config-a config-b predecessor-ref capacity-receipt phase selection].each do |name|
++      value.banner = 'Usage: vpsfree-kb-verify --root DIR --config FILE --capacity-receipt FILE --phase PHASE'
++      %w[root config capacity-receipt phase selection].each do |name|
+         value.on("--#{name} VALUE") do |argument|
+           key = name.tr('-', '_').to_sym
+           raise Error, "duplicate option: --#{name}" if options.key?(key)
+@@ -677,7 +696,7 @@ module KbVerify
+     raise Error, 'unexpected positional arguments' unless argv.empty?
+     phase = options.delete(:phase) || raise(Error, '--phase is required')
+     selected = options.delete(:selection) || raise(Error, 'use the packaged verifier with its fixed source selection')
+-    %i[root config_a config_b predecessor_ref capacity_receipt].each { |name| options.fetch(name) }
++    %i[root config capacity_receipt].each { |name| options.fetch(name) }
+     options[:selection] = JSON.parse(File.read(selected))
+     Campaign.new(**options).run(phase)
+     puts JSON.generate('phase' => phase, 'complete' => true)
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+index 1434c34765e8c8a67f276a3b77e77aa39b1defd6..1f67b6844827ae1114fd1af317507f9b7846f1f8 100644
+--- a/tools/test-runtime-verify.rb
++++ b/tools/test-runtime-verify.rb
+@@ -6,9 +6,9 @@ require 'timeout'
+ require_relative 'runtime-verify'
+ 
+ class RuntimeVerifyTest < Minitest::Test
+-  def configuration(port)
+-    { 'services' => { 'memoryMiB' => 4096, 'rootDiskMiB' => 12288 },
+-      'nodes' => { 'node1' => { 'memoryMiB' => 4096, 'tankDiskGiB' => 16 } },
++  def configuration(port = 24000)
++    { 'services' => { 'memoryMiB' => 2048, 'rootDiskMiB' => 8192 },
++      'nodes' => { 'node1' => { 'memoryMiB' => 2048, 'tankDiskGiB' => 8 } },
+       'topologies' => { 'single' => ['node1'] }, 'dns' => { 'enable' => false },
+       'resolver' => { 'mode' => 'cluster', 'upstreamNameservers' => ['10.0.2.3'] },
+       'seed' => { 'users' => [['test-admin', 99, 1], ['test-user1', 1, 9], ['test-user2', 1, 17]].map do |login, level, block_start|
+@@ -20,13 +20,10 @@ class RuntimeVerifyTest < Minitest::Test
+         'ports' => { 'services' => { 'ssh' => port, 'https' => port + 10 }, 'node1' => { 'ssh' => port + 1 } } } }
+   end
+ 
+-  def with_campaign(config_a: configuration(24000), config_b: configuration(24100))
++  def with_campaign(config: configuration)
+     Dir.mktmpdir do |directory|
+-      files = [config_a, config_b].each_with_index.map do |config, index|
+-        file = File.join(directory, "config-#{index}.json")
+-        File.write(file, JSON.generate(config), perm: 0o600)
+-        file
+-      end
++      config_path = File.join(directory, 'config.json')
++      File.write(config_path, JSON.pretty_generate(config) + "\n", perm: 0o600)
+       metadata = File.join(directory, 'metadata.json')
+       File.write(metadata, JSON.generate('schema' => 1, 'revision' => 'a' * 40, 'source' => File.expand_path('..', __dir__)))
+       selection = { 'metadata' => metadata, 'source' => File.expand_path('..', __dir__), 'path' => '/nix/store/tools/bin',
+@@ -35,10 +32,12 @@ class RuntimeVerifyTest < Minitest::Test
+         'gem_home' => '/nix/store/ruby/lib/ruby/gems' }
+       FileUtils.mkdir_p(File.join(selection['runtime'], 'bin'))
+       File.write(File.join(selection['runtime'], 'bin/vpsfree-kb-devcluster'), metadata)
++      # Pure orchestration fixtures bypass store validation, preserving each
++      # supplied metadata value; never nest a stub of the same constructor.
+       software = ->(value) { Struct.new(:metadata).new(value) }
+       KbRuntime::Software.stub(:new, software) do
+-        campaign = KbVerify::Campaign.new(root: File.join(directory, 'campaign'), config_a: files[0], config_b: files[1],
+-          predecessor_ref: "github:vpsfreecz/vpsfree-kb-contracts/#{KbVerify::PREDECESSOR}", capacity_receipt: File.join(directory, 'capacity.json'), selection:)
++        campaign = KbVerify::Campaign.new(root: File.join(directory, 'campaign'), config: config_path,
++          capacity_receipt: File.join(directory, 'capacity.json'), selection:)
+         write_assessment(campaign, assessment(campaign))
+         yield campaign
+       end
+@@ -49,11 +48,17 @@ class RuntimeVerifyTest < Minitest::Test
+     roles = { 'state_images' => campaign.root, 'store' => '/nix/store', 'builder_scratch' => '/tmp' }.transform_values do |path|
+       { 'path' => path, 'device' => 10, 'mountpoint' => '/', 'fstype' => 'ext4' }
+     end
+-    { 'schema' => 1, 'bindings' => campaign.inputs, 'observed_at' => Time.now.utc.iso8601,
++    { 'schema' => 1, 'kind' => KbVerify::KIND, 'bindings' => campaign.inputs, 'observed_at' => Time.now.utc.iso8601,
+       'roles' => roles, 'owned_output' => { 'allocated_bytes' => 0, 'apparent_bytes' => 0 },
+       'realized_paths' => [], 'missing_paths' => [],
+-      'filesystems' => [{ 'device' => 10, 'reserve_bytes' => 16 * KbVerify::GIB,
+-        'build_headroom_bytes' => 4 * KbVerify::GIB, 'observed_available_bytes' => 200 * KbVerify::GIB }],
++      'resource_overheads' => %w[construction runtime_browser].to_h do |name|
++        [name, { 'ram_bytes' => 2 * KbVerify::GIB, 'shm_bytes' => KbVerify::GIB, 'assessment' => 'Synthetic assessed margin.' }]
++      end,
++      'filesystems' => [{ 'device' => 10, 'reserve_bytes' => 16 * KbVerify::GIB, 'retained_growth_bytes' => 3 * KbVerify::GIB,
++        'build_headroom_bytes' => 4 * KbVerify::GIB, 'observed_available_bytes' => 200 * KbVerify::GIB,
++        'construction_overlap_bytes' => KbVerify::GIB, 'construction_overlap_assessment' => 'Synthetic measured staging/import overlap.' }],
++      'capture_assessment' => { 'assessment' => 'Synthetic template/quota assessment.', 'minimum_free_inodes' => 1000,
++        'services_memory_bytes' => 128 * 1024**2, 'node_memory_bytes' => 128 * 1024**2, 'template_metadata_bytes' => KbVerify::GIB },
+       'build_plan' => { 'scratch_bound' => 'unknown', 'max_jobs' => 1, 'cores' => 1,
+         'assessment' => 'Synthetic capacity fixture, not a host-capacity claim.',
+         'daemon_scratch_evidence' => 'Synthetic declared daemon scratch directory.',
+@@ -70,59 +75,81 @@ class RuntimeVerifyTest < Minitest::Test
+       { 'path' => path, 'device' => 10, 'mountpoint' => '/', 'fstype' => 'ext4', 'available_bytes' => available }
+     end
+     campaign.define_singleton_method(:host_capacity) do
+-      { 'ram_available' => 30 * KbVerify::GIB, 'shm_available' => 24 * KbVerify::GIB }
++      { 'ram_available' => 6 * KbVerify::GIB, 'shm_available' => 5 * KbVerify::GIB }
+     end
+     campaign.define_singleton_method(:allocation) do |path|
+       stat = File.lstat(path)
+-      { 'path' => path, 'device' => 10, 'allocated_bytes' => stat.blocks * 512, 'apparent_bytes' => stat.size }
++      { 'path' => path, 'device' => 10, 'inode' => stat.ino, 'allocated_bytes' => stat.blocks * 512, 'apparent_bytes' => stat.size }
+     end
+   end
+ 
+-  def test_phase_prerequisites_do_not_infer_ownership_or_launch
++  def test_single_profile_accounts_domains_and_dedicated_protocol_ports
+     with_campaign do |campaign|
+-      campaign.define_singleton_method(:command) { |*_args, **| flunk('prerequisite refusal must precede commands') }
+-      assert_raises(Errno::ENOENT) { campaign.run('bilingual-capture') }
+-      refute(File.exist?(campaign.file('state-b')))
+-      refute(File.exist?(campaign.file('receipts/bilingual-capture-attempt.json')))
++      assert_equal('single-runtime-v1', KbVerify::KIND)
++      assert_equal(%w[installed-layout runtime-smoke bilingual-capture], KbVerify::PHASES)
++      assert_equal(configuration, campaign.config)
++      assert_equal(Digest::SHA256.file(File.join(File.dirname(campaign.root), 'config.json')).hexdigest, campaign.inputs['configuration_sha256'])
++      assert_equal(%w[test-admin test-user1 test-user2], campaign.config.dig('seed', 'users').map { |entry| entry['login'] })
++      refute(campaign.inputs.key?('predecessor_ref'))
++      refute(campaign.inputs.key?('configurations'))
+     end
++    %w[memory root tank nodes dns resolver domain bind port].each do |wrong|
++      candidate = configuration
++      case wrong
++      when 'memory' then candidate['services']['memoryMiB'] = 4096
++      when 'root' then candidate['services']['rootDiskMiB'] = 12288
++      when 'tank' then candidate['nodes']['node1']['tankDiskGiB'] = 16
++      when 'nodes' then candidate['nodes']['node2'] = candidate['nodes']['node1'].dup
++      when 'dns' then candidate['dns']['enable'] = true
++      when 'resolver' then candidate['resolver']['upstreamNameservers'] = ['192.0.2.1']
++      when 'domain' then candidate['domains']['api'] = 'api.invalid'
++      when 'bind' then candidate['local']['bindAddress'] = '0.0.0.0'
++      when 'port' then candidate['local']['ports']['node1']['ssh'] = candidate['local']['ports']['services']['ssh']
++      end
++      assert_raises(KbVerify::Error) { with_campaign(config: candidate) { flunk('invalid profile admitted') } }
++    end
++    # TCP and UDP remain distinct protocols, even for the same numeric port.
++    candidate = configuration
++    candidate['local']['multicastPort'] = candidate['local']['ports']['services']['ssh']
++    with_campaign(config: candidate) { |campaign| assert_equal(candidate, campaign.config) }
+   end
+ 
+-  def test_only_exact_published_7dc_predecessor_is_accepted_before_campaign_mutation
+-    assert_equal('7dc4d70830e535f4559bccfa668cf65cdce1de2d', KbVerify::PREDECESSOR)
+-    with_campaign do |campaign|
+-      assert_equal('github:vpsfreecz/vpsfree-kb-contracts/7dc4d70830e535f4559bccfa668cf65cdce1de2d', campaign.inputs['predecessor_ref'])
+-      directory = File.dirname(campaign.root)
+-      ['github:vpsfreecz/vpsfree-kb-contracts/68aa33b451a14eb7bf4b2f1a090a8e5a2f80b52e',
+-        "github:vpsfreecz/vpsfree-kb-contracts/#{'b' * 40}",
+-        'github:vpsfreecz/vpsfree-kb-contracts/master'].each do |reference|
+-        error = assert_raises(KbVerify::Error) do
+-          KbVerify::Campaign.new(root: campaign.root, config_a: File.join(directory, 'config-0.json'),
+-            config_b: File.join(directory, 'config-1.json'), predecessor_ref: reference,
+-            capacity_receipt: File.join(directory, 'capacity.json'), selection: campaign.selection)
+-        end
+-        assert_equal('predecessor must be the exact published 7dc4d708 Git-flake', error.message)
+-        refute(File.exist?(campaign.root))
++  def test_explicit_admin_and_members_refuse_missing_duplicate_role_auth_identity_and_namespace
++    %w[missing duplicate role password identity namespace member].each do |wrong|
++      candidate = configuration
++      users = candidate.fetch('seed').fetch('users')
++      admin = users.find { |account| account['login'] == 'test-admin' }
++      case wrong
++      when 'missing' then users.delete(admin)
++      when 'duplicate' then users << admin.dup
++      when 'role' then admin['level'] = 1
++      when 'password' then admin.delete('password')
++      when 'identity' then admin['email'] = 'not-synthetic.invalid'
++      when 'namespace' then admin['namespace']['blockStart'] = 9
++      when 'member' then users.find { |account| account['login'] == 'test-user1' }['level'] = 99
+       end
++      assert_raises(KbVerify::Error) { with_campaign(config: candidate) { flunk('invalid account admitted') } }
+     end
+   end
+ 
+-  def test_phase_receipts_bind_exact_inputs_and_truthful_failed_attempts_without_cleanup
++  def test_obsolete_cli_arguments_and_unknown_phase_refuse_before_campaign_construction
++    calls = []
++    constructor = ->(**options) { calls << options; flunk('invalid CLI reached campaign') }
++    KbVerify::Campaign.stub(:new, constructor) do
++      %w[--config-a --config-b --predecessor-ref].each do |argument|
++        _out, error = capture_io { assert_equal(1, KbVerify.run([argument, 'obsolete'])) }
++        assert_match(/invalid option/, error)
++      end
++      capture_io { assert_equal(1, KbVerify.run([])) }
++    end
++    assert_empty(calls)
+     with_campaign do |campaign|
+-      campaign.define_singleton_method(:installed_layout) { check(true, 'synthetic installed boundary') }
+-      campaign.run('installed-layout')
+-      receipt = campaign.read('receipts/installed-layout.json')
+-      assert(receipt['complete'])
+-      assert_equal(campaign.inputs, receipt['inputs'])
+-      assert_raises(KbVerify::Error) { campaign.run('installed-layout') }
+-      campaign.define_singleton_method(:isolation_continuity_update) { checkpoint('old-run-retained'); raise KbVerify::Error, 'synthetic import failure' }
+-      assert_raises(KbVerify::Error) { campaign.run('isolation-continuity-update') }
+-      assert_equal('failed', campaign.read('receipts/isolation-continuity-update-attempt.json')['stage'])
+-      refute(File.exist?(campaign.file('receipts/isolation-continuity-update.json')))
+       assert_raises(KbVerify::Error) { campaign.run('isolation-continuity-update') }
++      refute(File.exist?(campaign.root))
+     end
+   end
+ 
+-  def test_nonempty_unowned_root_is_never_adopted_or_cleaned
++  def test_nonempty_unowned_old_kind_or_changed_inputs_are_never_adopted
+     with_campaign do |campaign|
+       Dir.mkdir(campaign.root, 0o700)
+       File.write(campaign.file('foreign'), 'retain')
+@@ -130,473 +157,588 @@ class RuntimeVerifyTest < Minitest::Test
+       assert_equal('retain', File.read(campaign.file('foreign')))
+       refute(File.exist?(campaign.file('campaign.json')))
+     end
+-  end
+-
+-  def test_changed_campaign_configuration_cannot_replace_identity
+     with_campaign do |campaign|
+       campaign.initialize_campaign
++      identity = campaign.read('campaign.json')
++      identity['kind'] = 'historical-two-root'
++      campaign.write('campaign.json', identity)
++      before = File.binread(campaign.file('campaign.json'))
++      assert_raises(KbVerify::Error) { campaign.initialize_campaign }
++      assert_equal(before, File.binread(campaign.file('campaign.json')))
++      campaign.write('campaign.json', identity.merge('kind' => KbVerify::KIND))
++      campaign.inputs['configuration']['local']['multicastPort'] += 1
+       before = File.binread(campaign.file('campaign.json'))
+-      campaign.inputs['configurations'][1]['local']['multicastPort'] += 1
+       assert_raises(KbVerify::Error) { campaign.initialize_campaign }
+       assert_equal(before, File.binread(campaign.file('campaign.json')))
+     end
+   end
+ 
+-  def test_overlapping_ports_and_production_capacity_defaults_refuse_before_root_creation
+-    assert_raises(KbVerify::Error) { with_campaign(config_b: configuration(24000)) {} }
+-    config = configuration(24100)
+-    config['nodes']['node1']['tankDiskGiB'] = 320
+-    assert_raises(KbVerify::Error) { with_campaign(config_b: config) {} }
+-  end
+-
+-  def test_inventory_accounts_are_explicit_in_both_initial_configs_before_any_campaign_mutation
+-    %i[config_a config_b].each do |which|
+-      %w[missing duplicate role password identity namespace member].each do |wrong|
+-        candidate = configuration(which == :config_a ? 24000 : 24100)
+-        users = candidate.fetch('seed').fetch('users')
+-        admin = users.find { |account| account['login'] == 'test-admin' }
+-        case wrong
+-        when 'missing' then users.delete(admin)
+-        when 'duplicate' then users << admin.dup
+-        when 'role' then admin['level'] = 1
+-        when 'password' then admin.delete('password')
+-        when 'identity' then admin['email'] = 'not-synthetic.invalid'
+-        when 'namespace' then admin['namespace']['blockStart'] = 9
+-        when 'member' then users.find { |account| account['login'] == 'test-user1' }['level'] = 99
++  def test_wrong_selected_source_or_runtime_metadata_refuses_before_root_creation
++    with_campaign do |campaign|
++      directory = File.dirname(campaign.root)
++      source = campaign.source.merge('source' => '/wrong/source')
++      File.write(campaign.selection['metadata'], JSON.generate(source))
++      assert_raises(KbVerify::Error) do
++        KbVerify::Campaign.new(root: campaign.root, config: File.join(directory, 'config.json'),
++          capacity_receipt: File.join(directory, 'capacity.json'), selection: campaign.selection)
++      end
++      refute(File.exist?(campaign.root))
++      File.write(campaign.selection['metadata'], JSON.generate(campaign.source))
++      File.write(File.join(campaign.selection['runtime'], 'bin/vpsfree-kb-devcluster'), 'wrong fixed metadata')
++      assert_raises(KbVerify::Error) do
++        KbVerify::Campaign.new(root: campaign.root, config: File.join(directory, 'config.json'),
++          capacity_receipt: File.join(directory, 'capacity.json'), selection: campaign.selection)
++      end
++      refute(File.exist?(campaign.root))
++    end
++  end
++
++  def test_failed_optional_layout_cannot_be_crossed_into_runtime_or_capture
++    with_campaign do |campaign|
++      calls = []
++      campaign.define_singleton_method(:installed_layout) { calls << :layout; raise KbVerify::Error, 'synthetic layout failure' }
++      campaign.define_singleton_method(:runtime_smoke) { flunk('failed campaign reached public start') }
++      assert_raises(KbVerify::Error) { campaign.run('installed-layout') }
++      before = File.binread(campaign.file('receipts/installed-layout-attempt.json'))
++      assert_raises(KbVerify::Error) { campaign.run('runtime-smoke') }
++      assert_raises(Errno::ENOENT) { campaign.run('bilingual-capture') }
++      assert_equal([:layout], calls)
++      assert_equal(before, File.binread(campaign.file('receipts/installed-layout-attempt.json')))
++      refute(File.exist?(campaign.file('receipts/runtime-smoke-attempt.json')))
++      refute(File.exist?(campaign.file('state')))
++    end
++  end
++
++  def test_missing_or_wrong_identity_capacity_receipt_precedes_root_creation_and_commands
++    %w[missing kind source selection configuration configuration_sha256 root capacity_receipt].each do |wrong|
++      with_campaign do |campaign|
++        value = assessment(campaign)
++        if wrong == 'missing'
++          File.unlink(File.join(File.dirname(campaign.root), 'capacity.json'))
++        elsif wrong == 'kind'
++          value['kind'] = 'historical-two-root'
++          write_assessment(campaign, value)
++        else
++          value['bindings'] = Marshal.load(Marshal.dump(campaign.inputs))
++          value['bindings'][wrong] = 'mismatch'
++          write_assessment(campaign, value)
+         end
+-        assert_raises(KbVerify::Error) { with_campaign(**{ which => candidate }) { flunk('invalid account prerequisites cannot admit a campaign') } }
++        campaign.define_singleton_method(:command) { |*_args, **| flunk('invalid receipt reached command') }
++        assert_raises(KbVerify::Error, Errno::ENOENT) { campaign.run('runtime-smoke') }
++        refute(File.exist?(campaign.root))
+       end
+     end
+   end
+ 
+-  def test_private_accounts_digest_is_part_of_the_resume_and_update_identity
++  def test_capture_refuses_old_or_changed_smoke_receipt_without_reinterpreting_it
+     with_campaign do |campaign|
+       campaign.initialize_campaign
+-      directory = campaign.file('state-b/clusters/same-slug')
+-      FileUtils.mkdir_p(File.join(directory, 'credentials'), mode: 0o700)
+-      FileUtils.mkdir_p(File.join(directory, 'disks'), mode: 0o700)
+-      KbVerify::CREDENTIALS.each { |name| File.write(File.join(directory, 'credentials', name), name, perm: 0o600) }
+-      %w[services-root.img node1-tank.img].each { |name| File.write(File.join(directory, 'disks', name), name, perm: 0o600) }
+-      accounts = File.join(directory, 'accounts.json')
+-      File.write(accounts, JSON.generate('users' => campaign.configurations[1].fetch('seed').fetch('users')), perm: 0o600)
+-      before = campaign.identities
+-      assert_equal(Digest::SHA256.file(accounts).hexdigest, before['accounts_sha256'])
+-      assert_equal(KbVerify::CREDENTIALS.sort, before['credentials'].keys.sort)
+-      File.write(accounts, JSON.generate('users' => []), perm: 0o600)
+-      refute_equal(before['accounts_sha256'], campaign.identities['accounts_sha256'])
+-      descriptor = { 'instance_id' => 'same-instance', 'run_id' => 'old-run', 'artifact_id' => 'same-artifact',
+-        'artifact_sha256' => 'same-digest', 'provenance' => { 'machine_toplevels' => { 'services' => 'same-closure' } } }
+-      campaign.define_singleton_method(:sentinels) { |_which| { 'services' => 'same-sentinel' } }
+-      assert_raises(KbVerify::Error) do
+-        campaign.continuity(descriptor, descriptor.merge('run_id' => 'new-run'), before, { 'services' => 'same-sentinel' })
++      valid = { 'schema' => 1, 'kind' => KbVerify::KIND, 'phase' => 'runtime-smoke', 'complete' => true, 'inputs' => campaign.inputs }
++      [valid.merge('kind' => 'historical-two-root'), valid.merge('complete' => false), valid.merge('inputs' => {})].each do |invalid|
++        campaign.write('receipts/runtime-smoke.json', invalid)
++        before = File.binread(campaign.file('receipts/runtime-smoke.json'))
++        campaign.define_singleton_method(:command) { |*_args, **| flunk('rejected receipt reached capture') }
++        assert_raises(KbVerify::Error) { campaign.run('bilingual-capture') }
++        assert_equal(before, File.binread(campaign.file('receipts/runtime-smoke.json')))
++        refute(File.exist?(campaign.file('receipts/bilingual-capture-attempt.json')))
+       end
+     end
+   end
+ 
+-  def test_predecessor_uses_final_controller_stop_then_genuine_old_resume_and_final_live_update
+-    predecessor_sequence
++  def test_physical_campaign_lock_refuses_a_second_writer_before_phase_or_command
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      File.open(campaign.file('verify.lock'), File::RDWR | File::CREAT, 0o600) do |holder|
++        assert(holder.flock(File::LOCK_EX | File::LOCK_NB))
++        campaign.define_singleton_method(:command) { |*_args, **| flunk('contending writer reached command') }
++        error = assert_raises(KbVerify::Error) { campaign.run('runtime-smoke') }
++        assert_equal('verification campaign is already running', error.message)
++        refute(File.exist?(campaign.file('receipts/runtime-smoke-attempt.json')))
++      end
++    end
+   end
+ 
+-  def test_each_failed_historical_drain_prevents_the_following_mutation_and_replay
+-    [1, 2].each { |position| predecessor_sequence(fail_drain: position) }
++  def test_installed_layout_is_reusable_and_not_a_smoke_prerequisite
++    with_campaign do |campaign|
++      calls = []
++      campaign.define_singleton_method(:installed_layout) { calls << :layout }
++      campaign.run('installed-layout')
++      before = File.binread(campaign.file('receipts/installed-layout.json'))
++      campaign.run('installed-layout')
++      assert_equal([:layout], calls)
++      assert_equal(before, File.binread(campaign.file('receipts/installed-layout.json')))
++    end
++    with_campaign do |campaign|
++      campaign.define_singleton_method(:runtime_smoke) { check(true, 'synthetic phase dispatch') }
++      campaign.run('runtime-smoke')
++      assert(campaign.read('receipts/runtime-smoke.json')['complete'])
++      refute(File.exist?(campaign.file('receipts/installed-layout.json')))
++    end
++    with_campaign do |campaign|
++      campaign.define_singleton_method(:command) { |*_args, **| flunk('missing smoke prerequisite reached command') }
++      assert_raises(Errno::ENOENT) { campaign.run('bilingual-capture') }
++      refute(File.exist?(campaign.file('receipts/bilingual-capture-attempt.json')))
++    end
+   end
+ 
+-  def predecessor_sequence(fail_drain: nil)
++  def test_installed_layout_does_not_construct_packages_or_initialize_runtime
+     with_campaign do |campaign|
+-      campaign.initialize_campaign
+-      old_runtime = '/nix/store/synthetic-7dc-runtime'
+-      old_source = campaign.source.merge('revision' => '7dc4d70830e535f4559bccfa668cf65cdce1de2d')
+-      campaign.write('predecessor.json', { 'runtime' => old_runtime, 'source' => old_source })
+       calls = []
+-      drains = []
+-      campaign.define_singleton_method(:capacity) { |_operation| }
+-      checkpoint = campaign.method(:checkpoint)
+-      campaign.define_singleton_method(:checkpoint) do |stage, detail = {}|
+-        calls << ['checkpoint', stage]
+-        checkpoint.call(stage, detail)
+-      end
+-      campaign.define_singleton_method(:command) do |*argv, **options|
++      campaign.define_singleton_method(:command) do |*argv, **|
+         calls << argv
+-        if options[:caller_timeout]
+-          drains << { argv: argv, options: options }
+-          raise KbVerify::Error, 'synthetic native service refusal; no replay' if drains.length == fail_drain
+-          ["LoadState=loaded\nActiveState=inactive\nSubState=dead\nMainPID=0\nResult=success\n", 0]
+-        elsif argv.include?('vpsadmin-console-router.service')
+-          ["LoadState=loaded\nActiveState=active\nSubState=running\nMainPID=41\nResult=success\n", 0]
+-        else
+-          ['', 0]
++        case argv.first
++        when 'git' then ['', 128]
++        when /vpsfree-kb-devcluster/ then ['{"found":false}', 0]
++        when /vpsfree-kb-capture/
++          unless argv.include?('--help')
++            target = argv.include?('--output-root') ? file('output') : file('work')
++            FileUtils.mkdir_p(File.join(target, 'tmp'))
++          end
++          ['', argv.include?('--help') ? 0 : 1]
++        else flunk("unexpected command #{argv}")
+         end
+       end
+-      base = { 'instance_id' => 'b-instance', 'run_id' => 'old-run', 'artifact_id' => 'old-artifact',
+-        'artifact_sha256' => 'old-digest', 'provenance' => { 'source' => old_source, 'machine_toplevels' => { 'services' => 'old-closure' } } }
+-      old_descriptors = [base, base.merge('run_id' => 'old-resumed')]
+-      current = base.merge('run_id' => 'updated-run', 'artifact_id' => 'final-artifact', 'artifact_sha256' => 'final-digest',
+-        'provenance' => { 'source' => campaign.source, 'machine_toplevels' => { 'services' => 'new-closure' } })
+-      final_descriptors = [current, current, current.merge('run_id' => 'final-resumed')]
+-      descriptors = []
+-      campaign.define_singleton_method(:descriptor) do |which, expected|
+-        descriptors << [which, expected]
+-        case which
+-        when 'a' then base.merge('instance_id' => 'a-instance')
+-        when 'old'
+-          value = old_descriptors.shift || raise('unexpected predecessor descriptor')
+-          @guest_observations ||= {}
+-          @guest_observations[['old', value['run_id']]] = { 'descriptor' => value,
+-            'machines' => { 'services' => { 'identity_sha256' => 'd' * 64, 'closure' => 'old-closure' } } }
+-          value
+-        when 'b' then final_descriptors.shift || raise('unexpected final descriptor')
++      campaign.run('installed-layout')
++      refute(calls.any? { |argv| argv.first == 'nix' })
++      refute(File.exist?(campaign.file('state')))
++      assert_equal(1, calls.count { |argv| argv.include?('status') })
++      assert_empty(Dir.glob(campaign.file('predecessor*')))
++    end
++  end
++
++  def descriptor(campaign, run = 'first-run')
++    { 'instance_id' => 'same-instance', 'run_id' => run, 'artifact_id' => 'same-artifact', 'artifact_sha256' => 'a' * 64,
++      'machines' => { 'services' => {}, 'node1' => {} },
++      'provenance' => { 'source' => campaign.source, 'guest_identity' => { 'schema' => 1, 'artifact_id' => 'same-artifact' },
++        'machine_toplevels' => { 'services' => '/nix/store/same-services', 'node1' => '/nix/store/same-node' } } }
++  end
++
++  def smoke_sequence(fail_at: nil, incomplete: false)
++    with_campaign do |campaign|
++      calls = []
++      first = descriptor(campaign)
++      resumed = descriptor(campaign, 'second-run')
++      descriptor_queue = [first, resumed]
++      identity = { 'credentials' => KbVerify::CREDENTIALS.to_h { |name| [name, "digest-#{name}"] },
++        'accounts_sha256' => 'accounts-digest', 'disks' => 'same-disks', 'artifacts' => 'same-artifact', 'images' => 'same-image' }
++      sentinel = { 'services' => 'root-digest', 'node1' => 'data-digest' }
++      campaign.define_singleton_method(:descriptor) { descriptor_queue.shift || raise('unexpected extra descriptor') }
++      campaign.define_singleton_method(:capacity) { |operation| calls << ['capacity', operation] }
++      campaign.define_singleton_method(:resources) { |value, **| calls << ['resources', value['run_id']] }
++      campaign.define_singleton_method(:read_smoke) { |path| calls << ['read-smoke', path] }
++      campaign.define_singleton_method(:identities) { identity }
++      campaign.define_singleton_method(:sentinels) { sentinel }
++      campaign.define_singleton_method(:command) do |*argv, **options|
++        calls << argv
++        action = argv[3] if argv.first.end_with?('/bin/vpsfree-kb-devcluster')
++        raise KbVerify::Error, "synthetic native #{action} failure" if action && action == fail_at
++        if action == 'start'
++          FileUtils.mkdir_p(file('state/clusters/same-slug'), mode: 0o700)
++          write('state/clusters/same-slug/processes-first-run.json', first.slice('instance_id', 'run_id', 'artifact_id', 'artifact_sha256').merge('schema' => 1, 'complete' => !incomplete))
+         end
++        [action == 'status' ? JSON.generate('found' => true, 'state' => 'stopped', 'ready' => false) : '', 0]
+       end
+-      # Transport-only observations are synthetic here. Exercise the actual
+-      # engine command selection and every existing continuity comparison.
+-      identities = { 'credentials' => KbVerify::CREDENTIALS.to_h { |name| [name, name] },
+-        'accounts_sha256' => 'accounts-digest', 'disks' => ['root-and-data-identities'] }
+-      sentinels = { 'services' => 'root-sentinel', 'node1' => 'data-sentinel' }
+-      campaign.define_singleton_method(:identities) { identities }
+-      campaign.define_singleton_method(:sentinels) { |_which| sentinels }
+-      campaign.define_singleton_method(:isolation) { |_first, _second| }
+-      campaign.define_singleton_method(:preparation) { |_value| }
+-      if fail_drain
+-        campaign.write('receipts/installed-layout.json', { 'complete' => true, 'inputs' => campaign.inputs })
+-        error = assert_raises(KbVerify::Error) { campaign.run('isolation-continuity-update') }
+-        assert_match(/native service refusal/, error.message)
+-        assert_equal(fail_drain, drains.length)
+-        operations = calls.select { |argv| argv[0].end_with?('/bin/vpsfree-kb-devcluster') && argv[2] == campaign.file('state-b') }.map { |argv| argv[3] }
+-        assert_equal(fail_drain == 1 ? %w[start ssh ssh ssh] : %w[start ssh ssh ssh stop resume ssh], operations)
+-        refute_includes(operations, 'update')
+-        refute(File.exist?(campaign.file('receipts/isolation-continuity-update.json')))
+-        assert_equal('failed', campaign.read('receipts/isolation-continuity-update-attempt.json')['stage'])
+-        previous = calls.dup
+-        assert_raises(KbVerify::Error) { campaign.run('isolation-continuity-update') }
+-        assert_equal(previous, calls)
++      if fail_at || incomplete
++        assert_raises(KbVerify::Error) { campaign.run('runtime-smoke') }
++        refute(File.exist?(campaign.file('receipts/runtime-smoke.json')))
++        refute(calls.any? { |argv| argv[3] == 'resume' })
++        before = calls.dup
++        assert_raises(KbVerify::Error) { campaign.run('runtime-smoke') }
++        assert_equal(before, calls)
++        assert_equal('failed', campaign.read('receipts/runtime-smoke-attempt.json')['stage'])
+         return
+       end
+-      campaign.isolation_continuity_update
+-      assert_equal(2, drains.length)
+-      drains.each do |drain|
+-        assert_equal(360, drain[:options][:caller_timeout])
+-        assert_equal(['ssh', 'same-slug', 'services', '--', 'sh', '-s', '--', 'd' * 64, 'old-closure'], drain[:argv][3..])
+-        script = drain[:options][:input]
+-        assert_includes(script, 'sha256sum /etc/vpsfree-kb-capture.json')
+-        assert_includes(script, 'readlink -f /run/current-system')
+-        assert_includes(script, 'timeout 360 systemctl stop vpsadmin-console-router.service')
+-        refute_match(/RabbitMQ|rabbitmq|kill|isolate/, script)
++      campaign.run('runtime-smoke')
++      commands = calls.select { |argv| argv.first.end_with?('/bin/vpsfree-kb-devcluster') }
++      assert_equal(%w[start ssh ssh stop status resume], commands.map { |argv| argv[3] })
++      assert(commands.all? { |argv| argv[0] == File.join(campaign.selection['runtime'], 'bin/vpsfree-kb-devcluster') && argv[2] == campaign.file('state') })
++      assert_equal(%w[start resume], calls.select { |argv| argv.first == 'capacity' }.map { |argv| argv[1] })
++      %w[start stop resume].each do |action|
++        assert_equal(['--timeout', '900'], commands.find { |argv| argv[3] == action }[5, 2])
+       end
+-      commands = calls.select { |argv| argv[0].end_with?('/bin/vpsfree-kb-devcluster') }
+-      b_commands = commands.select { |argv| argv[2] == campaign.file('state-b') }
+-      assert_equal(%w[start ssh ssh ssh stop resume ssh update ssh stop resume ssh], b_commands.map { |argv| argv[3] })
+-      assert_equal([old_runtime, old_runtime, old_runtime, old_runtime, campaign.selection['runtime'], old_runtime, old_runtime,
+-        campaign.selection['runtime'], campaign.selection['runtime'], campaign.selection['runtime'], campaign.selection['runtime'], campaign.selection['runtime']],
+-        b_commands.map { |argv| File.dirname(File.dirname(argv[0])) })
+-      b_commands.select { |argv| %w[stop update].include?(argv[3]) }.each { |argv| assert_equal(['--timeout', '900'], argv[5, 2]) }
+-      assert_equal([old_source, old_source], descriptors.select { |which, _| which == 'old' }.map(&:last))
+-      assert_equal(3, descriptors.count { |which, expected| which == 'b' && expected == campaign.source })
+-      assert_empty(old_descriptors); assert_empty(final_descriptors)
+-      assert_equal(identities, campaign.read('continuity-b.json')['identities'])
+-      assert_equal(sentinels, campaign.read('continuity-b.json')['sentinels'])
+-      assert_equal(current.merge('run_id' => 'final-resumed'), campaign.read('accepted-b.json'))
+-      assert_includes(campaign.assertions, 'all six credentials, private accounts digest and disk identities preserved')
+-      assert_includes(campaign.assertions, 'update preserves disks, six credentials, private accounts digest and sentinels')
+-      assert_includes(campaign.assertions, 'final-controller stop of predecessor runner, genuine predecessor resume, final-controller update')
+-      assert_equal(2, Dir.glob(campaign.file('receipts/router-drain-*.json')).length)
+-      assert_equal(2, Dir.glob(campaign.file('receipts/router-health-*.json')).length)
+-    end
+-  end
+-
+-  def test_router_drain_uses_completed_public_attestation_and_exact_clean_result
++      assert_equal(['--network', 'local', '--topology', 'single', '--config', campaign.file('config.json')], commands.first[7..])
++      assert(calls.any? { |argv| argv[1].is_a?(String) && argv[1].end_with?('/tools/verify-live-lease.cjs') && argv[2..] ==
++        [campaign.file('smoke-connection.json'), campaign.selection['metadata'], campaign.selection['runtime'], campaign.file('state'), campaign.file('config.json')] })
++      refute(commands.any? { |argv| %w[update reset].include?(argv[3]) })
++      refute(calls.any? { |argv| argv.include?('nix') || argv.join.include?('console-router') || argv.join.include?('state-b') })
++      assert_equal(first, campaign.read('smoke-connection.json'))
++      assert_equal(resumed, campaign.read('accepted-runtime.json'))
++      assert_equal({ 'identities' => identity, 'sentinels' => sentinel }, campaign.read('continuity.json'))
++      receipt = campaign.read('receipts/runtime-smoke.json')
++      assert_equal(KbVerify::KIND, receipt['kind'])
++      assert(receipt['complete'])
++      assert_includes(receipt['assertions'], 'cold resume does not rebuild closures')
++      assert_empty(descriptor_queue)
++      assert_raises(KbVerify::Error) { campaign.run('runtime-smoke') }
++    end
++  end
++
++  def test_final_source_smoke_start_lease_stop_resume_preserves_continuity_without_historical_mutations
++    smoke_sequence
++  end
++
++  def test_native_start_stop_and_incomplete_exit_end_phase_without_resume_or_replay
++    smoke_sequence(fail_at: 'start')
++    smoke_sequence(fail_at: 'stop')
++    smoke_sequence(incomplete: true)
++  end
++
++  def test_descriptor_rechecks_each_actual_guest_identity_closure_and_selected_source
+     with_campaign do |campaign|
+-      campaign.initialize_campaign
+-      metadata = campaign.source.merge('revision' => KbVerify::PREDECESSOR)
+-      identity = { 'schema' => 1, 'source' => metadata, 'artifact_id' => 'old-artifact' }
+-      raw = JSON.pretty_generate(identity) + "\n"
+-      value = { 'run_id' => 'old-run', 'artifact_id' => 'old-artifact', 'artifact_sha256' => 'd' * 64,
+-        'provenance' => { 'source' => metadata, 'guest_identity' => identity, 'machine_toplevels' => { 'services' => '/nix/store/old-system' } } }
++      value = descriptor(campaign)
+       calls = []
+-      result = "LoadState=loaded\nActiveState=inactive\nSubState=dead\nMainPID=0\nResult=success\n"
+-      campaign.define_singleton_method(:engine) do |which, action, *args, **options|
+-        calls << [which, action, args, options]
+-        case action
+-        when 'connection' then [JSON.generate(value), 0]
+-        when 'ssh'
+-          case args[2]
+-          when 'cat' then [raw, 0]
+-          when 'readlink' then ["/nix/store/old-system\n", 0]
+-          when 'sh' then [result, 0]
+-          else raise 'unexpected synthetic public command'
+-          end
+-        else raise 'no lifecycle is available in attestation fixture'
+-        end
+-      end
+-      assert_raises(KbVerify::Error) { campaign.historical_router_drain(value) }
+-      assert_empty(calls, 'SSH drain must not acquire authority from a descriptor alone')
+-      checked = campaign.descriptor('old', metadata)
+-      assert_equal(%w[connection ssh ssh], calls.map { |call| call[1] })
+-      campaign.historical_router_drain(checked)
+-      drain = calls.last
+-      assert_equal('old', drain[0])
+-      assert_equal(['services', '--', 'sh', '-s', '--', Digest::SHA256.hexdigest(raw), '/nix/store/old-system'], drain[2])
+-      assert_equal(360, drain[3][:caller_timeout])
+-      assert_equal(1, Dir.glob(campaign.file('receipts/router-drain-*.json')).length)
+-      receipt = campaign.read('receipts/router-drain-old-run.json')
+-      assert_equal(Digest::SHA256.hexdigest(raw), receipt.dig('guard', 'identity_sha256'))
+-      assert_equal(metadata, receipt['source'])
+-      assert_equal(Digest::SHA256.hexdigest(result), receipt['output_sha256'])
+-      refute(receipt.key?('transcript'))
+-      File.unlink(campaign.file('receipts/router-drain-old-run.json'))
+-      [result.sub('inactive', 'failed'), result.sub('dead', 'stop-sigterm'), result.sub('MainPID=0', 'MainPID=41'),
+-        result.sub('Result=success', 'Result=timeout'), result.sub('loaded', 'not-found'), result + "Result=success\n"].each do |invalid|
+-        result = invalid
+-        assert_raises(KbVerify::Error) { campaign.historical_router_drain(checked) }
+-        refute(File.exist?(campaign.file('receipts/router-drain-old-run.json')))
++      campaign.define_singleton_method(:engine) do |action, *args, **|
++        calls << [action, *args]
++        result = action == 'connection' ? JSON.generate(value) : args[2] == 'cat' ? JSON.generate(value.dig('provenance', 'guest_identity')) : value.dig('provenance', 'machine_toplevels', args.first) + "\n"
++        [result, 0]
+       end
++      assert_equal(value, campaign.descriptor)
++      assert_equal(%w[connection ssh ssh ssh ssh], calls.map(&:first))
++      assert_equal(%w[services node1], calls.select { |call| call[3] == 'cat' }.map { |call| call[1] })
++      value['provenance']['source'] = value['provenance']['source'].merge('revision' => 'b' * 40)
++      before = calls.length
++      assert_raises(KbVerify::Error) { campaign.descriptor }
++      assert_equal(before + 1, calls.length, 'wrong source must refuse before SSH')
+     end
+   end
+ 
+-  def test_public_command_observer_expiry_keeps_native_exit_and_unknown_remote_cancellation
++  def test_continuity_refuses_changed_run_artifact_closure_credential_account_disk_and_sentinel
+     with_campaign do |campaign|
+-      campaign.initialize_campaign
+-      marker = campaign.file('work/drain-command-ready')
+-      argv = [RbConfig.ruby, '-e', 'STDOUT.sync=true; STDERR.sync=true; STDOUT.puts("drain stdout"); STDERR.puts("drain stderr"); File.write(ARGV[0], Process.pid.to_s); STDIN.read; sleep 60', marker]
+-      clock = Process.method(:clock_gettime)
+-      expired = false
+-      owner = error = nil
+-      observed = lambda do |kind, *args|
+-        clock.call(kind, *args) + ((kind == Process::CLOCK_MONOTONIC && Thread.current == owner && expired) ? 361 : 0)
++      before = descriptor(campaign)
++      after = descriptor(campaign, 'second-run')
++      identity = { 'credentials' => 'same-six', 'accounts_sha256' => 'same-accounts', 'disks' => 'same-disks', 'images' => 'same-image' }
++      sentinel = { 'services' => 'same-root', 'node1' => 'same-data' }
++      campaign.define_singleton_method(:identities) { identity }
++      campaign.define_singleton_method(:sentinels) { sentinel }
++      campaign.continuity(before, after, identity.dup, sentinel.dup)
++      [after.merge('run_id' => before['run_id']), after.merge('instance_id' => 'different'), after.merge('artifact_id' => 'different'),
++        after.merge('provenance' => after['provenance'].merge('machine_toplevels' => {}))].each do |invalid|
++        assert_raises(KbVerify::Error) { campaign.continuity(before, invalid, identity.dup, sentinel.dup) }
+       end
+-      Process.stub(:clock_gettime, observed) do
+-        owner = Thread.new do
+-          campaign.commands.call(argv, cwd: campaign.file('work'), caller_timeout: 360, stage: 'synthetic/historical-drain')
+-        rescue KbVerify::Error => error
+-          error
+-        end
+-        Timeout.timeout(5) { Thread.pass until File.exist?(marker) }
+-        expired = true
+-        error = Timeout.timeout(15) { owner.value }
+-        assert_instance_of(KbVerify::Error, error)
+-        assert_match(/observer expired; remote cancellation unknown/, error.message)
++      %w[credentials accounts_sha256 disks images].each do |key|
++        assert_raises(KbVerify::Error) { campaign.continuity(before, after, identity.merge(key => 'different'), sentinel.dup) }
+       end
+-      path = Dir.glob(campaign.file('diagnostics/*/command.json')).fetch(0)
+-      record = JSON.parse(File.read(path))
+-      assert_includes(error.message, path)
+-      assert_equal(Integer(File.read(marker)), record['pid'])
+-      assert(record['observer_expired'])
+-      refute(record['accepted'])
+-      assert(record['complete'])
+-      assert_equal(Signal.list.fetch('TERM'), record['signal'])
+-      assert_equal('spawned public command only', record['cleanup_scope'])
+-      assert_equal('unknown', record['remote_cancellation'])
+-      assert_equal(360, record['caller_timeout_seconds'])
+-      assert_equal('synthetic/historical-drain', record['stage'])
+-      assert_equal("drain stdout\n", File.read(File.join(File.dirname(path), 'stdout')))
+-      assert_equal("drain stderr\n", File.read(File.join(File.dirname(path), 'stderr')))
+-      refute(record.key?('environment'))
+-    ensure
+-      owner&.raise(Interrupt) if owner&.alive?
+-      owner&.join
++      assert_raises(KbVerify::Error) { campaign.continuity(before, after, identity.dup, { 'services' => 'changed' }) }
+     end
+   end
+ 
+-  def test_native_guest_timeout_is_not_an_observer_expiry
++  def test_six_private_credentials_accounts_and_sparse_disk_identity_are_read_from_one_state
+     with_campaign do |campaign|
+       campaign.initialize_campaign
+-      argv = [RbConfig.ruby, '-e', 'STDERR.write("native guest timeout"); exit 124']
+-      error = assert_raises(KbVerify::Error) do
+-        campaign.commands.call(argv, cwd: campaign.file('work'), caller_timeout: 360, stage: 'synthetic/native-guest-timeout')
++      directory = campaign.file('state/clusters/same-slug')
++      FileUtils.mkdir_p(File.join(directory, 'credentials'), mode: 0o700)
++      FileUtils.mkdir_p(File.join(directory, 'disks'), mode: 0o700)
++      KbVerify::CREDENTIALS.each { |name| File.write(File.join(directory, 'credentials', name), name, perm: 0o600) }
++      %w[services-root.img node1-tank.img].each do |name|
++        File.open(File.join(directory, 'disks', name), 'w', 0o600) { |stream| stream.truncate(8 * KbVerify::GIB) }
+       end
+-      path = Dir.glob(campaign.file('diagnostics/*/command.json')).fetch(0)
+-      record = JSON.parse(File.read(path))
+-      assert_includes(error.message, path)
+-      assert_equal(124, record['exit_code'])
+-      assert_nil(record['signal'])
+-      refute(record['observer_expired'])
+-      refute(record['accepted'])
+-      assert_equal('native guest timeout', File.read(File.join(File.dirname(path), 'stderr')))
++      accounts = File.join(directory, 'accounts.json')
++      File.write(accounts, JSON.generate('users' => campaign.config.fetch('seed').fetch('users')), perm: 0o600)
++      campaign.write('state/clusters/same-slug/artifact-one.json', { 'artifact_id' => 'same-artifact' })
++      image = File.join(directory, 'image.img')
++      File.open(image, 'w', 0o600) { |stream| stream.truncate(8 * KbVerify::GIB) }
++      campaign.define_singleton_method(:image_paths) { [image, image] }
++      before = campaign.identities
++      assert_equal(Digest::SHA256.file(accounts).hexdigest, before['accounts_sha256'])
++      assert_equal(KbVerify::CREDENTIALS.sort, before['credentials'].keys.sort)
++      assert_equal(1, before['images'].length)
++      assert_equal(2, before['disks'].length)
++      File.write(accounts, JSON.generate('users' => []), perm: 0o600)
++      refute_equal(before['accounts_sha256'], campaign.identities['accounts_sha256'])
+     end
+   end
+ 
+-  def test_selected_tools_scrub_inherited_workspace_and_source_overrides
++  def test_read_smoke_uses_real_selected_connection_tls_accounts_and_member_browser_helpers
+     with_campaign do |campaign|
+-      name = 'VPSADMIN_DEVCLUSTER_VPSADMIN_SOURCE'
+-      previous = ENV[name]
+-      ENV[name] = '/wrong/source'
+-      environment = KbVerify::Commands.new(campaign.selection, campaign.root).environment
+-      refute(environment.key?(name))
+-      refute(environment.key?('DEV_SESSION_SLUG'))
+-      refute(environment.key?('RUBYOPT'))
+-      assert_equal(campaign.selection['path'], environment['PATH'])
+-      assert_equal(campaign.selection['browsers'], environment['PLAYWRIGHT_BROWSERS_PATH'])
+-      assert_equal(campaign.selection['gem_home'], environment['GEM_HOME'])
+-      assert_equal(environment['GEM_HOME'], environment['GEM_PATH'])
+-    ensure
+-      ENV[name] = previous
++      campaign.initialize_campaign
++      value = { 'member' => { 'id' => 2, 'login' => 'test-user1' }, 'api_tls_verified' => true, 'php_member_read' => true }
++      calls = []
++      campaign.define_singleton_method(:command) { |*argv, **| calls << argv; [JSON.generate(value), 0] }
++      campaign.read_smoke(campaign.file('connection.json'))
++      assert_equal(['node', '-e'], calls.first[0, 2])
++      assert_equal([campaign.file('connection.json'), campaign.selection['metadata'], campaign.source['source']], calls.first.last(3))
++      script = calls.first[2]
++      %w[readConnection openLease connection.verify inventoryIdentity launchBrowser login assertInventoryMember lease.assertLive].each { |name| assert_includes(script, name) }
++      assert_includes(script, "goto(page, '/?page=adminvps&action=list')")
++      assert_equal(value, campaign.read('receipts/read-smoke.json'))
++      value['member']['login'] = 'test-admin'
++      assert_raises(KbVerify::Error) { campaign.read_smoke(campaign.file('connection.json')) }
+     end
+   end
+ 
+-  def test_cli_missing_arguments_and_unknown_phase_refuse_without_execution
+-    assert_equal(1, KbVerify.run([]))
+-    with_campaign { |campaign| assert_raises(KbVerify::Error) { campaign.run('other') }; refute(File.exist?(campaign.root)) }
++  def resource_transport(campaign, services_bytes: 2 * KbVerify::GIB, tank_bytes: 6 * KbVerify::GIB)
++    campaign.define_singleton_method(:engine) do |action, machine, *args, **options|
++      raise 'resource observation must use public SSH' unless action == 'ssh' && args == ['--', 'sh', '-s']
++      raise 'missing real memory observation' unless options.fetch(:input).include?('/proc/meminfo')
++      memory = "available_memory_bytes=#{512 * 1024**2}\n"
++      pressure = "some avg10=0.00 avg60=1.23 avg300=0.01 total=12345\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=25\n"
++      [memory + pressure + (machine == 'services' ? "available_bytes=#{services_bytes}\navailable_inodes=1200\n" : "tank_available_bytes=#{tank_bytes}\n"), 0]
++    end
+   end
+ 
+-  def test_installed_layout_resolves_matching_predecessor_outputs_without_assuming_path_order
++  def test_private_resource_receipt_retains_native_some_and_full_pressure_and_allocations
+     with_campaign do |campaign|
+       campaign.initialize_campaign
+-      calls = []
+-      runtime = '/nix/store/synthetic-predecessor-runtime'
+-      metadata_path = '/nix/store/synthetic-predecessor-source.json'
+-      metadata = campaign.source.merge('revision' => '7dc4d70830e535f4559bccfa668cf65cdce1de2d')
+-      campaign.define_singleton_method(:capacity) { |operation| calls << ['capacity', operation] }
+-      campaign.define_singleton_method(:command) do |*argv, **|
+-        calls << argv
+-        case argv[0]
+-        when 'git' then ['', 128]
+-        when /vpsfree-kb-devcluster/ then ['{"found":false}', 0]
+-        when /vpsfree-kb-capture/
+-          unless argv.include?('--help')
+-            target = argv.include?('--output-root') ? file('output') : file('work')
+-            FileUtils.mkdir_p(File.join(target, 'tmp'))
+-          end
+-          ['', argv.include?('--help') ? 0 : 1]
+-        when 'nix' then ["#{metadata_path}\n#{runtime}\n", 0]
+-        else flunk("unexpected command #{argv}")
+-        end
+-      end
+-      original_file = File.method(:file?)
+-      original_read = File.method(:read)
+-      file = ->(name) { [metadata_path, "#{runtime}/bin/vpsfree-kb-devcluster"].include?(name) || original_file.call(name) }
+-      read = lambda do |name, *arguments|
+-        case name
+-        when metadata_path then JSON.generate(metadata)
+-        when "#{runtime}/bin/vpsfree-kb-devcluster" then metadata_path
+-        else original_read.call(name, *arguments)
+-        end
++      resource_transport(campaign)
++      campaign.resources(descriptor(campaign), capture: true)
++      receipt = campaign.read(Dir.glob(campaign.file('receipts/resources-*.json')).fetch(0).delete_prefix("#{campaign.root}/"))
++      assert_equal(KbVerify::KIND, receipt['kind'])
++      assert(receipt['capture_admitted'])
++      %w[services node1].each do |machine|
++        pressure = receipt.dig('observations', machine, 'pressure')
++        assert_equal("some avg10=0.00 avg60=1.23 avg300=0.01 total=12345\nfull avg10=0.00 avg60=0.00 avg300=0.00 total=25\n", pressure)
++        refute_includes(pressure, 'available_memory_bytes=')
+       end
+-      File.stub(:file?, file) do
+-        File.stub(:read, read) do
+-          campaign.installed_layout
+-        end
+-      end
+-      assert_equal({ 'runtime' => runtime, 'metadata_path' => metadata_path, 'source' => metadata }, campaign.read('predecessor.json'))
+-      assert_operator(calls.index(['capacity', 'predecessor-build']), :<, calls.index { |argv| argv.first == 'nix' })
+-      builds = calls.select { |argv| argv.first == 'nix' }
+-      assert_equal(1, builds.size)
+-      assert_equal(['github:vpsfreecz/vpsfree-kb-contracts/7dc4d70830e535f4559bccfa668cf65cdce1de2d#kb-runtime',
+-        'github:vpsfreecz/vpsfree-kb-contracts/7dc4d70830e535f4559bccfa668cf65cdce1de2d#runtime-source'], builds.first.last(2))
++      assert_equal(16 * KbVerify::GIB, receipt.dig('output_allocations', 'disk_bytes'))
++      assert_equal(0o600, File.stat(Dir.glob(campaign.file('receipts/resources-*.json')).fetch(0)).mode & 0o777)
+     end
+   end
+ 
+-  def test_missing_or_wrong_identity_capacity_receipt_refuses_before_root_or_build
+-    %w[missing source selection configurations root predecessor_ref].each do |wrong|
+-      with_campaign do |campaign|
++  def test_insufficient_live_bytes_inodes_guest_memory_and_quota_headroom_refuse_capture
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      resource_transport(campaign, services_bytes: KbVerify::GIB - 1)
++      assert_raises(KbVerify::Error) { campaign.resources(descriptor(campaign)) }
++      assert_empty(Dir.glob(campaign.file('receipts/resources-*.json')))
++      resource_transport(campaign, tank_bytes: 5 * KbVerify::GIB - 1)
++      assert_raises(KbVerify::Error) { campaign.resources(descriptor(campaign), capture: true) }
++      %w[minimum_free_inodes services_memory_bytes node_memory_bytes].each do |key|
++        resource_transport(campaign)
+         value = assessment(campaign)
+-        if wrong == 'missing'
+-          File.unlink(File.join(File.dirname(campaign.root), 'capacity.json'))
+-        else
+-          key = wrong == 'configurations' ? 'configuration_sha256' : wrong
+-          value['bindings'] = Marshal.load(Marshal.dump(campaign.inputs))
+-          value['bindings'][key] = 'mismatch'
+-          write_assessment(campaign, value)
+-        end
+-        campaign.define_singleton_method(:command) { |*_args, **| flunk('refusal must precede a command') }
+-        assert_raises(KbVerify::Error, Errno::ENOENT) { campaign.run('installed-layout') }
+-        refute(File.exist?(campaign.root))
++        value['capture_assessment'][key] = key == 'minimum_free_inodes' ? 1201 : 512 * 1024**2 + 1
++        write_assessment(campaign, value)
++        assert_raises(KbVerify::Error) { campaign.resources(descriptor(campaign), capture: true) }
+       end
++      assert_empty(Dir.glob(campaign.file('receipts/resources-*.json')))
+     end
+   end
+ 
+-  def test_actual_filesystem_binding_and_fresh_space_cannot_be_waived_by_old_receipt
++  def test_capture_uses_same_resumed_instance_both_languages_selectors_cwd_strict_validation_and_export
+     with_campaign do |campaign|
+       campaign.initialize_campaign
+-      fake_measurements(campaign)
+-      value = assessment(campaign)
+-      value['roles']['store']['device'] = 20
+-      write_assessment(campaign, value)
+-      assert_raises(KbVerify::Error) { campaign.capacity('predecessor-build') }
+-      write_assessment(campaign, assessment(campaign))
+-      fake_measurements(campaign, available: 100 * KbVerify::GIB)
+-      assert_raises(KbVerify::Error) { campaign.capacity('predecessor-build') }
+-      assert_empty(Dir.glob(campaign.file('receipts/capacity-*.json')))
++      current = descriptor(campaign, 'resumed')
++      identity, sentinel = { 'same' => 'identity' }, { 'services' => 'same', 'node1' => 'same' }
++      campaign.write('accepted-runtime.json', current)
++      campaign.write('continuity.json', { 'identities' => identity, 'sentinels' => sentinel })
++      campaign.define_singleton_method(:descriptor) { current }
++      campaign.define_singleton_method(:identities) { identity }
++      campaign.define_singleton_method(:sentinels) { sentinel }
++      calls = []
++      campaign.define_singleton_method(:capacity) { |operation| calls << ['capacity', operation] }
++      campaign.define_singleton_method(:resources) { |value, **opts| calls << ['resources', value['run_id'], opts] }
++      campaign.define_singleton_method(:command) do |*argv, **options|
++        calls << [argv, options]
++        if argv[3] == 'connection'
++          [JSON.generate(current), 0]
++        else
++          FileUtils.mkdir_p(file('output/tmp'))
++          rows = %w[cs en].map { |language| { 'language' => language, 'id' => 'networking/ip-address-list', 'provenance' => { 'source' => source } } }
++          File.write(file('output/tmp/capture-results.json'), JSON.generate(rows))
++          ['', 0]
++        end
++      end
++      export = ->(output, destination) { calls << ['export', output, destination]; { 'sha256' => 'synthetic-export' } }
++      campaign.instance_variable_set(:@phase, 'bilingual-capture')
++      KbCaptureArtifacts.stub(:export, export) { campaign.bilingual_capture }
++      captured = calls.select { |call| call[0].is_a?(Array) && call[0][0].end_with?('/bin/vpsfree-kb-capture') }
++      assert_equal(3, captured.size)
++      assert_includes(captured[0][0], '--cluster')
++      assert_includes(captured[0][0], 'cs')
++      assert_includes(captured[1][0], '--connection')
++      assert_includes(captured[1][0], 'en')
++      refute_includes(captured[2][0], '--output-root')
++      assert_equal(campaign.file('output'), captured[2][1][:cwd])
++      validations = calls.select { |call| call[0].is_a?(Array) && call[0][0].end_with?('/bin/vpsfree-kb-validate') }
++      assert_equal(2, validations.size)
++      assert_includes(validations[0][0], '--update')
++      refute_includes(validations[1][0], '--update')
++      refute(validations.any? { |call| call[0].include?('--allow-missing') })
++      assert_operator(calls.index(['capacity', 'capture']), :<, calls.index(captured.first))
++      assert_equal(['export', campaign.file('output'), campaign.file('export')], calls.last)
++      assert_equal({ 'sha256' => 'synthetic-export' }, campaign.read('receipts/export.json'))
+     end
+   end
+ 
+-  def test_shared_filesystem_and_duplicate_missing_path_are_charged_once_with_unknown_scratch
++  def capacity_receipt(campaign)
++    campaign.read(Dir.glob(campaign.file('receipts/capacity-*.json')).max.delete_prefix("#{campaign.root}/"))
++  end
++
++  def test_shared_filesystem_closure_dedup_one_image_and_separate_intrinsic_envelope
+     with_campaign do |campaign|
+       campaign.initialize_campaign
+       fake_measurements(campaign)
+       value = assessment(campaign)
+       missing = { 'path' => '/nix/store/synthetic-kb-missing-closure', 'kind' => 'closure', 'nar_size' => 2 * KbVerify::GIB, 'download_size' => nil }
+-      image = { 'path' => '/nix/store/synthetic-kb-missing-image', 'kind' => 'service-image', 'nar_size' => 12 * KbVerify::GIB, 'download_size' => KbVerify::GIB }
++      image = { 'path' => '/nix/store/synthetic-kb-missing-image', 'kind' => 'service-image', 'nar_size' => 8 * KbVerify::GIB }
+       value['missing_paths'] = [missing, missing.dup, image]
+       write_assessment(campaign, value)
+-      campaign.capacity('predecessor-build')
+-      receipt = campaign.read(Dir.glob(campaign.file('receipts/capacity-*.json')).fetch(0).delete_prefix("#{campaign.root}/"))
++      campaign.capacity('start')
++      receipt = capacity_receipt(campaign)
+       assert_equal(1, receipt['filesystems'].size)
+-      assert_equal(94 * KbVerify::GIB, receipt['filesystems'][0]['remaining_growth_bytes'])
+-      assert_equal('unknown', receipt['scratch_bound'])
++      assert_equal(26 * KbVerify::GIB, receipt['filesystems'][0]['remaining_growth_bytes'])
++      assert_equal(24 * KbVerify::GIB, receipt['intrinsic_output_envelope_bytes'])
++      assert_equal(16 * KbVerify::GIB, receipt['filesystems'][0]['reserve_bytes'])
++      assert_equal(3 * KbVerify::GIB, receipt['filesystems'][0]['retained_growth_bytes'])
++      assert_equal(KbVerify::GIB, receipt['filesystems'][0]['construction_overlap_bytes'])
+       assert_equal(2, receipt['known_missing_paths'].size)
++      assert_equal('unknown', receipt['scratch_bound'])
+       assert_equal(Digest::SHA256.file(File.join(File.dirname(campaign.root), 'capacity.json')).hexdigest, receipt['receipt_sha256'])
+-      assert_includes(campaign.commands.environment['NIX_CONFIG'], 'max-jobs = 1')
+-      assert_equal(108 * KbVerify::GIB, receipt['owned_output_worst_envelope'])
++      value['missing_paths'] << image.merge('path' => '/nix/store/second-image')
++      write_assessment(campaign, value)
++      assert_raises(KbVerify::Error) { campaign.capacity('start') }
+     end
+   end
+ 
+-  def test_sparse_apparent_disk_size_does_not_erase_remaining_growth
++  def test_actual_filesystem_binding_fresh_space_retained_growth_and_unknown_scratch_cannot_be_waived
+     with_campaign do |campaign|
+       campaign.initialize_campaign
+       fake_measurements(campaign)
+-      directory = campaign.file('state-b/clusters/same-slug/disks')
+-      FileUtils.mkdir_p(directory)
+-      disk = File.join(directory, 'node1-tank.img')
+-      File.open(disk, 'w', 0o600) { |stream| stream.truncate(16 * KbVerify::GIB) }
+-      stat = File.stat(disk)
+-      remaining = campaign.remaining_growth('resume-b-final')
+-      assert_equal(16 * KbVerify::GIB, stat.size)
+-      assert_equal(28 * KbVerify::GIB - stat.blocks * 512, remaining['disk_bytes'])
+-      assert_operator(remaining['disk_bytes'], :>, 12 * KbVerify::GIB)
++      value = assessment(campaign)
++      value['roles']['store']['device'] = 20
++      write_assessment(campaign, value)
++      assert_raises(KbVerify::Error) { campaign.capacity('start') }
++      write_assessment(campaign, assessment(campaign))
++      # 24 GiB intrinsic + 16 reserve + 3 retained + 4 headroom + 1 overlap.
++      fake_measurements(campaign, available: 48 * KbVerify::GIB - 1)
++      assert_raises(KbVerify::Error) { campaign.capacity('start') }
++      fake_measurements(campaign, available: 48 * KbVerify::GIB)
++      campaign.capacity('start')
++      value = assessment(campaign)
++      value['build_plan']['scratch_bound'] = 8 * KbVerify::GIB
++      write_assessment(campaign, value)
++      assert_raises(KbVerify::Error) { campaign.capacity_assessment }
+     end
+   end
+ 
+-  def test_capacity_precedes_predecessor_construction_and_every_build_or_launch_command
++  def test_positive_ram_and_shm_margins_use_sequential_phase_peak_not_sum
++    with_campaign do |campaign|
++      value = assessment(campaign)
++      requirements = campaign.memory_requirements(value, 'start')
++      assert_equal(4 * KbVerify::GIB, requirements['guest_bytes'])
++      assert_equal(2 * KbVerify::GIB, requirements['builder_bytes'])
++      assert_equal(6 * KbVerify::GIB, requirements['ram_bytes'])
++      assert_equal(5 * KbVerify::GIB, requirements['shm_bytes'])
++      value['resource_overheads']['construction']['ram_bytes'] = 5 * KbVerify::GIB
++      assert_equal(7 * KbVerify::GIB, campaign.memory_requirements(value, 'start')['ram_bytes'])
++      assert_equal(6 * KbVerify::GIB, campaign.memory_requirements(value, 'resume')['ram_bytes'])
++      %w[construction runtime_browser].product(%w[ram_bytes shm_bytes]).each do |phase, resource|
++        invalid = assessment(campaign)
++        invalid['resource_overheads'][phase][resource] = 0
++        assert_raises(KbVerify::Error) { campaign.memory_requirements(invalid, 'start') }
++      end
++    end
++  end
++
++  def test_fresh_ram_and_shm_are_checked_before_each_start_and_resume
+     with_campaign do |campaign|
+       campaign.initialize_campaign
+-      campaign.define_singleton_method(:capacity) { |operation| raise KbVerify::Error, "capacity refused #{operation}" }
+-      commands = []
+-      campaign.define_singleton_method(:command) do |*argv, **|
+-        commands << argv
+-        case argv[0]
+-        when 'git' then ['', 128]
+-        when /vpsfree-kb-devcluster/ then ['{"found":false}', 0]
+-        when /vpsfree-kb-capture/
+-          unless argv.include?('--help')
+-            target = argv.include?('--output-root') ? file('output') : file('work')
+-            FileUtils.mkdir_p(File.join(target, 'tmp'))
+-          end
+-          ['', argv.include?('--help') ? 0 : 1]
+-        else flunk("unexpected command #{argv}")
++      fake_measurements(campaign)
++      [%w[start ram_available], %w[resume shm_available]].each do |action, resource|
++        campaign.define_singleton_method(:host_capacity) do
++          { 'ram_available' => 6 * KbVerify::GIB, 'shm_available' => 5 * KbVerify::GIB }.merge(resource => (resource == 'ram_available' ? 6 : 5) * KbVerify::GIB - 1)
+         end
++        calls = []
++        campaign.define_singleton_method(:command) { |*argv, **| calls << argv; ['', 0] }
++        assert_raises(KbVerify::Error) { campaign.engine(action) }
++        assert_empty(calls)
+       end
+-      assert_raises(KbVerify::Error) { campaign.installed_layout }
+-      refute(commands.any? { |argv| argv.first == 'nix' })
+-      commands.clear
+-      [%w[a start], %w[old start], %w[old resume], %w[b update], %w[b resume]].each do |which, action|
+-        assert_raises(KbVerify::Error) { campaign.engine(which, action) }
+-      end
+-      assert_empty(commands)
+     end
+   end
+ 
+-  def test_assessment_rejects_invented_scratch_bound_and_rechecks_ram_and_shm
++  def test_sparse_future_growth_physical_inode_dedup_and_resume_do_not_add_an_image
+     with_campaign do |campaign|
+       campaign.initialize_campaign
+-      value = assessment(campaign)
+-      value['build_plan']['scratch_bound'] = 8 * KbVerify::GIB
+-      write_assessment(campaign, value)
+-      assert_raises(KbVerify::Error) { campaign.capacity_assessment }
+-      write_assessment(campaign, assessment(campaign))
+-      fake_measurements(campaign)
+-      campaign.define_singleton_method(:host_capacity) { { 'ram_available' => 23 * KbVerify::GIB, 'shm_available' => 24 * KbVerify::GIB } }
+-      assert_raises(KbVerify::Error) { campaign.capacity('start-a') }
+-      campaign.define_singleton_method(:host_capacity) { { 'ram_available' => 30 * KbVerify::GIB, 'shm_available' => 17 * KbVerify::GIB } }
+-      assert_raises(KbVerify::Error) { campaign.capacity('start-a') }
++      directory = campaign.file('state/clusters/same-slug/disks')
++      FileUtils.mkdir_p(directory, mode: 0o700)
++      disk = File.join(directory, 'node1-tank.img')
++      File.open(disk, 'w', 0o600) { |stream| stream.truncate(8 * KbVerify::GIB); stream.seek(0); stream.write('sentinel') }
++      original = File.stat(disk)
++      before = campaign.remaining_growth
++      assert_equal(8 * KbVerify::GIB, original.size)
++      assert_equal(16 * KbVerify::GIB - original.blocks * 512, before['disk_bytes'])
++      assert_operator(before['disk_bytes'], :>, 8 * KbVerify::GIB)
++      File.link(disk, File.join(directory, 'services-root.img'))
++      aliased = campaign.remaining_growth
++      assert_equal(1, aliased['retained_disks'].size)
++      assert_equal(before['disk_bytes'], aliased['disk_bytes'], 'same allocated inode must be deducted once')
++      image = '/nix/store/synthetic-one-service-image'
++      campaign.define_singleton_method(:image_paths) { [image, image] }
++      allocation = campaign.method(:allocation)
++      campaign.define_singleton_method(:allocation) do |path|
++        path == image ? { 'path' => path, 'device' => 20, 'inode' => 41, 'allocated_bytes' => 8 * KbVerify::GIB, 'apparent_bytes' => 8 * KbVerify::GIB } : allocation.call(path)
++      end
++      after = campaign.remaining_growth
++      assert_equal(0, after['image_bytes'])
++      assert_equal(1, after['realized_images'].size)
++      assert_equal(aliased['disk_bytes'], after['disk_bytes'])
++    end
++  end
++
++  def test_public_nix_projection_has_two_2048_runtime_guests_and_actual_2048_image_builder_with_unchanged_kernels
++    Dir.mktmpdir do |directory|
++      reduced = configuration
++      normal = Marshal.load(Marshal.dump(reduced))
++      normal['services']['memoryMiB'] = 4096
++      normal['nodes']['node1']['memoryMiB'] = 4096
++      source = File.expand_path('..', __dir__)
++      reference = "git+file://#{source}"
++      environment = ENV.keys.grep(/\AVPSADMIN_(?:DEVCLUSTER|KB)_/).to_h { |name| [name, nil] }
++      environment.merge!('VPSADMINOS_CONFIG' => nil, 'VPSADMIN_DEVCLUSTER_NETWORK' => 'local', 'VPSADMIN_DEVCLUSTER_TOPOLOGY' => 'single',
++        'VPSADMIN_DEVCLUSTER_TELEGRAM_ENABLE' => '0')
++      expression = <<~NIX
++        let
++          plan = (builtins.getFlake #{JSON.generate(reference)}).runtimePlan;
++          imageContext = builtins.getContext plan.machines.services.diskImage;
++        in {
++          machines = builtins.mapAttrs (_: machine: {
++            inherit (machine) memory kernel cpus;
++            disks = machine.disks;
++          }) plan.machines;
++          imageDerivations = builtins.filter (name: builtins.match ".*[.]drv" name != null) (builtins.attrNames imageContext);
++        }
++      NIX
++      project = lambda do |name, config|
++        input = File.join(directory, "#{name}.json")
++        File.write(input, JSON.generate(config), perm: 0o600)
++        output, error, status = Open3.capture3(environment.merge('VPSADMIN_DEVCLUSTER_CONFIG_FILE' => input),
++          'nix', 'eval', '--impure', '--json', '--expr', expression, chdir: source)
++        assert(status.success?, "public runtimePlan projection refused: #{error}")
++        JSON.parse(output)
++      end
++      value = project.call('reduced', reduced)
++      baseline = project.call('baseline', normal)
++      assert_equal(%w[node1 services], value['machines'].keys.sort)
++      assert_equal([2048, 2048], value['machines'].values.map { |machine| machine['memory'] })
++      assert_equal([4, 4], value['machines'].values.map { |machine| machine['cpus'] })
++      assert_equal(baseline['machines'].transform_values { |machine| machine['kernel'] }, value['machines'].transform_values { |machine| machine['kernel'] })
++      value['machines'].each_value { |machine| assert_match(%r{\A/nix/store/[a-z0-9]{32}-.+/bzImage\z}, machine['kernel']) }
++      assert_equal('8G', value.dig('machines', 'node1', 'disks').first.fetch('size'))
++      assert_equal(1, value['imageDerivations'].size)
++      output, error, status = Open3.capture3('nix', 'derivation', 'show', value['imageDerivations'].first)
++      assert(status.success?, "native image derivation inspection refused: #{error}")
++      native = JSON.parse(output)
++      derivations = native.fetch('derivations', native)
++      assert_equal('2048', derivations.fetch(value['imageDerivations'].first).fetch('env').fetch('memSize'))
++    end
++  end
++
++  def test_selected_tools_scrub_inherited_workspace_and_source_overrides
++    with_campaign do |campaign|
++      name = 'VPSADMIN_DEVCLUSTER_VPSADMIN_SOURCE'
++      previous = ENV[name]
++      ENV[name] = '/wrong/source'
++      environment = KbVerify::Commands.new(campaign.selection, campaign.root).environment
++      refute(environment.key?(name))
++      refute(environment.key?('DEV_SESSION_SLUG'))
++      refute(environment.key?('RUBYOPT'))
++      assert_equal(campaign.selection['path'], environment['PATH'])
++      assert_equal(campaign.selection['browsers'], environment['PLAYWRIGHT_BROWSERS_PATH'])
++      assert_equal(campaign.selection['gem_home'], environment['GEM_HOME'])
++      assert_equal(environment['GEM_HOME'], environment['GEM_PATH'])
++      assert_includes(environment['NIX_CONFIG'], "max-jobs = 1\n")
++      assert_includes(environment['NIX_CONFIG'], "cores = 1\n")
++    ensure
++      ENV[name] = previous
+     end
+   end
+ 
+@@ -604,7 +746,7 @@ class RuntimeVerifyTest < Minitest::Test
+     with_campaign do |campaign|
+       argv = [RbConfig.ruby, '-e', 'STDOUT.write("native output"); STDERR.write("native error"); exit 23']
+       campaign.define_singleton_method(:installed_layout) do
+-        checkpoint('predecessor-construction')
++        checkpoint('synthetic-construction')
+         command(*argv)
+       end
+       failure = nil
+@@ -623,7 +765,7 @@ class RuntimeVerifyTest < Minitest::Test
+       assert_nil(record['signal'])
+       assert(record['complete'])
+       refute(record['accepted'])
+-      assert_equal('installed-layout/predecessor-construction', record['stage'])
++      assert_equal('installed-layout/synthetic-construction', record['stage'])
+       assert_equal('native output', File.read(File.join(File.dirname(path), 'stdout')))
+       assert_equal('native error', File.read(File.join(File.dirname(path), 'stderr')))
+       Dir.glob(File.join(File.dirname(path), '*')).each { |name| assert_equal(0o600, File.stat(name).mode & 0o777) }
+@@ -637,8 +779,8 @@ class RuntimeVerifyTest < Minitest::Test
+       before = File.binread(campaign.file('receipts/installed-layout-attempt.json'))
+       replay = assert_raises(KbVerify::Error) { campaign.run('installed-layout') }
+       assert_equal('incomplete phase requires diagnosis; no automatic campaign replay', replay.message)
+-      assert_raises(Errno::ENOENT) { campaign.run('isolation-continuity-update') }
+-      refute(File.exist?(campaign.file('receipts/isolation-continuity-update-attempt.json')))
++      assert_raises(Errno::ENOENT) { campaign.run('bilingual-capture') }
++      refute(File.exist?(campaign.file('receipts/bilingual-capture-attempt.json')))
+       assert_equal(before, File.binread(campaign.file('receipts/installed-layout-attempt.json')))
+       assert_equal([path], Dir.glob(campaign.file('diagnostics/*/command.json')))
+       refute(File.exist?(campaign.file('state-a')))

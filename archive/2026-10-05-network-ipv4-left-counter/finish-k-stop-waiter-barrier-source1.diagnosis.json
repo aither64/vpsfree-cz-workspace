@@ -1,0 +1,60 @@
+{
+  "baseline_head": "09229a735be3887e8078e4c00216f8b63613dcf5",
+  "native_evidence": [
+    {
+      "run": 37990835413,
+      "head": "09229a735be3887e8078e4c00216f8b63613dcf5",
+      "conclusion": "failure",
+      "metadata_path": "finish-stop-ack-hosted1/k/final.json",
+      "metadata_sha256": "b96763606a87208dee8d01ddc950679a361de9640d1e5673d2b4ddce1fc52a75",
+      "log_path": "finish-stop-ack-hosted1/k/full.log",
+      "log_sha256": "ffe7f8ab140e976915e5b3695d33b5196540ac63d49a3287045aeaf38cc502bb"
+    },
+    {
+      "run": 37990835821,
+      "head": "09229a735be3887e8078e4c00216f8b63613dcf5",
+      "conclusion": "success",
+      "metadata_path": "finish-stop-ack-hosted1/k-runtime/final.json",
+      "metadata_sha256": "3536487f1c597d35877a1713eaf4be9a0c6b27915c6486cf86bc96bcb7396c36",
+      "log_path": "finish-stop-ack-hosted1/k-runtime/full.log",
+      "log_sha256": "90e3a53d56fc78e18cd94caeaefa56a4122fdcde1e127e54db761074eea7509a"
+    }
+  ],
+  "brief_references": [
+    {
+      "path": "finish-k-stop-waiter-barrier-brief1.md",
+      "sha256": "1e61891d9c1a9cc4583db35f33d2839dd83558e5560c9661b6c2e9a541a50801"
+    },
+    {
+      "path": "finish-k-stop-waiter-barrier-diagnosis1.json",
+      "sha256": "b1cb93edd1b3d343213233b9bf3db765c7f63d0f31716f62d0974d834ae1497e"
+    }
+  ],
+  "failed_native": {
+    "seed": 47124,
+    "summary": "19 runs, 652 assertions, 0 failures, 1 error, 0 skips",
+    "case": "RunnerSessionTest#test_signal_withdraws_ready_marker_and_repeated_control_only_waits_for_the_same_shutdown",
+    "location": "tools/test-machine.rb:267",
+    "error": "Timeout::Error at fixture operation-lock polling barrier",
+    "waiter_outcome_retained": false
+  },
+  "successful_same_head_native": {
+    "seed": 30482,
+    "summary": "19 runs, 665 assertions, 0 failures, 0 errors, 0 skips"
+  },
+  "source_inference": "The operation-lock polling probe can acquire the same nonblocking operation lock required by the real public stop waiter, which can then return Busy. The failed native log does not prove that scheduling or waiter outcome.",
+  "corrected_boundary": "The per-instance private control wrapper invokes its captured existing bound method unchanged. Only successful authenticated control return queues acknowledgement; the exact returned handoff is passed back to stop_locked. A tagged waiter error queues the original exception, which the barrier raises with its existing backtrace. The wrapper is removed in ensure, restoring inherited private control.",
+  "preserved_limits": [
+    "public stop timeout 5 and every existing five-second guard",
+    "held late child released only after authenticated acknowledgement",
+    "all preexisting method bodies outside the replaced waiter/probe block",
+    "append-only child identities and once-only shutdown",
+    "existing primary/secondary cleanup and private native evidence handling",
+    "production locks, trust, handoff, source/schema and lifecycle behavior"
+  ],
+  "verification_status": "source-only; no local tests, syntax/lint/formatter checks, builds, probes, lifecycle or Git/index/ref mutations",
+  "residual_unknowns": [
+    "The prior failed scheduling/Busy outcome is inferred rather than retained native proof.",
+    "The corrected source has not executed; hosted verification and direct step9 disposition remain root-owned."
+  ]
+}

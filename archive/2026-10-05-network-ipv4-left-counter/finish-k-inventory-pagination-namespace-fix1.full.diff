@@ -1,0 +1,206 @@
+diff --git a/fixtures/prepare.cjs b/fixtures/prepare.cjs
+index f06349d688c2196d596f7fb22e8136cea57f2429..d61efcb5be17322c2f479c8f3d496af034f7240b 100644
+--- a/fixtures/prepare.cjs
++++ b/fixtures/prepare.cjs
+@@ -570,8 +570,8 @@ async function ensureIpInventory(api, { userId, vpsId }) {
+   const node = (await api('GET', `nodes/${resourceId(vps.node)}`)).node;
+   const locationId = resourceId(node.location);
+   const location = (await api('GET', `locations/${locationId}`)).location;
+-  // HaveAPI 0.29.8 GET filters use the resource namespace; pagination uses _meta.
+-  const networks = (await api('GET', 'networks?_meta%5Blimit%5D=1000')).networks;
++  // HaveAPI 0.29.8 GET filters and pagination use the singular resource namespace.
++  const networks = (await api('GET', 'networks?network%5Blimit%5D=1000')).networks;
+   if (networks.length === 1000) throw new Error('Inventory network selection is truncated');
+   for (const address of ['198.51.100.0', '2001:db8:106::']) {
+     const primary = networks.filter((network) => network.address === address);
+@@ -585,7 +585,7 @@ async function ensureIpInventory(api, { userId, vpsId }) {
+     throw new Error('Unexpected dedicated inventory network');
+   }
+   if (!pool) pool = (await api('POST', 'networks', { network: { ...INVENTORY_POOL, enabled: true } })).network;
+-  let locations = (await api('GET', `location_networks?location_network%5Bnetwork%5D=${pool.id}&_meta%5Blimit%5D=1000`)).location_networks;
++  let locations = (await api('GET', `location_networks?location_network%5Bnetwork%5D=${pool.id}&location_network%5Blimit%5D=1000`)).location_networks;
+   if (locations.length > 1 || (locations.length === 1 && resourceId(locations[0].location) !== locationId)) {
+     throw new Error('Unexpected dedicated inventory location');
+   }
+@@ -598,7 +598,7 @@ async function ensureIpInventory(api, { userId, vpsId }) {
+   if (locations[0].primary !== false || locations[0].autopick !== false || locations[0].userpick !== false) {
+     throw new Error('Dedicated inventory location is unexpectedly pickable');
+   }
+-  const addresses = (await api('GET', `ip_addresses?ip_address%5Bnetwork%5D=${pool.id}&_meta%5Blimit%5D=1000`)).ip_addresses;
++  const addresses = (await api('GET', `ip_addresses?ip_address%5Bnetwork%5D=${pool.id}&ip_address%5Blimit%5D=1000`)).ip_addresses;
+   if (addresses.length > 1) throw new Error('Dedicated inventory pool has unexpected addresses');
+   let ip = addresses[0];
+   if (!ip) {
+@@ -612,7 +612,7 @@ async function ensureIpInventory(api, { userId, vpsId }) {
+       || resourceId(ip.charged_environment) !== resourceId(location.environment)) {
+     throw new Error('Unexpected dedicated inventory address ownership, charge or assignment');
+   }
+-  const assigned = (await api('GET', `ip_addresses?ip_address%5Bvps%5D=${vpsId}&ip_address%5Bversion%5D=4&_meta%5Blimit%5D=1000`)).ip_addresses;
++  const assigned = (await api('GET', `ip_addresses?ip_address%5Bvps%5D=${vpsId}&ip_address%5Bversion%5D=4&ip_address%5Blimit%5D=1000`)).ip_addresses;
+   if (!assigned.some((entry) => entry.addr.startsWith('198.51.100.') && resourceId(entry.user) === userId)) {
+     throw new Error('Inventory VPS has no real enabled assigned IPv4 address');
+   }
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index 58f977fdbc1c6e8f276fce464871fbdf06cb3ab0..8d9815e489e72e91d30980df9646eff1c62ed1a1 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -290,22 +290,22 @@ function fixture({ disabled = false, missing = false, assigned = false, owner =
+     const url = new URL(resource, 'https://api.example.test/');
+     const list = url.pathname.slice(1);
+     const params = url.searchParams;
+-    const paginate = (rows) => params.has('_meta[limit]') ? rows.slice(0, Number(params.get('_meta[limit]'))) : rows;
++    const paginate = (rows, namespace) => params.has(`${namespace}[limit]`) ? rows.slice(0, Number(params.get(`${namespace}[limit]`))) : rows;
+     if (resource === 'vpses/10') return { vps: { ...INVENTORY_RESOURCES, id: 10, hostname: 'ip-inventory', user: { id: 2 }, node: { id: 101 } } };
+     if (resource === 'nodes/101') return { node: { location: { id: 1 } } };
+     if (resource === 'locations/1') return { location: { environment: { id: 1 } } };
+-    if (method === 'GET' && list === 'networks') return { networks: paginate([...(networkMissing ? [] : [pool]), ...unrelated.networks]) };
++    if (method === 'GET' && list === 'networks') return { networks: paginate([...(networkMissing ? [] : [pool]), ...unrelated.networks], 'network') };
+     if (method === 'GET' && list === 'location_networks') {
+       const rows = [...(dedicatedLocation ? [dedicatedLocation] : []), ...unrelated.locations];
+       return { location_networks: paginate(rows.filter((row) => !params.has('location_network[network]')
+-        || String(row.network.id) === params.get('location_network[network]'))) };
++        || String(row.network.id) === params.get('location_network[network]')), 'location_network') };
+     }
+     if (method === 'GET' && list === 'ip_addresses') {
+       const rows = [...(ip ? [ip] : []), ...unrelated.addresses];
+       return { ip_addresses: paginate(rows.filter((row) => (!params.has('ip_address[network]')
+         || String(row.network.id) === params.get('ip_address[network]'))
+         && (!params.has('ip_address[vps]') || String(row.vps?.id) === params.get('ip_address[vps]'))
+-        && (!params.has('ip_address[version]') || String(row.version) === params.get('ip_address[version]')))) };
++        && (!params.has('ip_address[version]') || String(row.version) === params.get('ip_address[version]'))), 'ip_address') };
+     }
+     if (method === 'POST' && resource === 'networks') { networkMissing = false; return { network: pool }; }
+     if (method === 'POST' && resource === 'location_networks') {
+@@ -349,10 +349,10 @@ test('a fresh dedicated public pool and location are provisioned before the owne
+   assert.deepEqual(wireCalls.map((call) => [call.method, call.wirePath]), [
+     ['GET', '/v7.0/users/current'], ['GET', '/v7.0/users/current'],
+     ['GET', '/v7.0/vpses/10'], ['GET', '/v7.0/nodes/101'], ['GET', '/v7.0/locations/1'],
+-    ['GET', '/v7.0/networks?_meta%5Blimit%5D=1000'], ['POST', '/v7.0/networks'],
+-    ['GET', '/v7.0/location_networks?location_network%5Bnetwork%5D=5&_meta%5Blimit%5D=1000'], ['POST', '/v7.0/location_networks'],
+-    ['GET', '/v7.0/ip_addresses?ip_address%5Bnetwork%5D=5&_meta%5Blimit%5D=1000'], ['POST', '/v7.0/ip_addresses'],
+-    ['GET', '/v7.0/ip_addresses?ip_address%5Bvps%5D=10&ip_address%5Bversion%5D=4&_meta%5Blimit%5D=1000'], ['PUT', '/v7.0/networks/5'],
++    ['GET', '/v7.0/networks?network%5Blimit%5D=1000'], ['POST', '/v7.0/networks'],
++    ['GET', '/v7.0/location_networks?location_network%5Bnetwork%5D=5&location_network%5Blimit%5D=1000'], ['POST', '/v7.0/location_networks'],
++    ['GET', '/v7.0/ip_addresses?ip_address%5Bnetwork%5D=5&ip_address%5Blimit%5D=1000'], ['POST', '/v7.0/ip_addresses'],
++    ['GET', '/v7.0/ip_addresses?ip_address%5Bvps%5D=10&ip_address%5Bversion%5D=4&ip_address%5Blimit%5D=1000'], ['PUT', '/v7.0/networks/5'],
+   ]);
+   assert.deepEqual(calls.filter(([method]) => method !== 'GET').map(([method, resource]) => [method, resource]), [
+     ['POST', 'networks'], ['POST', 'location_networks'], ['POST', 'ip_addresses'], ['PUT', 'networks/5'],
+@@ -379,25 +379,26 @@ test('namespaced inventory queries isolate unrelated rows, provision one associa
+       ['PUT', 'networks/5', { network: { enabled: false } }],
+     ]);
+     const expectedQueries = [
+-      ['/v7.0/networks', [['_meta[limit]', '1000']]],
+-      ['/v7.0/location_networks', [['location_network[network]', '5'], ['_meta[limit]', '1000']]],
+-      ['/v7.0/ip_addresses', [['ip_address[network]', '5'], ['_meta[limit]', '1000']]],
+-      ['/v7.0/ip_addresses', [['ip_address[vps]', '10'], ['ip_address[version]', '4'], ['_meta[limit]', '1000']]],
++      ['/v7.0/networks', [['network[limit]', '1000']]],
++      ['/v7.0/location_networks', [['location_network[network]', '5'], ['location_network[limit]', '1000']]],
++      ['/v7.0/ip_addresses', [['ip_address[network]', '5'], ['ip_address[limit]', '1000']]],
++      ['/v7.0/ip_addresses', [['ip_address[vps]', '10'], ['ip_address[version]', '4'], ['ip_address[limit]', '1000']]],
+     ];
+     assert.deepEqual(calls.filter((call) => call.method === 'GET' && call.query.length).map((call) => [call.pathname, call.query]), expectedQueries);
+     const beforeReuse = calls.length;
+     assert.deepEqual(await ensureIpInventory(adminApi, { userId: 2, vpsId: 10 }), first);
+     assert(calls.slice(beforeReuse).every((call) => call.method === 'GET'), 'reuse cannot duplicate registration, charges or enablement');
+     assert.deepEqual(calls.slice(beforeReuse).filter((call) => call.query.length).map((call) => [call.pathname, call.query]), expectedQueries);
+-    const locations = (await adminApi('GET', 'location_networks?location_network%5Bnetwork%5D=5&_meta%5Blimit%5D=1000')).location_networks;
++    const locations = (await adminApi('GET', 'location_networks?location_network%5Bnetwork%5D=5&location_network%5Blimit%5D=1000')).location_networks;
+     assert.equal(locations.length, 1);
+     assert.equal(locations[0].network.id, 5);
+-    const addresses = (await adminApi('GET', 'ip_addresses?ip_address%5Bnetwork%5D=5&_meta%5Blimit%5D=1000')).ip_addresses;
++    const addresses = (await adminApi('GET', 'ip_addresses?ip_address%5Bnetwork%5D=5&ip_address%5Blimit%5D=1000')).ip_addresses;
+     assert.deepEqual(addresses.map((entry) => entry.id), [90]);
+-    const assigned = (await adminApi('GET', 'ip_addresses?ip_address%5Bvps%5D=10&ip_address%5Bversion%5D=4&_meta%5Blimit%5D=1000')).ip_addresses;
++    const assigned = (await adminApi('GET', 'ip_addresses?ip_address%5Bvps%5D=10&ip_address%5Bversion%5D=4&ip_address%5Blimit%5D=1000')).ip_addresses;
+     assert.deepEqual(assigned.map((entry) => entry.id), [11], 'another VPS and IPv6 rows are excluded');
+-    assert.equal((await adminApi('GET', 'networks?_meta%5Blimit%5D=1')).networks.length, 1);
+-    assert.equal((await adminApi('GET', 'networks?limit=1')).networks.length, 3, 'flat limit is not a metadata alias');
++    assert.equal((await adminApi('GET', 'networks?network%5Blimit%5D=1')).networks.length, 1);
++    assert.equal((await adminApi('GET', 'networks?limit=1')).networks.length, 3, 'flat limit is not a resource input alias');
++    assert.equal((await adminApi('GET', 'networks?_meta%5Blimit%5D=1')).networks.length, 3, 'metadata limit is not a resource input alias');
+   });
+   assert.equal(JSON.stringify(inventory.unrelated), unrelated, 'unrelated primary associations, addresses and VPS rows remain untouched');
+ });
+@@ -415,7 +416,7 @@ test('old flat filters return unrelated associations and refuse before any inven
+     const flatApi = (method, resource, body) => {
+       const url = new URL(resource, 'https://api.example.test/');
+       const flat = new URLSearchParams([...url.searchParams].map(([key, value]) =>
+-        [key.replace(/^(?:location_network|ip_address|_meta)\[([^\]]+)\]$/, '$1'), value]));
++        [key.replace(/^(?:network|location_network|ip_address)\[([^\]]+)\]$/, '$1'), value]));
+       return adminApi(method, `${url.pathname.slice(1)}${flat.size ? `?${flat}` : ''}`, body);
+     };
+     await assert.rejects(ensureIpInventory(flatApi, { userId: 2, vpsId: 10 }), /Unexpected dedicated inventory location/);
+@@ -429,6 +430,72 @@ test('old flat filters return unrelated associations and refuse before any inven
+   assert.equal(inventory.pool.enabled, true, 'flat-query refusal cannot disable the dedicated pool');
+ });
+ 
++test('more than one thousand source networks return the bounded page and refuse before inventory mutation or following browser work', async (t) => {
++  const inventory = fixture({ networkMissing: true, locationMissing: true, missing: true });
++  inventory.unrelated.networks.push(...Array.from({ length: 1001 }, (_, index) => ({
++    id: 100 + index, address: `2001:db8:${index.toString(16)}::`, enabled: true,
++  })));
++  const original = JSON.stringify(inventory.unrelated);
++  assert.equal(inventory.unrelated.networks.length, 1003);
++  let returnedNetworkCount;
++  const calls = mockInventoryTransport(t, async (call) => {
++    if (call.resource === 'users/current') return { response: currentUser(call.login) };
++    assert.equal(call.login, 'test-admin');
++    assert.equal(call.method, 'GET', 'truncated selection cannot provision or disable inventory');
++    const response = await inventory.api(call.method, call.resource, call.body);
++    if (response.networks) returnedNetworkCount = response.networks.length;
++    return { response };
++  });
++  await withInventoryConnection(recordedAccounts(), async (cluster) => {
++    const { member, adminApi } = await inventoryIdentity(cluster);
++    const page = { locator() { assert.fail('truncated inventory must refuse before following browser work'); } };
++    await assert.rejects(async () => {
++      await ensureIpInventory(adminApi, { userId: member.id, vpsId: 10 });
++      await assertInventoryMember(page, member);
++    }, (error) => {
++      assert.equal(error.message, 'Inventory network selection is truncated');
++      return true;
++    });
++  });
++  assert.equal(returnedNetworkCount, 1000, 'the server model applies the actual resource input limit');
++  assert.deepEqual(calls.map((call) => [call.method, call.wirePath]), [
++    ['GET', '/v7.0/users/current'], ['GET', '/v7.0/users/current'],
++    ['GET', '/v7.0/vpses/10'], ['GET', '/v7.0/nodes/101'], ['GET', '/v7.0/locations/1'],
++    ['GET', '/v7.0/networks?network%5Blimit%5D=1000'],
++  ]);
++  assert.deepEqual(calls.at(-1).query, [['network[limit]', '1000']]);
++  assert.equal(JSON.stringify(inventory.unrelated), original);
++  assert.equal(inventory.pool.enabled, true);
++});
++
++test('only each singular resource input limit bounds its list, not flat or metadata aliases', async (t) => {
++  const inventory = fixture({ disabled: true });
++  const original = JSON.stringify(inventory.unrelated);
++  const calls = mockInventoryTransport(t, async (call) => {
++    if (call.resource === 'users/current') return { response: currentUser(call.login) };
++    assert.equal(call.login, 'test-admin');
++    assert.equal(call.method, 'GET');
++    return { response: await inventory.api(call.method, call.resource, call.body) };
++  });
++  await withInventoryConnection(recordedAccounts(), async (cluster) => {
++    const { adminApi } = await inventoryIdentity(cluster);
++    for (const [resource, namespace, total] of [
++      ['networks', 'network', 3], ['location_networks', 'location_network', 3], ['ip_addresses', 'ip_address', 4],
++    ]) {
++      const encoded = `${namespace}%5Blimit%5D=1`;
++      assert.equal((await adminApi('GET', `${resource}?${encoded}`))[resource].length, 1);
++      assert.deepEqual(calls.at(-1).query, [[`${namespace}[limit]`, '1']]);
++      assert.equal((await adminApi('GET', `${resource}?limit=1`))[resource].length, total);
++      assert.deepEqual(calls.at(-1).query, [['limit', '1']]);
++      assert.equal((await adminApi('GET', `${resource}?_meta%5Blimit%5D=1`))[resource].length, total);
++      assert.deepEqual(calls.at(-1).query, [['_meta[limit]', '1']]);
++    }
++  });
++  assert(calls.every((call) => call.method === 'GET'));
++  assert.equal(JSON.stringify(inventory.unrelated), original);
++  assert.equal(inventory.pool.enabled, false);
++});
++
+ test('an existing disabled owned detached fixture performs no writes', async () => {
+   const { api, calls } = fixture({ disabled: true });
+   await ensureIpInventory(api, { userId: 2, vpsId: 10 });

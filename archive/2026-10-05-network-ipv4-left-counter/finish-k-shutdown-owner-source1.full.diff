@@ -1,0 +1,1506 @@
+diff --git a/cluster/lib/devcluster_runner.rb b/cluster/lib/devcluster_runner.rb
+index d78d824018fea8fa5752ff393c101ba64d759009..44f0f23cf6db61bcd2b6155e68c1637a47d557bd 100644
+--- a/cluster/lib/devcluster_runner.rb
++++ b/cluster/lib/devcluster_runner.rb
+@@ -96,130 +96,199 @@ module DevClusters
+       runner = KbRuntime::ProcessIdentity.read(Process.pid)
+       raise KbRuntime::Error, 'runner tuple differs' unless KbRuntime::ProcessIdentity.runner_matches?(runner, launch)
+       children = {}
+-      complete = false
+       mutex = Mutex.new
+-      publish = proc do
++      stopping = false
++      shutdown_error = nil
++      tracking = true
++      @started_machines = []
++      discover = proc do
++        KbRuntime::ProcessIdentity.descendants(Process.pid).each { |record| children[[record['pid'], record['start_ticks']]] = record }
++      end
++      write_processes = proc do |complete|
++        state.write(process_path, { 'schema' => 1, 'instance_id' => opts[:instance_id], 'run_id' => opts[:run_id],
++          'artifact_id' => opts[:artifact_id], 'artifact_sha256' => opts[:artifact_sha256],
++          'runner' => runner, 'children' => children.values, 'complete' => complete })
++      end
++      publish = proc { mutex.synchronize { discover.call; write_processes.call(false) } }
++      withdraw_ready = proc do
++        begin
++          marker = state.read(ready_path)
++          unless marker['schema'] == 1 && %w[instance_id run_id artifact_id artifact_sha256].all? { |key| marker[key] == launch[key] }
++            raise KbRuntime::Error, 'foreign readiness receipt during shutdown'
++          end
++          File.unlink(ready_path)
++        rescue Errno::ENOENT
++          # Shutdown may begin before the startup marker was published.
++        end
++      end
++      latch_shutdown = proc do
+         mutex.synchronize do
+-          KbRuntime::ProcessIdentity.descendants(Process.pid).each { |record| children[[record['pid'], record['start_ticks']]] = record }
+-          state.write(process_path, { 'schema' => 1, 'instance_id' => opts[:instance_id], 'run_id' => opts[:run_id],
+-                      'artifact_id' => opts[:artifact_id], 'artifact_sha256' => opts[:artifact_sha256],
+-                      'runner' => runner, 'children' => children.values, 'complete' => complete })
++          next false if stopping
++          stopping = true
++          begin
++            withdraw_ready.call
++          rescue KbRuntime::Error, SystemCallError => error
++            # Unsafe readiness is never unlinked, but cannot abandon live
++            # machines/reapers. Preserve the failure after owned drain.
++            shutdown_error ||= error
++            warn "Readiness withdrawal failed: #{error.class}: #{error.message}"
++          end
++          true
+         end
+       end
+       publish.call
+-
+       machines = build_machines(opts)
+-      stopping = false
+-
+-      stop_all = proc do
+-        next if stopping
+ 
+-        stopping = true
+-        machines.reverse_each do |entry|
++      # Only this one-shot notifier raises into the normal body. The trap itself
++      # uses no mutex, and repeated requests remain acknowledgement-only.
++      Thread.handle_interrupt(ShutdownRequested => :never) do
++        signal_reader, signal_writer = IO.pipe
++        signal_thread = Thread.new do
++          if signal_reader.read(1)
++            latch_shutdown.call
++            Thread.main.raise ShutdownRequested
++          end
++        end
++        signal_trap = proc do
+           begin
+-            warn "Stopping #{entry.name}"
+-            entry.machine.stop(timeout: 120)
+-          rescue StandardError => e
+-            warn "Graceful stop failed for #{entry.name}: #{e.class}: #{e.message}"
+-            # Retain ambiguous processes and claims. A PID alone is no signal authority.
++            signal_writer.write_nonblock('.')
++          rescue IO::WaitWritable, IOError, Errno::EPIPE
++            # The one-shot notifier is already notified or quiesced.
+           end
+         end
+-      end
+-
+-      signal_reader, signal_writer = IO.pipe
+-      signal_thread = Thread.new do
+-        begin
+-          signal_reader.read(1)
+-          Thread.main.raise ShutdownRequested
+-        rescue IOError
+-          # The main thread closes the pipe during normal shutdown.
++        Signal.trap('TERM', &signal_trap)
++        Signal.trap('INT', &signal_trap)
++
++        control_path = File.join(opts[:sock_dir], 'control.sock')
++        raise KbRuntime::Error, 'control socket already exists' if File.exist?(control_path) || File.symlink?(control_path)
++        server = UNIXServer.new(control_path)
++        File.chmod(0o600, control_path)
++        control_thread = Thread.new do
++          loop do
++            peer = server.accept
++            begin
++              _pid, uid, = peer.getsockopt(Socket::SOL_SOCKET, Socket::SO_PEERCRED).unpack('iii')
++              request = Timeout.timeout(5) { peer.gets(8193) }
++              raise KbRuntime::Error, 'invalid control peer/request' unless uid == Process.uid && request && request.bytesize <= 8192
++              value = JSON.parse(request)
++              expected = { 'schema' => 1, 'instance_id' => opts[:instance_id], 'run_id' => opts[:run_id], 'command' => 'stop' }
++              raise KbRuntime::Error, 'control identity differs' unless value == expected
++              first = latch_shutdown.call
++              peer.puts(JSON.generate('schema' => 1, 'run_id' => opts[:run_id], 'accepted' => true))
++              peer.flush
++              signal_trap.call if first
++            rescue StandardError
++              # Invalid local requests never acquire shutdown authority.
++            ensure
++              peer.close
++            end
++          end
+         end
+-      end
+-
+-      signal_trap = proc do
+-        begin
+-          signal_writer.write_nonblock('.')
+-        rescue IO::WaitWritable, IOError, Errno::EPIPE
+-          # The shutdown thread is already notified or gone.
++        start_tracker = proc do
++          Thread.new do
++            loop do
++              keep_tracking = mutex.synchronize do
++                next false unless tracking
++                discover.call
++                write_processes.call(false)
++                true
++              end
++              break unless keep_tracking
++              sleep 0.05
++            end
++          end
+         end
+-      end
+-
+-      Signal.trap('TERM', &signal_trap)
+-      Signal.trap('INT', &signal_trap)
++        tracking_thread = start_tracker.call
+ 
+-      control_path = File.join(opts[:sock_dir], 'control.sock')
+-      raise KbRuntime::Error, 'control socket already exists' if File.exist?(control_path) || File.symlink?(control_path)
+-      server = UNIXServer.new(control_path)
+-      File.chmod(0o600, control_path)
+-      control_thread = Thread.new do
+-        loop do
+-          peer = server.accept
++        begin
++          Thread.handle_interrupt(ShutdownRequested => :immediate) do
++            start_machines(machines, opts[:timeout])
++            publish.call
++            state.write(state.path("run-#{opts[:run_id]}.json"), launch.merge('processes' => state.read(process_path)), immutable: true)
++            mutex.synchronize do
++              unless stopping
++                state.write(ready_path, { 'schema' => 1, 'instance_id' => opts[:instance_id], 'run_id' => opts[:run_id],
++                  'artifact_id' => opts[:artifact_id], 'artifact_sha256' => opts[:artifact_sha256] }, immutable: true)
++              end
++            end
++            loop { sleep 2 }
++          end
++        rescue ShutdownRequested
++          # The one owned shutdown is finalized below.
++        ensure
++          latch_shutdown.call
++          Signal.trap('TERM', 'IGNORE')
++          Signal.trap('INT', 'IGNORE')
++          signal_writer.close unless signal_writer.closed?
++          signal_thread.join
++          # Nothing can queue another notification after the notifier is joined.
++          # Consume an already queued one without replacing a primary failure.
+           begin
+-            _pid, uid, = peer.getsockopt(Socket::SOL_SOCKET, Socket::SO_PEERCRED).unpack('iii')
+-            request = Timeout.timeout(5) { peer.gets(8193) }
+-            raise KbRuntime::Error, 'invalid control peer/request' unless uid == Process.uid && request && request.bytesize <= 8192
+-            value = JSON.parse(request)
+-            expected = { 'schema' => 1, 'instance_id' => opts[:instance_id], 'run_id' => opts[:run_id], 'command' => 'stop' }
+-            raise KbRuntime::Error, 'control identity differs' unless value == expected
+-            peer.puts(JSON.generate('schema' => 1, 'run_id' => opts[:run_id], 'accepted' => true))
+-            peer.flush
+-            signal_trap.call
+-          rescue StandardError
+-            # Invalid local requests never acquire shutdown authority.
+-          ensure
+-            peer.close
++            Thread.handle_interrupt(ShutdownRequested => :immediate) { Thread.pass }
++          rescue ShutdownRequested
++            # Drain remains protected by the surrounding narrow mask.
+           end
+-        end
+-      end
+-      tracking_thread = Thread.new do
+-        loop do
+-          publish.call
+-          sleep 0.05
+-        end
+-      end
+-
+-      begin
+-        start_machines(machines, opts[:timeout])
+-        publish.call
+-        state.write(state.path("run-#{opts[:run_id]}.json"), launch.merge('processes' => state.read(process_path)), immutable: true)
+-        state.write(ready_path, { 'schema' => 1, 'instance_id' => opts[:instance_id], 'run_id' => opts[:run_id],
+-          'artifact_id' => opts[:artifact_id], 'artifact_sha256' => opts[:artifact_sha256] }, immutable: true)
+-
+-        loop do
+-          break if stopping
+ 
+-          sleep 2
+-        end
+-      rescue ShutdownRequested
+-        # Normal path for SIGTERM/SIGINT. Shutdown happens in ensure.
+-      ensure
+-        Signal.trap('TERM', 'IGNORE')
+-        Signal.trap('INT', 'IGNORE')
+-        stop_all.call
+-        tracking_thread.kill
+-        tracking_thread.join
+-        publish.call
+-        exited = children.values.all? { |record| KbRuntime::ProcessIdentity.gone?(record) }
+-        machines.each do |entry|
+-          next unless exited
+-          begin
+-            entry.machine.finalize
+-            entry.machine.cleanup
+-          rescue StandardError => e
+-            warn "Cleanup failed for #{entry.name}: #{e.class}: #{e.message}"
++          publish.call
++          @started_machines.reverse_each do |entry|
++            next unless entry.machine.running?
++            begin
++              warn "Stopping #{entry.name}"
++              entry.machine.stop(timeout: opts[:timeout])
++            rescue StandardError => error
++              warn "Graceful stop failed for #{entry.name}: #{error.class}: #{error.message}"
++              # Never repeat stop: the original reaper retains the machine.
++            end
++          end
++          finalized = false
++          loop do
++            @started_machines.each do |entry|
++              next unless entry.machine.running?
++              begin
++                entry.machine.join(timeout: [opts[:timeout], 1].min)
++              rescue StandardError => error
++                warn "Reaper wait failed for #{entry.name}: #{error.class}: #{error.message}"
++              end
++            end
++            exited = mutex.synchronize do
++              discover.call
++              write_processes.call(false)
++              @started_machines.none? { |entry| entry.machine.running? } && children.values.all? { |record| KbRuntime::ProcessIdentity.gone?(record) }
++            end
++            unless exited
++              sleep 0.05
++              next
++            end
++            mutex.synchronize { tracking = false }
++            tracking_thread.join
++            unless finalized
++              @started_machines.each do |entry|
++                begin
++                  entry.machine.finalize
++                  entry.machine.cleanup
++                rescue StandardError => error
++                  warn "Cleanup failed for #{entry.name}: #{error.class}: #{error.message}"
++                end
++              end
++              finalized = true
++            end
++            complete = mutex.synchronize do
++              discover.call
++              proved = @started_machines.none? { |entry| entry.machine.running? } && children.values.all? { |record| KbRuntime::ProcessIdentity.gone?(record) }
++              write_processes.call(proved)
++              proved
++            end
++            break if complete
++            mutex.synchronize { tracking = true }
++            tracking_thread = start_tracker.call
+           end
++          control_thread.kill
++          control_thread.join
++          server.close
++          File.unlink(control_path)
++          signal_reader.close unless signal_reader.closed?
++          raise shutdown_error if shutdown_error && !$!
+         end
+-        complete = exited
+-        publish.call
+-        File.unlink(ready_path) if File.exist?(ready_path)
+-        control_thread.kill
+-        control_thread.join
+-        server.close
+-        File.unlink(control_path)
+-        signal_writer.close unless signal_writer.closed?
+-        signal_reader.close unless signal_reader.closed?
+-        signal_thread.kill
+-        signal_thread.join
+       end
+ 
+       0
+@@ -269,6 +338,7 @@ module DevClusters
+     def start_machine_group(machines, timeout)
+       machines.each do |entry|
+         warn "Starting #{entry.name}"
++        @started_machines << entry
+         entry.machine.start(wait_for_boot: false)
+       end
+ 
+diff --git a/cluster/lib/kb_runtime.rb b/cluster/lib/kb_runtime.rb
+index b1f585d6642084f10ee4ac2f4623d5d14eb5d881..d913c8cbf5522a62f677ef3258a26aab40956de2 100644
+--- a/cluster/lib/kb_runtime.rb
++++ b/cluster/lib/kb_runtime.rb
+@@ -201,7 +201,7 @@ module KbRuntime
+             raise Error, 'different candidate cannot replace the retained update'
+           end
+         else
+-          raise Error, 'an unprepared update requires a live ready predecessor' unless phase['phase'] == 'ready'
++          raise Error, 'an unprepared update requires a live ready predecessor' unless ready?(old)
+           verify_live(old)
+           previous = artifact(old)
+           credentials = state.path('credentials')
+@@ -318,7 +318,7 @@ module KbRuntime
+           ready = state.path("ready-#{run_id}.json")
+           if File.exist?(ready)
+             ready_record = state.read(ready)
+-            raise Error, 'foreign readiness receipt' unless %w[instance_id run_id artifact_id artifact_sha256].all? { |key| ready_record[key] == built[key] } && live?(built)
++            raise Error, 'foreign readiness receipt' unless ready_record['schema'] == 1 && %w[instance_id run_id artifact_id artifact_sha256].all? { |key| ready_record[key] == built[key] } && live?(built)
+             set_phase('verifying', run_id)
+             establish_ssh_trust(built, deadline:)
+             verify_live(built)
+@@ -332,6 +332,7 @@ module KbRuntime
+             end
+             state.write(state.path('accepted-artifact.json'), built.slice('artifact_id', 'artifact_sha256'))
+             set_phase('ready', run_id)
++            raise Error, 'readiness withdrawn during verification' unless ready?(built)
+             state.write(state.path('connection.json'), descriptor(built))
+             File.unlink(state.path('update.json')) if File.exist?(state.path('update.json'))
+             return descriptor(built)
+@@ -359,6 +360,24 @@ module KbRuntime
+       false
+     end
+ 
++    # Readiness is a guarded snapshot, distinct from process ownership/liveness.
++    def ready?(record = launch)
++      current = phase
++      return false unless current['phase'] == 'ready'
++
++      validate_launch(record, current.fetch('run_id'))
++      raise Error, 'readiness launch differs' unless launch == record
++      begin
++        marker = state.read(state.path("ready-#{record.fetch('run_id')}.json"))
++      rescue Errno::ENOENT
++        return false
++      end
++      unless marker['schema'] == 1 && %w[instance_id run_id artifact_id artifact_sha256].all? { |key| marker[key] == record[key] }
++        raise Error, 'foreign readiness receipt'
++      end
++      live?(record)
++    end
++
+     def gone?(record)
+       proof = process_record(record)
+       proof.fetch('complete') == true && [proof.fetch('runner'), *proof.fetch('children')].all? { |process| ProcessIdentity.gone?(process) }
+@@ -373,6 +392,7 @@ module KbRuntime
+       raise Error, 'foreign runner control peer' unless uid == Process.uid && pid == handoff[:runner].fetch('pid') && ProcessIdentity.runner_matches?(handoff[:runner], record)
+       raise Error, 'runner launch changed before stop request' unless launch == record && process_record(record).fetch('runner') == handoff[:runner]
+       check_shutdown_paths(handoff, required: true)
++      set_phase('stopping', record.fetch('run_id'))
+       socket.puts(JSON.generate('schema' => 1, 'instance_id' => record['instance_id'], 'run_id' => record['run_id'], 'command' => command))
+       response = Timeout.timeout(5) { socket.gets(8193) }
+       raise Error, 'invalid runner control response' unless response && response.bytesize <= 8192 && JSON.parse(response) == { 'schema' => 1, 'run_id' => record['run_id'], 'accepted' => true }
+@@ -549,7 +569,7 @@ module KbRuntime
+         record = File.exist?(state.path('phase.json')) ? phase : nil
+         { 'schema' => 2, 'found' => true, 'state' => record ? record['phase'] : 'initialized',
+           'instance_id' => identity['instance_id'], 'run_id' => record && record['run_id'],
+-          'ready' => record && record['phase'] == 'ready' && live?(launch) }
++          'ready' => record && record['phase'] == 'ready' && ready?(launch) }
+       end
+     end
+ 
+@@ -578,7 +598,7 @@ module KbRuntime
+     def connection
+       state.transaction do
+         record = launch
+-        raise Error, 'cluster is not ready' unless phase['phase'] == 'ready' && live?(record)
++        raise Error, 'cluster is not ready' unless ready?(record)
+         state.file(state.path('connection.json'))
+       end
+     end
+@@ -865,16 +885,18 @@ module KbRuntime
+         state.lock('operation') do
+           record = launch
+           raise Error, 'capture lease identity differs' unless record['instance_id'] == instance_id && record['run_id'] == run_id &&
+-            record['artifact_id'] == artifact_id && record['artifact_sha256'] == artifact_sha256 && phase['phase'] == 'ready'
++            record['artifact_id'] == artifact_id && record['artifact_sha256'] == artifact_sha256
++          raise Error, 'cluster is not ready for capture lease' unless ready?(record)
+           value = state.file(state.path('connection.json'))
+           raise Error, 'descriptor changed' unless Digest::SHA256.hexdigest(value) == descriptor_sha256
+           verify_live(record)
++          raise Error, 'readiness lost before capture lease response' unless ready?(record)
+           output.puts(JSON.generate('schema' => 1, 'instance_id' => instance_id, 'run_id' => run_id,
+             'artifact_id' => artifact_id, 'artifact_sha256' => artifact_sha256, 'descriptor_sha256' => descriptor_sha256))
+           output.flush
+         end
+         loop do
+-          raise Error, 'runner lost during capture lease' unless live?(launch)
++          raise Error, 'readiness lost during capture lease' unless ready?(launch)
+           next unless IO.select([input], nil, nil, 0.2)
+           break if input.read_nonblock(1024, exception: false).nil?
+         end
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index bc5e34daacc13e002e643a9672a7de2933becb9f..029e9e7bcdc86fa43ec77971f8d457c983a3c977 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -52,6 +52,14 @@ written only after all machines succeed; retained trust is never replaced or
+ expanded to accept a changed key. Strict authentication and guest source/system
+ closure checks remain separate requirements.
+ 
++The engine's read-only `ready?` predicate requires a ready phase, its validated
++current launch, the matching schema-1 run-ready marker and the recorded live
++runner. Missing readiness returns false; unsafe or foreign records refuse.
++Status, connection export, initial update admission and capture use this same
++predicate. Capture checks it again after guest attestation and throughout its
++lease. Process liveness alone does not establish readiness. Shutdown withdraws
++the marker even when requested directly through the runner's signal path.
++
+ Failed discovery attempts identify the machine, endpoint and private native
+ diagnostic path. An exhausted budget may refuse before a scan starts. Bounded
+ command output and status stay under the owned run, outside artifact exports. A failed verification leaves the run non-ready with its claims
+@@ -81,8 +89,23 @@ bind probe precedes launch and closes before QEMU binds. The durable claim spans
+ that handoff, but cannot reserve the port against unrelated host software.
+ 
+ Stop requests shutdown through the recorded runner's validated control socket.
+-The runner gracefully shuts down and reaps its machines. It joins its control
+-thread before closing the listener and removing its own control socket. Unknown
++After authenticating the owned paths and peer, the controller marks the run
++`stopping` before sending the request. The runner withdraws readiness and issues
++at most one graceful stop per started, running machine. Repeated authenticated
++requests acknowledge the same shutdown and wait; they do not repeat poweroff.
++
++The runner uses its configured machine operation budget, normally 900 seconds.
++The CLI's `--timeout` bounds the controller's observation after acknowledgement;
++it does not bound sequential machine waits or the whole update command. If a
++machine wait or the caller expires, the same runner, tracker, control listener
++and reapers remain alive while owned children remain. The run stays non-ready
++and retains its claims and disks. A later public stop can wait for that same
++shutdown. No timeout supplies force or restart authority.
++
++The runner records newly discovered children throughout the drain. It publishes
++complete exit only after machine reapers finish and every retained child is
++proved gone. It then joins its control thread before closing the listener and
++removing its own control socket. Unknown
+ socket-directory entries still prevent the engine from marking the run stopped.
+ An unresponsive or ambiguous orphan remains recorded with its paths and claims;
+ no PID search, process-group kill or force option substitutes for ownership.
+@@ -280,7 +303,22 @@ vpsfree-kb-verify --root "$ROOT" --config-a "$CONFIG_A" --config-b "$CONFIG_B" \
+ ```
+ 
+ The predecessor's runtime and source metadata come from the same immutable
+-reference. Later phases require matching completed campaign receipts. An
++reference, fixed to
++`github:vpsfreecz/vpsfree-kb-contracts/7dc4d70830e535f4559bccfa668cf65cdce1de2d`.
++This experiment verifies that exact K-runtime upgrade and live artifact/import/
++closure continuity. Both versions use the same vpsAdmin pin; it does not verify
++a vpsAdmin upgrade or compatibility with other predecessor revisions.
++
++The predecessor performs one SSH host-key scan per endpoint and has no readiness
++retry. Its runner also inherits its parent's POSIX session and can leave its
++control socket after shutdown. Run this finite experiment in a durable ordinary
++host service that retains descendants after the controller exits. Use the final
++public controller for stop and update, with its live authenticated shutdown
++handoff. A failed start cannot be resumed as an accepted artifact. Preserve a
++native failure and stop the experiment; do not patch the predecessor, replay the
++failed campaign or substitute host-key trust.
++
++Later phases require matching completed campaign receipts. An
+ incomplete phase retains its stage evidence and owned state; it cannot silently
+ become another campaign or authorize cleanup.
+ Failed public commands retain their native exit and diagnostic output privately
+@@ -308,6 +346,26 @@ The continuity phase starts A from the final package and B from the predecessor.
+ It uses the final public controller to stop the predecessor runner, resumes B
+ with the genuine predecessor package, then updates B through the final public
+ command. This does not certify the predecessor's own stop implementation.
++Both historical shutdown crossings require explicit service preparation through
++the genuine predecessor's public SSH command. In the same guarded remote script,
++the verifier checks the attested guest identity digest and current system
++closure, then stops only `vpsadmin-console-router.service`. It requires the
++loaded unit to be inactive/dead, with `MainPID=0` and `Result=success`. RabbitMQ,
++SSH and the guest store remain running. Preparation occurs before the first
++final-controller stop and again after genuine predecessor resume, before update.
++
++Each preparation has a 360-second guest command budget and a separate
++360-second caller observation budget, including transport. Native command
++failure and caller expiry remain distinct. Expiry does not prove cancellation
++of a remote job. Any failed preparation ends the finite campaign; stop or
++update must not follow it. Final boot must restore the normally enabled router
++before capture. The final runner's ordinary stop is also verified without this
++historical preparation.
++
++The resulting upgrade claim includes this explicit guest-service preparation.
++It does not certify ordinary unprepared historical shutdown. The predecessor's
++first SSH scan and service drain may still fail; preserve that failure rather
++than repeat the campaign for a different timing outcome.
+ All six credential files, disk identities and
+ root/data sentinels must survive; run/artifact identities and actual guest system
+ closures must change as specified by update. A remains healthy during that work.
+diff --git a/tools/fixtures/fake-kb-runner.rb b/tools/fixtures/fake-kb-runner.rb
+index f6b59bea43bb935c07991e2879485a3f85e968cb..52b00102ab5fc64e6e5a7f003ca3a834ec6f753b 100755
+--- a/tools/fixtures/fake-kb-runner.rb
++++ b/tools/fixtures/fake-kb-runner.rb
+@@ -54,6 +54,8 @@ state.lock('runner', create: true) do
+     if mode == 'retry' && attempts == 1
+       next
+     end
++    ready = state.path("ready-#{launch['run_id']}.json")
++    File.unlink(ready) if File.exist?(ready)
+     if mode == 'growing'
+       extra_reader, extra_writer = IO.pipe
+       extra_child = Process.spawn(RbConfig.ruby, '-e', 'STDIN.read', in: extra_reader, close_others: true)
+diff --git a/tools/runtime-verify.rb b/tools/runtime-verify.rb
+index 2a111d2042b4a35bfe8968ff0ed84d00e523bccb..320575be8f424264985ed676bc6374f0d67c5a30 100644
+--- a/tools/runtime-verify.rb
++++ b/tools/runtime-verify.rb
+@@ -12,7 +12,7 @@ module KbVerify
+   PHASES = %w[installed-layout isolation-continuity-update bilingual-capture].freeze
+   CREDENTIALS = %w[id_ed25519 id_ed25519.pub vpsadmin-ca.crt vpsadmin-ca.key vpsadmin-cert.crt vpsadmin-cert.key].freeze
+   GIB = 1024**3
+-  PREDECESSOR = '68aa33b451a14eb7bf4b2f1a090a8e5a2f80b52e'
++  PREDECESSOR = '7dc4d70830e535f4559bccfa668cf65cdce1de2d'
+ 
+   class Commands
+     attr_reader :environment
+@@ -32,7 +32,10 @@ module KbVerify
+         'NIX_CONFIG' => "experimental-features = nix-command flakes\nextra-substituters = https://cache.vpsadminos.org\nextra-trusted-public-keys = cache.vpsadminos.org:wpIJlNZQIhS+0gFf1U3MC9sLZdLW3sh5qakOWGDoDrE=\n")
+     end
+ 
+-    def call(argv, cwd:, accepted: [0], input: '', stage: nil)
++    def call(argv, cwd:, accepted: [0], input: '', stage: nil, caller_timeout: nil)
++      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
++      raise Error, 'invalid public command observation budget' if caller_timeout && (!caller_timeout.is_a?(Numeric) || !caller_timeout.finite? || caller_timeout <= 0)
++      deadline = caller_timeout && started + caller_timeout
+       state = KbRuntime::State.new(@root, 'diagnostics')
+       state.private_directory(@root) || raise(Error, 'command campaign root is absent')
+       directory = File.join(@root, 'diagnostics')
+@@ -41,6 +44,7 @@ module KbVerify
+       state.private_directory(directory, create: true)
+       record = { 'schema' => 1, 'argv' => argv, 'cwd' => cwd, 'stage' => stage,
+         'owner_uid' => Process.uid, 'started_at' => Time.now.utc.iso8601, 'complete' => false }
++      record['caller_timeout_seconds'] = caller_timeout if caller_timeout
+       native = File.join(directory, 'command.json')
+       reader, writer = IO.pipe
+       output = File.open(File.join(directory, 'stdout'), File::WRONLY | File::CREAT | File::EXCL | File::NOFOLLOW, 0o600)
+@@ -66,8 +70,21 @@ module KbVerify
+             pid = nil
+           end
+         end
++        if deadline && Process.clock_gettime(Process::CLOCK_MONOTONIC) >= deadline
++          Thread.handle_interrupt(SignalException => :never) do
++            status = reap_interrupted(pid) if pid
++            pid = nil
++            record.merge!('observer_expired' => true, 'accepted' => false, 'complete' => !status.nil?,
++              'exit_code' => status&.exitstatus, 'signal' => status&.termsig,
++              'elapsed_seconds' => Process.clock_gettime(Process::CLOCK_MONOTONIC) - started,
++              'cleanup_scope' => 'spawned public command only', 'remote_cancellation' => 'unknown',
++              'finished_at' => Time.now.utc.iso8601)
++            state.write(native, record)
++          end
++          raise Error, "public command observer expired; remote cancellation unknown; private diagnostics: #{native}"
++        end
+         break if status
+-        sleep 0.05
++        sleep(deadline ? [0.05, [deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC), 0].max].min : 0.05)
+       end
+       record.merge!('complete' => true, 'exit_code' => status.exitstatus, 'signal' => status.termsig,
+         'accepted' => accepted.include?(status.exitstatus), 'finished_at' => Time.now.utc.iso8601)
+@@ -95,6 +112,7 @@ module KbVerify
+           state.write(native, record)
+         end
+       end
++      raise failure if record['observer_expired']
+       raise Error, "verification command failed; private diagnostics: #{native}"
+ 
+     ensure
+@@ -129,7 +147,7 @@ module KbVerify
+         source.fetch('source') == selection.fetch('source') && File.expand_path('..', __dir__) == source.fetch('source')
+       raise Error, 'selected runtime metadata differs' unless
+         File.read(File.join(selection.fetch('runtime'), 'bin/vpsfree-kb-devcluster')).include?(selection.fetch('metadata'))
+-      raise Error, 'predecessor must be the exact published K68 Git-flake' unless predecessor_ref == "github:vpsfreecz/vpsfree-kb-contracts/#{PREDECESSOR}"
++      raise Error, 'predecessor must be the exact published 7dc4d708 Git-flake' unless predecessor_ref == "github:vpsfreecz/vpsfree-kb-contracts/#{PREDECESSOR}"
+       @state = KbRuntime::State.new(@root, 'campaign')
+       config_bytes = [config_a, config_b].map { |name| @state.file(File.expand_path(name)) }
+       @configurations = config_bytes.map { |bytes| JSON.parse(bytes) }
+@@ -246,18 +264,18 @@ module KbVerify
+         'stage' => stage, 'inputs' => inputs, 'assertions' => assertions, 'time' => Time.now.utc.iso8601 }.merge(detail))
+     end
+ 
+-    def command(*argv, cwd: file('work'), accepted: [0])
+-      output, _error, code = commands.call(argv, cwd:, accepted:, stage: [@phase, @stage].compact.join('/'))
++    def command(*argv, cwd: file('work'), accepted: [0], input: '', caller_timeout: nil)
++      output, _error, code = commands.call(argv, cwd:, accepted:, input:, caller_timeout:, stage: [@phase, @stage].compact.join('/'))
+       [output, code]
+     end
+ 
+-    def engine(which, action, *args, accepted: [0])
++    def engine(which, action, *args, accepted: [0], input: '', caller_timeout: nil)
+       if %w[start resume update].include?(action)
+         target = which == 'a' ? 'a' : (which == 'old' ? 'b-predecessor' : 'b-final')
+         capacity("#{action}-#{target}")
+       end
+       package = which == 'old' ? read('predecessor.json').fetch('runtime') : selection.fetch('runtime')
+-      command(File.join(package, 'bin/vpsfree-kb-devcluster'), '--state-root', file("state-#{which == 'a' ? 'a' : 'b'}"), action, 'same-slug', *args, accepted:)
++      command(File.join(package, 'bin/vpsfree-kb-devcluster'), '--state-root', file("state-#{which == 'a' ? 'a' : 'b'}"), action, 'same-slug', *args, accepted:, input:, caller_timeout:)
+     end
+ 
+     def installed_layout
+@@ -455,15 +473,66 @@ module KbVerify
+       out, = engine(which, 'connection')
+       value = JSON.parse(out)
+       check(value.dig('provenance', 'source') == metadata, "#{which} exact prepared source")
++      observations = {}
+       value.fetch('provenance').fetch('machine_toplevels').each do |machine, closure|
+         identity, = engine(which, 'ssh', machine, '--', 'cat', '/etc/vpsfree-kb-capture.json')
+         check(JSON.parse(identity) == value.fetch('provenance').fetch('guest_identity'), "#{which}/#{machine} live guest identity")
+         running, = engine(which, 'ssh', machine, '--', 'readlink', '-f', '/run/current-system')
+         check(running.strip == closure, "#{which}/#{machine} actual system closure")
++        observations[machine] = { 'identity_sha256' => Digest::SHA256.hexdigest(identity), 'closure' => closure }
+       end
++      @guest_observations ||= {}
++      @guest_observations[[which, value.fetch('run_id')]] = { 'descriptor' => JSON.parse(JSON.generate(value)), 'machines' => observations }
+       value
+     end
+ 
++    def historical_router_drain(value)
++      proof = @guest_observations&.fetch(['old', value.fetch('run_id')], nil)
++      check(proof && proof.fetch('descriptor') == value && value.dig('provenance', 'source', 'revision') == PREDECESSOR,
++        'historical drain follows exact predecessor descriptor/source attestation')
++      service = proof.fetch('machines').fetch('services')
++      script = <<~SH
++        set -eu
++        test "$(sha256sum /etc/vpsfree-kb-capture.json | cut -d ' ' -f 1)" = "$1"
++        test "$(readlink -f /run/current-system)" = "$2"
++        timeout 360 systemctl stop vpsadmin-console-router.service
++        systemctl show vpsadmin-console-router.service --property=LoadState,ActiveState,SubState,MainPID,Result
++      SH
++      checkpoint('draining-predecessor-console-router', 'run_id' => value.fetch('run_id'))
++      output, = engine('old', 'ssh', 'services', '--', 'sh', '-s', '--', service.fetch('identity_sha256'),
++        service.fetch('closure'), input: script, caller_timeout: 360)
++      properties = router_properties(output)
++      check(properties == { 'LoadState' => 'loaded', 'ActiveState' => 'inactive', 'SubState' => 'dead',
++        'MainPID' => '0', 'Result' => 'success' }, 'historical console router clean inactive result')
++      write("receipts/router-drain-#{value.fetch('run_id')}.json", { 'schema' => 1,
++        'source' => value.fetch('provenance').fetch('source'), 'run_id' => value.fetch('run_id'),
++        'artifact_id' => value.fetch('artifact_id'), 'artifact_sha256' => value.fetch('artifact_sha256'),
++        'unit' => 'vpsadmin-console-router.service', 'properties' => properties,
++        'guard' => service, 'output_sha256' => Digest::SHA256.hexdigest(output),
++        'guest_timeout_seconds' => 360, 'caller_timeout_seconds' => 360 }, immutable: true)
++      assertions << 'operator-prepared 7dc K-runtime-only crossing; unchanged V; ordinary historical stop and K68 excluded'
++    end
++
++    def router_properties(output)
++      entries = output.lines.map { |line| line.chomp.split('=', 2) }
++      check(entries.all? { |entry| entry.size == 2 } && entries.map(&:first).sort == %w[ActiveState LoadState MainPID Result SubState],
++        'exact console router service properties')
++      entries.to_h
++    end
++
++    def restored_router(value)
++      output, = engine('b', 'ssh', 'services', '--', 'systemctl', 'show', 'vpsadmin-console-router.service',
++        '--property=LoadState,ActiveState,SubState,MainPID,Result')
++      properties = router_properties(output)
++      check(properties.slice('LoadState', 'ActiveState', 'SubState', 'Result') ==
++        { 'LoadState' => 'loaded', 'ActiveState' => 'active', 'SubState' => 'running', 'Result' => 'success' } &&
++        /\A[1-9][0-9]*\z/.match?(properties.fetch('MainPID')), 'final boot restores healthy console router')
++      write("receipts/router-health-#{value.fetch('run_id')}-#{SecureRandom.hex(6)}.json", { 'schema' => 1,
++        'source' => value.fetch('provenance').fetch('source'), 'run_id' => value.fetch('run_id'),
++        'artifact_id' => value.fetch('artifact_id'), 'unit' => 'vpsadmin-console-router.service',
++        'properties' => properties, 'output_sha256' => Digest::SHA256.hexdigest(output) }, immutable: true)
++    end
++
+     def identities
+       directory = file('state-b/clusters/same-slug')
+       files = CREDENTIALS.to_h { |name| [name, Digest::SHA256.file(File.join(directory, 'credentials', name)).hexdigest] }
+@@ -507,29 +576,33 @@ module KbVerify
+       end
+       identity, sentinel = identities, sentinels('old')
+       write('continuity-b.json', { 'identities' => identity, 'sentinels' => sentinel }, immutable: true)
++      historical_router_drain(old)
+       checkpoint('final-controller-stop-of-predecessor-b')
+-      engine('b', 'stop')
++      engine('b', 'stop', '--timeout', '900')
+       engine('old', 'resume')
+       resumed = descriptor('old', old_source)
+       continuity(old, resumed, identity, sentinel)
+       descriptor('a', source)
++      historical_router_drain(resumed)
+       checkpoint('updating-b')
+-      engine('b', 'update', '--network', 'local', '--topology', 'single', '--config', file('config-b.json'))
+-      assertions << 'final-controller stop of K68 runner, K68 resume, final-controller update'
++      engine('b', 'update', '--timeout', '900', '--network', 'local', '--topology', 'single', '--config', file('config-b.json'))
++      assertions << 'final-controller stop of predecessor runner, genuine predecessor resume, final-controller update'
+       current = descriptor('b', source)
++      restored_router(current)
+       check(current.fetch('instance_id') == old.fetch('instance_id') && current.fetch('run_id') != resumed.fetch('run_id'), 'update retains instance with fresh run')
+       check(current.fetch('artifact_id') != resumed.fetch('artifact_id') && current.fetch('provenance').fetch('machine_toplevels') != resumed.fetch('provenance').fetch('machine_toplevels'), 'genuinely changed artifact and closures')
+       check(identities == identity && sentinels('b') == sentinel, 'update preserves disks, six credentials, private accounts digest and sentinels')
+       preparation(current)
+       isolation(descriptor('a', source), current)
+       checkpoint('resetting-only-a')
+-      engine('a', 'stop')
++      engine('a', 'stop', '--timeout', '900')
+       engine('a', 'reset')
+       check(!File.exist?(file('state-a/clusters/same-slug')), 'only owned A tree reset')
+       current = descriptor('b', source)
+-      engine('b', 'stop')
++      engine('b', 'stop', '--timeout', '900')
+       engine('b', 'resume')
+       final = descriptor('b', source)
++      restored_router(final)
+       continuity(current, final, identity, sentinel)
+       write('accepted-b.json', final, immutable: true)
+       checkpoint('public-lease-proof')
+@@ -566,7 +639,7 @@ module KbVerify
+     end
+ 
+     def bilingual_capture
+-      descriptor('b', source)
++      restored_router(descriptor('b', source))
+       before = source_hashes
+       output = file('output')
+       capture = File.join(selection.fetch('capture'), 'bin/vpsfree-kb-capture')
+diff --git a/tools/test-machine.rb b/tools/test-machine.rb
+index 947522495a2c67e4c8899a2989d52e2fad11b0f4..ac8faca5a44bb6cdcb76a63250728e57b995c98e 100644
+--- a/tools/test-machine.rb
++++ b/tools/test-machine.rb
+@@ -190,6 +190,146 @@ class RunnerSessionTest < Minitest::Test
+     end
+   end
+ 
++  def test_caller_expiry_retains_one_shutdown_and_tracks_late_children_until_reapers_complete
++    delayed_shutdown
++  end
++
++  def test_signal_withdraws_ready_marker_and_repeated_control_only_waits_for_the_same_shutdown
++    delayed_shutdown(signal_origin: true)
++  end
++
++  def delayed_shutdown(signal_origin: false)
++    with_runner(mode: 'delayed-drain') do |context|
++      server = UNIXServer.new(File.join(context[:state].root, 'drain.sock'))
++      File.chmod(0o600, server.path)
++      peer = waiter = nil
++      with_controller(context) do |pid, input, output|
++        observe_runner(context, output, pid)
++        input.write('.'); input.flush
++        assert(Process.waitpid2(pid).last.success?)
++        context[:controller_reaped] = true
++        context[:shutdown_attempted] = true
++        context[:shutdown_attempts] = 1
++        context[:engine].set_phase('ready', context[:record]['run_id'])
++        assert(context[:engine].ready?(context[:record]))
++        if signal_origin
++          Process.kill('TERM', context[:runner]['pid'])
++          peer = Timeout.timeout(5) { server.accept }
++          assert_equal('ready', context[:engine].phase['phase'])
++          assert(context[:engine].live?(context[:record]))
++          refute(context[:engine].status['ready'])
++          assert_raises(KbRuntime::Error) { context[:engine].connection }
++        end
++        failure = assert_raises(KbRuntime::Error) { context[:engine].stop(timeout: 0) }
++        assert_match(/owned shutdown incomplete/, failure.message)
++        peer ||= Timeout.timeout(5) { server.accept }
++        stopped = JSON.parse(Timeout.timeout(5) { peer.gets })
++        assert_equal('stop', stopped['stage'])
++        assert_equal(1, stopped['timeout'], 'configured machine budget, not hard-coded 120')
++        assert_equal('budget-expired', JSON.parse(Timeout.timeout(5) { peer.gets })['stage'])
++        assert_equal('stopping', context[:engine].phase['phase'])
++        refute(File.exist?(context[:state].path("ready-#{context[:record]['run_id']}.json")))
++        assert_retained_runner(context)
++        refute(context[:engine].process_record(context[:record])['complete'])
++        assert_equal(context[:claims], Dir.glob(File.join(context[:engine].resources.root, '*.json')).to_h { |path| [path, File.binread(path)] })
++        refute(File.exist?(File.join(context[:record]['state_dir'], 'cleaned')))
++
++        # These exact authenticated requests and signals all target one drain.
++        2.times do
++          assert_raises(KbRuntime::Error) { context[:engine].stop(timeout: 0) }
++          Process.kill('TERM', context[:runner]['pid'])
++          Process.kill('INT', context[:runner]['pid'])
++        end
++        peer.puts('late')
++        late = JSON.parse(Timeout.timeout(5) { peer.gets })
++        assert_equal('late', late['stage'])
++        proof = Timeout.timeout(5) do
++          loop do
++            current = context[:engine].process_record(context[:record])
++            break current if current['children'].any? { |child| child['pid'] == late['pid'] }
++            Thread.pass
++          end
++        end
++        assert_equal(context[:runner], proof['runner'])
++        assert_equal(2, proof['children'].size)
++        refute(proof['complete'])
++        peer.puts('exit')
++        assert_equal({ 'stage' => 'reaped', 'running' => false }, JSON.parse(Timeout.timeout(5) { peer.gets }))
++        refute(context[:engine].gone?(context[:record]), 'nil join and first child exit do not prove the late child gone')
++        refute(context[:engine].process_record(context[:record])['complete'])
++        assert_equal(1, File.readlines(File.join(context[:record]['state_dir'], 'stop-calls.jsonl')).length)
++        waiter = Thread.new do
++          context[:engine].stop(timeout: 5)
++          :stopped
++        rescue KbRuntime::Error => error
++          error
++        end
++        Timeout.timeout(5) do
++          loop do
++            begin
++              context[:state].lock('operation', wait: false) { }
++            rescue KbRuntime::Busy
++              break
++            end
++            Thread.pass
++          end
++        end
++        peer.puts('finish')
++        assert_equal('finished', JSON.parse(Timeout.timeout(5) { peer.gets })['stage'])
++        Timeout.timeout(5) { Thread.pass until context[:engine].gone?(context[:record]) }
++        assert_equal(2, context[:engine].process_record(context[:record])['children'].size, 'identities are append-only')
++        assert_equal(:stopped, Timeout.timeout(5) { waiter.value })
++        assert_shutdown(context)
++        assert_equal(1, File.readlines(File.join(context[:record]['state_dir'], 'stop-calls.jsonl')).length)
++        assert_equal(context[:runner], context[:engine].process_record(context[:record])['runner'])
++      end
++    ensure
++      primary = $!
++      cleanup_error = nil
++      begin
++        if File.exist?(context[:state].path("processes-#{context[:record]['run_id']}.json")) && !context[:engine].gone?(context[:record])
++          unless context[:shutdown_attempted]
++            context[:shutdown_attempted] = true
++            context[:shutdown_attempts] = 1
++            begin
++              context[:engine].stop(timeout: 0)
++            rescue KbRuntime::Error
++              # First owned request only; release the fixture's child below.
++            end
++          end
++          peer ||= Timeout.timeout(5) { server.accept }
++          peer.puts('release') unless peer.closed?
++          Timeout.timeout(5) { Thread.pass until context[:engine].gone?(context[:record]) }
++        end
++      rescue StandardError => error
++        cleanup_error = error
++        context[:drain_cleanup_error] = error
++      ensure
++        peer&.close unless peer&.closed?
++        server&.close unless server&.closed?
++        waiter&.join
++      end
++      raise cleanup_error if cleanup_error && !primary
++    end
++  end
++
++  def test_queued_shutdown_at_the_ensure_boundary_does_not_replace_primary_failure
++    with_runner(mode: 'primary-drain-error') do |context|
++      out, error, status = Open3.capture3(*runner_argv(context))
++      File.write(context[:log], out, mode: 'wb', perm: 0o600)
++      File.write(context[:error], error, mode: 'wb', perm: 0o600)
++      refute(status.success?)
++      assert_match(/primary readiness fixture failure/, error)
++      refute_match(/unhandled exception.*ShutdownRequested/, error)
++      proof = context[:engine].process_record(context[:record])
++      assert(proof['complete'])
++      assert(context[:engine].gone?(context[:record]))
++      refute(File.exist?(context[:state].path("ready-#{context[:record]['run_id']}.json")))
++      assert_equal(1, File.readlines(File.join(context[:record]['state_dir'], 'stop-calls.jsonl')).length)
++      shutdown(context)
++    end
++  end
++
+   def test_primary_assertion_and_secondary_cleanup_failure_keep_original_error_and_private_evidence
+     context = nil
+     original = nil
+@@ -221,7 +361,7 @@ class RunnerSessionTest < Minitest::Test
+     assert_equal(original_backtrace, evidence['primary']['backtrace'])
+     assert_equal(true, evidence['processes']['complete'])
+     assert_equal(true, evidence['gone'])
+-    assert_equal('starting', evidence['phase']['phase'])
++    assert_equal('stopping', evidence['phase']['phase'])
+     assert_equal([{ 'name' => 'unrelated', 'type' => 'file' }], evidence['socket_entries'])
+     assert_equal(0, evidence['claims_count'])
+     assert_match(/secondary cleanup/, diagnostic)
+@@ -281,7 +421,7 @@ class RunnerSessionTest < Minitest::Test
+           assert(fixture[:engine].gone?(fixture[:record]))
+           assert(fixture[:engine].process_record(fixture[:record])['complete'])
+           assert_empty(Dir.glob(File.join(fixture[:engine].resources.root, '*.json')))
+-          assert_equal('starting', fixture[:engine].phase['phase'])
++          assert_equal('stopping', fixture[:engine].phase['phase'])
+         end
+       end
+     end
+@@ -343,6 +483,7 @@ class RunnerSessionTest < Minitest::Test
+             secondary = error
+           end
+         end
++        secondary ||= context[:drain_cleanup_error]
+         failure = primary || context[:shutdown_error] || secondary
+         if failure
+           cleanup_error = primary ? secondary : nil
+@@ -433,7 +574,7 @@ class RunnerSessionTest < Minitest::Test
+       '--config', record['config_path'], '--state-dir', record['state_dir'], '--sock-dir', record['socket_dir'],
+       '--launch-file', context[:state].path("launch-#{record['run_id']}.json"), '--state-root', context[:state].root,
+       '--slug', context[:state].slug, '--instance-id', record['instance_id'], '--run-id', record['run_id'],
+-      '--artifact-id', record['artifact_id'], '--artifact-sha256', record['artifact_sha256'], '--timeout', '5']
++      '--artifact-id', record['artifact_id'], '--artifact-sha256', record['artifact_sha256'], '--timeout', context[:mode] == 'delayed-drain' ? '1' : '5']
+   end
+ 
+   def with_controller(context)
+@@ -515,6 +656,10 @@ class RunnerSessionTest < Minitest::Test
+       context[:shutdown_error] = error
+       raise
+     end
++    assert_shutdown(context)
++  end
++
++  def assert_shutdown(context)
+     assert_equal('stopped', context[:engine].phase['phase'])
+     assert(context[:engine].process_record(context[:record])['complete'])
+     assert(context[:engine].gone?(context[:record]))
+@@ -531,6 +676,20 @@ class RunnerSessionTest < Minitest::Test
+       $LOAD_PATH.replace(JSON.parse(File.read(ARGV.shift)))
+       require #{File.expand_path('../cluster/lib/devcluster_runner', __dir__).inspect}
+       mode = ARGV.shift
++      $session_fixture_mode = mode
++      if mode == 'primary-drain-error'
++        original_read = KbRuntime::State.instance_method(:read)
++        KbRuntime::State.define_method(:read) do |path, **options|
++          begin
++            original_read.bind_call(self, path, **options)
++          ensure
++            if File.basename(path).start_with?('ready-') && !@queued_shutdown_fixture
++              @queued_shutdown_fixture = true
++              Thread.new { Thread.main.raise DevClusters::OsVmRunner::ShutdownRequested }.join
++            end
++          end
++        end
++      end
+       if mode == 'own-session'
+         Process.setsid
+         Process.define_singleton_method(:setsid) { raise 'setsid called twice' }
+@@ -578,6 +737,18 @@ class RunnerSessionTest < Minitest::Test
+           reader, @writer = IO.pipe
+           @child = Process.spawn(RbConfig.ruby, '-e', 'STDIN.read', in: reader, close_others: true)
+           reader.close
++          @running = true
++          @reaper = Thread.new do
++            Process.wait(@child)
++            @running = false
++          end
++        end
++        def running?
++          @running
++        end
++        def join(timeout:)
++          @reaper.join(timeout)
++          nil # The pinned public API discards its timeout result.
+         end
+         def wait_for_boot(timeout:)
+           fds = Dir.children('/proc/self/fd').filter_map do |name|
+@@ -585,13 +756,54 @@ class RunnerSessionTest < Minitest::Test
+           end
+           File.write(File.join(@directory, 'machine.json'), JSON.generate('session' => Process.getsid(0),
+             'group' => Process.getpgrp, 'fds' => fds), mode: 'wb', perm: 0o600)
++          raise 'primary readiness fixture failure' if $session_fixture_mode == 'primary-drain-error'
+         end
+         def stop(timeout:)
+           $shutdown_listener.wait_for_next_accept if $shutdown_listener
+-          @writer.close
+-          Process.wait(@child)
++          File.open(File.join(@directory, 'stop-calls.jsonl'), 'a', 0o600) { |file| file.puts(JSON.generate('timeout' => timeout)) }
++          if $session_fixture_mode == 'delayed-drain'
++            @drain = UNIXSocket.new(File.join(File.dirname(File.dirname(File.dirname(@directory))), 'drain.sock'))
++            @drain.puts(JSON.generate('stage' => 'stop', 'child' => @child, 'timeout' => timeout))
++            @commands = Thread.new do
++              while (command = @drain.gets)
++                case command.strip
++                when 'late'
++                  reader, @late_writer = IO.pipe
++                  @late_child = Process.spawn(RbConfig.ruby, '-e', 'STDIN.read', in: reader, close_others: true)
++                  reader.close
++                  @drain.puts(JSON.generate('stage' => 'late', 'pid' => @late_child))
++                when 'exit'
++                  @writer.close
++                  @reaper.join
++                  @drain.puts(JSON.generate('stage' => 'reaped', 'running' => running?))
++                when 'release'
++                  @writer.close unless @writer.closed?
++                  @reaper.join
++                  @late_writer&.close unless @late_writer&.closed?
++                  Process.wait(@late_child) if @late_child
++                  break
++                when 'finish'
++                  @late_writer.close
++                  Process.wait(@late_child)
++                  @drain.puts(JSON.generate('stage' => 'finished'))
++                  break
++                else
++                  raise 'unexpected owned drain barrier command'
++                end
++              end
++            end
++            unless @reaper.join(timeout)
++              @drain.puts(JSON.generate('stage' => 'budget-expired'))
++              raise 'injected machine operation budget expired'
++            end
++          else
++            @writer.close
++            @reaper.join
++          end
+         end
+         def finalize
++          @commands&.join
++          @drain&.close
+           File.write(File.join(@directory, 'finalized'), '', mode: 'wb', perm: 0o600)
+         end
+         def cleanup
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+index 1c46e4c95a0ffeff70b65e16bd97e5d2e78af17f..1434c34765e8c8a67f276a3b77e77aa39b1defd6 100644
+--- a/tools/test-runtime-verify.rb
++++ b/tools/test-runtime-verify.rb
+@@ -87,6 +87,25 @@ class RuntimeVerifyTest < Minitest::Test
+     end
+   end
+ 
++  def test_only_exact_published_7dc_predecessor_is_accepted_before_campaign_mutation
++    assert_equal('7dc4d70830e535f4559bccfa668cf65cdce1de2d', KbVerify::PREDECESSOR)
++    with_campaign do |campaign|
++      assert_equal('github:vpsfreecz/vpsfree-kb-contracts/7dc4d70830e535f4559bccfa668cf65cdce1de2d', campaign.inputs['predecessor_ref'])
++      directory = File.dirname(campaign.root)
++      ['github:vpsfreecz/vpsfree-kb-contracts/68aa33b451a14eb7bf4b2f1a090a8e5a2f80b52e',
++        "github:vpsfreecz/vpsfree-kb-contracts/#{'b' * 40}",
++        'github:vpsfreecz/vpsfree-kb-contracts/master'].each do |reference|
++        error = assert_raises(KbVerify::Error) do
++          KbVerify::Campaign.new(root: campaign.root, config_a: File.join(directory, 'config-0.json'),
++            config_b: File.join(directory, 'config-1.json'), predecessor_ref: reference,
++            capacity_receipt: File.join(directory, 'capacity.json'), selection: campaign.selection)
++        end
++        assert_equal('predecessor must be the exact published 7dc4d708 Git-flake', error.message)
++        refute(File.exist?(campaign.root))
++      end
++    end
++  end
++
+   def test_phase_receipts_bind_exact_inputs_and_truthful_failed_attempts_without_cleanup
+     with_campaign do |campaign|
+       campaign.define_singleton_method(:installed_layout) { check(true, 'synthetic installed boundary') }
+@@ -175,30 +194,56 @@ class RuntimeVerifyTest < Minitest::Test
+   end
+ 
+   def test_predecessor_uses_final_controller_stop_then_genuine_old_resume_and_final_live_update
++    predecessor_sequence
++  end
++
++  def test_each_failed_historical_drain_prevents_the_following_mutation_and_replay
++    [1, 2].each { |position| predecessor_sequence(fail_drain: position) }
++  end
++
++  def predecessor_sequence(fail_drain: nil)
+     with_campaign do |campaign|
+       campaign.initialize_campaign
+-      old_runtime = '/nix/store/synthetic-k68-runtime'
+-      old_source = campaign.source.merge('revision' => KbVerify::PREDECESSOR)
++      old_runtime = '/nix/store/synthetic-7dc-runtime'
++      old_source = campaign.source.merge('revision' => '7dc4d70830e535f4559bccfa668cf65cdce1de2d')
+       campaign.write('predecessor.json', { 'runtime' => old_runtime, 'source' => old_source })
+       calls = []
++      drains = []
+       campaign.define_singleton_method(:capacity) { |_operation| }
+-      campaign.define_singleton_method(:checkpoint) { |stage, *_| calls << ['checkpoint', stage] }
+-      campaign.define_singleton_method(:command) do |*argv, **|
++      checkpoint = campaign.method(:checkpoint)
++      campaign.define_singleton_method(:checkpoint) do |stage, detail = {}|
++        calls << ['checkpoint', stage]
++        checkpoint.call(stage, detail)
++      end
++      campaign.define_singleton_method(:command) do |*argv, **options|
+         calls << argv
+-        ['', 0]
++        if options[:caller_timeout]
++          drains << { argv: argv, options: options }
++          raise KbVerify::Error, 'synthetic native service refusal; no replay' if drains.length == fail_drain
++          ["LoadState=loaded\nActiveState=inactive\nSubState=dead\nMainPID=0\nResult=success\n", 0]
++        elsif argv.include?('vpsadmin-console-router.service')
++          ["LoadState=loaded\nActiveState=active\nSubState=running\nMainPID=41\nResult=success\n", 0]
++        else
++          ['', 0]
++        end
+       end
+       base = { 'instance_id' => 'b-instance', 'run_id' => 'old-run', 'artifact_id' => 'old-artifact',
+-        'artifact_sha256' => 'old-digest', 'provenance' => { 'machine_toplevels' => { 'services' => 'old-closure' } } }
++        'artifact_sha256' => 'old-digest', 'provenance' => { 'source' => old_source, 'machine_toplevels' => { 'services' => 'old-closure' } } }
+       old_descriptors = [base, base.merge('run_id' => 'old-resumed')]
+       current = base.merge('run_id' => 'updated-run', 'artifact_id' => 'final-artifact', 'artifact_sha256' => 'final-digest',
+-        'provenance' => { 'machine_toplevels' => { 'services' => 'new-closure' } })
++        'provenance' => { 'source' => campaign.source, 'machine_toplevels' => { 'services' => 'new-closure' } })
+       final_descriptors = [current, current, current.merge('run_id' => 'final-resumed')]
+       descriptors = []
+       campaign.define_singleton_method(:descriptor) do |which, expected|
+         descriptors << [which, expected]
+         case which
+         when 'a' then base.merge('instance_id' => 'a-instance')
+-        when 'old' then old_descriptors.shift || raise('unexpected predecessor descriptor')
++        when 'old'
++          value = old_descriptors.shift || raise('unexpected predecessor descriptor')
++          @guest_observations ||= {}
++          @guest_observations[['old', value['run_id']]] = { 'descriptor' => value,
++            'machines' => { 'services' => { 'identity_sha256' => 'd' * 64, 'closure' => 'old-closure' } } }
++          value
+         when 'b' then final_descriptors.shift || raise('unexpected final descriptor')
+         end
+       end
+@@ -211,13 +256,39 @@ class RuntimeVerifyTest < Minitest::Test
+       campaign.define_singleton_method(:sentinels) { |_which| sentinels }
+       campaign.define_singleton_method(:isolation) { |_first, _second| }
+       campaign.define_singleton_method(:preparation) { |_value| }
++      if fail_drain
++        campaign.write('receipts/installed-layout.json', { 'complete' => true, 'inputs' => campaign.inputs })
++        error = assert_raises(KbVerify::Error) { campaign.run('isolation-continuity-update') }
++        assert_match(/native service refusal/, error.message)
++        assert_equal(fail_drain, drains.length)
++        operations = calls.select { |argv| argv[0].end_with?('/bin/vpsfree-kb-devcluster') && argv[2] == campaign.file('state-b') }.map { |argv| argv[3] }
++        assert_equal(fail_drain == 1 ? %w[start ssh ssh ssh] : %w[start ssh ssh ssh stop resume ssh], operations)
++        refute_includes(operations, 'update')
++        refute(File.exist?(campaign.file('receipts/isolation-continuity-update.json')))
++        assert_equal('failed', campaign.read('receipts/isolation-continuity-update-attempt.json')['stage'])
++        previous = calls.dup
++        assert_raises(KbVerify::Error) { campaign.run('isolation-continuity-update') }
++        assert_equal(previous, calls)
++        return
++      end
+       campaign.isolation_continuity_update
++      assert_equal(2, drains.length)
++      drains.each do |drain|
++        assert_equal(360, drain[:options][:caller_timeout])
++        assert_equal(['ssh', 'same-slug', 'services', '--', 'sh', '-s', '--', 'd' * 64, 'old-closure'], drain[:argv][3..])
++        script = drain[:options][:input]
++        assert_includes(script, 'sha256sum /etc/vpsfree-kb-capture.json')
++        assert_includes(script, 'readlink -f /run/current-system')
++        assert_includes(script, 'timeout 360 systemctl stop vpsadmin-console-router.service')
++        refute_match(/RabbitMQ|rabbitmq|kill|isolate/, script)
++      end
+       commands = calls.select { |argv| argv[0].end_with?('/bin/vpsfree-kb-devcluster') }
+       b_commands = commands.select { |argv| argv[2] == campaign.file('state-b') }
+-      assert_equal(%w[start ssh ssh stop resume update stop resume], b_commands.map { |argv| argv[3] })
+-      assert_equal([old_runtime, old_runtime, old_runtime, campaign.selection['runtime'], old_runtime,
+-        campaign.selection['runtime'], campaign.selection['runtime'], campaign.selection['runtime']],
++      assert_equal(%w[start ssh ssh ssh stop resume ssh update ssh stop resume ssh], b_commands.map { |argv| argv[3] })
++      assert_equal([old_runtime, old_runtime, old_runtime, old_runtime, campaign.selection['runtime'], old_runtime, old_runtime,
++        campaign.selection['runtime'], campaign.selection['runtime'], campaign.selection['runtime'], campaign.selection['runtime'], campaign.selection['runtime']],
+         b_commands.map { |argv| File.dirname(File.dirname(argv[0])) })
++      b_commands.select { |argv| %w[stop update].include?(argv[3]) }.each { |argv| assert_equal(['--timeout', '900'], argv[5, 2]) }
+       assert_equal([old_source, old_source], descriptors.select { |which, _| which == 'old' }.map(&:last))
+       assert_equal(3, descriptors.count { |which, expected| which == 'b' && expected == campaign.source })
+       assert_empty(old_descriptors); assert_empty(final_descriptors)
+@@ -226,7 +297,120 @@ class RuntimeVerifyTest < Minitest::Test
+       assert_equal(current.merge('run_id' => 'final-resumed'), campaign.read('accepted-b.json'))
+       assert_includes(campaign.assertions, 'all six credentials, private accounts digest and disk identities preserved')
+       assert_includes(campaign.assertions, 'update preserves disks, six credentials, private accounts digest and sentinels')
+-      assert_includes(campaign.assertions, 'final-controller stop of K68 runner, K68 resume, final-controller update')
++      assert_includes(campaign.assertions, 'final-controller stop of predecessor runner, genuine predecessor resume, final-controller update')
++      assert_equal(2, Dir.glob(campaign.file('receipts/router-drain-*.json')).length)
++      assert_equal(2, Dir.glob(campaign.file('receipts/router-health-*.json')).length)
++    end
++  end
++
++  def test_router_drain_uses_completed_public_attestation_and_exact_clean_result
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      metadata = campaign.source.merge('revision' => KbVerify::PREDECESSOR)
++      identity = { 'schema' => 1, 'source' => metadata, 'artifact_id' => 'old-artifact' }
++      raw = JSON.pretty_generate(identity) + "\n"
++      value = { 'run_id' => 'old-run', 'artifact_id' => 'old-artifact', 'artifact_sha256' => 'd' * 64,
++        'provenance' => { 'source' => metadata, 'guest_identity' => identity, 'machine_toplevels' => { 'services' => '/nix/store/old-system' } } }
++      calls = []
++      result = "LoadState=loaded\nActiveState=inactive\nSubState=dead\nMainPID=0\nResult=success\n"
++      campaign.define_singleton_method(:engine) do |which, action, *args, **options|
++        calls << [which, action, args, options]
++        case action
++        when 'connection' then [JSON.generate(value), 0]
++        when 'ssh'
++          case args[2]
++          when 'cat' then [raw, 0]
++          when 'readlink' then ["/nix/store/old-system\n", 0]
++          when 'sh' then [result, 0]
++          else raise 'unexpected synthetic public command'
++          end
++        else raise 'no lifecycle is available in attestation fixture'
++        end
++      end
++      assert_raises(KbVerify::Error) { campaign.historical_router_drain(value) }
++      assert_empty(calls, 'SSH drain must not acquire authority from a descriptor alone')
++      checked = campaign.descriptor('old', metadata)
++      assert_equal(%w[connection ssh ssh], calls.map { |call| call[1] })
++      campaign.historical_router_drain(checked)
++      drain = calls.last
++      assert_equal('old', drain[0])
++      assert_equal(['services', '--', 'sh', '-s', '--', Digest::SHA256.hexdigest(raw), '/nix/store/old-system'], drain[2])
++      assert_equal(360, drain[3][:caller_timeout])
++      assert_equal(1, Dir.glob(campaign.file('receipts/router-drain-*.json')).length)
++      receipt = campaign.read('receipts/router-drain-old-run.json')
++      assert_equal(Digest::SHA256.hexdigest(raw), receipt.dig('guard', 'identity_sha256'))
++      assert_equal(metadata, receipt['source'])
++      assert_equal(Digest::SHA256.hexdigest(result), receipt['output_sha256'])
++      refute(receipt.key?('transcript'))
++      File.unlink(campaign.file('receipts/router-drain-old-run.json'))
++      [result.sub('inactive', 'failed'), result.sub('dead', 'stop-sigterm'), result.sub('MainPID=0', 'MainPID=41'),
++        result.sub('Result=success', 'Result=timeout'), result.sub('loaded', 'not-found'), result + "Result=success\n"].each do |invalid|
++        result = invalid
++        assert_raises(KbVerify::Error) { campaign.historical_router_drain(checked) }
++        refute(File.exist?(campaign.file('receipts/router-drain-old-run.json')))
++      end
++    end
++  end
++
++  def test_public_command_observer_expiry_keeps_native_exit_and_unknown_remote_cancellation
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      marker = campaign.file('work/drain-command-ready')
++      argv = [RbConfig.ruby, '-e', 'STDOUT.sync=true; STDERR.sync=true; STDOUT.puts("drain stdout"); STDERR.puts("drain stderr"); File.write(ARGV[0], Process.pid.to_s); STDIN.read; sleep 60', marker]
++      clock = Process.method(:clock_gettime)
++      expired = false
++      owner = error = nil
++      observed = lambda do |kind, *args|
++        clock.call(kind, *args) + ((kind == Process::CLOCK_MONOTONIC && Thread.current == owner && expired) ? 361 : 0)
++      end
++      Process.stub(:clock_gettime, observed) do
++        owner = Thread.new do
++          campaign.commands.call(argv, cwd: campaign.file('work'), caller_timeout: 360, stage: 'synthetic/historical-drain')
++        rescue KbVerify::Error => error
++          error
++        end
++        Timeout.timeout(5) { Thread.pass until File.exist?(marker) }
++        expired = true
++        error = Timeout.timeout(15) { owner.value }
++        assert_instance_of(KbVerify::Error, error)
++        assert_match(/observer expired; remote cancellation unknown/, error.message)
++      end
++      path = Dir.glob(campaign.file('diagnostics/*/command.json')).fetch(0)
++      record = JSON.parse(File.read(path))
++      assert_includes(error.message, path)
++      assert_equal(Integer(File.read(marker)), record['pid'])
++      assert(record['observer_expired'])
++      refute(record['accepted'])
++      assert(record['complete'])
++      assert_equal(Signal.list.fetch('TERM'), record['signal'])
++      assert_equal('spawned public command only', record['cleanup_scope'])
++      assert_equal('unknown', record['remote_cancellation'])
++      assert_equal(360, record['caller_timeout_seconds'])
++      assert_equal('synthetic/historical-drain', record['stage'])
++      assert_equal("drain stdout\n", File.read(File.join(File.dirname(path), 'stdout')))
++      assert_equal("drain stderr\n", File.read(File.join(File.dirname(path), 'stderr')))
++      refute(record.key?('environment'))
++    ensure
++      owner&.raise(Interrupt) if owner&.alive?
++      owner&.join
++    end
++  end
++
++  def test_native_guest_timeout_is_not_an_observer_expiry
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      argv = [RbConfig.ruby, '-e', 'STDERR.write("native guest timeout"); exit 124']
++      error = assert_raises(KbVerify::Error) do
++        campaign.commands.call(argv, cwd: campaign.file('work'), caller_timeout: 360, stage: 'synthetic/native-guest-timeout')
++      end
++      path = Dir.glob(campaign.file('diagnostics/*/command.json')).fetch(0)
++      record = JSON.parse(File.read(path))
++      assert_includes(error.message, path)
++      assert_equal(124, record['exit_code'])
++      assert_nil(record['signal'])
++      refute(record['observer_expired'])
++      refute(record['accepted'])
++      assert_equal('native guest timeout', File.read(File.join(File.dirname(path), 'stderr')))
+     end
+   end
+ 
+@@ -259,7 +443,7 @@ class RuntimeVerifyTest < Minitest::Test
+       calls = []
+       runtime = '/nix/store/synthetic-predecessor-runtime'
+       metadata_path = '/nix/store/synthetic-predecessor-source.json'
+-      metadata = campaign.source.merge('revision' => KbVerify::PREDECESSOR)
++      metadata = campaign.source.merge('revision' => '7dc4d70830e535f4559bccfa668cf65cdce1de2d')
+       campaign.define_singleton_method(:capacity) { |operation| calls << ['capacity', operation] }
+       campaign.define_singleton_method(:command) do |*argv, **|
+         calls << argv
+@@ -293,8 +477,10 @@ class RuntimeVerifyTest < Minitest::Test
+       end
+       assert_equal({ 'runtime' => runtime, 'metadata_path' => metadata_path, 'source' => metadata }, campaign.read('predecessor.json'))
+       assert_operator(calls.index(['capacity', 'predecessor-build']), :<, calls.index { |argv| argv.first == 'nix' })
+-      assert_includes(calls.find { |argv| argv.first == 'nix' }, "#{campaign.inputs['predecessor_ref']}#kb-runtime")
+-      assert_includes(calls.find { |argv| argv.first == 'nix' }, "#{campaign.inputs['predecessor_ref']}#runtime-source")
++      builds = calls.select { |argv| argv.first == 'nix' }
++      assert_equal(1, builds.size)
++      assert_equal(['github:vpsfreecz/vpsfree-kb-contracts/7dc4d70830e535f4559bccfa668cf65cdce1de2d#kb-runtime',
++        'github:vpsfreecz/vpsfree-kb-contracts/7dc4d70830e535f4559bccfa668cf65cdce1de2d#runtime-source'], builds.first.last(2))
+     end
+   end
+ 
+@@ -414,14 +600,17 @@ class RuntimeVerifyTest < Minitest::Test
+     end
+   end
+ 
+-  def test_failed_native_command_keeps_private_stdout_stderr_exact_exit_and_stage
++  def test_failed_native_phase_keeps_private_stdout_stderr_exact_exit_and_stage_without_replay
+     with_campaign do |campaign|
+-      campaign.initialize_campaign
+       argv = [RbConfig.ruby, '-e', 'STDOUT.write("native output"); STDERR.write("native error"); exit 23']
++      campaign.define_singleton_method(:installed_layout) do
++        checkpoint('predecessor-construction')
++        command(*argv)
++      end
+       failure = nil
+       stdout, stderr = capture_io do
+         failure = assert_raises(KbVerify::Error) do
+-          campaign.commands.call(argv, cwd: campaign.file('work'), stage: 'installed-layout/predecessor-construction')
++          campaign.run('installed-layout')
+         end
+       end
+       assert_equal('', stdout)
+@@ -439,6 +628,21 @@ class RuntimeVerifyTest < Minitest::Test
+       assert_equal('native error', File.read(File.join(File.dirname(path), 'stderr')))
+       Dir.glob(File.join(File.dirname(path), '*')).each { |name| assert_equal(0o600, File.stat(name).mode & 0o777) }
+       refute(record.key?('environment'))
++      attempt = campaign.read('receipts/installed-layout-attempt.json')
++      assert_equal('failed', attempt['stage'])
++      assert_equal(campaign.inputs, attempt['inputs'])
++      assert_equal('KbVerify::Error', attempt['error_class'])
++      refute(attempt['complete'])
++      refute(File.exist?(campaign.file('receipts/installed-layout.json')))
++      before = File.binread(campaign.file('receipts/installed-layout-attempt.json'))
++      replay = assert_raises(KbVerify::Error) { campaign.run('installed-layout') }
++      assert_equal('incomplete phase requires diagnosis; no automatic campaign replay', replay.message)
++      assert_raises(Errno::ENOENT) { campaign.run('isolation-continuity-update') }
++      refute(File.exist?(campaign.file('receipts/isolation-continuity-update-attempt.json')))
++      assert_equal(before, File.binread(campaign.file('receipts/installed-layout-attempt.json')))
++      assert_equal([path], Dir.glob(campaign.file('diagnostics/*/command.json')))
++      refute(File.exist?(campaign.file('state-a')))
++      refute(File.exist?(campaign.file('state-b')))
+     end
+   end
+ 
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index a049332462d6c89df42b5ab068ec8b1ff2012417..b401b8053e5013f80d5c39e137d5a53e123e58e2 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -3,6 +3,7 @@
+ require 'minitest/autorun'
+ require 'minitest/mock'
+ require 'tmpdir'
++require 'stringio'
+ require_relative '../cluster/lib/kb_runtime'
+ require_relative '../cluster/launcher'
+ 
+@@ -1901,6 +1902,134 @@ class RuntimeLifecycleTest < Minitest::Test
+     end
+   end
+ 
++  def test_missing_ready_marker_denies_status_connection_update_and_capture_without_effects
++    Dir.mktmpdir('kb-readiness-', '/tmp') do |directory|
++      value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++      begin
++        requested = config
++        value.start(config: requested, network: 'local', timeout: 5)
++        record = value.launch
++        connection = value.state.file(value.state.path('connection.json'))
++        File.unlink(value.state.path("ready-#{record['run_id']}.json"))
++        before = retained_files(value)
++        assert(value.live?(record))
++        refute(value.ready?(record))
++        assert_equal('ready', value.phase['phase'], 'signal-origin drain may retain the ready phase')
++        refute(value.status['ready'])
++        assert_raises(KbRuntime::Error) { value.connection }
++        update_error = assert_raises(KbRuntime::Error) { value.update(config: requested, topology: 'single', network: 'local', timeout: 5) }
++        assert_match(/live ready predecessor/, update_error.message)
++        error = assert_raises(KbRuntime::Error) do
++          value.capture_lease(instance_id: record['instance_id'], run_id: record['run_id'],
++            artifact_id: record['artifact_id'], artifact_sha256: record['artifact_sha256'],
++            descriptor_sha256: Digest::SHA256.hexdigest(connection), input: StringIO.new, output: StringIO.new)
++        end
++        assert_match(/not ready/, error.message)
++        assert_equal(before, retained_files(value))
++        assert_equal(1, value.software.builds)
++      ensure
++        # This synthetic runner permits a marker already withdrawn by the test.
++        value.stop(timeout: 5) if File.exist?(value.state.path('phase.json'))
++      end
++    end
++  end
++
++  def test_foreign_and_unsafe_ready_markers_keep_their_strict_refusal
++    Dir.mktmpdir('kb-readiness-', '/tmp') do |directory|
++      value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++      begin
++        value.start(config: config, network: 'local', timeout: 5)
++        record = value.launch
++        path = value.state.path("ready-#{record['run_id']}.json")
++        marker = value.state.read(path)
++        %w[schema instance_id run_id artifact_id artifact_sha256].each do |key|
++          value.state.write(path, marker.merge(key => key == 'schema' ? 2 : 'foreign'))
++          before = retained_files(value)
++          assert_raises(KbRuntime::Error) { value.status }
++          assert_raises(KbRuntime::Error) { value.connection }
++          assert(value.live?(record))
++          assert_equal(before, retained_files(value))
++        end
++        value.state.write(path, marker)
++        File.chmod(0o644, path)
++        assert_raises(KbRuntime::Error) { value.ready?(record) }
++        File.chmod(0o600, path)
++        value.state.write(path, marker)
++      ensure
++        value.stop(timeout: 5) if File.exist?(value.state.path('phase.json'))
++      end
++    end
++  end
++
++  def test_readiness_loss_cancels_an_acquired_capture_and_prevents_late_handshake
++    Dir.mktmpdir('kb-readiness-', '/tmp') do |directory|
++      value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++      begin
++        value.start(config: config, network: 'local', timeout: 5)
++        record = value.launch
++        marker = value.state.path("ready-#{record['run_id']}.json")
++        original = value.state.read(marker)
++        connection = value.state.file(value.state.path('connection.json'))
++        input, writer = IO.pipe
++        output_reader, output = IO.pipe
++        lease = Thread.new do
++          value.capture_lease(instance_id: record['instance_id'], run_id: record['run_id'],
++            artifact_id: record['artifact_id'], artifact_sha256: record['artifact_sha256'],
++            descriptor_sha256: Digest::SHA256.hexdigest(connection), input:, output:)
++        rescue KbRuntime::Error => error
++          error
++        end
++        assert_equal(record['run_id'], JSON.parse(Timeout.timeout(5) { output_reader.gets })['run_id'])
++        File.unlink(marker)
++        error = Timeout.timeout(5) { lease.value }
++        assert_instance_of(KbRuntime::Error, error)
++        assert_match(/readiness lost/, error.message)
++        assert(value.live?(record))
++        refute(value.status['ready'])
++        value.state.write(marker, original)
++        verify = value.method(:verify_live)
++        value.define_singleton_method(:verify_live) do |current|
++          verify.call(current)
++          File.unlink(marker)
++        end
++        handshake = StringIO.new
++        assert_raises(KbRuntime::Error) do
++          value.capture_lease(instance_id: record['instance_id'], run_id: record['run_id'],
++            artifact_id: record['artifact_id'], artifact_sha256: record['artifact_sha256'],
++            descriptor_sha256: Digest::SHA256.hexdigest(connection), input: StringIO.new, output: handshake)
++        end
++        assert_empty(handshake.string)
++      ensure
++        writer&.close unless writer&.closed?
++        lease&.join
++        [input, output_reader, output].compact.each { |stream| stream.close unless stream.closed? }
++        value.stop(timeout: 5) if File.exist?(value.state.path('phase.json'))
++      end
++    end
++  end
++
++  def test_marker_withdrawn_during_initial_attestation_never_reports_ready
++    Dir.mktmpdir('kb-readiness-', '/tmp') do |directory|
++      value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++      verify = value.method(:verify_live)
++      value.define_singleton_method(:verify_live) do |record|
++        verify.call(record)
++        File.unlink(state.path("ready-#{record['run_id']}.json"))
++      end
++      begin
++        failure = assert_raises(KbRuntime::Error) { value.start(config: config, network: 'local', timeout: 5) }
++        assert_match(/readiness withdrawn/, failure.message)
++        refute(value.status['ready'])
++        assert(value.live?(value.launch))
++        assert_equal(1, value.software.builds)
++        assert_equal(1, Dir.glob(File.join(value.state.directory, 'launch-*.json')).length)
++        refute(File.exist?(value.state.path('connection.json')))
++      ensure
++        value.stop(timeout: 5) if File.exist?(value.state.path('phase.json'))
++      end
++    end
++  end
++
+   def test_live_children_prevent_claim_release_and_eof_releases_capture_gate
+     Dir.mktmpdir do |directory|
+       value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))

@@ -1,0 +1,1 @@
+import{r as e,j as n}from"./vendor-react-MGxsW2Ms.js";const r=e.createContext(null);function u(t){return n.jsx(r.Provider,{value:t.value,children:t.children})}function s(){const t=e.useContext(r);if(!t)throw new Error("useVpsContext must be used within VpsContextProvider");return t}const x=s;export{u as V,x as u};

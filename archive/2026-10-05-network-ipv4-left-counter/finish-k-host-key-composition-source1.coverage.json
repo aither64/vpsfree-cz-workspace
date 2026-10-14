@@ -1,0 +1,37 @@
+{
+  "status": "declared and UNRUN; source inspection only",
+  "case_count": 10,
+  "existing_cases": [
+    "test_actual_services_node_and_optional_dns_have_exactly_one_ed25519_declaration_and_hostkey_line",
+    "test_real_generation_and_second_start_preserve_private_bytes_and_public_fingerprint",
+    "test_pool_completion_barrier_prevents_generation_until_released",
+    "test_unavailable_pool_refuses_before_any_storage_or_generation",
+    "test_missing_tmpfs_wrong_dataset_mountpoint_and_unmounted_storage_refuse_before_generation",
+    "test_unsafe_tank_path_or_owner_mode_refuses_without_preparing_keys",
+    "test_existing_unsafe_directory_and_failed_preparation_are_not_repaired",
+    "test_unsafe_private_key_type_mode_owner_link_or_invalid_material_is_preserved",
+    "test_unsafe_public_path_and_public_file_without_private_key_are_not_overwritten",
+    "test_native_key_generation_failure_cannot_start_daemon_or_create_fallback"
+  ],
+  "new_assertions": [
+    "Exactly one evaluated waitForService pool-tank || exit 1 prefix",
+    "Exactly one evaluated OS Ensure SSH host keys generation block",
+    "Exactly one evaluated pinned daemon exec with existing config arguments",
+    "Pool wait precedes the OS generation block",
+    "OS generation block precedes the exact daemon exec"
+  ],
+  "retained_boundaries": [
+    "Actual pinned services/node/optional DNS declarations and generated sshd configuration",
+    "Real Ed25519 generation and repeated inode/private-byte/public-fingerprint preservation",
+    "Pool completion barrier and unavailable/wrong dataset/mountpoint/storage producers",
+    "Unsafe path/type/UID/mode/link/private/public key refusal without repair",
+    "Native generator failure prevents daemon/fallback",
+    "Original five-second waits, child ownership and cleanup"
+  ],
+  "unchanged_hosted_selectors": [
+    "nix develop --command bin/check --allow-missing",
+    "nix develop --command ruby tools/test-node-ssh.rb"
+  ],
+  "root_owned_later_gates": "Normal consolidation/publication, exact K/E package-contract checks and affected independent review",
+  "claims_excluded": "No local execution, passing repaired projection/shell check, guest continuity, fit, trust migration, campaign or media proof"
+}

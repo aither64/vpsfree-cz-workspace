@@ -1,0 +1,139 @@
+{
+  "session": "2026-10-05-network-ipv4-left-counter",
+  "member": "implementer0",
+  "retained_settings": {
+    "model": "gpt-6.1-sol",
+    "effort": "xhigh",
+    "purpose": "implementation",
+    "access": "workspace_write",
+    "roster_revision": 17
+  },
+  "repository": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/dev-workspace",
+  "head": "d2d64f2e2a2167a1171e2bca17fe99ff2375d231",
+  "base": "c51ba3c0ca0d41d237ef71c56accd564beb70a33",
+  "branch": "2026-10-05-network-ipv4-left-counter",
+  "path_count": 2,
+  "paths": [
+    "portal/internal/web/server_test.go",
+    "portal/internal/web/operation_state_test.go"
+  ],
+  "index_empty": true,
+  "accepted_inputs": {
+    "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-d-fixture-repair-source-acceptance1.md": {
+      "sha256": "926428f5fbe4f1d7b771a39427f0fadcf6cfe6225382ddfea9b504978dd61e93"
+    },
+    "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-d-inherited-test-rebase1-proof.json": {
+      "sha256": "e43bc1dbec56c0a6e24aa377de49df93862c4951a78549714ec234514bb06feb"
+    },
+    "design.md Hosted E3 deletion-force fixture diagnosis section": {
+      "body_sha256": "4d88511450b1b0a841b1b6b874d12ff379691cf5648da0e6d76c090f65bc98a5"
+    }
+  },
+  "native_evidence": {
+    "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-e-generator-source-log3.txt": {
+      "sha256": "8f16cba3a97d257440f3d266d650094d1ebdccbdfe10f8d8d18e998ef5fd916f",
+      "bytes": 112797
+    }
+  },
+  "historical_hosted_pair": {
+    "run": 37833313842,
+    "extension": "7b5acc05d3b005ebfb4f05c2cc58d636faaabd1e",
+    "generic": "51aba080b264c28f5584867b6cf006bf423ae2f3"
+  },
+  "native_failure": {
+    "example": "TestDeleteOperationRetryUsesTheJournaledForceSetting",
+    "log_line": 810,
+    "reported_result": "timeout after 2.02s; paused/validated receipt, attempt 1, force true, retained matching journal"
+  },
+  "source_diagnosis": "Both fake force-retry commands captured arguments and exited successfully without removing their test-created deletion journals. Source reconciliation can turn complete back to paused while a valid matching journal remains. Executor completion followed by retained-journal reconciliation explains the native receipt; the exact goroutine ordering is inferred, not reproduced.",
+  "correction": {
+    "two force retry cases": "Each test explicitly passes its exact temporary journal path through DELETE_JOURNAL. The fake helper fails on unsuccessful argv capture or nonrecursive unlink, then exits 0. Original force argv/conflict assertions remain. After unchanged wait completion, tests require the original receipt, incremented attempt, true force and original started time, assert journal absence, then invoke actual lifecycleOperationForSlug and require complete with identical receipt/attempt/force/journal/started identity.",
+    "matching journal counter-case": "The existing accepted-browser-identity fixture begins complete with a nonempty receipt ID and attempt 1, leaves its matching valid journal intact, and requires synchronous reconciliation to paused/validated with receipt/attempt/force/started identity retained. Original target, deleted-thread, journal-ID and expected-journal assertions remain."
+  },
+  "scope_proof": "Only the three assigned existing test bodies differ; all other bytes in the two files and all existing test names are unchanged. No production, helper-wrapper, deadline, worker, lock or schema changes; no recursive/shared/real cleanup or new framework.",
+  "unchanged_owning_sources": {
+    "portal/internal/web/server.go": {
+      "sha256": "a133cf3c2cc13d1fd1921b9dc58a40eda90510dc32cfb72474732a68f4e54046",
+      "byte_identical_to_head": true
+    },
+    "portal/internal/web/operation_state.go": {
+      "sha256": "fb1dfd8c5a832cec39aa7200a4456a2492234e4945b9243abe66a353f409ec7b",
+      "byte_identical_to_head": true
+    },
+    "portal/internal/web/command_fixture_test.go": {
+      "sha256": "6c301952d0e928ac51bb301d0ed7b99445c3669f47011a36746a2290e91e64a7",
+      "byte_identical_to_head": true
+    },
+    "libexec/dev-session": {
+      "sha256": "ef2ff8d6f23566cc9a7af77a76801321691b86c748cdd9515cb8f1d6ec91198b",
+      "byte_identical_to_head": true
+    },
+    "flake.nix": {
+      "sha256": "6f6e734fb5c157519b3e044ac60ad48e41feb8286997ab2076741a3ed4816864",
+      "byte_identical_to_head": true
+    },
+    "flake.lock": {
+      "sha256": "5c6524e206d5f7e168f3e51864b9051a4bdecf5c80153ecc96dc1487bed949d9",
+      "byte_identical_to_head": true
+    },
+    "nix/workspace-portal.nix": {
+      "sha256": "622dccfdecba69cb2ed4d9f6e1ee3f061c0eb2fe84ad4749e2c3e0ae6ab2e6c0",
+      "byte_identical_to_head": true
+    },
+    ".github/workflows/check.yml": {
+      "sha256": "9df5880935d8a36480c3258edf7975a4571021c5200bf685390ec080eb99ef6e",
+      "byte_identical_to_head": true
+    },
+    "docs/workspace-portal.md": {
+      "sha256": "41004f4d14079a516498f67ba45e8eeef8b8cbf201a1b58a4071996961326c02",
+      "byte_identical_to_head": true
+    }
+  },
+  "source_preparation": [
+    {
+      "argv": [
+        "/nix/store/3yh8g6m3balbhzxsx77jlyyx443bxqii-go-1.26.6/bin/gofmt",
+        "-w",
+        "portal/internal/web/server_test.go",
+        "portal/internal/web/operation_state_test.go"
+      ],
+      "exit": 0,
+      "scope": "Only the two approved Go test paths, using the exact declared formatter supplied by root; no ambient formatter or shell evaluation."
+    }
+  ],
+  "checks_run": [],
+  "local_reproduction": false,
+  "git_mutations": false,
+  "lifecycle_operations": false,
+  "hosted_selection": {
+    "focused": [
+      "nix",
+      "develop",
+      "--command",
+      "go",
+      "-C",
+      "portal",
+      "test",
+      "-mod=readonly",
+      "./internal/web",
+      "-run",
+      "^(TestDeleteOperationRetry(Uses|CanUpgrade)TheJournaledForceSetting|TestDeleteSessionRetryReachesTheRemovalJournalAfterTrackingMoved|TestMatchingDeleteJournalPreservesTheAcceptedBrowserIdentity|TestLifecycleOperationDoesNotInferDeletionFromAMissingManifest)$"
+    ],
+    "full affected package": [
+      "nix",
+      "develop",
+      "--command",
+      "go",
+      "-C",
+      "portal",
+      "test",
+      "-mod=readonly",
+      "./internal/web"
+    ],
+    "normal workflow": "Existing .github/workflows/check.yml Check/fast on the parent-published exact head; package checks include the full Go suite. Do not manually dispatch the host VM job."
+  },
+  "documentation": "Existing owning lifecycle contracts remain correct. Temporary native diagnosis and correction evidence belong in this packet; no project prose change is needed.",
+  "readiness": "Frozen formatted test-only source for parent inspection and hosted verification; neither D51 historical results nor this source inspection certify the current head.",
+  "blockers": [],
+  "design_deviations": []
+}

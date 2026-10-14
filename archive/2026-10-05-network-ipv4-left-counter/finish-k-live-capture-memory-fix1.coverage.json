@@ -1,0 +1,26 @@
+{
+  "actual_boundary": "Campaign.capacity with real private capacity assessment, role binding, host comparison, filesystem budget checks and emitted capacity receipt; only host/filesystem/allocation observations use the existing synthetic fixture",
+  "added_method": "test_live_capture_checks_incremental_margins_without_readmitting_resident_guests",
+  "affected_owner_hosted_selection": "nix develop --command ruby tools/test-runtime-verify.rb",
+  "canonical_hosted_selection": "nix develop --command bin/check --allow-missing",
+  "cases": [
+    "Full actual start admission at 6 GiB RAM and 5 GiB free shm.",
+    "Fresh synthetic availability after the admitted 4 GiB guests is 2 GiB RAM and 1 GiB shm; actual capture admission succeeds at those incremental margins.",
+    "Capture receipt retains descriptive 4 GiB guest_bytes, exact current host availability, 2/1 GiB admission demand and original assessment digest/roles.",
+    "Real capacity receipt retains shared-filesystem once-only budgeting, 24 GiB future output growth, 16 GiB reserve, 3 GiB retained growth and explicitly unknown scratch.",
+    "Full start and resume capacity both refuse at live 2/1 GiB availability.",
+    "Capture refuses RAM one byte below 2 GiB with shm at its margin, and shm one byte below 1 GiB with RAM at its margin.",
+    "Failed admissions create no additional successful capacity receipt."
+  ],
+  "limits": "Synthetic host/filesystem admission regression is not real host capacity, guest, builder fit, capture, package or lifecycle proof.",
+  "selector_workflow_change": false,
+  "status": "declared, statically inspected, UNRUN",
+  "unchanged_cases": "Every baseline test method and assertion remains byte-identical; only one method is inserted.",
+  "unchanged_production_boundaries": [
+    "Both construction and runtime_browser assessments still require positive RAM/shm and a nonempty explicit assessment.",
+    "Initial start uses the peak of sequential construction and full guest/runtime demand; resume uses full guest/runtime demand.",
+    "bilingual_capture attests its public descriptor, completed resumed runtime and continuity before capacity(capture), then checks live guest resources before any capture command.",
+    "Filesystem bindings, sparse future growth, image/closure/inode deduplication, retained reserves, unknown scratch, resource checks, no-replay and command child/timer authority are exact baseline bytes."
+  ],
+  "verification_owner": "root; no commands in this packet were executed as checks"
+}

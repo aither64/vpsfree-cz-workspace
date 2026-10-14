@@ -1,0 +1,13 @@
+Both native source Checks 38060776587 and 38060776592 at K33b94de1e5d5bca2f2a9bc2c9c504a73e7ba0cd2 report one error in the new native image-projection assertion: Hash#fetch at tools/test-runtime-verify.rb:721 requests the full /nix/store/...drv key. Each retained log reports runtime 96/1209, closure 12/51 and machine 19/667 passing, then verifier 29/312 with zero failures and one error. Those are original-head observations, not certification of this correction.
+
+The failing native JSON payload was not retained and no local JSON experiment or reproduction was run. Exact Nix 2.34.8 primary source emits a version/derivations envelope and indexes each derivation with drvPath.to_string(); its manual documents format 4 and basename-only store-path representation. This supports the source-backed diagnosis that the test's full-path lookup and broad legacy-shape fallback are wrong for the selected current contract. The command help's old example is not used as schema evidence.
+
+Primary evidence: [Nix 2.34.8 derivation-show.cc](https://raw.githubusercontent.com/NixOS/nix/2.34.8/src/nix/derivation-show.cc), lines 56 and 59–62; [exact derivation JSON manual](https://releases.nixos.org/nix/nix-2.34.8/manual/protocols/json/derivation/index.html), version and store-path sections.
+
+Only the two-line JSON lookup/assertion block is replaced. The new block requires native version 4, fetches the derivations envelope, requires exactly the requested image derivation's basename key, and checks that entry's env.memSize is 2048. It neither selects an arbitrary entry nor tolerates an older shape. Every native command, projection, profile, runtime/kernel/CPU/disk assertion, other method and byte outside this block is preserved.
+
+The full-index binary diff is one path and equals the scoped diff. The index remains empty. All other tracked files, including owning runtime/prose, inputs, workflows, dependencies, schemas, captures and images, match baseline bytes and Git modes. No documentation/product change is useful for this test-consumer correction; its rationale stays with this source/evidence packet and proposed message.
+
+Corrected tests, image RAM projection and real image fit remain unexecuted and uncertified. No local tests, syntax/lint/formatter, Nix evaluation/build, process/probe/lifecycle/runtime, Git/index/ref/pin operations, hosted polling/launch or private-campaign access occurred. Root owns normal history consolidation, exact hosted K/E pairing and final affected review. All original source1 and failed-hosted controls remain untouched.
+
+Session portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-05-network-ipv4-left-counter/

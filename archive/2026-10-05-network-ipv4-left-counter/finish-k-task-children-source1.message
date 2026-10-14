@@ -1,0 +1,10 @@
+runtime: discover children across all process tasks
+
+The leader task child list misses processes spawned by a retained worker.
+Read every task at each recursive level and keep the captured process
+identities across exit and reparenting.
+
+Observed task disappearance or task-set changes cannot authorize completion.
+Require a fresh quiesced proof before machine cleanup and retain the proof
+afterward, using the existing tracker and once-only finalization path.
+State schemas and cleanup authority remain unchanged.

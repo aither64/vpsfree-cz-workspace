@@ -1,0 +1,40 @@
+{
+  "state": "declared, UNRUN",
+  "canonical_hosted_selector": "nix develop --command bin/check --allow-missing",
+  "focused_existing_source_owner": "nix develop --command ruby tools/test-runtime.rb",
+  "focused_new_source_owner": "nix develop --command ruby tools/test-node-ssh.rb",
+  "new_generated_owner_cases": [
+    "test_actual_services_node_and_optional_dns_have_exactly_one_ed25519_declaration_and_hostkey_line",
+    "test_real_generation_and_second_start_preserve_private_bytes_and_public_fingerprint",
+    "test_pool_completion_barrier_prevents_generation_until_released",
+    "test_unavailable_pool_refuses_before_any_storage_or_generation",
+    "test_missing_tmpfs_wrong_dataset_mountpoint_and_unmounted_storage_refuse_before_generation",
+    "test_unsafe_tank_path_or_owner_mode_refuses_without_preparing_keys",
+    "test_existing_unsafe_directory_and_failed_preparation_are_not_repaired",
+    "test_unsafe_private_key_type_mode_owner_link_or_invalid_material_is_preserved",
+    "test_unsafe_public_path_and_public_file_without_private_key_are_not_overwritten",
+    "test_native_key_generation_failure_cannot_start_daemon_or_create_fallback"
+  ],
+  "new_trust_cases": [
+    "test_reordered_and_subset_retained_host_key_sets_do_not_rewrite_trust",
+    "test_extra_valid_host_key_algorithm_is_refused_without_enlarging_single_key_trust"
+  ],
+  "old_runtime_case_count_source_only": 96,
+  "current_runtime_case_count_source_only": 98,
+  "preserved_positive_case": "RuntimeTest#test_retained_ssh_trust_accepts_the_same_endpoint_and_key_but_refuses_rebinding",
+  "negative_generated_variants": [
+    "missing/failed findmnt; tmpfs; foreign dataset; wrong mount target",
+    "mounted=no; wrong ZFS mountpoint; native nonzero producer exits despite valid-looking output",
+    "missing/symlink/non-directory/writable/foreign-owner tank",
+    "symlink/non-directory/wrong-mode/foreign-owner key directory; mkdir failure",
+    "symlink/directory/wrong-mode/foreign-owner/hardlinked/invalid private key",
+    "public orphan/symlink/directory/wrong-mode/foreign-owner/hardlink",
+    "key-generation exit before daemon/fallback"
+  ],
+  "limits": [
+    "controlled storage/owner probes are synthetic",
+    "real declared-Nix Ed25519 generation is a hosted case, not yet executed",
+    "no actual VM/ZFS/guest reboot/capture/fit or compatibility pass",
+    "no workflow/selector/dependency change"
+  ]
+}

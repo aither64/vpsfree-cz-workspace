@@ -1,0 +1,44 @@
+commit 3cca38fe0c5dba3bf7a15fec909c31eda42ce687
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 10:15:43 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 10 22:38:36 2026 +0200
+
+    cluster: mediate capture leases through the generation guard
+    
+    Relay capture-lease input, readiness and diagnostics through dispatcher-owned
+    pipes. Retain the selected package-generation guard through provider exit and
+    reaping, and cancel the owned child when the caller or protocol is lost.
+    
+    Close the downstream protocol pipe promptly on provider stdout EOF, even if
+    that provider is still running. Diagnostic stderr closure leaves the lease
+    usable. Other provider commands retain buffered dispatch and exit behavior.
+
+commit e66a441051899e9c7771eca394b3f4a145a4863d
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 16:43:01 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 10 22:38:36 2026 +0200
+
+    portal: check reconciliation deadline after proof
+    
+    Check the caller's original context after journal and response proof, before
+    accepting lifecycle reconciliation. Slow proof must not commit authority after
+    the fresh-owner deadline has expired.
+    
+    Keep the upstream contention retry and acceptance behavior, and extract its
+    loop for deterministic progress-conflict, cancellation and no-op coverage.
+
+commit 91c47ad2d6205b6c3275701855bffed190c51323
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Thu Oct 8 22:02:34 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 10 22:38:36 2026 +0200
+
+    portal: model completed deletion in force retry tests
+    
+    Remove each force-retry fixture journal before its fake command
+    reports success, matching the deletion completion side effect. Prove
+    fresh reconciliation preserves the completed receipt and retry
+    identity. A retained matching journal must still pause a completed
+    receipt without changing its identity.

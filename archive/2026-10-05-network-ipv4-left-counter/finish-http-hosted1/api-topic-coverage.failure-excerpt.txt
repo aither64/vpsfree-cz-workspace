@@ -1,0 +1,60 @@
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1264199Z ^[[36;1m    full = manifests.get(("full", topic))^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1264683Z ^[[36;1m    core = manifests.get(("core", topic))^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1265273Z ^[[36;1m    if full is not None and core is not None and sorted(full) != sorted(core):^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1265964Z ^[[36;1m        errors.append(f"Full/core manifests disagree for topic {topic}.")^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1266503Z ^[[36;1m^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1266829Z ^[[36;1mif errors:^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1267191Z ^[[36;1m    for error in errors:^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1267616Z ^[[36;1m        print(f"ERROR: {error}")^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1268051Z ^[[36;1m    raise SystemExit(1)^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1268447Z ^[[36;1m^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1268955Z ^[[36;1mmessage = "OK: both successful matrices cover every eligible API spec exactly once."^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1269559Z ^[[36;1mprint(message)^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1270170Z ^[[36;1mwith open(os.environ["GITHUB_STEP_SUMMARY"], "a") as summary:^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1270896Z ^[[36;1m    summary.write(f"### Topic coverage\n\n- Eligible API spec files: **{len(eligible)}**\n"^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1271636Z ^[[36;1m                  f"- Nonempty topics per mode: **{len(topics)}**\n\n{message}\n")^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1272191Z ^[[36;1mPYTHON^[[0m
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1551272Z shell: /usr/bin/bash -e {0}
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1551921Z env:
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1552466Z   FULL_RESULT: failure
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1553067Z   CORE_RESULT: failure
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1554392Z   EXPECTED_TOPICS: foundation plugins dns storage mail vps platform-infrastructure platform-operations platform-config auth users ip-ownership network
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1555798Z ##[endgroup]
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1979670Z full: 13 manifests, 415 mapped paths, 415 eligible specs
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1980775Z core: 13 manifests, 415 mapped paths, 415 eligible specs
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1981540Z ERROR: full matrix result is 'failure', expected 'success'.
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.1982300Z ERROR: core matrix result is 'failure', expected 'success'.
+API specs - topic coverage	Validate: every spec file belongs to exactly one topic	2026-10-08T17:39:09.2043683Z ##[error]Process completed with exit code 1.
+API specs - topic coverage	Post Checkout (for git ls-files)	﻿2026-10-08T17:39:09.2198321Z Post job cleanup.
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3086916Z [command]/usr/bin/git version
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3145034Z git version 2.55.0
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3185529Z Temporarily overriding HOME='/home/runner/work/_temp/3038ba24-8d00-439e-a218-34532ae0c49b' before making global git config changes
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3187734Z Adding repository directory to the temporary git global config as a safe directory
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3191798Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/vpsadmin/vpsadmin
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3226667Z Removing SSH command configuration
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3232799Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3272495Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3526041Z Removing HTTP extra header
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3533327Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3573232Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3848437Z Removing includeIf entries pointing to credentials config files
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3849449Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3884049Z includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git.path
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3885449Z includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git/worktrees/*.path
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3886731Z includeif.gitdir:/github/workspace/.git.path
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3887979Z includeif.gitdir:/github/workspace/.git/worktrees/*.path
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3895131Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git.path
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3923260Z /home/runner/work/_temp/git-credentials-c0b93a34-428b-405f-b75e-b34b4f6d2d01.config
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3934139Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git.path \/home\/runner\/work\/_temp\/git\-credentials\-c0b93a34\-428b\-405f\-b75e\-b34b4f6d2d01\.config
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.3980888Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git/worktrees/*.path
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.4012147Z /home/runner/work/_temp/git-credentials-c0b93a34-428b-405f-b75e-b34b4f6d2d01.config
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.4022536Z [command]/usr/bin/git config --local --unset includeif.gitdir:/home/runner/work/vpsadmin/vpsadmin/.git/worktrees/*.path \/home\/runner\/work\/_temp\/git\-credentials\-c0b93a34\-428b\-405f\-b75e\-b34b4f6d2d01\.config
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.4079002Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git.path
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.4108908Z /github/runner_temp/git-credentials-c0b93a34-428b-405f-b75e-b34b4f6d2d01.config
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.4117145Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git.path \/github\/runner_temp\/git\-credentials\-c0b93a34\-428b\-405f\-b75e\-b34b4f6d2d01\.config
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.4156091Z [command]/usr/bin/git config --local --get-all includeif.gitdir:/github/workspace/.git/worktrees/*.path
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.4183573Z /github/runner_temp/git-credentials-c0b93a34-428b-405f-b75e-b34b4f6d2d01.config
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.4193880Z [command]/usr/bin/git config --local --unset includeif.gitdir:/github/workspace/.git/worktrees/*.path \/github\/runner_temp\/git\-credentials\-c0b93a34\-428b\-405f\-b75e\-b34b4f6d2d01\.config
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.4236966Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+API specs - topic coverage	Post Checkout (for git ls-files)	2026-10-08T17:39:09.4494713Z Removing credentials config '/home/runner/work/_temp/git-credentials-c0b93a34-428b-405f-b75e-b34b4f6d2d01.config'
+API specs - topic coverage	Complete job	﻿2026-10-08T17:39:09.4670863Z Cleaning up orphan processes

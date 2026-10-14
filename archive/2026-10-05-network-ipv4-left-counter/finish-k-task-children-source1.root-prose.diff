@@ -1,0 +1,22 @@
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index 029e9e7bcdc86fa43ec77971f8d457c983a3c977..a4266501126ec3bd7fb3c2f3e4937afd70d0560f 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -112,6 +112,17 @@ no PID search, process-group kill or force option substitutes for ownership.
+ Reset requires a stopped, proven instance and removes only its owned tree.
+ Old rooted closures remain until that owned reset.
+ 
++Process discovery reads the child lists of every task in each reached process.
++It retains observed process identities across exit and reparenting; task IDs
++are not child-process records. Missing child data for a live task refuses the
++observation. An observed task disappearance or changed task set makes that pass
++inconclusive. The runner retains ownership and observes again through its normal
++drain loop. It requires a successful quiesced observation before invoking machine
++finalization or cleanup, and fresh proof afterward before publishing completion.
++These procfs reads are not an atomic tree snapshot: machine reapers and retained
++child identities still govern completion. Discovery cannot recover processes
++that escaped before observation or repair incomplete old receipts.
++
+ During the same locked stop or update call, the engine may remove the
+ acknowledged runner's residual control socket. Before sending the request, it
+ pins the private directory and socket inode with open descriptors and proves

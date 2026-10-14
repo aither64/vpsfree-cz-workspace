@@ -1,0 +1,1 @@
+import{a as o}from"./main-LDE_lf6r.js";import{u as i}from"./appMode-58oMVEad.js";function u(){const e=o(),{mode:c}=i();return e.canUseAdminUi?c==="admin"?{scope:"all",mineUserId:void 0,canSwitchScope:!0}:{scope:"mine",mineUserId:typeof e.user?.id=="number"?e.user.id:void 0,canSwitchScope:!0}:{scope:"mine",mineUserId:void 0,canSwitchScope:!1}}export{u};

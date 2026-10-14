@@ -1,0 +1,47 @@
+from pathlib import Path
+import subprocess,hashlib,json
+T=Path('/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter');R=T.parent.parent/'worktrees'/T.name/'vpsfree-kb-contracts-runtime';C=R.parent/'vpsfree-kb-contracts'
+old='9a06c9989d462bc16197dc948e59e1968273ab68';base='873758fd6aec0c03f50a94600e0ceab97946f255';paths=['tools/test-ip-inventory.cjs'];packet=T/'finish-k-lease-runner-negative-fixture-source1';branch=T.name+'-kb-runtime'
+def g(*a,repo=R):
+ p=subprocess.run(['/nix/store/5vpcfsdx1lcnlb2y4k7xyc74shp5qwbh-git-2.54.0/bin/git',*a],cwd=repo,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=True)
+ if p.stderr: print(p.stderr.decode(),end='',flush=True)
+ return p.stdout
+
+def save(suffix,data):
+ with(T/('finish-k-lease-runner-negative-fixture-source1-'+suffix)).open('xb') as f:f.write(data)
+# Packet integrity is inspected separately by root before this normal commit.
+assert g('rev-parse','HEAD').decode().strip()==old and set(g('status','--porcelain').decode().splitlines())=={' M '+p for p in paths}
+assert g('rev-parse','HEAD',repo=C).decode().strip()==old and not g('status','--porcelain',repo=C)
+assert not g('diff','--cached','--binary') and not g('diff','--cached','--binary',repo=C)
+assert g('remote','get-url','origin').decode().strip()=='git@github.com:vpsfreecz/vpsfree-kb-contracts.git'
+assert json.loads((T/'finish-k-lease-runner-negative-fixture-source1-inspection.json').read_text())['source_bytes_modes_and_full_diff_exact']
+assert hashlib.sha256((R/'cluster/runtime-contract.md').read_bytes()).hexdigest()=='3bc7876414f2b60b1b0ebf356eb66b3e98ce69aed0ef66f8b9a5c997f7697a11'
+names=g('ls-files').decode().splitlines()
+hooks=Path(g('rev-parse','--git-path','hooks').decode().strip());hooks=hooks if hooks.is_absolute() else R/hooks
+assert not [p for p in hooks.iterdir() if p.is_file() and not p.name.endswith('.sample')]
+assert subprocess.run(['/nix/store/5vpcfsdx1lcnlb2y4k7xyc74shp5qwbh-git-2.54.0/bin/git','config','--get','core.hooksPath'],cwd=R,capture_output=True).returncode==1
+assert not any(Path(n).name in {'.overcommit.yml','.pre-commit-config.yaml','lefthook.yml','lefthook.yaml'} or '/.husky/' in '/'+n for n in names)
+protected={n:g('ls-tree',old,'--',n) for n in names if n not in paths}
+oldseries=g('rev-list','--reverse',base+'..HEAD').decode().splitlines(); assert len(oldseries)==2
+# Preserve published failing source as provenance outside the final series.
+g('update-ref','refs/heads/preserve/finish-lease-runner-negative-fixture-failure',old,'0'*40)
+g('push','origin','refs/heads/preserve/finish-lease-runner-negative-fixture-failure:refs/heads/preserve/finish-lease-runner-negative-fixture-failure')
+g('fetch','origin')
+assert g('rev-parse','origin/master').decode().strip()==base,'upstream advanced; reassess instead of silently changing base'
+g('add','--',*paths);delta=g('diff','--cached','--binary','--full-index')
+expected_tree=g('write-tree').decode().strip();save('staged.diff',delta)
+print(g('commit','--amend','-F','/tmp/finish-k-lease-runner-negative-fixture-owning.message').decode(),flush=True)
+head=g('rev-parse','HEAD').decode().strip();tree=g('rev-parse','HEAD^{tree}').decode().strip();assert tree==expected_tree and not g('status','--porcelain')
+series=g('rev-list','--reverse',base+'..HEAD').decode().splitlines();assert len(series)==2 and series[0]==oldseries[0] and not g('rev-list','--merges',base+'..HEAD')
+assert g('diff','--binary','--full-index',old,head)==delta
+for n,entry in protected.items():assert g('ls-tree','HEAD','--',n)==entry,n
+assert not g('status','--porcelain',repo=C)
+g('-c','rebase.updateRefs=false','rebase','--onto',head,old,repo=C)
+assert not g('status','--porcelain',repo=C) and g('rev-parse','HEAD',repo=C).decode().strip()==head
+for b in [branch,T.name]:
+ assert g('ls-remote','origin','refs/heads/'+b).decode()==old+'\trefs/heads/'+b+'\n'
+ save('push-'+b+'.log',g('push','--force-with-lease=refs/heads/'+b+':'+old,'origin',head+':refs/heads/'+b))
+ assert g('ls-remote','origin','refs/heads/'+b).decode()==head+'\trefs/heads/'+b+'\n'
+save('final.head',(head+'\n').encode());save('final.diff',g('diff','--binary','--full-index',base,'HEAD'));save('final.history',g('log','--reverse','--format=fuller',base+'..HEAD'))
+proof={'old':old,'head':head,'tree':tree,'base':base,'series':series,'normal_commit':True,'source_delta_exact':True,'protected_count':len(protected),'both_worktrees_clean':True,'publication':'both exact SSH feature refs verified','hosted':'unproved','real_guest':'new source unprepared; G725 stopped artifact/trust retained; no new attempt selected'}
+save('proof.json',(json.dumps(proof,indent=2)+'\n').encode());print(json.dumps(proof),flush=True)

@@ -1,0 +1,727 @@
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index dc0f55575547305458207e25726cb21a4677a545..7dbc2b6fb85fb046facea6ae61f278aee5ed899d 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -6,10 +6,13 @@ const os = require('node:os');
+ const https = require('node:https');
+ const { EventEmitter } = require('node:events');
+ const { PassThrough } = require('node:stream');
++const { spawn } = require('node:child_process');
++const { createInterface } = require('node:readline');
++const crypto = require('node:crypto');
+ const { Connection } = require('../lib/connection.cjs');
+ const { assertInventoryMember, ensureIpInventory,
+   INVENTORY_POOL, INVENTORY_RESOURCES, prepareFixtures } = require('../fixtures/prepare.cjs');
+-const { heldController } = require('./verify-live-lease.cjs');
++const { heldController, observeLeaseState } = require('./verify-live-lease.cjs');
+ 
+ const recordedAccounts = () => [['test-admin', 99, 1], ['test-user1', 1, 9], ['test-user2', 1, 17]].map(([login, level, blockStart]) => ({
+   login, level, password: `synthetic-${login}`, fullName: `Synthetic ${login}`,
+@@ -413,3 +416,507 @@ test('actual controller stdout loss cancels acquired work and leaves no live chi
+     assert.equal(fs.readFileSync(marker, 'utf8'), 'exited');
+   } finally { fs.rmSync(root, { recursive: true }); }
+ });
++
++async function withLeaseObservation(work) {
++  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kb-lease-observation-'));
++  const stateRoot = path.join(root, 'state');
++  const directory = path.join(stateRoot, 'clusters/same-slug');
++  const sdk = path.resolve(__dirname, '..');
++  const ids = { instance_id: crypto.randomUUID(), run_id: crypto.randomUUID(), artifact_id: crypto.randomUUID() };
++  for (const name of [stateRoot, path.dirname(directory), directory, path.join(root, 'runtime'),
++    path.join(root, 'runtime/reservations'), path.join(root, 'runtime/run'), path.join(directory, 'disks')]) {
++    fs.mkdirSync(name, { mode: 0o700 });
++  }
++  const write = (filename, value) => fs.writeFileSync(filename, JSON.stringify(value) + '\n', { mode: 0o600 });
++  const source = { schema: 1, revision: '1'.repeat(40), source: sdk };
++  const artifact = { schema: 1, instance_id: ids.instance_id, artifact_id: ids.artifact_id, source };
++  const artifactJson = JSON.stringify(artifact) + '\n';
++  const value = { ...ids, owner_id: `uid:${process.getuid()}`,
++    artifact_sha256: crypto.createHash('sha256').update(artifactJson).digest('hex'),
++    provenance: { source, artifact_json: artifactJson } };
++  const processPath = path.join(directory, `processes-${ids.run_id}.json`);
++  const config = path.join(directory, 'config.json');
++  const claim = path.join(root, 'runtime/reservations', `${ids.instance_id}-${ids.run_id}.json`);
++  const provider = path.join(root, 'publisher.rb');
++  const options = { '--config': config, '--state-dir': path.join(directory, 'disks'), '--sock-dir': path.join(root, 'runtime/run'),
++    '--run-id': ids.run_id, '--instance-id': ids.instance_id, '--artifact-id': ids.artifact_id,
++    '--artifact-sha256': value.artifact_sha256 };
++  // Responses follow native identity acquisition or completed State.write
++  // publication: this is an owned pipe barrier, not a scheduling assumption.
++  fs.writeFileSync(provider, `
++    require File.join(${JSON.stringify(sdk)}, 'cluster/lib/kb_process')
++    require 'rbconfig'
++    state = KbRuntime::State.new(${JSON.stringify(stateRoot)}, 'same-slug')
++    children = []
++    temporary = nil
++    publication = nil
++    respond = ->(value) { STDOUT.puts(JSON.generate(value)); STDOUT.flush }
++    respond.call(KbRuntime::ProcessIdentity.read(Process.pid))
++    begin
++      STDIN.each_line do |line|
++        request = JSON.parse(line)
++        case request.fetch('action')
++        when 'publish'
++          state.write(${JSON.stringify(processPath)}, request.fetch('record'))
++          respond.call('inode' => File.lstat(${JSON.stringify(processPath)}).ino)
++        when 'temporary-create'
++          raise 'publication already held' if publication
++          temporary = ${JSON.stringify(processPath)} + '.' + SecureRandom.hex(12)
++          publication = File.open(temporary, File::WRONLY | File::CREAT | File::EXCL | File::NOFOLLOW, 0o600)
++          respond.call('path' => temporary)
++        when 'temporary-write'
++          publication.write(request.fetch('bytes'))
++          publication.flush
++          respond.call('position' => publication.pos)
++        when 'temporary-fsync'
++          publication.fsync
++          respond.call('synced' => true)
++        when 'temporary-publish'
++          publication.close
++          publication = nil
++          File.rename(temporary, ${JSON.stringify(processPath)})
++          temporary = nil
++          File.open(${JSON.stringify(directory)}, &:fsync)
++          respond.call('inode' => File.lstat(${JSON.stringify(processPath)}).ino)
++        when 'child'
++          input, writer = IO.pipe
++          output, reader = IO.pipe
++          code = <<~'CHILD'
++            require File.join(ARGV.fetch(0), 'cluster/lib/kb_process')
++            require 'rbconfig'
++            STDOUT.puts(JSON.generate(KbRuntime::ProcessIdentity.read(Process.pid)))
++            STDOUT.flush
++            if STDIN.gets
++              after_exec = <<~'NEXT'
++                require File.join(ARGV.fetch(0), 'cluster/lib/kb_process')
++                STDOUT.puts(JSON.generate(KbRuntime::ProcessIdentity.read(Process.pid)))
++                STDOUT.flush
++                STDIN.read
++              NEXT
++              exec RbConfig.ruby, '-e', after_exec, ARGV.fetch(0)
++            end
++          CHILD
++          pid = Process.spawn(RbConfig.ruby, '-e', code, ${JSON.stringify(sdk)}, in: input, out: reader, err: STDERR, close_others: true)
++          children << [pid, writer, output]
++          input.close
++          reader.close
++          respond.call(JSON.parse(output.readline))
++        when 'child-exec'
++          _pid, writer, output = children.first
++          writer.puts('exec')
++          writer.flush
++          respond.call(JSON.parse(output.readline))
++        when 'child-exit'
++          pid, writer, output = children.shift
++          writer.close
++          respond.call('pid' => Process.waitpid(pid))
++          output.close
++        else
++          raise 'unexpected fixture action'
++        end
++      end
++    ensure
++      publication.close if publication && !publication.closed?
++      File.unlink(temporary) if temporary && File.exist?(temporary)
++      children.each { |_pid, writer, _output| writer.close }
++      children.each { |pid, _writer, output| Process.waitpid(pid); output.close }
++    end
++  `, { mode: 0o600 });
++  const child = spawn('ruby', [provider, 'start', ...Object.entries(options).flat()], { stdio: ['pipe', 'pipe', 'pipe'] });
++  child.stderr.resume();
++  child.stdin.on('error', () => {});
++  const lines = createInterface({ input: child.stdout });
++  const exited = new Promise((resolve) => child.once('close', (code, signal) => resolve({ code, signal })));
++  const response = () => new Promise((resolve, reject) => {
++    const timer = setTimeout(() => finish(new Error('owned publication barrier deadline')), 5000);
++    const finish = (error, result) => {
++      clearTimeout(timer); lines.off('line', line); child.off('error', failure); child.off('close', failure);
++      if (error) reject(error); else resolve(result);
++    };
++    const line = (bytes) => { try { finish(null, JSON.parse(bytes)); } catch (error) { finish(error); } };
++    const failure = () => finish(new Error('owned publisher ended before its barrier'));
++    lines.once('line', line); child.once('error', failure); child.once('close', failure);
++  });
++  const request = async (action, detail = {}) => {
++    const pending = response();
++    child.stdin.write(JSON.stringify({ action, ...detail }) + '\n');
++    return pending;
++  };
++  try {
++    const runner = await response();
++    write(path.join(directory, 'identity.json'), { schema: 2, instance_id: ids.instance_id, owner_uid: process.getuid(),
++      state_root: stateRoot, slug: 'same-slug', created_at: new Date().toISOString() });
++    write(config, { synthetic: true });
++    write(path.join(directory, 'phase.json'), { schema: 1, phase: 'ready', run_id: ids.run_id });
++    fs.writeFileSync(path.join(directory, `artifact-${ids.artifact_id}.json`), artifactJson, { mode: 0o600 });
++    write(path.join(directory, `launch-${ids.run_id}.json`), { schema: 2, ...ids, artifact_sha256: value.artifact_sha256,
++      owner_uid: process.getuid(), state_root: stateRoot, slug: 'same-slug', source, boot_id: runner.boot_id,
++      config_path: config, state_dir: options['--state-dir'], socket_dir: options['--sock-dir'],
++      runner_identity: { executable: runner.executable, entrypoint: provider } });
++    write(claim, { ...ids, artifact_sha256: value.artifact_sha256, owner_uid: process.getuid(), boot_id: runner.boot_id, state_root: stateRoot });
++    const record = { schema: 1, ...ids, artifact_sha256: value.artifact_sha256, runner, children: [], complete: false };
++    await request('publish', { record });
++    await work({ root, stateRoot, directory, processPath, config, claim, sdk, value, record, request, write, child, exited,
++      observe: () => observeLeaseState(stateRoot, value, sdk) });
++  } finally {
++    if (!child.stdin.destroyed) child.stdin.end();
++    let timer;
++    try {
++      const result = await Promise.race([exited, new Promise((_resolve, reject) => {
++        timer = setTimeout(() => reject(new Error('owned publisher cleanup deadline')), 5000);
++      })]);
++      assert.deepEqual(result, { code: 0, signal: null });
++    } finally {
++      clearTimeout(timer); lines.close();
++      if (child.exitCode !== null || child.signalCode !== null) fs.rmSync(root, { recursive: true });
++    }
++  }
++}
++
++test('lease state permits atomic equal-byte receipt replacement and append-only live or exited children', async () => {
++  await withLeaseObservation(async (fixture) => {
++    const observation = fixture.observe();
++    const before = observation.snapshot();
++    const bytes = fs.readFileSync(fixture.processPath);
++    const inode = fs.lstatSync(fixture.processPath).ino;
++    const replaced = await fixture.request('publish', { record: fixture.record });
++    assert.notEqual(replaced.inode, inode);
++    assert.deepEqual(fs.readFileSync(fixture.processPath), bytes);
++    observation.assertUnchanged(before);
++    const child = await fixture.request('child');
++    assert.equal(child.boot_id, fixture.record.runner.boot_id);
++    assert.equal(child.owner_uid, process.getuid());
++    const appended = { ...fixture.record, children: [child] };
++    await fixture.request('publish', { record: appended });
++    observation.assertUnchanged(before);
++    const afterExec = await fixture.request('child-exec');
++    assert.equal(afterExec.pid, child.pid);
++    assert.equal(afterExec.start_ticks, child.start_ticks);
++    assert.notDeepEqual(afterExec.argv, child.argv);
++    await fixture.request('publish', { record: { ...appended, children: [afterExec] } });
++    observation.assertUnchanged(before); // A child's legitimate exec does not remove its PID/start identity.
++    assert.equal((await fixture.request('child-exit')).pid, child.pid);
++    observation.assertUnchanged(before); // Retained children need not still be alive.
++    await fixture.request('publish', { record: fixture.record });
++    assert.throws(() => observation.assertUnchanged(before), /previously observed child identity/);
++  });
++});
++
++test('lease state still protects other inodes and bytes including historical receipts and the exact claim', async () => {
++  await withLeaseObservation(async (fixture) => {
++    const historical = path.join(fixture.directory, `processes-${crypto.randomUUID()}.json`);
++    fixture.write(historical, { historical: true });
++    const observation = fixture.observe();
++    let before = observation.snapshot();
++    for (const filename of [fixture.config, historical, fixture.claim]) {
++      const bytes = fs.readFileSync(filename);
++      const inode = fs.lstatSync(filename).ino;
++      const replacement = `${filename}.replacement`;
++      fs.writeFileSync(replacement, bytes, { mode: 0o600 });
++      fs.renameSync(replacement, filename);
++      assert.notEqual(fs.lstatSync(filename).ino, inode);
++      assert.throws(() => observation.assertUnchanged(before), /unchanged/);
++      before = observation.snapshot(); // Isolate the next negative case; no refusal is treated as success.
++      const changed = JSON.parse(bytes);
++      changed.unexpected = true;
++      fixture.write(filename, changed);
++      assert.throws(() => observation.assertUnchanged(before), /unchanged/);
++      fixture.write(filename, JSON.parse(bytes));
++      before = observation.snapshot();
++    }
++  });
++});
++
++test('lease observation rejects foreign receipt IDs, malformed identities and changed authenticated runner', async () => {
++  await withLeaseObservation(async (fixture) => {
++    const observation = fixture.observe();
++    const before = observation.snapshot();
++    const child = await fixture.request('child');
++    const malformed = [
++      ...['instance_id', 'run_id', 'artifact_id'].map((field) => ({ ...fixture.record, [field]: crypto.randomUUID() })),
++      { ...fixture.record, artifact_sha256: '0'.repeat(64) }, { ...fixture.record, schema: 2 }, { ...fixture.record, complete: true },
++      { ...fixture.record, children: null }, { ...fixture.record, children: [child, child] },
++      { ...fixture.record, children: [{ ...child, boot_id: crypto.randomUUID() }] },
++      { ...fixture.record, children: [{ ...child, owner_uid: process.getuid() + 1 }] },
++      { ...fixture.record, children: [{ ...child, start_ticks: 'invalid' }] },
++      { ...fixture.record, children: [fixture.record.runner] },
++      ...['pid', 'start_ticks', 'boot_id', 'owner_uid', 'executable', 'argv'].map((field) => ({ ...fixture.record,
++        runner: { ...fixture.record.runner, [field]: field === 'argv' ? ['wrong-runner-argv'] :
++          typeof fixture.record.runner[field] === 'number' ? fixture.record.runner[field] + 1 : `${fixture.record.runner[field]}-wrong` } })),
++    ];
++    for (const record of malformed) {
++      await fixture.request('publish', { record });
++      assert.throws(() => observation.assertUnchanged(before), /observation refused/);
++    }
++    await fixture.request('publish', { record: fixture.record });
++    observation.assertUnchanged(before);
++  });
++});
++
++test('lease observation refuses truncated, oversized, unsafe, symlinked and missing live receipts', async () => {
++  await withLeaseObservation(async (fixture) => {
++    const observation = fixture.observe();
++    const before = observation.snapshot();
++    const valid = fs.readFileSync(fixture.processPath);
++    for (const bytes of ['{', 'null', JSON.stringify({ unrelated: true }), ' '.repeat(2 * 1024 * 1024 + 1)]) {
++      fs.writeFileSync(fixture.processPath, bytes);
++      assert.throws(() => observation.assertUnchanged(before), /observation refused/);
++    }
++    fs.writeFileSync(fixture.processPath, valid);
++    fs.chmodSync(fixture.processPath, 0o644);
++    assert.throws(() => observation.assertUnchanged(before), /observation refused/);
++    fs.chmodSync(fixture.processPath, 0o600);
++    fs.unlinkSync(fixture.processPath);
++    fs.symlinkSync(fixture.config, fixture.processPath);
++    assert.throws(() => observation.assertUnchanged(before), /observation refused/);
++    fs.unlinkSync(fixture.processPath);
++    assert.throws(() => observation.assertUnchanged(before), /observation refused/);
++    fs.mkdirSync(fixture.processPath, { mode: 0o700 });
++    assert.throws(() => observation.assertUnchanged(before), /observation refused/);
++    fs.rmdirSync(fixture.processPath);
++    fs.writeFileSync(fixture.processPath, valid, { mode: 0o600 });
++    fs.chmodSync(fixture.directory, 0o755);
++    assert.throws(() => observation.assertUnchanged(before), /observation refused/);
++    fs.chmodSync(fixture.directory, 0o700);
++    observation.assertUnchanged(before);
++  });
++});
++
++test('lease observation refuses changed launch or artifact binding and an exited recorded runner', async () => {
++  await withLeaseObservation(async (fixture) => {
++    assert.throws(() => observeLeaseState(fixture.stateRoot, { ...fixture.value, run_id: crypto.randomUUID() }, fixture.sdk), /observation refused/);
++    assert.throws(() => observeLeaseState(fixture.stateRoot, { ...fixture.value, instance_id: crypto.randomUUID() }, fixture.sdk), /observation refused/);
++    const observation = fixture.observe();
++    const before = observation.snapshot();
++    const launchPath = path.join(fixture.directory, `launch-${fixture.value.run_id}.json`);
++    const launch = JSON.parse(fs.readFileSync(launchPath));
++    fixture.write(launchPath, { ...launch, artifact_id: crypto.randomUUID() });
++    assert.throws(() => observation.assertUnchanged(before), /observation refused/);
++    fixture.write(launchPath, launch);
++    const artifactPath = path.join(fixture.directory, `artifact-${fixture.value.artifact_id}.json`);
++    const artifact = fs.readFileSync(artifactPath);
++    fixture.write(artifactPath, { schema: 1, instance_id: crypto.randomUUID() });
++    assert.throws(() => observation.assertUnchanged(before), /observation refused/);
++    fs.writeFileSync(artifactPath, artifact);
++    fixture.child.stdin.end();
++    assert.deepEqual(await fixture.exited, { code: 0, signal: null });
++    assert.throws(() => observation.snapshot(), /observation refused/);
++  });
++});
++
++test('lease observation tolerates only the current held atomic writer while the published receipt stays valid', async () => {
++  await withLeaseObservation(async (fixture) => {
++    const observation = fixture.observe();
++    const before = observation.snapshot();
++    const bytes = fs.readFileSync(fixture.processPath, 'utf8');
++    const inode = fs.lstatSync(fixture.processPath).ino;
++    const { path: temporary } = await fixture.request('temporary-create');
++    assert.equal(path.dirname(temporary), fixture.directory);
++    assert.match(temporary.slice(fixture.processPath.length), /^\.[0-9a-f]{24}$/);
++    assert.equal(fs.lstatSync(temporary).size, 0);
++    observation.assertUnchanged(before);
++    assert.equal((await fixture.request('temporary-write', { bytes: bytes.slice(0, 17) })).position, 17);
++    assert.equal(fs.readFileSync(temporary, 'utf8'), bytes.slice(0, 17));
++    observation.assertUnchanged(before);
++    await fixture.request('temporary-write', { bytes: bytes.slice(17) });
++    assert.deepEqual(await fixture.request('temporary-fsync'), { synced: true });
++    assert.equal(fs.readFileSync(temporary, 'utf8'), bytes);
++    observation.assertUnchanged(before);
++
++    const config = fs.readFileSync(fixture.config);
++    fs.writeFileSync(fixture.config, 'protected mutation');
++    assert.throws(() => observation.assertUnchanged(before), /unchanged/);
++    fs.writeFileSync(fixture.config, config);
++    fs.unlinkSync(fixture.processPath);
++    assert.throws(() => observation.snapshot(), /observation refused/);
++    fs.writeFileSync(fixture.processPath, '{', { mode: 0o600 });
++    assert.throws(() => observation.snapshot(), /observation refused/);
++    fs.writeFileSync(fixture.processPath, bytes);
++
++    const published = await fixture.request('temporary-publish');
++    assert.notEqual(published.inode, inode);
++    assert.equal(fs.existsSync(temporary), false);
++    assert.equal(fs.readFileSync(fixture.processPath, 'utf8'), bytes);
++    observation.assertUnchanged(before);
++  });
++});
++
++test('lease observation accepts exact temporary rename between enumeration, lstat or open without hiding protected changes', async () => {
++  await withLeaseObservation(async (fixture) => {
++    const observation = fixture.observe();
++    const before = observation.snapshot();
++    const bytes = fs.readFileSync(fixture.processPath);
++    const temporary = `${fixture.processPath}.${'a'.repeat(24)}`;
++    for (const boundary of ['enumeration', 'open', 'protected mutation']) {
++      fs.writeFileSync(temporary, bytes, { mode: 0o600 });
++      const descriptor = fs.openSync(temporary, fs.constants.O_RDONLY);
++      const originalReaddir = fs.readdirSync;
++      const originalOpen = fs.openSync;
++      const config = fs.readFileSync(fixture.config);
++      let renamed = false;
++      const publish = () => {
++        assert.equal(renamed, false);
++        fs.renameSync(temporary, fixture.processPath);
++        renamed = true;
++        if (boundary === 'protected mutation') fs.writeFileSync(fixture.config, 'simultaneous protected mutation');
++      };
++      try {
++        fs.readdirSync = (directory, ...args) => {
++          const names = originalReaddir(directory, ...args);
++          if (directory === fixture.directory && boundary !== 'open') {
++            assert(names.includes(path.basename(temporary)));
++            publish();
++          }
++          return names;
++        };
++        fs.openSync = (filename, ...args) => {
++          if (filename === temporary && boundary === 'open') publish();
++          return originalOpen(filename, ...args);
++        };
++        if (boundary === 'protected mutation') assert.throws(() => observation.assertUnchanged(before), /unchanged/);
++        else observation.assertUnchanged(before);
++        assert.equal(renamed, true);
++        assert.equal(fs.fstatSync(descriptor).ino, fs.lstatSync(fixture.processPath).ino);
++      } finally {
++        fs.readdirSync = originalReaddir;
++        fs.openSync = originalOpen;
++        fs.closeSync(descriptor);
++        fs.writeFileSync(fixture.config, config);
++      }
++      observation.assertUnchanged(before);
++    }
++  });
++});
++
++test('lease observation protects historical, other-directory and malformed publication names', async () => {
++  await withLeaseObservation(async (fixture) => {
++    const observation = fixture.observe();
++    const before = observation.snapshot();
++    for (const filename of [
++      path.join(fixture.directory, `processes-${crypto.randomUUID()}.json.${'a'.repeat(24)}`),
++      path.join(fixture.stateRoot, `${path.basename(fixture.processPath)}.${'a'.repeat(24)}`),
++      `${fixture.processPath}.${'a'.repeat(23)}`,
++      `${fixture.processPath}.${'a'.repeat(25)}`,
++      `${fixture.processPath}.${'A'.repeat(24)}`,
++      `${fixture.processPath}.${'a'.repeat(23)}z`,
++      `${fixture.config}.${'a'.repeat(24)}`,
++    ]) {
++      fs.writeFileSync(filename, 'unpublished', { mode: 0o600 });
++      try { assert.throws(() => observation.assertUnchanged(before), /unchanged/); }
++      finally { fs.unlinkSync(filename); }
++      observation.assertUnchanged(before);
++    }
++  });
++});
++
++test('lease observation refuses unsafe temporary metadata and safe inode substitution, closing every opened descriptor', async () => {
++  await withLeaseObservation(async (fixture) => {
++    const observation = fixture.observe();
++    const before = observation.snapshot();
++    const temporary = `${fixture.processPath}.${'b'.repeat(24)}`;
++    fs.symlinkSync(fixture.config, temporary);
++    assert.throws(() => observation.snapshot(), /unsafe unpublished/);
++    fs.unlinkSync(temporary);
++    fs.mkdirSync(temporary, { mode: 0o700 });
++    assert.throws(() => observation.snapshot(), /unsafe unpublished/);
++    fs.rmdirSync(temporary);
++    fs.writeFileSync(temporary, '', { mode: 0o644 });
++    assert.throws(() => observation.snapshot(), /unsafe unpublished/);
++    fs.chmodSync(temporary, 0o600);
++    fs.truncateSync(temporary, 2 * 1024 * 1024 + 1);
++    assert.throws(() => observation.snapshot(), /unsafe unpublished/);
++    fs.truncateSync(temporary, 0);
++    const originalLstat = fs.lstatSync;
++    const originalOpen = fs.openSync;
++    const originalFstat = fs.fstatSync;
++    const originalClose = fs.closeSync;
++    for (const failure of ['valid', 'owner', 'opened owner', 'substitution', 'unsafe then absent', 'EACCES', 'ELOOP', 'fstat EIO']) {
++      const descriptors = new Set();
++      try {
++        fs.lstatSync = (filename, ...args) => {
++          if (filename === temporary && ['EACCES', 'ELOOP'].includes(failure)) {
++            throw Object.assign(new Error(failure), { code: failure });
++          }
++          const stat = originalLstat(filename, ...args);
++          if (filename === temporary && failure === 'owner') return new Proxy(stat, {
++            get(target, key) { return key === 'uid' ? process.getuid() + 1 : Reflect.get(target, key); },
++          });
++          if (filename === temporary && failure === 'unsafe then absent') {
++            fs.unlinkSync(filename);
++            return new Proxy(stat, { get(target, key) { return key === 'mode' ? 0o644 : Reflect.get(target, key); } });
++          }
++          return stat;
++        };
++        fs.openSync = (filename, ...args) => {
++          if (filename === temporary && failure === 'substitution') {
++            const replacement = path.join(fixture.root, 'replacement');
++            fs.writeFileSync(replacement, '', { mode: 0o600 });
++            fs.renameSync(replacement, temporary);
++          }
++          const fd = originalOpen(filename, ...args);
++          if (filename === temporary) descriptors.add(fd);
++          return fd;
++        };
++        fs.fstatSync = (fd, ...args) => {
++          if (descriptors.has(fd) && failure === 'fstat EIO') throw Object.assign(new Error('EIO'), { code: 'EIO' });
++          const stat = originalFstat(fd, ...args);
++          if (descriptors.has(fd) && failure === 'opened owner') return new Proxy(stat, {
++            get(target, key) { return key === 'uid' ? process.getuid() + 1 : Reflect.get(target, key); },
++          });
++          return stat;
++        };
++        fs.closeSync = (fd) => { descriptors.delete(fd); return originalClose(fd); };
++        if (failure === 'valid') observation.assertUnchanged(before);
++        else assert.throws(() => observation.snapshot(), /unsafe unpublished|changed while opening|EACCES|ELOOP|EIO/);
++        assert.equal(descriptors.size, 0);
++      } finally {
++        fs.lstatSync = originalLstat;
++        fs.openSync = originalOpen;
++        fs.fstatSync = originalFstat;
++        fs.closeSync = originalClose;
++        if (!fs.existsSync(temporary)) fs.writeFileSync(temporary, '', { mode: 0o600 });
++      }
++    }
++    fs.unlinkSync(temporary);
++    observation.assertUnchanged(before);
++  });
++});
++
++test('lease observation never excuses a disappearing protected entry or publication directory', async () => {
++  await withLeaseObservation(async (fixture) => {
++    const observation = fixture.observe();
++    const historical = path.join(fixture.directory, `processes-${crypto.randomUUID()}.json`);
++    fs.writeFileSync(historical, 'protected history', { mode: 0o600 });
++    const originalReaddir = fs.readdirSync;
++    try {
++      fs.readdirSync = (directory, ...args) => {
++        const names = originalReaddir(directory, ...args);
++        if (directory === fixture.directory) {
++          assert(names.includes(path.basename(historical)));
++          fs.unlinkSync(historical);
++        }
++        return names;
++      };
++      assert.throws(() => observation.snapshot(), { code: 'ENOENT' });
++    } finally { fs.readdirSync = originalReaddir; }
++
++    const temporary = `${fixture.processPath}.${'c'.repeat(24)}`;
++    fs.writeFileSync(temporary, '', { mode: 0o600 });
++    const originalLstat = fs.lstatSync;
++    const displaced = path.join(fixture.root, 'displaced-instance');
++    let renamed = false;
++    try {
++      fs.lstatSync = (filename, ...args) => {
++        if (filename === temporary) { fs.renameSync(fixture.directory, displaced); renamed = true; }
++        return originalLstat(filename, ...args);
++      };
++      assert.throws(() => observation.snapshot(), { code: 'ENOENT' });
++      assert.equal(renamed, true);
++    } finally {
++      fs.lstatSync = originalLstat;
++      if (renamed) fs.renameSync(displaced, fixture.directory);
++      fs.unlinkSync(temporary);
++    }
++    observation.snapshot();
++  });
++});
+diff --git a/tools/verify-live-lease.cjs b/tools/verify-live-lease.cjs
+index 2f586681d7d2d621c8dc4b4c7684f3e0cc035523..40e3a11c5eed00802389d1ecaa8f24dd90377453 100644
+--- a/tools/verify-live-lease.cjs
++++ b/tools/verify-live-lease.cjs
+@@ -74,11 +74,46 @@ async function heldController(value, digest, interrupt, work) {
+   }
+ }
+ 
+-function retained(root, additional = []) {
++function retained(root, additional = [], currentProcessPath) {
+   const value = {};
++  const publicationDirectory = currentProcessPath && path.dirname(currentProcessPath);
++  const publicationPrefix = currentProcessPath && `${path.basename(currentProcessPath)}.`;
++  const safeTemporary = (filename, directory) => {
++    const parent = fs.lstatSync(directory);
++    const safeParent = (stat) => stat.isDirectory() && !stat.isSymbolicLink() &&
++      stat.uid === process.getuid() && (stat.mode & 0o777) === 0o700;
++    assert(safeParent(parent), 'unsafe process publication directory');
++    const missing = (error) => {
++      if (error.code !== 'ENOENT') throw error;
++      const current = fs.lstatSync(directory);
++      assert(safeParent(current) && current.dev === parent.dev && current.ino === parent.ino,
++        'process publication directory changed');
++    };
++    let stat;
++    try { stat = fs.lstatSync(filename); } catch (error) { missing(error); return; }
++    const safe = (entry) => entry.isFile() && !entry.isSymbolicLink() && entry.uid === process.getuid() &&
++      (entry.mode & 0o777) === 0o600 && entry.size <= 2 * 1024 * 1024;
++    assert(safe(stat), 'unsafe unpublished process receipt');
++    let fd;
++    try { fd = fs.openSync(filename, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW); }
++    catch (error) { missing(error); return; }
++    try {
++      const opened = fs.fstatSync(fd);
++      assert(safe(opened) && opened.dev === stat.dev && opened.ino === stat.ino,
++        'unpublished process receipt changed while opening');
++    } finally { fs.closeSync(fd); }
++  };
+   const walk = (directory) => {
+     for (const name of fs.readdirSync(directory)) {
+       const filename = path.join(directory, name);
++      if (filename === currentProcessPath) continue;
++      // Only this validated current publisher's exact unpublished namespace
++      // can disappear during rename. All other entries remain protected.
++      if (directory === publicationDirectory && name.startsWith(publicationPrefix) &&
++        /^[0-9a-f]{24}$/.test(name.slice(publicationPrefix.length))) {
++        safeTemporary(filename, directory);
++        continue;
++      }
+       const stat = fs.lstatSync(filename);
+       if (stat.isDirectory()) { walk(filename); continue; }
+       if (stat.isFile() && !filename.endsWith('.img') && !filename.endsWith('.log')) {
+@@ -95,11 +130,112 @@ function retained(root, additional = []) {
+   return value;
+ }
+ 
++// The selected subject SDK owns private atomic reads and native PID identity.
++// This observation grants no lifecycle, signalling or complete-exit authority.
++const liveObservation = String.raw`
++  require File.join(ARGV.fetch(0), 'cluster/lib/kb_process')
++  begin
++    input = STDIN.read(2 * 1024 * 1024 + 1)
++    raise KbRuntime::Error, 'descriptor exceeds limit' if input.bytesize > 2 * 1024 * 1024
++    expected = JSON.parse(input)
++    fields = %w[instance_id run_id artifact_id artifact_sha256]
++    raise KbRuntime::Error, 'invalid expected identity' unless
++      fields.first(3).all? { |key| KbRuntime::State::UUID.match?(expected.fetch(key)) } &&
++      /\A[0-9a-f]{64}\z/.match?(expected.fetch('artifact_sha256')) &&
++      expected.fetch('owner_id') == "uid:#{Process.uid}" &&
++      expected.fetch('provenance').fetch('source').fetch('source') == ARGV.fetch(0)
++    state = KbRuntime::State.new(ARGV.fetch(1), 'same-slug')
++    raise KbRuntime::Error, 'state root differs' unless state.root == ARGV.fetch(1)
++    raise KbRuntime::Error, 'instance differs' unless state.identity.fetch('instance_id') == expected.fetch('instance_id')
++    phase = state.read(state.path('phase.json'))
++    raise KbRuntime::Error, 'not the current ready run' unless
++      phase == { 'schema' => 1, 'phase' => 'ready', 'run_id' => expected.fetch('run_id') }
++    launch = state.read(state.path("launch-#{expected.fetch('run_id')}.json"))
++    raise KbRuntime::Error, 'launch differs' unless launch['schema'] == KbRuntime::State::SCHEMA &&
++      fields.all? { |key| launch[key] == expected[key] } && launch['state_root'] == state.root &&
++      launch['slug'] == state.slug && launch['owner_uid'] == Process.uid &&
++      launch['source'] == expected.fetch('provenance').fetch('source') &&
++      launch['boot_id'] == KbRuntime::ProcessIdentity.boot_id
++    bytes = state.file(state.path("artifact-#{expected.fetch('artifact_id')}.json"))
++    artifact = JSON.parse(bytes)
++    raise KbRuntime::Error, 'artifact differs' unless
++      Digest::SHA256.hexdigest(bytes) == expected.fetch('artifact_sha256') &&
++      bytes == expected.fetch('provenance').fetch('artifact_json') && artifact['schema'] == 1 &&
++      artifact['instance_id'] == expected['instance_id'] && artifact['artifact_id'] == expected['artifact_id'] &&
++      artifact['source'] == launch['source']
++    claim = File.join(File.dirname(launch.fetch('socket_dir')), 'reservations', "#{expected.fetch('instance_id')}-#{expected.fetch('run_id')}.json")
++    raise KbRuntime::Error, 'claim directory absent' unless state.private_directory(File.dirname(claim))
++    reservation = state.read(claim)
++    raise KbRuntime::Error, 'claim differs' unless fields.all? { |key| reservation[key] == expected[key] } &&
++      reservation['state_root'] == state.root && reservation['owner_uid'] == Process.uid &&
++      reservation['boot_id'] == launch['boot_id']
++    process_path = state.path("processes-#{expected.fetch('run_id')}.json")
++    record = state.read(process_path)
++    raise KbRuntime::Error, 'process receipt differs' unless record.is_a?(Hash) &&
++      record.keys.sort == (fields + %w[schema runner children complete]).sort && record['schema'] == 1 &&
++      fields.all? { |key| record[key] == expected[key] } && record['complete'] == false && record['children'].is_a?(Array)
++    valid = lambda do |identity|
++      identity.is_a?(Hash) && identity.keys.sort == %w[argv boot_id executable owner_uid pid start_ticks] &&
++        identity['pid'].is_a?(Integer) && identity['pid'] > 1 && identity['pid'] <= 2**31 - 1 &&
++        identity['start_ticks'].is_a?(Integer) && identity['start_ticks'] >= 0 && identity['start_ticks'] <= 2**53 - 1 &&
++        identity['boot_id'] == launch['boot_id'] && identity['owner_uid'] == Process.uid &&
++        identity['executable'].is_a?(String) && identity['executable'].start_with?('/') &&
++        !identity['executable'].include?("\0") && identity['argv'].is_a?(Array) &&
++        identity['argv'].all? { |argument| argument.is_a?(String) && !argument.include?("\0") }
++    end
++    runner = record['runner']
++    raise KbRuntime::Error, 'runner differs' unless valid.call(runner) && KbRuntime::ProcessIdentity.runner_matches?(runner, launch)
++    keys = record['children'].map do |child|
++      raise KbRuntime::Error, 'invalid child identity' unless valid.call(child) && child['pid'] != runner['pid']
++      [child['pid'], child['start_ticks']]
++    end
++    raise KbRuntime::Error, 'duplicate child identity' unless keys.uniq == keys
++    STDOUT.write(JSON.generate('process_path' => process_path, 'claim_path' => claim, 'record' => record))
++  rescue StandardError => error
++    warn "Live process observation refused: #{error.class}"
++    exit 1
++  end
++`;
++
++function observeLeaseState(root, value, sdkSource) {
++  const read = () => {
++    try {
++      return JSON.parse(execFileSync('ruby', ['-e', liveObservation, '--', sdkSource, root], {
++        input: JSON.stringify(value), encoding: 'utf8', maxBuffer: 8 * 1024 * 1024, timeout: 10000,
++        stdio: ['pipe', 'pipe', 'pipe'],
++      }));
++    } catch (error) { throw new Error('Live process observation refused', { cause: error }); }
++  };
++  const initial = read();
++  const seen = new Set();
++  const update = (observation) => {
++    assert.equal(observation.process_path, initial.process_path);
++    assert.equal(observation.claim_path, initial.claim_path);
++    assert.deepEqual(observation.record.runner, initial.record.runner, 'authenticated runner must remain unchanged');
++    const keys = new Set(observation.record.children.map((child) => JSON.stringify([child.pid, child.start_ticks])));
++    for (const key of seen) assert(keys.has(key), 'previously observed child identity must remain recorded');
++    for (const key of keys) seen.add(key);
++  };
++  update(initial);
++  return {
++    snapshot() {
++      update(read());
++      const protectedFiles = retained(root, [initial.claim_path], initial.process_path);
++      update(read());
++      return protectedFiles;
++    },
++    assertUnchanged(before) {
++      assert(isDeepStrictEqual(this.snapshot(), before), 'lease rejection leaves state/credentials/claims unchanged');
++    },
++  };
++}
++
+ async function main(argv) {
+   const [descriptorPath, metadataPath, runtimePackage, stateRoot, configPath] = argv;
+   const { value, digest } = readConnection(descriptorPath, ['ip-inventory']);
+   const source = JSON.parse(fs.readFileSync(metadataPath));
+   const engine = path.join(runtimePackage, 'bin/vpsfree-kb-devcluster');
++  let observation;
+   for (const interrupt of [false, true, false]) {
+     await heldController(value, digest, interrupt, async (lease) => {
+       const connection = new Connection(value, lease);
+@@ -112,16 +248,8 @@ async function main(argv) {
+       connection.ssh = async (...args) => { ssh += 1; return method(...args); };
+       await assert.rejects(connection.verify({ ...source, revision: '0'.repeat(40) }), /Expected K source/);
+       assert.equal(ssh, 0, 'wrong source must fail before SSH or fixtures');
+-      const directory = path.join(stateRoot, 'clusters/same-slug');
+-      const launch = JSON.parse(fs.readFileSync(path.join(directory, `launch-${value.run_id}.json`)));
+-      assert.equal(launch.instance_id, value.instance_id);
+-      assert.equal(launch.run_id, value.run_id);
+-      const claim = path.join(path.dirname(launch.socket_dir), 'reservations', `${value.instance_id}-${value.run_id}.json`);
+-      const reservation = JSON.parse(fs.readFileSync(claim));
+-      assert.equal(reservation.state_root, stateRoot);
+-      assert.equal(reservation.instance_id, value.instance_id);
+-      assert.equal(reservation.run_id, value.run_id);
+-      const before = retained(stateRoot, [claim]);
++      observation ||= observeLeaseState(stateRoot, value, source.source);
++      const before = observation.snapshot();
+       for (const command of ['stop', 'update', 'reset']) {
+         const args = ['--state-root', stateRoot, command, 'same-slug'];
+         if (command === 'update') args.push('--network', 'local', '--config', configPath);
+@@ -131,7 +259,7 @@ async function main(argv) {
+         catch (error) { if (error.signal) throw error; code = error.status; }
+         assert.equal(code, 75, `public ${command} must refuse before lease release`);
+         lease.assertLive();
+-        assert(isDeepStrictEqual(retained(stateRoot, [claim]), before), 'lease rejection leaves state/credentials/claims unchanged');
++        observation.assertUnchanged(before);
+       }
+     });
+   }
+@@ -139,5 +267,5 @@ async function main(argv) {
+   assert.equal(current.run_id, value.run_id);
+   process.stdout.write('Public lease proof complete\n');
+ }
+-module.exports = { heldController, main, retained };
++module.exports = { heldController, main, retained, observeLeaseState };
+ if (require.main === module) main(process.argv.slice(2)).catch((error) => { process.stderr.write(`${error.message}\n`); process.exitCode = 1; });

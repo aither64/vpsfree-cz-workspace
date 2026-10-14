@@ -1,0 +1,63 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin' is dirty
+Successfully installed bundler-4.0.22
+1 gem installed
+Bundle complete! 7 Gemfile dependencies, 48 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin/api/models/transaction_chains/vps/update.rb: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin/api/spec/models/transaction_chains/vps/update_spec.rb: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin/tests/playwright/webui/specs/admin-cluster.spec.cjs: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/src/pages/app/admin/cluster/NetworksPage.tsx: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/src/pages/app/admin/cluster/NetworksPage.test.tsx: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.ts: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-scoped-checks.sh: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/run-implementer-remediation-quick2.sh: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin/docs/ip-locking.md: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/docs/design/API_CONTRACTS.md: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-in-shell.sh: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-consolidate-in-shell.sh: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/run-network-remediation-source-commits.sh: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-v-api.paths: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-v-webui.paths: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-w.paths: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-v-api.message: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-v-webui.message: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-w.message: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/docs/work-log/2026-10-06-network-availability.md: OK
+81001ef0aa28d43df83191d3909372419733e2535f59cae0c6f98aee8ad6c4e6  /home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-v-api.paths
+7812b42dd6aca2c2418545aa0d7dbfacd5581d65c20038ccec9f453600b20c63  /home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-v-api.message
+Running pre-commit hooks
+Run Nixfmt...................................................[Nixfmt] OK
+Run MigrationSpecs...................................[MigrationSpecs] OK
+Run VpsadminWebuiI18n.............................[VpsadminWebuiI18n] OK
+Analyze with RuboCop........................................[RuboCop] OK
+Run VpsadminApiI18n.................................[VpsadminApiI18n] OK
+
+✓ All pre-commit hooks passed
+
+Running commit-msg hooks
+Check subject line................................[SingleLineSubject] OK
+Check for trailing periods in subject................[TrailingPeriod] OK
+Check text width..........................................[TextWidth] WARNING
+Line 4 of commit message has > 72 characters
+
+⚠ All commit-msg hooks passed, but with warnings
+
+[2026-10-05-network-ipv4-left-counter 8c1e17af1] fixup! api: add network availability admission controls
+ 3 files changed, 125 insertions(+), 23 deletions(-)
+commit 8c1e17af137d20274399329f2665a6be7a7d57e0
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 16:02:10 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 6 16:02:10 2026 +0200
+
+    fixup! api: add network availability admission controls
+    
+    Treat retained export endpoints transferred with VPS datasets as new
+    ownership. Capture their networks and reserve their parents and hosts with
+    the VPS addresses before queuing ownership or accounting changes.
+
+ api/models/transaction_chains/vps/update.rb        |  44 ++++-----
+ .../models/transaction_chains/vps/update_spec.rb   | 100 +++++++++++++++++++++
+ docs/ip-locking.md                                 |   4 +-
+ 3 files changed, 125 insertions(+), 23 deletions(-)

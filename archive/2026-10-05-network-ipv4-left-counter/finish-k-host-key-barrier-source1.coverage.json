@@ -1,0 +1,27 @@
+{
+  "status": "UNRUN; source-only",
+  "existing_case_count": 10,
+  "existing_case_names": [
+    "test_actual_services_node_and_optional_dns_have_exactly_one_ed25519_declaration_and_hostkey_line",
+    "test_real_generation_and_second_start_preserve_private_bytes_and_public_fingerprint",
+    "test_pool_completion_barrier_prevents_generation_until_released",
+    "test_unavailable_pool_refuses_before_any_storage_or_generation",
+    "test_missing_tmpfs_wrong_dataset_mountpoint_and_unmounted_storage_refuse_before_generation",
+    "test_unsafe_tank_path_or_owner_mode_refuses_without_preparing_keys",
+    "test_existing_unsafe_directory_and_failed_preparation_are_not_repaired",
+    "test_unsafe_private_key_type_mode_owner_link_or_invalid_material_is_preserved",
+    "test_unsafe_public_path_and_public_file_without_private_key_are_not_overwritten",
+    "test_native_key_generation_failure_cannot_start_daemon_or_create_fallback"
+  ],
+  "new_case_count": 0,
+  "owning_regressions": [
+    "test_pool_completion_barrier_prevents_generation_until_released",
+    "test_unavailable_pool_refuses_before_any_storage_or_generation"
+  ],
+  "behavior": "The actual generated Bash fixture waits on blocking FD4 for parent release; closing the release writer still gives EOF refusal.",
+  "unchanged_hosted_selectors": [
+    "nix develop --command bin/check --allow-missing",
+    "nix develop --command ruby tools/test-node-ssh.rb"
+  ],
+  "limits": "No repaired test/config/guest/capture pass claim. Lead owns publication, exact K/E hosted gates and review."
+}

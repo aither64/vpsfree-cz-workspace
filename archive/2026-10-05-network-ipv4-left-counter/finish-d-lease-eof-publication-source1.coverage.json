@@ -1,0 +1,21 @@
+{
+  "status": "UNRUN; source-only fixture repair",
+  "existing_tests_unchanged": true,
+  "test_method_count": 27,
+  "hosted_selectors": [
+    "nix develop .#dev-workspace --command ruby test/workspace_host/commands_and_locks_test.rb --name test_capture_lease_abrupt_dispatcher_loss_closes_both_mediated_peer_channels",
+    "nix develop .#dev-workspace --command ruby test/workspace_host/commands_and_locks_test.rb --name '/capture_lease|non_streaming_provider_dispatch/'",
+    "nix develop .#dev-workspace --command ruby test/workspace_host_test.rb"
+  ],
+  "hosted_package_gates": [
+    "D exact-head Check fast job; existing checks except host-module-idempotency",
+    "E exact reselected D composition: nix flake check --print-build-logs including checks.x86_64-linux.compatibility-package"
+  ],
+  "reached_consumers": [
+    "abrupt dispatcher loss: caller EOF, marker literal payload, generation lock",
+    "stdout half-close: marker literal payload while cleanup/reap guard remains held",
+    "readiness and default stdout: marker existence before provider cleanup completes",
+    "broken output/interruption/before-or-same-window stdout EOF: shared producer, exact reaping preserved"
+  ],
+  "execution_owner": "root, hosted only; no workflows edited"
+}

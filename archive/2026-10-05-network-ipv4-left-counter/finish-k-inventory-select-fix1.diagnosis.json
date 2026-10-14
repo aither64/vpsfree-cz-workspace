@@ -1,0 +1,93 @@
+{
+  "session": "2026-10-05-network-ipv4-left-counter",
+  "member": "implementer0",
+  "retained_settings": {
+    "model": "gpt-6.1-sol",
+    "effort": "xhigh",
+    "purpose": "implementation",
+    "access": "workspace_write"
+  },
+  "repository": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsfree-kb-contracts-runtime",
+  "head": "a93fc97ed421d56dfe6753efb223af14948e5e6d",
+  "branch": "2026-10-05-network-ipv4-left-counter-kb-runtime",
+  "path_count": 1,
+  "path": "tools/test-ip-inventory.cjs",
+  "index_empty": true,
+  "native_evidence": {
+    "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-corrected-hosted3/k/native-logs.zip": {
+      "sha256": "1b4116d95cf5bf1b2dbd77a6efca0747c37199ed59ab899c8453348edab77d18",
+      "bytes": 67385
+    },
+    "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-k-generator-source-log3.txt": {
+      "sha256": "1c3002dae54df00bdf52700bd85ff07f1a72a81d0861d93d7b7bc1862982b6c1",
+      "bytes": 119534
+    }
+  },
+  "native_hosted_run": 37833264821,
+  "native_inventory_result": {
+    "tests": 25,
+    "passed": 24,
+    "failed": 1,
+    "cancelled": 0,
+    "skipped": 0,
+    "todo": 0
+  },
+  "native_failure": {
+    "example": "first inventory preparation creates the tiny VPS in the proved member browser before explicit admin registration",
+    "log_lines": "947-955",
+    "error": "TypeError: select.locator is not a function",
+    "site": "lib/webui.cjs:120 -> fixtures/prepare.cjs:109 -> prepareFixtures:620 -> tools/test-ip-inventory.cjs:329"
+  },
+  "source_diagnosis": "The form fake returned a select with count/evaluateAll/selectOption but no child locator. The production selectFirstOption requires select.locator(option).evaluateAll and invokes its DOM-option mapping callback. The prior inspection missed this nesting; the earlier details correction is retained byte-identically. No product or live browser failure is diagnosed.",
+  "correction": "Only the first tiny-VPS form locator fake changes. Its namespace select exposes locator(option).evaluateAll, invokes the actual callback on realistic disabled/blank/zero/separator/usable option objects with trimmed text, and asserts selection of value 1. Other form methods and all original assertions remain.",
+  "inspected_real_helper_surface": {
+    "identity/discovery": "Existing member edit-profile/logbox attributes and no-regain-admin counts, two API identities before navigation, empty owned-VPS row discovery and lease/account checks are retained.",
+    "goto/preparePage": "page.goto/addStyleTag/evaluate remain present.",
+    "environment/location": "The existing newvps-step1.count models an absent environment stage; location tr.first.locator.check remains present.",
+    "template": "The prior exact-text/tr ancestor/radio first-count-check and details count/evaluate callback remain byte-identical, including the open-before-check assertion.",
+    "submitLast": "Submit collection count/nth/click and the existing location/template/resources/submit stage progression are retained.",
+    "resources/hostname": "Resource and hostname input.fill remain present with existing exact resource/stage assertions.",
+    "namespace": "count -> locator(option).evaluateAll(actual callback) -> selectOption(expected 1); disabled, blank, zero and separator entries precede the usable Namespace option.",
+    "user data/boot": "No-user-data count/check and boot count/isChecked/setChecked retain their existing shape; the requested boot is true.",
+    "completion": "waitForLoadState, veid URL, running-state innerText, dedicated admin registration/disabling and private fixture write remain on the real preparation path."
+  },
+  "scope_proof": "Current source equals HEAD before the first form fake and from its getByText block onward. This retains the details fix, all 25 native selected cases and original member/admin/resource/order/no-effects assertions. No helper bypass, new case, skip, product injection or createVpsIn stub.",
+  "unchanged_owning_sources": {
+    "fixtures/prepare.cjs": {
+      "sha256": "7db4d48049afd4a6fb8eaf4d095a9e3f520e30d90c2e007cb08763900c7bda0b",
+      "byte_identical_to_head": true
+    },
+    "lib/webui.cjs": {
+      "sha256": "50873a59d35fc06eb75810ffb71893d839199a6f52904356828585344d1cb077",
+      "byte_identical_to_head": true
+    },
+    "tools/runtime-verify.rb": {
+      "sha256": "c9c98d3bdbb9fc7319415b9f4a784cfa91437c298ba829a55576ae212c863943",
+      "byte_identical_to_head": true
+    },
+    "cluster/runtime-contract.md": {
+      "sha256": "6b871fb0a44dc74b16cfa981caff4d6fa5d443195107338c708443df5d7d2a20",
+      "byte_identical_to_head": true
+    },
+    "flake.nix": {
+      "sha256": "30aa26e0014d35b4c2bc68484d2df12fb12e6248e9556e9549d2b4f7064e74e4",
+      "byte_identical_to_head": true
+    },
+    "flake.lock": {
+      "sha256": "b37f63bf8c040c4ac5c8f5eb83ab5243f57dc1821d36ddc62b6d2483aca4effa",
+      "byte_identical_to_head": true
+    },
+    "captures.json": {
+      "sha256": "f16308506fd741978392ba50fb0183b43697fe80a3f96386b1d3424da7f3044d",
+      "byte_identical_to_head": true
+    }
+  },
+  "checks_run": [],
+  "local_reproduction": false,
+  "git_mutations": false,
+  "runtime_operations": false,
+  "hosted_selection": "Parent-owned canonical .github/workflows/check.yml Check/check at the published corrected exact head, with the existing bin/check source selection unchanged.",
+  "readiness": "Frozen source-only correction for lead inspection and hosted verification; no corrected-source pass claim.",
+  "blockers": [],
+  "design_deviations": []
+}

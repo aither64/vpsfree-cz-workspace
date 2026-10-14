@@ -1,0 +1,145 @@
+diff --git a/cluster/lib/kb_closure.rb b/cluster/lib/kb_closure.rb
+index dbd2a5c6a250ea352b40d4bb1c8aa5ec1814b0ee..ed74b26cad9ffa9b9101696a4c3ce70082cb3ebd 100644
+--- a/cluster/lib/kb_closure.rb
++++ b/cluster/lib/kb_closure.rb
+@@ -105,8 +105,13 @@ module KbRuntime
+     end
+ 
+     def capacity(old, machine, bytes, inodes)
+-      output = @engine.ssh(old, machine, 'sh', '-c',
+-        'set -eu; df -B1 --output=avail /nix/store | tail -n1; df -i --output=iavail /nix/store | tail -n1')
++      output = @engine.ssh(old, machine, 'sh', '-c', <<~'SH')
++        set -eu
++        bytes=$(df -B1 --output=avail /nix/store)
++        inodes=$(df --output=iavail /nix/store)
++        printf '%s\n' "$bytes" | tail -n1
++        printf '%s\n' "$inodes" | tail -n1
++      SH
+       free_bytes, free_inodes = output.split.map { |value| Integer(value) }
+       unless free_bytes && free_inodes && free_bytes >= bytes + RESERVE_BYTES && free_inodes >= inodes + RESERVE_INODES
+         raise Error, "insufficient guest store space on #{machine}; no GC or resize was attempted"
+diff --git a/tools/test-closure.rb b/tools/test-closure.rb
+index 231bb67f7af6809192bb41ee508b0efafc3eeb47..bb58e0c71a20d1e6ef45c028820ed35a193a5a3d 100644
+--- a/tools/test-closure.rb
++++ b/tools/test-closure.rb
+@@ -2,6 +2,7 @@
+ 
+ require 'minitest/autorun'
+ require 'minitest/mock'
++require 'open3'
+ require 'tmpdir'
+ require_relative '../cluster/lib/kb_closure'
+ 
+@@ -145,4 +146,112 @@ class ClosurePreparationTest < Minitest::Test
+       assert_equal(4, KbRuntime::ClosurePreparation.new(Object.new).inode_count([closure]))
+     end
+   end
++
++  def with_native_capacity(engine, producer: nil, output: '', exit_status: 0)
++    df = ENV.fetch('PATH').split(File::PATH_SEPARATOR).map { |directory| File.join(directory, 'df') }
++      .find { |path| File.file?(path) && File.executable?(path) }
++    refute_nil(df, 'the declared shell must provide GNU df')
++    assert_match(%r{\A/nix/store/}, File.realpath(df))
++    version, _stderr, status = Open3.capture3(df, '--version')
++    assert(status.success?)
++    assert_match(/\Adf \(GNU coreutils\)/, version)
++    original = engine.method(:ssh)
++    observations = []
++    Dir.mktmpdir('kb-capacity-producer-') do |directory|
++      trace = File.join(directory, 'df-argv')
++      wrapper = File.join(directory, 'df')
++      File.write(wrapper, <<~SH)
++        #!/bin/sh
++        set -eu
++        printf '%s\\n' "$*" >> #{Shellwords.escape(trace)}
++        if test "$1" = '-B1'; then field=bytes; else field=inodes; fi
++        if test "$field" = #{Shellwords.escape(producer.to_s)}; then
++          printf '%s' #{Shellwords.escape(output)}
++          printf '%s\\n' 'controlled df diagnostic' >&2
++          exit #{Integer(exit_status)}
++        fi
++        exec #{Shellwords.escape(df)} "$@"
++      SH
++      File.chmod(0o700, wrapper)
++      engine.define_singleton_method(:ssh) do |record, machine, *argv, input: nil|
++        if argv.first(2) == ['sh', '-c'] && argv.last.include?('df -B1')
++          calls << [:ssh, record['run_id'], machine, argv, input]
++          stdout, stderr, result = Open3.capture3({ 'PATH' => "#{directory}:#{ENV.fetch('PATH')}" }, *argv)
++          observations << { argv: argv, stdout: stdout, stderr: stderr, status: result,
++            producers: File.readlines(trace, chomp: true) }
++          raise KbRuntime::Error, "guest capacity command failed (exit #{result.exitstatus})" unless result.success?
++
++          stdout
++        else
++          original.call(record, machine, *argv, input: input)
++        end
++      end
++      yield observations
++    end
++  ensure
++    engine.define_singleton_method(:ssh, original) if original
++  end
++
++  def test_actual_capacity_shell_uses_native_gnu_df_before_copy_and_complete_receipts
++    with_preparation do |engine, preparation, old, artifact, _expected|
++      copies = []
++      with_native_capacity(engine) do |observations|
++        command = ->(*argv, env:) { copies << [argv, env]; '' }
++        KbRuntime::Software.stub(:command, command) { preparation.prepare(old, artifact) }
++        assert_equal(1, observations.length)
++        native = observations.first
++        assert(native[:status].success?, native[:stderr])
++        assert_equal(['-B1 --output=avail /nix/store', '--output=iavail /nix/store'], native[:producers])
++        assert_match(/\A\s*\d+\s+\d+\s*\z/, native[:stdout])
++        assert_equal(1, copies.length)
++        assert_equal(['nix', 'copy'], copies.first.first.first(2))
++        assert(engine.state.read(engine.state.path("prepared-#{artifact['artifact_id']}-services.json"))['complete'])
++        assert(engine.state.read(engine.state.path("prepared-#{artifact['artifact_id']}.json"))['complete'])
++      end
++    end
++  end
++
++  %i[bytes inodes].each do |producer|
++    define_method("test_#{producer}_native_df_failure_cannot_reach_copy_or_prepared_receipt") do
++      with_preparation do |engine, preparation, old, artifact, _expected|
++        with_native_capacity(engine, producer: producer, output: "measurement that must not be parsed\n", exit_status: 41) do |observations|
++          copy = ->(*_argv, env:) { flunk('failed capacity cannot invoke nix copy') }
++          error = assert_raises(KbRuntime::Error) do
++            KbRuntime::Software.stub(:command, copy) { preparation.prepare(old, artifact) }
++          end
++          assert_equal('guest capacity command failed (exit 41)', error.message)
++          assert_equal(1, observations.length)
++          native = observations.first
++          assert_equal(41, native[:status].exitstatus)
++          assert_equal('', native[:stdout], 'no numeric lines may be published before both df commands succeed')
++          assert_equal("controlled df diagnostic\n", native[:stderr])
++          expected = ['-B1 --output=avail /nix/store']
++          expected << '--output=iavail /nix/store' if producer == :inodes
++          assert_equal(expected, native[:producers])
++          refute(File.exist?(engine.state.path("prepared-#{artifact['artifact_id']}-services.json")))
++          refute(File.exist?(engine.state.path("prepared-#{artifact['artifact_id']}.json")))
++          assert(engine.calls.all? { |call| call[1] == old['run_id'] })
++        end
++      end
++    end
++  end
++
++  %i[bytes inodes].product([['missing', ''], ['malformed', "not-a-number\n"]]).each do |producer, (label, output)|
++    define_method("test_successful_#{producer}_df_with_#{label}_measurement_refuses_before_copy_or_prepared_receipt") do
++      with_preparation do |engine, preparation, old, artifact, _expected|
++        with_native_capacity(engine, producer: producer, output: output) do |observations|
++          copy = ->(*_argv, env:) { flunk('invalid measurements cannot invoke nix copy') }
++          assert_raises(KbRuntime::Error, ArgumentError) do
++            KbRuntime::Software.stub(:command, copy) { preparation.prepare(old, artifact) }
++          end
++          assert_equal(1, observations.length)
++          assert(observations.first[:status].success?)
++          assert_equal(['-B1 --output=avail /nix/store', '--output=iavail /nix/store'], observations.first[:producers])
++          refute(File.exist?(engine.state.path("prepared-#{artifact['artifact_id']}-services.json")))
++          refute(File.exist?(engine.state.path("prepared-#{artifact['artifact_id']}.json")))
++          assert(engine.calls.all? { |call| call[1] == old['run_id'] })
++        end
++      end
++    end
++  end
+ end

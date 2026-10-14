@@ -1,0 +1,3 @@
+const a="https://vpsadmin.invalid/",u=/[\\\u0000-\u001f\u007f]/;function c(r,l){const t=r.trim();if(!t||u.test(t))return null;try{return{value:t,url:new URL(t,l)}}catch{return null}}function f(r,l={}){if(l.allowPngDataImage&&r.length<=1024*1024){const i=r.trim(),o="data:image/png;base64,";if(i.startsWith(o)){const s=i.slice(o.length);return s.length>=12&&s.length%4===0&&/^[A-Za-z0-9+/]+={0,2}$/.test(s)&&atob(s.slice(0,12)).startsWith(`PNG\r
+
+`)?i:null}}const t=c(r,a);if(!t)return null;const{value:n,url:e}=t;return n.startsWith("/")||n.startsWith("?")||n.startsWith("#")?e.origin===a.slice(0,-1)?n:null:e.protocol==="http:"||e.protocol==="https:"||l.allowMailto&&e.protocol==="mailto:"?n:null}export{f as s};

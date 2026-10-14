@@ -1,0 +1,25 @@
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index 94052cf64ce6ca977651d368b28aafe477f447b0..e0fa3c2d4790dd39df3966a637ab2298c4ed7f56 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -357,6 +357,20 @@ must pass a real qualification; they are not measured sufficient minima for
+ all fixtures or workloads. The general runtime configuration remains separate
+ from this verifier profile.
+ 
++For `single` topology with `services.memoryMiB` set to 2048, the services
++workload uses a 256M MySQL buffer pool and 64 connections. Join, sort and read
++buffers are 1M, 2M and 1M; temporary and heap tables are limited to 16M each.
++The API uses one worker with one to four threads. The nested WebUI's dynamic
++PHP pool has at most four children, starts one and keeps one to two spare.
++Only the base and DNS-record Prometheus export timers are disabled; their
++service definitions and the essential scheduler, supervisor and maintenance
++tasks remain available. Other topologies and the normal 4096 MiB configuration
++retain their inherited workload settings. These limits reduce the dedicated
++fixture's concurrency and SQL workspace; excess work may queue or spill to disk.
++They are qualification targets, not a total memory bound or a sustained-fit
++guarantee. They create a distinct guest artifact and do not alter retained
++artifacts through resume.
++
+ Include disposable `test-admin` (level 99), `test-user1` and `test-user2`
+ (both level 1) accounts from the initial start. Give each a full name, a password
+ and an email of `LOGIN@example.test`. Each namespace has `blockCount: 8`;

@@ -1,0 +1,23 @@
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index af18d41296a31f0e5e46ecccc9ebf234f13954ba..05e46ee0b8fa72cd5c87ef17aa4740a8e16a8a83 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -81,11 +81,13 @@ bind probe precedes launch and closes before QEMU binds. The durable claim spans
+ that handoff, but cannot reserve the port against unrelated host software.
+ 
+ Stop requests shutdown through the recorded runner's validated control socket.
+-The runner gracefully shuts down and reaps its machines. An unresponsive or
+-ambiguous orphan remains recorded with its paths and claims; no PID search,
+-process-group kill or force option substitutes for ownership. Reset requires a
+-stopped, proven instance and removes only its owned tree. Old rooted closures
+-remain until that owned reset.
++The runner gracefully shuts down and reaps its machines. It joins its control
++thread before closing the listener and removing its own control socket. Unknown
++socket-directory entries still prevent the engine from marking the run stopped.
++An unresponsive or ambiguous orphan remains recorded with its paths and claims;
++no PID search, process-group kill or force option substitutes for ownership.
++Reset requires a stopped, proven instance and removes only its owned tree.
++Old rooted closures remain until that owned reset.
+ 
+ Legacy `.devcluster/clusters` and old slug-only global socket directories are
+ outside schema 2. The launcher neither adopts nor deletes them. Create a fresh

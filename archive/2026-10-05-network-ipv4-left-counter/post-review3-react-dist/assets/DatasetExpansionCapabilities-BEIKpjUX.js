@@ -1,0 +1,1 @@
+function t(a){const n=a.mode==="admin"&&a.role==="admin",s=n&&a.isVpsDataset&&!a.hasExpansion,e=n&&a.hasExpansion;return{showEntry:a.hasExpansion||s,canCreate:s,canRegister:s,canEdit:e,canAddSpace:e&&a.expansionState==="active",showAdminMetadata:n}}export{t as d};

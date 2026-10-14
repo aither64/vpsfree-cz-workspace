@@ -1,0 +1,572 @@
+diff --git a/README.md b/README.md
+index c82983d16472f4c36b07e494161edbf7eaa15901..454909a5841f66874498db94a91e130746b3ea90 100644
+--- a/README.md
++++ b/README.md
+@@ -78,13 +78,14 @@ disables only that pool. Reruns validate the same allocation without enabling
+ the pool or charging again. Other checkpoints retain their full fixtures and
+ the primary address pools remain enabled.
+ 
+-This fixture requires explicit `test-user1` (level 1) and `test-admin` (level 99)
+-entries in the dedicated configuration's `seed.users`. Supply disposable test
+-credentials and synthetic `example.test` identities. The administrator keeps
+-its seeded namespace (`blockStart: 1`, `blockCount: 8`); member namespaces must
+-be disjoint. API provisioning uses the recorded administrator account, while
+-VPS creation and screenshots use the ordinary member. Both API identities and
+-the browser's member identity are checked before mutations or capture.
++This fixture requires explicit `test-admin` (level 99), `test-user1` and
++`test-user2` (both level 1) entries in the dedicated configuration's `seed.users`.
++Give each account a full name, a disposable password and an email of
++`LOGIN@example.test`. Each namespace has `blockCount: 8`; set `blockStart` to
++1 for `test-admin`, 9 for `test-user1` and 17 for `test-user2`. API provisioning
++uses the recorded administrator, while VPS creation and screenshots use
++`test-user1`. Both API identities and the browser's member identity are checked
++before mutations or capture.
+ 
+ Use `--scenario NAME` to recapture a functional group or
+ `--checkpoint TOPIC/VIEW` for one asset. Run `bin/devcluster --help` for cluster
+diff --git a/cluster/lib/kb_state.rb b/cluster/lib/kb_state.rb
+index c3ab09e03032ed406ffaa0f3ce856cde42f1d1f3..a798b38fd819e12f028774d172c65c7072c28a86 100644
+--- a/cluster/lib/kb_state.rb
++++ b/cluster/lib/kb_state.rb
+@@ -57,16 +57,20 @@ module KbRuntime
+     end
+ 
+     def file(path, limit: 2 * 1024 * 1024)
+-      check_ancestors(File.dirname(path))
+-      stat = File.lstat(path)
+-      raise Error, "unsafe private file: #{path}" unless stat.file? && !stat.symlink? && stat.uid == Process.uid && (stat.mode & 0o777) == 0o600 && stat.size <= limit
++      3.times do
++        check_ancestors(File.dirname(path))
++        stat = File.lstat(path)
++        raise Error, "unsafe private file: #{path}" unless stat.file? && !stat.symlink? && stat.uid == Process.uid && (stat.mode & 0o777) == 0o600 && stat.size <= limit
+ 
+-      File.open(path, File::RDONLY | File::NOFOLLOW) do |stream|
+-        opened = stream.stat
+-        raise Error, "file changed while opening: #{path}" unless [opened.dev, opened.ino] == [stat.dev, stat.ino]
++        File.open(path, File::RDONLY | File::NOFOLLOW) do |stream|
++          opened = stream.stat
++          raise Error, "unsafe private file: #{path}" unless opened.file? && !opened.symlink? && opened.uid == Process.uid && (opened.mode & 0o777) == 0o600 && opened.size <= limit
++          next unless [opened.dev, opened.ino] == [stat.dev, stat.ino]
+ 
+-        (stream.read(limit + 1) || '').tap { |bytes| raise Error, 'file exceeds size limit' if bytes.bytesize > limit }
++          return (stream.read(limit + 1) || '').tap { |bytes| raise Error, 'file exceeds size limit' if bytes.bytesize > limit }
++        end
+       end
++      raise Error, "file changed while opening: #{path}"
+     end
+ 
+     def read(path, **opts)
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index 11477b989541572bfe6c8388ad03b51b78f6ce12..303a29e58bcc35d546701b1c674ac5af39fdd0cb 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -29,6 +29,13 @@ receipts. They bind a prepared artifact UUID and receipt digest to configuration
+ bytes, socket paths, requested resources, source, runner and expected system
+ closures. The runner records its boot ID, PID, Linux start ticks, executable and
+ exact argument vector, plus owned child identities.
++Private records are published by atomic rename. A reader validates both the
++named file and its opened descriptor, including ownership, mode and size. If a
++safe replacement changes the inode between those checks, it restarts the read,
++up to three attempts. Other failures and continued replacement refuse access.
++A successful read returns one complete validated snapshot; owner locks and
++receipt identity checks still govern consistency across records.
++
+ Readiness belongs to that exact run. A stale PID or ready file cannot authorize
+ cleanup. Status reports busy (exit 75) when a lifecycle operation or capture owns
+ the gate.
+@@ -251,14 +258,14 @@ resolver and `example.test` domains. Conflicts refuse rather than selecting
+ different resources. Keep B's configuration, disk layout, SSH endpoints and TLS
+ names unchanged between source versions.
+ 
+-Both configurations must include explicit disposable `test-user1` (level 1)
+-and `test-admin` (level 99) accounts from the initial start. Use synthetic
+-`example.test` identities, preserve the administrator's seeded namespace
+-(`blockStart: 1`, `blockCount: 8`) and keep member namespaces disjoint. The
+-verifier rejects missing, duplicate or incompatible account entries before
+-lifecycle work. Keep B's account configuration unchanged through predecessor
+-resume and update; compare its private accounts-file digest without exposing
+-credentials.
++Both configurations must include explicit disposable `test-admin` (level 99),
++`test-user1` and `test-user2` (both level 1) accounts from the initial start.
++Give each account a full name, a password and an email of `LOGIN@example.test`.
++Each namespace has `blockCount: 8`; set `blockStart` to 1 for `test-admin`,
++9 for `test-user1` and 17 for `test-user2`. The verifier rejects missing,
++duplicate or incompatible account entries before lifecycle work. Keep B's
++account configuration unchanged through predecessor resume and update; compare
++its private accounts-file digest without exposing credentials.
+ 
+ The continuity phase starts A from the final package and B from the predecessor.
+ It proves predecessor stop/resume, then a genuinely changed-source update of B
+diff --git a/docs/webui-change-workflow.md b/docs/webui-change-workflow.md
+index 8fbc3ab6e8c580369009cf0bfc80d1624d2468f3..ef56b3595c94b4196a1e800158f7393c76f782c8 100644
+--- a/docs/webui-change-workflow.md
++++ b/docs/webui-change-workflow.md
+@@ -103,12 +103,14 @@ For only `networking/ip-address-list`, use an explicit `single` configuration
+ with the `ip-inventory` capability and matching committed runtime, capture and
+ validation packages. This fixture needs services and node1; it does not require
+ the full storage/traffic fixture. Keep both languages in one private output
+-directory. Include explicit disposable `test-user1` (level 1) and `test-admin`
+-(level 99) entries in `seed.users`, with synthetic `example.test` identities.
+-Keep the administrator's seeded namespace (`blockStart: 1`, `blockCount: 8`)
+-and member namespaces disjoint. The fixture proves both recorded API accounts,
+-uses the administrator only for inventory provisioning, and keeps the browser
+-in the ordinary member's session throughout VPS creation and capture:
++directory. Include explicit disposable `test-admin` (level 99), `test-user1`
++and `test-user2` (both level 1) entries in `seed.users`. Give each a full name,
++a password and an email of `LOGIN@example.test`. Each namespace has
++`blockCount: 8`; set `blockStart` to 1 for `test-admin`, 9 for `test-user1` and
++17 for `test-user2`. The fixture proves the recorded administrator and
++`test-user1` API identities, uses the administrator only for inventory
++provisioning, and keeps the browser in `test-user1`'s session throughout VPS
++creation and capture:
+ 
+ ```sh
+ vpsfree-kb-devcluster start FEATURE-SLUG --topology single --config /path/to/dedicated-config.json --state-root /path/to/private-state
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index 5d3d4259758827fe29822558f495568c26104774..1a93e4f5924cf2d582ae2ff7a1cf530280b93e7b 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -229,6 +229,325 @@ class RuntimeTest < Minitest::Test
+   end
+ end
+ 
++class AtomicRecordReadTest < Minitest::Test
++  def test_atomic_rename_returns_complete_replacement_bytes_and_json
++    %i[file read].each do |method|
++      with_record do |state, path|
++        bytes = "#{JSON.generate('value' => 'replacement', 'items' => [1, 2, 3])}\n"
++        replace = lambda do |events|
++          replace_record(path, bytes) if events[:opens] == 1
++        end
++        with_record_opens(path, before_open: replace) do |events|
++          expected = method == :file ? bytes : JSON.parse(bytes)
++          assert_equal(expected, state.public_send(method, path, limit: 128))
++          assert_equal(2, events[:stats])
++          assert_equal(2, events[:opens])
++          assert_equal([[2, 129]], events[:reads])
++          assert(events[:streams].all?(&:closed?))
++        end
++      end
++    end
++  end
++
++  def test_two_safe_replacements_close_each_descriptor_before_success
++    with_record do |state, path|
++      replace = lambda do |events|
++        assert(events[:streams].all?(&:closed?), 'each retry must first close its descriptor')
++        replace_record(path, "#{JSON.generate('attempt' => events[:opens])}\n") if events[:opens] <= 2
++      end
++      with_record_opens(path, before_open: replace) do |events|
++        assert_equal({ 'attempt' => 2 }, state.read(path, limit: 128))
++        assert_equal(3, events[:stats])
++        assert_equal(3, events[:opens])
++        assert_equal([[3, 129]], events[:reads])
++        assert(events[:streams].all?(&:closed?))
++      end
++    end
++  end
++
++  def test_rename_after_open_returns_the_complete_matching_opened_snapshot
++    with_record do |state, path|
++      replace = ->(_stream, _events) { replace_record(path, "{\"value\":\"new\"}\n") }
++      with_record_opens(path, after_open: replace) do |events|
++        assert_equal({ 'value' => 'old' }, state.read(path, limit: 128))
++        assert_equal({ 'value' => 'new' }, JSON.parse(File.binread(path)))
++        assert_equal(1, events[:stats])
++        assert_equal(1, events[:opens])
++        assert_equal([[1, 129]], events[:reads])
++        assert(events[:streams].all?(&:closed?))
++      end
++    end
++  end
++
++  def test_safe_replacement_churn_stops_after_three_closed_attempts
++    with_record do |state, path|
++      replace = lambda do |events|
++        assert(events[:streams].all?(&:closed?), 'churn must not accumulate open descriptors')
++        replace_record(path, "#{JSON.generate('attempt' => events[:opens])}\n")
++      end
++      with_record_opens(path, before_open: replace) do |events|
++        error = assert_raises(KbRuntime::Error) { state.read(path) }
++        assert_match(/file changed while opening/, error.message)
++        assert_equal(3, events[:stats])
++        assert_equal(3, events[:opens])
++        assert_empty(events[:reads], 'mismatched snapshots must never be read')
++        assert(events[:streams].all?(&:closed?))
++      end
++    end
++  end
++
++  def test_unsafe_named_files_are_refused_without_open_or_retry
++    %i[mode size directory symlink].each do |kind|
++      with_record do |state, path|
++        unsafe_record(path, kind)
++        with_record_opens(path) do |events|
++          assert_raises(KbRuntime::Error, kind.to_s) { state.file(path, limit: 32) }
++          assert_equal(1, events[:stats], kind.to_s)
++          assert_equal(0, events[:opens], kind.to_s)
++          assert_empty(events[:streams])
++        end
++      end
++    end
++  end
++
++  def test_unsafe_opened_replacements_are_refused_without_read_or_retry
++    %i[mode size directory].each do |kind|
++      with_record do |state, path|
++        with_record_opens(path, before_open: ->(_events) { unsafe_record(path, kind) }) do |events|
++          assert_raises(KbRuntime::Error, kind.to_s) { state.file(path, limit: 32) }
++          assert_equal(1, events[:stats], kind.to_s)
++          assert_equal(1, events[:opens], kind.to_s)
++          assert_empty(events[:reads])
++          assert(events[:streams].all?(&:closed?))
++        end
++      end
++    end
++  end
++
++  def test_symlink_replacement_open_failure_is_not_retried
++    with_record do |state, path|
++      with_record_opens(path, before_open: ->(_events) { unsafe_record(path, :symlink) }) do |events|
++        assert_raises(Errno::ELOOP) { state.file(path) }
++        assert_equal(1, events[:stats])
++        assert_equal(1, events[:opens])
++        assert_empty(events[:streams])
++      end
++    end
++  end
++
++  def test_retry_revalidates_symlink_and_non_directory_ancestors
++    %i[symlink file].each do |kind|
++      with_record do |state, path|
++        replace = ->(_events) { replace_record(path, "{}\n") }
++        change_parent = lambda do |_stream, _events|
++          retained = "#{state.directory}.retained"
++          File.rename(state.directory, retained)
++          if kind == :symlink
++            File.symlink(retained, state.directory)
++          else
++            File.write(state.directory, 'not a directory', mode: 'wb', perm: 0o600)
++          end
++        end
++        with_record_opens(path, before_open: replace, after_open: change_parent) do |events|
++          error = assert_raises(KbRuntime::Error) { state.file(path) }
++          assert_match(/state (path|ancestor)/, error.message)
++          assert_equal(1, events[:stats], 'retry must reject the ancestor before another lstat')
++          assert_equal(1, events[:opens])
++          assert_empty(events[:reads])
++          assert(events[:streams].all?(&:closed?))
++        end
++      end
++    end
++  end
++
++  def test_foreign_uid_in_either_snapshot_is_not_a_retry_condition
++    with_record do |state, path|
++      original = File.method(:lstat)
++      stats = 0
++      named = lambda do |name|
++        value = original.call(name)
++        if name == path
++          stats += 1
++          value.define_singleton_method(:uid) { Process.uid + 1 }
++        end
++        value
++      end
++      File.stub(:lstat, named) do
++        File.stub(:open, ->(*) { flunk('foreign named ownership must fail before open') }) do
++          assert_raises(KbRuntime::Error) { state.file(path) }
++        end
++      end
++      assert_equal(1, stats)
++    end
++    with_record do |state, path|
++      foreign = lambda do |stream, _events|
++        value = stream.stat
++        value.define_singleton_method(:uid) { Process.uid + 1 }
++        stream.define_singleton_method(:stat) { value }
++      end
++      with_record_opens(path, after_open: foreign) do |events|
++        assert_raises(KbRuntime::Error) { state.file(path) }
++        assert_equal(1, events[:stats])
++        assert_equal(1, events[:opens])
++        assert_empty(events[:reads])
++        assert(events[:streams].all?(&:closed?))
++      end
++    end
++  end
++
++  def test_growth_after_matching_fstat_keeps_the_limit_plus_one_bound
++    with_record do |state, path|
++      grow_on_read = lambda do |stream, _events|
++        original = stream.method(:read)
++        stream.define_singleton_method(:read) do |length|
++          File.open(path, File::WRONLY | File::APPEND) { |writer| writer.write('x' * 64) }
++          original.call(length)
++        end
++      end
++      with_record_opens(path, after_open: grow_on_read) do |events|
++        error = assert_raises(KbRuntime::Error) { state.file(path, limit: 32) }
++        assert_equal('file exceeds size limit', error.message)
++        assert_equal([[1, 33]], events[:reads])
++        assert_equal(1, events[:stats])
++        assert_equal(1, events[:opens])
++        assert(events[:streams].all?(&:closed?))
++      end
++    end
++  end
++
++  def test_missing_invalid_json_and_io_errors_are_not_retried
++    %i[missing json open read].each do |kind|
++      with_record do |state, path|
++        File.unlink(path) if kind == :missing
++        File.write(path, '{invalid') if kind == :json
++        before = kind == :open ? ->(_events) { raise Errno::EACCES, 'injected open refusal' } : nil
++        after = kind == :read ? ->(stream, _events) { stream.define_singleton_method(:read) { |_length| raise IOError, 'injected read failure' } } : nil
++        with_record_opens(path, before_open: before, after_open: after) do |events|
++          expected = { missing: Errno::ENOENT, json: KbRuntime::Error, open: Errno::EACCES, read: IOError }.fetch(kind)
++          error = assert_raises(expected, kind.to_s) { state.read(path) }
++          assert_match(/invalid JSON/, error.message) if kind == :json
++          assert_equal(1, events[:stats], kind.to_s)
++          assert_equal(kind == :missing ? 0 : 1, events[:opens], kind.to_s)
++          assert(events[:streams].all?(&:closed?))
++        end
++      end
++    end
++  end
++
++  def test_atomic_empty_zero_limit_snapshot_remains_valid
++    with_record(bytes: '') do |state, path|
++      replace = ->(events) { replace_record(path, '') if events[:opens] == 1 }
++      with_record_opens(path, before_open: replace) do |events|
++        assert_equal('', state.file(path, limit: 0))
++        assert_equal(2, events[:stats])
++        assert_equal(2, events[:opens])
++        assert_equal([[2, 1]], events[:reads])
++        assert(events[:streams].all?(&:closed?))
++      end
++    end
++  end
++
++  def test_lock_open_identity_remains_strict_and_closes_on_replacement
++    Dir.mktmpdir do |directory|
++      state = KbRuntime::State.new(File.join(directory, 'state'), 'example')
++      state.lock('gate', create: true) {}
++      path = File.join(state.root, 'locks', 'example.gate.lock')
++      original = File.method(:open)
++      streams = []
++      attempts = 0
++      test = self
++      opened = lambda do |*args, &block|
++        if args[0] == path && args[1] == (File::RDWR | File::NOFOLLOW)
++          attempts += 1
++          replace_record(path, '')
++          stream = original.call(*args)
++          streams << stream
++          stream.define_singleton_method(:flock) { |_flags| test.flunk('changed lock must not be acquired') }
++          stream
++        else
++          original.call(*args, &block)
++        end
++      end
++      File.stub(:open, opened) do
++        error = assert_raises(KbRuntime::Error) { state.lock('gate') { flunk('changed lock was acquired') } }
++        assert_equal('lock changed while opening', error.message)
++      end
++      assert_equal(1, attempts)
++      assert(streams.all?(&:closed?))
++    ensure
++      streams&.each { |stream| stream.close unless stream.closed? }
++    end
++  end
++
++  private
++
++  def with_record(bytes: "{\"value\":\"old\"}\n")
++    Dir.mktmpdir do |directory|
++      state = KbRuntime::State.new(File.join(directory, 'state'), 'example')
++      state.private_directory(state.directory, create: true)
++      path = state.path('record.json')
++      File.write(path, bytes, mode: 'wb', perm: 0o600)
++      yield state, path
++    end
++  end
++
++  def replace_record(path, bytes, mode: 0o600)
++    temporary = "#{path}.replacement"
++    File.write(temporary, bytes, mode: 'wb', perm: mode)
++    File.chmod(mode, temporary)
++    File.rename(temporary, path)
++  end
++
++  def unsafe_record(path, kind)
++    case kind
++    when :mode
++      replace_record(path, "{}\n", mode: 0o644)
++    when :size
++      replace_record(path, 'x' * 33)
++    when :directory
++      File.unlink(path)
++      Dir.mkdir(path, 0o700)
++    when :symlink
++      target = "#{path}.target"
++      File.write(target, "{}\n", mode: 'wb', perm: 0o600)
++      File.unlink(path)
++      File.symlink(target, path)
++    end
++  end
++
++  def with_record_opens(path, before_open: nil, after_open: nil)
++    events = { stats: 0, opens: 0, streams: [], reads: [] }
++    original_lstat = File.method(:lstat)
++    original_open = File.method(:open)
++    named = lambda do |name|
++      events[:stats] += 1 if name == path
++      original_lstat.call(name)
++    end
++    opened = lambda do |*args, &block|
++      if args[0] == path && args[1] == (File::RDONLY | File::NOFOLLOW)
++        events[:opens] += 1
++        attempt = events[:opens]
++        before_open&.call(events)
++        original_open.call(*args) do |stream|
++          events[:streams] << stream
++          original_read = stream.method(:read)
++          stream.define_singleton_method(:read) do |length|
++            events[:reads] << [attempt, length]
++            original_read.call(length)
++          end
++          after_open&.call(stream, events)
++          block.call(stream)
++        end
++      else
++        original_open.call(*args, &block)
++      end
++    end
++    File.stub(:lstat, named) { File.stub(:open, opened) { yield events } }
++  ensure
++    events&.fetch(:streams)&.each { |stream| stream.close unless stream.closed? }
++  end
++end
++
+ class FakeSoftware
+   attr_reader :metadata, :builds
+ 
+@@ -471,6 +790,117 @@ class RuntimeLifecycleTest < Minitest::Test
+     end.to_h { |path| [path, [File.stat(path).ino, File.binread(path)]] }
+   end
+ 
++  def test_process_receipt_rename_during_readiness_does_not_replay_prepare_build_or_spawn
++    Dir.mktmpdir do |directory|
++      value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++      preparations = 0
++      spawns = 0
++      renamed = false
++      streams = []
++      original_prepare = value.software.method(:prepare)
++      value.software.define_singleton_method(:prepare) do |*args, **options|
++        preparations += 1
++        original_prepare.call(*args, **options)
++      end
++      original_spawn = Process.method(:spawn)
++      spawn = lambda do |*args, **options|
++        spawns += 1
++        original_spawn.call(*args, **options)
++      end
++      original_open = File.method(:open)
++      opened = lambda do |*args, &block|
++        process_record = args[0].is_a?(String) && File.dirname(args[0]) == value.state.directory &&
++          /\Aprocesses-[0-9a-f-]+\.json\z/.match?(File.basename(args[0])) &&
++          args[1] == (File::RDONLY | File::NOFOLLOW)
++        if process_record
++          unless renamed
++            assert_equal('starting', value.phase['phase'])
++            path = args[0]
++            before = File.stat(path)
++            temporary = "#{path}.readiness-replacement"
++            File.write(temporary, File.binread(path), mode: 'wb', perm: 0o600)
++            File.rename(temporary, path)
++            refute_equal(before.ino, File.stat(path).ino)
++            renamed = true
++          end
++          original_open.call(*args) do |stream|
++            streams << stream
++            block.call(stream)
++          end
++        else
++          original_open.call(*args, &block)
++        end
++      end
++      begin
++        Process.stub(:spawn, spawn) do
++          File.stub(:open, opened) { value.start(config: config, network: 'local', timeout: 5) }
++        end
++        assert(renamed, 'the readiness reader must encounter the actual atomic replacement')
++        assert(streams.all?(&:closed?))
++        assert_equal(1, preparations)
++        assert_equal(1, value.software.builds)
++        assert_equal(1, spawns)
++        assert_equal(1, Dir.glob(File.join(value.state.directory, 'launch-*.json')).length)
++        assert_equal(1, Dir.glob(File.join(value.state.directory, 'spawn-*.json')).length)
++        record = value.launch
++        assert_equal(1, value.process_record(record).fetch('children').length)
++        assert(value.status['ready'])
++        value.stop(timeout: 5)
++        assert_equal('stopped', value.phase['phase'])
++        assert(value.process_record(record).fetch('complete'))
++        assert(value.gone?(record))
++        assert_empty(Dir.glob(File.join(value.resources.root, '*.json')))
++        assert_equal(1, preparations)
++        assert_equal(1, value.software.builds)
++        assert_equal(1, spawns)
++      ensure
++        value.stop(timeout: 5) if File.exist?(value.state.path('phase.json')) && value.phase['phase'] != 'stopped'
++        streams.each { |stream| stream.close unless stream.closed? }
++      end
++    end
++  end
++
++  def test_public_stop_reads_retained_g4_schema_two_launch_without_selecting_software
++    original_runtime = ENV['XDG_RUNTIME_DIR']
++    Dir.mktmpdir('kb-g4-', '/tmp') do |directory|
++      runtime = File.join(directory, 'runtime')
++      Dir.mkdir(runtime, 0o700)
++      ENV['XDG_RUNTIME_DIR'] = runtime
++      value = engine(File.join(directory, 'state'), File.join(runtime, 'vpsfree-kb', 'reservations'))
++      value.software.metadata['revision'] = 'ab09bd437b310f57e4ff2453ec0432555d85eaca'
++      begin
++        value.start(config: config, network: 'local', timeout: 5)
++        record = value.launch
++        assert_equal(2, value.state.identity.fetch('schema'))
++        assert_equal('ab09bd437b310f57e4ff2453ec0432555d85eaca', record.fetch('source').fetch('revision'))
++        retained = [value.state.path('identity.json'), value.state.path("launch-#{record['run_id']}.json"),
++          value.state.path("artifact-#{record['artifact_id']}.json")].to_h { |path| [path, File.binread(path)] }
++        credentials = KbRuntime::Software.credentials_identity(value.state.path('credentials'))
++        no_source = ->(*) { flunk('public stop must validate retained launch without selecting guest software') }
++        output, error = capture_io do
++          KbRuntime::Software.stub(:checkout, no_source) do
++            KbRuntime::Software.stub(:new, no_source) do
++              assert_equal(0, KbRuntime::CLI.run(['--state-root', value.state.root, 'stop', value.state.slug, '--timeout', '5']))
++            end
++          end
++        end
++        assert_empty(output)
++        assert_empty(error)
++        assert_equal('stopped', value.phase['phase'])
++        assert(value.process_record(record).fetch('complete'))
++        assert(value.gone?(record), 'ordinary stop must prove runner and child exit')
++        assert_empty(Dir.glob(File.join(value.resources.root, '*.json')))
++        assert_equal(retained, retained.keys.to_h { |path| [path, File.binread(path)] })
++        assert_equal(credentials, KbRuntime::Software.credentials_identity(value.state.path('credentials')))
++        assert_equal(1, value.software.builds)
++      ensure
++        value.stop(timeout: 5) if File.exist?(value.state.path('phase.json')) && value.phase['phase'] != 'stopped'
++      end
++    end
++  ensure
++    ENV['XDG_RUNTIME_DIR'] = original_runtime
++  end
++
+   %w[host port network].each do |change|
+     define_method("test_update_rejects_changed_ssh_#{change}_before_any_retained_state_mutation") do
+       Dir.mktmpdir do |directory|

@@ -1,0 +1,44 @@
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index a7c2a2e382903fb4460323fa65b02b6bbca5b4bc..dc0f55575547305458207e25726cb21a4677a545 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -271,13 +271,32 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+   });
+   const form = (name) => ({
+     count: async () => name === 'newvps-step1' ? 0 : 1,
+-    locator: (selector) => ({
+-      count: async () => 1, nth: () => ({ click: async () => { entries.push(['submit', stage]); stage = stage === 'location' ? 'template' : stage === 'template' ? 'resources' : 'submit'; } }),
+-      fill: async (value) => entries.push([selector, value, stage]),
+-      check: async () => {}, isChecked: async () => true,
+-      evaluateAll: async () => [{ value: '1', disabled: false, label: 'Namespace' }],
+-      selectOption: async () => {}, setChecked: async () => {},
+-    }),
++    locator: (selector) => {
++      if (selector === 'select[name="user_namespace_map"]') {
++        const options = [
++          { value: '2', disabled: true, textContent: ' Disabled namespace ' },
++          { value: '', disabled: false, textContent: ' Choose namespace ' },
++          { value: '0', disabled: false, textContent: ' Default ' },
++          { value: '3', disabled: false, textContent: ' ------- ' },
++          { value: '1', disabled: false, textContent: ' Namespace ' },
++        ];
++        return {
++          count: async () => 1,
++          locator: (child) => {
++            assert.equal(child, 'option');
++            return { evaluateAll: async (callback) => callback(options) };
++          },
++          selectOption: async (value) => { assert.equal(value, '1'); },
++        };
++      }
++      return {
++        count: async () => 1, nth: () => ({ click: async () => { entries.push(['submit', stage]); stage = stage === 'location' ? 'template' : stage === 'template' ? 'resources' : 'submit'; } }),
++        fill: async (value) => entries.push([selector, value, stage]),
++        check: async () => {}, isChecked: async () => true,
++        evaluateAll: async () => [{ value: '1', disabled: false, label: 'Namespace' }],
++        selectOption: async () => {}, setChecked: async () => {},
++      };
++    },
+     getByText: (text, options) => {
+       assert.equal(text, 'Debian (latest)');
+       assert.equal(options.exact, true);

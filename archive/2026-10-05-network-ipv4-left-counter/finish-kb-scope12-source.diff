@@ -1,0 +1,387 @@
+diff --git a/README.md b/README.md
+index 68629261a81be72c2e96e7d0b788797ff0c84c75..f373272b40b38c4fe58fa8ee2fa7343a0c5c3dee 100644
+--- a/README.md
++++ b/README.md
+@@ -80,10 +80,9 @@ packages pass pool-capacity checks without allocating that space up front.
+ The `networking/ip-address-list` checkpoint instead uses the `ip-inventory`
+ fixture: one real VPS with 1 CPU, 1024 MiB RAM and 4096 MiB disk, its enabled
+ assigned address, and an owned detached address from a dedicated documentation
+-pool. The fixture provisions that address while the pool is enabled, then
+-disables only that pool. Reruns validate the same allocation without enabling
+-the pool or charging again. Other checkpoints retain their full fixtures and
+-the primary address pools remain enabled.
++pool. Both pools remain enabled. Reruns validate the same allocation without
++changing network availability or charging again. Other checkpoints retain
++their full fixtures.
+ 
+ This fixture requires explicit `test-admin` (level 99), `test-user1` and
+ `test-user2` (both level 1) entries in the dedicated configuration's `seed.users`.
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index 4ed8149dd163e42534de9c6647c842c45babd752..713c93666db01432a25e3f9393c4c4f51d854431 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -469,8 +469,10 @@ separately completed lifecycle receipt, but it leaves media acceptance pending.
+ 
+ The bilingual phase selects only `networking/ip-address-list` and its
+ `ip-inventory` fixture. This uses one real 1 CPU, 1 GiB RAM, 4 GiB disk VPS,
+-its enabled assigned address, and a dedicated disabled documentation pool with
+-an owned detached address. Other capture concepts retain their full fixtures.
++its assigned address, and an owned detached address from a dedicated
++documentation pool. Both pools must be enabled; fixture preparation refuses a
++disabled pool without changing its availability. Other capture concepts retain
++their full fixtures.
+ CS and EN use one explicit output root different from the invocation directory,
+ exercising both cluster and private connection selectors. An EN recapture from
+ the output directory also proves the packaged writable-CWD default. The results
+@@ -483,8 +485,7 @@ from immutable source. Under the physical artifact lock, export only the two
+ `tmp/capture-results.json` and `tmp/capture-source.json`, with checksums. Exclude
+ connections, credentials, accounts, CLI homes and raw transcripts. Validate and
+ review both images before carryback; preserve the generating revision when a
+-later commit records them. Native tooltip title/focus assertions do not establish
+-that a browser-native tooltip appears in a PNG.
++later commit records them.
+ 
+ The optional workspace integration is documented by its provider in
+ vpsfree-dev-workspace. Source publication does not install or activate it.
+diff --git a/docs/webui-change-workflow.md b/docs/webui-change-workflow.md
+index 7f3e215d6c252eb6acf21a5f1b4b8f37612d896a..b641649e0b72159eb477213e262fbae7d503b838 100644
+--- a/docs/webui-change-workflow.md
++++ b/docs/webui-change-workflow.md
+@@ -135,9 +135,8 @@ resumed instance. Historical upgrade and two-root tests are separate deferred
+ coverage. Capacity admission accounts closures, temporary build costs and
+ retained-host obligations separately from the 24 GiB new disk extent. Its
+ capacity and owned-state failure requirements apply before real work.
+-Review the gray disabled row and enabled assigned row in both images; native
+-title/focus assertions accompany the images without claiming a native tooltip
+-popup was captured. Other screenshot concepts keep their existing fixtures.
++Review the owned detached address and assigned VPS row in both images. Their
++networks remain enabled. Other screenshot concepts keep their existing fixtures.
+ 
+ Inspect changed images, crops, fonts, fixture data, and the contact sheet. Keep
+ the existing semantic filename for the same screenshot concept. Introduce a new
+diff --git a/fixtures/prepare.cjs b/fixtures/prepare.cjs
+index 8e6ba3104db0a3f4c5bed2ea9b6dac1c0ef4efb0..4d2df02678d3cc47972f0c769ac15f59692346b1 100644
+--- a/fixtures/prepare.cjs
++++ b/fixtures/prepare.cjs
+@@ -554,7 +554,7 @@ async function assertInventoryMember(page, member) {
+   }
+ }
+ 
+-const INVENTORY_POOL = { label: 'Documentation disabled inventory', address: '203.0.113.0',
++const INVENTORY_POOL = { label: 'Documentation inventory', address: '203.0.113.0',
+   prefix: 24, ip_version: 4, role: 'public_access', managed: true,
+   split_access: 'no_access', split_prefix: 32, purpose: 'vps' };
+ const INVENTORY_IP = '203.0.113.10';
+@@ -585,12 +585,12 @@ async function ensureIpInventory(api, { userId, vpsId }) {
+     throw new Error('Unexpected dedicated inventory network');
+   }
+   if (!pool) pool = (await api('POST', 'networks', { network: { ...INVENTORY_POOL, enabled: true } })).network;
++  if (pool.enabled !== true) throw new Error('Dedicated inventory pool is not enabled');
+   let locations = (await api('GET', `location_networks?location_network%5Bnetwork%5D=${pool.id}&location_network%5Blimit%5D=1000`)).location_networks;
+   if (locations.length > 1 || (locations.length === 1 && resourceId(locations[0].location) !== locationId)) {
+     throw new Error('Unexpected dedicated inventory location');
+   }
+   if (locations.length === 0) {
+-    if (pool.enabled !== true) throw new Error('Disabled inventory pool is incomplete');
+     locations = [(await api('POST', 'location_networks', { location_network: {
+       network: pool.id, location: locationId, primary: false, priority: 100, autopick: false, userpick: false,
+     } })).location_network];
+@@ -603,7 +603,6 @@ async function ensureIpInventory(api, { userId, vpsId }) {
+   if (addresses.length > 1) throw new Error('Dedicated inventory pool has unexpected addresses');
+   let ip = addresses[0];
+   if (!ip) {
+-    if (pool.enabled !== true) throw new Error('Disabled inventory pool is incomplete');
+     ip = (await api('POST', 'ip_addresses', { ip_address: {
+       addr: `${INVENTORY_IP}/32`, network: pool.id, user: userId, location: locationId,
+     } })).ip_address;
+@@ -617,11 +616,7 @@ async function ensureIpInventory(api, { userId, vpsId }) {
+   if (!assigned.some((entry) => entry.addr.startsWith('198.51.100.') && resourceId(entry.user) === userId)) {
+     throw new Error('Inventory VPS has no real enabled assigned IPv4 address');
+   }
+-  if (pool.enabled === true) {
+-    pool = (await api('PUT', `networks/${pool.id}`, { network: { enabled: false } })).network;
+-  }
+-  if (pool.enabled !== false) throw new Error('Dedicated inventory network did not become disabled');
+-  return { inventoryVpsId: vpsId, disabledIpId: ip.id, disabledNetworkId: pool.id, disabledAddress: INVENTORY_IP };
++  return { inventoryVpsId: vpsId, inventoryIpId: ip.id, inventoryNetworkId: pool.id, inventoryAddress: INVENTORY_IP };
+ }
+ 
+ async function prepareFixtures({ cluster, language, page, required, invocationRoot }) {
+diff --git a/scenarios/networking.cjs b/scenarios/networking.cjs
+index 313f59924307268d45ec1610a3734b450c5f0e9c..0d6e1577812a18596b1372b37962d630572231fb 100644
+--- a/scenarios/networking.cjs
++++ b/scenarios/networking.cjs
+@@ -42,24 +42,14 @@ async function run({ cluster, fixtures, language, page, proxyUrl, sourceRoot, in
+     await goto(page, '/?page=networking&action=ip_addresses&list=1&limit=100');
+     await assertInventoryMember(page, fixtures.inventoryMember);
+     const table = page.locator('#content-in table').last();
+-    const disabled = table.locator('tr', { hasText: `${fixtures.disabledAddress}/32` });
+-    await expect(disabled).toHaveCount(1);
+-    await expect(disabled).toHaveCSS('background-color', 'rgb(166, 166, 166)');
+-    const address = disabled.locator('span[tabindex="0"]', { hasText: '203.0.113.0/24' });
+-    await expect(address).toHaveAttribute('title', language === 'cs'
+-      ? 'Síť je zakázaná pro nové přidělování a přiřazování adres. Existující přiřazené adresy zůstávají použitelné.'
+-      : 'This network is disabled for new allocations and assignments. Existing assignments remain usable.');
+-    await address.focus();
+-    await expect(address).toBeFocused();
+-    await expect(disabled.locator('a[href*="action=route_edit"]')).toHaveCount(1);
+-    await expect(disabled.locator('a[href*="action=assignments"]')).toHaveCount(1);
+-    await expect(disabled.locator('a[href*="action=route_assign"]')).toHaveCount(0);
+-    await expect(table.locator('th', { hasText: /^(Enabled|Povoleno)$/ })).toHaveCount(0);
++    const detached = table.locator('tr', { hasText: `${fixtures.inventoryAddress}/32` });
++    await expect(detached).toHaveCount(1);
++    await expect(detached).toBeVisible();
++    await expect(detached.locator('a[href*="action=route_edit"]')).toHaveCount(1);
++    await expect(detached.locator('a[href*="action=assignments"]')).toHaveCount(1);
++    await expect(detached.locator('a[href*="action=route_assign"]')).toHaveCount(1);
+     const assigned = table.locator(`a[href*="action=info"][href*="veid=${fixtures.inventoryVpsId}"]`).first();
+     await expect(assigned).toBeVisible();
+-    await expect(assigned.locator('xpath=ancestor::tr[1]')).not.toHaveCSS('background-color', 'rgb(166, 166, 166)');
+-    // Native title semantics are asserted separately; PNGs do not certify the
+-    // browser's native tooltip popup. Capture the actual contrasting rows.
+     await session.locator(page, 'networking/ip-address-list', page.locator('#content-in'));
+   }
+ 
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index a1a66ff28fa2ab2b3511ffefdb87ce741ae6a0cf..dbeb72f432f08c17964cdfd57ba6837e3c1be972 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -90,12 +90,12 @@ function memberPage({ id = 2, login = 'test-user1', admin = false, impersonated
+   };
+ }
+ 
+-test('actual inventory preparation proves both API identities and admin-only disabled rerun without admin browser navigation', async (t) => {
+-  const existing = fixture({ disabled: true });
++test('actual inventory preparation proves both API identities and admin-only enabled rerun without admin browser navigation', async (t) => {
++  const existing = fixture();
+   const calls = mockInventoryTransport(t, async (call) => {
+     if (call.resource === 'users/current') return { response: currentUser(call.login) };
+     assert.equal(call.login, 'test-admin', 'only the explicit administrator reads/provisions dedicated inventory');
+-    assert.equal(call.method, 'GET', 'disabled rerun cannot reenable, register or charge');
++    assert.equal(call.method, 'GET', 'enabled rerun cannot change the pool, register or charge');
+     return { response: await existing.api(call.method, call.resource, call.body) };
+   });
+   await withInventoryConnection(recordedAccounts(), async (cluster, _abort, root) => {
+@@ -318,27 +318,28 @@ function fixture({ disabled = false, missing = false, assigned = false, owner =
+       ip = { id: 90, addr: '203.0.113.10', prefix: 32, network: { id: 5 }, user: { id: body.ip_address.user }, network_interface: null, charged_environment: { id: 1 } };
+       return { ip_address: ip };
+     }
+-    if (method === 'PUT' && resource === 'networks/5') { pool.enabled = body.network.enabled; return { network: pool }; }
+     throw new Error(`Unexpected fixture action ${method} ${resource}`);
+   };
+   return { api, calls, pool, unrelated };
+ }
+ 
+-test('first provision uses public owned registration while enabled then disables only the dedicated pool', async () => {
+-  const { api, calls } = fixture({ missing: true });
++test('first provision uses public owned registration and retains the enabled dedicated pool', async () => {
++  const { api, calls, pool } = fixture({ missing: true });
+   const value = await ensureIpInventory(api, { userId: 2, vpsId: 10 });
+-  assert.equal(value.disabledAddress, '203.0.113.10');
++  assert.equal(value.inventoryAddress, '203.0.113.10');
+   assert.deepEqual(calls.filter(([method]) => method !== 'GET'), [
+     ['POST', 'ip_addresses', { ip_address: { addr: '203.0.113.10/32', network: 5, user: 2, location: 1 } }],
+-    ['PUT', 'networks/5', { network: { enabled: false } }],
+   ]);
++  assert.equal(pool.enabled, true);
++  assert(!calls.some(([method]) => method === 'PUT'), 'provisioning cannot disable or re-enable a network');
+   calls.length = 0;
+-  await ensureIpInventory(api, { userId: 2, vpsId: 10 });
+-  assert(calls.every(([method]) => method === 'GET'), 'rerun must not reenable, allocate or charge again');
++  assert.deepEqual(await ensureIpInventory(api, { userId: 2, vpsId: 10 }), value);
++  assert(calls.every(([method]) => method === 'GET'), 'rerun must not change the pool, allocate or charge again');
++  assert.equal(pool.enabled, true);
+ });
+ 
+-test('a fresh dedicated public pool and location are provisioned before the owned address and disable', async (t) => {
+-  const { api, calls } = fixture({ networkMissing: true, locationMissing: true, missing: true });
++test('a fresh enabled dedicated public pool and location are provisioned before the owned address', async (t) => {
++  const { api, calls, pool } = fixture({ networkMissing: true, locationMissing: true, missing: true });
+   const wireCalls = mockInventoryTransport(t, async (call) => {
+     if (call.resource === 'users/current') return { response: currentUser(call.login) };
+     assert.equal(call.login, 'test-admin');
+@@ -354,13 +355,15 @@ test('a fresh dedicated public pool and location are provisioned before the owne
+     ['GET', '/v7.0/networks?network%5Blimit%5D=1000'], ['POST', '/v7.0/networks'],
+     ['GET', '/v7.0/location_networks?location_network%5Bnetwork%5D=5&location_network%5Blimit%5D=1000'], ['POST', '/v7.0/location_networks'],
+     ['GET', '/v7.0/ip_addresses?ip_address%5Bnetwork%5D=5&ip_address%5Blimit%5D=1000'], ['POST', '/v7.0/ip_addresses'],
+-    ['GET', '/v7.0/ip_addresses?ip_address%5Bvps%5D=10&ip_address%5Bversion%5D=4&ip_address%5Blimit%5D=1000'], ['PUT', '/v7.0/networks/5'],
++    ['GET', '/v7.0/ip_addresses?ip_address%5Bvps%5D=10&ip_address%5Bversion%5D=4&ip_address%5Blimit%5D=1000'],
+   ]);
+   assert.deepEqual(calls.filter(([method]) => method !== 'GET').map(([method, resource]) => [method, resource]), [
+-    ['POST', 'networks'], ['POST', 'location_networks'], ['POST', 'ip_addresses'], ['PUT', 'networks/5'],
++    ['POST', 'networks'], ['POST', 'location_networks'], ['POST', 'ip_addresses'],
+   ]);
+   assert.deepEqual(calls.find(([method, resource]) => method === 'POST' && resource === 'networks')[2],
+     { network: { ...INVENTORY_POOL, enabled: true } });
++  assert.equal(pool.enabled, true);
++  assert(!wireCalls.some((call) => call.method === 'PUT'), 'fresh provisioning cannot disable or re-enable a network');
+ });
+ 
+ test('namespaced inventory queries isolate unrelated rows, provision one association and safely reuse it', async (t) => {
+@@ -374,11 +377,10 @@ test('namespaced inventory queries isolate unrelated rows, provision one associa
+   await withInventoryConnection(recordedAccounts(), async (cluster) => {
+     const { adminApi } = await inventoryIdentity(cluster);
+     const first = await ensureIpInventory(adminApi, { userId: 2, vpsId: 10 });
+-    assert.deepEqual(first, { inventoryVpsId: 10, disabledIpId: 90, disabledNetworkId: 5, disabledAddress: '203.0.113.10' });
++    assert.deepEqual(first, { inventoryVpsId: 10, inventoryIpId: 90, inventoryNetworkId: 5, inventoryAddress: '203.0.113.10' });
+     assert.deepEqual(calls.filter((call) => call.method !== 'GET').map((call) => [call.method, call.resource, call.body]), [
+       ['POST', 'location_networks', { location_network: { network: 5, location: 1, primary: false, priority: 100, autopick: false, userpick: false } }],
+       ['POST', 'ip_addresses', { ip_address: { addr: '203.0.113.10/32', network: 5, user: 2, location: 1 } }],
+-      ['PUT', 'networks/5', { network: { enabled: false } }],
+     ]);
+     const expectedQueries = [
+       ['/v7.0/networks', [['network[limit]', '1000']]],
+@@ -498,13 +500,14 @@ test('only each singular resource input limit bounds its list, not flat or metad
+   assert.equal(inventory.pool.enabled, false);
+ });
+ 
+-test('an existing disabled owned detached fixture performs no writes', async () => {
+-  const { api, calls } = fixture({ disabled: true });
++test('an existing enabled owned detached fixture performs no writes', async () => {
++  const { api, calls, pool } = fixture();
+   await ensureIpInventory(api, { userId: 2, vpsId: 10 });
+   assert(calls.every(([method]) => method === 'GET'));
++  assert.equal(pool.enabled, true);
+ });
+ 
+-for (const options of [{ disabled: true, missing: true }, { owner: 3 }, { assigned: true }]) {
++for (const options of [{ disabled: true }, { disabled: true, missing: true }, { owner: 3 }, { assigned: true }]) {
+   test(`unexpected fixture state refuses without adoption: ${JSON.stringify(options)}`, async () => {
+     const { api, calls } = fixture(options);
+     await assert.rejects(ensureIpInventory(api, { userId: 2, vpsId: 10 }));
+@@ -512,16 +515,21 @@ for (const options of [{ disabled: true, missing: true }, { owner: 3 }, { assign
+   });
+ }
+ 
+-test('pool identity collision refuses before any mutation', async () => {
+-  const { api, calls, pool } = fixture();
+-  pool.label = 'foreign pool';
+-  await assert.rejects(ensureIpInventory(api, { userId: 2, vpsId: 10 }), /Unexpected dedicated/);
+-  assert(calls.every(([method]) => method === 'GET'));
+-});
++for (const label of ['foreign pool', 'Documentation disabled inventory']) {
++  for (const disabled of [false, true]) {
++    test(`pool identity collision refuses before any mutation: ${label}, disabled=${disabled}`, async () => {
++      const { api, calls, pool } = fixture({ disabled });
++      pool.label = label;
++      await assert.rejects(ensureIpInventory(api, { userId: 2, vpsId: 10 }), /Unexpected dedicated/);
++      assert(calls.every(([method]) => method === 'GET'));
++      assert.equal(pool.enabled, !disabled);
++    });
++  }
++}
+ 
+ for (const locationMissing of [true, false]) {
+   for (const primary of [null, false]) {
+-    test(`${locationMissing ? 'new' : 'retained'} non-primary association accepts exact ${primary} and disabled reuse performs no writes`, async (t) => {
++    test(`${locationMissing ? 'new' : 'retained'} non-primary association accepts exact ${primary} and enabled reuse performs no writes`, async (t) => {
+       const inventory = fixture({ locationMissing, missing: true });
+       const unrelated = JSON.stringify(inventory.unrelated);
+       const calls = mockInventoryTransport(t, async (call) => {
+@@ -544,20 +552,20 @@ for (const locationMissing of [true, false]) {
+       });
+       await withInventoryConnection(recordedAccounts(), async (cluster) => {
+         const { adminApi } = await inventoryIdentity(cluster);
+-        const expected = { inventoryVpsId: 10, disabledIpId: 90, disabledNetworkId: 5, disabledAddress: '203.0.113.10' };
++        const expected = { inventoryVpsId: 10, inventoryIpId: 90, inventoryNetworkId: 5, inventoryAddress: '203.0.113.10' };
+         assert.deepEqual(await ensureIpInventory(adminApi, { userId: 2, vpsId: 10 }), expected);
+-        assert.equal(inventory.pool.enabled, false);
++        assert.equal(inventory.pool.enabled, true);
+         const writes = calls.filter((call) => call.method !== 'GET');
+         assert.deepEqual(writes.map((call) => [call.method, call.resource]), [
+           ...(locationMissing ? [['POST', 'location_networks']] : []),
+-          ['POST', 'ip_addresses'], ['PUT', 'networks/5'],
++          ['POST', 'ip_addresses'],
+         ]);
+         if (locationMissing) assert.deepEqual(writes[0].body, { location_network: {
+           network: 5, location: 1, primary: false, priority: 100, autopick: false, userpick: false,
+         } });
+         const afterProvision = calls.length;
+         assert.deepEqual(await ensureIpInventory(adminApi, { userId: 2, vpsId: 10 }), expected);
+-        assert(calls.slice(afterProvision).every((call) => call.method === 'GET'), 'a complete disabled pool cannot reenable, allocate or charge again');
++        assert(calls.slice(afterProvision).every((call) => call.method === 'GET'), 'a complete enabled pool cannot change, allocate or charge again');
+       });
+       assert.equal(JSON.stringify(inventory.unrelated), unrelated);
+     });
+@@ -570,7 +578,7 @@ const invalidLocationFlags = [
+ ];
+ for (const locationMissing of [true, false]) {
+   for (const [field, value] of invalidLocationFlags) {
+-    test(`${locationMissing ? 'new' : 'retained'} association ${field} ${value === undefined ? 'missing' : JSON.stringify(value)} refuses before IP creation or disable`, async (t) => {
++    test(`${locationMissing ? 'new' : 'retained'} association ${field} ${value === undefined ? 'missing' : JSON.stringify(value)} refuses before IP creation`, async (t) => {
+       const inventory = fixture({ locationMissing, missing: true });
+       const calls = mockInventoryTransport(t, async (call) => {
+         if (call.resource === 'users/current') return { response: currentUser(call.login) };
+@@ -595,7 +603,7 @@ for (const locationMissing of [true, false]) {
+         });
+       });
+       assert.deepEqual(calls.filter((call) => call.method !== 'GET').map((call) => [call.method, call.resource]),
+-        locationMissing ? [['POST', 'location_networks']] : [], 'a new association may already exist, but IP creation and disable must not follow');
++        locationMissing ? [['POST', 'location_networks']] : [], 'a new association may already exist, but IP creation must not follow');
+       assert(!calls.some((call) => call.pathname === '/v7.0/ip_addresses'));
+       assert.equal(inventory.pool.enabled, true);
+     });
+@@ -623,28 +631,37 @@ for (const [field, value] of [['charged_environment', { id: 2 }], ['prefix', 24]
+   });
+ }
+ 
+-for (const [source, value] of [['primary pool', false], ['primary pool', null], ['dedicated pool', null], ['disable response', true], ['disable response', null]]) {
+-  test(`valid null-primary association preserves ${source} enabled ${value} refusal`, async (t) => {
+-    const inventory = fixture();
++for (const [source, value] of [
++  ['primary pool', false], ['primary pool', null],
++  ...['dedicated pool', 'new pool'].flatMap((source) => [false, undefined, null, 0, 1, 'true'].map((value) => [source, value])),
++]) {
++  test(`inventory ${source} enabled ${value === undefined ? 'missing' : JSON.stringify(value)} refuses before association or IP writes`, async (t) => {
++    const inventory = fixture({ networkMissing: source === 'new pool', locationMissing: true, missing: true });
+     const calls = mockInventoryTransport(t, async (call) => {
+       if (call.resource === 'users/current') return { response: currentUser(call.login) };
+       const response = await inventory.api(call.method, call.resource, call.body);
+       if (response.networks && source === 'primary pool') response.networks.find((entry) => entry.address === '198.51.100.0').enabled = value;
+-      if (response.networks && source === 'dedicated pool') response.networks.find((entry) => entry.id === 5).enabled = value;
+-      if (response.location_networks) assert.equal(response.location_networks[0].primary, null);
+-      if (response.network && source === 'disable response') response.network = { ...response.network, enabled: value };
++      const pool = source === 'dedicated pool' ? response.networks?.find((entry) => entry.id === 5)
++        : source === 'new pool' ? response.network : null;
++      if (pool) {
++        if (value === undefined) delete pool.enabled;
++        else pool.enabled = value;
++      }
+       return { response };
+     });
+     await withInventoryConnection(recordedAccounts(), async (cluster) => {
+       const { adminApi } = await inventoryIdentity(cluster);
+-      const expected = source === 'primary pool' ? 'Primary inventory pool is not enabled' : 'Dedicated inventory network did not become disabled';
++      const expected = source === 'primary pool' ? 'Primary inventory pool is not enabled' : 'Dedicated inventory pool is not enabled';
+       await assert.rejects(ensureIpInventory(adminApi, { userId: 2, vpsId: 10 }), (error) => {
+         assert.equal(error.message, expected);
+         return true;
+       });
+     });
+     assert.deepEqual(calls.filter((call) => call.method !== 'GET').map((call) => [call.method, call.resource]),
+-      source === 'disable response' ? [['PUT', 'networks/5']] : []);
++      source === 'new pool' ? [['POST', 'networks']] : []);
++    assert(!calls.some((call) => ['/v7.0/location_networks', '/v7.0/ip_addresses'].includes(call.pathname)),
++      'unsafe pool admission refuses before association or address work');
++    assert(!calls.some((call) => call.method === 'PUT'), 'refusal cannot disable or re-enable a network');
+   });
+ }
+ 
+@@ -752,7 +769,7 @@ test('first inventory preparation creates the tiny VPS in the proved member brow
+     assert.deepEqual(result.inventoryMember, { id: 2, login: 'test-user1' });
+     assert.equal(cluster.account().login, 'test-user1');
+     assert.deepEqual(calls.filter((call) => call.method !== 'GET').map((call) => [call.login, call.method, call.resource]),
+-      [['test-admin', 'POST', 'ip_addresses'], ['test-admin', 'PUT', 'networks/5']]);
++      [['test-admin', 'POST', 'ip_addresses']]);
+   });
+   for (const [name, value] of Object.entries(INVENTORY_RESOURCES)) {
+     assert(entries.some(([selector, actual, at]) => selector === `input[name="${name}"]` && actual === String(value) && at === 'resources'));
+@@ -785,7 +802,7 @@ test('missing swap with numeric zero completes member preparation without a swap
+   assert.deepEqual(entries.filter(([kind]) => kind === 'submit'),
+     [['submit', 'location'], ['submit', 'template'], ['submit', 'resources'], ['submit', 'submit']]);
+   assert.deepEqual(calls.filter((call) => call.method !== 'GET').map((call) => [call.login, call.method, call.resource]),
+-    [['test-admin', 'POST', 'ip_addresses'], ['test-admin', 'PUT', 'networks/5']]);
++    [['test-admin', 'POST', 'ip_addresses']]);
+ });
+ 
+ test('a present nonzero swap control receives its exact requested value before final submission', async (t) => {

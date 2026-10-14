@@ -1,0 +1,1742 @@
+diff --git a/docs/codex-package.md b/docs/codex-package.md
+index 8032407108d9a849d1d8b76b12fbd69433bebb60..c7f67592ea68a92ea149e503a7bf0ca73a31d372 100644
+--- a/docs/codex-package.md
++++ b/docs/codex-package.md
+@@ -111,6 +111,13 @@ for the supported entry points. System recovery uses its retained system
+ generation; whether an older Codex can read newer state must be established
+ separately on disposable state before using that recovery path.
+ 
++Workspace package switches compare the candidate's resolved native executable
++and launch contract, rather than its CLI version string or package path. With
++the live-switch contract, an unchanged native invocation preserves the running
++App Server and terminal clients. The initial cutover from an older package and
++any changed invocation require idle sessions; see
++[switching while threads are active](workspace-portal.md#switching-while-codex-threads-are-active).
++
+ ## Session naming release boundary
+ 
+ The portal's session namer uses a portal-owned, naming-only App Server with
+diff --git a/docs/dev-sessions.md b/docs/dev-sessions.md
+index f4037073576a28c062e869f241d0fabb2f17435b..18a2c0dca7b9546a3096004c7e514fead6ca2c03 100644
+--- a/docs/dev-sessions.md
++++ b/docs/dev-sessions.md
+@@ -572,8 +572,9 @@ Observations survive service restarts. Re-enabling, reviving a session or
+ releasing a hold also starts a fresh period. Changes made and reverted entirely
+ between scans cannot be observed.
+ 
+-Use **Automatic archival** on the session page to inspect its rule, earliest
+-eligibility, blockers and last result. **Keep open** prevents automatic archival
++The session's **Settings** tab shows its archival status and any concrete failure.
++Policy, eligibility, activity and the full saved error are under **Technical
++details**. **Keep open** prevents automatic archival
+ while leaving manual archival available. The equivalent commands are:
+ 
+ ```sh
+@@ -681,9 +682,11 @@ deployment interruption stops the operation, run the same `archive` command
+ again with the same mode. It resumes completed phases without repeating them.
+ The CLI prints phases as they are persisted. The browser exposes the same phase
+ and offers Retry when an archive, delete, or revive operation fails or pauses.
+-For an automatic archive, the session banner also shows the last failed worker
+-attempt and its timestamp. This is separate from the last completed journal
+-step. Technical details remain in Settings. A pending archive keeps the
++For an automatic archive, the session banner shows the saved failure and its
++timestamp. Settings shows the same reason while the banner is hidden there.
++The worker retains its actual bounded exception alongside the public diagnostic;
++pending-operation and stale-observation metadata do not replace the failure.
++Technical details remain collapsed in Settings. A pending archive keeps the
+ conversation read-only; completion retains the conversation in archived history.
+ 
+ Ordinary commands in the automatic worker have a 60-second timeout. Conversation
+diff --git a/docs/session-archive-recovery.md b/docs/session-archive-recovery.md
+index 4719eaa9dc8c060454020c3a0540b1744ab8cf3e..ea6b94d7eb398581e51e5bcad4485b3d174bcaf3 100644
+--- a/docs/session-archive-recovery.md
++++ b/docs/session-archive-recovery.md
+@@ -16,6 +16,15 @@ that fetched default. Abandoned archival skips publication and merge proof, but
+ still requires an existing shared branch, tag or origin tracking ref to retain
+ each detached commit. Archival creates no rescue ref and never removes branches.
+ 
++Record checksums cover paths, entry types, file contents and symlink targets.
++Permission changes alone do not change the recorded content. Archival and revival
++retain the files through ordinary moves and Git tracking. They accept checksums
++from existing mode-sensitive journals as exact legacy proofs without rewriting
++their evidence. Those journals still require their recorded modes; resolve an
++existing mismatch before retrying. Newly created operations use content-only
++checksums and require an executor with this support. Finish pending operations
++before changing the selected workspace package.
++
+ The registered coordination workspace's shared `master` branch can advance
+ through tracking commits, including the archive's own commit. Its sealed final
+ head stays unchanged and must remain an ancestor of local `master`. Complete
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index 5b1343481b73f5da59af75c1972197d6d0f1a6f8..22fc8173cfa32497935e3da27e2215a8f923810e 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -231,6 +231,35 @@ an older package; recover by repeating the same switch or selecting a newer
+ package. Commands waiting on a transition lock reject a generation change and
+ must be run again.
+ 
++### Switching while Codex threads are active
++
++Packages publishing `livePackageSwitchPolicy = 1` can switch while threads are
++active when the candidate resolves to the same native Codex executable, launch
++policy, complete arguments and native child-thread capacity as every running
++workspace's launch marker. Catalog defaults, portal code, session tools and
++package paths do not themselves require a Codex restart. The host refreshes
++registration inventory and restarts the portal and router; Codex, tmux and
++managed terminal clients keep running. Browser clients reconnect to the portal.
++
++The immutable launch marker continues to describe the package and catalog that
++actually started Codex. Inventory describes the selected package. Neither a
++catalog update nor a live switch rewrites launch provenance. Existing rosters
++keep their saved settings; newly selected presets and members use the selected
++catalog.
++
++A predecessor without this policy requires one idle cutover and Codex restart,
++even if the native invocation is unchanged. This retires member report helpers
++that dispatch to their original package. New helpers bind the configured user
++profile and resolve its `bin/dev-session` on every report. Missing or malformed
++launch markers, changed launch arguments or a different native executable also
++take the idle restart path. The candidate's bundled executable is checked, unless
++the operator explicitly supplies `DEV_WORKSPACES_SYSTEM_CODEX`.
++
++Lifecycle journals, unfinished creations, cluster and authority checks, and the
++exclusive transition lock still apply to live switches. A failure after profile
++selection retains the forward target and pending reconciliation evidence. Retry
++the same switch from the stable command; do not select an older generation.
++
+ ### Cluster transition policy
+ 
+ The runtime contract uses development-cluster state schema 1 and transition
+@@ -621,8 +650,9 @@ an implementation-purpose member, or a lead that owns design and satisfies
+ the implementation policy when no implementer is present. An existing
+ implementer must satisfy its policy; the lead cannot substitute for an invalid
+ implementer. Role names can differ from the built-in names. The package records
+-its catalog digest, and the host launch marker binds it through the
+-registration-plan digest. No native child-agent capacity or per-role startup
++its catalog digest, and the host launch marker records the launch catalog through
++the registration-plan digest. Catalog identity alone does not require a restart.
++No native child-agent capacity or per-role startup
+ arguments are required for direct threads.
+ 
+ At creation, the selected preset is copied into the private schema-3 receipt
+@@ -699,10 +729,12 @@ that binding, including for members created by an earlier package. No roster
+ format change is needed. The helper checks the current roster identity before
+ sending. A missing or mismatched binding fails without sending to `lead`.
+ The helper exposes only `report_to_lead`. It passes the report through stdin to
+-the installed session command, which checks that the lead thread still belongs
++the configured user profile's session command, which checks that the lead thread still belongs
+ to this session under the session lock. Neither command puts the report text in
+ its process arguments. Use a fresh message ID for each report, and reuse that
+-ID only when retrying delivery of the same report.
++ID only when retrying delivery of the same report. The helper retains the stable
++profile path across package switches, including custom profiles, and checks the
++roster again for each call.
+ 
+ A fork requires all source members to have finished creation, preserves the
+ source member snapshot, and refuses an interrupted retry if that roster
+diff --git a/libexec/dev-session b/libexec/dev-session
+index 7708049fa2c4f4061527c0e3f3bb32f6adeedac4..59cd69dee90bc0568393bf5a9303323ae97cf0bd 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -708,6 +708,7 @@ module DevSession
+       process_exec: nil,
+       portal_command: nil,
+       portal_url: nil,
++      host_profile: nil,
+       cluster_providers: { },
+       require_runtime: nil,
+       env: ENV,
+@@ -731,6 +732,7 @@ module DevSession
+       @workspace_state_root = File.expand_path(
+         env.fetch('DEV_WORKSPACES_STATE', File.join(@state_home, namespace))
+       )
++      @host_profile = host_profile || env.fetch('DEV_WORKSPACES_PROFILE', File.join(@workspace_state_root, 'profile'))
+       @out = out
+       @err = err
+       @today = today
+@@ -1697,6 +1699,7 @@ module DevSession
+       end
+ 	  command = [*@portal_command, 'team', action == 'archive-retained' ? 'archive' : action,
+                  '--user-state-root', @workspace_state_root,
++                 '--host-profile', @host_profile,
+                  '--workspace', workspace,
+                  '--session-slug', slug,
+                  '--root-thread-id', root_thread,
+@@ -6583,7 +6586,7 @@ module DevSession
+       journal_root
+     end
+ 
+-    def archived_tracking_identity(slug, plan, mode, proven_heads, finalized_at)
++    def archived_tracking_identity(slug, plan, mode, proven_heads, finalized_at, legacy_permissions: false)
+       state = read_bounded_file(state_file(slug), 'state.md')
+       target_state = tracking_lifecycle_content(state, mode)
+       manifest = finalized_portal_manifest(
+@@ -6592,29 +6595,32 @@ module DevSession
+       overrides = { 'state.md' => target_state }
+       overrides[PORTAL_MANIFEST] = YAML.dump(manifest) if manifest
+       [
+-        tracking_tree_sha256(work_dir(slug), overrides:),
++        tracking_tree_sha256(work_dir(slug), overrides:, legacy_permissions:),
+         manifest&.dig('codex', 'thread_id')
+       ]
+     end
+ 
+     def verify_pending_archive_tracking!(slug, journal, plan, final_heads: nil)
+       final_heads ||= ArchiveCleanup.new(self, slug).load(journal:)&.fetch('inventory')&.fetch('registered_heads')
+-      actual_digest, thread_id = archived_tracking_identity(
++      projection = [
+         slug,
+         plan,
+         journal.fetch('mode'),
+         final_heads || journal.fetch('proven_heads'),
+         journal.fetch('finalized_at')
+-      )
+-      unless actual_digest == journal.fetch('target_tracking_sha256') &&
++      ]
++      actual_digest, thread_id = archived_tracking_identity(*projection)
++      expected = journal.fetch('target_tracking_sha256')
++      matches = actual_digest == expected ||
++                archived_tracking_identity(*projection, legacy_permissions: true).first == expected
++      unless matches &&
+              thread_id == journal['retained_thread_id']
+         raise Error, "tracking changed during archival: #{slug}"
+       end
+     end
+ 
+     def verify_archived_tracking_tree!(slug, journal)
+-      actual = tracking_tree_sha256(archive_dir(slug))
+-      unless actual == journal.fetch('target_tracking_sha256')
++      unless tracking_tree_matches?(archive_dir(slug), journal.fetch('target_tracking_sha256'))
+         raise Error, "archived tracking changed during recovery: #{slug}"
+       end
+ 
+@@ -6970,13 +6976,17 @@ module DevSession
+     end
+ 
+     def verify_revived_tracking_tree!(slug, journal)
+-      actual = tracking_tree_sha256(work_dir(slug))
+-      return if actual == journal.fetch('target_tracking_sha256')
++      return if tracking_tree_matches?(work_dir(slug), journal.fetch('target_tracking_sha256'))
+ 
+       raise Error, "revived tracking changed during recovery: #{slug}"
+     end
+ 
+-    def tracking_tree_sha256(root, overrides: {})
++    def tracking_tree_matches?(root, expected, overrides: {})
++      tracking_tree_sha256(root, overrides:) == expected ||
++        tracking_tree_sha256(root, overrides:, legacy_permissions: true) == expected
++    end
++
++    def tracking_tree_sha256(root, overrides: {}, legacy_permissions: false)
+       digest = Digest::SHA256.new
+       seen_overrides = {}
+       visit = lambda do |directory, relative_root|
+@@ -6991,7 +7001,7 @@ module DevSession
+           unless path_exists?(path)
+             tracking_digest_field(digest, 'file')
+             tracking_digest_field(digest, relative)
+-            tracking_digest_field(digest, format('%o', 0o644))
++            tracking_digest_field(digest, format('%o', 0o644)) if legacy_permissions
+             tracking_digest_field(digest, overrides.fetch(relative))
+             seen_overrides[relative] = true
+             next
+@@ -7009,7 +7019,7 @@ module DevSession
+           tracking_digest_field(digest, kind)
+           tracking_digest_field(digest, relative)
+           mode = kind == 'file' && overrides.key?(relative) ? 0o644 : stat.mode & 0o777
+-          tracking_digest_field(digest, format('%o', mode))
++          tracking_digest_field(digest, format('%o', mode)) if legacy_permissions
+           case kind
+           when 'directory'
+             visit.call(path, relative)
+@@ -8751,6 +8761,7 @@ module DevSession
+         codex_command: @codex_command,
+         portal_command: @portal_command,
+         portal_url: @portal_url,
++        host_profile: @host_profile,
+         cluster_providers: @cluster_providers,
+         require_runtime: @require_runtime,
+         env: @env,
+diff --git a/libexec/workspace-archive-cleanup.rb b/libexec/workspace-archive-cleanup.rb
+index 06155ef4d99826039f12bb47384f10d1212c666a..015f49a8d553c81ef7b1437f3c2a41198ecd7915 100644
+--- a/libexec/workspace-archive-cleanup.rb
++++ b/libexec/workspace-archive-cleanup.rb
+@@ -70,6 +70,10 @@ module DevSession
+         tracking_tree_sha256(work_dir(slug))
+       end
+ 
++      def archive_cleanup_source_matches?(slug, digest)
++        tracking_tree_matches?(work_dir(slug), digest)
++      end
++
+       def archive_cleanup_read_sidecar(path)
+         read_private_json_object(path, 'archive cleanup sidecar', max_size: ArchiveCleanup::MAX_BYTES, mode: 0o600)
+       end
+@@ -262,7 +266,7 @@ module DevSession
+       inventory = sidecar.fetch('inventory')
+       source = source_path
+       unless !exists?(archive_path) && directory_identity(source) == inventory.fetch('tracking_identity') &&
+-             @runner.archive_cleanup_source_digest(@slug) == inventory.fetch('source_sha256') &&
++             @runner.archive_cleanup_source_matches?(@slug, inventory.fetch('source_sha256')) &&
+              inventory.fetch('worktrees').none? { |record| record.fetch('removed') } &&
+              inventory.fetch('containers').none? { |record| record.fetch('removed') }
+         raise Error, "prepared archive cleanup source changed: #{@slug}"
+diff --git a/libexec/workspace-auto-archive.rb b/libexec/workspace-auto-archive.rb
+index 22fd1f2d3b0f4acede46666017e5a0a45f8107ca..7972f8e3a8c7713b0a612632e147fa94e4ae74cc 100644
+--- a/libexec/workspace-auto-archive.rb
++++ b/libexec/workspace-auto-archive.rb
+@@ -356,6 +356,11 @@ module WorkspaceAutoArchive
+ 
+     private
+ 
++    def auto_archive_error_message(error)
++      error.message.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
++           .byteslice(0, 16_384).scrub('')
++    end
++
+     def auto_archive_tracking_identity(slug, tracking, root_thread_id)
+       stat = File.lstat(tracking)
+       unless stat.directory? && File.realpath(tracking) == tracking
+@@ -451,7 +456,8 @@ module WorkspaceAutoArchive
+                          end
+             state.merge!('eligible' => false, 'result' => 'deferred', 'blockers' => [diagnostic['message']],
+                          'diagnostics' => [diagnostic], 'last_attempt_at' => Time.now.utc.iso8601,
+-                         'last_attempt_result' => 'deferred', 'last_attempt_error' => diagnostic['message'])
++                         'last_attempt_result' => 'deferred',
++                         'last_attempt_error' => auto_archive_error_message(e))
+             auto_archive_store.write("session-#{slug}", state)
+           end
+         end
+@@ -564,7 +570,8 @@ module WorkspaceAutoArchive
+           state['eligible'] = false
+           state['blockers'] << proof_error.message
+           state['diagnostics'] << Policy.diagnostic('cleanup_proof_failed', proof_category, 'Cleanup or exact merge proof is not satisfied.')
+-          state['last_attempt_error'] = state['diagnostics'].last.fetch('message')
++          state['result'] = 'deferred'
++          state['last_attempt_error'] = auto_archive_error_message(proof_error)
+           state['last_attempt_at'] = Time.now.utc.iso8601
+           state['last_attempt_result'] = 'deferred'
+         end
+diff --git a/libexec/workspace-host b/libexec/workspace-host
+index 6ce7db8e17e0f1f22efe4a92a97cd71b17f76b45..aa217723c6360d35d34614ed4857feab729efa1a 100755
+--- a/libexec/workspace-host
++++ b/libexec/workspace-host
+@@ -381,11 +381,7 @@ module DevWorkspaceHost
+       )
+       @profile = env.fetch('DEV_WORKSPACES_PROFILE', File.join(@state, 'profile'))
+       @skills = env.fetch('DEV_WORKSPACES_SKILLS_DIR', File.join(@home, '.codex/skills'))
+-      @system_codex = if env.key?('DEV_WORKSPACES_SYSTEM_CODEX')
+-                        env.fetch('DEV_WORKSPACES_SYSTEM_CODEX')
+-                      else
+-                        File.join(package_root, 'libexec/codex/bin/codex')
+-                      end
++      @system_codex = codex_for_package(package_root)
+       @router_socket = env.fetch(
+         'DEV_WORKSPACES_ROUTER_SOCKET',
+         '/run/dev-workspaces/router.sock'
+@@ -608,25 +604,29 @@ module DevWorkspaceHost
+       end
+       require_compatible_development_cluster_helpers!(candidate)
+       require_compatible_runtime_authorities!(candidate)
++      candidate_codex = File.realpath(codex_for_package(candidate))
+       current_codex = File.realpath(active_codex)
+       system! candidate_host, 'check-codex', '--codex', current_codex
+-      if File.realpath(@system_codex) != current_codex
+-        system! candidate_host, 'check-codex', '--codex', @system_codex
++      if candidate_codex != current_codex
++        system! candidate_host, 'check-codex', '--codex', candidate_codex
+       end
+ 
+       candidate_plans = registration_plans(package: candidate)
+-      probe_registration_plans!(File.realpath(@system_codex), candidate_plans)
++      probe_registration_plans!(candidate_codex, candidate_plans)
+       predecessor_package = preselection_session_package
++      restart_required = codex_restart_required?(
++        candidate_plans, candidate_codex, package: candidate, predecessor: predecessor_package
++      )
+       quiesced = []
+       begin
+-        quiesced = quiesce_sessions
++        quiesced = quiesce_sessions if restart_required
+       rescue Error
+-        write_pending_codex_update(candidate, File.realpath(@system_codex), candidate_plans)
++        write_pending_codex_update(candidate, candidate_codex, candidate_plans)
+         raise
+       end
+       begin
+         stop_auto_archive_services
+-        write_pending_codex_update(candidate, File.realpath(@system_codex), candidate_plans)
++        write_pending_codex_update(candidate, candidate_codex, candidate_plans)
+         FileUtils.mkdir_p(File.dirname(@profile), mode: 0o700)
+         unless File.symlink?(@profile) && File.realpath(@profile) == candidate
+           system! 'nix-env', '--profile', @profile, '--set', candidate
+@@ -652,10 +652,10 @@ module DevWorkspaceHost
+         reraise_after_terminal_restoration(transition_error, quiesced, package: predecessor_package)
+       end
+       wait_for_codex_sockets
+-      verify_registration_semantics!(candidate_plans, File.realpath(@system_codex))
++      verify_registration_semantics!(candidate_plans, candidate_codex)
+       clear_pending_codex_update
+       begin
+-        restore_quiesced_sessions(quiesced, package: candidate)
++        restore_quiesced_sessions(quiesced, package: candidate) if restart_required
+       rescue StandardError => restore_error
+         raise Error,
+               "workspace package transition completed, but terminal clients need dev-session sync: " \
+@@ -1587,11 +1587,13 @@ module DevWorkspaceHost
+ 
+     def marker_has_semantics?(marker, codex, plan)
+       marker.is_a?(Hash) && marker.dig('launch', 'codex_path') == codex &&
+-        marker.dig('launch', 'digest') == plan.digest
++        marker.dig('launch', 'policy') == plan.policy && marker.dig('launch', 'argv') == plan.argv &&
++        marker.dig('launch', 'required_native_child_threads') == plan.required_native_child_threads
+     end
+ 
+     def marker_matches_plan?(entry, marker, codex, plan)
+       marker_has_semantics?(marker, codex, plan) &&
++        marker.dig('launch', 'digest') == plan.digest &&
+         marker.dig('launch', 'package_root') == plan.package_root &&
+         marker.dig('launch', 'policy') == plan.policy && marker.dig('launch', 'argv') == plan.argv &&
+         marker.dig('launch', 'required_native_child_threads') == plan.required_native_child_threads &&
+@@ -1769,7 +1771,7 @@ module DevWorkspaceHost
+               'complete the selected forward package transition first'
+       end
+       plans = registration_plans(package:)
+-      restart_required = active != adopted || registration_restart_required?(plans, adopted)
++      restart_required = codex_restart_required?(plans, adopted, package:, active:)
+       unless restart_required
+         plans.each do |entry, plan|
+           refresh_registration_inventory(entry, plan)
+@@ -1819,12 +1821,39 @@ module DevWorkspaceHost
+       true
+     end
+ 
++    def codex_restart_required?(plans, codex, package:, predecessor: package, active: File.realpath(active_codex))
++      !live_package_switch_contract?(predecessor) || !live_package_switch_contract?(package) ||
++        active != codex || registration_restart_required?(plans, codex)
++    end
++
+     def registration_restart_required?(plans, codex)
+       plans.any? do |entry, plan|
+-        !marker_has_semantics?(load_registration_marker(entry), codex, plan)
++        marker = load_registration_marker(entry)
++        !marker_has_semantics?(marker, codex, plan) ||
++          !live_package_switch_contract?(marker.dig('launch', 'package_root'))
+       end
+     end
+ 
++    def codex_for_package(package)
++      @env.fetch('DEV_WORKSPACES_SYSTEM_CODEX') { File.join(package, 'libexec/codex/bin/codex') }
++    end
++
++    # The launch package proves that every retained member report helper can
++    # dispatch through the selected profile. A predecessor without this policy
++    # needs one idle restart even when its native Codex invocation is unchanged.
++    def live_package_switch_contract?(package)
++      return false unless package.is_a?(String)
++
++      path = File.join(package, 'share/workspace-portal/runtime-contract.json')
++      payload = File.binread(path, 64 * 1024 + 1)
++      return false if payload.bytesize > 64 * 1024
++
++      contract = parse_strict_json_object(payload, 'live package switch contract', 64 * 1024)
++      contract['livePackageSwitchPolicy'] == RUNTIME_CONTRACT.fetch('livePackageSwitchPolicy')
++    rescue Error, SystemCallError
++      false
++    end
++
+     def verify_registration_markers!(plans, codex)
+       invalid = plans.filter_map do |entry, plan|
+         entry.fetch('name') unless marker_matches_plan?(entry, load_registration_marker(entry), codex, plan)
+diff --git a/portal/cmd/workspace-portal/live_switch_integration_test.go b/portal/cmd/workspace-portal/live_switch_integration_test.go
+new file mode 100644
+index 0000000000000000000000000000000000000000..8fc06897d4d956e22a50dcc37619865044f1e673
+--- /dev/null
++++ b/portal/cmd/workspace-portal/live_switch_integration_test.go
+@@ -0,0 +1,397 @@
++//go:build live_switch_integration
++
++package main
++
++import (
++	"context"
++	"crypto/sha256"
++	"encoding/json"
++	"fmt"
++	"io"
++	"net"
++	"net/http"
++	"net/http/httptest"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strconv"
++	"strings"
++	"sync"
++	"testing"
++	"time"
++
++	"github.com/aither64/codex-web/codex"
++	"github.com/coder/websocket"
++)
++
++// This explicitly selected fixture owns only temporary state, a loopback model
++// provider and one native App Server. It never opens the installed workspace.
++func TestNativeLiveSwitchReconnect(t *testing.T) {
++	native := os.Getenv("LIVE_SWITCH_CODEX")
++	if !filepath.IsAbs(native) {
++		t.Fatal("LIVE_SWITCH_CODEX must select the exact native executable")
++	}
++	version, err := exec.Command(native, "--version").Output()
++	if err != nil {
++		t.Fatal(err)
++	}
++	bytes, err := os.ReadFile(native)
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Logf("native=%s version=%s sha256=%x", native, strings.TrimSpace(string(version)), sha256.Sum256(bytes))
++	root := t.TempDir()
++	home := filepath.Join(root, "home")
++	if err := os.Mkdir(home, 0o700); err != nil {
++		t.Fatal(err)
++	}
++	hold := make(chan struct{})
++	var release sync.Once
++	defer release.Do(func() { close(hold) })
++	entered := make(chan struct{}, 4)
++	var mu sync.Mutex
++	requests := map[string]int{}
++	provider := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		// The exact native provider probes Responses WebSocket support. Signal
++		// the supported HTTP fallback, as the native naming fixture does.
++		if r.Method == http.MethodGet && strings.EqualFold(r.Header.Get("Upgrade"), "websocket") {
++			w.WriteHeader(http.StatusUpgradeRequired)
++			return
++		}
++		if r.Method != http.MethodPost {
++			w.WriteHeader(http.StatusNotFound)
++			return
++		}
++		data, err := io.ReadAll(io.LimitReader(r.Body, 256*1024))
++		if err != nil {
++			w.WriteHeader(http.StatusBadRequest)
++			return
++		}
++		kind := "ordinary"
++		for _, candidate := range []string{"approval-probe", "question-probe"} {
++			if strings.Contains(string(data), candidate) {
++				kind = candidate
++			}
++		}
++		mu.Lock()
++		requests[kind]++
++		index := requests[kind]
++		mu.Unlock()
++		w.Header().Set("Content-Type", "text/event-stream")
++		event := func(value any) { encoded, _ := json.Marshal(value); _, _ = fmt.Fprintf(w, "data: %s\n\n", encoded) }
++		event(map[string]any{"type": "response.created", "response": map[string]any{"id": fmt.Sprintf("probe-%s-%d", kind, index)}})
++		w.(http.Flusher).Flush()
++		if kind == "ordinary" {
++			select {
++			case entered <- struct{}{}:
++			default:
++			}
++			select {
++			case <-hold:
++			case <-r.Context().Done():
++				return
++			}
++		}
++		item := map[string]any{"type": "message", "role": "assistant", "id": fmt.Sprintf("answer-%s-%d", kind, index), "phase": "final_answer",
++			"content": []any{map[string]any{"type": "output_text", "text": "synthetic-completed"}}}
++		if kind != "ordinary" && index == 1 {
++			name, arguments := "exec_command", `{"cmd":"printf synthetic-approved","sandbox_permissions":"require_escalated","justification":"Synthetic reconnect approval probe"}`
++			if kind == "question-probe" {
++				name, arguments = "request_user_input", `{"questions":[{"id":"choice","header":"Choice","question":"Choose the synthetic result","options":[{"label":"Continue","description":"Complete the probe"},{"label":"Stop","description":"Stop the probe"}]}]}`
++			}
++			item = map[string]any{"type": "function_call", "id": "call-item-" + kind, "call_id": "call-" + kind, "name": name, "arguments": arguments}
++		}
++		event(map[string]any{"type": "response.output_item.done", "item": item})
++		event(map[string]any{"type": "response.completed", "response": map[string]any{"id": fmt.Sprintf("probe-%s-%d", kind, index),
++			"usage": map[string]any{"input_tokens": 0, "output_tokens": 0, "total_tokens": 0}}})
++	}))
++	defer provider.Close()
++	config := "model_provider = \"openai\"\nmodel = \"gpt-5.5\"\nmodel_reasoning_effort = \"low\"\napproval_policy = \"on-request\"\nopenai_base_url = " + strconv.Quote(provider.URL+"/v1") + "\n"
++	if err := os.WriteFile(filepath.Join(home, "config.toml"), []byte(config), 0o600); err != nil {
++		t.Fatal(err)
++	}
++	ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
++	defer cancel()
++	socket := filepath.Join(root, "app.sock")
++	command := exec.CommandContext(ctx, native, "app-server", "--listen", "unix://"+socket)
++	command.Dir = root
++	command.Env = []string{"HOME=" + root, "CODEX_HOME=" + home, "PATH=" + os.Getenv("PATH"), "OPENAI_API_KEY=synthetic-only"}
++	log, err := os.Create(filepath.Join(root, "native.log"))
++	if err != nil {
++		t.Fatal(err)
++	}
++	defer log.Close()
++	command.Stdout, command.Stderr = log, log
++	if err := command.Start(); err != nil {
++		t.Fatal(err)
++	}
++	defer func() { cancel(); _ = command.Wait() }()
++	var lastIdleError error
++	wait := func(label string, predicate func() bool) {
++		t.Helper()
++		for !predicate() {
++			select {
++			case <-ctx.Done():
++				data, _ := os.ReadFile(log.Name())
++				mu.Lock()
++				counts, _ := json.Marshal(requests)
++				mu.Unlock()
++				t.Fatalf("%s: %v; last idle check: %v; provider requests: %s; native log: %s", label, ctx.Err(), lastIdleError, counts, data)
++			case <-time.After(20 * time.Millisecond):
++			}
++		}
++	}
++	wait("native socket", func() bool { _, err := os.Stat(socket); return err == nil })
++	client := codex.New(socket)
++	defer func() { client.Close() }()
++	idle := func(id string) bool {
++		err := client.RequireThreadIdle(ctx, id, root)
++		if err != nil && ctx.Err() == nil {
++			lastIdleError = err
++		}
++		return err == nil
++	}
++	start := func(mode string) string {
++		t.Helper()
++		id, err := client.StartThreadWithSettings(ctx, root, map[string]string{}, codex.ThreadSettings{Model: "gpt-5.5", ReasoningEffort: "low", CollaborationMode: mode, Policy: codex.ThreadPolicy{Sandbox: "workspace-write"}})
++		if err != nil {
++			t.Fatal(err)
++		}
++		return id
++	}
++	initial := func(id, text, mode string) codex.SendReceipt {
++		t.Helper()
++		// A fresh thread has no saved rollout yet. Seed it through turn/start,
++		// as the native naming smoke does, before the normal client resume path.
++		var result struct {
++			Turn struct{ ID string } `json:"turn"`
++		}
++		params := map[string]any{"threadId": id, "input": []any{map[string]any{"type": "text", "text": text}},
++			"model": "gpt-5.5", "effort": "low", "clientUserMessageId": text}
++		if mode == "plan" {
++			params["collaborationMode"] = map[string]any{"mode": "plan", "settings": map[string]any{
++				"model": "gpt-5.5", "reasoning_effort": "low", "developer_instructions": nil}}
++		}
++		if err := client.Request(ctx, "turn/start", params, &result); err != nil || result.Turn.ID == "" {
++			t.Fatalf("initial native turn: %v", err)
++		}
++		return codex.SendReceipt{TurnID: result.Turn.ID}
++	}
++	lead, member := start("default"), start("default")
++	leadReceipt := initial(lead, "running-lead", "default")
++	memberReceipt := initial(member, "running-member", "default")
++	for range 2 {
++		select {
++		case <-entered:
++		case <-ctx.Done():
++			t.Fatal("both native turns did not reach the provider")
++		}
++	}
++	queued, err := client.Queue(ctx, lead, "queued-after-reconnect", "queued-probe")
++	if err != nil {
++		t.Fatal(err)
++	}
++	reconnect := func(ids ...string) {
++		t.Helper()
++		client.Close()
++		client = codex.New(socket)
++		for _, id := range ids {
++			if _, err := client.ResumeThread(ctx, id, root, map[string]string{}); err != nil {
++				t.Fatal(err)
++			}
++		}
++	}
++	completed := func(id, turn string) codex.Transcript {
++		t.Helper()
++		transcript, err := client.ReadThread(ctx, id)
++		if err != nil {
++			t.Fatal(err)
++		}
++		for _, entry := range transcript.Entries {
++			if entry.TurnID == turn && entry.TurnStatus == "completed" && entry.Kind == "agentMessage" && entry.Text == "synthetic-completed" {
++				return transcript
++			}
++		}
++		t.Fatalf("original turn %s did not complete its synthetic response: %#v", turn, transcript)
++		return transcript
++	}
++	reconnect(lead, member)
++	for id, turn := range map[string]string{lead: leadReceipt.TurnID, member: memberReceipt.TurnID} {
++		transcript, err := client.ReadThread(ctx, id)
++		if err != nil || transcript.Status != "active" || transcript.LatestTurnID != turn {
++			t.Fatalf("running turn did not survive reconnect: %#v, %v", transcript, err)
++		}
++	}
++	queuedAgain, err := client.Queue(ctx, lead, "queued-after-reconnect", "queued-probe")
++	if err != nil || queuedAgain.ID != queued.ID {
++		t.Fatalf("queue retry identity changed: %#v, %v", queuedAgain, err)
++	}
++	release.Do(func() { close(hold) })
++	wait("lead and member completion", func() bool {
++		return idle(lead) && idle(member)
++	})
++	completed(lead, leadReceipt.TurnID)
++	completed(member, memberReceipt.TurnID)
++	transcript, err := client.ReadThread(ctx, lead)
++	if err != nil {
++		t.Fatal(err)
++	}
++	count := 0
++	for _, entry := range transcript.Entries {
++		if entry.ClientUserMessageID == "queued-probe" {
++			count++
++		}
++	}
++	if count != 1 {
++		t.Fatalf("queued message delivered %d times", count)
++	}
++	// Accepted reports use the same durable send ledger as team assignments.
++	// A retained retry after reconnect must resolve to the existing turn.
++	report, err := client.Send(ctx, lead, "synthetic member report", "report-probe", "team:report")
++	if err != nil {
++		t.Fatal(err)
++	}
++	wait("report completion", func() bool { return idle(lead) })
++	completed(lead, report.TurnID)
++	reconnect(lead)
++	retried, err := client.Send(ctx, lead, "synthetic member report", "report-probe", "team:report")
++	if err != nil || retried.TurnID != report.TurnID {
++		t.Fatalf("report retry changed native turn: %#v, %v", retried, err)
++	}
++	transcript, err = client.ReadThread(ctx, lead)
++	if err != nil {
++		t.Fatal(err)
++	}
++	count = 0
++	for _, entry := range transcript.Entries {
++		if entry.ClientUserMessageID == "report-probe" {
++			count++
++		}
++	}
++	if count != 1 {
++		t.Fatalf("report delivered %d times", count)
++	}
++	for _, probe := range []struct{ text, mode, kind string }{{"approval-probe", "default", "command"}, {"question-probe", "plan", "userInput"}} {
++		thread := start(probe.mode)
++		original := initial(thread, probe.text, probe.mode)
++		wait("initial "+probe.kind, func() bool { return len(client.Prompts(thread)) == 1 })
++		before, err := client.PromptsWithItems(ctx, thread)
++		if err != nil || len(before) != 1 {
++			t.Fatalf("initial prompt authority: %#v, %v", before, err)
++		}
++		reconnect(thread)
++		wait("reconnected "+probe.kind, func() bool { return len(client.Prompts(thread)) == 1 })
++		after, err := client.PromptsWithItems(ctx, thread)
++		if err != nil || len(after) != 1 {
++			t.Fatalf("reconnected prompt authority: %#v, %v", after, err)
++		}
++		prompt := after[0]
++		if prompt.Kind != probe.kind || prompt.ThreadID != thread || prompt.TurnID != original.TurnID || prompt.ItemID != before[0].ItemID {
++			t.Fatalf("wrong blocking request: %#v", prompt)
++		}
++		if before[0].AuthorityAvailable && !prompt.AuthorityAvailable {
++			t.Fatal("approval authority was lost during reconnect")
++		}
++		t.Logf("%s authority before/after reconnect: %t/%t", probe.kind, before[0].AuthorityAvailable, prompt.AuthorityAvailable)
++		if probe.kind == "userInput" {
++			err = client.RespondAnswers(ctx, prompt.ID, thread, map[string]map[string][]string{"choice": {"answers": {"Continue"}}})
++		} else {
++			err = client.RespondDecision(ctx, prompt.ID, thread, "accept")
++			if err != nil && strings.Contains(err.Error(), "matching approval item is unavailable") {
++				// Native 0.160 omits this pending command item. Keep
++				// the browser's authority guard and exercise its terminal fallback
++				// on a fresh connection to the same isolated native process.
++				client.Close()
++				terminal := liveSwitchTerminalApproval(t, ctx, socket, root, thread, prompt.ItemID)
++				defer terminal.CloseNow()
++				client = codex.New(socket)
++				_, err = client.ResumeThread(ctx, thread, root, map[string]string{})
++				t.Log("replayed approval completed through native terminal fallback; browser authority guard retained")
++			}
++		}
++		if err != nil {
++			var items map[string]any
++			itemsErr := client.Request(ctx, "thread/items/list", map[string]any{"threadId": thread, "limit": 100, "sortDirection": "desc"}, &items)
++			encoded, _ := json.Marshal(items)
++			t.Fatalf("respond to %s: %v; replayed prompt: %#v; items: %s (%v)", probe.kind, err, prompt, encoded, itemsErr)
++		}
++		wait("resolved "+probe.kind, func() bool { return idle(thread) })
++		transcript := completed(thread, original.TurnID)
++		if probe.kind == "command" {
++			executed := false
++			for _, entry := range transcript.Entries {
++				if entry.TurnID == original.TurnID && entry.ItemID == prompt.ItemID && entry.Kind == "commandExecution" && entry.TurnStatus == "completed" && strings.Contains(entry.Details, "synthetic-approved") {
++					executed = true
++				}
++			}
++			if !executed {
++				t.Fatalf("replayed approval did not execute its original command: %#v", transcript)
++			}
++		}
++	}
++	if command.ProcessState != nil || command.Process.Pid == 0 {
++		t.Fatal("native process exited across portal reconnects")
++	}
++	t.Logf("preserved native PID %d; active turns, queue/report retries, approval and question completed", command.Process.Pid)
++}
++
++// Emulate the terminal's JSON-RPC response to a replayed native command request.
++// This never uses a workspace socket or bypasses the browser's approval guard.
++func liveSwitchTerminalApproval(t *testing.T, ctx context.Context, socket, cwd, thread, item string) *websocket.Conn {
++	t.Helper()
++	transport := &http.Transport{DialContext: func(ctx context.Context, _, _ string) (net.Conn, error) {
++		return (&net.Dialer{}).DialContext(ctx, "unix", socket)
++	}}
++	t.Cleanup(transport.CloseIdleConnections)
++	connection, _, err := websocket.Dial(ctx, "ws://localhost/", &websocket.DialOptions{HTTPClient: &http.Client{Transport: transport}})
++	if err != nil {
++		t.Fatal(err)
++	}
++	t.Cleanup(func() { connection.CloseNow() })
++	write := func(message any) {
++		t.Helper()
++		data, err := json.Marshal(message)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if err := connection.Write(ctx, websocket.MessageText, data); err != nil {
++			t.Fatal(err)
++		}
++	}
++	write(map[string]any{"id": "terminal-init", "method": "initialize", "params": map[string]any{
++		"clientInfo":   map[string]any{"name": "live-switch-terminal", "version": "0.1.0"},
++		"capabilities": map[string]any{"experimentalApi": true}}})
++	for {
++		var message struct {
++			ID     json.RawMessage `json:"id"`
++			Method string          `json:"method"`
++			Error  json.RawMessage `json:"error"`
++			Params struct {
++				ThreadID string `json:"threadId"`
++				ItemID   string `json:"itemId"`
++			} `json:"params"`
++		}
++		_, data, err := connection.Read(ctx)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if err := json.Unmarshal(data, &message); err != nil {
++			t.Fatal(err)
++		}
++		if len(message.Error) > 0 {
++			t.Fatalf("native terminal request: %s", message.Error)
++		}
++		if string(message.ID) == `"terminal-init"` {
++			write(map[string]any{"method": "initialized"})
++			write(map[string]any{"id": "terminal-resume", "method": "thread/resume", "params": map[string]any{
++				"threadId": thread, "cwd": cwd, "excludeTurns": true}})
++		}
++		if message.Method == "item/commandExecution/requestApproval" {
++			if message.Params.ThreadID != thread || message.Params.ItemID != item || len(message.ID) == 0 {
++				t.Fatal("terminal approval replay changed thread or item identity")
++			}
++			write(map[string]any{"id": message.ID, "result": map[string]any{"decision": "accept"}})
++			return connection
++		}
++	}
++}
+diff --git a/portal/cmd/workspace-portal/main.go b/portal/cmd/workspace-portal/main.go
+index be218dcd06d990a55c9bc4f948b9b456c748a9ef..6b91f9863edeeaf34bbb1969da0dec1cc6f7cc4f 100644
+--- a/portal/cmd/workspace-portal/main.go
++++ b/portal/cmd/workspace-portal/main.go
+@@ -407,6 +407,7 @@ func teamCommand(args []string) error {
+ 	command := args[0]
+ 	flags := flag.NewFlagSet("team "+command, flag.ContinueOnError)
+ 	stateRoot := flags.String("user-state-root", "", "private user state root")
++	hostProfile := flags.String("host-profile", "", "selected workspace user profile")
+ 	packageRoot := flags.String("package-root", "", "installed workspace package root")
+ 	workspace := flags.String("workspace", "", "development workspace root")
+ 	slug := flags.String("session-slug", "", "development session slug")
+@@ -503,7 +504,7 @@ func teamCommand(args []string) error {
+ 		"DEV_SESSION_SLUG": *slug, "DEV_SESSION_WORKSPACE": *workspace, "DEV_SESSION_WORK_DIR": *cwd,
+ 		"DEV_SESSION_REQUIRE_RUNTIME": "1", "DEV_SESSION_CODEX_SOCKET": *socket,
+ 	}
+-	service := teamruntime.Service{Progress: creationprogress.FromEnvironment(), Store: store, Client: client, Workspace: *workspace, Catalog: teamCatalog,
++	service := teamruntime.Service{Progress: creationprogress.FromEnvironment(), Store: store, Client: client, Workspace: *workspace, HostProfile: *hostProfile, Catalog: teamCatalog,
+ 		ValidateSettings: func(ctx context.Context, settings codex.ThreadSettings) error {
+ 			models, err := client.ListModels(ctx)
+ 			if err != nil {
+diff --git a/portal/cmd/workspace-portal/team_mcp.go b/portal/cmd/workspace-portal/team_mcp.go
+index 9691e00c2ad217c08ead151e50af0766a2f7f678..ceca18c718ffc893d805ae3940e888574f0df908 100644
+--- a/portal/cmd/workspace-portal/team_mcp.go
++++ b/portal/cmd/workspace-portal/team_mcp.go
+@@ -35,7 +35,7 @@ var teamMCPMessageIDPattern = regexp.MustCompile(`^(?:[0-9a-f]{32}|[0-9a-f]{8}-[
+ // cannot choose another session or sender.
+ type teamMCPBinding struct {
+ 	stateRoot, workspace, slug, rootThreadID, address, memberThreadID string
+-	devSession, workDir                                               string
++	devSession, hostProfile, workDir                                  string
+ 	store                                                             *teamruntime.Store
+ }
+ 
+@@ -46,14 +46,10 @@ type teamMCPInvocation struct {
+ }
+ 
+ type teamMCPDependencies struct {
+-	executable func() (string, error)
+-	run        func(context.Context, teamMCPInvocation) error
++	run func(context.Context, teamMCPInvocation) error
+ }
+ 
+ func (dependencies teamMCPDependencies) withDefaults() teamMCPDependencies {
+-	if dependencies.executable == nil {
+-		dependencies.executable = os.Executable
+-	}
+ 	if dependencies.run == nil {
+ 		dependencies.run = func(ctx context.Context, invocation teamMCPInvocation) error {
+ 			command := exec.CommandContext(ctx, invocation.command, invocation.args...)
+@@ -74,6 +70,7 @@ func teamMCPCommand(args []string, input io.Reader, output, diagnostics io.Write
+ 	flags := flag.NewFlagSet("team-mcp", flag.ContinueOnError)
+ 	flags.SetOutput(diagnostics)
+ 	stateRoot := flags.String("user-state-root", "", "private user state root")
++	hostProfile := flags.String("host-profile", "", "selected workspace user profile")
+ 	workspace := flags.String("workspace", "", "canonical workspace root")
+ 	slug := flags.String("session-slug", "", "bound session slug")
+ 	rootThreadID := flags.String("root-thread-id", "", "bound lead thread ID")
+@@ -83,9 +80,10 @@ func teamMCPCommand(args []string, input io.Reader, output, diagnostics io.Write
+ 		return err
+ 	}
+ 	if flags.NArg() != 0 || !canonicalAbsolutePath(*stateRoot) || !canonicalAbsolutePath(*workspace) ||
++		!canonicalAbsolutePath(*hostProfile) ||
+ 		!session.ValidSlug(*slug) || !teamMCPThreadIDPattern.MatchString(*rootThreadID) ||
+ 		!teamMCPThreadIDPattern.MatchString(*memberThreadID) || !teamMCPAddressPattern.MatchString(*address) {
+-		return errors.New("team-mcp requires a canonical state root, workspace, session, lead thread, member address, and member thread")
++		return errors.New("team-mcp requires a canonical state root, host profile, workspace, session, lead thread, member address, and member thread")
+ 	}
+ 	resolvedWorkspace, err := filepath.EvalSymlinks(*workspace)
+ 	if err != nil || resolvedWorkspace != *workspace {
+@@ -99,17 +97,15 @@ func teamMCPCommand(args []string, input io.Reader, output, diagnostics io.Write
+ 	if err != nil {
+ 		return err
+ 	}
+-	executable, err := dependencies.executable()
+-	if err != nil || !canonicalAbsolutePath(executable) {
+-		return errors.New("team-mcp cannot resolve its package executable")
+-	}
+-	devSession := filepath.Join(filepath.Dir(executable), "dev-session")
++	// Keep the profile symlink in this path. Each report must dispatch through
++	// the currently selected generation, including from a retained MCP process.
++	devSession := filepath.Join(*hostProfile, "bin", "dev-session")
+ 	if info, err := os.Stat(devSession); err != nil || !info.Mode().IsRegular() || info.Mode()&0o111 == 0 {
+-		return errors.New("team-mcp cannot find the package dev-session command")
++		return errors.New("team-mcp cannot find the selected profile dev-session command")
+ 	}
+ 	binding := teamMCPBinding{stateRoot: *stateRoot, workspace: *workspace, slug: *slug,
+ 		rootThreadID: *rootThreadID, address: *address, memberThreadID: *memberThreadID,
+-		devSession: devSession, workDir: filepath.Join(*workspace, "work", *slug), store: store}
++		devSession: devSession, hostProfile: *hostProfile, workDir: filepath.Join(*workspace, "work", *slug), store: store}
+ 	return binding.serve(context.Background(), input, output, diagnostics, dependencies.run)
+ }
+ 
+@@ -138,13 +134,14 @@ func (binding teamMCPBinding) invocation(message, messageID string) teamMCPInvoc
+ 	environment := make([]string, 0, len(os.Environ())+7)
+ 	for _, entry := range os.Environ() {
+ 		key, _, _ := strings.Cut(entry, "=")
+-		if strings.HasPrefix(key, "DEV_SESSION_") || key == "DEV_WORKSPACES_STATE" || key == "DEV_WORKSPACE_NAME" {
++		if strings.HasPrefix(key, "DEV_SESSION_") || key == "DEV_WORKSPACES_STATE" || key == "DEV_WORKSPACES_PROFILE" || key == "DEV_WORKSPACE_NAME" {
+ 			continue
+ 		}
+ 		environment = append(environment, entry)
+ 	}
+ 	environment = append(environment,
+ 		"DEV_WORKSPACES_STATE="+binding.stateRoot,
++		"DEV_WORKSPACES_PROFILE="+binding.hostProfile,
+ 		"DEV_SESSION_SLUG="+binding.slug,
+ 		"DEV_SESSION_WORKSPACE="+binding.workspace,
+ 		"DEV_SESSION_WORK_DIR="+binding.workDir,
+diff --git a/portal/cmd/workspace-portal/team_mcp_test.go b/portal/cmd/workspace-portal/team_mcp_test.go
+index 048ba8536da8e0ddaea0081aa3c32d2b951aab4a..2497fce7c98d9d8c44ae27c5c8556f86ab4068cd 100644
+--- a/portal/cmd/workspace-portal/team_mcp_test.go
++++ b/portal/cmd/workspace-portal/team_mcp_test.go
+@@ -32,6 +32,10 @@ func teamMCPFixture(t *testing.T) (teamMCPBinding, teamMCPDependencies, []string
+ 	if err := os.WriteFile(devSession, []byte("#!/bin/sh\nexit 0\n"), 0o700); err != nil {
+ 		t.Fatal(err)
+ 	}
++	hostProfile := filepath.Join(root, "custom-profile")
++	if err := os.Symlink(filepath.Dir(packageBin), hostProfile); err != nil {
++		t.Fatal(err)
++	}
+ 	store, err := teamruntime.NewStore(stateRoot, workspace)
+ 	if err != nil {
+ 		t.Fatal(err)
+@@ -47,11 +51,12 @@ func teamMCPFixture(t *testing.T) (teamMCPBinding, teamMCPDependencies, []string
+ 	}
+ 	binding := teamMCPBinding{stateRoot: stateRoot, workspace: workspace, slug: slug,
+ 		rootThreadID: "lead-thread", address: "reviewer0", memberThreadID: "member-thread",
+-		devSession: devSession, workDir: workDir, store: store}
++		devSession: filepath.Join(hostProfile, "bin", "dev-session"), hostProfile: hostProfile, workDir: workDir, store: store}
+ 	args := []string{"--user-state-root", stateRoot, "--workspace", workspace,
++		"--host-profile", hostProfile,
+ 		"--session-slug", slug, "--root-thread-id", "lead-thread",
+ 		"--member-address", "reviewer0", "--member-thread-id", "member-thread"}
+-	deps := teamMCPDependencies{executable: func() (string, error) { return filepath.Join(packageBin, "workspace-portal"), nil }}
++	deps := teamMCPDependencies{}
+ 	return binding, deps, args
+ }
+ 
+@@ -94,6 +99,7 @@ func TestTeamMCPProtocolAndBoundHostInvocation(t *testing.T) {
+ 	t.Setenv("DEV_SESSION_SLUG", "foreign-session")
+ 	t.Setenv("DEV_SESSION_MEMBER_ADDRESS", "implementer0")
+ 	t.Setenv("DEV_WORKSPACES_STATE", "/foreign/state")
++	t.Setenv("DEV_WORKSPACES_PROFILE", "/foreign/profile")
+ 	var invocations []teamMCPInvocation
+ 	deps.run = func(_ context.Context, invocation teamMCPInvocation) error {
+ 		invocations = append(invocations, invocation)
+@@ -145,6 +151,7 @@ func TestTeamMCPProtocolAndBoundHostInvocation(t *testing.T) {
+ 	}
+ 	for key, want := range map[string]string{
+ 		"DEV_WORKSPACES_STATE":                binding.stateRoot,
++		"DEV_WORKSPACES_PROFILE":              binding.hostProfile,
+ 		"DEV_SESSION_SLUG":                    binding.slug,
+ 		"DEV_SESSION_WORKSPACE":               binding.workspace,
+ 		"DEV_SESSION_WORK_DIR":                binding.workDir,
+@@ -258,3 +265,54 @@ func TestTeamMCPChildOutputNeverEntersProtocol(t *testing.T) {
+ 		t.Fatalf("host output escaped into MCP streams: %q, %q", output.String(), diagnostics.String())
+ 	}
+ }
++
++func TestRetainedTeamMCPDispatchesThroughCustomProfileAfterSwitch(t *testing.T) {
++	binding, deps, args := teamMCPFixture(t)
++	trace := filepath.Join(t.TempDir(), "deliveries")
++	t.Setenv("TEAM_MCP_TRACE", trace)
++	writeDispatcher := func(path, generation string) {
++		t.Helper()
++		if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
++			t.Fatal(err)
++		}
++		body := "#!/bin/sh\nprintf '%s:%s\\n' '" + generation + "' \"${11}\" >> \"$TEAM_MCP_TRACE\"\ncat >/dev/null\n"
++		if err := os.WriteFile(path, []byte(body), 0o700); err != nil {
++			t.Fatal(err)
++		}
++	}
++	writeDispatcher(binding.devSession, "first")
++	second := filepath.Join(t.TempDir(), "second")
++	writeDispatcher(filepath.Join(second, "bin", "dev-session"), "second")
++	run := deps.withDefaults().run
++	count := 0
++	deps.run = func(ctx context.Context, invocation teamMCPInvocation) error {
++		if err := run(ctx, invocation); err != nil {
++			return err
++		}
++		count++
++		if count == 1 {
++			link := binding.hostProfile + ".next"
++			if err := os.Symlink(second, link); err != nil {
++				return err
++			}
++			return os.Rename(link, binding.hostProfile)
++		}
++		return nil
++	}
++	const id = "12345678-1234-1234-1234-123456789abc"
++	call := teamMCPRequestLine(t, 1, "tools/call", map[string]any{"name": "report_to_lead", "arguments": map[string]any{
++		"message": "same report retry", "message_id": id}})
++	var output, diagnostics bytes.Buffer
++	if err := teamMCPCommand(args, strings.NewReader(call+call), &output, &diagnostics, deps); err != nil {
++		t.Fatal(err)
++	}
++	for _, response := range teamMCPResponses(t, output.String()) {
++		if teamMCPResult(t, response)["isError"] != false {
++			t.Fatalf("report failed: %#v", response)
++		}
++	}
++	data, err := os.ReadFile(trace)
++	if err != nil || string(data) != "first:"+id+"\nsecond:"+id+"\n" {
++		t.Fatalf("selected dispatchers and retry identity = %q, %v", data, err)
++	}
++}
+diff --git a/portal/internal/agentteams/registration.go b/portal/internal/agentteams/registration.go
+index 9f7642929772770dad0a78ee28b77f5f5ae95348..e4ffab1fca312593fc342707f73acf4a4d5db8ee 100644
+--- a/portal/internal/agentteams/registration.go
++++ b/portal/internal/agentteams/registration.go
+@@ -10,7 +10,9 @@ const RegistrationPolicyVersion = 1
+ // RegistrationPlan is the host launch contract. Direct team members use
+ // independent App Server threads, so they need no native agent configuration.
+ // The installed catalog identity still participates in the marker digest: a
+-// creation request can only use a catalog registered with this host generation.
++// creation request uses the selected package's validated catalog. The digest
++// records launch provenance; catalog changes alone do not alter the native
++// executable, policy, argv or capacity and therefore do not require a restart.
+ type RegistrationPlan struct {
+ 	Schema                     int      `json:"schema"`
+ 	Policy                     int      `json:"policy"`
+diff --git a/portal/internal/session/runtime-contract.json b/portal/internal/session/runtime-contract.json
+index 5535279f91067df5dbf435a1d6c1050b902220ef..d51518b9ee44057b8ee07b30995ddea89ec8444b 100644
+--- a/portal/internal/session/runtime-contract.json
++++ b/portal/internal/session/runtime-contract.json
+@@ -2,6 +2,7 @@
+   "developmentClusterStateSchema": 1,
+   "developmentClusterTransitionPolicy": 3,
+   "runtimeAuthorityIdentityPolicy": 1,
++  "livePackageSwitchPolicy": 1,
+   "agentTeamRegistration": {
+     "helperSchema": 1,
+     "policy": 1,
+diff --git a/portal/internal/teamruntime/runtime.go b/portal/internal/teamruntime/runtime.go
+index 51a810bb7be4dee9da16fed768557c85f4c2202d..cf2acb74d0ef0baf8402aaf134eaec87ad2e346e 100644
+--- a/portal/internal/teamruntime/runtime.go
++++ b/portal/internal/teamruntime/runtime.go
+@@ -788,6 +788,7 @@ type Service struct {
+ 	Store            *Store
+ 	Client           Client
+ 	Workspace        string
++	HostProfile      string
+ 	Catalog          *agentteams.Catalog
+ 	ValidateSettings func(context.Context, codex.ThreadSettings) error
+ }
+@@ -821,11 +822,19 @@ func (service Service) memberTurnPolicy(slug, rootThreadID string, member Member
+ 		return codex.ThreadPolicy{}, errors.New("member report helper path is not canonical and absolute")
+ 	}
+ 	identity := strings.Join([]string{service.Store.workspace, slug, rootThreadID, member.Address, member.Thread}, "\x00")
++	hostProfile := service.HostProfile
++	if hostProfile == "" {
++		hostProfile = filepath.Join(service.Store.stateRoot, "profile")
++	}
++	if !filepath.IsAbs(hostProfile) || filepath.Clean(hostProfile) != hostProfile {
++		return codex.ThreadPolicy{}, errors.New("member report host profile must be an absolute clean path")
++	}
+ 	digest := sha256.Sum256([]byte(identity))
+ 	policy.MCPServer = &codex.ThreadMCPServer{
+ 		Name: "team_" + hex.EncodeToString(digest[:16]), Tool: "report_to_lead", Command: command,
+ 		Args: []string{
+ 			"team-mcp", "--user-state-root", service.Store.stateRoot,
++			"--host-profile", hostProfile,
+ 			"--workspace", service.Store.workspace, "--session-slug", slug,
+ 			"--root-thread-id", rootThreadID, "--member-address", member.Address,
+ 			"--member-thread-id", member.Thread,
+diff --git a/portal/internal/teamruntime/runtime_test.go b/portal/internal/teamruntime/runtime_test.go
+index 1db243a0ade9f232a9b4338415e8c4a347be3776..04aed29ed2405ac3b93c08c17e09959386302d84 100644
+--- a/portal/internal/teamruntime/runtime_test.go
++++ b/portal/internal/teamruntime/runtime_test.go
+@@ -651,7 +651,7 @@ func TestAssignmentUsesConfiguredMemberSettings(t *testing.T) {
+ 		t.Fatalf("member report policy = starts %#v, assignment %#v", client.starts, client.options)
+ 	}
+ 	if got, want := bound.MCPServer.Args, []string{
+-		"team-mcp", "--user-state-root", store.stateRoot, "--workspace", workspace,
++		"team-mcp", "--user-state-root", store.stateRoot, "--host-profile", filepath.Join(store.stateRoot, "profile"), "--workspace", workspace,
+ 		"--session-slug", "one", "--root-thread-id", "root-one", "--member-address", "implementer0", "--member-thread-id", "thread-1",
+ 	}; !reflect.DeepEqual(got, want) {
+ 		t.Fatalf("member report helper args = %#v, want %#v", got, want)
+diff --git a/portal/internal/web/archive_failure_browser_test.cjs b/portal/internal/web/archive_failure_browser_test.cjs
+index 5cc7e4470aa6679fc0a8a07fcc45d265ee304608..2cffe8763fe7c9f78920d6fff7fc65e1ae852cfa 100644
+--- a/portal/internal/web/archive_failure_browser_test.cjs
++++ b/portal/internal/web/archive_failure_browser_test.cjs
+@@ -51,6 +51,9 @@ const {chromium, firefox, expect} = require("@playwright/test");
+       // A settings visit shares the pending-page read, and focus does not evade throttling.
+       await banner.getByRole("link", {name: "Technical details"}).click();
+       await expect(page.locator("#settings")).toBeVisible();
++      await expect(banner).toBeHidden();
++      await expect(page.locator("#auto-archive-values")).toContainText("Closing the conversation timed out.");
++      await expect(page.locator("#auto-archive-details")).not.toHaveAttribute("open");
+       assert.equal(reads, 1);
+       offline = true;
+       const offlineOperationResponse = responseFor("operation");
+@@ -71,6 +74,7 @@ const {chromium, firefox, expect} = require("@playwright/test");
+       assert.equal(reads, 3);
+       held = false; release();
+       await expect(page.locator("#auto-archive-status")).toBeHidden();
++      await page.locator("#session-tab-codex").click();
+       failure.operation.id = "b".repeat(64);
+       const priorClearedDetail = await operationDetail.textContent();
+       operation = {...operation, updatedAt: "2026-09-16T13:07:17Z"};
+@@ -105,9 +109,39 @@ const {chromium, firefox, expect} = require("@playwright/test");
+       assert.equal((await (await runningOperationResponse).json()).state, "running");
+       await expect(operationDetail).toContainText("Running");
+       await expect(banner).toContainText("Last automatic attempt failed");
++      failure.last_attempt_error = "archived tracking changed during recovery: <script>example</script>";
++      failure.last_attempt_at = "2026-10-07T12:06:43Z";
++      failure.journal = {operation: "archive", phase: "clusters_released"};
++      failure.diagnostics = [
++        {code: "archive_proof_failed", category: "tracking", message: "Archival proof failed; retry after resolving the recorded failure."},
++        {code: "archive_operation_pending", category: "lifecycle_pending", message: "An accepted lifecycle operation needs its recorded retry."},
++        {code: "observation_stale", category: "observation_stale", message: "The cached observation is older than two hours."},
++      ];
++      operation = {...operation, state: "paused"};
++      await page.locator("#session-tab-settings").click();
++      await wake();
++      const values = page.locator("#auto-archive-values");
++      await expect(values).toContainText("Archiving session records: archived tracking changed during recovery:");
++      await expect(values).not.toContainText("An accepted lifecycle operation");
++      await expect(banner).toBeHidden();
++      assert.equal(await values.locator("script").count(), 0);
++      await page.reload();
++      await expect(values).toContainText("Archiving session records: archived tracking changed during recovery:");
++      await expect(page.locator("#auto-archive-details")).not.toHaveAttribute("open");
++      await page.locator("#auto-archive-details summary").click();
++      await expect(page.locator("#auto-archive-details pre")).toContainText(failure.last_attempt_error);
++      failure.result = "archived";
++      failure.last_attempt_error = null;
++      failure.diagnostics = [{code: "observation_stale", category: "observation_stale", message: "The cached observation is older than two hours."}];
++      await page.reload();
++      await expect(values).toHaveText("Session archived.");
++      await expect(page.locator("#auto-archive-details")).not.toHaveAttribute("open");
++      await page.locator("#auto-archive-details summary").click();
++      await expect(page.locator("#auto-archive-details pre")).toContainText("The cached observation is older than two hours.");
+       // Completion must clear the historical warning and reload the final page.
+       operation = {...operation, state: "complete"};
+       const nextNavigation = page.waitForEvent("framenavigated", {predicate: frame => frame === page.mainFrame()});
++      await wake();
+       await nextNavigation;
+       await expect(banner).toBeHidden();
+       assert.deepEqual(errors, []);
+diff --git a/portal/internal/web/browser_contract_test.cjs b/portal/internal/web/browser_contract_test.cjs
+index 3d04458958361c0436462543c9413628c7797c47..ab302236f48ddd799140cf8d0839b178666b0b4b 100644
+--- a/portal/internal/web/browser_contract_test.cjs
++++ b/portal/internal/web/browser_contract_test.cjs
+@@ -95,6 +95,29 @@ const semanticArchiveFailure = {...failedArchive,identity:"bound-directory-targe
+   operation:{id:"journal-1",identity:"bound-directory-target",identity_version:1,root_thread_id:"thread-1"},
+   diagnostics:[{code:"archive_proof_failed",category:"tracking",message:"Exact tracking proof is unavailable."}]};
+ assert.equal(archiveFailurePresentation(archiveOperation,semanticArchiveFailure,"thread-1").message,"Exact tracking proof is unavailable.");
++const actualArchiveFailure = {...semanticArchiveFailure,
++  journal: {operation: "archive", phase: "clusters_released"},
++  last_attempt_at: "2026-10-07T12:06:43Z",
++  last_attempt_error: "archived tracking changed during recovery: example",
++  diagnostics: [
++    {code: "archive_proof_failed", category: "tracking", message: "Archival proof failed; retry after resolving the recorded failure."},
++    {code: "archive_operation_pending", category: "lifecycle_pending", message: "An accepted lifecycle operation needs its recorded retry."},
++    {code: "observation_stale", category: "observation_stale", message: "The cached observation is older than two hours."},
++  ]};
++assert.deepEqual(autoArchivePresentation(actualArchiveFailure).blockers,
++  ["Archiving session records: archived tracking changed during recovery: example"]);
++assert.deepEqual(autoArchivePresentation(actualArchiveFailure).diagnostics, [actualArchiveFailure.last_attempt_error]);
++assert.deepEqual(autoArchivePresentation({...actualArchiveFailure, journal: null,
++  last_attempt_error: "sample/sample: feature branch is not present on origin",
++  diagnostics: [{code: "cleanup_proof_failed", category: "merge_proof", message: "Cleanup or exact merge proof is not satisfied."}]}).blockers,
++  ["sample/sample: feature branch is not present on origin"]);
++assert.deepEqual(archiveFailurePresentation(archiveOperation, actualArchiveFailure, "thread-1"), {
++  message: "Archiving session records: archived tracking changed during recovery: example",
++  attemptedAt: actualArchiveFailure.last_attempt_at,
++});
++assert.deepEqual(autoArchivePresentation({...actualArchiveFailure,
++  last_attempt_error: "command failed with exit 1: fixture\nworkspace-portal: retained thread has queued messages"}).blockers,
++  ["Archiving session records: workspace-portal: retained thread has queued messages"]);
+ assert.equal(archiveFailurePresentation(archiveOperation,{...semanticArchiveFailure,identity:"replacement-directory"},"thread-1"),null);
+ 
+ assert.deepEqual(archiveFailurePresentation({...archiveOperation, state: "running"}, failedArchive, "thread-1"), lastArchiveFailure);
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index e7a871d34200db84a63f53326b07545e58f84648..a13b9d8d5ff6826ba092639af7ffa4a29e288682 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -1944,7 +1944,7 @@ func (s *Server) teamService() (teamruntime.Service, error) {
+ 	if err != nil {
+ 		return teamruntime.Service{}, err
+ 	}
+-	service := teamruntime.Service{Store: store, Client: client, Workspace: s.config.Workspace, ValidateSettings: func(ctx context.Context, settings codex.ThreadSettings) error {
++	service := teamruntime.Service{Store: store, Client: client, Workspace: s.config.Workspace, HostProfile: s.config.HostProfile, ValidateSettings: func(ctx context.Context, settings codex.ThreadSettings) error {
+ 		return s.validateModelSettings(ctx, settings, false)
+ 	}}
+ 	if s.installedTeams != nil && s.installedTeams.Managed {
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 48098b4f500ca860967e66cdc7bf473d72021658..e50aa91ea966119280c7837e0e57867b09be6dd6 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -821,7 +821,18 @@
+     if (state.result) fields.push(["Last result", ({archived: "Archived", deferred: "Deferred", error: "Check failed"})[state.result] || "Unknown result"]);
+     const blockers = [], diagnostics = [];
+     if (Array.isArray(state.diagnostics)) {
++      const failedAttempt = state.last_attempt_error && ["deferred", "error"].includes(state.result);
++      if (failedAttempt) {
++        const reason = state.last_attempt_error.split(/\r?\n/).map(line => line.trim())
++          .find(line => line && !line.startsWith("command failed with exit")) || state.last_attempt_error;
++        const step = {prepared: "Stopping session activity", quiesced: "Releasing development clusters",
++          clusters_released: "Archiving session records", tracking_archived: "Committing archive records",
++          tracking_committed: "Closing conversations", thread_retired: "Stopping session runtime",
++          runtime_retired: "Finishing archive", archived: "Finishing archive"}[state.journal?.phase];
++        blockers.push(step ? `${step}: ${reason.slice(0, 400)}` : reason.slice(0, 400));
++      }
+       for (const entry of state.diagnostics) {
++        if (failedAttempt && ["archive_proof_failed", "cleanup_proof_failed", "archive_operation_pending", "observation_stale"].includes(entry.code)) continue;
+         if (!["policy", "hold"].includes(entry.category) && entry.message) blockers.push(entry.message);
+       }
+       if (state.activity_known !== undefined) fields.push(["Conversation activity", state.activity_known ? "Verified at the last observation" : "Unknown"]);
+@@ -2223,7 +2234,7 @@
+   let lastAutoArchive = null, autoArchiveRead = 0, autoArchiveSaving = false;
+   let autoArchiveLoading = null, autoArchiveReadAt = -Infinity;
+   const showAutoArchiveDetails = (diagnostics) => {
+-    autoArchiveDetails.hidden = !diagnostics.length;
++    autoArchiveDetails.hidden = !diagnostics.length && !autoArchiveDetails.querySelector("dl");
+     autoArchiveDetails.querySelector("pre").textContent = diagnostics.join("\n\n");
+   };
+   const renderAutoArchive = (state) => {
+@@ -2237,16 +2248,17 @@
+       const description = document.createElement("dd"); description.textContent = value;
+       fields.append(term, description);
+     }
+-    autoArchiveValues.replaceChildren(fields); autoArchiveValues.hidden = false;
+-    if (presentation.blockers.length) {
+-      const heading = document.createElement("h4"); heading.textContent = "Blockers at last check";
+-      const list = document.createElement("ul");
+-      for (const text of presentation.blockers) {
+-        const item = document.createElement("li"); item.textContent = text; list.append(item);
+-      }
+-      autoArchiveValues.append(heading, list);
+-    }
+-    showAutoArchiveDetails(presentation.diagnostics);
++    autoArchiveDetails.querySelector("dl")?.remove();
++    autoArchiveDetails.querySelector("summary").after(fields);
++    const attemptedAt = state.last_attempt_at || state.checked_at;
++    const attempted = ["deferred", "error"].includes(state.result) && Number.isFinite(Date.parse(attemptedAt)) ?
++      ` Last attempt: ${new Date(attemptedAt).toLocaleString()}.` : "";
++    autoArchiveValues.textContent = state.result === "archived" ? "Session archived." :
++      presentation.blockers.length ? `${presentation.blockers.join(" ")}${attempted}` :
++      state.hold ? "Keep open is enabled." :
++        state.enabled ? "Automatic archival is enabled." : "Automatic archival is disabled.";
++    autoArchiveValues.hidden = false;
++    showAutoArchiveDetails(state.result === "archived" ? [...presentation.blockers, ...presentation.diagnostics] : presentation.diagnostics);
+     autoArchiveStatus.textContent = ""; autoArchiveStatus.hidden = true;
+     if (autoArchiveHold) { autoArchiveHold.checked = state.hold; autoArchiveHold.disabled = autoArchiveSaving; }
+   };
+@@ -2351,10 +2363,11 @@
+   function renderArchiveFailure() {
+     if (!archiveFailure) return;
+     const failure = archiveFailurePresentation(lastLifecycleOperation, lastAutoArchive, body.dataset.rootThreadId);
+-    archiveFailure.hidden = !failure;
++    archiveFailure.hidden = !failure || document.getElementById("settings")?.classList.contains("active");
+     archiveFailure.querySelector("span").textContent = failure ?
+       `Last automatic attempt failed (${new Date(failure.attemptedAt).toLocaleString()}): ${failure.message}` : "";
+   }
++  document.addEventListener("session-section-change", renderArchiveFailure);
+   const showLifecycle = (operation = lastLifecycleOperation, pendingKind = "") => {
+     if (!lifecycleStatus || !lifecycleTitle || !lifecycleDetail || !lifecycleRetry) return;
+     if (operation.options?.journalExpected) { pendingLifecycle = operation.kind; body.dataset.pendingLifecycle = pendingLifecycle; }
+diff --git a/test/dev_session/archive_cleanup_test.rb b/test/dev_session/archive_cleanup_test.rb
+index 3b6cbe6bad25322ce5800e7e51bccd3118effc3e..a5a35bbda973200f36bf2e5afb399fbf6c8b0e97 100644
+--- a/test/dev_session/archive_cleanup_test.rb
++++ b/test/dev_session/archive_cleanup_test.rb
+@@ -3,6 +3,96 @@
+ require_relative '../support/dev_session_test_case'
+ 
+ class DevSessionTest < Minitest::Test
++  def test_archive_private_records_under_restrictive_umask
++    %w[active complete].each do |lifecycle|
++      with_archive_cleanup_fixture do |runner, workspace, slug, _common, _feature|
++        if lifecycle == 'complete'
++          set_lifecycle(workspace, slug, lifecycle)
++          assert_git_success('git', '-C', workspace, 'add', File.join('work', slug, 'state.md'))
++          assert_git_success('git', '-C', workspace, 'commit', '-m', 'complete fixture')
++        end
++        tracking = File.join(workspace, 'work', slug)
++        Dir[File.join(tracking, '*')].each { |path| File.chmod(0o600, path) if File.file?(path) }
++        previous_umask = File.umask(0o077)
++        begin
++          runner.archive(slug, as_is: true)
++        ensure
++          File.umask(previous_umask)
++        end
++        assert(File.directory?(File.join(workspace, 'archive', slug)))
++        refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
++        refute(File.exist?(DevSession::ArchiveCleanup.new(runner, slug).path))
++      end
++    end
++  end
++
++  def test_archive_retry_accepts_permission_changes_but_rejects_changed_records
++    with_archive_cleanup_fixture do |runner, workspace, slug, _common, _feature|
++      runner.define_singleton_method(:commit_tracking_transition!) { |*, **| raise DevSession::Error, 'pause before commit' }
++      assert_raises(DevSession::Error) { runner.archive(slug, as_is: true) }
++      runner.singleton_class.remove_method(:commit_tracking_transition!)
++      tracking = File.join(workspace, 'archive', slug)
++      path = File.join(tracking, 'plan.md')
++      content = File.binread(path)
++      journal = runner.send(:lifecycle_journal_file, slug, 'archive')
++      original_journal = File.binread(journal)
++      %i[contents path type].each do |change|
++        case change
++        when :contents then File.write(path, content + 'changed')
++        when :path then File.rename(path, path + '.renamed')
++        when :type
++          File.unlink(path)
++          File.symlink('state.md', path)
++        end
++        error = assert_raises(DevSession::Error) { runner.archive(slug, as_is: true) }
++        assert_includes(error.message, 'archived tracking changed')
++        assert_equal(original_journal, File.binread(journal))
++        File.rename(path + '.renamed', path) if change == :path
++        File.unlink(path) if change == :type
++        File.binwrite(path, content)
++      end
++      Dir[File.join(tracking, '*')].each { |file| File.chmod(0o600, file) if File.file?(file) }
++      File.chmod(0o700, tracking)
++      runner.archive(slug, as_is: true)
++      refute(File.exist?(journal))
++    end
++  end
++
++  def test_tracking_content_digest_preserves_symlink_targets
++    with_workspace do |workspace|
++      runner = runner_for(workspace)
++      root = File.join(workspace, 'records')
++      FileUtils.mkdir_p(root)
++      File.symlink('first', File.join(root, 'link'))
++      digest = runner.send(:tracking_tree_sha256, root)
++      File.unlink(File.join(root, 'link'))
++      File.symlink('second', File.join(root, 'link'))
++      refute(runner.send(:tracking_tree_matches?, root, digest))
++    end
++  end
++
++  def test_archive_retries_legacy_prepared_intent_and_moved_tracking
++    %i[prepared moved].each do |phase|
++      with_archive_cleanup_fixture do |runner, workspace, slug, _common, _feature|
++        runner.define_singleton_method(:tracking_tree_sha256) do |root, **keywords|
++          super(root, **keywords, legacy_permissions: true)
++        end
++        if phase == :prepared
++          runner.define_singleton_method(:write_lifecycle_journal) { |*, **| raise DevSession::Error, 'pause after sidecar' }
++        else
++          runner.define_singleton_method(:commit_tracking_transition!) { |*, **| raise DevSession::Error, 'pause after move' }
++        end
++        assert_raises(DevSession::Error) { runner.archive(slug, as_is: true) }
++        runner.singleton_class.remove_method(:tracking_tree_sha256)
++        runner.singleton_class.remove_method(phase == :prepared ? :write_lifecycle_journal : :commit_tracking_transition!)
++        runner.archive(slug, as_is: true)
++        assert(File.directory?(File.join(workspace, 'archive', slug)))
++        refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
++        refute(File.exist?(DevSession::ArchiveCleanup.new(runner, slug).path))
++      end
++    end
++  end
++
+   def test_archive_shared_master_preserves_the_sealed_head_after_its_tracking_commit
+     with_shared_master_archive_fixture do |runner, workspace, slug, sealed|
+       runner.archive(slug, as_is: true)
+diff --git a/test/dev_session/automatic_archive_test.rb b/test/dev_session/automatic_archive_test.rb
+index df034ff86d29d2e76ac5430ca09209f6f24357b7..2e3e7bca5b4bd383e4c9a690edcb75be126f70d0 100644
+--- a/test/dev_session/automatic_archive_test.rb
++++ b/test/dev_session/automatic_archive_test.rb
+@@ -474,6 +474,10 @@ class DevSessionTest < Minitest::Test
+       result = automatic_scan(runner).fetch(0)
+       refute(result['eligible'])
+       assert_includes(result['blockers'].join, 'cannot be completed')
++      status = runner.auto_archive_status(slug)
++      assert_equal('deferred', status.fetch('result'))
++      assert_includes(status.fetch('last_attempt_error'), 'sample/sample: feature branch is not present on origin')
++      assert(status.fetch('last_attempt_at'))
+       assert(File.directory?(File.join(workspace, 'work', slug)))
+     end
+   end
+@@ -530,6 +534,8 @@ class DevSessionTest < Minitest::Test
+       assert_equal('tracking_committed', JSON.parse(File.read(journal))['phase'])
+       head = git_capture_success('git', '-C', workspace, 'rev-parse', 'HEAD')
+       pending = runner.auto_archive_status(slug)
++      assert_includes(pending.fetch('last_attempt_error'), 'find session conversation: context deadline exceeded')
++      assert_includes(pending.fetch('last_attempt_error'), 'command failed with exit 1')
+       refute(pending['repair_needed'])
+       assert_equal('tracking_committed', pending.fetch('journal').fetch('phase'))
+       assert(pending.fetch('diagnostics').any? { |entry| entry['code'] == 'archive_operation_pending' })
+@@ -543,6 +549,22 @@ class DevSessionTest < Minitest::Test
+     end
+   end
+ 
++  def test_automatic_archive_records_bounded_utf8_failures
++    with_workspace do |workspace|
++      slug = '2026-06-06-bounded-error'
++      runner = automatic_fixture(workspace, slug, lifecycle: 'complete')
++      automatic_scan(runner)
++      runner.define_singleton_method(:auto_archive_observe) do |*, **|
++        raise DevSession::Error, 'specific failure: ' + ('ž' * 20_000)
++      end
++      assert_equal('deferred', automatic_scan(runner).fetch(0)['result'])
++      message = runner.auto_archive_status(slug).fetch('last_attempt_error')
++      assert(message.start_with?('specific failure: '))
++      assert_operator(message.bytesize, :<=, 16_384)
++      assert(message.valid_encoding?)
++    end
++  end
++
+   class TTYInput < StringIO
+     def tty?
+       true
+diff --git a/test/dev_session/revive_test.rb b/test/dev_session/revive_test.rb
+index f45a277b061f404526d94992e3fe442270811c80..e92a4cf05701bc4be0d0619c8122b8ab95f040d3 100644
+--- a/test/dev_session/revive_test.rb
++++ b/test/dev_session/revive_test.rb
+@@ -3,6 +3,32 @@
+ require_relative '../support/dev_session_test_case'
+ 
+ class DevSessionTest < Minitest::Test
++  def test_revive_retries_content_and_legacy_record_digests
++    [false, true].each do |legacy|
++      with_workspace do |workspace|
++        slug = '2026-06-06-revive-digest'
++        archived_runner(workspace, slug)
++        configure_workspace_origin(workspace)
++        runner = runner_for(workspace)
++        runner.define_singleton_method(:start) { |*, **| nil }
++        if legacy
++          runner.define_singleton_method(:tracking_tree_sha256) do |root, **keywords|
++            super(root, **keywords, legacy_permissions: true)
++          end
++        end
++        runner.send(:prepare_revive_journal!, slug, 'complete')
++        runner.singleton_class.remove_method(:tracking_tree_sha256) if legacy
++        File.rename(File.join(workspace, 'archive', slug), File.join(workspace, 'work', slug))
++        unless legacy
++          Dir[File.join(workspace, 'work', slug, '*')].each { |path| File.chmod(0o600, path) if File.file?(path) }
++        end
++        runner.revive(slug, as_is: true)
++        assert_match(/\A---\nlifecycle: active\n---/, File.read(File.join(workspace, 'work', slug, 'state.md')))
++        refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'revive')))
++      end
++    end
++  end
++
+   def test_revive_commits_tracking_before_starting_the_runtime
+     skip 'git is not available' unless command_available?('git')
+ 
+diff --git a/test/dev_session/team_mcp_binding_test.rb b/test/dev_session/team_mcp_binding_test.rb
+index 13583f975aba957c8da636bafebfad202bf6ebf8..70e04d14f5d945c14eb100ee4eb417cc65d07f93 100644
+--- a/test/dev_session/team_mcp_binding_test.rb
++++ b/test/dev_session/team_mcp_binding_test.rb
+@@ -67,6 +67,8 @@ class TeamMcpBindingTest < DevSessionTest
+       argv, input = capture.calls.fetch(0)
+       assert_equal('Private report text', input)
+       assert_equal('/dev/stdin', argv.fetch(argv.index('--input-file') + 1))
++      assert_equal(File.join(workspace, '.xdg-state', 'dev-workspaces', 'profile'),
++                   argv.fetch(argv.index('--host-profile') + 1))
+       refute_includes(argv.join(' '), 'Private report text')
+       refute_includes(argv, '--message')
+     end
+diff --git a/test/support/workspace_host_test_case.rb b/test/support/workspace_host_test_case.rb
+index 8d6cd6a78a97485c451457aad5fbac8996b62963..0b240772a84644a81f90fb2f0ab0296b0eba299e 100644
+--- a/test/support/workspace_host_test_case.rb
++++ b/test/support/workspace_host_test_case.rb
+@@ -67,7 +67,8 @@ class WorkspaceHostTest < Minitest::Test
+     ),
+     authority_policy: DevWorkspaceHost::RUNTIME_CONTRACT.fetch(
+       'runtimeAuthorityIdentityPolicy'
+-    )
++    ),
++    live_switch_policy: DevWorkspaceHost::RUNTIME_CONTRACT.fetch('livePackageSwitchPolicy')
+   )
+     package = File.join(parent, name)
+     command = File.join(package, 'bin', 'workspace-host')
+@@ -85,6 +86,7 @@ class WorkspaceHostTest < Minitest::Test
+         'trackingMaxBytes' => tracking_max
+       }
+       contract_data['runtimeAuthorityIdentityPolicy'] = authority_policy if authority_policy
++      contract_data['livePackageSwitchPolicy'] = live_switch_policy if live_switch_policy
+       File.write(contract, JSON.generate(contract_data))
+       %w[alpha beta].each do |kind|
+         helper = File.join(package, 'libexec/workspace-portal', "#{kind}-devcluster")
+diff --git a/test/workspace_host/agent_team_registration_test.rb b/test/workspace_host/agent_team_registration_test.rb
+index 8741112bff27b3c90584317714e59740fcc72901..a13bee8771c9b603e115c91360d672f5c8fa1d5b 100644
+--- a/test/workspace_host/agent_team_registration_test.rb
++++ b/test/workspace_host/agent_team_registration_test.rb
+@@ -336,7 +336,7 @@ class WorkspaceHostTest < Minitest::Test
+     end
+   end
+ 
+-  def test_reconciliation_uses_semantic_digest_for_restart_and_keeps_strict_pending_evidence
++  def test_reconciliation_uses_launch_arguments_for_restart_and_keeps_strict_pending_evidence
+     Dir.mktmpdir('workspace-agent-team-reconcile-test') do |directory|
+       package, entry, host = registration_host(directory)
+       codex = File.realpath(host.send(:active_codex))
+@@ -348,6 +348,11 @@ class WorkspaceHostTest < Minitest::Test
+ 
+       host.responses = { entry.fetch('name') => registration_response(digest: 'b' * 64) }
+       assert(host.send(:reconcile_codex_update, defer_busy: false))
++      refute_includes(host.events, [:restarted])
++      assert_equal('a' * 64, host.send(:load_registration_marker, entry).dig('launch', 'digest'))
++
++      host.responses = { entry.fetch('name') => registration_response(digest: 'b' * 64, argv: []) }
++      assert(host.send(:reconcile_codex_update, defer_busy: false))
+       assert_includes(host.events, [:checked, codex])
+       assert(host.events.any? { |event| event.first == :probed && event[2] == 'b' * 64 })
+       assert_includes(host.events, [:quiesced])
+@@ -375,7 +380,7 @@ class WorkspaceHostTest < Minitest::Test
+       original = host.send(:registration_plan_for, entry, package:)
+       host.send(:write_registration_marker, entry, codex, original)
+       host.send(:write_pending_codex_update, package, codex, [[entry, original]])
+-      host.responses = { entry.fetch('name') => registration_response(digest: 'b' * 64) }
++      host.responses = { entry.fetch('name') => registration_response(digest: 'b' * 64, argv: []) }
+       host.fail_marker_verification = true
+ 
+       assert_raises(DevWorkspaceHost::Error) do
+@@ -667,8 +672,7 @@ class WorkspaceHostTest < Minitest::Test
+ 
+   def registration_host(directory, argv: ['-c', 'agents.dw_example.config_file=/nix/store/example-role.toml'])
+     _root, entry, environment = registration_workspace(directory)
+-    package = File.join(directory, 'package')
+-    FileUtils.mkdir_p(package)
++    package = make_package(directory, 'package')
+     host = RegistrationHost.new(
+       package:, responses: { entry.fetch('name') => registration_response(argv:) }, env: environment,
+       out: StringIO.new, err: StringIO.new
+diff --git a/test/workspace_host/live_switch_test.rb b/test/workspace_host/live_switch_test.rb
+new file mode 100644
+index 0000000000000000000000000000000000000000..0cfc93dfa85c4f8dc94caae0682ab7abb99d15e4
+--- /dev/null
++++ b/test/workspace_host/live_switch_test.rb
+@@ -0,0 +1,98 @@
++# frozen_string_literal: true
++
++require_relative 'suspension_test'
++
++class WorkspaceHostTest < Minitest::Test
++  def test_busy_switch_preserves_consumers_and_launch_marker_across_catalog_changes
++    [nil, 'b' * 64].each do |digest|
++      with_transition_host do |host, paths|
++        assert_equal(0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
++        entry = host.send(:registry).entries.fetch(0)
++        marker = host.send(:load_registration_marker, entry)
++        host.events.clear
++        host.busy = ['lead and member are active']
++        host.registration_digest = digest
++        host.candidate = make_package(paths.fetch(:root), 'package-two')
++
++        assert_equal(0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
++        assert_equal(host.candidate, File.realpath(host.instance_variable_get(:@profile)))
++        refute(host.events.any? { |event| %i[sessions_quiesced sessions_restored consumers_restarted].include?(event.first) })
++        assert_includes(host.events, [:configured])
++        assert_equal(marker, host.send(:load_registration_marker, entry))
++        assert_equal(host.candidate, host.send(:load_registration_inventory, entry).fetch('package_root'))
++        assert_nil(host.send(:pending_codex_update))
++      end
++    end
++  end
++
++  def test_busy_switch_refuses_missing_malformed_or_incompatible_launch_evidence
++    %i[missing malformed argv capacity legacy].each do |mismatch|
++      with_transition_host do |host, paths|
++        assert_equal(0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
++        entry = host.send(:registry).entries.fetch(0)
++        marker_path = host.send(:registration_marker_path, entry)
++        case mismatch
++        when :missing then File.unlink(marker_path)
++        when :malformed then File.write(marker_path, '{}')
++        when :argv then host.registration_argv = []
++        when :capacity then host.registration_capacity = 2
++        when :legacy
++          contract = File.join(host.candidate, 'share/workspace-portal/runtime-contract.json')
++          data = JSON.parse(File.read(contract))
++          data.delete('livePackageSwitchPolicy')
++          File.write(contract, JSON.generate(data))
++        end
++        predecessor = host.candidate
++        host.candidate = make_package(paths.fetch(:root), 'package-two')
++        host.busy = ['active member']
++        host.events.clear
++
++        assert_equal(1, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]), mismatch.to_s)
++        assert_equal(predecessor, File.realpath(host.instance_variable_get(:@profile)))
++        refute(host.events.any? { |event| event.first == :profile_set })
++        assert_equal(host.candidate, host.send(:pending_codex_update).fetch('package_root'))
++        host.busy = []
++        assert_equal(0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
++        assert_includes(host.events, [:consumers_restarted])
++      end
++    end
++  end
++
++  def test_switch_checks_and_adopts_the_candidates_binary
++    with_transition_host do |host, paths|
++      assert_equal(0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
++      host.instance_variable_get(:@env).delete('DEV_WORKSPACES_SYSTEM_CODEX')
++      host.candidate = make_package(paths.fetch(:root), 'package-two')
++      codex = make_codex(paths.fetch(:root), 'codex-candidate')
++      bundled = File.join(host.candidate, 'libexec/codex/bin/codex')
++      FileUtils.mkdir_p(File.dirname(bundled))
++      File.symlink(codex, bundled)
++      host.events.clear
++      host.busy = ['active lead']
++
++      assert_equal(1, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
++      assert_equal(File.realpath(codex), host.send(:pending_codex_update).fetch('codex_path'))
++      assert(host.events.any? { |event| event == [:registration_probed, File.realpath(codex), 'a' * 64] })
++      host.busy = []
++      assert_equal(0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
++      assert_equal(File.realpath(codex), File.realpath(host.send(:active_codex)))
++    end
++  end
++
++  def test_failed_live_activation_retains_forward_target_and_retries_while_busy
++    with_transition_host do |host, paths|
++      assert_equal(0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
++      host.busy = ['active lead']
++      host.candidate = make_package(paths.fetch(:root), 'package-two')
++      host.fail_activation = true
++      host.events.clear
++
++      assert_equal(1, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
++      assert_equal(host.candidate, File.realpath(host.instance_variable_get(:@profile)))
++      assert_equal(host.candidate, host.send(:pending_codex_update).fetch('package_root'))
++      assert_equal(0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
++      refute(host.events.any? { |event| %i[sessions_quiesced sessions_restored consumers_restarted].include?(event.first) })
++      assert_nil(host.send(:pending_codex_update))
++    end
++  end
++end
+diff --git a/test/workspace_host/profile_transition_test.rb b/test/workspace_host/profile_transition_test.rb
+index ce48815e129ae0e432b6594a6bd32a667cfa1ee3..8e72895a951dbbaba4c2c5dd9aa04d757ba3f664 100644
+--- a/test/workspace_host/profile_transition_test.rb
++++ b/test/workspace_host/profile_transition_test.rb
+@@ -27,6 +27,7 @@ class WorkspaceHostTest < Minitest::Test
+       previous = File.realpath(host.instance_variable_get(:@profile))
+       host.candidate = make_package(paths.fetch(:root), 'package-two')
+       host.executing_package = host.candidate
++      host.registration_argv = [] # This case exercises the idle predecessor dispatcher.
+ 
+       workspace = host.send(:registry).entries.fetch(0).fetch('root')
+       locks = File.join(workspace, 'worktrees', '.locks')
+diff --git a/test/workspace_host/suspension_test.rb b/test/workspace_host/suspension_test.rb
+index 0641ee452d4396a66a33aef5656d4709c3e7616f..123cdd3e323e37089d59e57addea0aa55398e8bb 100644
+--- a/test/workspace_host/suspension_test.rb
++++ b/test/workspace_host/suspension_test.rb
+@@ -377,7 +377,8 @@ class WorkspaceHostTest < Minitest::Test
+   class TransitionHost < DevWorkspaceHost::Host
+     attr_accessor :busy, :candidate, :executing_package, :delegate_quiesce,
+                   :quiesce_output, :fail_activation, :fail_links, :fail_restart,
+-                  :fail_restore, :fail_set_before_profile, :fail_set_after_profile
++                  :fail_restore, :fail_set_before_profile, :fail_set_after_profile,
++                  :registration_digest, :registration_argv, :registration_capacity
+     attr_reader :events
+ 
+     def initialize(candidate:, busy:, **options)
+@@ -468,6 +469,7 @@ class WorkspaceHostTest < Minitest::Test
+     end
+ 
+     def activate_installed(_command)
++      @system_codex = codex_for_package(candidate)
+       configure_user_services
+       if fail_activation
+         self.fail_activation = false
+@@ -510,9 +512,9 @@ class WorkspaceHostTest < Minitest::Test
+     def registration_plan_for(_entry, package: package_root)
+       DevWorkspaceHost::RegistrationPlan.new(
+         package_root: File.realpath(package),
+-        argv: ['-c', 'agents.dw_transition.config_file=/nix/store/transition-role.toml'],
+-        digest: 'a' * 64, policy: 1,
+-        required_native_child_threads: 1, states: []
++        argv: registration_argv || ['-c', 'agents.dw_transition.config_file=/nix/store/transition-role.toml'],
++        digest: registration_digest || 'a' * 64, policy: 1,
++        required_native_child_threads: registration_capacity || 1, states: []
+       )
+     end
+ 
+diff --git a/test/workspace_host_test.rb b/test/workspace_host_test.rb
+index e8c307a930cdc091b8b26dcb027c8af26b5632a5..59703de3547107adc94ada3c9d36d28faf0fdfef 100644
+--- a/test/workspace_host_test.rb
++++ b/test/workspace_host_test.rb
+@@ -6,4 +6,5 @@ require_relative 'workspace_host/commands_and_locks_test'
+ require_relative 'workspace_host/profile_transition_test'
+ require_relative 'workspace_host/agent_team_registration_test'
+ require_relative 'workspace_host/suspension_test'
++require_relative 'workspace_host/live_switch_test'
+ require_relative 'workspace_host/archive_recovery_test'

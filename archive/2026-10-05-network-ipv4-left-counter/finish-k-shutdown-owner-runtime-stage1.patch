@@ -1,0 +1,45 @@
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index bc5e34daacc13e002e643a9672a7de2933becb9f..029e9e7bcdc86fa43ec77971f8d457c983a3c977 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -52,6 +52,14 @@ written only after all machines succeed; retained trust is never replaced or
+ expanded to accept a changed key. Strict authentication and guest source/system
+ closure checks remain separate requirements.
+ 
++The engine's read-only `ready?` predicate requires a ready phase, its validated
++current launch, the matching schema-1 run-ready marker and the recorded live
++runner. Missing readiness returns false; unsafe or foreign records refuse.
++Status, connection export, initial update admission and capture use this same
++predicate. Capture checks it again after guest attestation and throughout its
++lease. Process liveness alone does not establish readiness. Shutdown withdraws
++the marker even when requested directly through the runner's signal path.
++
+ Failed discovery attempts identify the machine, endpoint and private native
+ diagnostic path. An exhausted budget may refuse before a scan starts. Bounded
+ command output and status stay under the owned run, outside artifact exports. A failed verification leaves the run non-ready with its claims
+@@ -81,8 +89,23 @@ bind probe precedes launch and closes before QEMU binds. The durable claim spans
+ that handoff, but cannot reserve the port against unrelated host software.
+ 
+ Stop requests shutdown through the recorded runner's validated control socket.
+-The runner gracefully shuts down and reaps its machines. It joins its control
+-thread before closing the listener and removing its own control socket. Unknown
++After authenticating the owned paths and peer, the controller marks the run
++`stopping` before sending the request. The runner withdraws readiness and issues
++at most one graceful stop per started, running machine. Repeated authenticated
++requests acknowledge the same shutdown and wait; they do not repeat poweroff.
++
++The runner uses its configured machine operation budget, normally 900 seconds.
++The CLI's `--timeout` bounds the controller's observation after acknowledgement;
++it does not bound sequential machine waits or the whole update command. If a
++machine wait or the caller expires, the same runner, tracker, control listener
++and reapers remain alive while owned children remain. The run stays non-ready
++and retains its claims and disks. A later public stop can wait for that same
++shutdown. No timeout supplies force or restart authority.
++
++The runner records newly discovered children throughout the drain. It publishes
++complete exit only after machine reapers finish and every retained child is
++proved gone. It then joins its control thread before closing the listener and
++removing its own control socket. Unknown
+ socket-directory entries still prevent the engine from marking the run stopped.
+ An unresponsive or ambiguous orphan remains recorded with its paths and claims;
+ no PID search, process-group kill or force option substitutes for ownership.

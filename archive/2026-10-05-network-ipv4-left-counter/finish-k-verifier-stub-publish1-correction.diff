@@ -1,0 +1,22 @@
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+index 991cf41494791a9c831e308782a530a3e9511ec3..8948cc622305654ec035cf5f69ed97870a2f03e9 100644
+--- a/tools/test-runtime-verify.rb
++++ b/tools/test-runtime-verify.rb
+@@ -35,7 +35,7 @@ class RuntimeVerifyTest < Minitest::Test
+         'gem_home' => '/nix/store/ruby/lib/ruby/gems' }
+       FileUtils.mkdir_p(File.join(selection['runtime'], 'bin'))
+       File.write(File.join(selection['runtime'], 'bin/vpsfree-kb-devcluster'), metadata)
+-      software = Struct.new(:metadata).new(JSON.parse(File.read(metadata)))
++      software = ->(value) { Struct.new(:metadata).new(value) }
+       KbRuntime::Software.stub(:new, software) do
+         campaign = KbVerify::Campaign.new(root: File.join(directory, 'campaign'), config_a: files[0], config_b: files[1],
+           predecessor_ref: "github:vpsfreecz/vpsfree-kb-contracts/#{KbVerify::PREDECESSOR}", capacity_receipt: File.join(directory, 'capacity.json'), selection:)
+@@ -232,7 +232,7 @@ class RuntimeVerifyTest < Minitest::Test
+       end
+       File.stub(:file?, file) do
+         File.stub(:read, read) do
+-          KbRuntime::Software.stub(:new, ->(value) { Struct.new(:metadata).new(value) }) { campaign.installed_layout }
++          campaign.installed_layout
+         end
+       end
+       assert_equal({ 'runtime' => runtime, 'metadata_path' => metadata_path, 'source' => metadata }, campaign.read('predecessor.json'))

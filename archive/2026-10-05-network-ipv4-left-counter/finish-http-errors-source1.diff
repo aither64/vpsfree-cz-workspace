@@ -1,0 +1,278 @@
+diff --git a/api/lib/vpsadmin/api/resources/ip_address.rb b/api/lib/vpsadmin/api/resources/ip_address.rb
+index 68c8758eaf9c8bc7873b168a9543f8d08492c969..b2f0240bb415ebe82690bf649790a930488bafe6 100644
+--- a/api/lib/vpsadmin/api/resources/ip_address.rb
++++ b/api/lib/vpsadmin/api/resources/ip_address.rb
+@@ -280,6 +280,8 @@ class VpsAdmin::API::Resources::IpAddress < HaveAPI::Resource
+       error!(e.message, { addr: ['not a valid IP address'] })
+     rescue ::ActiveRecord::RecordInvalid => e
+       error!('create failed', e.record.errors.to_hash)
++    rescue VpsAdmin::API::Exceptions::IpAddressInvalid => e
++      error!(e.message)
+     end
+   end
+ 
+@@ -315,7 +317,8 @@ class VpsAdmin::API::Resources::IpAddress < HaveAPI::Resource
+     rescue ActiveRecord::RecordInvalid => e
+       error!('update failed', e.record.errors.to_hash)
+     rescue VpsAdmin::API::Exceptions::IpAddressInvalidLocation,
+-           VpsAdmin::API::Exceptions::IpAddressInUse => e
++           VpsAdmin::API::Exceptions::IpAddressInUse,
++           VpsAdmin::API::Exceptions::IpAddressInvalid => e
+       error!(e.message)
+     end
+ 
+diff --git a/api/lib/vpsadmin/api/resources/network.rb b/api/lib/vpsadmin/api/resources/network.rb
+index ae75a69658cf8a33131e354cdbcc10b3d7963f5a..9bb1886bf559f809e3f1297456f9441d811af882 100644
+--- a/api/lib/vpsadmin/api/resources/network.rb
++++ b/api/lib/vpsadmin/api/resources/network.rb
+@@ -211,6 +211,8 @@ module VpsAdmin::API::Resources
+         error!('add failed', e.record.errors.to_hash)
+       rescue ArgumentError => e
+         error!(e.message)
++      rescue VpsAdmin::API::Exceptions::IpAddressInvalid => e
++        error!(e.message)
+       end
+     end
+   end
+diff --git a/api/lib/vpsadmin/api/resources/vps.rb b/api/lib/vpsadmin/api/resources/vps.rb
+index 52d155a430f7e6965c983368e1858adbb4c3e95b..346bd41f12511b38973ea9f590c01b28d4bd4aa3 100644
+--- a/api/lib/vpsadmin/api/resources/vps.rb
++++ b/api/lib/vpsadmin/api/resources/vps.rb
+@@ -530,6 +530,8 @@ class VpsAdmin::API::Resources::VPS < HaveAPI::Resource
+         'update failed',
+         e.record == vps ? to_param_names(vps.errors.to_hash, :input) : e.record.errors.to_hash
+       )
++    rescue VpsAdmin::API::Exceptions::IpAddressInvalid => e
++      error!(e.message)
+     end
+ 
+     def state_id
+diff --git a/api/spec/api/resources/ip_address_spec.rb b/api/spec/api/resources/ip_address_spec.rb
+index 030404d6d948ebd9b267554c48d70c800843491e..5c74e0252d742d0fd6f23df6a6115268fd1c99c2 100644
+--- a/api/spec/api/resources/ip_address_spec.rb
++++ b/api/spec/api/resources/ip_address_spec.rb
+@@ -600,6 +600,34 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+   describe 'Create' do
+     let(:payload) { { addr: '192.0.2.200', network: SpecSeed.network_v4.id } }
+ 
++    %w[en cs].each do |locale|
++      it "returns a localized action error for disabled owned registration in #{locale}" do
++        SpecSeed.network_v4.update!(enabled: false)
++        header 'Accept-Language', locale
++        owned_payload = payload.merge(user: SpecSeed.user.id, location: SpecSeed.location.id)
++
++        expect do
++          as(SpecSeed.admin) { json_post index_path, ip_address: owned_payload }
++        end.not_to change { ip_admission_snapshot }
++
++        expect_disabled_network_error(locale)
++      ensure
++        header 'Accept-Language', nil
++      end
++    end
++
++    it 'keeps unexpected registration failures non-disclosing HTTP500 errors' do
++      expect(IpAddress).to receive(:register).and_raise(RuntimeError, 'private registration failure')
++
++      expect do
++        as(SpecSeed.admin) { json_post index_path, ip_address: payload }
++      end.not_to change { ip_admission_snapshot }
++
++      expect_status(500)
++      expect(json['status']).to be(false)
++      expect(last_response.body).not_to include('private registration failure')
++    end
++
+     it 'rejects unauthenticated access' do
+       json_post index_path, ip_address: payload
+ 
+@@ -703,6 +731,42 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+   describe 'Update' do
+     let!(:ip_to_update) { create_ip!(addr: '192.0.2.120', network: SpecSeed.network_v4) }
+ 
++    %w[en cs].each do |locale|
++      it "returns a localized action error for disabled ownership changes in #{locale}" do
++        ensure_signer_unlocked!
++        SpecSeed.network_v4.update!(enabled: false)
++        header 'Accept-Language', locale
++
++        expect do
++          as(SpecSeed.admin) do
++            json_put show_path(ip_to_update.id), ip_address: {
++              user: SpecSeed.user.id, environment: SpecSeed.environment.id
++            }
++          end
++        end.not_to change { ip_admission_snapshot }
++
++        expect_disabled_network_error(locale)
++      ensure
++        header 'Accept-Language', nil
++      end
++    end
++
++    it 'keeps unexpected ownership failures non-disclosing HTTP500 errors' do
++      expect(TransactionChains::Ip::Update).to receive(:fire).and_raise(RuntimeError, 'private ownership failure')
++
++      expect do
++        as(SpecSeed.admin) do
++          json_put show_path(ip_to_update.id), ip_address: {
++            user: SpecSeed.user.id, environment: SpecSeed.environment.id
++          }
++        end
++      end.not_to change { ip_admission_snapshot }
++
++      expect_status(500)
++      expect(json['status']).to be(false)
++      expect(last_response.body).not_to include('private ownership failure')
++    end
++
+     it 'rejects unauthenticated access' do
+       json_put show_path(ip_to_update.id), ip_address: { user: SpecSeed.user.id }
+ 
+@@ -816,6 +880,25 @@ RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+       }
+     end
+ 
++    %w[en cs].each do |locale|
++      it "retains the same localized disabled assignment action error in #{locale}" do
++        ensure_signer_unlocked!
++        data = assign_data
++        SpecSeed.network_v4.update!(enabled: false)
++        header 'Accept-Language', locale
++
++        expect do
++          as(SpecSeed.user) do
++            json_post assign_path(data[:ip_free].id), ip_address: { network_interface: data[:user_netif].id }
++          end
++        end.not_to change { ip_admission_snapshot }
++
++        expect_disabled_network_error(locale)
++      ensure
++        header 'Accept-Language', nil
++      end
++    end
++
+     it 'rejects unauthenticated access' do
+       data = assign_data
+       json_post assign_path(data[:ip_free].id), ip_address: { network_interface: data[:user_netif].id }
+diff --git a/api/spec/api/resources/network_write_spec.rb b/api/spec/api/resources/network_write_spec.rb
+index 7b5352b91be136717c9156b26a3f4cdb9ef0125d..980226df9ff318696fb2b098cc6dae75362bee3e 100644
+--- a/api/spec/api/resources/network_write_spec.rb
++++ b/api/spec/api/resources/network_write_spec.rb
+@@ -367,6 +367,40 @@ RSpec.describe 'VpsAdmin::API::Resources::Network write actions' do # rubocop:di
+     let(:managed_net) { create_network!(address: '203.0.113.0', prefix: 24, managed: true) }
+     let(:unmanaged_net) { create_network!(address: '203.0.113.128', prefix: 25, managed: false) }
+ 
++    %w[en cs].each do |locale|
++      it "returns a localized action error for disabled owned additions in #{locale}" do
++        managed_net.update!(enabled: false)
++        LocationNetwork.create!(location: SpecSeed.location, network: managed_net, priority: 1)
++        header 'Accept-Language', locale
++
++        expect do
++          as(SpecSeed.admin) do
++            json_post add_addresses_path(managed_net.id), network: {
++              count: 2, user: SpecSeed.user.id, environment: SpecSeed.environment.id
++            }
++          end
++        end.not_to change { ip_admission_snapshot }
++
++        expect_disabled_network_error(locale)
++      ensure
++        header 'Accept-Language', nil
++      end
++    end
++
++    it 'keeps unexpected addition failures non-disclosing HTTP500 errors' do
++      network = managed_net
++      allow(Network).to receive(:find).with(network.id.to_s).and_return(network)
++      expect(network).to receive(:add_ips).and_raise(RuntimeError, 'private addition failure')
++
++      expect do
++        as(SpecSeed.admin) { json_post add_addresses_path(network.id), network: { count: 2 } }
++      end.not_to change { ip_admission_snapshot }
++
++      expect_status(500)
++      expect(json['status']).to be(false)
++      expect(last_response.body).not_to include('private addition failure')
++    end
++
+     it 'rejects unauthenticated access' do
+       json_post add_addresses_path(managed_net.id), network: { count: 2 }
+ 
+diff --git a/api/spec/api/resources/vps_write_spec.rb b/api/spec/api/resources/vps_write_spec.rb
+index 8da184e37ae88429152b503feea3c0a33c4412ca..ada2682c551b8c0c22818457320c3f194e958aec 100644
+--- a/api/spec/api/resources/vps_write_spec.rb
++++ b/api/spec/api/resources/vps_write_spec.rb
+@@ -471,6 +471,42 @@ RSpec.describe 'VpsAdmin::API::Resources::VPS write actions' do # rubocop:disabl
+       end
+     end
+ 
++    %w[en cs].each do |locale|
++      it "returns a localized action error for disabled VPS ownership transfers in #{locale}" do
++        allow(TransactionChains::Vps::Update).to receive(:fire).and_call_original
++        ensure_signer_unlocked!
++        vps = create_vps!(user: SpecSeed.user, node: SpecSeed.node)
++        netif = create_network_interface!(vps, name: 'eth0')
++        ip = IpAddress.register(IPAddress.parse('192.0.2.242'),
++                                network: SpecSeed.network_v4, prefix: 32, size: 1,
++                                user: SpecSeed.user, location: SpecSeed.location)
++        ip.update!(network_interface: netif)
++        SpecSeed.network_v4.update!(enabled: false)
++        header 'Accept-Language', locale
++
++        expect do
++          as(SpecSeed.admin) { json_put show_path(vps.id), vps: { user: SpecSeed.other_user.id } }
++        end.not_to change { ip_admission_snapshot }
++
++        expect_disabled_network_error(locale)
++      ensure
++        header 'Accept-Language', nil
++      end
++    end
++
++    it 'keeps unexpected VPS transfer failures non-disclosing HTTP500 errors' do
++      vps = create_vps!(user: SpecSeed.user, node: SpecSeed.node)
++      expect(TransactionChains::Vps::Update).to receive(:fire).and_raise(RuntimeError, 'private VPS transfer failure')
++
++      expect do
++        as(SpecSeed.admin) { json_put show_path(vps.id), vps: { user: SpecSeed.other_user.id } }
++      end.not_to change { ip_admission_snapshot }
++
++      expect_status(500)
++      expect(json['status']).to be(false)
++      expect(last_response.body).not_to include('private VPS transfer failure')
++    end
++
+     it 'rejects unauthenticated access' do
+       vps = create_vps!(user: SpecSeed.user, node: SpecSeed.node)
+ 
+diff --git a/api/spec/support/core_resource_spec_helpers.rb b/api/spec/support/core_resource_spec_helpers.rb
+index 04f9bfd5e1fcdb36a324bf9beafa6732262af265..5bc756e0e5505c04cbc65f609f07c734e3fda44a 100644
+--- a/api/spec/support/core_resource_spec_helpers.rb
++++ b/api/spec/support/core_resource_spec_helpers.rb
+@@ -3,6 +3,24 @@
+ require 'securerandom'
+ 
+ module CoreResourceSpecHelpers
++  def ip_admission_snapshot
++    models = [Network, IpAddress, HostIpAddress, IpAddressAssignment, NetworkInterface,
++              Vps, Dataset, DatasetInPool, Export, EnvironmentUserConfig,
++              UserClusterResource, ClusterResourceUse, ResourceLock, TransactionChain]
++    models.to_h do |model|
++      [model.name, model.unscoped.order(:id).map(&:attributes)]
++    end.merge('Transaction count' => Transaction.count)
++  end
++
++  def expect_disabled_network_error(locale)
++    message = {
++      'en' => 'This network is disabled for new allocations and assignments.',
++      'cs' => 'Síť je zakázaná pro nové přidělování a přiřazování IP adres.'
++    }.fetch(locale)
++    expect(last_response.status).to eq(200)
++    expect(json).to eq('status' => false, 'message' => message, 'response' => nil, 'errors' => {})
++  end
++
+   def with_current_user(user)
+     prev = ::User.current
+     ::User.current = user

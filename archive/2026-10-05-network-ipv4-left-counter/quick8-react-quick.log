@@ -1,0 +1,69 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui' is dirty
+
+> vpsadmin-webui@1.0.0 ci:quick
+> npm run env:locked && npm run audit:design-docs && npm run lint && npm run format:check && npm run audit:i18n && npm run audit:i18n-structure && npm run audit:csp && npm run audit:pages && npm run audit:structural && npm run audit:component-contracts && npm run audit:active-docs && npm run audit:overlays && npm run audit:lookup-primitives && npm run audit:api-barrel-imports && npm run audit:ui-strings:check && npm run audit:mutations:check && npm run typecheck && npm run typecheck:tooling && npm run typecheck:e2e:core && npm run typecheck:bff:core
+
+
+> vpsadmin-webui@1.0.0 env:locked
+> node scripts/check-locked-toolchain.mjs
+
+Locked toolchain: Node 24.21.0, npm 11.19.0
+
+> vpsadmin-webui@1.0.0 audit:design-docs
+> node scripts/audit-design-docs.mjs
+
+Design inventory: 256 routes, 64 API modules
+Design docs: 68 documents checked, 71 unique requirements
+
+> vpsadmin-webui@1.0.0 lint
+> npm run lint:tailwind && npm run lint:patterns && npm run lint:scoped
+
+
+> vpsadmin-webui@1.0.0 lint:tailwind
+> node scripts/lint-tailwind-tokens.mjs
+
+Tailwind token discipline: OK
+
+> vpsadmin-webui@1.0.0 lint:patterns
+> node scripts/lint-banned-patterns.mjs
+
+[lint] ok (1703 files scanned)
+
+> vpsadmin-webui@1.0.0 lint:scoped
+> node scripts/scoped-quality.mjs lint
+
+ESLint passed on 9 adopted files
+
+> vpsadmin-webui@1.0.0 format:check
+> node scripts/scoped-quality.mjs format
+
+Prettier passed on 46 reviewed files
+
+> vpsadmin-webui@1.0.0 audit:i18n
+> node scripts/audit-i18n.mjs --fail
+
+i18n audit: en=8230, cs=8230
+OK: literal catalogs and translations match.
+
+> vpsadmin-webui@1.0.0 audit:i18n-structure
+> node scripts/audit-i18n-structure.mjs
+
+i18n structure OK
+
+> vpsadmin-webui@1.0.0 audit:csp
+> node scripts/audit-csp.mjs
+
+[audit-csp] PASS (sha256-wyf6w6jZL1nQnvQ3z5xyWt1FnxVZMXcEAzprShSzkQY=)
+
+> vpsadmin-webui@1.0.0 audit:pages
+> node scripts/audit-page-integrity.mjs
+
+audit-page-integrity: OK (160 page/layout files scanned)
+
+> vpsadmin-webui@1.0.0 audit:structural
+> node scripts/audit-structural-budgets.mjs
+
+Structural budgets FAILED: 38 raw violations, 0 proposed exceptions, 36 accepted exceptions, 1 unaccepted violations, 1 invalid exceptions, 0 aggregate failures
+Full inventory: work/audits/structural.json
+- src/pages/app/networking/UserNetworkPage.tsx [crossed-500]: 683 > 0 (excess 183)
+- src/pages/app/networking/UserNetworkPage.tsx [crossed-500]: source content hash changed; review the change or remove the exception

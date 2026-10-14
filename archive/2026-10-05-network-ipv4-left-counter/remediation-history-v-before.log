@@ -1,0 +1,58 @@
+commit 07e09ea6733f812928bd83161a628103a8ddbdbf
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 16:03:18 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 6 16:03:18 2026 +0200
+
+    fixup! webui: expose network availability and enabled address selectors
+    
+    Check the availability cell's actual boolean icon when toggling a network.
+    The legacy list does not render textual state labels in that cell.
+
+commit 8c1e17af137d20274399329f2665a6be7a7d57e0
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 16:02:10 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 6 16:02:10 2026 +0200
+
+    fixup! api: add network availability admission controls
+    
+    Treat retained export endpoints transferred with VPS datasets as new
+    ownership. Capture their networks and reserve their parents and hosts with
+    the VPS addresses before queuing ownership or accounting changes.
+
+commit 6b3628af665049dc095ba985ef0fbe8a22286863
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:10:41 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 6 15:10:41 2026 +0200
+
+    webui: expose network availability and enabled address selectors
+    
+    Show enabled state in network and owned-address inventory. Add a confirmed
+    administrator POST form and exclude disabled pools from available selectors
+    when the API advertises support. Keep old API requests compatible.
+    
+    Detached owned addresses in disabled networks remain visible with assignment
+    controls unavailable, including stale assignment forms. Preserve controls for
+    existing service and cover confirmation, CSRF and selector behavior.
+
+commit 819d66b0ec15fa874492437139fb80dc8e175a39
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:09:44 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 6 15:09:44 2026 +0200
+
+    api: add network availability admission controls
+    
+    Allow administrators to disable new use of a network without interrupting
+    existing assigned addresses. Count available public IPv4 allocation rows
+    only in enabled pools and expose optional availability metadata and filters.
+    
+    Capture each operation's source and destination networks before reserving IP
+    rows, retaining that set through included allocations and retries. Recheck
+    current address identity and eligibility after reservation while preserving
+    trusted assigned-address continuity during migration, swap and restore.
+    
+    The additive enabled column defaults to true. Update all API writers before
+    disabling a network; older writers do not enforce this policy.

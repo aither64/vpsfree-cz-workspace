@@ -1,0 +1,68 @@
+$ git rev-parse HEAD
+505ffc457b3329af0b124075f417953c9cc42edd
+$ git status --porcelain
+$ git ls-remote origin refs/heads/master refs/heads/2026-10-05-network-ipv4-left-counter
+505ffc457b3329af0b124075f417953c9cc42edd	refs/heads/2026-10-05-network-ipv4-left-counter
+7157c8098dcf60127aa4df823fab82b4185ad22a	refs/heads/master
+$ git merge-base --is-ancestor 7157c8098dcf60127aa4df823fab82b4185ad22a 505ffc457b3329af0b124075f417953c9cc42edd
+$ git worktree add --detach /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/integration13-vpsfree-dev-workspace 7157c8098dcf60127aa4df823fab82b4185ad22a
+HEAD is now at 7157c80 devcluster: expose retained start and portal control permissions
+Preparing worktree (detached HEAD 7157c80)
+$ git merge --ff-only 505ffc457b3329af0b124075f417953c9cc42edd
+Updating 7157c80..505ffc4
+Fast-forward
+ README.md                           |  13 +-
+ dev-clusters/kb/README.md           |  66 ++++++++
+ dev-clusters/kb/bin/devcluster      |   6 +
+ dev-clusters/kb/lib/cli.rb          | 132 ++++++++++++++++
+ dev-clusters/kb/lib/connection.rb   |  53 +++++++
+ dev-clusters/kb/lib/guards.rb       | 125 +++++++++++++++
+ dev-clusters/kb/lib/lease.rb        | 153 ++++++++++++++++++
+ dev-clusters/kb/lib/managed.rb      | 137 ++++++++++++++++
+ dev-clusters/kb/lib/portable.rb     | 132 ++++++++++++++++
+ dev-clusters/kb/lib/provider.rb     | 137 ++++++++++++++++
+ flake.lock                          | 268 +++++++++++++++++++++++++++++--
+ flake.nix                           |  74 ++++++++-
+ nix/organization-tools.nix          |  28 ++++
+ nix/site-config.nix                 |   2 +-
+ test/fixtures/kb-config.json        | 306 ++++++++++++++++++++++++++++++++++++
+ test/kb_cli_test.rb                 | 207 ++++++++++++++++++++++++
+ test/kb_connection_test.rb          |  65 ++++++++
+ test/kb_devcluster_test.rb          | 134 ++++++++++++++++
+ test/kb_guards_test.rb              |  79 ++++++++++
+ test/kb_lease_test.rb               | 279 ++++++++++++++++++++++++++++++++
+ test/kb_portable_test.rb            | 142 +++++++++++++++++
+ test/kb_public_dispatch_test.rb     | 258 ++++++++++++++++++++++++++++++
+ test/support/kb_snapshot_fixture.rb |  98 ++++++++++++
+ 23 files changed, 2880 insertions(+), 14 deletions(-)
+ create mode 100644 dev-clusters/kb/README.md
+ create mode 100755 dev-clusters/kb/bin/devcluster
+ create mode 100644 dev-clusters/kb/lib/cli.rb
+ create mode 100644 dev-clusters/kb/lib/connection.rb
+ create mode 100644 dev-clusters/kb/lib/guards.rb
+ create mode 100644 dev-clusters/kb/lib/lease.rb
+ create mode 100644 dev-clusters/kb/lib/managed.rb
+ create mode 100644 dev-clusters/kb/lib/portable.rb
+ create mode 100644 dev-clusters/kb/lib/provider.rb
+ create mode 100644 test/fixtures/kb-config.json
+ create mode 100644 test/kb_cli_test.rb
+ create mode 100644 test/kb_connection_test.rb
+ create mode 100644 test/kb_devcluster_test.rb
+ create mode 100644 test/kb_guards_test.rb
+ create mode 100644 test/kb_lease_test.rb
+ create mode 100644 test/kb_portable_test.rb
+ create mode 100644 test/kb_public_dispatch_test.rb
+ create mode 100644 test/support/kb_snapshot_fixture.rb
+$ git rev-parse HEAD
+505ffc457b3329af0b124075f417953c9cc42edd
+$ git status --porcelain
+$ git diff --check 7157c8098dcf60127aa4df823fab82b4185ad22a 505ffc457b3329af0b124075f417953c9cc42edd
+$ git push origin HEAD:refs/heads/master
+To github.com:vpsfreecz/dev-workspace.git
+   7157c80..505ffc4  HEAD -> master
+$ git ls-remote origin refs/heads/master
+505ffc457b3329af0b124075f417953c9cc42edd	refs/heads/master
+$ git fetch origin
+From github.com:vpsfreecz/dev-workspace
+ * branch            HEAD       -> FETCH_HEAD
+$ git worktree remove /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/integration13-vpsfree-dev-workspace

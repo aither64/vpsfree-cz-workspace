@@ -1,0 +1,35 @@
+$ git rev-parse HEAD
+cce681424b866f6a51cbc0a1e4daa226ed33fc07
+$ git status --porcelain
+$ git ls-remote origin refs/heads/main refs/heads/dev/ip-suggestions-timeout
+cce681424b866f6a51cbc0a1e4daa226ed33fc07	refs/heads/dev/ip-suggestions-timeout
+7152729dcde326e00d16b5af0a46d0f60b431dbb	refs/heads/main
+$ git merge-base --is-ancestor 7152729dcde326e00d16b5af0a46d0f60b431dbb cce681424b866f6a51cbc0a1e4daa226ed33fc07
+$ git worktree add --detach /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/integration13-vpsadmin-webui 7152729dcde326e00d16b5af0a46d0f60b431dbb
+HEAD is now at 7152729d docs: record the verified console and navigation release
+Preparing worktree (detached HEAD 7152729d)
+$ git merge --ff-only cce681424b866f6a51cbc0a1e4daa226ed33fc07
+Updating 7152729d..cce68142
+Fast-forward
+ docs/design/API_CONTRACTS.md                       |  14 +
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/WORKFLOWS.md                           |   7 +
+ docs/work-log/2026-10-09-ip-suggestions-timeout.md |  45 +++
+ e2e/specs/admin/network_availability.spec.ts       | 129 +++++++
+ .../useProgressiveSuggestedIpQueries.test.tsx      | 380 ++++++++++++++++++++-
+ .../useProgressiveSuggestedIpQueries.ts            |  53 ++-
+ 7 files changed, 603 insertions(+), 27 deletions(-)
+ create mode 100644 docs/work-log/2026-10-09-ip-suggestions-timeout.md
+$ git rev-parse HEAD
+cce681424b866f6a51cbc0a1e4daa226ed33fc07
+$ git status --porcelain
+$ git diff --check 7152729dcde326e00d16b5af0a46d0f60b431dbb cce681424b866f6a51cbc0a1e4daa226ed33fc07
+$ git push origin HEAD:refs/heads/main
+To github.com:vpsfreecz/vpsadmin-webui.git
+   7152729d..cce68142  HEAD -> main
+$ git ls-remote origin refs/heads/main
+cce681424b866f6a51cbc0a1e4daa226ed33fc07	refs/heads/main
+$ git fetch origin
+From github.com:vpsfreecz/vpsadmin-webui
+ * branch              HEAD       -> FETCH_HEAD
+$ git worktree remove /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/integration13-vpsadmin-webui

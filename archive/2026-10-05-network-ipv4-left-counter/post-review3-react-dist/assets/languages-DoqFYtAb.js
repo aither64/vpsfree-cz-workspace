@@ -1,0 +1,1 @@
+import{m as n,n as t}from"./main-LDE_lf6r.js";async function r(a){const i={};a?.limit!==void 0&&(i.limit=a.limit),a?.fromId!==void 0&&(i.from_id=a.fromId);const e=await n({method:"GET",path:"/languages",namespace:"language",params:i});return{...e,data:t(e.data,"languages#index")}}export{r as f};

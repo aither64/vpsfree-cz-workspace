@@ -1,0 +1,6 @@
+runtime: use a short root for the retained stop fixture
+
+The fixture's runtime socket can exceed the UNIX path budget when its
+private temporary root inherits Nix TMPDIR nesting. Create this test's
+unique private root directly under /tmp while retaining its XDG runtime
+ownership, public stop assertions and the existing socket-length guard.

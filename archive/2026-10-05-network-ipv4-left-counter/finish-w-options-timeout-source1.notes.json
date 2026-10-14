@@ -1,0 +1,39 @@
+{
+  "source_established_cause": "The existing local timer started before fetchQuery but only GET received its signal; shared metadata awaited without observing it. haveApiCall also awaits description/envelope work, motivating the same supplied-promise wait around GET.",
+  "implementation": "One existing caller timer, tiny local waitForRequest with abort listener cleanup/late handlers, signal checks before metadata/GET/rows. fetchQuery key/config and all GET options unchanged.",
+  "reached_consumers": [
+    {
+      "path": "src/pages/app/admin/IpAddressesPage.tsx",
+      "facts": "suggestions selected only for admin default inventory; listQ retains separate key, enabled policy and loadedListData selection under manual filters"
+    },
+    {
+      "path": "src/lib/api/ipAddresses.ts",
+      "facts": "OPTIONS /ip_addresses?method=GET is shared and receives no suggestion-local signal; GET receives the existing timed signal and unchanged bounded enabled filter"
+    },
+    {
+      "path": "src/lib/api/haveapi.ts",
+      "facts": "description/auth/envelope awaits preserved; caller wait provides settlement without adapter mutation"
+    },
+    {
+      "path": "src/pages/app/networking/fetchAssignableIpAddresses.ts",
+      "facts": "separate assignment discovery consumer unchanged and outside timeout claim"
+    },
+    {
+      "path": "src/pages/app/admin/ipAddresses/suggestedFreeIps.ts",
+      "facts": "same location priorities, query plan, three buckets and limit50"
+    }
+  ],
+  "technical_documentation_draft_for_root": [
+    "Each suggestion invocation has one twelve-second caller budget spanning shared metadata and GET. Cancellation or expiry stops that caller, consumes late settlement, and prevents a late GET or row publication.",
+    "The shared capability request and its five-minute cache continue independently. Retry has a fresh local budget and may rejoin a pending lookup; it does not restart shared discovery. Later location batches have separate budgets.",
+    "Successful older API metadata still omits unsupported network_enabled; errors remain errors. Pre-limit filtering, stale disabled guard and manual-list selection remain unchanged."
+  ],
+  "root_prose_comparison": "Read API_CONTRACTS/WORKFLOWS/REQ050/dated entry against final source and browser draft. No factual/options mismatch found; no root-owned wording edited.",
+  "verification_gaps": "New source is unexecuted. Hosted type/unit/smoke/build and image inspection plus committed independent review remain pending; synthetic tests do not prove deployed or real API behavior.",
+  "obsolete_expectations": "None. Original four unit case bodies/assertions and all original browser cases preserved; only shared test helper gains actual QueryClient/fake-time support and deterministic teardown.",
+  "scope": "Three application files; four separately root-owned prose paths. No dependency, action/workflow, adapter, inventory/adoption, budget, locale, API/schema/pin or other repository change.",
+  "hook_context": "AGENTS requires declared hooks. No .overcommit.yml/.pre-commit-config.yaml/lefthook.yml/.husky or package hook declaration found; core.hooksPath unset. Normal commit/hook inspection remains root-owned; no bypass.",
+  "history": "Separate issue30 branch starts at exact approved main7152729d; no commits by implementer. Merged PR19 and all other branches untouched.",
+  "hold": "Application and freeze controls held after report; root owns final prose/Git/hosted proof/review. K frozen baseline proposal and all campaigns remain untouched.",
+  "portal": "https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-05-network-ipv4-left-counter/"
+}

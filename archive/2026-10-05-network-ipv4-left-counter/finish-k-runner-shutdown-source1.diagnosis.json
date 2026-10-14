@@ -1,0 +1,118 @@
+{
+  "schema": 1,
+  "at": "2026-10-09T13:01:02.132298+00:00",
+  "head": "a1897006c445d5622d21ca5e15a2bf3c5dc54521",
+  "branch": "2026-10-05-network-ipv4-left-counter-kb-runtime",
+  "worktree": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsfree-kb-contracts-runtime",
+  "identity": {
+    "slug": "2026-10-05-network-ipv4-left-counter",
+    "workspace": "/home/aither/workspace/ai/vpsfree.cz",
+    "current_executable": "/home/aither/bin/dev-session",
+    "current_cwd": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter",
+    "login": false,
+    "markers": "both absent",
+    "current_exit": 0,
+    "current_stdout": "2026-10-05-network-ipv4-left-counter",
+    "roster_revision": 17,
+    "member": "implementer0",
+    "thread": "01a10c52-50ed-7312-9f0c-62b6ea389308",
+    "model": "gpt-6.1-sol",
+    "effort": "xhigh",
+    "purpose": "implementation",
+    "access": "workspace_write"
+  },
+  "accepted_design": {
+    "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/design.md",
+    "section": "### PROPOSAL: runner control-thread shutdown ordering (2026-10-09)",
+    "line": 3708,
+    "extant_section_sha256": "19a6c0c57e82cad6894e1cf93c7c017e25d5de1033eae38742087761a910d7c4",
+    "accepted_section_sha256": "19a6c0c57e82cad6894e1cf93c7c017e25d5de1033eae38742087761a910d7c4",
+    "acceptance": "finish-k-runner-shutdown-source-acceptance1.json"
+  },
+  "source_scope": [
+    "cluster/lib/devcluster_runner.rb",
+    "tools/test-machine.rb"
+  ],
+  "root_prose": {
+    "path": "cluster/runtime-contract.md",
+    "sha256": "5fc5aa3cc7345892571be55e0c8b0b1fb5b17c98181caf3018f91c6179741e7c",
+    "receipt": "finish-k-runner-shutdown-root-prose2.json",
+    "facts_match": true,
+    "edited_by_implementer": false
+  },
+  "production_delta": "Only move server.close after existing own control_thread.kill/join. Exact control.sock unlink remains next; no rescue, cleanup broadening, Engine edit, schema, timeout, process/group signal or permission change.",
+  "fixture_changes": [
+    "Mark explicit shutdown attempts before public stop; never automatically repeat a failed explicit stop.",
+    "Capture first StandardError or Minitest::Assertion object/backtrace and re-raise unchanged; automatic existing public cleanup reports a secondary error without replacing the primary.",
+    "Before fixture disappearance, copy native runner/controller logs to a separate 0700 test-owned /tmp evidence directory with 0600 copies/hash/byte facts and private failure.json; bounded inventory (32 names/types), phase, complete/gone and claim-count facts plus listener marker when present.",
+    "Public excerpts bounded to768 bytes, first three traceback frames and last two failure lines per native log; redact token/password/secret/credential assignments. No config/state/credential dump or export change.",
+    "Setsid-refusal native capture stored in owned fixture log files before assertions; no deleted fixture log is called retained evidence."
+  ],
+  "deterministic_barrier": "Fixture-only wrapper delegates to actual UNIXServer. After stop response, its second accept signals a Queue; fake machine stop waits for that entry. A close while that control thread is alive closes the real listener and joins the thread before returning, forcing old close-before-kill ordering to expose its accept error. Correct kill/join-first ordering reaches close with the control thread dead. No production injection or sleep-dependent race.",
+  "new_test_methods": [
+    "test_public_stop_quiesces_the_real_listener_before_close_and_removes_its_namespace",
+    "test_primary_assertion_and_secondary_cleanup_failure_keep_original_error_and_private_evidence",
+    "test_primary_failure_survives_successful_public_cleanup",
+    "test_explicit_failed_stop_is_not_repeated_and_preserves_an_unrelated_socket_entry"
+  ],
+  "preserved_tests": "All four original runner session/setSID/PID/executable/argv/child/no-guard-FD assertions and pinned PreparedMachineTest bytes preserved; common shutdown additionally requires namespace absent.",
+  "test_requirements": [
+    "Real public stop complete/gone; finalized/cleaned; stopped; claims released; namespace/control.sock absent",
+    "First Minitest assertion identity/backtrace plus secondary cleanup error evidence/redaction",
+    "Primary failure retained after successful public cleanup",
+    "Explicit nonempty-namespace refusal preserves unrelated entry contents/inode, complete/gone and released claims, unchanged non-stopped phase, one stop attempt"
+  ],
+  "native_evidence": [
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-ssh-session-hosted2/k/full.log",
+      "sha256": "40732a166bc434cad1ae2f66db1bf78fe3ffaca9e1c61310c80263206d139c82"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-ssh-session-hosted2/k/final.json",
+      "sha256": "a385d4867b1e3f1373e63a135fcf709bc2d6fb0983a53066e10e437cecdf81d5"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-ssh-session-hosted2/k-runtime/full.log",
+      "sha256": "72a1908eee927fc046d7a7ab020c293498278dece3e82a3b98a8f35906a2bfac"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-ssh-session-hosted2/k-runtime/final.json",
+      "sha256": "01627f7d41e855ecbcf03ea839ebc7040137a4bfc7c14fb8d36c67504fb6a987"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-ssh-session-hosted2/k-managed/full.log",
+      "sha256": "8685ce5a71a86bcef47ac66279690b9fbd58b46e7f6ccfa80c5894cf7bccfb37"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-ssh-session-hosted2/k-managed/final.json",
+      "sha256": "dcbbd4cbcff7545a3076ef920c8afcd535c68e5d9e52138e8c8e05a005966877"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-ssh-session-hosted2/k-runtime-managed/full.log",
+      "sha256": "b39c8630a51b7e80b9f2c210ac47159f10f05023848466fd66964521318b99c4"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-ssh-session-hosted2/k-runtime-managed/final.json",
+      "sha256": "add24f8423323bbcd44bdbf70fb4e1dacc4d31307cd83000693a1767ad5d2797"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-k-runner-shutdown-source-acceptance1.json",
+      "sha256": "2cddf2f435305928145cad807d634ebc653debb5d81f19f0b1f67ff861916ebe"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-k-runner-shutdown-root-prose1.json",
+      "sha256": "db627a7d23a140c972f316152527e68ecb9af011de041429231ba1b4a29a9314"
+    },
+    {
+      "path": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-k-runner-shutdown-root-prose2.json",
+      "sha256": "1f7514cfe2792f5d4caecafeb6fa8734476753a6e9334d6d8da0b277c4b0cc6d"
+    }
+  ],
+  "native_limits": "Four prior K source lanes report runtime63/663 pass and machine/session8/104 with three cleanup_socket errors. Native inventory/runner stderr were missing; this source interleaving is not a proven native or historical campaign cause.",
+  "retention_limit": "Private copies outlive the temporary fixture inside the hosted runner. Existing workflow does not export those private files; do not claim downloadable host artifacts. Bounded redacted excerpts and hashes are emitted to native suite output.",
+  "local_verification": "None: no tests/CI/syntax/lint/formatter/evaluation/build/probes/process/VM/lifecycle/Git/index/ref operations.",
+  "protected_scope": "Only two owned files and the separately root-owned doc differ from HEAD. No untracked paths; all other tracked source/inputs/schema/captures/PNGs and other repositories/private campaigns unchanged.",
+  "compatibility": "State2/connection1/process/control/cleanup contracts unchanged. This is future shutdown ordering, not retained-root recovery or authorization to touch G4/G6.",
+  "next_gate": "Root inspection and normal source consolidation/publication, exact K/E hosted proof and affected committed review before package/real work.",
+  "held": true
+}

@@ -1,0 +1,52 @@
+1:  18095875f ! 1:  d3986cbf0 api: add network availability admission controls
+    @@ api/spec/api/resources/cluster_spec.rb: RSpec.describe 'VpsAdmin::API::Resources
+          it 'works for authenticated users as well' do
+     
+      ## api/spec/api/resources/ip_address_spec.rb ##
+    +@@
+    + require 'securerandom'
+    + 
+    + RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+    ++  include CoreResourceSpecHelpers
+    ++
+    +   before do
+    +     header 'Accept', 'application/json'
+    +     SpecSeed.network_v4
+     @@ api/spec/api/resources/ip_address_spec.rb: RSpec.describe 'VpsAdmin::API::Resources::IpAddress' do
+        describe 'Create' do
+          let(:payload) { { addr: '192.0.2.200', network: SpecSeed.network_v4.id } }
+    @@ api/spec/api/resources/ip_address_spec.rb: RSpec.describe 'VpsAdmin::API::Resour
+            json_post assign_path(data[:ip_free].id), ip_address: { network_interface: data[:user_netif].id }
+     
+      ## api/spec/api/resources/network_write_spec.rb ##
+    +@@
+    + require 'securerandom'
+    + 
+    + RSpec.describe 'VpsAdmin::API::Resources::Network write actions' do # rubocop:disable RSpec/DescribeClass
+    ++  include CoreResourceSpecHelpers
+    ++
+    +   let(:ipv4_network) { SpecSeed.network_v4 }
+    +   let(:ipv6_network) { SpecSeed.network_v6 }
+    + 
+     @@ api/spec/api/resources/network_write_spec.rb: RSpec.describe 'VpsAdmin::API::Resources::Network write actions' do # rubocop:di
+          expect(IpAddress.count).to eq(count)
+        end
+    @@ api/spec/api/resources/user_available_ips_spec.rb: RSpec.describe 'VpsAdmin::API
+      
+     
+      ## api/spec/api/resources/vps_write_spec.rb ##
+    +@@
+    + require 'securerandom'
+    + 
+    + RSpec.describe 'VpsAdmin::API::Resources::VPS write actions' do # rubocop:disable RSpec/DescribeClass
+    ++  include CoreResourceSpecHelpers
+    ++
+    +   before do
+    +     header 'Accept', 'application/json'
+    +     SpecSeed.location
+     @@ api/spec/api/resources/vps_write_spec.rb: RSpec.describe 'VpsAdmin::API::Resources::VPS write actions' do # rubocop:disabl
+            end
+          end
+2:  2ebaed9bb = 2:  5f7d19d15 webui: expose network availability and inventory
+3:  e02cc4281 = 3:  f03390b8a api: restrict non-admin network and IP lists
+4:  7e86ee211 = 4:  ebe4fab3d api: expose authoritative network inventory counts

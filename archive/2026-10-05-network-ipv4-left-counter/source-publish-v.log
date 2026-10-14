@@ -1,0 +1,69 @@
+Successfully installed bundler-4.0.22
+1 gem installed
+Bundle complete! 7 Gemfile dependencies, 48 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+ .../migrate/20261006120000_add_network_enabled.rb  |   5 +
+ api/db/schema.rb                                   |   3 +-
+ api/lib/vpsadmin/api/locales/cs.yml                |  10 ++
+ api/lib/vpsadmin/api/locales/en.yml                |  10 ++
+ api/lib/vpsadmin/api/resources/cluster.rb          |   3 +-
+ api/lib/vpsadmin/api/resources/ip_address.rb       |   4 +-
+ api/lib/vpsadmin/api/resources/network.rb          |   8 +-
+ api/lib/vpsadmin/api/resources/user.rb             |   4 +-
+ api/models/ip_address.rb                           |  69 ++++++++-
+ api/models/ip_release_request_address.rb           |   2 +-
+ api/models/network.rb                              |  18 ++-
+ api/models/network_interface.rb                    |   1 +
+ api/models/transaction_chains/export/create.rb     |   6 +-
+ api/models/transaction_chains/ip/allocate.rb       |  39 +++--
+ api/models/transaction_chains/ip/update.rb         |   3 +
+ .../network_interface/add_route.rb                 |   2 +
+ .../transaction_chains/vps/clone/os_to_os.rb       |  27 +++-
+ api/models/transaction_chains/vps/create.rb        |  11 +-
+ api/models/transaction_chains/vps/migrate/base.rb  |  49 +++++--
+ api/models/transaction_chains/vps/swap.rb          |   9 ++
+ api/models/transaction_chains/vps/update.rb        |   2 +
+ api/spec/api/resources/cluster_spec.rb             |  30 ++--
+ api/spec/api/resources/network_write_spec.rb       |  28 ++++
+ api/spec/api/resources/user_available_ips_spec.rb  |  11 ++
+ .../20261006120000_add_network_enabled_spec.rb     |  29 ++++
+ api/spec/models/ip_ownership_concurrency_spec.rb   | 162 ++++++++++++++++++++-
+ api/spec/models/network_registration_spec.rb       |  19 +++
+ .../transaction_chains/export/create_spec.rb       |   2 +-
+ .../models/transaction_chains/ip/allocate_spec.rb  |  77 +++++++++-
+ .../models/transaction_chains/ip/update_spec.rb    |  15 ++
+ .../network_interface/add_route_spec.rb            |  14 ++
+ .../transaction_chains/vps/clone/os_to_os_spec.rb  |  24 ++-
+ .../models/transaction_chains/vps/create_spec.rb   |  22 +++
+ .../models/transaction_chains/vps/migrate_spec.rb  |   1 +
+ .../transaction_chains/vps/replace/os_spec.rb      |   3 +-
+ .../models/transaction_chains/vps/swap_spec.rb     |   2 +
+ .../models/transaction_chains/vps/update_spec.rb   |  16 ++
+ docs/README.md                                     |   1 +
+ docs/ip-locking.md                                 |  56 +++++++
+ docs/upgrade-network-availability.md               |  32 ++++
+ .../playwright/webui/specs/admin-cluster.spec.cjs  |  33 +++++
+ tests/suite/network/export-lifecycle.nix           |   9 ++
+ .../network-interface-routes-and-host-ips.nix      |  35 +++++
+ ...ore-after-reinstall-with-descendants-remote.nix |  14 ++
+ tests/suite/vps/migrate-with-data-check.nix        |  18 +++
+ webui/forms/cluster.forms.php                      |  44 ++++++
+ webui/forms/networking.forms.php                   |  17 ++-
+ .../lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.mo | Bin 149746 -> 150374 bytes
+ .../lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po |  79 ++++++----
+ webui/lang/locale/vpsAdmin.pot                     |  61 +++++---
+ webui/lib/functions.lib.php                        |   4 +
+ webui/pages/page_cluster.php                       |  23 +++
+ webui/tests/Regression/CsrfStateFormsTest.php      |  15 ++
+ webui/tests/Regression/NetworkAvailabilityTest.php |  86 +++++++++++
+ 54 files changed, 1150 insertions(+), 117 deletions(-)
+remote: 
+remote: Create a pull request for '2026-10-05-network-ipv4-left-counter' on GitHub by visiting:        
+remote:      https://github.com/vpsfreecz/vpsadmin/pull/new/2026-10-05-network-ipv4-left-counter        
+remote: 
+remote: GitHub found 2 vulnerabilities on vpsfreecz/vpsadmin's default branch (2 high). To find out more, visit:        
+remote:      https://github.com/vpsfreecz/vpsadmin/security/dependabot        
+remote: 
+To github.com:vpsfreecz/vpsadmin.git
+ * [new branch]          6b3628af665049dc095ba985ef0fbe8a22286863 -> 2026-10-05-network-ipv4-left-counter
+6b3628af665049dc095ba985ef0fbe8a22286863	refs/heads/2026-10-05-network-ipv4-left-counter

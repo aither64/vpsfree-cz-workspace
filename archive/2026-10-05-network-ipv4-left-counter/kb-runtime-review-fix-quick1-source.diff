@@ -1,0 +1,354 @@
+diff --git a/bin/check b/bin/check
+index 73d3b73..bc8d262 100755
+--- a/bin/check
++++ b/bin/check
+@@ -58,6 +58,7 @@ ruby -c tools/test-capture-export.rb
+ ruby tools/test-capture-export.rb
+ node tools/test-connection.cjs
+ node tools/test-artifacts.cjs
++node tools/test-capture-lease.cjs
+ ruby -c cluster/seed-production-shape.rb
+ ruby -c tools/check-contract.rb
+ ruby -c tools/check-kb-annotations.rb
+diff --git a/cluster/lib/kb_runtime.rb b/cluster/lib/kb_runtime.rb
+index ca29762..f40c7ef 100644
+--- a/cluster/lib/kb_runtime.rb
++++ b/cluster/lib/kb_runtime.rb
+@@ -187,7 +187,11 @@ module KbRuntime
+       state.transaction do
+         old = launch
+         identity = state.identity
+-        requested(config, topology, network, identity, SecureRandom.uuid)
++        replacement = requested(config, topology, network, identity, SecureRandom.uuid)
++        endpoints = ->(record) { record.fetch('endpoints').transform_values { |endpoint| endpoint.slice('host', 'port') } }
++        unless endpoints.call(replacement) == endpoints.call(old)
++          raise Error, 'update requires unchanged SSH endpoints for retained host-key trust'
++        end
+         if File.exist?(state.path('update.json'))
+           operation = state.read(state.path('update.json'))
+           candidate = state.read(state.path("candidate-#{operation.fetch('artifact_id')}.json"))
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index 870dc44..266b547 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -89,8 +89,10 @@ Missing roots fail rather than being recreated. An unresolved update refuses
+ resume and cannot fall back to an older artifact.
+ 
+ `update` prevalidates the replacement configuration, disk layout and TLS names
+-under one held operation, then attests the old live runner and guests. It journals
+-the candidate and becomes non-ready before building its rooted closures. Build
++under one held operation, then attests the old live runner and guests. Updates
++require the same resolved SSH hosts and ports because retained host-key trust is
++not rebound. The engine journals the candidate and becomes non-ready before
++building its rooted closures. Build
+ failure preserves the old processes, claims and disks. Retrying requires the same
+ selected source and requested configuration.
+ 
+diff --git a/lib/artifacts.cjs b/lib/artifacts.cjs
+index c8232ce..a09972f 100644
+--- a/lib/artifacts.cjs
++++ b/lib/artifacts.cjs
+@@ -61,7 +61,9 @@ function validProvenance(value, source) {
+ }
+ 
+ class Artifacts {
+-  constructor({ sourceRoot, outputRoot, manifest, source, invocation = true }) {
++  constructor({ sourceRoot, outputRoot, manifest, source, invocation = true, assertLive = () => {} }) {
++    this.assertLive = assertLive;
++    this.assertLive();
+     this.sourceRoot = sourceRoot;
+     this.outputRoot = path.resolve(outputRoot);
+     if (this.outputRoot.startsWith('/nix/store/') || !fs.existsSync(this.outputRoot)) throw new Error('Output root must be an existing writable directory outside the store');
+@@ -113,6 +115,7 @@ class Artifacts {
+   }
+ 
+   stage(asset) {
++    this.assertLive();
+     const source = this.manifest.assets.find((row) => row.id === asset.id)?.variants[asset.language];
+     const candidate = this.candidate.assets.find((row) => row.id === asset.id)?.variants[asset.language];
+     if (!source || source.review_status !== 'pending' || candidate?.review_status !== 'pending') throw new Error('Protected capture cannot be overwritten');
+@@ -122,6 +125,7 @@ class Artifacts {
+   }
+ 
+   finish(results) {
++    this.assertLive();
+     if (new Set(results.map((row) => `${row.language}:${row.id}`)).size !== results.length) throw new Error('Duplicate capture publication');
+     for (const row of results) this.validateResult(row, this.invocationRoot);
+     const replacing = new Set(results.map((row) => `${row.language}:${row.id}`));
+@@ -129,10 +133,13 @@ class Artifacts {
+     for (const row of results) {
+       const filename = artifactPath(this.outputRoot, row.output);
+       fs.mkdirSync(path.dirname(filename), { recursive: true });
++      this.assertLive();
+       fs.renameSync(artifactPath(this.invocationRoot, row.output), filename);
+     }
+     // Interruption after bitmap publication leaves a stale hash and cannot certify it.
++    this.assertLive();
+     atomicJson(this.receiptPath, this.receipt);
++    this.assertLive();
+     atomicJson(this.resultsPath, merged);
+     return results;
+   }
+diff --git a/lib/browser.cjs b/lib/browser.cjs
+index d55e910..d69ddc8 100644
+--- a/lib/browser.cjs
++++ b/lib/browser.cjs
+@@ -95,8 +95,11 @@ async function launchBrowser(cluster, viewport, language = 'cs') {
+       proxy: { server: `http://127.0.0.1:${address.port}` },
+     });
+   } catch (error) { await closeServer(proxy); throw error; }
++  const onLoss = () => { browser.close().catch(() => {}); };
++  cluster.lease.signal.addEventListener('abort', onLoss, { once: true });
+   let context;
+   try {
++    cluster.assertLease();
+     context = await browser.newContext({
+       baseURL: cluster.webuiBaseUrl,
+       ignoreHTTPSErrors: true,
+@@ -107,11 +110,9 @@ async function launchBrowser(cluster, viewport, language = 'cs') {
+     cluster.assertLease();
+   } catch (error) {
+     try { await browser.close(); } finally { await closeServer(proxy); }
++    cluster.lease.signal.removeEventListener('abort', onLoss);
+     throw error;
+   }
+-  const onLoss = () => { browser.close().catch(() => {}); };
+-  cluster.lease.signal.addEventListener('abort', onLoss, { once: true });
+-
+   return {
+     browser,
+     context,
+diff --git a/lib/capture-session.cjs b/lib/capture-session.cjs
+index 0c154b0..e1d7d43 100644
+--- a/lib/capture-session.cjs
++++ b/lib/capture-session.cjs
+@@ -121,6 +121,7 @@ class CaptureSession {
+ 
+   async shot(page, checkpoint, locators, options = {}) {
+     if (!this.wants(checkpoint)) return;
++    this.artifacts.assertLive();
+     const asset = this.asset(checkpoint);
+     const output = this.artifacts.stage(asset);
+     if (asset.review_status !== 'pending' && fs.existsSync(output)) {
+@@ -134,6 +135,7 @@ class CaptureSession {
+     const clip = options.clip || await unionBox(targets, options.padding);
+     fs.mkdirSync(path.dirname(output), { recursive: true });
+ 
++    this.artifacts.assertLive();
+     await page.screenshot({
+       path: output,
+       clip,
+@@ -141,6 +143,7 @@ class CaptureSession {
+       maskColor: '#d8dee9',
+     });
+ 
++    this.artifacts.assertLive();
+     const contents = fs.readFileSync(output);
+     this.seen.add(checkpoint);
+     this.results.push({
+@@ -203,6 +206,7 @@ class CaptureSession {
+   }
+ 
+   finish() {
++    this.artifacts.assertLive();
+     const missing = this.assets
+       .map((asset) => asset.checkpoint)
+       .filter((checkpoint) => !this.seen.has(checkpoint));
+diff --git a/lib/connection.cjs b/lib/connection.cjs
+index 76d9a54..4572d40 100644
+--- a/lib/connection.cjs
++++ b/lib/connection.cjs
+@@ -65,7 +65,8 @@ function readConnection(filename, required = []) {
+   return { value, digest: crypto.createHash('sha256').update(bytes).digest('hex') };
+ }
+ 
+-async function openLease(argv, expected, { timeout = 120000, cleanupGrace = 500 } = {}) {
++async function openLease(argv, expected, { timeout = 120000, cleanupGrace = 500, signal } = {}) {
++  signal?.throwIfAborted();
+   const child = spawn(argv[0], argv.slice(1), { stdio: ['pipe', 'pipe', 'pipe'] });
+   const abort = new AbortController();
+   let closing = false;
+@@ -123,10 +124,16 @@ async function openLease(argv, expected, { timeout = 120000, cleanupGrace = 500
+   child.stdout.on('error', () => loseProtocol('Capture controller protocol failed; fixture activity is cancelled'));
+   child.stderr.on('error', () => {}); // Diagnostic loss alone is not lease loss.
+   child.stderr.resume();
++  const cancelReadiness = () => loseProtocol(
++    'Capture lease acquisition cancelled by its enclosing lease',
++  );
++  signal?.addEventListener('abort', cancelReadiness, { once: true });
++  if (signal?.aborted) cancelReadiness();
+   await new Promise((resolve, reject) => {
+     let buffered = '';
+     const timer = setTimeout(() => reject(new Error('Capture controller readiness timed out')), timeout);
+     rejectReadiness = (error) => { clearTimeout(timer); reject(error); };
++    if (signal?.aborted) { rejectReadiness(signal.reason); return; }
+     const fail = () => { clearTimeout(timer); reject(new Error('Capture controller failed before readiness')); };
+     child.once('error', fail);
+     child.once('close', () => { if (!ready) fail(); });
+@@ -149,7 +156,8 @@ async function openLease(argv, expected, { timeout = 120000, cleanupGrace = 500
+         reject(new Error('Capture lease readiness identity differs'));
+       }
+     });
+-  }).catch(async (error) => { await shutdown(); throw error; });
++  }).catch(async (error) => { await shutdown(); throw error; })
++    .finally(() => signal?.removeEventListener('abort', cancelReadiness));
+   rejectReadiness = null;
+   return {
+     signal: abort.signal,
+diff --git a/runner/capture.cjs b/runner/capture.cjs
+index d53b6a6..bd19d83 100755
+--- a/runner/capture.cjs
++++ b/runner/capture.cjs
+@@ -31,14 +31,19 @@ async function main({ argv = process.argv.slice(2), sourceMetadata, defaultOutpu
+     { schema: 1, kind: 'kb-artifact-lock' });
+   let lease;
+   let capture;
++  const assertLive = () => {
++    artifactLease.assertLive();
++    if (lease) lease.assertLive();
++  };
+   try {
++    assertLive();
+     const manifest = JSON.parse(fs.readFileSync(path.join(repoRoot, 'captures.json')));
+     const expected = sourceMetadata || JSON.parse(execFileSync('ruby',
+       [path.join(repoRoot, 'cluster/source-metadata.rb'), '--checkout', repoRoot], { encoding: 'utf8' }));
+     if (manifest.vpsadmin_commit !== pinnedVpsadminCommit() || expected.inputs.vpsadmin.rev !== manifest.vpsadmin_commit) {
+       throw new Error('Inventory, pinned input and immutable K source disagree');
+     }
+-    const artifacts = new Artifacts({ sourceRoot: repoRoot, outputRoot, manifest, source: expected });
++    const artifacts = new Artifacts({ sourceRoot: repoRoot, outputRoot, manifest, source: expected, assertLive });
+     const session = new CaptureSession({ assets: manifest.assets, checkpoint: options.checkpoint,
+       language: options.language, repoRoot, scenario: options.scenario, artifacts });
+     if (session.assets.length === 0) throw new Error('No inventory entries match the request');
+@@ -55,11 +60,19 @@ async function main({ argv = process.argv.slice(2), sourceMetadata, defaultOutpu
+       '--run-id', value.run_id, '--artifact-id', value.artifact_id, '--artifact-sha256', value.artifact_sha256,
+       '--descriptor-sha256', digest],
+       { schema: 1, instance_id: value.instance_id, run_id: value.run_id,
+-        artifact_id: value.artifact_id, artifact_sha256: value.artifact_sha256, descriptor_sha256: digest });
+-    const cluster = new Connection(value, lease);
++        artifact_id: value.artifact_id, artifact_sha256: value.artifact_sha256, descriptor_sha256: digest },
++    { signal: artifactLease.signal });
++    // Both locks must remain live. Keep the cluster controller until browser/SSH
++    // cleanup completes; an artifact failure only cancels its pending handshake.
++    const cluster = new Connection(value, {
++      signal: AbortSignal.any([artifactLease.signal, lease.signal]),
++      assertLive,
++    });
+     session.provenance = await cluster.verify(expected);
+     capture = await launchBrowser(cluster, options.viewport, options.language);
++    cluster.assertLease();
+     const page = await capture.context.newPage();
++    cluster.assertLease();
+     await login(page, cluster, options.language);
+     cluster.assertLease();
+     const fixtures = await prepareFixtures({ cluster, page, language: options.language, required,
+@@ -74,6 +87,7 @@ async function main({ argv = process.argv.slice(2), sourceMetadata, defaultOutpu
+     }
+     cluster.assertLease();
+     const results = session.finish();
++    cluster.assertLease();
+     process.stdout.write(`Captured ${results.length} checkpoint(s)\n`);
+   } finally {
+     // Complete browser/SSH cleanup before EOF releases the capture gate.
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index c096570..7b49038 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -1,6 +1,7 @@
+ # frozen_string_literal: true
+ 
+ require 'minitest/autorun'
++require 'minitest/mock'
+ require 'tmpdir'
+ require_relative '../cluster/lib/kb_runtime'
+ 
+@@ -161,6 +162,38 @@ class RuntimeTest < Minitest::Test
+     socket&.close
+   end
+ 
++  def test_retained_ssh_trust_accepts_the_same_endpoint_and_key_but_refuses_rebinding
++    Dir.mktmpdir do |directory|
++      state = KbRuntime::State.new(File.join(directory, 'state'), 'trust')
++      state.transaction(create: true) { state.initialize_identity }
++      state.private_directory(state.path('credentials'), create: true)
++      known = File.join(state.path('credentials'), 'known_hosts')
++      File.write(known, '', mode: 'wb', perm: 0o600)
++      engine = KbRuntime::Engine.new(state:, software: nil, controller: [])
++      endpoint = { 'host' => '127.0.0.1', 'port' => 10_022 }
++      key = 'AAAAC3NzaC1lZDI1NTE5AAAAIAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIC'
++      scan = lambda do |command, *args|
++        assert_equal('ssh-keyscan', command)
++        assert_equal(%w[-T 5 -p], args.take(3))
++        "[#{args.last}]:#{args[3]} ssh-ed25519 #{key}"
++      end
++      KbRuntime::Software.stub(:command, scan) do
++        record = { 'endpoints' => { 'services' => endpoint } }
++        engine.establish_ssh_trust(record)
++        retained = File.binread(known)
++        engine.establish_ssh_trust(record)
++        assert_equal(retained, File.binread(known))
++        [endpoint.merge('port' => 20_022), endpoint.merge('host' => '127.0.0.2')].each do |changed|
++          assert_raises(KbRuntime::Error) { engine.establish_ssh_trust('endpoints' => { 'services' => changed }) }
++          assert_equal(retained, File.binread(known))
++        end
++        key = 'a-different-guest-key'
++        assert_raises(KbRuntime::Error) { engine.establish_ssh_trust(record) }
++        assert_equal(retained, File.binread(known))
++      end
++    end
++  end
++
+   def test_capture_gate_makes_status_busy_without_mutating_receipts
+     Dir.mktmpdir do |directory|
+       state = KbRuntime::State.new(File.join(directory, 'state'), 'example')
+@@ -298,6 +331,50 @@ class RuntimeLifecycleTest < Minitest::Test
+       resources: KbRuntime::Resources.new(state, root: claims))
+   end
+ 
++  def retained_files(value)
++    [value.state.directory, value.resources.root].flat_map do |root|
++      Dir.glob(File.join(root, '**', '*')).select { |path| File.file?(path) }
++    end.to_h { |path| [path, [File.stat(path).ino, File.binread(path)]] }
++  end
++
++  %w[host port network].each do |change|
++    define_method("test_update_rejects_changed_ssh_#{change}_before_any_retained_state_mutation") do
++      Dir.mktmpdir do |directory|
++        value = engine(File.join(directory, 'state'), File.join(directory, 'claims'))
++        requested = config
++        begin
++          value.start(config: requested, network: 'local', timeout: 5)
++          old = value.launch
++          retained = retained_files(value)
++          candidate = Marshal.load(Marshal.dump(requested))
++          network = 'local'
++          case change
++          when 'host'
++            candidate['local']['bindAddress'] = '127.0.0.2'
++          when 'port'
++            candidate['local']['ports']['services']['ssh'] = old['endpoints']['services']['port'] == 20_022 ? 20_023 : 20_022
++          when 'network'
++            network = 'bridge'
++            candidate['services']['ip'] = '192.0.2.20'
++            candidate['network'] = { 'dedicated' => true, 'bridge' => 'test-br' }
++          end
++          value.software.metadata['revision'] = 'b' * 40
++          error = assert_raises(KbRuntime::Error) { value.update(config: candidate, topology: 'single', network:, timeout: 5) }
++          assert_match(/unchanged SSH endpoints/, error.message)
++          assert_equal(retained, retained_files(value), 'preflight must preserve files, credentials, journal and claims')
++          assert_equal(old, value.launch)
++          assert_equal('ready', value.phase['phase'])
++          refute(File.exist?(value.state.path('update.json')))
++          assert_equal(old['credential_identity'], KbRuntime::Software.credentials_identity(value.state.path('credentials')))
++          assert_equal(1, value.software.builds)
++          assert(value.live?(old))
++        ensure
++          value.stop(timeout: 5) if File.exist?(value.state.path('phase.json'))
++        end
++      end
++    end
++  end
++
+   def test_two_same_slug_runs_have_disjoint_resources_and_cleanup_only_their_own_instance
+     Dir.mktmpdir do |directory|
+       claims = File.join(directory, 'claims')

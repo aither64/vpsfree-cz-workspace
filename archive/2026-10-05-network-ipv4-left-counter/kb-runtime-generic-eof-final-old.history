@@ -1,0 +1,13 @@
+commit 9b5bb4d61413e1de7702f45b50ef3229d2b93244
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 10:15:43 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 7 10:15:43 2026 +0200
+
+    cluster: mediate capture leases through the generation guard
+    
+    Relay capture-lease input, readiness and diagnostics through dispatcher-owned
+    pipes. Retain the selected package-generation guard through provider exit and
+    reaping, and cancel the owned child when the caller or relay is lost.
+    
+    Other provider commands retain their buffered dispatch and exit behavior.

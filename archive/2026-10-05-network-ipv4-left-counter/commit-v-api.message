@@ -1,0 +1,13 @@
+api: add network availability admission controls
+
+Allow administrators to disable new use of a network without interrupting
+existing assigned addresses. Count available public IPv4 allocation rows
+only in enabled pools and expose optional availability metadata and filters.
+
+Capture each operation's source and destination networks before reserving IP
+rows, retaining that set through included allocations and retries. Recheck
+current address identity and eligibility after reservation while preserving
+trusted assigned-address continuity during migration, swap and restore.
+
+The additive enabled column defaults to true. Update all API writers before
+disabling a network; older writers do not enforce this policy.

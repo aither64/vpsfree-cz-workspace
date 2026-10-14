@@ -1,0 +1,63 @@
+{
+  "status": "UNRUN; source-only static inspection",
+  "new_cases": [
+    {
+      "label": "malformed HTTP404",
+      "http_status": 404
+    },
+    {
+      "label": "malformed HTTP200",
+      "http_status": 200
+    },
+    {
+      "label": "null envelope",
+      "http_status": 200
+    },
+    {
+      "label": "array envelope",
+      "http_status": 200
+    },
+    {
+      "label": "primitive envelope",
+      "http_status": 200
+    },
+    {
+      "label": "false success status",
+      "http_status": 200
+    },
+    {
+      "label": "non-boolean success status",
+      "http_status": 200
+    },
+    {
+      "label": "missing response",
+      "http_status": 200
+    },
+    {
+      "label": "null response",
+      "http_status": 200
+    },
+    {
+      "label": "array response",
+      "http_status": 200
+    },
+    {
+      "label": "primitive response",
+      "http_status": 200
+    }
+  ],
+  "each_case_requires": [
+    "Error class and exact bounded diagnostic",
+    "no cause",
+    "message under 192 characters and stack under 4096 characters",
+    "no synthetic response/account/password values in message or stack",
+    "one exact member GET /v7.0/users/current only",
+    "no browser/navigation/provisioning/follow-on request or fixture metadata publication"
+  ],
+  "existing_valid_JSON_404_and_all_other_cases_retained": true,
+  "unchanged_hosted_selectors": [
+    "nix develop --command node tools/test-ip-inventory.cjs",
+    "nix develop --command bin/check --allow-missing"
+  ],
+  "limits": "Prospective source only; no repaired hosted pass, helper/guest/capture qualification or runtime operation."
+}

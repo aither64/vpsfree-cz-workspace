@@ -1,0 +1,12 @@
+runtime: quiesce control thread before closing listener
+
+Stop and join the runner's control thread before closing its UNIX listener,
+then remove only its own control socket. This avoids intentional listener
+closure racing a pending accept while preserving unexpected thread failures
+and the engine's strict namespace and exit-proof checks.
+
+Exercise the ordering through the real listener and public stop. Preserve
+fixture primary failures, report secondary cleanup failures, and retain
+private native diagnostics before temporary fixture removal. State formats
+and cleanup permissions are unchanged; retained campaigns gain no recovery
+or cleanup authority.

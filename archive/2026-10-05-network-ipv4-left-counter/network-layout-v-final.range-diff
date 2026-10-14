@@ -1,0 +1,335 @@
+1:  5b6700dc6 = 1:  5b6700dc6 api: add network availability admission controls
+2:  bee928bb1 ! 2:  d604da2a6 webui: expose network availability and inventory
+    @@ Commit message
+         address, preserving existing service links and stale-form guards.
+     
+      ## tests/playwright/webui/specs/admin-cluster.spec.cjs ##
+    +@@ tests/playwright/webui/specs/admin-cluster.spec.cjs: async function expectTableWithinContent(page, selector) {
+    +   expect(layout.scrollWidth).toBeLessThanOrEqual(layout.clientWidth + 1);
+    + }
+    + 
+    ++async function switchLanguage(page, locale) {
+    ++  await Promise.all([
+    ++    page.waitForNavigation({ waitUntil: 'domcontentloaded' }),
+    ++    page.locator(`#langbox a[href*="newlang=${encodeURIComponent(locale)}"]`).click(),
+    ++  ]);
+    ++}
+    ++
+    ++async function expectNetworkAlignment(row) {
+    ++  await expect(row.locator('td')).toHaveCount(4);
+    ++  await expect(row.locator('dl.inline.network-properties')).toHaveCount(1);
+    ++  await expect(row.locator('dl.inline.network-usage')).toHaveCount(1);
+    ++  const layout = await row.evaluate((element) => {
+    ++    const bounds = (node) => {
+    ++      const { top, bottom, left, right } = node.getBoundingClientRect();
+    ++      return { top, bottom, left, right };
+    ++    };
+    ++    const textBounds = (node) => {
+    ++      const range = document.createRange();
+    ++      range.selectNodeContents(node);
+    ++      return bounds(range);
+    ++    };
+    ++    return {
+    ++      cells: [...element.children].map((cell) => ({
+    ++        overflow: cell.scrollWidth - cell.clientWidth,
+    ++        verticalAlign: getComputedStyle(cell).verticalAlign,
+    ++      })),
+    ++      groups: [...element.querySelectorAll('dl.inline')].map((list) => ({
+    ++        counts: list.classList.contains('network-usage'),
+    ++        bounds: bounds(list),
+    ++        cell: bounds(list.parentElement),
+    ++        display: getComputedStyle(list).display,
+    ++        margins: ['marginTop', 'marginRight', 'marginBottom', 'marginLeft']
+    ++          .map((name) => getComputedStyle(list)[name]),
+    ++        rowGap: parseFloat(getComputedStyle(list).rowGap),
+    ++        pairs: [...list.querySelectorAll('dt')].map((label) => {
+    ++          const value = label.nextElementSibling;
+    ++          return {
+    ++            label: bounds(label),
+    ++            labelText: textBounds(label),
+    ++            labelWeight: getComputedStyle(label).fontWeight,
+    ++            value: bounds(value),
+    ++            valueText: textBounds(value),
+    ++            valueAlign: getComputedStyle(value).textAlign,
+    ++            countWeight: value.querySelector('strong')
+    ++              ? getComputedStyle(value.querySelector('strong')).fontWeight : null,
+    ++          };
+    ++        }),
+    ++      })),
+    ++    };
+    ++  });
+    ++  for (const cell of layout.cells) {
+    ++    expect(cell.verticalAlign).toBe('top');
+    ++    expect(cell.overflow).toBeLessThanOrEqual(1);
+    ++  }
+    ++  expect(Math.abs(layout.groups[0].bounds.top - layout.groups[1].bounds.top)).toBeLessThanOrEqual(1);
+    ++  for (const group of layout.groups) {
+    ++    expect(group.display).toBe('grid');
+    ++    expect(group.margins).toEqual(['0px', '0px', '0px', '0px']);
+    ++    expect(group.rowGap).toBe(5);
+    ++    expect(group.pairs).toHaveLength(group.counts ? 5 : 3);
+    ++    expect(group.bounds.left).toBeGreaterThanOrEqual(group.cell.left);
+    ++    expect(group.bounds.right).toBeLessThanOrEqual(group.cell.right);
+    ++    for (const [index, pair] of group.pairs.entries()) {
+    ++      expect(pair.labelWeight).toBe('400');
+    ++      expect(pair.valueAlign).toBe(group.counts ? 'right' : 'left');
+    ++      expect(pair.value.left - pair.label.right).toBeGreaterThanOrEqual(9);
+    ++      expect(Math.abs(pair.label.top - pair.value.top)).toBeLessThanOrEqual(1);
+    ++      expect(Math.abs(pair.labelText.left - pair.label.left)).toBeLessThanOrEqual(1);
+    ++      expect(pair.labelText.right).toBeLessThanOrEqual(pair.label.right + 1);
+    ++      expect(pair.valueText.left).toBeGreaterThanOrEqual(pair.value.left - 1);
+    ++      expect(pair.valueText.right).toBeLessThanOrEqual(pair.value.right + 1);
+    ++      expect(pair.valueText.bottom).toBeLessThanOrEqual(group.cell.bottom + 1);
+    ++      const edge = group.counts ? 'right' : 'left';
+    ++      expect(Math.abs(pair.valueText[edge] - pair.value[edge])).toBeLessThanOrEqual(1);
+    ++      if (group.counts) {
+    ++        expect(Number(pair.countWeight)).toBeGreaterThanOrEqual(700);
+    ++        expect(Math.abs(pair.valueText.right - group.pairs[0].valueText.right)).toBeLessThanOrEqual(1);
+    ++      }
+    ++      if (index > 0) {
+    ++        const previous = group.pairs[index - 1];
+    ++        expect(Math.abs(pair.label.top - Math.max(previous.label.bottom, previous.value.bottom)
+    ++          - group.rowGap)).toBeLessThanOrEqual(1);
+    ++      }
+    ++    }
+    ++  }
+    ++}
+    ++
+    + function resourcePackageItemRow(page, resourceLabel) {
+    +   return page.locator('table.table-style01 tr', {
+    +     has: page.locator('a[href*="resource_packages_item_edit"]'),
+     @@ tests/playwright/webui/specs/admin-cluster.spec.cjs: test.describe.serial('admin cluster browser coverage', () => {
+          await logout(page, fixtures.admin.username);
+        });
+      
+    -+  test('network availability uses confirmed POST targets and retains inventory in both directions', async ({ page }) => {
+    ++  test('network availability uses confirmed POST targets and retains inventory in both directions', async ({ page }, testInfo) => {
+     +    const network = requireClusterAdminFixtures().networks.networkToLocation;
+     +    await login(page, fixtures.admin);
+     +    await gotoCluster(page, 'network_enabled', { network: network.id });
+    @@ tests/playwright/webui/specs/admin-cluster.spec.cjs: test.describe.serial('admin
+     +    }).locator('[data-network-enabled] img');
+     +    await expect(enabledIcon).toHaveCount(1);
+     +    await expect(enabledIcon).toHaveAttribute('src', 'template/icons/transact_fail.png');
+    ++    try {
+    ++      for (const [language, locale, properties, usage] of [
+    ++        ['en', 'en_US.utf8', 'Properties', 'IP usage'],
+    ++        ['cs', 'cs_CZ.utf8', 'Vlastnosti', 'Využití IP'],
+    ++      ]) {
+    ++        await switchLanguage(page, locale);
+    ++        await expect(page.locator('html')).toHaveAttribute('lang', language);
+    ++        await expect(page.locator('#network-list th').nth(1)).toHaveText(properties);
+    ++        await expect(page.locator('#network-list th').nth(2)).toHaveText(usage);
+    ++        await networkRow.scrollIntoViewIfNeeded();
+    ++        await expectTableWithinContent(page, '#network-list');
+    ++        await expectNetworkAlignment(networkRow);
+    ++        await expect(networkRow.locator('[data-network-count="available_to_users"]')).toHaveText('0');
+    ++        await expect(enabledIcon).toHaveAttribute('src', 'template/icons/transact_fail.png');
+    ++        await expect(networkRow.locator('a[href*="action=ip_addresses"]')).toBeVisible();
+    ++        await expect(networkRow.locator('a[href*="action=network_locations"]')).toBeVisible();
+    ++        await page.screenshot({ path: testInfo.outputPath(`network-list-alignment-${language}.png`), fullPage: false });
+    ++        await expectNetworkAlignment(networkRow);
+    ++      }
+    ++    } finally {
+    ++      await switchLanguage(page, 'en_US.utf8');
+    ++    }
+     +    await gotoCluster(page, 'network_enabled', { network: network.id });
+     +    form = formByAction(page, 'action=network_enabled');
+     +    await expect(form.locator('input[name="enabled"]')).toHaveValue('1');
+    @@ webui/forms/cluster.forms.php: function networks_list()
+     -				title="' . _('List IP addresses in this network') . '">',
+     -                ['network' => $n->id]
+     -            )
+    -+            '<div>' . h(_('Type')) . ': ' . h([
+    ++            '<dl class="inline network-properties"><dt>' . h(_('Type')) . '</dt><dd>' . h([
+     +                'public_access' => 'Pub',
+     +                'private_access' => 'Priv',
+    -+            ][$n->role]) . '</div>'
+    -+            . '<div>' . h(_('Managed')) . ': ' . boolean_icon($n->managed) . '</div>'
+    -+            . '<div data-network-enabled>' . h(_('Enabled')) . ': ' . ($enabled !== null
+    ++            ][$n->role]) . '</dd>'
+    ++            . '<dt>' . h(_('Managed')) . '</dt><dd>' . boolean_icon($n->managed) . '</dd>'
+    ++            . '<dt>' . h(_('Enabled')) . '</dt><dd data-network-enabled>' . ($enabled !== null
+     +                ? boolean_icon($enabled) . ($canUpdateEnabled
+     +                    ? ' <a href="?page=cluster&action=network_enabled&network=' . $n->id . '">'
+     +                        . h(_('Edit')) . '</a>' : '')
+    -+                : '-') . '</div>'
+    ++                : '-') . '</dd></dl>'
+              );
+     +        $attributes = $n->attributes();
+    -+        $usage = '';
+    ++        $usage = '<dl class="inline network-usage">';
+     +        foreach ([
+     +            ['available_to_users', _('Available to users'), _('Registered addresses or prefixes with no owner or interface assignment, and not reserved by an operation. Disabled networks contribute zero. Use on a particular VPS also depends on location, network purpose and user limits.')],
+     +            ['owned_unassigned', _('Owned, not assigned'), _('Addresses or prefixes held by users but not assigned to any interface. Other users cannot take them. Includes reserved entries and disabled networks; assignment still requires an enabled network and no conflicting reservation.')],
+    @@ webui/forms/cluster.forms.php: function networks_list()
+     +            ['size', _('Total capacity'), _('Number of allocation units implied by the network and split prefixes, including entries not yet registered. This is not the available pool.')],
+     +        ] as [$field, $label, $tooltip]) {
+     +            $value = $attributes[$field] ?? null;
+    -+            $usage .= '<div><span tabindex="0" title="' . h($tooltip) . '" aria-label="'
+    -+                . h($label . '. ' . $tooltip) . '">' . h($label) . '</span>: '
+    -+                . '<strong data-network-count="' . h($field) . '">'
+    -+                . (is_numeric($value) ? approx_number($value) : '-') . '</strong></div>';
+    ++            $usage .= '<dt><span tabindex="0" title="' . h($tooltip) . '" aria-label="'
+    ++                . h($label . '. ' . $tooltip) . '">' . h($label) . '</span></dt>'
+    ++                . '<dd><strong data-network-count="' . h($field) . '">'
+    ++                . (is_numeric($value) ? approx_number($value) : '-') . '</strong></dd>';
+     +        }
+    -+        $xtpl->table_td($usage);
+    ++        $xtpl->table_td($usage . '</dl>');
+              $xtpl->table_td(
+     -            '<a href="?page=cluster&action=network_locations&network=' . $n->id . '">'
+     -            . '<img
+    @@ webui/forms/cluster.forms.php: function networks_list()
+              );
+              $xtpl->table_tr();
+          }
+    -@@ webui/forms/cluster.forms.php: function networks_list()
+    -     $xtpl->table_out();
+    - }
+      
+    +-    $xtpl->table_out();
+    ++    $xtpl->table_out('network-list');
+    ++}
+    ++
+     +function network_enabled_form($network_id)
+     +{
+     +    global $xtpl, $api;
+    @@ webui/forms/cluster.forms.php: function networks_list()
+     +    $xtpl->table_tr();
+     +    $xtpl->form_add_checkbox(_('Confirm') . ':', 'confirm', '1', false);
+     +    $xtpl->form_out($enabled ? _('Disable this network') : _('Enable this network'));
+    -+}
+    -+
+    + }
+    + 
+      function ip_list_link($page, $text, $conds)
+    - {
+    -     $str_conds = [];
+     
+      ## webui/forms/networking.forms.php ##
+     @@ webui/forms/networking.forms.php: function ip_address_list($page)
+    @@ webui/pages/page_cluster.php: if (isAdmin()) {
+                  location_networks_list($_GET['location']);
+                  $xtpl->sbar_add(_("Back to locations"), '?page=cluster&action=locations');
+     
+    + ## webui/public/template/css/main.css ##
+    +@@ webui/public/template/css/main.css: dl.inline dd {
+    +   margin: 0;
+    + }
+    + 
+    ++#network-list td {
+    ++  vertical-align: top;
+    ++}
+    ++
+    ++#network-list dl.inline {
+    ++  grid-template-columns: auto minmax(0, 1fr);
+    ++  align-items: start;
+    ++  margin: 0;
+    ++}
+    ++
+    ++#network-list dt {
+    ++  font-weight: normal;
+    ++}
+    ++
+    ++#network-list dd {
+    ++  text-align: left;
+    ++}
+    ++
+    ++#network-list .network-usage dd {
+    ++  text-align: right;
+    ++}
+    ++
+    + #password-change-history {
+    +   table-layout: fixed;
+    + }
+    +
+      ## webui/tests/Regression/CsrfStateFormsTest.php ##
+     @@ webui/tests/Regression/CsrfStateFormsTest.php: if (!class_exists('CsrfTokenInvalid')) {
+      
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +            $row = $xpath->query('//tr[td[1]/strong="192.0.2.0/24"]')->item(0);
+     +            self::assertNotNull($row);
+     +            self::assertSame(4, $xpath->query('./td', $row)->length);
+    ++            self::assertSame(2, $xpath->query('//table[@id="network-list"]/tr')->length);
+     +            self::assertStringContainsString('test network', $row->textContent);
+    -+            $cell = $xpath->query('.//div[@data-network-enabled]', $row)->item(0);
+    ++            $properties = $xpath->query('./td[2]/dl[@class="inline network-properties"]', $row)->item(0);
+    ++            self::assertNotNull($properties);
+    ++            self::assertSame(3, $xpath->query('./dt', $properties)->length);
+    ++            self::assertSame(3, $xpath->query('./dd', $properties)->length);
+    ++            self::assertSame([_('Type'), _('Managed'), _('Enabled')], array_map(
+    ++                static fn($label) => $label->textContent,
+    ++                iterator_to_array($xpath->query('./dt', $properties))
+    ++            ));
+    ++            self::assertSame('Pub', $xpath->query('./dt[1]/following-sibling::dd[1]', $properties)->item(0)->textContent);
+    ++            self::assertSame('template/icons/transact_fail.png', $xpath->query('./dt[2]/following-sibling::dd[1]/img/@src', $properties)->item(0)->nodeValue);
+    ++            self::assertSame(0, $xpath->query('.//strong', $properties)->length);
+    ++            $cell = $xpath->query('./dd[@data-network-enabled]', $properties)->item(0);
+     +            self::assertNotNull($cell);
+    ++            self::assertSame(_('Enabled'), $xpath->query('./preceding-sibling::dt[1]', $cell)->item(0)->textContent);
+     +            if ($enabled === null) {
+    -+                self::assertSame(_('Enabled') . ': -', trim($cell->textContent));
+    ++                self::assertSame('-', trim($cell->textContent));
+     +                self::assertSame(0, $xpath->query('.//img|.//a', $cell)->length);
+     +            } else {
+     +                self::assertSame(
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +                    $xpath->query('.//img/@src', $cell)->item(0)->nodeValue
+     +                );
+     +                self::assertSame($supported ? 1 : 0, $xpath->query('.//a[contains(@href,"action=network_enabled")]', $cell)->length);
+    ++                if ($supported) {
+    ++                    self::assertSame(_('Edit'), $xpath->query('.//a', $cell)->item(0)->textContent);
+    ++                }
+     +            }
+     +        }
+     +    }
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +            foreach (['available_to_users', 'owned_unassigned', 'assigned', 'used', 'size'] as $field) {
+     +                $value = $xpath->query('//*[@data-network-count="' . $field . '"]')->item(0);
+     +                self::assertNotNull($value);
+    ++                self::assertSame('strong', $value->nodeName);
+    ++                self::assertSame('dd', $value->parentNode->nodeName);
+    ++                self::assertSame('inline network-usage', $value->parentNode->parentNode->getAttribute('class'));
+    ++                $label = $xpath->query('./preceding-sibling::dt[1]/span', $value->parentNode)->item(0);
+    ++                self::assertNotNull($label);
+    ++                self::assertSame('0', $label->getAttribute('tabindex'));
+    ++                self::assertSame(match ($field) {
+    ++                    'available_to_users' => _('Available to users'),
+    ++                    'owned_unassigned' => _('Owned, not assigned'),
+    ++                    'assigned' => _('Assigned'),
+    ++                    'used' => _('Registered in vpsAdmin'),
+    ++                    'size' => _('Total capacity'),
+    ++                }, $label->textContent);
+     +                $expected = match ($field) {
+     +                    'assigned' => '1', 'used' => '2', 'size' => '256',
+     +                    default => $counters === null ? '-' : (string) $counters[$field],
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +                self::assertSame($expected, trim($value->textContent));
+     +            }
+     +            self::assertSame(4, $xpath->query('//th')->length);
+    ++            self::assertSame(5, $xpath->query('//dl[@class="inline network-usage"]/dt')->length);
+    ++            self::assertSame(5, $xpath->query('//dl[@class="inline network-usage"]/dd')->length);
+    ++            self::assertSame(0, $xpath->query('//dl[@class="inline network-usage"]/dt//strong')->length);
+     +            self::assertStringContainsString(h(_('Properties')), $html);
+     +            self::assertStringContainsString(h(_('IP usage')), $html);
+     +            self::assertStringContainsString(h(_('Actions')), $html);
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +        $html = $xtpl->text('main.table');
+     +        $xpath = $this->xpath($html);
+     +        $capacity = $xpath->query('//*[@data-network-count="size"]')->item(0);
+    ++        self::assertSame('dd', $capacity->parentNode->nodeName);
+     +        self::assertSame('12', $xpath->query('.//sup', $capacity)->item(0)->textContent);
+     +        self::assertStringContainsString('10', $capacity->textContent);
+     +        self::assertStringNotContainsString('&lt;sup', $html);
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +        self::assertStringContainsString('&lt;img', $html);
+     +        self::assertSame(0, $xpath->query('//img[@onerror]')->length);
+     +        $description = _('Registered addresses or prefixes with no owner or interface assignment, and not reserved by an operation. Disabled networks contribute zero. Use on a particular VPS also depends on location, network purpose and user limits.');
+    -+        $label = $xpath->query('//*[@data-network-count="available_to_users"]/preceding-sibling::span')->item(0);
+    ++        $label = $xpath->query('//*[@data-network-count="available_to_users"]/parent::dd/preceding-sibling::dt[1]/span')->item(0);
+     +        self::assertSame($description, $label->getAttribute('title'));
+     +        self::assertSame(_('Available to users') . '. ' . $description, $label->getAttribute('aria-label'));
+     +    }
+3:  da3ae4feb = 3:  a4fa90b89 api: restrict non-admin network and IP lists
+4:  cc8e9e7e4 = 4:  12a3cb677 api: expose authoritative network inventory counts

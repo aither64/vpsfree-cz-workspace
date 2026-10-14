@@ -1,0 +1,14 @@
+diff --git a/api/spec/models/ip_release_campaign_spec.rb b/api/spec/models/ip_release_campaign_spec.rb
+index a9d59b2e047e67f5c1c85fc3f6bd8427e9b5ba82..89dea85ea6661f0ec161431c4ef3431a6839afa6 100644
+--- a/api/spec/models/ip_release_campaign_spec.rb
++++ b/api/spec/models/ip_release_campaign_spec.rb
+@@ -718,6 +718,9 @@ RSpec.describe IpReleaseCampaign do
+   end
+ 
+   it 'renders singular and plural subjects, text and HTML for each message selection' do
++    # Generate lazy ActiveRecord readers before verifying the template doubles.
++    described_class.define_attribute_methods
++    IpReleaseRequest.define_attribute_methods
+     IpReleaseRequestAddress.define_attribute_methods
+     %w[requested reminder].product([1, 2, 5], [true, false], [true, false]).each do |event, count, allow_keep, public_ipv4|
+       addresses = Array.new(count) do |i|

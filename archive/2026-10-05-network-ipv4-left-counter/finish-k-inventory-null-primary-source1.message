@@ -1,0 +1,9 @@
+capture: accept saved non-primary location associations
+
+The selected vpsAdmin model stores false primary flags as null so its
+unique index permits multiple non-primary associations. Accept exactly
+false or null while keeping autopick and userpick strictly false.
+
+Model the save callback and retain the literal false request. Cover new
+and retained associations, safe disabled reuse and malformed flags that
+must refuse before address registration or network disable.

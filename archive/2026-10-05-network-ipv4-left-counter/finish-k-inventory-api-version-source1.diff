@@ -1,0 +1,142 @@
+diff --git a/fixtures/prepare.cjs b/fixtures/prepare.cjs
+index 953ed4c4c857e304c97af4b2e2b65f801c4f1c94..fc45cbfd0ec1f9fb04ec406c9dda3c8992190c88 100644
+--- a/fixtures/prepare.cjs
++++ b/fixtures/prepare.cjs
+@@ -450,12 +450,15 @@ async function networkInterface(cluster, node, vpsId) {
+   return interfaces[0];
+ }
+ 
++// The selected vpsAdmin input exposes API 7.0; check this contract when changing its pin.
++const INVENTORY_API_VERSION = '7.0';
++
+ // The dedicated inventory fixture uses ordinary authenticated resource actions.
+ // Its HTTPS destination still comes exclusively from the leased descriptor.
+ function inventoryApi(cluster, login) {
+   return async (method, resource, body) => {
+     cluster.assertLease();
+-    const url = new URL(`v1/${resource}`, cluster.apiUrl);
++    const url = new URL(`v${INVENTORY_API_VERSION}/${resource}`, cluster.apiUrl);
+     const endpoint = cluster.route(url);
+     const account = cluster.account(login);
+     const bytes = body === undefined ? null : JSON.stringify(body);
+@@ -481,7 +484,9 @@ function inventoryApi(cluster, login) {
+           try {
+             cluster.assertLease();
+             const value = JSON.parse(data);
+-            if (response.statusCode !== 200 || value.status !== true) throw new Error('Inventory resource action failed');
++            if (response.statusCode !== 200 || value.status !== true) {
++              throw new Error(`Inventory resource action failed: ${method.slice(0, 8)} ${url.pathname.slice(0, 128)} (HTTP ${response.statusCode})`);
++            }
+             resolve(value.response);
+           } catch (error) { reject(error); }
+         });
+diff --git a/tools/test-ip-inventory.cjs b/tools/test-ip-inventory.cjs
+index 5d996ee8d786dfe9efc1734b4072fddab353b8a1..7815cd00726f4832118ac3ba78850c0e4a10ae8f 100644
+--- a/tools/test-ip-inventory.cjs
++++ b/tools/test-ip-inventory.cjs
+@@ -10,7 +10,7 @@ const { spawn } = require('node:child_process');
+ const { createInterface } = require('node:readline');
+ const crypto = require('node:crypto');
+ const { Connection } = require('../lib/connection.cjs');
+-const { assertInventoryMember, ensureIpInventory,
++const { assertInventoryMember, ensureIpInventory, inventoryIdentity,
+   INVENTORY_POOL, INVENTORY_RESOURCES, prepareFixtures } = require('../fixtures/prepare.cjs');
+ const { heldController, observeLeaseState } = require('./verify-live-lease.cjs');
+ 
+@@ -45,17 +45,24 @@ function mockInventoryTransport(t, respond) {
+     assert.equal(options.ca.toString(), 'synthetic CA');
+     assert.equal(options.headers.Cookie, undefined);
+     assert(options.signal instanceof AbortSignal);
++    assert.match(options.path, /^\/v7\.0\//, 'every inventory action uses the selected wire API version');
++    if (calls.length < 2) {
++      assert.equal(options.method, 'GET');
++      assert.equal(options.path, '/v7.0/users/current');
++      assert.equal(login, ['test-user1', 'test-admin'][calls.length]);
++    }
+     const request = new EventEmitter();
+     request.setTimeout = () => request;
+     request.destroy = (error) => request.emit('error', error);
+     request.end = (bytes) => {
+-      const call = { login, method: options.method, resource: options.path.replace(/^\/v1\//, ''), body: bytes ? JSON.parse(bytes) : undefined };
++      const call = { login, method: options.method, wirePath: options.path,
++        resource: options.path.replace(/^\/v7\.0\//, ''), body: bytes ? JSON.parse(bytes) : undefined };
+       calls.push(call);
+       Promise.resolve().then(() => respond(call)).then((result) => {
+         const response = new PassThrough();
+         response.statusCode = result.statusCode || 200;
+         callback(response);
+-        response.end(JSON.stringify(result.denied ? { status: false } : { status: true, response: result.response }));
++        response.end(JSON.stringify(result.denied ? { status: false, ...result.failure } : { status: true, response: result.response }));
+       }).catch((error) => request.emit('error', error));
+     };
+     return request;
+@@ -110,6 +117,8 @@ test('actual inventory preparation proves both API identities and admin-only dis
+     const result = await prepareFixtures({ cluster, page, language: 'en', required: ['ip-inventory'], invocationRoot });
+     assert.deepEqual(result.inventoryMember, { id: 2, login: 'test-user1' });
+     assert.deepEqual(calls.slice(0, 2).map((call) => [call.login, call.resource]), [['test-user1', 'users/current'], ['test-admin', 'users/current']]);
++    assert.deepEqual(calls.slice(0, 2).map((call) => [call.login, call.method, call.wirePath]),
++      [['test-user1', 'GET', '/v7.0/users/current'], ['test-admin', 'GET', '/v7.0/users/current']]);
+     assert.equal(result.inventoryVpsId, 10);
+     assert.equal(navigation.length, 2, 'only owned VPS discovery and running-state reads are needed');
+     assert.equal(cluster.account().login, 'test-user1', 'default browser account remains the ordinary member');
+@@ -119,6 +128,32 @@ test('actual inventory preparation proves both API identities and admin-only dis
+   });
+ });
+ 
++test('inventory HTTP 404 refuses before browser or mutation without leaking diagnostic values', async (t) => {
++  const accounts = recordedAccounts();
++  const secret = 'synthetic-raw-response-secret';
++  const calls = mockInventoryTransport(t, () => ({ statusCode: 404, denied: true,
++    failure: { response: { private: secret }, message: secret, errors: { authorization: secret } },
++  }));
++  await withInventoryConnection(accounts, async (cluster, _abort, root) => {
++    const page = {
++      locator() { assert.fail('HTTP refusal must precede browser work'); },
++      goto() { assert.fail('HTTP refusal must precede browser navigation'); },
++    };
++    const invocationRoot = path.join(root, 'invocation');
++    await assert.rejects(prepareFixtures({ cluster, page, language: 'en', required: ['ip-inventory'], invocationRoot }), (error) => {
++      assert.equal(error.message, 'Inventory resource action failed: GET /v7.0/users/current (HTTP 404)');
++      assert(error.message.length < 192);
++      for (const value of [secret, ...accounts.flatMap((account) => [account.login, account.password])]) {
++        assert(!error.message.includes(value), 'diagnostics contain no response or account values');
++      }
++      return true;
++    });
++    assert.equal(fs.existsSync(invocationRoot), false, 'refusal cannot publish fixture metadata');
++  });
++  assert.deepEqual(calls.map((call) => [call.login, call.method, call.wirePath]),
++    [['test-user1', 'GET', '/v7.0/users/current']], 'no fallback, second identity request or provisioning mutation follows refusal');
++});
++
+ for (const wrong of ['missing', 'duplicate', 'role', 'namespace', 'password']) {
+   test(`recorded inventory account ${wrong} refuses before HTTP or browser mutation`, async (t) => {
+     const accounts = recordedAccounts();
+@@ -231,9 +266,25 @@ test('first provision uses public owned registration while enabled then disables
+   assert(calls.every(([method]) => method === 'GET'), 'rerun must not reenable, allocate or charge again');
+ });
+ 
+-test('a fresh dedicated public pool and location are provisioned before the owned address and disable', async () => {
++test('a fresh dedicated public pool and location are provisioned before the owned address and disable', async (t) => {
+   const { api, calls } = fixture({ networkMissing: true, locationMissing: true, missing: true });
+-  await ensureIpInventory(api, { userId: 2, vpsId: 10 });
++  const wireCalls = mockInventoryTransport(t, async (call) => {
++    if (call.resource === 'users/current') return { response: currentUser(call.login) };
++    assert.equal(call.login, 'test-admin');
++    return { response: await api(call.method, call.resource, call.body) };
++  });
++  await withInventoryConnection(recordedAccounts(), async (cluster) => {
++    const { adminApi } = await inventoryIdentity(cluster);
++    await ensureIpInventory(adminApi, { userId: 2, vpsId: 10 });
++  });
++  assert.deepEqual(wireCalls.map((call) => [call.method, call.wirePath]), [
++    ['GET', '/v7.0/users/current'], ['GET', '/v7.0/users/current'],
++    ['GET', '/v7.0/vpses/10'], ['GET', '/v7.0/nodes/101'], ['GET', '/v7.0/locations/1'],
++    ['GET', '/v7.0/networks?limit=1000'], ['POST', '/v7.0/networks'],
++    ['GET', '/v7.0/location_networks?network=5&limit=1000'], ['POST', '/v7.0/location_networks'],
++    ['GET', '/v7.0/ip_addresses?network=5&limit=1000'], ['POST', '/v7.0/ip_addresses'],
++    ['GET', '/v7.0/ip_addresses?vps=10&version=4&limit=1000'], ['PUT', '/v7.0/networks/5'],
++  ]);
+   assert.deepEqual(calls.filter(([method]) => method !== 'GET').map(([method, resource]) => [method, resource]), [
+     ['POST', 'networks'], ['POST', 'location_networks'], ['POST', 'ip_addresses'], ['PUT', 'networks/5'],
+   ]);

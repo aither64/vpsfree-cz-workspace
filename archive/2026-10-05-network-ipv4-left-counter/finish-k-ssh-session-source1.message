@@ -1,0 +1,11 @@
+runtime: bound SSH discovery and isolate runner sessions
+
+Wait for each recorded SSH endpoint under the existing readiness deadline,
+retain bounded native diagnostics privately, and publish initial trust only
+when every machine succeeds. Retained host-key trust and strict guest
+identity checks remain unchanged.
+
+Establish the runner's own POSIX session before creating machines while
+preserving its PID, argument vector, receipt and cleanup authority. This
+separates inherited terminal/group lifetime without escaping cgroup policy
+or changing the retained predecessor.

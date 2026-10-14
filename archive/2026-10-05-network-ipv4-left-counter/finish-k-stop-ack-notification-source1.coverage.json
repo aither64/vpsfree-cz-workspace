@@ -1,0 +1,21 @@
+{
+  "status": "declared, unexecuted",
+  "new_test": "RunnerSessionTest#test_first_valid_stop_notifies_once_when_its_acknowledgement_hits_a_closed_client",
+  "assertions": [
+    "invalid request EOF leaves ready marker and no machine stop",
+    "first valid request has latched before barrier, readiness withdrawn, actual reply still blocked",
+    "client closes before actual underlying write; native Errno::EPIPE from puts/flush retained in private file and native log",
+    "same exact runner starts one graceful drain with its retained live child/claims and false completion",
+    "later actual public Engine.stop authenticates a successful second acknowledgement and waits for the same child",
+    "no repeated machine stop; normal exact exit proof, stopped phase, claims released, socket namespace absent",
+    "original children retained in terminal receipt; directly owned runner reaped with successful native exit"
+  ],
+  "baseline_machine_test_methods": 18,
+  "draft_machine_test_methods": 19,
+  "hosted_workflow": ".github/workflows/check.yml / Check",
+  "hosted_command": "nix develop --command bin/check --allow-missing",
+  "affected_existing_owner": "ruby tools/test-machine.rb",
+  "existing_selectors_changed": false,
+  "root_gates": "normal consolidation/publication, exact hosted K/E proof, direct step9 finding disposition",
+  "guest_or_operation_proof": false
+}

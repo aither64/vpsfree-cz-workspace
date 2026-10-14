@@ -1,0 +1,41 @@
+{
+  "source_baseline": "49221a07e2fabbee4a3621979f814eac8c8bad9d",
+  "design": "design.md:6107 through end",
+  "design_section_sha256": "047e1ad2932c10a8c6ba1ae14aef49eaafda0aa717d32d2494db1daa7c154dcf",
+  "source_acceptance": "finish-corrected-virtiofs-source-acceptance1.json",
+  "evidence": [
+    {
+      "path": "finish-corrected-virtiofs-source-acceptance1.json",
+      "sha256": "72ba00ded7424fccda3f82a7ff8970ab07aff965e3f7404cb36b45201a84dedf",
+      "evidence_scope": "historical/root-sanitized source evidence; no current operational certification"
+    },
+    {
+      "path": "finish-corrected-g13-stop1.json",
+      "sha256": "2e8a43ece668bb5d0cccdb7ba3421bed56e7d0e78d0387f5085a54d2662d9863",
+      "evidence_scope": "historical/root-sanitized source evidence; no current operational certification"
+    },
+    {
+      "path": "finish-corrected-g13-stop-refusal1.json",
+      "sha256": "1059844efb5805397544e4b21f17003c17ba8f15f2da8003183c9a2d0bc26de6",
+      "evidence_scope": "historical/root-sanitized source evidence; no current operational certification"
+    },
+    {
+      "path": "finish-corrected-g13-residual-pidfiles1.json",
+      "sha256": "90044b4cb0f52f6775817d2217d3de12702393dd1a88080d722c20b85d7b6723",
+      "evidence_scope": "historical/root-sanitized source evidence; no current operational certification"
+    },
+    {
+      "path": "finish-corrected-g13-final-unit-observation1.json",
+      "sha256": "c380b7652ed8c7cbdd769a72a35eee75f4163a00aa8e93c04317e412d2e59257",
+      "evidence_scope": "historical/root-sanitized source evidence; no current operational certification"
+    }
+  ],
+  "primary_sources": [
+    "https://gitlab.com/virtio-fs/virtiofsd/-/raw/v1.13.3/src/main.rs",
+    "https://gitlab.com/virtio-fs/virtiofsd/-/raw/v1.13.3/src/util.rs"
+  ],
+  "pinned_os_source": "6bdf458fd9105379860234ff33d352e55844f08f",
+  "pinned_os_source_path": "/nix/store/m7lppk7djkzqvrddvj0f2aa05sywl5d3-source",
+  "source_facts": "OSVM uses --socket-path and retains direct daemon PIDs. virtiofsd 1.13.3 --fd uses a supplied listener without the pathname/pidfile branch. K now owns exclusive listeners plus exact cleanup pins without changing daemon stop/wait/reapers. Flake exposes existing guest-pinned pkgs.virtiofsd solely for hosted API coverage.",
+  "limits": "Historical complete G13 process exit and failed namespace retirement remain original-source evidence. This draft neither repairs old state nor certifies prospective behavior; no syscall reproduction, cleanup, PNG or real qualification claim."
+}

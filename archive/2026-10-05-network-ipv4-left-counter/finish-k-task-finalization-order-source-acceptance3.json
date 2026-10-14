@@ -1,0 +1,15 @@
+{
+  "accepted_at": "2026-10-09T19:46:57.951196+00:00",
+  "design": "design.md5043: Order reconciliation: quiesced proof before runner-invoked cleanup",
+  "supersedes_placement_only": "finish-k-task-disappearance-source-acceptance2.json",
+  "app_owners": [
+    "cluster/lib/kb_process.rb",
+    "cluster/lib/devcluster_runner.rb",
+    "tools/test-runtime.rb",
+    "tools/test-machine.rb"
+  ],
+  "root_doc": "cluster/runtime-contract.md",
+  "boundary": "one existing drain loop: initial proof, quiesce tracker, NEW quiesced discover/full proof false publication BEFORE K finalize/cleanup, preserve post-cleanup fresh proof before true; any inconclusive pass resumes existing tracker once; no extra loop/authority/schema",
+  "preserve": "both existing failing delayed_shutdown methods AND shared delayed_shutdown body/5s guards byte-identical",
+  "operations": "all local tests/probes/builds/Git/runtime/private campaign actions held"
+}

@@ -1,0 +1,27 @@
+{
+  "workflows": [
+    {
+      "id": 369520612,
+      "name": "CI",
+      "path": ".github/workflows/ci.yml",
+      "state": "active"
+    },
+    {
+      "id": 369520616,
+      "name": "Playwright smoke",
+      "path": ".github/workflows/e2e-smoke.yml",
+      "state": "active"
+    }
+  ],
+  "commands": [
+    "npm run ci:quick",
+    "npm run ci:tests",
+    "npm run build",
+    "npm run test:scripts:browser",
+    "npm run e2e:pr:desktop",
+    "npm run e2e:pr:mobile",
+    "npm run e2e:touch:webkit"
+  ],
+  "mode": "existing hosted workflow selection only; no run or dispatch performed",
+  "browser_scope": "availability/timeout fixture on desktop Chromium and mobile Chrome; mobile WebKit selects separate touch specs"
+}

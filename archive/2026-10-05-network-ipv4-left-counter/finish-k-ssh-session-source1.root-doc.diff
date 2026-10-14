@@ -1,0 +1,36 @@
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index 303a29e58bcc35d546701b1c674ac5af39fdd0cb..af18d41296a31f0e5e46ecccc9ebf234f13954ba 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -36,9 +36,28 @@ up to three attempts. Other failures and continued replacement refuse access.
+ A successful read returns one complete validated snapshot; owner locks and
+ receipt identity checks still govern consistency across records.
+ 
+-Readiness belongs to that exact run. A stale PID or ready file cannot authorize
+-cleanup. Status reports busy (exit 75) when a lifecycle operation or capture owns
+-the gate.
++Before creating machines or publishing its live tuple, the runner establishes
++its own POSIX session without forking. Its recorded PID, executable and argument
++vector stay the same. Session establishment failure refuses before machine
++creation. The separate session protects the run from inherited terminal and
++process-group signals; a containing cgroup, supervisor or host failure can still
++end it. Complete ownership and exit evidence remain required for cleanup.
++
++Readiness belongs to that exact run. The runner's boot marker confirms its test
++shell. The engine separately waits for valid SSH host keys from every recorded
++machine within one absolute readiness deadline. Empty or unavailable key
++discovery may wait within that budget. Invalid or wrong-endpoint keys, runner
++identity loss and retained-key mismatch refuse immediately. Initial trust is
++written only after all machines succeed; retained trust is never replaced or
++expanded to accept a changed key. Strict authentication and guest source/system
++closure checks remain separate requirements.
++
++Failed discovery attempts identify the machine, endpoint and private native
++diagnostic path. An exhausted budget may refuse before a scan starts. Bounded
++command output and status stay under the owned run, outside artifact exports. A failed verification leaves the run non-ready with its claims
++and evidence. It does not replay lifecycle work or authorize orphan cleanup.
++A stale PID or ready file cannot authorize cleanup. Status reports busy (exit 75)
++when a lifecycle operation or capture owns the gate.
+ 
+ Public `start`, `resume`, `update`, `stop` and `reset` refuse gate or operation
+ contention with exit 75. Retry explicitly after the holder releases its lock;

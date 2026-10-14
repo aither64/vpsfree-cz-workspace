@@ -1,0 +1,63 @@
+{
+  "schema": 1,
+  "at": "2026-10-11T16:15:57.710597+00:00",
+  "generator": "87d51f0fb0a03f361ba7dfe9718d95af29772fc6",
+  "native_exit_code": 1,
+  "wrapper_complete": true,
+  "cancel_reason": null,
+  "result_sha256": "3e30ecff7a188c822ce278a1fe7328d533f4d27f7cd0583c70ac92a46a5e2e36",
+  "attempt_sha256": "041b56e17c54486aa187c349dbcf9d49ab8993c364e757ed3aa8c94f1c52f61b",
+  "failed_phase": {
+    "schema": 1,
+    "kind": "single-runtime-v1",
+    "phase": "runtime-smoke",
+    "complete": false,
+    "stage": "failed",
+    "failed_stage": "starting-final-runtime",
+    "error_class": "KbVerify::Error",
+    "time": "2026-10-11T16:09:08Z"
+  },
+  "diagnostic": "Verification refused: capacity filesystem binding changed: state_images",
+  "commands": [
+    {
+      "argv": [
+        "findmnt",
+        "-n",
+        "-o",
+        "FSTYPE",
+        "-T",
+        "/home/aither/.local/state/vpsfree-kb-verification/2026-10-05-network-ipv4-left-counter-working1/campaign"
+      ],
+      "complete": true,
+      "exit_code": 0,
+      "stage": "runtime-smoke/starting-final-runtime"
+    },
+    {
+      "argv": [
+        "df",
+        "-B1",
+        "--output=avail",
+        "/home/aither/.local/state/vpsfree-kb-verification/2026-10-05-network-ipv4-left-counter-working1/campaign"
+      ],
+      "complete": true,
+      "exit_code": 0,
+      "stage": "runtime-smoke/starting-final-runtime"
+    },
+    {
+      "argv": [
+        "findmnt",
+        "-n",
+        "-o",
+        "TARGET",
+        "-T",
+        "/home/aither/.local/state/vpsfree-kb-verification/2026-10-05-network-ipv4-left-counter-working1/campaign"
+      ],
+      "complete": true,
+      "exit_code": 0,
+      "stage": "runtime-smoke/starting-final-runtime"
+    }
+  ],
+  "engine_state_absent": true,
+  "diagnosis": "Root preparation copied the observed parent path into the state_images role, while the public verifier requires the exact campaign root path. Device/mount/type agree; path identity does not. Refusal precedes any public lifecycle command, image build, instance, claim or guest. Product source is unchanged.",
+  "disposition": "Preserve this immutable failed campaign and all original receipts. Correct only the root preparation, refresh admission and use a new campaign root/context/unit. No replay/cleanup/upscale."
+}

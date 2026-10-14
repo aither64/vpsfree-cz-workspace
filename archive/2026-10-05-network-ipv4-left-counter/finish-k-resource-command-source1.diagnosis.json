@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "baseline": "725c325e8b4971931e5d16df86bafa8584358ecb",
+  "allowlisted_proof": {
+    "path": "finish-virtiofs-runtime-failure-proof1.json",
+    "sha256": "63ab8135d55b036bb03701d5fbeba0fd1639e8bffda0d0a5006b38a6ab05fee8"
+  },
+  "accepted_design": {
+    "path": "design.md",
+    "section_line": 6447,
+    "section_sha256": "6912aec19b42bdeade09330aad886baf60aaa92eff64d613987b95635b58aa3a"
+  },
+  "native": {
+    "runtime_phase_complete": false,
+    "wrapper_exit": 1,
+    "failed_stage": "starting-final-runtime",
+    "source_defined_error": "Verification refused: assertion failed: services real resource observations",
+    "services_observation": {
+      "available_memory_bytes": 509583360,
+      "available_bytes": 4164870144,
+      "available_inodes_present_but_empty": true,
+      "pressure": [
+        "some avg10=0.00 avg60=0.00 avg300=0.00 total=95",
+        "full avg10=0.00 avg60=0.00 avg300=0.00 total=95"
+      ]
+    },
+    "listed_command_records": 33,
+    "listed_native_command_exit_codes": [
+      0
+    ],
+    "native_result_sha256": "fbec2f6cb56469f75a44408a457dde999b98e1d4f2a89a3871ff72707110f516",
+    "attempt_sha256": "f5a7f1c287912b1beb6d1608d4e66c670599265e571dd9786317126ad5954125"
+  },
+  "record_count_qualification": "The current allowlisted proof enumerates 33 command records, all native 0; the brief says 32. No nested private evidence was opened to reconcile that count.",
+  "source_cause": "GNU df -i excludes --output; a producer in printf substitution/pipeline can fail while the final formatting command reports zero.",
+  "repair": "Use df --output=iavail and standalone assignments under set -eu for awk, each df and zfs before formatting captured text.",
+  "evidence_limits": "This is source-backed correction consistent with the native proof, not a local reproduction or corrected hosted/live pass. No resource-exhaustion, payload-fit, historical cleanup or capture claim.",
+  "private_campaign_inputs_or_references_followed": false,
+  "policies_unchanged": [
+    "numeric and PSI observations",
+    "thresholds and schema",
+    "source/trust/lease/lifecycle",
+    "capacity/fixture/headroom",
+    "no replay",
+    "existing Commands authority and diagnostics"
+  ],
+  "scope_deviations": []
+}

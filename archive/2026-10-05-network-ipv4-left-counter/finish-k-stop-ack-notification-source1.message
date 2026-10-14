@@ -1,0 +1,9 @@
+runtime: notify first shutdown when its reply fails
+
+A valid first stop withdraws readiness before its acknowledgement is sent.
+A broken reply could skip the sole shutdown notification and leave later
+requests waiting on a drain that never started.
+
+Ensure the existing first-request notification runs after the reply attempt.
+Invalid requests still do not notify, and later valid requests only
+acknowledge the same shutdown.

@@ -1,0 +1,46 @@
+Add network availability controls
+
+Administrators can enable or disable a network in its create/edit form when the
+API advertises support. Disabling retains the network and owned addresses in
+inventory while preventing new assignment actions. Available-address selectors
+request `network_enabled=true` and exclude explicitly disabled cached results.
+
+Older APIs receive no unsupported fields or filters, and missing enabled state
+remains unknown. The API enforces current admission policy; the frontend does
+not compute the public IPv4 counter. This implements REQ-071 and extends the
+REQ-050 detached-address revalidation contract.
+
+Suggestions apply the advertised enabled filter before the 50-row
+suggestion limit and retain the local stale-response guard. Capability lookup
+failures show an error and a retry action. Cached metadata cannot authorize
+availability writes while a lookup is pending, fetching or failed; other fields
+remain editable.
+
+Six focused synthetic unit files passed with 51 tests.
+They cover filtering before the suggestion limit, older APIs, stale responses,
+capability failures and retries, and omission of availability writes while
+metadata is unconfirmed. The full ci:quick gate passed again, including lint,
+formatting, localization audits and application, tooling, adopted browser and
+BFF type checks. The design audit checked 68 documents and 71 requirement IDs.
+The browser suite passed all four cases on desktop and all four on mobile with
+Chromium from the locked nixpkgs input. The production build passed with a
+chunk-size warning.
+
+Current-head CI passed the smoke browser workflow, Chromium script regressions
+and production build. Its dependency audit fails because the unchanged BFF
+lockfile contains proxy-addr 2.0.7. Separate [maintenance PR #20](https://github.com/vpsfreecz/vpsadmin-webui/pull/20)
+patches that dependency to 2.0.8 and passed its audits, focused tests and clean
+paired package checks. The audit stopped this workflow before its quick
+checks, so local passing checks do not establish a passing CI gate.
+
+Bilingual Playwright scenarios cover both toggle directions, rejection
+and retry, older APIs, and disabled owned-address inventory. They use synthetic
+API fixtures and do not establish live API or deployment behavior.
+
+The backend requires its additive enabled migration and all API writers updated
+before the first network disable. Configuration feature pins and the external
+KB contract check are committed separately. No deployment is included.
+
+English and Czech desktop/mobile screenshots show the implemented editor.
+The [session portal](https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-05-network-ipv4-left-counter/)
+contains the captures and review evidence. No live API or deployment is claimed.

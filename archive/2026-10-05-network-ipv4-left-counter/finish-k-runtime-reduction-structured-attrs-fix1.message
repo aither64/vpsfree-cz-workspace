@@ -1,0 +1,10 @@
+verification: inspect the image builder's structured memory arguments
+
+The selected VM builder uses structured attributes, so native derivation JSON
+keeps its effective QEMU memory arguments outside the flattened environment.
+The image-profile test looked for env.memSize and failed before checking RAM.
+
+Inspect the bound record's structured QEMU arguments. Require one 2048-MiB
+memory setting, its shared memfd object and matching machine backend, while
+keeping the exact native version and derivation identity assertions. Limit
+failure context to keys and memory fields instead of dumping build scripts.

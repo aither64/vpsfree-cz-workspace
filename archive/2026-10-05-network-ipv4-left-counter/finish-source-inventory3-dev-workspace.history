@@ -1,0 +1,30 @@
+commit c582ee757cd5b55c69db7b030ffd25eae8e5635b
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 10:15:43 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 7 16:34:32 2026 +0200
+
+    cluster: mediate capture leases through the generation guard
+    
+    Relay capture-lease input, readiness and diagnostics through dispatcher-owned
+    pipes. Retain the selected package-generation guard through provider exit and
+    reaping, and cancel the owned child when the caller or protocol is lost.
+    
+    Close the downstream protocol pipe promptly on provider stdout EOF, even if
+    that provider is still running. Diagnostic stderr closure leaves the lease
+    usable. Other provider commands retain buffered dispatch and exit behavior.
+
+commit 51aba080b264c28f5584867b6cf006bf423ae2f3
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 7 16:43:01 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 7 16:43:01 2026 +0200
+
+    portal: check reconciliation deadline after proof
+    
+    Check the caller's original context after journal and response proof, before
+    accepting lifecycle reconciliation. Slow proof must not commit authority after
+    the fresh-owner deadline has expired.
+    
+    Keep the upstream contention retry and acceptance behavior, and extract its
+    loop for deterministic progress-conflict, cancellation and no-op coverage.

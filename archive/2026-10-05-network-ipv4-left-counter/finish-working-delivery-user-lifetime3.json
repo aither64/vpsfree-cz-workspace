@@ -1,0 +1,88 @@
+{
+  "schema": 1,
+  "at": "2026-10-11T19:36:18.467291+00:00",
+  "scope": "Read-only existing user-manager lifetime observation; no service launch or configuration mutation",
+  "user": {
+    "RuntimePath": "/run/user/1000",
+    "State": "active",
+    "Sessions": "2520 1997 1996 1875 1874 502 4",
+    "Linger": "yes"
+  },
+  "system_manager_unit": {
+    "Id": "user@1000.service",
+    "ActiveState": "active",
+    "SubState": "running",
+    "Job": "",
+    "MainPID": "4239",
+    "ControlGroup": "/user.slice/user-1000.slice/user@1000.service"
+  },
+  "runtime_directory_unit": {
+    "Id": "user-runtime-dir@1000.service",
+    "ActiveState": "active",
+    "SubState": "exited",
+    "Job": ""
+  },
+  "user_manager": {
+    "Version": "260.5",
+    "ControlGroup": "/user.slice/user-1000.slice/user@1000.service"
+  },
+  "native_manager": {
+    "pid": 4239,
+    "uid": 1000,
+    "start_ticks": 4036366,
+    "boot_id": "0104034e-3a15-4772-aa62-aac7ee4ff6ef",
+    "cgroup": "0::/user.slice/user-1000.slice/user@1000.service/init.scope",
+    "exe_unavailable": "Named manager /proc exe read denied; no privilege change or guessed executable identity"
+  },
+  "sessions": [
+    {
+      "Id": "2520",
+      "User": "1000",
+      "Class": "user",
+      "State": "active"
+    },
+    {
+      "Id": "1997",
+      "User": "1000",
+      "Class": "user",
+      "State": "closing"
+    },
+    {
+      "Id": "1996",
+      "User": "1000",
+      "Class": "user",
+      "State": "closing"
+    },
+    {
+      "Id": "1875",
+      "User": "1000",
+      "Class": "user",
+      "State": "closing"
+    },
+    {
+      "Id": "1874",
+      "User": "1000",
+      "Class": "user",
+      "State": "closing"
+    },
+    {
+      "Id": "502",
+      "User": "1000",
+      "Class": "user",
+      "State": "closing"
+    },
+    {
+      "Id": "4",
+      "User": "1000",
+      "Class": "manager",
+      "State": "active"
+    }
+  ],
+  "source": "https://raw.githubusercontent.com/systemd/systemd/v260.5/src/login/logind-user.c",
+  "reconciliation": "user_get_state can report closing when retained pinning sessions are closing; that label alone does not establish manager teardown. user_may_gc preserves a lingering user while its units remain active. Actual Linger=yes, manager active/running and runtime-directory active with no queued unit jobs are independently observed. Exact reason for this label is not established.",
+  "existing_lifetime_sufficient_for_later_context_gate": true,
+  "configuration_or_linger_changed": false,
+  "operation_admitted": false,
+  "initial_observation_refusal": "Named manager exe read raised PermissionError before any receipt or mutation; unavailable field is explicit in this read-only lifetime observation. Manager unit and PID/start/cgroup remain independently observed, not a full executable-tuple certification.",
+  "limits": "Recheck immediately before a launch and prove the exact new service running/MainPID/start/InvocationID/cgroup before verifier spawn. Explicit user termination, unexpected manager loss and resource kills are outside the persistence guarantee and confer no cleanup authority."
+}

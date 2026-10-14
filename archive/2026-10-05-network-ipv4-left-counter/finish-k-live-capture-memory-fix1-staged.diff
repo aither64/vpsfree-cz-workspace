@@ -1,0 +1,100 @@
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index d775e94fcf509241c0ee0bf245abbfaa1334fa87..52a16d8c5604fff34c2d3675bf9fb0497c899cf7 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -366,13 +366,17 @@ another instance automatically. Failed public commands retain native argv,
+ exit/signal and diagnostic output privately beneath the campaign root. Artifact
+ exports exclude this evidence.
+ 
+-Capacity admission derives the 4 GiB guest RAM/shared-memory demand from the
+-validated configuration and adds separately assessed positive overhead. For
+-example, 2 GiB RAM and 1 GiB shared-memory margins require 6 GiB available RAM
+-and 5 GiB free shared memory. Assess construction and runtime/browser phases
+-separately and use their peak, rather than summing a builder that has already
+-exited with running guests. Require working KVM; no emulation or nested VM is
+-part of this qualification.
++Before start or resume, capacity admission includes the 4 GiB guest RAM and
++shared-memory demand plus separately assessed positive overhead. For example,
++2 GiB RAM and 1 GiB shared-memory margins require 6 GiB available RAM and 5 GiB
++free shared memory. Initial start assesses construction and runtime/browser
++phases separately and uses their peak. The builder finishes before guests start.
++
++Live capture first attests the same resumed guests and their continuity. Its
++fresh availability check requires only the additional runtime/browser margins,
++2 GiB RAM and 1 GiB shared memory in this example. The running guests have
++already reduced those available figures. Require working KVM; no emulation or
++nested VM is part of this qualification.
+ 
+ The intrinsic eventual new disk output is one 8 GiB image, one 8 GiB writable
+ root and one 8 GiB sparse tank. The receipt reports this 24 GiB extent separately
+diff --git a/tools/runtime-verify.rb b/tools/runtime-verify.rb
+index 874d1cb522da97db40ca08f7b195762cc79a7b69..82fc59f26ef57d009cd6c042666e0a6dd87752c1 100644
+--- a/tools/runtime-verify.rb
++++ b/tools/runtime-verify.rb
+@@ -310,6 +310,8 @@ module KbVerify
+         shm = positive_bytes(assessed.fetch('shm_bytes'))
+         raise Error, 'resource overhead requires an explicit assessment' unless assessed['assessment'].is_a?(String) && !assessed['assessment'].strip.empty?
+         base = name == 'construction' ? builder_bytes : guest_bytes
++        # Capture admits additional work after the existing live-guest continuity check.
++        base = 0 if name == 'runtime_browser' && operation == 'capture'
+         [name, { 'ram_bytes' => base + ram, 'shm_bytes' => base + shm }]
+       end
+       selected = operation == 'start' ? phases.values : [phases.fetch('runtime_browser')]
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+index c5a7ad6eb467b1a59b9a52a1dc45c9a354c96da8..dc751d62f073ab33dbf3e53053ad72e39ee07fe6 100644
+--- a/tools/test-runtime-verify.rb
++++ b/tools/test-runtime-verify.rb
+@@ -645,6 +645,53 @@ class RuntimeVerifyTest < Minitest::Test
+     end
+   end
+ 
++  def test_live_capture_checks_incremental_margins_without_readmitting_resident_guests
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      fake_measurements(campaign)
++      available = { 'ram_available' => 6 * KbVerify::GIB, 'shm_available' => 5 * KbVerify::GIB }
++      campaign.define_singleton_method(:host_capacity) { available.dup }
++      campaign.capacity('start')
++      admitted = capacity_receipt(campaign)
++      assert_equal(6 * KbVerify::GIB, admitted.dig('memory_requirements', 'ram_bytes'))
++      assert_equal(5 * KbVerify::GIB, admitted.dig('memory_requirements', 'shm_bytes'))
++
++      # Fresh availability already excludes the 4 GiB of admitted running guests.
++      available.transform_values! { |bytes| bytes - 4 * KbVerify::GIB }
++      previous = Dir.glob(campaign.file('receipts/capacity-*.json'))
++      campaign.capacity('capture')
++      paths = Dir.glob(campaign.file('receipts/capacity-*.json'))
++      created = paths - previous
++      assert_equal(1, created.size)
++      receipt = campaign.read(created.fetch(0).delete_prefix("#{campaign.root}/"))
++      assert_equal('capture', receipt['operation'])
++      assert_equal(available, receipt['host'])
++      assert_equal(4 * KbVerify::GIB, receipt.dig('memory_requirements', 'guest_bytes'))
++      assert_equal(2 * KbVerify::GIB, receipt.dig('memory_requirements', 'ram_bytes'))
++      assert_equal(KbVerify::GIB, receipt.dig('memory_requirements', 'shm_bytes'))
++      assert_equal(assessment(campaign)['roles'], receipt.dig('assessment', 'roles'))
++      assert_equal(Digest::SHA256.file(File.join(File.dirname(campaign.root), 'capacity.json')).hexdigest, receipt['receipt_sha256'])
++      assert_equal(1, receipt['filesystems'].size)
++      assert_equal(24 * KbVerify::GIB, receipt['filesystems'][0]['remaining_growth_bytes'])
++      assert_equal(16 * KbVerify::GIB, receipt['filesystems'][0]['reserve_bytes'])
++      assert_equal(3 * KbVerify::GIB, receipt['filesystems'][0]['retained_growth_bytes'])
++      assert_equal('unknown', receipt['scratch_bound'])
++
++      %w[start resume].each do |operation|
++        error = assert_raises(KbVerify::Error) { campaign.capacity(operation) }
++        assert_includes(error.message, 'fresh host RAM')
++      end
++      %w[ram_available shm_available].each do |resource|
++        margin = available.fetch(resource)
++        available[resource] = margin - 1
++        error = assert_raises(KbVerify::Error) { campaign.capacity('capture') }
++        assert_includes(error.message, resource == 'ram_available' ? 'fresh host RAM' : 'fresh shared memory')
++        available[resource] = margin
++      end
++      assert_equal(paths.sort, Dir.glob(campaign.file('receipts/capacity-*.json')).sort)
++    end
++  end
++
+   def test_sparse_future_growth_physical_inode_dedup_and_resume_do_not_add_an_image
+     with_campaign do |campaign|
+       campaign.initialize_campaign

@@ -1,0 +1,46 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui' is dirty
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin/api/models/transaction_chains/vps/update.rb: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin/api/spec/models/transaction_chains/vps/update_spec.rb: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin/tests/playwright/webui/specs/admin-cluster.spec.cjs: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/src/pages/app/admin/cluster/NetworksPage.tsx: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/src/pages/app/admin/cluster/NetworksPage.test.tsx: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.ts: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-scoped-checks.sh: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/run-implementer-remediation-quick2.sh: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin/docs/ip-locking.md: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/docs/design/API_CONTRACTS.md: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-in-shell.sh: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-consolidate-in-shell.sh: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/run-network-remediation-source-commits.sh: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-v-api.paths: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-v-webui.paths: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-w.paths: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-v-api.message: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-v-webui.message: OK
+/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-w.message: OK
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/docs/work-log/2026-10-06-network-availability.md: OK
+883db275e0437e85eac6b8432d890d17e18136103990d5ea6f3410bf0cf97f92  /home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-w.paths
+d0ac9a121f036aab3bc4e3626e8d456468e4e5f66a8adc32026e5b709b4bce18  /home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/remediation-fixup-w.message
+[dev/network-enabled 73f12269] fixup! networking: manage network availability
+ 6 files changed, 213 insertions(+), 12 deletions(-)
+ create mode 100644 src/pages/app/admin/ipAddresses/useProgressiveSuggestedIpQueries.test.tsx
+commit 73f12269bdf3ac1828ffdc7921b4d4c27f8b785b
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 16:04:20 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 6 16:04:20 2026 +0200
+
+    fixup! networking: manage network availability
+    
+    Filter suggested addresses by advertised network availability before the
+    bounded page limit. Keep capability lookup failures visible and prevent
+    cached or pending metadata from authorizing availability writes.
+
+ docs/design/API_CONTRACTS.md                       |  7 ++
+ docs/work-log/2026-10-06-network-availability.md   | 23 ++++--
+ src/pages/app/admin/cluster/NetworksPage.test.tsx  | 69 +++++++++++++++-
+ src/pages/app/admin/cluster/NetworksPage.tsx       | 19 ++++-
+ .../useProgressiveSuggestedIpQueries.test.tsx      | 92 ++++++++++++++++++++++
+ .../useProgressiveSuggestedIpQueries.ts            | 15 +++-
+ 6 files changed, 213 insertions(+), 12 deletions(-)

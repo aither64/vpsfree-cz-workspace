@@ -1,0 +1,1369 @@
+commit 9d5da9db162209347162674a08960463a3fd825e
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 14:40:24 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 14:40:24 2026 +0200
+
+    Keep desktop navigation expanded
+    
+    Remove the icon-only sidebar mode and its toggle so destination labels
+    stay visible. Ignore persisted collapse values without resetting theme,
+    language, dashboard or tip preferences; preserve the mobile drawer.
+    
+    Cover local/server preference migration and cs/en user/admin navigation,
+    adopt changed files into quality gates, and document REQ-004/REQ-005.
+
+ WORK_LOG.md                                      | 33 ++++++++++
+ docs/design/PRODUCT_DESIGN.md                    |  7 +-
+ docs/design/REQUIREMENTS.md                      |  4 +-
+ e2e/specs/app/sidebar_expanded.spec.ts           | 35 ++++++++++
+ e2e/specs/app/ui_preferences_persistence.spec.ts | 12 ++--
+ scripts/fixtures/e2e-type-coverage.json          |  9 +--
+ scripts/fixtures/lint-coverage.json              |  2 +-
+ scripts/fixtures/structural-debt-ledger.json     | 14 ----
+ src/app/uiSettingsModel.test.ts                  |  4 +-
+ src/app/uiSettingsModel.ts                       |  8 +--
+ src/components/layout/AppLayout.tsx              |  5 --
+ src/components/layout/AppSidebar.tsx             | 81 +++++-------------------
+ src/components/layout/SidebarTips.tsx            |  3 +-
+ tsconfig.e2e.json                                |  4 +-
+ 14 files changed, 110 insertions(+), 111 deletions(-)
+
+commit 0e5b33d73aa248186097fab2cd740833bac1d7c4
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 14:49:48 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 14:49:48 2026 +0200
+
+    test: update expanded sidebar coverage expectations
+    
+    Account for the newly adopted sidebar E2E files in both repository and
+    Gitless inventory checks without relaxing the coverage gate.
+
+ WORK_LOG.md                        | 7 +++++++
+ scripts/e2e-type-coverage.test.mjs | 6 +++---
+ 2 files changed, 10 insertions(+), 3 deletions(-)
+
+commit 40b8c18dc3f26336fa9c26bee4afe7482e28238b
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 14:50:15 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 14:50:15 2026 +0200
+
+    ui: remove password reset from public navigation
+    
+    Keep sign-in as the public authentication entry point on desktop and mobile.
+    Recovery remains available through the login flow. Update the navigation
+    regression and document the requirement and verification.
+
+ WORK_LOG.md                                 | 25 +++++++++++++++++++++++++
+ docs/design/REQUIREMENTS.md                 |  2 +-
+ docs/design/WORKFLOWS.md                    |  5 ++++-
+ src/components/layout/PublicLayout.test.tsx | 14 ++++++--------
+ src/components/layout/PublicLayout.tsx      | 24 +-----------------------
+ 5 files changed, 37 insertions(+), 33 deletions(-)
+
+commit 330d761b17bd79400458462c1ea033b76003f338
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 15:04:13 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 15:04:13 2026 +0200
+
+    ui: keep personal account data scoped to its owner
+    
+    Filter administrator sessions and metrics tokens by the signed-in user
+    when opened through Account, regardless of UI mode. Verify namespace
+    ownership before mounting personal deep-link details and actions.
+    
+    Preserve backend-enforced member scope and selected-user administration.
+    Document the adjacent account audit and add role, pagination, error and
+    cs/en desktop/mobile regressions.
+
+ WORK_LOG.md                                        |  35 ++++++
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/WORKFLOWS.md                           |  16 +++
+ e2e/specs/app/profile_owner_scope.spec.ts          | 136 +++++++++++++++++++++
+ scripts/e2e-type-coverage.test.mjs                 |   6 +-
+ scripts/fixtures/e2e-type-coverage.json            |   1 +
+ src/components/user/UserMetricsTokensPanel.tsx     |   4 +-
+ src/pages/app/profile/ProfileMetricsPage.tsx       |   2 +-
+ src/pages/app/profile/ProfileSessionsPage.tsx      |   2 +-
+ .../userNamespaces/ProfileNamespaceOwnerGate.tsx   |  42 +++++++
+ .../ProfileUserNamespacesMapDetailPage.tsx         |  14 ++-
+ .../ProfileUserNamespacesNamespaceDetailPage.tsx   |  14 ++-
+ tsconfig.e2e.json                                  |   3 +-
+ 13 files changed, 259 insertions(+), 18 deletions(-)
+
+commit c772e251dabc71d07832f7b6ef7cfdfddf14c38a
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 15:22:54 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 15:22:54 2026 +0200
+
+    Fit the VPS console and keyboard into the window
+    
+    Replace the full VPS overview header on console routes with compact context
+    and fit the complete pinned console renderer into the available viewport.
+    Keep the embedded document size stable because the legacy router only fits
+    xterm on load; resizing must not crop the keyboard or recreate a session.
+    
+    Preserve explicit session controls and an original-size option. Add cs/en
+    viewport regressions, renderer fixture support, screenshots and REQ-020
+    handover evidence. Keep new work-log entries in separate change files.
+
+ WORK_LOG.md                                     |   6 ++
+ docs/design/PRODUCT_DESIGN.md                   |   6 +-
+ docs/design/REQUIREMENTS.md                     |   2 +-
+ docs/design/WORKFLOWS.md                        |   9 ++
+ docs/work-log/2026-09-30-console-viewport.md    |  52 ++++++++++
+ docs/work-log/README.md                         |  11 ++
+ docs/work-log/screenshots/console-cs-laptop.png | Bin 0 -> 90365 bytes
+ docs/work-log/screenshots/console-cs-mobile.png | Bin 0 -> 143638 bytes
+ e2e/specs/app/vps_console_viewport.spec.ts      | 129 ++++++++++++++++++++++++
+ scripts/e2e-type-coverage.test.mjs              |   6 +-
+ scripts/fixtures/e2e-type-coverage.json         |   1 +
+ scripts/fixtures/structural-debt-ledger.json    |  28 -----
+ src/components/layout/AppLayout.tsx             |  11 +-
+ src/components/layout/AppMainContent.tsx        |  24 +++++
+ src/components/layout/DetailShell.tsx           |   3 +-
+ src/i18n/locales/cs/vps/console.ts              |   8 +-
+ src/i18n/locales/en/vps/console.ts              |   8 +-
+ src/pages/app/vps/ConsoleViewport.tsx           |  61 +++++++++++
+ src/pages/app/vps/VpsConsoleFrame.tsx           |  86 ++++++++++++++++
+ src/pages/app/vps/VpsConsolePage.tsx            |  92 +++--------------
+ src/pages/app/vps/VpsLayout.tsx                 |  15 ++-
+ tsconfig.e2e.json                               |   1 +
+ 22 files changed, 428 insertions(+), 131 deletions(-)
+
+commit 109b17be7c591e129766b16cd730c7f07cf4d25c
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 15:44:13 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 15:44:13 2026 +0200
+
+    Fix missing IP and DNS matches in global search
+    
+    Search exact IPs without the direct-owner filter that excludes addresses
+    assigned to an owned VPS. Verify ownership and use only the administrator
+    ID-order cursor contract. Keep cluster results beyond the eighth hit and
+    report failed empty searches instead of pretending there are no matches.
+    
+    Add cold-start and failure regressions, localized incomplete-search errors,
+    keyboard scrolling, contract documentation and synthetic screenshots.
+
+ WORK_LOG.md                                        |   5 +
+ docs/design/REQUIREMENTS.md                        |   6 +
+ docs/design/WORKFLOWS.md                           |  30 +++++
+ docs/work-log/2026-09-30-global-search.md          |  55 +++++++++
+ docs/work-log/screenshots/global-search-dns-cs.png | Bin 0 -> 125619 bytes
+ .../screenshots/global-search-owned-ip.png         | Bin 0 -> 109748 bytes
+ e2e/specs/app/global_search_cold_start.spec.ts     | 137 +++++++++++++++++++++
+ scripts/e2e-type-coverage.test.mjs                 |   6 +-
+ scripts/fixtures/e2e-type-coverage.json            |   1 +
+ src/components/layout/AppHeader.tsx                |  18 ++-
+ src/components/layout/CommandPalette.tsx           |   3 +-
+ src/i18n/locales/cs/common/palette.ts              |   1 +
+ src/i18n/locales/en/common/palette.ts              |   1 +
+ src/lib/search/searchOwnedIpAddresses.test.ts      |  56 +++++++++
+ src/lib/search/searchOwnedIpAddresses.ts           |  78 ++++++++++++
+ src/lib/search/userGlobalSearch.test.ts            |  21 +++-
+ src/lib/search/userGlobalSearch.ts                 |  57 ++++-----
+ tsconfig.e2e.json                                  |   3 +-
+ 18 files changed, 434 insertions(+), 44 deletions(-)
+
+commit d78ceb233055c2c6efffeb91420e51e84d97842b
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 16:23:21 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 16:23:21 2026 +0200
+
+    Fix private IP availability for staging VPSes
+    
+    Request compatible network purposes and trust the API's location membership
+    instead of rejecting secondary-location networks. Revalidate cached detached
+    addresses before offering them and keep availability failures actionable.
+    
+    Record real dev API assignment and cleanup evidence alongside focused browser
+    regressions, API contracts and strict typing of both touched browser specs.
+
+ WORK_LOG.md                                        |   4 +
+ docs/design/API_CONTRACTS.md                       |  18 ++++
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/WORKFLOWS.md                           |  19 ++++
+ docs/work-log/2026-09-30-private-ip-assignment.md  |  97 +++++++++++++++++++++
+ .../screenshots/private-ip-staging-admin.png       | Bin 0 -> 185008 bytes
+ .../private-ip-staging-member-mobile.png           | Bin 0 -> 47921 bytes
+ e2e/specs/app/user_network_page.spec.ts            |  21 +++--
+ e2e/specs/app/vps_private_ip_availability.spec.ts  |  82 +++++++++++++++++
+ scripts/e2e-type-coverage.test.mjs                 |   6 +-
+ scripts/fixtures/e2e-type-coverage.json            |   9 +-
+ src/lib/api/ipAddresses.test.ts                    |   9 ++
+ src/lib/api/ipAddresses.ts                         |   2 +
+ src/pages/app/networking/AssignIpAddressModal.tsx  |  55 +++---------
+ .../networking/IpAddressAssignmentModel.test.ts    |  36 --------
+ .../app/networking/IpAddressAssignmentModel.ts     |  26 ------
+ .../networking/fetchAssignableIpAddresses.test.ts  |  61 +++++++++++++
+ .../app/networking/fetchAssignableIpAddresses.ts   |  42 +++++++++
+ tsconfig.e2e.json                                  |   2 +
+ 19 files changed, 370 insertions(+), 121 deletions(-)
+
+commit 482d99a60b743ddfafcd0ab190c938e268f31027
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 16:25:37 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 16:25:37 2026 +0200
+
+    Fix search header scrolling tests in JSDOM
+    
+    Provide the browser scrollIntoView API in the header test environment and
+    verify that keyboard selection scrolls the active result. Restore the
+    original descriptor after the suite to avoid leaking test setup.
+    
+    The full unit suite passes all 1,637 cases after this correction.
+
+ docs/work-log/2026-09-30-global-search.md |  9 +++++++++
+ src/components/layout/AppHeader.test.tsx  | 21 ++++++++++++++++++++-
+ 2 files changed, 29 insertions(+), 1 deletion(-)
+
+commit 7c08d28aea0910cae802dfd22265e4457fea519f
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 16:44:30 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 16:44:30 2026 +0200
+
+    Show accepted VPS detail while creation continues
+    
+    Load the new VPS detail immediately after acceptance, with task progress
+    and explicit pending, failed and unavailable states instead of a spinner
+    until provisioning completes. Preserve receipts, owner context and locks.
+    
+    Cover completion, early API gaps and reload on desktop/mobile in cs/en,
+    and record the behavior and verification in the design docs and work log.
+
+ WORK_LOG.md                                        |   6 ++
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/WORKFLOWS.md                           |  10 +++
+ docs/work-log/2026-09-30-vps-create-detail.md      |  61 +++++++++++++++++
+ .../screenshots/vps-create-pending-desktop-cs.png  | Bin 0 -> 178041 bytes
+ .../screenshots/vps-create-pending-mobile-cs.png   | Bin 0 -> 530497 bytes
+ e2e/specs/app/vps_create_failures.spec.ts          |   9 ++-
+ e2e/specs/app/vps_creation_progress.spec.ts        |  56 ++++++++++++++++
+ scripts/e2e-type-coverage.test.mjs                 |   6 +-
+ scripts/fixtures/e2e-type-coverage.json            |   9 +--
+ scripts/fixtures/structural-debt-ledger.json       |  14 ----
+ src/i18n/locales/cs/vps/create.ts                  |   8 +++
+ src/i18n/locales/en/vps/create.ts                  |   8 +++
+ .../app/vps/VpsCreatePage.acceptedBinding.test.tsx |   1 +
+ src/pages/app/vps/VpsCreatePage.tsx                |  65 ++----------------
+ src/pages/app/vps/VpsCreationProgress.tsx          |  35 ++++++++++
+ src/pages/app/vps/VpsDetailVisibility.test.ts      |  17 +++--
+ src/pages/app/vps/VpsDetailVisibility.ts           |  11 ++--
+ src/pages/app/vps/VpsLayout.tsx                    |  59 +++++++----------
+ src/pages/app/vps/acceptVpsCreation.ts             |  73 +++++++++++++++++++++
+ src/pages/app/vps/useVpsCreationProgress.ts        |  27 ++++++++
+ tsconfig.e2e.json                                  |   2 +
+ 22 files changed, 346 insertions(+), 133 deletions(-)
+
+commit 421a12c22d69e108b9de2f86e523fb3a1343dbfd
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 16:56:27 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 16:56:27 2026 +0200
+
+    Align account-change review with registration layout
+    
+    Use full-width comparison and decision cards, with initially expanded
+    technical metadata inside the request card. This keeps approval below
+    the data being reviewed instead of in a narrow sidebar.
+    
+    Share the existing metadata renderer and remove the resolved page-size
+    exception. Record requirements, verification and synthetic screenshots.
+
+ WORK_LOG.md                                        |   6 ++
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/WORKFLOWS.md                           |   6 ++
+ docs/work-log/2026-09-30-change-review-layout.md   |  44 ++++++++
+ .../screenshots/change-review-desktop-cs.png       | Bin 0 -> 122857 bytes
+ .../screenshots/change-review-mobile-cs.png        | Bin 0 -> 291639 bytes
+ scripts/fixtures/structural-debt-ledger.json       |  14 ---
+ src/pages/app/admin/RequestDetailPage.tsx          | 118 +++------------------
+ src/pages/app/admin/RequestTechnicalMetadata.tsx   |  96 +++++++++++++++++
+ 9 files changed, 168 insertions(+), 118 deletions(-)
+
+commit ab404332e81046a09ffe738ac7f5f5e3d45f0cc4
+Merge: 534caa83 0e5b33d7
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 20:34:58 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 20:34:58 2026 +0200
+
+    Merge PR #1 for the approved September WebUI release
+    
+    Integrate the reviewed change while preserving its commits and authorship.
+    The maintainer authorized PRs #1 through #8 for the three WebUI sites.
+
+commit 03e784200a07647a35979703b5836cf183d8fc09
+Merge: ab404332 40b8c18d
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 20:35:25 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 20:35:25 2026 +0200
+
+    Merge PR #2 to simplify public account navigation
+    
+    Retain both independent work-log entries while integrating password
+    recovery navigation into the approved WebUI release.
+
+commit 1db6dcc92a8673aa2deed86ea56dc4606680d62f
+Merge: 03e78420 330d761b
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 20:36:02 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 20:36:02 2026 +0200
+
+    Merge PR #3 to keep personal account data owner-scoped
+    
+    Preserve the union of strict E2E coverage and all work-log entries from
+    the approved changes, including sidebar and personal-account scenarios.
+
+commit 6e3553f0b60bfecf046f790e6e107129949430ff
+Merge: 1db6dcc9 c772e251
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 20:36:15 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 20:36:15 2026 +0200
+
+    Merge PR #4 into the approved WebUI release
+    
+    Preserve the change and earlier approved work, combining strict browser
+    type coverage and retaining each independent work-log entry.
+
+commit 49c8a5a0a6fda6a500dc335dd0035e361d3691f8
+Merge: 6e3553f0 482d99a6
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 20:36:16 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 20:36:16 2026 +0200
+
+    Merge PR #5 into the approved WebUI release
+    
+    Preserve the change and earlier approved work, combining strict browser
+    type coverage and retaining each independent work-log entry.
+
+commit 5369a4753cf21d50081cbfbad13defdb5bdc8746
+Merge: 49c8a5a0 d78ceb23
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 20:36:16 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 20:36:16 2026 +0200
+
+    Merge PR #6 into the approved WebUI release
+    
+    Preserve the change and earlier approved work, combining strict browser
+    type coverage and retaining each independent work-log entry.
+
+commit d865174f85ad4259172521096221fb58cb5d1ae7
+Merge: 5369a475 7c08d28a
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 20:36:41 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 20:36:41 2026 +0200
+
+    Merge PR #7 to show accepted VPS creation progress
+    
+    Combine creation status with the compact console layout, and retain all
+    strict browser coverage while removing both resolved size exceptions.
+
+commit 9af8590350a4c0e38e8fff924f669982dcabbdb7
+Merge: d865174f 421a12c2
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 20:36:52 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 20:36:52 2026 +0200
+
+    Merge PR #8 to align account-change review layout
+    
+    Preserve full-width review details and the separate decision card alongside
+    the seven other approved changes and their verification records.
+
+commit ff19040a1278a17c01c38297a574a59c9090042f
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 20:38:41 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 20:38:41 2026 +0200
+
+    release: reconcile approved WebUI integration checks
+    
+    Format the combined E2E configuration and record the authorized three-site
+    release, preserved PR history and required legacy BFF migration.
+
+ WORK_LOG.md       | 17 +++++++++++++++++
+ tsconfig.e2e.json | 11 ++---------
+ 2 files changed, 19 insertions(+), 9 deletions(-)
+
+commit 718cf7596eb8b11a796268a73c1f2e0a02a98450
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 20:40:24 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 20:40:24 2026 +0200
+
+    release: preserve complete layout and work-log merge content
+    
+    Fix conflict resolution truncation found by integration typechecking.
+    Reconstruct the full VPS layout and every work-log entry from PR sources.
+
+ WORK_LOG.md                     | 1109 ++++++++++++++++++++++++++++++++++++++-
+ src/pages/app/vps/VpsLayout.tsx |  275 ++++++++++
+ 2 files changed, 1383 insertions(+), 1 deletion(-)
+
+commit aa2f60b89df65d2f987be48784ed42bab7010833
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Wed Sep 30 21:11:14 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Wed Sep 30 21:11:14 2026 +0200
+
+    docs: record the completed three-site WebUI release
+    
+    Record the eight merged PRs, exact deployed revision, successful checks,
+    configuration pin and rollback evidence for the authorized release.
+    Distinguish anonymous live checks from fixture coverage and note the
+    remaining development-host disk and TLS limitations for the next operator.
+
+ WORK_LOG.md                                    |  3 +-
+ docs/work-log/2026-09-30-three-site-release.md | 94 ++++++++++++++++++++++++++
+ 2 files changed, 96 insertions(+), 1 deletion(-)
+
+commit 3f31fce5cd58f3ace204c27e917b85527bfc08c0
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Fri Oct 2 19:12:12 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Fri Oct 2 19:12:12 2026 +0200
+
+    docs: publish the deployment and maintainer handover
+    
+    Publish the locally recorded review and release workflow in the canonical
+    repository. Replace stale planned-deployment and pending-PR statuses with
+    linked release evidence, and document newadmin and older-host recovery.
+    
+    Keep live certification and host-capacity limits explicit so the next
+    operator can distinguish completed deployment from outstanding acceptance.
+
+ AGENTS.md                                          |  94 ++++++++++-
+ README.md                                          |   6 +-
+ deploy/README.md                                   |   5 +
+ deploy/dev.crucio.cz/README.md                     |   5 +
+ docs/CANONICAL_DOCS.md                             |   7 +-
+ docs/README.md                                     |   3 +
+ docs/clankerdev/DEPLOYMENT.md                      |   5 +
+ docs/design/OPERATIONS.md                          | 174 ++++++++++++++-------
+ docs/design/README.md                              |  20 ++-
+ docs/design/REQUIREMENTS.md                        |  24 +--
+ docs/operations/older-hosts.md                     |  93 +++++++++++
+ docs/work-log/2026-09-30-change-review-layout.md   |   9 ++
+ docs/work-log/2026-09-30-console-viewport.md       |   9 ++
+ docs/work-log/2026-09-30-global-search.md          |   9 ++
+ docs/work-log/2026-09-30-private-ip-assignment.md  |   9 ++
+ .../work-log/2026-09-30-review-release-workflow.md |  47 ++++++
+ docs/work-log/2026-09-30-vps-create-detail.md      |   9 ++
+ .../2026-10-02-deployment-documentation.md         |  44 ++++++
+ 18 files changed, 492 insertions(+), 80 deletions(-)
+
+commit 5cdc95ecfd50ca4056f01c2d072a66dfd810d601
+Author:     Michal Janoušek <kerry@kerrycze.net>
+AuthorDate: Sun Sep 27 23:24:40 2026 +0000
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 09:13:39 2026 +0200
+
+    Add localized registration response presets
+    
+    Offer the agreed rejection and correction messages in the applicant language
+    while preserving editable reasons and the existing review safeguards.
+    Document the accepted wording and verify submitted cs/en payloads.
+    
+    Imported from Kerrycek/clankerdev PR #529, retaining the current review
+    layout documentation when reconciling the workflow description.
+    
+    (cherry picked from commit 169ad7fac8d8daab8d6d96d1e561dd2877915f0e)
+
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/WORKFLOWS.md                           |  20 ++++
+ .../2026-09-28-registration-reason-presets.md      |  51 +++++++++++
+ .../admin/registration_reason_presets.spec.ts      |  74 +++++++++++++++
+ src/i18n/locales/cs/requests/review_safety.ts      |  16 ++++
+ src/i18n/locales/en/requests/review_safety.ts      |  16 ++++
+ .../app/admin/RegistrationReasonEditor.test.tsx    |  42 +++++++++
+ src/pages/app/admin/RegistrationReasonEditor.tsx   | 102 +++++++++++++++++++++
+ .../app/admin/RegistrationReasonPresets.test.ts    |  50 ++++++++++
+ src/pages/app/admin/RegistrationReasonPresets.ts   |  80 ++++++++++++++++
+ .../admin/RequestReviewActions.behavior.test.tsx   |  39 ++++++++
+ src/pages/app/admin/RequestReviewActions.tsx       |  36 ++++++--
+ 12 files changed, 517 insertions(+), 11 deletions(-)
+
+commit 8eaa2c0ba56b6cc5354f8dc28746d7ffa91c0c78
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 09:20:46 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 09:20:46 2026 +0200
+
+    test: verify registration presets against the canonical baseline
+    
+    Adopt the imported browser spec into strict E2E coverage and update the
+    exact coverage assertions. Record fresh checks, synthetic screenshots and
+    the remaining legacy PR inventory so the transfer is reviewable without
+    reintroducing unrelated old history or deployment assumptions.
+
+ .../2026-09-28-registration-reason-presets.md      |  33 +++++++++++++++++++++
+ docs/work-log/2026-10-03-legacy-pr-review.md       |  29 ++++++++++++++++++
+ .../registration-presets-desktop-cs.png            | Bin 0 -> 69614 bytes
+ .../screenshots/registration-presets-mobile-en.png | Bin 0 -> 206633 bytes
+ scripts/e2e-type-coverage.test.mjs                 |   6 ++--
+ scripts/fixtures/e2e-type-coverage.json            |   1 +
+ tsconfig.e2e.json                                  |   1 +
+ 7 files changed, 67 insertions(+), 3 deletions(-)
+
+commit cf3053928cc1955a3c58a39c42aa164eb2ec3a9e
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 10:01:13 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 10:01:13 2026 +0200
+
+    Show VPS migration acceptance in the shared toast
+    
+    Keep accepted migration feedback visible while the detail refreshes or
+    scrolls, with the submitted VPS name and a persistent Open tasks action.
+    Retain errors, uncertain receipts, drafts and transaction tracking.
+    
+    Compare every legacy migration option against the locked API: default IP
+    transfer off and remove the unsupported single-VPS stop_on_error field.
+    Cover receipts and payloads on desktop/mobile, adopt the lifecycle spec
+    into strict E2E types, and document the parity audit and review evidence.
+
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/WORKFLOWS.md                           |  14 ++++
+ docs/work-log/2026-10-03-migration-feedback.md     |  83 +++++++++++++++++++
+ .../2026-10-03-migration/desktop-cs.png            | Bin 0 -> 123920 bytes
+ .../screenshots/2026-10-03-migration/mobile-cs.png | Bin 0 -> 187867 bytes
+ e2e/specs/app/vps_lifecycle_tab_actions.spec.ts    |  92 ++++++++++++++++++---
+ scripts/e2e-type-coverage.test.mjs                 |   6 +-
+ scripts/fixtures/e2e-type-coverage.json            |   8 +-
+ src/i18n/locales/cs/vps/lifecycle.ts               |   1 +
+ src/i18n/locales/en/vps/lifecycle.ts               |   1 +
+ src/lib/api/vps.test.ts                            |   2 -
+ src/lib/api/vps.ts                                 |   1 -
+ src/pages/app/vps/VpsAdminLifecycleModel.test.ts   |  21 ++++-
+ src/pages/app/vps/VpsAdminLifecycleModel.ts        |   5 +-
+ src/pages/app/vps/VpsAdminReplaceMigrateCards.tsx  |   5 --
+ src/pages/app/vps/VpsLifecyclePage.tsx             |   3 +-
+ src/pages/app/vps/vpsMigrateReceipt.ts             |  12 +++
+ tsconfig.e2e.json                                  |   1 +
+ 18 files changed, 219 insertions(+), 38 deletions(-)
+
+commit 861be8e2b7e2d744382fd602d359652cfe216ff1
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 10:12:08 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 10:12:08 2026 +0200
+
+    Restore API operation names in transaction headings
+    
+    Prefer authoritative API labels over client-side action guesses so Czech
+    and unfamiliar operations keep their names instead of showing Operation.
+    Remove the chain table's independent renaming and retain classification
+    for badges and unnamed-operation fallbacks.
+    
+    Cover primary headings, detail and Tasks across desktop/mobile fixtures,
+    adopt the chain browser spec into strict types, and document the naming
+    contract with synthetic review screenshots.
+
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/WORKFLOWS.md                           |   8 +++
+ .../2026-10-03-transaction-operation-names.md      |  58 +++++++++++++++++++++
+ .../2026-10-03-transactions/desktop-cs.png         | Bin 0 -> 164941 bytes
+ .../2026-10-03-transactions/mobile-cs.png          | Bin 0 -> 384797 bytes
+ e2e/specs/app/transaction_chains_ux.spec.ts        |  45 +++++++++++++++-
+ scripts/e2e-type-coverage.test.mjs                 |   6 +--
+ scripts/fixtures/e2e-type-coverage.json            |   8 +--
+ src/lib/operationTaxonomy.test.ts                  |  28 +++++++++-
+ src/lib/operationTaxonomy.ts                       |   4 +-
+ src/pages/app/ActionStateDetailPage.test.tsx       |   2 +-
+ .../app/transactions/TransactionChainsTable.tsx    |  36 +------------
+ tsconfig.e2e.json                                  |   1 +
+ 13 files changed, 146 insertions(+), 52 deletions(-)
+
+commit fa4de6ee7b9fced078cf440a511fdc5e890d5dc7
+Author:     Michal Janoušek <kerry@kerrycze.net>
+AuthorDate: Sat Oct 3 10:17:17 2026 +0200
+Commit:     Michal Janoušek <kerry@kerrycze.net>
+CommitDate: Sat Oct 3 10:17:17 2026 +0200
+
+    Port the searchable VPS migration destination picker
+    
+    Import legacy PR528's destination-first form while retaining canonical
+    PR10's accepted toast, API defaults and strict browser coverage. Keep
+    all execution options visible and preserve paged inventory failure gates.
+    
+    Original commits:
+    d49ca409aebbb80471e24d4f44e485c7cd1cc1be
+    94784cf4c93253bc8996f7b15b8dbfe3e96b0899
+    Source: https://github.com/Kerrycek/clankerdev/pull/528
+
+ docs/design/REQUIREMENTS.md                       |   2 +-
+ docs/design/WORKFLOWS.md                          |  23 +-
+ docs/work-log/2026-09-28-vps-migration-ux.md      |  79 +++++++
+ docs/work-log/2026-10-03-legacy-migration-port.md |  25 +++
+ e2e/specs/app/vps_lifecycle_tab_actions.spec.ts   | 128 ++++++++++-
+ src/i18n/locales/cs/vps/lifecycle.ts              |  28 ++-
+ src/i18n/locales/en/vps/lifecycle.ts              |  28 ++-
+ src/pages/app/vps/VpsAdminReplaceMigrateCards.tsx | 250 +++++++++-------------
+ src/pages/app/vps/VpsLifecyclePage.tsx            |  32 +--
+ src/pages/app/vps/VpsMigrationNodePicker.tsx      | 155 ++++++++++++++
+ src/pages/app/vps/VpsMigrationNodes.test.ts       |  29 +++
+ src/pages/app/vps/VpsMigrationNodes.ts            |  21 ++
+ 12 files changed, 616 insertions(+), 184 deletions(-)
+
+commit 96e0f4d8302057a627246e674d22a935ecbce45b
+Author:     Michal Janoušek <kerry@kerrycze.net>
+AuthorDate: Sat Oct 3 10:30:50 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 10:30:50 2026 +0200
+
+    docs: port and reconcile the legacy maintainer handover
+    
+    Transfer Kerrycek/clankerdev PR530 through e0f99d8f while preserving
+    its dated provenance and original authorship. Adapt the handbook to the
+    canonical BFF, credential, package and deployment contracts so historical
+    instructions cannot override current operational guidance.
+    
+    Map all 70 current requirements and 64 API modules to review evidence,
+    and retain Gitless audits while adding anchor and coverage checks.
+
+ .env.example                                       |  13 +-
+ bff/README.md                                      |   6 +
+ deploy/clankerdev.vpsfree.cz/release.md            |  26 ++
+ docs/design/ACTION_CONTRACTS.md                    | 398 +++++++++++++++++++++
+ docs/design/API_CONTRACTS.md                       |  42 +++
+ docs/design/ARCHITECTURE.md                        |  54 ++-
+ docs/design/CONFIGURATION.md                       | 114 ++++++
+ docs/design/DEVELOPMENT.md                         | 112 ++++++
+ docs/design/DOCUMENTATION_REVIEW.md                | 207 +++++++++++
+ docs/design/DOMAIN_COVERAGE.md                     |  65 ++++
+ docs/design/EVIDENCE_MATRIX.md                     | 147 ++++++++
+ docs/design/HANDOVER.md                            |  91 +++++
+ docs/design/PRODUCT_DESIGN.md                      |   4 +-
+ docs/design/README.md                              |  31 +-
+ docs/design/SOURCES.md                             |  45 ++-
+ docs/design/TROUBLESHOOTING.md                     |  77 ++++
+ docs/design/VISUAL_REFERENCES.md                   |  82 +++++
+ docs/design/WORKFLOWS.md                           |  13 +-
+ docs/design/images/migration-destinations.png      | Bin 0 -> 158067 bytes
+ docs/design/images/registration-baseline.png       | Bin 0 -> 226750 bytes
+ docs/design/images/registration-correct.png        | Bin 0 -> 211672 bytes
+ docs/design/images/registration-reject.png         | Bin 0 -> 81261 bytes
+ docs/design/images/vps-header-baseline.png         | Bin 0 -> 49086 bytes
+ docs/work-log/2026-09-27-per-change-work-log.md    |  62 ++++
+ docs/work-log/2026-09-29-documentation-handover.md | 199 +++++++++++
+ docs/work-log/2026-10-03-documentation-port.md     |  31 ++
+ public/config.local.js.example                     |   8 +-
+ scripts/audit-design-docs.mjs                      |  52 ++-
+ scripts/design-docs.test.mjs                       |  56 ++-
+ 29 files changed, 1901 insertions(+), 34 deletions(-)
+
+commit a84943331afaeed40a3a4ae35453a9a4b3b38c98
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 10:31:18 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 10:31:18 2026 +0200
+
+    docs: record migration picker port verification
+    
+    Keep the canonical port's passing checks and synthetic desktop/mobile
+    captures separate from the historical PR528 evidence.
+
+ docs/work-log/2026-10-03-legacy-migration-port.md      |  17 +++++++++++++++--
+ .../2026-10-03-migration-picker/desktop-picker.png     | Bin 0 -> 142871 bytes
+ .../2026-10-03-migration-picker/mobile-form.png        | Bin 0 -> 414330 bytes
+ 3 files changed, 15 insertions(+), 2 deletions(-)
+
+commit 837eebc95748788500a95227c98d93b20c4f0c81
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 10:33:38 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 10:33:38 2026 +0200
+
+    docs: record handover port checks and canonical dependencies
+    
+    Separate the current pinned-toolchain verification from historical PR530
+    results and link the canonical migration picker port for reviewers.
+
+ docs/design/ACTION_CONTRACTS.md                |  2 +-
+ docs/design/EVIDENCE_MATRIX.md                 |  4 +++-
+ docs/work-log/2026-10-03-documentation-port.md | 20 ++++++++++++++++++--
+ 3 files changed, 22 insertions(+), 4 deletions(-)
+
+commit 416cab8d7507c49300015109d1f5367a63dd0681
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 10:47:11 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 10:47:11 2026 +0200
+
+    Fit incident lists within the available page width
+    
+    Replace the oversized table minimum and fixed column budget with full
+    width and proportional columns. Wrap complete report text and identifiers
+    in rows and cards so users can read incidents without horizontal scrolling.
+    
+    Cover long values, desktop/mobile widths and both roles/locales in browser
+    tests, retaining the existing filter and ownership regression coverage.
+
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/WORKFLOWS.md                           |   7 ++
+ docs/work-log/2026-10-03-incident-list-width.md    |  39 ++++++++++
+ .../screenshots/2026-10-03-incidents/admin.png     | Bin 0 -> 146900 bytes
+ .../screenshots/2026-10-03-incidents/desktop.png   | Bin 0 -> 111575 bytes
+ .../screenshots/2026-10-03-incidents/mobile.png    | Bin 0 -> 262643 bytes
+ e2e/specs/app/incidents_responsive_layout.spec.ts  |  83 +++++++++++++++++++++
+ scripts/e2e-type-coverage.test.mjs                 |   6 +-
+ scripts/fixtures/e2e-type-coverage.json            |   1 +
+ src/pages/app/incidents/IncidentsPage.tsx          |  42 +++++------
+ tsconfig.e2e.json                                  |   1 +
+ 11 files changed, 156 insertions(+), 25 deletions(-)
+
+commit 140b31748c0f05466070e069f1f3664bc14c426b
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 10:58:01 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 10:58:01 2026 +0200
+
+    Preserve embedded PNG payment QR images during sanitization
+    
+    The URL validators removed data-image sources, leaving empty QR frames.
+    Allow bounded base64 PNGs only for payment image sources while retaining
+    existing link, news and executable-content restrictions.
+    
+    Verify image decoding and painted pixels for CZK and EUR in desktop and
+    mobile browser tests; a visible empty image is no longer sufficient.
+
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/WORKFLOWS.md                           |   6 ++
+ docs/work-log/2026-10-03-payment-qr-images.md      |  38 ++++++++++++
+ .../screenshots/2026-10-03-payment-qr/desktop.png  | Bin 0 -> 25135 bytes
+ .../screenshots/2026-10-03-payment-qr/mobile.png   | Bin 0 -> 73875 bytes
+ e2e/specs/app/payment_qr_images.spec.ts            |  65 +++++++++++++++++++++
+ e2e/specs/app/payments_page.spec.ts                |   1 +
+ scripts/e2e-type-coverage.test.mjs                 |   6 +-
+ scripts/fixtures/e2e-type-coverage.json            |   9 +--
+ src/lib/safeUrl.test.ts                            |  21 +++++++
+ src/lib/safeUrl.ts                                 |  19 +++++-
+ src/lib/sanitizeHtml.test.ts                       |   6 ++
+ src/lib/sanitizeHtml.ts                            |   2 +
+ src/pages/app/payments/PaymentsModel.test.ts       |  12 ++++
+ src/pages/app/payments/PaymentsModel.ts            |   3 +-
+ tsconfig.e2e.json                                  |   2 +
+ 16 files changed, 179 insertions(+), 13 deletions(-)
+
+commit dcf99cc554a1655b7e1f5174ff9d8e05941dcb9b
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 14:34:48 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 14:34:48 2026 +0200
+
+    fix: discard stale review queue UI for resolved requests
+    
+    Refetch request state on history return and show the next-request preference
+    only while the request awaits review. Drop the saved list snapshot count,
+    which incorrectly claimed that resolved applications were still waiting.
+    Keep reconsideration from resuming an obsolete queue and cover both normal
+    sequential decisions and Czech/English history return on desktop and mobile.
+
+ docs/design/REQUIREMENTS.md                        |   4 +-
+ docs/design/WORKFLOWS.md                           |   8 ++-
+ .../2026-10-03-request-review-queue-state.md       |  56 ++++++++++++++++
+ .../2026-10-03-request-review-queue/desktop.png    | Bin 0 -> 16390 bytes
+ .../2026-10-03-request-review-queue/mobile.png     | Bin 0 -> 54816 bytes
+ e2e/specs/admin/requests_operations_smoke.spec.ts  |  72 +++++++++++++++++++--
+ scripts/e2e-type-coverage.test.mjs                 |   6 +-
+ scripts/fixtures/e2e-type-coverage.json            |   8 +--
+ src/i18n/locales/cs/requests.ts                    |   1 -
+ src/i18n/locales/en/requests.ts                    |   1 -
+ src/pages/app/admin/RequestDetailPage.test.tsx     |  29 +++++++++
+ src/pages/app/admin/RequestDetailPage.tsx          |   8 +--
+ tsconfig.e2e.json                                  |   1 +
+ 13 files changed, 169 insertions(+), 25 deletions(-)
+
+commit 22af4910c140ca18272dc060d14f350ae54318da
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 14:54:48 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 14:54:48 2026 +0200
+
+    test: align default request queue smoke with current labels
+    
+    The full CI suite exposed an older test that still expected the removed
+    snapshot count. Verify the preference and next-request navigation instead,
+    and adopt the touched spec into strict E2E checking.
+
+ docs/work-log/2026-10-03-request-review-queue-state.md | 10 ++++++++++
+ e2e/specs/app/admin_default_review_queue.spec.ts       |  7 ++++---
+ scripts/e2e-type-coverage.test.mjs                     |  6 +++---
+ scripts/fixtures/e2e-type-coverage.json                |  8 +-------
+ tsconfig.e2e.json                                      |  1 +
+ 5 files changed, 19 insertions(+), 13 deletions(-)
+
+commit ffee00dc9546e90946b0b745ad24b6fd2ada8f48
+Merge: 3f31fce5 8eaa2c0b
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 14:55:23 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 14:55:23 2026 +0200
+
+    Merge PR #9 to restore registration response presets
+    
+    Include the maintainer-approved applicant-language reason presets in the
+    three-site release, retaining the original commits and author history.
+
+commit f4202412808595b797f7a7b253a0ba79c97c0903
+Merge: ffee00dc cf305392
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 14:56:18 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 14:56:18 2026 +0200
+
+    Merge PR #10 for migration feedback and legacy option parity
+    
+    Include the maintainer-approved change in the three-site release while
+    retaining its commits and combining strict E2E coverage without omissions.
+
+commit 58f07d1468bde37e4be53a94480b938f8e0d6364
+Merge: f4202412 861be8e2
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 14:56:18 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 14:56:18 2026 +0200
+
+    Merge PR #11 for actual transaction operation names
+    
+    Include the maintainer-approved change in the three-site release while
+    retaining its commits and combining strict E2E coverage without omissions.
+
+commit 06a21fa0ee4c5c72907ebf9182c62f1d1bd54022
+Merge: 58f07d14 a8494333
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 14:56:18 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 14:56:18 2026 +0200
+
+    Merge PR #12 for searchable migration destinations
+    
+    Include the maintainer-approved change in the three-site release while
+    retaining its commits and combining strict E2E coverage without omissions.
+
+commit 0561e3f924b7260eb5c8a13a5c6f96469991bfb7
+Merge: 06a21fa0 837eebc9
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 14:56:18 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 14:56:18 2026 +0200
+
+    Merge PR #13 for the updated maintainer handbook
+    
+    Include the maintainer-approved change in the three-site release while
+    retaining its commits and combining strict E2E coverage without omissions.
+
+commit 66c4ea0f344e0ac0efc56c92a033698a4c7906b1
+Merge: 0561e3f9 416cab8d
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 14:57:05 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 14:57:05 2026 +0200
+
+    Merge PR #14 for incident lists that fit the viewport
+    
+    Include the maintainer-approved change in the three-site release while
+    retaining its commits and combining strict E2E coverage without omissions.
+
+commit f391368aa905d11313d51bc1fb9cc3051b17fe2d
+Merge: 66c4ea0f 140b3174
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 14:57:43 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 14:57:43 2026 +0200
+
+    Merge PR #15 for payment QR images
+    
+    Include the maintainer-approved change in the three-site release while
+    retaining its commits and combining strict E2E coverage without omissions.
+
+commit 16f1a99562af4803e90c75b9e29e1514c0cb7cd4
+Merge: f391368a 22af4910
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 14:58:24 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 14:58:24 2026 +0200
+
+    Merge PR #16 for correct request review queue state
+    
+    Include the maintainer-approved change in the three-site release while
+    retaining its commits and combining strict E2E coverage without omissions.
+
+commit 0bdb1605ea1b6586df72047909c56c592e0c7ccb
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 14:58:55 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 14:58:55 2026 +0200
+
+    docs: record the approved eight-PR release candidate
+    
+    Record the authorized scope, integration decisions and live preflight state
+    before verifying and deploying the combined application changes.
+
+ docs/work-log/2026-10-03-three-site-release.md | 28 ++++++++++++++++++++++++++
+ 1 file changed, 28 insertions(+)
+
+commit 268410ef957de8c6175bc1c1cc791dcb13d82761
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 15:14:28 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 15:14:28 2026 +0200
+
+    test: fix the metrics token fixture clock
+    
+    The July active-token fixture crosses its 90-day stale threshold on October
+    3 at noon, so wall-clock browser runs start failing without a product change.
+    Fix the browser date to the fixture timeline while keeping timers running,
+    and adopt the complete spec into strict E2E checking.
+
+ docs/work-log/2026-10-03-metrics-token-fixture-clock.md | 14 ++++++++++++++
+ e2e/specs/app/profile_metrics_tokens.spec.ts            |  5 +++++
+ scripts/e2e-type-coverage.test.mjs                      |  6 +++---
+ scripts/fixtures/e2e-type-coverage.json                 |  8 +-------
+ tsconfig.e2e.json                                       |  1 +
+ 5 files changed, 24 insertions(+), 10 deletions(-)
+
+commit eb2b9769d92fd1526814be938fab9a4b5ceb44fa
+Merge: 0bdb1605 268410ef
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 15:16:12 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 15:16:12 2026 +0200
+
+    Merge PR #17 for a stable metrics-token fixture clock
+    
+    Include the maintainer-approved change in the three-site release while
+    retaining its commits and combining strict E2E coverage without omissions.
+
+commit 8b8ae904eb78b65c7d8840f8fba3d678a7d6a6fa
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 15:18:23 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 15:18:23 2026 +0200
+
+    test: type the metrics token fixtures explicitly
+    
+    Preserve optional token and last-use fields while adopting the complete
+    browser spec into strict checking. Record six passing desktop/mobile cases.
+
+ docs/work-log/2026-10-03-metrics-token-fixture-clock.md |  4 +++-
+ e2e/specs/app/profile_metrics_tokens.spec.ts            | 17 +++++++++++++----
+ 2 files changed, 16 insertions(+), 5 deletions(-)
+
+commit f123a7fb825437034a764a8a5654032a481a8476
+Merge: eb2b9769 8b8ae904
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 15:18:25 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 15:18:25 2026 +0200
+
+    Merge the verified metrics-token fixture type follow-up
+    
+    Keep the release validation repair in PR #17 and retain all six successful
+    browser scenarios without changing application behavior.
+
+commit d71c2834ef29a4f0d69c6044e8702480a9716d62
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sat Oct 3 15:44:08 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sat Oct 3 15:44:08 2026 +0200
+
+    docs: record the completed October three-site release
+    
+    Record the merged changes, exact deployed revision and configuration pin,
+    CI repairs, runtime checks and retained rollback so later operators can
+    verify and recover this release without relying on the conversation.
+    Update delivered requirement states and preserve dated preparation history.
+
+ docs/design/OPERATIONS.md                          |   6 +-
+ docs/design/REQUIREMENTS.md                        |  12 +--
+ .../2026-09-28-registration-reason-presets.md      |   6 ++
+ docs/work-log/2026-10-03-documentation-port.md     |   6 ++
+ docs/work-log/2026-10-03-incident-list-width.md    |   6 ++
+ docs/work-log/2026-10-03-legacy-migration-port.md  |   6 ++
+ .../2026-10-03-metrics-token-fixture-clock.md      |   6 ++
+ docs/work-log/2026-10-03-migration-feedback.md     |   6 ++
+ docs/work-log/2026-10-03-payment-qr-images.md      |   6 ++
+ .../2026-10-03-request-review-queue-state.md       |   6 ++
+ docs/work-log/2026-10-03-three-site-release.md     | 107 ++++++++++++++++++++-
+ .../2026-10-03-transaction-operation-names.md      |   6 ++
+ .../clankerdev.vpsfree.cz-desktop.png              | Bin 0 -> 246360 bytes
+ .../clankerdev.vpsfree.cz-mobile.png               | Bin 0 -> 203217 bytes
+ .../2026-10-03-release/dev.crucio.cz-desktop.png   | Bin 0 -> 166255 bytes
+ .../2026-10-03-release/dev.crucio.cz-mobile.png    | Bin 0 -> 117791 bytes
+ .../newadmin.vpsfree.cz-desktop.png                | Bin 0 -> 246593 bytes
+ .../newadmin.vpsfree.cz-mobile.png                 | Bin 0 -> 203217 bytes
+ .../screenshots/2026-10-03-release/results.json    |  86 +++++++++++++++++
+ 19 files changed, 254 insertions(+), 11 deletions(-)
+
+commit 640d9a1dc79f032d08fde43b922377163fd73d90
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sun Oct 4 09:49:13 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sun Oct 4 09:49:13 2026 +0200
+
+    nixos: allow reviewed external payment QR image sources
+    
+    Production payment instructions use an external PNG generator which the
+    newadmin CSP blocks. Add a validated, opt-in image source list so the site
+    can allow that exact endpoint without permitting arbitrary HTTPS images.
+    
+    Cover external and embedded QR decoding under CSP on desktop and mobile,
+    and record the production diagnosis and required site configuration.
+
+ docs/design/NIXOS_SERVICE.md                       |   9 +-
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/WORKFLOWS.md                           |  12 +-
+ docs/work-log/2026-10-04-payment-qr-csp.md         |  58 ++++++++
+ .../2026-10-04-payment-qr-csp/desktop.png          | Bin 0 -> 25135 bytes
+ .../2026-10-04-payment-qr-csp/mobile.png           | Bin 0 -> 73875 bytes
+ e2e/specs/app/payment_qr_images.spec.ts            | 159 ++++++++++++++-------
+ nixos/modules/webui.nix                            |  18 ++-
+ tests/nixos/module-eval.nix                        |  25 ++++
+ 9 files changed, 229 insertions(+), 54 deletions(-)
+
+commit 7a4c4b20d97b558962da3631fafc7e91c553652d
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Sun Oct 4 09:53:35 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Sun Oct 4 09:53:35 2026 +0200
+
+    docs: record QR companion configuration and build limitation
+    
+    Link both reviewable changes and record the attempted host build, hook
+    results and incomplete deployment verification without claiming release.
+
+ docs/work-log/2026-10-04-payment-qr-csp.md | 19 ++++++++++++++++---
+ 1 file changed, 16 insertions(+), 3 deletions(-)
+
+commit 02ac0c7de1a588dbb14a18e652fe3f7e9b45cc51
+Merge: d71c2834 7a4c4b20
+Author:     Michal Janoušek <kerry@kerrycze.net>
+AuthorDate: Sun Oct 4 11:22:37 2026 +0200
+Commit:     GitHub <noreply@github.com>
+CommitDate: Sun Oct 4 11:22:37 2026 +0200
+
+    Merge pull request #18 from vpsfreecz/dev/payment-qr-format
+    
+    nixos: permit reviewed external payment QR generators
+
+commit a7361bb2912485b61a5a0b1472d51158ac08ec96
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 18:13:53 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 6 18:13:53 2026 +0200
+
+    bff: update proxy-addr to 2.0.8
+    
+    The BFF production dependency audit failed for proxy-addr 2.0.7 because of
+    GHSA-jqcg-44mw-7w3h. That version was already in the main baseline.
+    
+    Update that transitive dependency to the patched 2.0.8 release and refresh
+    the BFF package's generated dependency hash. Preserve the existing
+    dependency constraints and proxy trust configuration, and reconcile the
+    owning package documentation and dated work log.
+
+ bff/package-lock.json                        | 16 ++++++----
+ docs/design/PACKAGING.md                     |  6 ++--
+ docs/work-log/2026-10-06-proxy-addr-patch.md | 47 ++++++++++++++++++++++++++++
+ packages/bff.nix                             |  2 +-
+ 4 files changed, 60 insertions(+), 11 deletions(-)
+
+commit 221f91d407d5bd1c6c0d4c1e983fb54e133a0af5
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Tue Oct 6 19:46:56 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Tue Oct 6 19:46:56 2026 +0200
+
+    Fix mobile tap feedback and keep controls reachable
+    
+    Show a cancellable modal while cold search code loads instead of shifting
+    the app shell. Preserve focused VPS suggestions when the owner changes,
+    and keep touch targets and scrolling controls within the viewport.
+    
+    Add Chromium/WebKit touch regressions and document live-site fixture
+    evidence, limitations, and the next UI priorities.
+
+ .github/workflows/e2e-smoke.yml                    |   7 +-
+ docs/design/PRODUCT_DESIGN.md                      |  11 +
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/design/VERIFICATION.md                        |  16 ++
+ docs/work-log/2026-10-06-mobile-touch-audit.md     | 168 ++++++++++++++
+ .../mobile-touch-20261006/cold-search-before.png   | Bin 0 -> 56100 bytes
+ .../assets/mobile-touch-20261006/cold-search.png   | Bin 0 -> 7317 bytes
+ .../assets/mobile-touch-20261006/desktop.png       | Bin 0 -> 80125 bytes
+ .../assets/mobile-touch-20261006/mobile.png        | Bin 0 -> 49193 bytes
+ .../assets/mobile-touch-20261006/wide-touch.png    | Bin 0 -> 80146 bytes
+ e2e/specs/app/mobile_touch_interactions.spec.ts    | 249 +++++++++++++++++++++
+ package.json                                       |   3 +-
+ playwright.config.ts                               |   5 +
+ scripts/fixtures/e2e-type-coverage.json            |   1 +
+ scripts/fixtures/lint-coverage.json                |   4 +-
+ scripts/fixtures/structural-debt-ledger.json       |  14 --
+ src/components/layout/AppLayout.tsx                |  20 +-
+ src/components/layout/DeferredChromeSection.tsx    |  42 ++++
+ src/components/ui/VpsLookupInput.test.tsx          |  25 +++
+ src/components/ui/VpsLookupInput.tsx               |  52 ++---
+ src/components/ui/buttonStyles.ts                  |   2 +
+ .../app/admin/mailer/MailboxConnectionPanel.tsx    |  51 +++++
+ src/pages/app/admin/mailer/MailboxDetailPage.tsx   |  44 +---
+ src/pages/app/vps/VpsListRowActions.tsx            |   5 +-
+ tsconfig.e2e.json                                  |   1 +
+ 25 files changed, 610 insertions(+), 112 deletions(-)
+
+commit 16f10bfa3eda6f34a92ff7b0bd7832cc9ad6089e
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Tue Oct 6 20:45:20 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Tue Oct 6 20:45:20 2026 +0200
+
+    webui: harden touch forms and lookup navigation
+    
+    Keep mobile dialog actions inside the visible viewport and deliver urgent
+    notifications inside dialogs without covering their footers. Preserve
+    registration drafts after rejection and lock cancellation during submission.
+    
+    Unify user and node lookup activation and preserve search drafts across
+    filter and pagination URL writes. Choose VPS cards by available content
+    width and wrap long incident subjects.
+    
+    Add bilingual touch workflow coverage and record targeted passes, broad
+    suite timing failures, screenshots and physical-device limits.
+
+ docs/design/PRODUCT_DESIGN.md                      |  13 +-
+ docs/design/REQUIREMENTS.md                        |   6 +-
+ docs/work-log/2026-10-06-mobile-workflows.md       | 125 ++++++++++
+ .../mobile-workflows-20261006/landscape-cards.png  | Bin 0 -> 247999 bytes
+ .../payment-qr-external-cs.png                     | Bin 0 -> 128240 bytes
+ .../mobile-workflows-20261006/registration-cs.png  | Bin 0 -> 240858 bytes
+ .../mobile-workflows-20261006/wide-table.png       | Bin 0 -> 482770 bytes
+ e2e/specs/app/exports_filter_contract.spec.ts      |  20 +-
+ e2e/specs/app/mobile_touch_interactions.spec.ts    |   9 +-
+ e2e/specs/app/mobile_workflows.spec.ts             | 263 +++++++++++++++++++++
+ .../app/security_advisory_update_mutations.spec.ts |   2 +-
+ playwright.config.ts                               |   2 +-
+ scripts/audit-lookup-primitives.mjs                |   1 +
+ scripts/audit-overlay-contracts.mjs                |   6 +-
+ scripts/e2e-type-coverage.test.mjs                 |   6 +-
+ scripts/fixtures/e2e-type-coverage.json            |  17 +-
+ scripts/fixtures/lint-coverage.json                |  20 +-
+ src/app/toasts.overlay.test.tsx                    |  71 ++++++
+ src/app/toasts.tsx                                 | 127 +++++-----
+ src/components/ui/Drawer.test.tsx                  |   2 +-
+ src/components/ui/Drawer.tsx                       |  25 +-
+ src/components/ui/Input.tsx                        |   1 +
+ src/components/ui/LookupCombobox.test.tsx          |  82 +++++++
+ src/components/ui/LookupCombobox.tsx               | 173 ++++++++++++++
+ src/components/ui/Modal.tsx                        |  44 ++--
+ src/components/ui/NodeLookupInput.tsx              | 220 ++++-------------
+ src/components/ui/OverlayInteractions.test.tsx     |  62 +++++
+ src/components/ui/Select.tsx                       |  13 +-
+ src/components/ui/Textarea.tsx                     |   1 +
+ src/components/ui/UserLookupInput.tsx              | 207 ++++------------
+ src/lib/hooks/useBodyScrollLock.ts                 |  19 ++
+ src/lib/hooks/useModalActive.ts                    |  22 ++
+ src/lib/hooks/useOverlayViewport.ts                |  30 +++
+ src/pages/app/VpsListPage.tsx                      |   4 +-
+ src/pages/app/admin/RequestOperationalLinks.tsx    |  52 ++++
+ src/pages/app/admin/RequestReviewActions.tsx       |  90 +++----
+ .../app/incidents/IncidentReportDetailPage.tsx     |   2 +-
+ src/pages/app/vps/VpsListMobile.tsx                |   4 +-
+ src/pages/app/vps/VpsListTable.tsx                 |   2 +-
+ src/pages/app/vps/useVpsListSmartFilters.test.tsx  |  38 +++
+ src/pages/app/vps/useVpsListSmartFilters.tsx       |  23 +-
+ src/pages/app/vps/vpsListSmartFilterHelpers.ts     |  15 ++
+ src/styles/index.css                               |  14 ++
+ tailwind.config.js                                 |   2 +-
+ tsconfig.e2e.json                                  |   3 +
+ 45 files changed, 1280 insertions(+), 558 deletions(-)
+
+commit 000377743624fd7adb77c5a2d570c35e699daa6e
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Tue Oct 6 21:35:12 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Tue Oct 6 21:35:12 2026 +0200
+
+    webui: use API transaction labels in the selected UI language
+    
+    Prefer localized transaction labels over technical names across item views.
+    Send the UI language to HaveAPI and refresh read caches when it changes,
+    without remounting editors or replaying mutations. Preserve the request
+    language during OAuth renewal and retain names for older API responses.
+    
+    Cover cs/en rendering, language switches, stale responses and retries;
+    record fixture screenshots, checks and the inherited BFF audit blocker.
+
+ docs/design/API_CONTRACTS.md                       |  16 ++++++
+ docs/design/REQUIREMENTS.md                        |   2 +-
+ docs/work-log/2026-10-06-transaction-api-labels.md |  59 +++++++++++++++++++++
+ .../chromium-cs.png                                | Bin 0 -> 86267 bytes
+ .../chromium-en.png                                | Bin 0 -> 84956 bytes
+ .../mobile-chrome-cs.png                           | Bin 0 -> 230622 bytes
+ .../mobile-chrome-en.png                           | Bin 0 -> 200759 bytes
+ e2e/specs/app/transaction_detail_page.spec.ts      |  42 +++++++++++++++
+ scripts/e2e-type-coverage.test.mjs                 |   6 +--
+ scripts/fixtures/e2e-type-coverage.json            |   8 +--
+ scripts/fixtures/lint-coverage.json                |  10 +++-
+ scripts/fixtures/structural-debt-ledger.json       |  12 ++---
+ src/app/ApiLanguageSync.test.tsx                   |  34 ++++++++++++
+ src/app/ApiLanguageSync.tsx                        |  25 +++++++++
+ src/app/i18n.tsx                                   |   4 +-
+ src/components/layout/TransactionChainsPanel.tsx   |   3 +-
+ src/lib/api/haveapi.call.test.ts                   |   9 ++++
+ src/lib/api/haveapi.refresh.test.ts                |  17 ++++++
+ src/lib/api/haveapi.ts                             |   6 ++-
+ src/lib/api/transactions.ts                        |   1 +
+ src/lib/operationTaxonomy.test.ts                  |  10 ++++
+ src/lib/operationTaxonomy.ts                       |   2 +-
+ src/pages/app/ActionStateTransactionsTable.tsx     |   3 +-
+ src/pages/app/TransactionChainDetailPage.tsx       |   3 +-
+ .../app/transactions/TransactionItemsTable.tsx     |   2 +-
+ src/routes/RouteProvidersLayout.test.tsx           |   2 +
+ src/routes/RouteProvidersLayout.tsx                |   2 +
+ tsconfig.e2e.json                                  |  12 ++++-
+ 28 files changed, 259 insertions(+), 31 deletions(-)
+
+commit 6385b08bdeaac8e0cef3dbb82a1a6fbee182364e
+Merge: 02ac0c7d a7361bb2
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Tue Oct 6 21:42:36 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Tue Oct 6 21:42:36 2026 +0200
+
+    Merge BFF dependency patch for the October WebUI release
+    
+    Include the reviewed proxy-addr fix so the combined release uses the
+    patched dependency and matching immutable package hash.
+
+commit 92884b930fbf110783a027b3bb7e571f0ae1dfd5
+Merge: 6385b08b 16f10bfa
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Tue Oct 6 21:42:52 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Tue Oct 6 21:42:52 2026 +0200
+
+    Merge mobile interaction fixes for the October WebUI release
+    
+    Include the tested tap feedback, lookup, dialog and responsive-layout
+    changes while retaining the original commits and their verification.
+
+commit 8f1afadb104a7d18550bb1761013dfc3897565fc
+Merge: 92884b93 00037774
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Tue Oct 6 21:43:16 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Tue Oct 6 21:43:16 2026 +0200
+
+    Merge localized transaction labels into the tested release
+    
+    Combine mobile fixes and API label selection. Preserve both branches of
+    strict browser coverage and adjust their combined inventory counts.
+
+commit 78a723f7d8c609e05f9de7189ff35416747bafdc
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Tue Oct 6 21:45:56 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Tue Oct 6 21:45:56 2026 +0200
+
+    ci: format the combined release coverage manifests
+    
+    Apply pinned Prettier after merging both feature inventories so the
+    integration candidate passes the unchanged formatting gate. Record the
+    approved release scope and preflight rollback versions.
+
+ docs/work-log/2026-10-06-three-site-release.md | 27 ++++++++++++++++++++++++++
+ scripts/fixtures/lint-coverage.json            |  7 +------
+ tsconfig.e2e.json                              | 11 ++---------
+ 3 files changed, 30 insertions(+), 15 deletions(-)
+
+commit 5d853740a43ddd3ab2b73a976a48367065038f9b
+Author:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+AuthorDate: Tue Oct 6 22:13:58 2026 +0200
+Commit:     Michal Janoušek <kerrycze@Kerrys-MacBook-Pro.local>
+CommitDate: Tue Oct 6 22:13:58 2026 +0200
+
+    docs: record the verified three-site mobile release
+    
+    Record the deployed revision, browser evidence and retained rollback
+    releases so operators can distinguish prepared changes from live behavior.
+
+ docs/work-log/2026-10-06-three-site-release.md     | 106 +++++++++++++++++-
+ .../clankerdev.vpsfree.cz-desktop.png              | Bin 0 -> 271618 bytes
+ .../clankerdev.vpsfree.cz-mobile-chrome.png        | Bin 0 -> 723599 bytes
+ .../clankerdev.vpsfree.cz-mobile-webkit.png        | Bin 0 -> 1023869 bytes
+ .../release-20261006/dev.crucio.cz-desktop.png     | Bin 0 -> 177453 bytes
+ .../dev.crucio.cz-mobile-chrome.png                | Bin 0 -> 405556 bytes
+ .../dev.crucio.cz-mobile-webkit.png                | Bin 0 -> 573133 bytes
+ .../newadmin.vpsfree.cz-desktop.png                | Bin 0 -> 271176 bytes
+ .../newadmin.vpsfree.cz-mobile-chrome.png          | Bin 0 -> 722556 bytes
+ .../newadmin.vpsfree.cz-mobile-webkit.png          | Bin 0 -> 1024692 bytes
+ docs/work-log/assets/release-20261006/results.json | 119 +++++++++++++++++++++
+ 11 files changed, 223 insertions(+), 2 deletions(-)
+
+commit ce856841a65d72648d03b6cba1748dd7dd9af048
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 6 15:13:47 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Thu Oct 8 12:23:19 2026 +0200
+
+    networking: manage network availability and inventory
+    
+    Add administrator availability controls with current capability metadata.
+    Keep disabled owned addresses visible without assignment actions and use
+    optional enabled-network filters for new assignment selectors.
+    
+    Display authoritative available and owned-unassigned network counts with
+    bilingual keyboard descriptions. Keep the editor's owned total separate
+    and new statistics optional for older APIs. Warn only on explicit disabled
+    state in desktop and mobile admin IP flags, preserving service links.
+    
+    Document REQ-071 and the REQ-050 extension with the API and workflow
+    contracts, synthetic unit coverage and bilingual browser scenarios.
+
+ docs/design/API_CONTRACTS.md                       |  48 ++-
+ docs/design/EVIDENCE_MATRIX.md                     |   5 +-
+ docs/design/REQUIREMENTS.md                        |   8 +-
+ docs/design/WORKFLOWS.md                           |  24 ++
+ docs/work-log/2026-10-06-network-availability.md   | 138 +++++++++
+ e2e/specs/admin/network_availability.spec.ts       | 339 +++++++++++++++++++++
+ scripts/e2e-type-coverage.test.mjs                 |   6 +-
+ scripts/fixtures/e2e-type-coverage.json            |   1 +
+ scripts/fixtures/structural-debt-ledger.json       |   8 +-
+ src/i18n/locales/cs/admin/ip_addresses.ts          |   2 +
+ src/i18n/locales/cs/adminCluster/networks.ts       |  17 +-
+ src/i18n/locales/en/admin/ip_addresses.ts          |   2 +
+ src/i18n/locales/en/adminCluster/networks.ts       |  15 +-
+ src/lib/api/ipAddresses.ts                         |   9 +
+ src/lib/api/networks.test.ts                       |  34 ++-
+ src/lib/api/networks.ts                            |  24 ++
+ .../app/admin/IpAddressesPage.correctness.test.tsx |  31 +-
+ src/pages/app/admin/cluster/NetworksPage.test.tsx  | 236 ++++++++++++++
+ src/pages/app/admin/cluster/NetworksPage.tsx       |  76 ++++-
+ .../admin/ipAddresses/IpAddressesListMobile.tsx    |   6 +
+ .../app/admin/ipAddresses/IpAddressesListTable.tsx |   6 +
+ .../useProgressiveSuggestedIpQueries.test.tsx      |  92 ++++++
+ .../useProgressiveSuggestedIpQueries.ts            |  17 +-
+ .../app/admin/networking/InventoryDescription.tsx  |  81 +++++
+ .../networking/UserNetworkAddressActions.test.tsx  |  49 +++
+ .../app/networking/UserNetworkAddressActions.tsx   |  34 +++
+ src/pages/app/networking/UserNetworkPage.tsx       |  24 +-
+ .../networking/fetchAssignableIpAddresses.test.ts  |  23 +-
+ .../app/networking/fetchAssignableIpAddresses.ts   |   9 +-
+ tsconfig.e2e.json                                  |   1 +
+ 30 files changed, 1299 insertions(+), 66 deletions(-)

@@ -1,0 +1,30 @@
+import pathlib,json,hashlib,datetime,os,subprocess,fcntl
+T=pathlib.Path.cwd();a=json.loads((T/'finish-direct-package-realize2-acceptance.json').read_text());c=json.loads((T/'finish-direct-private-configs2.json').read_text());proof=json.loads((T/'finish-direct-kernel-proof3-acceptance.json').read_text());assert proof['accepted'] and proof['generator']==a['generator']
+prior=json.loads((T/'finish-direct-capacity-installed-layout2.json').read_text());value=json.loads(pathlib.Path(prior['private_receipt_path']).read_text());assert value['bindings']['source']['revision']==a['generator'] and value['bindings']['root']==c['campaign_root']
+for q in c['configurations']:assert hashlib.sha256(pathlib.Path(q['path']).read_bytes()).hexdigest()==q['sha256']
+old=json.loads((pathlib.Path(c['campaign_root'])/'predecessor.json').read_text());assert pathlib.Path(old['runtime']).is_dir() and pathlib.Path(old['metadata_path']).is_file()
+value['observed_at']=datetime.datetime.now(datetime.timezone.utc).isoformat();G=1024**3
+for role,p in [('state_images',c['campaign_root']),('store','/nix/store'),('builder_scratch','/nix/var/nix/builds')]:
+ existing=pathlib.Path(p)
+ while not existing.exists():existing=existing.parent
+ value['roles'][role]={'path':p,'device':existing.stat().st_dev,'mountpoint':subprocess.check_output(['findmnt','-n','-o','TARGET','-T',str(existing)],text=True).strip(),'fstype':subprocess.check_output(['findmnt','-n','-o','FSTYPE','-T',str(existing)],text=True).strip()}
+assert len(set(v['device'] for v in value['roles'].values()))==1
+fs=os.statvfs('/nix/store');free=fs.f_bavail*fs.f_frsize;ram=int(next(x for x in pathlib.Path('/proc/meminfo').read_text().splitlines() if x.startswith('MemAvailable:')).split()[1])*1024;shm=os.statvfs('/dev/shm');shmfree=shm.f_bavail*shm.f_frsize
+with open('/dev/kvm','r+b',buffering=0) as fd:assert fcntl.ioctl(fd,0xAE00)==12
+assert free>=(92+32+64)*G and ram>=24*G and shmfree>=18*G
+retained=json.loads((T/'finish-direct-retained-growth1.json').read_text());growth=[]
+for disk in retained['disks']:
+ st=pathlib.Path(disk['path']).stat();assert st.st_dev==disk['device'] and st.st_ino==disk['inode'] and st.st_size==disk['apparent_bytes'];remaining=max(st.st_size-st.st_blocks*512,0);growth.append({'name':disk['name'],'device':st.st_dev,'inode':st.st_ino,'apparent_bytes':st.st_size,'allocated_bytes':st.st_blocks*512,'remaining_growth_bytes':remaining})
+assert sum(q['remaining_growth_bytes'] for q in growth)<=16*G
+allocated=int(subprocess.check_output(['du','-s','-B1',c['campaign_root']],text=True).split()[0]);apparent=int(subprocess.check_output(['du','-s','-B1','--apparent-size',c['campaign_root']],text=True).split()[0]);value['owned_output']={'allocated_bytes':allocated,'apparent_bytes':apparent}
+value['build_plan']['assessment']='ISOLATION/CONTINUITY/UPDATE: exact G6 and genuine K68 public packages realized/rooted. Fresh G6+A/G6+B/K68+B kernel-only projections have identical observed derivations/outputs; all five kernel outputs and recursive closures are local valid paths and all-output public dry-run has no planned build/substitution. Complete per-instance guest initrd/toplevel/image closure cost is NOT fully known before public engine preparation; source credentials do not select kernels. Fresh shared disk '+str(free)+' bytes supports full 92 GiB remaining new output envelope, 32 GiB protected reserve (16 host + up to 16 retained incomplete G4 sparse growth), and 64 GiB positive assessed build headroom. This is substantial monitored headroom, NOT a bound on unknown builder scratch or exact future peak. Public operations are sequential at max-jobs1/cores4. Parent wrapper continuously monitors reserve/RAM/shm and actual prepared kernels; cancellation cannot certify daemon builders or detached runner cleanup. No foreign GC/reset savings, no guest import/ZFS/quota waiver. Guest exact missing recursive closure and import capacity must pass the engine before update stops the predecessor.'
+value['build_plan']['derivations']=proof['derivations'];value['build_plan']['kernel_substitutions']=['Fresh exact G6 source/config projection and local complete-kernel proof: '+str(T/'finish-direct-kernel-proof3-acceptance.json')+' SHA256 '+hashlib.sha256((T/'finish-direct-kernel-proof3-acceptance.json').read_bytes()).hexdigest()+'. All five outputs including dev/modules have local recursive path metadata, all-output dry-run is already realized. No new kernel build admitted. Actual prepared kernel identities must agree.']
+value['realized_paths']=list(dict.fromkeys(value['realized_paths']+[old['runtime'],old['metadata_path']]+proof['outputs']));value['missing_paths']=[]
+value['filesystems']=[{'device':value['roles']['store']['device'],'reserve_bytes':32*G,'build_headroom_bytes':64*G,'observed_available_bytes':free}]
+p=pathlib.Path(c['private_parent'])/'capacity-isolation2.json';fd=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+with os.fdopen(fd,'w') as f:json.dump(value,f,indent=2);f.write('\n')
+public={'schema':1,'generator':a['generator'],'phase_scope':'isolation-continuity-update','private_receipt_path':str(p),'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'observed_available_bytes':free,'ram_available_bytes':ram,'shm_available_bytes':shmfree,'reserve_bytes':32*G,'assessed_build_headroom_bytes':64*G,'scratch_bound':'unknown','missing_guest_toplevel_closure_costs':'not fully known before actual public preparation','realized_kernel_outputs':len(proof['outputs']),'retained_g4_growth':growth,'private_contents_exported':False}
+with (T/'finish-direct-capacity-isolation2.json').open('x') as f:json.dump(public,f,indent=2);f.write('\n')
+s=(T/'finish-direct-isolation1.py').read_text().replace('isolation1','isolation2').replace('realize1-acceptance','realize2-acceptance').replace('private-configs1','private-configs2').replace('ab09bd437b310f57e4ff2453ec0432555d85eaca',a['generator']).replace('free<16*1024**3','free<32*1024**3').replace('untouched host filesystem reserve lost','host plus retained G4 sparse-growth reserve lost')
+with (T/'finish-direct-isolation2.py').open('x') as f:f.write(s)
+print(json.dumps(public))

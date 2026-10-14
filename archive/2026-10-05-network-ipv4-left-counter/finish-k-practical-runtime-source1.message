@@ -1,0 +1,10 @@
+verify: support the compact single profile at 2 or 4 GiB
+
+Keep the compact SQL/API/PHP workload when single-topology services use
+4096 MiB, and allow each verifier guest to use 2048 or 4096 MiB independently.
+Retain the fixed image, root and tank sizes and existing dynamic accounting.
+
+The services image builder follows configured RAM and runs before guests.
+Fresh 4096/4096 admission includes both guests plus assessed margins;
+already-live capture admits only its additional margins. Source/artifact
+guards remain unchanged, so this does not resize or adopt an old run.

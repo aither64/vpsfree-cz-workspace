@@ -1,0 +1,9 @@
+verify: honor a validated explicit command TMPDIR
+
+Keep a caller-selected short temporary directory in the verifier child
+environment so browser socket paths need not include the campaign root.
+Require an existing canonical caller-owned private directory and refuse
+invalid explicit values instead of falling back.
+
+Keep the campaign temporary default when TMPDIR is absent, along with
+selected tools, environment scrubbing and child cleanup authority.

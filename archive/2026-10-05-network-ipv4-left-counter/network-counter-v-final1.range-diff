@@ -1,0 +1,891 @@
+1:  fc4f01a02 = 1:  5b6700dc6 api: add network availability admission controls
+2:  70314e816 ! 2:  bee928bb1 webui: expose network availability and enabled address selectors
+    @@ Metadata
+     Author: Jakub Skokan <jakub.skokan@havefun.cz>
+     
+      ## Commit message ##
+    -    webui: expose network availability and enabled address selectors
+    +    webui: expose network availability and inventory
+     
+    -    Show enabled state in network and owned-address inventory. Add a confirmed
+    -    administrator POST form and exclude disabled pools from available selectors
+    -    when the API advertises support. Keep old API requests compatible.
+    +    Add confirmed administrator availability controls and keep disabled owned
+    +    addresses visible without detached assignment actions. Enabled selectors
+    +    follow advertised API capabilities and remain compatible with older APIs.
+     
+    -    Detached owned addresses in disabled networks remain visible with assignment
+    -    controls unavailable, including stale assignment forms. Preserve controls for
+    -    existing service and cover confirmation, CSRF and selector behavior.
+    +    Group network identity, properties, IP usage and actions in four columns.
+    +    Use authoritative available and owned-unassigned counts with descriptions
+    +    of ownership, interface assignment and capacity. Missing statistics remain
+    +    unknown. Shade disabled routed-IP rows and explain them at the network
+    +    address, preserving existing service links and stale-form guards.
+     
+      ## tests/playwright/webui/specs/admin-cluster.spec.cjs ##
+     @@ tests/playwright/webui/specs/admin-cluster.spec.cjs: test.describe.serial('admin cluster browser coverage', () => {
+    @@ tests/playwright/webui/specs/admin-cluster.spec.cjs: test.describe.serial('admin
+     +    await form.locator('input[name="confirm"]').check();
+     +    await submitForm(form, 'Disable this network');
+     +    await expectNotification(page, 'Changes saved');
+    -+    const enabledIcon = rowWithText(page, network.label).locator('td').filter({
+    ++    const networkRow = rowWithText(page, network.label);
+    ++    await expect(networkRow.locator('td')).toHaveCount(4);
+    ++    await expect(networkRow.locator('[data-network-count="available_to_users"]')).toHaveText('0');
+    ++    const enabledIcon = networkRow.locator('td').filter({
+     +      has: page.locator(`a[href="?page=cluster&action=network_enabled&network=${network.id}"]`),
+    -+    }).locator('img');
+    ++    }).locator('[data-network-enabled] img');
+     +    await expect(enabledIcon).toHaveCount(1);
+     +    await expect(enabledIcon).toHaveAttribute('src', 'template/icons/transact_fail.png');
+     +    await gotoCluster(page, 'network_enabled', { network: network.id });
+    @@ tests/playwright/webui/specs/admin-cluster.spec.cjs: test.describe.serial('admin
+     
+      ## webui/forms/cluster.forms.php ##
+     @@ webui/forms/cluster.forms.php: function networks_list()
+    -     $xtpl->table_add_category(_('Label'));
+    -     $xtpl->table_add_category(_('Type'));
+    -     $xtpl->table_add_category(_('Managed'));
+    -+    $xtpl->table_add_category(_('Enabled'));
+    -     $xtpl->table_add_category(_('Size'));
+    -     $xtpl->table_add_category(_('Used'));
+    -     $xtpl->table_add_category(_('Assigned'));
+    -@@ webui/forms/cluster.forms.php: function networks_list()
+    -             'private_access' => 'Priv',
+    -         ][$n->role]);
+    -         $xtpl->table_td(boolean_icon($n->managed));
+    +     $xtpl->title(_('Networks'));
+    + 
+    +     $xtpl->table_add_category(_('Network'));
+    +-    $xtpl->table_add_category(_('Location'));
+    +-    $xtpl->table_add_category(_('Label'));
+    +-    $xtpl->table_add_category(_('Type'));
+    +-    $xtpl->table_add_category(_('Managed'));
+    +-    $xtpl->table_add_category(_('Size'));
+    +-    $xtpl->table_add_category(_('Used'));
+    +-    $xtpl->table_add_category(_('Assigned'));
+    +-    $xtpl->table_add_category(_('Owned'));
+    +-    $xtpl->table_add_category(_('Free'));
+    +-    $xtpl->table_add_category(_('IPs'));
+    +-    $xtpl->table_add_category(_('Locations'));
+    ++    $xtpl->table_add_category(_('Properties'));
+    ++    $xtpl->table_add_category(_('IP usage'));
+    ++    $xtpl->table_add_category(_('Actions'));
+    + 
+    +     $networks = $api->network->list();
+    ++    $canUpdateEnabled = isset($api->network->update->getParameters('input')->enabled);
+    + 
+    +     foreach ($networks as $n) {
+    +-        $xtpl->table_td($n->address . '/' . $n->prefix);
+    +-        $xtpl->table_td($n->primary_location_id ? $n->primary_location->label : '-');
+    +-        $xtpl->table_td($n->label);
+    +-        $xtpl->table_td([
+    +-            'public_access' => 'Pub',
+    +-            'private_access' => 'Priv',
+    +-        ][$n->role]);
+    +-        $xtpl->table_td(boolean_icon($n->managed));
+    +-        $xtpl->table_td(approx_number($n->size), false, true);
+    +-        $xtpl->table_td($n->used, false, true);
+    +-        $xtpl->table_td($n->assigned, false, true);
+    +-        $xtpl->table_td($n->owned, false, true);
+    +         $xtpl->table_td(
+    +-            (approx_number($n->used - $n->taken))
+    +-            . ' (' . (approx_number($n->size - $n->taken)) . ')',
+    +-            false,
+    +-            true
+    ++            '<strong>' . h($n->address . '/' . $n->prefix) . '</strong>'
+    ++            . '<div>' . h($n->label) . '</div>'
+    ++            . '<div>' . h($n->primary_location_id ? $n->primary_location->label : '-') . '</div>'
+    +         );
+     +        $enabled = network_enabled_state($n);
+    -+        $canUpdateEnabled = isset($api->network->update->getParameters('input')->enabled);
+    -+        $xtpl->table_td(
+    -+            $enabled !== null
+    -+            ? boolean_icon($enabled) . ($canUpdateEnabled
+    -+                ? ' <a href="?page=cluster&action=network_enabled&network=' . $n->id . '">'
+    -+                    . h(_('Edit')) . '</a>' : '')
+    -+            : '-'
+    -+        );
+    -         $xtpl->table_td(approx_number($n->size), false, true);
+    -         $xtpl->table_td($n->used, false, true);
+    -         $xtpl->table_td($n->assigned, false, true);
+    +         $xtpl->table_td(
+    +-            ip_list_link(
+    +-                'cluster',
+    +-                '<img
+    +-				src="template/icons/vps_ip_list.png"
+    +-				title="' . _('List IP addresses in this network') . '">',
+    +-                ['network' => $n->id]
+    +-            )
+    ++            '<div>' . h(_('Type')) . ': ' . h([
+    ++                'public_access' => 'Pub',
+    ++                'private_access' => 'Priv',
+    ++            ][$n->role]) . '</div>'
+    ++            . '<div>' . h(_('Managed')) . ': ' . boolean_icon($n->managed) . '</div>'
+    ++            . '<div data-network-enabled>' . h(_('Enabled')) . ': ' . ($enabled !== null
+    ++                ? boolean_icon($enabled) . ($canUpdateEnabled
+    ++                    ? ' <a href="?page=cluster&action=network_enabled&network=' . $n->id . '">'
+    ++                        . h(_('Edit')) . '</a>' : '')
+    ++                : '-') . '</div>'
+    +         );
+    ++        $attributes = $n->attributes();
+    ++        $usage = '';
+    ++        foreach ([
+    ++            ['available_to_users', _('Available to users'), _('Registered addresses or prefixes with no owner or interface assignment, and not reserved by an operation. Disabled networks contribute zero. Use on a particular VPS also depends on location, network purpose and user limits.')],
+    ++            ['owned_unassigned', _('Owned, not assigned'), _('Addresses or prefixes held by users but not assigned to any interface. Other users cannot take them. Includes reserved entries and disabled networks; assignment still requires an enabled network and no conflicting reservation.')],
+    ++            ['assigned', _('Assigned'), _('Addresses or prefixes attached to network interfaces, including VPS and export interfaces. These entries can also have an owner.')],
+    ++            ['used', _('Registered in vpsAdmin'), _('Addresses or prefixes registered in vpsAdmin, including owned and assigned entries.')],
+    ++            ['size', _('Total capacity'), _('Number of allocation units implied by the network and split prefixes, including entries not yet registered. This is not the available pool.')],
+    ++        ] as [$field, $label, $tooltip]) {
+    ++            $value = $attributes[$field] ?? null;
+    ++            $usage .= '<div><span tabindex="0" title="' . h($tooltip) . '" aria-label="'
+    ++                . h($label . '. ' . $tooltip) . '">' . h($label) . '</span>: '
+    ++                . '<strong data-network-count="' . h($field) . '">'
+    ++                . (is_numeric($value) ? approx_number($value) : '-') . '</strong></div>';
+    ++        }
+    ++        $xtpl->table_td($usage);
+    +         $xtpl->table_td(
+    +-            '<a href="?page=cluster&action=network_locations&network=' . $n->id . '">'
+    +-            . '<img
+    +-				src="template/icons/vps_ip_list.png"
+    +-				title="' . _('List locations this network is available in') . '">'
+    +-            . '</a>'
+    ++            ip_list_link('cluster', h(_('IP addresses')), ['network' => $n->id])
+    ++            . '<div><a href="?page=cluster&action=network_locations&network=' . $n->id . '">'
+    ++            . h(_('Locations')) . '</a></div>'
+    +         );
+    +         $xtpl->table_tr();
+    +     }
+     @@ webui/forms/cluster.forms.php: function networks_list()
+          $xtpl->table_out();
+      }
+    @@ webui/forms/cluster.forms.php: function networks_list()
+          $str_conds = [];
+     
+      ## webui/forms/networking.forms.php ##
+    -@@ webui/forms/networking.forms.php: function ip_address_list($page)
+    -     $pagination->setResourceList($ips);
+    - 
+    -     $xtpl->table_add_category(_("Network"));
+    -+    $xtpl->table_add_category(_('Enabled'));
+    -     $xtpl->table_add_category(_("IP address"));
+    -     $xtpl->table_add_category(_("Size"));
+    - 
+     @@ webui/forms/networking.forms.php: function ip_address_list($page)
+          foreach ($ips as $ip) {
+              $netif = $ip->network_interface_id ? $ip->network_interface : null;
+              $vps = $netif && $netif->vps_id ? $netif->vps : null;
+     +        $enabled = network_enabled_state($ip->network);
+      
+    -         $xtpl->table_td($ip->network->address . '/' . $ip->network->prefix);
+    -+        $xtpl->table_td($enabled !== null ? ($enabled ? _('Enabled') : _('Disabled')) : '-');
+    +-        $xtpl->table_td($ip->network->address . '/' . $ip->network->prefix);
+    ++        $network = h($ip->network->address . '/' . $ip->network->prefix);
+    ++        if ($enabled === false) {
+    ++            $network = '<span tabindex="0" title="' . h(_('This network is disabled for new allocations and assignments. Existing assignments remain usable.'))
+    ++                . '">' . $network . '</span>';
+    ++        }
+    ++        $xtpl->table_td($network);
+              $xtpl->table_td($ip->addr . '/' . $ip->prefix);
+              $xtpl->table_td(approx_number($ip->size), false, true);
+      
+    @@ webui/forms/networking.forms.php: function ip_address_list($page)
+                  $xtpl->table_td(
+                      '<a href="?page=networking&action=route_assign&id=' . $ip->id . '&return=' . $return_url . '">'
+                      . '<img src="template/icons/vps_add.png" alt="' . _('Add to a VPS') . '" title="' . _('Add to a VPS') . '">'
+    +@@ webui/forms/networking.forms.php: function ip_address_list($page)
+    + 
+    +         // 		$xtpl->table_td('<a href="?page=cluster&action=ipaddr_delete&ip_id='.$ip->id.'"><img src="template/icons/m_delete.png"  title="'. _("Delete from cluster") .'" /></a>');
+    + 
+    +-        $xtpl->table_tr();
+    ++        $xtpl->table_tr($enabled === false ? '#A6A6A6' : false);
+    +     }
+    + 
+    +     $xtpl->table_pagination($pagination);
+     @@ webui/forms/networking.forms.php: function route_edit_form($id)
+          global $xtpl, $api;
+      
+    @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.mo
+      Binary files webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.mo and webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.mo differ
+     
+      ## webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po ##
+    +@@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Snapshot"
+    + msgid "File name"
+    + msgstr "Název souboru"
+    + 
+    +-#: forms/backup.forms.php forms/cluster.forms.php forms/networking.forms.php
+    +-#: forms/userns.forms.php pages/page_transactions.php
+    ++#: forms/backup.forms.php forms/networking.forms.php forms/userns.forms.php
+    ++#: pages/page_transactions.php
+    + msgid "Size"
+    + msgstr "Velikost"
+    + 
+    +@@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Sítě"
+    + msgid "Network"
+    + msgstr "Síť"
+    + 
+    +-#: forms/cluster.forms.php forms/dns.forms.php forms/ip_release.forms.php
+    +-#: forms/networking.forms.php forms/node.forms.php forms/outage.forms.php
+    +-#: forms/users.forms.php forms/vps.forms.php pages/page_adminvps.php
+    +-#: pages/page_cluster.php pages/page_networking.php
+    +-msgid "Location"
+    +-msgstr "Lokace"
+    ++#: forms/cluster.forms.php
+    ++msgid "Properties"
+    ++msgstr "Vlastnosti"
+    + 
+    +-#: forms/cluster.forms.php forms/dataset.forms.php forms/monitoring.forms.php
+    +-#: forms/userdata.forms.php forms/userns.forms.php forms/users.forms.php
+    +-#: pages/page_adminm.php pages/page_backup.php pages/page_cluster.php
+    +-msgid "Label"
+    +-msgstr "Označení"
+    ++#: forms/cluster.forms.php
+    ++msgid "IP usage"
+    ++msgstr "Využití IP"
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid "Actions"
+    ++msgstr "Akce"
+    + 
+    + #: forms/cluster.forms.php forms/dns.forms.php forms/oom_reports.forms.php
+    + #: forms/outage.forms.php forms/security_advisory.forms.php
+     @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Typ"
+      msgid "Managed"
+      msgstr "Spravováno"
+      
+    +-#: forms/cluster.forms.php pages/page_adminm.php
+    +-msgid "Used"
+    +-msgstr "Použitý"
+     +#: forms/cluster.forms.php forms/dns.forms.php forms/export.forms.php
+     +#: forms/networking.forms.php forms/users.forms.php pages/page_cluster.php
+     +msgid "Enabled"
+     +msgstr "Povoleno"
+     +
+    - #: forms/cluster.forms.php pages/page_adminm.php
+    - msgid "Used"
+    - msgstr "Použitý"
+    -@@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Vypsat IP adresy v této síti"
+    - msgid "List locations this network is available in"
+    - msgstr "Vypsat lokace, ve kterých je tato síť dostupná"
+    ++#: forms/cluster.forms.php
+    ++msgid "Available to users"
+    ++msgstr "Volné pro uživatele"
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid ""
+    ++"Registered addresses or prefixes with no owner or interface assignment, and "
+    ++"not reserved by an operation. Disabled networks contribute zero. Use on a "
+    ++"particular VPS also depends on location, network purpose and user limits."
+    ++msgstr ""
+    ++"Evidované adresy nebo prefixy bez vlastníka a bez přiřazení k rozhraní, "
+    ++"které nejsou rezervované probíhající operací. V zakázané síti je tento počet "
+    ++"nulový. Použití na konkrétním VPS závisí také na lokaci, účelu sítě a "
+    ++"limitech uživatele."
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid ""
+    ++"Addresses or prefixes held by users but not assigned to any interface. Other "
+    ++"users cannot take them. Includes reserved entries and disabled networks; "
+    ++"assignment still requires an enabled network and no conflicting reservation."
+    ++msgstr ""
+    ++"Adresy nebo prefixy vlastněné uživateli, které nejsou přiřazené k žádnému "
+    ++"rozhraní. Jiný uživatel je nemůže převzít. Počet zahrnuje i rezervované "
+    ++"adresy a zakázané sítě; přiřazení vyžaduje povolenou síť a nesmí mu bránit "
+    ++"rezervace."
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid "Owned, not assigned"
+    ++msgstr "Vlastněné, nepřiřazené"
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid ""
+    ++"Addresses or prefixes attached to network interfaces, including VPS and "
+    ++"export interfaces. These entries can also have an owner."
+    ++msgstr ""
+    ++"Adresy nebo prefixy přiřazené k síťovým rozhraním, včetně rozhraní VPS a "
+    ++"exportů. Tyto adresy mohou zároveň mít vlastníka."
+    + 
+    + #: forms/cluster.forms.php forms/networking.forms.php
+    + msgid "Assigned"
+    +-msgstr "Zadáno"
+    ++msgstr "Přiřazené"
+      
+    +-#: forms/cluster.forms.php forms/dns.forms.php forms/networking.forms.php
+    +-msgid "Owned"
+    +-msgstr "Vlastněno"
+     +#: forms/cluster.forms.php
+    ++msgid ""
+    ++"Addresses or prefixes registered in vpsAdmin, including owned and assigned "
+    ++"entries."
+    ++msgstr ""
+    ++"Adresy nebo prefixy evidované ve vpsAdmin, včetně vlastněných a přiřazených."
+    + 
+    +-#: forms/cluster.forms.php forms/ip_release.forms.php
+    +-msgid "IPs"
+    ++#: forms/cluster.forms.php
+    ++msgid "Registered in vpsAdmin"
+    ++msgstr "Evidované ve vpsAdmin"
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid ""
+    ++"Number of allocation units implied by the network and split prefixes, "
+    ++"including entries not yet registered. This is not the available pool."
+    ++msgstr ""
+    ++"Počet adres nebo prefixů podle prefixu sítě a prefixu pro dělení, včetně "
+    ++"dosud neevidovaných. Tento počet nevyjadřuje dostupnost."
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid "Total capacity"
+    ++msgstr "Celková kapacita"
+    ++
+    ++#: forms/cluster.forms.php forms/dns.forms.php forms/ip_release.forms.php
+    ++#: forms/vps.forms.php
+    ++msgid "IP addresses"
+    + msgstr "IP adresy"
+    + 
+    + #: forms/cluster.forms.php forms/ip_release.forms.php forms/outage.forms.php
+    +@@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgid "Locations"
+    + msgstr "Lokace"
+    + 
+    + #: forms/cluster.forms.php
+    +-msgid "List IP addresses in this network"
+    +-msgstr "Vypsat IP adresy v této síti"
+     +msgid "Network availability"
+     +msgstr "Dostupnost sítě"
+     +
+    @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Vypsat IP adresy v
+     +msgid "Back to networks"
+     +msgstr "Zpět k sítím"
+     +
+    ++#: forms/cluster.forms.php forms/dns.forms.php forms/networking.forms.php
+    ++msgid "Owned"
+    ++msgstr "Vlastněno"
+    ++
+     +#: forms/cluster.forms.php forms/networking.forms.php
+     +msgid ""
+     +"Disabling prevents new allocations and assignments. Existing service "
+    @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Vypsat IP adresy v
+     +#: forms/cluster.forms.php
+     +msgid "Disable this network"
+     +msgstr "Zakázat tuto síť"
+    -+
+    -+#: forms/cluster.forms.php
+    + 
+    + #: forms/cluster.forms.php
+    +-msgid "List locations this network is available in"
+    +-msgstr "Vypsat lokace, ve kterých je tato síť dostupná"
+     +msgid "Enable this network"
+     +msgstr "Povolit tuto síť"
+    -+
+    + 
+      #: forms/cluster.forms.php
+      msgid "Network locations"
+    - msgstr "Lokace sítě"
+    +@@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Lokace sítě"
+    + msgid "Add location"
+    + msgstr "Přidat lokaci"
+    + 
+    ++#: forms/cluster.forms.php forms/dataset.forms.php forms/monitoring.forms.php
+    ++#: forms/userdata.forms.php forms/userns.forms.php forms/users.forms.php
+    ++#: pages/page_adminm.php pages/page_backup.php pages/page_cluster.php
+    ++msgid "Label"
+    ++msgstr "Označení"
+    ++
+    + #: forms/cluster.forms.php forms/dns.forms.php
+    + msgid "Primary"
+    + msgstr "Primární"
+    +@@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Adresa"
+    + msgid "Add network to location"
+    + msgstr "Přidat síť do lokace"
+    + 
+    ++#: forms/cluster.forms.php forms/dns.forms.php forms/ip_release.forms.php
+    ++#: forms/networking.forms.php forms/node.forms.php forms/outage.forms.php
+    ++#: forms/users.forms.php forms/vps.forms.php pages/page_adminvps.php
+    ++#: pages/page_cluster.php pages/page_networking.php
+    ++msgid "Location"
+    ++msgstr "Lokace"
+    ++
+    + #: forms/cluster.forms.php forms/dataset.forms.php forms/dns.forms.php
+    + #: forms/oom_reports.forms.php forms/userdata.forms.php forms/userns.forms.php
+    + #: forms/users.forms.php pages/page_adminm.php
+    +@@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Přidat IP adresy"
+    + msgid "Back"
+    + msgstr "Zpět"
+    + 
+    +-#: forms/cluster.forms.php forms/dns.forms.php forms/ip_release.forms.php
+    +-#: forms/vps.forms.php
+    +-msgid "IP addresses"
+    +-msgstr "IP adresy"
+    +-
+    + #: forms/cluster.forms.php
+    + msgid "Delete DNS resolver"
+    + msgstr "Smazat DNS resolver"
+     @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr ""
+      "<b>Upozornění:</b> Balíček bude také okamžitě odebrán všem uživatelům, kteří "
+      "jej používají."
+    @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Ponechat"
+      msgid "Disabled"
+      msgstr "Zakázáno"
+      
+    +@@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "K uvolnění"
+    + msgid "Kept"
+    + msgstr "Ponecháno"
+    + 
+    ++#: forms/ip_release.forms.php
+    ++msgid "IPs"
+    ++msgstr "IP adresy"
+    ++
+    + #: forms/ip_release.forms.php
+    + msgid "Policy"
+    + msgstr "Pravidla"
+     @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgid ""
+      "All selected addresses remain owned until the whole release succeeds. If it "
+      "rolls back, none are released. Addresses in a running release cannot be "
+    @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgid ""
+      msgid "Release attempts"
+      msgstr "Pokusy o uvolnění"
+      
+    +@@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Prefix"
+    + msgid "'unassigned' to list free addresses"
+    + msgstr "'unassigned' pro seznam volných adres"
+    + 
+    ++#: forms/networking.forms.php
+    ++msgid ""
+    ++"This network is disabled for new allocations and assignments. Existing "
+    ++"assignments remain usable."
+    ++msgstr ""
+    ++"Síť je zakázaná pro nové přidělování a přiřazování adres. Existující "
+    ++"přiřazené adresy zůstávají použitelné."
+    ++
+    + #: forms/networking.forms.php forms/vps.forms.php
+    + msgid "List incident reports"
+    + msgstr "Zobrazit incidenty"
+     @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Seznam incidentů"
+      msgid "Overview"
+      msgstr "Přehled"
+    @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Seznam incidentů"
+      #: forms/networking.forms.php forms/vps.forms.php
+      msgid "Network interface"
+      msgstr "Síťové rozhraní"
+    +@@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Aktualizováno na"
+    + msgid "Step size"
+    + msgstr "Velikost kroku"
+    + 
+    ++#: pages/page_adminm.php
+    ++msgid "Used"
+    ++msgstr "Použitý"
+    ++
+    + #: pages/page_adminm.php
+    + msgid "Request approved"
+    + msgstr "Žádost schválena"
+     @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Síť zakázána"
+      msgid "Failed to disable network"
+      msgstr "Síť se nepodařilo zakázat"
+    @@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Balíček prostře
+      #: pages/page_cluster.php
+      msgid "Back to locations"
+      msgstr "Zpět k lokacím"
+    +@@ webui/lang/locale/cs_CZ.utf8/LC_MESSAGES/vpsAdmin.po: msgstr "Upravit pole nápovědy"
+    + msgid "Help"
+    + msgstr "Pomoc"
+    + 
+    ++#~ msgid "List IP addresses in this network"
+    ++#~ msgstr "Vypsat IP adresy v této síti"
+    ++
+    ++#~ msgid "List locations this network is available in"
+    ++#~ msgstr "Vypsat lokace, ve kterých je tato síť dostupná"
+    ++
+    + #~ msgid ""
+    + #~ "Addresses being released cannot be retained. If cleanup fails, ownership "
+    + #~ "is kept and an admin can try again."
+     
+      ## webui/lang/locale/vpsAdmin.pot ##
+    +@@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+    + msgid "File name"
+    + msgstr ""
+    + 
+    +-#: forms/backup.forms.php forms/cluster.forms.php forms/networking.forms.php
+    +-#: forms/userns.forms.php pages/page_transactions.php
+    ++#: forms/backup.forms.php forms/networking.forms.php forms/userns.forms.php
+    ++#: pages/page_transactions.php
+    + msgid "Size"
+    + msgstr ""
+    + 
+    +@@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+    + msgid "Network"
+    + msgstr ""
+    + 
+    +-#: forms/cluster.forms.php forms/dns.forms.php forms/ip_release.forms.php
+    +-#: forms/networking.forms.php forms/node.forms.php forms/outage.forms.php
+    +-#: forms/users.forms.php forms/vps.forms.php pages/page_adminvps.php
+    +-#: pages/page_cluster.php pages/page_networking.php
+    +-msgid "Location"
+    ++#: forms/cluster.forms.php
+    ++msgid "Properties"
+    + msgstr ""
+    + 
+    +-#: forms/cluster.forms.php forms/dataset.forms.php forms/monitoring.forms.php
+    +-#: forms/userdata.forms.php forms/userns.forms.php forms/users.forms.php
+    +-#: pages/page_adminm.php pages/page_backup.php pages/page_cluster.php
+    +-msgid "Label"
+    ++#: forms/cluster.forms.php
+    ++msgid "IP usage"
+    ++msgstr ""
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid "Actions"
+    + msgstr ""
+    + 
+    + #: forms/cluster.forms.php forms/dns.forms.php forms/oom_reports.forms.php
+     @@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+      msgid "Managed"
+      msgstr ""
+      
+    +-#: forms/cluster.forms.php pages/page_adminm.php
+    +-msgid "Used"
+     +#: forms/cluster.forms.php forms/dns.forms.php forms/export.forms.php
+     +#: forms/networking.forms.php forms/users.forms.php pages/page_cluster.php
+     +msgid "Enabled"
+     +msgstr ""
+     +
+    - #: forms/cluster.forms.php pages/page_adminm.php
+    - msgid "Used"
+    ++#: forms/cluster.forms.php
+    ++msgid "Available to users"
+    ++msgstr ""
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid ""
+    ++"Registered addresses or prefixes with no owner or interface assignment, and "
+    ++"not reserved by an operation. Disabled networks contribute zero. Use on a "
+    ++"particular VPS also depends on location, network purpose and user limits."
+    ++msgstr ""
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid ""
+    ++"Addresses or prefixes held by users but not assigned to any interface. Other "
+    ++"users cannot take them. Includes reserved entries and disabled networks; "
+    ++"assignment still requires an enabled network and no conflicting reservation."
+    ++msgstr ""
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid "Owned, not assigned"
+    ++msgstr ""
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid ""
+    ++"Addresses or prefixes attached to network interfaces, including VPS and "
+    ++"export interfaces. These entries can also have an owner."
+      msgstr ""
+    -@@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+    - msgid "List locations this network is available in"
+    + 
+    + #: forms/cluster.forms.php forms/networking.forms.php
+    + msgid "Assigned"
+    + msgstr ""
+    + 
+    +-#: forms/cluster.forms.php forms/dns.forms.php forms/networking.forms.php
+    +-msgid "Owned"
+    ++#: forms/cluster.forms.php
+    ++msgid ""
+    ++"Addresses or prefixes registered in vpsAdmin, including owned and assigned "
+    ++"entries."
+      msgstr ""
+      
+    +-#: forms/cluster.forms.php forms/ip_release.forms.php
+    +-msgid "IPs"
+     +#: forms/cluster.forms.php
+    ++msgid "Registered in vpsAdmin"
+    ++msgstr ""
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid ""
+    ++"Number of allocation units implied by the network and split prefixes, "
+    ++"including entries not yet registered. This is not the available pool."
+    ++msgstr ""
+    ++
+    ++#: forms/cluster.forms.php
+    ++msgid "Total capacity"
+    ++msgstr ""
+    ++
+    ++#: forms/cluster.forms.php forms/dns.forms.php forms/ip_release.forms.php
+    ++#: forms/vps.forms.php
+    ++msgid "IP addresses"
+    + msgstr ""
+    + 
+    + #: forms/cluster.forms.php forms/ip_release.forms.php forms/outage.forms.php
+    +@@ webui/lang/locale/vpsAdmin.pot: msgid "Locations"
+    + msgstr ""
+    + 
+    + #: forms/cluster.forms.php
+    +-msgid "List IP addresses in this network"
+     +msgid "Network availability"
+     +msgstr ""
+     +
+    @@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+     +msgid "Back to networks"
+     +msgstr ""
+     +
+    ++#: forms/cluster.forms.php forms/dns.forms.php forms/networking.forms.php
+    ++msgid "Owned"
+    ++msgstr ""
+    ++
+     +#: forms/cluster.forms.php forms/networking.forms.php
+     +msgid ""
+     +"Disabling prevents new allocations and assignments. Existing service "
+    @@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+     +#: forms/vps.forms.php pages/page_adminvps.php pages/page_backup.php
+     +#: pages/page_cluster.php pages/page_dataset.php
+     +msgid "Confirm"
+    -+msgstr ""
+    -+
+    -+#: forms/cluster.forms.php
+    + msgstr ""
+    + 
+    + #: forms/cluster.forms.php
+    +-msgid "List locations this network is available in"
+     +msgid "Disable this network"
+     +msgstr ""
+     +
+     +#: forms/cluster.forms.php
+     +msgid "Enable this network"
+    + msgstr ""
+    + 
+    + #: forms/cluster.forms.php
+    +@@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+    + msgid "Add location"
+    + msgstr ""
+    + 
+    ++#: forms/cluster.forms.php forms/dataset.forms.php forms/monitoring.forms.php
+    ++#: forms/userdata.forms.php forms/userns.forms.php forms/users.forms.php
+    ++#: pages/page_adminm.php pages/page_backup.php pages/page_cluster.php
+    ++msgid "Label"
+    ++msgstr ""
+    ++
+    + #: forms/cluster.forms.php forms/dns.forms.php
+    + msgid "Primary"
+    + msgstr ""
+    +@@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+    + msgid "Add network to location"
+    + msgstr ""
+    + 
+    ++#: forms/cluster.forms.php forms/dns.forms.php forms/ip_release.forms.php
+    ++#: forms/networking.forms.php forms/node.forms.php forms/outage.forms.php
+    ++#: forms/users.forms.php forms/vps.forms.php pages/page_adminvps.php
+    ++#: pages/page_cluster.php pages/page_networking.php
+    ++msgid "Location"
+     +msgstr ""
+     +
+    + #: forms/cluster.forms.php forms/dataset.forms.php forms/dns.forms.php
+    + #: forms/oom_reports.forms.php forms/userdata.forms.php forms/userns.forms.php
+    + #: forms/users.forms.php pages/page_adminm.php
+    +@@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+    + msgid "Back"
+    + msgstr ""
+    + 
+    +-#: forms/cluster.forms.php forms/dns.forms.php forms/ip_release.forms.php
+    +-#: forms/vps.forms.php
+    +-msgid "IP addresses"
+    +-msgstr ""
+    +-
+      #: forms/cluster.forms.php
+    - msgid "Network locations"
+    + msgid "Delete DNS resolver"
+      msgstr ""
+     @@ webui/lang/locale/vpsAdmin.pot: msgid ""
+      "that are using it."
+    @@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+      msgid "Disabled"
+      msgstr ""
+      
+    +@@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+    + msgid "Kept"
+    + msgstr ""
+    + 
+    ++#: forms/ip_release.forms.php
+    ++msgid "IPs"
+    ++msgstr ""
+    ++
+    + #: forms/ip_release.forms.php
+    + msgid "Policy"
+    + msgstr ""
+    +@@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+    + msgid "'unassigned' to list free addresses"
+    + msgstr ""
+    + 
+    ++#: forms/networking.forms.php
+    ++msgid ""
+    ++"This network is disabled for new allocations and assignments. Existing "
+    ++"assignments remain usable."
+    ++msgstr ""
+    ++
+    + #: forms/networking.forms.php forms/vps.forms.php
+    + msgid "List incident reports"
+    + msgstr ""
+     @@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+      msgid "Overview"
+      msgstr ""
+    @@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+      #: forms/networking.forms.php forms/vps.forms.php
+      msgid "Network interface"
+      msgstr ""
+    +@@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+    + msgid "Step size"
+    + msgstr ""
+    + 
+    ++#: pages/page_adminm.php
+    ++msgid "Used"
+    ++msgstr ""
+    ++
+    + #: pages/page_adminm.php
+    + msgid "Request approved"
+    + msgstr ""
+     @@ webui/lang/locale/vpsAdmin.pot: msgstr ""
+      msgid "Failed to disable network"
+      msgstr ""
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +        }
+     +    }
+     +
+    -+    public function testNetworkInventoryUsesRealClientEnabledColumn(): void
+    ++    public function testNetworkInventoryGroupsRealClientPropertiesAndKeepsEditCapability(): void
+     +    {
+     +        $this->loadUi();
+     +        global $api, $xtpl;
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +            networks_list();
+     +
+     +            $xpath = $this->xpath($xtpl->text('main.table'));
+    -+            $cell = $xpath->query('//tr[td[1]="192.0.2.0/24"]/td[6]')->item(0);
+    ++            $row = $xpath->query('//tr[td[1]/strong="192.0.2.0/24"]')->item(0);
+    ++            self::assertNotNull($row);
+    ++            self::assertSame(4, $xpath->query('./td', $row)->length);
+    ++            self::assertStringContainsString('test network', $row->textContent);
+    ++            $cell = $xpath->query('.//div[@data-network-enabled]', $row)->item(0);
+     +            self::assertNotNull($cell);
+     +            if ($enabled === null) {
+    -+                self::assertSame('-', trim($cell->textContent));
+    ++                self::assertSame(_('Enabled') . ': -', trim($cell->textContent));
+     +                self::assertSame(0, $xpath->query('.//img|.//a', $cell)->length);
+     +            } else {
+     +                self::assertSame(
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +        }
+     +    }
+     +
+    ++    public function testNetworkCountsKeepZeroDistinctFromMissingWithoutUsingOldFreeArithmetic(): void
+    ++    {
+    ++        $this->loadUi();
+    ++        global $api, $xtpl;
+    ++
+    ++        foreach ([['available_to_users' => 0, 'owned_unassigned' => 1], ['available_to_users' => 13, 'owned_unassigned' => 0], null] as $counters) {
+    ++            $api = $this->realClient(true, true, false, $counters);
+    ++            $xtpl = $this->template();
+    ++            networks_list();
+    ++            $html = $xtpl->text('main.table');
+    ++            $xpath = $this->xpath($html);
+    ++            foreach (['available_to_users', 'owned_unassigned', 'assigned', 'used', 'size'] as $field) {
+    ++                $value = $xpath->query('//*[@data-network-count="' . $field . '"]')->item(0);
+    ++                self::assertNotNull($value);
+    ++                $expected = match ($field) {
+    ++                    'assigned' => '1', 'used' => '2', 'size' => '256',
+    ++                    default => $counters === null ? '-' : (string) $counters[$field],
+    ++                };
+    ++                self::assertSame($expected, trim($value->textContent));
+    ++            }
+    ++            self::assertSame(4, $xpath->query('//th')->length);
+    ++            self::assertStringContainsString(h(_('Properties')), $html);
+    ++            self::assertStringContainsString(h(_('IP usage')), $html);
+    ++            self::assertStringContainsString(h(_('Actions')), $html);
+    ++            self::assertSame(5, $xpath->query('//*[@tabindex="0"]')->length);
+    ++            self::assertSame(1, $xpath->query('//a[contains(@href,"action=ip_addresses") and contains(@href,"network=7")]')->length);
+    ++            self::assertSame(1, $xpath->query('//a[contains(@href,"action=network_locations") and contains(@href,"network=7")]')->length);
+    ++            self::assertStringNotContainsString('254', $html);
+    ++            self::assertSame(['network.list'], array_column($api->requests, 'action'));
+    ++        }
+    ++    }
+    ++
+    ++    public function testLargeCapacityRetainsTrustedNumericUnitMarkup(): void
+    ++    {
+    ++        $this->loadUi();
+    ++        global $api, $xtpl;
+    ++        $api = $this->realClient(true);
+    ++        $api->responses['network.list'][0]->size = 2000000000000;
+    ++        $xtpl = $this->template();
+    ++        networks_list();
+    ++        $html = $xtpl->text('main.table');
+    ++        $xpath = $this->xpath($html);
+    ++        $capacity = $xpath->query('//*[@data-network-count="size"]')->item(0);
+    ++        self::assertSame('12', $xpath->query('.//sup', $capacity)->item(0)->textContent);
+    ++        self::assertStringContainsString('10', $capacity->textContent);
+    ++        self::assertStringNotContainsString('&lt;sup', $html);
+    ++        self::assertStringNotContainsString('&amp;times;', $html);
+    ++    }
+    ++
+    ++    public function testNetworkCountLabelsAndTooltipsAreEscaped(): void
+    ++    {
+    ++        $this->loadUi();
+    ++        global $api, $xtpl;
+    ++        $api = $this->realClient(true);
+    ++        $api->responses['network.list'][0]->label = '<img src=x onerror=alert(1)> & "network"';
+    ++        $xtpl = $this->template();
+    ++        networks_list();
+    ++        $html = $xtpl->text('main.table');
+    ++        $xpath = $this->xpath($html);
+    ++        self::assertStringContainsString('&lt;img', $html);
+    ++        self::assertSame(0, $xpath->query('//img[@onerror]')->length);
+    ++        $description = _('Registered addresses or prefixes with no owner or interface assignment, and not reserved by an operation. Disabled networks contribute zero. Use on a particular VPS also depends on location, network purpose and user limits.');
+    ++        $label = $xpath->query('//*[@data-network-count="available_to_users"]/preceding-sibling::span')->item(0);
+    ++        self::assertSame($description, $label->getAttribute('title'));
+    ++        self::assertSame(_('Available to users') . '. ' . $description, $label->getAttribute('aria-label'));
+    ++    }
+    ++
+     +    public function testIpInventoryPreservesAssignedServiceAndFiltersDetachedActions(): void
+     +    {
+     +        $this->loadUi();
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +            $xpath = $this->xpath($xtpl->text('main.table'));
+     +            $row = $xpath->query('//tr[td[1]="192.0.2.0/24"]')->item(0);
+     +            self::assertNotNull($row);
+    -+            self::assertSame($enabled === null ? '-' : ($enabled ? _('Enabled') : _('Disabled')), trim($xpath->query('./td[2]', $row)->item(0)->textContent));
+    ++            self::assertSame($enabled === false ? 'background:#A6A6A6' : '', $row->getAttribute('style'));
+    ++            self::assertSame(0, $xpath->query('//th[normalize-space(.)="' . _('Enabled') . '"]')->length);
+    ++            $tooltip = $xpath->query('./td[1]/span/@title', $row);
+    ++            self::assertSame($enabled === false ? 1 : 0, $tooltip->length);
+    ++            if ($enabled === false) {
+    ++                self::assertSame(_('This network is disabled for new allocations and assignments. Existing assignments remain usable.'), $tooltip->item(0)->nodeValue);
+    ++            }
+     +            self::assertSame(!$assigned && $enabled !== false ? 1 : 0, $xpath->query('.//a[contains(@href,"action=route_assign")]', $row)->length);
+     +            self::assertSame($assigned ? 1 : 0, $xpath->query('.//a[contains(@href,"action=route_unassign")]', $row)->length);
+     +            self::assertSame($assigned ? 1 : 0, $xpath->query('.//a[contains(@href,"page=adminvps")]', $row)->length);
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +        return new DOMXPath($doc);
+     +    }
+     +
+    -+    private function realClient(?bool $enabled, bool $supported = true, bool $assigned = false): \HaveAPI\Client
+    ++    private function realClient(?bool $enabled, bool $supported = true, bool $assigned = false, ?array $counters = ['available_to_users' => 0, 'owned_unassigned' => 1]): \HaveAPI\Client
+     +    {
+     +        $client = new class ('https://api.example') extends \HaveAPI\Client {
+     +            public array $responses = [];
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +            'id' => 7, 'address' => '192.0.2.0', 'prefix' => 24, 'label' => 'test network',
+     +            'role' => 'public_access', 'managed' => false, 'size' => 256,
+     +            'used' => 2, 'taken' => 2, 'assigned' => 1, 'owned' => 1, 'primary_location' => null,
+    -+        ] + ($enabled === null ? [] : ['enabled' => $enabled]));
+    ++        ] + ($counters ?? []) + ($enabled === null ? [] : ['enabled' => $enabled]));
+     +        $user = $resolved(['id' => 1, 'login' => 'test-user']);
+     +        $vps = $resolved(['id' => 4, 'hostname' => 'existing-service']);
+     +        $netif = $resolved(['id' => 5, 'name' => 'eth0', 'vps' => $vps]);
+    @@ webui/tests/Regression/NetworkAvailabilityTest.php (new)
+     +                'role' => 'String', 'managed' => 'Boolean', 'size' => 'Integer',
+     +                'used' => 'Integer', 'taken' => 'Integer', 'assigned' => 'Integer', 'owned' => 'Integer',
+     +                'primary_location' => $resourceParam('location', 'label'),
+    -+            ] + ($enabled === null ? [] : ['enabled' => 'Boolean']),
+    ++            ] + array_fill_keys(array_keys($counters ?? []), 'Integer') + ($enabled === null ? [] : ['enabled' => 'Boolean']),
+     +            'ip_address' => [
+     +                'id' => 'Integer', 'addr' => 'String', 'prefix' => 'Integer', 'size' => 'Integer',
+     +                'network' => $resourceParam('network', 'label'), 'user' => $resourceParam('user', 'login'),
+3:  5d5527a67 = 3:  da3ae4feb api: restrict non-admin network and IP lists
+4:  adb6bb9cb = 4:  cc8e9e7e4 api: expose authoritative network inventory counts
+5:  818cf3646 < -:  --------- webui: expose network availability and inventory

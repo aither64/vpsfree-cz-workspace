@@ -1,0 +1,48 @@
+{
+  "session": "2026-10-05-network-ipv4-left-counter",
+  "member": "implementer0",
+  "repository": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsfree-kb-contracts-runtime",
+  "head": "8ebc58c24ddbf13a9bf0d0c2c3425275c194adf9",
+  "branch": "2026-10-05-network-ipv4-left-counter-kb-runtime",
+  "path_count": 1,
+  "path": "tools/test-runtime-verify.rb",
+  "index_empty": true,
+  "native_evidence": {
+    "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-k-generator-source-log1.txt": {
+      "sha256": "de3b4fec2e09a076dd4f0a72c521e584198306c807f4376216ae28a5fda4fb7f",
+      "bytes": 111905
+    },
+    "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-05-network-ipv4-left-counter/finish-hosted-recovery1/k/run-logs.zip": {
+      "sha256": "ebd20e007e6e8d665b4a4ddd784f208c9e67222a674d501028497d68e9bf887c",
+      "bytes": 68866
+    }
+  },
+  "native_hosted_run": 37826386600,
+  "native_seed": 51401,
+  "native_result": {
+    "runs": 18,
+    "assertions": 11,
+    "failures": 2,
+    "errors": 15,
+    "skips": 0
+  },
+  "native_first_failure": {
+    "example": "test_installed_layout_resolves_matching_predecessor_outputs_without_assuming_path_order",
+    "log_lines": "741-747",
+    "error": "NameError: undefined method '__minitest_stub__new' for class '#<Class:KbRuntime::Software>'",
+    "outer_stub": "tools/test-runtime-verify.rb:39",
+    "nested_stub": "tools/test-runtime-verify.rb:235"
+  },
+  "source_diagnosis": "The same Software.new method is stubbed twice in nested scopes. Minitest uses one alias name for that method; inner restoration removes the alias needed by outer ensure. Native subsequent examples fail because new is no longer available.",
+  "correction": "The sole outer constructor stub is callable and wraps the exact metadata value supplied to each construction. installed_layout runs under it without a second same-method stub. Normal single-scope ensure restores the constructor; no framework or environment fallback.",
+  "scope_proof": "Current source is byte-identical to HEAD except the two recorded line substitutions. All 18 test definitions and their assertions, predecessor metadata/output-order, capacity/accounts/phase/command checks are retained. Product sources, docs, pins, schemas and other repositories are untouched.",
+  "deliberate_fixture_boundary": "The pure synthetic fixture still bypasses immutable-store validation; the callable preserves actual supplied final/predecessor metadata rather than substituting one identity.",
+  "checks_run": [],
+  "local_reproduction": false,
+  "git_mutations": false,
+  "runtime_operations": false,
+  "hosted_selection": ".github/workflows/check.yml Check/check -> nix develop --command bin/check --allow-missing at root-published corrected exact head; canonical stop-first sequence will reach previously unrun IP/export/Node/contract checks only after this suite passes.",
+  "readiness": "Source frozen for root inspection/consolidation and hosted verification; no corrected-source pass claimed.",
+  "blockers": [],
+  "design_deviations": []
+}

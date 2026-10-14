@@ -1,0 +1,182 @@
+diff --git a/tools/runtime-verify.rb b/tools/runtime-verify.rb
+index 82fc59f26ef57d009cd6c042666e0a6dd87752c1..fdf51ae840157fbdd3d681aa245a01bf5469f87f 100644
+--- a/tools/runtime-verify.rb
++++ b/tools/runtime-verify.rb
+@@ -577,21 +577,34 @@ module KbVerify
+       write('receipts/read-smoke.json', value, immutable: true)
+     end
+ 
++    def resource_script(machine)
++      # Standalone assignments preserve producer failures before formatting.
++      script = <<~'SH'
++        set -eu
++        available_memory_bytes=$(awk '/^MemAvailable:/ {printf "%.0f", $2 * 1024}' /proc/meminfo)
++        printf 'available_memory_bytes=%s\n' "$available_memory_bytes"
++        if test -r /proc/pressure/memory; then cat /proc/pressure/memory; fi
++      SH
++      if machine == 'services'
++        script += <<~'SH'
++          available_bytes=$(df -B1 --output=avail /)
++          available_inodes=$(df --output=iavail /)
++          printf 'available_bytes=%s\n' "$(printf '%s\n' "$available_bytes" | tail -n 1 | tr -d ' ')"
++          printf 'available_inodes=%s\n' "$(printf '%s\n' "$available_inodes" | tail -n 1 | tr -d ' ')"
++        SH
++      else
++        script += <<~'SH'
++          tank_available_bytes=$(zfs get -Hp -o value available tank)
++          printf 'tank_available_bytes=%s\n' "$tank_available_bytes"
++        SH
++      end
++      script
++    end
++
+     def resources(value, capture: false)
+       observations = {}
+       %w[services node1].each do |machine|
+-        script = <<~SH
+-          set -eu
+-          printf 'available_memory_bytes=%s\n' "$(awk '/^MemAvailable:/ {printf "%.0f", $2 * 1024}' /proc/meminfo)"
+-          if test -r /proc/pressure/memory; then cat /proc/pressure/memory; fi
+-        SH
+-        if machine == 'services'
+-          script += "printf 'available_bytes=%s\\n' \"$(df -B1 --output=avail / | tail -n 1 | tr -d ' ')\"\n"
+-          script += "printf 'available_inodes=%s\\n' \"$(df -i --output=iavail / | tail -n 1 | tr -d ' ')\"\n"
+-        else
+-          script += "printf 'tank_available_bytes=%s\\n' \"$(zfs get -Hp -o value available tank)\"\n"
+-        end
+-        output, = engine('ssh', machine, '--', 'sh', '-s', input: script)
++        output, = engine('ssh', machine, '--', 'sh', '-s', input: resource_script(machine))
+         numeric = output.lines.filter_map do |line|
+           match = /\A([a-z_]+)=([0-9]+)\n?\z/.match(line)
+           [match[1], Integer(match[2])] if match
+diff --git a/tools/test-runtime-verify.rb b/tools/test-runtime-verify.rb
+index dc751d62f073ab33dbf3e53053ad72e39ee07fe6..1158000b9b00c96640ae124e05c7994322cb0a22 100644
+--- a/tools/test-runtime-verify.rb
++++ b/tools/test-runtime-verify.rb
+@@ -476,6 +476,126 @@ class RuntimeVerifyTest < Minitest::Test
+     end
+   end
+ 
++  def declared_resource_tools
++    %w[sh df awk tail tr cat].to_h do |name|
++      path = ENV.fetch('PATH').split(File::PATH_SEPARATOR).map { |directory| File.join(directory, name) }
++        .find { |candidate| File.file?(candidate) && File.executable?(candidate) }
++      refute_nil(path, "declared resource tool #{name}")
++      resolved = File.realpath(path)
++      assert_match(%r{\A/nix/store/}, resolved, "declared resource tool #{name}")
++      [name, File.expand_path(path)]
++    end
++  end
++
++  def controlled_resource_script_transport(campaign, observation:, output:, exit_code: 0)
++    tools = declared_resource_tools
++    directory = campaign.file('work/resource-producers')
++    Dir.mkdir(directory, 0o700)
++    emit = lambda do |name, valid|
++      body = "printf '%s' #{Shellwords.escape(name == observation ? output : valid)}\n"
++      if name == observation && exit_code != 0
++        body += "printf '%s\\n' #{Shellwords.escape("controlled #{name} failure")} >&2\nexit #{exit_code}\n"
++      end
++      body
++    end
++    scripts = {
++      'awk' => emit.call('available_memory_bytes', (512 * 1024**2).to_s),
++      'df' => <<~SH,
++        case "$*" in
++          '-B1 --output=avail /')
++            #{emit.call('available_bytes', "Avail\n #{2 * KbVerify::GIB}\n")}
++            ;;
++          '--output=iavail /')
++            #{emit.call('available_inodes', "Iavail\n 1200\n")}
++            ;;
++          *) printf 'unexpected df arguments\n' >&2; exit 64 ;;
++        esac
++      SH
++      'zfs' => <<~SH
++        test "$*" = 'get -Hp -o value available tank' || exit 64
++        #{emit.call('tank_available_bytes', "#{6 * KbVerify::GIB}\n")}
++      SH
++    }
++    scripts.each do |name, body|
++      File.write(File.join(directory, name), "#!#{tools.fetch('sh')}\nset -eu\n#{body}", perm: 0o700)
++    end
++    owner = KbVerify::Commands.new(campaign.selection.merge('path' => "#{directory}:#{ENV.fetch('PATH')}"), campaign.root)
++    campaign.define_singleton_method(:engine) do |action, machine, *args, **options|
++      raise 'resource observation must use public SSH' unless action == 'ssh' && args == ['--', 'sh', '-s']
++      result, _error, code = owner.call([tools.fetch('sh'), '-s'], cwd: file('work'),
++        input: options.fetch(:input), stage: "resource-observation/#{machine}")
++      [result, code]
++    end
++  end
++
++  def test_actual_generated_services_script_reports_numeric_fields_with_declared_gnu_tools
++    with_campaign do |campaign|
++      campaign.initialize_campaign
++      tools = declared_resource_tools
++      owner = KbVerify::Commands.new(campaign.selection.merge('path' => ENV.fetch('PATH')), campaign.root)
++      version, _error, code = owner.call([tools.fetch('df'), '--version'], cwd: campaign.file('work'))
++      assert_equal(0, code)
++      assert_includes(version, '(GNU coreutils)')
++      output, _error, code = owner.call([tools.fetch('sh'), '-s'], cwd: campaign.file('work'),
++        input: campaign.resource_script('services'), stage: 'resource-observation/services')
++      assert_equal(0, code)
++      numeric = output.lines.grep(/\A[a-z_]+=[0-9]+\n\z/).to_h { |line| line.strip.split('=', 2) }
++      assert_equal(%w[available_bytes available_inodes available_memory_bytes], numeric.keys.sort)
++      numeric.each_value { |value| assert_operator(Integer(value), :>=, 0) }
++      # This checks the producer interface, not this hosted machine's headroom.
++      assert_empty(Dir.glob(campaign.file('receipts/resources-*.json')))
++    end
++  end
++
++  def test_actual_resource_script_preserves_each_failed_producer_exit_and_private_diagnostics
++    %w[available_memory_bytes available_bytes available_inodes tank_available_bytes].each_with_index do |observation, index|
++      with_campaign do |campaign|
++        campaign.initialize_campaign
++        code = 23 + index
++        controlled_resource_script_transport(campaign, observation:, output: "123456789\n", exit_code: code)
++        failure = assert_raises(KbVerify::Error) { campaign.resources(descriptor(campaign)) }
++        paths = Dir.glob(campaign.file('diagnostics/*/command.json'))
++        assert_equal(observation == 'tank_available_bytes' ? 2 : 1, paths.size)
++        native = paths.find { |path| JSON.parse(File.read(path))['exit_code'] == code }
++        refute_nil(native)
++        assert_includes(failure.message, native)
++        record = JSON.parse(File.read(native))
++        assert(record['complete'])
++        refute(record['accepted'])
++        assert_equal(code, record['exit_code'])
++        assert_nil(record['signal'])
++        machine = observation == 'tank_available_bytes' ? 'node1' : 'services'
++        assert_equal("resource-observation/#{machine}", record['stage'])
++        assert_equal("controlled #{observation} failure\n", File.read(File.join(File.dirname(native), 'stderr')))
++        refute_includes(File.read(File.join(File.dirname(native), 'stdout')), "#{observation}=")
++        Dir.glob(File.join(File.dirname(native), '*')).each { |path| assert_equal(0o600, File.stat(path).mode & 0o777) }
++        assert_empty(Dir.glob(campaign.file('receipts/resources-*.json')))
++      end
++    end
++  end
++
++  def test_actual_resource_script_missing_or_malformed_numeric_outputs_refuse_without_receipt
++    %w[available_memory_bytes available_bytes available_inodes tank_available_bytes].product(['', "not-a-number\n"]).each do |observation, output|
++      with_campaign do |campaign|
++        campaign.initialize_campaign
++        controlled_resource_script_transport(campaign, observation:, output:)
++        failure = assert_raises(KbVerify::Error) { campaign.resources(descriptor(campaign)) }
++        machine = observation == 'tank_available_bytes' ? 'node1' : 'services'
++        assert_equal("assertion failed: #{machine} real resource observations", failure.message)
++        paths = Dir.glob(campaign.file('diagnostics/*/command.json'))
++        assert_equal(machine == 'node1' ? 2 : 1, paths.size)
++        paths.each do |path|
++          record = JSON.parse(File.read(path))
++          assert(record['complete'])
++          assert(record['accepted'])
++          assert_equal(0, record['exit_code'])
++          assert_nil(record['signal'])
++        end
++        assert_empty(Dir.glob(campaign.file('receipts/resources-*.json')))
++      end
++    end
++  end
++
+   def test_private_resource_receipt_retains_native_some_and_full_pressure_and_allocations
+     with_campaign do |campaign|
+       campaign.initialize_campaign

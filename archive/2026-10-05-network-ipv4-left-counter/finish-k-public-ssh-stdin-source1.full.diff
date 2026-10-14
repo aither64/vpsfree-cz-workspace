@@ -1,0 +1,125 @@
+diff --git a/cluster/launcher.rb b/cluster/launcher.rb
+index 91b756b42cad9fc3c342f8460df1c87e463596a0..08265c834d3b3af57f8d2f913867bff6f7ab1d4a 100644
+--- a/cluster/launcher.rb
++++ b/cluster/launcher.rb
+@@ -76,7 +76,10 @@ module KbRuntime
+       when 'ssh'
+         machine, *remote = rest
+         remote.shift if remote.first == '--'
+-        state.lock('gate') { puts engine.ssh(engine.launch, machine, *remote) }
++        state.lock('gate') do
++          input = $stdin.tty? ? nil : $stdin
++          puts engine.ssh(engine.launch, machine, *remote, input:)
++        end
+       when 'refresh'
+         state.transaction { engine.refresh }
+       when 'config'
+diff --git a/cluster/runtime-contract.md b/cluster/runtime-contract.md
+index 52a16d8c5604fff34c2d3675bf9fb0497c899cf7..0b497dc479b985dc48619254b928bd121cb9ce53 100644
+--- a/cluster/runtime-contract.md
++++ b/cluster/runtime-contract.md
+@@ -75,6 +75,10 @@ no instance until both locks are held. Successful start, resume and update
+ output describes the verified run at operation completion. Use `status` for a
+ fresh guarded snapshot afterward.
+ 
++`ssh SLUG MACHINE -- COMMAND` forwards piped or file-backed standard input
++to the remote command while holding the same gate. Empty input sends EOF.
++Terminal invocations send no input; interactive terminal sessions are unsupported.
++
+ The per-user resource registry claims the complete requested set under one short
+ lock. Its durable records remain after controller loss. Only positive process
+ exit proof permits release. The registry coordinates KB instances; a host bind
+diff --git a/tools/test-runtime.rb b/tools/test-runtime.rb
+index 067cc98f33d5c1d7fa18af7aebc7d83a76e36ebb..a75f89719e8ca74a20c708ad8c3a04c7031b99a6 100644
+--- a/tools/test-runtime.rb
++++ b/tools/test-runtime.rb
+@@ -233,6 +233,89 @@ class RuntimeTest < Minitest::Test
+     refute(KbRuntime::ProcessIdentity.gone?(record.merge('boot_id' => SecureRandom.uuid)))
+     assert(KbRuntime::ProcessIdentity.matches?(record))
+   end
++
++  def test_public_ssh_forwards_exact_piped_bytes_and_empty_eof_to_the_real_transport
++    with_public_ssh_fixture do |environment, command, expected|
++      ['', "printf '%s' 'no trailing newline'", "binary\x00\xff\x80\nno trailing newline".b].each do |input|
++        output, error, status = Open3.capture3(environment, *command, stdin_data: input)
++        assert_public_ssh_result(output, error, status, input, expected)
++      end
++    end
++  end
++
++  def test_public_ssh_forwards_file_backed_standard_input_without_buffering_in_the_launcher
++    with_public_ssh_fixture do |environment, command, expected|
++      input = "file-backed\x00\xff\nno trailing newline".b
++      path = File.join(File.dirname(environment.fetch('KB_SSH_GATE')), 'stdin.bin')
++      File.binwrite(path, input, perm: 0o600)
++      setup = '$stdin.reopen(ARGV.shift, "rb"); $PROGRAM_NAME = ARGV.shift; load $PROGRAM_NAME'
++      output, error, status = Open3.capture3(environment, command.first, '-e', setup, path, *command.drop(1))
++      assert_public_ssh_result(output, error, status, input, expected)
++    end
++  end
++
++  def test_public_ssh_terminal_branch_never_reads_input_and_sends_empty_eof
++    with_public_ssh_fixture do |environment, command, expected|
++      setup = <<~'RUBY'
++        require ARGV.shift
++        terminal = Object.new
++        def terminal.tty?; true; end
++        def terminal.read(*); raise 'terminal input must not be read'; end
++        def terminal.readpartial(*); raise 'terminal input must not be read'; end
++        $stdin = terminal
++        exit KbRuntime::CLI.run(ARGV)
++      RUBY
++      output, error, status = Open3.capture3(environment, command.first, '-e', setup, *command.drop(1), stdin_data: 'unread terminal input')
++      assert_public_ssh_result(output, error, status, '', expected)
++    end
++  end
++
++  private
++
++  def with_public_ssh_fixture
++    Dir.mktmpdir('kb-ssh-') do |directory|
++      state = KbRuntime::State.new(File.join(directory, 'state'), 'example')
++      identity = state.transaction(create: true) { state.initialize_identity }
++      run_id = SecureRandom.uuid
++      state.write(state.path('phase.json'), { 'schema' => 1, 'phase' => 'ready', 'run_id' => run_id })
++      state.write(state.path("launch-#{run_id}.json"), identity.merge('run_id' => run_id,
++        'endpoints' => { 'services' => { 'host' => '192.0.2.10', 'port' => 22022, 'user' => 'root' } }))
++      credentials = state.path('credentials')
++      state.private_directory(credentials, create: true)
++      %w[id_ed25519 known_hosts].each { |name| File.write(File.join(credentials, name), "synthetic #{name}", perm: 0o600) }
++      original = Dir.glob(File.join(state.directory, '**', '*')).select { |path| File.file?(path) }.to_h { |path| [path, File.binread(path)] }
++      executable = File.join(directory, 'ssh')
++      program = <<~'RUBY'
++        require 'json'
++        input = STDIN.binmode.read
++        available = File.open(ENV.fetch('KB_SSH_GATE'), 'r+') { |lock| !!lock.flock(File::LOCK_EX | File::LOCK_NB) }
++        STDOUT.write(JSON.generate('argv' => ARGV, 'input_hex' => input.unpack1('H*'), 'gate_available' => available,
++          'environment' => %w[SSH_AUTH_SOCK NIX_CONFIG VPSADMIN_DEVCLUSTER_CONFIG_SOURCE].to_h { |name| [name, ENV[name]] }) + "\n")
++      RUBY
++      File.write(executable, "#!#{RbConfig.ruby}\n#{program}", perm: 0o700)
++      environment = { 'PATH' => "#{directory}:#{ENV.fetch('PATH')}",
++        'KB_SSH_GATE' => File.join(state.root, 'locks', 'example.gate.lock'),
++        'SSH_AUTH_SOCK' => '/synthetic-agent', 'NIX_CONFIG' => 'synthetic config',
++        'VPSADMIN_DEVCLUSTER_CONFIG_SOURCE' => '/synthetic-source' }
++      remote = ['sh', '-s', 'argument with spaces', "single'quote", '--literal']
++      expected = ['-F', File::NULL, '-i', File.join(credentials, 'id_ed25519'), '-p', '22022',
++        '-o', 'BatchMode=yes', '-o', 'IdentitiesOnly=yes', '-o', 'StrictHostKeyChecking=yes', '-o', "UserKnownHostsFile=#{File.join(credentials, 'known_hosts')}",
++        '-o', 'GlobalKnownHostsFile=/dev/null', '-o', 'ConnectTimeout=5', 'root@192.0.2.10', Shellwords.join(remote)]
++      command = [RbConfig.ruby, File.expand_path('../cluster/launcher.rb', __dir__), '--state-root', state.root, 'ssh', state.slug, 'services', '--', *remote]
++      yield environment, command, expected
++      assert_equal(original, original.keys.to_h { |path| [path, File.binread(path)] })
++    end
++  end
++
++  def assert_public_ssh_result(output, error, status, input, expected)
++    assert_equal(0, status.exitstatus, error)
++    assert_equal('', error)
++    value = JSON.parse(output)
++    assert_equal(input.unpack1('H*'), value['input_hex'])
++    assert_equal(expected, value['argv'])
++    assert_equal(false, value['gate_available'])
++    assert_equal({ 'SSH_AUTH_SOCK' => nil, 'NIX_CONFIG' => nil, 'VPSADMIN_DEVCLUSTER_CONFIG_SOURCE' => nil }, value['environment'])
++  end
+ end
+ 
+ class ProcessDiscoveryTest < Minitest::Test

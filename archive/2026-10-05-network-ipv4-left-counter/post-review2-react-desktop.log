@@ -1,0 +1,114 @@
+
+[WebServer] (node:998691) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+
+Running 4 tests using 1 worker
+
+
+(node:998809) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[1/4] [chromium] › e2e/specs/admin/network_availability.spec.ts:6:3 › @pr-smoke @pr-smoke-mobile network availability retains service context and rejected drafts (en)
+  1) [chromium] › e2e/specs/admin/network_availability.spec.ts:6:3 › @pr-smoke @pr-smoke-mobile network availability retains service context and rejected drafts (en) 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByTestId('admin.cluster.networks.editor')
+    Expected substring: "Existing service continues"
+    Received string:    "Edit networkCareful editsChanging network address/prefix or split settings can affect existing VPS connectivity. Double-check before saving.192.0.2.0/24 (#101) · Assigned: 3 · Owned: 5LabelIP versionIPv4IPv6RolePublicPrivateAddressPrefixPurposeAnyVPSExportSplit accessNo accessSplit by userSplit by ownerSplit prefixIf splitting is enabled, this prefix is used for split subnets.Managed by vpsAdminIf enabled, vpsAdmin keeps an inventory of IP addresses in this network.CancelSave"
+    Timeout: 15000ms
+
+    Call log:
+      - Expect "toContainText" with timeout 15000ms
+      - waiting for getByTestId('admin.cluster.networks.editor')
+        33 × locator resolved to <div role="dialog" tabindex="-1" aria-modal="true" data-overlay="modal" aria-labelledby="_r_9_" data-overlay-surface="overlay" data-testid="admin.cluster.networks.editor" class="relative z-10 flex w-full flex-col overflow-hidden bg-overlay-surface shadow-panel ring-1 ring-border max-h-modal rounded-lg max-w-xl">…</div>
+           - unexpected value "Edit networkCareful editsChanging network address/prefix or split settings can affect existing VPS connectivity. Double-check before saving.192.0.2.0/24 (#101) · Assigned: 3 · Owned: 5LabelIP versionIPv4IPv6RolePublicPrivateAddressPrefixPurposeAnyVPSExportSplit accessNo accessSplit by userSplit by ownerSplit prefixIf splitting is enabled, this prefix is used for split subnets.Managed by vpsAdminIf enabled, vpsAdmin keeps an inventory of IP addresses in this network.CancelSave"
+
+
+      41 |     await expect(editor).toContainText(language === 'en' ? 'Assigned: 3' : 'Přiřazeno: 3');
+      42 |     await expect(editor).toContainText(language === 'en' ? 'Owned: 5' : 'Vlastněno: 5');
+    > 43 |     await expect(editor).toContainText(language === 'en' ? 'Existing service continues' : 'Stávající provoz pokračuje');
+         |                          ^
+      44 |     await toggle.uncheck();
+      45 |     // Captures show the implemented UI with synthetic API fixtures.
+      46 |     await page.screenshot({ path: testInfo.outputPath(`network-availability-${language}.png`), fullPage: true });
+        at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/e2e/specs/admin/network_availability.spec.ts:43:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../work/2026-10-05-network-ipv4-left-counter/post-review2-react-desktop-results/admin-network_availability-ddeed-ext-and-rejected-drafts-en--chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../work/2026-10-05-network-ipv4-left-counter/post-review2-react-desktop-results/admin-network_availability-ddeed-ext-and-rejected-drafts-en--chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../work/2026-10-05-network-ipv4-left-counter/post-review2-react-desktop-results/admin-network_availability-ddeed-ext-and-rejected-drafts-en--chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../work/2026-10-05-network-ipv4-left-counter/post-review2-react-desktop-results/admin-network_availability-ddeed-ext-and-rejected-drafts-en--chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../work/2026-10-05-network-ipv4-left-counter/post-review2-react-desktop-results/admin-network_availability-ddeed-ext-and-rejected-drafts-en--chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:999445) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[2/4] [chromium] › e2e/specs/admin/network_availability.spec.ts:6:3 › @pr-smoke @pr-smoke-mobile network availability retains service context and rejected drafts (cs)
+  2) [chromium] › e2e/specs/admin/network_availability.spec.ts:6:3 › @pr-smoke @pr-smoke-mobile network availability retains service context and rejected drafts (cs) 
+
+    Error: expect(locator).toContainText(expected) failed
+
+    Locator: getByTestId('admin.cluster.networks.editor')
+    Expected substring: "Stávající provoz pokračuje"
+    Received string:    "Upravit síťOpatrné úpravyZměna adresy/prefixu nebo split nastavení může ovlivnit konektivitu existujících VPS. Před uložením vše zkontroluj.192.0.2.0/24 (#101) · Přiřazeno: 3 · Vlastněno: 5PopisekVerze IPIPv4IPv6RoleVeřejnáPrivátníAdresaPrefixÚčelLibovolnýVPSExportPřístup ke splituBez přístupuRozdělit podle uživateleRozdělit podle vlastníkaPrefix splituPokud je split povolený, tento prefix se používá pro split podsítě.Spravováno vpsAdminemPokud je povoleno, vpsAdmin vede inventář IP adres v této síti.ZrušitUložit"
+    Timeout: 15000ms
+
+    Call log:
+      - Expect "toContainText" with timeout 15000ms
+      - waiting for getByTestId('admin.cluster.networks.editor')
+        33 × locator resolved to <div role="dialog" tabindex="-1" aria-modal="true" data-overlay="modal" aria-labelledby="_r_f_" data-overlay-surface="overlay" data-testid="admin.cluster.networks.editor" class="relative z-10 flex w-full flex-col overflow-hidden bg-overlay-surface shadow-panel ring-1 ring-border max-h-modal rounded-lg max-w-xl">…</div>
+           - unexpected value "Upravit síťOpatrné úpravyZměna adresy/prefixu nebo split nastavení může ovlivnit konektivitu existujících VPS. Před uložením vše zkontroluj.192.0.2.0/24 (#101) · Přiřazeno: 3 · Vlastněno: 5PopisekVerze IPIPv4IPv6RoleVeřejnáPrivátníAdresaPrefixÚčelLibovolnýVPSExportPřístup ke splituBez přístupuRozdělit podle uživateleRozdělit podle vlastníkaPrefix splituPokud je split povolený, tento prefix se používá pro split podsítě.Spravováno vpsAdminemPokud je povoleno, vpsAdmin vede inventář IP adres v této síti.ZrušitUložit"
+
+
+      41 |     await expect(editor).toContainText(language === 'en' ? 'Assigned: 3' : 'Přiřazeno: 3');
+      42 |     await expect(editor).toContainText(language === 'en' ? 'Owned: 5' : 'Vlastněno: 5');
+    > 43 |     await expect(editor).toContainText(language === 'en' ? 'Existing service continues' : 'Stávající provoz pokračuje');
+         |                          ^
+      44 |     await toggle.uncheck();
+      45 |     // Captures show the implemented UI with synthetic API fixtures.
+      46 |     await page.screenshot({ path: testInfo.outputPath(`network-availability-${language}.png`), fullPage: true });
+        at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-05-network-ipv4-left-counter/vpsadmin-webui/e2e/specs/admin/network_availability.spec.ts:43:26
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    ../../../work/2026-10-05-network-ipv4-left-counter/post-review2-react-desktop-results/admin-network_availability-a4baa-ext-and-rejected-drafts-cs--chromium/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    ../../../work/2026-10-05-network-ipv4-left-counter/post-review2-react-desktop-results/admin-network_availability-a4baa-ext-and-rejected-drafts-cs--chromium/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: ../../../work/2026-10-05-network-ipv4-left-counter/post-review2-react-desktop-results/admin-network_availability-a4baa-ext-and-rejected-drafts-cs--chromium/error-context.md
+
+    attachment #4: trace (application/zip) ─────────────────────────────────────────────────────────
+    ../../../work/2026-10-05-network-ipv4-left-counter/post-review2-react-desktop-results/admin-network_availability-a4baa-ext-and-rejected-drafts-cs--chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace ../../../work/2026-10-05-network-ipv4-left-counter/post-review2-react-desktop-results/admin-network_availability-a4baa-ext-and-rejected-drafts-cs--chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+
+(node:999811) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[3/4] [chromium] › e2e/specs/admin/network_availability.spec.ts:62:1 › @pr-smoke @pr-smoke-mobile older APIs keep unknown state and omit unsupported availability fields
+[4/4] [chromium] › e2e/specs/admin/network_availability.spec.ts:91:1 › @pr-smoke @pr-smoke-mobile disabled detached owned addresses stay visible without assignment
+  2 failed
+    [chromium] › e2e/specs/admin/network_availability.spec.ts:6:3 › @pr-smoke @pr-smoke-mobile network availability retains service context and rejected drafts (en) 
+    [chromium] › e2e/specs/admin/network_availability.spec.ts:6:3 › @pr-smoke @pr-smoke-mobile network availability retains service context and rejected drafts (cs) 
+  2 passed (1.1m)

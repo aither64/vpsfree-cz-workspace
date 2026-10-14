@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "native_failure": {
+    "run": 38135141443,
+    "head": "9a06c9989d462bc16197dc948e59e1968273ab68",
+    "record": "finish-lease-runner-negative-fixture1.json",
+    "record_sha256": "12de3cd82adbdb934b3e801fa7d522f4f1c2b588bf14f15f2153aaa028611eab",
+    "log": "finish-host-key-barrier-hosted1/k-runtime/full.log",
+    "log_sha256": "a0314260ad817334178a9694d41f908fe4c1ecd2a2311ee573663121bbd48021",
+    "observed": "35 lease tests, one expected-error mismatch: individually authenticated changed runner rejected by the invariant",
+    "identity_difference": {
+      "expected_pid": 37843,
+      "observed_pid": 37844,
+      "start_ticks": 49084
+    }
+  },
+  "same_head_pass": {
+    "run": 38135145234,
+    "source": "lead brief",
+    "does_not_erase_failure": true
+  },
+  "source_mechanism": "pid+1 is not invalid authority; a live same-argv child may share a clock tick. Exact ProcessIdentity matching can succeed, then the independent unchanged-runner invariant correctly refuses. The historical fork scheduling remains inferred, not reproduced.",
+  "historical_scheduling_limit": "The native tuple difference is observed; which historical fork occupied pid+1 remains inferred, not reproduced.",
+  "consumer_boundaries": {
+    "cluster/lib/kb_process.rb": "f640115d05f430349e1cb70a6630b3acb858297c22be5b19a106b4291870c50b",
+    "tools/verify-live-lease.cjs": "63bba7077737d8c5f05a5eccbe6961c5fb22f2a1a9e28b0382f4efbda97ba32a",
+    "native_identity": "ProcessIdentity.read/matches?/runner_matches? validate live boot/start/UID/executable/argv plus recorded launch options.",
+    "observer": "Native read refusal is distinct from deepEqual(record.runner, initial.record.runner) after independently successful authentication."
+  },
+  "scope": "Fixture-only. No production observer/SDK/lease/trust/schema change.",
+  "deviations_or_blockers": [],
+  "tests": "UNRUN"
+}

@@ -1,0 +1,1 @@
+const i=60,s=604800,u=3600;function T(r,t={}){const e=r.trim();if(!e)return t.required?"required":null;if(!/^\d+$/.test(e))return"integer";const n=Number(e);return!Number.isInteger(n)||n<60||n>604800?"range":null}function a(r){const t=r.trim();return t?Number(t):void 0}export{u as D,s as a,i as b,a as p,T as v};
