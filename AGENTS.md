@@ -63,7 +63,7 @@ the parent's responsibility for choosing scope or accepting results.
   generic dev-workspace and codex-web use `git@github.com:aither64/<project>.git`.
   The vpsFree extension is locally vpsfree-dev-workspace and remotely
   `git@github.com:vpsfreecz/dev-workspace.git`.
-- Commit a substantive initial plan/state before the first project-code commit
+- For ordinary sessions, commit a substantive initial plan/state before the first project-code commit
   or external mutation. State begins with YAML front matter `lifecycle: active`.
   Completion requires every registered exact final feature head merged into its
   remote default branch and no remaining work. Pushing/testing/deploying alone

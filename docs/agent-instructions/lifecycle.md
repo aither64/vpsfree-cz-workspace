@@ -10,6 +10,10 @@ lifecycle changes; archived/deleted deployed owners retain recovery reservations
 Revival preserves ownership. Package candidates must preserve the coordination
 contract and retained artifacts; inactivity never frees a review reservation.
 
+Sensitive sessions keep these lifecycle and coordination checks, but their
+tracking moves stay local and do not require or create Git commits. Preserve
+private sensitivity metadata and local exclusions through recovery.
+
 An initiative can leave `work/` through an explicitly requested archive or
 delete action, or through the enabled automatic archive policy below. Completing
 the requested work, answering the current message,

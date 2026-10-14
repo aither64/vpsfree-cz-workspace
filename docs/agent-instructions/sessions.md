@@ -62,6 +62,22 @@ verified literal slug and workspace path for that command; this does not turn
 the command's CWD into ownership evidence.
 
 
+## Sensitive sessions
+
+Select `--sensitive` at creation or use the portal checkbox. Keep the normal
+tracking paths and maintain substantive local plan/state, but never stage or
+commit their contents. The runtime installs local `info/exclude` rules before
+tracking writes; preserve those rules and private sensitivity metadata.
+Forks and plan-derived sessions inherit sensitivity. Existing ordinary sessions
+cannot be converted. Keep session notes and evidence under the excluded tracking
+directory; do not copy them into tracked notes or other sessions. Project-code
+commits, review, publication and coordinated integration retain their usual rules.
+
+Archive and revive move local records without tracking commits. Their ownership,
+recovery, automatic archival and coordinator reservation rules still apply.
+Git does not back up sensitive records. Keep local backups and retain private
+user state; an older package cannot manage sensitive sessions.
+
 ## Older tracking
 
 Older records and manifestless-revival shells require reviewed repository scope;
@@ -118,7 +134,7 @@ branches, whether a later rebase preserved patch equivalence, and the exact
 final heads once integrated. Do not mark an initiative complete merely because
 review, CI, or deployment succeeded.
 
-Write a substantive plan and initial state, then commit both in the top-level
+For ordinary sessions, write a substantive plan and initial state, then commit both in the top-level
 workspace repository before the first project-code commit or external mutation.
 After that initial commit, keep plan and state current in the working tree
 without committing every update. A short initiative should normally make no
