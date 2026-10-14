@@ -27,7 +27,7 @@ Vytvořte nový VPS a nechte ho spustit. Můžete také použít svůj stávají
 V detailu VPS použijte formulář <vpsadmin-nav id="vps.boot-rescue.open">**Spustit VPS ze šablony (nouzový režim)**</vpsadmin-nav>. Nejlepší je vybrat jinou distribuci než NixOS, aby zde nebyl adresář ''/nix''. Použijte např. Alpine nebo Debian.
 
 ==== 3. Vytvoření VPS subdatasetu pro Nix store ====
-V detailu VPS vytvořte subdataset ''nix'', který bude připojen na ''/nix'' (proto jsme v předchozím kroku nechtěli bootovat do NixOS). Možná budete muset uvolnit nějaké místo na disku, abyste mohli vytvořit dataset, což lze provést zmenšením root datasetu.
+V detailu VPS <vpsadmin-nav id="datasets.create.open">vytvoř subdataset ''nix''</vpsadmin-nav>, který bude připojen na ''/nix'' (proto jsme v předchozím kroku nechtěli bootovat do NixOS). Možná budeš muset uvolnit nějaké místo na disku, abys mohl vytvořit dataset, což lze provést zmenšením root datasetu.
 
 ==== 4. Přesun Nix store do subdatasetu ====
 Přihlaste se do VPS v rescue módu, buď přes SSH, nebo použijte vzdálenou konzoli. Root dataset je připojen na ''/mnt/vps'' a náš nový subdataset ''nix'' je připojen na ''/nix''. Chceme přesunout Nix store z root datasetu do subdatasetu.
@@ -37,7 +37,7 @@ mv /mnt/vps/nix/* /nix/
 </code>
 
 ==== 5. Připojení root datasetu do /persistent ====
-V režimu impermanence bude váš kořenový souborový systém dočasný a při každém startu vymazán. Naše trvalé úložiště připojíme do ''/persistent''. Může to být root dataset, nebo můžete vytvořit další subdataset pro tento účel. Zde použijeme root dataset. V detailu VPS klikněte na odkaz <vpsadmin-nav id="datasets.mount.open">**Mount**</vpsadmin-nav> u prvního uvedeného datasetu (jeho název je ID VPS) a připojte ho do ''/persistent''.
+V režimu impermanence bude tvůj kořenový souborový systém dočasný a při každém startu vymazán. Naše trvalé úložiště připojíme do ''/persistent''. Může to být root dataset, nebo si pro tento účel můžeš <vpsadmin-nav id="datasets.create.open">vytvořit další subdataset</vpsadmin-nav>. Zde použijeme root dataset. V detailu VPS klikni na odkaz <vpsadmin-nav id="datasets.mount.open">**Mount**</vpsadmin-nav> u prvního uvedeného datasetu (jeho název je ID VPS) a připoj ho do ''/persistent''.
 
 ==== 6. Restart VPS ====
 Nyní restartujte VPS, čímž opustíte rescue mód.
