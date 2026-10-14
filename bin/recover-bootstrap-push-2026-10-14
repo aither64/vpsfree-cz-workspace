@@ -1,0 +1,102 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Exact recovery of one retained push; never a general integration interface.
+require 'json'
+require 'digest'
+
+ROOT = '/home/aither/workspace/ai/vpsfree.cz'
+PACKAGE = '/nix/store/m12vcm73v1ld944ay9j284r5ikyi9x2n-dev-workspace-0.2.0'
+PROFILE = '/home/aither/.local/state/dev-workspaces/profile'
+OWNER = '55e83d75-cb96-417a-9308-11d3caf22dcd'
+JOB = 'ec09fd84-f48c-4ea6-92fe-a2392f08e7a2'
+ATTEMPT = 'bb975e20-0b90-42c3-a09a-a6476353823c'
+HEAD = '9a481ba1c69a0f22a7e84e3353d676911df2271e'
+BASE = '8bf9da9c3be811b3e5666ccd4177c9c63e537171'
+SSH = '/nix/store/qilxjlbdj0rvrz8isfmnfb9cp91fbvv1-openssh-10.5p1/bin/ssh'
+SLUG = '2026-10-13-workspace-coordination'
+TARGET = '/home/aither/.local/state/dev-workspaces/coordination/sources/8ed592ca-77c7-4a33-b02c-9e4f7729e281/target'
+BUNDLE = "#{ROOT}/worktrees/#{SLUG}/vpsfree-cz-configuration/.gems"
+
+abort 'exact recovery takes no arguments' unless ARGV.empty?
+%w[DEV_WORKSPACES_CONFIG DEV_WORKSPACES_STATE DEV_WORKSPACES_PROFILE XDG_STATE_HOME OVERCOMMIT_DISABLE OVERCOMMIT_DISABLED].each do |name|
+  abort "environment override is outside recovery: #{name}" if ENV.key?(name)
+end
+abort 'selected package changed' unless File.realpath(PROFILE) == PACKAGE
+abort 'declared configuration shell is required' unless ENV['BUNDLE_PATH'] == BUNDLE
+abort 'session identity changed' unless ENV['DEV_SESSION_SLUG'] == SLUG && ENV['DEV_SESSION_WORKSPACE'] == ROOT
+abort 'selected transport is unavailable' unless File.executable?(SSH)
+load File.join(PACKAGE, 'libexec/.workspace-host-wrapped')
+
+host = DevWorkspaceHost::Host.new
+entry = host.send(:registry).find('vpsfree-cz')
+abort 'registered workspace changed' unless entry && entry['root'] == ROOT
+engine = host.send(:coordination_engine, entry)
+owner = engine.existing_bootstrap_owner(SLUG, OWNER)
+engine.current_generation!
+request_path = engine.attempt_path(ATTEMPT, 'request.json')
+request = WorkspaceCoordination.private_read(request_path, limit: WorkspaceCoordination::MAX_REQUEST)
+abort 'original request changed' unless request['digest'] == WorkspaceCoordination.digest(request.reject { |key, _| key == 'digest' }) &&
+  request.dig('job', 'id') == JOB && request.dig('job', 'attempt') == ATTEMPT && request.dig('owner', 'id') == OWNER && request['package'] == PACKAGE
+path, common, identity, = engine.repository(owner, 'vpsfree-cz-configuration')
+abort 'canonical repository changed' unless identity == 'github.com/vpsfreecz/vpsfree-cz-configuration' && common == "#{ROOT}/repos/vpsfree-cz-configuration.git"
+
+File.open(engine.attempt_path(ATTEMPT, 'worker.lock'), File::RDWR | File::CREAT, 0o600) do |worker|
+  abort 'original worker/reconciler is busy; retry this exact recovery' unless worker.flock(File::LOCK_EX | File::LOCK_NB)
+  abort 'original worker service is running' if engine.attempt_service_running?(ATTEMPT)
+  File.open(File.join(common, 'dev-session-tracking.lock'), File::RDWR | File::CREAT, 0o600) do |git_lock|
+    abort 'repository mutation is busy; retry this exact recovery' unless git_lock.flock(File::LOCK_EX | File::LOCK_NB)
+    engine.current_generation!
+    data = engine.store.read
+    job = data['jobs'].fetch(JOB)
+    operation = job.fetch('snapshot').fetch('operation')
+    abort 'original snapshot or catalog changed' unless request.dig('job', 'snapshot') == job['snapshot'] && job.dig('snapshot', 'catalogDigest') == engine.catalog.digest
+    reservation = data['reservations'].fetch('d114323d-806c-479f-b7a4-8c1a08afb45b')
+    abort 'review reservation changed' unless reservation['ownerId'] == OWNER && reservation['state'] == 'deployed_review'
+    abort 'original claim changed' unless job['ownerId'] == OWNER && job['attempt'] == ATTEMPT && %w[running reconciling succeeded].include?(job['state']) &&
+      job['resources'] == ["repo:#{identity}:refs/heads/master", "git:#{common}"] &&
+      operation.slice('repository', 'target', 'featureHead', 'expectedRemoteHead', 'comparisonBase', 'targetCheckout') ==
+        {'repository' => 'vpsfree-cz-configuration', 'target' => 'refs/heads/master', 'featureHead' => HEAD,
+         'expectedRemoteHead' => BASE, 'comparisonBase' => BASE, 'targetCheckout' => TARGET}
+    approval = data['approvals'].fetch(job.fetch('approvalId'))
+    abort 'original approval changed' unless approval['ownerId'] == OWNER && approval['kind'] == 'merge' &&
+      approval['reviewedSnapshot'] == job.dig('snapshot', 'id') &&
+      approval['scope'] == [{'repository' => 'vpsfree-cz-configuration', 'target' => 'refs/heads/master'}] &&
+      approval.dig('source', 'quote') == "ok, after you'll deploy the fix, you can merge the changes"
+    phase = WorkspaceCoordination.private_read(engine.attempt_path(ATTEMPT, 'phase.json'), limit: WorkspaceCoordination::MAX_REQUEST)
+    abort 'original mutation phase changed' unless phase['attemptId'] == ATTEMPT && phase['requestDigest'] == request['digest'] && phase['phase'] == 'push_intent'
+    abort 'retained target identity changed' unless File.realpath(engine.capture('git', '-C', TARGET, 'rev-parse', '--path-format=absolute', '--git-common-dir').strip) == common &&
+      engine.capture('git', '-C', TARGET, 'rev-parse', 'HEAD').strip == HEAD &&
+      engine.capture('git', '-C', path, 'rev-parse', 'refs/heads/master').strip == HEAD &&
+      engine.capture('git', '-C', TARGET, 'status', '--porcelain').empty?
+    %w[Gemfile Gemfile.lock .overcommit.yml].each do |name|
+      abort 'target hook inputs changed' unless File.binread(File.join(TARGET, name)) == File.binread("#{ROOT}/worktrees/#{SLUG}/vpsfree-cz-configuration/#{name}")
+    end
+    remote = engine.remote_head(path, 'refs/heads/master')
+    engine.capture('git', '-C', path, 'fetch', 'origin', 'refs/heads/master')
+    if engine.ancestor?(path, HEAD, remote)
+      puts JSON.generate('schema' => 1, 'jobId' => JOB, 'attemptId' => ATTEMPT, 'outcome' => 'already_published', 'remoteHead' => remote)
+      next
+    end
+    abort 'remote baseline changed; preserve the original claim' unless remote == BASE
+    abort 'completed operation cannot publish again' if job['state'] == 'succeeded'
+    hooks = engine.artifact!(operation.fetch('hookArtifact'))
+    abort 'original hook artifact changed' unless hooks['id'] == 'sha256:4134bab45a12ceb0a1228131e0672552b5f89755a9fc24ee639697ede36d4c59'
+    original = engine.instance_variable_get(:@env)
+    corrected = ENV.to_h.merge('PATH' => [hooks.fetch('environment').fetch('PATH'), File.dirname(SSH), ENV.fetch('PATH')].join(File::PATH_SEPARATOR),
+      'GIT_SSH_COMMAND' => SSH, 'BUNDLE_PATH' => BUNDLE)
+    engine.instance_variable_set(:@env, corrected)
+    begin
+      engine.capture('bundle', 'check', cwd: TARGET)
+      engine.capture(File.join(common, 'hooks/post-merge'), '0', cwd: TARGET)
+      abort 'remote baseline changed during hook checks' unless engine.remote_head(path, 'refs/heads/master') == BASE
+      engine.capture('git', '-C', TARGET, 'push', 'origin', "#{HEAD}:refs/heads/master")
+      remote = engine.remote_head(path, 'refs/heads/master')
+      engine.capture('git', '-C', path, 'fetch', 'origin', 'refs/heads/master')
+      abort 'push response requires ordinary reconciliation; preserve the claim' unless engine.ancestor?(path, HEAD, remote)
+      puts JSON.generate('schema' => 1, 'jobId' => JOB, 'attemptId' => ATTEMPT, 'outcome' => 'published', 'remoteHead' => remote)
+    ensure
+      engine.instance_variable_set(:@env, original)
+    end
+  end
+end
