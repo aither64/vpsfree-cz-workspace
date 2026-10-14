@@ -78,6 +78,12 @@ uses the reviewed candidate's bounded synchronous bootstrap. It creates no Codex
 thread. Retained bootstrap-owner maintenance requires its explicit UUID and the
 same active tracking incarnation; it cannot submit new unattended jobs.
 
+The [dated integration procedure](maintenance/bootstrap-merge-2026-10-13.md)
+covers the initiating threadless installation's authorized master merges. Its
+reviewed source-only helper uses the selected runtime's existing workers and
+receipts under a supervised exclusion of other bootstrap operations. It is
+limited to that installation and keeps the machine reservation held for review.
+
 Keep failed or interrupted attempts, deployed artifacts and GC roots. Archive,
 delete, suspend and auto-archive do not free deployed ownership. A profile failure
 after selection recovers forward under its original attempt. Ambiguous remote
