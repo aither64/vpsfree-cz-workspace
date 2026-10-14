@@ -1,0 +1,13 @@
+# Design and verification brief
+
+Solo lead owns design and application edits. The session has no retained roster or Codex root; standalone review uses the installed default catalog. Affected feature worktrees are worktrees/2026-10-14-sensitive-sessions/{dev-workspace,vpsfree-dev-workspace,workspace}.
+
+Sensitivity is immutable and represented by an optional manifest boolean, copied into accepted creation snapshots/journals and maintained in private workspace-scoped sensitivity metadata. That private metadata survives runtime retirement and records archive tombstones. Normal sessions omit fields, retaining old digests. Older strict readers reject sensitive fields. No conversion API or UI.
+
+Before tracking writes, create local ignore entries for both work/SLUG/ and archive/SLUG/ through Git's common info/exclude under the shared tracking lock. Preserve unrelated contents, validate effective ignores and absence from HEAD/index. Never unstage operator changes. Lifecycle content proofs and sealed journals remain; sensitive transitions validate local content instead of requiring or writing tracking commits. Keep branch proofs, recovery snapshots, coordinator fences and reservations unchanged. Fork and plan derivation force inherited sensitivity.
+
+New-session portal and CLI surface a sensitivity option and summaries/badges. Lead/member technical binding carries sensitive-record instructions without changing saved role policy/model/access. Generic and site guidance exempt records from tracking commits and put session notes/evidence under its excluded root.
+
+Coordinator evidence already lives under active tracking and private state. Verify sensitive sessions keep owner identity, evidence checksums, notification policy and lifecycle fences across archive/revive. Candidate profile retains the installed coordination contract. No database/node/API client migration or system activation is necessary for implementation delivery. Any later integration/deployment is separately authorized and coordinated.
+
+Quick checks: focused Ruby lifecycle/privacy/creation, Go manifest/creation/policy and browser checks. Independent review after all commits and quick checks, covering general/architecture/scope/risk lanes and complete branch history (no database migrations). Longer packaged Nix checks only after review via a fresh Luna watcher. Acceptance requires normal git add -A omit records, ordinary sessions unchanged, sensitive retries/derivations/lifecycle local with no HEAD changes, and no weakened coordinator identity or fences. Recovery retains private state and capable package; pending journals block incompatible transitions.
