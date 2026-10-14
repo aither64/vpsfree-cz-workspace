@@ -1,0 +1,58 @@
+{
+  "workspaceHead": "a49bc282e7d8134ad3fd9d6dfa90f6793ff4f34e",
+  "configurationHead": "60f11105c17b49139348bceab136d3e13cb4431d",
+  "checks": [
+    {
+      "label": "workspace-build",
+      "command": [
+        "nix",
+        "build",
+        "--print-build-logs",
+        "--out-link",
+        "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-dismiss-recovery-banner/workspace-package"
+      ],
+      "exitStatus": 0,
+      "elapsedSeconds": 899.8
+    },
+    {
+      "label": "composition-check",
+      "command": [
+        "bin/check-dev-workspace-deployment",
+        "--workspace-root",
+        "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-dismiss-recovery-banner/workspace",
+        "--configuration-root",
+        "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-dismiss-recovery-banner/vpsfree-cz-configuration"
+      ],
+      "exitStatus": 0,
+      "elapsedSeconds": 0.26
+    },
+    {
+      "label": "aitherdev-build",
+      "command": [
+        "nix",
+        "develop",
+        "--command",
+        "confctl",
+        "build",
+        "--yes",
+        "cz.vpsfree/machines/aitherdev"
+      ],
+      "exitStatus": 0,
+      "elapsedSeconds": 90.81
+    },
+    {
+      "label": "runtime-ci",
+      "command": [
+        "gh",
+        "run",
+        "watch",
+        "38603485646",
+        "--repo",
+        "aither64/dev-workspace",
+        "--exit-status"
+      ],
+      "exitStatus": 0,
+      "elapsedSeconds": 0.91
+    }
+  ]
+}

@@ -30,7 +30,9 @@ a continuation message merely because the notice was dismissed.
 - Separate additive private records avoid schema changes to strict recovery files.
 - No migrations, lifecycle transitions or Codex protocol changes.
 - No default-branch integration or archive is authorized.
-- Terminal-only initiative has no retained team; lead performs implementation.
+- Idle retained tracking conversation has no team; external lead implements.
+- Notice identity uses existing canonical terminal identity, covering CLI restore
+  and interrupted portal recovery without adding recovery-schema fields.
 
 ## Compatibility and deployment
 

@@ -12,9 +12,10 @@ session identity and refuses unfinished lifecycle work, changed identities and
 non-waiting states. It never calls a native activation or submission method.
 
 A separate private root-thread record uses existing atomic/synced record helpers.
-Its identity includes the exact workspace/session tracking incarnation and native
-socket epoch. Existing waiting sessions derive a deterministic initial notice ID;
-successful runtime restoration assigns a fresh ID even if only tmux was lost.
+Its identity includes the exact workspace/session tracking incarnation, canonical
+terminal identity and native socket epoch. A deterministic notice ID changes when
+either terminal or App Server is restored, covering CLI and interrupted portal
+restoration without additional recovery writes.
 Dismissal is idempotent for one exact notice. Existing execution-permission and
 runtime contract schemas are unchanged. Corrupt/mismatched notice metadata must
 never hide a banner. Stopped/recovering/failed states are never suppressed.

@@ -1,0 +1,91 @@
+{
+  "heads": {
+    "dev-workspace": "f899a9a583118ca6033d95f94f5eaa3c2f87fe54",
+    "workspace": "a49bc282e7d8134ad3fd9d6dfa90f6793ff4f34e",
+    "vpsfree-cz-configuration": "60f11105c17b49139348bceab136d3e13cb4431d"
+  },
+  "quickAndBrowser": {
+    "sourceHead": "f899a9a583118ca6033d95f94f5eaa3c2f87fe54",
+    "passed": [
+      {
+        "command": "node --check portal/internal/web/static/app.js",
+        "exitStatus": 0
+      },
+      {
+        "command": "node --check portal/internal/web/page_lifecycle_browser_test.cjs",
+        "exitStatus": 0
+      },
+      {
+        "command": "go -C portal test -mod=readonly ./internal/web -run TestRecovery|TestShippedBrowserClientMatchesSessionAPI -count=1",
+        "exitStatus": 0,
+        "elapsedSeconds": 2.213
+      },
+      {
+        "command": "git diff --check (source worktree)",
+        "exitStatus": 0
+      },
+      {
+        "command": "Chromium and Firefox lifecycle/dismissal browser regression",
+        "exitStatus": 0,
+        "elapsedSeconds": 23.993
+      }
+    ],
+    "environment": {
+      "shell": "repository nix develop",
+      "DEV_WORKSPACES_CODEX_PROVIDERS": "absent test catalog",
+      "TMPDIR": "/tmp"
+    },
+    "limitations": "Full browser and package checks follow independent source review.",
+    "postRebaseFocusedChecks": {
+      "exitStatus": 0,
+      "elapsedSeconds": 2.319,
+      "patchEquivalence": "source-rebase-range-diff.txt"
+    },
+    "postRebaseBrowser": {
+      "exitStatus": 0,
+      "elapsedSeconds": 22.678,
+      "browsers": [
+        "Chromium",
+        "Firefox"
+      ],
+      "log": "rebased-browser-check.log"
+    }
+  },
+  "package": {
+    "workspaceHead": "a49bc282e7d8134ad3fd9d6dfa90f6793ff4f34e",
+    "configurationHead": "60f11105c17b49139348bceab136d3e13cb4431d",
+    "checks": [
+      {
+        "label": "workspace-build",
+        "command": [
+          "nix",
+          "build",
+          "--print-build-logs",
+          "--out-link",
+          "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-dismiss-recovery-banner/workspace-package"
+        ],
+        "exitStatus": 0,
+        "elapsedSeconds": 899.8
+      },
+      {
+        "label": "composition-check",
+        "command": [
+          "bin/check-dev-workspace-deployment",
+          "--workspace-root",
+          "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-dismiss-recovery-banner/workspace",
+          "--configuration-root",
+          "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-dismiss-recovery-banner/vpsfree-cz-configuration"
+        ],
+        "exitStatus": 0,
+        "elapsedSeconds": 0.26
+      }
+    ]
+  },
+  "ci": {
+    "runId": 38603485646,
+    "conclusion": "success",
+    "head": "f899a9a583118ca6033d95f94f5eaa3c2f87fe54"
+  },
+  "machineSnapshotBuilt": true,
+  "activation": false
+}
