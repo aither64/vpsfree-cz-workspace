@@ -9,7 +9,11 @@ NixOS VPS (containers) on vpsAdminOS need to import vpsadminos.nix from vpsAdmin
 - `vpsadminos`: flake module exports, stable guest templates, focused evaluation
   tests/CI, and owning-project documentation.
 - Czech and English KB pages: NixOS, Impermanence, and User Data. These six pages
-  are unmanaged; no KB contract repository change is needed.
+  are unmanaged; no managed-page expansion is needed.
+- `vpsfree-kb-contracts`: final review identified a baseline missing dataset-create
+  annotation/binding in both Impermanence pages. Add existing-path page bindings,
+  expected tag counts, and scoped discovery reconciliation for the candidates.
+  No WebUI controls, screenshots, managed pages or production input changes.
 
 ## Approach
 
@@ -38,6 +42,17 @@ nixpkgs, rather than when the image is built.
   Impermanence; bilingual User Data has a related legacy module import.
 - Initial metadata refusal is resolved: the ordinary manifest is now schema 1,
   creation ready; architect assignments succeeded during planning.
+- Required narrow final-review correction: annotate existing subdataset-create
+  instructions in steps 3 and 5 with `datasets.create.open`, count two tags per
+  language, and bind both pages; refresh affected
+  inventory only. The main technical interface and guest behavior are unchanged.
+- Runtime testing exposed an independent impermanence UID-after-restart failure
+  on unchanged raw/unstable compatibility paths. Diagnostics are authorized;
+  raw compatibility changes remain outside the accepted scope. The user has a
+  pending include/defer decision on the concrete, unverified prerequisite in
+  `impermanence-prerequisite-proposal.md`. No answer has been received. Include
+  would mean a separate baseline-fix commit followed by quick checks, final
+  review and runtime verification; defer retains unmet persistence acceptance.
 
 ## Compatibility and deployment
 

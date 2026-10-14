@@ -20,8 +20,13 @@ Refer material deviations to the lead before implementing them.
 
 Application source was inspected at canonical `origin/staging` commit
 `1150e37b1cc997b1728f2fda806a3433ef55b798`. Reconcile relevant upstream changes
-when preparing the implementation worktree. No configuration-repository or
-`vpsfree-kb-contracts` feature change is expected.
+when preparing the implementation worktree. No configuration-repository change
+is expected. Final review expanded the scope to a narrow
+`vpsfree-kb-contracts` companion change: bind both Impermanence pages to the
+existing `datasets.create.open` path and reconcile the required annotation
+metadata. The lead owns the paired KB markup and refreshed release manifests;
+`implementer0` owns the contract bindings and minimal related metadata. This
+revision does not change the guest-module architecture or technical APIs.
 
 ## Public interface
 
@@ -134,6 +139,9 @@ whole check pass.
 | `tests/nixos-container-modules-eval.nix` or a focused equivalent | Export, selector, release-compatibility and template checks |
 | Existing standalone/template test helpers and CI | Wire focused evaluation into CI and cover the relevant generated configurations |
 | Project guest documentation, linked from `mkdocs.yml` | Public import contract, selection and failure behavior, standalone route and legacy distinction |
+| `vpsfree-kb-contracts/contract/navigation.yml` | Add the Czech and English Impermanence page bindings to the existing `datasets.create.open` path |
+| `vpsfree-kb-contracts/contract/kb-annotations.yml` | Record two creation tags per Impermanence language and one English Features tag, replacing its obsolete exception |
+| `vpsfree-kb-contracts/contract/kb-navigation-inventory.yml` | Reconcile affected Impermanence discoveries for creation instructions in steps 3 and 5 and English Features |
 
 Use a small test-only fixture definition with pinned nixpkgs revisions for
 historical real-release evaluations. Do not update production inputs or introduce
@@ -168,13 +176,46 @@ can stay unchanged across supported nixpkgs upgrades, while unknown releases
 require an updated compatibility map. Do not imply that normal NixOS upgrades
 should change stateVersion.
 
-These pages are unmanaged by `vpsfree-kb-contracts/contract/pages.yml`. Do not add
-contract-repository changes or screenshot scope. Preserve real page IDs,
-translation tags and DokuWiki syntax; examples in both languages must retain
-equivalent machine-significant content. The lead applies
+These pages remain unmanaged by `vpsfree-kb-contracts/contract/pages.yml`.
+Preserve real page IDs, translation tags and DokuWiki syntax; examples in both
+languages must retain equivalent machine-significant content. The lead applies
 `vpsfree-user-facing-writing` and prepares localized revision summaries, staging
 and verification through the guarded KB workflow. The owning-project
 documentation remains the durable public API reference.
+
+Final review found a Blocking baseline annotation issue in both Impermanence
+pages. Each language needs two paired `<vpsadmin-nav>` creation tags: one around
+the step-3 instruction to create the `nix` subdataset in VPS details, and one
+around the step-5 instruction offering creation of another persistent-storage
+subdataset. Use `id="datasets.create.open"`, preserving visible wording and
+keeping unrelated explanation outside each semantic span. Extend that existing
+navigation path's page lists only with:
+
+- Czech: `navody:distribuce:nixos:impermanence`.
+- English: `manuals:distributions:nixos:impermanence`.
+
+The contract checker requires every path/page pair to have a binding or truthful
+exception. Record `count: 2` for `datasets.create.open` on each Impermanence
+page in `contract/kb-annotations.yml`. The English Features instruction also
+requires one `vps.features.open` tag and a `count: 1` binding replacing its
+obsolete annotation exception; its navigation page binding already exists.
+For the final candidate corpus, replace the two step-3 discovery exceptions in
+`contract/kb-navigation-inventory.yml` with `paths: [datasets.create.open]`, add
+the creation path to each step-5 discovery while preserving its existing mount
+path, and classify the English Features discovery with `vps.features.open`.
+Reconcile text, paragraph index and derived discovery ID only where the accepted
+candidate changes require it; preserve the complete page-ID inventory and
+unrelated classifications. At inspected contract base
+`ce2c8cd9358c3636e5d39343e595df813a0b197f`, these step-3 discoveries were
+`ff6424ee5947162c` (Czech) and `99e0a207d925d665` (English). Candidate-derived
+identity is authoritative if the final text or paragraph position differs.
+
+This companion change adds no controls, navigation paths, WebUI behavior,
+screenshots, managed-page sources, runtime fixtures or `contract/pages.yml`
+entries. Do not change vpsAdmin, its pinned revision, source fingerprints,
+capture provenance or unrelated annotations to accommodate it. The existing
+navigation contract already defines the control and path; only page coverage
+and its bounded reconciliation metadata change.
 
 ## Compatibility, rollout and recovery
 
@@ -192,11 +233,13 @@ same legacy namespace. No downstream change is needed. Preserve these targets
 even though the corresponding modern generic names now mean something else.
 
 There is no database schema, migration, seed, API, generated client, CLI,
-Terraform, daemon protocol or on-disk format change. The change affects Nix
-evaluation and generated guest configuration only. It requires no coordinated
-update of hosts, all running machines or all nodes; guests adopt independently
-when their configuration is rebuilt. Existing generated files are copied only
-when absent, so this does not rewrite existing guest configurations.
+Terraform, daemon protocol or on-disk format change. The application change
+affects Nix evaluation and generated guest configuration; the companion change
+records coverage of an existing documented WebUI action. They require no
+coordinated update of hosts, all running machines or all nodes; guests adopt
+independently when their configuration is rebuilt. Existing generated files
+are copied only when absent, so this does not rewrite existing guest
+configurations.
 
 New grouped imports require a vpsadminos revision containing the new interface.
 An old vpsadminos pin still accepts `containerStable` but retains its old
@@ -206,6 +249,22 @@ claims that behavior. Generated locks must reference a revision that contains
 the advertised exports and selector. Implementation authorization does not
 authorize default-branch integration or production KB publication; the lead
 handles their separate required approvals.
+
+Refresh the six-page candidate indexes, checksums, localized revision summaries
+and per-language release manifests after reconciling these annotations. Retain the
+immutable fetched production source revisions and contents as the concurrency
+baseline. Record the exact reviewed contract revision with candidate-validation
+evidence. Publish the companion branch through the ordinary explicit integration
+gate; do not infer merge approval from resolving the review finding.
+
+Adding navigation bindings does not make these pages managed or require new
+managed-page/test provenance. Existing `datasets.create.open` rendering is
+reused, so no plugin/configuration deployment is introduced by this design.
+Verify its rendering in both staged pages and preserve the source-revision
+guards. Use the installed schema-5 release workflow required by workspace
+instructions even though the inspected contract workflow's examples still
+mention schema 4. Production promotion requires approval of the refreshed exact
+staged manifests; any previously reviewed candidate digests are superseded.
 
 Migrate imports with the guest nixpkgs pin and stateVersion unchanged, then
 compare evaluation before activation. Reverting vpsadminos below the new API
@@ -259,6 +318,36 @@ prescribed watcher rather than treating it as an inline quick check.
 10. Wire the focused release evaluator into CI. Nix's shallow module check is
     insufficient. Run formatting and declared hooks, project documentation
     checks, and validate the six KB candidates' examples and language parity.
+11. Validate the contract companion in its pinned Nix environment: the two
+    navigation page bindings, count-2 creation bindings in both languages,
+    count-1 English Features binding, and affected discovery records must agree.
+    Plan the scoped static annotation check and the full-corpus annotation check
+    through `ruby tools/check-kb-annotations.rb`, respectively without candidate
+    arguments and with the complete immutable `--source-index` plus final
+    `--candidate-index`. A two-page subset cannot satisfy the complete-page
+    identity contract. Also plan `ruby tools/test-kb-annotations.rb` and
+    `ruby tools/check-contract.rb`. Retain the repository's mandatory static
+    `bin/check` as a baseline check under its normal policy. Do not refresh
+    unrelated fingerprints, media or annotations to turn a baseline failure
+    green. The lead and implementer coordinate exact candidate paths and record
+    scoped results separately from full-corpus and repository baseline results.
+12. Manually verify both creation instructions, in steps 3 and 5, in each
+    language: each needs its own well-formed, nonempty paired tag with the
+    existing creation path. Verify the English Features instruction has one
+    Features tag and that existing mount tags remain intact. Independent lexical
+    discovery is not sufficient evidence of complete annotation. In staging,
+    check these rendered paths, translation links and updated revision summaries.
+    No capture regeneration or new runtime suite is required by these
+    binding-only changes.
+
+The lead reports the current full-corpus annotation count comparison differs
+only on two pre-existing IP-address pages outside the six candidates:
+`navody:vps:ip_adresy` and `manuals:vps:ip_addresses`, where
+`networking.host-addresses.add` is expected once but occurs zero times. Record
+that full-corpus failure separately from the scoped companion validation. Do not
+edit those pages, reduce their expected counts, filter them out of the complete
+inventory or broaden this initiative to hide the mismatch. This reported count
+comparison is not a claim that later full-corpus validation stages have passed.
 
 An isolated output-shape check may complement the module tests. Any full flake
 check should distinguish the known legacy `nixosConfigurations` convention issue
@@ -270,6 +359,14 @@ After the intended substantive deliverable is committed and quick checks pass,
 the lead runs mandatory independent final review, including the complete branch
 history and an explicit no-migrations conclusion. Routine design planning does
 not itself trigger that review. Long integration tests follow final review.
+
+The lead reports that the reviewer's final report confirms the application
+source is correct. The declarative narrow fix for B1 and the message-only
+validation paragraph for I1 may be verified by the lead without an independent
+review rerun. Record the exact committed fixes and verification in the review
+reconciliation before proceeding to long tests; keep the unrelated annotation
+baseline failure distinct. This document assigns no new reviewer and starts no
+verification run; the lead retains orchestration.
 
 Use a fresh policy-selected Luna/low verification watcher for authorized builds,
 image tests and uncertain-duration waits. Run the four relevant VM image cases:
@@ -304,5 +401,8 @@ config-dependent imports produced infinite recursion. The pinned stable input's
 
 These experiments establish the design mechanics only. They are not real
 multi-release NixOS, template build, runtime, deployment or KB publication
-evidence. Implementation, committed-deliverable review and the acceptance
-checks above remain to be completed and recorded by the lead.
+evidence. Current implementation, committed-deliverable review and acceptance
+results are recorded by the lead in `state.md`; the planning experiments do not
+substitute for those results. The contract guidance and checker were inspected
+read-only for this scope reconciliation; no contract checks were run by the
+architect.

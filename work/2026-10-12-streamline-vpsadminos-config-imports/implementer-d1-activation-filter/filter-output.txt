@@ -1,0 +1,12 @@
+5:#### Activation script snippet: specialfs
+6:specialfs() {
+7:  source /nix/store/fixture-source-of-special-mounts.sh
+9:specialfs
+11:#### Activation script snippet: users
+12:/nix/store/fixture-update-users-groups.pl
+13:test -e /var/lib/nixos/uid-map
+14:test -e /var/lib/nixos/gid-map
+16:#### Activation script snippet: persistence
+17:test -d /persistent
+18:mount --bind /temporary-source /temporary-target
+22:#### Activation script snippet: complete
