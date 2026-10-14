@@ -34,7 +34,7 @@ package = File.realpath(profile)
 abort 'selected package changed' unless package == plan.fetch('selectedPackage') && package.start_with?('/nix/store/')
 load File.join(package, 'libexec', '.workspace-host-wrapped')
 require_relative '../lib/bootstrap_merge_2026_10_13'
-WorkspaceCoordination.keys!(plan, %w[schema workspace workspaceName slug ownerId reservationId selectedPackage profileToken catalogDigest repositories evidence deploymentEvidence source])
+WorkspaceCoordination.keys!(plan, %w[schema workspace workspaceName slug ownerId reservationId selectedPackage profileToken catalogDigest repositories evidence deploymentEvidence source], %w[lineageEvidence])
 abort 'invalid plan schema' unless plan['schema'] == 1
 request = WorkspaceCoordination.parse(File.binread(options.fetch(:request), WorkspaceCoordination::MAX_REQUEST + 1))
 begin
