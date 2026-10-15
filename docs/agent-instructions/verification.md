@@ -107,3 +107,20 @@ test scripts in the current RSpec-style structure with examples and
 expectations, such as `describe`, `it`, and `expect`. Do not refactor existing
 tests solely to convert their style unless the user explicitly asks for that
 refactor.
+
+## Disposable test data
+
+Record temporary test and benchmark directories in the owning initiative. Stop
+owned runners and guests through their native tools, then remove disposable
+data when verification ends. Keep only compact evidence needed for review or
+recovery. A dated pathname alone does not prove that another initiative has
+retired its data.
+
+Aitherdev's configuration-managed cleanup retains recognized completed
+`/tmp/**/os-test-*` runs for seven inactive days. Active run locks, process
+references and `.keep` markers preserve them. Ad hoc campaigns and benchmark
+directories need explicit owner cleanup. The user-profile coordinator separately
+collects finished source/target snapshots and expires unused preparations after
+seven days; use `workspace-host coordination gc --dry-run --json` to inspect its
+reference decisions. See the configuration repository's
+`docs/operations/aitherdev-disk-retention.md` for host policy and recovery.
