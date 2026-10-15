@@ -34,7 +34,7 @@ if ARGV.include?('074406d2-822a-4079-9ef4-931a802da234') && ARGV.include?('integ
         # the exact refreshed comparison and inspect its native proof.
         raise WorkspaceCoordination::Error.new('certified refresh saved; capture comparison and resume without recovery loader', 75)
       end
-      super
+      raise WorkspaceCoordination::Error.new('recovery loader refuses changed or already-refreshed state; use ordinary resume after inspection', 75)
     end
   end
 

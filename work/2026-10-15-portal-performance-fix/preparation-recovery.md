@@ -21,6 +21,8 @@ review range, prepare phase, empty run job set and absent workspace snapshot,
 approval and successful preparation receipt. It stops with exit 75 immediately
 after saving the refresh, before any merge is submitted. The loader applies only
 to that exact integration-resume invocation; child Ruby hook commands are inert.
+Repeating the loader after it has saved a refreshed head returns 75 again. A
+changed phase also refuses; the loader never advances the ordinary driver.
 
 Before execution, retain a private copy and SHA-256 of the integration journal.
 Review this completed bounded recovery and its loader independently. After it
