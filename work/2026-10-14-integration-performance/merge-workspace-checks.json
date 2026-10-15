@@ -1,0 +1,31 @@
+{
+  "result": "passed",
+  "revision": "c5e2a6930afae45407525452be663f0a5060295b",
+  "commands": [
+    {
+      "command": "nix flake check --print-build-logs",
+      "exit_status": 0,
+      "elapsed_seconds": 17.97,
+      "log": "merge-workspace-checks-flake.log"
+    },
+    {
+      "command": "nix eval --raw .#packages.x86_64-linux.default.drvPath",
+      "exit_status": 0,
+      "elapsed_seconds": 7.07,
+      "value": "/nix/store/j04ma3w9h8dn11p65vlbxc3y4h681zv0-dev-workspace-0.2.0.drv",
+      "matches_previous_verified": true,
+      "log": "merge-workspace-checks-drv.log"
+    },
+    {
+      "command": "nix eval --raw .#packages.x86_64-linux.default.outPath",
+      "exit_status": 0,
+      "elapsed_seconds": 6.58,
+      "value": "/nix/store/hycsrx1zywpgcv3q7jyavj8rwr0x3154-dev-workspace-0.2.0",
+      "matches_previous_verified": true,
+      "log": "merge-workspace-checks-out.log"
+    }
+  ],
+  "notes": [
+    "No unexpected local Linux kernel build appeared in the flake check output."
+  ]
+}

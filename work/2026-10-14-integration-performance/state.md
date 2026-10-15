@@ -1,116 +1,90 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-10-14-integration-performance
 
-Integration authorized by the user: “okay, merge it”. Optimizations1–5 are implemented, verified and
-deployed to aitherdev. This initiative remains active because all four final
-feature heads are unmerged and its machine reservation remains held for review.
+All five optimizations are implemented, independently reviewed, verified, deployed
+to aitherdev and merged into all four remote master branches. The coordinator
+accepted exact integration and deployed replacement proofs and released aitherdev.
+All owned jobs succeeded and notifications are delivered. Session and refs remain.
 
 ## Phase checklist
 
-- [x] Accepted scope, lead-owned design and initial tracking committed6415d3ac.
-- [x] Implementation and focused checks complete in four feature worktrees.
-- [x] Independent review complete; narrow Go metadata consumer follow-up validated.
-- [x] Full package, Ruby, browser, extension, workspace and CI checks passed.
-- [x] Three driver/build benchmarks recorded, including a separate cache miss.
-- [x] Ordered system/profile rollout and live acceptance passed.
-- [x] User approval to merge all four feature branches into refs/heads/master.
-- [ ] Final integration and reservation completion after that approval.
+- [x] Accepted design and initial tracking committed (6415d3ac).
+- [x] Implementation and focused local checks complete.
+- [x] Independent final review and narrow Go consumer follow-up complete.
+- [x] Full packages, Ruby, browser, extension, workspace and exact CI passed.
+- [x] Performance samples and system/profile rollout accepted.
+- [x] User instruction “okay, merge it” authorizes all four refs/heads/master targets.
+- [x] All exact final feature heads merged and remote ancestry verified.
+- [x] Reservation released; no remaining work or blockers.
 
-## Final branches
+## Integrated revisions
 
-Branch2026-10-14-integration-performance in each registered worktree under
-worktrees/2026-10-14-integration-performance/:
-
-| Project | Published head |
+| Project | Exact final feature head |
 | --- | --- |
 | dev-workspace | 832d9f1a6a21337dd44063ddf39f7a88cfc95450 |
 | vpsfree-dev-workspace | 767dfd587e346168e1443e65ccdb67ce748f3fe3 |
-| workspace | ee8645664ed75c7069c259d9e888a8ad334c7f76 |
+| workspace | c5e2a6930afae45407525452be663f0a5060295b |
 | vpsfree-cz-configuration | d28926183eb9f1dc427ed597819cf157796ade88 |
 
-Complete series, bases and diff digests: review-inventory.json. Three coherent
-runtime commits; one extension/adoption commit each; configuration docs plus one
-generated pin. No obsolete approaches, redundant pin streams or migrations.
-Source originals retained in scoped refs. Shared master was never rewritten.
+Merge receipts: merge-completion.json. Three unchanged heads were admitted together
+by driver 0850c3fa-425a-43cb-8af9-26205747760a. Its preparation took 51.8 seconds,
+active administration 58.0 seconds total; queue time zero. Driver wall time was
+2m52s including time before the explicit resume. Workspace used the ordinary
+coordinator after a clean tracking-only rebase over d22b5341. Its range-diff and
+final diff match the reviewed feature; certificate reconstructs the exact tree.
+No migration, obsolete approach or redundant pin stream remains. Approval scope
+and independent review remain valid. Sources/feature refs are retained.
 
-## Verification and performance
+The workspace pin-only recipe cannot regenerate substantive policy adoption, so
+the lead used ordinary rebase/preparation rather than discarding those changes.
+The merge-only driver cannot finish an existing deployment reservation; ordinary
+finish handled that separately. Its evidence field is a nonempty string, unlike
+prepare's checksummed evidence list; corrected before any completion mutation.
+One comparison capture met a concurrent command lock and succeeded after it ended.
 
-verification-core.json and verification-results.json retain exact commands,
-heads, exit statuses and timings. All final checks passed, including CI38647942844.
-689Ruby tests across11shards passed; Go-only metadata remediation preserved the
-exact Ruby aggregate derivation. Source-filter tests prove portal-only reuse.
-Focused admission4/13, integration17/76, certificate4/8, extension recipe3/8,
-artifact registration10/101 and affected package-layout checks passed.
+## Verification, review and deployment
 
-Main verification/preparation phase25m17s. Three disposable driver runs took
-0.696/0.690/0.675s active administration; zero queue. Exact workspace/aitherdev
-builds in parallel took138.3/163.1s. Comparable warm workspace builds were
-1.273/1.354/1.288s; one cache-miss rebuild309.7s is retained separately. Missing
-Nix outputs prevented that sample being called warm; package root is retained.
-The complete live workflow target remains unverified because feature merges are
-not authorized. See performance.md and performance-results.json.
+Complete prior evidence: review-inventory.json, review-final-summary.md,
+verification-core.json, verification-results.json and rollout.md. The sealed
+review-final.md and activation evidence bytes remain unchanged. Reviewer native
+01a13c61-bcf5-7e90-8c9b-085f4f9127ae used retained Astra/xhigh fallback settings
+because roster:null. No unresolved Blocking/Important findings. No migrations.
+The final Go metadata consumer fix was directly verified under narrow-fix policy.
 
-Full verification initially found the Go package reader rejecting new metadata;
-fixed and fully rechecked. Failed attempt logs retained with attempt-ef82 prefix.
-Earlier CI synthetic package fixture omitted required libraries; repaired and
-focused regression passed. Configuration hook first failed outside its Nix shell;
-retained checkout was initialized and original hook replayed, without bypass.
-Superseded CI cancellation returned HTTP403 due token scope; final CI passed.
-
-## Review and documentation
-
-review-final-summary.md distinguishes independent review through ef82f595 from the
-narrow832d9f1a parser follow-up. Review packets/remediation retained. Reviewer
-Astra/xhigh fallback, native01a13c61-bcf5-7e90-8c9b-085f4f9127ae; roster:null.
-Generic integration/coordination docs own contracts; extension/workspace docs
-own recipe/policy adoption; configuration operations guide owns site procedure.
-Individual rollout and timing: rollout.md. No package/profile rollback or format
-migration is introduced. Profile recovery stays forward-only.
-
-## Deployed ownership and acceptance
+Exact runtime CI38647942844 passed; 689 Ruby tests across11 shards and all Go,
+browser, package and extension checks passed. Unchanged revisions reused that
+verification. Fresh Luna/low watcher checked rebased workspace c5e2a693: flake
+checks passed in18s; its derivation and output match the deployed application
+exactly. Details: merge-workspace-checks.json. The configuration head is unchanged.
+No repeat deployment was needed and no unexpected local kernel was built.
 
 System jobb3b7277b-9384-4938-8f72-2ff3661b2cd0 and profile job
-414ed9ee-3059-4677-9564-3cf11109f8ee succeeded. Reservation
-75f8a0ac-59c5-43e4-8703-31f4e32b015c remainsdeployed_review for vpsfree:aitherdev.
-Selected application/nix/store/hycsrx1zywpgcv3q7jyavj8rwr0x3154-dev-workspace-0.2.0.
-System/profile agree on/nix/store/hhhbcsinndg1z08r50a6xba7fwymgr9x-nixos-system-aitherdev-26.05.20261012.7993f34.
-Capabilities, recipe, mappings and CLI options verified; backendHTTP200 and TLS
-frontendHTTP401 without credentials. Owned notifications delivered through the
-separate worker. Evidence: live-runtime-acceptance.json/live-coordination-status.json.
+414ed9ee-3059-4677-9564-3cf11109f8ee remain successful. Selected application:
+/nix/store/hycsrx1zywpgcv3q7jyavj8rwr0x3154-dev-workspace-0.2.0.
+Live system and system profile:
+/nix/store/hhhbcsinndg1z08r50a6xba7fwymgr9x-nixos-system-aitherdev-26.05.20261012.7993f34.
+Acceptance: live-runtime-acceptance.json and merge-acceptance.json. Workspace's
+nonancestor deployed source is covered by merge-workspace-equivalence.json.
+Reservation75f8a0ac-59c5-43e4-8703-31f4e32b015c is released at revision5 after
+integration, unchanged live identities and settled delivery were independently
+checked by finish. Deployment and human review work are finished.
 
-## Next action and retained state
+Feature contracts are in runtime integration/coordination guides; extension and
+workspace docs own recipe/policy adoption; configuration operations guide owns
+site procedure. Performance.md and performance-results.json retain the original
+25m17s preparation/verification phase and comparable/cache-miss samples. This
+merge validates the deployed batch path, but is not a complete fresh-workflow
+benchmark. Residual advisory: synchronous native ownership reads can delay ticks.
+No further feature documentation change was needed for this integration.
 
-User direction “Implement the plan.” authorized the planned rollout, not merging.
-Next action is explicit integration direction for these four repository/master
-pairs; then refresh/review/check only changes actually required by moved bases.
-Preserve reservation, feature refs, sources, artifacts, GC roots and session.
-No finish/release, archive, delete or stop was run or authorized. The native root
-01a13c21-6660-7c32-a6ed-07b2620940aa remains notification-only; parent owns work.
+## Retained state and next action
 
-A Luna/low watcher owned the first full attempt. Subsequent native follow-up was
-refused for v2 subagents, so monitoring visibly fell back to parent with bounded
-waits; no watcher model was substituted. Unexpected kernels were not built.
-Preserve unrelated shared index/files; final checkpoint stages only curated owned
-records and excludes raw logs, HTML, transient requests and secret-bearing data.
+No required work remains. Retain the session, branches, worktrees, original deployed
+artifacts, source roots and recovery receipts. No archive, delete or stop requested
+or run. Preserve unrelated shared files/index. The earlier verification fallback
+and failed-attempt evidence remain documented in rollout/review records.
 
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-14-integration-performance/
-
-## Merge authorization and preflight
-
-Latest user instruction “okay, merge it” authorizes dev-workspace,
-vpsfree-dev-workspace, workspace and vpsfree-cz-configuration into
-refs/heads/master, and completion of the accepted rollout reservation.
-Fetched all four targets; only workspace moved, by tracking-only d22b5341.
-Final full series and diff hashes match review-inventory.json; no migrations,
-obsolete approaches or redundant pin streams. Review and exact checks reused.
-The driver will batch the three unchanged repositories; workspace uses ordinary
-coordinator preparation after a certified tracking-only rebase, preserving its
-substantive adoption changes that a pin-only recipe cannot regenerate.
-
-## Integration 0850c3fa-425a-43cb-8af9-26205747760a
-
-Requested exact feature heads are integrated. See integration/0850c3fa-425a-43cb-8af9-26205747760a/summary.md
-and integration/0850c3fa-425a-43cb-8af9-26205747760a/result.json for operation receipts. Feature refs and session retained.
