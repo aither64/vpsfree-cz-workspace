@@ -4,7 +4,7 @@ lifecycle: active
 
 # 2026-10-14-integration-performance
 
-Ready, awaiting merge approval. Optimizations1–5 are implemented, verified and
+Integration authorized by the user: “okay, merge it”. Optimizations1–5 are implemented, verified and
 deployed to aitherdev. This initiative remains active because all four final
 feature heads are unmerged and its machine reservation remains held for review.
 
@@ -16,7 +16,7 @@ feature heads are unmerged and its machine reservation remains held for review.
 - [x] Full package, Ruby, browser, extension, workspace and CI checks passed.
 - [x] Three driver/build benchmarks recorded, including a separate cache miss.
 - [x] Ordered system/profile rollout and live acceptance passed.
-- [ ] User approval to merge the four feature branches into master.
+- [x] User approval to merge all four feature branches into refs/heads/master.
 - [ ] Final integration and reservation completion after that approval.
 
 ## Final branches
@@ -97,3 +97,20 @@ Preserve unrelated shared index/files; final checkpoint stages only curated owne
 records and excludes raw logs, HTML, transient requests and secret-bearing data.
 
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-14-integration-performance/
+
+## Merge authorization and preflight
+
+Latest user instruction “okay, merge it” authorizes dev-workspace,
+vpsfree-dev-workspace, workspace and vpsfree-cz-configuration into
+refs/heads/master, and completion of the accepted rollout reservation.
+Fetched all four targets; only workspace moved, by tracking-only d22b5341.
+Final full series and diff hashes match review-inventory.json; no migrations,
+obsolete approaches or redundant pin streams. Review and exact checks reused.
+The driver will batch the three unchanged repositories; workspace uses ordinary
+coordinator preparation after a certified tracking-only rebase, preserving its
+substantive adoption changes that a pin-only recipe cannot regenerate.
+
+## Integration 0850c3fa-425a-43cb-8af9-26205747760a
+
+Requested exact feature heads are integrated. See integration/0850c3fa-425a-43cb-8af9-26205747760a/summary.md
+and integration/0850c3fa-425a-43cb-8af9-26205747760a/result.json for operation receipts. Feature refs and session retained.
