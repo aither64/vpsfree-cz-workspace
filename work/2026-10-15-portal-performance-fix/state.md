@@ -1,49 +1,72 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Portal performance implementation
 
 ## Status
 
-Phase: integration and deployment preparation. Source and pins published;
-focused Go/browser and semantic-lock checks pass. No deployment yet.
-No retained roster; lead owns design and code.
-Created managed session 2026-10-15-portal-performance-fix in
-/home/aither/workspace/ai/vpsfree.cz with lead 01a14155-d18d-7512-85a3-c3105dd6fa7d.
-Bootstrap conversation explicitly waits while the initiating conversation works.
-Explicit literal environment identity matches dev-session current.
+Phase: complete and ready for use. All four exact final feature heads are
+merged into remote master; independent review, local/browser/race checks,
+full package builds and final feature/master CI passed. The system and user
+profile are deployed on aitherdev. Ten-minute live acceptance passed with
+0.15086 portal core (five-minute average, 96.66% below the fresh 4.51664-core
+baseline), 0.07994-second cached p95, 480 activity/index requests and six
+nonempty history pages. No HTTP failure, stale snapshot or overflow occurred.
+Original native Codex and tmux processes and binary remained unchanged.
+
+The coordinator released reservation 9a7c34b6-c406-4a28-901f-f24b26ccf7f9 at
+revision 5 after fresh exact integration and deployed-input proofs. All six
+jobs succeeded and all 14 notifications are delivered. No work or blocker remains.
+
+No retained roster; the initiating lead owns design/code and the managed lead
+01a14155-d18d-7512-85a3-c3105dd6fa7d waits without duplicate operations.
+Verified session identity is 2026-10-15-portal-performance-fix at
+/home/aither/workspace/ai/vpsfree.cz; explicit literal environment identity
+continues to match dev-session current. Coordination owner is
+420aa210-6d7a-4f07-afe3-ca49aea0ac94.
 
 - [x] Diagnosis and approved plan.
 - [x] Create managed implementation initiative and technical brief.
 - [x] Implement, document and quick-check source changes.
 - [x] Publish and independently review complete committed branches.
-- [ ] Longer checks and exact configuration/application builds (application passes).
-- [ ] Merge all four final heads to remote master.
-- [ ] Deploy system then profile and verify acceptance.
-- [ ] Prove integration and release aitherdev reservation.
+- [x] Longer checks and exact configuration/application builds.
+- [x] Merge all four final heads to remote master.
+- [x] Deploy system then profile; preserve native Codex and tmux processes.
+- [x] Complete ten-minute live CPU/latency/history acceptance.
+- [x] Prove integration, release aitherdev reservation and record completion.
 
 ## Repositories and next actions
 
 codex-web, dev-workspace, workspace and vpsfree-cz-configuration.
 Feature branches/worktrees use the initiative slug; shared root stays master.
 Final branch inventory: final-heads.json. Review packet: review-packet.md.
-Next: preserve the preceding rollout baseline, complete remaining master merges,
-prepare aitherdev system/profile, deploy, live-verify and release.
+Native integration receipts: integration/074406d2-822a-4079-9ef4-931a802da234/.
+Next action: use the deployed portal. No operator action remains.
+Final rollout: rollout.md. Acceptance: live-acceptance.json.
+Release receipt: finish-result.json. Full final proofs: post-finish-coordination.json.
 
 ## Authorization and documentation
 
-plan.md records the user's explicit merge, deployment and release direction.
-design.md owns implementation/verification details.
+plan.md records the user's explicit merge, deployment and reservation-release
+direction. design.md owns implementation/verification details. Lasting behavior
+is documented in codex-web README History reads and dev-workspace
+`docs/workspace-portal.md`; no KB publication is required.
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-15-portal-performance-fix/
 
 ## Commands, risks and cleanup
 
-Initial start without --goal-file refused before creating a session. An explicit
-waiting bootstrap goal created a valid managed lead. The prior threadless
-investigation is not reused. No machine reservation acquired yet.
-Preserve unrelated shared index/files. Ownership caching must fail closed on
-identity changes; history backfills must not block watches or fabricate counts.
+No blocker remains. Two initial verification sandboxes denied local IPC needed
+by the probe; corrected native monitoring completed successfully. The first
+native finish request used an evidence object where the installed API expects
+a string; it refused before mutation. The corrected request retained the exact
+acceptance path/checksum and every native proof. One artifact registration had
+transient lifecycle lock contention and succeeded on retry.
+Preserve unrelated shared index/files, retained branches, worktrees, original
+attempts and rollback artifacts. No archive/delete/stop is authorized. The
+session remains available for follow-up.
+
+## Historical implementation and rollout checkpoints
 
 ## Implementation checkpoint
 
@@ -212,3 +235,38 @@ or release claimed yet.
 
 Requested exact feature heads are integrated. See integration/074406d2-822a-4079-9ef4-931a802da234/summary.md
 and integration/074406d2-822a-4079-9ef4-931a802da234/result.json for operation receipts. Feature refs and session retained.
+
+Ordered native system/profile activations succeeded; original integration run
+completed normally. Deployed appa6brrl4a354sn4q25crqw3q54wwg0qag, systemnsyavczc.
+Native CodexPID2615996 and tmuxPID435397 and native binarySHA420f2b59
+are unchanged across deployment. Master runtime CI38818112064 passes, including
+its master-only host checks. Fresh Luna/low watcher owns verify-live.sh; machine
+reservation remains held for warm-up plus ten-minute acceptance.
+
+First live probe measured no service data: sandbox network=false denied Unix
+socket connect (EPERM). Canceled only its exact warm-up child; wrapper exited143.
+Preserved artifacts as warmup-socket-denied.*. Direct parent read proves both
+main/own activity endpoints200 ~53ms with counts complete. Fresh Luna/low
+acceptance watcher has required IPC networking enabled; test now fails promptly
+on permission errors. This corrects instrumentation, not product code.
+
+
+Fresh native utility /root/live_acceptance_final uses the installed catalog's
+verification_watcher policy (gpt-6-luna/low, digest
+437585347ac8b2cdbf498a169d8871e684f3f61ccf1dd48e8589d79ef9629abd).
+Its service-manager preflight returned portal MainPID456486. It owns exactly
+one unchanged verify-live.sh invocation; no deployment or retry is delegated.
+The preceding CLI attempt's evidence is live-bus-denied.log/status and
+live-watch-corrected.md, not a service test failure. The corrected utility's
+final report will distinguish measured acceptance from instrumentation.
+
+
+Final live utility completed exit 0: live-watch-final.md. Acceptance passed in
+600.165 seconds; all six history pages were nonempty. Final native finish request
+fb895c74-42b0-469c-8088-ce59217b91e8 released the machine at revision 5.
+The final proof contains four owned exact heads plus the actually deployed
+unowned vpsfree-dev-workspace revision 767dfd587e346168e1443e65ccdb67ce748f3fe3.
+All 14 notifications settled. Routine final tracking/evidence introduces no
+substantive deliverable requiring another independent review. The final handoff
+checkpoint preserves the curated rollout, acceptance, identity and release proof;
+raw logs and samples remain local.
