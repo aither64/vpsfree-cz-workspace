@@ -6,7 +6,7 @@ lifecycle: active
 
 ## Status
 
-Phase: longer verification. Source and matching pins committed/published;
+Phase: integration and deployment preparation. Source and pins published;
 focused Go/browser and semantic-lock checks pass. No deployment yet.
 No retained roster; lead owns design and code.
 Created managed session 2026-10-15-portal-performance-fix in
@@ -28,7 +28,8 @@ Explicit literal environment identity matches dev-session current.
 codex-web, dev-workspace, workspace and vpsfree-cz-configuration.
 Feature branches/worktrees use the initiative slug; shared root stays master.
 Final branch inventory: final-heads.json. Review packet: review-packet.md.
-Next: independent four-lane final review, then longer checks and builds.
+Next: preserve the preceding rollout baseline, complete remaining master merges,
+prepare aitherdev system/profile, deploy, live-verify and release.
 
 ## Authorization and documentation
 
@@ -116,3 +117,63 @@ baseline so they preserve the deployed retention changes.
 
 Requested exact feature heads are integrated. See integration/e26cca5e-a674-4e0f-b212-476ae0f030cb/summary.md
 and integration/e26cca5e-a674-4e0f-b212-476ae0f030cb/result.json for operation receipts. Feature refs and session retained.
+
+Provider merged by native coordinator: master/remote exact
+523865195522ad6f4804613e6f54823ddf447924, job
+f3917dca-7ee5-498c-b8c7-6b5044e3b032 applied/verified. Integration run
+e26cca5e-a674-4e0f-b212-476ae0f030cb completed and native deliveries settled.
+Other three feature branches remain unmerged. The machine is still reserved
+by the preceding retention initiative.
+
+Read-only real native history probe completed successfully: 162 observations,
+14,198 tool calls, 2,349 sent + 1,244 received messages, countsComplete=true.
+Per-observation p95 0.467 s, max 0.906 s; no RPC/transport failure. This was
+the existing large conversation, without resuming/sending/subscribing. Detailed
+evidence: native-history-probe-result.json and .jsonl. Initial unobserved timing
+is correctly unclassified. The application has not been deployed yet.
+
+The successful composed build output was unrooted (--no-link) and was
+collected during the preceding owner's authorized host GC before a later
+path-info query. Build/test evidence remains valid for exact derivation
+nnbbvgcdbbjpy6x5968v99bpjqzzgzwz. Deployment preparation must realize and root
+its final artifact; do not claim the earlier output is retained. Retain a
+profile/output root for the next build.
+
+Aitherdev preceding owner released (ledger924). Runtime patches rebased
+cleanly/identically onto integrated retention 2370232f, new head2b22de8d.
+Config/workspace pins regenerated once atop integrated retention policy;
+final-heads.json updated. Focused checks, hooks and deployment-lock contract
+pass. The original native collaboration reviewer cannot be addressed through
+current tools; a fresh read-only standalone Astra/xhigh CLI reviewer is running
+general/risk affected lanes on the final composition. Catalog/roster rechecked
+(no roster; same saved default review role). No source design change.
+
+Final composition review accepted with no remaining findings in general/risk
+lanes; prior architecture/scope remains applicable. Native reviewer thread
+01a14196-4c7c-7552-9a2e-91cdbc1d068d verified gpt-6-astra/xhigh/read-only in
+composition-review-identity.json; report composition-review.md. Exact current
+branch histories/pins and no-migration conclusion confirmed. Final package/CI
+verification launched from clean current heads with a retained output root.
+
+Final pre-merge check: all exact heads/series/diffs still match final independent
+composition review; no superseded pin commits or migrations. Comparison captures
+complete for remaining three repositories (one transient session lock was retried).
+Final composed package and CI pass; final-verification.json freezes evidence.
+Proceed with integrate-first native driver; do not edit its sealed review or
+verification evidence. No completion section: retain reservation for acceptance.
+
+Native final integration preparation stopped before submitting jobs because
+shared workspace master contained unpublished ordinary archive-only commit
+1a5e443d (145 paths, exclusively work/archive of that completed initiative).
+Published that existing linear tracking commit unchanged over SSH; no foreign
+records or index edited. Current workspace feature now needs certified refresh
+over that tracking-only baseline. Resuming the same native run first.
+
+Ordinary retry confirms cached workspace expectedHead prevents reaching its
+installed certified refresh after the archive-only baseline advance. Prepared
+recovery is a one-run operator loader, not an installed product change. It calls
+only the existing native refresh/proof/publication, updates that derived cache,
+and stops before submission for comparison capture. Ownership/generation, all
+requests/reviews/approvals/snapshots and native execution guards remain intact.
+The exact completed procedure and loader will receive final independent review
+before execution. Ruby syntax passes; no recovery mutation executed yet.
