@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "runtimeHead": "6f8773da97e95f413a943943548326b38ec5bdb4",
+  "regressionBeforeFix": {
+    "runs": 4,
+    "assertions": 84,
+    "failures": 1,
+    "errors": 2
+  },
+  "regressionAfterFix": {
+    "runs": 4,
+    "assertions": 170,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "seconds": 21.13033
+  },
+  "commands": [
+    "nix shell --inputs-from . nixpkgs#ruby nixpkgs#git nixpkgs#tmux -c ruby test/dev_session_test.rb --name /test_tracking_lifecycle_conversion|test_explicit_archive_revives_completed|test_explicit_archive_retry_preserves/",
+    "nix shell --inputs-from . nixpkgs#ruby -c ruby -c libexec/dev-session",
+    "bin/check-dev-workspace-deployment --workspace-root WORKSPACE_FEATURE --configuration-root CONFIGURATION_FEATURE"
+  ],
+  "syntax": "passed",
+  "deploymentContract": "passed",
+  "configurationHooks": "passed; generated commit message width warning retained",
+  "inputDiff": "Only selected runtime rev/narHash/lastModified changed; workspace extension and sibling nodes preserved"
+}
