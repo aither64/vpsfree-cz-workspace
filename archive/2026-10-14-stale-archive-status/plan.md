@@ -1,18 +1,3 @@
-# 2026-10-14-stale-archive-status
-
-## Goal
-
-## Affected repositories
-
-## Approach
-
-## Decisions
-
-## Compatibility and deployment
-
-## Documentation
-
-## Testing plan
 # Stale archive status
 
 Prevent an old session page from retaining ARCHIVE PENDING and Retry archive

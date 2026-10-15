@@ -1,0 +1,692 @@
+=== RUN   TestArchiveFailurePage
+2026/10/14 18:33:11 http: TLS handshake error from 127.0.0.1:42386: remote error: tls: unknown certificate
+2026/10/14 18:33:11 http: TLS handshake error from 127.0.0.1:54476: remote error: tls: unknown certificate
+2026/10/14 18:33:11 http: TLS handshake error from 127.0.0.1:54506: remote error: tls: unknown certificate
+2026/10/14 18:33:11 http: TLS handshake error from 127.0.0.1:54490: remote error: tls: unknown certificate
+2026/10/14 18:33:11 http: TLS handshake error from 127.0.0.1:54496: remote error: tls: unknown certificate
+    archive_failure_browser_test.go:52: browser: exit status 1
+        Request failed: https://127.0.0.1:33537/api/sessions/example/details { errorText: 'net::ERR_ABORTED' }
+        Request failed: https://127.0.0.1:33537/static/reset-credits.js?v=1 { errorText: 'net::ERR_ABORTED' }
+        Request failed: https://127.0.0.1:33537/api/sessions/example/details { errorText: 'net::ERR_ABORTED' }
+        Request failed: https://127.0.0.1:33537/api/sessions/example/details { errorText: 'net::ERR_ABORTED' }
+        Request failed: https://127.0.0.1:33537/api/sessions/example/details { errorText: 'net::ERR_ABORTED' }
+        Request failed: https://127.0.0.1:33537/api/sessions/example/details { errorText: 'net::ERR_ABORTED' }
+        Request failed: https://127.0.0.1:33537/codex/assets/uploads.js?v=6 { errorText: 'net::ERR_ABORTED' }
+        Request failed: https://127.0.0.1:33537/codex/assets/sync.js?v=2 { errorText: 'net::ERR_ABORTED' }
+        Request failed: https://127.0.0.1:33537/codex/assets/refresh.js?v=1 { errorText: 'net::ERR_ABORTED' }
+        chromium: archive diagnostics, throttling, recovery and read-only state passed
+        Request failed: https://127.0.0.1:33537/api/sessions/example/details { errorText: 'NS_BINDING_ABORTED' }
+        Request failed: https://127.0.0.1:33537/api/sessions/example/thread/page { errorText: 'NS_BINDING_ABORTED' }
+        Request failed: https://127.0.0.1:33537/api/sessions/example/details { errorText: 'NS_BINDING_ABORTED' }
+        Request failed: https://127.0.0.1:33537/api/sessions/example/details { errorText: 'NS_BINDING_ABORTED' }
+        Request failed: https://127.0.0.1:33537/static/reset-credits.js?v=1 { errorText: 'NS_BINDING_ABORTED' }
+        Page error: TypeError: error loading dynamically imported module: https://127.0.0.1:33537/static/reset-credits.js?v=1
+            at  (https://127.0.0.1:33537/static/app.js?v=39:1429:39)
+            at async* (https://127.0.0.1:33537/static/app.js?v=39:5452:3)
+        Page error: TypeError: error loading dynamically imported module: https://127.0.0.1:33537/codex/assets/conversation.js?v=14
+            at  (https://127.0.0.1:33537/static/app.js?v=39:1120:30)
+            at async* (https://127.0.0.1:33537/static/app.js?v=39:5452:3)
+        AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+        + actual - expected
+        
+        + [
+        +   'error loading dynamically imported module: https://127.0.0.1:33537/static/reset-credits.js?v=1',
+        +   'error loading dynamically imported module: https://127.0.0.1:33537/codex/assets/conversation.js?v=14'
+        + ]
+        - []
+        
+            at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-stale-archive-status/dev-workspace/portal/internal/web/archive_failure_browser_test.cjs:252:14 {
+          generatedMessage: true,
+          code: 'ERR_ASSERTION',
+          actual: [Array],
+          expected: [],
+          operator: 'deepStrictEqual',
+          diff: 'simple'
+        }
+--- FAIL: TestArchiveFailurePage (51.86s)
+=== RUN   TestQuestionBrowser
+=== RUN   TestQuestionBrowser/question_browser_test.cjs
+2026/10/14 18:34:03 http: TLS handshake error from 127.0.0.1:43814: remote error: tls: unknown certificate
+2026/10/14 18:34:03 http: TLS handshake error from 127.0.0.1:43830: remote error: tls: unknown certificate
+2026/10/14 18:34:03 http: TLS handshake error from 127.0.0.1:43834: remote error: tls: unknown certificate
+2026/10/14 18:34:03 http: TLS handshake error from 127.0.0.1:43850: remote error: tls: unknown certificate
+2026/10/14 18:34:03 http: TLS handshake error from 127.0.0.1:43862: remote error: tls: unknown certificate
+2026/10/14 18:34:03 http: TLS handshake error from 127.0.0.1:43896: remote error: tls: unknown certificate
+2026/10/14 18:34:04 http: TLS handshake error from 127.0.0.1:43910: remote error: tls: unknown certificate
+2026/10/14 18:34:37 http: TLS handshake error from 127.0.0.1:59734: remote error: tls: unknown certificate
+2026/10/14 18:34:38 http: TLS handshake error from 127.0.0.1:59762: remote error: tls: unknown certificate
+2026/10/14 18:34:40 http: TLS handshake error from 127.0.0.1:59774: remote error: tls: unknown certificate
+2026/10/14 18:34:41 http: TLS handshake error from 127.0.0.1:37240: remote error: tls: unknown certificate
+    question_browser_test.go:127: {
+          "results": [
+            "blocking question hides composer across thread refreshes",
+            "failed answers and disconnected snapshots preserve drafts and visibility; successful answer restores focus",
+            "one retry restores the exact question and answers after a temporary missing prompt",
+            "changed questions never receive an automatic answer or an old draft",
+            "Refresh question retries a failed snooze with the unchanged token",
+            "a late snooze failure cannot disable the replacement offer",
+            "asynchronous questions in Default mode hide composer; one interrupt survives replacement and works",
+            "approvals, terminal-only requests and unanswerable questions retain normal controls",
+            "attachment popover closes; an in-progress upload completes while hidden and remains attached",
+            "pending questions take precedence over completed plans; Keep planning restores the composer",
+            {
+              "viewport": [
+                1440,
+                1000
+              ],
+              "geometry": {
+                "width": 1440,
+                "height": 1000,
+                "documentWidth": 1440,
+                "composer": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 0,
+                  "height": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "actions": {
+                  "x": 299,
+                  "y": 894.40625,
+                  "width": 1092,
+                  "height": 42,
+                  "top": 894.40625,
+                  "right": 1391,
+                  "bottom": 936.40625,
+                  "left": 299
+                },
+                "interrupt": {
+                  "x": 1313.484375,
+                  "y": 312.40625,
+                  "width": 77.515625,
+                  "height": 29.78125,
+                  "top": 312.40625,
+                  "right": 1391,
+                  "bottom": 342.1875,
+                  "left": 1313.484375
+                },
+                "scrolls": true
+              }
+            },
+            {
+              "viewport": [
+                1280,
+                720
+              ],
+              "geometry": {
+                "width": 1280,
+                "height": 720,
+                "documentWidth": 1280,
+                "composer": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 0,
+                  "height": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "actions": {
+                  "x": 295,
+                  "y": 614.40625,
+                  "width": 940,
+                  "height": 42,
+                  "top": 614.40625,
+                  "right": 1235,
+                  "bottom": 656.40625,
+                  "left": 295
+                },
+                "interrupt": {
+                  "x": 1157.484375,
+                  "y": 214.40625,
+                  "width": 77.515625,
+                  "height": 29.78125,
+                  "top": 214.40625,
+                  "right": 1235,
+                  "bottom": 244.1875,
+                  "left": 1157.484375
+                },
+                "scrolls": true
+              }
+            },
+            {
+              "viewport": [
+                1280,
+                540
+              ],
+              "geometry": {
+                "width": 1280,
+                "height": 540,
+                "documentWidth": 1280,
+                "composer": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 0,
+                  "height": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "actions": {
+                  "x": 295,
+                  "y": 434.40625,
+                  "width": 940,
+                  "height": 42,
+                  "top": 434.40625,
+                  "right": 1235,
+                  "bottom": 476.40625,
+                  "left": 295
+                },
+                "interrupt": {
+                  "x": 1157.484375,
+                  "y": 151.40625,
+                  "width": 77.515625,
+                  "height": 29.78125,
+                  "top": 151.40625,
+                  "right": 1235,
+                  "bottom": 181.1875,
+                  "left": 1157.484375
+                },
+                "scrolls": true
+              }
+            },
+            {
+              "viewport": [
+                390,
+                844
+              ],
+              "geometry": {
+                "width": 390,
+                "height": 844,
+                "documentWidth": 390,
+                "composer": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 0,
+                  "height": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "actions": {
+                  "x": 82.1875,
+                  "y": 738.40625,
+                  "width": 283.625,
+                  "height": 42,
+                  "top": 738.40625,
+                  "right": 365.8125,
+                  "bottom": 780.40625,
+                  "left": 82.1875
+                },
+                "interrupt": {
+                  "x": 288.296875,
+                  "y": 257.8125,
+                  "width": 77.515625,
+                  "height": 29.78125,
+                  "top": 257.8125,
+                  "right": 365.8125,
+                  "bottom": 287.59375,
+                  "left": 288.296875
+                },
+                "scrolls": true
+              }
+            },
+            {
+              "viewport": [
+                640,
+                360
+              ],
+              "geometry": {
+                "width": 640,
+                "height": 360,
+                "documentWidth": 640,
+                "composer": {
+                  "x": 0,
+                  "y": 0,
+                  "width": 0,
+                  "height": 0,
+                  "top": 0,
+                  "right": 0,
+                  "bottom": 0,
+                  "left": 0
+                },
+                "actions": {
+                  "x": 87,
+                  "y": 254.40625,
+                  "width": 524,
+                  "height": 42,
+                  "top": 254.40625,
+                  "right": 611,
+                  "bottom": 296.40625,
+                  "left": 87
+                },
+                "interrupt": {
+                  "x": 533.484375,
+                  "y": 95.78125,
+                  "width": 77.515625,
+                  "height": 29.78125,
+                  "top": 95.78125,
+                  "right": 611,
+                  "bottom": 125.5625,
+                  "left": 533.484375
+                },
+                "scrolls": true
+              }
+            }
+          ],
+          "answerRequests": 5
+        }
+        
+=== RUN   TestQuestionBrowser/page_lifecycle_browser_test.cjs
+    question_browser_test.go:125: page_lifecycle_browser_test.cjs: exit status 1
+        A [Error]: expect(locator).toBeFocused() failed
+        
+        Locator:  locator('#sidebar-menu').getByRole('link', { name: 'Automatic archival', exact: true })
+        Expected: focused
+        Received: inactive
+        Timeout:  5000ms
+        
+        Call log:
+          - Expect "to.be.focused" with timeout 5000ms
+          - waiting for locator('#sidebar-menu').getByRole('link', { name: 'Automatic archival', exact: true })
+            9 × locator resolved to <a href="/automatic-archival">Automatic archival</a>
+              - unexpected value "inactive"
+        
+            at Proxy.<anonymous> (/nix/store/fg778x0631ld4xd8fim2kbvxll5715xp-playwright-test-1.59.1/lib/node_modules/playwright/lib/matchers/expect.js:213:24)
+            at checkSidebarMenu (/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-stale-archive-status/dev-workspace/portal/internal/web/page_lifecycle_browser_test.cjs:11:83)
+            at async /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-stale-archive-status/dev-workspace/portal/internal/web/page_lifecycle_browser_test.cjs:80:7 {
+          matcherResult: {
+            message: 'expect(locator).toBeFocused() failed\n' +
+              '\n' +
+              "Locator:  locator('#sidebar-menu').getByRole('link', { name: 'Automatic archival', exact: true })\n" +
+              'Expected: focused\n' +
+              'Received: inactive\n' +
+              'Timeout:  5000ms\n' +
+              '\n' +
+              'Call log:\n' +
+              '  - Expect "to.be.focused" with timeout 5000ms\n' +
+              "  - waiting for locator('#sidebar-menu').getByRole('link', { name: 'Automatic archival', exact: true })\n" +
+              '    9 × locator resolved to <a href="/automatic-archival">Automatic archival</a>\n' +
+              '      - unexpected value "inactive"\n',
+            pass: false,
+            actual: 'inactive',
+            name: 'toBeFocused',
+            expected: 'focused',
+            log: [
+              '  - Expect "to.be.focused" with timeout 5000ms',
+              "  - waiting for locator('#sidebar-menu').getByRole('link', { name: 'Automatic archival', exact: true })",
+              '    9 × locator resolved to <a href="/automatic-archival">Automatic archival</a>',
+              '      - unexpected value "inactive"'
+            ],
+            timeout: 5000
+          }
+        }
+=== RUN   TestQuestionBrowser/presentation_browser_test.cjs
+2026/10/14 18:34:59 http: TLS handshake error from 127.0.0.1:51236: remote error: tls: unknown certificate
+2026/10/14 18:35:00 http: TLS handshake error from 127.0.0.1:51256: remote error: tls: unknown certificate
+2026/10/14 18:35:00 http: TLS handshake error from 127.0.0.1:51276: remote error: tls: unknown certificate
+2026/10/14 18:35:00 http: TLS handshake error from 127.0.0.1:51262: remote error: tls: unknown certificate
+2026/10/14 18:35:02 http: TLS handshake error from 127.0.0.1:49896: remote error: tls: unknown certificate
+2026/10/14 18:35:02 http: TLS handshake error from 127.0.0.1:49902: remote error: tls: unknown certificate
+2026/10/14 18:35:02 http: TLS handshake error from 127.0.0.1:49912: remote error: tls: unknown certificate
+2026/10/14 18:35:02 http: TLS handshake error from 127.0.0.1:49922: remote error: tls: unknown certificate
+2026/10/14 18:35:02 http: TLS handshake error from 127.0.0.1:49938: remote error: tls: unknown certificate
+2026/10/14 18:35:02 http: TLS handshake error from 127.0.0.1:49954: remote error: tls: unknown certificate
+2026/10/14 18:35:02 http: TLS handshake error from 127.0.0.1:49982: remote error: tls: unknown certificate
+2026/10/14 18:35:02 http: TLS handshake error from 127.0.0.1:49998: remote error: tls: unknown certificate
+2026/10/14 18:35:02 http: TLS handshake error from 127.0.0.1:50008: remote error: tls: unknown certificate
+2026/10/14 18:35:03 http: TLS handshake error from 127.0.0.1:50010: remote error: tls: unknown certificate
+2026/10/14 18:35:03 http: TLS handshake error from 127.0.0.1:50022: remote error: tls: unknown certificate
+2026/10/14 18:35:03 http: TLS handshake error from 127.0.0.1:50044: remote error: tls: unknown certificate
+2026/10/14 18:35:03 http: TLS handshake error from 127.0.0.1:50056: remote error: tls: unknown certificate
+2026/10/14 18:35:03 http: TLS handshake error from 127.0.0.1:50066: remote error: tls: unknown certificate
+2026/10/14 18:35:03 http: TLS handshake error from 127.0.0.1:50074: remote error: tls: unknown certificate
+2026/10/14 18:35:03 http: TLS handshake error from 127.0.0.1:50086: remote error: tls: unknown certificate
+2026/10/14 18:35:03 http: TLS handshake error from 127.0.0.1:50088: remote error: tls: unknown certificate
+2026/10/14 18:35:03 http: TLS handshake error from 127.0.0.1:50102: remote error: tls: unknown certificate
+2026/10/14 18:35:03 http: TLS handshake error from 127.0.0.1:50114: remote error: tls: unknown certificate
+2026/10/14 18:35:03 http: TLS handshake error from 127.0.0.1:50128: remote error: tls: unknown certificate
+2026/10/14 18:35:04 http: TLS handshake error from 127.0.0.1:50144: remote error: tls: unknown certificate
+2026/10/14 18:35:04 http: TLS handshake error from 127.0.0.1:50164: remote error: tls: unknown certificate
+2026/10/14 18:35:04 http: TLS handshake error from 127.0.0.1:50156: remote error: tls: unknown certificate
+2026/10/14 18:35:04 http: TLS handshake error from 127.0.0.1:50186: remote error: tls: unknown certificate
+2026/10/14 18:35:05 http: TLS handshake error from 127.0.0.1:50192: remote error: tls: unknown certificate
+2026/10/14 18:35:05 http: TLS handshake error from 127.0.0.1:50194: remote error: tls: unknown certificate
+2026/10/14 18:35:05 http: TLS handshake error from 127.0.0.1:50206: remote error: tls: unknown certificate
+2026/10/14 18:35:06 http: TLS handshake error from 127.0.0.1:50212: remote error: tls: unknown certificate
+2026/10/14 18:35:06 http: TLS handshake error from 127.0.0.1:50226: remote error: tls: unknown certificate
+2026/10/14 18:35:06 http: TLS handshake error from 127.0.0.1:50242: remote error: tls: unknown certificate
+    question_browser_test.go:125: presentation_browser_test.cjs: exit status 1
+        locator.click: Timeout 30000ms exceeded.
+        Call log:
+        [2m  - waiting for locator('#archive-session-form button[value="complete"]')[22m
+        
+            at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-stale-archive-status/dev-workspace/portal/internal/web/presentation_browser_test.cjs:366:76 {
+          name: 'TimeoutError'
+        }
+=== RUN   TestQuestionBrowser/team_settings_browser_test.cjs
+2026/10/14 18:35:40 http: TLS handshake error from 127.0.0.1:38078: remote error: tls: unknown certificate
+2026/10/14 18:35:40 http: TLS handshake error from 127.0.0.1:38084: remote error: tls: unknown certificate
+2026/10/14 18:35:40 http: TLS handshake error from 127.0.0.1:38092: remote error: tls: unknown certificate
+2026/10/14 18:35:40 http: TLS handshake error from 127.0.0.1:38106: remote error: tls: unknown certificate
+2026/10/14 18:35:41 http: TLS handshake error from 127.0.0.1:56568: remote error: tls: unknown certificate
+2026/10/14 18:35:41 http: TLS handshake error from 127.0.0.1:56560: remote error: tls: unknown certificate
+2026/10/14 18:35:41 http: TLS handshake error from 127.0.0.1:56582: remote error: tls: unknown certificate
+2026/10/14 18:35:41 http: TLS handshake error from 127.0.0.1:56592: remote error: tls: unknown certificate
+2026/10/14 18:35:41 http: TLS handshake error from 127.0.0.1:56600: remote error: tls: unknown certificate
+2026/10/14 18:35:42 http: TLS handshake error from 127.0.0.1:56616: remote error: tls: unknown certificate
+2026/10/14 18:35:42 http: TLS handshake error from 127.0.0.1:56630: remote error: tls: unknown certificate
+2026/10/14 18:35:42 http: TLS handshake error from 127.0.0.1:56620: remote error: tls: unknown certificate
+2026/10/14 18:35:42 http: TLS handshake error from 127.0.0.1:56634: remote error: tls: unknown certificate
+2026/10/14 18:35:42 http: TLS handshake error from 127.0.0.1:56658: remote error: tls: unknown certificate
+2026/10/14 18:35:43 http: TLS handshake error from 127.0.0.1:56668: remote error: tls: unknown certificate
+2026/10/14 18:35:43 http: TLS handshake error from 127.0.0.1:56678: remote error: tls: unknown certificate
+2026/10/14 18:35:43 http: TLS handshake error from 127.0.0.1:56680: remote error: tls: unknown certificate
+2026/10/14 18:35:43 http: TLS handshake error from 127.0.0.1:56692: remote error: tls: unknown certificate
+2026/10/14 18:35:44 http: TLS handshake error from 127.0.0.1:56708: remote error: tls: unknown certificate
+2026/10/14 18:35:44 http: TLS handshake error from 127.0.0.1:56714: remote error: tls: unknown certificate
+2026/10/14 18:35:44 http: TLS handshake error from 127.0.0.1:56718: remote error: tls: unknown certificate
+2026/10/14 18:35:44 http: TLS handshake error from 127.0.0.1:56720: remote error: tls: unknown certificate
+2026/10/14 18:35:45 http: TLS handshake error from 127.0.0.1:56732: remote error: tls: unknown certificate
+2026/10/14 18:35:45 http: TLS handshake error from 127.0.0.1:56742: remote error: tls: unknown certificate
+2026/10/14 18:35:45 http: TLS handshake error from 127.0.0.1:56748: remote error: tls: unknown certificate
+2026/10/14 18:35:45 http: TLS handshake error from 127.0.0.1:56764: remote error: tls: unknown certificate
+2026/10/14 18:35:45 http: TLS handshake error from 127.0.0.1:56786: remote error: tls: unknown certificate
+2026/10/14 18:35:46 http: TLS handshake error from 127.0.0.1:56788: remote error: tls: unknown certificate
+2026/10/14 18:35:46 http: TLS handshake error from 127.0.0.1:56792: remote error: tls: unknown certificate
+2026/10/14 18:35:46 http: TLS handshake error from 127.0.0.1:56804: remote error: tls: unknown certificate
+2026/10/14 18:35:46 http: TLS handshake error from 127.0.0.1:56830: remote error: tls: unknown certificate
+2026/10/14 18:35:46 http: TLS handshake error from 127.0.0.1:56834: remote error: tls: unknown certificate
+2026/10/14 18:35:47 http: TLS handshake error from 127.0.0.1:56846: remote error: tls: unknown certificate
+2026/10/14 18:35:47 http: TLS handshake error from 127.0.0.1:56860: remote error: tls: unknown certificate
+2026/10/14 18:35:47 http: TLS handshake error from 127.0.0.1:56872: remote error: tls: unknown certificate
+2026/10/14 18:35:47 http: TLS handshake error from 127.0.0.1:56880: remote error: tls: unknown certificate
+2026/10/14 18:35:47 http: TLS handshake error from 127.0.0.1:56888: remote error: tls: unknown certificate
+2026/10/14 18:35:47 http: TLS handshake error from 127.0.0.1:56890: remote error: tls: unknown certificate
+2026/10/14 18:35:47 http: TLS handshake error from 127.0.0.1:56892: remote error: tls: unknown certificate
+2026/10/14 18:35:47 http: TLS handshake error from 127.0.0.1:56906: remote error: tls: unknown certificate
+2026/10/14 18:35:48 http: TLS handshake error from 127.0.0.1:56924: remote error: tls: unknown certificate
+2026/10/14 18:35:48 http: TLS handshake error from 127.0.0.1:56926: remote error: tls: unknown certificate
+2026/10/14 18:35:48 http: TLS handshake error from 127.0.0.1:56934: remote error: tls: unknown certificate
+2026/10/14 18:35:49 http: TLS handshake error from 127.0.0.1:56948: remote error: tls: unknown certificate
+2026/10/14 18:35:49 http: TLS handshake error from 127.0.0.1:56970: remote error: tls: unknown certificate
+2026/10/14 18:35:49 http: TLS handshake error from 127.0.0.1:56964: remote error: tls: unknown certificate
+2026/10/14 18:35:50 http: TLS handshake error from 127.0.0.1:57000: remote error: tls: unknown certificate
+2026/10/14 18:35:50 http: TLS handshake error from 127.0.0.1:57004: remote error: tls: unknown certificate
+2026/10/14 18:35:50 http: TLS handshake error from 127.0.0.1:57018: remote error: tls: unknown certificate
+2026/10/14 18:35:50 http: TLS handshake error from 127.0.0.1:57028: remote error: tls: unknown certificate
+2026/10/14 18:35:50 http: TLS handshake error from 127.0.0.1:57032: remote error: tls: unknown certificate
+2026/10/14 18:35:50 http: TLS handshake error from 127.0.0.1:57030: remote error: tls: unknown certificate
+2026/10/14 18:35:50 http: TLS handshake error from 127.0.0.1:57048: remote error: tls: unknown certificate
+2026/10/14 18:35:50 http: TLS handshake error from 127.0.0.1:57060: remote error: tls: unknown certificate
+2026/10/14 18:35:51 http: TLS handshake error from 127.0.0.1:52362: remote error: tls: unknown certificate
+2026/10/14 18:35:51 http: TLS handshake error from 127.0.0.1:52358: remote error: tls: unknown certificate
+2026/10/14 18:35:51 http: TLS handshake error from 127.0.0.1:52384: remote error: tls: unknown certificate
+2026/10/14 18:35:51 http: TLS handshake error from 127.0.0.1:52388: remote error: tls: unknown certificate
+2026/10/14 18:35:52 http: TLS handshake error from 127.0.0.1:52390: remote error: tls: unknown certificate
+2026/10/14 18:35:52 http: TLS handshake error from 127.0.0.1:52402: remote error: tls: unknown certificate
+2026/10/14 18:35:52 http: TLS handshake error from 127.0.0.1:52418: remote error: tls: unknown certificate
+2026/10/14 18:35:52 http: TLS handshake error from 127.0.0.1:52424: remote error: tls: unknown certificate
+2026/10/14 18:35:52 http: TLS handshake error from 127.0.0.1:52442: remote error: tls: unknown certificate
+2026/10/14 18:35:52 http: TLS handshake error from 127.0.0.1:52436: remote error: tls: unknown certificate
+2026/10/14 18:35:53 http: TLS handshake error from 127.0.0.1:52462: remote error: tls: unknown certificate
+2026/10/14 18:35:53 http: TLS handshake error from 127.0.0.1:52478: remote error: tls: unknown certificate
+2026/10/14 18:35:53 http: TLS handshake error from 127.0.0.1:52486: remote error: tls: unknown certificate
+2026/10/14 18:35:53 http: TLS handshake error from 127.0.0.1:52498: remote error: tls: unknown certificate
+2026/10/14 18:35:54 http: TLS handshake error from 127.0.0.1:52506: remote error: tls: unknown certificate
+2026/10/14 18:35:54 http: TLS handshake error from 127.0.0.1:52518: remote error: tls: unknown certificate
+2026/10/14 18:35:54 http: TLS handshake error from 127.0.0.1:52528: remote error: tls: unknown certificate
+2026/10/14 18:35:54 http: TLS handshake error from 127.0.0.1:52530: remote error: tls: unknown certificate
+2026/10/14 18:35:54 http: TLS handshake error from 127.0.0.1:52544: remote error: tls: unknown certificate
+2026/10/14 18:35:54 http: TLS handshake error from 127.0.0.1:52556: remote error: tls: unknown certificate
+2026/10/14 18:35:54 http: TLS handshake error from 127.0.0.1:52582: remote error: tls: unknown certificate
+2026/10/14 18:35:54 http: TLS handshake error from 127.0.0.1:52594: remote error: tls: unknown certificate
+2026/10/14 18:35:54 http: TLS handshake error from 127.0.0.1:52600: remote error: tls: unknown certificate
+2026/10/14 18:35:55 http: TLS handshake error from 127.0.0.1:52610: remote error: tls: unknown certificate
+2026/10/14 18:35:55 http: TLS handshake error from 127.0.0.1:52616: remote error: tls: unknown certificate
+2026/10/14 18:35:55 http: TLS handshake error from 127.0.0.1:52626: remote error: tls: unknown certificate
+2026/10/14 18:35:55 http: TLS handshake error from 127.0.0.1:52636: remote error: tls: unknown certificate
+2026/10/14 18:35:55 http: TLS handshake error from 127.0.0.1:52648: remote error: tls: unknown certificate
+2026/10/14 18:35:55 http: TLS handshake error from 127.0.0.1:52654: remote error: tls: unknown certificate
+2026/10/14 18:35:55 http: TLS handshake error from 127.0.0.1:52660: remote error: tls: unknown certificate
+2026/10/14 18:35:55 http: TLS handshake error from 127.0.0.1:52676: remote error: tls: unknown certificate
+2026/10/14 18:35:56 http: TLS handshake error from 127.0.0.1:52692: remote error: tls: unknown certificate
+2026/10/14 18:35:56 http: TLS handshake error from 127.0.0.1:52698: remote error: tls: unknown certificate
+2026/10/14 18:35:56 http: TLS handshake error from 127.0.0.1:52706: remote error: tls: unknown certificate
+2026/10/14 18:35:56 http: TLS handshake error from 127.0.0.1:52720: remote error: tls: unknown certificate
+2026/10/14 18:35:56 http: TLS handshake error from 127.0.0.1:52730: remote error: tls: unknown certificate
+2026/10/14 18:35:57 http: TLS handshake error from 127.0.0.1:52738: remote error: tls: unknown certificate
+2026/10/14 18:35:57 http: TLS handshake error from 127.0.0.1:52748: remote error: tls: unknown certificate
+2026/10/14 18:35:57 http: TLS handshake error from 127.0.0.1:52762: remote error: tls: unknown certificate
+2026/10/14 18:35:57 http: TLS handshake error from 127.0.0.1:52770: remote error: tls: unknown certificate
+2026/10/14 18:35:57 http: TLS handshake error from 127.0.0.1:52794: remote error: tls: unknown certificate
+2026/10/14 18:35:58 http: TLS handshake error from 127.0.0.1:52804: remote error: tls: unknown certificate
+2026/10/14 18:35:58 http: TLS handshake error from 127.0.0.1:52820: remote error: tls: unknown certificate
+2026/10/14 18:35:58 http: TLS handshake error from 127.0.0.1:52824: remote error: tls: unknown certificate
+2026/10/14 18:35:59 http: TLS handshake error from 127.0.0.1:52856: remote error: tls: unknown certificate
+2026/10/14 18:35:59 http: TLS handshake error from 127.0.0.1:52868: remote error: tls: unknown certificate
+2026/10/14 18:35:59 http: TLS handshake error from 127.0.0.1:52874: remote error: tls: unknown certificate
+2026/10/14 18:35:59 http: TLS handshake error from 127.0.0.1:52878: remote error: tls: unknown certificate
+2026/10/14 18:36:00 http: TLS handshake error from 127.0.0.1:52896: remote error: tls: unknown certificate
+2026/10/14 18:36:00 http: TLS handshake error from 127.0.0.1:52902: remote error: tls: unknown certificate
+2026/10/14 18:36:00 http: TLS handshake error from 127.0.0.1:52916: remote error: tls: unknown certificate
+2026/10/14 18:36:01 http: TLS handshake error from 127.0.0.1:52924: remote error: tls: unknown certificate
+2026/10/14 18:36:01 http: TLS handshake error from 127.0.0.1:52930: remote error: tls: unknown certificate
+2026/10/14 18:36:01 http: TLS handshake error from 127.0.0.1:44566: remote error: tls: unknown certificate
+2026/10/14 18:36:01 http: TLS handshake error from 127.0.0.1:44592: remote error: tls: unknown certificate
+2026/10/14 18:36:01 http: TLS handshake error from 127.0.0.1:44578: remote error: tls: unknown certificate
+2026/10/14 18:36:02 http: TLS handshake error from 127.0.0.1:44602: remote error: tls: unknown certificate
+2026/10/14 18:36:02 http: TLS handshake error from 127.0.0.1:44606: remote error: tls: unknown certificate
+2026/10/14 18:36:02 http: TLS handshake error from 127.0.0.1:44612: remote error: tls: unknown certificate
+2026/10/14 18:36:02 http: TLS handshake error from 127.0.0.1:44620: remote error: tls: unknown certificate
+2026/10/14 18:36:02 http: TLS handshake error from 127.0.0.1:44662: remote error: tls: unknown certificate
+2026/10/14 18:36:02 http: TLS handshake error from 127.0.0.1:44672: remote error: tls: unknown certificate
+2026/10/14 18:36:02 http: TLS handshake error from 127.0.0.1:44684: remote error: tls: unknown certificate
+2026/10/14 18:36:02 http: TLS handshake error from 127.0.0.1:44694: remote error: tls: unknown certificate
+    question_browser_test.go:127: 
+=== RUN   TestQuestionBrowser/team_activity_browser_test.cjs
+2026/10/14 18:36:06 http: TLS handshake error from 127.0.0.1:44704: remote error: tls: unknown certificate
+2026/10/14 18:36:06 http: TLS handshake error from 127.0.0.1:44742: remote error: tls: unknown certificate
+2026/10/14 18:36:06 http: TLS handshake error from 127.0.0.1:44736: remote error: tls: unknown certificate
+2026/10/14 18:36:06 http: TLS handshake error from 127.0.0.1:44720: remote error: tls: unknown certificate
+2026/10/14 18:36:06 http: TLS handshake error from 127.0.0.1:44756: remote error: tls: unknown certificate
+2026/10/14 18:36:12 http: TLS handshake error from 127.0.0.1:50956: remote error: tls: unknown certificate
+2026/10/14 18:36:12 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:12 conversation POST "/codex/conversations/example~implementer0/queue/reconcile": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:12 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:12 conversation POST "/codex/conversations/example~implementer0/queue/reconcile": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:13 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:16 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:16 conversation POST "/codex/conversations/example~implementer0/queue/reconcile": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:22 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:22 http: TLS handshake error from 127.0.0.1:55584: remote error: tls: unknown certificate
+2026/10/14 18:36:22 http: TLS handshake error from 127.0.0.1:55586: remote error: tls: unknown certificate
+2026/10/14 18:36:22 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:22 conversation POST "/codex/conversations/example~implementer0/queue/reconcile": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:22 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:23 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:23 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:23 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:24 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:24 conversation POST "/codex/conversations/example~implementer0/queue/reconcile": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:24 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:25 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:25 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:26 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:26 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:26 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:26 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:36 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:36 conversation POST "/codex/conversations/example~implementer0/queue/reconcile": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:36 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:36 conversation POST "/codex/conversations/example~implementer0/queue/reconcile": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:37 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:37 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:37 conversation POST "/codex/conversations/example~implementer0/queue/reconcile": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:42 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:43 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:43 conversation POST "/codex/conversations/example~implementer0/queue/reconcile": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:43 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:43 conversation POST "/codex/conversations/example~implementer0/queue/reconcile": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:45 conversation GET "/codex/conversations/example~implementer0/events": resolve conversation: this Codex client cannot create independent team threads
+2026/10/14 18:36:48 conversation POST "/codex/conversations/example~implementer0/queue/reconcile": resolve conversation: this Codex client cannot create independent team threads
+    question_browser_test.go:125: team_activity_browser_test.cjs: exit status 1
+        chromium: compact status and stable timer geometry passed at 1280/420px
+        A [Error]: expect(locator).toHaveText(expected) failed
+        
+        Locator:  locator('#codex-work-elapsed')
+        Expected: "8s this turn"
+        Received: ""
+        Timeout:  5000ms
+        
+        Call log:
+          - Expect "to.have.text" with timeout 5000ms
+          - waiting for locator('#codex-work-elapsed')
+            9 × locator resolved to <time title="" id="codex-work-elapsed"></time>
+              - unexpected value ""
+        
+            at Proxy.<anonymous> (/nix/store/fg778x0631ld4xd8fim2kbvxll5715xp-playwright-test-1.59.1/lib/node_modules/playwright/lib/matchers/expect.js:213:24)
+            at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-stale-archive-status/dev-workspace/portal/internal/web/team_activity_browser_test.cjs:243:31 {
+          matcherResult: {
+            name: 'toHaveText',
+            expected: '8s this turn',
+            message: 'expect(locator).toHaveText(expected) failed\n' +
+              '\n' +
+              "Locator:  locator('#codex-work-elapsed')\n" +
+              'Expected: "8s this turn"\n' +
+              'Received: ""\n' +
+              'Timeout:  5000ms\n' +
+              '\n' +
+              'Call log:\n' +
+              '  - Expect "to.have.text" with timeout 5000ms\n' +
+              "  - waiting for locator('#codex-work-elapsed')\n" +
+              '    9 × locator resolved to <time title="" id="codex-work-elapsed"></time>\n' +
+              '      - unexpected value ""\n',
+            pass: false,
+            actual: '',
+            log: [
+              '  - Expect "to.have.text" with timeout 5000ms',
+              "  - waiting for locator('#codex-work-elapsed')",
+              '    9 × locator resolved to <time title="" id="codex-work-elapsed"></time>',
+              '      - unexpected value ""'
+            ],
+            timeout: 5000
+          }
+        }
+=== RUN   TestQuestionBrowser/usability_browser_test.cjs
+2026/10/14 18:36:51 http: TLS handshake error from 127.0.0.1:39780: remote error: tls: unknown certificate
+2026/10/14 18:36:51 http: TLS handshake error from 127.0.0.1:39808: remote error: tls: unknown certificate
+2026/10/14 18:36:51 http: TLS handshake error from 127.0.0.1:39824: remote error: tls: unknown certificate
+2026/10/14 18:36:51 http: TLS handshake error from 127.0.0.1:39838: remote error: tls: unknown certificate
+2026/10/14 18:36:51 http: TLS handshake error from 127.0.0.1:39840: remote error: tls: unknown certificate
+2026/10/14 18:36:52 http: TLS handshake error from 127.0.0.1:39894: remote error: tls: unknown certificate
+2026/10/14 18:36:52 http: TLS handshake error from 127.0.0.1:39910: remote error: tls: unknown certificate
+2026/10/14 18:36:52 http: TLS handshake error from 127.0.0.1:39930: remote error: tls: unknown certificate
+2026/10/14 18:36:53 http: TLS handshake error from 127.0.0.1:39940: remote error: tls: unknown certificate
+2026/10/14 18:36:53 http: TLS handshake error from 127.0.0.1:39968: remote error: tls: unknown certificate
+2026/10/14 18:36:53 http: TLS handshake error from 127.0.0.1:39980: remote error: tls: unknown certificate
+2026/10/14 18:36:53 http: TLS handshake error from 127.0.0.1:39994: remote error: tls: unknown certificate
+2026/10/14 18:36:53 http: TLS handshake error from 127.0.0.1:40000: remote error: tls: unknown certificate
+2026/10/14 18:36:53 http: TLS handshake error from 127.0.0.1:40016: remote error: tls: unknown certificate
+2026/10/14 18:36:53 http: TLS handshake error from 127.0.0.1:40020: remote error: tls: unknown certificate
+2026/10/14 18:36:53 http: TLS handshake error from 127.0.0.1:40022: remote error: tls: unknown certificate
+2026/10/14 18:36:54 http: TLS handshake error from 127.0.0.1:40038: remote error: tls: unknown certificate
+2026/10/14 18:36:54 http: TLS handshake error from 127.0.0.1:40046: remote error: tls: unknown certificate
+2026/10/14 18:36:54 http: TLS handshake error from 127.0.0.1:40060: remote error: tls: unknown certificate
+2026/10/14 18:36:54 http: TLS handshake error from 127.0.0.1:40066: remote error: tls: unknown certificate
+2026/10/14 18:36:54 http: TLS handshake error from 127.0.0.1:40068: remote error: tls: unknown certificate
+2026/10/14 18:36:54 http: TLS handshake error from 127.0.0.1:40078: remote error: tls: unknown certificate
+2026/10/14 18:36:54 http: TLS handshake error from 127.0.0.1:40082: remote error: tls: unknown certificate
+2026/10/14 18:36:54 http: TLS handshake error from 127.0.0.1:40086: remote error: tls: unknown certificate
+2026/10/14 18:36:54 http: TLS handshake error from 127.0.0.1:40116: remote error: tls: unknown certificate
+2026/10/14 18:36:54 http: TLS handshake error from 127.0.0.1:40102: remote error: tls: unknown certificate
+2026/10/14 18:36:55 http: TLS handshake error from 127.0.0.1:40134: remote error: tls: unknown certificate
+2026/10/14 18:36:56 http: TLS handshake error from 127.0.0.1:40148: remote error: tls: unknown certificate
+2026/10/14 18:36:56 http: TLS handshake error from 127.0.0.1:40152: remote error: tls: unknown certificate
+2026/10/14 18:36:56 http: TLS handshake error from 127.0.0.1:40160: remote error: tls: unknown certificate
+2026/10/14 18:36:56 http: TLS handshake error from 127.0.0.1:40174: remote error: tls: unknown certificate
+2026/10/14 18:36:56 http: TLS handshake error from 127.0.0.1:40184: remote error: tls: unknown certificate
+2026/10/14 18:36:56 http: TLS handshake error from 127.0.0.1:40204: remote error: tls: unknown certificate
+2026/10/14 18:36:56 http: TLS handshake error from 127.0.0.1:40208: remote error: tls: unknown certificate
+2026/10/14 18:36:58 http: TLS handshake error from 127.0.0.1:40232: remote error: tls: unknown certificate
+2026/10/14 18:36:58 http: TLS handshake error from 127.0.0.1:40248: remote error: tls: unknown certificate
+    question_browser_test.go:127: 
+=== RUN   TestQuestionBrowser/repository_review_live_browser_test.cjs
+2026/10/14 18:37:00 http: TLS handshake error from 127.0.0.1:40258: remote error: tls: unknown certificate
+2026/10/14 18:37:00 http: TLS handshake error from 127.0.0.1:40270: remote error: tls: unknown certificate
+2026/10/14 18:37:00 http: TLS handshake error from 127.0.0.1:40274: remote error: tls: unknown certificate
+2026/10/14 18:37:00 http: TLS handshake error from 127.0.0.1:40288: remote error: tls: unknown certificate
+2026/10/14 18:37:00 http: TLS handshake error from 127.0.0.1:40282: remote error: tls: unknown certificate
+2026/10/14 18:37:01 http: TLS handshake error from 127.0.0.1:40336: remote error: tls: unknown certificate
+2026/10/14 18:37:01 http: TLS handshake error from 127.0.0.1:40352: remote error: tls: unknown certificate
+2026/10/14 18:37:01 http: TLS handshake error from 127.0.0.1:40364: remote error: tls: unknown certificate
+2026/10/14 18:37:01 http: TLS handshake error from 127.0.0.1:40368: remote error: tls: unknown certificate
+    question_browser_test.go:127: 
+=== RUN   TestQuestionBrowser/paging_browser_live_test.cjs
+2026/10/14 18:37:07 http: TLS handshake error from 127.0.0.1:57176: remote error: tls: unknown certificate
+2026/10/14 18:37:07 http: TLS handshake error from 127.0.0.1:57184: remote error: tls: unknown certificate
+2026/10/14 18:37:07 http: TLS handshake error from 127.0.0.1:57210: remote error: tls: unknown certificate
+2026/10/14 18:37:07 http: TLS handshake error from 127.0.0.1:57198: remote error: tls: unknown certificate
+2026/10/14 18:37:07 http: TLS handshake error from 127.0.0.1:57224: remote error: tls: unknown certificate
+2026/10/14 18:37:07 http: TLS handshake error from 127.0.0.1:57252: remote error: tls: unknown certificate
+2026/10/14 18:37:07 http: TLS handshake error from 127.0.0.1:57256: remote error: tls: unknown certificate
+2026/10/14 18:37:07 http: TLS handshake error from 127.0.0.1:57264: remote error: tls: unknown certificate
+2026/10/14 18:37:19 http: TLS handshake error from 127.0.0.1:34918: remote error: tls: unknown certificate
+2026/10/14 18:37:19 http: TLS handshake error from 127.0.0.1:34920: remote error: tls: unknown certificate
+2026/10/14 18:37:19 http: TLS handshake error from 127.0.0.1:34932: remote error: tls: unknown certificate
+2026/10/14 18:37:19 http: TLS handshake error from 127.0.0.1:34938: remote error: tls: unknown certificate
+2026/10/14 18:37:19 http: TLS handshake error from 127.0.0.1:34950: remote error: tls: unknown certificate
+2026/10/14 18:37:20 http: TLS handshake error from 127.0.0.1:34968: remote error: tls: unknown certificate
+2026/10/14 18:37:20 http: TLS handshake error from 127.0.0.1:34980: remote error: tls: unknown certificate
+2026/10/14 18:37:20 http: TLS handshake error from 127.0.0.1:34992: remote error: tls: unknown certificate
+2026/10/14 18:37:20 http: TLS handshake error from 127.0.0.1:35014: remote error: tls: unknown certificate
+2026/10/14 18:37:20 http: TLS handshake error from 127.0.0.1:35022: remote error: tls: unknown certificate
+2026/10/14 18:37:20 http: TLS handshake error from 127.0.0.1:35030: remote error: tls: unknown certificate
+2026/10/14 18:37:21 http: TLS handshake error from 127.0.0.1:46036: remote error: tls: unknown certificate
+2026/10/14 18:37:21 http: TLS handshake error from 127.0.0.1:46048: remote error: tls: unknown certificate
+2026/10/14 18:37:21 http: TLS handshake error from 127.0.0.1:46056: remote error: tls: unknown certificate
+2026/10/14 18:37:21 http: TLS handshake error from 127.0.0.1:46068: remote error: tls: unknown certificate
+    question_browser_test.go:127: automatic paging, retry, anchor, exhaustion, keyboard and independent lanes passed
+        
+=== RUN   TestQuestionBrowser/mode_refresh_browser_test.cjs
+2026/10/14 18:37:25 http: TLS handshake error from 127.0.0.1:46076: remote error: tls: unknown certificate
+2026/10/14 18:37:25 http: TLS handshake error from 127.0.0.1:46094: remote error: tls: unknown certificate
+2026/10/14 18:37:25 http: TLS handshake error from 127.0.0.1:46108: remote error: tls: unknown certificate
+2026/10/14 18:37:25 http: TLS handshake error from 127.0.0.1:46114: remote error: tls: unknown certificate
+2026/10/14 18:37:25 http: TLS handshake error from 127.0.0.1:46128: remote error: tls: unknown certificate
+    question_browser_test.go:127: Mode retention, shared notices, stale reads/renders, saves and thread identity passed
+        
+=== RUN   TestQuestionBrowser/cluster_controls_browser_test.cjs
+2026/10/14 18:37:34 http: TLS handshake error from 127.0.0.1:37482: remote error: tls: unknown certificate
+2026/10/14 18:37:34 http: TLS handshake error from 127.0.0.1:37508: remote error: tls: unknown certificate
+2026/10/14 18:37:34 http: TLS handshake error from 127.0.0.1:37524: remote error: tls: unknown certificate
+2026/10/14 18:37:34 http: TLS handshake error from 127.0.0.1:37538: remote error: tls: unknown certificate
+2026/10/14 18:37:35 http: TLS handshake error from 127.0.0.1:37570: remote error: tls: unknown certificate
+2026/10/14 18:37:35 http: TLS handshake error from 127.0.0.1:37586: remote error: tls: unknown certificate
+2026/10/14 18:37:35 http: TLS handshake error from 127.0.0.1:37590: remote error: tls: unknown certificate
+2026/10/14 18:37:35 http: TLS handshake error from 127.0.0.1:37600: remote error: tls: unknown certificate
+2026/10/14 18:37:35 http: TLS handshake error from 127.0.0.1:37596: remote error: tls: unknown certificate
+2026/10/14 18:37:35 http: TLS handshake error from 127.0.0.1:37616: remote error: tls: unknown certificate
+2026/10/14 18:37:35 http: TLS handshake error from 127.0.0.1:37626: remote error: tls: unknown certificate
+2026/10/14 18:37:35 http: TLS handshake error from 127.0.0.1:37628: remote error: tls: unknown certificate
+    question_browser_test.go:127: 
+--- FAIL: TestQuestionBrowser (231.05s)
+    --- PASS: TestQuestionBrowser/question_browser_test.cjs (48.34s)
+    --- FAIL: TestQuestionBrowser/page_lifecycle_browser_test.cjs (8.34s)
+    --- FAIL: TestQuestionBrowser/presentation_browser_test.cjs (40.34s)
+    --- PASS: TestQuestionBrowser/team_settings_browser_test.cjs (25.84s)
+    --- FAIL: TestQuestionBrowser/team_activity_browser_test.cjs (45.76s)
+    --- PASS: TestQuestionBrowser/usability_browser_test.cjs (8.98s)
+    --- PASS: TestQuestionBrowser/repository_review_live_browser_test.cjs (6.12s)
+    --- PASS: TestQuestionBrowser/paging_browser_live_test.cjs (18.41s)
+    --- PASS: TestQuestionBrowser/mode_refresh_browser_test.cjs (8.45s)
+    --- PASS: TestQuestionBrowser/cluster_controls_browser_test.cjs (20.45s)
+FAIL
+FAIL	github.com/aither64/dev-workspace/portal/internal/web	282.964s
+FAIL
