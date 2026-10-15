@@ -177,3 +177,38 @@ and stops before submission for comparison capture. Ownership/generation, all
 requests/reviews/approvals/snapshots and native execution guards remain intact.
 The exact completed procedure and loader will receive final independent review
 before execution. Ruby syntax passes; no recovery mutation executed yet.
+
+CLI resume omitted explicit settings and unexpectedly selected default Sol and
+full-access instead of retained Astra/read-only. Verified this immediately and
+stopped only that review process before accepting its output. Reran the same
+reviewer with its original Astra/xhigh/read-only settings explicitly restored;
+native context proof in recovery-review-identity.json. No source/recovery
+mutation occurred in the invalid review.
+
+Bounded recovery final review accepted all four lanes with no remaining
+findings (recovery-review-final.md). Important retry-pause finding closed by
+committed e66d7968; loader never delegates to native advance. Ruby syntax and
+child-argument inertness checks pass. Private journal backup/checksum retained
+in recovery-backup.json. Executing the approved operator sequence on the same
+original run; application sources and native execution safeguards unchanged.
+
+Recovery executed as reviewed and stopped75 before submission. Native
+workspace-pins generated_pin proof saved in workspace-certified-refresh.json;
+new exact workspace head366517f22b9083dd94249bc6161273b136f4cbf6
+over shared tracking e66d7968. Original f73b89d9 is retained by native lineage.
+Comparison captured and semantic deployment check passes. final-heads.json
+updated; sealed original verification/review receipts unchanged. Ordinary
+loader-free resume is running on the same original operation.
+
+All four exact final application feature heads are now merged remotely by
+native jobs: provider52386519, runtime2b22de8d, configuration35aeee4e,
+workspace366517f2 (certified equivalent of reviewed f73). Final native run
+074406d2 remains same owner; three merge jobs succeeded. Ordered system/profile
+preparation and activation now launched. Fresh Luna/low standalone watcher
+observes only that existing command and admitted deployment jobs. No acceptance
+or release claimed yet.
+
+## Integration 074406d2-822a-4079-9ef4-931a802da234
+
+Requested exact feature heads are integrated. See integration/074406d2-822a-4079-9ef4-931a802da234/summary.md
+and integration/074406d2-822a-4079-9ef4-931a802da234/result.json for operation receipts. Feature refs and session retained.
