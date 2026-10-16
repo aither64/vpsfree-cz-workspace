@@ -1,0 +1,89 @@
+diff --git a/portal/internal/web/attention_browser_test.cjs b/portal/internal/web/attention_browser_test.cjs
+index 65bd597..ca4bc95 100644
+--- a/portal/internal/web/attention_browser_test.cjs
++++ b/portal/internal/web/attention_browser_test.cjs
+@@ -933,3 +933,20 @@ test('a new refresh waits for the already-started successor fetch before trustin
+   assert.equal(h.state.probes, 1); assert.equal(h.controls['worker-status'].textContent, '');
+   assert.equal(h.timers.size, 0);
+ });
++
++test('Test and Disable retire readiness progress without a lingering Updating status past its deadline', async () => {
++  for (const waitingWorker of [true, false]) for (const action of ['test', 'disable']) {
++    const h = await feedbackHarness(testStoreHarness(), {waitingWorker, noReply: !waitingWorker});
++    assert.match(h.controls['worker-status'].textContent, /^Updating browser notifications/);
++    await h.controls[action].click(); await h.flush();
++    assert.equal(h.controls['worker-status'].textContent,
++      'The notification update could not be confirmed. Refresh this page to try again. Test results may be limited.');
++    await h.advance(10001);
++    assert.doesNotMatch(h.controls['worker-status'].textContent, /Updating/);
++    assert.match(h.controls['worker-status'].textContent, /could not be confirmed/);
++    assert.equal(h.registration.listenerCount(), 0);
++    assert.equal(h.registration.waiting?.listenerCount() || 0, 0);
++    assert.equal(h.state.updateChecks, 1, 'action cancellation does not start an update loop');
++    h.listeners.pagehide(); await h.flush(); assert.equal(h.timers.size, 0);
++  }
++});
+diff --git a/portal/internal/web/static/browser-notifications.js b/portal/internal/web/static/browser-notifications.js
+index c26d8f1..edb2665 100644
+--- a/portal/internal/web/static/browser-notifications.js
++++ b/portal/internal/web/static/browser-notifications.js
+@@ -11,7 +11,14 @@
+   const store = globalThis.workspaceAttentionStore;
+   let pendingTest = null, pollTimer = null, pollGeneration = 0, pageClosed = false, workerUpdate = null, resumeRetired = false;
+   let refreshGeneration = 0, observationRetired = false, cancelReadiness = null;
+-  const invalidateRefresh = () => { refreshGeneration++; cancelReadiness?.(); };
++  const updateUnconfirmed = "The notification update could not be confirmed. Refresh this page to try again. Test results may be limited.";
++  const invalidateRefresh = (action = false) => {
++    refreshGeneration++;
++    if (cancelReadiness) {
++      cancelReadiness();
++      if (action) setText(workerStatus, updateUnconfirmed);
++    }
++  };
+   const setText = (element, text) => { if (element) { element.textContent = text; element.hidden = !text; } };
+   const localResult = async promise => {
+     let timer;
+@@ -43,7 +50,6 @@
+     const generation = refreshGeneration, deadline = Date.now() + 10000;
+     const valid = () => current() && generation === refreshGeneration && !pageClosed && !observationRetired;
+     if (!valid()) return;
+-    const failed = "The notification update could not be confirmed. Refresh this page to try again. Test results may be limited.";
+     setText(workerStatus, "Updating browser notifications… You can keep your tabs open.");
+     if (update && !workerUpdate) workerUpdate = Promise.resolve().then(() => registration.update());
+     const activated = await new Promise(resolve => {
+@@ -78,7 +84,7 @@
+       inspect();
+     });
+     if (!valid()) return;
+-    if (!activated) {setText(workerStatus, failed); return;}
++    if (!activated) {setText(workerStatus, updateUnconfirmed); return;}
+     const controller = navigator.serviceWorker.controller;
+     if (!globalThis.MessageChannel) {
+       setText(workerStatus, "Detailed test results are unavailable. Refresh this page to check for a notification update.");
+@@ -248,7 +254,7 @@
+     if (busy || !supported || Notification.permission === "denied") return;
+     readCleanup();
+     if (pendingCleanup) { status.textContent = cleanupStatus(); buttons(); return; }
+-    invalidateRefresh(); observationRetired = false;
++    invalidateRefresh(true); observationRetired = false;
+     cancelTest();
+     busy = true; buttons();
+     try {
+@@ -287,7 +293,7 @@
+   });
+   disable.addEventListener("click", async () => {
+     if (busy) return;
+-    invalidateRefresh();
++    invalidateRefresh(true);
+     cancelTest();
+     busy = true; registered = false; buttons();
+     let registration = null, subscription = localSubscription, selector = null, currentBound = false;
+@@ -336,7 +342,7 @@
+   });
+   test.addEventListener("click", async () => {
+     if (busy || !registered) return;
+-    invalidateRefresh();
++    invalidateRefresh(true);
+     busy = true; buttons();
+     const retirement = cancelTest(), generation = pollGeneration, identity = registrationId;
+     setText(testStatus, "A matching test result is unavailable. Appearance on your screen is unconfirmed.");

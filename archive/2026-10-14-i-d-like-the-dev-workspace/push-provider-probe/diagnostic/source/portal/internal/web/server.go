@@ -1,0 +1,3671 @@
+package web
+
+import (
+	"bytes"
+	"context"
+	"crypto/rand"
+	"crypto/sha256"
+	"embed"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"html/template"
+	"io"
+	"io/fs"
+	"log"
+	"net/http"
+	"net/url"
+	"os"
+	"os/exec"
+	"path"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+
+	"github.com/aither64/codex-web/codex"
+	"github.com/aither64/codex-web/conversation"
+	"github.com/aither64/dev-workspace/portal/internal/agentteams"
+	"github.com/aither64/dev-workspace/portal/internal/cluster"
+	"github.com/aither64/dev-workspace/portal/internal/creationprogress"
+	"github.com/aither64/dev-workspace/portal/internal/processgroup"
+	"github.com/aither64/dev-workspace/portal/internal/repository"
+	"github.com/aither64/dev-workspace/portal/internal/session"
+	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
+	"github.com/aither64/dev-workspace/portal/internal/uploads"
+	"github.com/aither64/dev-workspace/portal/internal/workspacecodex"
+	"github.com/microcosm-cc/bluemonday"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	goldmarktext "github.com/yuin/goldmark/text"
+	"golang.org/x/sys/unix"
+)
+
+//go:embed templates/*.html static/*
+var assets embed.FS
+
+var queueClientMessageIDPattern = regexp.MustCompile(
+	`^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`,
+)
+var messageDigestPattern = regexp.MustCompile(`^[0-9a-f]{64}$`)
+var sessionAPIOperationPattern = regexp.MustCompile(`^[a-z]+(?:-[a-z]+)*$`)
+
+type codexController interface {
+	conversation.Client
+	ReadAccountRateLimits(context.Context) (codex.AccountRateLimits, error)
+	ListThreadActivity(context.Context, []workspacecodex.ThreadActivity) ([]workspacecodex.ThreadActivity, error)
+	PrepareSend(string, string, string, string, bool) error
+	ReconcileSend(context.Context, string, string, string, string) (codex.SendReceipt, bool, error)
+	DiscardPreparedSend(string, string, string, string) (bool, error)
+	ReconcileThreadInstructionsWithPolicy(context.Context, string, codex.ThreadPolicy) error
+}
+
+type Config struct {
+	RecoverSessions        bool
+	ObserveActivity        bool
+	CollectUploads         bool
+	Workspace              string
+	BaseURL                string
+	TrustedOrigins         []string
+	DisplayLabel           string
+	HostLabel              string
+	SSHHost                string
+	DevSession             string
+	HostProfile            string
+	GH                     string
+	Tmux                   string
+	AuthorityDir           string
+	TransitionLock         string
+	NamingSocket           string
+	NamingModelCatalogFile string
+	CodexSocket            string
+	CodexVersion           string
+	ClusterProviders       []cluster.Provider
+	UserStateRoot          string
+	PackageRoot            string
+	WorkspaceName          string
+	RegistrationMarker     string
+	Logger                 *log.Logger
+	Codex                  codexController
+	VerifyThread           func(context.Context, string, string) error
+	ReadThread             func(context.Context, string) (codex.Transcript, error)
+	// SessionNamer injects the isolated naming boundary in tests. Normal server
+	// construction uses the owned naming socket/catalog; missing inputs use fallback.
+	SessionNamer func(context.Context, string) (string, error)
+}
+
+type cachedRepositories struct {
+	repositories string
+	statuses     []repository.Status
+	created      time.Time
+	updated      time.Time
+	terminal     bool
+	archived     bool
+}
+
+type indexSessionStatus struct {
+	Sensitive           bool      `json:"sensitive,omitempty"`
+	ObservationIdentity string    `json:"observationIdentity"`
+	Slug                string    `json:"slug"`
+	UpdatedAt           time.Time `json:"updatedAt"`
+	Archived            bool      `json:"archived"`
+	RepositoryCount     int       `json:"repositoryCount"`
+	RunningClusters     int       `json:"runningClusters"`
+	ClusterNotice       string    `json:"clusterNotice,omitempty"`
+	PendingLifecycle    string    `json:"pendingLifecycle,omitempty"`
+}
+
+type cachedIndexStatus struct {
+	statuses      []indexSessionStatus
+	created       time.Time
+	warning       string
+	authoritative bool
+}
+
+type lifecycleOperation struct {
+	Slug                  string                    `json:"slug,omitempty"`
+	Kind                  string                    `json:"kind,omitempty"`
+	State                 string                    `json:"state"`
+	Phase                 string                    `json:"phase,omitempty"`
+	StartedAt             string                    `json:"startedAt,omitempty"`
+	UpdatedAt             string                    `json:"updatedAt,omitempty"`
+	Error                 string                    `json:"error,omitempty"`
+	Redirect              string                    `json:"redirect,omitempty"`
+	ReceiptID             string                    `json:"receiptId,omitempty"`
+	TargetIdentityVersion int                       `json:"targetIdentityVersion,omitempty"`
+	Attempt               int                       `json:"attempt,omitempty"`
+	CurrentTarget         *lifecycleTargetSnapshot  `json:"currentTarget,omitempty"`
+	ErrorCode             string                    `json:"code,omitempty"`
+	Options               lifecycleOperationOptions `json:"options,omitempty"`
+}
+
+type lifecycleOperationOptions struct {
+	Mode                  string `json:"mode,omitempty"`
+	AllowAbandoned        bool   `json:"allowAbandoned,omitempty"`
+	Force                 bool   `json:"force,omitempty"`
+	TargetID              string `json:"targetId,omitempty"`
+	DeletedThreadID       string `json:"deletedThreadId,omitempty"`
+	JournalID             string `json:"journalId,omitempty"`
+	JournalExpected       bool   `json:"journalExpected,omitempty"`
+	TargetLocation        string `json:"targetLocation,omitempty"`
+	JournalEvidence       string `json:"journalEvidence,omitempty"`
+	JournalTargetID       string `json:"journalTargetId,omitempty"`
+	JournalTargetLocation string `json:"journalTargetLocation,omitempty"`
+}
+
+type Server struct {
+	recoveryMu             sync.Mutex
+	recoveryOperations     map[string]recoveryStatus
+	recoveryJobs           map[string]bool
+	uploadCreationMu       conversation.MutationLocker
+	uploadStore            *uploads.Store
+	uploadHandler          http.Handler
+	reviewOnce             sync.Once
+	reviewService          *repositoryReviewService
+	activity               *activityMonitor
+	notifications          *notificationService
+	config                 Config
+	hostProfile            hostProfileIdentity
+	templates              *template.Template
+	markdown               goldmark.Markdown
+	sanitizer              *bluemonday.Policy
+	repository             repository.Runner
+	repositoryMu           sync.Mutex
+	repositoryCache        map[string]cachedRepositories
+	indexStatusMu          sync.Mutex
+	indexStatusCache       cachedIndexStatus
+	indexStatusWait        chan struct{}
+	indexStatusRetryAt     time.Time
+	codexLimitsMu          sync.Mutex
+	codexLimitsCache       codexLimitsSnapshot
+	codexLimitsWait        *codexLimitsCall
+	codexLimitsGeneration  uint64
+	providerLimits         map[string]*codexLimitsCall
+	codexResetMu           sync.Mutex
+	messageMu              sync.Mutex
+	messageLocks           map[string]conversation.MutationLocker
+	clusters               cluster.Runner
+	clusterControlMu       sync.Mutex
+	clusterControls        map[string]bool
+	operationMu            sync.Mutex
+	operationRevisions     map[string]uint64
+	operationSnapshotMu    sync.RWMutex
+	operationSnapshots     map[string]cachedLifecycleSnapshot
+	operationStatusWarning string
+	displayRefreshMu       sync.Mutex
+	displayRefreshWake     chan struct{}
+	displayRefreshPending  bool
+	displayFullPending     bool
+	creations              map[string]creationReceipt
+	preparations           map[string]sessionPreparation
+	preparationUnconfirmed map[string]string
+	preparationWork        map[string]preparationWork
+	preparationSync        func(string) error
+	namingSlots            chan struct{}
+	operations             map[string]lifecycleOperation
+	operationStore         *lifecycleOperationStore
+	operationContext       context.Context
+	cancelOperations       context.CancelFunc
+	operationWG            sync.WaitGroup
+	displayRefreshWG       sync.WaitGroup
+	closing                bool
+	stopOnce               sync.Once
+	stopping               chan struct{}
+	conversation           http.Handler
+	trustedOrigins         []string
+	installedTeams         *agentteams.Installed
+}
+
+type hostProfileIdentity struct {
+	device, inode       uint64
+	ctimeSec, ctimeNSec int64
+	mtimeSec, mtimeNSec int64
+	target              string
+}
+
+type pageData struct {
+	InitialRequest    string
+	Preparation       *preparationStatus
+	StyleNonce        string
+	BaseURL           string
+	DisplayLabel      string
+	HostLabel         string
+	SSHHost           string
+	CreationDate      string
+	IndexGeneratedAt  string
+	MaxMessageBytes   int
+	Error             string
+	Active            []session.Summary
+	Archived          []session.Summary
+	Session           *session.Summary
+	Repositories      []repository.Status
+	RepositoryWarning string
+	Clusters          []cluster.Status
+	Artifacts         []session.Artifact
+	PendingLifecycle  string
+	LifecycleOnly     bool
+	LifecycleTargetID string
+	AgentTeams        *agentTeamsPage
+	TeamStatusError   string
+	DirectTeam        *teamruntime.Roster
+	RemovedMembers    []teamruntime.Member
+	TeamPresets       []teamruntime.Preset
+	TeamRoles         []teamRoleOption
+	TeamRoleDefaults  []teamRoleDefault
+	ReadyMembers      []teamruntime.Member
+	SelectedMember    string
+	SelectedThreadID  string
+	ConversationID    string
+	MemberNotice      string
+	Recovery          recoveryStatus
+	SourceFileAPI     string
+}
+
+type teamRoleOption struct {
+	ID    string
+	Label string
+}
+
+type teamRoleDefault struct {
+	Role   string `json:"role"`
+	Model  string `json:"model"`
+	Effort string `json:"reasoningEffort"`
+	Source string `json:"source"`
+}
+
+func (s *Server) roleDefaults(roster *teamruntime.Roster, roles []teamRoleOption) []teamRoleDefault {
+	var catalog *agentteams.Catalog
+	if s.installedTeams != nil && s.installedTeams.Managed {
+		catalog = s.installedTeams.Catalog
+	}
+	teamID := ""
+	if roster != nil {
+		teamID = roster.PresetID
+	}
+	defaults := make([]teamRoleDefault, 0, len(roles))
+	for _, role := range roles {
+		resolved, err := teamruntime.ResolveRole(catalog, teamID, role.ID, teamID != "")
+		if err != nil {
+			continue
+		}
+		defaults = append(defaults, teamRoleDefault{Role: role.ID, Model: resolved.Model, Effort: resolved.Effort, Source: resolved.Source})
+	}
+	return defaults
+}
+
+func teamRoles(presets []teamruntime.Preset) []teamRoleOption {
+	roles := make(map[string]bool)
+	for _, preset := range presets {
+		for _, member := range preset.Members {
+			roles[member.Role] = true
+		}
+		if len(preset.Members) == 0 {
+			for _, role := range preset.Roles {
+				if role != "lead" {
+					roles[role] = true
+				}
+			}
+		}
+	}
+	ids := make([]string, 0, len(roles))
+	for role := range roles {
+		ids = append(ids, role)
+	}
+	sort.Strings(ids)
+	options := make([]teamRoleOption, 0, len(ids))
+	for _, role := range ids {
+		label := strings.ReplaceAll(role, "_", " ")
+		if label != "" {
+			label = strings.ToUpper(label[:1]) + label[1:]
+		}
+		options = append(options, teamRoleOption{ID: role, Label: label})
+	}
+	return options
+}
+
+type agentTeamsPage struct {
+	Managed       bool
+	CatalogDigest string
+	DefaultTeam   string
+	Teams         []agentTeamRow
+}
+
+type agentTeamRow struct {
+	Name        string
+	Label       string
+	Description string
+	MemberCount int
+	RoleSummary string
+	LeadModel   string
+	LeadEffort  string
+}
+
+func New(config Config) (*Server, error) {
+	if config.RecoverSessions && (config.UserStateRoot == "" || config.AuthorityDir == "" || config.DevSession == "" || config.Codex == nil) {
+		return nil, errors.New("session recovery requires complete private runtime configuration")
+	}
+	if config.RecoverSessions {
+		if _, ok := config.Codex.(recoveryController); !ok {
+			return nil, errors.New("session recovery requires a cold recovery client")
+		}
+	}
+	var installedTeams *agentteams.Installed
+	if config.Logger == nil {
+		config.Logger = log.Default()
+	}
+	if config.DisplayLabel == "" {
+		config.DisplayLabel = "Development workspace"
+	}
+	if config.HostLabel == "" {
+		config.HostLabel = "this host"
+	}
+	if config.Tmux == "" {
+		config.Tmux = "tmux"
+	}
+	if config.VerifyThread == nil && config.Codex != nil {
+		config.VerifyThread = config.Codex.VerifyThread
+	}
+	if config.ReadThread == nil && config.Codex != nil {
+		config.ReadThread = config.Codex.ReadThread
+	}
+	workspace, err := filepath.Abs(config.Workspace)
+	if err != nil {
+		return nil, err
+	}
+	workspace, err = filepath.EvalSymlinks(workspace)
+	if err != nil {
+		return nil, fmt.Errorf("resolve workspace: %w", err)
+	}
+	config.Workspace = workspace
+	if config.PackageRoot != "" || config.WorkspaceName != "" || config.RegistrationMarker != "" {
+		if config.PackageRoot == "" || config.WorkspaceName == "" || config.RegistrationMarker == "" || config.UserStateRoot == "" {
+			return nil, errors.New("portal agent team authorities are incomplete")
+		}
+		if !filepath.IsAbs(config.PackageRoot) || filepath.Clean(config.PackageRoot) != config.PackageRoot ||
+			!filepath.IsAbs(config.RegistrationMarker) || filepath.Clean(config.RegistrationMarker) != config.RegistrationMarker ||
+			!filepath.IsAbs(config.CodexSocket) || filepath.Clean(config.CodexSocket) != config.CodexSocket ||
+			filepath.Base(config.RegistrationMarker) != "registration.json" ||
+			filepath.Dir(config.RegistrationMarker) != filepath.Dir(config.CodexSocket) {
+			return nil, errors.New("portal agent team authorities must be absolute and canonical")
+		}
+		resolvedPackageRoot, resolveErr := filepath.EvalSymlinks(config.PackageRoot)
+		if resolveErr != nil || resolvedPackageRoot != config.PackageRoot {
+			return nil, errors.New("portal package root must be a resolved canonical path")
+		}
+		installed, loadErr := agentteams.LoadInstalled(config.PackageRoot)
+		if loadErr != nil {
+			return nil, fmt.Errorf("load installed agent teams: %w", loadErr)
+		}
+		if installed.Managed && installed.Catalog == nil {
+			return nil, errors.New("managed package has no agent team catalog")
+		}
+		config.PackageRoot = filepath.Clean(config.PackageRoot)
+		installedTeams = &installed
+	}
+	baseURL, err := url.Parse(config.BaseURL)
+	if err != nil || baseURL.Scheme == "" || baseURL.Host == "" || baseURL.Path != "" || baseURL.RawQuery != "" || baseURL.Fragment != "" || baseURL.User != nil {
+		return nil, fmt.Errorf("invalid base URL %q", config.BaseURL)
+	}
+	if baseURL.Scheme != "https" {
+		return nil, fmt.Errorf("portal requires an HTTPS base URL")
+	}
+	trustedOrigins, err := portalTrustedOrigins(config.BaseURL, config.TrustedOrigins)
+	if err != nil {
+		return nil, err
+	}
+	if config.DevSession == "" || !filepath.IsAbs(config.DevSession) {
+		return nil, errors.New("portal requires an absolute dev-session command")
+	}
+	if config.HostProfile == "" || !filepath.IsAbs(config.HostProfile) {
+		return nil, errors.New("portal requires an absolute workspace host profile")
+	}
+	hostProfile, err := readHostProfileIdentity(config.HostProfile)
+	if err != nil {
+		return nil, fmt.Errorf("read workspace host profile: %w", err)
+	}
+	templates, err := template.New("pages").Funcs(template.FuncMap{
+		"shortSHA": func(value string) string {
+			if len(value) > 10 {
+				return value[:10]
+			}
+			return value
+		},
+		"shortThread": func(value string) string {
+			if len(value) > 13 {
+				return value[:8] + "…" + value[len(value)-4:]
+			}
+			return value
+		},
+		"timeAgo":         timeAgo,
+		"workflowSummary": workflowSummary,
+	}).ParseFS(assets, "templates/*.html")
+	if err != nil {
+		return nil, err
+	}
+	policy := bluemonday.UGCPolicy()
+	policy.RequireNoFollowOnLinks(true)
+	policy.RequireNoReferrerOnLinks(true)
+	operationContext, cancelOperations := context.WithCancel(context.Background())
+	operationStore, err := newLifecycleOperationStore(workspace, config.UserStateRoot)
+	if err != nil {
+		cancelOperations()
+		return nil, err
+	}
+	operations, err := operationStore.load()
+	if err != nil {
+		cancelOperations()
+		return nil, err
+	}
+	if config.SessionNamer == nil && config.NamingSocket != "" && config.NamingModelCatalogFile != "" {
+		config.SessionNamer = normalSessionNamer(config.NamingSocket, config.NamingModelCatalogFile, operationStore)
+	}
+	server := &Server{
+		uploadCreationMu: conversation.NewMutationLock(),
+		config:           config, hostProfile: hostProfile, templates: templates,
+		markdown: goldmark.New(goldmark.WithExtensions(extension.Table)), sanitizer: policy,
+		repository:         repository.Runner{Workspace: workspace, GH: config.GH},
+		clusters:           cluster.Runner{Workspace: workspace, Providers: config.ClusterProviders, Cache: &cluster.StatusCache{}},
+		repositoryCache:    make(map[string]cachedRepositories),
+		messageLocks:       make(map[string]conversation.MutationLocker),
+		operations:         operations,
+		operationRevisions: make(map[string]uint64),
+		operationSnapshots: make(map[string]cachedLifecycleSnapshot),
+		displayRefreshWake: make(chan struct{}, 1),
+		operationStore:     operationStore,
+		operationContext:   operationContext,
+		cancelOperations:   cancelOperations,
+		stopping:           make(chan struct{}),
+		trustedOrigins:     trustedOrigins,
+		installedTeams:     installedTeams,
+		namingSlots:        make(chan struct{}, 2),
+	}
+	if err := server.loadPreparations(); err != nil {
+		cancelOperations()
+		return nil, err
+	}
+	if err := server.loadCreations(); err != nil {
+		cancelOperations()
+		return nil, err
+	}
+	conversationHandler, err := conversation.NewHandler(conversation.Options{
+		AllowedOrigins: trustedOrigins, BasePath: "/codex", Logger: config.Logger,
+		MaxMessageBytes: session.MaxMessageBytes, Shutdown: server.stopping,
+		Resolver: conversation.ResolverFunc(server.resolveConversation),
+	})
+	if err != nil {
+		cancelOperations()
+		return nil, err
+	}
+	server.conversation = conversationHandler
+	if err := server.initUploads(); err != nil {
+		cancelOperations()
+		return nil, err
+	}
+	server.initNotifications()
+	if err := server.reconcilePreparations(); err != nil {
+		cancelOperations()
+		return nil, err
+	}
+	for slug, operation := range operations {
+		server.publishLifecycleSnapshot(slug, operation, time.Time{})
+	}
+	server.displayRefreshWG.Add(1)
+	go server.runDisplayRefreshes()
+	server.startUploadCollector()
+	server.startRecovery()
+	server.startActivityMonitor()
+	server.startNotifications()
+	if config.Codex != nil {
+		server.operationWG.Add(1)
+		go server.reconcileThreadInstructions()
+	}
+	return server, nil
+}
+
+// portalTrustedOrigins extends the canonical portal origin with aliases chosen
+// by the registered workspace. Callers must provide complete HTTPS origins so
+// browser Origin values can be compared exactly; request Host headers never
+// add an origin to this set.
+func portalTrustedOrigins(baseURL string, aliases []string) ([]string, error) {
+	origins := make([]string, 0, len(aliases)+1)
+	seen := make(map[string]struct{}, len(aliases)+1)
+	for _, origin := range append([]string{baseURL}, aliases...) {
+		parsed, err := url.Parse(origin)
+		if err != nil || parsed.Scheme != "https" || parsed.Host == "" || parsed.Path != "" ||
+			parsed.RawQuery != "" || parsed.Fragment != "" || parsed.User != nil {
+			return nil, fmt.Errorf("invalid trusted portal origin %q", origin)
+		}
+		if _, duplicate := seen[origin]; duplicate {
+			return nil, fmt.Errorf("duplicate trusted portal origin %q", origin)
+		}
+		seen[origin] = struct{}{}
+		origins = append(origins, origin)
+	}
+	return origins, nil
+}
+
+func (s *Server) reconcileThreadInstructions() {
+	defer s.operationWG.Done()
+	if s.config.Codex == nil {
+		return
+	}
+	ctx := s.operationContext
+	pending := make(map[string]string)
+	lastErrors := make(map[string]string)
+	initialized := false
+	var listError string
+	waitForRetry := func() bool {
+		timer := time.NewTimer(2 * time.Second)
+		defer timer.Stop()
+		select {
+		case <-ctx.Done():
+			return false
+		case <-timer.C:
+			return true
+		}
+	}
+	for {
+		summaries, err := s.listSessions()
+		if err != nil {
+			if listError != err.Error() {
+				s.config.Logger.Printf("list sessions for Codex instruction reconciliation: %v", err)
+				listError = err.Error()
+			}
+			if len(summaries) == 0 {
+				if !waitForRetry() {
+					return
+				}
+				continue
+			}
+		} else {
+			listError = ""
+		}
+		current := make(map[string]string)
+		currentSummaries := make(map[string]*session.Summary)
+		for _, summary := range summaries {
+			if !summary.Archived && summary.Codex.ThreadID != "" && !s.recoveryHeld(summary.Slug, summary.Codex.ThreadID) {
+				current[summary.Slug] = summary.Codex.ThreadID
+				currentSummaries[summary.Slug] = &summary
+			}
+		}
+		if !initialized {
+			pending = current
+			initialized = true
+		} else {
+			for slug, threadID := range pending {
+				if currentThreadID := current[slug]; currentThreadID == "" {
+					if err == nil {
+						delete(pending, slug)
+						delete(lastErrors, slug)
+					}
+				} else if currentThreadID != threadID {
+					pending[slug] = currentThreadID
+					delete(lastErrors, slug)
+				}
+			}
+		}
+		if len(pending) == 0 {
+			return
+		}
+		for slug, threadID := range pending {
+			if err != nil && current[slug] == "" {
+				continue
+			}
+			var leadInstructions string
+			if summary := currentSummaries[slug]; summary != nil {
+				roster, loadErr := s.loadTeamRoster(summary)
+				if loadErr != nil && !errors.Is(loadErr, os.ErrNotExist) {
+					if lastErrors[slug] != loadErr.Error() {
+						s.config.Logger.Printf("load lead policy for %s: %v", slug, loadErr)
+						lastErrors[slug] = loadErr.Error()
+					}
+					continue
+				}
+				if roster != nil {
+					leadInstructions = roster.LeadInstructions
+				} else if receipt, ok := s.currentCreation(slug); ok && receipt.DirectTeam != nil {
+					leadInstructions = receipt.DirectTeam.LeadInstructions
+				}
+			}
+			attemptCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			err := s.config.Codex.ReconcileThreadInstructionsWithPolicy(
+				attemptCtx, threadID, workspacecodex.LeadThreadPolicy(slug, s.config.Workspace, leadInstructions),
+			)
+			cancel()
+			if err == nil {
+				delete(pending, slug)
+				delete(lastErrors, slug)
+			} else if ctx.Err() != nil {
+				return
+			} else if lastErrors[slug] != err.Error() {
+				s.config.Logger.Printf("reconcile Codex instructions for %s: %v", slug, err)
+				lastErrors[slug] = err.Error()
+			}
+		}
+		if len(pending) == 0 {
+			return
+		}
+		if !waitForRetry() {
+			return
+		}
+	}
+}
+
+func (s *Server) Close() {
+	s.stopOnce.Do(func() {
+		s.operationMu.Lock()
+		s.closing = true
+		close(s.stopping)
+		s.cancelOperations()
+		s.operationMu.Unlock()
+		s.operationWG.Wait()
+		s.displayRefreshWG.Wait()
+		s.pausePreparationsOnClose()
+	})
+}
+
+func (s *Server) Handler() http.Handler {
+	mux := http.NewServeMux()
+	static, _ := fs.Sub(assets, "static")
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.FS(static))))
+	if s.conversation != nil {
+		mux.Handle("/codex/", s.conversation)
+	}
+	if s.uploadHandler != nil {
+		mux.Handle("/uploads/", s.uploadHandler)
+	}
+	mux.HandleFunc("GET /notification-worker.js", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+		w.Header().Set("Service-Worker-Allowed", "/")
+		data, _ := assets.ReadFile("static/notification-worker.js")
+		w.Write(data)
+	})
+	mux.HandleFunc("GET /healthz", s.health)
+	mux.HandleFunc("/", s.route)
+	guarded := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if looksLikePreparationPath(r.URL) && !validPreparationPath(r.URL) {
+			http.NotFound(w, r)
+			return
+		}
+		if s.invalidSourceRequest(r) {
+			http.NotFound(w, r)
+			return
+		}
+		if looksLikeSessionAPIPath(r.URL) {
+			if _, ok := sessionAPIPath(r.URL); !ok {
+				http.NotFound(w, r)
+				return
+			}
+		}
+		mux.ServeHTTP(w, r)
+	})
+	return s.securityHeaders(guarded)
+}
+
+func (s *Server) route(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodPost || r.Method == http.MethodDelete {
+		if !s.validMutation(r) {
+			s.writeError(w, r, http.StatusForbidden, "request origin is invalid")
+			return
+		}
+	}
+	switch {
+	case strings.HasPrefix(r.URL.Path, "/creations/") || strings.HasPrefix(r.URL.Path, "/api/session-creations/"):
+		s.preparationRoute(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/":
+		s.index(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/automatic-archival":
+		s.render(w, "automatic-archival", pageData{})
+	case r.Method == http.MethodGet && r.URL.Path == "/operations":
+		s.render(w, "operations", pageData{})
+	case r.Method == http.MethodPost && r.URL.Path == "/api/upload-drafts":
+		s.withCreationMutation(w, r, func() { s.newUploadDraft(w, r) })
+	case r.Method == http.MethodPost && r.URL.Path == "/sessions":
+		s.withCreationMutation(w, r, func() { s.createSession(w, r) })
+	case r.Method == http.MethodGet && r.URL.Path == "/api/models":
+		s.models(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/api/codex-limits":
+		s.codexLimits(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/api/codex-providers":
+		s.codexProviders(w, r)
+	case r.Method == http.MethodPost && r.URL.Path == "/api/codex-providers/switch":
+		s.providerMutation(w, r, false)
+	case r.Method == http.MethodPost && r.URL.Path == "/api/codex-providers/cancel":
+		s.providerMutation(w, r, true)
+	case r.Method == http.MethodPost && r.URL.Path == "/api/codex-limits/reset":
+		s.consumeCodexReset(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/api/collaboration-modes":
+		s.collaborationModes(w, r)
+	case r.URL.Path == "/api/auto-archive":
+		s.autoArchiveWorkspaceAPI(w, r)
+	case strings.HasPrefix(r.URL.Path, "/api/browser-notifications"):
+		s.browserNotificationsAPI(w, r)
+	case r.URL.Path == "/api/coordination":
+		s.coordinationAPI(w, r, "")
+	case r.Method == http.MethodGet && r.URL.Path == "/api/index-status":
+		s.indexStatus(w, r)
+	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/artifacts/"):
+		s.artifact(w, r)
+	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/artifact-previews/"):
+		s.artifactImage(w, r)
+	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/files/"):
+		s.sourcePage(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/workspace-files":
+		s.workspaceSourcePage(w, r)
+	case r.Method == http.MethodGet && r.URL.Path == "/api/workspace/file":
+		s.workspaceSourceFile(w, r)
+	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, s.config.Workspace+"/"):
+		s.sourceRedirect(w, r)
+	case strings.HasPrefix(r.URL.Path, "/api/sessions/"):
+		s.sessionAPI(w, r)
+	case r.Method == http.MethodGet && strings.Count(strings.Trim(r.URL.Path, "/"), "/") == 0:
+		s.sessionPage(w, r, strings.Trim(r.URL.Path, "/"))
+	default:
+		http.NotFound(w, r)
+	}
+}
+
+func (s *Server) withPortalMutation(w http.ResponseWriter, r *http.Request, slug string, mutate func()) {
+	_, unlock, err := s.acquireTransitionContext(r.Context(), unix.LOCK_SH)
+	if err != nil {
+		s.writeError(w, r, http.StatusServiceUnavailable, "workspace runtime is changing; retry shortly")
+		return
+	}
+	defer unlock()
+	if err := s.requireCurrentHostProfile(); err != nil {
+		s.writeError(w, r, http.StatusServiceUnavailable, err.Error())
+		return
+	}
+	mutate()
+}
+
+// Keep generation admission around durable result/reconciliation writes.
+func (s *Server) withCurrentGeneration(mutate func() error) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	_, unlock, err := s.acquireTransitionContext(ctx, unix.LOCK_SH)
+	if err != nil {
+		return err
+	}
+	defer unlock()
+	if err := s.requireCurrentHostProfile(); err != nil {
+		return err
+	}
+	return mutate()
+}
+
+func (s *Server) lockTransition() (func(), error) {
+	return s.lockTransitionMode(unix.LOCK_SH)
+}
+
+func (s *Server) lockTransitionContext(ctx context.Context) (func(), error) {
+	_, unlock, err := s.acquireTransitionContext(ctx, unix.LOCK_SH)
+	return unlock, err
+}
+
+func (s *Server) lockTransitionMode(mode int) (func(), error) {
+	_, unlock, err := s.acquireTransition(mode)
+	return unlock, err
+}
+
+func (s *Server) acquireTransition(mode int) (*os.File, func(), error) {
+	return s.acquireTransitionContext(context.Background(), mode)
+}
+
+func (s *Server) acquireTransitionContext(
+	ctx context.Context, mode int,
+) (*os.File, func(), error) {
+	if err := ctx.Err(); err != nil {
+		return nil, nil, err
+	}
+	if s.config.TransitionLock == "" {
+		return nil, func() {}, nil
+	}
+	file, err := os.OpenFile(s.config.TransitionLock, os.O_RDWR|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, nil, err
+	}
+	for {
+		err = unix.Flock(int(file.Fd()), mode|unix.LOCK_NB)
+		if err == nil {
+			break
+		}
+		if mode&unix.LOCK_NB != 0 || (!errors.Is(err, unix.EWOULDBLOCK) && !errors.Is(err, unix.EAGAIN)) {
+			file.Close()
+			return nil, nil, err
+		}
+		timer := time.NewTimer(10 * time.Millisecond)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			file.Close()
+			return nil, nil, ctx.Err()
+		case <-timer.C:
+		}
+	}
+	return file, func() {
+		_ = unix.Flock(int(file.Fd()), unix.LOCK_UN)
+		_ = file.Close()
+	}, nil
+}
+
+func readHostProfileIdentity(path string) (hostProfileIdentity, error) {
+	var stat unix.Stat_t
+	if err := unix.Lstat(path, &stat); err != nil {
+		return hostProfileIdentity{}, err
+	}
+	if stat.Mode&unix.S_IFMT != unix.S_IFLNK {
+		return hostProfileIdentity{}, errors.New("workspace host profile is not a symlink")
+	}
+	target, err := os.Readlink(path)
+	if err != nil {
+		return hostProfileIdentity{}, err
+	}
+	return hostProfileIdentity{
+		device: uint64(stat.Dev), inode: stat.Ino,
+		ctimeSec: stat.Ctim.Sec, ctimeNSec: stat.Ctim.Nsec,
+		mtimeSec: stat.Mtim.Sec, mtimeNSec: stat.Mtim.Nsec,
+		target: target,
+	}, nil
+}
+
+func (s *Server) requireCurrentHostProfile() error {
+	current, err := readHostProfileIdentity(s.config.HostProfile)
+	if err != nil || current != s.hostProfile {
+		return errors.New("portal belongs to a superseded workspace package generation; reload it")
+	}
+	return s.requireProviderAdmission()
+}
+
+func (s *Server) health(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	_, _ = io.WriteString(w, `{"ok":true}`+"\n")
+}
+
+func (s *Server) securityHeaders(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		w.Header().Set("X-Frame-Options", "DENY")
+		w.Header().Set("Referrer-Policy", "same-origin")
+		w.Header().Set("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+		w.Header().Set("Content-Security-Policy", "default-src 'self'; connect-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) validMutation(r *http.Request) bool {
+	origin := r.Header.Get("Origin")
+	for _, trusted := range s.trustedOrigins {
+		if origin == trusted {
+			return true
+		}
+	}
+	return false
+}
+
+func (s *Server) index(w http.ResponseWriter, _ *http.Request) {
+	s.indexStatusMu.Lock()
+	cached := cloneIndexStatus(s.indexStatusCache)
+	s.indexStatusMu.Unlock()
+	var summaries []session.Summary
+	var err error
+	if cached.created.IsZero() {
+		summaries, err = s.listSessions()
+	} else {
+		for _, status := range cached.statuses {
+			summaries = append(summaries, session.Summary{Manifest: session.Manifest{Slug: status.Slug, Sensitive: status.Sensitive,
+				Repositories: make([]session.Repository, status.RepositoryCount)}, Archived: status.Archived, UpdatedAt: status.UpdatedAt, ObservationIdentity: status.ObservationIdentity})
+		}
+	}
+	now := time.Now().UTC()
+	data := pageData{
+		BaseURL: s.config.BaseURL, CreationDate: now.Format(time.DateOnly),
+		IndexGeneratedAt: now.Format(time.RFC3339Nano), MaxMessageBytes: session.MaxMessageBytes,
+		AgentTeams: s.agentTeamsPage(),
+	}
+	if !cached.created.IsZero() {
+		data.IndexGeneratedAt = cached.created.Format(time.RFC3339Nano)
+	}
+	if err != nil {
+		data.Error = err.Error()
+	}
+	for _, summary := range summaries {
+		if summary.Archived {
+			data.Archived = append(data.Archived, summary)
+		} else {
+			data.Active = append(data.Active, summary)
+		}
+	}
+	s.render(w, "index", data)
+}
+
+func (s *Server) indexStatus(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Query().Get("progress") != "1" {
+		s.requestDisplayRefresh(true)
+	}
+	s.indexStatusMu.Lock()
+	result := cloneIndexStatus(s.indexStatusCache)
+	s.indexStatusMu.Unlock()
+	operations, _ := s.lifecycleOperations()
+	if result.created.IsZero() && result.warning == "" {
+		result.warning = "Session status is loading."
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	s.writeJSON(w, http.StatusOK, map[string]any{
+		"sessions": result.statuses, "generatedAt": result.created,
+		"operations": operations, "warning": result.warning,
+		"authoritative": result.authoritative,
+	})
+}
+
+func cloneIndexStatus(source cachedIndexStatus) cachedIndexStatus {
+	source.statuses = append([]indexSessionStatus(nil), source.statuses...)
+	return source
+}
+
+func (s *Server) computeIndexStatus(ctx context.Context) cachedIndexStatus {
+	pending, err := session.PendingLifecycles(s.config.Workspace)
+	return s.computeIndexStatusWithPending(ctx, pending, err)
+}
+
+func (s *Server) computeIndexStatusWithPending(ctx context.Context, pending map[string]session.LifecycleProgress, pendingErr error) cachedIndexStatus {
+	result := cachedIndexStatus{}
+	summaries, err := s.listSessionsWithPending(pending, pendingErr)
+	operations, _ := s.lifecycleOperations()
+	operationsBySlug := make(map[string]lifecycleOperation, len(operations))
+	for _, operation := range operations {
+		operationsBySlug[operation.Slug] = operation
+	}
+	result.authoritative = err == nil
+	if err != nil {
+		s.config.Logger.Printf("list sessions for index status: %v", err)
+		result.warning = "Some session status is unavailable."
+	}
+	discovered, discoveryErr := s.discoverRepositories(ctx, false)
+	if discoveryErr != nil {
+		s.config.Logger.Printf("discover active repositories for index status: %v", discoveryErr)
+		result.warning = "Some repository status is unavailable."
+	}
+
+	type clusterCount struct {
+		slug   string
+		count  int
+		notice string
+		err    error
+	}
+	clusterResults := make(chan clusterCount, len(summaries))
+	var clusterWait sync.WaitGroup
+	clusterLimit := make(chan struct{}, 4)
+	expected := make([]workspacecodex.ThreadActivity, 0, len(summaries))
+	for index := range summaries {
+		summary := &summaries[index]
+		if !summary.Archived {
+			merged, mergeErr := session.MergeActiveRepositories(summary.Repositories, discovered[summary.Slug])
+			summary.Repositories = merged
+			if mergeErr != nil {
+				s.config.Logger.Printf("merge repositories for %s: %v", summary.Slug, mergeErr)
+			}
+			if summary.Codex.ThreadID != "" {
+				expected = append(expected, workspacecodex.ThreadActivity{
+					ID:  summary.Codex.ThreadID,
+					Cwd: filepath.Join(s.config.Workspace, "work", summary.Slug),
+				})
+			}
+			if s.clusters.MayExist(summary.Slug) {
+				clusterWait.Add(1)
+				go func(slug string) {
+					defer clusterWait.Done()
+					select {
+					case clusterLimit <- struct{}{}:
+						defer func() { <-clusterLimit }()
+					case <-ctx.Done():
+						clusterResults <- clusterCount{slug: slug, err: ctx.Err()}
+						return
+					}
+					clusters, inspectErr := s.clusters.InspectContext(ctx, slug)
+					count := 0
+					var notices []string
+					for _, item := range clusters {
+						if item.Notice != "" {
+							notices = append(notices, item.Label+": "+item.Notice)
+						}
+						if item.State == "running" {
+							count++
+						}
+					}
+					clusterResults <- clusterCount{slug: slug, count: count, notice: strings.Join(notices, " "), err: inspectErr}
+				}(summary.Slug)
+			}
+		}
+	}
+	go func() {
+		clusterWait.Wait()
+		close(clusterResults)
+	}()
+
+	activityByIdentity := make(map[string]time.Time)
+	if s.config.Codex != nil && len(expected) > 0 {
+		activities, activityErr := s.config.Codex.ListThreadActivity(ctx, expected)
+		if activityErr != nil {
+			s.config.Logger.Printf("load Codex index activity: %v", activityErr)
+			result.warning = "Some recent Codex activity is unavailable."
+		} else {
+			for _, activity := range activities {
+				activityByIdentity[activity.ID+"\x00"+activity.Cwd] = activity.UpdatedAt
+			}
+		}
+	}
+	clustersBySlug := make(map[string]int)
+	clusterNotices := make(map[string]string)
+	for item := range clusterResults {
+		clustersBySlug[item.slug] = item.count
+		clusterNotices[item.slug] = item.notice
+		if item.err != nil {
+			s.config.Logger.Printf("inspect clusters for %s: %v", item.slug, item.err)
+			if item.notice == "" {
+				clusterNotices[item.slug] = "Cluster status is temporarily unavailable."
+			}
+		}
+	}
+	for _, summary := range summaries {
+		updated := summary.UpdatedAt
+		if !summary.Archived && summary.Codex.ThreadID != "" {
+			expectedCwd := filepath.Join(s.config.Workspace, "work", summary.Slug)
+			if activity := activityByIdentity[summary.Codex.ThreadID+"\x00"+expectedCwd]; activity.After(updated) {
+				updated = activity
+			}
+		}
+		pendingKind := pending[summary.Slug].Operation
+		if pendingKind == "" {
+			if operation, ok := operationsBySlug[summary.Slug]; ok && operation.State != "complete" {
+				pendingKind = operation.Kind
+			}
+		}
+		result.statuses = append(result.statuses, indexSessionStatus{
+			Slug: summary.Slug, Sensitive: summary.Sensitive, UpdatedAt: updated, Archived: summary.Archived, ObservationIdentity: summary.ObservationIdentity,
+			RepositoryCount: len(summary.Repositories),
+			RunningClusters: clustersBySlug[summary.Slug], ClusterNotice: clusterNotices[summary.Slug], PendingLifecycle: pendingKind,
+		})
+	}
+	return result
+}
+
+func (s *Server) listSessions() ([]session.Summary, error) {
+	pending, pendingErr := session.PendingLifecycles(s.config.Workspace)
+	return s.listSessionsWithPending(pending, pendingErr)
+}
+
+func (s *Server) listSessionsWithPending(pending map[string]session.LifecycleProgress, pendingErr error) ([]session.Summary, error) {
+	summaries, listErr := session.List(s.config.Workspace)
+	seen := make(map[string]struct{}, len(summaries))
+	for index := range summaries {
+		summary := &summaries[index]
+		seen[summary.Slug] = struct{}{}
+		identity, err := session.ObservationIdentity(summary.Workspace, summary.Slug,
+			filepath.Join(summary.Workspace, summary.Root, summary.Slug), summary.Codex.ThreadID)
+		if err != nil {
+			s.config.Logger.Printf("observe session card %s: %v", summary.Slug, err)
+			continue
+		}
+		summary.ObservationIdentity = identity
+	}
+	for slug, progress := range pending {
+		if _, ok := seen[slug]; ok || progress.Operation != "delete" {
+			continue
+		}
+		summaries = append(summaries, session.Summary{
+			Manifest: session.Manifest{Slug: slug}, Lifecycle: "active",
+			UpdatedAt: progress.UpdatedAt, Workspace: s.config.Workspace,
+		})
+	}
+	sort.Slice(summaries, func(i, j int) bool {
+		if summaries[i].Archived != summaries[j].Archived {
+			return !summaries[i].Archived
+		}
+		if !summaries[i].UpdatedAt.Equal(summaries[j].UpdatedAt) {
+			return summaries[i].UpdatedAt.After(summaries[j].UpdatedAt)
+		}
+		return summaries[i].Slug < summaries[j].Slug
+	})
+	return summaries, errors.Join(listErr, pendingErr)
+}
+
+func (s *Server) sessionPage(w http.ResponseWriter, r *http.Request, slug string) {
+	if s.creationPage(w, r, slug) {
+		return
+	}
+	summary, err := session.Find(s.config.Workspace, slug)
+	if errors.Is(err, fs.ErrNotExist) {
+		progress, progressErr := session.PendingLifecycleProgress(s.config.Workspace, slug)
+		if progressErr != nil {
+			s.writeError(w, r, http.StatusInternalServerError, progressErr.Error())
+			return
+		}
+		if progress == nil || progress.Operation != "delete" {
+			http.NotFound(w, r)
+			return
+		}
+		summary = &session.Summary{
+			Manifest: session.Manifest{Slug: slug}, Lifecycle: "active",
+			UpdatedAt: progress.UpdatedAt, Workspace: s.config.Workspace,
+		}
+		err = nil
+	}
+	if err != nil {
+		s.writeError(w, r, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if summary.Root == "" {
+		data := pageData{
+			BaseURL: s.config.BaseURL, Session: summary, PendingLifecycle: "delete",
+			CreationDate: time.Now().Format(time.DateOnly), MaxMessageBytes: session.MaxMessageBytes,
+			LifecycleOnly: true,
+		}
+		s.render(w, "session", data)
+		return
+	}
+	observation, observationErr := session.ObservationIdentity(summary.Workspace, summary.Slug,
+		filepath.Join(summary.Workspace, summary.Root, summary.Slug), summary.Codex.ThreadID)
+	if observationErr != nil {
+		s.writeError(w, r, http.StatusConflict, "Session identity changed. Reload the session.")
+		return
+	}
+	if expected := r.URL.Query().Get("attentionIdentity"); expected != "" && expected != observation {
+		s.writeError(w, r, http.StatusConflict, "Session identity changed. Reload the session.")
+		return
+	}
+	summary.ObservationIdentity = observation
+	lifecycleTargetID, lifecycleIdentityErr := lifecycleTargetIdentity(summary)
+	s.normalizeInteractivity(r.Context(), summary)
+	data := pageData{
+		BaseURL: s.config.BaseURL, Session: summary,
+		CreationDate: time.Now().Format(time.DateOnly), MaxMessageBytes: session.MaxMessageBytes,
+		LifecycleTargetID: lifecycleTargetID,
+		AgentTeams:        s.agentTeamsPage(),
+		TeamPresets:       s.directTeamPresets(),
+	}
+	if roster, rosterErr := s.loadTeamRoster(summary); rosterErr != nil && !errors.Is(rosterErr, os.ErrNotExist) {
+		data.Error = "Team roster is unavailable: " + rosterErr.Error()
+	} else {
+		data.DirectTeam = roster
+		data.RemovedMembers = removedTeamMembers(roster)
+	}
+	data.TeamRoles = teamRoles(data.TeamPresets)
+	data.TeamRoleDefaults = s.roleDefaults(data.DirectTeam, data.TeamRoles)
+	data.SelectedThreadID = summary.Codex.ThreadID
+	data.ConversationID = summary.Slug
+	if data.DirectTeam != nil {
+		for _, member := range data.DirectTeam.Members {
+			if member.State == "ready" && member.RetireIntent == "" && member.Thread != "" && summary.RecoveryReady {
+				data.ReadyMembers = append(data.ReadyMembers, member)
+			}
+		}
+	}
+	if address := r.URL.Query().Get("member"); address != "" {
+		for _, member := range data.ReadyMembers {
+			if member.Address == address {
+				data.SelectedMember = address
+				data.SelectedThreadID = member.Thread
+				data.ConversationID = teamConversationID(summary.Slug, address)
+				break
+			}
+		}
+		if data.SelectedMember == "" {
+			data.MemberNotice = "That team member is no longer available. Showing lead."
+		}
+	}
+	if lifecycleIdentityErr != nil {
+		data.Error = "Session lifecycle identity is unavailable: " + lifecycleIdentityErr.Error()
+	}
+	summary.ExecutionHeld = s.recoveryHeld(summary.Slug, data.SelectedThreadID)
+	data.Recovery, _ = s.selectedRecoveryStatus(summary, data.SelectedMember)
+	data.PendingLifecycle, err = session.PendingLifecycle(s.config.Workspace, summary.Slug)
+	if err != nil {
+		data.Error = "Session lifecycle state is unsafe: " + err.Error()
+	}
+	data.Repositories = s.repository.Skeleton(summary.Slug, summary.Repositories, summary.Archived)
+	data.Clusters, err = s.clusters.InspectContext(r.Context(), summary.Slug)
+	if err != nil {
+		s.config.Logger.Printf("inspect clusters for %s: %v", summary.Slug, err)
+	}
+
+	data.Artifacts = session.AvailableArtifacts(summary)
+	if receipt, ok := s.currentCreation(slug); ok && receipt.State == "conflict" {
+		if data.Error != "" {
+			data.Error += " "
+		}
+		data.Error += receipt.Phase
+	}
+	s.render(w, "session", data)
+}
+
+// agentTeamsPage is intentionally a presentation-only projection of the
+// installed immutable catalog. Creation still resolves every submitted value
+// against the catalog and the live App Server inventory before any effect.
+func (s *Server) agentTeamsPage() *agentTeamsPage {
+	if s.installedTeams == nil || !s.installedTeams.Managed || s.installedTeams.Catalog == nil {
+		return &agentTeamsPage{}
+	}
+	presets, err := teamruntime.PresetsFromCatalog(*s.installedTeams.Catalog)
+	if err != nil {
+		s.config.Logger.Printf("project direct team catalog: %v", err)
+		return &agentTeamsPage{}
+	}
+	rows := make([]agentTeamRow, 0, len(presets))
+	for _, preset := range presets {
+		rows = append(rows, agentTeamRow{
+			Name: preset.ID, Label: preset.Name, Description: preset.Description,
+			MemberCount: preset.MemberCount(), RoleSummary: preset.RoleSummary(),
+			LeadModel: preset.LeadModel, LeadEffort: preset.LeadEffort,
+		})
+	}
+	return &agentTeamsPage{Managed: true, CatalogDigest: s.installedTeams.Catalog.CatalogDigest,
+		DefaultTeam: s.installedTeams.Catalog.DefaultTeam, Teams: rows}
+}
+
+// sessionDetails refreshes the existing sections without replacing the conversation.
+func (s *Server) sessionDetails(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
+	pendingLifecycle, err := session.PendingLifecycle(s.config.Workspace, summary.Slug)
+	if err != nil {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "Unable to verify session lifecycle: " + err.Error()})
+		return
+	}
+	s.normalizeInteractivity(r.Context(), summary)
+	var warning string
+	if !summary.Archived {
+		repositories, err := s.activeRepositories(r.Context(), summary)
+		if err != nil {
+			s.config.Logger.Printf("refresh repositories for %s: %v", summary.Slug, err)
+			warning = "Some live worktrees could not be verified: " + err.Error()
+		}
+		summary.Repositories = repositories
+	}
+	data := pageData{Session: summary, Repositories: s.repositories(r.Context(), summary), RepositoryWarning: warning, Artifacts: session.AvailableArtifacts(summary), AgentTeams: s.agentTeamsPage()}
+	data.TeamPresets = s.directTeamPresets()
+	readyMembers := make([]string, 0)
+	if roster, rosterErr := s.loadTeamRoster(summary); rosterErr != nil && !errors.Is(rosterErr, os.ErrNotExist) {
+		s.config.Logger.Printf("refresh team roster for %s: %v", summary.Slug, rosterErr)
+		data.TeamStatusError = "Team roster is unavailable: " + rosterErr.Error()
+	} else {
+		data.DirectTeam = roster
+		data.RemovedMembers = removedTeamMembers(roster)
+		if roster != nil && summary.RecoveryReady {
+			for _, member := range roster.Members {
+				if member.State == "ready" && member.RetireIntent == "" && member.Thread != "" {
+					readyMembers = append(readyMembers, member.Address)
+				}
+			}
+		}
+	}
+	data.TeamRoles = teamRoles(data.TeamPresets)
+	data.TeamRoleDefaults = s.roleDefaults(data.DirectTeam, data.TeamRoles)
+	var repositories, artifacts, members bytes.Buffer
+	if err := s.templates.ExecuteTemplate(&repositories, "repositories", data); err != nil {
+		s.writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Unable to render repositories"})
+		return
+	}
+	if err := s.templates.ExecuteTemplate(&artifacts, "artifact-list", data); err != nil {
+		s.writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Unable to render artifacts"})
+		return
+	}
+	if err := s.templates.ExecuteTemplate(&members, "member-status", data); err != nil {
+		s.writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Unable to render team status"})
+		return
+	}
+	if !summary.Archived && s.clusters.MayExist(summary.Slug) {
+		var inspectErr error
+		data.Clusters, inspectErr = s.clusters.InspectContext(r.Context(), summary.Slug)
+		if inspectErr != nil {
+			s.config.Logger.Printf("refresh clusters for %s: %v", summary.Slug, inspectErr)
+		}
+	}
+	var clusters bytes.Buffer
+	if err := s.templates.ExecuteTemplate(&clusters, "clusters", data); err != nil {
+		s.writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "Unable to render clusters"})
+		return
+	}
+
+	w.Header().Set("Cache-Control", "no-store")
+	recovery, _ := s.selectedRecoveryStatus(summary, r.URL.Query().Get("member"))
+	s.writeJSON(w, http.StatusOK, map[string]any{
+		"currentTarget":    s.lifecycleSnapshot(summary.Slug),
+		"pendingLifecycle": pendingLifecycle,
+		"recovery":         recovery,
+		"interactive":      summary.Interactive,
+		"repositoriesHTML": repositories.String(), "artifactsHTML": artifacts.String(),
+		"repositoryCount": len(data.Repositories), "artifactCount": len(data.Artifacts), "clustersHTML": clusters.String(), "clusterCount": len(data.Clusters),
+		"teamHTML":     members.String(),
+		"readyMembers": readyMembers,
+	})
+}
+
+func removedTeamMembers(roster *teamruntime.Roster) []teamruntime.Member {
+	if roster == nil {
+		return nil
+	}
+	removed := make([]teamruntime.Member, 0)
+	for _, member := range roster.Members {
+		if member.State == "removed" {
+			removed = append(removed, member)
+		}
+	}
+	return removed
+}
+
+func (s *Server) repositories(ctx context.Context, summary *session.Summary) []repository.Status {
+	repositoryJSON, _ := json.Marshal(summary.Repositories)
+	cacheDuration := 5 * time.Second
+	if summary.Archived {
+		cacheDuration = time.Minute
+	}
+	s.repositoryMu.Lock()
+	if cached, ok := s.repositoryCache[summary.Slug]; ok && time.Since(cached.created) < cacheDuration && cached.repositories == string(repositoryJSON) &&
+		cached.updated.Equal(summary.ManifestUpdatedAt) && cached.terminal == summary.Terminal && cached.archived == summary.Archived {
+		result := append([]repository.Status(nil), cached.statuses...)
+		s.repositoryMu.Unlock()
+		return result
+	}
+	s.repositoryMu.Unlock()
+	inspectionContext, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	statuses := s.repository.Inspect(
+		inspectionContext, summary.Slug, summary.Repositories, summary.Archived,
+	)
+	observationContext, stopObservation := context.WithTimeout(ctx, time.Second)
+	defer stopObservation()
+	if !summary.Archived {
+		runReviewBatch(observationContext, len(summary.Repositories), func(index int) {
+			service := s.reviews()
+			repo, err := service.reader.Resolve(observationContext, summary.Slug, summary.Repositories[index], false)
+			if err == nil {
+				err = service.observeComparison(observationContext, summary.Slug, repo)
+			}
+			if err != nil {
+				s.config.Logger.Printf("capture comparison for %s/%s: %v", summary.Slug, summary.Repositories[index].Name, err)
+			}
+		})
+	}
+	s.repositoryMu.Lock()
+	s.repositoryCache[summary.Slug] = cachedRepositories{
+		statuses: append([]repository.Status(nil), statuses...), created: time.Now(), repositories: string(repositoryJSON),
+		updated: summary.ManifestUpdatedAt, terminal: summary.Terminal, archived: summary.Archived,
+	}
+	s.repositoryMu.Unlock()
+	return statuses
+}
+
+func (s *Server) createSession(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, session.MaxFormRequestBodyBytes)
+	if err := r.ParseForm(); err != nil {
+		s.writeError(w, r, http.StatusBadRequest, "invalid form")
+		return
+	}
+	if _, present := r.Form["clientRequestId"]; present {
+		s.createPreparation(w, r)
+		return
+	}
+	if values, present := r.Form["sensitive"]; present && (len(values) != 1 || values[0] != "true") {
+		s.writeError(w, r, http.StatusBadRequest, "invalid session sensitivity")
+		return
+	}
+	name := strings.TrimSpace(r.FormValue("name"))
+	goal := strings.TrimSpace(r.FormValue("goal"))
+	model := strings.TrimSpace(r.FormValue("model"))
+	effort := strings.TrimSpace(r.FormValue("effort"))
+	team := strings.TrimSpace(r.FormValue("team"))
+	catalogDigest := strings.TrimSpace(r.FormValue("catalogDigest"))
+	creationDate := strings.TrimSpace(r.FormValue("creation_date"))
+	if !session.ValidSlug(name) || len(name) > 48 {
+		s.writeError(w, r, http.StatusBadRequest, "session name is invalid")
+		return
+	}
+	if (goal == "" && len(r.Form["attachmentIds"]) == 0) || len([]byte(goal)) > session.MaxMessageBytes {
+		s.writeError(w, r, http.StatusBadRequest, fmt.Sprintf(
+			"initial request is required and must be at most %s bytes",
+			session.FormattedMaxMessageBytes(),
+		))
+		return
+	}
+	if parsed, err := time.Parse(time.DateOnly, creationDate); err != nil || parsed.Format(time.DateOnly) != creationDate {
+		s.writeError(w, r, http.StatusBadRequest, "session creation date is invalid")
+		return
+	}
+	_, teamSubmitted := r.Form["team"]
+	_, digestSubmitted := r.Form["catalogDigest"]
+	request := creationRequest{Sensitive: r.FormValue("sensitive") == "true", Kind: "new", Slug: creationDate + "-" + name, Goal: goal, Model: model, Effort: effort}
+	resolvedRequest, resolveErr := s.resolveManagedCreation(r.Context(), request, agentteams.CreationSelectionInput{
+		Team:            agentteams.StringPresence{Present: teamSubmitted, Value: team},
+		CatalogDigest:   agentteams.StringPresence{Present: digestSubmitted, Value: catalogDigest},
+		Model:           agentteams.StringPresence{Present: model != "", Value: model},
+		ReasoningEffort: agentteams.StringPresence{Present: effort != "", Value: effort},
+	})
+	if resolveErr != nil {
+		status := http.StatusBadRequest
+		if strings.Contains(resolveErr.Error(), "catalog digest is stale") {
+			status = http.StatusConflict
+		} else if strings.Contains(resolveErr.Error(), "launch evidence") || strings.Contains(resolveErr.Error(), "Codex socket") {
+			status = http.StatusServiceUnavailable
+		}
+		s.writeError(w, r, status, resolveErr.Error())
+		return
+	}
+	request = resolvedRequest
+	settingsModel, settingsEffort := request.Model, request.Effort
+	if request.directTeam != nil {
+		settingsModel, settingsEffort = request.directTeam.LeadModel, request.directTeam.LeadEffort
+	}
+	if err := validateCreationSettings(settingsModel, settingsEffort); err != nil {
+		s.writeError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := s.uploadCreationMu.Lock(r.Context()); err != nil {
+		s.writeError(w, r, 409, "Session creation is busy; retry shortly")
+		return
+	}
+	defer s.uploadCreationMu.Unlock()
+	if err := s.retainCreationUploads(r.Context()); err != nil {
+		s.writeError(w, r, 500, "Unable to reconcile initial uploads")
+		return
+	}
+	preparedGoal, prepareErr := s.prepareCreationAttachments(r.Context(), creationDate+"-"+name, r.FormValue("uploadScope"), goal, r.Form["attachmentIds"])
+	if prepareErr != nil {
+		s.writeError(w, r, http.StatusBadRequest, prepareErr.Error())
+		return
+	}
+	request.Goal = preparedGoal
+	receipt, err := s.acceptCreation(request)
+	if err != nil {
+		s.writeError(w, r, http.StatusConflict, err.Error())
+		return
+	}
+	if err := s.uploadStore.RetainCreations(r.Context(), map[string]uploads.Scope{goal: {Slug: receipt.Request.Slug, Epoch: receipt.DeletionHistorySHA256}}); err != nil {
+		s.writeError(w, r, http.StatusInternalServerError, "Session creation was accepted; reload to check its progress")
+		return
+	}
+	if r.Header.Get("Accept") == "application/json" {
+		s.writeJSON(w, http.StatusAccepted, receipt.status())
+		return
+	}
+	http.Redirect(w, r, receipt.status().URL, http.StatusSeeOther)
+}
+
+func (s *Server) runDevSession(parent context.Context, timeout time.Duration, args ...string) (string, string, error) {
+	commandCtx, cancel := context.WithTimeout(parent, timeout)
+	defer cancel()
+	command := exec.Command(s.config.DevSession, args...)
+	return runDevSessionCommand(commandCtx, command)
+}
+
+func (s *Server) runDevSessionWithTransition(
+	parent context.Context, timeout time.Duration, transition *os.File, args ...string,
+) (string, string, error) {
+	commandCtx, cancel := context.WithTimeout(parent, timeout)
+	defer cancel()
+	command := exec.Command(s.config.DevSession, args...)
+	if transition != nil {
+		command.ExtraFiles = []*os.File{transition}
+		command.Env = append(os.Environ(), "DEV_WORKSPACE_TRANSITION_LOCK_FD=3")
+	}
+	return runDevSessionCommand(commandCtx, command)
+}
+
+// Creation alone opts into ephemeral stderr progress. exec.Wait joins the
+// stderr copy goroutine before this returns, so no callback outlives the result.
+func (s *Server) runCreationCommand(parent context.Context, timeout time.Duration, transition *os.File,
+	observer creationprogress.Observer, args ...string,
+) (string, string, error) {
+	commandCtx, cancel := context.WithTimeout(parent, timeout)
+	defer cancel()
+	command := exec.Command(s.config.DevSession, args...)
+	command.Env = append(os.Environ(), creationprogress.Environment+"=1")
+	if transition != nil {
+		command.ExtraFiles = []*os.File{transition}
+		command.Env = append(command.Env, "DEV_WORKSPACE_TRANSITION_LOCK_FD=3")
+	}
+	var stdout, stderr bytes.Buffer
+	decoder := creationprogress.NewDecoder(&stderr, observer)
+	command.Stdout, command.Stderr = &stdout, decoder
+	err := processgroup.Run(commandCtx, command)
+	_ = decoder.Close()
+	return stdout.String(), stderr.String(), err
+}
+
+func runDevSessionCommand(commandCtx context.Context, command *exec.Cmd) (string, string, error) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	err := processgroup.Run(commandCtx, command)
+	return stdout.String(), stderr.String(), err
+}
+
+func (s *Server) models(w http.ResponseWriter, r *http.Request) {
+	if s.config.Codex == nil {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "Codex model catalog is unavailable"})
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	models, err := s.config.Codex.ListModels(ctx)
+	if err != nil {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+		return
+	}
+	if models == nil {
+		models = []codex.Model{}
+	}
+	s.writeJSON(w, http.StatusOK, models)
+}
+
+func (s *Server) collaborationModes(w http.ResponseWriter, r *http.Request) {
+	if s.config.Codex == nil {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{
+			"error": "Codex collaboration modes are unavailable",
+		})
+		return
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+	modes, err := s.config.Codex.ListCollaborationModes(ctx)
+	if err != nil {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+		return
+	}
+	if modes == nil {
+		modes = []codex.CollaborationMode{}
+	}
+	s.writeJSON(w, http.StatusOK, modes)
+}
+
+func (s *Server) validateCollaborationMode(ctx context.Context, requested string) error {
+	if requested == "" {
+		return nil
+	}
+	if s.config.Codex == nil {
+		return errors.New("Codex collaboration modes are unavailable")
+	}
+	lookupContext, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	modes, err := s.config.Codex.ListCollaborationModes(lookupContext)
+	if err != nil {
+		return fmt.Errorf("load Codex collaboration modes: %w", err)
+	}
+	for _, mode := range modes {
+		if mode.Mode == requested {
+			return nil
+		}
+	}
+	return fmt.Errorf("Codex collaboration mode %q is not available", requested)
+}
+
+func (s *Server) validateModelSettings(ctx context.Context, settings codex.ThreadSettings, allowDefault bool) error {
+	if settings.Model == "" {
+		if settings.ReasoningEffort != "" || !allowDefault {
+			return errors.New("select a Codex model before choosing a reasoning effort")
+		}
+		return nil
+	}
+	if s.config.Codex == nil {
+		return errors.New("Codex model catalog is unavailable")
+	}
+	lookupContext, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	models, err := s.config.Codex.ListModels(lookupContext)
+	if err != nil {
+		return fmt.Errorf("load Codex models: %w", err)
+	}
+	for _, model := range models {
+		if model.Model != settings.Model {
+			continue
+		}
+		if settings.ReasoningEffort == "" {
+			return nil
+		}
+		for _, effort := range model.SupportedReasoningEfforts {
+			if effort.ReasoningEffort == settings.ReasoningEffort {
+				return nil
+			}
+		}
+		return fmt.Errorf("reasoning effort %q is not available for %s", settings.ReasoningEffort, model.DisplayName)
+	}
+	return fmt.Errorf("Codex model %q is not available", settings.Model)
+}
+
+func (s *Server) artifact(w http.ResponseWriter, r *http.Request) {
+	remainder := strings.TrimPrefix(r.URL.Path, "/artifacts/")
+	s.serveArtifactFile(w, r, remainder, false)
+}
+
+func (s *Server) artifactImage(w http.ResponseWriter, r *http.Request) {
+	remainder := strings.TrimPrefix(r.URL.Path, "/artifact-previews/")
+	s.serveArtifactFile(w, r, remainder, true)
+}
+
+func artifactContentType(path string) (string, string, bool) {
+	extension := strings.ToLower(filepath.Ext(path))
+	types := map[string]struct {
+		kind        string
+		contentType string
+	}{
+		".gif": {"image", "image/gif"}, ".jpeg": {"image", "image/jpeg"},
+		".jpg": {"image", "image/jpeg"}, ".png": {"image", "image/png"},
+		".webp": {"image", "image/webp"}, ".json": {"text", "application/json"},
+		".log":  {"text", "text/plain; charset=utf-8"},
+		".md":   {"markdown", "text/markdown; charset=utf-8"},
+		".txt":  {"text", "text/plain; charset=utf-8"},
+		".yaml": {"text", "application/yaml"}, ".yml": {"text", "application/yaml"},
+	}
+	presentation, ok := types[extension]
+	return presentation.kind, presentation.contentType, ok
+}
+
+func (s *Server) serveArtifactFile(w http.ResponseWriter, r *http.Request, remainder string, imageOnly bool) {
+	parts := strings.SplitN(remainder, "/", 2)
+	if len(parts) != 2 {
+		http.NotFound(w, r)
+		return
+	}
+	summary, err := session.Find(s.config.Workspace, parts[0])
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	file, info, err := session.OpenArtifact(summary, parts[1], 10*1024*1024)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	defer file.Close()
+	kind, contentType, allowed := artifactContentType(parts[1])
+	if !allowed || (imageOnly && kind != "image") {
+		http.Error(w, "artifact type is not available", http.StatusUnsupportedMediaType)
+		return
+	}
+	w.Header().Set("Content-Security-Policy", "sandbox; default-src 'none'")
+	w.Header().Set("Content-Type", contentType)
+	disposition := "attachment"
+	if imageOnly {
+		disposition = "inline"
+	}
+	w.Header().Set("Content-Disposition", fmt.Sprintf("%s; filename=%q", disposition, info.Name()))
+	http.ServeContent(w, r, info.Name(), info.ModTime(), file)
+}
+
+func (s *Server) artifactPreview(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
+	path := strings.TrimSpace(r.URL.Query().Get("path"))
+	kind, _, allowed := artifactContentType(path)
+	if !allowed {
+		s.writeJSON(w, http.StatusUnsupportedMediaType, map[string]string{"error": "artifact type is not available"})
+		return
+	}
+	file, _, err := session.OpenArtifact(summary, path, 10*1024*1024)
+	if err != nil {
+		s.writeJSON(w, http.StatusNotFound, map[string]string{"error": "artifact is not available"})
+		return
+	}
+	defer file.Close()
+	if kind == "image" {
+		s.writeJSON(w, http.StatusOK, map[string]string{
+			"kind": "image", "url": "/artifact-previews/" +
+				url.PathEscape(summary.Slug) + "/" + strings.ReplaceAll(url.PathEscape(path), "%2F", "/"),
+		})
+		return
+	}
+	data, err := io.ReadAll(io.LimitReader(file, 10*1024*1024+1))
+	if err != nil || len(data) > 10*1024*1024 {
+		s.writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "unable to read artifact"})
+		return
+	}
+	text := strings.ToValidUTF8(string(data), "�")
+	if kind == "markdown" {
+		s.writeJSON(w, http.StatusOK, map[string]string{
+			"kind": "markdown", "html": string(s.renderTextMarkdown(text)),
+		})
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]string{"kind": "text", "text": text})
+}
+
+func (s *Server) sessionAPI(w http.ResponseWriter, r *http.Request) {
+	parts, ok := sessionAPIPath(r.URL)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	if s.creationAPI(w, r, parts) || s.earlyCreationRequest(w, r, parts) {
+		return
+	}
+	if conversationPath := legacyConversationPath(parts, r.Method); conversationPath != "" && s.conversation != nil {
+		decodedPath, err := url.PathUnescape(conversationPath)
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		request := r.Clone(r.Context())
+		requestURL := *r.URL
+		requestURL.Path = decodedPath
+		requestURL.RawPath = conversationPath
+		request.URL = &requestURL
+		s.conversation.ServeHTTP(w, request)
+		return
+	}
+	if len(parts) == 2 && r.Method == http.MethodGet && parts[1] == "operation" {
+		s.lifecycleStatus(w, parts[0])
+		return
+	}
+	if len(parts) == 2 && r.Method == http.MethodDelete && parts[1] == "operation" {
+		s.withPortalMutation(w, r, parts[0], func() { s.dismissLifecycleOperation(w, r, parts[0]) })
+		return
+	}
+	if len(parts) == 3 && r.Method == http.MethodPost &&
+		parts[1] == "operation" && parts[2] == "retry" {
+		s.withPortalMutation(w, r, parts[0], func() { s.retryLifecycleOperation(w, r, parts[0]) })
+		return
+	}
+	if len(parts) == 2 && r.Method == http.MethodPost && parts[1] == "delete" {
+		s.deleteSession(w, r, parts[0])
+		return
+	}
+	if len(parts) == 2 && r.Method == http.MethodPost && parts[1] == "archive" {
+		summary, err := session.Find(s.config.Workspace, parts[0])
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		s.startArchive(w, r, summary)
+		return
+	}
+	if len(parts) == 2 && parts[1] == "auto-archive" {
+		s.autoArchiveAPI(w, r, parts[0])
+		return
+	}
+	if len(parts) == 2 && r.Method == http.MethodPost && parts[1] == "revive" {
+		summary, err := session.Find(s.config.Workspace, parts[0])
+		if err != nil {
+			http.NotFound(w, r)
+			return
+		}
+		s.startRevive(w, r, summary)
+		return
+	}
+	if r.Method == http.MethodPost || r.Method == http.MethodDelete {
+		s.withPortalMutation(w, r, parts[0], func() { s.sessionAPIResolved(w, r, parts) })
+		return
+	}
+	s.sessionAPIResolved(w, r, parts)
+}
+
+func looksLikeSessionAPIPath(requestURL *url.URL) bool {
+	escaped := requestURL.EscapedPath()
+	return strings.HasPrefix(escaped, "/api/sessions/") ||
+		strings.HasPrefix(requestURL.Path, "/api/sessions/") ||
+		strings.HasPrefix(path.Clean(escaped), "/api/sessions/") ||
+		strings.HasPrefix(path.Clean(requestURL.Path), "/api/sessions/")
+}
+
+func sessionAPIPath(requestURL *url.URL) ([]string, bool) {
+	escaped := requestURL.EscapedPath()
+	if requestURL.RawPath != "" && requestURL.RawPath != escaped {
+		return nil, false
+	}
+	remainder, found := strings.CutPrefix(escaped, "/api/sessions/")
+	if !found {
+		return nil, false
+	}
+	parts := strings.Split(remainder, "/")
+	if len(parts) < 2 || len(parts) > 3 || !session.ValidSlug(parts[0]) ||
+		!sessionAPIOperationPattern.MatchString(parts[1]) {
+		return nil, false
+	}
+	for _, part := range parts {
+		if part == "" {
+			return nil, false
+		}
+	}
+	if len(parts) == 3 && parts[1] != "queue" && !(parts[1] == "thread" && parts[2] == "page") &&
+		!((parts[1] == "operation" || parts[1] == "creation") && parts[2] == "retry") {
+		return nil, false
+	}
+	return parts, true
+}
+
+func legacyConversationPath(parts []string, method string) string {
+	if len(parts) == 2 {
+		allowed := map[string]map[string]bool{
+			http.MethodGet: {
+				"activity": true, "events": true, "pending": true, "queue": true, "thread": true,
+			},
+			http.MethodPost: {
+				"interrupt": true, "message": true, "message-ack": true,
+				"queue": true, "respond": true, "settings": true,
+			},
+		}
+		if allowed[method][parts[1]] {
+			return "/codex/conversations/" + strings.Join(parts, "/")
+		}
+	}
+	if len(parts) == 3 && parts[1] == "queue" &&
+		(method == http.MethodDelete ||
+			(method == http.MethodPost && (parts[2] == "start" || parts[2] == "reconcile"))) {
+		return "/codex/conversations/" + strings.Join(parts, "/")
+	}
+	if len(parts) == 3 && parts[1] == "thread" && parts[2] == "page" && method == http.MethodGet {
+		return "/codex/conversations/" + strings.Join(parts, "/")
+	}
+	return ""
+}
+
+func (s *Server) sessionAPIResolved(w http.ResponseWriter, r *http.Request, parts []string) {
+	summary, err := session.Find(s.config.Workspace, parts[0])
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	s.sessionAPIForSummary(w, r, parts, summary)
+}
+
+func (s *Server) sessionAPIForSummary(
+	w http.ResponseWriter, r *http.Request, parts []string, summary *session.Summary,
+) {
+	if len(parts) == 2 && parts[1] == "attention" {
+		s.attentionAPI(w, r, summary.Slug)
+		return
+	}
+	if len(parts) == 2 && parts[1] == "coordination" {
+		s.coordinationAPI(w, r, summary.Slug)
+		return
+	}
+	if len(parts) == 2 && (parts[1] == "resume" || parts[1] == "continue" || parts[1] == "recovery" || parts[1] == "dismiss-recovery") {
+		s.recoveryAPI(w, r, summary, parts[1])
+		return
+	}
+	if len(parts) == 2 && parts[1] == "file" {
+		if r.Method != http.MethodGet {
+			w.Header().Set("Allow", http.MethodGet)
+			s.writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "File viewing is read-only."})
+			return
+		}
+		s.sourceFile(w, r, summary)
+		return
+	}
+	if s.repositoryReviewAPI(w, r, summary, parts) {
+		return
+	}
+	if len(parts) == 2 && r.Method == http.MethodGet && parts[1] == "details" {
+		s.sessionDetails(w, r, summary)
+		return
+	}
+	if len(parts) == 2 && parts[1] == "team-stats" && r.Method == http.MethodGet {
+		s.teamStatsAPI(w, r, summary)
+		return
+	}
+	if len(parts) == 2 && parts[1] == "team" {
+		s.teamAPI(w, r, summary)
+		return
+	}
+	if len(parts) == 2 && parts[1] == "team-thread" {
+		s.teamThreadAPI(w, r, summary)
+		return
+	}
+	if len(parts) == 2 && r.Method == http.MethodPost &&
+		(parts[1] == "start-cluster" || parts[1] == "stop-cluster" || parts[1] == "release-cluster") {
+		s.controlCluster(w, r, summary, strings.TrimSuffix(parts[1], "-cluster"))
+		return
+	}
+	if len(parts) == 2 && r.Method == http.MethodGet && parts[1] == "artifact-preview" {
+		s.artifactPreview(w, r, summary)
+		return
+	}
+	s.normalizeInteractivity(r.Context(), summary)
+	if summary.Codex.ThreadID == "" {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session has no Codex thread"})
+		return
+	}
+	if len(parts) == 2 && r.Method == http.MethodPost && parts[1] == "fork" {
+		if !summary.Interactive {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session is not ready to fork"})
+			return
+		}
+		s.forkSession(w, r, summary)
+		return
+	}
+	if r.Method == http.MethodPost || r.Method == http.MethodDelete {
+		lock, err := session.LockRuntimeShared(s.config.AuthorityDir, summary.Slug)
+		if err != nil {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			return
+		}
+		defer lock.Close()
+		owner, journalErr := session.PendingLifecycle(s.config.Workspace, summary.Slug)
+		if journalErr != nil {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": journalErr.Error()})
+			return
+		}
+		if owner != "" {
+			s.writeJSON(w, http.StatusConflict, map[string]string{
+				"error": "session " + owner + " is unfinished; retry that operation first",
+			})
+			return
+		}
+		summary, err = session.Find(s.config.Workspace, parts[0])
+		if err != nil {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session state changed"})
+			return
+		}
+		s.normalizeInteractivity(r.Context(), summary)
+		if err := s.requireOrdinaryRetainedMutation(r.Context(), summary); err != nil {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			return
+		}
+		if !summary.Interactive {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session is not ready for browser changes"})
+			return
+		}
+	}
+	if len(parts) == 2 && r.Method == http.MethodPost && parts[1] == "implement-plan" {
+		s.implementPlan(w, r, summary)
+		return
+	}
+	http.NotFound(w, r)
+}
+
+type teamRequestBody struct {
+	Action         string `json:"action"`
+	Preset         string `json:"preset"`
+	Role           string `json:"role"`
+	Address        string `json:"address"`
+	From           string `json:"from"`
+	To             string `json:"to"`
+	Message        string `json:"message"`
+	MessageID      string `json:"messageId"`
+	Model          string `json:"model"`
+	Effort         string `json:"reasoningEffort"`
+	modelProvided  bool
+	effortProvided bool
+	settingsNull   bool
+}
+
+func (request *teamRequestBody) UnmarshalJSON(data []byte) error {
+	type wire teamRequestBody
+	var decoded wire
+	decoder := json.NewDecoder(bytes.NewReader(data))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&decoded); err != nil {
+		return err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fields); err != nil {
+		return err
+	}
+	_, decoded.modelProvided = fields["model"]
+	_, decoded.effortProvided = fields["reasoningEffort"]
+	decoded.settingsNull = bytes.Equal(bytes.TrimSpace(fields["model"]), []byte("null")) ||
+		bytes.Equal(bytes.TrimSpace(fields["reasoningEffort"]), []byte("null"))
+	*request = teamRequestBody(decoded)
+	return nil
+}
+
+func (s *Server) teamEnvironment(summary *session.Summary) map[string]string {
+	work := filepath.Join(s.config.Workspace, "work", summary.Slug)
+	return map[string]string{
+		"DEV_SESSION_SLUG": summary.Slug, "DEV_SESSION_WORKSPACE": s.config.Workspace,
+		"DEV_SESSION_WORK_DIR": work, "DEV_SESSION_WORKTREES_DIR": filepath.Join(s.config.Workspace, "worktrees", summary.Slug),
+		"DEV_SESSION_PORTAL_BASE_URL": s.config.BaseURL, "DEV_SESSION_URL": strings.TrimSuffix(s.config.BaseURL, "/") + "/" + summary.Slug + "/",
+		"DEV_SESSION_AUTHORITY_DIR": s.config.AuthorityDir, "DEV_SESSION_CODEX_SOCKET": s.config.CodexSocket,
+		"DEV_SESSION_CODEX_VERSION": s.config.CodexVersion, "DEV_SESSION_REQUIRE_RUNTIME": "1",
+	}
+}
+
+func (s *Server) directTeamPresets() []teamruntime.Preset {
+	if s.installedTeams == nil || !s.installedTeams.Managed || s.installedTeams.Catalog == nil {
+		return teamruntime.Presets()
+	}
+	presets, err := teamruntime.PresetsFromCatalog(*s.installedTeams.Catalog)
+	if err != nil {
+		s.config.Logger.Printf("project installed direct team presets: %v", err)
+		return nil
+	}
+	return presets
+}
+
+func (s *Server) teamService() (teamruntime.Service, error) {
+	if s.config.UserStateRoot == "" || s.config.Codex == nil {
+		return teamruntime.Service{}, errors.New("team runtime is unavailable")
+	}
+	client, ok := s.config.Codex.(teamruntime.Client)
+	if !ok {
+		return teamruntime.Service{}, errors.New("this Codex client cannot create independent team threads")
+	}
+	store, err := teamruntime.NewStore(s.config.UserStateRoot, s.config.Workspace)
+	if err != nil {
+		return teamruntime.Service{}, err
+	}
+	service := teamruntime.Service{Store: store, Client: client, Workspace: s.config.Workspace, HostProfile: s.config.HostProfile, ValidateSettings: func(ctx context.Context, settings codex.ThreadSettings) error {
+		return s.validateModelSettings(ctx, settings, false)
+	}}
+	if s.installedTeams != nil && s.installedTeams.Managed {
+		service.Catalog = s.installedTeams.Catalog
+	}
+	return service, nil
+}
+
+func (s *Server) loadTeamRoster(summary *session.Summary) (*teamruntime.Roster, error) {
+	if s.config.UserStateRoot == "" || summary.Codex.ThreadID == "" {
+		return nil, os.ErrNotExist
+	}
+	store, err := teamruntime.NewStore(s.config.UserStateRoot, s.config.Workspace)
+	if err != nil {
+		return nil, err
+	}
+	return store.Load(summary.Slug, summary.Codex.ThreadID)
+}
+
+// teamAPI is intentionally a small direct-thread adapter. A request never
+// reaches the retired virtual-team dispatcher: it either changes the roster or
+// sends one normal, client-correlated turn to the selected independent thread.
+func (s *Server) teamAPI(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
+	if r.Method == http.MethodGet {
+		roster, err := s.loadTeamRoster(summary)
+		if err != nil && !errors.Is(err, os.ErrNotExist) {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			return
+		}
+		presets := s.directTeamPresets()
+		s.writeJSON(w, http.StatusOK, map[string]any{"roster": roster, "presets": presets,
+			"roleDefaults": s.roleDefaults(roster, teamRoles(presets))})
+		return
+	}
+	if r.Method != http.MethodPost && r.Method != http.MethodDelete {
+		w.Header().Set("Allow", "GET, POST, DELETE")
+		s.writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "unsupported team operation"})
+		return
+	}
+	// The creation receipt proves the exact initial roster. Keep all Team
+	// mutations behind that proof, including assignment and retry, so a ready
+	// manifest cannot expose a roster that invalidates its pending receipt.
+	if receipt, ok := s.currentCreation(summary.Slug); ok && receipt.blocksSession() {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session initialization has not finished"})
+		return
+	}
+	// Match all other browser mutations: this shared runtime lock is the same
+	// lock held exclusively by dev-session lifecycle commands. Keep the App
+	// Server side effect and roster transition inside it so archive/delete cannot
+	// race member creation or assignment.
+	lock, err := session.LockRuntimeShared(s.config.AuthorityDir, summary.Slug)
+	if err != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		return
+	}
+	defer lock.Close()
+	owner, journalErr := session.PendingLifecycle(s.config.Workspace, summary.Slug)
+	if journalErr != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": journalErr.Error()})
+		return
+	}
+	if owner != "" {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session " + owner + " is unfinished; retry that operation first"})
+		return
+	}
+	summary, err = session.Find(s.config.Workspace, summary.Slug)
+	if err != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session state changed"})
+		return
+	}
+	s.normalizeInteractivity(r.Context(), summary)
+	if err := s.requireOrdinaryRetainedMutation(r.Context(), summary); err != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		return
+	}
+	if summary.Archived || !summary.Interactive {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session is not ready for team changes"})
+		return
+	}
+	var request teamRequestBody
+	if !s.decodeJSON(w, r, &request) {
+		return
+	}
+	request.Action, request.Address, request.Role = strings.TrimSpace(request.Action), strings.TrimSpace(request.Address), strings.TrimSpace(request.Role)
+	if request.Action == "assign" && strings.TrimSpace(request.From) != "" && strings.TrimSpace(request.From) != "lead" {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "The portal can only assign work as lead."})
+		return
+	}
+	service, err := s.teamService()
+	if err != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		return
+	}
+	if r.Method == http.MethodDelete || request.Action == "remove" {
+		err = service.Remove(r.Context(), summary.Slug, summary.Codex.ThreadID, request.Address)
+	} else {
+		cwd := filepath.Join(s.config.Workspace, "work", summary.Slug)
+		if request.Action == "add" || request.Action == "configure" {
+			request.Model = strings.TrimSpace(request.Model)
+			request.Effort = strings.TrimSpace(request.Effort)
+			if request.settingsNull || request.modelProvided != request.effortProvided ||
+				(request.modelProvided && (request.Model == "" || request.Effort == "")) ||
+				(request.Action == "configure" && !request.modelProvided) {
+				s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "choose a model and reasoning effort for this member"})
+				return
+			}
+			if request.modelProvided {
+				if err := s.validateModelSettings(r.Context(), codex.ThreadSettings{Model: request.Model, ReasoningEffort: request.Effort}, false); err != nil {
+					s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+					return
+				}
+			}
+		}
+		switch request.Action {
+		case "preset":
+			if s.installedTeams != nil && s.installedTeams.Managed && s.installedTeams.Catalog != nil {
+				var preset teamruntime.Preset
+				preset, err = teamruntime.FindCatalogPreset(*s.installedTeams.Catalog, strings.TrimSpace(request.Preset))
+				if err == nil {
+					_, err = service.ApplyPresetSpec(r.Context(), summary.Slug, summary.Codex.ThreadID, cwd, s.teamEnvironment(summary), preset)
+				}
+			} else {
+				_, err = service.ApplyPreset(r.Context(), summary.Slug, summary.Codex.ThreadID, cwd, s.teamEnvironment(summary), strings.TrimSpace(request.Preset), strings.TrimSpace(request.Model), strings.TrimSpace(request.Effort))
+			}
+		case "add":
+			_, err = service.Add(r.Context(), summary.Slug, summary.Codex.ThreadID, cwd, s.teamEnvironment(summary), request.Role, strings.TrimSpace(request.Model), strings.TrimSpace(request.Effort))
+		case "retry":
+			_, err = service.RetryCreating(r.Context(), summary.Slug, summary.Codex.ThreadID, cwd, s.teamEnvironment(summary), request.Address)
+		case "configure":
+			_, err = service.Configure(r.Context(), summary.Slug, summary.Codex.ThreadID, request.Address, strings.TrimSpace(request.Model), strings.TrimSpace(request.Effort))
+		case "assign":
+			_, err = service.Assign(r.Context(), summary.Slug, summary.Codex.ThreadID, "lead", strings.TrimSpace(request.To), request.Message, strings.TrimSpace(request.Model), strings.TrimSpace(request.Effort), strings.TrimSpace(request.MessageID))
+		default:
+			err = errors.New("unknown team action")
+		}
+	}
+	if err != nil {
+		var settingsError *teamruntime.MemberSettingsError
+		status := http.StatusConflict
+		if errors.As(err, &settingsError) {
+			status = http.StatusBadRequest
+		}
+		s.writeJSON(w, status, map[string]string{"error": err.Error()})
+		return
+	}
+	roster, rosterErr := s.loadTeamRoster(summary)
+	if rosterErr != nil {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": rosterErr.Error()})
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]any{"roster": roster})
+}
+
+// teamThreadAPI accepts only a roster address, never a raw thread ID. This
+// keeps read-only member transcripts inside the owning session boundary.
+func (s *Server) teamThreadAPI(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", http.MethodGet)
+		s.writeJSON(w, http.StatusMethodNotAllowed, map[string]string{"error": "team transcripts are read-only"})
+		return
+	}
+	roster, err := s.loadTeamRoster(summary)
+	if err != nil {
+		s.writeJSON(w, http.StatusNotFound, map[string]string{"error": "team member is unavailable"})
+		return
+	}
+	address := strings.TrimSpace(r.URL.Query().Get("member"))
+	var threadID string
+	for _, member := range roster.Members {
+		if member.Address == address {
+			threadID = member.Thread
+			break
+		}
+	}
+	if threadID == "" {
+		s.writeJSON(w, http.StatusNotFound, map[string]string{"error": "team member is unavailable"})
+		return
+	}
+	transcript, err := s.config.Codex.ReadThread(r.Context(), threadID)
+	if err != nil {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+		return
+	}
+	s.presentTranscript(&transcript)
+	s.writeJSON(w, http.StatusOK, map[string]any{"member": address, "transcript": transcript})
+}
+
+func (s *Server) deleteSession(w http.ResponseWriter, r *http.Request, slug string) {
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
+	var body struct {
+		Force     bool   `json:"force"`
+		TargetID  string `json:"targetId"`
+		ReceiptID string `json:"receiptId"`
+	}
+	if !s.decodeJSON(w, r, &body) {
+		return
+	}
+	owner, journalErr := session.PendingLifecycle(s.config.Workspace, slug)
+	if journalErr != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": journalErr.Error()})
+		return
+	}
+	if owner != "" && owner != "delete" {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "session " + owner + " is unfinished; retry that operation first",
+		})
+		return
+	}
+	if owner == "delete" {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "Deletion is already in progress. Use the retry action.",
+		})
+		return
+	}
+	force := body.Force
+	deletionTargetID, deletedThreadID, targetErr := s.resolveDeletionTarget(
+		slug, false, body.TargetID, "",
+	)
+	if targetErr != nil {
+		s.writeLifecycleError(w, targetErr)
+		return
+	}
+	deletionJournalID, targetErr := newLifecycleOperationID()
+	if targetErr != nil {
+		s.writeJSON(w, http.StatusInternalServerError, map[string]string{
+			"error": "Unable to create a deletion operation identity.",
+		})
+		return
+	}
+	args := []string{"delete", slug, "--as-is", "--portal-authorized"}
+	if force {
+		args = append(args, "--force")
+	}
+	args = append(args, "--portal-operation-id", deletionJournalID)
+	s.startLifecycleOperation(w, slug, "delete", "/", args, lifecycleOperationOptions{
+		Force: force, TargetID: deletionTargetID, DeletedThreadID: deletedThreadID,
+		JournalID: deletionJournalID,
+	}, "", body.ReceiptID)
+}
+
+func newLifecycleOperationID() (string, error) {
+	random := make([]byte, 32)
+	if _, err := rand.Read(random); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(random), nil
+}
+
+func (s *Server) revalidateLifecycleTarget(slug, kind, expectedTargetID string) error {
+	summary, err := session.Find(s.config.Workspace, slug)
+	if errors.Is(err, fs.ErrNotExist) {
+		return errors.New("The session no longer exists. Reload the workspace before retrying it.")
+	}
+	if err != nil {
+		return fmt.Errorf("verify %s target: %w", kind, err)
+	}
+	_, err = validateLifecycleTarget(summary, expectedTargetID, kind)
+	return err
+}
+
+func (s *Server) resolveDeletionTarget(
+	slug string, journalOwned bool, expectedTargetID, retainedThreadID string,
+) (string, string, error) {
+	if journalOwned {
+		return expectedTargetID, retainedThreadID, nil
+	}
+	summary, err := session.Find(s.config.Workspace, slug)
+	if errors.Is(err, fs.ErrNotExist) {
+		return "", "", errors.New("The session no longer exists. Reload the workspace before deleting it.")
+	}
+	if err != nil {
+		return "", "", fmt.Errorf("verify deletion target: %w", err)
+	}
+	currentTargetID, err := validateLifecycleTarget(summary, expectedTargetID, "delete")
+	if err != nil {
+		return "", "", err
+	}
+	currentThreadID := summary.Codex.ThreadID
+	return currentTargetID, currentThreadID, nil
+}
+
+func completedPlan(transcript codex.Transcript) (codex.TranscriptEntry, bool) {
+	for index := len(transcript.Entries) - 1; index >= 0; index-- {
+		entry := transcript.Entries[index]
+		if transcript.LatestTurnID != "" && entry.TurnID == transcript.LatestTurnID &&
+			entry.Kind == "plan" && entry.TurnStatus == "completed" && strings.TrimSpace(entry.Text) != "" {
+			return entry, true
+		}
+	}
+	return codex.TranscriptEntry{}, false
+}
+
+func planDigest(text string) string {
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(text)))
+}
+
+type implementPlanRequest struct {
+	Sensitive                   bool    `json:"sensitive,omitempty"`
+	PlanContextVersion          int     `json:"planContextVersion"`
+	PlanText                    string  `json:"planText"`
+	Model                       *string `json:"model"`
+	ReasoningEffort             *string `json:"reasoningEffort"`
+	Team                        *string `json:"team"`
+	CatalogDigest               *string `json:"catalogDigest"`
+	Action                      string  `json:"action"`
+	PlanTurnID                  string  `json:"planTurnId"`
+	PlanSHA256                  string  `json:"planSha256"`
+	ClientUserMessageID         string  `json:"clientUserMessageId"`
+	Name                        string  `json:"name"`
+	CreationDate                string  `json:"creationDate"`
+	BrowserNotificationsEnabled *bool   `json:"browserNotificationsEnabled,omitempty"`
+}
+
+func (s *Server) implementPlan(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
+	r.Body = http.MaxBytesReader(w, r.Body, session.MaxFormRequestBodyBytes)
+	var payload json.RawMessage
+	if !s.decodeJSON(w, r, &payload) {
+		return
+	}
+	if err := rejectDuplicateCreationJSONKeys(payload); err != nil {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON request"})
+		return
+	}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(payload, &raw); err != nil || raw == nil {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON request"})
+		return
+	}
+	if err := validateBrowserNotificationPreference(raw); err != nil {
+		s.writeError(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+	var body implementPlanRequest
+	decoder := json.NewDecoder(bytes.NewReader(payload))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&body); err != nil || decoder.Decode(&struct{}{}) != io.EOF {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON request"})
+		return
+	}
+	if strings.TrimSpace(body.Action) == "new" {
+		for _, field := range []string{"model", "reasoningEffort", "team", "catalogDigest"} {
+			if value, ok := raw[field]; ok && bytes.Equal(bytes.TrimSpace(value), []byte("null")) {
+				s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "managed creation fields must be omitted instead of null"})
+				return
+			}
+		}
+		destination, err := creationDestination(strings.TrimSpace(body.Name), strings.TrimSpace(body.CreationDate))
+		if err != nil {
+			s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+			return
+		}
+		request := creationRequest{
+			BrowserNotificationsEnabled: body.BrowserNotificationsEnabled, Sensitive: body.Sensitive, Kind: "plan", Slug: destination, PlanTurnID: strings.TrimSpace(body.PlanTurnID),
+			PlanSHA256: strings.TrimSpace(body.PlanSHA256), PlanText: body.PlanText,
+		}
+		if body.Model != nil {
+			request.Model, request.modelSubmitted = strings.TrimSpace(*body.Model), true
+		}
+		if body.ReasoningEffort != nil {
+			request.Effort, request.effortSubmitted = strings.TrimSpace(*body.ReasoningEffort), true
+		}
+		if body.Team != nil {
+			request.Team, request.teamSubmitted = strings.TrimSpace(*body.Team), true
+		}
+		if body.CatalogDigest != nil {
+			request.CatalogDigest, request.digestSubmitted = strings.TrimSpace(*body.CatalogDigest), true
+		}
+		s.acceptPlanCreation(w, r, summary, request)
+		return
+	}
+
+	action := strings.TrimSpace(body.Action)
+	if action != "same" && action != "recover" {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "select how to implement the plan"})
+		return
+	}
+	const implementationMessage = "Implement the plan."
+	body.ClientUserMessageID = strings.TrimSpace(body.ClientUserMessageID)
+	if !queueClientMessageIDPattern.MatchString(body.ClientUserMessageID) {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "message has an invalid client identity"})
+		return
+	}
+
+	if body.PlanContextVersion != 0 && body.PlanContextVersion != 2 {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "unsupported plan request version; reload the page"})
+		return
+	}
+
+	if action == "recover" && (!messageDigestPattern.MatchString(body.PlanSHA256) || (body.PlanContextVersion == 2 && strings.TrimSpace(body.PlanTurnID) == "")) {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid plan receipt"})
+		return
+	}
+
+	if action == "same" && body.PlanContextVersion == 0 {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "reload the page before starting plan implementation"})
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
+	defer cancel()
+	messageLock := s.messageLock(summary.Slug)
+	if err := messageLock.Lock(ctx); err != nil {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+		return
+	}
+	defer messageLock.Unlock()
+	// Recover a previously submitted request before checking proposal freshness.
+	// This operation cannot start a prepared request or change thread settings.
+	actionContext := "plan:" + strings.TrimSpace(body.PlanSHA256)
+	if body.PlanContextVersion == 2 {
+		actionContext = "plan:" + strings.TrimSpace(body.PlanTurnID) + ":" + strings.TrimSpace(body.PlanSHA256)
+	}
+	if receipt, found, err := s.config.Codex.ReconcileSend(
+		ctx, summary.Codex.ThreadID, implementationMessage, body.ClientUserMessageID, actionContext,
+	); err != nil {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+		return
+	} else if found {
+		s.writeJSON(w, http.StatusAccepted, receipt)
+		return
+	}
+
+	if action == "recover" {
+		if body.PlanContextVersion == 2 {
+			transcript, err := s.config.Codex.ReadThread(ctx, summary.Codex.ThreadID)
+			if err != nil {
+				s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+				return
+			}
+			if transcript.LatestTurnID == "" || transcript.LatestTurnID == strings.TrimSpace(body.PlanTurnID) {
+				s.writeJSON(w, http.StatusConflict, map[string]string{"error": "review the current plan before retrying implementation"})
+				return
+			}
+		}
+
+		retired, err := s.config.Codex.DiscardPreparedSend(
+			summary.Codex.ThreadID, implementationMessage, body.ClientUserMessageID, actionContext,
+		)
+		if err != nil {
+			s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+		} else if !retired {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": "message state changed; retry receipt recovery"})
+		} else {
+			s.writeJSON(w, http.StatusOK, map[string]any{"retired": true, "clientUserMessageId": body.ClientUserMessageID})
+		}
+		return
+	}
+
+	transcript, err := s.config.Codex.ReadThread(ctx, summary.Codex.ThreadID)
+	if err != nil {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+		return
+	}
+	plan, ok := completedPlan(transcript)
+	digest := planDigest(plan.Text)
+	if !ok || plan.TurnID != strings.TrimSpace(body.PlanTurnID) ||
+		digest != strings.TrimSpace(body.PlanSHA256) {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "the displayed plan is stale; review the latest plan before implementing it",
+		})
+		return
+	}
+	if transcript.Status == "active" {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "Codex is still working on this plan"})
+		return
+	}
+	if transcript.CollaborationMode == "plan" {
+		if err := s.config.Codex.PrepareSend(
+			summary.Codex.ThreadID, implementationMessage,
+			body.ClientUserMessageID, actionContext, false,
+		); err != nil {
+			s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+			return
+		}
+		mode := "default"
+		if _, err := s.config.Codex.UpdateThreadSettings(
+			ctx, summary.Codex.ThreadID,
+			codex.ThreadSettingsUpdate{CollaborationMode: &mode},
+		); err != nil {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+			return
+		}
+	} else if transcript.CollaborationMode == "default" {
+		attempted, attemptErr := s.config.Codex.SendAttempted(
+			ctx, summary.Codex.ThreadID, implementationMessage,
+			body.ClientUserMessageID, actionContext,
+		)
+		if attemptErr != nil {
+			s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": attemptErr.Error()})
+			return
+		}
+		if !attempted {
+			s.writeJSON(w, http.StatusConflict, map[string]string{
+				"error": "the conversation is no longer in Plan mode",
+			})
+			return
+		}
+	} else {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "the conversation is no longer in Plan mode",
+		})
+		return
+	}
+	receipt, err := s.config.Codex.Send(
+		ctx, summary.Codex.ThreadID, implementationMessage,
+		body.ClientUserMessageID, actionContext,
+	)
+	if err != nil {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": err.Error()})
+		return
+	}
+	s.writeJSON(w, http.StatusAccepted, receipt)
+}
+
+func (s *Server) controlCluster(w http.ResponseWriter, r *http.Request, summary *session.Summary, action string) {
+	if summary.Archived {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "archived sessions cannot have live development clusters"})
+		return
+	}
+	lock, lockErr := session.LockRuntimeShared(s.config.AuthorityDir, summary.Slug)
+	if lockErr != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": lockErr.Error()})
+		return
+	}
+	defer lock.Close()
+	owner, journalErr := session.PendingLifecycle(s.config.Workspace, summary.Slug)
+	if journalErr != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": journalErr.Error()})
+		return
+	}
+	if owner != "" {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "session " + owner + " is unfinished; retry that operation first",
+		})
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
+	var body struct {
+		Kind string `json:"kind"`
+	}
+	if !s.decodeJSON(w, r, &body) {
+		return
+	}
+	kind := strings.TrimSpace(body.Kind)
+	key := summary.Slug + "\x00" + kind
+	s.clusterControlMu.Lock()
+	if s.clusterControls[key] {
+		s.clusterControlMu.Unlock()
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "cluster is changing; wait for the current operation"})
+		return
+	}
+	if s.clusterControls == nil {
+		s.clusterControls = make(map[string]bool)
+	}
+	s.clusterControls[key] = true
+	s.clusterControlMu.Unlock()
+	defer func() {
+		s.clusterControlMu.Lock()
+		delete(s.clusterControls, key)
+		s.clusterControlMu.Unlock()
+	}()
+	s.operationMu.Lock()
+	if s.closing {
+		s.operationMu.Unlock()
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "portal is stopping; refresh cluster status"})
+		return
+	}
+	s.operationWG.Add(1)
+	s.operationMu.Unlock()
+	defer s.operationWG.Done()
+	timeout := time.Duration(session.ClusterProvider().ReleaseTimeoutSeconds) * time.Second
+	if action == "start" {
+		timeout = 30 * time.Minute
+	}
+	ctx, cancel := context.WithTimeout(s.operationContext, timeout)
+	defer cancel()
+	if err := s.clusters.Control(ctx, kind, summary.Slug, action); err != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		return
+	}
+	s.writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+func (s *Server) startArchive(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
+	var body struct {
+		Mode      string `json:"mode"`
+		TargetID  string `json:"targetId"`
+		ReceiptID string `json:"receiptId"`
+	}
+	if !s.decodeJSON(w, r, &body) {
+		return
+	}
+	owner, journalErr := session.PendingLifecycle(s.config.Workspace, summary.Slug)
+	if journalErr != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": journalErr.Error()})
+		return
+	}
+	if owner != "" {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "Session " + owner + " is already in progress. Use the retry action.",
+		})
+		return
+	}
+	if body.Mode != "complete" && body.Mode != "abandoned" && body.Mode != "archived" {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid archival policy"})
+		return
+	}
+	targetID, err := validateLifecycleTarget(summary, body.TargetID, "archive")
+	if err != nil {
+		s.writeLifecycleError(w, err)
+		return
+	}
+	if summary.Archived {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session is already archived"})
+		return
+	}
+	args := []string{"archive", summary.Slug, "--as-is", "--portal-authorized"}
+	if body.Mode == "abandoned" {
+		args = append(args, "--abandoned")
+	} else if body.Mode == "complete" {
+		args = append(args, "--require-merged")
+	}
+	journalID, err := newLifecycleOperationID()
+	if err != nil {
+		s.writeJSON(w, http.StatusInternalServerError, map[string]string{
+			"error": "Unable to create an archive operation identity.",
+		})
+		return
+	}
+	args = append(args, "--portal-operation-id", journalID)
+	s.startLifecycleOperation(
+		w, summary.Slug, "archive", "/", args,
+		lifecycleOperationOptions{
+			Mode: body.Mode, TargetID: targetID, JournalID: journalID,
+		}, "", body.ReceiptID,
+	)
+}
+
+func (s *Server) startRevive(w http.ResponseWriter, r *http.Request, summary *session.Summary) {
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
+	var body struct {
+		AllowAbandoned bool   `json:"allowAbandoned"`
+		TargetID       string `json:"targetId"`
+		ReceiptID      string `json:"receiptId"`
+	}
+	if !s.decodeJSON(w, r, &body) {
+		return
+	}
+	owner, journalErr := session.PendingLifecycle(s.config.Workspace, summary.Slug)
+	if journalErr != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": journalErr.Error()})
+		return
+	}
+	if owner != "" {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "Session " + owner + " is already in progress. Use the retry action.",
+		})
+		return
+	}
+	targetID, err := validateLifecycleTarget(summary, body.TargetID, "revive")
+	if err != nil {
+		s.writeLifecycleError(w, err)
+		return
+	}
+	if !summary.Archived {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "session is already active"})
+		return
+	}
+	if summary.Lifecycle == "abandoned" && !body.AllowAbandoned {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "confirm that the abandoned session should be revived"})
+		return
+	}
+	args := []string{"revive", summary.Slug, "--as-is", "--portal-authorized"}
+	if summary.Lifecycle == "abandoned" {
+		args = append(args, "--allow-abandoned")
+	}
+	journalID, err := newLifecycleOperationID()
+	if err != nil {
+		s.writeJSON(w, http.StatusInternalServerError, map[string]string{
+			"error": "Unable to create a revive operation identity.",
+		})
+		return
+	}
+	args = append(args, "--portal-operation-id", journalID)
+	s.startLifecycleOperation(
+		w, summary.Slug, "revive", "/"+summary.Slug+"/", args,
+		lifecycleOperationOptions{
+			AllowAbandoned: body.AllowAbandoned || summary.Lifecycle == "abandoned",
+			TargetID:       targetID,
+			JournalID:      journalID,
+		}, "", body.ReceiptID,
+	)
+}
+
+func (s *Server) startLifecycleOperation(
+	w http.ResponseWriter, slug, kind, redirect string, args []string,
+	options lifecycleOperationOptions, expectedReceiptID string, supersedeReceiptIDs ...string,
+) {
+	s.operationMu.Lock()
+	closing := s.closing
+	s.operationMu.Unlock()
+	if closing {
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "portal is shutting down"})
+		return
+	}
+	admission, cancel := context.WithTimeout(s.operationContext, 15*time.Second)
+	defer cancel()
+	_, unlock, gateErr := s.acquireTransitionContext(admission, unix.LOCK_SH)
+	if gateErr != nil {
+		s.writeLifecycleError(w, gateErr)
+		return
+	}
+	defer unlock()
+	if err := s.requireCurrentHostProfile(); err != nil {
+		s.writeLifecycleError(w, err)
+		return
+	}
+	owner, err := session.PendingLifecycle(s.config.Workspace, slug)
+	if err != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		return
+	}
+	if owner != "" && owner != kind {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "session " + owner + " is unfinished; retry that operation first",
+		})
+		return
+	}
+	s.operationMu.Lock()
+	if s.closing {
+		s.operationMu.Unlock()
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "portal is shutting down"})
+		return
+	}
+	operation, exists := s.operations[slug]
+	if expectedReceiptID != "" &&
+		(!exists || operation.ReceiptID != expectedReceiptID || operation.Kind != kind ||
+			operation.Options.JournalID != options.JournalID || operation.Options.Mode != options.Mode ||
+			operation.Options.AllowAbandoned != options.AllowAbandoned ||
+			(operation.State != "failed" && operation.State != "paused")) {
+		s.operationMu.Unlock()
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "The lifecycle operation changed. Reload the page before retrying it.",
+		})
+		return
+	}
+	if expectedReceiptID == "" && len(supersedeReceiptIDs) != 0 && supersedeReceiptIDs[0] != "" &&
+		(!exists || operation.ReceiptID != supersedeReceiptIDs[0] || operation.State != "failed" || operation.Options.JournalExpected) {
+		s.operationMu.Unlock()
+		s.writeLifecycleError(w, errors.New("The lifecycle receipt changed. Review the current operation before confirming again."))
+		return
+	}
+	if exists && operation.State == "running" {
+		s.operationMu.Unlock()
+		if operation.Kind != kind || operation.Options.TargetID != options.TargetID ||
+			operation.Options.Mode != options.Mode || operation.Options.Force != options.Force ||
+			operation.Options.AllowAbandoned != options.AllowAbandoned {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": "another session operation is already running"})
+			return
+		}
+		s.writeJSON(w, http.StatusAccepted, operation)
+		return
+	}
+	originalOperation, originalExists, originalRevision := operation, exists, s.operationRevisions[slug]
+	s.operationMu.Unlock()
+	progress, proofErr := session.PendingLifecycleProgress(s.config.Workspace, slug)
+	if proofErr == nil {
+		if expectedReceiptID != "" {
+			proofErr = s.prepareLifecycleRetry(&operation, progress)
+			if proofErr == nil {
+				// Preserve explicit force escalation after proving the stored receipt.
+				force := options.Force
+				options = operation.Options
+				options.Force = options.Force || force
+				if kind == "delete" && options.Force {
+					foundForce := false
+					for _, argument := range args {
+						if argument == "--force" {
+							foundForce = true
+						}
+					}
+					if !foundForce {
+						args = append(args, "--force")
+					}
+				}
+			}
+		} else {
+			supersede := ""
+			if len(supersedeReceiptIDs) != 0 {
+				supersede = supersedeReceiptIDs[0]
+			}
+			if progress != nil || (exists && operation.Options.JournalExpected) {
+				proofErr = errors.New("An accepted lifecycle journal cannot be replaced. Retry that operation.")
+			} else if supersede != "" {
+				if !exists || operation.ReceiptID != supersede || operation.State != "failed" {
+					proofErr = errors.New("The lifecycle receipt changed. Review the current operation before confirming again.")
+				}
+			} else if exists && operation.State != "complete" {
+				proofErr = errors.New("Retry the existing operation or explicitly confirm replacing its failed request.")
+			}
+			if proofErr == nil {
+				summary, findErr := session.Find(s.config.Workspace, slug)
+				proofErr = findErr
+				if proofErr == nil {
+					_, proofErr = validateLifecycleTarget(summary, options.TargetID, kind)
+					options.TargetLocation = summary.Root
+				}
+			}
+		}
+	}
+	if proofErr != nil {
+		var changed *lifecycleTargetChangedError
+		if errors.As(proofErr, &changed) && exists && operation.State == "failed" && !operation.Options.JournalExpected {
+			changed.ReceiptID = operation.ReceiptID
+		}
+		s.writeLifecycleError(w, proofErr)
+		return
+	}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	startedAt := now
+	if expectedReceiptID != "" {
+		startedAt = operation.StartedAt
+	}
+	receiptID := operation.ReceiptID
+	var receiptErr error
+	if expectedReceiptID == "" {
+		receiptID, receiptErr = newLifecycleOperationID()
+	}
+	if receiptErr != nil {
+		s.writeJSON(w, http.StatusInternalServerError, map[string]string{
+			"error": "unable to create the lifecycle operation",
+		})
+		return
+	}
+	attempt := 1
+	if expectedReceiptID != "" {
+		attempt = operation.Attempt + 1
+	}
+	version := lifecycleTargetIdentityVersion
+	if expectedReceiptID != "" {
+		version = operation.TargetIdentityVersion
+	}
+	operation = lifecycleOperation{
+		Slug: slug, Kind: kind, State: "running", Phase: "starting", Redirect: redirect,
+		StartedAt: startedAt, UpdatedAt: now, ReceiptID: receiptID, Options: options,
+		TargetIdentityVersion: version, Attempt: attempt,
+	}
+	s.operationMu.Lock()
+	current, present := s.operations[slug]
+	if s.closing {
+		s.operationMu.Unlock()
+		s.writeJSON(w, http.StatusServiceUnavailable, map[string]string{"error": "portal is shutting down"})
+		return
+	}
+	if present != originalExists || (present && current != originalOperation) ||
+		(!present && s.operationRevisions[slug] != originalRevision) {
+		s.operationMu.Unlock()
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "The lifecycle operation changed. Review its current status before retrying."})
+		return
+	}
+	if err := s.operationStore.canPersistTerminalOutcomes(s.operations, slug, operation); err != nil {
+		s.operationMu.Unlock()
+		s.writeJSON(w, http.StatusInsufficientStorage, map[string]string{
+			"error": "lifecycle operation history is full; dismiss finished operations and retry",
+		})
+		return
+	}
+	if err := s.replaceLifecycleOperationLocked(slug, operation); err != nil {
+		s.operationMu.Unlock()
+		s.writeJSON(w, http.StatusInternalServerError, map[string]string{
+			"error": "unable to persist the lifecycle operation",
+		})
+		return
+	}
+	s.operationWG.Add(1)
+	s.operationMu.Unlock()
+	s.requestDisplayRefresh(true)
+	go func(started lifecycleOperation) {
+		defer s.operationWG.Done()
+		err := s.runLifecycleOperation(s.operationContext, slug, kind, args, started.Options)
+		finished := time.Now().UTC().Format(time.RFC3339Nano)
+		completed := started
+		completed.UpdatedAt = finished
+		if err == nil {
+			completed.State = "complete"
+			completed.Phase = "complete"
+		} else {
+			completed.State = "failed"
+			completed.Error = boundedLifecycleError(err.Error())
+			var changed *lifecycleTargetChangedError
+			if errors.As(err, &changed) {
+				completed.ErrorCode = "target_changed"
+			}
+		}
+		persistErr := s.withCurrentGeneration(func() error {
+			if err != nil {
+				if progress, progressErr := session.PendingLifecycleProgress(s.config.Workspace, slug); progressErr == nil && progress != nil && progress.Operation == kind {
+					completed.Phase = progress.Phase
+					if completed.Options.JournalID != "" &&
+						completed.Options.JournalID == progress.JournalID {
+						if completed.Options.JournalEvidence == "" || completed.Options.JournalEvidence == progress.Evidence {
+							completed.applyProgressOptions(*progress)
+							s.bindLifecycleJournalTarget(&completed, *progress)
+						}
+					}
+				}
+			}
+			view := s.lifecycleOperationView(slug, completed)
+			s.operationMu.Lock()
+			defer s.operationMu.Unlock()
+			current, exists := s.operations[slug]
+			if !exists || current.ReceiptID != completed.ReceiptID || current.Attempt != completed.Attempt {
+				return nil
+			}
+			if err := s.replaceLifecycleOperationLocked(slug, completed); err != nil {
+				return err
+			}
+			s.publishLifecycleSnapshot(slug, view, time.Now().UTC())
+			return nil
+		})
+		if persistErr != nil {
+			s.config.Logger.Printf("persist completed %s operation for %s: %v", kind, slug, persistErr)
+			s.operationMu.Lock()
+			current, exists := s.operations[slug]
+			if exists && current.ReceiptID == completed.ReceiptID && current.Attempt == completed.Attempt {
+				completed.State = "failed"
+				completed.Error = "The command ended, but the portal could not save its final status. Check the session state and retry."
+				s.operations[slug] = completed
+				s.operationRevisions[slug]++
+				s.publishLifecycleSnapshot(slug, completed, time.Time{})
+			}
+			s.operationMu.Unlock()
+		}
+
+	}(operation)
+	s.writeJSON(w, http.StatusAccepted, operation)
+}
+
+func (s *Server) runLifecycleOperation(
+	parent context.Context, slug, kind string, args []string, options lifecycleOperationOptions,
+) error {
+	return s.executeLifecycleOperation(parent, 12*time.Minute, slug, kind, args, options)
+}
+
+func (s *Server) executeLifecycleOperation(
+	parent context.Context, timeout time.Duration, slug, kind string, args []string,
+	options lifecycleOperationOptions,
+) error {
+	ctx, cancel := context.WithTimeout(parent, timeout)
+	defer cancel()
+	transition, unlockTransition, err := s.acquireTransitionContext(ctx, unix.LOCK_SH)
+	if err != nil {
+		return fmt.Errorf("lock workspace runtime for %s: %w", kind, err)
+	}
+	defer unlockTransition()
+	if err := s.requireCurrentHostProfile(); err != nil {
+		return err
+	}
+	mutationLock := s.messageLock(slug)
+	if err := mutationLock.Lock(ctx); err != nil {
+		return fmt.Errorf("lock conversation mutations for %s: %w", kind, err)
+	}
+	defer mutationLock.Unlock()
+	progress, progressErr := session.PendingLifecycleProgress(s.config.Workspace, slug)
+	if progressErr != nil {
+		return fmt.Errorf("verify %s operation identity: %w", kind, progressErr)
+	}
+	if options.JournalExpected {
+		if progress == nil || progress.Operation != kind ||
+			progress.JournalID == "" || progress.JournalID != options.JournalID ||
+			(options.JournalEvidence != "" && options.JournalEvidence != progress.Evidence) {
+			return errors.New("The lifecycle operation changed. Reload the page before retrying it.")
+		}
+	} else if progress != nil {
+		return errors.New("Another lifecycle operation started. Reload the page before retrying it.")
+	}
+	if kind == "delete" {
+		if _, _, targetErr := s.resolveDeletionTarget(
+			slug, progress != nil, options.TargetID, options.DeletedThreadID,
+		); targetErr != nil {
+			return targetErr
+		}
+	} else if progress == nil {
+		if targetErr := s.revalidateLifecycleTarget(slug, kind, options.TargetID); targetErr != nil {
+			return targetErr
+		}
+	}
+	stdout, stderr, err := s.runDevSessionWithTransition(ctx, timeout, transition, args...)
+	if err != nil {
+		return commandFailure(kind+" session", stdout, stderr, err)
+	}
+	s.repositoryMu.Lock()
+	delete(s.repositoryCache, slug)
+	s.repositoryMu.Unlock()
+	return nil
+}
+
+func (s *Server) lifecycleStatus(w http.ResponseWriter, slug string) {
+	// GET demand coalesces ordinary discovery/target refreshes. The worker's
+	// independent running-only cadence supplies fast progress between them.
+	s.requestDisplayRefresh(true)
+	s.operationSnapshotMu.RLock()
+	snapshot, exists := s.operationSnapshots[slug]
+	warning := s.operationStatusWarning
+	s.operationSnapshotMu.RUnlock()
+	if !exists {
+		snapshot.operation = lifecycleOperation{State: "idle"}
+	}
+	s.writeJSON(w, http.StatusOK, struct {
+		lifecycleOperation
+		StatusCheckedAt time.Time `json:"statusCheckedAt"`
+		StatusStale     bool      `json:"statusStale"`
+		StatusWarning   string    `json:"statusWarning,omitempty"`
+	}{snapshot.operation, snapshot.checkedAt, snapshot.checkedAt.IsZero() || time.Since(snapshot.checkedAt) > 15*time.Second || warning != "", warning})
+}
+
+func (s *Server) retryLifecycleOperation(w http.ResponseWriter, r *http.Request, slug string) {
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
+	var body struct {
+		JournalID string `json:"journalId"`
+		ReceiptID string `json:"receiptId"`
+		Force     *bool  `json:"force"`
+	}
+	if !s.decodeJSON(w, r, &body) {
+		return
+	}
+	operation, ok, err := s.lifecycleOperationForSlug(slug)
+	if err != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		return
+	}
+	if !ok {
+		s.writeJSON(w, http.StatusNotFound, map[string]string{"error": "lifecycle operation is not available"})
+		return
+	}
+	if operation.State != "failed" && operation.State != "paused" {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "lifecycle operation is not retryable"})
+		return
+	}
+	if body.ReceiptID == "" || operation.ReceiptID == "" || body.ReceiptID != operation.ReceiptID {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "The lifecycle operation changed. Reload the page before retrying it.",
+		})
+		return
+	}
+	owner, ownerErr := session.PendingLifecycle(s.config.Workspace, slug)
+	if ownerErr != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": ownerErr.Error()})
+		return
+	}
+	if owner != "" && owner != operation.Kind {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "session " + owner + " is unfinished; retry that operation first",
+		})
+		return
+	}
+	progress, progressErr := session.PendingLifecycleProgress(s.config.Workspace, slug)
+	if progressErr != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": progressErr.Error()})
+		return
+	}
+	if body.JournalID == "" || body.JournalID != operation.Options.JournalID {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "The lifecycle operation changed. Reload the page before retrying it.",
+		})
+		return
+	}
+	if body.Force != nil && operation.Kind != "delete" {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{
+			"error": "Force is available only when retrying deletion.",
+		})
+		return
+	}
+	if progress != nil {
+		if progress.Operation != operation.Kind || body.JournalID != progress.JournalID {
+			s.writeJSON(w, http.StatusConflict, map[string]string{
+				"error": "The lifecycle operation changed. Reload the page before retrying it.",
+			})
+			return
+		}
+	} else if operation.Options.JournalExpected {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "The lifecycle recovery journal is no longer available. Reload the workspace before retrying.",
+		})
+		return
+	}
+	if operation.Kind == "delete" && body.Force != nil && *body.Force {
+		operation.Options.Force = true
+	}
+
+	args := []string{operation.Kind, slug, "--as-is", "--portal-authorized"}
+	switch operation.Kind {
+	case "archive":
+		if operation.Options.Mode != "complete" && operation.Options.Mode != "abandoned" && operation.Options.Mode != "archived" {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": "archive retry mode is unavailable"})
+			return
+		}
+		if operation.Options.Mode == "abandoned" {
+			args = append(args, "--abandoned")
+		} else if operation.Options.Mode == "complete" {
+			args = append(args, "--require-merged")
+		}
+	case "delete":
+		deletionTargetID, deletedThreadID, targetErr := s.resolveDeletionTarget(
+			slug, true, operation.Options.TargetID,
+			operation.Options.DeletedThreadID,
+		)
+		if targetErr != nil {
+			s.writeJSON(w, http.StatusConflict, map[string]string{"error": targetErr.Error()})
+			return
+		}
+		operation.Options.TargetID = deletionTargetID
+		operation.Options.DeletedThreadID = deletedThreadID
+		if operation.Options.Force {
+			args = append(args, "--force")
+		}
+	case "revive":
+		if operation.Options.AllowAbandoned {
+			args = append(args, "--allow-abandoned")
+		}
+	default:
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": "lifecycle operation is invalid"})
+		return
+	}
+	args = append(args, "--portal-operation-id", operation.Options.JournalID)
+	s.startLifecycleOperation(
+		w, slug, operation.Kind, operation.Redirect, args, operation.Options,
+		operation.ReceiptID,
+	)
+}
+
+func (s *Server) dismissLifecycleOperation(w http.ResponseWriter, r *http.Request, slug string) {
+	r.Body = http.MaxBytesReader(w, r.Body, 4096)
+	var body struct {
+		ReceiptID string `json:"receiptId"`
+	}
+	if !s.decodeJSON(w, r, &body) {
+		return
+	}
+	operation, ok, err := s.lifecycleOperationForSlug(slug)
+	if err != nil && !ok {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		return
+	}
+	if !ok {
+		w.WriteHeader(http.StatusNoContent)
+		return
+	}
+	if operation.State != "failed" && operation.State != "complete" {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "running or paused lifecycle operations cannot be dismissed",
+		})
+		return
+	}
+	s.operationMu.Lock()
+	defer s.operationMu.Unlock()
+	current, exists := s.operations[slug]
+	if !exists || body.ReceiptID == "" || current.ReceiptID == "" ||
+		body.ReceiptID != current.ReceiptID {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "The lifecycle operation changed. Reload the page before dismissing it.",
+		})
+		return
+	}
+	if current.State != "failed" && current.State != "complete" {
+		s.writeJSON(w, http.StatusConflict, map[string]string{
+			"error": "running or paused lifecycle operations cannot be dismissed",
+		})
+		return
+	}
+	if err := s.removeLifecycleOperationLocked(slug); err != nil {
+		s.writeJSON(w, http.StatusInternalServerError, map[string]string{
+			"error": "unable to dismiss the lifecycle operation",
+		})
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func commandFailure(action, stdout, stderr string, err error) error {
+	message := strings.TrimSpace(stderr)
+	if message == "" {
+		message = strings.TrimSpace(stdout)
+	}
+	if message == "" {
+		message = err.Error()
+	}
+	lines := strings.Split(strings.ToValidUTF8(message, "�"), "\n")
+	concise := make([]string, 0, len(lines))
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if marker := strings.Index(line, "error: command failed:"); marker >= 0 {
+			line = strings.TrimSpace(line[:marker])
+		}
+		if line == "" || strings.HasPrefix(line, "command failed:") ||
+			(strings.HasPrefix(line, "error: command failed") && strings.Contains(line, "/nix/store/")) {
+			continue
+		}
+		concise = append(concise, line)
+	}
+	if len(concise) == 0 {
+		concise = append(concise, err.Error())
+	}
+	return errors.New(boundedLifecycleError(action + ": " + strings.Join(concise, "\n")))
+}
+
+func (s *Server) forkSession(w http.ResponseWriter, r *http.Request, source *session.Summary) {
+	r.Body = http.MaxBytesReader(w, r.Body, 64*1024)
+	var payload json.RawMessage
+	if !s.decodeJSON(w, r, &payload) {
+		return
+	}
+	var raw map[string]json.RawMessage
+	if rejectDuplicateCreationJSONKeys(payload) != nil || json.Unmarshal(payload, &raw) != nil || validateBrowserNotificationPreference(raw) != nil {
+		s.writeError(w, r, http.StatusBadRequest, "invalid browser notification preference")
+		return
+	}
+	r.Body = io.NopCloser(bytes.NewReader(payload))
+	var body struct {
+		Sensitive                   bool   `json:"sensitive,omitempty"`
+		Name                        string `json:"name"`
+		CreationDate                string `json:"creationDate"`
+		Model                       string `json:"model"`
+		ReasoningEffort             string `json:"reasoningEffort"`
+		BrowserNotificationsEnabled *bool  `json:"browserNotificationsEnabled,omitempty"`
+	}
+	if !s.decodeJSON(w, r, &body) {
+		return
+	}
+	body.Name = strings.TrimSpace(body.Name)
+	body.CreationDate = strings.TrimSpace(body.CreationDate)
+	body.Model = strings.TrimSpace(body.Model)
+	body.ReasoningEffort = strings.TrimSpace(body.ReasoningEffort)
+	if !session.ValidSlug(body.Name) || len(body.Name) > 48 {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "session name is invalid"})
+		return
+	}
+	if parsed, err := time.Parse(time.DateOnly, body.CreationDate); err != nil ||
+		parsed.Format(time.DateOnly) != body.CreationDate {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "session creation date is invalid"})
+		return
+	}
+	if err := validateCreationSettings(body.Model, body.ReasoningEffort); err != nil {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": err.Error()})
+		return
+	}
+	current, identity, err := s.creationSource(source.Slug)
+	if err != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		return
+	}
+	receipt, err := s.acceptCreation(creationRequest{
+		BrowserNotificationsEnabled: body.BrowserNotificationsEnabled, Sensitive: body.Sensitive, Kind: "fork", Slug: body.CreationDate + "-" + body.Name,
+		Source: current.Slug, SourceThreadID: current.Codex.ThreadID, SourceIdentity: identity,
+		Model: body.Model, Effort: body.ReasoningEffort,
+	})
+	if err != nil {
+		s.writeJSON(w, http.StatusConflict, map[string]string{"error": err.Error()})
+		return
+	}
+	s.writeJSON(w, http.StatusAccepted, receipt.status())
+}
+
+func (s *Server) normalizeInteractivity(parent context.Context, summary *session.Summary) {
+	persisted := summary.Codex
+	summary.Interactive = false
+	summary.RecoveryReady = false
+	summary.ExecutionHeld = s.config.RecoverSessions
+	summary.Codex = session.Codex{}
+	summary.Tmux = session.Tmux{}
+	if s.config.VerifyThread == nil || s.config.CodexSocket == "" || s.config.CodexVersion == "" ||
+		persisted.ThreadID == "" || persisted.SocketPath != s.config.CodexSocket {
+		return
+	}
+	expectedCwd := filepath.Join(s.config.Workspace, "work", summary.Slug)
+	verifyContext, verifyCancel := context.WithTimeout(parent, 3*time.Second)
+	defer verifyCancel()
+	if err := s.config.VerifyThread(verifyContext, persisted.ThreadID, expectedCwd); err != nil {
+		return
+	}
+	// A persisted thread with configured endpoint provenance and App Server cwd is
+	// safe for passive transcript reads. Live host authority is still required
+	// for every control and mutation.
+	summary.Codex = persisted
+	creationReady := session.RequireRetainedReady(summary, s.config.CodexSocket) == nil
+	if !summary.HasCreation() && RequireObservationReceipts(summary, s.config.UserStateRoot, "", "") != nil {
+		creationReady = false
+	}
+	if summary.Archived || !creationReady {
+		return
+	}
+	summary.RecoveryReady = true
+	if s.config.AuthorityDir == "" {
+		return
+	}
+	authority, err := session.LoadRuntimeAuthority(
+		s.config.AuthorityDir, summary.Slug, s.config.Workspace,
+	)
+	if err != nil || authority.State != "ready" ||
+		authority.CodexThreadID != persisted.ThreadID ||
+		authority.CodexSocketPath != s.config.CodexSocket {
+		return
+	}
+	ctx, cancel := context.WithTimeout(parent, 3*time.Second)
+	defer cancel()
+	if err := authority.VerifyTmux(ctx, s.config.Tmux); err != nil {
+		return
+	}
+	if err := s.config.VerifyThread(
+		ctx, authority.CodexThreadID, expectedCwd,
+	); err != nil {
+		return
+	}
+	summary.Tmux = session.Tmux{
+		SocketPath: authority.TmuxSocket, CodexThreadID: authority.CodexThreadID,
+		CodexSocketPath:    authority.CodexSocketPath,
+		CodexClientVersion: authority.CodexClientVersion,
+	}
+	summary.Interactive = true
+	summary.ExecutionHeld = s.recoveryHeld(summary.Slug, persisted.ThreadID)
+}
+
+// Creation-less interaction uses the same current public root/team proof as
+// observation. Busy is governed by the requested operation; unknown submissions
+// or another same-CWD identity never authorize a write.
+func (s *Server) requireOrdinaryRetainedMutation(ctx context.Context, summary *session.Summary) error {
+	if summary.HasCreation() {
+		return nil
+	}
+	if summary.Archived || session.RequireRetainedReady(summary, s.config.CodexSocket) != nil {
+		return errors.New("ordinary retained conversation is not ready")
+	}
+	if err := RequireObservationReceipts(summary, s.config.UserStateRoot, "", ""); err != nil {
+		return err
+	}
+	authority, err := session.LoadRuntimeAuthority(s.config.AuthorityDir, summary.Slug, s.config.Workspace)
+	if err != nil || authority.State != "ready" || authority.CodexThreadID != summary.Codex.ThreadID ||
+		authority.CodexSocketPath != summary.Codex.SocketPath || authority.CodexClientVersion != summary.Codex.ClientVersion {
+		return errors.New("retained runtime authority changed")
+	}
+	if err := authority.VerifyTmux(ctx, s.config.Tmux); err != nil {
+		return err
+	}
+	identity, err := session.ObservationIdentity(summary.Workspace, summary.Slug, filepath.Join(summary.Workspace, summary.Root, summary.Slug), summary.Codex.ThreadID)
+	if err != nil {
+		return err
+	}
+	service, err := s.teamService()
+	if err != nil {
+		return err
+	}
+	observation, err := service.ObserveRetained(ctx, summary.Slug, summary.Codex.ThreadID, identity)
+	if err != nil || !observation.ActivityKnown {
+		return errors.New("retained conversation or submission proof is unavailable")
+	}
+	for _, subject := range observation.Subjects {
+		if subject.Address == "lead" && subject.ArchiveState != "active" {
+			return errors.New("retained root is not a materialized active conversation")
+		}
+	}
+	again, err := session.Find(summary.Workspace, summary.Slug)
+	if err != nil || again.HasCreation() || again.Root != summary.Root || again.Codex != summary.Codex ||
+		session.RequireRetainedReady(again, s.config.CodexSocket) != nil {
+		return errors.New("ordinary retained tracking changed")
+	}
+	after, err := session.ObservationIdentity(summary.Workspace, summary.Slug, filepath.Join(summary.Workspace, again.Root, again.Slug), again.Codex.ThreadID)
+	if err != nil || after != identity {
+		return errors.New("retained tracking identity changed")
+	}
+	if err := RequireObservationReceipts(again, s.config.UserStateRoot, "", ""); err != nil {
+		return err
+	}
+	current, err := session.LoadRuntimeAuthority(s.config.AuthorityDir, summary.Slug, s.config.Workspace)
+	if err != nil || current != authority {
+		return errors.New("retained runtime authority changed")
+	}
+	return current.VerifyTmux(ctx, s.config.Tmux)
+}
+
+func (s *Server) resolveConversation(
+	ctx context.Context, request conversation.ResolveRequest,
+) (conversation.Target, error) {
+	slug, address, valid := parseTeamConversationID(request.ID)
+	if !valid {
+		return conversation.Target{}, errors.New("invalid session identity")
+	}
+	var releases []func()
+	release := func() {
+		for index := len(releases) - 1; index >= 0; index-- {
+			releases[index]()
+		}
+	}
+	failed := true
+	defer func() {
+		if failed {
+			release()
+		}
+	}()
+	if request.Mutation {
+		if receipt, ok := s.currentCreation(slug); ok && receipt.blocksSession() {
+			return conversation.Target{}, errors.New("session initialization has not finished")
+		}
+	}
+	if request.Mutation {
+		_, unlock, err := s.acquireTransitionContext(ctx, unix.LOCK_SH)
+		if err != nil {
+			return conversation.Target{}, fmt.Errorf("lock workspace transition: %w", err)
+		}
+		releases = append(releases, unlock)
+		if err := s.requireCurrentHostProfile(); err != nil {
+			return conversation.Target{}, err
+		}
+	}
+	summary, err := session.Find(s.config.Workspace, slug)
+	if err != nil {
+		return conversation.Target{}, err
+	}
+	s.normalizeInteractivity(ctx, summary)
+	if summary.Codex.ThreadID == "" {
+		return conversation.Target{}, errors.New("session has no verified Codex thread")
+	}
+	if request.Mutation {
+		runtimeLock, err := session.LockRuntimeShared(s.config.AuthorityDir, summary.Slug)
+		if err != nil {
+			return conversation.Target{}, fmt.Errorf("lock session runtime: %w", err)
+		}
+		releases = append(releases, func() { _ = runtimeLock.Close() })
+		owner, err := session.PendingLifecycle(s.config.Workspace, summary.Slug)
+		if err != nil {
+			return conversation.Target{}, err
+		}
+		if owner != "" {
+			return conversation.Target{}, fmt.Errorf("session %s is unfinished", owner)
+		}
+		summary, err = session.Find(s.config.Workspace, slug)
+		if err != nil {
+			return conversation.Target{}, errors.New("session state changed")
+		}
+		s.normalizeInteractivity(ctx, summary)
+		if !(request.Operation == "settings" && !summary.Interactive && summary.RecoveryReady) {
+			if err := s.requireOrdinaryRetainedMutation(ctx, summary); err != nil {
+				return conversation.Target{}, err
+			}
+		}
+	}
+	interactive := summary.Interactive
+	settingsReady := summary.RecoveryReady && !summary.Archived
+	if request.Mutation && !interactive && !(settingsReady && request.Operation == "settings") {
+		return conversation.Target{}, errors.New("session is not ready for browser changes")
+	}
+	if request.Operation == "events" && !interactive {
+		return conversation.Target{}, errors.New("session is not interactive")
+	}
+	capabilities := conversation.Capabilities{Read: true, Settings: settingsReady}
+	if interactive {
+		capabilities = conversation.Capabilities{
+			Read: true, Pending: true, QueueRead: true,
+			Send: true, Queue: true, Interrupt: true,
+			Settings: true, Respond: true, EventStream: true,
+		}
+	}
+	conversationClient := conversation.Client(s.config.Codex)
+	threadID := summary.Codex.ThreadID
+	if address != "" {
+		service, serviceErr := s.teamService()
+		if serviceErr != nil {
+			return conversation.Target{}, serviceErr
+		}
+		if request.Mutation {
+			unlock, lockErr := service.Store.LockOperation(ctx, slug)
+			if lockErr != nil {
+				return conversation.Target{}, lockErr
+			}
+			releases = append(releases, unlock)
+		}
+		member, memberErr := readyConversationMember(service.Store, slug, summary.Codex.ThreadID, address)
+		if memberErr != nil {
+			return conversation.Target{}, memberErr
+		}
+		threadID = member.Thread
+		memberClient := memberConversationClient{
+			Client: s.config.Codex, server: s, service: service,
+			slug: slug, rootThreadID: summary.Codex.ThreadID,
+			address: address, threadID: threadID,
+		}
+		conversationClient = memberClient
+		if _, ok := s.config.Codex.(conversation.TranscriptPageReader); ok {
+			conversationClient = memberPagedConversationClient{memberClient}
+		}
+	}
+	held := s.recoveryHeld(slug, threadID)
+	if (interactive && held) || (!interactive && settingsReady) {
+		if interactive {
+			capabilities = conversation.Capabilities{Read: true, Pending: true, QueueRead: true, Send: true, Queue: true, Settings: true}
+		} else {
+			capabilities = conversation.Capabilities{Read: true, Settings: true}
+		}
+		coldClient := recoveryConversationClient{Client: conversationClient, server: s, slug: slug, root: summary.Codex.ThreadID, thread: threadID, address: address}
+		if _, ok := conversationClient.(conversation.TranscriptPageReader); ok {
+			conversationClient = recoveryPagedConversationClient{coldClient}
+		} else {
+			conversationClient = coldClient
+		}
+	}
+	expectedCwd := filepath.Join(s.config.Workspace, "work", summary.Slug)
+	var attachments conversation.AttachmentProvider
+	if s.uploadStore != nil {
+		backend, err := s.sessionUploads(ctx, summary.Slug, threadID, !interactive)
+		if err != nil {
+			return conversation.Target{}, err
+		}
+		backend.BaseURL = "/uploads/s-" + request.ID
+		attachments = backend
+	}
+	var once sync.Once
+	failed = false
+	return conversation.Target{
+		Attachments: attachments,
+		Client:      conversationClient, ThreadID: threadID, Directory: expectedCwd,
+		Capabilities: capabilities, MutationLock: s.messageLock(request.ID),
+		TransformTranscript: s.presentTranscript,
+		Activity:            s.activityProvider(),
+		Release:             func() { once.Do(release) },
+	}, nil
+}
+
+func (s *Server) presentTranscript(transcript *codex.Transcript) {
+	for index := range transcript.Entries {
+		entry := &transcript.Entries[index]
+		if entry.Text != "" &&
+			(entry.Kind == "agentMessage" || entry.Kind == "reasoning" || entry.Kind == "plan") {
+			entry.HTML = string(s.renderTextMarkdown(entry.Text))
+		}
+	}
+}
+
+func (s *Server) messageLock(threadID string) conversation.MutationLocker {
+	s.messageMu.Lock()
+	defer s.messageMu.Unlock()
+	lock := s.messageLocks[threadID]
+	if lock == nil {
+		lock = conversation.NewMutationLock()
+		s.messageLocks[threadID] = lock
+	}
+	return lock
+}
+
+func (s *Server) renderTextMarkdown(text string) template.HTML {
+	var output strings.Builder
+	source := []byte(text)
+	document := s.markdown.Parser().Parse(goldmarktext.NewReader(source))
+	s.rewriteSourceLinks(document)
+	if err := s.markdown.Renderer().Render(&output, source, document); err != nil {
+		return template.HTML("<p class=\"notice error\">Unable to render document.</p>")
+	}
+	return template.HTML(s.sanitizer.Sanitize(output.String())) // #nosec G203 -- sanitized by bluemonday.
+}
+
+func (s *Server) render(w http.ResponseWriter, name string, data pageData) {
+	s.renderStatus(w, http.StatusOK, name, data)
+}
+func (s *Server) renderStatus(w http.ResponseWriter, status int, name string, data pageData) {
+	if name == "session" || name == "source-file" {
+		var nonce [24]byte
+		if _, err := rand.Read(nonce[:]); err != nil {
+			http.Error(w, "Unable to render page", http.StatusInternalServerError)
+			return
+		}
+		data.StyleNonce = hex.EncodeToString(nonce[:])
+		policy := w.Header().Get("Content-Security-Policy")
+		w.Header().Set("Content-Security-Policy", strings.Replace(policy,
+			"style-src 'self'", "style-src 'self' 'nonce-"+data.StyleNonce+"'", 1))
+	}
+	data.DisplayLabel = s.config.DisplayLabel
+	data.HostLabel = s.config.HostLabel
+	data.SSHHost = s.config.SSHHost
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.WriteHeader(status)
+	if err := s.templates.ExecuteTemplate(w, name, data); err != nil {
+		s.config.Logger.Printf("render %s: %v", name, err)
+	}
+}
+func (s *Server) writeJSON(w http.ResponseWriter, status int, value any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(value)
+}
+func (s *Server) writeError(w http.ResponseWriter, r *http.Request, status int, message string) {
+	if strings.HasPrefix(r.URL.Path, "/api/") || r.Header.Get("Accept") == "application/json" {
+		s.writeJSON(w, status, map[string]string{"error": message})
+		return
+	}
+	http.Error(w, message, status)
+}
+func (s *Server) decodeJSON(w http.ResponseWriter, r *http.Request, destination any) bool {
+	r.Body = http.MaxBytesReader(w, r.Body, session.MaxJSONRequestBodyBytes)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(destination); err != nil {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid JSON request"})
+		return false
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		s.writeJSON(w, http.StatusBadRequest, map[string]string{"error": "request must contain one JSON value"})
+		return false
+	}
+	return true
+}
+
+func timeAgo(value time.Time) string {
+	duration := time.Since(value)
+	if duration < time.Minute {
+		return "just now"
+	}
+	if duration < time.Hour {
+		return fmt.Sprintf("%dm ago", int(duration.Minutes()))
+	}
+	if duration < 24*time.Hour {
+		return fmt.Sprintf("%dh ago", int(duration.Hours()))
+	}
+	return fmt.Sprintf("%dd ago", int(duration.Hours()/24))
+}

@@ -1,0 +1,56 @@
+diff --git a/libexec/dev-session b/libexec/dev-session
+index 0f227ce..7fbf92a 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -3960,10 +3960,11 @@ module DevSession
+ 	  allowed << 'planText' if request['kind'] == 'plan'
+ 	  # An explicit lead override remains in the accepted browser request as
+ 	  # provenance. Its resolved, immutable values live in directTeam.
+-	  allowed.concat(%w[model effort sensitive])
++	  allowed.concat(%w[model effort sensitive browserNotificationsEnabled])
+       unless required.any? && request.keys.all? { |key| allowed.include?(key) } &&
+              (required - request.keys).empty? && request['slug'] == slug &&
+-             request['team'] == direct_team['id'] && request['catalogDigest'] == direct_team['catalogDigest']
++             request['team'] == direct_team['id'] && request['catalogDigest'] == direct_team['catalogDigest'] &&
++             (!request.key?('browserNotificationsEnabled') || [true, false].include?(request['browserNotificationsEnabled']))
+         raise Error, 'direct team creation request is no longer current; start a new request'
+       end
+     end
+diff --git a/libexec/workspace-host b/libexec/workspace-host
+index 752993c..6a81451 100755
+--- a/libexec/workspace-host
++++ b/libexec/workspace-host
+@@ -2415,6 +2415,8 @@ module DevWorkspaceHost
+ 							end
+     allowed << 'sensitive'
+     return false if request.key?('sensitive') && request['sensitive'] != true
++    allowed << 'browserNotificationsEnabled'
++    return false unless !request.key?('browserNotificationsEnabled') || [true, false].include?(request['browserNotificationsEnabled'])
+     return false unless (request.keys - allowed).empty? && (required - request.keys).empty?
+ 	  return false unless request['slug'] == slug && valid_session_identity?(request['slug']) &&
+ 						  valid_portal_team_identifier?(request['team']) &&
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index 1e82e67..e720a94 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -271,7 +271,7 @@ buildGoModule {
+ 
+   inherit src;
+   modRoot = "portal";
+-  vendorHash = "sha256-TtTCKkMtvnGo+2nRxuuBDDJVRsxK4Yhbic/DYhn1rII=";
++  vendorHash = "sha256-iyydGWryLmh8P+YxQcQ2SqGIj1Lds+WBDgsKQV4uFqA=";
+ 
+   postPatch = ''
+     expected=${lib.escapeShellArg codexWebVersion}
+@@ -318,6 +318,11 @@ buildGoModule {
+       --coverage-only ${codexWebSrc}/codex/client.go
+     go test ./...
+     node --check internal/web/static/app.js
++    node --check internal/web/static/session-attention-store.js
++    node --check internal/web/static/session-attention.js
++    node --check internal/web/static/browser-notifications.js
++    node --check internal/web/static/notification-worker.js
++    node --test internal/web/attention_browser_test.cjs
+     node --check internal/web/static/coordination.js
+     node --test internal/web/coordination_browser_test.cjs
+     node --check internal/web/static/codex-providers.js

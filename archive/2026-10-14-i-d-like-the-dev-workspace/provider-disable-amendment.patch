@@ -1,0 +1,641 @@
+diff --git a/docs/browser-notifications-operations.md b/docs/browser-notifications-operations.md
+index 78f11b3..fd3bf18 100644
+--- a/docs/browser-notifications-operations.md
++++ b/docs/browser-notifications-operations.md
+@@ -10,7 +10,16 @@ session's lifecycle.
+ Allow outbound HTTPS to the exact supported provider hosts:
+ 
+ - `updates.push.services.mozilla.com` for Firefox;
+-- `fcm.googleapis.com` for Chrome and supported Chromium builds.
++- `fcm.googleapis.com` for Chrome and supported Chromium builds;
++- `jmt17.google.com` for Chromium's upstream staging GCM service.
++
++Chromium 147.0.7727.15 [defines that staging host](https://raw.githubusercontent.com/chromium/chromium/147.0.7727.15/components/push_messaging/push_messaging_constants.cc)
++and [selects it for non-stable channels](https://raw.githubusercontent.com/chromium/chromium/147.0.7727.15/components/push_messaging/push_messaging_utils.cc).
++Its [unbranded POSIX build reports an unknown channel](https://raw.githubusercontent.com/chromium/chromium/147.0.7727.15/chrome/common/channel_info_posix.cc),
++which takes that route. This exact upstream host is supported without allowing
++other Google subdomains. Staging ownership does not guarantee service
++availability; verify the actual subscription and test delivery. Never rewrite a
++browser-issued endpoint to another provider or path.
+ 
+ The sender accepts HTTPS on port 443 only, disables environment proxies and
+ redirects, validates every resolved address as public, then dials a validated
+@@ -54,6 +63,25 @@ response bodies in diagnostics; the UI exposes only generic result categories.
+ 
+ ## Disable and recovery
+ 
++The browser's Disable action independently removes the server registration and
++the local subscription. `POST /api/browser-notifications/disable` accepts
++exactly one `registrationId` or `endpointDigest`, each a lowercase 64-hex string.
++The digest is SHA-256 of the exact subscription endpoint. Deletion matches only
++the current workspace and exact trusted portal origin, including when the
++endpoint is no longer allowed for registration. An absent record succeeds
++idempotently. Only matching registrations and their outbox entries are removed;
++the lookup makes no outbound request and creates no registration or new private
++state format. Existing clients can continue deleting by registration ID.
++
++Before unsubscribing, the browser keeps one bounded cleanup selector in local
++storage. A lost registration ID uses the endpoint digest, without retaining the
++endpoint or subscription keys. Server failure does not prevent local
++unsubscribe. The browser verifies local absence and retains unresolved server
++cleanup across reload for an explicit Disable retry. Enable remains unavailable
++while cleanup is pending. Fully disabled means both removals are confirmed.
++Browser storage failure can prevent retaining the selector across reload; the
++current page keeps it in memory for retry.
++
+ To disable delivery without stopping sessions, create the owner-only file
+ `browser-notifications.disabled` in the same private portal directory. The
+ running sender notices it on its next two-second pass, cancels unsent work and
+diff --git a/docs/browser-notifications.md b/docs/browser-notifications.md
+index 21046b0..388298e 100644
+--- a/docs/browser-notifications.md
++++ b/docs/browser-notifications.md
+@@ -47,11 +47,14 @@ you can close all portal tabs or switch windows before checking delivery. A
+ provider-accepted result means the push service accepted the message; confirm
+ that the browser and operating system displayed it. **Disable on this browser**
+ removes the server registration and unsubscribes locally. It leaves the browser's
+-site permission unchanged. An incomplete removal stays visible and can be
+-retried. If the browser loses the registration response or saved ID, it reports
+-the local subscription as incomplete. Disable recovers the server ID by
+-registering the same subscription again, removes that registration and
+-unsubscribes locally.
++site permission unchanged. The two removals are independent: server failure does
++not prevent local unsubscribe. If server cleanup remains uncertain, the browser
++keeps a small deletion selector for an explicit Disable retry, including after
++reload. It contains an ID or endpoint digest, not subscription keys or the
++endpoint itself. Finish pending cleanup before enabling again. Fully disabled
++means both removals are confirmed. A lost registration response or saved ID
++reports incomplete setup; Disable uses the endpoint digest without registering
++the subscription again.
+ Denied permission requires a change in the browser's site settings.
+ 
+ The browser must support service workers, Notifications and the Push API in a
+diff --git a/portal/internal/web/attention_browser_test.cjs b/portal/internal/web/attention_browser_test.cjs
+index 4c487e5..3b8ae25 100644
+--- a/portal/internal/web/attention_browser_test.cjs
++++ b/portal/internal/web/attention_browser_test.cjs
+@@ -172,36 +172,140 @@ test('retained focused document refuses replaced directory or changed root', asy
+   }
+ });
+ 
+-test('lost registration reply and push-key mismatch expose disable recovery', async () => {
+-  for (const scenario of ["lost-reply", "key-mismatch", "lost-storage"]) {
+-    const keyMismatch = scenario === "key-mismatch";
+-    const controls = Object.fromEntries(['status', 'enable', 'disable', 'test'].map(name => [name, {disabled: false, addEventListener(type, callback) {this[type] = callback;}}]));
+-    const calls = [], storage = new Map(); let subscribed = scenario !== "lost-reply", registered = scenario === "lost-storage", loseReply = scenario === "lost-reply", unsubscribed = 0;
+-    const subscription = {options: keyMismatch ? {applicationServerKey: new Uint8Array([1]).buffer} : {},
+-      toJSON: () => ({endpoint: 'https://fcm.googleapis.com/private-endpoint', keys: {p256dh: 'public', auth: 'auth'}, expirationTime: null}),
+-      unsubscribe: async () => {unsubscribed++; subscribed = false; return true;}};
+-    const registration = {pushManager: {getSubscription: async () => subscribed ? subscription : null,
+-      subscribe: async () => {subscribed = true; return subscription;}}};
+-    const context = {document: {getElementById: () => ({querySelector: selector => controls[selector.match(/notification-(\w+)/)[1]]})},
+-      navigator: {serviceWorker: {getRegistration: async () => registration, register: async () => registration, ready: Promise.resolve(registration)}},
+-      Notification: {permission: 'granted', requestPermission: async () => 'granted'}, PushManager: function() {}, isSecureContext: true,
+-      AbortController, setTimeout, clearTimeout, atob, Uint8Array,
+-      localStorage: {getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key)},
+-      fetch: async (url, options = {}) => {
+-        const body = options.body && JSON.parse(options.body); calls.push({url, body});
+-        if (url.endsWith('/register')) {registered = true; if (loseReply) {loseReply = false; throw Error('lost reply');} return {ok: true, json: async () => ({registrationId: 'browser-id'})};}
+-        if (url.endsWith('/disable')) {assert.equal(body.registrationId, 'browser-id'); registered = false; return {ok: true, json: async () => ({ok: true})};}
+-        return {ok: true, json: async () => ({available: true, publicKey: 'Ag', registered: false})};
+-      },
+-    };
+-    vm.runInNewContext(source('browser-notifications.js'), context);
+-    for (let i = 0; i < 20; i++) await Promise.resolve();
+-    if (scenario !== "lost-storage") await controls.enable.click();
+-    assert.equal(controls.status.textContent, 'Browser setup is incomplete. Disable it or enable notifications again.');
+-    assert.equal(controls.disable.disabled, false); assert.equal(subscribed, true);
+-    await controls.disable.click();
+-    assert.equal(unsubscribed, 1); assert.equal(registered, false);
+-    assert.match(controls.status.textContent, /^Disabled on this browser/);
+-    assert.equal(calls.filter(call => call.url.endsWith('/register')).length, scenario === "lost-reply" ? 2 : 1);
++const browserId = 'd'.repeat(64), browserKey = 'workspace-browser-notifications.v1', cleanupKey = `${browserKey}.cleanup`;
++const endpoint = 'https://fcm.googleapis.com/private-endpoint?exact=value';
++const endpointDigest = require('node:crypto').createHash('sha256').update(endpoint).digest('hex');
++async function notificationHarness(state, storage = new Map()) {
++  const controls = Object.fromEntries(['status', 'enable', 'disable', 'test'].map(name => [name, {disabled: false, addEventListener(type, callback) {this[type] = callback;}}]));
++  const calls = [];
++  const subscription = {endpoint, options: state.keyMismatch ? {applicationServerKey: new Uint8Array([1]).buffer} : {},
++    toJSON: () => ({endpoint, keys: {p256dh: 'public', auth: 'auth'}, expirationTime: null}),
++    unsubscribe: async () => {
++      state.unsubscribeCalls = (state.unsubscribeCalls || 0) + 1;
++      if (state.localFailure) return false;
++      state.subscribed = false;
++      if (state.verificationFails) state.lookupFailure = true;
++      return !state.falseAfterRemoval;
++    }};
++  const registration = {pushManager: {getSubscription: async () => {if (state.lookupFailure) throw Error('lookup unavailable'); return state.subscribed ? subscription : null;},
++    subscribe: async () => {state.subscribed = true; return subscription;}}};
++  const context = {document: {getElementById: () => ({querySelector: selector => controls[selector.match(/notification-(\w+)/)[1]]})},
++    navigator: {serviceWorker: {getRegistration: async () => registration, register: async () => registration, ready: Promise.resolve(registration)}},
++    Notification: {permission: 'granted', requestPermission: async () => {state.permissionCalls = (state.permissionCalls || 0) + 1; return 'granted';}},
++    PushManager: function() {}, isSecureContext: true, AbortController, setTimeout, clearTimeout, atob, Uint8Array, TextEncoder,
++    crypto: require('node:crypto').webcrypto,
++    localStorage: {getItem: key => storage.get(key) || null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key)},
++    fetch: async (url, options = {}) => {
++      const body = options.body && JSON.parse(options.body); calls.push({url, body});
++      if (url.endsWith('/register')) {
++        state.registered = true;
++        if (state.loseRegisterReply) {state.loseRegisterReply = false; throw Error('lost reply');}
++        return {ok: true, json: async () => ({registrationId: browserId})};
++      }
++      if (url.endsWith('/disable')) {
++        assert.equal(Object.keys(body).length, 1);
++        assert.ok(body.registrationId === browserId || body.endpointDigest === endpointDigest);
++        if (state.offline) throw Error('offline');
++        if (state.denied) return {ok: false, json: async () => ({error: 'Notification origin is invalid.'})};
++        state.registered = false;
++        if (state.loseDisableReply) {state.loseDisableReply = false; throw Error('lost reply');}
++        return {ok: true, json: async () => ({ok: true})};
++      }
++      return {ok: true, json: async () => ({available: true, publicKey: 'Ag', registered: state.registered && url.includes(`registrationId=${browserId}`)})};
++    },
++  };
++  vm.runInNewContext(source('browser-notifications.js'), context);
++  for (let i = 0; i < 30; i++) await Promise.resolve();
++  return {controls, calls, storage};
++}
++
++test('lost registration reply, saved ID or changed key disable without registering again', async () => {
++  for (const scenario of ['lost-reply', 'key-mismatch', 'lost-storage']) {
++    const state = {subscribed: scenario !== 'lost-reply', registered: scenario === 'lost-storage',
++      loseRegisterReply: scenario === 'lost-reply', keyMismatch: scenario === 'key-mismatch'};
++    const h = await notificationHarness(state);
++    if (scenario !== 'lost-storage') await h.controls.enable.click();
++    assert.equal(h.controls.status.textContent, 'Browser setup is incomplete. Disable it or enable notifications again.');
++    assert.equal(h.controls.disable.disabled, false);
++    const registrationsBefore = h.calls.filter(call => call.url.endsWith('/register')).length;
++    await h.controls.disable.click();
++    assert.equal(state.unsubscribeCalls, 1); assert.equal(state.registered, false);
++    assert.match(h.controls.status.textContent, /^Disabled on this browser/);
++    assert.equal(h.calls.filter(call => call.url.endsWith('/register')).length, registrationsBefore);
++    assert.deepEqual(h.calls.find(call => call.url.endsWith('/disable')).body, {endpointDigest});
+   }
+ });
++
++test('offline or denied lost-ID cleanup unsubscribes and survives reload for explicit retry', async () => {
++  for (const failure of ['offline', 'denied']) {
++    const state = {subscribed: true, registered: true, [failure]: true};
++    const h = await notificationHarness(state);
++    await h.controls.disable.click();
++    assert.equal(state.subscribed, false); assert.equal(state.registered, true);
++    assert.equal(h.controls.status.textContent, 'Browser subscription removed; server cleanup is still pending. Retry Disable.');
++    assert.deepEqual(JSON.parse(h.storage.get(cleanupKey)), {endpointDigest});
++    assert.equal(h.controls.enable.disabled, true); assert.equal(h.controls.disable.disabled, false);
++    const reloaded = await notificationHarness(state, h.storage);
++    assert.equal(reloaded.calls.some(call => call.body), false, 'page load performs no mutation');
++    await reloaded.controls.enable.click();
++    assert.equal(reloaded.calls.some(call => call.body), false, 'Enable cannot discard pending cleanup');
++    assert.equal(state.permissionCalls || 0, 0);
++    assert.equal(reloaded.controls.status.textContent, 'Browser subscription removed; server cleanup is still pending. Retry Disable.');
++    assert.equal(reloaded.controls.disable.disabled, false);
++    state[failure] = false;
++    await reloaded.controls.disable.click();
++    assert.equal(state.registered, false); assert.equal(state.unsubscribeCalls, 1);
++    assert.deepEqual(reloaded.calls.find(call => call.url.endsWith('/disable')).body, {endpointDigest});
++    assert.equal(h.storage.has(cleanupKey), false);
++    assert.match(reloaded.controls.status.textContent, /^Disabled on this browser/);
++  }
++});
++
++test('known ID survives unknown deletion outcome and retries idempotently after reload', async () => {
++  const state = {subscribed: true, registered: true, loseDisableReply: true};
++  const storage = new Map([[browserKey, browserId]]);
++  const h = await notificationHarness(state, storage);
++  await h.controls.disable.click();
++  assert.equal(state.subscribed, false); assert.equal(state.registered, false);
++  assert.equal(storage.get(browserKey), browserId, 'lost response is not confirmation');
++  const reloaded = await notificationHarness(state, storage);
++  await reloaded.controls.disable.click();
++  assert.deepEqual(reloaded.calls.find(call => call.url.endsWith('/disable')).body, {registrationId: browserId});
++  assert.equal(storage.has(browserKey), false); assert.equal(storage.has(cleanupKey), false);
++  assert.match(reloaded.controls.status.textContent, /^Disabled on this browser/);
++});
++
++test('known-ID disable verifies normal removal, false results and retryable local failure', async () => {
++  for (const [localFailure, falseAfterRemoval] of [[true, false], [false, true], [false, false]]) {
++    const state = {subscribed: true, registered: true, localFailure, falseAfterRemoval};
++    const h = await notificationHarness(state, new Map([[browserKey, browserId]]));
++    await h.controls.disable.click();
++    assert.equal(state.registered, false);
++    assert.deepEqual(h.calls.find(call => call.url.endsWith('/disable')).body, {registrationId: browserId});
++    assert.equal(h.calls.some(call => call.url.endsWith('/register')), false);
++    if (localFailure) {
++      assert.equal(h.controls.status.textContent, 'Disabling is incomplete. Retry Disable.');
++      assert.equal(h.controls.disable.disabled, false);
++      state.localFailure = false;
++      await h.controls.disable.click();
++    }
++    assert.match(h.controls.status.textContent, /^Disabled on this browser/);
++    assert.equal(state.subscribed, false);
++  }
++});
++
++test('uncertain local absence retains its selector and Disable control across reload', async () => {
++  const state = {subscribed: true, registered: true, verificationFails: true};
++  const h = await notificationHarness(state, new Map([[browserKey, browserId]]));
++  await h.controls.disable.click();
++  assert.equal(state.registered, false); assert.equal(state.subscribed, false);
++  assert.equal(h.controls.status.textContent, 'Disabling is incomplete. Retry Disable.');
++  assert.equal(h.controls.disable.disabled, false);
++  assert.deepEqual(JSON.parse(h.storage.get(cleanupKey)), {registrationId: browserId});
++  state.lookupFailure = false; state.verificationFails = false;
++  const reloaded = await notificationHarness(state, h.storage);
++  assert.equal(reloaded.controls.disable.disabled, false);
++  await reloaded.controls.disable.click();
++  assert.match(reloaded.controls.status.textContent, /^Disabled on this browser/);
++  assert.equal(h.storage.has(cleanupKey), false);
++});
+diff --git a/portal/internal/web/notifications.go b/portal/internal/web/notifications.go
+index 47aa8ba..0ce636f 100644
+--- a/portal/internal/web/notifications.go
++++ b/portal/internal/web/notifications.go
+@@ -3,6 +3,7 @@ package web
+ import (
+ 	"context"
+ 	"crypto/rand"
++	"crypto/sha256"
+ 	"encoding/hex"
+ 	"encoding/json"
+ 	"errors"
+@@ -316,6 +317,52 @@ func (s *Server) browserNotificationsAPI(w http.ResponseWriter, r *http.Request)
+ 		s.writeJSON(w, http.StatusOK, map[string]any{"version": 1, "publicKey": n.store.state.PublicKey, "registered": registered, "result": result, "available": !n.disabled()})
+ 		return
+ 	}
++	if r.URL.Path == "/api/browser-notifications/disable" {
++		if r.Method != http.MethodPost {
++			w.WriteHeader(http.StatusMethodNotAllowed)
++			return
++		}
++		// Raw fields distinguish omission from explicit null or an empty selector.
++		var input struct {
++			RegistrationID json.RawMessage `json:"registrationId"`
++			EndpointDigest json.RawMessage `json:"endpointDigest"`
++		}
++		r.Body = http.MaxBytesReader(w, r.Body, 8192)
++		if !s.decodeJSON(w, r, &input) {
++			return
++		}
++		var id, digest string
++		if (len(input.RegistrationID) == 0) == (len(input.EndpointDigest) == 0) ||
++			(len(input.RegistrationID) != 0 && (json.Unmarshal(input.RegistrationID, &id) != nil || !messageDigestPattern.MatchString(id))) ||
++			(len(input.EndpointDigest) != 0 && (json.Unmarshal(input.EndpointDigest, &digest) != nil || !messageDigestPattern.MatchString(digest))) {
++			s.writeError(w, r, http.StatusBadRequest, "Invalid notification action.")
++			return
++		}
++		err := n.store.change(func(state *notificationState) error {
++			for browserID, browser := range state.Browsers {
++				if browser.Origin != origin {
++					continue
++				}
++				sum := sha256.Sum256([]byte(browser.Subscription.Endpoint))
++				if (id != "" && browserID != id) || (digest != "" && hex.EncodeToString(sum[:]) != digest) {
++					continue
++				}
++				delete(state.Browsers, browserID)
++				for key, delivery := range state.Outbox {
++					if delivery.Browser == browserID {
++						delete(state.Outbox, key)
++					}
++				}
++			}
++			return nil
++		})
++		if err != nil {
++			s.writeError(w, r, http.StatusBadRequest, err.Error())
++			return
++		}
++		s.writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
++		return
++	}
+ 	var input struct {
+ 		RegistrationID string               `json:"registrationId"`
+ 		Subscription   webpush.Subscription `json:"subscription"`
+@@ -355,22 +402,12 @@ func (s *Server) browserNotificationsAPI(w http.ResponseWriter, r *http.Request)
+ 				outputID = hex.EncodeToString(bytes[:])
+ 			}
+ 			state.Browsers[outputID] = browserRegistration{ID: outputID, Origin: origin, Subscription: input.Subscription, ExpiresAt: expires}
+-		case "/api/browser-notifications/disable", "/api/browser-notifications/test":
++		case "/api/browser-notifications/test":
+ 			browser, found := state.Browsers[input.RegistrationID]
+-			if !found && r.URL.Path == "/api/browser-notifications/disable" && r.Method == http.MethodPost && messageDigestPattern.MatchString(input.RegistrationID) {
+-				return nil
+-			}
+ 			if !found || browser.Origin != origin {
+ 				return errors.New("Browser registration is unavailable. Enable notifications again.")
+ 			}
+-			if r.URL.Path == "/api/browser-notifications/disable" && r.Method == http.MethodPost {
+-				delete(state.Browsers, browser.ID)
+-				for key, delivery := range state.Outbox {
+-					if delivery.Browser == browser.ID {
+-						delete(state.Outbox, key)
+-					}
+-				}
+-			} else if r.URL.Path == "/api/browser-notifications/test" && r.Method == http.MethodPost && !browser.Disabled && !n.disabled() {
++			if r.Method == http.MethodPost && !browser.Disabled && !n.disabled() {
+ 				now := time.Now()
+ 				event := attentionEvent{Version: 1, ID: attentionDigest(browser.ID, now.String()), Identity: "test-" + browser.ID, Revision: uint64(now.UnixMilli()), Kind: "test", Route: "/", ExpiresAt: now.Add(time.Minute).UnixMilli()}
+ 				state.Outbox[notificationDeliveryKey(browser.ID, "test")] = notificationDelivery{Browser: browser.ID, Event: event, NextAt: now.Add(10 * time.Second).UnixMilli()}
+diff --git a/portal/internal/web/notifications_browser_test.cjs b/portal/internal/web/notifications_browser_test.cjs
+index 68057a8..1dec136 100644
+--- a/portal/internal/web/notifications_browser_test.cjs
++++ b/portal/internal/web/notifications_browser_test.cjs
+@@ -22,9 +22,10 @@ const base = process.argv[2];
+         const sub = await (await context.request.get(`${base}/fixture/subscription`)).json();
+         await context.grantPermissions(["notifications"], {origin: base});
+         await page.evaluate(sub => {
+-          const fake = {options: {}, toJSON: () => ({...sub, expirationTime: null}), unsubscribe: async () => true};
++          let subscribed = true;
++          const fake = {options: {}, toJSON: () => ({...sub, expirationTime: null}), unsubscribe: async () => {subscribed = false; return true;}};
+           PushManager.prototype.subscribe = async () => fake;
+-          PushManager.prototype.getSubscription = async () => fake;
++          PushManager.prototype.getSubscription = async () => subscribed ? fake : null;
+         }, sub);
+         await page.locator("[data-notification-enable]").click();
+         await expect(page.locator("[data-notification-status]")).toContainText("Enabled on this browser");
+diff --git a/portal/internal/web/notifications_test.go b/portal/internal/web/notifications_test.go
+index 02f0655..3878e19 100644
+--- a/portal/internal/web/notifications_test.go
++++ b/portal/internal/web/notifications_test.go
+@@ -2,7 +2,9 @@ package web
+ 
+ import (
+ 	"context"
++	"crypto/sha256"
+ 	"encoding/base64"
++	"encoding/hex"
+ 	"encoding/json"
+ 	"fmt"
+ 	"io"
+@@ -245,6 +247,95 @@ func TestNotificationsRegistrationOriginAndDelayedTest(t *testing.T) {
+ 	}
+ }
+ 
++func TestNotificationsDisableSelectorsAndScope(t *testing.T) {
++	for _, selector := range []string{"registrationId", "endpointDigest"} {
++		t.Run(selector, func(t *testing.T) {
++			n := testNotifications(t)
++			client := &mockPushClient{code: http.StatusCreated}
++			n.client = client
++			sub := testPushSubscription(t)
++			target, foreign, unrelated := strings.Repeat("a", 64), strings.Repeat("b", 64), strings.Repeat("c", 64)
++			n.store.mu.Lock()
++			err := n.store.change(func(state *notificationState) error {
++				for id, origin := range map[string]string{target: "https://workspace.example", foreign: "https://alias.example", unrelated: "https://workspace.example"} {
++					copy := sub
++					if id == unrelated {
++						copy.Endpoint += "/unrelated"
++					}
++					state.Browsers[id] = browserRegistration{ID: id, Origin: origin, Subscription: copy}
++					state.Outbox[id] = notificationDelivery{Browser: id}
++				}
++				return nil
++			})
++			n.store.mu.Unlock()
++			if err != nil {
++				t.Fatal("fixture persistence failed")
++			}
++			value := target
++			if selector == "endpointDigest" {
++				sum := sha256.Sum256([]byte(sub.Endpoint))
++				value = hex.EncodeToString(sum[:])
++			}
++			body, _ := json.Marshal(map[string]string{selector: value})
++			for i := 0; i < 2; i++ {
++				w := notificationRequest(n, http.MethodPost, "/api/browser-notifications/disable", string(body))
++				if w.Code != http.StatusOK || len(n.store.state.Browsers) != 2 || len(n.store.state.Outbox) != 2 {
++					t.Fatal("scoped idempotent deletion failed")
++				}
++				if _, ok := n.store.state.Browsers[target]; ok {
++					t.Fatal("target browser remains")
++				}
++				for _, id := range []string{foreign, unrelated} {
++					if n.store.state.Browsers[id].ID != id || n.store.state.Outbox[id].Browser != id {
++						t.Fatal("deletion crossed origin or registration boundary")
++					}
++				}
++			}
++			if client.calls != 0 {
++				t.Fatal("deletion performed outbound work")
++			}
++		})
++	}
++}
++
++func TestNotificationsDisableRejectsInvalidSelectorsAndOrigins(t *testing.T) {
++	n := testNotifications(t)
++	id := strings.Repeat("a", 64)
++	for _, body := range []string{
++		`{}`, `{"registrationId":null}`, `{"endpointDigest":null}`, `{"endpointDigest":true}`,
++		`{"registrationId":""}`, `{"endpointDigest":"short"}`, `{"endpointDigest":"` + strings.Repeat("A", 64) + `"}`,
++		`{"registrationId":"` + id + `","endpointDigest":"` + id + `"}`,
++		`{"registrationId":"` + id + `","endpointDigest":null}`,
++		`{"endpointDigest":"` + id + `","workspace":"another"}`,
++	} {
++		if w := notificationRequest(n, http.MethodPost, "/api/browser-notifications/disable", body); w.Code != http.StatusBadRequest {
++			t.Fatal("invalid deletion selector accepted")
++		}
++	}
++	body := `{"endpointDigest":"` + id + `"}`
++	r := httptest.NewRequest(http.MethodPost, "https://workspace.example/api/browser-notifications/disable", strings.NewReader(body))
++	r.Header.Set("Origin", "https://attacker.example")
++	w := httptest.NewRecorder()
++	n.server.Handler().ServeHTTP(w, r)
++	if w.Code != http.StatusForbidden {
++		t.Fatal("cross-origin digest deletion accepted")
++	}
++	if w := notificationRequest(n, http.MethodGet, "/api/browser-notifications/disable", body); w.Code != http.StatusMethodNotAllowed {
++		t.Fatal("deletion accepted a read method")
++	}
++	// A never-registered, refused endpoint needs no admission or outbound call
++	// to confirm absence. SHA-256 covers the exact string, including its path.
++	sum := sha256.Sum256([]byte("https://refused.example/private-path?exact=value"))
++	body = `{"endpointDigest":"` + hex.EncodeToString(sum[:]) + `"}`
++	if w := notificationRequest(n, http.MethodPost, "/api/browser-notifications/disable", body); w.Code != http.StatusOK || len(n.store.state.Browsers) != 0 {
++		t.Fatal("absent refused endpoint could not be removed")
++	}
++	n.server.hostProfile.target = "superseded-fixture"
++	if w := notificationRequest(n, http.MethodPost, "/api/browser-notifications/disable", body); w.Code != http.StatusConflict {
++		t.Fatal("superseded package accepted deletion")
++	}
++}
++
+ type mockPushClient struct {
+ 	code    int
+ 	err     error
+@@ -308,7 +399,12 @@ func TestNotificationsSenderNoPageRestartAndProviderOutcomes(t *testing.T) {
+ }
+ 
+ func TestNotificationsPushValidationAndTransportGuards(t *testing.T) {
+-	for _, endpoint := range []string{"http://fcm.googleapis.com/push", "https://fcm.googleapis.com.evil.test/push", "https://127.0.0.1/push", "https://user@fcm.googleapis.com/push", "https://fcm.googleapis.com:444/push", "https://updates.push.services.mozilla.com/push#fragment"} {
++	for _, endpoint := range []string{"https://fcm.googleapis.com/push", "https://updates.push.services.mozilla.com/push", "https://jmt17.google.com/push", "https://jmt17.google.com:443/push"} {
++		if _, err := validatePushEndpoint(endpoint); err != nil {
++			t.Fatal("exact supported provider rejected")
++		}
++	}
++	for _, endpoint := range []string{"http://fcm.googleapis.com/push", "https://fcm.googleapis.com.evil.test/push", "https://jmt17.google.com.evil.test/push", "https://not-jmt17.google.com/push", "https://jmt18.google.com/push", "http://jmt17.google.com/push", "https://jmt17.google.com:444/push", "https://127.0.0.1/push", "https://user@fcm.googleapis.com/push", "https://fcm.googleapis.com:444/push", "https://updates.push.services.mozilla.com/push#fragment"} {
+ 		if _, err := validatePushEndpoint(endpoint); err == nil {
+ 			t.Fatalf("accepted %s", endpoint)
+ 		}
+diff --git a/portal/internal/web/notifications_transport.go b/portal/internal/web/notifications_transport.go
+index 64d21f8..7f62787 100644
+--- a/portal/internal/web/notifications_transport.go
++++ b/portal/internal/web/notifications_transport.go
+@@ -20,6 +20,9 @@ import (
+ var pushProviderHosts = map[string]bool{
+ 	"updates.push.services.mozilla.com": true,
+ 	"fcm.googleapis.com":                true,
++	// Chromium 147 uses this upstream staging GCM host for non-stable channels,
++	// including unbranded builds. It is an exact host, not a Google suffix rule.
++	"jmt17.google.com": true,
+ }
+ 
+ func validatePushEndpoint(endpoint string) (*url.URL, error) {
+diff --git a/portal/internal/web/static/browser-notifications.js b/portal/internal/web/static/browser-notifications.js
+index ff5535f..51b62b2 100644
+--- a/portal/internal/web/static/browser-notifications.js
++++ b/portal/internal/web/static/browser-notifications.js
+@@ -1,14 +1,47 @@
+ (() => {
+   "use strict";
+   const key = "workspace-browser-notifications.v1";
++  const cleanupKey = `${key}.cleanup`;
+   const panel = document.getElementById("browser-notifications");
+   if (!panel) return;
+   const status = panel.querySelector("[data-notification-status]"), enable = panel.querySelector("[data-notification-enable]"),
+     disable = panel.querySelector("[data-notification-disable]"), test = panel.querySelector("[data-notification-test]");
+   const supported = globalThis.isSecureContext && "serviceWorker" in navigator && "PushManager" in globalThis && "Notification" in globalThis;
+-  let registrationId = "", busy = false, registered = false, localSubscription = null;
++  let registrationId = "", busy = false, registered = false, localSubscription = null, localKnown = false, pendingCleanup = null;
+   const incomplete = "Browser setup is incomplete. Disable it or enable notifications again.";
++  const disablingIncomplete = "Disabling is incomplete. Retry Disable.";
++  const serverPending = "Browser subscription removed; server cleanup is still pending. Retry Disable.";
++  const digestPattern = /^[0-9a-f]{64}$/;
++  const readCleanup = () => {
++    try {
++      const saved = localStorage.getItem(cleanupKey);
++      if (saved && saved.length <= 128) {
++        const value = JSON.parse(saved), fields = value && Object.keys(value);
++        if (fields?.length === 1 && ["registrationId", "endpointDigest"].includes(fields[0]) &&
++            typeof value[fields[0]] === "string" && digestPattern.test(value[fields[0]])) pendingCleanup = value;
++      }
++    } catch (_) {}
++  };
++  const saveCleanup = selector => {
++    pendingCleanup = selector;
++    try { localStorage.setItem(cleanupKey, JSON.stringify(selector)); } catch (_) {}
++  };
++  const clearCleanup = selector => {
++    try {
++      if (selector.registrationId && registrationId === selector.registrationId) {
++        localStorage.removeItem(key);
++        if (localStorage.getItem(key)) return false;
++        registrationId = "";
++      }
++      localStorage.removeItem(cleanupKey);
++      if (localStorage.getItem(cleanupKey)) return false;
++      pendingCleanup = null;
++      return true;
++    } catch (_) { return false; }
++  };
++  const cleanupStatus = () => localKnown && !localSubscription ? serverPending : disablingIncomplete;
+   try { registrationId = localStorage.getItem(key) || ""; } catch (_) {}
++  readCleanup();
+   const api = async (path, body) => {
+     const controller = new AbortController(), deadline = setTimeout(() => controller.abort(), 8000);
+     try {
+@@ -18,25 +51,28 @@
+     } finally { clearTimeout(deadline); }
+   };
+   const buttons = () => {
+-    enable.disabled = busy || !supported || Notification.permission === "denied";
+-    disable.disabled = busy || !supported || (!localSubscription && !registrationId);
+-    test.disabled = busy || !registered;
++    enable.disabled = busy || !supported || Notification.permission === "denied" || Boolean(pendingCleanup);
++    disable.disabled = busy || (!localSubscription && !registrationId && !pendingCleanup);
++    test.disabled = busy || !registered || Boolean(pendingCleanup);
+   };
+   async function refresh() {
+     if (!supported) { status.textContent = "This browser build does not support background Web Push. Use a browser with Push API support."; buttons(); return; }
+     try {
+       const local = await navigator.serviceWorker.getRegistration("/");
+       localSubscription = await local?.pushManager.getSubscription();
++      localKnown = true;
+       const state = await api(`?registrationId=${encodeURIComponent(registrationId)}`);
+-      registered = Boolean(state.registered && localSubscription && Notification.permission === "granted");
+-      status.textContent = localSubscription && !registered ? incomplete : Notification.permission === "denied" ? "Notifications are blocked. Change this site's notification permission in your browser settings." :
++      registered = Boolean(!pendingCleanup && state.registered && localSubscription && Notification.permission === "granted");
++      status.textContent = pendingCleanup ? cleanupStatus() : localSubscription && !registered ? incomplete : Notification.permission === "denied" ? "Notifications are blocked. Change this site's notification permission in your browser settings." :
+         !state.available ? "Notification delivery is disabled on the server." : state.result === "expired" ? "The browser subscription expired. Enable notifications again." : registered ?
+         ({expired: "The browser subscription expired. Enable notifications again.", retrying: "The provider is unavailable. Delivery will retry.", delivery_failed: "Delivery failed. Send a test notification to check it.", provider_refused: "The provider refused delivery. Enable notifications again.", provider_accepted: "The push service accepted the last notification. Check this browser to confirm it appeared."})[state.result] || "Enabled on this browser." : "Disabled on this browser.";
+-    } catch (error) { registered = false; status.textContent = localSubscription ? incomplete : error.message; }
++    } catch (error) { registered = false; status.textContent = pendingCleanup ? cleanupStatus() : localSubscription ? incomplete : error.message; }
+     buttons();
+   }
+   enable.addEventListener("click", async () => {
+     if (busy || !supported || Notification.permission === "denied") return;
++    readCleanup();
++    if (pendingCleanup) { status.textContent = cleanupStatus(); buttons(); return; }
+     busy = true; buttons();
+     try {
+       const permission = await Notification.requestPermission();
+@@ -65,24 +101,43 @@
+   });
+   disable.addEventListener("click", async () => {
+     if (busy) return;
+-    busy = true; buttons();
++    busy = true; registered = false; buttons();
++    let registration = null, subscription = localSubscription, selector = null, serverAbsent = false;
++    readCleanup();
++    try {
++      registration = await navigator.serviceWorker.getRegistration("/");
++      subscription = await registration?.pushManager.getSubscription() || subscription;
++    } catch (_) {}
+     try {
+-      const registration = await navigator.serviceWorker.getRegistration("/");
+-      const subscription = await registration?.pushManager.getSubscription() || localSubscription;
+-      if (!registrationId && subscription) {
+-        // A lost register acknowledgement/storage key is recovered through the
+-        // same origin-bound, endpoint-idempotent registration, then removed.
+-        const value = subscription.toJSON();
+-        const saved = await api("/register", {subscription: {endpoint: value.endpoint, keys: value.keys}, expirationTime: value.expirationTime ?? null});
+-        registrationId = saved.registrationId;
++      selector = pendingCleanup || (registrationId ? {registrationId} : null);
++      if (!selector && subscription) {
++        const endpoint = subscription.endpoint || subscription.toJSON().endpoint;
++        if (typeof endpoint !== "string" || !endpoint) throw new Error();
++        const sum = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(endpoint));
++        selector = {endpointDigest: [...new Uint8Array(sum)].map(byte => byte.toString(16).padStart(2, "0")).join("")};
+       }
+-      if (registrationId) await api("/disable", {registrationId});
+-      registered = false;
+-      if (subscription && !await subscription.unsubscribe()) throw new Error("The server registration was removed, but browser unsubscribe failed. Retry Disable.");
+-      localSubscription = null; localStorage.removeItem(key); registrationId = ""; registered = false;
+-      status.textContent = "Disabled on this browser. Site permission remains in your browser settings.";
+-    } catch (error) { status.textContent = `Disabling is incomplete: ${error.message}`; }
+-    finally { busy = false; buttons(); }
++      if (selector) {
++        // Retain only one deletion selector before discarding the subscription.
++        // Even a refused provider can be removed without registering it again.
++        saveCleanup(selector);
++        await api("/disable", selector);
++        serverAbsent = true;
++      }
++    } catch (_) {}
++    // Local removal is independent of the server response. A false/throwing
++    // unsubscribe is followed by a read, which establishes actual absence.
++    try { if (subscription) await subscription.unsubscribe(); } catch (_) {}
++    localKnown = false;
++    try {
++      registration ||= await navigator.serviceWorker.getRegistration("/");
++      localSubscription = await registration?.pushManager.getSubscription() || null;
++      localKnown = true;
++    } catch (_) {}
++    if (serverAbsent && localKnown && !localSubscription && clearCleanup(selector) && registrationId) saveCleanup({registrationId});
++    const complete = serverAbsent && localKnown && !localSubscription && !pendingCleanup && !registrationId;
++    status.textContent = complete ? "Disabled on this browser. Site permission remains in your browser settings." :
++      localKnown && !localSubscription && !serverAbsent ? serverPending : disablingIncomplete;
++    busy = false; buttons();
+   });
+   test.addEventListener("click", async () => {
+     if (busy || !registered) return;

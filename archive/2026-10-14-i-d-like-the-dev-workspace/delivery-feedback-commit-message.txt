@@ -1,0 +1,13 @@
+portal: report correlated browser notification test outcomes
+
+The queued-test message did not advance, and a worker receipt preceded the
+browser display attempt. Return the exact queued event descriptor and retain
+bounded local receipt, display and browser-record outcomes for that test.
+Resume checks after reopening and keep the last provider result explicitly
+uncorrelated. Give each explicit test a fresh notification tag while retaining
+session notification tags, acknowledgement and subscription cleanup behavior.
+
+The reply is additive and browser fields remain optional in IndexedDB v1.
+There is no server state migration, transport or sender change. Older clients
+ignore the descriptor; older workers leave detailed results unknown. These
+diagnostics do not establish the cause of a missing physical notification.

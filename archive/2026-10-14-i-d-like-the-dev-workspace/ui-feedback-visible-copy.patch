@@ -1,0 +1,86 @@
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 352d0d1..d62397d 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -5,7 +5,7 @@
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Workspace</title>
+-  <link rel="stylesheet" href="/static/style.css?v=14">
++  <link rel="stylesheet" href="/static/style.css?v=15">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body data-index data-index-generated-at="{{.IndexGeneratedAt}}">
+@@ -37,7 +37,6 @@
+     {{if .Error}}<p class="notice error">{{.Error}}</p>{{end}}
+     <p id="index-status-warning" class="notice warning" hidden></p>
+     <p data-coordination-warning class="notice warning" role="status" hidden></p>
+-    {{template "browser-notifications"}}
+     <section class="panel new-session">
+       <div><p class="eyebrow">Start work</p><h2>New session</h2><p class="muted">Codex will decide which repositories the request affects. From {{.HostLabel}}, use <code>dev-session start &lt;short-name&gt;</code>.</p></div>
+       <form id="new-session-form" method="post" action="/sessions" class="stack">
+@@ -97,7 +96,6 @@
+   <script src="/static/preparation.js?v=4" defer></script>
+   <script src="/static/app.js?v=40" defer></script>
+   <script src="/static/coordination.js?v=4" defer></script>
+-  <script src="/static/browser-notifications.js" defer></script>
+ </body>
+ </html>
+ {{end}}
+@@ -107,6 +105,7 @@
+ <nav id="sidebar-menu" class="sidebar-menu" popover="auto" aria-label="Workspace navigation">
+   <a href="/operations" autofocus>Operations</a>
+   <a href="/automatic-archival">Automatic archival</a>
++  <a href="/browser-notifications">Browser notifications</a>
+ </nav>
+ {{end}}
+ 
+diff --git a/portal/internal/web/templates/notifications.html b/portal/internal/web/templates/notifications.html
+index f6ab5a9..038275b 100644
+--- a/portal/internal/web/templates/notifications.html
++++ b/portal/internal/web/templates/notifications.html
+@@ -1,8 +1,30 @@
++{{define "browser-notifications-page"}}
++<!doctype html>
++<html lang="en">
++<head>
++  <meta charset="utf-8">
++  <meta name="viewport" content="width=device-width, initial-scale=1">
++  <title>Browser notifications · {{.DisplayLabel}}</title>
++  <link rel="stylesheet" href="/static/style.css?v=15">
++</head>
++<body>
++  <header class="topbar">
++    <div><p class="eyebrow">{{.DisplayLabel}}</p><h1>Browser notifications</h1></div>
++    <a href="/">Back to workspace</a>
++  </header>
++  <main class="page">
++    {{template "browser-notifications"}}
++  </main>
++  <script src="/static/browser-notifications.js" defer></script>
++</body>
++</html>
++{{end}}
++
+ {{define "browser-notifications"}}
+ <section id="browser-notifications" class="panel">
+   <h3>Browser notifications</h3>
+   <p>Notifications can appear while the browser is running with every portal tab closed. They show session names, which may appear on your lock screen. Delivery uses your browser vendor’s push service.</p>
+   <p data-notification-status role="status">Checking browser notifications…</p>
+-  <div class="actions"><button type="button" data-notification-enable>Enable browser notifications</button><button type="button" data-notification-test disabled>Send test notification</button><button type="button" class="quiet" data-notification-disable disabled>Disable on this browser</button></div>
++  <div class="notification-actions"><button type="button" data-notification-enable>Enable browser notifications</button><button type="button" data-notification-test disabled>Send test notification</button><button type="button" class="quiet" data-notification-disable disabled>Disable on this browser</button></div>
+ </section>
+ {{end}}
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 2f15471..e24ca49 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -7,7 +7,7 @@
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>{{.Session.Slug}} · Workspace</title>
+   <link rel="stylesheet" href="/codex/assets/conversation.css?v=5">
+-  <link rel="stylesheet" href="/static/style.css?v=14">
++  <link rel="stylesheet" href="/static/style.css?v=15">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body class="session-body" data-session="{{.Session.Slug}}" data-session-observation="{{.Session.ObservationIdentity}}" data-thread-id="{{if .SelectedThreadID}}{{.SelectedThreadID}}{{else}}{{.Session.Codex.ThreadID}}{{end}}" data-root-thread-id="{{.Session.Codex.ThreadID}}" data-conversation-id="{{.ConversationID}}" data-selected-member="{{.SelectedMember}}" data-lifecycle-target-id="{{.LifecycleTargetID}}" data-target-identity-version="2" data-archived="{{.Session.Archived}}" data-interactive="{{.Session.Interactive}}" data-execution-held="{{.Session.ExecutionHeld}}" data-lifecycle="{{.Session.Lifecycle}}" data-pending-lifecycle="{{.PendingLifecycle}}">

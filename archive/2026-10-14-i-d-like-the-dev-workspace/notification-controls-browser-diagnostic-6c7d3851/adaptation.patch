@@ -1,0 +1,11 @@
+--- committed/notifications_browser_test.cjs
++++ in-memory/notifications_browser_test.cjs
+@@ -2,7 +2,7 @@
+ const assert = require("node:assert/strict");
+ const {chromium, firefox, expect} = require("@playwright/test");
+ const base = process.argv[2];
+-const safeError = error => ["Error", "TimeoutError", "AbortError", "NotAllowedError", "SecurityError", "InvalidStateError", "TypeError"].includes(error?.name) ? error.name : "UnknownError";
++const safeError = error => { const category = ["Error", "TimeoutError", "AbortError", "NotAllowedError", "SecurityError", "InvalidStateError", "TypeError"].includes(error?.name) ? error.name : "UnknownError"; try { globalThis[Symbol.for("notification-fixture-diagnostic-6c7d3851")](error); } catch (_) {} return category; };
+ function failureTrace(context) {
+   const rows = [], requests = new WeakMap(), pending = new Set();
+   let order = 0, requestNumber = 0, dropped = 0;

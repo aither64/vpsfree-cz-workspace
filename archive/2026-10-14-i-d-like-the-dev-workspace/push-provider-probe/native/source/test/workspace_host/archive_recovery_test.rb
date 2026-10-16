@@ -1,0 +1,480 @@
+# frozen_string_literal: true
+
+require_relative '../support/workspace_host_test_case'
+
+class WorkspaceHostTest < Minitest::Test
+  def test_workspace_host_loads_dev_session_only_for_archive_recovery
+    script = <<~RUBY
+      load ARGV.fetch(0)
+      abort 'dev-session loaded eagerly' if defined?(DevSession::Runner)
+      begin
+        DevWorkspaceHost::Host.allocate.send(:with_verified_archive_recovery, {}, 'example', {}, {}, {})
+      rescue KeyError
+      end
+      abort 'dev-session was not loaded for recovery' unless defined?(DevSession::Runner)
+    RUBY
+    source = File.expand_path('../../libexec', __dir__)
+    Dir.mktmpdir('workspace-host-package-layout') do |root|
+      packaged_libexec = File.join(root, 'libexec')
+      packaged_session = File.join(packaged_libexec, 'workspace-portal')
+      package_contract = File.join(root, 'share', 'workspace-portal')
+      FileUtils.mkdir_p([packaged_session, package_contract])
+      %w[workspace-host workspace-coordination.rb workspace-coordination-command.rb workspace-coordination-timing.rb workspace-coordination-host.rb workspace-coordination-execution.rb workspace-codex-providers.rb workspace-provider-admission.rb workspace-profile-identity.rb workspace-sensitive-sessions.rb workspace-auto-archive.rb workspace-archive-cleanup.rb workspace-archive-recovery.rb].each do |name|
+        FileUtils.cp(File.join(source, name), File.join(packaged_libexec, name))
+      end
+      public_wrapper = File.join(packaged_session, 'dev-session')
+      File.write(public_wrapper, "#!/bin/sh\nexit 0\n")
+      wrapped_source = File.join(packaged_session, '.dev-session-wrapped')
+      FileUtils.cp(File.join(source, 'dev-session'), wrapped_source)
+      %w[workspace-coordination.rb workspace-coordination-command.rb workspace-coordination-timing.rb workspace-provider-admission.rb workspace-profile-identity.rb workspace-sensitive-sessions.rb workspace-auto-archive.rb workspace-archive-cleanup.rb workspace-archive-recovery.rb].each do |name|
+        File.symlink(File.join('..', name), File.join(packaged_session, name))
+      end
+      FileUtils.cp(File.expand_path('../../portal/internal/session/runtime-contract.json', __dir__),
+                   File.join(package_contract, 'runtime-contract.json'))
+      {
+        source: File.join(source, 'workspace-host'),
+        packaged: File.join(packaged_libexec, 'workspace-host')
+      }.each do |layout, host_path|
+        output, error, status = Open3.capture3(RbConfig.ruby, '-e', script, host_path)
+        assert(status.success?, "#{layout}: #{output}#{error}")
+      end
+      File.unlink(wrapped_source)
+      missing_source = <<~RUBY
+        load ARGV.fetch(0)
+        begin
+          DevWorkspaceHost::Host.allocate.send(:with_verified_archive_recovery, {}, 'example', {}, {}, {})
+          abort 'missing Ruby source passed'
+        rescue DevWorkspaceHost::Error => error
+          abort error.message unless error.message.include?('Ruby source is unavailable')
+        end
+        abort 'public wrapper was loaded as Ruby' if defined?(DevSession::Runner)
+      RUBY
+      output, error, status = Open3.capture3(RbConfig.ruby, '-e', missing_source,
+                                             File.join(packaged_libexec, 'workspace-host'))
+      assert(status.success?, "missing wrapped source: #{output}#{error}")
+    end
+  end
+
+  module RecoveryBehavior
+    attr_accessor :recovery_journal, :fail_recovery_preflight, :fail_recovery_executor,
+                  :fail_recovery_team, :fail_recovery_verifier,
+                  :fail_recovery_final_proof,
+                  :selected_recovery_version, :fail_recovery_contract,
+                  :change_profile_before_lock
+
+    private
+
+    def codex_version(_command)
+      selected_recovery_version || '0.160.0'
+    end
+
+    def with_transition_lock(mode = File::LOCK_EX, &block)
+      if change_profile_before_lock
+        self.change_profile_before_lock = false
+        File.unlink(@profile)
+        File.symlink(candidate, @profile)
+      end
+      super(mode, &block)
+    end
+
+    def capture_env!(environment, *argv)
+      if argv.include?('--retained-only')
+        events << [:archive_team, environment, argv]
+        raise DevWorkspaceHost::Error, 'injected retained team failure' if fail_recovery_team
+
+        return ''
+      end
+      return super unless (argv & %w[require-archive-ready require-archived]).any?
+
+      events << [:archive_preflight, environment, argv]
+      if fail_recovery_final_proof && events.count { |event| event.first == :archive_preflight } == 2
+        raise DevWorkspaceHost::Error, 'injected final archive proof failure'
+      end
+      raise DevWorkspaceHost::Error, 'injected archive proof failure' if fail_recovery_preflight
+
+      ''
+    end
+
+    def with_verified_archive_recovery(_entry, _slug, _journal, _runtime, _environment, selected_version:)
+      events << [:archive_tracking_verified, selected_version]
+      raise DevWorkspaceHost::Error, 'injected tracking failure' if fail_recovery_verifier
+
+      yield
+    end
+
+    def check_codex(command)
+      raise DevWorkspaceHost::Error, 'incompatible generated Codex contract' if fail_recovery_contract
+
+      super
+    end
+
+    def system_env_interactive!(environment, command, *arguments)
+      events << [:archive_executor, environment, command, arguments]
+      raise DevWorkspaceHost::Error, 'injected lifecycle interruption' if fail_recovery_executor
+
+      File.unlink(recovery_journal)
+    end
+  end
+
+  def test_recover_archive_uses_selected_executor_and_only_substitutes_protocol_helper
+    with_recovery_host do |host, paths|
+      creation_before = File.binread(paths.fetch(:creation))
+      assert_equal(0, recover_archive(host, paths))
+      assert_equal(%i[archive_tracking_verified archive_preflight archive_team archive_preflight archive_executor],
+                   host.events.map(&:first).reject { |event| event == :codex_checked })
+      preflights = host.events.select { |event| event.first == :archive_preflight }
+      assert_equal(%w[team team], preflights.map { |event| event.fetch(2).fetch(1) })
+      assert_equal(%w[require-archive-ready require-archived], preflights.map { |event| event.fetch(2).fetch(2) })
+      assert_equal('0.160.0', host.events.find { |event| event.first == :archive_tracking_verified }.fetch(1))
+      assert(preflights.all? { |event| event.fetch(1).fetch('DEV_WORKSPACE_CODEX_HOME') == paths.fetch(:codex_home) })
+      execution = host.events.find { |event| event.first == :archive_executor }
+      refute_nil(execution)
+      assert_equal(File.join(paths.fetch(:predecessor), 'libexec/workspace-portal/dev-session'), execution.fetch(2))
+      entry = host.send(:registry).find('example-workspace')
+      _, expected_command, expected_arguments = host.send(
+        :dev_session_invocation, entry, ['archive', paths.fetch(:slug), '--as-is'],
+        transition_lock: false, package: paths.fetch(:predecessor)
+      )
+      assert_equal(expected_command, execution.fetch(2))
+      index = expected_arguments.index('--portal-command')
+      expected_arguments[index + 1] = File.join(paths.fetch(:candidate), 'bin/workspace-portal')
+      assert_equal(expected_arguments, execution.fetch(3))
+      assert_equal(paths.fetch(:predecessor), File.realpath(host.instance_variable_get(:@profile)))
+      refute(File.exist?(paths.fetch(:journal)))
+      assert_equal(creation_before, File.binread(paths.fetch(:creation)))
+      refute(host.events.any? { |event| %i[profile_set configured consumers_restarted sessions_quiesced].include?(event.first) })
+    end
+  end
+
+  def test_recover_archive_accepts_absent_legacy_creation_record
+    with_recovery_host(creation_record: false) do |host, paths|
+      refute(File.exist?(paths.fetch(:creation)))
+      assert_equal(0, recover_archive(host, paths))
+      assert(host.events.any? { |event| event.first == :archive_executor })
+    end
+  end
+
+  def test_recover_archive_checks_the_selected_version_contract_without_a_profile_upgrade
+    %w[0.155.0 0.160.0].each do |version|
+      with_recovery_host do |host, paths|
+        host.selected_recovery_version = version
+        selected_codex = File.realpath(host.send(:active_codex))
+        token = host.send(:profile_link_token)
+        assert_equal(0, recover_archive(host, paths))
+        assert_equal(version, host.events.find { |event| event.first == :archive_tracking_verified }.fetch(1))
+        assert_equal(selected_codex, File.realpath(host.send(:active_codex)))
+        assert_equal(token, host.send(:profile_link_token))
+        assert_equal([:codex_checked, selected_codex], host.events.find { |event| event.first == :codex_checked })
+      end
+    end
+  end
+
+  def test_recover_archive_refuses_an_incompatible_generated_selected_contract_before_mutation
+    with_recovery_host do |host, paths|
+      host.fail_recovery_contract = true
+      assert_recovery_refused_before_proof(host, paths, 'generated protocol contract')
+      refute(host.events.any? { |event| event.first == :archive_tracking_verified })
+      host.fail_recovery_contract = false
+      assert_equal(0, recover_archive(host, paths))
+    end
+  end
+
+  def test_recover_archive_accepts_supported_ready_creation_variants
+    %w[managed direct legacy-null-goal].each do |variant|
+      with_recovery_host do |host, paths|
+        record = JSON.parse(File.read(paths.fetch(:creation)))
+        case variant
+        when 'managed', 'direct'
+          %w[preserve_tracking tracking_origin tracking_plan_sha256 tracking_state_sha256].each do |key|
+            record.delete(key)
+          end
+          record['model'] = 'gpt-6-sol'
+          record['effort'] = 'high'
+          if variant == 'managed'
+            record['schema'] = 2
+            record['agent_team_binding'] = "v1.payload.#{'a' * 64}"
+            record['agent_team_binding_digest'] = 'a' * 64
+          else
+            record['schema'] = 3
+            record['direct_team'] = {
+              'id' => 'delegated', 'name' => 'Full team', 'description' => 'Direct threads',
+              'catalogDigest' => 'a' * 64, 'teamDigest' => 'b' * 64,
+              'leadModel' => 'gpt-6-sol', 'leadEffort' => 'high',
+              'leadInstructions' => "Coordinate the team.\n", 'roles' => %w[lead architect0],
+              'members' => [{
+                'role' => 'architect', 'address' => 'architect0', 'behavior' => 'designer',
+                'purpose' => 'design', 'access' => 'read_only',
+                'instructions' => 'Write assigned design artifacts.',
+                'model' => 'gpt-6-sol', 'reasoningEffort' => 'xhigh'
+              }]
+            }
+          end
+        when 'legacy-null-goal'
+          record['goal_sha256'] = nil
+          manifest = YAML.safe_load(File.read(paths.fetch(:manifest)))
+          manifest.fetch('creation').delete('goal_sha256')
+          File.write(paths.fetch(:manifest), YAML.dump(manifest))
+        end
+        File.write(paths.fetch(:creation), JSON.generate(record))
+        creation_before = File.binread(paths.fetch(:creation))
+        assert_equal(0, recover_archive(host, paths), variant)
+        assert(host.events.any? { |event| event.first == :archive_executor }, variant)
+        assert_equal(creation_before, File.binread(paths.fetch(:creation)), variant)
+      end
+    end
+  end
+
+  def test_recover_archive_refuses_unfinished_or_invalid_creation_before_proof
+    %w[creating malformed wrong-slug unsafe-mode goal-mismatch invalid-tracking unknown-schema
+       unknown-state oversized symlink nonregular explicit-null-goal].each do |failure|
+      with_recovery_host do |host, paths|
+        creation = paths.fetch(:creation)
+        case failure
+        when 'creating'
+          record = JSON.parse(File.read(creation))
+          record['state'] = 'creating'
+          record['tmux_identity'] = 'f' * 64
+          File.write(creation, JSON.generate(record))
+        when 'malformed'
+          File.write(creation, '{')
+        when 'wrong-slug', 'invalid-tracking', 'unknown-schema', 'unknown-state'
+          record = JSON.parse(File.read(creation))
+          case failure
+          when 'wrong-slug'
+            record['slug'] = 'wrong'
+          when 'invalid-tracking'
+            record['tracking_plan_sha256'] = 'wrong'
+          when 'unknown-schema'
+            record['schema'] = 99
+          when 'unknown-state'
+            record['state'] = 'unknown'
+          end
+          File.write(creation, JSON.generate(record))
+        when 'unsafe-mode'
+          File.chmod(0o644, creation)
+        when 'goal-mismatch'
+          manifest = YAML.safe_load(File.read(paths.fetch(:manifest)))
+          manifest.fetch('creation')['goal_sha256'] = 'f' * 64
+          File.write(paths.fetch(:manifest), YAML.dump(manifest))
+        when 'oversized'
+          File.write(creation, JSON.generate(JSON.parse(File.read(creation)).merge('padding' => 'x' * 65_536)))
+        when 'symlink'
+          File.rename(creation, "#{creation}.target")
+          File.symlink("#{creation}.target", creation)
+        when 'nonregular'
+          File.unlink(creation)
+          Dir.mkdir(creation)
+        when 'explicit-null-goal'
+          record = JSON.parse(File.read(creation))
+          record['goal_sha256'] = nil
+          File.write(creation, JSON.generate(record))
+          manifest = YAML.safe_load(File.read(paths.fetch(:manifest)))
+          manifest.fetch('creation')['goal_sha256'] = nil
+          File.write(paths.fetch(:manifest), YAML.dump(manifest))
+        end
+        assert_recovery_refused_before_proof(host, paths, failure)
+      end
+    end
+  end
+
+  def test_recover_archive_refuses_competing_operations_with_ready_creation
+    %w[start fork agent-teams-migration removal revive].each do |name|
+      with_recovery_host do |host, paths|
+        conflict = File.join(File.dirname(paths.fetch(:journal)), "#{paths.fetch(:slug)}.#{name}.json")
+        File.write(conflict, '{}')
+        assert_recovery_refused_before_proof(host, paths, name)
+      end
+    end
+  end
+
+  def test_recover_archive_refuses_a_cleanup_sidecar_before_selected_executor_proof
+    with_recovery_host do |host, paths|
+      sidecar = File.join(File.dirname(paths.fetch(:journal)), "#{paths.fetch(:slug)}.archive-cleanup.json")
+      File.write(sidecar, '{}')
+      assert_recovery_refused_before_proof(host, paths, 'cleanup sidecar')
+      assert_equal('{}', File.binread(sidecar))
+    end
+  end
+
+  def test_recover_archive_refuses_wrong_source_phase_identity_and_missing_journal
+    %w[source phase workspace root missing conflict contract generation].each do |failure|
+      with_recovery_host do |host, paths|
+        case failure
+        when 'source'
+          host.executing_package = paths.fetch(:predecessor)
+        when 'phase', 'workspace'
+          journal = JSON.parse(File.read(paths.fetch(:journal)))
+          journal[failure == 'phase' ? 'phase' : 'workspace'] = 'wrong'
+          File.write(paths.fetch(:journal), JSON.generate(journal))
+        when 'root'
+          manifest = YAML.safe_load(File.read(paths.fetch(:manifest)))
+          manifest.fetch('codex')['thread_id'] = 'other'
+          File.write(paths.fetch(:manifest), YAML.dump(manifest))
+        when 'missing'
+          File.unlink(paths.fetch(:journal))
+        when 'conflict'
+          File.write(File.join(File.dirname(paths.fetch(:journal)), "#{paths.fetch(:slug)}.removal.json"), "{}")
+        when 'contract'
+          contract = File.join(paths.fetch(:predecessor), 'share/workspace-portal/runtime-contract.json')
+          data = JSON.parse(File.read(contract))
+          data.delete('devSessionFlags')
+          File.write(contract, JSON.generate(data))
+        when 'generation'
+          host.change_profile_before_lock = true
+        end
+        assert_equal(1, recover_archive(host, paths), failure)
+        refute(host.events.any? { |event| event.first == :archive_executor }, failure)
+        assert_equal(paths.fetch(:predecessor), File.realpath(host.instance_variable_get(:@profile))) unless failure == 'generation'
+      end
+    end
+  end
+
+  def test_recover_archive_keeps_journal_on_failed_proof_or_executor_and_retries
+    with_recovery_host do |host, paths|
+      host.fail_recovery_preflight = true
+      assert_equal(1, recover_archive(host, paths))
+      assert(File.file?(paths.fetch(:journal)))
+      refute(host.events.any? { |event| event.first == :archive_executor })
+      host.fail_recovery_preflight = false
+      host.fail_recovery_executor = true
+      assert_equal(1, recover_archive(host, paths))
+      assert(File.file?(paths.fetch(:journal)))
+      host.fail_recovery_executor = false
+      assert_equal(0, recover_archive(host, paths))
+      refute(File.exist?(paths.fetch(:journal)))
+      assert_equal(1, recover_archive(host, paths))
+    end
+  end
+
+  def test_recover_archive_keeps_journal_when_verifier_or_team_fails
+    with_recovery_host do |host, paths|
+      %i[fail_recovery_verifier fail_recovery_team].each do |failure|
+        host.public_send("#{failure}=", true)
+        host.events.clear
+        assert_equal(1, recover_archive(host, paths), failure)
+        assert(File.file?(paths.fetch(:journal)), failure)
+        assert_equal(paths.fetch(:predecessor), File.realpath(host.instance_variable_get(:@profile)), failure)
+        refute(host.events.any? { |event| event.first == :archive_executor }, failure)
+        host.public_send("#{failure}=", false)
+      end
+      host.events.clear
+      assert_equal(0, recover_archive(host, paths))
+    end
+  end
+
+  def test_recover_archive_final_team_proof_blocks_executor
+    with_recovery_host do |host, paths|
+      host.fail_recovery_final_proof = true
+      assert_equal(1, recover_archive(host, paths))
+      assert_equal(%i[archive_tracking_verified archive_preflight archive_team archive_preflight],
+                   host.events.map(&:first).reject { |event| event == :codex_checked })
+      assert(File.file?(paths.fetch(:journal)))
+      assert_equal(paths.fetch(:predecessor), File.realpath(host.instance_variable_get(:@profile)))
+      host.fail_recovery_final_proof = false
+      host.events.clear
+      assert_equal(0, recover_archive(host, paths))
+    end
+  end
+
+  def test_recover_archive_preserves_existing_abandoned_mode_without_force
+    with_recovery_host do |host, paths|
+      journal = JSON.parse(File.read(paths.fetch(:journal)))
+      journal['mode'] = 'abandoned'
+      File.write(paths.fetch(:journal), JSON.generate(journal))
+      assert_equal(0, recover_archive(host, paths))
+      arguments = host.events.find { |event| event.first == :archive_executor }.fetch(3)
+      assert_equal(%w[archive 2026-09-29-recover-example --as-is --abandoned],
+                   arguments[(arguments.index('--') + 1)..])
+      refute_includes(arguments, '--force')
+      refute_includes(arguments, '--portal-authorized')
+    end
+  end
+
+  def test_normal_switch_still_refuses_journal_then_succeeds_after_recovery
+    with_recovery_host do |host, paths|
+      host.executing_package = nil
+      assert_equal(1, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
+      host.executing_package = paths.fetch(:candidate)
+      assert_equal(0, recover_archive(host, paths))
+      host.executing_package = nil
+      assert_equal(0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
+      assert_equal(paths.fetch(:candidate), File.realpath(host.instance_variable_get(:@profile)))
+    end
+  end
+
+  private
+
+  def assert_recovery_refused_before_proof(host, paths, failure)
+    journal_before = File.binread(paths.fetch(:journal))
+    assert_equal(1, recover_archive(host, paths), failure)
+    refute(host.events.any? { |event| %i[archive_preflight archive_team archive_executor].include?(event.first) }, failure)
+    assert_equal(journal_before, File.binread(paths.fetch(:journal)), failure)
+    assert_equal(paths.fetch(:predecessor), File.realpath(host.instance_variable_get(:@profile)), failure)
+  end
+
+  def recover_archive(host, paths)
+    host.run('workspace-host', [
+      'recover-archive', '--source', paths.fetch(:source),
+      '--workspace', 'example-workspace', '--session', paths.fetch(:slug)
+    ])
+  end
+
+  def with_recovery_host(creation_record: true)
+    with_transition_host do |host, paths|
+      host.send(:root_codex, paths.fetch(:old_codex), paths.fetch(:current_root))
+      assert_equal(0, host.run('workspace-host', ['switch', '--source', paths.fetch(:source)]))
+      predecessor = File.realpath(host.instance_variable_get(:@profile))
+      candidate = make_package(paths.fetch(:root), 'package-two')
+      [predecessor, candidate].each do |package|
+        File.write(File.join(package, 'share/workspace-portal/runtime-contract.json'),
+                   JSON.generate(DevWorkspaceHost::RUNTIME_CONTRACT))
+        helper = File.join(package, 'bin/workspace-portal')
+        File.write(helper, "#!/bin/sh\nexit 0\n")
+        File.chmod(0o755, helper)
+      end
+      executor = File.join(predecessor, 'libexec/workspace-portal/dev-session')
+      FileUtils.mkdir_p(File.dirname(executor))
+      File.write(executor, "#!/bin/sh\nexit 0\n")
+      File.chmod(0o755, executor)
+      codex_home = File.join(paths.fetch(:root), '.codex')
+      FileUtils.mkdir_p(codex_home)
+      host.candidate = candidate
+      host.executing_package = candidate
+      host.extend(RecoveryBehavior)
+      host.events.clear
+      entry = host.send(:registry).find('example-workspace')
+      slug = '2026-09-29-recover-example'
+      root_thread = '11111111-1111-7111-8111-111111111111'
+      locks = File.join(entry.fetch('root'), 'worktrees', '.locks')
+      FileUtils.mkdir_p(locks)
+      journal = File.join(locks, "#{slug}.archive.json")
+      File.write(journal, JSON.generate(
+        'schema' => 2, 'slug' => slug, 'workspace' => entry.fetch('root'),
+        'operation_id' => 'a' * 64, 'phase' => 'tracking_committed',
+        'mode' => 'complete', 'proven_heads' => {}, 'finalized_at' => '2026-09-29T10:00:00Z',
+        'retained_thread_id' => root_thread, 'target_tracking_sha256' => 'b' * 64
+      ))
+      File.chmod(0o600, journal)
+      archive = File.join(entry.fetch('root'), 'archive', slug)
+      FileUtils.mkdir_p(archive)
+      manifest = File.join(archive, 'portal.yml')
+      File.write(manifest, YAML.dump(
+        'slug' => slug, 'codex' => { 'thread_id' => root_thread,
+                                    'socket_path' => host.send(:instance_runtime, entry).fetch(:codex) },
+        'creation' => { 'state' => 'ready', 'goal_sha256' => 'c' * 64 }
+      ))
+      creation = File.join(locks, "#{slug}.creation.json")
+      if creation_record
+        File.write(creation, JSON.generate(
+          'schema' => 1, 'slug' => slug, 'goal_sha256' => 'c' * 64,
+          'run_codex' => true, 'state' => 'ready', 'preserve_tracking' => true,
+          'tracking_origin' => 'retained', 'tracking_plan_sha256' => 'd' * 64,
+          'tracking_state_sha256' => 'e' * 64
+        ))
+        File.chmod(0o600, creation)
+      end
+      host.recovery_journal = journal
+      yield host, paths.merge(predecessor:, candidate:, codex_home:, journal:, manifest:, creation:, slug:)
+    end
+  end
+end

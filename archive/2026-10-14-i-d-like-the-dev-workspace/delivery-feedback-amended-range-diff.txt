@@ -1,0 +1,187 @@
+1:  43c6461 ! 1:  50fba34 portal: report correlated browser notification test outcomes
+    @@ portal/internal/web/attention_browser_test.cjs: test('successful replacement ret
+     +    MessageChannel: function() {this.port1 = {close() {}}; this.port2 = {reply: value => queueMicrotask(() => this.port1.onmessage({data: value}))};},
+     +    setTimeout(callback, delay) {const id = ++nextTimer; timers.set(id, {callback, at: now + delay}); return id;}, clearTimeout: id => timers.delete(id),
+     +    localStorage: {getItem: key => saved.get(key) || null, setItem: (key,value) => saved.set(key,value), removeItem: key => saved.delete(key)},
+    -+    fetch: async (url, config = {}) => {calls.push({url, config}); return {ok: true, json: async () => url.endsWith('/test') ? {ok: true, test: options.oldServer ? null : state.descriptor} : {available: true, registered: state.registered, result: 'provider_accepted'}};},
+    ++    fetch: async (url, config = {}) => {calls.push({url, config});
+    ++      if (url.endsWith('/test') && state.testReply) return state.testReply();
+    ++      return {ok: true, json: async () => url.endsWith('/test') ? {ok: true, test: options.oldServer ? null : state.descriptor} : {available: true, registered: state.registered, result: 'provider_accepted'}};},
+     +  };
+     +  context.document.getElementById = () => ({querySelector: selector => controls[selector.replace('[data-notification-','').replace(']','')]});
+     +  vm.runInNewContext(source('browser-notifications.js'), context);
+    @@ portal/internal/web/attention_browser_test.cjs: test('successful replacement ret
+     +  await h.push(testDescriptor());
+     +  assert.equal(h.shown.length, 1); assert.equal(h.shown[0].body, 'Browser notification test');
+     +  assert.equal(h.storage.records.size, 0, 'no fabricated display evidence after storage timeout');
+    ++});
+    ++
+    ++test('a failed or lost second Test retires the old check before sending and late old results cannot certify it', async () => {
+    ++  for (const failure of ['rejected', 'lost']) {
+    ++    const h = await feedbackHarness(); await h.controls.test.click();
+    ++    const first = h.state.descriptor;
+    ++    let rejectReply;
+    ++    h.state.testReply = () => {
+    ++      assert.equal(h.storage.records.get(first.identity).testPending, undefined, 'saved A is retired before submitting B');
+    ++      return new Promise((resolve, reject) => {rejectReply = () => failure === 'lost' ? reject(Error('lost reply')) :
+    ++        resolve({ok: false, json: async () => ({error: 'Browser notifications are disabled.'})});});
+    ++    };
+    ++    const secondClick = h.controls.test.click(); await h.flush();
+    ++    assert.match(h.controls['test-status'].textContent, /matching test result is unavailable/);
+    ++    await h.storage.store.saveTest(first, {received: true, display: 'resolved', browserRecord: 'present'});
+    ++    h.listeners.message({data: {type: 'notification-test-update', identity: first.identity}}); await h.flush();
+    ++    assert.match(h.controls['test-status'].textContent, /matching test result is unavailable/);
+    ++    rejectReply(); await secondClick;
+    ++    h.listeners.message({data: {type: 'notification-test-update', identity: first.identity}});
+    ++    h.listeners.visibilitychange(); h.listeners.pageshow(); await h.flush();
+    ++    assert.match(h.controls['test-status'].textContent, /matching test result is unavailable/);
+    ++    assert.equal(h.timers.size, 0, 'retired A cannot restart polling after failed B');
+    ++    const reopened = await feedbackHarness(h.storage);
+    ++    assert.equal(reopened.controls['test-status'].textContent, '', 'retired A does not auto-resume on reload');
+    ++    assert.equal(reopened.timers.size, 0);
+    ++  }
+    ++});
+    ++
+    ++test('an older document cancellation cannot erase a newer shared descriptor, including single-field mismatches', async () => {
+    ++  for (const field of ['id', 'revision', 'expiresAt', 'identity']) {
+    ++    const storage = testStoreHarness(), firstTab = await feedbackHarness(storage);
+    ++    await firstTab.controls.test.click(); const first = firstTab.state.descriptor;
+    ++    const secondTab = await feedbackHarness(storage);
+    ++    secondTab.state.descriptor = {...first, id: 'e'.repeat(64), revision: first.revision + 1};
+    ++    await secondTab.controls.test.click(); const second = secondTab.state.descriptor;
+    ++    // Exercise every field of the exact cancellation match independently. This
+    ++    // simulates an accepted newer descriptor already saved by the other page.
+    ++    const stored = {...first, [field]: second[field]};
+    ++    if (field === 'expiresAt') stored.expiresAt = first.expiresAt + 1;
+    ++    if (field === 'identity') stored.identity = `test-${'f'.repeat(64)}`;
+    ++    storage.records.get(first.identity).testPending = structuredClone(stored);
+    ++    firstTab.listeners.storage({key: browserKey, newValue: 'f'.repeat(64)}); await firstTab.flush();
+    ++    assert.deepEqual(storage.records.get(first.identity).testPending, stored, `${field} difference prevents stale cancellation`);
+    ++    storage.records.get(first.identity).testPending = structuredClone(second);
+    ++    const reopened = await feedbackHarness(storage);
+    ++    assert.match(reopened.controls['test-status'].textContent, /Waiting for this test/);
+    ++    await storage.store.saveTest(second, {received: true, display: 'resolved', browserRecord: 'present'});
+    ++    reopened.listeners.message({data: {type: 'notification-test-update', identity: second.identity}}); await reopened.flush();
+    ++    assert.match(reopened.controls['test-status'].textContent, /matching notification is recorded/);
+    ++  }
+    ++});
+    ++
+    ++test('a delayed resume read cannot overwrite a new Test or undo cancellation, pagehide or registration replacement', async () => {
+    ++  for (const action of ['new-test', 'disable', 'pagehide', 'replacement']) {
+    ++    const storage = testStoreHarness(), descriptor = testDescriptor(Date.now());
+    ++    await storage.store.saveTest(descriptor);
+    ++    const read = storage.store.read; let release;
+    ++    storage.store.read = async identity => {
+    ++      const snapshot = structuredClone(await read(identity));
+    ++      return new Promise(resolve => {release = () => resolve(snapshot);});
+    ++    };
+    ++    const h = await feedbackHarness(storage); assert.equal(typeof release, 'function');
+    ++    storage.store.read = read;
+    ++    if (action === 'new-test') {
+    ++      h.state.descriptor = {...descriptor, id: 'e'.repeat(64), revision: descriptor.revision + 1};
+    ++      await h.controls.test.click();
+    ++    } else if (action === 'disable') await h.controls.disable.click();
+    ++    else if (action === 'pagehide') h.listeners.pagehide();
+    ++    else h.listeners.storage({key: browserKey, newValue: 'f'.repeat(64)});
+    ++    release(); await h.flush();
+    ++    if (action === 'new-test') {
+    ++      await storage.store.saveTest(h.state.descriptor, {received: true, display: 'resolved', browserRecord: 'present'});
+    ++      h.listeners.message({data: {type: 'notification-test-update', identity: descriptor.identity}}); await h.flush();
+    ++      assert.match(h.controls['test-status'].textContent, /matching notification is recorded/, 'late A read did not displace B');
+    ++    } else {
+    ++      assert.equal(h.controls['test-status'].textContent, '');
+    ++      assert.equal(h.timers.size, 0, 'invalidated resume never schedules a wait');
+    ++    }
+    ++  }
+    ++});
+    ++
+    ++test('deferred, failed or timed-out retirement cannot auto-resume A or submit B before retirement succeeds', async () => {
+    ++  for (const retirement of ['deferred', 'failed', 'timeout']) {
+    ++    const h = await feedbackHarness(); await h.controls.test.click(); const first = h.state.descriptor;
+    ++    const update = h.storage.store.update; let release;
+    ++    h.storage.store.update = (identity, change) => new Promise((resolve, reject) => {
+    ++      release = () => retirement === 'failed' ? reject(Error('storage unavailable')) : resolve(update(identity, change));
+    ++    });
+    ++    h.state.testReply = async () => {throw Error('lost second reply');};
+    ++    const second = h.controls.test.click(); await h.flush();
+    ++    h.listeners.visibilitychange(); h.listeners.pageshow(); await h.flush();
+    ++    assert.equal(h.calls.filter(call => call.url.endsWith('/test')).length, 1, 'no B request while A retirement is pending');
+    ++    assert.match(h.controls['test-status'].textContent, /matching test result is unavailable/);
+    ++    if (retirement === 'timeout') {await h.advance(1001); await second;}
+    ++    else {release(); await second;}
+    ++    await h.storage.store.saveTest(first, {received: true, display: 'resolved', browserRecord: 'present'});
+    ++    h.listeners.message({data: {type: 'notification-test-update', identity: first.identity}});
+    ++    h.listeners.visibilitychange(); h.listeners.pageshow(); await h.flush();
+    ++    assert.match(h.controls['test-status'].textContent, /matching test result is unavailable/);
+    ++    assert.equal(h.timers.size, 0, 'busy false cannot auto-load retired A after a failed deletion or B reply');
+    ++    assert.equal(h.calls.filter(call => call.url.endsWith('/test')).length, retirement === 'deferred' ? 2 : 1,
+    ++      'failed or uncertain local retirement refuses B submission');
+    ++    if (retirement === 'timeout') {release(); await h.flush();}
+    ++    assert.equal(Boolean(h.storage.records.get(first.identity).testPending), retirement === 'failed',
+    ++      'failed persistence remains explicitly unconfirmed; no second request was issued');
+    ++  }
+     +});
+     
+      ## portal/internal/web/notifications.go ##
+    @@ portal/internal/web/static/browser-notifications.js
+     +  const testStatus = panel.querySelector("[data-notification-test-status]"), providerStatus = panel.querySelector("[data-notification-provider-status]"),
+     +    workerStatus = panel.querySelector("[data-notification-worker-status]");
+     +  const store = globalThis.workspaceAttentionStore;
+    -+  let pendingTest = null, pollTimer = null, pollGeneration = 0, pageClosed = false, updatingWorker = false;
+    ++  let pendingTest = null, pollTimer = null, pollGeneration = 0, pageClosed = false, updatingWorker = false, resumeRetired = false;
+     +  const setText = (element, text) => { if (element) { element.textContent = text; element.hidden = !text; } };
+     +  const localResult = async promise => {
+     +    let timer;
+    @@ portal/internal/web/static/browser-notifications.js
+     +  const stopTest = () => { pollGeneration++; clearTimeout(pollTimer); pollTimer = null; };
+     +  const cancelTest = () => {
+     +    stopTest();
+    -+    const identity = pendingTest?.identity;
+    ++    resumeRetired = true;
+    ++    const descriptor = pendingTest;
+     +    pendingTest = null;
+     +    setText(testStatus, "");
+    -+    if (identity && store) void store.update(identity, value => { delete value.testPending; return value; }).catch(() => {});
+    ++    if (!descriptor || !store) return Promise.resolve();
+    ++    const retirement = store.update(descriptor.identity, value => {
+    ++      if (store.testMatches(value.testPending, descriptor)) delete value.testPending;
+    ++      return value;
+    ++    });
+    ++    // Enable/Disable compensation must not wait on diagnostic storage. A new
+    ++    // explicit Test does await retirement before submitting another request.
+    ++    void retirement.catch(() => {});
+    ++    return retirement;
+     +  };
+     +  const lastProvider = value => ({provider_accepted: "The push service accepted a notification.", retrying: "The push service is unavailable; delivery will retry.",
+     +    provider_refused: "The push service refused a notification.", delivery_failed: "A notification could not be sent.", expired: "A notification expired."})[value];
+    @@ portal/internal/web/static/browser-notifications.js
+     +    if (generation === pollGeneration && !pageClosed) pollTimer = setTimeout(() => void pollTest(), 2000);
+     +  }
+     +  async function resumeTest() {
+    -+    if (!store?.read || !registered || pageClosed || pendingTest) return;
+    ++    if (!store?.read || !registered || busy || pageClosed || pendingTest || resumeRetired) return;
+    ++    const generation = pollGeneration, identity = `test-${registrationId}`;
+     +    try {
+    -+      const record = await localResult(store.read(`test-${registrationId}`)), saved = store.testDescriptor(record?.testPending);
+    -+      if (saved && saved.identity === `test-${registrationId}` && saved.expiresAt <= Date.now() + 70000) {
+    ++      const record = await localResult(store.read(identity)), saved = store.testDescriptor(record?.testPending);
+    ++      if (generation !== pollGeneration || pageClosed || !registered || busy || resumeRetired || identity !== `test-${registrationId}` || pendingTest) return;
+    ++      if (saved && saved.identity === identity && saved.expiresAt <= Date.now() + 70000) {
+     +        pendingTest = saved;
+     +        void pollTest();
+     +      }
+    @@ portal/internal/web/static/browser-notifications.js
+          if (busy || !registered) return;
+          busy = true; buttons();
+     -    try { await api("/test", {registrationId}); status.textContent = "A test notification will be sent in 10 seconds. Close portal tabs or switch windows to check background delivery."; }
+    ++    const retirement = cancelTest(), generation = pollGeneration, identity = registrationId;
+    ++    setText(testStatus, "A matching test result is unavailable. Appearance on your screen is unconfirmed.");
+     +    try {
+    ++      await localResult(retirement);
+    ++      if (generation !== pollGeneration || pageClosed || identity !== registrationId || !registered) return;
+     +      const response = await api("/test", {registrationId});
+    ++      if (generation !== pollGeneration || pageClosed || identity !== registrationId || !registered) return;
+     +      stopTest();
+     +      let descriptor = store?.testDescriptor?.(response.test);
+     +      if (descriptor && (descriptor.identity !== `test-${registrationId}` || descriptor.expiresAt > Date.now() + 70000 || descriptor.expiresAt <= Date.now())) descriptor = null;
+2:  a5e4158 = 2:  5a07708 portal: remove the redundant session attention status row

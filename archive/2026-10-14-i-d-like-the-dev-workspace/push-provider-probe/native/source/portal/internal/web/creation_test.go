@@ -1,0 +1,1946 @@
+package web
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"os/exec"
+	"path/filepath"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/aither64/codex-web/codex"
+	"github.com/aither64/dev-workspace/portal/internal/agentteams"
+	"github.com/aither64/dev-workspace/portal/internal/session"
+	"github.com/aither64/dev-workspace/portal/internal/teamruntime"
+	"golang.org/x/sys/unix"
+)
+
+type creationTestCodex struct {
+	*browserContractCodex
+	entered chan<- struct{}
+	release <-chan struct{}
+}
+
+func (client *creationTestCodex) ListModels(ctx context.Context) ([]codex.Model, error) {
+	if client.entered != nil {
+		select {
+		case client.entered <- struct{}{}:
+		default:
+		}
+	}
+	if client.release != nil {
+		select {
+		case <-client.release:
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		}
+	}
+	models, _ := client.browserContractCodex.ListModels(ctx)
+	return append(models, codex.Model{Model: "native-default", DisplayName: "Native Default", IsDefault: true,
+		DefaultReasoningEffort:    "medium",
+		SupportedReasoningEfforts: []codex.ReasoningEffortOption{{ReasoningEffort: "medium"}}}), nil
+}
+func awaitCreation(t *testing.T, server *Server, slug string) creationReceipt {
+	t.Helper()
+	deadline := time.Now().Add(3 * time.Second)
+	for time.Now().Before(deadline) {
+		receipt, ok := server.currentCreation(slug)
+		if ok && receipt.State != "running" {
+			return receipt
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatal("creation worker did not finish")
+	return creationReceipt{}
+}
+func postCreation(t *testing.T, server *Server, path, body, contentType string) *httptest.ResponseRecorder {
+	t.Helper()
+	request := httptest.NewRequest(http.MethodPost, path, strings.NewReader(body))
+	request.Header.Set("Origin", server.config.BaseURL)
+	request.Header.Set("Content-Type", contentType)
+	response := httptest.NewRecorder()
+	server.Handler().ServeHTTP(response, request)
+	return response
+}
+func writeCreationBinding(t *testing.T, server *Server, receipt creationReceipt) {
+	t.Helper()
+	binding := map[string]any{"schema": 1, "workspace": server.config.Workspace, "slug": receipt.Request.Slug, "kind": receipt.Request.Kind, "receipt_id": receipt.ReceiptID, "deletion_history_sha256": receipt.DeletionHistorySHA256,
+		"source_thread": receipt.Request.SourceThreadID, "source_identity": receipt.Request.SourceIdentity, "goal_sha256": nil, "model": receipt.Model, "effort": receipt.Effort}
+	if receipt.Request.Kind != "fork" {
+		binding["kind"] = "start"
+		binding["goal_sha256"] = planDigest(receipt.Goal)
+	}
+	bindingData, err := json.Marshal(binding)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(server.creationEvidencePath(receipt)+".request", bindingData, 0600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func writeCreationProof(t *testing.T, server *Server, receipt creationReceipt) {
+	t.Helper()
+	writeCreationBinding(t, server, receipt)
+	slug := receipt.Request.Slug
+	directory := filepath.Join(server.config.Workspace, "work", slug)
+	if err := os.MkdirAll(directory, 0755); err != nil {
+		t.Fatal(err)
+	}
+	manifest := "schema: 1\nslug: " + slug + "\ncodex:\n  thread_id: created-thread\ncreation:\n  state: ready\n  initial_goal_sent: true\n"
+	if receipt.Request.Kind != "fork" {
+		manifest += "  goal_sha256: " + planDigest(receipt.Goal) + "\n"
+	}
+	if receipt.Request.Kind == "fork" {
+		manifest += "forked_from: " + receipt.Request.Source + "\n"
+	}
+	if err := os.WriteFile(filepath.Join(directory, "portal.yml"), []byte(manifest), 0644); err != nil {
+		t.Fatal(err)
+	}
+	writeWebTrackingFiles(t, directory, "active")
+	var stat unix.Stat_t
+	if err := unix.Lstat(directory, &stat); err != nil {
+		t.Fatal(err)
+	}
+	proof := creationEvidence{Schema: 1, Workspace: server.config.Workspace, Slug: slug, ReceiptID: receipt.ReceiptID, ThreadID: "created-thread",
+		SourceThreadID: receipt.Request.SourceThreadID, GoalSHA256: planDigest(receipt.Goal), Model: receipt.Model, Effort: receipt.Effort,
+		TrackingDevice: stat.Dev, TrackingInode: stat.Ino}
+	data, err := json.Marshal(proof)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(server.creationEvidencePath(receipt), data, 0600); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func legacyVirtualBinding() (string, string) {
+	digest := strings.Repeat("a", 64)
+	return "v1.e30." + digest, digest
+}
+
+func TestDirectTeamPresetAcceptsFrozenCustomRoleInstructions(t *testing.T) {
+	preset := teamruntime.Preset{
+		ID: "custom", Name: "Custom team", Description: "A lead and scribe",
+		CatalogDigest: strings.Repeat("a", 64), TeamDigest: strings.Repeat("b", 64),
+		LeadModel: "model-1", LeadEffort: "high", LeadInstructions: "Coordinate the team.\nWait for the first request.",
+		Roles: []string{"lead", "scribe0"},
+		Members: []teamruntime.MemberSpec{{Role: "scribe", Address: "scribe0", Model: "model-1", Effort: "high",
+			Behavior: "general", Access: "read_only", Purpose: "general", Instructions: "Summarize the assignment."}},
+	}
+	if err := validDirectTeamPreset(preset); err != nil {
+		t.Fatal(err)
+	}
+	data, err := json.Marshal(preset)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := validateDirectPresetShape(data); err != nil {
+		t.Fatal(err)
+	}
+	var malformed map[string]any
+	if err := json.Unmarshal(data, &malformed); err != nil {
+		t.Fatal(err)
+	}
+	malformed["leadInstructions"] = ""
+	emptyLead, err := json.Marshal(malformed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := validateDirectPresetShape(emptyLead); err == nil {
+		t.Fatal("accepted an explicitly empty lead prompt")
+	}
+	preset.Members[0].Purpose = "review"
+	if err := validDirectTeamPreset(preset); err == nil {
+		t.Fatal("accepted a custom role with the wrong purpose")
+	}
+}
+
+func TestCompletedCreationJournalRecognizesStrictManagedReadyState(t *testing.T) {
+	t.Helper()
+	token, digest := legacyVirtualBinding()
+	journal := map[string]any{
+		"schema": 2, "slug": "2026-09-22-managed", "goal_sha256": strings.Repeat("c", 64),
+		"run_codex": true, "state": "ready", "model": "model-lead", "effort": "high",
+		"agent_team_binding": token, "agent_team_binding_digest": digest,
+	}
+	data, err := json.Marshal(journal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		t.Fatal(err)
+	}
+	ready, err := completedCreationJournal(raw, "2026-09-22-managed")
+	if err != nil || !ready {
+		t.Fatalf("managed ready journal = %v, %v", ready, err)
+	}
+	raw["tmux_identity"] = json.RawMessage(`"` + strings.Repeat("d", 64) + `"`)
+	if _, err := completedCreationJournal(raw, "2026-09-22-managed"); err == nil {
+		t.Fatal("managed ready journal retained a creating-only field")
+	}
+}
+
+func TestCreationProofRejectsBothReceiptSchemaMismatches(t *testing.T) {
+	for _, schemas := range [][2]int{{1, 2}, {2, 1}} {
+		t.Run(fmt.Sprintf("receipt_%d_proof_%d", schemas[0], schemas[1]), func(t *testing.T) {
+			server := newTestServer(t)
+			defer server.Close()
+			receipt := creationReceipt{
+				Schema: schemas[0], Workspace: server.config.Workspace,
+				Request:   creationRequest{Kind: "new", Slug: "2026-09-22-schema-proof", Goal: "Initial request"},
+				ReceiptID: strings.Repeat("a", 64), DeletionHistorySHA256: strings.Repeat("b", 64),
+				Validated: true, Model: "model-1", Effort: "high",
+			}
+			if err := os.MkdirAll(server.creationDirectory(), 0700); err != nil {
+				t.Fatal(err)
+			}
+			data, err := json.Marshal(creationEvidence{Schema: schemas[1]})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(server.creationEvidencePath(receipt), data, 0600); err != nil {
+				t.Fatal(err)
+			}
+			if err := server.proveCreation(receipt); err == nil {
+				t.Fatalf("receipt schema %d accepted proof schema %d", schemas[0], schemas[1])
+			}
+		})
+	}
+}
+
+func TestDirectCreationProofAcceptsSchemaThreeJournalAndRoster(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	slug := "2026-09-22-direct-proof"
+	preset := teamruntime.Preset{ID: "delegated", Name: "Full team", Description: "A lead and reviewer thread",
+		CatalogDigest: strings.Repeat("a", 64), TeamDigest: strings.Repeat("b", 64),
+		LeadModel: "model-1", LeadEffort: "high", Roles: []string{"lead", "reviewer0"},
+		Members: []teamruntime.MemberSpec{{Role: "reviewer", Address: "reviewer0", Model: "model-1", Effort: "high", Behavior: "reviewer", Access: "read_only"}}}
+	receipt := creationReceipt{Schema: 3, Workspace: server.config.Workspace,
+		Request:   creationRequest{Kind: "new", Slug: slug, Goal: "Initial request", Team: preset.ID, CatalogDigest: preset.CatalogDigest},
+		ReceiptID: strings.Repeat("c", 64), DeletionHistorySHA256: strings.Repeat("d", 64),
+		Validated: true, Goal: "Initial request", Model: preset.LeadModel, Effort: preset.LeadEffort, DirectTeam: &preset}
+	if err := os.MkdirAll(server.creationDirectory(), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	writeCreationProof(t, server, receipt)
+	journal := map[string]any{"schema": 3, "slug": slug, "goal_sha256": planDigest(receipt.Goal),
+		"run_codex": true, "state": "ready", "model": receipt.Model, "effort": receipt.Effort, "direct_team": preset}
+	journalData, err := json.Marshal(journal)
+	if err != nil {
+		t.Fatal(err)
+	}
+	journalPath := filepath.Join(server.config.Workspace, "worktrees", ".locks", slug+".creation.json")
+	if err := os.MkdirAll(filepath.Dir(journalPath), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(journalPath, journalData, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	store, err := teamruntime.NewStore(server.config.UserStateRoot, server.config.Workspace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.Update(context.Background(), slug, "created-thread", true, func(roster *teamruntime.Roster) error {
+		roster.PresetID, roster.CatalogDigest, roster.TeamDigest = preset.ID, preset.CatalogDigest, preset.TeamDigest
+		roster.LeadModel, roster.LeadEffort = preset.LeadModel, preset.LeadEffort
+		roster.Members = []teamruntime.Member{{Address: "reviewer0", Role: "reviewer", Index: 0, Thread: "reviewer-thread",
+			Model: "model-1", Effort: "high", Behavior: "reviewer", Access: "read_only", State: "ready", AddedAt: time.Now().UTC()}}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var proof creationEvidence
+	if err := readCreationJSON(server.creationEvidencePath(receipt), &proof); err != nil {
+		t.Fatal(err)
+	}
+	proof.Schema, proof.CatalogDigest, proof.TeamDigest, proof.Team = 3, preset.CatalogDigest, preset.TeamDigest, preset.ID
+	proofData, err := json.Marshal(proof)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(server.creationEvidencePath(receipt), proofData, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := server.proveCreation(receipt); err != nil {
+		t.Fatalf("schema-three browser proof: %v", err)
+	}
+	roster, err := store.Load(slug, "created-thread")
+	if err != nil {
+		t.Fatal(err)
+	}
+	roster.Members[0].Access = "workspace_write"
+	if err := rosterMatchesDirectTeam(*roster, preset); err == nil {
+		t.Fatal("creation proof accepted a changed member access policy")
+	}
+}
+
+func TestTeamMutationsWaitForCreationProof(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	slug := "2026-09-22-pending-team"
+	server.creations[slug] = creationReceipt{Schema: 3, Workspace: server.config.Workspace,
+		Request: creationRequest{Kind: "new", Slug: slug}, ReceiptID: strings.Repeat("a", 64),
+		DeletionHistorySHA256: planDigest(""), State: "paused"}
+	summary := &session.Summary{Manifest: session.Manifest{Slug: slug, Codex: session.Codex{ThreadID: "created-thread"}}, Interactive: true}
+	for _, method := range []string{http.MethodPost, http.MethodDelete} {
+		request := httptest.NewRequest(method, "/api/sessions/"+slug+"/team", strings.NewReader(`{"action":"remove","address":"reviewer0"}`))
+		response := httptest.NewRecorder()
+		server.teamAPI(response, request, summary)
+		if response.Code != http.StatusConflict || !strings.Contains(response.Body.String(), "initialization has not finished") {
+			t.Fatalf("%s pending team mutation = %d %s", method, response.Code, response.Body.String())
+		}
+	}
+}
+
+func TestCreationSettingValueMatchesManagedScalarBound(t *testing.T) {
+	if err := validateCreationSettingValue(strings.Repeat("m", session.MaxAgentTeamPersistedScalarBytes)); err != nil {
+		t.Fatalf("%d-byte model setting rejected: %v", session.MaxAgentTeamPersistedScalarBytes, err)
+	}
+	if err := validateCreationSettingValue(strings.Repeat("m", session.MaxAgentTeamPersistedScalarBytes+1)); err == nil {
+		t.Fatalf("%d-byte model setting was accepted", session.MaxAgentTeamPersistedScalarBytes+1)
+	}
+}
+
+func managedCreationReceiptForRestart(t *testing.T, server *Server, kind string) creationReceipt {
+	t.Helper()
+	token, digest := legacyVirtualBinding()
+	request := creationRequest{Kind: kind, Slug: "2026-09-22-managed", Team: "solo", CatalogDigest: strings.Repeat("a", 64)}
+	if kind == "new" {
+		request.Goal = "Create the managed session."
+	} else {
+		request.Source = "source"
+		request.SourceThreadID = "source-thread"
+		request.SourceIdentity = strings.Repeat("c", 64)
+		request.PlanTurnID = "plan-turn"
+		request.PlanSHA256 = strings.Repeat("d", 64)
+	}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	return creationReceipt{
+		Schema: 2, Workspace: server.config.Workspace, Request: request, ReceiptID: strings.Repeat("e", 64),
+		DeletionHistorySHA256: strings.Repeat("f", 64), Attempt: 1, State: "ready", Phase: "Session is ready.",
+		StartedAt: now, UpdatedAt: now, Validated: true, Model: "model-lead", Effort: "high",
+		AgentTeamBinding: token, AgentTeamBindingDigest: digest,
+	}
+}
+
+func TestPendingLegacyVirtualCreationFailsClosed(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	receipt := managedCreationReceiptForRestart(t, server, "new")
+	receipt.State = "paused"
+	if err := server.initializeCreation(&receipt); err == nil || !strings.Contains(err.Error(), "virtual team creation cannot resume") {
+		t.Fatalf("pending virtual creation resumed after cutover: %v", err)
+	}
+}
+
+func TestLoadCreationsRejectsMalformedManagedRequestRecords(t *testing.T) {
+	writeReceipt := func(t *testing.T, server *Server, receipt creationReceipt, mutate func(map[string]any)) {
+		t.Helper()
+		data, err := json.Marshal(receipt)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var raw map[string]any
+		if err := json.Unmarshal(data, &raw); err != nil {
+			t.Fatal(err)
+		}
+		mutate(raw)
+		data, err = json.Marshal(raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.MkdirAll(server.creationDirectory(), 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(server.creationPath("2026-09-22-managed"), data, 0600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	request := func(raw map[string]any) map[string]any {
+		return raw["request"].(map[string]any)
+	}
+
+	for _, test := range []struct {
+		name   string
+		kind   string
+		valid  bool
+		mutate func(map[string]any)
+	}{
+		{name: "new accepts exact fields", kind: "new", valid: true, mutate: func(map[string]any) {}},
+		{name: "plan accepts exact fields", kind: "plan", valid: true, mutate: func(map[string]any) {}},
+		{name: "pre-effect plan cancellation survives restart", kind: "plan", valid: true, mutate: func(raw map[string]any) {
+			raw["state"] = "cancelled"
+			raw["validated"] = false
+		}},
+		{name: "cancellation rejects an already validated plan", kind: "plan", mutate: func(raw map[string]any) { raw["state"] = "cancelled" }},
+		{name: "new rejects source field", kind: "new", mutate: func(raw map[string]any) { request(raw)["source"] = "source" }},
+		{name: "new rejects missing goal", kind: "new", mutate: func(raw map[string]any) { delete(request(raw), "goal") }},
+		{name: "plan rejects goal", kind: "plan", mutate: func(raw map[string]any) { request(raw)["goal"] = "not a plan field" }},
+		{name: "plan rejects missing source identity", kind: "plan", mutate: func(raw map[string]any) { delete(request(raw), "sourceIdentity") }},
+		{name: "plan rejects control turn identity", kind: "plan", mutate: func(raw map[string]any) { request(raw)["planTurnId"] = "turn\nnext" }},
+		{name: "rejects null optional override", kind: "new", mutate: func(raw map[string]any) { request(raw)["model"] = nil }},
+		{name: "accepts effort without model", kind: "new", valid: true, mutate: func(raw map[string]any) { request(raw)["effort"] = "high" }},
+		{name: "rejects invalid team identifier", kind: "new", mutate: func(raw map[string]any) { request(raw)["team"] = "not-a-team" }},
+		{name: "rejects invalid catalog digest", kind: "new", mutate: func(raw map[string]any) { request(raw)["catalogDigest"] = "not-a-digest" }},
+		{name: "rejects oversized new goal", kind: "new", mutate: func(raw map[string]any) { request(raw)["goal"] = strings.Repeat("x", session.MaxMessageBytes+1) }},
+		{name: "rejects unsupported receipt schema", kind: "new", mutate: func(raw map[string]any) { raw["schema"] = 3 }},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			server := newTestServer(t)
+			defer server.Close()
+			writeReceipt(t, server, managedCreationReceiptForRestart(t, server, test.kind), test.mutate)
+			err := server.loadCreations()
+			if test.valid {
+				if err != nil {
+					t.Fatalf("load exact managed %s receipt: %v", test.kind, err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatal("malformed managed receipt loaded across restart")
+			}
+		})
+	}
+}
+
+// The browser must not accept a stale rendered direct-team catalog and then
+// leave a durable receipt whose immutable roster differs from what was shown.
+func TestBrowserCreationRejectsStaleDirectTeamFieldsBeforeReceipt(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	server.config.Codex = &browserContractCodex{}
+	server.installedTeams = &agentteams.Installed{
+		Managed: true,
+		Catalog: &agentteams.Catalog{
+			CatalogDigest: strings.Repeat("a", 64),
+			Teams: map[string]agentteams.Team{"solo": {
+				Description: "A single lead thread",
+				TeamDigest:  strings.Repeat("c", 64),
+				Roles: map[string]agentteams.Role{
+					"team_lead": {Model: "model-1", Effort: "high", Purpose: "lead", Instructions: "Coordinate this session."},
+				},
+			}},
+		},
+	}
+
+	newResponse := postCreation(t, server, "/sessions", "creation_date=2026-09-12&name=stale-team&goal=Initial+request&team=solo&catalogDigest="+strings.Repeat("b", 64), "application/x-www-form-urlencoded")
+	if newResponse.Code != http.StatusConflict || !strings.Contains(newResponse.Body.String(), "catalog digest is stale") {
+		t.Fatalf("stale direct team new response: %d %s", newResponse.Code, newResponse.Body.String())
+	}
+	if _, ok := server.currentCreation("2026-09-12-stale-team"); ok {
+		t.Fatal("stale direct team new request persisted a receipt")
+	}
+
+	prepareInteractiveConversation(t, server, "source")
+	plan := "Approved plan"
+	planResponse := postCreation(t, server, "/api/sessions/source/implement-plan", fmt.Sprintf(`{"action":"new","name":"stale-plan","creationDate":"2026-09-12","planTurnId":"approved","planText":%q,"planSha256":%q,"team":"solo","catalogDigest":%q}`, plan, planDigest(plan), strings.Repeat("b", 64)), "application/json")
+	if planResponse.Code != http.StatusConflict || !strings.Contains(planResponse.Body.String(), "catalog digest is stale") {
+		t.Fatalf("stale direct team plan response: %d %s", planResponse.Code, planResponse.Body.String())
+	}
+	if _, ok := server.currentCreation("2026-09-12-stale-plan"); ok {
+		t.Fatal("stale direct team plan request persisted a receipt")
+	}
+}
+
+func TestCreationNavigationPrecedesSlowValidationAndManifestDiscovery(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	entered := make(chan struct{}, 1)
+	release := make(chan struct{})
+	server.config.Codex = &creationTestCodex{browserContractCodex: &browserContractCodex{}, entered: entered, release: release}
+	defer close(release)
+	accepted := make(chan *httptest.ResponseRecorder, 1)
+	go func() {
+		accepted <- postCreation(t, server, "/sessions", "creation_date=2026-09-12&name=latency&model=model-1&effort=high&goal=Initial+request", "application/x-www-form-urlencoded")
+	}()
+	// Validation stays blocked until cleanup, so the response proves it is asynchronous.
+	select {
+	case response := <-accepted:
+		if response.Code != http.StatusSeeOther {
+			t.Fatalf("acceptance: %d %s", response.Code, response.Body.String())
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("creation acceptance did not return while validation was blocked")
+	}
+	select {
+	case <-entered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("worker never reached slow validation")
+	}
+	slug := "2026-09-12-latency"
+	page := httptest.NewRecorder()
+	server.Handler().ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/"+slug+"/", nil))
+	if page.Code != http.StatusOK || !strings.Contains(page.Body.String(), `data-creation="`+slug+`"`) || strings.Contains(page.Body.String(), `id="message-form"`) {
+		t.Fatalf("premanifest page: %d %s", page.Code, page.Body.String())
+	}
+	status := httptest.NewRecorder()
+	server.Handler().ServeHTTP(status, httptest.NewRequest(http.MethodGet, "/api/sessions/"+slug+"/creation", nil))
+	if status.Code != http.StatusOK || !strings.Contains(status.Body.String(), `"initialRequest":"Initial request"`) || !strings.Contains(status.Body.String(), "startedAt") {
+		t.Fatalf("private status: %d %s", status.Code, status.Body.String())
+	}
+	var stored creationReceipt
+	if err := readCreationJSON(server.creationPath(slug), &stored); err != nil {
+		t.Fatal(err)
+	}
+	if stored.Request.Goal != "Initial request" {
+		t.Fatalf("lost captured goal: %#v", stored)
+	}
+	duplicate := postCreation(t, server, "/sessions", "creation_date=2026-09-12&name=latency&model=model-1&effort=high&goal=Initial+request", "application/x-www-form-urlencoded")
+	if duplicate.Code != http.StatusSeeOther {
+		t.Fatal(duplicate.Body.String())
+	}
+	receipt, _ := server.currentCreation(slug)
+	if receipt.ReceiptID != stored.ReceiptID || receipt.Attempt != 1 {
+		t.Fatal("duplicate started a new receipt or attempt")
+	}
+	conflicting := postCreation(t, server, "/sessions", "creation_date=2026-09-12&name=latency&model=model-1&effort=high&goal=Different+request", "application/x-www-form-urlencoded")
+	if conflicting.Code != http.StatusConflict {
+		t.Fatalf("conflicting duplicate = %d", conflicting.Code)
+	}
+}
+
+func TestCreationCapturesDeletionHistoryUnderDestinationLock(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	release := make(chan struct{})
+	defer close(release)
+	server.config.Codex = &creationTestCodex{browserContractCodex: &browserContractCodex{}, release: release}
+	request := creationRequest{Kind: "new", Slug: "after-clock-correction", Goal: "Fresh request"}
+	operationID := strings.Repeat("a", 64)
+	writeCompletedRemovalMarker(t, server, request.Slug, operationID, time.Date(2099, 1, 1, 0, 0, 0, 0, time.UTC))
+	lock, err := os.OpenFile(filepath.Join(server.config.AuthorityDir, request.Slug+".lock"), os.O_CREATE|os.O_RDWR, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lock.Close()
+	if err := unix.Flock(int(lock.Fd()), unix.LOCK_EX|unix.LOCK_NB); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := server.acceptCreation(request); err == nil {
+		t.Fatal("accepted history while deletion owns the destination lock")
+	}
+	if _, err := os.Stat(server.creationPath(request.Slug)); !os.IsNotExist(err) {
+		t.Fatal("locked acceptance persisted a receipt")
+	}
+	if err := unix.Flock(int(lock.Fd()), unix.LOCK_UN); err != nil {
+		t.Fatal(err)
+	}
+	receipt, err := server.acceptCreation(request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if receipt.DeletionHistorySHA256 != planDigest(operationID) {
+		t.Fatal("future deletion timestamp blocked or changed fresh acceptance")
+	}
+	var persisted creationReceipt
+	if err := readCreationJSON(server.creationPath(request.Slug), &persisted); err != nil {
+		t.Fatal(err)
+	}
+	if persisted.DeletionHistorySHA256 != receipt.DeletionHistorySHA256 {
+		t.Fatal("acceptance did not freeze deletion history")
+	}
+	// A clock-only correction cannot change matching duplicate identity.
+	writeCompletedRemovalMarker(t, server, request.Slug, operationID, time.Date(2000, 1, 1, 0, 0, 0, 0, time.UTC))
+	duplicate, err := server.acceptCreation(request)
+	if err != nil || duplicate.ReceiptID != receipt.ReceiptID || duplicate.DeletionHistorySHA256 != receipt.DeletionHistorySHA256 {
+		t.Fatal("clock correction changed an accepted request")
+	}
+}
+
+func TestCreationForkAcceptsBeforeSlowSourceVerification(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	prepareInteractiveConversation(t, server, "source")
+	entered := make(chan struct{}, 1)
+	release := make(chan struct{})
+	defer close(release)
+	server.config.VerifyThread = func(ctx context.Context, _ string, _ string) error {
+		select {
+		case entered <- struct{}{}:
+		default:
+		}
+		select {
+		case <-release:
+			return nil
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	response := postCreation(t, server, "/api/sessions/source/fork", `{"name":"fork","creationDate":"2026-09-12"}`, "application/json")
+	if response.Code != http.StatusAccepted {
+		t.Fatalf("fork response: %d %s", response.Code, response.Body.String())
+	}
+	select {
+	case <-entered:
+	case <-time.After(time.Second):
+		t.Fatal("source verification not started")
+	}
+}
+
+func TestCreationInterruptedReceiptPausesAndRequiresExactRetryAttempt(t *testing.T) {
+	server := newTestServer(t)
+	entered := make(chan struct{}, 1)
+	never := make(chan struct{})
+	server.config.Codex = &creationTestCodex{browserContractCodex: &browserContractCodex{}, entered: entered, release: never}
+	postCreation(t, server, "/sessions", "creation_date=2026-09-12&name=interrupted&model=model-1&effort=high&goal=Request", "application/x-www-form-urlencoded")
+	<-entered
+	server.Close()
+	receipt, _ := server.currentCreation("2026-09-12-interrupted")
+	// Simulate loss of the final outcome write at process termination.
+	receipt.State = "running"
+	if err := server.saveCreation(receipt); err != nil {
+		t.Fatal(err)
+	}
+	restarted, err := New(server.config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restarted.Close()
+	restored, _ := restarted.currentCreation(receipt.Request.Slug)
+	if restored.State != "paused" {
+		t.Fatalf("restart resumed blindly: %#v", restored)
+	}
+	stale := postCreation(t, restarted, "/api/sessions/"+receipt.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":0}`, receipt.ReceiptID), "application/json")
+	if stale.Code != http.StatusConflict {
+		t.Fatalf("stale retry = %d", stale.Code)
+	}
+	valid := postCreation(t, restarted, "/api/sessions/"+receipt.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receipt.ReceiptID), "application/json")
+	if valid.Code != http.StatusAccepted {
+		t.Fatalf("valid retry = %d %s", valid.Code, valid.Body.String())
+	}
+	current, _ := restarted.currentCreation(receipt.Request.Slug)
+	if current.Attempt != 2 {
+		t.Fatalf("retry attempt = %d", current.Attempt)
+	}
+}
+
+func TestCreationRecoveryRequiresReceiptBoundCompletionAndExactSession(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	request := creationRequest{Kind: "new", Slug: "2026-09-12-proof", Goal: "Exact request"}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""), Request: request, ReceiptID: strings.Repeat("a", 64), Attempt: 1,
+		State: "paused", StartedAt: now, UpdatedAt: now, Validated: true, Goal: request.Goal, Model: "model-1", Effort: "high"}
+	if err := server.saveCreation(receipt); err != nil {
+		t.Fatal(err)
+	}
+	server.creations[request.Slug] = receipt
+	writeCreationProof(t, server, receipt)
+	wrong := receipt
+	wrong.ReceiptID = strings.Repeat("b", 64)
+	if err := server.proveCreation(wrong); err == nil {
+		t.Fatal("accepted another receipt's completion")
+	}
+	proofPath := server.creationEvidencePath(receipt)
+	proofData, err := os.ReadFile(proofPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var proof map[string]any
+	if err := json.Unmarshal(proofData, &proof); err != nil {
+		t.Fatal(err)
+	}
+	proof["schema"] = 2
+	mismatchedSchema, err := json.Marshal(proof)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(proofPath, mismatchedSchema, 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := server.proveCreation(receipt); err == nil {
+		t.Fatal("schema-1 receipt accepted schema-2 completion evidence")
+	}
+	writeCreationProof(t, server, receipt)
+	if err := os.Remove(server.creationEvidencePath(receipt)); err != nil {
+		t.Fatal(err)
+	}
+	unproven, _ := server.currentCreation(request.Slug)
+	if unproven.State != "paused" {
+		t.Fatal("manifest alone proved completion")
+	}
+	writeCreationProof(t, server, receipt)
+	proven, _ := server.currentCreation(request.Slug)
+	if proven.State != "ready" {
+		t.Fatalf("completion proof not recovered: %#v", proven)
+	}
+	directory := filepath.Join(server.config.Workspace, "work", request.Slug)
+	if err := os.Rename(directory, directory+"-old"); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(directory, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := server.proveCreation(receipt); err == nil {
+		t.Fatal("replacement session accepted old completion")
+	}
+}
+
+func TestCreationPlanSnapshotWaitsForMessageLockAndRejectsNewerPlan(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	prepareInteractiveConversation(t, server, "source")
+	read := make(chan struct{}, 1)
+	controller := &browserContractCodex{readEntered: read, transcript: codex.Transcript{LatestTurnID: "new-plan", ThreadID: "thread-1", Status: "idle", CollaborationMode: "plan",
+		Model: "model-1", ReasoningEffort: "high", Entries: []codex.TranscriptEntry{{Kind: "plan", TurnID: "new-plan", TurnStatus: "completed", Text: "New plan"}}}}
+	server.config.Codex = controller
+	lock := server.messageLock("source")
+	if err := lock.Lock(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	body := fmt.Sprintf(`{"action":"new","name":"plan","creationDate":"2026-09-12","planTurnId":"approved","planText":"Approved plan","planSha256":%q,"model":"model-1","reasoningEffort":"high"}`, planDigest("Approved plan"))
+	response := postCreation(t, server, "/api/sessions/source/implement-plan", body, "application/json")
+	if response.Code != http.StatusAccepted {
+		lock.Unlock()
+		t.Fatalf("plan acceptance: %d %s", response.Code, response.Body.String())
+	}
+	select {
+	case <-read:
+		lock.Unlock()
+		t.Fatal("snapshot read escaped message lock")
+	case <-time.After(30 * time.Millisecond):
+	}
+	lock.Unlock()
+	receipt := awaitCreation(t, server, "2026-09-12-plan")
+	if receipt.Validated || !strings.Contains(receipt.Error, "stale") || receipt.Request.PlanText != "Approved plan" {
+		t.Fatalf("stale plan was replaced: %#v", receipt)
+	}
+}
+
+func TestCreationRechecksGenerationAfterWorkerTransitionLock(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	server.config.Codex = &creationTestCodex{browserContractCodex: &browserContractCodex{}}
+	lockPath := filepath.Join(t.TempDir(), "transition.lock")
+	file, err := os.OpenFile(lockPath, os.O_CREATE|os.O_RDWR, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	server.config.TransitionLock = lockPath
+	if err := unix.Flock(int(file.Fd()), unix.LOCK_EX); err != nil {
+		t.Fatal(err)
+	}
+	receipt, err := server.acceptCreation(creationRequest{Kind: "new", Slug: "2026-09-12-generation", Goal: "Request"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	profile := server.config.HostProfile
+	if err := os.Remove(profile); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(t.TempDir(), profile); err != nil {
+		t.Fatal(err)
+	}
+	if err := unix.Flock(int(file.Fd()), unix.LOCK_UN); err != nil {
+		t.Fatal(err)
+	}
+	completed := awaitCreation(t, server, receipt.Request.Slug)
+	if !strings.Contains(completed.Error, "superseded") || completed.Validated {
+		t.Fatalf("old generation executed: %#v", completed)
+	}
+}
+
+func TestCreationFastSourceLockDoesNotWaitForLifecycleMutation(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	prepareInteractiveConversation(t, server, "source")
+	file, err := os.OpenFile(filepath.Join(server.config.AuthorityDir, "source.lock"), os.O_CREATE|os.O_RDWR, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer file.Close()
+	if err := unix.Flock(int(file.Fd()), unix.LOCK_EX); err != nil {
+		t.Fatal(err)
+	}
+	started := time.Now()
+	response := postCreation(t, server, "/api/sessions/source/fork", `{"name":"fork","creationDate":"2026-09-12"}`, "application/json")
+	if response.Code != http.StatusConflict || time.Since(started) > 200*time.Millisecond {
+		t.Fatalf("source lock blocked: %d", response.Code)
+	}
+}
+
+func TestCreationWorkerPersistsSuccessAndPlanRetryUsesTheCapturedGoal(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	prepareInteractiveConversation(t, server, "source")
+	plan := "# Accepted plan\n\n1. Preserve indentation.\n   Continue exactly.\n"
+	wantGoal := "Implement the following approved plan from session source.\n\n# Accepted plan\n\n1. Preserve indentation.\n   Continue exactly."
+	controller := &browserContractCodex{transcript: codex.Transcript{LatestTurnID: "approved", ThreadID: "thread-1", Status: "idle", CollaborationMode: "plan", Model: "model-1", ReasoningEffort: "high",
+		Entries: []codex.TranscriptEntry{{Kind: "plan", TurnID: "approved", TurnStatus: "completed", Text: plan}}}}
+	server.config.Codex = controller
+	directory := t.TempDir()
+	helper := filepath.Join(directory, "dev-session")
+	started := filepath.Join(directory, "started")
+	release := filepath.Join(directory, "release")
+	// The first attempt fails after validation. The second waits while the test
+	// models the CLI's durable completion, then returns its normal result.
+	script := `#!/bin/sh
+if [ ! -f "$CREATION_STARTED" ]; then
+  touch "$CREATION_STARTED"
+  printf 'temporary initialization failure\n' >&2
+  exit 1
+fi
+touch "$CREATION_STARTED.second"
+while [ ! -f "$CREATION_RELEASE" ]; do sleep 0.01; done
+printf '{"slug":"2026-09-12-plan-retry"}\n'
+`
+	if err := os.WriteFile(helper, []byte(script), 0755); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("CREATION_STARTED", started)
+	t.Setenv("CREATION_RELEASE", release)
+	server.config.DevSession = fixtureDevSessionCommand(t, server.config.Workspace, helper)
+	body := fmt.Sprintf(`{"action":"new","name":"plan-retry","creationDate":"2026-09-12","planTurnId":"approved","planText":%q,"planSha256":%q,"model":"model-1","reasoningEffort":"high"}`, plan, planDigest(plan))
+	response := postCreation(t, server, "/api/sessions/source/implement-plan", body, "application/json")
+	if response.Code != http.StatusAccepted {
+		t.Fatalf("acceptance: %d %s", response.Code, response.Body.String())
+	}
+	failed := awaitCreation(t, server, "2026-09-12-plan-retry")
+	if !failed.Validated || !strings.Contains(failed.Error, "temporary initialization failure") {
+		t.Fatalf("first failure: %#v", failed)
+	}
+	if failed.Goal != wantGoal || failed.Request.PlanText != plan || failed.Request.PlanSHA256 != planDigest(plan) || failed.Request.PlanTurnID != "approved" {
+		t.Fatalf("plan snapshot or normalized goal changed: %#v", failed)
+	}
+	controller.transcript.Entries = []codex.TranscriptEntry{{Kind: "plan", TurnID: "new-plan", TurnStatus: "completed", Text: "A newer unaccepted plan"}}
+	retry := postCreation(t, server, "/api/sessions/2026-09-12-plan-retry/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, failed.ReceiptID), "application/json")
+	if retry.Code != http.StatusAccepted {
+		t.Fatalf("retry: %d %s", retry.Code, retry.Body.String())
+	}
+	deadline := time.Now().Add(time.Second)
+	for {
+		if _, err := os.Stat(started + ".second"); err == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("retry CLI did not start")
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	writeCreationProof(t, server, failed)
+	if err := os.WriteFile(release, nil, 0600); err != nil {
+		t.Fatal(err)
+	}
+	ready := awaitCreation(t, server, "2026-09-12-plan-retry")
+	if ready.State != "ready" || ready.Attempt != 2 || ready.Goal != wantGoal || ready.Request != failed.Request {
+		t.Fatalf("retry changed goal or did not complete: %#v", ready)
+	}
+	var stored creationReceipt
+	if err := readCreationJSON(server.creationPath(ready.Request.Slug), &stored); err != nil {
+		t.Fatal(err)
+	}
+	if stored.State != "ready" {
+		t.Fatal("success was not durable")
+	}
+}
+
+func TestCreationGoalNormalizationMatchesCLI(t *testing.T) {
+	inputs := []string{" \tfirst\n  second\r\n\v\f\x00", "\u00a0Plan\u3000\n", " \u3000Plan\u00a0 \n"}
+	want := []string{"first\n  second", "\u00a0Plan\u3000", "\u3000Plan\u00a0"}
+	directory := t.TempDir()
+	args := []string{"-e", `load ARGV.shift; runner = DevSession::Runner.allocate; print JSON.generate(ARGV.map { |path| runner.send(:read_goal, path) })`, "../../../libexec/dev-session"}
+	for index, input := range inputs {
+		path := filepath.Join(directory, fmt.Sprintf("goal-%d", index))
+		if err := os.WriteFile(path, []byte(input), 0600); err != nil {
+			t.Fatal(err)
+		}
+		args = append(args, path)
+	}
+	output, err := exec.Command("ruby", args...).CombinedOutput()
+	if err != nil {
+		t.Fatalf("read goals through the CLI: %v, %s", err, output)
+	}
+	var actual []string
+	if err := json.Unmarshal(output, &actual); err != nil || len(actual) != len(inputs) {
+		t.Fatalf("decode CLI goals: %v, %s", err, output)
+	}
+	for index, input := range inputs {
+		if actual[index] != want[index] || normalizedCreationGoal(input) != actual[index] {
+			t.Fatalf("goal %d differs from CLI strip semantics: Ruby %q, Go %q, expected %q", index, actual[index], normalizedCreationGoal(input), want[index])
+		}
+	}
+}
+
+func TestCreationReconcilesDeployedUntrimmedPlanReceipt(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	plan := "# Approved\n\n1. Keep this content.\n   Keep this indentation.\u00a0\u3000\n"
+	rawGoal := "Implement the following approved plan from session source.\n\n" + plan
+	receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""),
+		Request:   creationRequest{Kind: "plan", Slug: "deployed-plan", Source: "source", SourceThreadID: "source-thread", SourceIdentity: "source-identity", PlanText: plan, PlanSHA256: planDigest(plan), PlanTurnID: "approved"},
+		ReceiptID: strings.Repeat("a", 64), Attempt: 2, State: "failed", Error: "creation completion goal changed", Validated: true, Goal: rawGoal, Model: "model-1", Effort: "high"}
+	if err := server.saveCreation(receipt); err != nil {
+		t.Fatal(err)
+	}
+	// Model the deployed CLI's canonical binding, manifest and evidence while
+	// retaining the older portal receipt's exact frozen goal and plan snapshot.
+	canonical := receipt
+	canonical.Goal = strings.TrimSuffix(rawGoal, "\n")
+	writeCreationProof(t, server, canonical)
+	if bound, err := server.readCreationBinding(receipt); !bound || err != nil {
+		t.Fatalf("canonical CLI binding was rejected: %v, %v", bound, err)
+	}
+	if err := os.Remove(server.creationEvidencePath(receipt)); err != nil {
+		t.Fatal(err)
+	}
+	if message := server.canonicalCreationConflict(receipt); message != "" {
+		t.Fatalf("matching canonical goal was classified as foreign: %s", message)
+	}
+	writeCreationProof(t, server, canonical)
+	changed := receipt
+	changed.Goal = strings.Replace(rawGoal, "Keep this content", "Different content", 1)
+	if err := server.proveCreation(changed); err == nil {
+		t.Fatal("normalization accepted different plan content")
+	}
+	if err := server.loadCreations(); err != nil {
+		t.Fatal(err)
+	}
+	server.config.DevSession = fixtureDevSessionCommand(t, server.config.Workspace, filepath.Join(t.TempDir(), "must-not-run"))
+	response := httptest.NewRecorder()
+	server.Handler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/api/sessions/deployed-plan/creation", nil))
+	if response.Code != http.StatusOK {
+		t.Fatalf("read reconciled receipt: %d, %s", response.Code, response.Body.String())
+	}
+	var stored creationReceipt
+	if err := readCreationJSON(server.creationPath(receipt.Request.Slug), &stored); err != nil {
+		t.Fatal(err)
+	}
+	if stored.State != "ready" || stored.Attempt != receipt.Attempt || stored.ReceiptID != receipt.ReceiptID || stored.Goal != rawGoal || stored.Request != receipt.Request {
+		t.Fatalf("reconciliation changed accepted identity or reran creation: %#v", stored)
+	}
+}
+
+func TestCreationProofBeforeForkJournalRemovalStillOffersRetry(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""), Request: creationRequest{Kind: "fork", Slug: "2026-09-12-journal", Source: "source", SourceThreadID: "old-thread"},
+		ReceiptID: strings.Repeat("c", 64), Attempt: 1, State: "paused", StartedAt: now, UpdatedAt: now, Validated: true, Model: "model-1", Effort: "high"}
+	if err := server.saveCreation(receipt); err != nil {
+		t.Fatal(err)
+	}
+	server.creations[receipt.Request.Slug] = receipt
+	writeCreationProof(t, server, receipt)
+	directory := filepath.Join(server.config.Workspace, "worktrees", ".locks")
+	if err := os.MkdirAll(directory, 0700); err != nil {
+		t.Fatal(err)
+	}
+	journal := filepath.Join(directory, receipt.Request.Slug+".fork.json")
+	if err := os.WriteFile(journal, []byte("{}"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	paused, _ := server.currentCreation(receipt.Request.Slug)
+	if paused.State != "paused" {
+		t.Fatal("unfinished fork journal was hidden by completion evidence")
+	}
+	if err := os.Remove(journal); err != nil {
+		t.Fatal(err)
+	}
+	ready, _ := server.currentCreation(receipt.Request.Slug)
+	if ready.State != "ready" {
+		t.Fatalf("finished fork did not recover: %#v", ready)
+	}
+}
+
+func TestCreationUnvalidatedRetryRefusesTheReplacementSource(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	prepareInteractiveConversation(t, server, "source")
+	source, identity, err := server.creationSource("source")
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""), Request: creationRequest{Kind: "fork", Slug: "2026-09-12-stale-source", Source: source.Slug, SourceThreadID: source.Codex.ThreadID, SourceIdentity: identity},
+		ReceiptID: strings.Repeat("d", 64), Attempt: 1, State: "paused", StartedAt: now, UpdatedAt: now, Model: "model-1", Effort: "high"}
+	if err := server.saveCreation(receipt); err != nil {
+		t.Fatal(err)
+	}
+	server.creations[receipt.Request.Slug] = receipt
+	directory := filepath.Join(server.config.Workspace, "work", "source")
+	if err := os.Rename(directory, directory+"-old"); err != nil {
+		t.Fatal(err)
+	}
+	prepareInteractiveConversation(t, server, "source")
+	response := postCreation(t, server, "/api/sessions/"+receipt.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receipt.ReceiptID), "application/json")
+	if response.Code != http.StatusAccepted {
+		t.Fatalf("retry submission: %d", response.Code)
+	}
+	failed := awaitCreation(t, server, receipt.Request.Slug)
+	if !strings.Contains(failed.Error, "replacement") {
+		t.Fatalf("replacement source was used: %#v", failed)
+	}
+}
+
+func TestCreationStorePreservesMaximallyEscapedCapturedMessages(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	goal := strings.Repeat("<", session.MaxMessageBytes)
+	now := time.Now().UTC().Format(time.RFC3339Nano)
+	receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""),
+		Request:   creationRequest{Kind: "new", Slug: "2026-09-12-escaped", Goal: goal},
+		ReceiptID: strings.Repeat("e", 64), Attempt: 1, State: "paused", StartedAt: now, UpdatedAt: now,
+		Validated: true, Goal: goal, Model: "model-1", Effort: "high"}
+	if err := server.saveCreation(receipt); err != nil {
+		t.Fatal(err)
+	}
+	var restored creationReceipt
+	if err := readCreationJSON(server.creationPath(receipt.Request.Slug), &restored); err != nil {
+		t.Fatal(err)
+	}
+	if restored.Request.Goal != goal || restored.Goal != goal {
+		t.Fatal("large accepted request was changed")
+	}
+}
+
+func TestCreationFinalPersistenceFailureKeepsExplicitRetryAvailable(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	entered := make(chan struct{}, 1)
+	release := make(chan struct{})
+	server.config.Codex = &creationTestCodex{browserContractCodex: &browserContractCodex{}, entered: entered, release: release}
+	receipt, err := server.acceptCreation(creationRequest{Kind: "new", Slug: "2026-09-12-save-failed", Goal: "Request", Model: "model-1", Effort: "high"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	<-entered
+	path := server.creationPath(receipt.Request.Slug)
+	if err := os.Remove(path); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Mkdir(path, 0700); err != nil {
+		t.Fatal(err)
+	}
+	close(release)
+	paused := awaitCreation(t, server, receipt.Request.Slug)
+	if paused.State != "paused" || !strings.Contains(paused.Phase, "Unable to save") {
+		t.Fatalf("page would wait forever after worker stopped: %#v", paused)
+	}
+}
+
+func TestCreationRetiresCompletedReceiptsAcrossRestartWithoutLosingRecovery(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	pending := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""),
+		Request:   creationRequest{Kind: "new", Slug: "pending-recovery", Goal: "original request"},
+		ReceiptID: strings.Repeat("a", 64), Attempt: 3, State: "paused"}
+	if err := server.saveCreation(pending); err != nil {
+		t.Fatal(err)
+	}
+	var oldest creationReceipt
+	for i := 0; i < maxCreationReceipts; i++ {
+		receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""),
+			Request:   creationRequest{Kind: "new", Slug: fmt.Sprintf("receipt-%04d", i)},
+			ReceiptID: fmt.Sprintf("%064x", i+1), Attempt: 1, State: "ready"}
+		if err := server.saveCreation(receipt); err != nil {
+			t.Fatal(err)
+		}
+		if i == 0 {
+			oldest = receipt
+			writeCreationProof(t, server, receipt)
+		}
+	}
+	if err := server.loadCreations(); err != nil {
+		t.Fatal(err)
+	}
+	if len(server.creations) != maxCreationReceipts {
+		t.Fatalf("loaded %d receipts", len(server.creations))
+	}
+	if server.creations[pending.Request.Slug].ReceiptID != pending.ReceiptID {
+		t.Fatal("pending recovery was lost")
+	}
+	for _, path := range []string{server.creationPath(oldest.Request.Slug), server.creationEvidencePath(oldest), server.creationEvidencePath(oldest) + ".request"} {
+		if _, err := os.Stat(path); !os.IsNotExist(err) {
+			t.Fatalf("completed receipt retained at %s: %v", path, err)
+		}
+	}
+	if _, err := server.acceptCreation(oldest.Request); err == nil || !strings.Contains(err.Error(), "already exists") {
+		t.Fatalf("retired receipt allowed destination replacement: %v", err)
+	}
+	if err := server.retireReadyCreations(1); err != nil {
+		t.Fatal(err)
+	}
+	if len(server.creations) != maxCreationReceipts-1 {
+		t.Fatal("completed history did not release a creation slot")
+	}
+	if err := server.loadCreations(); err != nil {
+		t.Fatal(err)
+	}
+	replayed, err := server.acceptCreation(pending.Request)
+	if err != nil || replayed.ReceiptID != pending.ReceiptID || replayed.Attempt != 3 || replayed.State != "paused" {
+		t.Fatalf("pending retry identity changed: %#v, %v", replayed, err)
+	}
+	// A later completed deletion must also release a name whose retry-cache
+	// record was already evicted, without leaving its CLI binding behind.
+	if err := os.RemoveAll(filepath.Join(server.config.Workspace, "work", oldest.Request.Slug)); err != nil {
+		t.Fatal(err)
+	}
+	request := oldest.Request
+	request.Goal = "New request after deletion"
+	replacement, err := server.acceptCreation(request)
+	if err != nil || replacement.ReceiptID == oldest.ReceiptID {
+		t.Fatalf("evicted receipt stranded deleted name: %#v, %v", replacement, err)
+	}
+}
+
+// The base generation has no receipt store: its synchronous creation path can
+// publish a canonical manifest after head accepted a request but before the CLI
+// binding. This fixture uses that unchanged manifest/runtime format for the
+// middle step, then starts a fresh head server against the same private state.
+func TestCreationHeadBaseHeadBeforeCLIBindingPreservesCanonicalSession(t *testing.T) {
+	server := newTestServer(t)
+	entered := make(chan struct{}, 1)
+	never := make(chan struct{})
+	server.config.Codex = &creationTestCodex{browserContractCodex: &browserContractCodex{}, entered: entered, release: never}
+	accepted, err := server.acceptCreation(creationRequest{Kind: "new", Slug: "2026-09-12-rollback", Goal: "Original accepted request", Model: "model-1", Effort: "high"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	<-entered
+	server.Close()
+	if _, err := os.Stat(server.creationEvidencePath(accepted) + ".request"); !os.IsNotExist(err) {
+		t.Fatalf("CLI binding already exists: %v", err)
+	}
+	// Base creates the same slug independently while ignoring the additive state.
+	prepareInteractiveConversation(t, server, accepted.Request.Slug)
+	server.config.Codex = &browserContractCodex{}
+	restored, err := New(server.config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer restored.Close()
+	page := httptest.NewRecorder()
+	restored.Handler().ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/"+accepted.Request.Slug+"/", nil))
+	if page.Code != http.StatusOK || strings.Contains(page.Body.String(), "data-creation=") ||
+		!strings.Contains(page.Body.String(), `id="message-form"`) || !strings.Contains(page.Body.String(), creationConflictMessage) {
+		t.Fatalf("rolled-forward page hides canonical session: %d %s", page.Code, page.Body.String())
+	}
+	receipt, ok := restored.currentCreation(accepted.Request.Slug)
+	if !ok || receipt.State != "conflict" || receipt.ReceiptID != accepted.ReceiptID || receipt.Attempt != 1 || receipt.Validated {
+		t.Fatalf("independent session adopted as completion: %#v", receipt)
+	}
+	if receipt.status().CanonicalURL != "/"+accepted.Request.Slug+"/" {
+		t.Fatal("conflict has no canonical destination")
+	}
+	retry := postCreation(t, restored, "/api/sessions/"+accepted.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receipt.ReceiptID), "application/json")
+	if retry.Code != http.StatusConflict {
+		t.Fatalf("conflicting request retried: %d %s", retry.Code, retry.Body.String())
+	}
+	sent := postCreation(t, restored, "/codex/conversations/"+accepted.Request.Slug+"/message", `{"message":"Use canonical session","clientUserMessageId":"00000000-0000-4000-8000-000000000071"}`, "application/json")
+	if sent.Code != http.StatusAccepted {
+		t.Fatalf("receipt blocks canonical controls: %d %s", sent.Code, sent.Body.String())
+	}
+	if _, _, err := restored.creationSource(accepted.Request.Slug); err != nil {
+		t.Fatalf("receipt blocks canonical source: %v", err)
+	}
+	var stored creationReceipt
+	if err := readCreationJSON(restored.creationPath(accepted.Request.Slug), &stored); err != nil {
+		t.Fatal(err)
+	}
+	if stored.State != "conflict" {
+		t.Fatal("conflict was not durable")
+	}
+	if _, err := os.Stat(restored.creationEvidencePath(receipt)); !os.IsNotExist(err) {
+		t.Fatal("conflict synthesized completion evidence")
+	}
+}
+
+func TestCreationHeadBaseHeadAfterBindingPreservesForeignCanonicalSession(t *testing.T) {
+	for _, test := range []struct {
+		name, goal, model string
+		pending, conflict bool
+	}{
+		{name: "different base goal", goal: "Independent base request", model: "model-1", conflict: true},
+		{name: "different base settings", goal: "Accepted head request", model: "model-2", conflict: true},
+		{name: "matching recoverable request", goal: "Accepted head request", model: "model-1"},
+		{name: "unfinished journal keeps authority", goal: "Independent base request", model: "model-1", pending: true},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			server := newTestServer(t)
+			receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""),
+				Request:   creationRequest{Kind: "new", Slug: "2026-09-12-bound-rollback", Goal: "Accepted head request"},
+				ReceiptID: strings.Repeat("7", 64), Attempt: 1, State: "paused", Validated: true,
+				Goal: "Accepted head request", Model: "model-1", Effort: "high"}
+			if err := server.saveCreation(receipt); err != nil {
+				t.Fatal(err)
+			}
+			// Head stopped after binding, before any destination journal or
+			// manifest existed. Base ignores the additive binding completely.
+			writeCreationBinding(t, server, receipt)
+			server.Close()
+			prepareInteractiveConversation(t, server, receipt.Request.Slug)
+			manifestPath := filepath.Join(server.config.Workspace, "work", receipt.Request.Slug, "portal.yml")
+			manifest, err := os.ReadFile(manifestPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			manifest = append(manifest, []byte("  goal_sha256: "+planDigest(test.goal)+"\n")...)
+			if err := os.WriteFile(manifestPath, manifest, 0644); err != nil {
+				t.Fatal(err)
+			}
+			directory := filepath.Join(server.config.Workspace, "worktrees", ".locks")
+			if err := os.MkdirAll(directory, 0700); err != nil {
+				t.Fatal(err)
+			}
+			journal := fmt.Sprintf(`{"schema":1,"slug":%q,"state":"ready","goal_sha256":%q,"run_codex":true,"model":%q,"effort":"high"}`, receipt.Request.Slug, planDigest(test.goal), test.model)
+			if err := os.WriteFile(filepath.Join(directory, receipt.Request.Slug+".creation.json"), []byte(journal), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if test.pending {
+				if err := os.WriteFile(filepath.Join(directory, receipt.Request.Slug+".start.json"), []byte("{}"), 0600); err != nil {
+					t.Fatal(err)
+				}
+			}
+			server.config.Codex = &browserContractCodex{}
+			restored, err := New(server.config)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer restored.Close()
+			current, ok := restored.currentCreation(receipt.Request.Slug)
+			if !ok || (current.State == "conflict") != test.conflict || current.State == "ready" || current.ReceiptID != receipt.ReceiptID || current.Attempt != 1 {
+				t.Fatalf("incorrect reconciliation at binding boundary: %#v", current)
+			}
+			if test.conflict {
+				page := httptest.NewRecorder()
+				restored.Handler().ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/"+receipt.Request.Slug+"/", nil))
+				if page.Code != http.StatusOK || strings.Contains(page.Body.String(), "data-creation=") || !strings.Contains(page.Body.String(), `id="message-form"`) {
+					t.Fatal("bound conflicting receipt shadows the canonical session")
+				}
+				retry := postCreation(t, restored, "/api/sessions/"+receipt.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receipt.ReceiptID), "application/json")
+				if retry.Code != http.StatusConflict {
+					t.Fatal("bound conflicting receipt was retried")
+				}
+			}
+			if _, err := os.Stat(restored.creationEvidencePath(receipt)); !os.IsNotExist(err) {
+				t.Fatal("reconciliation fabricated completion evidence")
+			}
+			if bound, err := restored.readCreationBinding(receipt); !bound || err != nil {
+				t.Fatalf("reconciliation changed the accepted CLI binding: %v", err)
+			}
+		})
+	}
+}
+
+func TestCreationHeadBaseHeadForkBindingDoesNotAdoptMatchingCanonicalFork(t *testing.T) {
+	for _, pending := range []bool{false, true} {
+		t.Run(fmt.Sprintf("fork-journal=%v", pending), func(t *testing.T) {
+			server := newTestServer(t)
+			receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""),
+				Request:   creationRequest{Kind: "fork", Slug: "2026-09-12-bound-fork", Source: "source", SourceThreadID: "source-thread", SourceIdentity: strings.Repeat("a", 64)},
+				ReceiptID: strings.Repeat("8", 64), Attempt: 1, State: "paused", Validated: true, Model: "model-1", Effort: "high"}
+			if err := server.saveCreation(receipt); err != nil {
+				t.Fatal(err)
+			}
+			writeCreationBinding(t, server, receipt)
+			server.Close()
+			// Base independently completes a fork with the same source and
+			// settings, but cannot publish head's receipt-bound evidence.
+			prepareInteractiveConversation(t, server, receipt.Request.Slug)
+			manifestPath := filepath.Join(server.config.Workspace, "work", receipt.Request.Slug, "portal.yml")
+			manifest, err := os.ReadFile(manifestPath)
+			if err != nil {
+				t.Fatal(err)
+			}
+			manifest = append(manifest, []byte("forked_from: source\n")...)
+			if err := os.WriteFile(manifestPath, manifest, 0644); err != nil {
+				t.Fatal(err)
+			}
+			if pending {
+				writeBoundForkRecovery(t, server, receipt)
+			}
+			restored, err := New(server.config)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer restored.Close()
+			current, ok := restored.currentCreation(receipt.Request.Slug)
+			if !ok || (current.State == "conflict") == pending || current.State == "ready" {
+				t.Fatalf("matching canonical fork lost its ownership boundary: %#v", current)
+			}
+			if !pending {
+				retry := postCreation(t, restored, "/api/sessions/"+receipt.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receipt.ReceiptID), "application/json")
+				if retry.Code != http.StatusConflict {
+					t.Fatal("binding-only fork attempted to recover an unrelated destination")
+				}
+			}
+			if _, err := os.Stat(restored.creationEvidencePath(receipt)); !os.IsNotExist(err) {
+				t.Fatal("matching canonical fork was adopted as receipt completion")
+			}
+		})
+	}
+}
+
+func TestCreationRetiresDeletedReadySlugBeforeAcceptingAnotherRequest(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""), Request: creationRequest{Kind: "new", Slug: "2026-09-12-reuse", Goal: "Old request"},
+		ReceiptID: strings.Repeat("1", 64), Attempt: 1, State: "ready", Validated: true, Goal: "Old request", Model: "model-1", Effort: "high"}
+	if err := server.saveCreation(receipt); err != nil {
+		t.Fatal(err)
+	}
+	server.creations[receipt.Request.Slug] = receipt
+	writeCreationProof(t, server, receipt)
+	if err := os.WriteFile(server.creationEvidencePath(receipt)+".request", []byte("{}"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	authority := filepath.Join(server.config.AuthorityDir, receipt.Request.Slug+".json")
+	if err := os.WriteFile(authority, []byte("{}"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.RemoveAll(filepath.Join(server.config.Workspace, "work", receipt.Request.Slug)); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := server.currentCreation(receipt.Request.Slug); !ok {
+		t.Fatal("retired while runtime identity still exists")
+	}
+	if err := os.Remove(authority); err != nil {
+		t.Fatal(err)
+	}
+	directory := filepath.Join(server.config.Workspace, "worktrees", ".locks")
+	if err := os.MkdirAll(directory, 0700); err != nil {
+		t.Fatal(err)
+	}
+	var removal string
+	for _, journal := range session.LifecycleJournals() {
+		if journal.Command == "delete" {
+			removal = filepath.Join(directory, receipt.Request.Slug+"."+journal.Name+".json")
+		}
+	}
+	if err := os.WriteFile(removal, []byte("{}"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := server.currentCreation(receipt.Request.Slug); !ok {
+		t.Fatal("retired while deletion remains unfinished")
+	}
+	if err := os.Remove(removal); err != nil {
+		t.Fatal(err)
+	}
+	runtimeLock, err := os.OpenFile(filepath.Join(server.config.AuthorityDir, receipt.Request.Slug+".lock"), os.O_RDWR, 0600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer runtimeLock.Close()
+	if err := unix.Flock(int(runtimeLock.Fd()), unix.LOCK_EX|unix.LOCK_NB); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := server.currentCreation(receipt.Request.Slug); !ok {
+		t.Fatal("retired while another CLI operation holds the runtime lock")
+	}
+	if err := unix.Flock(int(runtimeLock.Fd()), unix.LOCK_UN); err != nil {
+		t.Fatal(err)
+	}
+	accepted, err := server.acceptCreation(creationRequest{Kind: "new", Slug: receipt.Request.Slug, Goal: "Different request"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if accepted.ReceiptID == receipt.ReceiptID || accepted.Request.Goal != "Different request" || accepted.Attempt != 1 {
+		t.Fatalf("stale receipt reused: %#v", accepted)
+	}
+	if _, err := os.Stat(server.creationEvidencePath(receipt) + ".request"); !os.IsNotExist(err) {
+		t.Fatalf("retired binding leaked: %v", err)
+	}
+	stale := postCreation(t, server, "/api/sessions/"+receipt.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receipt.ReceiptID), "application/json")
+	if stale.Code != http.StatusConflict {
+		t.Fatalf("old receipt targets new attempt: %d", stale.Code)
+	}
+}
+
+func TestCreationEvidenceGapDeletionRetiresTheExactRequest(t *testing.T) {
+	for _, kind := range []string{"new", "plan", "fork"} {
+		for _, state := range []string{"paused", "failed"} {
+			t.Run(kind+"/"+state, func(t *testing.T) {
+				server := newTestServer(t)
+				started := time.Now().UTC().Add(-time.Minute)
+				receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""),
+					Request:   creationRequest{Kind: kind, Slug: "2026-09-12-deleted-" + kind, Goal: "Original goal"},
+					ReceiptID: strings.Repeat("d", 64), Attempt: 1, State: state, StartedAt: started.Format(time.RFC3339Nano),
+					Validated: true, Goal: "Original goal", Model: "model-1", Effort: "high"}
+				if kind != "new" {
+					receipt.Request.Source = "source"
+					receipt.Request.SourceThreadID = "source-thread"
+					receipt.Request.SourceIdentity = strings.Repeat("f", 64)
+				}
+				// Capture the existing deletion independently of its clock value.
+				// Merely missing tracking or changing another slug cannot end it.
+				writeCompletedRemovalMarker(t, server, receipt.Request.Slug, strings.Repeat("a", 64), started.Add(time.Hour))
+				history, err := session.CompletedRemovalHistory(server.config.Workspace, receipt.Request.Slug, server.config.UserStateRoot)
+				if err != nil {
+					t.Fatal(err)
+				}
+				receipt.DeletionHistorySHA256 = history
+				if err := server.saveCreation(receipt); err != nil {
+					t.Fatal(err)
+				}
+				server.creations[receipt.Request.Slug] = receipt
+				writeCompletedRemovalMarker(t, server, "different-slug", strings.Repeat("b", 64), time.Now())
+				if current, ok := server.currentCreation(receipt.Request.Slug); !ok || current.State != state {
+					t.Fatal("absence or unrelated deletion retired an incomplete request")
+				}
+				writeCreationProof(t, server, receipt)
+				if err := os.Remove(server.creationEvidencePath(receipt)); err != nil {
+					t.Fatal(err)
+				}
+				server.Close()
+				// Exercise the existing Ruby deletion producer, including the
+				// canonical tracking move and final schema-1 recovery marker.
+				script := `load ARGV.fetch(0)
+runner = DevSession::Runner.new(workspace: ARGV.fetch(1), env: ENV.to_h.merge('DEV_WORKSPACES_STATE' => ARGV.fetch(2), 'PATH' => ''))
+slug = ARGV.fetch(3)
+removal = runner.send(:prepare_removal!, slug, force: false)
+%w[validated thread_retiring thread_retired clusters_released worktrees_removed runtime_retired].each { |phase| runner.send(:advance_removal!, slug, removal, phase) }
+runner.send(:preserve_removed_state!, slug, removal, nil)
+runner.send(:advance_removal!, slug, removal, 'tracking_preserved')
+runner.send(:advance_removal!, slug, removal, 'tracking_committed')
+runner.send(:finalize_removal!, slug, removal)
+removal['removed_at'] = '2000-01-01T00:00:00Z'
+runner.send(:write_removal_metadata!, removal.fetch('recovery'), removal)
+`
+				command := exec.Command("ruby", "-e", script, "../../../libexec/dev-session", server.config.Workspace, server.config.UserStateRoot, receipt.Request.Slug)
+				if output, err := command.CombinedOutput(); err != nil {
+					t.Fatalf("delete fixture: %v\n%s", err, output)
+				}
+				lock, err := os.OpenFile(filepath.Join(server.config.AuthorityDir, receipt.Request.Slug+".lock"), os.O_CREATE|os.O_RDWR, 0600)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer lock.Close()
+				if err := unix.Flock(int(lock.Fd()), unix.LOCK_EX|unix.LOCK_NB); err != nil {
+					t.Fatal(err)
+				}
+				restored, err := New(server.config)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer restored.Close()
+				if _, ok := restored.currentCreation(receipt.Request.Slug); !ok {
+					t.Fatal("retired during an active destination mutation")
+				}
+				if err := unix.Flock(int(lock.Fd()), unix.LOCK_UN); err != nil {
+					t.Fatal(err)
+				}
+				stale := postCreation(t, restored, "/api/sessions/"+receipt.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receipt.ReceiptID), "application/json")
+				if stale.Code != http.StatusNotFound {
+					t.Fatalf("deleted request remained retryable: %d", stale.Code)
+				}
+				if _, err := os.Stat(filepath.Join(server.config.Workspace, "work", receipt.Request.Slug)); !os.IsNotExist(err) {
+					t.Fatal("stale retry recreated deleted tracking")
+				}
+				for _, path := range []string{server.creationPath(receipt.Request.Slug), server.creationEvidencePath(receipt) + ".request"} {
+					if _, err := os.Stat(path); !os.IsNotExist(err) {
+						t.Fatal("deleted request cache was retained")
+					}
+				}
+				fresh, err := restored.acceptCreation(creationRequest{Kind: "new", Slug: receipt.Request.Slug, Goal: "Fresh request"})
+				if err != nil {
+					t.Fatal(err)
+				}
+				if fresh.ReceiptID == receipt.ReceiptID {
+					t.Fatal("name reuse retained the deleted receipt")
+				}
+				stale = postCreation(t, restored, "/api/sessions/"+receipt.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receipt.ReceiptID), "application/json")
+				if stale.Code != http.StatusConflict {
+					t.Fatal("old retry targeted the new request")
+				}
+			})
+		}
+	}
+}
+
+func TestCreationReclaimsDeletedReceiptsForUnrelatedAdmissionAndStartup(t *testing.T) {
+	for _, restart := range []bool{false, true} {
+		t.Run(fmt.Sprintf("restart=%v", restart), func(t *testing.T) {
+			server := newTestServer(t)
+			started := time.Now().UTC().Add(-time.Minute)
+			count := maxCreationReceipts
+			if restart {
+				count++
+			}
+			for i := 0; i < count; i++ {
+				receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""),
+					Request:   creationRequest{Kind: "new", Slug: fmt.Sprintf("deleted-cache-%04d", i), Goal: "Original goal"},
+					ReceiptID: fmt.Sprintf("%064x", i+1), Attempt: 2, State: "paused", StartedAt: started.Format(time.RFC3339Nano)}
+				if i%2 != 0 {
+					receipt.State = "failed"
+				}
+				if i == 3 && !restart {
+					receipt.State = "running"
+				}
+				if err := server.saveCreation(receipt); err != nil {
+					t.Fatal(err)
+				}
+				server.creations[receipt.Request.Slug] = receipt
+				if i != 0 && (i != 3 || !restart) {
+					writeCompletedRemovalMarker(t, server, receipt.Request.Slug, strings.Repeat("a", 64), time.Now().UTC())
+				}
+			}
+			lock, err := os.OpenFile(filepath.Join(server.config.AuthorityDir, "deleted-cache-0001.lock"), os.O_CREATE|os.O_RDWR, 0600)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer lock.Close()
+			if err := unix.Flock(int(lock.Fd()), unix.LOCK_EX|unix.LOCK_NB); err != nil {
+				t.Fatal(err)
+			}
+			locks := filepath.Join(server.config.Workspace, "worktrees", ".locks")
+			if err := os.MkdirAll(locks, 0700); err != nil {
+				t.Fatal(err)
+			}
+			if err := os.WriteFile(filepath.Join(locks, "deleted-cache-0002.fork.json"), []byte("unfinished"), 0600); err != nil {
+				t.Fatal(err)
+			}
+			if restart {
+				server.Close()
+				server, err = New(server.config)
+				if err != nil {
+					t.Fatalf("deleted receipt history blocked startup: %v", err)
+				}
+				if len(server.creations) != 4 {
+					t.Fatalf("startup retained %d receipts", len(server.creations))
+				}
+			}
+			defer server.Close()
+			fresh, err := server.acceptCreation(creationRequest{Kind: "new", Slug: "unrelated-new-session", Goal: "Fresh request"})
+			if err != nil {
+				t.Fatalf("deleted receipt history blocked unrelated admission: %v", err)
+			}
+			server.operationMu.Lock()
+			defer server.operationMu.Unlock()
+			if len(server.creations) != 5 {
+				t.Fatalf("admission retained %d receipts", len(server.creations))
+			}
+			for i := 0; i < 4; i++ {
+				receipt, ok := server.creations[fmt.Sprintf("deleted-cache-%04d", i)]
+				if !ok || receipt.ReceiptID != fmt.Sprintf("%064x", i+1) || receipt.Attempt != 2 {
+					t.Fatalf("reclamation discarded unresolved receipt %d", i)
+				}
+			}
+			if fresh.Request.Slug != "unrelated-new-session" || fresh.Attempt != 1 {
+				t.Fatal("unrelated request reused deleted identity")
+			}
+		})
+	}
+}
+
+func TestCreationConflictRetentionIsBoundedAndDoesNotEvictPendingBindings(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	var first creationReceipt
+	for i := 0; i < maxCreationReceipts; i++ {
+		receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""), Request: creationRequest{Kind: "new", Slug: fmt.Sprintf("conflict-%04d", i)}, ReceiptID: fmt.Sprintf("%064x", i+1), Attempt: 1, State: "conflict"}
+		if err := server.saveCreation(receipt); err != nil {
+			t.Fatal(err)
+		}
+		server.creations[receipt.Request.Slug] = receipt
+		if i == 0 {
+			first = receipt
+		}
+	}
+	if err := server.retireReadyCreations(1); err != nil {
+		t.Fatal(err)
+	}
+	if len(server.creations) != maxCreationReceipts-1 {
+		t.Fatal("conflicts impose a lifetime ceiling")
+	}
+	if _, ok := server.creations[first.Request.Slug]; ok {
+		t.Fatal("oldest terminal conflict retained")
+	}
+	protected := server.creations["conflict-0001"]
+	protected.State = "ready"
+	server.creations[protected.Request.Slug] = protected
+	if err := server.saveCreation(protected); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(server.creationEvidencePath(protected)+".request", []byte("{}"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	directory := filepath.Join(server.config.Workspace, "worktrees", ".locks")
+	if err := os.MkdirAll(directory, 0700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(directory, protected.Request.Slug+".fork.json"), []byte("{}"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := server.retireReadyCreations(3); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(server.creationEvidencePath(protected) + ".request"); err != nil {
+		t.Fatal("terminal eviction removed an unfinished journal's binding")
+	}
+	if err := os.Remove(filepath.Join(directory, protected.Request.Slug+".fork.json")); err != nil {
+		t.Fatal(err)
+	}
+	journal := fmt.Sprintf(
+		`{"schema":1,"slug":%q,"goal_sha256":null,"run_codex":true,"state":"creating","tmux_identity":%q}`,
+		protected.Request.Slug, strings.Repeat("a", 64),
+	)
+	if err := os.WriteFile(filepath.Join(directory, protected.Request.Slug+".creation.json"), []byte(journal), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := server.retireReadyCreations(4); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(server.creationEvidencePath(protected) + ".request"); err != nil {
+		t.Fatal("terminal eviction removed an unfinished initial request's binding")
+	}
+}
+
+func writeBoundForkRecovery(t *testing.T, server *Server, receipt creationReceipt) string {
+	t.Helper()
+	writeCreationBinding(t, server, receipt)
+	directory := filepath.Join(server.config.Workspace, "worktrees", ".locks")
+	if err := os.MkdirAll(directory, 0700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(directory, receipt.Request.Slug+".fork.json")
+	// The portal only needs to know that this CLI-owned journal is pending.
+	// Its schema and recovery checks are exercised by the Ruby owner's tests.
+	if err := os.WriteFile(path, []byte("opaque pending fork journal\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func TestCreationBoundForkJournalRecoversWithoutItsSource(t *testing.T) {
+	for _, sourceState := range []string{"archived", "deleted"} {
+		t.Run(sourceState, func(t *testing.T) {
+			server := newTestServer(t)
+			defer server.Close()
+			prepareInteractiveConversation(t, server, "source")
+			source, identity, err := server.creationSource("source")
+			if err != nil {
+				t.Fatal(err)
+			}
+			receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""), Request: creationRequest{Kind: "fork", Slug: "2026-09-12-recover-fork", Source: "source", SourceThreadID: source.Codex.ThreadID, SourceIdentity: identity},
+				ReceiptID: strings.Repeat("3", 64), Attempt: 1, State: "paused", Validated: true, Model: "model-1", Effort: "high"}
+			if err := server.saveCreation(receipt); err != nil {
+				t.Fatal(err)
+			}
+			server.creations[receipt.Request.Slug] = receipt
+			journal := writeBoundForkRecovery(t, server, receipt)
+			sourceDirectory := filepath.Join(server.config.Workspace, "work", "source")
+			if sourceState == "archived" {
+				archive := filepath.Join(server.config.Workspace, "archive")
+				if err := os.MkdirAll(archive, 0755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Rename(sourceDirectory, filepath.Join(archive, "source")); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				if err := os.RemoveAll(sourceDirectory); err != nil {
+					t.Fatal(err)
+				}
+			}
+			server.config.Codex = &browserContractCodex{}
+			directory := t.TempDir()
+			helper := filepath.Join(directory, "dev-session")
+			marker := filepath.Join(directory, "started")
+			release := filepath.Join(directory, "release")
+			script := "#!/bin/sh\ntouch \"$FORK_STARTED\"\nwhile [ ! -f \"$FORK_RELEASE\" ]; do sleep 0.01; done\nrm \"$FORK_JOURNAL\"\nprintf '{\"slug\":\"2026-09-12-recover-fork\"}\\n'\n"
+			if err := os.WriteFile(helper, []byte(script), 0755); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("FORK_STARTED", marker)
+			t.Setenv("FORK_RELEASE", release)
+			t.Setenv("FORK_JOURNAL", journal)
+			server.config.DevSession = fixtureDevSessionCommand(t, server.config.Workspace, helper)
+			response := postCreation(t, server, "/api/sessions/"+receipt.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receipt.ReceiptID), "application/json")
+			if response.Code != http.StatusAccepted {
+				t.Fatalf("retry: %d %s", response.Code, response.Body.String())
+			}
+			deadline := time.Now().Add(time.Second)
+			for {
+				if _, err := os.Stat(marker); err == nil {
+					break
+				}
+				if time.Now().After(deadline) {
+					current, _ := server.currentCreation(receipt.Request.Slug)
+					t.Fatalf("journal recovery reread source: %#v", current)
+				}
+				time.Sleep(5 * time.Millisecond)
+			}
+			writeCreationProof(t, server, receipt)
+			if err := os.WriteFile(release, nil, 0600); err != nil {
+				t.Fatal(err)
+			}
+			completed := awaitCreation(t, server, receipt.Request.Slug)
+			if completed.State != "ready" || completed.ReceiptID != receipt.ReceiptID {
+				t.Fatalf("journal recovery failed: %#v", completed)
+			}
+		})
+	}
+}
+
+func TestCreationValidatedPlanRetryDelegatesRecoveryWithoutItsSource(t *testing.T) {
+	for _, sourceState := range []string{"archived", "deleted"} {
+		t.Run(sourceState, func(t *testing.T) {
+			server := newTestServer(t)
+			defer server.Close()
+			prepareInteractiveConversation(t, server, "source")
+			source, identity, err := server.creationSource("source")
+			if err != nil {
+				t.Fatal(err)
+			}
+			plan := "The exact accepted plan."
+			receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""),
+				Request:   creationRequest{Kind: "plan", Slug: "2026-09-12-plan-recovery", Source: "source", SourceThreadID: source.Codex.ThreadID, SourceIdentity: identity, PlanText: plan, PlanTurnID: "accepted-turn", PlanSHA256: planDigest(plan)},
+				ReceiptID: strings.Repeat("9", 64), Attempt: 1, State: "paused", Validated: true, Goal: "Implement the following approved plan from session source.\n\n" + plan, Model: "model-1", Effort: "high"}
+			if err := server.saveCreation(receipt); err != nil {
+				t.Fatal(err)
+			}
+			server.creations[receipt.Request.Slug] = receipt
+			// Ruby tests own the actual journal crash boundary. Here the portal
+			// must forward the recorded request and await the CLI's exact proof.
+			writeCreationProof(t, server, receipt)
+			if err := os.Remove(server.creationEvidencePath(receipt)); err != nil {
+				t.Fatal(err)
+			}
+			sourceDirectory := filepath.Join(server.config.Workspace, "work", "source")
+			if sourceState == "archived" {
+				archive := filepath.Join(server.config.Workspace, "archive")
+				if err := os.MkdirAll(archive, 0755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Rename(sourceDirectory, filepath.Join(archive, "source")); err != nil {
+					t.Fatal(err)
+				}
+			} else if err := os.RemoveAll(sourceDirectory); err != nil {
+				t.Fatal(err)
+			}
+			server.config.Codex = &browserContractCodex{}
+			directory := t.TempDir()
+			helper := filepath.Join(directory, "dev-session")
+			marker, release := filepath.Join(directory, "started"), filepath.Join(directory, "release")
+			arguments, goal := filepath.Join(directory, "arguments"), filepath.Join(directory, "goal")
+			script := `#!/bin/sh
+printf '%s\n' "$@" >"$PLAN_ARGS"
+while [ "$#" -gt 0 ]; do
+  if [ "$1" = "--goal-file" ]; then cp "$2" "$PLAN_GOAL"; fi
+  shift
+done
+touch "$PLAN_STARTED"
+while [ ! -f "$PLAN_RELEASE" ]; do sleep 0.01; done
+printf '{"slug":"2026-09-12-plan-recovery"}\n'
+`
+			if err := os.WriteFile(helper, []byte(script), 0755); err != nil {
+				t.Fatal(err)
+			}
+			t.Setenv("PLAN_ARGS", arguments)
+			t.Setenv("PLAN_GOAL", goal)
+			t.Setenv("PLAN_STARTED", marker)
+			t.Setenv("PLAN_RELEASE", release)
+			server.config.DevSession = fixtureDevSessionCommand(t, server.config.Workspace, helper)
+			response := postCreation(t, server, "/api/sessions/"+receipt.Request.Slug+"/creation/retry", fmt.Sprintf(`{"receiptId":%q,"attempt":1}`, receipt.ReceiptID), "application/json")
+			if response.Code != http.StatusAccepted {
+				t.Fatalf("retry: %d %s", response.Code, response.Body.String())
+			}
+			deadline := time.Now().Add(time.Second)
+			for {
+				if _, err := os.Stat(marker); err == nil {
+					break
+				}
+				if time.Now().After(deadline) {
+					current, _ := server.currentCreation(receipt.Request.Slug)
+					t.Fatalf("plan recovery reread source: %#v", current)
+				}
+				time.Sleep(5 * time.Millisecond)
+			}
+			passed, err := os.ReadFile(arguments)
+			if err != nil {
+				t.Fatal(err)
+			}
+			for option, expected := range map[string]string{"--expected-source": "source", "--expected-source-thread": source.Codex.ThreadID, "--expected-source-identity": identity, "--creation-receipt-id": receipt.ReceiptID, "--model": receipt.Model, "--effort": receipt.Effort} {
+				if !strings.Contains(string(passed), option+"\n"+expected+"\n") {
+					t.Fatalf("CLI lost captured %s", option)
+				}
+			}
+			delivered, err := os.ReadFile(goal)
+			if err != nil || string(delivered) != receipt.Goal {
+				t.Fatalf("CLI goal changed: %v", err)
+			}
+			writeCreationProof(t, server, receipt)
+			if err := os.WriteFile(release, nil, 0600); err != nil {
+				t.Fatal(err)
+			}
+			completed := awaitCreation(t, server, receipt.Request.Slug)
+			if completed.State != "ready" || completed.Request != receipt.Request || completed.Attempt != 2 {
+				t.Fatalf("delegated plan recovery failed: %#v", completed)
+			}
+		})
+	}
+}
+
+func TestCreationHeadBaseArchiveHeadKeepsCanonicalHistoryAccessible(t *testing.T) {
+	for _, kind := range []string{"new", "plan", "fork"} {
+		for _, evidence := range []bool{false, true} {
+			t.Run(fmt.Sprintf("%s/evidence=%v", kind, evidence), func(t *testing.T) {
+				server := newTestServer(t)
+				receipt := creationReceipt{Schema: 1, Workspace: server.config.Workspace, DeletionHistorySHA256: planDigest(""),
+					Request:   creationRequest{Kind: kind, Slug: "2026-09-12-archive-" + kind, Goal: "Exact original request"},
+					ReceiptID: strings.Repeat("e", 64), Attempt: 1, State: "paused", Validated: true, Goal: "Exact original request", Model: "model-1", Effort: "high"}
+				if kind != "new" {
+					receipt.Request.Source = "source"
+					receipt.Request.SourceThreadID = "source-thread"
+					receipt.Request.SourceIdentity = strings.Repeat("f", 64)
+				}
+				if err := server.saveCreation(receipt); err != nil {
+					t.Fatal(err)
+				}
+				server.Close()
+				writeCreationProof(t, server, receipt)
+				if !evidence {
+					if err := os.Remove(server.creationEvidencePath(receipt)); err != nil {
+						t.Fatal(err)
+					}
+				}
+				// The preceding generation archives its completed canonical
+				// tracking by rename, preserving thread and directory identity.
+				directory := filepath.Join(server.config.Workspace, "work", receipt.Request.Slug)
+				manifestPath := filepath.Join(directory, "portal.yml")
+				manifest, err := os.ReadFile(manifestPath)
+				if err != nil {
+					t.Fatal(err)
+				}
+				manifest = append(manifest, []byte("finalized_at: '2026-09-12T12:00:00Z'\n")...)
+				if err := os.WriteFile(manifestPath, manifest, 0644); err != nil {
+					t.Fatal(err)
+				}
+				writeWebTrackingFiles(t, directory, "complete")
+				archive := filepath.Join(server.config.Workspace, "archive")
+				if err := os.MkdirAll(archive, 0755); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.Rename(directory, filepath.Join(archive, receipt.Request.Slug)); err != nil {
+					t.Fatal(err)
+				}
+				locks := filepath.Join(server.config.Workspace, "worktrees", ".locks")
+				if err := os.MkdirAll(locks, 0700); err != nil {
+					t.Fatal(err)
+				}
+				var pendingPath string
+				for _, journal := range session.LifecycleJournals() {
+					if journal.Command == "archive" {
+						pendingPath = filepath.Join(locks, receipt.Request.Slug+"."+journal.Name+".json")
+					}
+				}
+				if err := os.WriteFile(pendingPath, []byte("{}"), 0600); err != nil {
+					t.Fatal(err)
+				}
+				restored, err := New(server.config)
+				if err != nil {
+					t.Fatal(err)
+				}
+				defer restored.Close()
+				if current, _ := restored.currentCreation(receipt.Request.Slug); current.State != "paused" {
+					t.Fatal("unfinished archive lost recovery authority")
+				}
+				if err := os.Remove(pendingPath); err != nil {
+					t.Fatal(err)
+				}
+				current, ok := restored.currentCreation(receipt.Request.Slug)
+				expected := "conflict"
+				if evidence {
+					expected = "ready"
+				}
+				if !ok || current.State != expected || current.ReceiptID != receipt.ReceiptID || current.Request != receipt.Request {
+					t.Fatalf("archive reconciliation changed ownership: %#v", current)
+				}
+				page := httptest.NewRecorder()
+				restored.Handler().ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/"+receipt.Request.Slug+"/", nil))
+				if page.Code != http.StatusOK || strings.Contains(page.Body.String(), "data-creation=") || strings.Contains(page.Body.String(), `id="message-form"`) {
+					t.Fatalf("receipt hides or reopens canonical archive: %d", page.Code)
+				}
+				if !evidence && (!strings.Contains(page.Body.String(), creationArchivedMessage) || strings.Contains(page.Body.String(), creationConflictMessage)) {
+					t.Fatal("archive conflict has incorrect explanatory copy")
+				}
+				_, err = os.Stat(restored.creationEvidencePath(receipt))
+				if !evidence && !os.IsNotExist(err) {
+					t.Fatal("archive reconciliation synthesized completion evidence")
+				}
+				if evidence {
+					// Exact evidence must still reject a changed retained thread.
+					changed := strings.Replace(string(manifest), "created-thread", "replacement-thread", 1)
+					if err := os.WriteFile(filepath.Join(archive, receipt.Request.Slug, "portal.yml"), []byte(changed), 0644); err != nil {
+						t.Fatal(err)
+					}
+					if err := restored.proveCreation(receipt); err == nil {
+						t.Fatal("archived replacement thread accepted earlier completion evidence")
+					}
+				} else {
+					if err := os.Rename(filepath.Join(archive, receipt.Request.Slug), directory); err != nil {
+						t.Fatal(err)
+					}
+					writeWebTrackingFiles(t, directory, "active")
+					active := strings.Replace(string(manifest), "finalized_at: '2026-09-12T12:00:00Z'\n", "", 1)
+					if err := os.WriteFile(manifestPath, []byte(active), 0644); err != nil {
+						t.Fatal(err)
+					}
+					page = httptest.NewRecorder()
+					restored.Handler().ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/"+receipt.Request.Slug+"/", nil))
+					if page.Code != http.StatusOK || strings.Contains(page.Body.String(), "This session is archived.") || !strings.Contains(page.Body.String(), creationArchivedMessage) {
+						t.Fatal("historical creation notice misreports a revived session")
+					}
+				}
+			})
+		}
+	}
+}
+
+func TestCreationPageRetainsPromptBeforeValidationAndAfterFailure(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	release := make(chan struct{})
+	defer close(release)
+	server.config.Codex = &creationTestCodex{browserContractCodex: &browserContractCodex{}, release: release}
+	goal := "Original <script>alert(1)</script>\nsecond line"
+	receipt, err := server.acceptCreation(creationRequest{Kind: "new", Slug: "saved-prompt", Goal: goal})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, state := range []string{"running", "failed", "paused"} {
+		receipt.State = state
+		server.operationMu.Lock()
+		server.creations[receipt.Request.Slug] = receipt
+		server.operationMu.Unlock()
+		page := httptest.NewRecorder()
+		server.Handler().ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/saved-prompt/", nil))
+		if page.Code != 200 || !strings.Contains(page.Body.String(), "Original &lt;script&gt;") || strings.Contains(page.Body.String(), "<script>alert") {
+			t.Fatalf("unsafe or missing prompt: %s", page.Body.String())
+		}
+		status := httptest.NewRecorder()
+		server.Handler().ServeHTTP(status, httptest.NewRequest(http.MethodGet, "/api/sessions/saved-prompt/creation", nil))
+		var result creationStatus
+		if err := json.Unmarshal(status.Body.Bytes(), &result); err != nil || result.InitialRequest != goal {
+			t.Fatalf("status: %s (%v)", status.Body.String(), err)
+		}
+	}
+}
+
+func TestCreationJSONAcceptanceIncludesDurableRequest(t *testing.T) {
+	server := newTestServer(t)
+	defer server.Close()
+	request := httptest.NewRequest(http.MethodPost, "/sessions", strings.NewReader("creation_date=2026-09-13&name=saved&goal=Keep+this+request"))
+	request.Header.Set("Origin", server.config.BaseURL)
+	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	request.Header.Set("Accept", "application/json")
+	response := httptest.NewRecorder()
+	server.Handler().ServeHTTP(response, request)
+	var status creationStatus
+	if err := json.Unmarshal(response.Body.Bytes(), &status); err != nil || response.Code != 202 || status.InitialRequest != "Keep this request" || status.ReceiptID == "" {
+		t.Fatalf("acceptance: %d %s (%v)", response.Code, response.Body.String(), err)
+	}
+	var saved creationReceipt
+	if err := readCreationJSON(server.creationPath(status.Slug), &saved); err != nil || saved.ReceiptID != status.ReceiptID {
+		t.Fatalf("not durably accepted: %v", err)
+	}
+}

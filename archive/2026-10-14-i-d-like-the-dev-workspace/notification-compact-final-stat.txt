@@ -1,0 +1,57 @@
+TENTH DELTA
+docs/browser-notifications-operations.md           |  15 +-
+ docs/browser-notifications.md                      |  31 ++--
+ portal/internal/web/attention_browser_test.cjs     | 194 ++++++++++++++++++---
+ portal/internal/web/notifications_browser_test.cjs |  24 ++-
+ portal/internal/web/notifications_test.go          |  21 ++-
+ .../internal/web/static/browser-notifications.js   |  90 ++++++++--
+ portal/internal/web/static/style.css               |   9 +-
+ portal/internal/web/templates/index.html           |  16 +-
+ portal/internal/web/templates/notifications.html   |   4 +-
+ portal/internal/web/templates/session.html         |   4 +-
+ 10 files changed, 316 insertions(+), 92 deletions(-)
+
+WHOLE TEN-COMMIT BRANCH
+docs/browser-notifications-operations.md           |  153 +++
+ docs/browser-notifications.md                      |  192 +++
+ docs/codex-providers.md                            |   11 +
+ docs/workspace-portal.md                           |    9 +
+ libexec/dev-session                                |    5 +-
+ libexec/workspace-codex-providers.rb               |  102 +-
+ libexec/workspace-host                             |    2 +
+ nix/tests/session-recovery-boot.nix                |  128 +-
+ nix/workspace-portal.nix                           |    7 +-
+ portal/go.mod                                      |    3 +
+ portal/go.sum                                      |   74 +-
+ portal/internal/processgroup/processgroup_test.go  |  255 +++-
+ portal/internal/web/attention.go                   |  236 ++++
+ portal/internal/web/attention_browser_test.cjs     | 1425 ++++++++++++++++++++
+ portal/internal/web/attention_test.go              |  253 ++++
+ portal/internal/web/browser_contract_test.cjs      |    2 +-
+ portal/internal/web/creation.go                    |    4 +
+ portal/internal/web/creation_store.go              |   45 +-
+ portal/internal/web/notifications.go               |  548 ++++++++
+ portal/internal/web/notifications_browser_test.cjs |  445 ++++++
+ portal/internal/web/notifications_browser_test.go  |   92 ++
+ portal/internal/web/notifications_store.go         |  218 +++
+ portal/internal/web/notifications_test.go          |  607 +++++++++
+ portal/internal/web/notifications_transport.go     |  106 ++
+ portal/internal/web/preparation.go                 |    9 +-
+ portal/internal/web/preparation_store.go           |   21 +-
+ portal/internal/web/preparation_test.go            |    2 +-
+ portal/internal/web/server.go                      |   77 +-
+ portal/internal/web/static/app.js                  |   11 +-
+ .../internal/web/static/browser-notifications.js   |  496 +++++++
+ portal/internal/web/static/notification-worker.js  |  139 ++
+ portal/internal/web/static/preparation.js          |   11 +-
+ .../internal/web/static/session-attention-store.js |  106 ++
+ portal/internal/web/static/session-attention.js    |  103 ++
+ portal/internal/web/static/style.css               |    8 +-
+ portal/internal/web/templates/index.html           |   15 +-
+ portal/internal/web/templates/notifications.html   |   38 +
+ portal/internal/web/templates/session.html         |   18 +-
+ portal/internal/web/uploads.go                     |    3 +
+ test/dev_session/agent_team_creation_test.rb       |   31 +
+ .../workspace_host/agent_team_registration_test.rb |   42 +
+ test/workspace_host/codex_provider_test.rb         |  321 ++++-
+ 42 files changed, 6266 insertions(+), 107 deletions(-)

@@ -1,0 +1,164 @@
+--- live-native-b8a6/expected.json
++++ live-native-0b403305/expected.json
+@@ -1,5 +1,5 @@
+ {
+-  "sourceRevision": "b8a6be26a75347dcc9ec0fd1330dff886e47c93f",
++  "sourceRevision": "0b403305e085aa01884cf56acea7c717f78f7e86",
+   "origin": "https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz",
+   "sessionSlug": "2026-10-14-i-d-like-the-dev-workspace",
+   "settingsPath": "/2026-10-14-i-d-like-the-dev-workspace/#settings",
+--- live-native-b8a6/live-check.cjs
++++ live-native-0b403305/live-check.cjs
+@@ -143,7 +143,7 @@
+     const row = {browser: engine.name(), phase: "launch", providerAccepted: false, workerReceiptVerified: false,
+       browserNotificationRecordVerified: false, zeroPortalTabsVerified: false, osDisplayVerified: false};
+     report.browsers.push(row); save();
+-    const profile = fs.mkdtempSync(path.join(os.tmpdir(), `session-live-b8a6-${engine.name()}-`));
++    const profile = fs.mkdtempSync(path.join(os.tmpdir(), `session-live-0b403305-${engine.name()}-`));
+     let context;
+     try {
+       if (!selectedMatches(candidate)) fail("selected_profile_mismatch");
+@@ -162,6 +162,9 @@
+         permission: ["default", "granted", "denied"].includes(globalThis.Notification?.permission) ? Notification.permission : "unavailable"}));
+       if (!(row.apiSupport.secureContext && row.apiSupport.serviceWorker && row.apiSupport.push && row.apiSupport.notifications)) {row.phase = "browser_unsupported"; continue;}
+       if (row.apiSupport.permission !== "granted") {row.phase = "permission_unavailable"; continue;}
++      if (preparedPackage() !== candidate) fail("preparation_revision_mismatch");
++      if (!selectedMatches(candidate)) fail("selected_profile_mismatch");
++      if (!await servedAssetsMatch(context)) fail("served_asset_mismatch");
+       row.phase = "enable"; save(); row.enableAttempted = true;
+       await page.locator("[data-notification-enable]").click();
+       await page.waitForFunction(() => {
+@@ -172,7 +175,9 @@
+       }, null, {timeout: 45000});
+       if (!await page.locator("[data-notification-test]").isEnabled()) {row.phase = "registration_incomplete"; row.controlStatus = await controlStatus(page); continue;}
+       row.before = await deliveryEvidence(page);
++      if (preparedPackage() !== candidate) fail("preparation_revision_mismatch");
+       if (!selectedMatches(candidate)) fail("selected_profile_mismatch");
++      if (!await servedAssetsMatch(context)) fail("served_asset_mismatch");
+       row.phase = "test"; save();
+       await page.locator("[data-notification-test]").click();
+       await page.waitForFunction(() => document.querySelector("[data-notification-status]")?.textContent.startsWith("A test notification will be sent in 10 seconds."));
+@@ -183,12 +188,13 @@
+       await blank.bringToFront(); row.phase = "zero_tab_wait"; save(); await blank.waitForTimeout(18000);
+       page = await openSettings(context);
+       row.after = await deliveryEvidence(page);
++      row.preparationStillMatches = preparedPackage() === candidate;
+       row.selectedPackageStillMatches = selectedMatches(candidate);
+       row.servedAssetsStillMatch = await servedAssetsMatch(context);
+       row.providerAccepted = row.after.result === "provider_accepted";
+       row.workerReceiptVerified = Number.isInteger(row.before.workerTestRecords) && Number.isInteger(row.after.workerTestRecords) && row.after.workerTestRecords > row.before.workerTestRecords;
+       row.browserNotificationRecordVerified = row.after.testNotifications > row.before.testNotifications;
+-      row.phase = !row.selectedPackageStillMatches || !row.servedAssetsStillMatch ? "revision_changed" :
++      row.phase = !row.preparationStillMatches || !row.selectedPackageStillMatches || !row.servedAssetsStillMatch ? "revision_changed" :
+         row.providerAccepted && row.workerReceiptVerified && row.zeroPortalTabsVerified ? "provider_worker_observed" : "delivery_incomplete";
+     } catch (error) {row.phase = "incomplete"; row.error = safeError(error); if (codes.has(error.probeCode)) row.reason = error.probeCode;}
+     finally {
+--- live-native-b8a6/run.sh
++++ live-native-0b403305/run.sh
+@@ -2,7 +2,7 @@
+ set -eo pipefail
+ umask 077
+ tracking=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace
+-probe="$tracking/live-native-b8a6"
++probe="$tracking/live-native-0b403305"
+ cd "$tracking"
+ if [[ "$(dev-session current)" != 2026-10-14-i-d-like-the-dev-workspace ]]; then
+   printf '%s\n' 'Refusing live acceptance: session identity mismatch.' >&2
+--- live-native-b8a6/README.md
++++ live-native-0b403305/README.md
+@@ -1,9 +1,11 @@
+ # Post-activation live notification acceptance
+ 
+-Prepared only for runtime `b8a6be26a75347dcc9ec0fd1330dff886e47c93f` at the fixed
++Prepared only for runtime `0b403305e085aa01884cf56acea7c717f78f7e86` at the fixed
+ HTTPS portal origin and this session's Settings page. No live request, SSH
+ credential read, display launch or browser operation was performed during
+-preparation. The older `live-notification-check.cjs` is preserved unchanged.
++preparation. The earlier `live-native-b8a6/` bundle and
++`live-notification-check.cjs` are preserved byte-for-byte. This new directory is an adaptation of that approved
++headed-browser harness and owned-Xvfb runner.
+ 
+ ## Actual run command, after authorized activation
+ 
+@@ -11,14 +13,17 @@
+ dev-session-monitor watcher or its visible fallback:
+ 
+ ```sh
+-LIVE_PROFILE_PREPARED=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/profile-prepared.json bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/live-native-b8a6/run.sh
++LIVE_PROFILE_PREPARED=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/profile-prepared-0b403305.json bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/live-native-0b403305/run.sh
+ ```
+ 
+ `LIVE_PROFILE_PREPARED` must name the actual final activation's trusted profile
+ preparation record under this tracking directory. At preparation time, the
+ default `profile-prepared.json` still covers the earlier e414ed3 runtime. The
+-harness deliberately refuses it. The lead must supply/update the final record;
+-do not edit its coverage or disable the checks to make a run proceed.
++harness deliberately refuses it. The command above names a new, not-yet-supplied
++`profile-prepared-0b403305.json`; the lead must supply a genuine final preparation
++record after authorized activation, or point the environment variable at that
++record under this tracking directory. Do not edit the stale proof or its
++coverage, or disable checks to make a run proceed.
+ 
+ The runner uses the existing cached runtime environment, pinned browser bundle
+ and rooted Xvfb executable from `xvfb-path.txt`. It verifies the harness manifest,
+@@ -29,19 +34,27 @@
+ ## Revision and identity checks
+ 
+ The supplied profile preparation must bind `dev-workspace` coverage to exact
+-b8a6 and its candidate package must equal the selected remote profile's resolved
+-path. That path is read through the existing trusted root SSH connection using
++0b403305 and its candidate package must equal the selected remote profile's
++resolved path. That path is read through the existing trusted root SSH connection using
+ only `readlink -f`. Before Enable, the authenticated browser also verifies the
+ served notification client, worker and shared store asset SHA-256 values against
+-the committed b8a6 bytes in `expected.json`. The fixed page path and rendered
++the committed 0b403305 bytes in `expected.json`. The fixed page path and rendered
+ session slug must match this conversation's session.
+ 
+-The selected package is rechecked before Test and the package/assets are checked
+-again after the zero-tab window. A mismatch refuses new test work or records a
+-revision change; only scoped cleanup may continue. This is package/source
++The trusted preparation record, selected package and served assets are checked
++immediately before Enable, before Test and after the zero-tab window. A mismatch
++refuses new test work or records a revision change; only scoped cleanup may continue. This is package/source
+ binding through the trusted preparation record and served bytes, not a new
+-server revision endpoint. A changed selected revision requires a fresh reviewed
+-fixture/proof, not changing the expected value in place.
++server revision endpoint. A changed selected revision requires new matching preparation and proof.
++Do not change this bundle's expected value in place.
++
++The client, worker and shared store were independently read from committed
++Git objects at b8a6 and 0b403305 and compared byte-for-byte. All three are
++identical; their SHA-256 values remain the same. `asset-comparison.json` records
++each source path, public route and digest. `provenance.json` binds source
++0b403305 to published workspace `823d2b61b06de1a0cbe7e8b31b90f5907ecd7926`
++and configuration `0420df1c5272ff48441c14885a5f7fd042b5dcdb`; these pins are
++provenance, not evidence of activation. VM/CI and activation remain lead-owned.
+ 
+ ## Credentials and native delivery
+ 
+@@ -69,8 +82,9 @@
+ 
+ Provider acceptance, worker receipt and browser notification records are
+ separate fields. A zero Firefox browser-record count does not erase positive
+-worker receipt. Linux/Xvfb cannot establish physical or macOS display. A zero
+-process status means diagnostics completed, not that delivery succeeded.
++worker receipt. Linux/Xvfb cannot establish physical or macOS display. This
++harness does not exercise a real notification click; click/auth contracts are
++separate evidence. A zero process status means diagnostics completed, not that delivery succeeded.
+ 
+ ## Scoped cleanup and evidence
+ 
+@@ -102,9 +116,9 @@
+ 
+ These do not execute the live JavaScript or contact SSH/HTTPS. Preparation also
+ checks the local Xvfb executable and asset hashes without launching anything.
+-See `preparation-checks.log/status`, `preparation-summary.json`, `provenance.json`
+-and `runner-adaptation.patch`. Source, prior probes and old live script remain
+-unchanged. The earlier disposable native provider success belongs to its own
++See `preparation-checks.log/status`, `preparation-summary.json`, `provenance.json`,
++`asset-comparison.json`, `preserved-prior-bundle.sha256` and `adaptation.patch`.
++Source, prior probes and old live script remain unchanged. The earlier disposable native provider success belongs to its own
+ run; this live directory contains no delivery result until the lead executes it.
+ 
+ Session: <https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-14-i-d-like-the-dev-workspace/>

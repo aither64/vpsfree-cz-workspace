@@ -1,0 +1,142 @@
+#repositories .repo-grid { display: grid; grid-template-columns: minmax(0, 1fr); align-items: start; gap: 1rem; }
+#repositories .repo-card { min-width: 0; }
+.repository-review-actions, .repository-pagination, .repository-mode-controls { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
+#repositories .repository-review-actions { align-items: stretch; margin-top: 1rem; }
+#repositories .repository-review-actions > * { white-space: nowrap; }
+.repository-history { margin-top: 1rem; border-top: 1px solid var(--line, #283241); padding-top: 1rem; }
+.repository-history > summary { cursor: pointer; font-weight: 600; }
+.repository-history > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.repository-workflows, .repository-workflows-compact { margin-top: 1rem; border-top: 1px solid var(--line, #283241); padding-top: 1rem; }
+.repository-workflows-compact { margin-bottom: 0; color: var(--muted); font-size: .85rem; }
+.repository-workflows > summary { cursor: pointer; font-weight: 600; }
+.repository-workflows > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.repository-history-summary { margin-left: .4rem; font-size: .8rem; font-weight: 400; }
+.repository-workflow-counters { display: inline-flex; flex-wrap: wrap; gap: .25rem .6rem; margin-left: .5rem; vertical-align: middle; }
+.repository-workflow-counter { display: inline-flex; gap: .2rem; align-items: baseline; color: var(--muted); font-size: .76rem; font-weight: 500; white-space: nowrap; }
+.repository-workflow-counter strong { font-weight: 700; font-variant-numeric: tabular-nums; }
+.repository-workflow-counter.queued { color: var(--warning); }
+.repository-workflow-counter.running { color: #8fc7ff; }
+.repository-workflow-counter.successful { color: var(--accent); }
+.repository-workflow-counter.failed { color: var(--danger); }
+.repository-review-actions { margin-bottom: .8rem; }
+.repository-commit-list { list-style: none; margin: 0; padding: 0; }
+.repository-commit { border-bottom: 1px solid var(--line, #283241); padding: .5rem 0; }
+.repository-commit-row { display: flex; align-items: baseline; gap: .7rem; }
+.repository-commit-subject { flex: 1; min-width: 0; text-align: left; font-weight: 500; padding: .25rem 0; overflow-wrap: anywhere; }
+.repository-commit-sha { color: var(--muted, #667085); font-size: .78rem; }
+.repository-commit-link { white-space: nowrap; font-size: .78rem; }
+.repository-commit-message { margin: .25rem 0 .25rem .5rem; font-size: .85rem; }
+.repository-commit-message summary { cursor: pointer; color: var(--muted, #667085); }
+.repository-commit-message pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 22rem; overflow: auto; }
+.repository-pagination { justify-content: space-between; font-size: .8rem; margin-top: 1rem; }
+.repository-comparison[hidden], .repository-overview[hidden] { display: none; }
+#repositories.repository-review-open { overflow: hidden; }
+.repository-comparison { display: flex; flex-direction: column; height: 100%; min-height: 0; gap: .7rem; }
+.repository-review-heading { display: flex; align-items: center; flex-wrap: wrap; flex-shrink: 0; gap: .5rem; }
+.repository-review-heading button:not(.codex-copy-button) { font-size: .8rem; padding: .45rem .6rem; min-height: 2.25rem; }
+.repository-review-title { flex: 1; min-width: 0; }
+.repository-review-title h2 { margin: 0 0 .35rem; }
+.repository-review-heading > .repository-review-title { margin: 0; font-size: .95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.repository-comparison-details { padding: .75rem; border-bottom: 1px solid var(--line); }
+.repository-comparison-details p { margin: .35rem 0; overflow-wrap: anywhere; }
+.repository-pair { font-size: .8rem; }
+.repository-mode-controls button[aria-pressed="true"] { background: var(--accent, #245bdd); color: #062117; }
+.repository-comparison-changed { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+.repository-comparison-changed[hidden] { display: none; }
+.repository-review-body { display: grid; grid-template-columns: minmax(12rem, 23%) minmax(0, 1fr); flex: 1; min-height: 0; border: 1px solid var(--line, #283241); border-radius: .6rem; overflow: hidden; }
+.repository-file-list { overflow: auto; padding: .65rem; border-right: 1px solid var(--line, #283241); }
+.repository-file { display: flex; width: 100%; gap: .55rem; text-align: left; padding: .5rem; margin-bottom: .3rem; font-size: .8rem; }
+.repository-file[aria-current="true"] { background: #e9efff; color: #1c4090; }
+.repository-file-status { flex: none; min-width: 1.5rem; font-family: ui-monospace, monospace; }
+.repository-file-path { min-width: 0; overflow-wrap: anywhere; }
+.repository-file-scroll { color: var(--text); overflow: auto; min-width: 0; min-height: 0; background: #101620; }
+.repository-file-section { border-bottom: 2px solid var(--line); }
+.repository-editor-placeholder { min-height: 12rem; }
+.repository-file-title { color: var(--text); position: sticky; top: 0; left: 0; margin: 0; padding: .75rem; background: var(--panel-2); font-size: .9rem; overflow-wrap: anywhere; }
+.repository-file-metadata { padding: 0 .75rem; font-size: .8rem; color: var(--warning); }
+.repository-file-metadata p { margin: .4rem 0; }
+.repository-editor { min-width: 0; }
+.repository-editor > p { padding: .75rem; }
+.repository-editor .cm-editor { outline: none; background: #101620; color: var(--text); }
+.repository-editor .cm-gutters { background: var(--panel-2); color: var(--muted); border-right-color: var(--line); }
+.repository-editor .cm-mergeViewEditor { min-width: 0; }
+.repository-editor .cm-scroller { overflow-x: auto; }
+.repository-editor .cm-deletedChunk { max-height: 32rem; overflow: auto; }
+.repository-editor .cm-deletedChunk .cm-deletedText { text-decoration: none; }
+.repository-editor .cm-collapsedLines { cursor: pointer; }
+.repository-editor .cm-mergeView { min-height: 100%; }
+@media (max-width: 900px) {
+  #repositories .repo-grid { grid-template-columns: minmax(0, 1fr); }
+  .repository-review-body { grid-template-columns: minmax(8rem, 26%) minmax(0, 1fr); }
+}
+@media (max-width: 600px) {
+  .repository-review-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(5rem, 22%) minmax(0, 1fr); }
+  .repository-file-list { border-right: 0; border-bottom: 1px solid var(--line, #283241); }
+  .repository-file { margin-bottom: .1rem; }
+  .repository-comparison-changed { align-items: stretch; flex-direction: column; }
+  .repository-commit-link { font-size: .7rem; }
+}
+
+.repository-commit-row { align-items: flex-start; gap: .5rem; }
+.repository-commit-subject-group { flex: 1; min-width: 0; line-height: 1.8; }
+.repository-commit-subject { color: var(--text); text-decoration: none; overflow-wrap: anywhere; }
+.repository-commit-subject:hover { color: var(--accent); text-decoration: underline; }
+.repository-commit-expand { display: inline-flex; align-items: center; justify-content: center; min-width: 1.8rem; height: 1.5rem; margin-left: .35rem; padding: 0 .25rem; line-height: 1; font-weight: bold; vertical-align: middle; }
+.repository-commit-identity, .repository-commit-detail-identity, .repository-pair { display: flex; align-items: center; gap: .3rem; flex-wrap: wrap; }
+.repository-commit-identity { flex: none; justify-content: flex-end; }
+.repository-commit-link { font-size: 1.1rem; min-width: 1.7rem; min-height: 1.7rem; display: inline-flex; align-items: center; justify-content: center; }
+.repository-commit-message { white-space: pre-wrap; overflow-wrap: anywhere; margin: .5rem 0; max-height: 22rem; overflow: auto; }
+.repository-commit-message[hidden] { display: none; }
+.repository-commit-full-message { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; font-size: .9rem; margin: .6rem 0; }
+.repository-commit-detail-identity { font-size: .8rem; }
+.repository-commit-detail-identity > code { overflow-wrap: anywhere; }
+.repository-comparison-stats { font-size: .85rem; font-variant-numeric: tabular-nums; }
+.repository-additions { color: #7ee787; }
+.repository-deletions { color: #ffa198; }
+.repository-commit-parents { display: flex; align-items: center; flex-wrap: wrap; gap: .3rem; font-size: .8rem; }
+.repository-parent-link { font-family: ui-monospace, monospace; }
+.repository-file { color: var(--text); text-decoration: none; align-items: flex-start; }
+.repository-file-counts { font-size: .75rem; font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--muted); }
+.repository-file-status { font-family: inherit; font-size: .68rem; line-height: 1.5; padding: .1rem .35rem; border: 1px solid currentColor; border-radius: .25rem; min-width: 0; }
+.repository-file-status.status-added { color: #7ee787; }
+.repository-file-status.status-modified { color: #d2a8ff; }
+.repository-file-status.status-deleted { color: #ffa198; }
+.repository-file-status.status-renamed, .repository-file-status.status-copied { color: #79c0ff; }
+.repository-file-status.status-type, .repository-file-status.status-other { color: #e3b341; }
+.repository-file[aria-current="true"] { background: #203349; color: #f0f6fc; }
+.repository-file-title { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem .55rem; z-index: 5; border-bottom: 1px solid var(--line); }
+.repository-file-heading { display: flex; align-items: center; gap: .4rem; flex: 1; min-width: min(100%, 12rem); }
+.repository-file-toggle { flex: none; white-space: nowrap; }
+.repository-file-title h3 { display: flex; margin: 0; font-size: .9rem; min-width: 0; white-space: nowrap; }
+.repository-file-directory { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+.repository-file-basename { flex: 0 0 auto; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.repository-file-heading > .codex-copy-button { flex: none; }
+.repository-back-to-diff { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 1.8rem; min-height: 1.8rem; font-size: 1.25rem; text-decoration: none; }
+.repository-file-title > a { font-size: .8rem; white-space: nowrap; }
+.repository-file-title [hidden], .repository-mode-controls[hidden], .repository-file-section[hidden] { display: none; }
+.repository-review-heading > .codex-copy-button { flex: none; }
+.repository-review-actions > a[data-review-branch] { display: inline-flex; align-items: center; padding: .5rem .8rem; border-radius: .45rem; background: var(--accent); color: #062117; text-decoration: none; font-size: .85rem; font-weight: 600; }
+.repository-file-tree { list-style: none; padding: 0; margin: 0; }
+.repository-directory > .repository-file-tree { margin-left: .85rem; }
+.repository-directory > summary { cursor: pointer; padding: .4rem .2rem; font-size: .8rem; overflow-wrap: anywhere; }
+.repository-directory > summary:hover { color: var(--accent); }
+.repository-folder-icon { width: 1rem; height: 1rem; margin-right: .3rem; vertical-align: -.2rem; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linejoin: round; }
+.repository-folder-open, .repository-directory[open] > summary .repository-folder-closed { display: none; }
+.repository-directory[open] > summary .repository-folder-open { display: inline; }
+.repository-file-row { margin: .1rem 0; }
+.repository-file-row > .repository-file { min-width: 0; align-items: center; margin: 0; padding: .35rem .2rem; gap: .4rem; }
+.repository-file-list .repository-file-status { border: 0; padding: 0; min-width: 1ch; font-size: .8rem; font-weight: 600; }
+.repository-file-list .repository-file-path { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 600px) {
+  .repository-commit-row { flex-wrap: wrap; }
+  .repository-file-heading { flex-basis: 100%; }
+  .repository-file-directory { display: none; }
+  .repository-commit-subject-group { flex-basis: 100%; }
+  .repository-commit-identity { justify-content: flex-start; }
+  .repository-file-status { font-size: .65rem; }
+  .repository-review-heading > .repository-review-title { order: -1; flex-basis: 100%; }
+}
+
+.review-split-view { display: flex; align-items: stretch; }
+.review-split-pane { flex: 1 1 0; min-width: 0; }
+.review-split-pane + .review-split-pane { border-left: 1px solid #30363d; }

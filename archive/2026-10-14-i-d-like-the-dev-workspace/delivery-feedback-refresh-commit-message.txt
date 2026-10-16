@@ -1,0 +1,10 @@
+fixup! portal: report correlated browser notification test outcomes
+
+Stage refresh observations and commit only the latest current registration
+observation outside explicit actions. Retire reads across actions, pagehide
+and cross-tab revocation so stale success or failure cannot overwrite Enable.
+Keep failed registration and subscription cleanup semantics unchanged.
+
+Retain safe bounded failure-only request ordering in the browser fixture and
+require an explicit successful registration reply. This corrects a demonstrated
+source race without claiming the original browser failure cause is proved.

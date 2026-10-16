@@ -1,0 +1,435 @@
+1:  50fba34 ! 1:  012f618 portal: report correlated browser notification test outcomes
+    @@ portal/internal/web/attention_browser_test.cjs: function workerHarness() {
+          workspaceAttentionStore: {update: async (key, change) => {
+            const record = change(records.get(key) || {identity: key, seen: [], revision: 0, event: null}); records.set(key, record); return record;
+          }},
+    +@@ portal/internal/web/attention_browser_test.cjs: const endpoint = 'https://fcm.googleapis.com/private-endpoint?exact=value';
+    + const endpointDigest = require('node:crypto').createHash('sha256').update(endpoint).digest('hex');
+    + async function notificationHarness(state, storage = new Map()) {
+    +   const controls = Object.fromEntries(['status', 'enable', 'disable', 'test'].map(name => [name, {disabled: false, addEventListener(type, callback) {this[type] = callback;}}]));
+    +-  const calls = [];
+    ++  const calls = [], listeners = {};
+    +   const subscription = {endpoint, options: state.keyMismatch ? {applicationServerKey: new Uint8Array([1]).buffer} : {},
+    +     toJSON: () => ({endpoint, keys: {p256dh: 'public', auth: 'auth'}, expirationTime: null}),
+    +     unsubscribe: async () => {
+    +@@ portal/internal/web/attention_browser_test.cjs: async function notificationHarness(state, storage = new Map()) {
+    +       if (state.verificationFails) state.lookupFailure = true;
+    +       return !state.falseAfterRemoval;
+    +     }};
+    +-  const registration = {pushManager: {getSubscription: async () => {if (state.lookupFailure) throw Error('lookup unavailable'); return state.subscribed ? subscription : null;},
+    ++  const registration = {pushManager: {getSubscription: async () => {if (state.subscriptionRead) return state.subscriptionRead(subscription); if (state.lookupFailure) throw Error('lookup unavailable'); return state.subscribed ? subscription : null;},
+    +     subscribe: async () => {state.subscribed = true; return subscription;}}};
+    +-  const context = {document: {getElementById: () => ({querySelector: selector => controls[selector.match(/notification-(\w+)/)[1]]})},
+    +-    navigator: {serviceWorker: {getRegistration: async () => registration, register: async () => registration, ready: Promise.resolve(registration)}},
+    ++  const context = {document: {visibilityState: 'visible', addEventListener: (name, callback) => listeners[name] = callback,
+    ++    getElementById: () => ({querySelector: selector => controls[selector.match(/notification-(\w+)/)[1]]})},
+    ++    addEventListener: (name, callback) => listeners[name] = callback,
+    ++    navigator: {serviceWorker: {addEventListener: (name, callback) => listeners[name] = callback,
+    ++      getRegistration: async () => registration, register: async () => {state.onWorkerRegister?.(); return registration;}, ready: Promise.resolve(registration)}},
+    +     Notification: {permission: 'granted', requestPermission: async () => {state.permissionCalls = (state.permissionCalls || 0) + 1; return 'granted';}},
+    +     PushManager: function() {}, isSecureContext: true, AbortController, setTimeout, clearTimeout, atob, Uint8Array, TextEncoder,
+    +     crypto: require('node:crypto').webcrypto,
+    +@@ portal/internal/web/attention_browser_test.cjs: async function notificationHarness(state, storage = new Map()) {
+    +     fetch: async (url, options = {}) => {
+    +       const body = options.body && JSON.parse(options.body); calls.push({url, body, savedId: storage.get(browserKey)});
+    +       if (url.endsWith('/register')) {
+    ++        if (state.registerResponse) return state.registerResponse();
+    +         state.registered = true;
+    +         if (state.serverRecords) {
+    +           state.serverRecords.set(state.replacementId, body.subscription.endpoint);
+    +@@ portal/internal/web/attention_browser_test.cjs: async function notificationHarness(state, storage = new Map()) {
+    +         return {ok: true, json: async () => ({ok: true})};
+    +       }
+    +       const queriedId = new URL(url, 'https://workspace.example').searchParams.get('registrationId');
+    ++      if (queriedId !== null && state.readResponse) return state.readResponse(queriedId);
+    +       return {ok: true, json: async () => ({available: true, publicKey: 'Ag', registered: state.serverRecords ? state.serverRecords.has(queriedId) : state.registered && queriedId === browserId})};
+    +     },
+    +   };
+    +   vm.runInNewContext(source('browser-notifications.js'), context);
+    +   for (let i = 0; i < 30; i++) await Promise.resolve();
+    +-  return {controls, calls, storage};
+    ++  const flush = async () => {for (let i = 0; i < 50; i++) await Promise.resolve();};
+    ++  return {controls, calls, storage, listeners, context, registration, flush};
+    + }
+    + 
+    + test('lost registration reply, saved ID or changed key disable without registering again', async () => {
+     @@ portal/internal/web/attention_browser_test.cjs: test('successful replacement retires the old ID before overwrite or retains both
+          assert.equal(h.storage.has(browserKey), false); assert.equal(h.storage.has(cleanupKey), false);
+        }
+    @@ portal/internal/web/attention_browser_test.cjs: test('successful replacement ret
+     +    assert.equal(Boolean(h.storage.records.get(first.identity).testPending), retirement === 'failed',
+     +      'failed persistence remains explicitly unconfirmed; no second request was issued');
+     +  }
+    ++});
+    ++
+    ++const observationReply = (registered, available = true) => ({ok: true, json: async () => ({registered, available})});
+    ++test('old refresh success or rejection cannot replace Enable success for existing or absent local subscriptions', async () => {
+    ++  for (const subscribed of [false, true]) for (const reject of [false, true]) {
+    ++    const state = {subscribed, registered: false};
+    ++    const h = await notificationHarness(state);
+    ++    let finish;
+    ++    state.readResponse = () => new Promise((resolve, fail) => {finish = () => reject ? fail(Error('old read failed')) : resolve(observationReply(false));});
+    ++    h.listeners.controllerchange(); await h.flush();
+    ++    assert.equal(typeof finish, 'function', 'refresh GET started before Enable');
+    ++    await h.controls.enable.click();
+    ++    assert.equal(h.controls.test.disabled, false);
+    ++    assert.match(h.controls.status.textContent, /^Enabled on this browser/);
+    ++    const enabledStatus = h.controls.status.textContent;
+    ++    finish(); await h.flush();
+    ++    assert.equal(h.controls.status.textContent, enabledStatus);
+    ++    assert.equal(h.controls.test.disabled, false, 'stale GET cannot revoke new registration');
+    ++    delete state.readResponse;
+    ++    await h.controls.disable.click();
+    ++    assert.equal(state.subscribed, false, 'staged old local state did not displace current subscription');
+    ++  }
+    ++});
+    ++
+    ++test('refresh local reads stage atomically and controllerchange during Enable performs no competing observation', async () => {
+    ++  const state = {subscribed: false, registered: false};
+    ++  const h = await notificationHarness(state);
+    ++  let release;
+    ++  state.subscriptionRead = () => new Promise(resolve => {release = () => resolve(null);});
+    ++  h.listeners.controllerchange(); await h.flush();
+    ++  delete state.subscriptionRead;
+    ++  let heldRegister;
+    ++  state.registerResponse = () => new Promise(resolve => {heldRegister = () => {
+    ++    state.registered = true; resolve({ok: true, json: async () => ({registrationId: browserId})});
+    ++  };});
+    ++  const enabling = h.controls.enable.click(); await h.flush();
+    ++  const readsBefore = h.calls.filter(call => call.url.includes('?registrationId=')).length;
+    ++  h.listeners.controllerchange(); h.listeners.visibilitychange(); await h.flush();
+    ++  assert.equal(h.calls.filter(call => call.url.includes('?registrationId=')).length, readsBefore, 'triggers ignored during action');
+    ++  heldRegister(); await enabling;
+    ++  const status = h.controls.status.textContent;
+    ++  release(); await h.flush();
+    ++  assert.equal(h.controls.status.textContent, status); assert.equal(h.controls.test.disabled, false);
+    ++  assert.equal(h.calls.filter(call => call.url.includes('?registrationId=')).length, readsBefore, 'retired local read never issues stale GET');
+    ++});
+    ++
+    ++test('newest refresh wins reversed success and failure completion ordering', async () => {
+    ++  for (const oldFails of [false, true]) {
+    ++    const state = {subscribed: true, registered: true};
+    ++    const h = await notificationHarness(state, new Map([[browserKey, browserId]]));
+    ++    const pending = [];
+    ++    state.readResponse = () => new Promise((resolve, reject) => pending.push({resolve, reject}));
+    ++    h.listeners.controllerchange(); await h.flush();
+    ++    h.listeners.controllerchange(); await h.flush();
+    ++    assert.equal(pending.length, 2);
+    ++    pending[1].resolve(observationReply(true)); await h.flush();
+    ++    const currentStatus = h.controls.status.textContent;
+    ++    assert.equal(h.controls.test.disabled, false);
+    ++    if (oldFails) pending[0].reject(Error('older failure'));
+    ++    else pending[0].resolve(observationReply(false, false));
+    ++    await h.flush();
+    ++    assert.equal(h.controls.status.textContent, currentStatus); assert.equal(h.controls.test.disabled, false);
+    ++  }
+    ++});
+    ++
+    ++test('refresh completion cannot undo Disable, cross-tab revocation, pagehide or an explicit Test', async () => {
+    ++  for (const action of ['disable', 'revocation', 'pagehide', 'test']) for (const reject of [false, true]) {
+    ++    const state = {subscribed: true, registered: true};
+    ++    const h = await notificationHarness(state, new Map([[browserKey, browserId]]));
+    ++    let finish;
+    ++    state.readResponse = () => new Promise((resolve, fail) => {finish = () => reject ? fail(Error('old read failed')) : resolve(observationReply(true));});
+    ++    h.listeners.controllerchange(); await h.flush();
+    ++    if (action === 'disable') await h.controls.disable.click();
+    ++    else if (action === 'revocation') h.listeners.storage({key: browserKey, newValue: null});
+    ++    else if (action === 'pagehide') h.listeners.pagehide();
+    ++    else await h.controls.test.click();
+    ++    const status = h.controls.status.textContent, disabled = h.controls.test.disabled;
+    ++    finish(); await h.flush();
+    ++    assert.equal(h.controls.status.textContent, status); assert.equal(h.controls.test.disabled, disabled);
+    ++    if (action === 'revocation') {
+    ++      const before = h.calls.length; h.listeners.controllerchange(); h.listeners.visibilitychange(); await h.flush();
+    ++      assert.equal(h.calls.length, before, 'revoked observation cannot restart under old saved identity');
+    ++    }
+    ++  }
+    ++});
+    ++
+    ++test('real failed registration stays incomplete for both local subscription starting states', async () => {
+    ++  for (const subscribed of [false, true]) {
+    ++    const state = {subscribed, registered: false, registerResponse: async () => ({ok: false, json: async () => ({error: 'Registration could not be created.'})})};
+    ++    const h = await notificationHarness(state);
+    ++    state.onWorkerRegister = () => h.listeners.controllerchange();
+    ++    await h.controls.enable.click(); await h.flush();
+    ++    assert.equal(h.controls.status.textContent, 'Browser setup is incomplete. Disable it or enable notifications again.');
+    ++    assert.equal(h.controls.test.disabled, true); assert.equal(h.controls.disable.disabled, false);
+    ++  }
+    ++});
+    ++
+    ++test('browser fixture failure trace is bounded and excludes raw capability, ID, body and exception canaries', async () => {
+    ++  const fixture = fs.readFileSync(path.join(__dirname, 'notifications_browser_test.cjs'), 'utf8');
+    ++  const helper = fixture.slice(fixture.indexOf('const safeError ='), fixture.indexOf('async function checkControlSpacing'));
+    ++  const events = {}, output = [], context = {URL, setTimeout, clearTimeout, console: {log: value => output.push(value)}};
+    ++  vm.runInNewContext(helper, context);
+    ++  const trace = context.failureTrace({on: (name, callback) => events[name] = callback});
+    ++  const request = {url: () => 'https://workspace.example/api/browser-notifications?registrationId=private-id-canary', method: () => 'GET',
+    ++    frame: () => ({evaluate: async () => false})};
+    ++  events.request(request);
+    ++  events.response({request: () => request, status: () => 200,
+    ++    json: async () => ({registered: true, available: true, endpoint: 'endpoint-canary', keys: {auth: 'key-canary'}, error: 'body-canary'})});
+    ++  const register = {url: () => 'https://workspace.example/api/browser-notifications/register', method: () => 'POST'};
+    ++  events.request(register);
+    ++  events.response({request: () => register, status: () => 400,
+    ++    json: async () => {throw {name: 'private-error-canary', message: 'exception-canary'};}});
+    ++  await trace.dump({evaluate: async () => ({state: 'incomplete', savedIdPresent: false, testDisabled: true, controller: 'activated', active: true, waiting: false, installing: false})});
+    ++  assert.equal(output.length, 1); assert.doesNotMatch(output[0], /canary|https:|registrationId/);
+    ++  const rows = JSON.parse(output[0]).notificationFailureTrace;
+    ++  assert.equal(rows[0].event, 'request'); assert.equal(rows[0].request, 1);
+    ++  assert.ok(rows.some(row => row.event === 'response' && row.request === 1 && row.status === 200));
+    ++  assert.ok(rows.some(row => row.event === 'response_shape' && row.registered && row.available));
+    ++  assert.ok(rows.some(row => row.identity === 'stale'));
+    ++  assert.ok(rows.some(row => row.event === 'response_unavailable' && row.category === 'UnknownError'));
+    ++  for (let i = 0; i < 200; i++) events.request(request);
+    ++  await trace.dump({evaluate: async () => {throw {name: 'private-error-canary', message: 'exception-canary'};}});
+    ++  assert.ok(Buffer.byteLength(output[1], 'utf8') <= 8192);
+    ++  assert.ok(JSON.parse(output[1]).dropped > 0); assert.doesNotMatch(output[1], /canary|https:|registrationId/);
+     +});
+     
+      ## portal/internal/web/notifications.go ##
+    @@ portal/internal/web/notifications.go: func (s *Server) browserNotificationsAPI(w
+      func (s *Server) attentionAPI(w http.ResponseWriter, r *http.Request, slug string) {
+     
+      ## portal/internal/web/notifications_browser_test.cjs ##
+    +@@
+    + const assert = require("node:assert/strict");
+    + const {chromium, firefox, expect} = require("@playwright/test");
+    + const base = process.argv[2];
+    ++const safeError = error => ["Error", "TimeoutError", "AbortError", "NotAllowedError", "SecurityError", "InvalidStateError", "TypeError"].includes(error?.name) ? error.name : "UnknownError";
+    ++function failureTrace(context) {
+    ++  const rows = [], requests = new WeakMap(), pending = new Set();
+    ++  let order = 0, requestNumber = 0, dropped = 0;
+    ++  const record = value => {rows.push({order: ++order, ...value}); if (rows.length > 48) {rows.shift(); dropped++;}};
+    ++  const category = request => {
+    ++    const pathname = new URL(request.url()).pathname;
+    ++    return pathname === "/api/browser-notifications" && request.method() === "GET" ? "get" :
+    ++      pathname === "/api/browser-notifications/register" ? "register" : null;
+    ++  };
+    ++  const track = promise => {pending.add(promise); void promise.finally(() => pending.delete(promise));};
+    ++  const queryIdentity = async request => {
+    ++    const queried = new URL(request.url()).searchParams.get("registrationId");
+    ++    if (!queried) return "absent";
+    ++    try {return await request.frame().evaluate(value => value === localStorage.getItem("workspace-browser-notifications.v1"), queried) ? "current" : "stale";}
+    ++    catch (_) {return "unavailable";}
+    ++  };
+    ++  context.on("request", request => {
+    ++    const action = category(request); if (!action) return;
+    ++    const number = ++requestNumber; requests.set(request, number);
+    ++    record({event: "request", action, request: number});
+    ++    if (action === "get") track(queryIdentity(request).then(identity => record({event: "query_identity", request: number, identity})));
+    ++  });
+    ++  context.on("requestfailed", request => {
+    ++    if (requests.has(request)) record({event: "request_failed", request: requests.get(request)});
+    ++  });
+    ++  context.on("response", response => {
+    ++    const request = response.request(), number = requests.get(request);
+    ++    if (!number) return;
+    ++    record({event: "response", request: number, status: response.status()});
+    ++    track((async () => {
+    ++      try {
+    ++        const value = await response.json();
+    ++        record({event: "response_shape", request: number, registered: value.registered === true,
+    ++          available: value.available === true, replyIdPresent: typeof value.registrationId === "string" && Boolean(value.registrationId)});
+    ++      } catch (error) {record({event: "response_unavailable", request: number, category: safeError(error)});}
+    ++      if (category(request) === "get") record({event: "completion_identity", request: number, identity: await queryIdentity(request)});
+    ++    })());
+    ++  });
+    ++  return {record, async dump(page) {
+    ++    let snapshotDeadline;
+    ++    try {
+    ++      const snapshot = await Promise.race([page.evaluate(async () => {
+    ++        const text = document.querySelector("[data-notification-status]")?.textContent || "";
+    ++        const state = text.startsWith("Enabled on this browser") ? "enabled" : text.startsWith("Disabled on this browser") ? "disabled" :
+    ++          text.startsWith("Browser setup is incomplete") ? "incomplete" : text.startsWith("Registration failed:") ? "registration_failed" :
+    ++          text.startsWith("Disabling is incomplete") ? "disable_incomplete" : "other";
+    ++        const worker = await navigator.serviceWorker.getRegistration("/");
+    ++        return {state, savedIdPresent: Boolean(localStorage.getItem("workspace-browser-notifications.v1")),
+    ++          testDisabled: Boolean(document.querySelector("[data-notification-test]")?.disabled),
+    ++          controller: ["installing", "installed", "activating", "activated", "redundant"].includes(navigator.serviceWorker.controller?.state) ? navigator.serviceWorker.controller.state : "none",
+    ++          active: Boolean(worker?.active), waiting: Boolean(worker?.waiting), installing: Boolean(worker?.installing)};
+    ++      }), new Promise(resolve => {snapshotDeadline = setTimeout(() => resolve(null), 1500);})]);
+    ++      if (snapshot) record({event: "failure_state", ...snapshot});
+    ++      else record({event: "failure_state_unavailable", category: "TimeoutError"});
+    ++    } catch (error) {record({event: "failure_state_unavailable", category: safeError(error)});}
+    ++    finally {clearTimeout(snapshotDeadline);}
+    ++    let timer;
+    ++    await Promise.race([Promise.allSettled([...pending]), new Promise(resolve => {timer = setTimeout(resolve, 1000);})]); clearTimeout(timer);
+    ++    while (JSON.stringify({notificationFailureTrace: rows, dropped}).length > 8192) {rows.shift(); dropped++;}
+    ++    console.log(JSON.stringify({notificationFailureTrace: rows, dropped}));
+    ++  }};
+    ++}
+    + async function checkControlSpacing(page) {
+    +   const buttons = await page.locator("#browser-notifications button").all();
+    +   const bounds = await Promise.all(buttons.map(button => button.boundingBox()));
+    +@@ portal/internal/web/notifications_browser_test.cjs: async function checkControlSpacing(page) {
+    + (async () => {
+    +   for (const engine of [chromium, firefox]) {
+    +     const browser = await engine.launch({headless: true, ...(engine === chromium ? {channel: "chromium", args: ["--ignore-certificate-errors"]} : {})});
+    ++    let page, trace;
+    +     try {
+    +       const context = await browser.newContext({ignoreHTTPSErrors: true});
+    +-      const page = await context.newPage();
+    +-      const errors = [], mutations = []; page.on("pageerror", error => errors.push(error.message));
+    +-      page.on("request", request => {if (request.method() === "POST" && new URL(request.url()).pathname.startsWith("/api/browser-notifications")) mutations.push(request.url());});
+    ++      trace = failureTrace(context);
+    ++      page = await context.newPage();
+    ++      const errors = [], mutations = [];
+    ++      context.on("page", next => next.on("pageerror", error => {errors.push(safeError(error)); trace.record({event: "local_exception", category: safeError(error)});}));
+    ++      page.on("pageerror", error => {errors.push(safeError(error)); trace.record({event: "local_exception", category: safeError(error)});});
+    ++      page.on("request", request => {if (request.method() === "POST" && new URL(request.url()).pathname.startsWith("/api/browser-notifications")) mutations.push("notification_post");});
+    +       await page.goto(base);
+    +       await expect(page.locator("#browser-notifications")).toHaveCount(0);
+    +       const toggle = page.getByRole("button", {name: "Workspace menu", exact: true});
+     @@ portal/internal/web/notifications_browser_test.cjs: async function checkControlSpacing(page) {
+            if (engine === chromium) {
+              const sub = await (await context.request.get(`${base}/fixture/subscription`)).json();
+    @@ portal/internal/web/notifications_browser_test.cjs: async function checkControlS
+     +        };
+     +        await context.addInitScript(installSubscription, sub);
+     +        await page.evaluate(installSubscription, sub);
+    ++        const registerReply = page.waitForResponse(response => new URL(response.url()).pathname === "/api/browser-notifications/register" && response.request().method() === "POST");
+    ++        trace.record({event: "enable_click"});
+              await page.locator("[data-notification-enable]").click();
+    ++        const registerResponse = await registerReply;
+    ++        assert.ok(registerResponse.status() >= 200 && registerResponse.status() < 300, "register response must succeed");
+    ++        trace.record({event: "register_accepted"});
+              await expect(page.locator("[data-notification-status]")).toContainText("Enabled on this browser");
+              const worker = context.serviceWorkers()[0]; assert.ok(worker, "real root service worker registered through CSP");
+    -@@ portal/internal/web/notifications_browser_test.cjs: async function checkControlSpacing(page) {
+    +         await worker.evaluate(() => {
+                self.fixtureDisplays = [];
+                self.registration.showNotification = async (title, options) => self.fixtureDisplays.push({title, ...options});
+              });
+    @@ portal/internal/web/notifications_browser_test.cjs: async function checkControlS
+              assert.equal((await worker.evaluate(() => self.fixtureDisplays[0])).renotify, false);
+              const reopened = await context.newPage(); await reopened.goto(`${base}/example/#settings`);
+              await expect(reopened.locator("[data-notification-disable]")).toBeEnabled();
+    +@@ portal/internal/web/notifications_browser_test.cjs: async function checkControlSpacing(page) {
+    +       assert.deepEqual(errors, [], `${engine.name()} loaded real notification UI without script errors`);
+    +       console.log(`${engine.name()}: real template, CSP, permission separation and worker route passed${engine === chromium ? "; registered worker received synthetic push with zero tabs" : ""}`);
+    +       await context.close();
+    ++    } catch (error) {
+    ++      if (trace) {trace.record({event: "fixture_failure", category: safeError(error)}); await trace.dump(page);}
+    ++      throw error;
+    +     } finally {await browser.close();}
+    +   }
+    +-})().catch(error => {console.error(error); process.exitCode = 1;});
+    ++})().catch(error => {console.error(JSON.stringify({fixtureFailure: safeError(error)})); process.exitCode = 1;});
+     
+      ## portal/internal/web/notifications_test.go ##
+     @@ portal/internal/web/notifications_test.go: func TestNotificationsPageIsSeparateFromIndex(t *testing.T) {
+    @@ portal/internal/web/static/browser-notifications.js
+     +    workerStatus = panel.querySelector("[data-notification-worker-status]");
+     +  const store = globalThis.workspaceAttentionStore;
+     +  let pendingTest = null, pollTimer = null, pollGeneration = 0, pageClosed = false, updatingWorker = false, resumeRetired = false;
+    ++  let refreshGeneration = 0, observationRetired = false;
+     +  const setText = (element, text) => { if (element) { element.textContent = text; element.hidden = !text; } };
+     +  const localResult = async promise => {
+     +    let timer;
+    @@ portal/internal/web/static/browser-notifications.js
+     +  };
+     +  const lastProvider = value => ({provider_accepted: "The push service accepted a notification.", retrying: "The push service is unavailable; delivery will retry.",
+     +    provider_refused: "The push service refused a notification.", delivery_failed: "A notification could not be sent.", expired: "A notification expired."})[value];
+    -+  async function workerReadiness(registration, update = false) {
+    ++  async function workerReadiness(registration, update = false, current = () => true) {
+     +    if (!registration) return;
+     +    if (update && !updatingWorker) {
+     +      updatingWorker = true;
+    -+      try { await registration.update?.(); } catch (_) { setText(workerStatus, "The notification update could not be checked. Try reopening this page."); }
+    ++      try { await registration.update?.(); } catch (_) { if (current()) setText(workerStatus, "The notification update could not be checked. Try reopening this page."); }
+     +    }
+    ++    if (!current()) return;
+     +    if (registration.waiting || registration.installing) {
+     +      setText(workerStatus, "A notification update is waiting. Close portal tabs, then reopen this page.");
+     +      return;
+    @@ portal/internal/web/static/browser-notifications.js
+     +      try { registration.active.postMessage({type: "notification-test-capabilities"}, [channel.port2]); }
+     +      catch (_) { clearTimeout(timer); channel.port1.close(); resolve(false); }
+     +    });
+    -+    setText(workerStatus, supported ? "" : "Test results are limited until the notification update is active. Close portal tabs, then reopen this page.");
+    ++    if (current()) setText(workerStatus, supported ? "" : "Test results are limited until the notification update is active. Close portal tabs, then reopen this page.");
+     +  }
+     +  async function pollTest() {
+     +    stopTest();
+    @@ portal/internal/web/static/browser-notifications.js
+        };
+     -  async function refresh() {
+     +  async function refresh(resume = true) {
+    ++    if (busy || pageClosed || observationRetired) return;
+    ++    const generation = ++refreshGeneration, identity = registrationId;
+    ++    const current = () => generation === refreshGeneration && identity === registrationId && !busy && !pageClosed && !observationRetired;
+          if (!supported) { status.textContent = "This browser build does not support background Web Push. Use a browser with Push API support."; buttons(); return; }
+    ++    let observedSubscription = localSubscription, observedKnown = localKnown;
+          try {
+            const local = await navigator.serviceWorker.getRegistration("/");
+    -       localSubscription = await local?.pushManager.getSubscription();
+    -       localKnown = true;
+    -       const state = await api(`?registrationId=${encodeURIComponent(registrationId)}`);
+    +-      localSubscription = await local?.pushManager.getSubscription();
+    +-      localKnown = true;
+    +-      const state = await api(`?registrationId=${encodeURIComponent(registrationId)}`);
+    ++      observedSubscription = await local?.pushManager.getSubscription();
+    ++      observedKnown = true;
+    ++      if (!current()) return;
+    ++      const state = await api(`?registrationId=${encodeURIComponent(identity)}`);
+    ++      if (!current()) return;
+    ++      localSubscription = observedSubscription; localKnown = observedKnown;
+     +      setText(providerStatus, lastProvider(state.result) ? `Last push-service result; it may be from another notification: ${lastProvider(state.result)}` : "");
+            registered = Boolean(!pendingCleanup && state.registered && localSubscription && Notification.permission === "granted");
+            status.textContent = pendingCleanup ? cleanupStatus() : localSubscription && !registered ? incomplete : Notification.permission === "denied" ? "Notifications are blocked. Change this site's notification permission in your browser settings." :
+              !state.available ? "Notification delivery is disabled on the server." : state.result === "expired" ? "The browser subscription expired. Enable notifications again." : registered ?
+     -        ({expired: "The browser subscription expired. Enable notifications again.", retrying: "The provider is unavailable. Delivery will retry.", delivery_failed: "Delivery failed. Send a test notification to check it.", provider_refused: "The provider refused delivery. Enable notifications again.", provider_accepted: "The push service accepted the last notification. Check this browser to confirm it appeared."})[state.result] || "Enabled on this browser." : "Disabled on this browser.";
+    +-    } catch (error) { registered = false; status.textContent = pendingCleanup ? cleanupStatus() : localSubscription ? incomplete : error.message; }
+    +-    buttons();
+     +        "Enabled on this browser." : "Disabled on this browser.";
+    -+      if (resume) { void workerReadiness(local, true); void resumeTest(); }
+    -     } catch (error) { registered = false; status.textContent = pendingCleanup ? cleanupStatus() : localSubscription ? incomplete : error.message; }
+    -     buttons();
+    ++      if (resume) { void workerReadiness(local, true, current); void resumeTest(); }
+    ++    } catch (error) {
+    ++      if (!current()) return;
+    ++      localSubscription = observedSubscription; localKnown = observedKnown;
+    ++      registered = false; status.textContent = pendingCleanup ? cleanupStatus() : localSubscription ? incomplete : error.message;
+    ++    }
+    ++    if (current()) buttons();
+        }
+    -@@
+    +   enable.addEventListener("click", async () => {
+          if (busy || !supported || Notification.permission === "denied") return;
+          readCleanup();
+          if (pendingCleanup) { status.textContent = cleanupStatus(); buttons(); return; }
+    ++    refreshGeneration++; observationRetired = false;
+     +    cancelTest();
+          busy = true; buttons();
+          try {
+    @@ portal/internal/web/static/browser-notifications.js
+        });
+        disable.addEventListener("click", async () => {
+          if (busy) return;
+    ++    refreshGeneration++;
+     +    cancelTest();
+          busy = true; registered = false; buttons();
+          let registration = null, subscription = localSubscription, selector = null, currentBound = false;
+          readCleanup();
+     @@
+    +   });
+        test.addEventListener("click", async () => {
+          if (busy || !registered) return;
+    ++    refreshGeneration++;
+          busy = true; buttons();
+     -    try { await api("/test", {registrationId}); status.textContent = "A test notification will be sent in 10 seconds. Close portal tabs or switch windows to check background delivery."; }
+     +    const retirement = cancelTest(), generation = pollGeneration, identity = registrationId;
+    @@ portal/internal/web/static/browser-notifications.js
+     +  });
+     +  navigator.serviceWorker?.addEventListener?.("controllerchange", () => void refresh());
+     +  document.addEventListener?.("visibilitychange", () => { if (document.visibilityState === "visible") { void refresh(); if (pendingTest) void pollTest(); } });
+    -+  globalThis.addEventListener?.("pagehide", () => { pageClosed = true; stopTest(); });
+    ++  globalThis.addEventListener?.("pagehide", () => { pageClosed = true; refreshGeneration++; stopTest(); });
+     +  globalThis.addEventListener?.("pageshow", () => { pageClosed = false; void refresh(); if (pendingTest) void pollTest(); });
+     +  globalThis.addEventListener?.("storage", event => {
+     +    if ((event.key === key && event.newValue !== registrationId) || (event.key === cleanupKey && event.newValue)) {
+    ++      refreshGeneration++; observationRetired = true;
+     +      cancelTest(); registered = false; buttons();
+     +    }
+     +  });
+2:  5a07708 = 2:  4ed9af5 portal: remove the redundant session attention status row

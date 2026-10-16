@@ -1,0 +1,25 @@
+diff --git a/portal/internal/web/notifications_browser_test.cjs b/portal/internal/web/notifications_browser_test.cjs
+index b872022..ea703ae 100644
+--- a/portal/internal/web/notifications_browser_test.cjs
++++ b/portal/internal/web/notifications_browser_test.cjs
+@@ -47,7 +47,7 @@ async function checkControlSpacing(page) {
+       await page.setViewportSize({width: 1280, height: 720});
+       await checkControlSpacing(page);
+       await expect(page.locator("#session-notifications-enabled")).toBeChecked();
+-      await expect(page.locator("#session-attention-status")).toContainText(/^(?!.*unavailable)/);
++      await expect(page.locator("#session-attention-status")).toHaveCount(0);
+       assert.equal(await page.evaluate(() => Notification.permission), "default", "page load did not ask for permission");
+       assert.deepEqual(mutations, [], "opening or revealing controls never changes a subscription");
+       assert.equal(context.serviceWorkers().length, 0, "opening controls did not register a worker");
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 2ec1af5..d129fa7 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -51,7 +51,6 @@
+       <button id="session-recovery-dismiss" type="button" class="quiet icon-button" title="Dismiss restored-session notice" aria-label="Dismiss restored-session notice" hidden><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button>
+     </section>
+     {{end}}
+-    <p id="session-attention-status" class="muted full" role="status"></p>
+     <p id="session-details-warning" class="notice warning full" role="status" hidden></p>
+     {{if .MemberNotice}}<p class="notice warning full">{{.MemberNotice}}</p>{{end}}
+     {{if .Error}}<p class="notice error full">{{.Error}}</p>{{end}}

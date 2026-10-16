@@ -1,0 +1,219 @@
+diff --git a/portal/internal/web/notifications_browser_test.cjs b/portal/internal/web/notifications_browser_test.cjs
+index 1dec136..ca76a83 100644
+--- a/portal/internal/web/notifications_browser_test.cjs
++++ b/portal/internal/web/notifications_browser_test.cjs
+@@ -2,18 +2,55 @@
+ const assert = require("node:assert/strict");
+ const {chromium, firefox, expect} = require("@playwright/test");
+ const base = process.argv[2];
++async function checkControlSpacing(page) {
++  const buttons = await page.locator("#browser-notifications button").all();
++  const bounds = await Promise.all(buttons.map(button => button.boundingBox()));
++  const viewport = page.viewportSize();
++  for (let i = 0; i < bounds.length; i++) {
++    assert.ok(bounds[i] && bounds[i].x >= 0 && bounds[i].x + bounds[i].width <= viewport.width, "notification control fits the viewport");
++    if (i) assert.ok(bounds[i].y >= bounds[i - 1].y + bounds[i - 1].height + 8 ||
++      bounds[i].x >= bounds[i - 1].x + bounds[i - 1].width + 8, "notification controls have space between them");
++  }
++}
+ (async () => {
+   for (const engine of [chromium, firefox]) {
+     const browser = await engine.launch({headless: true, ...(engine === chromium ? {channel: "chromium", args: ["--ignore-certificate-errors"]} : {})});
+     try {
+       const context = await browser.newContext({ignoreHTTPSErrors: true});
+       const page = await context.newPage();
+-      const errors = []; page.on("pageerror", error => errors.push(error.message));
+-      await page.goto(`${base}/example/#settings`);
++      const errors = [], mutations = []; page.on("pageerror", error => errors.push(error.message));
++      page.on("request", request => {if (request.method() === "POST" && new URL(request.url()).pathname.startsWith("/api/browser-notifications")) mutations.push(request.url());});
++      await page.goto(base);
++      await expect(page.locator("#browser-notifications")).toHaveCount(0);
++      const toggle = page.getByRole("button", {name: "Workspace menu", exact: true});
++      await toggle.focus(); await page.keyboard.press("Enter");
++      await expect(page.getByRole("link", {name: "Operations", exact: true})).toBeFocused();
++      await page.keyboard.press("Escape"); await expect(toggle).toBeFocused();
++      await toggle.click();
++      await page.getByRole("link", {name: "Browser notifications", exact: true}).click();
++      await page.waitForURL("**/browser-notifications");
++      await expect(page.locator("[data-notification-status]")).toHaveText("Disabled on this browser.");
++      await checkControlSpacing(page);
++      await page.setViewportSize({width: 375, height: 812});
++      await checkControlSpacing(page);
++      await page.getByRole("link", {name: "Back to workspace", exact: true}).click();
++      await expect(page.locator("#browser-notifications")).toHaveCount(0);
++      await toggle.click();
++      await page.getByRole("link", {name: "Browser notifications", exact: true}).click();
++      await expect(page.locator("[data-notification-status]")).toHaveText("Disabled on this browser.");
++      await page.goto(`${base}/example/#codex`);
++      await expect(page.locator("#browser-notifications")).toBeHidden();
++      await expect(page.locator("[data-notification-status]")).toHaveText("Disabled on this browser.");
++      await page.locator("#session-tab-settings").click();
+       await expect(page.locator("#browser-notifications")).toBeVisible();
++      await checkControlSpacing(page);
++      await page.setViewportSize({width: 1280, height: 720});
++      await checkControlSpacing(page);
+       await expect(page.locator("#session-notifications-enabled")).toBeChecked();
+       await expect(page.locator("#session-attention-status")).toContainText(/^(?!.*unavailable)/);
+       assert.equal(await page.evaluate(() => Notification.permission), "default", "page load did not ask for permission");
++      assert.deepEqual(mutations, [], "opening or revealing controls never changes a subscription");
++      assert.equal(context.serviceWorkers().length, 0, "opening controls did not register a worker");
+       const workerAsset = await context.request.get(`${base}/notification-worker.js`);
+       assert.equal(workerAsset.status(), 200);
+       assert.equal(workerAsset.headers()["service-worker-allowed"], "/");
+diff --git a/portal/internal/web/notifications_test.go b/portal/internal/web/notifications_test.go
+index 3878e19..7cd4a09 100644
+--- a/portal/internal/web/notifications_test.go
++++ b/portal/internal/web/notifications_test.go
+@@ -54,6 +54,40 @@ func notificationRequest(n *notificationService, method, path, body string) *htt
+ 	return w
+ }
+ 
++func TestNotificationsPageIsSeparateFromIndex(t *testing.T) {
++	server := newTestServer(t)
++	defer server.Close()
++	server.config.DevSession = filepath.Join(t.TempDir(), "unavailable-dev-session")
++	index := httptest.NewRecorder()
++	server.Handler().ServeHTTP(index, httptest.NewRequest(http.MethodGet, "/", nil))
++	if index.Code != http.StatusOK {
++		t.Fatalf("index: %d: %s", index.Code, index.Body.String())
++	}
++	_, menu, ok := strings.Cut(index.Body.String(), `<nav id="sidebar-menu"`)
++	menu, _, _ = strings.Cut(menu, "</nav>")
++	if !ok || !strings.Contains(menu, `href="/browser-notifications"`) {
++		t.Fatal("browser notifications must be reachable through the workspace menu")
++	}
++	for _, removed := range []string{`id="browser-notifications"`, `src="/static/browser-notifications.js"`, "data-notification-enable"} {
++		if strings.Contains(index.Body.String(), removed) {
++			t.Fatalf("index still initializes browser controls: %s", removed)
++		}
++	}
++	if !strings.Contains(index.Body.String(), `name="browserNotificationsEnabled" type="checkbox" checked`) {
++		t.Fatal("new-session notification preference must remain available")
++	}
++	page := httptest.NewRecorder()
++	server.Handler().ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/browser-notifications", nil))
++	if page.Code != http.StatusOK {
++		t.Fatalf("notification page: %d: %s", page.Code, page.Body.String())
++	}
++	for _, required := range []string{`id="browser-notifications"`, "data-notification-enable", "data-notification-test", "data-notification-disable", `src="/static/browser-notifications.js" defer`, `href="/"`} {
++		if !strings.Contains(page.Body.String(), required) {
++			t.Fatalf("notification page lacks %s", required)
++		}
++	}
++}
++
+ func TestNotificationsPersistenceFailureAndKeyRetention(t *testing.T) {
+ 	n := testNotifications(t)
+ 	store := n.store
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index fa4204b..ca39fa4 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -719,6 +719,8 @@ func (s *Server) route(w http.ResponseWriter, r *http.Request) {
+ 		s.index(w, r)
+ 	case r.Method == http.MethodGet && r.URL.Path == "/automatic-archival":
+ 		s.render(w, "automatic-archival", pageData{})
++	case r.Method == http.MethodGet && r.URL.Path == "/browser-notifications":
++		s.render(w, "browser-notifications-page", pageData{})
+ 	case r.Method == http.MethodGet && r.URL.Path == "/operations":
+ 		s.render(w, "operations", pageData{})
+ 	case r.Method == http.MethodPost && r.URL.Path == "/api/upload-drafts":
+diff --git a/portal/internal/web/static/style.css b/portal/internal/web/static/style.css
+index 68055d3..d9eab41 100644
+--- a/portal/internal/web/static/style.css
++++ b/portal/internal/web/static/style.css
+@@ -46,6 +46,8 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
+ #creation-uploads.codex-upload-composer { max-height: none; overflow-y: visible; }
+ .creation-actions { display: flex; align-items: center; gap: .55rem; }
+ .creation-actions > button { flex: 1; }
++.notification-actions { display: flex; flex-wrap: wrap; gap: .7rem; }
++.notification-actions > button { max-width: 100%; }
+ .stack { display: grid; gap: 1rem; }
+ .muted, .empty { color: var(--muted); }
+ .empty { padding: 1rem 0; }
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 352d0d1..d62397d 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -5,7 +5,7 @@
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Workspace</title>
+-  <link rel="stylesheet" href="/static/style.css?v=14">
++  <link rel="stylesheet" href="/static/style.css?v=15">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body data-index data-index-generated-at="{{.IndexGeneratedAt}}">
+@@ -37,7 +37,6 @@
+     {{if .Error}}<p class="notice error">{{.Error}}</p>{{end}}
+     <p id="index-status-warning" class="notice warning" hidden></p>
+     <p data-coordination-warning class="notice warning" role="status" hidden></p>
+-    {{template "browser-notifications"}}
+     <section class="panel new-session">
+       <div><p class="eyebrow">Start work</p><h2>New session</h2><p class="muted">Codex will decide which repositories the request affects. From {{.HostLabel}}, use <code>dev-session start &lt;short-name&gt;</code>.</p></div>
+       <form id="new-session-form" method="post" action="/sessions" class="stack">
+@@ -97,7 +96,6 @@
+   <script src="/static/preparation.js?v=4" defer></script>
+   <script src="/static/app.js?v=40" defer></script>
+   <script src="/static/coordination.js?v=4" defer></script>
+-  <script src="/static/browser-notifications.js" defer></script>
+ </body>
+ </html>
+ {{end}}
+@@ -107,6 +105,7 @@
+ <nav id="sidebar-menu" class="sidebar-menu" popover="auto" aria-label="Workspace navigation">
+   <a href="/operations" autofocus>Operations</a>
+   <a href="/automatic-archival">Automatic archival</a>
++  <a href="/browser-notifications">Browser notifications</a>
+ </nav>
+ {{end}}
+ 
+diff --git a/portal/internal/web/templates/notifications.html b/portal/internal/web/templates/notifications.html
+index f6ab5a9..038275b 100644
+--- a/portal/internal/web/templates/notifications.html
++++ b/portal/internal/web/templates/notifications.html
+@@ -1,8 +1,30 @@
++{{define "browser-notifications-page"}}
++<!doctype html>
++<html lang="en">
++<head>
++  <meta charset="utf-8">
++  <meta name="viewport" content="width=device-width, initial-scale=1">
++  <title>Browser notifications · {{.DisplayLabel}}</title>
++  <link rel="stylesheet" href="/static/style.css?v=15">
++</head>
++<body>
++  <header class="topbar">
++    <div><p class="eyebrow">{{.DisplayLabel}}</p><h1>Browser notifications</h1></div>
++    <a href="/">Back to workspace</a>
++  </header>
++  <main class="page">
++    {{template "browser-notifications"}}
++  </main>
++  <script src="/static/browser-notifications.js" defer></script>
++</body>
++</html>
++{{end}}
++
+ {{define "browser-notifications"}}
+ <section id="browser-notifications" class="panel">
+   <h3>Browser notifications</h3>
+   <p>Notifications can appear while the browser is running with every portal tab closed. They show session names, which may appear on your lock screen. Delivery uses your browser vendor’s push service.</p>
+   <p data-notification-status role="status">Checking browser notifications…</p>
+-  <div class="actions"><button type="button" data-notification-enable>Enable browser notifications</button><button type="button" data-notification-test disabled>Send test notification</button><button type="button" class="quiet" data-notification-disable disabled>Disable on this browser</button></div>
++  <div class="notification-actions"><button type="button" data-notification-enable>Enable browser notifications</button><button type="button" data-notification-test disabled>Send test notification</button><button type="button" class="quiet" data-notification-disable disabled>Disable on this browser</button></div>
+ </section>
+ {{end}}
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 2f15471..e24ca49 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -7,7 +7,7 @@
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>{{.Session.Slug}} · Workspace</title>
+   <link rel="stylesheet" href="/codex/assets/conversation.css?v=5">
+-  <link rel="stylesheet" href="/static/style.css?v=14">
++  <link rel="stylesheet" href="/static/style.css?v=15">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body class="session-body" data-session="{{.Session.Slug}}" data-session-observation="{{.Session.ObservationIdentity}}" data-thread-id="{{if .SelectedThreadID}}{{.SelectedThreadID}}{{else}}{{.Session.Codex.ThreadID}}{{end}}" data-root-thread-id="{{.Session.Codex.ThreadID}}" data-conversation-id="{{.ConversationID}}" data-selected-member="{{.SelectedMember}}" data-lifecycle-target-id="{{.LifecycleTargetID}}" data-target-identity-version="2" data-archived="{{.Session.Archived}}" data-interactive="{{.Session.Interactive}}" data-execution-held="{{.Session.ExecutionHeld}}" data-lifecycle="{{.Session.Lifecycle}}" data-pending-lifecycle="{{.PendingLifecycle}}">

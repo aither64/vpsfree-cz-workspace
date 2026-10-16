@@ -1,0 +1,49 @@
+diff --git a/nix/tests/session-recovery-boot.nix b/nix/tests/session-recovery-boot.nix
+index 94de502..ba14b61 100644
+--- a/nix/tests/session-recovery-boot.nix
++++ b/nix/tests/session-recovery-boot.nix
+@@ -192,7 +192,7 @@ pkgs.testers.runNixOSTest {
+         ]
+         for command in commands:
+             try:
+-                status, output = machine.execute(user_prefix + "sh -c " + shlex.quote(command))
++                status, output = machine.execute(user_prefix + "sh -c " + shlex.quote(command), timeout=10)
+                 print(output)
+                 print("PROVIDER_DIAGNOSTIC_COLLECTION_STATUS=" + str(status))
+             except Exception:
+diff --git a/test/workspace_host/codex_provider_test.rb b/test/workspace_host/codex_provider_test.rb
+index 78e3b7e..188c27d 100644
+--- a/test/workspace_host/codex_provider_test.rb
++++ b/test/workspace_host/codex_provider_test.rb
+@@ -526,6 +526,7 @@ class WorkspaceHostTest
+               self.phase = 'waiting'
+               self.calls = 0
+               self.collection = []
++              self.collection_timeouts = []
+               self.fail_collection = False
+           def wait_until_succeeds(self, command):
+               self.calls += 1
+@@ -537,10 +538,12 @@ class WorkspaceHostTest
+               with contextlib.redirect_stdout(output):
+                   exec(expression, {'open': safe_open})
+               return output.getvalue()
+-          def execute(self, command):
++          def execute(self, command, *, timeout):
++              assert timeout == 10
+               self.collection.append(command)
++              self.collection_timeouts.append(timeout)
+               if self.fail_collection:
+-                  raise RuntimeError('SECRET_CANARY collection')
++                  raise TimeoutError('SECRET_CANARY collection')
+               return 0, 'safe-fixture-evidence'
+       machine = Machine()
+       scope = dict(machine=machine, json=json, shlex=shlex, state_path='/fixture/state.json', user_prefix='', host='/synthetic-host', user=lambda command: '{}', diagnostic_start='123', worker='workspace-codex-provider@fixture.service', codex_unit='workspace-codex@fixture.service')
+@@ -564,6 +567,8 @@ class WorkspaceHostTest
+           assert machine.calls == before + 1  # Terminal shell return was successful.
+           assert 'SECRET_CANARY' not in output.getvalue()
+       assert len(machine.collection) == 6
++      assert machine.collection_timeouts == [10] * 6
++      assert sum(machine.collection_timeouts[:3]) == 30
+       journal = machine.collection[0]
+       assert '--unit=workspace-codex-provider@fixture.service' in journal
+       assert '--unit=workspace-codex@fixture.service' in journal

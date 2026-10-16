@@ -1,0 +1,710 @@
+diff --git a/docs/codex-providers.md b/docs/codex-providers.md
+index f3a39f0..4facc94 100644
+--- a/docs/codex-providers.md
++++ b/docs/codex-providers.md
+@@ -112,6 +112,17 @@ restoration fails or is interrupted, use `dev-session sync SLUG --as-is` after
+ routing has reached a terminal phase. Do not erase state or restart an
+ unsafe service to bypass a refusal.
+ 
++When a provider change or recovery fails, the worker writes a `PROVIDER_FAILURE`
++record to stderr. Read the records with
++`journalctl --user -u workspace-codex-provider@WORKSPACE.service`.
++Each record is at most 2 KiB and identifies the operation, direction, stage,
++step, elapsed time, exception category and a few source labels and line numbers.
++Readiness failures include only observations already made by that attempt;
++unavailable values are explicit. Records omit error messages, commands, helper
++output, filesystem paths, credentials and snapshots. Diagnostic failures do not
++change recovery. Step and source labels locate a failure boundary; a helper
++failure may still need further diagnosis.
++
+ Packages consuming saved state must advertise provider schema 1 and transition
+ policy 1. Applying and recovery exclude package changes. Waiting requests survive
+ compatible updates. Cancel waiting requests before suspension or unregistration.
+diff --git a/libexec/workspace-codex-providers.rb b/libexec/workspace-codex-providers.rb
+index 43dbcd0..f23eefc 100644
+--- a/libexec/workspace-codex-providers.rb
++++ b/libexec/workspace-codex-providers.rb
+@@ -456,42 +456,105 @@ module DevWorkspaceHost
+       end
+     end
+ 
++    def provider_failure_class(error)
++      name = error.class.name
++      %w[DevWorkspaceHost::Error RuntimeError ArgumentError TypeError KeyError
++         NoMethodError NameError IOError EOFError JSON::ParserError
++         Errno::ENOENT Errno::EACCES Errno::EPERM Errno::ESRCH Errno::ECHILD
++         Errno::EPIPE Errno::ECONNREFUSED Errno::ECONNRESET Errno::ETIMEDOUT
++         Errno::ENOSPC Errno::EIO Errno::EINVAL Errno::EEXIST Errno::ENOTDIR].include?(name) ? name : 'OtherError'
++    rescue Exception
++      'OtherError'
++    end
++
++    def provider_failure_diagnostic(operation, direction, diagnostic, error)
++      # Failure-only projection: never include messages or helper argv/output.
++      sources = {
++        __FILE__ => 'workspace-codex-providers.rb',
++        File.join(__dir__, 'workspace-host') => 'workspace-host',
++        File.join(__dir__, '.workspace-host-wrapped') => 'workspace-host'
++      }
++      frames = Array(error.backtrace_locations).filter_map do |frame|
++        label = sources[frame.absolute_path || frame.path]
++        {source: label, line: frame.lineno} if label && frame.lineno.between?(1, 1_000_000)
++      end.first(4)
++      id = operation['id']
++      stage = operation['stage']
++      elapsed = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - diagnostic.fetch(:started)) * 1000).to_i
++      errno = error.is_a?(SystemCallError) ? error.errno : nil
++      record = {
++        operation: id.is_a?(String) && id.bytesize == 36 && id.match?(PROVIDER_OPERATION_ID) ? id : 'unavailable',
++        direction: %w[forward recovery].include?(direction) ? direction : 'unavailable',
++        stage: %w[capturing quiescing daemon-stop shared-start].include?(stage) ? stage : 'unavailable',
++        step: diagnostic.fetch(:step), elapsedMs: elapsed.clamp(0, 86_400_000),
++        exception: provider_failure_class(error),
++        errno: errno.is_a?(Integer) && errno.between?(0, 65535) ? errno : 'unavailable',
++        frames:
++      }
++      record[:readiness] = diagnostic[:readiness] if diagnostic[:readiness]
++      line = "PROVIDER_FAILURE #{JSON.generate(record)}\n"
++      @err.write(line) if line.bytesize <= 2048
++    rescue Exception
++      # Formatting or a broken stderr must not affect compensation/state writes.
++      nil
++    end
++
+     def provider_apply(entry, state, snapshot)
+       operation = state.fetch('operation')
+       unit = "workspace-codex@#{entry.fetch('name')}.service"
++      diagnostic = {step: 'capture', started: Process.clock_gettime(Process::CLOCK_MONOTONIC)}
+       begin
+         captured = provider_helper(entry, 'capture', snapshot:, target: operation.fetch('target'))
++        diagnostic[:step] = 'capture-write'
+         atomic_private_file(snapshot, JSON.generate(captured))
++        diagnostic[:step] = 'quiescing-write'
+         operation['stage'] = 'quiescing'
+         provider_write_state(entry, state)
++        diagnostic[:step] = 'terminal-snapshot'
+         atomic_private_file(snapshot + '.terminals', JSON.generate('schema' => 1, 'workspace' => entry.fetch('name'), 'root' => entry.fetch('root'), 'socket' => instance_runtime(entry).fetch(:codex), 'terminals' => []))
++        diagnostic[:step] = 'quiesce'
+         quiesce_sessions([entry], provider_terminal_snapshot: snapshot + '.terminals')
++        diagnostic[:step] = 'inventory'
+         final_inventory = provider_helper(entry, 'inventory')
+         raise Error, 'workspace became active before native daemon stop' unless final_inventory.fetch('blockers').empty?
++        diagnostic[:step] = 'restart-safety'
+         require_provider_restart_safe!(entry, final_inventory)
++        diagnostic[:step] = 'daemon-stop-write'
+         operation['stage'] = 'daemon-stop'
+         provider_write_state(entry, state)
++        diagnostic[:step] = 'daemon-stop'
+         system! 'systemctl', '--user', 'stop', unit
++        diagnostic[:step] = 'private-start'
+         provider_private_server(entry, operation.fetch('target')) do |socket|
++          diagnostic[:step] = 'private-resume'
+           provider_helper(entry, 'resume', snapshot:, target: operation.fetch('target'), socket:)
+         end
++        diagnostic[:step] = 'shared-selection-write'
+         state['active'] = operation.fetch('target')
+         operation['stage'] = 'shared-start'
+         provider_write_state(entry, state)
++        diagnostic[:step] = 'shared-start'
+         system! 'systemctl', '--user', 'start', unit
+-        provider_wait_shared_server(entry)
++        diagnostic[:step] = 'shared-readiness'
++        provider_wait_shared_server(entry, diagnostic:)
++        diagnostic[:step] = 'verify'
+         provider_helper(entry, 'verify', snapshot:, target: operation.fetch('target'))
++        diagnostic[:step] = 'applied-write'
+         provider_finish(state, 'applied', 'Provider changed. Terminal restoration is pending; run dev-session sync if interrupted.')
+         provider_write_state(entry, state)
+         begin
++          diagnostic[:step] = 'terminal-restore'
+           provider_restore_terminals(entry, snapshot)
+           operation.delete('message')
++          diagnostic[:step] = 'terminal-restored-write'
+           provider_write_state(entry, state)
+         rescue StandardError
+           operation['message'] = 'Provider changed. Some terminal clients need dev-session sync.'
++          diagnostic[:step] = 'terminal-notice-write'
+           provider_write_state(entry, state)
+         end
+-      rescue StandardError
++      rescue StandardError => error
++        provider_failure_diagnostic(operation, 'forward', diagnostic, error)
+         provider_finish(state, 'recovery-required', 'Provider switch needs recovery. Run workspace-host provider recover for this workspace.')
+         provider_write_state(entry, state)
+         provider_recover(entry)
+@@ -524,23 +587,39 @@ module DevWorkspaceHost
+       unless data.fetch('threads').all? { |thread| thread['original'] }
+         raise Error, 'provider recovery settings snapshot is incomplete'
+       end
++      diagnostic = {step: 'running-state', started: Process.clock_gettime(Process::CLOCK_MONOTONIC)}
+       begin
+         running = capture!('systemctl', '--user', 'show', unit, '--property=MainPID', '--value').strip.to_i.positive?
+-        require_provider_restart_safe!(entry, provider_helper(entry, 'inventory')) if running
++        if running
++          diagnostic[:step] = 'inventory'
++          inventory = provider_helper(entry, 'inventory')
++          diagnostic[:step] = 'restart-safety'
++          require_provider_restart_safe!(entry, inventory)
++        end
++        diagnostic[:step] = 'daemon-stop'
+         system! 'systemctl', '--user', 'stop', unit
++        diagnostic[:step] = 'previous-selection'
+         old = operation.fetch('previousActive')
++        diagnostic[:step] = 'private-start'
+         provider_private_server(entry, old) do |socket|
++          diagnostic[:step] = 'private-resume'
+           provider_helper(entry, 'resume', snapshot:, socket:)
+         end
++        diagnostic[:step] = 'shared-selection-write'
+         state['active'] = old
+         operation['stage'] = 'shared-start'
+         provider_write_state(entry, state)
++        diagnostic[:step] = 'shared-start'
+         system! 'systemctl', '--user', 'start', unit
+-        provider_wait_shared_server(entry)
++        diagnostic[:step] = 'shared-readiness'
++        provider_wait_shared_server(entry, diagnostic:)
++        diagnostic[:step] = 'verify'
+         provider_helper(entry, 'verify', snapshot:)
++        diagnostic[:step] = 'failed-write'
+         provider_finish(state, 'failed', 'Original routing was restored. Terminal restoration is pending; run dev-session sync if interrupted.')
+         provider_write_state(entry, state)
+-      rescue StandardError
++      rescue StandardError => error
++        provider_failure_diagnostic(operation, 'recovery', diagnostic, error)
+         provider_finish(state, 'recovery-required', 'Recovery could not be verified. Workspace writes remain blocked; retry provider recovery.')
+         provider_write_state(entry, state)
+         raise Error, 'provider recovery could not be verified'
+@@ -555,18 +634,25 @@ module DevWorkspaceHost
+       end
+     end
+ 
+-    def provider_wait_shared_server(entry)
++    def provider_wait_shared_server(entry, diagnostic: nil)
+       unit = "workspace-codex@#{entry.fetch('name')}.service"
+       socket = instance_runtime(entry).fetch(:codex)
+       deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 30
++      readiness = {mainPID: 'unavailable', activeState: 'unavailable', executableMatch: 'unavailable', socketPresent: 'unavailable', healthError: 'unavailable'}
++      diagnostic[:readiness] = readiness if diagnostic
+       loop do
+         properties = capture!('systemctl', '--user', 'show', unit, '--property=MainPID,ActiveState').lines.to_h { |line| line.strip.split('=', 2) }
++        readiness.merge!(mainPID: 'unavailable', activeState: 'unavailable', executableMatch: 'unavailable', socketPresent: 'unavailable')
++        readiness[:mainPID] = properties['MainPID'].to_i if properties['MainPID'].to_s.match?(/\A[0-9]{1,10}\z/)
++        readiness[:activeState] = properties['ActiveState'] if %w[active activating inactive deactivating failed reloading maintenance refreshing].include?(properties['ActiveState'])
+         raise Error, 'shared native App Server exited during startup' unless %w[active activating].include?(properties['ActiveState']) && properties['MainPID'].to_i.positive?
+-        if provider_process_binary(properties.fetch('MainPID').to_i) == provider_native_binary && File.socket?(socket)
++        readiness[:executableMatch] = provider_process_binary(properties.fetch('MainPID').to_i) == provider_native_binary
++        if readiness[:executableMatch] && (readiness[:socketPresent] = File.socket?(socket))
+           begin
+             provider_helper(entry, 'health')
+             return
+-          rescue StandardError
++          rescue StandardError => error
++            readiness[:healthError] = provider_failure_class(error)
+             # A socket pathname alone does not prove protocol readiness.
+           end
+         end
+diff --git a/nix/tests/session-recovery-boot.nix b/nix/tests/session-recovery-boot.nix
+index aed13d7..ba14b61 100644
+--- a/nix/tests/session-recovery-boot.nix
++++ b/nix/tests/session-recovery-boot.nix
+@@ -3,6 +3,89 @@
+   self,
+   devWorkspace,
+ }:
++let
++  metadata = pkgs.writeText "recovery-fixture-metadata.py" ''
++    """Failure-only, read-only projection of this VM's fixed disposable fixture."""
++    import json
++    import os
++    import stat
++
++    BASE = "/home/developer/.local/state/dev-workspaces/providers/fixture/"
++    IDS = {"aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb"}
++    ROOT = "/home/developer/workspace"
++    SOCKET = "/run/user/1000/dev-workspaces/fixture/app-server.sock"
++    PHASES = {"waiting", "applying", "applied", "canceled", "failed", "recovery-required"}
++    STAGES = {"capturing", "quiescing", "daemon-stop", "shared-start"}
++    PROVIDERS = {"openai", "pool", "pooltwo"}
++
++
++    def private_json(name, maximum):
++        # Fixed basename only. Never follow a snapshot reference supplied by state.
++        fd = os.open(BASE + name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
++        with os.fdopen(fd, "rb") as stream:
++            info = os.fstat(stream.fileno())
++            if not stat.S_ISREG(info.st_mode) or info.st_uid != 1000 or info.st_mode & 0o077:
++                raise ValueError("private file")
++            if info.st_size > maximum:
++                raise ValueError("file bound")
++            data = stream.read(maximum + 1)
++            if len(data) > maximum:
++                raise ValueError("read bound")
++            return json.loads(data)
++
++
++    def enum(value, allowed):
++        return value if isinstance(value, str) and value in allowed else "invalid-or-absent"
++
++
++    def main():
++        result = {"kind": "fixture-provider-metadata"}
++        try:
++            state = private_json("state.json", 1024 * 1024)
++            assert isinstance(state, dict) and state.get("schema") == 1
++            assert state.get("workspace") == "fixture" and state.get("root") == ROOT
++            assert state.get("socket") == SOCKET
++            op = state["operation"]
++            assert isinstance(op, dict) and op.get("id") in IDS
++            blockers = op.get("blockers")
++            result["operation"] = {
++                "phase": enum(op.get("phase"), PHASES),
++                "stage": enum(op.get("stage"), STAGES),
++                "active": enum(state.get("active"), PROVIDERS),
++                "target": enum(op.get("target"), PROVIDERS),
++                "previousActive": enum(op.get("previousActive"), PROVIDERS),
++                "blockerCount": len(blockers) if isinstance(blockers, list) else None,
++            }
++            snapshot_name = op["id"] + ".snapshot.json"
++            assert op.get("snapshot") == BASE + snapshot_name
++            try:
++                snapshot = private_json(snapshot_name, 16 * 1024 * 1024)
++                assert isinstance(snapshot, dict) and snapshot.get("schema") == 1
++                assert snapshot.get("workspace") == ROOT
++                threads, loaded = snapshot["threads"], snapshot["loaded"]
++                assert isinstance(threads, list) and len(threads) <= 4096
++                assert isinstance(loaded, list) and len(loaded) <= 4096
++                result["snapshot"] = {"status": "validated", "threadCount": len(threads), "loadedCount": len(loaded)}
++            except Exception:
++                result["snapshot"] = {"status": "unavailable-or-invalid"}
++            try:
++                terminals = private_json(snapshot_name + ".terminals", 1024 * 1024)
++                assert isinstance(terminals, dict) and terminals.get("schema") == 1
++                assert terminals.get("workspace") == "fixture" and terminals.get("root") == ROOT
++                assert terminals.get("socket") == SOCKET
++                assert isinstance(terminals["terminals"], list) and len(terminals["terminals"]) <= 4096
++                result["terminals"] = {"status": "validated", "terminalCount": len(terminals["terminals"])}
++            except Exception:
++                result["terminals"] = {"status": "unavailable-or-invalid"}
++        except Exception:
++            result["state"] = "unavailable-or-invalid"
++        print(json.dumps(result, sort_keys=True, separators=(",", ":")))
++
++
++    if __name__ == "__main__":
++        main()
++  '';
++in
+ pkgs.testers.runNixOSTest {
+   name = "dev-workspace-session-recovery-boot";
+   nodes.machine = {
+@@ -53,7 +136,7 @@ pkgs.testers.runNixOSTest {
+     };
+     environment.systemPackages = [ pkgs.git ];
+     # Register the user-profile closure in the VM's own Nix database.
+-    virtualisation.additionalPaths = [ devWorkspace ];
++    virtualisation.additionalPaths = [ devWorkspace metadata ];
+     system.stateVersion = "26.05";
+   };
+   testScript = ''
+@@ -96,12 +179,43 @@ pkgs.testers.runNixOSTest {
+     worker = "workspace-codex-provider@fixture.service"
+     codex_unit = "workspace-codex@fixture.service"
+ 
+-    def wait_phase(phase):
++    diagnostic_start = machine.succeed("date +%s").strip()
++    assert diagnostic_start.isdigit()
++
++    def collect_provider_diagnostics():
++        commands = [
++            "journalctl --user --no-pager --output=short-monotonic --since=@" + diagnostic_start
++            + " --unit=" + worker + " --unit=" + codex_unit + " | tail -c 65536",
++            "systemctl --user show " + worker + " " + codex_unit
++            + " --property=ActiveState,SubState,MainPID,Result,ExecMainStatus,NRestarts",
++            "${pkgs.python3}/bin/python3 ${metadata}",
++        ]
++        for command in commands:
++            try:
++                status, output = machine.execute(user_prefix + "sh -c " + shlex.quote(command), timeout=10)
++                print(output)
++                print("PROVIDER_DIAGNOSTIC_COLLECTION_STATUS=" + str(status))
++            except Exception:
++                print("PROVIDER_DIAGNOSTIC_COLLECTION_UNAVAILABLE")
++
++    def wait_provider_result(predicate):
++        # A terminal result returns to Python. A nonzero shell exit alone would
++        # keep wait_until_succeeds polling an already-failed operation for 900s.
+         command = "${pkgs.python3}/bin/python3 -c " + shlex.quote(
+             "import json; d=json.load(open(" + repr(state_path) + ")); o=d['operation']; "
+-            "assert o['phase'] == " + repr(phase) + ", json.dumps({k:o.get(k) for k in ['phase','stage','blockers','message']})")
+-        machine.wait_until_succeeds(user_prefix + "sh -c " + shlex.quote(command))
+-        return json.loads(user(host + " provider status fixture"))
++            "expected=(" + predicate + "); terminal=o['phase'] in ['failed','canceled']; "
++            "assert expected or terminal; "
++            "print('PROVIDER_EXPECTED_RESULT' if expected else 'PROVIDER_UNEXPECTED_TERMINAL')")
++        try:
++            output = machine.wait_until_succeeds(user_prefix + "sh -c " + shlex.quote(command))
++            assert "PROVIDER_UNEXPECTED_TERMINAL" not in output, "provider reached an unexpected terminal phase"
++            return json.loads(user(host + " provider status fixture"))
++        except Exception:
++            collect_provider_diagnostics()
++            raise
++
++    def wait_phase(phase):
++        return wait_provider_result("o['phase'] == " + repr(phase))
+ 
+     with subtest("foreign cgroup processes block the real worker until removed"):
+         foreign_pid = machine.succeed("${pkgs.python3}/bin/python3 -c " + shlex.quote(
+@@ -109,9 +223,7 @@ pkgs.testers.runNixOSTest {
+         group = user("systemctl --user show " + codex_unit + " -p ControlGroup --value").strip()
+         machine.succeed("echo " + foreign_pid + " > " + shlex.quote("/sys/fs/cgroup" + group + "/cgroup.procs"))
+         user(host + " provider request fixture pool aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+-        blocked = "${pkgs.python3}/bin/python3 -c " + shlex.quote(
+-            "import json; d=json.load(open(" + repr(state_path) + ")); assert d['operation']['phase']=='waiting' and d['operation']['blockers']")
+-        machine.wait_until_succeeds(user_prefix + "sh -c " + shlex.quote(blocked))
++        wait_provider_result("o['phase']=='waiting' and o['blockers']")
+         machine.succeed("kill " + foreign_pid)
+         assert wait_phase("applied")["active"] == "pool"
+         assert_services()
+diff --git a/test/workspace_host/codex_provider_test.rb b/test/workspace_host/codex_provider_test.rb
+index 2ac17ce..188c27d 100644
+--- a/test/workspace_host/codex_provider_test.rb
++++ b/test/workspace_host/codex_provider_test.rb
+@@ -63,13 +63,68 @@ class CodexProviderTestHost < DevWorkspaceHost::Host
+   def sleep(_seconds) = nil
+ end
+ 
++class ProviderDiagnosticTestHost < CodexProviderTestHost
++  attr_accessor :faults, :real_readiness
++  attr_reader :written_states
++
++  def initialize(**arguments)
++    super
++    @faults, @written_states = {}, []
++  end
++
++  private
++
++  def fault(point)
++    error = @faults[point]&.shift
++    raise error if error
++  end
++
++  def provider_helper(entry, action, **)
++    @calls << ['helper', action]
++    fault(['helper', action])
++    return {'schema' => 1, 'workspace' => entry.fetch('root'), 'threads' => [], 'loaded' => [], 'blockers' => []} if %w[inventory capture].include?(action)
++    {'verified' => true}
++  end
++
++  def provider_private_server(_entry, provider)
++    @calls << ['private', provider]
++    fault(['private', provider])
++    yield '/private/synthetic-socket'
++  end
++
++  def quiesce_sessions(*, **) = @calls << ['quiesce']
++
++  def provider_wait_shared_server(entry, diagnostic: nil)
++    @calls << ['readiness']
++    @checking_readiness = true
++    super if @real_readiness
++  ensure
++    @checking_readiness = false
++  end
++
++  def provider_process_binary(pid)
++    fault(['identity']) if @checking_readiness
++    super
++  end
++
++  def capture!(*arguments)
++    fault(['readiness-properties']) if arguments.include?('--property=MainPID,ActiveState')
++    super
++  end
++
++  def provider_write_state(entry, state)
++    super
++    @written_states << [state.dig('operation', 'phase'), state.dig('operation', 'stage'), state['active']]
++  end
++end
++
+ class WorkspaceHostTest
+-  def with_provider_host
++  def with_provider_host(host_class: CodexProviderTestHost)
+     Dir.mktmpdir('provider-host-test') do |directory|
+       root = make_workspace(directory, 'workspace')
+       config = File.join(directory, 'config', 'registry.json')
+       DevWorkspaceHost::Registry.new(config).register(name: 'example', root:, hostname: 'workspace.example.test', aliases: [], replace: false)
+-      host = CodexProviderTestHost.new(env: host_environment(directory, config:), out: StringIO.new, err: StringIO.new)
++      host = host_class.new(env: host_environment(directory, config:), out: StringIO.new, err: StringIO.new)
+       host.catalog = {'digest' => 'a' * 64, 'catalog' => {'schema' => 1, 'initialProvider' => 'openai', 'providers' => [
+         {'id' => 'openai', 'label' => 'Subscription', 'kind' => 'subscription'},
+         {'id' => 'pool', 'label' => 'Pool', 'kind' => 'codex-lb', 'baseURL' => 'http://127.0.0.1:2455/v1', 'tokenFile' => '/private/token'}
+@@ -280,4 +335,266 @@ class WorkspaceHostTest
+       assert_raises(DevWorkspaceHost::Error) { host.send(:require_provider_restart_safe!, entry, inventory) }
+     end
+   end
++
++  def prepare_diagnostic_apply(host, entry)
++    id = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
++    host.send(:provider_command, ['request', 'example', 'pool', id])
++    state = host.send(:provider_state, entry)
++    snapshot = File.join(host.send(:provider_directory, entry), "#{id}.snapshot.json")
++    host.send(:atomic_private_file, snapshot, JSON.generate('schema' => 1, 'threads' => []))
++    state['operation'].merge!('phase' => 'applying', 'stage' => 'capturing', 'snapshot' => snapshot, 'previousActive' => 'openai')
++    host.send(:provider_write_state, entry, state)
++    host.calls.clear
++    host.written_states.clear
++    [state, snapshot]
++  end
++
++  def provider_failure_records(host)
++    host.instance_variable_get(:@err).string.lines.map do |line|
++      assert_operator line.bytesize, :<=, 2048
++      assert line.start_with?('PROVIDER_FAILURE ')
++      refute_match(/SECRET_CANARY|private|https:|Bearer|argv|snapshot|rpc-payload/, line)
++      data = JSON.parse(line.delete_prefix('PROVIDER_FAILURE '))
++      assert_operator data.fetch('frames').length, :<=, 4
++      assert data.fetch('frames').all? { |frame| %w[workspace-host workspace-codex-providers.rb].include?(frame.fetch('source')) && frame.fetch('line').is_a?(Integer) }
++      data
++    end
++  end
++
++  def test_provider_failure_diagnostics_separate_forward_and_recovery_without_changing_order
++    outcomes = []
++    [:working, :broken_sink, :broken_formatter].each do |sink|
++      with_provider_host(host_class: ProviderDiagnosticTestHost) do |host, entry|
++        state, snapshot = prepare_diagnostic_apply(host, entry)
++        forward = Errno::EIO.new('SECRET_CANARY /private/token argv Bearer rpc-payload' * 4096)
++        recovery = Class.new(StandardError).new('SECRET_CANARY https://private/endpoint')
++        if sink == :broken_sink
++          broken = Object.new
++          broken.define_singleton_method(:write) { |_| raise IOError, 'SECRET_CANARY sink' }
++          host.instance_variable_set(:@err, broken)
++        elsif sink == :broken_formatter
++          [forward, recovery].each { |error| error.define_singleton_method(:backtrace_locations) { raise 'SECRET_CANARY formatter' } }
++        end
++        host.faults[['helper', 'verify']] = [forward, recovery]
++        error = assert_raises(DevWorkspaceHost::Error) { host.send(:provider_apply, entry, state, snapshot) }
++        assert_equal 'provider recovery could not be verified', error.message
++        saved = host.send(:provider_state, entry)
++        assert_equal 'recovery-required', saved.dig('operation', 'phase')
++        assert_equal 'openai', saved['active']
++        outcomes << [host.calls, host.written_states, saved.dig('operation', 'message')]
++        if sink == :working
++          records = provider_failure_records(host)
++          assert_equal %w[forward recovery], records.map { |record| record.fetch('direction') }
++          assert_equal %w[verify verify], records.map { |record| record.fetch('step') }
++          assert_equal ['Errno::EIO', 'OtherError'], records.map { |record| record.fetch('exception') }
++          assert_equal Errno::EIO::Errno, records.first.fetch('errno')
++          assert records.all? { |record| record.fetch('operation') == state.dig('operation', 'id') && record.fetch('stage') == 'shared-start' }
++          assert records.all? { |record| record.fetch('elapsedMs').is_a?(Integer) }
++          refute records.any? { |record| record.key?('readiness') }
++        elsif sink == :broken_formatter
++          assert_empty provider_failure_records(host)
++        end
++      end
++    end
++    assert_equal outcomes.first, outcomes[1]
++    assert_equal outcomes.first, outcomes[2]
++    calls, states = outcomes.first
++    assert_equal %w[stop start stop start], calls.select { |call| call.first == 'systemctl' && %w[stop start].include?(call[2]) }.map { |call| call[2] }
++    assert_equal ['capture', 'inventory', 'resume', 'verify', 'inventory', 'resume', 'verify'], calls.select { |call| call.first == 'helper' }.map(&:last)
++    assert_equal [
++      ['applying', 'quiescing', 'openai'], ['applying', 'daemon-stop', 'openai'],
++      ['applying', 'shared-start', 'pool'], ['recovery-required', 'shared-start', 'pool'],
++      ['recovery-required', 'shared-start', 'openai'], ['recovery-required', 'shared-start', 'openai']
++    ], states
++  end
++
++  def test_provider_failure_diagnostics_leave_success_and_compensation_state_compatible
++    with_provider_host(host_class: ProviderDiagnosticTestHost) do |host, entry|
++      state, snapshot = prepare_diagnostic_apply(host, entry)
++      host.send(:provider_apply, entry, state, snapshot)
++      assert_empty provider_failure_records(host)
++      assert_equal 'applied', host.send(:provider_state, entry).dig('operation', 'phase')
++      state, snapshot = prepare_diagnostic_apply(host, entry)
++      host.faults[['helper', 'verify']] = [RuntimeError.new('SECRET_CANARY')]
++      host.send(:provider_apply, entry, state, snapshot)
++      saved = host.send(:provider_state, entry)
++      assert_equal 'failed', saved.dig('operation', 'phase')
++      assert_equal 'openai', saved['active']
++      assert_equal ['forward'], provider_failure_records(host).map { |record| record['direction'] }
++      assert_equal %w[blockers catalogDigest createdAt id phase previousActive snapshot stage target updatedAt message].sort, saved.fetch('operation').keys.sort
++    end
++  end
++
++  def test_provider_failure_readiness_keeps_only_current_attempt_observations
++    cases = [
++      {fault: ['readiness-properties'], error: RuntimeError.new('SECRET_CANARY'), expected: {'mainPID' => 'unavailable', 'activeState' => 'unavailable', 'executableMatch' => 'unavailable', 'socketPresent' => 'unavailable', 'healthError' => 'unavailable'}},
++      {fault: ['identity'], error: Errno::ENOENT.new('SECRET_CANARY'), expected: {'mainPID' => 123, 'activeState' => 'active', 'executableMatch' => 'unavailable', 'socketPresent' => 'unavailable', 'healthError' => 'unavailable'}},
++      {fault: ['helper', 'health'], error: IOError.new('SECRET_CANARY'), expected: {'mainPID' => 123, 'activeState' => 'active', 'executableMatch' => true, 'socketPresent' => true, 'healthError' => 'IOError'}}
++    ]
++    cases.each do |test|
++      with_provider_host(host_class: ProviderDiagnosticTestHost) do |host, entry|
++        state, snapshot = prepare_diagnostic_apply(host, entry)
++        host.real_readiness = true
++        host.faults[test.fetch(:fault)] = [test.fetch(:error)]
++        host.service_states = ["MainPID=123\nActiveState=active\n"] * 2
++        # Existing deadline expires after the first failed health check, with no
++        # actual wait, service process or socket. Recovery gets its own context.
++        tick = 0
++        clock = ->(*) { tick += 1; tick == 3 ? 31.0 : 0.0 }
++        original_clock = Process.method(:clock_gettime)
++        original_socket = File.method(:socket?)
++        begin
++          Process.define_singleton_method(:clock_gettime, &clock)
++          File.define_singleton_method(:socket?) { |_| true }
++          host.send(:provider_apply, entry, state, snapshot)
++        ensure
++          Process.define_singleton_method(:clock_gettime, original_clock)
++          File.define_singleton_method(:socket?, original_socket)
++        end
++        records = provider_failure_records(host)
++        assert_equal 1, records.length
++        assert_equal 'shared-readiness', records.first.fetch('step')
++        assert_equal test.fetch(:expected), records.first.fetch('readiness')
++        assert records.first.fetch('frames').any? if test.fetch(:fault) == ['helper', 'health']
++        assert_equal 'failed', host.send(:provider_state, entry).dig('operation', 'phase')
++      end
++    end
++  end
++
++  def test_provider_failure_readiness_does_not_reuse_forward_values_in_recovery
++    with_provider_host(host_class: ProviderDiagnosticTestHost) do |host, entry|
++      state, snapshot = prepare_diagnostic_apply(host, entry)
++      host.real_readiness = true
++      host.service_states = ["MainPID=123\nActiveState=active\n"]
++      host.faults[['identity']] = [Errno::ENOENT.new('SECRET_CANARY')]
++      host.faults[['readiness-properties']] = [nil, RuntimeError.new('SECRET_CANARY')]
++      assert_raises(DevWorkspaceHost::Error) { host.send(:provider_apply, entry, state, snapshot) }
++      forward, recovery = provider_failure_records(host)
++      assert_equal 123, forward.dig('readiness', 'mainPID')
++      assert_equal 'active', forward.dig('readiness', 'activeState')
++      assert_equal ['unavailable'], recovery.fetch('readiness').values.uniq
++      assert_equal %w[forward recovery], [forward, recovery].map { |record| record['direction'] }
++    end
++  end
++
++  def test_provider_failure_readiness_retains_last_observation_when_next_read_fails
++    with_provider_host(host_class: ProviderDiagnosticTestHost) do |host, entry|
++      state, snapshot = prepare_diagnostic_apply(host, entry)
++      host.real_readiness = true
++      host.service_states = ["MainPID=123\nActiveState=active\n"] * 2
++      host.faults[['helper', 'health']] = [IOError.new('SECRET_CANARY')]
++      host.faults[['readiness-properties']] = [nil, RuntimeError.new('SECRET_CANARY')]
++      original_socket = File.method(:socket?)
++      begin
++        File.define_singleton_method(:socket?) { |_| true }
++        host.send(:provider_apply, entry, state, snapshot)
++      ensure
++        File.define_singleton_method(:socket?, original_socket)
++      end
++      record = provider_failure_records(host).fetch(0)
++      assert_equal({'mainPID' => 123, 'activeState' => 'active', 'executableMatch' => true, 'socketPresent' => true, 'healthError' => 'IOError'}, record['readiness'])
++      assert_equal 'failed', host.send(:provider_state, entry).dig('operation', 'phase')
++    end
++  end
++
++  def test_provider_failure_projection_bounds_untrusted_error_metadata
++    with_provider_host do |host, _entry|
++      operation = {'id' => 'SECRET_CANARY' * 4096, 'stage' => 'SECRET_CANARY'}
++      diagnostic = {step: 'verify', started: Process.clock_gettime(Process::CLOCK_MONOTONIC)}
++      host.send(:provider_failure_diagnostic, operation, 'forward', diagnostic, Class.new(StandardError).new('SECRET_CANARY' * 4096))
++      record = provider_failure_records(host).fetch(0)
++      assert_equal 'unavailable', record['operation']
++      assert_equal 'unavailable', record['stage']
++      assert_equal 'OtherError', record['exception']
++      assert_equal 'unavailable', record['errno']
++    end
++  end
++
++  def test_recovery_vm_wait_returns_terminal_to_python_and_keeps_expected_recovery_phases
++    fixture = File.expand_path('../../nix/tests/session-recovery-boot.nix', __dir__)
++    script = <<~'PY'
++      import ast, contextlib, io, json, re, shlex, sys, textwrap
++      from pathlib import Path
++      source = Path(sys.argv[1]).read_text()
++      driver = source.split("  testScript = ''\n", 1)[1].rsplit("  '';", 1)[0]
++      driver = textwrap.dedent(re.sub(r"\$\{[^}]+\}", "/synthetic-store/path", driver))
++      tree = ast.parse(driver)
++      names = {'wait_provider_result', 'wait_phase', 'collect_provider_diagnostics'}
++      functions = ast.Module(body=[node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name in names], type_ignores=[])
++      class Machine:
++          def __init__(self):
++              self.phase = 'waiting'
++              self.calls = 0
++              self.collection = []
++              self.collection_timeouts = []
++              self.fail_collection = False
++          def wait_until_succeeds(self, command):
++              self.calls += 1
++              expression = shlex.split(shlex.split(command)[-1])[-1]
++              def safe_open(path):
++                  assert path == '/fixture/state.json'
++                  return io.StringIO(json.dumps({'operation': {'phase': self.phase, 'blockers': ['synthetic']}}))
++              output = io.StringIO()
++              with contextlib.redirect_stdout(output):
++                  exec(expression, {'open': safe_open})
++              return output.getvalue()
++          def execute(self, command, *, timeout):
++              assert timeout == 10
++              self.collection.append(command)
++              self.collection_timeouts.append(timeout)
++              if self.fail_collection:
++                  raise TimeoutError('SECRET_CANARY collection')
++              return 0, 'safe-fixture-evidence'
++      machine = Machine()
++      scope = dict(machine=machine, json=json, shlex=shlex, state_path='/fixture/state.json', user_prefix='', host='/synthetic-host', user=lambda command: '{}', diagnostic_start='123', worker='workspace-codex-provider@fixture.service', codex_unit='workspace-codex@fixture.service')
++      exec(compile(functions, 'selected-vm-functions', 'exec'), scope)
++      wait = scope['wait_phase']
++      for phase in ['applied', 'failed', 'recovery-required', 'canceled']:
++          machine.phase = phase
++          wait(phase)  # Expected phase is checked before terminal classification.
++      assert not machine.collection
++      for phase in ['failed', 'canceled']:
++          machine.phase = phase
++          machine.fail_collection = True
++          before = machine.calls
++          output = io.StringIO()
++          try:
++              with contextlib.redirect_stdout(output):
++                  wait('applied')
++              raise RuntimeError('unexpected terminal accepted')
++          except AssertionError as error:
++              assert str(error) == 'provider reached an unexpected terminal phase'
++          assert machine.calls == before + 1  # Terminal shell return was successful.
++          assert 'SECRET_CANARY' not in output.getvalue()
++      assert len(machine.collection) == 6
++      assert machine.collection_timeouts == [10] * 6
++      assert sum(machine.collection_timeouts[:3]) == 30
++      journal = machine.collection[0]
++      assert '--unit=workspace-codex-provider@fixture.service' in journal
++      assert '--unit=workspace-codex@fixture.service' in journal
++      assert 'tail -c 65536' in journal
++      # Nonterminal phases keep the existing retry path (simulated first attempt).
++      for phase in ['waiting', 'applying', 'recovery-required']:
++          machine.phase = phase
++          try:
++              with contextlib.redirect_stdout(io.StringIO()):
++                  wait('applied')
++              raise RuntimeError('intermediate incorrectly accepted')
++          except AssertionError as error:
++              assert str(error) != 'provider reached an unexpected terminal phase'
++      assert source.count('with subtest(') == 5
++      assert source.count('machine.reboot()') == 2
++      assert "wait_phase(\"recovery-required\")" in source
++      assert source.count('wait_phase("failed")') == 2
++      metadata = textwrap.dedent(source.split('metadata = pkgs.writeText "recovery-fixture-metadata.py" \'\'\n', 1)[1].split("  '';\nin", 1)[0])
++      compile(metadata, 'fixture-metadata', 'exec')
++      assert 'os.O_NOFOLLOW' in metadata and 'os.O_NONBLOCK' in metadata
++      assert 'info.st_uid != 1000' in metadata and 'op.get("snapshot") == BASE + snapshot_name' in metadata
++      assert 'threadCount' in metadata and 'terminalCount' in metadata
++      print('VM wait expected/unexpected/intermediate phases and bounded collection: PASS')
++    PY
++    stdout, stderr, status = Open3.capture3('python3', '-c', script, fixture)
++    assert status.success?, stderr
++    assert_includes stdout, 'PASS'
++  end
+ end

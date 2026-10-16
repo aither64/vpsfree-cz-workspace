@@ -1,0 +1,329 @@
+--- initial-probe/portal/internal/web/notifications_browser_test.go
++++ diagnostic/portal/internal/web/notifications_browser_test.go
+@@ -1,7 +1,9 @@
+ package web
+ 
+ import (
++	"bytes"
+ 	"context"
++	"encoding/json"
+ 	"io"
+ 	"log"
+ 	"net/http"
+@@ -9,12 +11,88 @@
+ 	"os"
+ 	"os/exec"
+ 	"path/filepath"
++	"strings"
+ 	"sync"
+ 	"testing"
+ 	"time"
+ 
+ 	"github.com/aither64/dev-workspace/portal/internal/session"
+ )
++
++// Forward the actual response while retaining at most 4096 bytes in memory for
++// classification. No response body, request body or header is logged.
++type providerProbeResponse struct {
++	http.ResponseWriter
++	status int
++	body   bytes.Buffer
++}
++
++func (w *providerProbeResponse) WriteHeader(status int) {
++	if w.status == 0 {
++		w.status = status
++		w.ResponseWriter.WriteHeader(status)
++	}
++}
++
++func (w *providerProbeResponse) Write(data []byte) (int, error) {
++	if w.status == 0 {
++		w.WriteHeader(http.StatusOK)
++	}
++	if remaining := 4096 - w.body.Len(); remaining > 0 {
++		_, _ = w.body.Write(data[:min(remaining, len(data))])
++	}
++	return w.ResponseWriter.Write(data)
++}
++
++func providerProbeCategory(status int, body []byte) string {
++	if status >= 200 && status < 300 {
++		return "accepted"
++	}
++	var value struct {
++		Error string `json:"error"`
++	}
++	if json.Unmarshal(body, &value) != nil {
++		return "unclassified_response"
++	}
++	known := map[string]string{
++		"Workspace package changed. Reload before saving.":                 "package_admission",
++		"Notification origin is invalid.":                                  "origin_invalid",
++		"Browser notifications are unavailable.":                           "notifications_unavailable",
++		"Notification storage is unavailable.":                             "storage_unavailable",
++		"notification storage is unavailable":                              "storage_unavailable",
++		"invalid JSON request":                                             "invalid_json",
++		"request must contain one JSON value":                              "multiple_json_values",
++		"unsupported push provider endpoint":                               "unsupported_endpoint",
++		"invalid push public key":                                          "invalid_public_key",
++		"invalid push authentication key":                                  "invalid_auth_key",
++		"push subscription has expired":                                    "subscription_expired",
++		"This subscription belongs to another portal origin.":              "registration_origin_conflict",
++		"Registration could not be created.":                               "registration_randomness",
++		"Browser registration is unavailable. Enable notifications again.": "registration_unavailable",
++		"Browser notifications are disabled.":                              "notifications_disabled",
++		"Invalid notification action.":                                     "invalid_action",
++		"notification record limit reached":                                "record_limit",
++		"notification state exceeds its size limit":                        "state_size_limit",
++	}
++	if category, ok := known[value.Error]; ok {
++		return category
++	}
++	return "unclassified_product_error"
++}
++
++type providerProbeHTTP struct {
++	Sequence              int    `json:"sequence"`
++	Action                string `json:"action"`
++	Status                int    `json:"status"`
++	Category              string `json:"category"`
++	HostProfileCurrent    bool   `json:"hostProfileCurrent"`
++	ProviderAdmission     bool   `json:"providerAdmission"`
++	HostOriginMatched     bool   `json:"hostOriginMatched"`
++	MutationOriginMatched bool   `json:"mutationOriginMatched"`
++	RegistrationsBefore   int    `json:"registrationsBefore"`
++	RegistrationsAfter    int    `json:"registrationsAfter"`
++	StoreFailed           bool   `json:"storeFailed"`
++}
+ 
+ // Disposable verification only. Exercise the shipped transport, registration,
+ // worker and Test action; do not reconcile native activity or create sessions.
+@@ -38,13 +116,46 @@
+ 		t.Fatal("fixture identity unavailable")
+ 	}
+ 	handler := n.server.Handler()
++	var diagnosticsMu sync.Mutex
++	diagnostics := []providerProbeHTTP{}
++	sequence := 0
+ 	fixture.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+ 		switch {
+ 		case r.URL.Path == "/fixture/summary" && r.Method == http.MethodGet:
+ 			n.store.mu.Lock()
+ 			result := map[string]any{"registrations": len(n.store.state.Browsers), "pending": len(n.store.state.Outbox)}
+ 			n.store.mu.Unlock()
++			diagnosticsMu.Lock()
++			result["httpDiagnostics"] = append([]providerProbeHTTP{}, diagnostics...)
++			result["httpDiagnosticCount"] = sequence
++			diagnosticsMu.Unlock()
+ 			n.server.writeJSON(w, http.StatusOK, result)
++		case r.Method == http.MethodPost && (r.URL.Path == "/api/browser-notifications/register" ||
++			r.URL.Path == "/api/browser-notifications/disable" || r.URL.Path == "/api/browser-notifications/test"):
++			profile, profileErr := readHostProfileIdentity(n.server.config.HostProfile)
++			origin := n.server.notificationOrigin(r)
++			record := providerProbeHTTP{Action: strings.TrimPrefix(r.URL.Path, "/api/browser-notifications/"),
++				HostProfileCurrent: profileErr == nil && profile == n.server.hostProfile,
++				ProviderAdmission:  n.server.requireProviderAdmission() == nil,
++				HostOriginMatched:  origin != "", MutationOriginMatched: origin != "" && r.Header.Get("Origin") == origin}
++			n.store.mu.Lock()
++			record.RegistrationsBefore = len(n.store.state.Browsers)
++			n.store.mu.Unlock()
++			response := &providerProbeResponse{ResponseWriter: w}
++			handler.ServeHTTP(response, r)
++			record.Status = response.status
++			record.Category = providerProbeCategory(response.status, response.body.Bytes())
++			n.store.mu.Lock()
++			record.RegistrationsAfter, record.StoreFailed = len(n.store.state.Browsers), n.store.failed
++			n.store.mu.Unlock()
++			diagnosticsMu.Lock()
++			sequence++
++			record.Sequence = sequence
++			diagnostics = append(diagnostics, record)
++			if len(diagnostics) > 24 {
++				diagnostics = diagnostics[len(diagnostics)-24:]
++			}
++			diagnosticsMu.Unlock()
+ 		case r.URL.Path == "/api/sessions/example/attention" && r.Method == http.MethodGet:
+ 			n.server.writeJSON(w, http.StatusOK, map[string]any{"version": 1, "identity": identity,
+ 				"rootThread": "thread-1", "enabled": true, "fresh": true, "event": nil, "revision": 0})
+--- initial-probe/portal/internal/web/notifications_browser_test.cjs
++++ diagnostic/portal/internal/web/notifications_browser_test.cjs
+@@ -7,18 +7,112 @@
+ const resultPath = process.env.PROVIDER_PROBE_RESULT_FILE;
+ const origin = new URL(base).origin;
+ const safeResult = value => ["", "provider_accepted", "retrying", "provider_refused", "expired", "delivery_failed"].includes(value) ? value : "unknown";
+-const safeError = error => ["TimeoutError", "Error", "AbortError", "NotAllowedError", "NotSupportedError", "SecurityError"].includes(error?.name) ? error.name : "Error";
++const safeError = error => ["TimeoutError", "Error", "AbortError", "NotAllowedError", "NotSupportedError", "SecurityError", "InvalidStateError", "InvalidAccessError", "NetworkError", "UnknownError", "OperationError", "QuotaExceededError", "TypeError", "RangeError", "NotFoundError", "NotReadableError", "InvalidModificationError"].includes(error?.name) ? error.name : "Error";
+ const report = {sourceRevision: "e414ed31806d2b91620d5e5fad8b5b5ee56e07ac", platform: process.platform, headless: true,
+   providerTransport: "shipped_guardedPushClient_unmocked", syntheticPush: false, osDisplayVerified: false, macOSDisplayVerified: false, browsers: []};
+ const incomplete = "Browser setup is incomplete. Disable it or enable notifications again.";
+ function save() {
+   if (resultPath) fs.writeFileSync(resultPath, JSON.stringify(report, null, 2) + "\n", {mode: 0o600});
+ }
++// Transparent diagnostics: every native method receives its original arguments
++// and returns its real result or rejection. No capability or key enters state.
++async function installDiagnostics(context, row) {
++  row.apiHTTP = [];
++  context.on("response", response => {
++    const url = new URL(response.url());
++    const action = ({"/api/browser-notifications": "state", "/api/browser-notifications/register": "register",
++      "/api/browser-notifications/disable": "disable", "/api/browser-notifications/test": "test"})[url.pathname];
++    if (url.origin === origin && action && row.apiHTTP.length < 24) row.apiHTTP.push({action, status: response.status()});
++  });
++  await context.addInitScript(targetOrigin => {
++    if (location.origin !== targetOrigin) return;
++    const state = globalThis.__providerProbeDiagnostics = {steps: [], storage: {getCalls: 0, setCalls: 0}};
++    const allowedNames = ["Error", "AbortError", "NotAllowedError", "NotSupportedError", "SecurityError", "InvalidStateError", "InvalidAccessError", "NetworkError", "UnknownError", "OperationError", "QuotaExceededError", "TypeError", "RangeError", "NotFoundError", "NotReadableError", "InvalidModificationError"];
++    const classify = error => {
++      const name = allowedNames.includes(error?.name) ? error.name : "Error";
++      const category = ({NotAllowedError: "permission", SecurityError: "security", NetworkError: "network",
++        NotSupportedError: "unsupported", InvalidStateError: "state", InvalidAccessError: "argument",
++        AbortError: "aborted", OperationError: "operation", QuotaExceededError: "quota", TypeError: "argument", RangeError: "argument",
++        NotFoundError: "not_found", NotReadableError: "not_readable", InvalidModificationError: "state"})[name] || "unclassified";
++      // Recognize only fixed browser messages, never return the message itself.
++      const known = new Map([["Registration failed - push service error", "push_service_error"],
++        ["Registration failed - push service not available", "push_service_unavailable"],
++        ["Error retrieving push subscription", "push_subscription_lookup"]]).get(error?.message);
++      return {name, category: known || category};
++    };
++    const shape = subscription => {
++      if (!subscription) return {present: false};
++      try {
++        const value = subscription.toJSON(), url = new URL(value.endpoint);
++        const decodeLength = text => {
++          if (typeof text !== "string" || text.length > 256) return -1;
++          try {return atob(text.replace(/-/g, "+").replace(/_/g, "/")).length;} catch (_) {return -1;}
++        };
++        const expires = value.expirationTime;
++        return {present: true, endpointHttps: url.protocol === "https:", endpointHostAllowed: ["fcm.googleapis.com", "updates.push.services.mozilla.com"].includes(url.hostname),
++          endpointWithinLimit: value.endpoint.length <= 2048, endpointPortAllowed: !url.port || url.port === "443",
++          endpointPathPresent: Boolean(url.pathname), endpointHasCredentials: Boolean(url.username || url.password), endpointHasFragment: Boolean(url.hash),
++          publicKeyBytesValid: decodeLength(value.keys?.p256dh) === 65, authKeyBytesValid: decodeLength(value.keys?.auth) === 16,
++          publicKeyUnpadded: typeof value.keys?.p256dh === "string" && !value.keys.p256dh.includes("="),
++          authKeyUnpadded: typeof value.keys?.auth === "string" && !value.keys.auth.includes("="),
++          keyFieldsKnown: value.keys && Object.keys(value.keys).every(key => ["auth", "p256dh"].includes(key)),
++          expirationKind: expires === undefined ? "absent" : expires === null ? "null" : Number.isSafeInteger(expires) ? "integer" : typeof expires === "number" ? "fractional_or_unsafe_number" : "other",
++          expirationFuture: expires == null || (typeof expires === "number" && expires > Date.now())};
++      } catch (error) {return {present: true, inspectionError: classify(error)};}
++    };
++    const add = record => {if (state.steps.length < 24) state.steps.push(record);};
++    const wrap = (prototype, method, onSuccess) => {
++      const original = prototype?.[method];
++      if (typeof original !== "function") return;
++      prototype[method] = function(...args) {
++        const record = {stage: method, outcome: "pending"}; add(record);
++        if (method === "subscribe") record.options = {userVisibleOnly: args[0]?.userVisibleOnly === true,
++          publicKeyByteLengthValid: args[0]?.applicationServerKey?.byteLength === 65};
++        let promise;
++        try {promise = Reflect.apply(original, this, args);}
++        catch (error) {record.outcome = "rejected"; record.error = classify(error); throw error;}
++        return Promise.resolve(promise).then(value => {
++          record.outcome = "resolved";
++          if (onSuccess) {try {record.subscription = shape(value);} catch (_) {record.inspectionUnavailable = true;}}
++          return value;
++        }, error => {record.outcome = "rejected"; record.error = classify(error); throw error;});
++      };
++    };
++    try {
++      wrap(globalThis.ServiceWorkerContainer?.prototype, "register", false);
++      wrap(globalThis.PushManager?.prototype, "subscribe", true);
++      wrap(globalThis.PushManager?.prototype, "getSubscription", true);
++      const key = "workspace-browser-notifications.v1", get = Storage.prototype.getItem, set = Storage.prototype.setItem;
++      let savedValue;
++      Storage.prototype.getItem = function(name) {
++        if (name !== key) return Reflect.apply(get, this, [name]);
++        state.storage.getCalls++;
++        try {
++          const value = Reflect.apply(get, this, [name]);
++          state.storage.idPresent = Boolean(value);
++          if (savedValue !== undefined) state.storage.readbackMatched = value === savedValue;
++          return value;
++        } catch (error) {state.storage.getError = classify(error); throw error;}
++      };
++      Storage.prototype.setItem = function(name, value) {
++        if (name !== key) return Reflect.apply(set, this, [name, value]);
++        state.storage.setCalls++;
++        try {const result = Reflect.apply(set, this, [name, value]); savedValue = value; state.storage.setSucceeded = true; return result;}
++        catch (error) {state.storage.setError = classify(error); throw error;}
++      };
++      state.installed = true;
++    } catch (error) {state.installError = classify(error);}
++  }, origin);
++}
++async function browserDiagnostics(page) {
++  return page.evaluate(() => globalThis.__providerProbeDiagnostics || {installed: false});
++}
+ async function summary(page) {
+   return page.evaluate(async () => {
+     const response = await fetch("/fixture/summary", {cache: "no-store"});
+     const value = await response.json();
+-    return {registrations: value.registrations, pending: value.pending};
++    return {registrations: value.registrations, pending: value.pending, httpDiagnosticCount: value.httpDiagnosticCount,
++      httpDiagnostics: value.httpDiagnostics};
+   });
+ }
+ async function deliveryEvidence(page) {
+@@ -48,8 +142,9 @@
+ }
+ async function cleanup(context, row) {
+   row.cleanup = "incomplete";
++  let page;
+   try {
+-    let page = context.pages().find(page => page.url().startsWith(origin + "/"));
++    page = context.pages().find(page => page.url().startsWith(origin + "/"));
+     if (!page) {page = await context.newPage(); await page.goto(`${base}/example/#settings`);}
+     const button = page.locator("[data-notification-disable]");
+     await page.waitForTimeout(1000);
+@@ -57,15 +152,19 @@
+       await button.click();
+       await page.waitForFunction(() => document.querySelector("[data-notification-status]")?.textContent.startsWith("Disabled on this browser."), null, {timeout: 12000});
+     }
++  } catch (error) {row.cleanupError = safeError(error);}
++  if (!page || page.isClosed()) return;
++  try {
+     row.localSubscriptionRemaining = await page.evaluate(async () => {
+       const registration = await navigator.serviceWorker.getRegistration("/");
+       const subscription = await registration?.pushManager.getSubscription();
+       if (registration) (await registration.getNotifications()).forEach(notification => notification.close());
+       return Boolean(subscription);
+     });
+-    row.storeAfterCleanup = await summary(page);
+-    row.cleanup = !row.localSubscriptionRemaining && row.storeAfterCleanup.registrations === 0 ? "complete" : "incomplete";
+-  } catch (error) {row.cleanupError = safeError(error);}
++  } catch (error) {row.subscriptionCleanupError = safeError(error);}
++  try {row.storeAfterCleanup = await summary(page);} catch (error) {row.summaryCleanupError = safeError(error);}
++  try {row.browserAfterCleanup = await browserDiagnostics(page);} catch (error) {row.diagnosticCleanupError = safeError(error);}
++  row.cleanup = row.localSubscriptionRemaining === false && row.storeAfterCleanup?.registrations === 0 ? "complete" : "incomplete";
+ }
+ (async () => {
+   save();
+@@ -81,12 +180,14 @@
+           args: ["--ignore-certificate-errors", "--allow-insecure-localhost"]} : {})});
+       context.setDefaultTimeout(12000);
+       context.setDefaultNavigationTimeout(20000);
++      await installDiagnostics(context, row);
+       row.version = context.browser()?.version() || "unreported";
+       try {await context.grantPermissions(["notifications"], {origin}); row.permissionSetup = "granted";}
+       catch (error) {row.permissionSetup = "unavailable"; row.permissionError = safeError(error); row.phase = "permission_setup_unavailable"; continue;}
+       const page = await context.newPage();
+       page.setDefaultTimeout(12000);
+       await page.goto(`${base}/example/#settings`);
++      row.serverBefore = await summary(page);
+       row.apiSupport = await page.evaluate(() => ({secureContext: isSecureContext, serviceWorker: "serviceWorker" in navigator,
+         push: "PushManager" in globalThis, notifications: "Notification" in globalThis, permission: globalThis.Notification?.permission || "unavailable"}));
+       if (!(row.apiSupport.secureContext && row.apiSupport.serviceWorker && row.apiSupport.push && row.apiSupport.notifications)) {row.phase = "browser_unsupported"; continue;}
+@@ -97,7 +198,13 @@
+           const text = document.querySelector("[data-notification-status]")?.textContent || "";
+           return text.startsWith("Enabled on this browser") || text.startsWith("Registration failed:") || text === incompleteText || text.startsWith("Notifications are blocked");
+         }, incomplete, {timeout: 45000});
+-      } catch (error) {row.phase = "registration_incomplete"; row.registrationError = safeError(error); continue;}
++      } catch (error) {
++        row.phase = "registration_incomplete"; row.registrationError = safeError(error);
++        row.browserAfterRegistration = await browserDiagnostics(page); row.serverAfterRegistration = await summary(page);
++        continue;
++      }
++      row.browserAfterRegistration = await browserDiagnostics(page);
++      row.serverAfterRegistration = await summary(page);
+       const enabled = await page.evaluate(() => document.querySelector("[data-notification-status]")?.textContent.startsWith("Enabled on this browser"));
+       if (!enabled) {
+         row.phase = "registration_unavailable";

@@ -1,0 +1,844 @@
+From 7ad37d4a140a7834c5398efa853b411b8dbc5dd1 Mon Sep 17 00:00:00 2001
+From: Jakub Skokan <jakub.skokan@havefun.cz>
+Date: Thu, 15 Oct 2026 21:12:53 +0200
+Subject: [PATCH] portal: compact browser notification menu controls
+
+The workspace menu repeats detailed notification guidance and consumes
+space intended for quick controls. Replace it with Notifications and Sound
+checkboxes plus a Notification settings link, keeping Test and recovery
+in the full panel.
+
+Both surfaces call the same guarded Enable/Disable actions. The menu
+shows only confirmed setup, restores pending native toggles, and keeps
+uncertain cleanup mixed with one domain-owned error. Sound remains
+independent of delivery.
+
+Keep existing worker, storage and server contracts and preserve title
+markers and session mutes. Select the updated client and styles in all
+notification-control templates.
+---
+ docs/browser-notifications-operations.md      |  15 +-
+ docs/browser-notifications.md                 |  31 +--
+ .../internal/web/attention_browser_test.cjs   | 194 +++++++++++++++---
+ .../web/notifications_browser_test.cjs        |  24 ++-
+ portal/internal/web/notifications_test.go     |  21 +-
+ .../web/static/browser-notifications.js       |  90 ++++++--
+ portal/internal/web/static/style.css          |   9 +-
+ portal/internal/web/templates/index.html      |  16 +-
+ .../internal/web/templates/notifications.html |   4 +-
+ portal/internal/web/templates/session.html    |   4 +-
+ 10 files changed, 316 insertions(+), 92 deletions(-)
+
+diff --git a/docs/browser-notifications-operations.md b/docs/browser-notifications-operations.md
+index 4c06a05cf8b51eb3ddb070b07233b975f1aac840..1374aa60ebeeabe5d2097b9ee759d1116154d4a4 100644
+--- a/docs/browser-notifications-operations.md
++++ b/docs/browser-notifications-operations.md
+@@ -59,12 +59,15 @@ unregister, resubscribe, VAPID reset or document reload is part of activation.
+ Existing loaded scripts in older tabs are not replaced; use new or refreshed
+ controls for current notification behavior.
+ 
+-The workspace menu and full panel share the same Enable/Disable actions and
+-browser-local sound choice. Loading or opening the controls does not request
+-permission or change subscriptions. The worker may check for an update. Permission and
+-subscription changes require an explicit action. Browser Disable leaves session
+-mute preferences, title attention and reservation markers intact. Incomplete cleanup remains retryable
+-from either surface.
++The **Notifications** checkbox in the workspace menu and the full-panel buttons
++use the same Enable/Disable actions. **Sound** and **Play sound** use the same
++browser-local choice. Loading the page or opening the menu does not request
++permission or change subscriptions. The worker may check for an update.
++Permission and subscription changes require an explicit action. Disabling
++notifications for this browser leaves per-session mute preferences, title
++attention and reservation markers intact. If cleanup is incomplete, use
++**Notification settings** to retry Disable. The menu shows a brief notice and a
++mixed checkbox.
+ 
+ The browser-local **Play sound** setting uses the existing attention database.
+ Checked leaves `silent` out of the display options; unchecked sets
+diff --git a/docs/browser-notifications.md b/docs/browser-notifications.md
+index 63be5376583ba3c6f2e9ed5fc05369d9af76cb78..36bde9438e689f2b018106d5fccac13ea777da2c 100644
+--- a/docs/browser-notifications.md
++++ b/docs/browser-notifications.md
+@@ -42,21 +42,24 @@ finished**. They contain no prompts, commands or excerpts. Session names may
+ appear on the lock screen. The browser vendor's push service handles encrypted
+ delivery and can observe delivery metadata.
+ 
+-The workspace menu on index and session pages provides browser-wide delivery
+-controls and **Play sound**. The same controls appear in session Settings; the
+-**Browser notifications** link opens the full panel with Test and guidance.
++The workspace menu on index and session pages has **Notifications** and **Sound**
++checkboxes. **Notification settings** opens the full panel with detailed status,
++Test and recovery controls, also available in session Settings. The
++**Notifications** checkbox shows confirmed browser setup. A mixed, disabled
++checkbox means setup is uncertain; open **Notification settings** to check it.
+ Opening the menu reads the current state without requesting permission or
+-changing a subscription. Enable and Disable require an explicit click. Browser
+-Disable applies across sessions in this browser, while title attention and
+-reservation markers keep updating. Per-session notification settings remain
+-unchanged and apply again after browser Enable. A provider-accepted message may
+-still arrive after Disable.
+-
+-**Play sound** applies to notifications from this portal in the current browser
++changing a subscription. Changing **Notifications** uses the same Enable or
++Disable action as the full panel. Disabling applies across sessions in this
++browser, while title attention and reservation markers keep updating. Per-session
++notification settings remain unchanged and apply again after browser Enable.
++A provider-accepted message may still arrive after Disable.
++
++The **Sound** checkbox in the menu controls the same setting as **Play sound** in
++settings. It applies to notifications from this portal in the current browser
+ profile, across sessions and tests. It defaults on when no choice has been
+-saved. Turn it off for visual-only notifications. When checked, the
+-browser uses its default sound behavior; it does not guarantee a sound. Browser
+-and system notification settings still apply. The control reports when the browser lacks
++saved. Turn it off for visual-only notifications. When checked, the browser uses
++its default sound behavior; it does not guarantee a sound. Browser and system
++notification settings still apply. The control reports when the browser lacks
+ native visual-only support or the worker update is unconfirmed.
+ 
+ The choice is saved only after browser storage confirms the write. Reopening
+@@ -70,7 +73,7 @@ already displayed notification, enable delivery or mute a session.
+ 
+ Use **Send test notification** after enabling. The server waits ten seconds so
+ you can switch to another tab or app before checking delivery. Open
+-the full panel from **Browser notifications** in the workspace menu or use
++the full panel from **Notification settings** in the workspace menu or use
+ session Settings. The test result distinguishes arrival in this browser, whether
+ the browser accepted or rejected the display request, and whether it retained a
+ matching notification record. None of these confirms appearance on your screen.
+diff --git a/portal/internal/web/attention_browser_test.cjs b/portal/internal/web/attention_browser_test.cjs
+index e3999a64435f1098a8942eaada05158a57e4fd05..c0d5e10a5a7073eff5418a6e2f60601d217309e0 100644
+--- a/portal/internal/web/attention_browser_test.cjs
++++ b/portal/internal/web/attention_browser_test.cjs
+@@ -181,6 +181,7 @@ const endpoint = 'https://fcm.googleapis.com/private-endpoint?exact=value';
+ const endpointDigest = require('node:crypto').createHash('sha256').update(endpoint).digest('hex');
+ async function notificationHarness(state, storage = new Map()) {
+   const controls = Object.fromEntries(['status', 'enable', 'disable', 'test'].map(name => [name, {disabled: false, addEventListener(type, callback) {this[type] = callback;}}]));
++  const menu = Object.fromEntries(['delivery', 'menu-error'].map(name => [name, {disabled: true, textContent: '', addEventListener(type, callback) {this[type] = callback;}}]));
+   const calls = [], listeners = {};
+   const subscription = {endpoint, options: state.keyMismatch ? {applicationServerKey: new Uint8Array([1]).buffer} : {},
+     toJSON: () => ({endpoint, keys: {p256dh: 'public', auth: 'auth'}, expirationTime: null}),
+@@ -200,7 +201,7 @@ async function notificationHarness(state, storage = new Map()) {
+   const addListener = service.addEventListener;
+   service.addEventListener = (name, callback) => {addListener(name, callback); listeners[name] = event => service.dispatch(name, event);};
+   const context = {document: {visibilityState: 'visible', addEventListener: (name, callback) => listeners[name] = callback,
+-    querySelectorAll: selector => [controls[selector.slice(19, -1)]].filter(Boolean), getElementById: () => null},
++    querySelectorAll: selector => [controls[selector.slice(19, -1)] || menu[selector.slice(19, -1)]].filter(Boolean), getElementById: () => null},
+     addEventListener: (name, callback) => listeners[name] = callback,
+     navigator: {serviceWorker: service},
+     Notification: {permission: 'granted', requestPermission: async () => {state.permissionCalls = (state.permissionCalls || 0) + 1; return 'granted';}},
+@@ -245,7 +246,7 @@ async function notificationHarness(state, storage = new Map()) {
+   vm.runInNewContext(source('browser-notifications.js'), context);
+   for (let i = 0; i < 30; i++) await Promise.resolve();
+   const flush = async () => {for (let i = 0; i < 50; i++) await Promise.resolve();};
+-  return {controls, calls, storage, listeners, context, registration, flush};
++  return {controls, menu, calls, storage, listeners, context, registration, flush};
+ }
+ 
+ test('lost registration reply, saved ID or changed key disable without registering again', async () => {
+@@ -529,24 +530,24 @@ function lifecycleTarget(fields = {}) {
+ async function feedbackHarness(storage = testStoreHarness(), options = {}) {
+   const controls = Object.fromEntries(['status','enable','disable','test','test-status','provider-status','worker-status','sound','sound-status'].map(name => [name,
+     {disabled: false, textContent: '', addEventListener(type, callback) {this[type] = callback;}}]));
+-  const menuControls = options.menu ? Object.fromEntries(Object.entries(controls).filter(([name]) => !['test', 'test-status', 'provider-status'].includes(name)).map(([name]) => [name,
+-    {disabled: false, textContent: '', addEventListener(type, callback) {this[type] = callback;}}])) : {};
+-  const listeners = {}, timers = new Map(), calls = [], saved = new Map([[browserKey, browserId]]);
++  const menuControls = options.menu ? Object.fromEntries(['delivery', 'sound', 'menu-error'].map(name => [name,
++    {disabled: true, textContent: '', addEventListener(type, callback) {this[type] = callback;}}])) : {};
++  const listeners = {}, timers = new Map(), calls = [], saved = new Map(options.off ? [] : [[browserKey, browserId]]);
+   let now = Date.now(), nextTimer = 0;
+-  const state = {descriptor: testDescriptor(now), registered: true, subscribed: true, workerVersion: options.workerVersion ?? 1, update: options.update, noReply: options.noReply};
++  const state = {descriptor: testDescriptor(now), registered: !options.off, subscribed: !options.off, available: options.available ?? true, workerVersion: options.workerVersion ?? 1, update: options.update, noReply: options.noReply};
+   const subscription = {endpoint, options: {}, toJSON: () => ({endpoint, keys: {p256dh: 'public', auth: 'auth'}}), unsubscribe: async () => {state.subscribed = false; return true;}};
+   const registration = lifecycleTarget({update: async () => {state.updateChecks = (state.updateChecks || 0) + 1; if (state.update) await state.update();},
+     active: lifecycleTarget({state: 'activated', postMessage(_message, ports) {state.probes = (state.probes || 0) + 1; if (!state.noReply) ports[0].reply({version: state.workerVersion});}}),
+     pushManager: {getSubscription: async () => state.subscribed ? subscription : null,
+       subscribe: async () => {state.subscribes = (state.subscribes || 0) + 1; state.subscribed = true; return subscription;}}});
+   if (options.waitingWorker) registration.waiting = lifecycleTarget({state: 'installed'});
+-  const service = lifecycleTarget({getRegistration: async () => registration, controller: options.uncontrolled ? null : registration.active,
++  const service = lifecycleTarget({getRegistration: async () => options.initialLookup ? options.initialLookup(registration) : options.noRegistration ? null : registration, controller: options.uncontrolled ? null : registration.active,
+     register: async () => {state.registrations = (state.registrations || 0) + 1; return registration;}, ready: Promise.resolve(registration)});
+   const addServiceListener = service.addEventListener;
+   service.addEventListener = (name, callback) => {addServiceListener(name, callback); listeners[name] = event => service.dispatch(name, event);};
+   const context = {document: {visibilityState: 'visible', getElementById: () => ({querySelector: selector => controls[selector.slice(19, -1) || 'status']}),
+     addEventListener: (name, callback) => listeners[name] = callback}, navigator: {serviceWorker: service}, addEventListener: (name, callback) => listeners[name] = callback,
+-    Date: class extends Date {static now() {return now;}}, Notification: {permission: 'granted', requestPermission: async () => {state.permissions = (state.permissions || 0) + 1; return 'granted';}, prototype: options.noSilent ? {} : {silent: false}}, PushManager: function() {}, isSecureContext: true,
++    Date: class extends Date {static now() {return now;}}, Notification: {permission: options.permission || 'granted', requestPermission: async () => {state.permissions = (state.permissions || 0) + 1; if (state.permissionReply) return state.permissionReply(); return 'granted';}, prototype: options.noSilent ? {} : {silent: false}}, PushManager: function() {}, isSecureContext: options.unsupported ? false : true,
+     workspaceAttentionStore: options.oldStore ? {} : storage.store, AbortController, Uint8Array, TextEncoder, atob, crypto: require('node:crypto').webcrypto,
+     MessageChannel: function() {this.port1 = {close() {}}; this.port2 = {reply: value => queueMicrotask(() => this.port1.onmessage({data: value}))};},
+     setTimeout(callback, delay) {const id = ++nextTimer; timers.set(id, {callback, at: now + delay}); return id;}, clearTimeout: id => timers.delete(id),
+@@ -555,7 +556,7 @@ async function feedbackHarness(storage = testStoreHarness(), options = {}) {
+       if (url.endsWith('/test') && state.testReply) return state.testReply();
+       if (url.endsWith('/disable')) state.registered = false;
+       if (url.endsWith('/register')) {state.registered = true; return {ok: true, json: async () => ({registrationId: browserId})};}
+-      return {ok: true, json: async () => url.endsWith('/test') ? {ok: true, test: options.oldServer ? null : state.descriptor} : {available: true, registered: state.registered, publicKey: 'Ag', result: 'provider_accepted'}};},
++      return {ok: true, json: async () => url.endsWith('/test') ? {ok: true, test: options.oldServer ? null : state.descriptor} : {available: state.available, registered: state.registered, publicKey: 'Ag', result: 'provider_accepted'}};},
+   };
+   context.document.querySelectorAll = selector => {
+     const name = selector.slice(19, -1);
+@@ -1132,7 +1133,7 @@ test('menu-only owner reads status on load/open without permission, subscription
+   assert.equal(h.timers.size, 0, 'menu does not resume panel Test polling');
+   storage.state.failed = true;
+   h.listeners.menutoggle({newState: 'open'}); await h.flush();
+-  assert.match(h.controls['sound-status'].textContent, /could not be read/);
++  assert.equal(h.controls['menu-error'].textContent, 'Could not read the sound setting.');
+   assert.equal(h.controls.sound.disabled, true);
+ });
+ 
+@@ -1142,8 +1143,8 @@ test('menu and panel share committed sound, action locks, cleanup and saved pref
+   assert.equal(menu.sound.checked, false); assert.equal(h.controls.sound.checked, false);
+   h.storage.state.holdCommit = true;
+   h.controls.sound.checked = true; const saving = h.controls.sound.change(); await h.flush();
+-  assert.equal(menu.sound.disabled, true); assert.equal(menu.enable.disabled, true); assert.equal(h.controls.test.disabled, true);
+-  const before = h.calls.length; await menu.disable.click(); assert.equal(h.calls.length, before, 'competing actions ignored during sound commit');
++  assert.equal(menu.sound.disabled, true); assert.equal(menu.delivery.disabled, true); assert.equal(h.controls.test.disabled, true);
++  const before = h.calls.length; menu.delivery.checked = false; await menu.delivery.change(); assert.equal(h.calls.length, before, 'competing actions ignored during sound commit');
+   h.storage.state.completion(); await saving; h.storage.state.holdCommit = false;
+   assert.equal(menu.sound.checked, true); assert.equal(h.controls.sound.checked, true);
+   menu.sound.checked = false; await menu.sound.change();
+@@ -1153,15 +1154,15 @@ test('menu and panel share committed sound, action locks, cleanup and saved pref
+   h.context.fetch = async (...args) => args[0].endsWith('/disable') ? new Promise(resolve => {
+     releases.push(async () => resolve(await fetch(...args))); if (releases.length === 2) started();
+   }) : fetch(...args);
+-  const disabling = menu.disable.click(); await startedDeleting;
++  menu.delivery.checked = false; const disabling = menu.delivery.change(); await startedDeleting;
+   assert.equal(h.controls.enable.disabled, true); assert.equal(menu.sound.disabled, true);
+-  await h.controls.disable.click(); await menu.enable.click();
++  await h.controls.disable.click(); menu.delivery.checked = true; await menu.delivery.change();
+   await Promise.all(releases.map(release => release())); await disabling;
+-  assert.equal(h.controls.status.textContent, menu.status.textContent); assert.match(menu.status.textContent, /^Disabled on this browser/);
++  assert.match(h.controls.status.textContent, /^Disabled on this browser/); assert.equal(menu.delivery.checked, false); assert.equal(menu.delivery.indeterminate, false);
+   assert.equal(await h.storage.store.readSound(), false);
+   h.context.fetch = fetch;
+-  await menu.enable.click();
+-  assert.equal(h.controls.status.textContent, menu.status.textContent); assert.match(menu.status.textContent, /^Enabled on this browser/);
++  menu.delivery.checked = true; await menu.delivery.change();
++  assert.match(h.controls.status.textContent, /^Enabled on this browser/); assert.equal(menu.delivery.checked, true);
+   assert.equal(h.state.permissions, 1); assert.equal(h.state.registrations, 1); assert.equal(h.state.subscribes, 1);
+   assert.equal(await h.storage.store.readSound(), false);
+ });
+@@ -1172,7 +1173,7 @@ test('cross-tab registration or cleanup revocation replaces every Enabled status
+     const h = await feedbackHarness(testStoreHarness(), {menu: true});
+     await h.controls.test.click(); await h.advance(2000);
+     assert.equal(h.controls.status.textContent, 'Enabled on this browser.');
+-    assert.equal(h.menuControls.status.textContent, h.controls.status.textContent);
++    assert.equal(h.menuControls.delivery.checked, true);
+     let finish, reads = 0;
+     h.context.fetch = () => {reads++; return new Promise((resolve, reject) => {finish = () => rejects ? reject(Error('retired read failed')) :
+       resolve({ok: true, json: async () => ({available: true, registered: true})});});};
+@@ -1180,22 +1181,22 @@ test('cross-tab registration or cleanup revocation replaces every Enabled status
+     assert.equal(reads, 1, 'a status observation is pending before revocation');
+     h.listeners.storage(invalidation); await h.flush();
+     const expected = 'Browser setup is incomplete. Disable it or enable notifications again.';
+-    assert.equal(h.controls.status.textContent, expected); assert.equal(h.menuControls.status.textContent, expected);
+-    assert.equal(h.controls.test.disabled, true); assert.equal(h.menuControls.disable.disabled, false);
++    assert.equal(h.controls.status.textContent, expected); assert.equal(h.menuControls['menu-error'].textContent, 'Notification setup needs attention.'); assert.equal(h.menuControls.delivery.indeterminate, true);
++    assert.equal(h.controls.test.disabled, true); assert.equal(h.controls.disable.disabled, false); assert.equal(h.menuControls.delivery.disabled, true);
+     assert.equal(h.controls['test-status'].textContent, '');
+     assert.equal(h.storage.records.get(h.state.descriptor.identity).testPending, undefined, 'revocation still cancels the exact saved check');
+     h.listeners.menutoggle({newState: 'open'}); h.listeners.visibilitychange(); h.listeners.pageshow(); await h.flush();
+     assert.equal(reads, 1, 'opening the menu cannot restart a retired observation');
+     finish(); await h.flush(); await h.advance(20000);
+-    assert.equal(h.controls.status.textContent, expected); assert.equal(h.menuControls.status.textContent, expected);
++    assert.equal(h.controls.status.textContent, expected); assert.equal(h.menuControls['menu-error'].textContent, 'Notification setup needs attention.'); assert.equal(h.menuControls.delivery.indeterminate, true);
+     assert.equal(reads, 1, 'late old completion cannot refresh, repair or resume');
+   }
+ });
+ 
+ test('global delivery off and silent preference do not stop actual title attention, reservations or focused acknowledgement', async () => {
+   const h = await feedbackHarness(testStoreHarness(), {menu: true, menuOnly: true});
+-  h.controls.sound.checked = false; await h.controls.sound.change(); await h.controls.disable.click();
+-  assert.match(h.controls.status.textContent, /^Disabled on this browser/);
++  h.controls.sound.checked = false; await h.controls.sound.change(); h.controls.delivery.checked = false; await h.controls.delivery.change();
++  assert.equal(h.controls.delivery.checked, false); assert.equal(h.controls.delivery.indeterminate, false);
+   let current = event(), focus = false, refresh;
+   const listeners = {}, acknowledgements = [];
+   h.context.document.body = {dataset: {session: 'example', sessionObservation: identity, rootThreadId: 'thread-1'}};
+@@ -1275,3 +1276,150 @@ test('rejected focus or a client closed after enumeration never retries by openi
+     assert.equal(focused, 1); assert.equal(h.calls.length, 0);
+   }
+ });
++
++
++test('compact menu initializes without sinks and distinguishes confirmed on/off, blocked and mixed observations', async () => {
++  for (const [options, checked, mixed, disabled, message] of [
++    [{}, true, false, false, ''],
++    [{off: true, noRegistration: true}, false, false, false, ''],
++    [{off: true, noRegistration: true, permission: 'denied'}, false, false, true, 'Notifications are blocked.'],
++    [{off: true, noRegistration: true, available: false}, false, false, true, 'Notification delivery is unavailable.'],
++    [{unsupported: true}, false, true, true, 'Notifications are unavailable here.'],
++  ]) {
++    const h = await feedbackHarness(testStoreHarness(), {...options, menu: true, menuOnly: true});
++    assert.equal(h.controls.status, undefined); assert.equal(h.controls.enable, undefined); assert.equal(h.controls.disable, undefined);
++    assert.equal(h.controls.delivery.checked, checked); assert.equal(h.controls.delivery.indeterminate, mixed); assert.equal(h.controls.delivery.disabled, disabled);
++    assert.equal(h.controls['menu-error'].textContent, message); assert.equal(h.controls['menu-error'].hidden, !message);
++    assert.equal(h.calls.some(call => call.config.method), false); assert.equal(h.state.permissions || 0, 0);
++    if (options.off) assert.equal(h.controls.sound.disabled, false, 'Sound is independent of delivery');
++  }
++  let releaseInitial;
++  const initial = await feedbackHarness(testStoreHarness(), {menu: true, menuOnly: true,
++    initialLookup: registration => new Promise(resolve => {releaseInitial = () => resolve(registration);})});
++  assert.equal(initial.controls.delivery.indeterminate, true); assert.equal(initial.controls.delivery.disabled, true);
++  assert.equal(initial.controls['menu-error'].textContent, '', 'initial observation is not a failure');
++  releaseInitial(); await initial.flush(); assert.equal(initial.controls.delivery.checked, true);
++  const h = await feedbackHarness(testStoreHarness(), {menu: true, menuOnly: true});
++  h.context.fetch = async () => {throw Error('private status canary');};
++  h.listeners.menutoggle({newState: 'open'}); await h.flush();
++  assert.equal(h.controls.delivery.indeterminate, true); assert.equal(h.controls.delivery.disabled, true);
++  assert.equal(h.controls['menu-error'].textContent, 'Could not check notifications.');
++  assert.equal(h.controls['menu-error'].textContent.includes('canary'), false);
++});
++
++test('compact toggle restores confirmed values immediately during delayed Disable and Enable and blocks competing actions', async () => {
++  const h = await feedbackHarness(testStoreHarness(), {menu: true}), toggle = h.menuControls.delivery;
++  const fetch = h.context.fetch, releases = []; let deleting;
++  const started = new Promise(resolve => {deleting = resolve;});
++  h.context.fetch = async (...args) => args[0].endsWith('/disable') ? new Promise(resolve => {
++    releases.push(async () => resolve(await fetch(...args))); if (releases.length === 2) deleting();
++  }) : fetch(...args);
++  toggle.checked = false; const disabling = toggle.change();
++  assert.equal(toggle.checked, true); assert.equal(toggle.disabled, true); assert.equal(toggle.indeterminate, false);
++  assert.equal(h.controls.enable.disabled, true); assert.equal(h.menuControls.sound.disabled, true);
++  toggle.checked = true; await toggle.change();
++  await started; await Promise.all(releases.map(release => release())); await disabling;
++  assert.equal(toggle.checked, false); assert.equal(toggle.disabled, false); assert.equal(toggle.indeterminate, false);
++  assert.equal(h.menuControls['menu-error'].textContent, '');
++  let permit;
++  h.context.fetch = async (...args) => args[0].endsWith('/register') ? new Promise(resolve => {permit = async () => resolve(await fetch(...args));}) : fetch(...args);
++  toggle.checked = true; const enabling = toggle.change(); await h.flush();
++  assert.equal(toggle.checked, false); assert.equal(toggle.disabled, true); assert.equal(h.controls.disable.disabled, true);
++  const count = h.state.permissions; await h.controls.enable.click(); assert.equal(h.state.permissions, count);
++  await permit(); await enabling;
++  assert.equal(toggle.checked, true); assert.equal(toggle.disabled, false); assert.equal(h.menuControls['menu-error'].textContent, '');
++});
++
++test('compact cleanup stays mixed for failed current-digest or old-ID removal and only full panel retry can confirm off', async () => {
++  for (const failSelector of ['registrationId', 'endpointDigest']) {
++    const replacementId = 'e'.repeat(64);
++    const state = {subscribed: true, registered: true, replacementId, failSelector,
++      serverRecords: new Map([[browserId, 'https://fcm.googleapis.com/old-endpoint'], [replacementId, endpoint]]), outbox: new Set([browserId, replacementId])};
++    const h = await notificationHarness(state, new Map([[browserKey, browserId]]));
++    h.menu.delivery.checked = false; await h.menu.delivery.change();
++    assert.equal(state.subscribed, false); assert.equal(state.serverRecords.size, 1); assert.equal(state.outbox.size, 1);
++    assert.equal(h.menu.delivery.indeterminate, true); assert.equal(h.menu.delivery.disabled, true);
++    assert.equal(h.menu['menu-error'].textContent, 'Notification setup needs attention.');
++    assert.equal(h.controls.disable.disabled, false, 'detailed recovery remains available');
++    state.failSelector = null; await h.controls.disable.click();
++    assert.equal(state.serverRecords.size, 0); assert.equal(state.outbox.size, 0);
++    assert.equal(h.menu.delivery.checked, false); assert.equal(h.menu.delivery.indeterminate, false);
++  }
++  const h = await notificationHarness({subscribed: true, registered: true, localFailure: true}, new Map([[browserKey, browserId]]));
++  h.menu.delivery.checked = false; await h.menu.delivery.change();
++  assert.equal(h.menu.delivery.indeterminate, true); assert.equal(h.menu.delivery.disabled, true);
++  assert.equal(h.controls.disable.disabled, false);
++});
++
++test('compact projection cannot enable from pending, contradictory, stale or retired observations', async () => {
++  const h = await feedbackHarness(testStoreHarness(), {menu: true}), toggle = h.menuControls.delivery;
++  const fetch = h.context.fetch, pending = [];
++  h.context.fetch = () => new Promise((resolve, reject) => pending.push({resolve, reject}));
++  h.listeners.menutoggle({newState: 'open'}); await h.flush();
++  assert.equal(toggle.disabled, true, 'pending GET cannot authorize a stale action');
++  const permissions = h.state.permissions || 0; toggle.checked = false; await toggle.change();
++  assert.equal(toggle.checked, true); assert.equal(h.state.permissions || 0, permissions);
++  h.listeners.menutoggle({newState: 'open'}); await h.flush();
++  pending[1].resolve({ok: true, json: async () => ({available: true, registered: false})}); await h.flush();
++  assert.equal(toggle.indeterminate, true, 'local subscription plus absent server registration is incomplete');
++  assert.equal(h.menuControls['menu-error'].textContent, 'Notification setup needs attention.');
++  pending[0].resolve({ok: true, json: async () => ({available: true, registered: true})}); await h.flush();
++  assert.equal(toggle.indeterminate, true, 'old success cannot replace a newer contradictory observation');
++  h.context.fetch = fetch;
++  h.listeners.storage({key: browserKey, newValue: null}); await h.flush();
++  h.listeners.menutoggle({newState: 'open'}); await h.flush();
++  assert.equal(toggle.indeterminate, true); assert.equal(toggle.disabled, true);
++});
++
++test('compact notices use domain priority and clear only on that domain current success, without parsing detailed text', async () => {
++  const h = await feedbackHarness(testStoreHarness(), {menu: true});
++  h.storage.state.failed = true; h.listeners.menutoggle({newState: 'open'}); await h.flush();
++  assert.equal(h.menuControls['menu-error'].textContent, 'Could not read the sound setting.');
++  h.listeners.storage({key: browserKey, newValue: null}); await h.flush();
++  assert.equal(h.menuControls['menu-error'].textContent, 'Notification setup needs attention.');
++  h.storage.state.failed = false; h.menuControls.sound.checked = false; await h.menuControls.sound.change();
++  assert.equal(h.menuControls['menu-error'].textContent, 'Notification setup needs attention.', 'sound success cannot erase delivery uncertainty');
++  const clean = await feedbackHarness(testStoreHarness(), {menu: true});
++  clean.storage.state.commitFailure = true; clean.menuControls.sound.checked = false; await clean.menuControls.sound.change();
++  assert.equal(clean.menuControls['menu-error'].textContent, 'Could not save the sound setting.');
++  clean.controls.status.textContent = 'arbitrary backend/private status';
++  clean.listeners.controllerchange(); await clean.flush();
++  assert.equal(clean.menuControls['menu-error'].textContent, 'Could not save the sound setting.', 'delivery refresh alone cannot clear sound error');
++  clean.storage.state.commitFailure = false;
++  clean.listeners['session-section-change']({detail: 'settings'}); await clean.flush();
++  assert.equal(clean.menuControls['menu-error'].textContent, '');
++  const worker = await feedbackHarness(testStoreHarness(), {menu: true, waitingWorker: true});
++  assert.equal(worker.menuControls['menu-error'].textContent, '', 'in-progress activation is not an error');
++  await worker.advance(10001);
++  assert.equal(worker.menuControls['menu-error'].textContent, 'Notification update unconfirmed.');
++  const unsupported = await feedbackHarness(testStoreHarness(), {menu: true, noSilent: true});
++  assert.equal(unsupported.menuControls['menu-error'].textContent, 'Sound control is unavailable.');
++});
++
++test('late delivery action results cannot certify a retired compact checkbox or clear its error', async () => {
++  const h = await feedbackHarness(testStoreHarness(), {menu: true, off: true}), toggle = h.menuControls.delivery;
++  const fetch = h.context.fetch; let release;
++  h.context.fetch = async (...args) => args[0].endsWith('/register') ? new Promise(resolve => {release = async () => resolve(await fetch(...args));}) : fetch(...args);
++  toggle.checked = true; const action = toggle.change(); await h.flush();
++  h.listeners.storage({key: browserKey, newValue: 'f'.repeat(64)}); await h.flush();
++  await release(); await action; await h.flush();
++  assert.equal(toggle.indeterminate, true); assert.equal(toggle.disabled, true);
++  assert.equal(h.menuControls['menu-error'].textContent, 'Notification setup needs attention.');
++});
++
++
++test('compact action errors stay finite and current retry success clears only its own failure', async () => {
++  const h = await feedbackHarness(testStoreHarness(), {menu: true, off: true}), toggle = h.menuControls.delivery;
++  h.state.permissionReply = async () => {throw Error('private permission failure canary');};
++  toggle.checked = true; await toggle.change();
++  assert.equal(toggle.checked, false); assert.equal(toggle.indeterminate, false);
++  assert.equal(h.menuControls['menu-error'].textContent, 'Could not update notifications.');
++  delete h.state.permissionReply;
++  const enable = h.controls.enable.click(); await enable;
++  assert.equal(toggle.checked, true); assert.equal(h.menuControls['menu-error'].textContent, '');
++  const blocked = await feedbackHarness(testStoreHarness(), {menu: true, off: true});
++  blocked.state.permissionReply = async () => 'denied';
++  blocked.menuControls.delivery.checked = true; await blocked.menuControls.delivery.change();
++  assert.equal(blocked.menuControls['menu-error'].textContent, 'Notifications are blocked.');
++  assert.equal(blocked.menuControls.delivery.checked, false);
++});
+diff --git a/portal/internal/web/notifications_browser_test.cjs b/portal/internal/web/notifications_browser_test.cjs
+index 9e9a3c678d9a00f44ed739fa5c27384884e093a3..a3d4797f7927416ccdd1760ee7cc88ea2f816522 100644
+--- a/portal/internal/web/notifications_browser_test.cjs
++++ b/portal/internal/web/notifications_browser_test.cjs
+@@ -302,18 +302,23 @@ async function checkWorkerUpgrade(browser, engine) {
+       await page.keyboard.press("Escape"); await expect(toggle).toBeFocused();
+       await toggle.click();
+       const menu = page.locator("#sidebar-menu");
+-      await expect(menu.locator("[data-notification-status]")).toHaveText("Disabled on this browser.");
++      const menuDelivery = menu.locator("[data-notification-delivery]");
++      await expect(menuDelivery).toBeEnabled(); await expect(menuDelivery).not.toBeChecked();
++      assert.equal(await menuDelivery.evaluate(element => element.indeterminate), false, "menu confirms initial browser setup off");
++      await expect(menu.locator("[data-notification-menu-error]")).toBeHidden();
++      await expect(menu.locator("input[type=checkbox]")).toHaveCount(2);
++      await expect(menu.locator("button, [data-notification-status], [data-notification-worker-status], [data-notification-sound-status]")).toHaveCount(0);
+       const menuSound = menu.locator("[data-notification-sound]");
+       await expect(menuSound).toBeEnabled(); await expect(menuSound).toBeChecked();
+       await menuSound.click();
+       await expect.poll(() => page.evaluate(() => workspaceAttentionStore.readSound())).toBe(false);
+       await expect(menuSound).toBeEnabled(); await expect(menuSound).not.toBeChecked();
+       await page.setViewportSize({width: 375, height: 812});
+-      for (const button of await menu.locator("button").all()) {
+-        const bounds = await button.boundingBox();
++      for (const row of await menu.locator(".checkbox, .menu-notifications > a").all()) {
++        const bounds = await row.boundingBox();
+         assert.ok(bounds && bounds.x >= 0 && bounds.x + bounds.width <= 375, "quick controls fit a narrow menu");
+       }
+-      await page.getByRole("link", {name: "Browser notifications", exact: true}).click();
++      await page.getByRole("link", {name: "Notification settings", exact: true}).click();
+       await page.waitForURL("**/browser-notifications");
+       await expect(page.locator("#browser-notifications [data-notification-status]")).toHaveText("Disabled on this browser.");
+       await expect(page.locator("#browser-notifications [data-notification-sound]")).not.toBeChecked();
+@@ -326,7 +331,7 @@ async function checkWorkerUpgrade(browser, engine) {
+       await page.getByRole("link", {name: "Back to workspace", exact: true}).click();
+       await expect(page.locator("#browser-notifications")).toHaveCount(0);
+       await toggle.click();
+-      await page.getByRole("link", {name: "Browser notifications", exact: true}).click();
++      await page.getByRole("link", {name: "Notification settings", exact: true}).click();
+       await expect(page.locator("#browser-notifications [data-notification-status]")).toHaveText("Disabled on this browser.");
+       await page.goto(`${base}/example/#codex`);
+       await expect(page.locator("#browser-notifications")).toBeHidden();
+@@ -387,10 +392,12 @@ async function checkWorkerUpgrade(browser, engine) {
+         const registerReply = page.waitForResponse(response => new URL(response.url()).pathname === "/api/browser-notifications/register" && response.request().method() === "POST");
+         trace.record({event: "enable_click"});
+         await toggle.click();
+-        await menu.locator("[data-notification-enable]").click();
++        await expect(menuDelivery).toBeEnabled(); await expect(menuDelivery).not.toBeChecked();
++        await menuDelivery.click();
+         const registerResponse = await registerReply;
+         assert.ok(registerResponse.status() >= 200 && registerResponse.status() < 300, "register response must succeed");
+         trace.record({event: "register_accepted"});
++        await expect(menuDelivery).toBeEnabled(); await expect(menuDelivery).toBeChecked();
+         await page.keyboard.press("Escape");
+         await expect(page.locator("#browser-notifications [data-notification-status]")).toContainText("Enabled on this browser");
+         const worker = context.serviceWorkers()[0]; assert.ok(worker, "real root service worker registered through CSP");
+@@ -420,7 +427,10 @@ async function checkWorkerUpgrade(browser, engine) {
+         const reopened = await context.newPage(); await reopened.goto(`${base}/example/#settings`);
+         await expect(reopened.locator("#browser-notifications [data-notification-disable]")).toBeEnabled();
+         await reopened.getByRole("button", {name: "Workspace menu", exact: true}).click();
+-        await reopened.locator("#sidebar-menu [data-notification-disable]").click();
++        const reopenedDelivery = reopened.locator("#sidebar-menu [data-notification-delivery]");
++        await expect(reopenedDelivery).toBeEnabled(); await expect(reopenedDelivery).toBeChecked();
++        await reopenedDelivery.click();
++        await expect(reopenedDelivery).toBeEnabled(); await expect(reopenedDelivery).not.toBeChecked();
+         await expect(reopened.locator("#browser-notifications [data-notification-status]")).toContainText("Disabled on this browser");
+       }
+       assert.deepEqual(errors, [], `${engine.name()} loaded real notification UI without script errors`);
+diff --git a/portal/internal/web/notifications_test.go b/portal/internal/web/notifications_test.go
+index e5c97f58ace8f40baeace6e57c52396594a44493..d4eafad83c68fad56a541ab1b869c0dca881b384 100644
+--- a/portal/internal/web/notifications_test.go
++++ b/portal/internal/web/notifications_test.go
+@@ -76,23 +76,34 @@ func TestNotificationsPageIsSeparateFromIndex(t *testing.T) {
+ 	if !strings.Contains(index.Body.String(), `name="browserNotificationsEnabled" type="checkbox" checked`) {
+ 		t.Fatal("new-session notification preference must remain available")
+ 	}
+-	for _, required := range []string{"data-notification-enable", "data-notification-disable", "data-notification-sound", `aria-describedby="menu-notification-sound-hint menu-notification-sound-status"`, `src="/static/browser-notifications.js?v=4" defer`} {
+-		if !strings.Contains(index.Body.String(), required) {
+-			t.Fatalf("index menu lacks %s", required)
++	for _, required := range []string{"data-notification-delivery", "data-notification-sound", `aria-describedby="menu-notification-error"`, `data-notification-menu-error class="muted" role="status" hidden`, "> Notifications</label>", "> Sound</label>", `href="/browser-notifications">Notification settings</a>`} {
++		if !strings.Contains(menu, required) {
++			t.Fatalf("compact menu lacks %s", required)
+ 		}
+ 	}
++	if strings.Count(menu, `type="checkbox"`) != 2 {
++		t.Fatal("compact notification menu must have exactly two checkbox rows")
++	}
++	for _, removed := range []string{"data-notification-enable", "data-notification-disable", "data-notification-status", "data-notification-worker-status", "data-notification-sound-status", "<button", "Checking", "Page title", "Turn off", "Play sound"} {
++		if strings.Contains(menu, removed) {
++			t.Fatalf("compact menu contains detailed controls or help: %s", removed)
++		}
++	}
++	if strings.Count(index.Body.String(), `src="/static/browser-notifications.js?v=5" defer`) != 1 {
++		t.Fatal("index must initialize one notification owner")
++	}
+ 	page := httptest.NewRecorder()
+ 	server.Handler().ServeHTTP(page, httptest.NewRequest(http.MethodGet, "/browser-notifications", nil))
+ 	if page.Code != http.StatusOK {
+ 		t.Fatalf("notification page: %d: %s", page.Code, page.Body.String())
+ 	}
+-	for _, required := range []string{`id="browser-notifications"`, "data-notification-enable", "data-notification-test", "data-notification-disable", `type="checkbox" data-notification-sound aria-describedby="notification-sound-hint notification-sound-status" disabled`, `data-notification-sound-status role="status"`, `src="/static/browser-notifications.js?v=4" defer`, `href="/"`} {
++	for _, required := range []string{`id="browser-notifications"`, "data-notification-enable", "data-notification-test", "data-notification-disable", `type="checkbox" data-notification-sound aria-describedby="notification-sound-hint notification-sound-status" disabled`, `data-notification-sound-status role="status"`, `src="/static/browser-notifications.js?v=5" defer`, `href="/"`} {
+ 		if !strings.Contains(page.Body.String(), required) {
+ 			t.Fatalf("notification page lacks %s", required)
+ 		}
+ 	}
+ 	if strings.Index(page.Body.String(), `src="/static/session-attention-store.js?v=3"`) < 0 ||
+-		strings.Index(page.Body.String(), `src="/static/session-attention-store.js?v=3"`) > strings.Index(page.Body.String(), `src="/static/browser-notifications.js?v=4"`) {
++		strings.Index(page.Body.String(), `src="/static/session-attention-store.js?v=3"`) > strings.Index(page.Body.String(), `src="/static/browser-notifications.js?v=5"`) {
+ 		t.Fatal("notification page must initialize the shared store before the client")
+ 	}
+ }
+diff --git a/portal/internal/web/static/browser-notifications.js b/portal/internal/web/static/browser-notifications.js
+index d2f8ac2951c6b51399d4990c0aac91a2750072f1..3ce2ef8bed82ca464af5482d2c39e85e5cc7b8b7 100644
+--- a/portal/internal/web/static/browser-notifications.js
++++ b/portal/internal/web/static/browser-notifications.js
+@@ -4,9 +4,29 @@
+   const cleanupKey = `${key}.cleanup`;
+   const elements = name => [...document.querySelectorAll(`[data-notification-${name}]`)];
+   const statuses = elements("status"), enables = elements("enable"), disables = elements("disable"), tests = elements("test");
+-  if (!statuses.length) return;
+   const testStatus = elements("test-status"), providerStatus = elements("provider-status"), workerStatus = elements("worker-status");
+   const soundControls = elements("sound"), soundStatus = elements("sound-status");
++  const deliveryControls = elements("delivery"), menuErrors = elements("menu-error");
++  if (!statuses.length && !deliveryControls.length && !soundControls.length) return;
++  let menuValue = null, menuReading = false, menuAvailable = null;
++  let deliveryError = null, soundError = null, workerError = false;
++  const menuMessages = {
++    setup: "Notification setup needs attention.", read: "Could not check notifications.",
++    blocked: "Notifications are blocked.", unsupported: "Notifications are unavailable here.",
++    unavailable: "Notification delivery is unavailable.", action: "Could not update notifications.",
++    soundRead: "Could not read the sound setting.", soundSave: "Could not save the sound setting.",
++    soundUnsupported: "Sound control is unavailable.", worker: "Notification update unconfirmed.",
++  };
++  const renderMenu = () => {
++    deliveryControls.forEach(control => {
++      control.checked = menuValue === true;
++      control.indeterminate = menuValue === null;
++      control.disabled = busy || soundBusy || menuReading || pageClosed || observationRetired || menuValue === null ||
++        !supported || Notification.permission === "denied" || menuAvailable === false;
++    });
++    const problem = deliveryError || (!silentSupported ? "soundUnsupported" : soundError) || (workerError ? "worker" : null);
++    setText(menuErrors, menuMessages[problem] || "");
++  };
+   const setStatus = text => setText(statuses, text);
+   const store = globalThis.workspaceAttentionStore;
+   const silentSupported = Boolean(globalThis.Notification?.prototype && "silent" in Notification.prototype);
+@@ -21,6 +41,7 @@
+       "The sound setting could not be read. The browser will be asked to show notifications without sound." : !soundReady ?
+       "The notification update is unconfirmed. This sound setting may not take effect yet." : "";
+     setText(soundStatus, text);
++    renderMenu();
+   };
+   async function refreshSound() {
+     if (!soundControls.length || soundBusy || pageClosed) return;
+@@ -28,21 +49,21 @@
+     let value;
+     try { value = await store.readSound(); } catch (_) {}
+     if (generation !== soundGeneration || pageClosed || soundBusy) return;
+-    savedSound = value; soundFailed = false; renderSound();
++    savedSound = value; soundFailed = false; soundError = typeof value === "boolean" ? null : "soundRead"; renderSound();
+   }
+   soundControls.forEach(soundControl => soundControl.addEventListener("change", async () => {
+     if (busy || soundBusy || pageClosed || !silentSupported) return;
+     const generation = ++soundGeneration, selected = soundControl.checked;
+-    soundBusy = true; buttons();
++    soundError = null; soundBusy = true; buttons();
+     try {
+       const value = await store.writeSound(selected);
+-      if (generation === soundGeneration && !pageClosed) {savedSound = value; soundFailed = false;}
++      if (generation === soundGeneration && !pageClosed) {savedSound = value; soundFailed = false; soundError = null;}
+     } catch (_) {
+       // A timeout may leave an uncertain commit. Re-read rather than presenting
+       // the attempted value as saved; the helper aborts overdue writes.
+       let value;
+       try {value = await store.readSound();} catch (_) {}
+-      if (generation === soundGeneration && !pageClosed) {savedSound = value; soundFailed = true;}
++      if (generation === soundGeneration && !pageClosed) {savedSound = value; soundFailed = true; soundError = "soundSave";}
+     } finally {
+       soundBusy = false;
+       if (!pageClosed) {
+@@ -56,6 +77,7 @@
+   const updateUnconfirmed = "The notification update could not be confirmed. Refresh this page to try again. Test results may be limited.";
+   const invalidateRefresh = (action = false) => {
+     refreshGeneration++;
++    if (action) menuReading = false;
+     if (cancelReadiness) {
+       soundReady = false; renderSound();
+       cancelReadiness();
+@@ -93,7 +115,7 @@
+     const generation = refreshGeneration, deadline = Date.now() + 10000;
+     const valid = () => current() && generation === refreshGeneration && !pageClosed && !observationRetired;
+     if (!valid()) return;
+-    soundReady = false; renderSound();
++    workerError = false; soundReady = false; renderSound();
+     setText(workerStatus, "Updating browser notifications… You can keep your tabs open.");
+     if (update && !workerUpdate) workerUpdate = Promise.resolve().then(() => registration.update());
+     const activated = await new Promise(resolve => {
+@@ -128,9 +150,10 @@
+       inspect();
+     });
+     if (!valid()) return;
+-    if (!activated) {setText(workerStatus, updateUnconfirmed); return;}
++    if (!activated) {workerError = true; renderMenu(); setText(workerStatus, updateUnconfirmed); return;}
+     const controller = navigator.serviceWorker.controller;
+     if (!globalThis.MessageChannel) {
++      workerError = true; renderMenu();
+       setText(workerStatus, "Detailed test results are unavailable. Refresh this page to check for a notification update.");
+       return;
+     }
+@@ -150,7 +173,7 @@
+       catch (_) {finish(false);}
+     });
+     if (valid() && controller === navigator.serviceWorker.controller && controller === registration.active && !registration.waiting && !registration.installing) {
+-      soundReady = supported; renderSound();
++      workerError = !supported; soundReady = supported; renderSound();
+       setText(workerStatus, supported ? "" : "Detailed test results are unavailable. Refresh this page to check for a notification update.");
+     }
+   }
+@@ -273,7 +296,8 @@
+     invalidateRefresh();
+     const generation = refreshGeneration, identity = registrationId;
+     const current = () => generation === refreshGeneration && identity === registrationId && !busy && !pageClosed && !observationRetired;
+-    if (!supported) { setStatus("This browser build does not support background Web Push. Use a browser with Push API support."); buttons(); return; }
++    menuReading = true; renderMenu();
++    if (!supported) { menuReading = false; menuValue = null; deliveryError = "unsupported"; setStatus("This browser build does not support background Web Push. Use a browser with Push API support."); buttons(); return; }
+     let observedSubscription = localSubscription, observedKnown = localKnown;
+     try {
+       const local = await navigator.serviceWorker.getRegistration("/");
+@@ -283,8 +307,13 @@
+       const state = await api(`?registrationId=${encodeURIComponent(identity)}`);
+       if (!current()) return;
+       localSubscription = observedSubscription; localKnown = observedKnown;
+-      setText(providerStatus, lastProvider(state.result) ? `Last push-service result; it may be from another notification: ${lastProvider(state.result)}` : "");
++      menuAvailable = state.available;
++      const off = !state.registered && localKnown && !localSubscription && !registrationId && !pendingCleanup;
+       registered = Boolean(!pendingCleanup && state.registered && localSubscription && Notification.permission === "granted");
++      menuValue = registered && state.available ? true : off ? false : null;
++      deliveryError = pendingCleanup || (!off && !registered) ? "setup" : Notification.permission === "denied" ? "blocked" : !state.available ? "unavailable" : null;
++      menuReading = false;
++      setText(providerStatus, lastProvider(state.result) ? `Last push-service result; it may be from another notification: ${lastProvider(state.result)}` : "");
+       setStatus(pendingCleanup ? cleanupStatus() : localSubscription && !registered ? incomplete : Notification.permission === "denied" ? "Notifications are blocked. Change this site's notification permission in your browser settings." :
+         !state.available ? "Notification delivery is disabled on the server." : state.result === "expired" ? "The browser subscription expired. Enable notifications again." : registered ?
+         "Enabled on this browser." : "Disabled on this browser.");
+@@ -292,22 +321,26 @@
+     } catch (error) {
+       if (!current()) return;
+       localSubscription = observedSubscription; localKnown = observedKnown;
+-      registered = false; setStatus(pendingCleanup ? cleanupStatus() : localSubscription ? incomplete : error.message);
++      registered = false; menuValue = null; menuReading = false; deliveryError = pendingCleanup ? "setup" : "read"; setStatus(pendingCleanup ? cleanupStatus() : localSubscription ? incomplete : error.message);
+     }
+     if (current()) buttons();
+   }
+-  enables.forEach(control => control.addEventListener("click", async () => {
++  async function enableNotifications() {
+     if (soundBusy || busy || !supported || Notification.permission === "denied") return;
+     readCleanup();
+-    if (pendingCleanup) { setStatus(cleanupStatus()); buttons(); return; }
++    if (pendingCleanup) { menuValue = null; deliveryError = "setup"; setStatus(cleanupStatus()); buttons(); return; }
++    deliveryError = null; menuReading = false;
+     invalidateRefresh(true); observationRetired = false;
++    const generation = refreshGeneration, currentAction = () => generation === refreshGeneration && !pageClosed && !observationRetired;
+     cancelTest();
+     busy = true; buttons();
+     try {
+       const permission = await Notification.requestPermission();
++      if (currentAction() && permission !== "granted") deliveryError = permission === "denied" ? "blocked" : "action";
+       if (permission !== "granted") throw new Error(permission === "denied" ? "Notifications are blocked. Change this site's notification permission in your browser settings." : "Notification permission was not granted.");
+       const state = await api("");
+-      if (!state.available) throw new Error("Notification delivery is disabled on the server.");
++      if (currentAction()) menuAvailable = state.available;
++      if (!state.available) {if (currentAction()) deliveryError = "unavailable"; throw new Error("Notification delivery is disabled on the server.");}
+       const registration = await navigator.serviceWorker.register("/notification-worker.js", {scope: "/", updateViaCache: "none"});
+       await navigator.serviceWorker.ready;
+       let subscription = await registration.pushManager.getSubscription();
+@@ -332,14 +365,23 @@
+       localStorage.setItem(key, registrationId);
+       if (localStorage.getItem(key) !== registrationId) throw new Error("Browser registration could not be saved. Try enabling notifications again.");
+       if (replacement && !clearCleanup()) throw new Error();
++      if (currentAction()) {menuValue = true; deliveryError = null;}
+       registered = true; setStatus("Enabled on this browser. Send a test notification to check delivery.");
+       void workerReadiness(registration, true);
+-    } catch (error) { registered = false; setStatus(pendingCleanup ? disablingIncomplete : localSubscription ? incomplete : `Registration failed: ${error.message}`); }
++    } catch (error) {
++      registered = false;
++      if (currentAction()) {
++        menuValue = localKnown && !localSubscription && !registrationId && !pendingCleanup ? false : null;
++        deliveryError = pendingCleanup || localSubscription || registrationId ? "setup" : deliveryError || "action";
++      }
++      setStatus(pendingCleanup ? disablingIncomplete : localSubscription ? incomplete : `Registration failed: ${error.message}`); }
+     finally { busy = false; buttons(); }
+-  }));
+-  disables.forEach(control => control.addEventListener("click", async () => {
++  }
++  async function disableNotifications() {
+     if (soundBusy || busy) return;
++    deliveryError = null; menuReading = false;
+     invalidateRefresh(true);
++    const generation = refreshGeneration, currentAction = () => generation === refreshGeneration && !pageClosed && !observationRetired;
+     cancelTest();
+     busy = true; registered = false; buttons();
+     let registration = null, subscription = localSubscription, selector = null, currentBound = false;
+@@ -382,9 +424,21 @@
+     } catch (_) {}
+     if (serverAbsent && localKnown && !localSubscription && !registrationId) clearCleanup();
+     const complete = serverAbsent && localKnown && !localSubscription && !pendingCleanup && !registrationId;
++    if (currentAction()) {menuValue = complete ? false : null; deliveryError = complete ? null : "setup";}
+     setStatus(complete ? "Disabled on this browser. Site permission remains in your browser settings." :
+       localKnown && !localSubscription && !serverAbsent ? serverPending : disablingIncomplete);
+     busy = false; buttons();
++  }
++  enables.forEach(control => control.addEventListener("click", enableNotifications));
++  disables.forEach(control => control.addEventListener("click", disableNotifications));
++  deliveryControls.forEach(control => control.addEventListener("change", async () => {
++    const selected = control.checked, allowed = !control.disabled && !menuReading && !busy && !soundBusy && !pageClosed && !observationRetired;
++    // Native inputs toggle before change. Restore the last confirmed value
++    // synchronously; only the existing action's outcome can certify a new one.
++    buttons();
++    if (!allowed || menuValue === null || selected === menuValue) return;
++    if (selected) await enableNotifications();
++    else await disableNotifications();
+   }));
+   tests.forEach(control => control.addEventListener("click", async () => {
+     if (soundBusy || busy || !registered) return;
+@@ -430,7 +484,7 @@
+   globalThis.addEventListener?.("storage", event => {
+     if ((event.key === key && event.newValue !== registrationId) || (event.key === cleanupKey && event.newValue)) {
+       invalidateRefresh(); observationRetired = true;
+-      cancelTest(); registered = false; setStatus(incomplete); buttons();
++      cancelTest(); registered = false; menuValue = null; menuReading = false; deliveryError = "setup"; setStatus(incomplete); buttons();
+     }
+   });
+   document.addEventListener?.("session-section-change", event => { if (event.detail === "settings") void refreshSound(); });
+diff --git a/portal/internal/web/static/style.css b/portal/internal/web/static/style.css
+index 139dab59614ab0c1fd200b5ced0441a9ea0ca334..f524e98568d641077ae3fce62e8adeb5765da691 100644
+--- a/portal/internal/web/static/style.css
++++ b/portal/internal/web/static/style.css
+@@ -365,11 +365,10 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
+ .sidebar-menu-toggle { flex: none; padding: .25rem .6rem; font-size: 1.4rem; line-height: 1; }
+ .sidebar-menu[popover] { max-height: calc(100vh - 1rem); overflow-y: auto; position: fixed; inset: auto; margin: 0; padding: .35rem; max-width: calc(100vw - 1rem); border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); box-shadow: 0 8px 32px #0008; }
+ .sidebar-menu a { display: block; padding: .65rem .8rem; border-radius: 6px; }
+-.menu-notifications { width: 22rem; max-width: 100%; padding: .65rem .8rem; border-top: 1px solid var(--line); }
+-.menu-notifications p { margin: 0 0 .65rem; overflow-wrap: anywhere; }
+-.menu-notifications .notification-actions { margin-bottom: .85rem; }
+-.menu-notifications .checkbox { margin-bottom: .5rem; }
+-.menu-notifications > a { padding-left: 0; }
++.menu-notifications { max-width: 100%; padding: .6rem .8rem .3rem; border-top: 1px solid var(--line); }
++.menu-notifications p { margin: .45rem 0; overflow-wrap: anywhere; }
++.menu-notifications .checkbox { margin: 0 0 .45rem; color: var(--text); }
++.menu-notifications > a { padding: .25rem 0; font-size: .8rem; }
+ .sidebar-menu a:hover, .sidebar-menu a:focus-visible { background: var(--panel-2); }
+ .rail-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 1.25rem; flex: none; font-size: 1.2rem; }
+ .codex-waiting-indicator { position: absolute; top: -.08rem; right: -.12rem; width: .42rem; height: .42rem; border: 1px solid #10151d; border-radius: 999px; background: var(--warning); box-shadow: 0 0 0 1px color-mix(in srgb, var(--warning) 28%, transparent); }
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 2ac65d3760f46e919c540b88d0ba84d552881752..4b9d99659bf21145ede993daa643a6e5ada5bcd4 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -5,7 +5,7 @@
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Workspace</title>
+-  <link rel="stylesheet" href="/static/style.css?v=16">
++  <link rel="stylesheet" href="/static/style.css?v=17">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body data-index data-index-generated-at="{{.IndexGeneratedAt}}">
+@@ -94,7 +94,7 @@
+   </div>
+   <template id="session-card-template">{{template "session-card"}}</template>
+   <script src="/static/session-attention-store.js?v=3" defer></script>
+-  <script src="/static/browser-notifications.js?v=4" defer></script>
++  <script src="/static/browser-notifications.js?v=5" defer></script>
+   <script src="/static/preparation.js?v=4" defer></script>
+   <script src="/static/app.js?v=40" defer></script>
+   <script src="/static/coordination.js?v=4" defer></script>
+@@ -108,14 +108,10 @@
+   <a href="/operations" autofocus>Operations</a>
+   <a href="/automatic-archival">Automatic archival</a>
+   <section class="menu-notifications" aria-label="Browser notifications">
+-    <p class="muted">These controls apply to all sessions in this browser. Page title markers stay on.</p>
+-    <p data-notification-status role="status">Checking browser notifications…</p>
+-    <p data-notification-worker-status class="muted" role="status" hidden></p>
+-    <div class="notification-actions"><button type="button" data-notification-enable>Enable browser notifications</button><button type="button" class="quiet" data-notification-disable disabled>Disable on this browser</button></div>
+-    <label class="checkbox"><input type="checkbox" data-notification-sound aria-describedby="menu-notification-sound-hint menu-notification-sound-status" disabled> Play sound</label>
+-    <p id="menu-notification-sound-hint" class="muted">Turn off for visual-only notifications. Browser and system sound settings still apply.</p>
+-    <p id="menu-notification-sound-status" data-notification-sound-status role="status">Checking sound preference…</p>
+-    <a href="/browser-notifications">Browser notifications</a>
++    <label class="checkbox"><input type="checkbox" data-notification-delivery aria-describedby="menu-notification-error" disabled> Notifications</label>
++    <label class="checkbox"><input type="checkbox" data-notification-sound aria-describedby="menu-notification-error" disabled> Sound</label>
++    <p id="menu-notification-error" data-notification-menu-error class="muted" role="status" hidden></p>
++    <a href="/browser-notifications">Notification settings</a>
+   </section>
+ </nav>
+ {{end}}
+diff --git a/portal/internal/web/templates/notifications.html b/portal/internal/web/templates/notifications.html
+index f1266ec50ffc62bbb83b60274132c7b2e5a3c0b2..4da00277de789b4cdc5d41d1998f89239fc04d3c 100644
+--- a/portal/internal/web/templates/notifications.html
++++ b/portal/internal/web/templates/notifications.html
+@@ -5,7 +5,7 @@
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Browser notifications · {{.DisplayLabel}}</title>
+-  <link rel="stylesheet" href="/static/style.css?v=16">
++  <link rel="stylesheet" href="/static/style.css?v=17">
+ </head>
+ <body>
+   <header class="topbar">
+@@ -16,7 +16,7 @@
+     {{template "browser-notifications"}}
+   </main>
+   <script src="/static/session-attention-store.js?v=3" defer></script>
+-  <script src="/static/browser-notifications.js?v=4" defer></script>
++  <script src="/static/browser-notifications.js?v=5" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 6174f12ff395c92610f48054a22b5acd522e4b6d..6b45f2468338d20097fc89b5c7bb55d08b219d51 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -7,7 +7,7 @@
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>{{.Session.Slug}} · Workspace</title>
+   <link rel="stylesheet" href="/codex/assets/conversation.css?v=5">
+-  <link rel="stylesheet" href="/static/style.css?v=16">
++  <link rel="stylesheet" href="/static/style.css?v=17">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body class="session-body" data-session="{{.Session.Slug}}" data-session-observation="{{.Session.ObservationIdentity}}" data-thread-id="{{if .SelectedThreadID}}{{.SelectedThreadID}}{{else}}{{.Session.Codex.ThreadID}}{{end}}" data-root-thread-id="{{.Session.Codex.ThreadID}}" data-conversation-id="{{.ConversationID}}" data-selected-member="{{.SelectedMember}}" data-lifecycle-target-id="{{.LifecycleTargetID}}" data-target-identity-version="2" data-archived="{{.Session.Archived}}" data-interactive="{{.Session.Interactive}}" data-execution-held="{{.Session.ExecutionHeld}}" data-lifecycle="{{.Session.Lifecycle}}" data-pending-lifecycle="{{.PendingLifecycle}}">
+@@ -255,7 +255,7 @@
+   </dialog>
+   <script src="/static/app.js?v=40" defer></script>
+   <script src="/static/session-attention-store.js?v=3" defer></script>
+-  <script src="/static/browser-notifications.js?v=4" defer></script>
++  <script src="/static/browser-notifications.js?v=5" defer></script>
+   <script src="/static/session-attention.js" defer></script>
+   <script src="/static/coordination.js?v=4" defer></script>
+ </body>

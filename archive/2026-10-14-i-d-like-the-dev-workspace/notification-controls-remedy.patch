@@ -1,0 +1,50 @@
+diff --git a/portal/internal/web/attention_browser_test.cjs b/portal/internal/web/attention_browser_test.cjs
+index 5472657..e3999a6 100644
+--- a/portal/internal/web/attention_browser_test.cjs
++++ b/portal/internal/web/attention_browser_test.cjs
+@@ -1166,6 +1166,32 @@ test('menu and panel share committed sound, action locks, cleanup and saved pref
+   assert.equal(await h.storage.store.readSound(), false);
+ });
+ 
++test('cross-tab registration or cleanup revocation replaces every Enabled status and retired menu reads stay fenced', async () => {
++  for (const invalidation of [{key: browserKey, newValue: null}, {key: browserKey, newValue: 'f'.repeat(64)},
++    {key: cleanupKey, newValue: JSON.stringify({endpointDigest})}]) for (const rejects of [false, true]) {
++    const h = await feedbackHarness(testStoreHarness(), {menu: true});
++    await h.controls.test.click(); await h.advance(2000);
++    assert.equal(h.controls.status.textContent, 'Enabled on this browser.');
++    assert.equal(h.menuControls.status.textContent, h.controls.status.textContent);
++    let finish, reads = 0;
++    h.context.fetch = () => {reads++; return new Promise((resolve, reject) => {finish = () => rejects ? reject(Error('retired read failed')) :
++      resolve({ok: true, json: async () => ({available: true, registered: true})});});};
++    h.listeners.controllerchange(); await h.flush();
++    assert.equal(reads, 1, 'a status observation is pending before revocation');
++    h.listeners.storage(invalidation); await h.flush();
++    const expected = 'Browser setup is incomplete. Disable it or enable notifications again.';
++    assert.equal(h.controls.status.textContent, expected); assert.equal(h.menuControls.status.textContent, expected);
++    assert.equal(h.controls.test.disabled, true); assert.equal(h.menuControls.disable.disabled, false);
++    assert.equal(h.controls['test-status'].textContent, '');
++    assert.equal(h.storage.records.get(h.state.descriptor.identity).testPending, undefined, 'revocation still cancels the exact saved check');
++    h.listeners.menutoggle({newState: 'open'}); h.listeners.visibilitychange(); h.listeners.pageshow(); await h.flush();
++    assert.equal(reads, 1, 'opening the menu cannot restart a retired observation');
++    finish(); await h.flush(); await h.advance(20000);
++    assert.equal(h.controls.status.textContent, expected); assert.equal(h.menuControls.status.textContent, expected);
++    assert.equal(reads, 1, 'late old completion cannot refresh, repair or resume');
++  }
++});
++
+ test('global delivery off and silent preference do not stop actual title attention, reservations or focused acknowledgement', async () => {
+   const h = await feedbackHarness(testStoreHarness(), {menu: true, menuOnly: true});
+   h.controls.sound.checked = false; await h.controls.sound.change(); await h.controls.disable.click();
+diff --git a/portal/internal/web/static/browser-notifications.js b/portal/internal/web/static/browser-notifications.js
+index 47544f3..d2f8ac2 100644
+--- a/portal/internal/web/static/browser-notifications.js
++++ b/portal/internal/web/static/browser-notifications.js
+@@ -430,7 +430,7 @@
+   globalThis.addEventListener?.("storage", event => {
+     if ((event.key === key && event.newValue !== registrationId) || (event.key === cleanupKey && event.newValue)) {
+       invalidateRefresh(); observationRetired = true;
+-      cancelTest(); registered = false; buttons();
++      cancelTest(); registered = false; setStatus(incomplete); buttons();
+     }
+   });
+   document.addEventListener?.("session-section-change", event => { if (event.detail === "settings") void refreshSound(); });

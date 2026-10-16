@@ -1,0 +1,46 @@
+--- native/run_native.py
++++ live/run_live.py
+@@ -1,4 +1,4 @@
+-"""Own one Xvfb process and one native provider fixture run; no retries."""
++"""Own one Xvfb process and one live acceptance browser run; no retries."""
+ 
+ import datetime
+ import json
+@@ -15,7 +15,7 @@
+ 
+ 
+ def main():
+-    executable_file, run_directory, portal_directory = map(Path, sys.argv[1:])
++    executable_file, run_directory, harness_directory = map(Path, sys.argv[1:])
+     xvfb = None
+     test = None
+     read_fd = None
+@@ -57,15 +57,15 @@
+         environment = os.environ.copy()
+         environment["DISPLAY"] = ":" + display.decode("ascii")
+         evidence["displayAllocated"] = True
+-        with (run_directory / "go-test.log").open("wb") as log:
++        with (run_directory / "browser-check.log").open("wb") as log:
+             test = subprocess.Popen(
+-                ["go", "test", "-mod=readonly", "./internal/web", "-run", "^TestNotificationProviderProbe$", "-count=1", "-v"],
+-                cwd=portal_directory, env=environment, stdout=log, stderr=subprocess.STDOUT,
++                ["node", "live-check.cjs"],
++                cwd=harness_directory, env=environment, stdout=log, stderr=subprocess.STDOUT,
+             )
+             evidence["testStarted"] = True
+             status = test.wait()
+             evidence["testExitStatus"] = status
+-            (run_directory / "go-test.status").write_text(str(status) + "\n")
++            (run_directory / "browser-check.status").write_text(str(status) + "\n")
+         evidence["stage"] = "test_completed"
+     except InterruptedError:
+         evidence["stage"] = "interrupted"
+@@ -100,7 +100,7 @@
+         (run_directory / "runner-summary.json").write_text(json.dumps(evidence, indent=2) + "\n")
+         (run_directory / "status").write_text(str(status) + "\n")
+         (run_directory / "finished-at").write_text(timestamp())
+-    log = run_directory / "go-test.log"
++    log = run_directory / "browser-check.log"
+     if log.exists():
+         sys.stdout.write(log.read_text())
+     print(json.dumps(evidence))

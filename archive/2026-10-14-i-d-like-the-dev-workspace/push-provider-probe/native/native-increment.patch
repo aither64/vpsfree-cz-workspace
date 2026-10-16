@@ -1,0 +1,33 @@
+--- diagnostic/portal/internal/web/notifications_browser_test.cjs
++++ native/portal/internal/web/notifications_browser_test.cjs
+@@ -8,7 +8,7 @@
+ const origin = new URL(base).origin;
+ const safeResult = value => ["", "provider_accepted", "retrying", "provider_refused", "expired", "delivery_failed"].includes(value) ? value : "unknown";
+ const safeError = error => ["TimeoutError", "Error", "AbortError", "NotAllowedError", "NotSupportedError", "SecurityError", "InvalidStateError", "InvalidAccessError", "NetworkError", "UnknownError", "OperationError", "QuotaExceededError", "TypeError", "RangeError", "NotFoundError", "NotReadableError", "InvalidModificationError"].includes(error?.name) ? error.name : "Error";
+-const report = {sourceRevision: "e414ed31806d2b91620d5e5fad8b5b5ee56e07ac", platform: process.platform, headless: true,
++const report = {sourceRevision: "e414ed31806d2b91620d5e5fad8b5b5ee56e07ac", platform: process.platform, headless: false,
+   providerTransport: "shipped_guardedPushClient_unmocked", syntheticPush: false, osDisplayVerified: false, macOSDisplayVerified: false, browsers: []};
+ const incomplete = "Browser setup is incomplete. Disable it or enable notifications again.";
+ function save() {
+@@ -49,7 +49,7 @@
+           try {return atob(text.replace(/-/g, "+").replace(/_/g, "/")).length;} catch (_) {return -1;}
+         };
+         const expires = value.expirationTime;
+-        return {present: true, endpointHttps: url.protocol === "https:", endpointHostAllowed: ["fcm.googleapis.com", "updates.push.services.mozilla.com"].includes(url.hostname),
++        return {present: true, endpointHostname: /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/i.test(url.hostname) ? url.hostname : "non_dns_hostname", endpointHttps: url.protocol === "https:", endpointHostAllowed: ["fcm.googleapis.com", "updates.push.services.mozilla.com"].includes(url.hostname),
+           endpointWithinLimit: value.endpoint.length <= 2048, endpointPortAllowed: !url.port || url.port === "443",
+           endpointPathPresent: Boolean(url.pathname), endpointHasCredentials: Boolean(url.username || url.password), endpointHasFragment: Boolean(url.hash),
+           publicKeyBytesValid: decodeLength(value.keys?.p256dh) === 65, authKeyBytesValid: decodeLength(value.keys?.auth) === 16,
+@@ -175,9 +175,10 @@
+     const profile = fs.mkdtempSync(path.join(os.tmpdir(), `session-provider-probe-${engine.name()}-`));
+     let context;
+     try {
+-      context = await engine.launchPersistentContext(profile, {headless: true, ignoreHTTPSErrors: true,
++      context = await engine.launchPersistentContext(profile, {headless: false, ignoreHTTPSErrors: true,
+         ...(engine === chromium ? {channel: "chromium", ignoreDefaultArgs: ["--disable-background-networking"],
+-          args: ["--ignore-certificate-errors", "--allow-insecure-localhost"]} : {})});
++          args: ["--ignore-certificate-errors", "--allow-insecure-localhost"]} : {
++          firefoxUserPrefs: {"dom.push.serverURL": "wss://push.services.mozilla.com/", "dom.push.connection.enabled": true}})});
+       context.setDefaultTimeout(12000);
+       context.setDefaultNavigationTimeout(20000);
+       await installDiagnostics(context, row);

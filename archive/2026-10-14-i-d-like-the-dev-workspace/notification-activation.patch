@@ -1,0 +1,605 @@
+diff --git a/docs/browser-notifications-operations.md b/docs/browser-notifications-operations.md
+index a6cb43e..3722bd8 100644
+--- a/docs/browser-notifications-operations.md
++++ b/docs/browser-notifications-operations.md
+@@ -46,9 +46,14 @@ The successful Test reply adds only an exact event descriptor: `id`, `identity`,
+ `revision` and `expiresAt`. The client matches all four to the worker's bounded
+ local outcome. Reopen the controls after a background test to resume its check.
+ An old server or worker without these fields provides limited results, not proof
+-of delivery. New assets check/update an existing worker registration; a waiting
+-update requires closing portal tabs before reopening. No silent unregister,
+-resubscribe or VAPID reset is part of this check.
++of delivery. New or refreshed controls update the existing root registration.
++The successor skips waiting during installation and claims clients on activation,
++so other tabs can stay open. The page confirms its own controller, rather than
++only the registration's active worker, within a bounded ten-second check. Failed
++updates remain unconfirmed and can be checked again by refreshing the page. No
++unregister, resubscribe, VAPID reset or document reload is part of activation.
++Existing loaded scripts in older tabs are not replaced; use new or refreshed
++controls for current notification behavior.
+ 
+ ## Private state
+ 
+diff --git a/docs/browser-notifications.md b/docs/browser-notifications.md
+index 34683ef..fc691d5 100644
+--- a/docs/browser-notifications.md
++++ b/docs/browser-notifications.md
+@@ -43,7 +43,7 @@ appear on the lock screen. The browser vendor's push service handles encrypted
+ delivery and can observe delivery metadata.
+ 
+ Use **Send test notification** after enabling. The server waits ten seconds so
+-you can close all portal tabs or switch windows before checking delivery. Open
++you can switch to another tab or app before checking delivery. Open
+ these controls from **Browser notifications** in the workspace menu or from
+ session Settings. The test result distinguishes arrival in this browser, whether
+ the browser accepted or rejected the display request, and whether it retained a
+@@ -53,11 +53,14 @@ confirm this test. The page checks for a result until ten seconds after the
+ test's one-minute expiry and resumes the saved check after reopening. Missing
+ or unavailable results remain unconfirmed.
+ 
+-Existing subscribers may need a notification update before detailed test results
+-are available. The page checks the installed worker and reports a waiting or
+-unconfirmed update. Close all portal tabs and reopen when prompted. It never
+-unregisters the worker or replaces a subscription automatically. Each explicit
+-test gets a fresh notification entry; duplicate delivery of that test coalesces.
++New or refreshed notification controls check for an update to the installed
++worker. Updates activate automatically while other portal tabs stay open; no
++page is closed or reloaded, and unsent drafts stay intact. The page waits up to ten seconds for the updated worker to control it, then
++checks detailed Test support.
++An unsuccessful or unconfirmed update leaves those results limited; refresh the
++page to try again. Updating does not unregister the worker, replace a subscription
++or reset browser data. Each explicit test gets a fresh notification entry;
++duplicate delivery of that test coalesces.
+ Only older test entries for the same browser registration are closed. Session
+ notification tags and acknowledgement are unchanged.
+ 
+diff --git a/portal/internal/web/attention_browser_test.cjs b/portal/internal/web/attention_browser_test.cjs
+index 046df30..65bd597 100644
+--- a/portal/internal/web/attention_browser_test.cjs
++++ b/portal/internal/web/attention_browser_test.cjs
+@@ -31,11 +31,13 @@ function workerHarness() {
+     fetch: async (url, options) => { calls.push({url, options}); return {ok: !inaccessible, status: inaccessible ? 401 : 200, json: async () => status}; },
+     self: {location: {origin: 'https://workspace.example'}, registration: {
+       showNotification: async (title, options) => notifications.push({title, ...options}), getNotifications: async () => [],
+-    }, clients: {matchAll: async () => windows, openWindow: async url => calls.push({openWindow: url}), claim: async () => {}},
++    }, skipWaiting: async () => calls.push({skipWaiting: true}),
++    clients: {matchAll: async () => windows, openWindow: async url => calls.push({openWindow: url}), claim: async () => calls.push({claim: true})},
+     addEventListener: (name, listener) => listeners[name] = listener},
+   };
+   vm.runInNewContext(source('notification-worker.js'), context);
+   return {notifications, calls, records, context,
++    lifecycle: async name => {let pending; listeners[name]({waitUntil: promise => pending = promise}); await pending;},
+     status: value => status = value, inaccessible: () => inaccessible = true,
+     push: async payload => { let pending; listeners.push({data: {json: () => payload}, waitUntil: promise => pending = promise}); await pending; },
+     click: async (route, boundIdentity) => { let pending; listeners.notificationclick({notification: {data: {route, identity: boundIdentity}, close() {}}, waitUntil: promise => pending = promise}); await pending; },
+@@ -189,11 +191,16 @@ async function notificationHarness(state, storage = new Map()) {
+     }};
+   const registration = {pushManager: {getSubscription: async () => {if (state.subscriptionRead) return state.subscriptionRead(subscription); if (state.lookupFailure) throw Error('lookup unavailable'); return state.subscribed ? subscription : null;},
+     subscribe: async () => {state.subscribed = true; return subscription;}}};
++  registration.active = {state: 'activated'};
++  registration.update = async () => {};
++  const service = lifecycleTarget({controller: registration.active, getRegistration: async () => registration,
++    register: async () => {state.onWorkerRegister?.(); return registration;}, ready: Promise.resolve(registration)});
++  const addListener = service.addEventListener;
++  service.addEventListener = (name, callback) => {addListener(name, callback); listeners[name] = event => service.dispatch(name, event);};
+   const context = {document: {visibilityState: 'visible', addEventListener: (name, callback) => listeners[name] = callback,
+     getElementById: () => ({querySelector: selector => controls[selector.match(/notification-(\w+)/)[1]]})},
+     addEventListener: (name, callback) => listeners[name] = callback,
+-    navigator: {serviceWorker: {addEventListener: (name, callback) => listeners[name] = callback,
+-      getRegistration: async () => registration, register: async () => {state.onWorkerRegister?.(); return registration;}, ready: Promise.resolve(registration)}},
++    navigator: {serviceWorker: service},
+     Notification: {permission: 'granted', requestPermission: async () => {state.permissionCalls = (state.permissionCalls || 0) + 1; return 'granted';}},
+     PushManager: function() {}, isSecureContext: true, AbortController, setTimeout, clearTimeout, atob, Uint8Array, TextEncoder,
+     crypto: require('node:crypto').webcrypto,
+@@ -502,18 +509,28 @@ test('test storage failure still displays and fresh tests retire only older same
+   assert.deepEqual(h.storage.versions, [1], 'no IndexedDB migration');
+ });
+ 
++function lifecycleTarget(fields = {}) {
++  const handlers = new Map();
++  return {...fields, addEventListener(name, callback) {if (!handlers.has(name)) handlers.set(name, new Set()); handlers.get(name).add(callback);},
++    removeEventListener(name, callback) {handlers.get(name)?.delete(callback);},
++    dispatch(name, event) {[...handlers.get(name) || []].forEach(callback => callback(event));},
++    listenerCount() {return [...handlers.values()].reduce((sum, set) => sum + set.size, 0);}};
++}
+ async function feedbackHarness(storage = testStoreHarness(), options = {}) {
+   const controls = Object.fromEntries(['status','enable','disable','test','test-status','provider-status','worker-status'].map(name => [name,
+     {disabled: false, textContent: '', addEventListener(type, callback) {this[type] = callback;}}]));
+   const listeners = {}, timers = new Map(), calls = [], saved = new Map([[browserKey, browserId]]);
+   let now = Date.now(), nextTimer = 0;
+-  const state = {descriptor: testDescriptor(now), registered: true, workerVersion: options.workerVersion ?? 1};
+-  const registration = {update: async () => {state.updateChecks = (state.updateChecks || 0) + 1;}, active: {postMessage(_message, ports) {ports[0].reply({version: state.workerVersion});}},
+-    pushManager: {getSubscription: async () => ({endpoint, unsubscribe: async () => true})}};
+-  if (options.waitingWorker) registration.waiting = {};
++  const state = {descriptor: testDescriptor(now), registered: true, workerVersion: options.workerVersion ?? 1, update: options.update, noReply: options.noReply};
++  const registration = lifecycleTarget({update: async () => {state.updateChecks = (state.updateChecks || 0) + 1; if (state.update) await state.update();},
++    active: lifecycleTarget({state: 'activated', postMessage(_message, ports) {state.probes = (state.probes || 0) + 1; if (!state.noReply) ports[0].reply({version: state.workerVersion});}}),
++    pushManager: {getSubscription: async () => ({endpoint, unsubscribe: async () => true})}});
++  if (options.waitingWorker) registration.waiting = lifecycleTarget({state: 'installed'});
++  const service = lifecycleTarget({getRegistration: async () => registration, controller: options.uncontrolled ? null : registration.active});
++  const addServiceListener = service.addEventListener;
++  service.addEventListener = (name, callback) => {addServiceListener(name, callback); listeners[name] = event => service.dispatch(name, event);};
+   const context = {document: {visibilityState: 'visible', getElementById: () => ({querySelector: selector => controls[selector.slice(19, -1) || 'status']}),
+-    addEventListener: (name, callback) => listeners[name] = callback}, navigator: {serviceWorker: {getRegistration: async () => registration,
+-      addEventListener: (name, callback) => listeners[name] = callback}}, addEventListener: (name, callback) => listeners[name] = callback,
++    addEventListener: (name, callback) => listeners[name] = callback}, navigator: {serviceWorker: service}, addEventListener: (name, callback) => listeners[name] = callback,
+     Date: class extends Date {static now() {return now;}}, Notification: {permission: 'granted'}, PushManager: function() {}, isSecureContext: true,
+     workspaceAttentionStore: options.oldStore ? {} : storage.store, AbortController, Uint8Array, TextEncoder, crypto: require('node:crypto').webcrypto,
+     MessageChannel: function() {this.port1 = {close() {}}; this.port2 = {reply: value => queueMicrotask(() => this.port1.onmessage({data: value}))};},
+@@ -527,7 +544,7 @@ async function feedbackHarness(storage = testStoreHarness(), options = {}) {
+   vm.runInNewContext(source('browser-notifications.js'), context);
+   const flush = async () => {for (let i = 0; i < 80; i++) await Promise.resolve();};
+   await flush();
+-  return {controls, storage, state, timers, calls, context, listeners, registration, async advance(ms) {now += ms;
++  return {controls, storage, state, timers, calls, context, listeners, registration, service, async advance(ms) {now += ms;
+     const ready = [...timers].filter(([,timer]) => timer.at <= now); for (const [id,timer] of ready) {timers.delete(id); timer.callback(); await flush();}}, flush};
+ }
+ 
+@@ -585,7 +602,8 @@ test('UI preserves rejected/unavailable results, other-tab correlation and worke
+   assert.match(h.controls['test-status'].textContent, /Another test replaced this check/); assert.equal(h.timers.size, 0);
+   for (const options of [{workerVersion: 0}, {waitingWorker: true}]) {
+     const old = await feedbackHarness(testStoreHarness(), options);
+-    assert.match(old.controls['worker-status'].textContent, /Close portal tabs/);
++    if (options.waitingWorker) {assert.match(old.controls['worker-status'].textContent, /keep your tabs open/); await old.advance(10001);}
++    assert.match(old.controls['worker-status'].textContent, options.waitingWorker ? /could not be confirmed/ : /Detailed test results are unavailable/);
+     assert.equal(old.calls.some(call => call.config.method === 'POST'), false, 'updates never mutate subscriptions');
+   }
+ });
+@@ -843,3 +861,75 @@ test('browser fixture failure trace is bounded and excludes raw capability, ID,
+   assert.ok(Buffer.byteLength(output[1], 'utf8') <= 8192);
+   assert.ok(JSON.parse(output[1]).dropped > 0); assert.doesNotMatch(output[1], /canary|https:|registrationId/);
+ });
++
++test('worker install skips waiting and activation claims documents without touching delivery or state', async () => {
++  const h = workerHarness();
++  await h.lifecycle('install'); await h.lifecycle('activate');
++  assert.deepEqual(h.calls, [{skipWaiting: true}, {claim: true}]);
++  assert.equal(h.notifications.length, 0); assert.equal(h.records.size, 0);
++});
++
++test('waiting predecessor is replaced and capability is checked only after this document gets the successor controller', async () => {
++  const h = await feedbackHarness(testStoreHarness(), {waitingWorker: true});
++  assert.equal(h.state.updateChecks, 1, 'same root registration update fetches a successor');
++  assert.equal(h.state.probes || 0, 0, 'old active capability cannot certify a waiting update');
++  assert.match(h.controls['worker-status'].textContent, /keep your tabs open/);
++  let probes = 0;
++  const successor = lifecycleTarget({state: 'installing', postMessage(_message, ports) {probes++; ports[0].reply({version: 1});}});
++  h.registration.waiting = null; h.registration.installing = successor; h.registration.dispatch('updatefound');
++  successor.state = 'activated'; h.registration.installing = null; h.registration.active = successor; successor.dispatch('statechange');
++  await h.flush(); assert.equal(probes, 0, 'registration.active is insufficient while document controller is old');
++  h.service.controller = successor; h.service.dispatch('controllerchange'); await h.flush();
++  assert.equal(probes, 1); assert.equal(h.controls['worker-status'].textContent, '');
++  assert.equal(h.registration.listenerCount(), 0); assert.equal(successor.listenerCount(), 0); assert.equal(h.timers.size, 0);
++  assert.equal(h.calls.some(call => call.config.method === 'POST'), false, 'update makes no subscription or permission mutation');
++});
++
++test('worker transition deadlines and failures keep diagnostics limited and remove observers', async () => {
++  for (const options of [{waitingWorker: true}, {uncontrolled: true}, {update: () => new Promise(() => {})},
++    {update: async () => {throw Error('update failed');}}, {noReply: true}]) {
++    const h = await feedbackHarness(testStoreHarness(), options);
++    await h.advance(10001);
++    assert.match(h.controls['worker-status'].textContent, /could not be confirmed|Detailed test results are unavailable/);
++    assert.doesNotMatch(h.controls['worker-status'].textContent, /Close.*tabs/);
++    assert.equal(h.registration.listenerCount(), 0); assert.equal(h.registration.waiting?.listenerCount() || 0, 0);
++    assert.equal(h.registration.active.listenerCount(), 0); assert.equal(h.timers.size, 0);
++    assert.equal(h.state.updateChecks, 1, 'no repeated update loop');
++    assert.equal(h.calls.some(call => call.config.method === 'POST'), false);
++  }
++});
++
++test('stale worker readiness cannot overwrite a newer refresh, action or page retirement', async () => {
++  for (const invalidation of ['refresh', 'test', 'pagehide', 'revoke']) {
++    const h = await feedbackHarness(testStoreHarness(), {waitingWorker: true});
++    const predecessor = h.registration.waiting;
++    if (invalidation === 'refresh') h.service.dispatch('controllerchange');
++    else if (invalidation === 'test') await h.controls.test.click();
++    else if (invalidation === 'pagehide') h.listeners.pagehide();
++    else h.listeners.storage({key: browserKey, newValue: null});
++    await h.flush();
++    const status = h.controls['worker-status'].textContent;
++    h.registration.waiting = null; predecessor.state = 'redundant'; predecessor.dispatch('statechange'); await h.flush();
++    if (invalidation !== 'refresh') {
++      assert.equal(h.controls['worker-status'].textContent, status);
++      assert.equal(h.registration.listenerCount(), 0);
++    } else {
++      // The replacement observer may complete; the canceled observer's terminal
++      // state cannot publish a timeout over its confirmed controller result.
++      h.service.dispatch('controllerchange'); await h.flush();
++      assert.equal(h.controls['worker-status'].textContent, '');
++    }
++    h.listeners.pagehide(); await h.flush(); assert.equal(h.timers.size, 0);
++  }
++});
++
++test('a new refresh waits for the already-started successor fetch before trusting the old controller', async () => {
++  let release;
++  const h = await feedbackHarness(testStoreHarness(), {update: () => new Promise(resolve => {release = resolve;})});
++  h.service.dispatch('controllerchange'); await h.flush();
++  assert.equal(h.state.updateChecks, 1, 'refresh shares the one current document update check');
++  assert.equal(h.state.probes || 0, 0, 'old capable controller is not proof while successor fetch is outstanding');
++  release(); await h.flush();
++  assert.equal(h.state.probes, 1); assert.equal(h.controls['worker-status'].textContent, '');
++  assert.equal(h.timers.size, 0);
++});
+diff --git a/portal/internal/web/notifications_browser_test.cjs b/portal/internal/web/notifications_browser_test.cjs
+index e48fea4..d9197ff 100644
+--- a/portal/internal/web/notifications_browser_test.cjs
++++ b/portal/internal/web/notifications_browser_test.cjs
+@@ -75,6 +75,90 @@ async function checkControlSpacing(page) {
+       bounds[i].x >= bounds[i - 1].x + bounds[i - 1].width + 8, "notification controls have space between them");
+   }
+ }
++async function checkWorkerUpgrade(browser, engine) {
++  const context = await browser.newContext({ignoreHTTPSErrors: true});
++  const trace = failureTrace(context);
++  let retained, controls;
++  const stage = async name => {
++    const response = await context.request.post(`${base}/fixture/worker-stage/${name}`, {headers: {Origin: base}});
++    assert.equal(response.status(), 200, "fixture stage selection succeeds");
++  };
++  try {
++    await stage("old");
++    retained = await context.newPage(); await retained.goto(`${base}/example/#codex`);
++    await retained.evaluate(async () => {
++      await navigator.serviceWorker.register("/notification-worker.js", {scope: "/", updateViaCache: "none"});
++      await navigator.serviceWorker.ready;
++    });
++    await retained.waitForFunction(() => navigator.serviceWorker.controller?.state === "activated");
++    await retained.locator('#message-form textarea[name="message"]').fill("Retain this unsent draft");
++    await retained.evaluate(() => {globalThis.fixtureRetainedSentinel = true;});
++    let navigations = 0;
++    retained.on("framenavigated", frame => {if (frame === retained.mainFrame()) navigations++;});
++    await stage("waiting");
++    await retained.evaluate(async () => (await navigator.serviceWorker.getRegistration("/")).update());
++    await retained.waitForFunction(async () => Boolean((await navigator.serviceWorker.getRegistration("/"))?.waiting));
++    const priorController = await retained.evaluateHandle(() => navigator.serviceWorker.controller);
++    // The already-waiting predecessor cannot handle a new activation message.
++    // Fetch the actual successor at the same URL with its own install handler.
++    await stage("current");
++    controls = await context.newPage(); await controls.goto(`${base}/browser-notifications`);
++    await expect(controls.locator("[data-notification-worker-status]")).toBeHidden({timeout: 12000});
++    await expect.poll(() => controls.evaluate(async () => {
++      const registration = await navigator.serviceWorker.getRegistration("/");
++      return Boolean(registration?.active && !registration.waiting && !registration.installing &&
++        navigator.serviceWorker.controller === registration.active && registration.active.state === "activated");
++    })).toBe(true);
++    await expect(controls.locator("[data-notification-worker-status]")).toBeHidden();
++    assert.equal(await retained.evaluate(prior => navigator.serviceWorker.controller !== prior, priorController), true);
++    assert.equal(retained.isClosed(), false); assert.equal(navigations, 0);
++    assert.equal(await retained.evaluate(() => globalThis.fixtureRetainedSentinel), true);
++    await expect(retained.locator('#message-form textarea[name="message"]')).toHaveValue("Retain this unsent draft");
++    let controlsNavigations = 0;
++    controls.on("framenavigated", frame => {if (frame === controls.mainFrame()) controlsNavigations++;});
++    const capability = await controls.evaluate(() => new Promise(resolve => {
++      const channel = new MessageChannel(), controller = navigator.serviceWorker.controller;
++      const timer = setTimeout(() => {channel.port1.close(); resolve(false);}, 1500);
++      channel.port1.onmessage = event => {clearTimeout(timer); channel.port1.close(); resolve(event.data?.version === 1);};
++      controller.postMessage({type: "notification-test-capabilities"}, [channel.port2]);
++    }));
++    assert.equal(capability, true, "current document controller supports detailed Test outcomes");
++    if (engine !== chromium) {
++      console.log(`${engine.name()}: successor activated over old active/waiting workers; both tabs, draft and current-controller capability retained; no Playwright worker delivery claim`);
++      return;
++    }
++    const subscription = await (await context.request.get(`${base}/fixture/subscription`)).json();
++    await context.grantPermissions(["notifications"], {origin: base});
++    await controls.evaluate(sub => {
++      let subscribed = true;
++      const fake = {options: {}, toJSON: () => ({...sub, expirationTime: null}), unsubscribe: async () => {subscribed = false; return true;}};
++      PushManager.prototype.subscribe = async () => fake;
++      PushManager.prototype.getSubscription = async () => subscribed ? fake : null;
++    }, subscription);
++    const registerReply = controls.waitForResponse(response => new URL(response.url()).pathname === "/api/browser-notifications/register" && response.request().method() === "POST");
++    await controls.locator("[data-notification-enable]").click();
++    assert.equal((await registerReply).status(), 200);
++    await expect(controls.locator("[data-notification-test]")).toBeEnabled();
++    // Document controller equality already proved takeover. Select the worker
++    // carrying the actual successor's test-display implementation.
++    const successor = await Promise.any(context.serviceWorkers().map(async candidate => {
++      assert.equal(await candidate.evaluate(() => typeof displayTest), "function"); return candidate;
++    }));
++    await successor.evaluate(() => {self.registration.showNotification = async () => {};});
++    const queued = controls.waitForResponse(response => new URL(response.url()).pathname === "/api/browser-notifications/test" && response.request().method() === "POST");
++    await controls.locator("[data-notification-test]").click();
++    const descriptor = (await (await queued).json()).test;
++    await successor.evaluate(descriptor => self.dispatchEvent(new PushEvent("push", {data: JSON.stringify({...descriptor, version: 1, kind: "test", slug: "", route: "/"})})), descriptor);
++    await expect(controls.locator("[data-notification-test-status]")).toContainText("browser accepted the display request");
++    assert.equal(controlsNavigations, 0); assert.equal(retained.isClosed(), false); assert.equal(navigations, 0);
++    assert.equal(await retained.evaluate(() => globalThis.fixtureRetainedSentinel), true);
++    await expect(retained.locator('#message-form textarea[name="message"]')).toHaveValue("Retain this unsent draft");
++    await controls.locator("[data-notification-disable]").click();
++    await expect(controls.locator("[data-notification-status]")).toContainText("Disabled on this browser");
++    console.log(`${engine.name()}: successor activated over an old active and waiting worker with both tabs and draft retained; synthetic Test outcome correlated`);
++  } catch (error) {trace.record({event: "upgrade_fixture_failure", category: safeError(error)}); await trace.dump(controls || retained); throw error;}
++  finally {await stage("current"); await context.close();}
++}
+ (async () => {
+   for (const engine of [chromium, firefox]) {
+     const browser = await engine.launch({headless: true, ...(engine === chromium ? {channel: "chromium", args: ["--ignore-certificate-errors"]} : {})});
+@@ -117,7 +201,7 @@ async function checkControlSpacing(page) {
+       await expect(page.locator("#session-attention-status")).toHaveCount(0);
+       assert.equal(await page.evaluate(() => Notification.permission), "default", "page load did not ask for permission");
+       assert.deepEqual(mutations, [], "opening or revealing controls never changes a subscription");
+-      assert.equal(context.serviceWorkers().length, 0, "opening controls did not register a worker");
++      assert.equal(await page.evaluate(async () => Boolean(await navigator.serviceWorker.getRegistration("/"))), false, "opening controls did not register a worker");
+       const workerAsset = await context.request.get(`${base}/notification-worker.js`);
+       assert.equal(workerAsset.status(), 200);
+       assert.equal(workerAsset.headers()["service-worker-allowed"], "/");
+@@ -172,6 +256,7 @@ async function checkControlSpacing(page) {
+       assert.deepEqual(errors, [], `${engine.name()} loaded real notification UI without script errors`);
+       console.log(`${engine.name()}: real template, CSP, permission separation and worker route passed${engine === chromium ? "; registered worker received synthetic push with zero tabs" : ""}`);
+       await context.close();
++      await checkWorkerUpgrade(browser, engine);
+     } catch (error) {
+       if (trace) {trace.record({event: "fixture_failure", category: safeError(error)}); await trace.dump(page);}
+       throw error;
+diff --git a/portal/internal/web/notifications_browser_test.go b/portal/internal/web/notifications_browser_test.go
+index 5e2754d..6c62d89 100644
+--- a/portal/internal/web/notifications_browser_test.go
++++ b/portal/internal/web/notifications_browser_test.go
+@@ -7,6 +7,7 @@ import (
+ 	"os/exec"
+ 	"path/filepath"
+ 	"strings"
++	"sync/atomic"
+ 	"testing"
+ 	"time"
+ 
+@@ -34,7 +35,38 @@ func TestNotificationsBrowser(t *testing.T) {
+ 	}
+ 	event := attentionEvent{Version: 1, ID: strings.Repeat("b", 64), Identity: identity, Revision: 1, Slug: "example", Kind: "input", Member: "implementer0", Route: "/example/?member=implementer0#codex", ExpiresAt: time.Now().Add(time.Minute).UnixMilli()}
+ 	handler := n.server.Handler()
++	var workerStage atomic.Int32
++	workerStage.Store(2)
+ 	fixture.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
++		if strings.HasPrefix(r.URL.Path, "/fixture/worker-stage/") {
++			if r.Method != http.MethodPost || r.Header.Get("Origin") != n.server.config.BaseURL {
++				w.WriteHeader(http.StatusForbidden)
++				return
++			}
++			switch r.URL.Path {
++			case "/fixture/worker-stage/old":
++				workerStage.Store(0)
++			case "/fixture/worker-stage/waiting":
++				workerStage.Store(1)
++			case "/fixture/worker-stage/current":
++				workerStage.Store(2)
++			default:
++				w.WriteHeader(http.StatusBadRequest)
++				return
++			}
++			n.server.writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
++			return
++		}
++		if r.URL.Path == "/notification-worker.js" && workerStage.Load() < 2 {
++			// Fixture predecessors deliberately have neither skipWaiting nor an
++			// activation-message handler. Only the real successor can take over.
++			w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
++			w.Header().Set("Service-Worker-Allowed", "/")
++			w.Header().Set("Cache-Control", "no-store")
++			w.Write([]byte(`self.addEventListener("activate", event => event.waitUntil(self.clients.claim()));` +
++				strings.Repeat("\n// predecessor", int(workerStage.Load())+1)))
++			return
++		}
+ 		if r.URL.Path == "/fixture/subscription" {
+ 			n.server.writeJSON(w, http.StatusOK, testPushSubscription(t))
+ 			return
+diff --git a/portal/internal/web/notifications_test.go b/portal/internal/web/notifications_test.go
+index 72b0b02..4dbf43b 100644
+--- a/portal/internal/web/notifications_test.go
++++ b/portal/internal/web/notifications_test.go
+@@ -81,13 +81,13 @@ func TestNotificationsPageIsSeparateFromIndex(t *testing.T) {
+ 	if page.Code != http.StatusOK {
+ 		t.Fatalf("notification page: %d: %s", page.Code, page.Body.String())
+ 	}
+-	for _, required := range []string{`id="browser-notifications"`, "data-notification-enable", "data-notification-test", "data-notification-disable", `src="/static/browser-notifications.js?v=2" defer`, `href="/"`} {
++	for _, required := range []string{`id="browser-notifications"`, "data-notification-enable", "data-notification-test", "data-notification-disable", `src="/static/browser-notifications.js?v=3" defer`, `href="/"`} {
+ 		if !strings.Contains(page.Body.String(), required) {
+ 			t.Fatalf("notification page lacks %s", required)
+ 		}
+ 	}
+ 	if strings.Index(page.Body.String(), `src="/static/session-attention-store.js?v=2"`) < 0 ||
+-		strings.Index(page.Body.String(), `src="/static/session-attention-store.js?v=2"`) > strings.Index(page.Body.String(), `src="/static/browser-notifications.js?v=2"`) {
++		strings.Index(page.Body.String(), `src="/static/session-attention-store.js?v=2"`) > strings.Index(page.Body.String(), `src="/static/browser-notifications.js?v=3"`) {
+ 		t.Fatal("notification page must initialize the shared store before the client")
+ 	}
+ }
+diff --git a/portal/internal/web/static/browser-notifications.js b/portal/internal/web/static/browser-notifications.js
+index be330b0..c26d8f1 100644
+--- a/portal/internal/web/static/browser-notifications.js
++++ b/portal/internal/web/static/browser-notifications.js
+@@ -9,8 +9,9 @@
+   const testStatus = panel.querySelector("[data-notification-test-status]"), providerStatus = panel.querySelector("[data-notification-provider-status]"),
+     workerStatus = panel.querySelector("[data-notification-worker-status]");
+   const store = globalThis.workspaceAttentionStore;
+-  let pendingTest = null, pollTimer = null, pollGeneration = 0, pageClosed = false, updatingWorker = false, resumeRetired = false;
+-  let refreshGeneration = 0, observationRetired = false;
++  let pendingTest = null, pollTimer = null, pollGeneration = 0, pageClosed = false, workerUpdate = null, resumeRetired = false;
++  let refreshGeneration = 0, observationRetired = false, cancelReadiness = null;
++  const invalidateRefresh = () => { refreshGeneration++; cancelReadiness?.(); };
+   const setText = (element, text) => { if (element) { element.textContent = text; element.hidden = !text; } };
+   const localResult = async promise => {
+     let timer;
+@@ -38,27 +39,69 @@
+     provider_refused: "The push service refused a notification.", delivery_failed: "A notification could not be sent.", expired: "A notification expired."})[value];
+   async function workerReadiness(registration, update = false, current = () => true) {
+     if (!registration) return;
+-    if (update && !updatingWorker) {
+-      updatingWorker = true;
+-      try { await registration.update?.(); } catch (_) { if (current()) setText(workerStatus, "The notification update could not be checked. Try reopening this page."); }
+-    }
+-    if (!current()) return;
+-    if (registration.waiting || registration.installing) {
+-      setText(workerStatus, "A notification update is waiting. Close portal tabs, then reopen this page.");
+-      return;
+-    }
+-    if (!registration.active || !globalThis.MessageChannel) {
+-      setText(workerStatus, "The notification update could not be confirmed. Test results may be limited.");
++    cancelReadiness?.();
++    const generation = refreshGeneration, deadline = Date.now() + 10000;
++    const valid = () => current() && generation === refreshGeneration && !pageClosed && !observationRetired;
++    if (!valid()) return;
++    const failed = "The notification update could not be confirmed. Refresh this page to try again. Test results may be limited.";
++    setText(workerStatus, "Updating browser notifications… You can keep your tabs open.");
++    if (update && !workerUpdate) workerUpdate = Promise.resolve().then(() => registration.update());
++    const activated = await new Promise(resolve => {
++      const workers = new Set();
++      let timer, finished = false, checkingUpdate = Boolean(workerUpdate);
++      const finish = value => {
++        if (finished) return;
++        finished = true; clearTimeout(timer);
++        registration.removeEventListener?.("updatefound", inspect);
++        navigator.serviceWorker.removeEventListener?.("controllerchange", inspect);
++        workers.forEach(worker => worker.removeEventListener?.("statechange", inspect));
++        if (cancelReadiness === cancel) cancelReadiness = null;
++        resolve(value);
++      };
++      const cancel = () => finish(false);
++      const inspect = () => {
++        if (!valid()) {finish(false); return;}
++        for (const worker of [registration.installing, registration.waiting, registration.active]) {
++          if (worker && !workers.has(worker)) {workers.add(worker); worker.addEventListener?.("statechange", inspect);}
++        }
++        const controller = navigator.serviceWorker.controller;
++        if (!checkingUpdate && !registration.installing && !registration.waiting && controller &&
++            controller === registration.active && controller.state === "activated") finish(true);
++      };
++      cancelReadiness = cancel;
++      timer = setTimeout(() => finish(false), Math.max(0, deadline - Date.now()));
++      registration.addEventListener?.("updatefound", inspect);
++      navigator.serviceWorker.addEventListener?.("controllerchange", inspect);
++      if (checkingUpdate) {
++        workerUpdate.then(() => {checkingUpdate = false; if (!finished) inspect();}, () => finish(false));
++      }
++      inspect();
++    });
++    if (!valid()) return;
++    if (!activated) {setText(workerStatus, failed); return;}
++    const controller = navigator.serviceWorker.controller;
++    if (!globalThis.MessageChannel) {
++      setText(workerStatus, "Detailed test results are unavailable. Refresh this page to check for a notification update.");
+       return;
+     }
+     const supported = await new Promise(resolve => {
+-      const channel = new MessageChannel();
+-      const timer = setTimeout(() => { channel.port1.close(); resolve(false); }, 1500);
+-      channel.port1.onmessage = event => { clearTimeout(timer); channel.port1.close(); resolve(event.data?.version === 1); };
+-      try { registration.active.postMessage({type: "notification-test-capabilities"}, [channel.port2]); }
+-      catch (_) { clearTimeout(timer); channel.port1.close(); resolve(false); }
++      const channel = new MessageChannel(); let finished = false, timer;
++      const finish = value => {
++        if (finished) return;
++        finished = true; clearTimeout(timer); channel.port1.close(); channel.port2.close?.();
++        if (cancelReadiness === cancel) cancelReadiness = null;
++        resolve(value);
++      };
++      const cancel = () => finish(false);
++      cancelReadiness = cancel;
++      timer = setTimeout(() => finish(false), Math.max(0, Math.min(1500, deadline - Date.now())));
++      channel.port1.onmessage = event => finish(event.data?.version === 1);
++      try {controller.postMessage({type: "notification-test-capabilities"}, [channel.port2]);}
++      catch (_) {finish(false);}
+     });
+-    if (current()) setText(workerStatus, supported ? "" : "Test results are limited until the notification update is active. Close portal tabs, then reopen this page.");
++    if (valid() && controller === navigator.serviceWorker.controller && controller === registration.active && !registration.waiting && !registration.installing) {
++      setText(workerStatus, supported ? "" : "Detailed test results are unavailable. Refresh this page to check for a notification update.");
++    }
+   }
+   async function pollTest() {
+     stopTest();
+@@ -175,7 +218,8 @@
+   };
+   async function refresh(resume = true) {
+     if (busy || pageClosed || observationRetired) return;
+-    const generation = ++refreshGeneration, identity = registrationId;
++    invalidateRefresh();
++    const generation = refreshGeneration, identity = registrationId;
+     const current = () => generation === refreshGeneration && identity === registrationId && !busy && !pageClosed && !observationRetired;
+     if (!supported) { status.textContent = "This browser build does not support background Web Push. Use a browser with Push API support."; buttons(); return; }
+     let observedSubscription = localSubscription, observedKnown = localKnown;
+@@ -204,7 +248,7 @@
+     if (busy || !supported || Notification.permission === "denied") return;
+     readCleanup();
+     if (pendingCleanup) { status.textContent = cleanupStatus(); buttons(); return; }
+-    refreshGeneration++; observationRetired = false;
++    invalidateRefresh(); observationRetired = false;
+     cancelTest();
+     busy = true; buttons();
+     try {
+@@ -243,7 +287,7 @@
+   });
+   disable.addEventListener("click", async () => {
+     if (busy) return;
+-    refreshGeneration++;
++    invalidateRefresh();
+     cancelTest();
+     busy = true; registered = false; buttons();
+     let registration = null, subscription = localSubscription, selector = null, currentBound = false;
+@@ -292,7 +336,7 @@
+   });
+   test.addEventListener("click", async () => {
+     if (busy || !registered) return;
+-    refreshGeneration++;
++    invalidateRefresh();
+     busy = true; buttons();
+     const retirement = cancelTest(), generation = pollGeneration, identity = registrationId;
+     setText(testStatus, "A matching test result is unavailable. Appearance on your screen is unconfirmed.");
+@@ -306,7 +350,7 @@
+       if (descriptor && (descriptor.identity !== `test-${registrationId}` || descriptor.expiresAt > Date.now() + 70000 || descriptor.expiresAt <= Date.now())) descriptor = null;
+       if (!descriptor) cancelTest();
+       pendingTest = descriptor;
+-      status.textContent = "A test notification will be sent in 10 seconds. Close portal tabs or switch windows to check background delivery.";
++      status.textContent = "A test notification will be sent in 10 seconds. Switch to another tab or app to check background delivery.";
+       setText(testStatus, pendingTest ? "Waiting for this test to reach the browser." : "A matching test result is unavailable. Appearance on your screen is unconfirmed.");
+       if (pendingTest) {
+         try { await localResult(store.saveTest(pendingTest)); } catch (_) { setText(testStatus, "This browser could not save the test check. Keep this page open to check the result."); }
+@@ -329,11 +373,11 @@
+   });
+   navigator.serviceWorker?.addEventListener?.("controllerchange", () => void refresh());
+   document.addEventListener?.("visibilitychange", () => { if (document.visibilityState === "visible") { void refresh(); if (pendingTest) void pollTest(); } });
+-  globalThis.addEventListener?.("pagehide", () => { pageClosed = true; refreshGeneration++; stopTest(); });
++  globalThis.addEventListener?.("pagehide", () => { pageClosed = true; invalidateRefresh(); stopTest(); });
+   globalThis.addEventListener?.("pageshow", () => { pageClosed = false; void refresh(); if (pendingTest) void pollTest(); });
+   globalThis.addEventListener?.("storage", event => {
+     if ((event.key === key && event.newValue !== registrationId) || (event.key === cleanupKey && event.newValue)) {
+-      refreshGeneration++; observationRetired = true;
++      invalidateRefresh(); observationRetired = true;
+       cancelTest(); registered = false; buttons();
+     }
+   });
+diff --git a/portal/internal/web/static/notification-worker.js b/portal/internal/web/static/notification-worker.js
+index 8389e71..754e3b7 100644
+--- a/portal/internal/web/static/notification-worker.js
++++ b/portal/internal/web/static/notification-worker.js
+@@ -126,4 +126,5 @@ self.addEventListener("message", event => {
+     notifications.forEach(notification => notification.close());
+   })());
+ });
++self.addEventListener("install", event => event.waitUntil(self.skipWaiting()));
+ self.addEventListener("activate", event => event.waitUntil(self.clients.claim()));
+diff --git a/portal/internal/web/templates/notifications.html b/portal/internal/web/templates/notifications.html
+index 8691e74..0580cfa 100644
+--- a/portal/internal/web/templates/notifications.html
++++ b/portal/internal/web/templates/notifications.html
+@@ -16,7 +16,7 @@
+     {{template "browser-notifications"}}
+   </main>
+   <script src="/static/session-attention-store.js?v=2" defer></script>
+-  <script src="/static/browser-notifications.js?v=2" defer></script>
++  <script src="/static/browser-notifications.js?v=3" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index d129fa7..577b911 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -255,7 +255,7 @@
+   </dialog>
+   <script src="/static/app.js?v=40" defer></script>
+   <script src="/static/session-attention-store.js?v=2" defer></script>
+-  <script src="/static/browser-notifications.js?v=2" defer></script>
++  <script src="/static/browser-notifications.js?v=3" defer></script>
+   <script src="/static/session-attention.js" defer></script>
+   <script src="/static/coordination.js?v=4" defer></script>
+ </body>

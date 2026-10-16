@@ -1,0 +1,158 @@
+commit 96717cdeb5f733391846a95d78c117068ce77de8
+parent 832d9f1a6a21337dd44063ddf39f7a88cfc95450
+tree 6e46a89a1f3f7462cbbbdc086dc43846a480d7c7
+subject portal: show session attention and deliver background Web Push
+
+ docs/browser-notifications-operations.md           | 105 ++++
+ docs/browser-notifications.md                      | 127 +++++
+ docs/workspace-portal.md                           |   9 +
+ libexec/dev-session                                |   5 +-
+ libexec/workspace-host                             |   2 +
+ nix/workspace-portal.nix                           |   7 +-
+ portal/go.mod                                      |   3 +
+ portal/go.sum                                      |  74 ++-
+ portal/internal/web/attention.go                   | 236 +++++++++
+ portal/internal/web/attention_browser_test.cjs     | 399 +++++++++++++++
+ portal/internal/web/attention_test.go              | 253 ++++++++++
+ portal/internal/web/browser_contract_test.cjs      |   2 +-
+ portal/internal/web/creation.go                    |   4 +
+ portal/internal/web/creation_store.go              |  45 +-
+ portal/internal/web/notifications.go               | 542 +++++++++++++++++++++
+ portal/internal/web/notifications_browser_test.cjs |  52 ++
+ portal/internal/web/notifications_browser_test.go  |  60 +++
+ portal/internal/web/notifications_store.go         | 218 +++++++++
+ portal/internal/web/notifications_test.go          | 532 ++++++++++++++++++++
+ portal/internal/web/notifications_transport.go     | 106 ++++
+ portal/internal/web/preparation.go                 |   9 +-
+ portal/internal/web/preparation_store.go           |  21 +-
+ portal/internal/web/preparation_test.go            |   2 +-
+ portal/internal/web/server.go                      |  75 ++-
+ portal/internal/web/static/app.js                  |  11 +-
+ .../internal/web/static/browser-notifications.js   | 180 +++++++
+ portal/internal/web/static/notification-worker.js  |  80 +++
+ portal/internal/web/static/preparation.js          |  11 +-
+ .../internal/web/static/session-attention-store.js |  32 ++
+ portal/internal/web/static/session-attention.js    | 103 ++++
+ portal/internal/web/templates/index.html           |   7 +-
+ portal/internal/web/templates/notifications.html   |   8 +
+ portal/internal/web/templates/session.html         |  17 +-
+ portal/internal/web/uploads.go                     |   3 +
+ test/dev_session/agent_team_creation_test.rb       |  31 ++
+ .../workspace_host/agent_team_registration_test.rb |  42 ++
+ 36 files changed, 3349 insertions(+), 64 deletions(-)
+commit bb9e6291bec10227c961c36559fba406938f1eaa
+parent 96717cdeb5f733391846a95d78c117068ce77de8
+tree 40ba21cd382dcf8e67598ca80a98a4121bbd9e50
+subject provider: retain bounded failure context before compensation
+
+ docs/codex-providers.md                    |  11 +
+ libexec/workspace-codex-providers.rb       | 102 ++++++++-
+ nix/tests/session-recovery-boot.nix        | 128 +++++++++++-
+ test/workspace_host/codex_provider_test.rb | 321 ++++++++++++++++++++++++++++-
+ 4 files changed, 544 insertions(+), 18 deletions(-)
+commit 6e1d9a191724d376cad2a71f234f0e4d1c01f36f
+parent bb9e6291bec10227c961c36559fba406938f1eaa
+tree 115b87f64066c4073e571e7c42628ea4840fc564
+subject processgroup: make descendant exit assertions identity-aware
+
+ portal/internal/processgroup/processgroup_test.go | 255 ++++++++++++++++++++--
+ 1 file changed, 233 insertions(+), 22 deletions(-)
+commit 867682c3df251fbe6941ff9a667539ae1af790ec
+parent 6e1d9a191724d376cad2a71f234f0e4d1c01f36f
+tree ad1377d32da2d2ff139b0b21097a69d4afc08eed
+subject portal: move browser notifications into the workspace menu
+
+ portal/internal/web/notifications_browser_test.cjs | 41 ++++++++++++++++++++--
+ portal/internal/web/notifications_test.go          | 34 ++++++++++++++++++
+ portal/internal/web/server.go                      |  2 ++
+ portal/internal/web/static/style.css               |  2 ++
+ portal/internal/web/templates/index.html           |  5 ++-
+ portal/internal/web/templates/notifications.html   | 24 ++++++++++++-
+ portal/internal/web/templates/session.html         |  2 +-
+ 7 files changed, 103 insertions(+), 7 deletions(-)
+commit 012f6184faa62b7d476555058f1473adcd908528
+parent 867682c3df251fbe6941ff9a667539ae1af790ec
+tree a9a52f7cae2466dceee459a0a5df4887a57bb32d
+subject portal: report correlated browser notification test outcomes
+
+ docs/browser-notifications-operations.md           |  17 +-
+ docs/browser-notifications.md                      |  32 +-
+ portal/internal/web/attention_browser_test.cjs     | 458 ++++++++++++++++++++-
+ portal/internal/web/notifications.go               |   8 +-
+ portal/internal/web/notifications_browser_test.cjs | 107 ++++-
+ portal/internal/web/notifications_test.go          |  27 +-
+ .../internal/web/static/browser-notifications.js   | 177 +++++++-
+ portal/internal/web/static/notification-worker.js  |  51 ++-
+ .../internal/web/static/session-attention-store.js |  33 +-
+ portal/internal/web/templates/notifications.html   |   6 +-
+ portal/internal/web/templates/session.html         |   4 +-
+ 11 files changed, 885 insertions(+), 35 deletions(-)
+commit 4ed9af55127743b7564cb4dd01d10c9f7fee5120
+parent 012f6184faa62b7d476555058f1473adcd908528
+tree 3c0747c55490b7a9cddb6131f9991ea89f422875
+subject portal: remove the redundant session attention status row
+
+ portal/internal/web/notifications_browser_test.cjs | 2 +-
+ portal/internal/web/templates/session.html         | 1 -
+ 2 files changed, 1 insertion(+), 2 deletions(-)
+commit 469757183ba9491d642b56e91658dc64e390647b
+parent 4ed9af55127743b7564cb4dd01d10c9f7fee5120
+tree bc2a8d5f9dcba8fb94f65b8e7bde4122ba6f117e
+subject portal: activate notification workers while tabs stay open
+
+ docs/browser-notifications-operations.md           |  11 +-
+ docs/browser-notifications.md                      |  15 ++-
+ portal/internal/web/attention_browser_test.cjs     | 129 +++++++++++++++++++--
+ portal/internal/web/notifications_browser_test.cjs |  87 +++++++++++++-
+ portal/internal/web/notifications_browser_test.go  |  32 +++++
+ portal/internal/web/notifications_test.go          |   4 +-
+ .../internal/web/static/browser-notifications.js   | 102 +++++++++++-----
+ portal/internal/web/static/notification-worker.js  |   1 +
+ portal/internal/web/templates/notifications.html   |   2 +-
+ portal/internal/web/templates/session.html         |   2 +-
+ 10 files changed, 334 insertions(+), 51 deletions(-)
+commit fe72f3c043bd7101544bc4639d98211ec9202202
+parent 469757183ba9491d642b56e91658dc64e390647b
+tree 5d8b7036bbf608ccc1d7b5a2322a86a376df05bd
+subject portal: add browser-wide notification and sound controls
+
+ docs/browser-notifications-operations.md           |  23 ++
+ docs/browser-notifications.md                      |  34 ++-
+ portal/internal/web/attention_browser_test.cjs     | 308 +++++++++++++++++++--
+ portal/internal/web/notifications_browser_test.cjs | 170 +++++++++++-
+ portal/internal/web/notifications_test.go          |  15 +-
+ .../internal/web/static/browser-notifications.js   | 123 +++++---
+ portal/internal/web/static/notification-worker.js  |  18 +-
+ .../internal/web/static/session-attention-store.js |  47 +++-
+ portal/internal/web/static/style.css               |   7 +-
+ portal/internal/web/templates/index.html           |  15 +-
+ portal/internal/web/templates/notifications.html   |  10 +-
+ portal/internal/web/templates/session.html         |   6 +-
+ 12 files changed, 686 insertions(+), 90 deletions(-)
+commit 1038d4abdde8b115c21b5940b14be637cfa967b6
+parent fe72f3c043bd7101544bc4639d98211ec9202202
+tree 087795d04b26ed65588df8fdbca938a79a39f2f7
+subject portal: focus existing notification tabs without reloading
+
+ docs/browser-notifications-operations.md           |  6 ++-
+ docs/browser-notifications.md                      | 13 +++--
+ portal/internal/web/attention_browser_test.cjs     | 57 +++++++++++++++++++++-
+ portal/internal/web/notifications_browser_test.cjs | 22 +++++++++
+ portal/internal/web/static/notification-worker.js  |  9 ++--
+ 5 files changed, 98 insertions(+), 9 deletions(-)
+commit 7ad37d4a140a7834c5398efa853b411b8dbc5dd1
+parent 1038d4abdde8b115c21b5940b14be637cfa967b6
+tree 07f9ef1951b99925eb6687f2b8d70348d2fa741e
+subject portal: compact browser notification menu controls
+
+ docs/browser-notifications-operations.md           |  15 +-
+ docs/browser-notifications.md                      |  31 ++--
+ portal/internal/web/attention_browser_test.cjs     | 194 ++++++++++++++++++---
+ portal/internal/web/notifications_browser_test.cjs |  24 ++-
+ portal/internal/web/notifications_test.go          |  21 ++-
+ .../internal/web/static/browser-notifications.js   |  90 ++++++++--
+ portal/internal/web/static/style.css               |   9 +-
+ portal/internal/web/templates/index.html           |  16 +-
+ portal/internal/web/templates/notifications.html   |   4 +-
+ portal/internal/web/templates/session.html         |   4 +-
+ 10 files changed, 316 insertions(+), 92 deletions(-)

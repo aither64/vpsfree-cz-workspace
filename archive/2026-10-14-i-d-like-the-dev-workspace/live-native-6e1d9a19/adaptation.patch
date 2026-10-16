@@ -1,0 +1,116 @@
+--- live-native-bb9e6291/run.sh
++++ live-native-6e1d9a19/run.sh
+@@ -2,7 +2,7 @@
+ set -eo pipefail
+ umask 077
+ tracking=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace
+-probe="$tracking/live-native-bb9e6291"
++probe="$tracking/live-native-6e1d9a19"
+ cd "$tracking"
+ if [[ "$(dev-session current)" != 2026-10-14-i-d-like-the-dev-workspace ]]; then
+   printf '%s\n' 'Refusing live acceptance: session identity mismatch.' >&2
+--- live-native-bb9e6291/live-check.cjs
++++ live-native-6e1d9a19/live-check.cjs
+@@ -143,7 +143,7 @@
+     const row = {browser: engine.name(), phase: "launch", providerAccepted: false, workerReceiptVerified: false,
+       browserNotificationRecordVerified: false, zeroPortalTabsVerified: false, osDisplayVerified: false};
+     report.browsers.push(row); save();
+-    const profile = fs.mkdtempSync(path.join(os.tmpdir(), `session-live-bb9e6291-${engine.name()}-`));
++    const profile = fs.mkdtempSync(path.join(os.tmpdir(), `session-live-6e1d9a19-${engine.name()}-`));
+     let context;
+     try {
+       if (!selectedMatches(candidate)) fail("selected_profile_mismatch");
+--- live-native-bb9e6291/expected.json
++++ live-native-6e1d9a19/expected.json
+@@ -1,5 +1,5 @@
+ {
+-  "sourceRevision": "bb9e6291bec10227c961c36559fba406938f1eaa",
++  "sourceRevision": "6e1d9a191724d376cad2a71f234f0e4d1c01f36f",
+   "origin": "https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz",
+   "sessionSlug": "2026-10-14-i-d-like-the-dev-workspace",
+   "settingsPath": "/2026-10-14-i-d-like-the-dev-workspace/#settings",
+--- live-native-bb9e6291/README.md
++++ live-native-6e1d9a19/README.md
+@@ -1,11 +1,13 @@
+ # Post-activation live notification acceptance
+ 
+-Prepared only for runtime `bb9e6291bec10227c961c36559fba406938f1eaa` at the fixed
++**UNRUN — static preparation only.**
++
++Prepared only for runtime `6e1d9a191724d376cad2a71f234f0e4d1c01f36f` at the fixed
+ HTTPS portal origin and this session's Settings page. No live request, SSH
+ credential read, display launch or browser operation was performed during
+-preparation. The earlier `live-native-0b403305/`, `live-native-b8a6/` bundles and
+-`live-notification-check.cjs` are preserved byte-for-byte. This new directory is an adaptation of that approved
+-headed-browser harness and owned-Xvfb runner.
++preparation. The predecessor `live-native-bb9e6291/`, all earlier live bundles and
++`live-notification-check.cjs` remain unchanged. This new directory adapts the
++approved bb9 headed-browser harness and owned-Xvfb runner.
+ 
+ ## Actual run command, after authorized activation
+ 
+@@ -13,14 +15,14 @@
+ dev-session-monitor watcher or its visible fallback:
+ 
+ ```sh
+-LIVE_PROFILE_PREPARED=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/profile-prepared-bb9e6291.json bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/live-native-bb9e6291/run.sh
++LIVE_PROFILE_PREPARED=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/profile-prepared-6e1d9a19.json bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/live-native-6e1d9a19/run.sh
+ ```
+ 
+ `LIVE_PROFILE_PREPARED` must name the actual final activation's trusted profile
+ preparation record under this tracking directory. At preparation time, the
+ default `profile-prepared.json` still covers the earlier e414ed3 runtime. The
+ harness deliberately refuses it. The command above names a new, not-yet-supplied
+-`profile-prepared-bb9e6291.json`; the lead must supply a genuine final preparation
++`profile-prepared-6e1d9a19.json`; the lead must supply a genuine final preparation
+ record after authorized activation, or point the environment variable at that
+ record under this tracking directory. Do not edit the stale proof or its
+ coverage, or disable checks to make a run proceed.
+@@ -34,11 +36,11 @@
+ ## Revision and identity checks
+ 
+ The supplied profile preparation must bind `dev-workspace` coverage to exact
+-bb9e6291 and its candidate package must equal the selected remote profile's
++6e1d9a19 and its candidate package must equal the selected remote profile's
+ resolved path. That path is read through the existing trusted root SSH connection using
+ only `readlink -f`. Before Enable, the authenticated browser also verifies the
+ served notification client, worker and shared store asset SHA-256 values against
+-the committed bb9e6291 bytes in `expected.json`. The fixed page path and rendered
++the committed 6e1d9a19 bytes in `expected.json`. The fixed page path and rendered
+ session slug must match this conversation's session.
+ 
+ The trusted preparation record, selected package and served assets are checked
+@@ -49,14 +51,14 @@
+ Do not change this bundle's expected value in place.
+ 
+ The client, worker and shared store were independently read from committed
+-Git objects at 0b403305 and bb9e6291 and compared byte-for-byte. All three are
++Git objects at bb9e6291 and 6e1d9a19 and compared byte-for-byte. All three are
+ identical; their SHA-256 values remain the same. `asset-comparison.json` records
+-each source path, public route and digest. `provenance.json` binds the exact
+-refreshed runtime head. Final workspace/configuration pin revisions are explicitly
+-pending the lead's supplied values; no final pin identity has been guessed or
+-inherited from the earlier bundle. This packet remains preparation only until
+-that provenance and genuine final activation proof are available. VM/CI,
+-publication, composition and activation remain lead-owned.
++each source path, public route and digest. `provenance.json` binds runtime
++`6e1d9a191724d376cad2a71f234f0e4d1c01f36f`, workspace
++`0a9d232e74209da2c2f53358e5f2807f34074055` and configuration
++`45fa9962df83b9bec65523ae6ee7d19b63bb03ea`. These published source identities
++are provenance, not activation proof. The genuine final preparation record is
++still required. VM/CI, composition, activation and execution remain lead-owned.
+ 
+ ## Credentials and native delivery
+ 
+@@ -120,7 +122,9 @@
+ checks the local Xvfb executable and asset hashes without launching anything.
+ See `preparation-checks.log/status`, `preparation-summary.json`, `provenance.json`,
+ `asset-comparison.json`, `preserved-prior-bundle.sha256` and `adaptation.patch`.
+-Source, prior probes and old live script remain unchanged. The earlier disposable native provider success belongs to its own
+-run; this live directory contains no delivery result until the lead executes it.
++`inventory.md` lists the exact preparation scope and limitations. Source, prior
++probes and the old live script remain unchanged. Earlier disposable native
++provider results belong to their own runs. This directory has no `run/`, browser
++profile, delivery result or final preparation proof; no live acceptance has run.
+ 
+ Session: <https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-14-i-d-like-the-dev-workspace/>

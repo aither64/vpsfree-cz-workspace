@@ -1,0 +1,53 @@
+=== RUN   TestNotificationsBrowser
+    notifications_browser_test.go:56: notification browser plumbing: exit status 1
+        A [Error]: expect(locator).toContainText(expected) failed
+        
+        Locator: locator('[data-notification-status]')
+        Expected substring: "Enabled on this browser"
+        Received string:    "Browser setup is incomplete. Disable it or enable notifications again."
+        Timeout: 5000ms
+        
+        Call log:
+          - Expect "to.have.text" with timeout 5000ms
+          - waiting for locator('[data-notification-status]')
+            2 × locator resolved to <p role="status" data-notification-status="">Disabled on this browser.</p>
+              - unexpected value "Disabled on this browser."
+            7 × locator resolved to <p role="status" data-notification-status="">Browser setup is incomplete. Disable it or enable…</p>
+              - unexpected value "Browser setup is incomplete. Disable it or enable notifications again."
+        
+            at Proxy.<anonymous> (/nix/store/fg778x0631ld4xd8fim2kbvxll5715xp-playwright-test-1.59.1/lib/node_modules/playwright/lib/matchers/expect.js:213:24)
+            at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-14-i-d-like-the-dev-workspace/dev-workspace/portal/internal/web/notifications_browser_test.cjs:70:66 {
+          matcherResult: {
+            name: 'toContainText',
+            expected: 'Enabled on this browser',
+            message: 'expect(locator).toContainText(expected) failed\n' +
+              '\n' +
+              "Locator: locator('[data-notification-status]')\n" +
+              'Expected substring: "Enabled on this browser"\n' +
+              'Received string:    "Browser setup is incomplete. Disable it or enable notifications again."\n' +
+              'Timeout: 5000ms\n' +
+              '\n' +
+              'Call log:\n' +
+              '  - Expect "to.have.text" with timeout 5000ms\n' +
+              "  - waiting for locator('[data-notification-status]')\n" +
+              '    2 × locator resolved to <p role="status" data-notification-status="">Disabled on this browser.</p>\n' +
+              '      - unexpected value "Disabled on this browser."\n' +
+              '    7 × locator resolved to <p role="status" data-notification-status="">Browser setup is incomplete. Disable it or enable…</p>\n' +
+              '      - unexpected value "Browser setup is incomplete. Disable it or enable notifications again."\n',
+            pass: false,
+            actual: 'Browser setup is incomplete. Disable it or enable notifications again.',
+            log: [
+              '  - Expect "to.have.text" with timeout 5000ms',
+              "  - waiting for locator('[data-notification-status]')",
+              '    2 × locator resolved to <p role="status" data-notification-status="">Disabled on this browser.</p>',
+              '      - unexpected value "Disabled on this browser."',
+              '    7 × locator resolved to <p role="status" data-notification-status="">Browser setup is incomplete. Disable it or enable…</p>',
+              '      - unexpected value "Browser setup is incomplete. Disable it or enable notifications again."'
+            ],
+            timeout: 5000
+          }
+        }
+--- FAIL: TestNotificationsBrowser (9.74s)
+FAIL
+FAIL	github.com/aither64/dev-workspace/portal/internal/web	9.790s
+FAIL

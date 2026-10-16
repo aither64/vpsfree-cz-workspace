@@ -1,0 +1,188 @@
+diff --git a/docs/browser-notifications-operations.md b/docs/browser-notifications-operations.md
+index 3722bd8..8f1a5ce 100644
+--- a/docs/browser-notifications-operations.md
++++ b/docs/browser-notifications-operations.md
+@@ -55,6 +55,22 @@ unregister, resubscribe, VAPID reset or document reload is part of activation.
+ Existing loaded scripts in older tabs are not replaced; use new or refreshed
+ controls for current notification behavior.
+ 
++The browser-local **Play sound** setting uses the existing attention database.
++Checked leaves `silent` out of the display options; unchecked sets
++`silent: true` for Test, session and fallback notifications. Storage reads and
++writes are bounded and wait for transaction completion; unavailable or malformed
++state requests silent display. A rejected silent display is never retried with
++sound allowed. No subscription, provider payload or private server record is
++changed. Old loaded scripts do not implement this choice; use new or refreshed
++controls and confirm the worker update.
++
++Check native visual-only support and the saved choice in each browser profile.
++[Firefox 132 added `Notification.silent` support](https://developer.mozilla.org/en-US/docs/Mozilla/Firefox/Releases/132).
++Run one explicit Test with each choice and a background session event with
++visual-only selected. Record physical appearance and sound separately. Browser
++API support and recorded options do not prove OS sound behavior, and allowing
++sound cannot override browser or system settings.
++
+ ## Private state
+ 
+ `browser-notifications.json` lives beside `lifecycle-operations.json` in the
+diff --git a/docs/browser-notifications.md b/docs/browser-notifications.md
+index fc691d5..8c7a537 100644
+--- a/docs/browser-notifications.md
++++ b/docs/browser-notifications.md
+@@ -42,6 +42,22 @@ finished**. They contain no prompts, commands or excerpts. Session names may
+ appear on the lock screen. The browser vendor's push service handles encrypted
+ delivery and can observe delivery metadata.
+ 
++**Play sound** applies to notifications from this portal in the current browser
++profile, across sessions and tests. It defaults on when no choice has been
++saved. Turn it off for visual-only notifications. Sound allowed uses the
++browser's default behavior; it does not guarantee a sound. Browser and system
++notification settings still apply. The control reports when the browser lacks
++native visual-only support or the worker update is unconfirmed.
++
++The choice is saved only after browser storage confirms the write. Reopening
++these controls reads the last committed choice, including one saved in another
++tab. A failed save reports the failure and rechecks the stored choice. An
++unreadable or corrupt preference requests silent display while still attempting
++the notification. Disable and re-enable retain the choice; clearing this site's
++browser data resets it. Changing the setting affects the worker's next display
++attempt, including a push already queued by the provider. It cannot change an
++already displayed notification, enable delivery or mute a session.
++
+ Use **Send test notification** after enabling. The server waits ten seconds so
+ you can switch to another tab or app before checking delivery. Open
+ these controls from **Browser notifications** in the workspace menu or from
+@@ -131,7 +147,10 @@ database upgrade. These optional fields contain event IDs, revisions, expiry,
+ fixed stage names and an allowlisted browser error category. They contain no
+ endpoint, subscription key, provider response or notification payload. Older
+ clients or workers leave the new result unknown. Local diagnostic storage
+-failure does not prevent the worker from attempting display.
++failure does not prevent the worker from attempting display. The same database
++also holds one browser sound preference, separately from the 512 attention and
++test records. It uses the existing version-1 object store without a database
++upgrade or a server-side preference.
+ 
+ Once accepted by a provider, a message cannot reliably be recalled. A mute or
+ focus race can still produce a visible neutral notification. Clicking closes
+diff --git a/portal/internal/web/static/browser-notifications.js b/portal/internal/web/static/browser-notifications.js
+index edb2665..4665483 100644
+--- a/portal/internal/web/static/browser-notifications.js
++++ b/portal/internal/web/static/browser-notifications.js
+@@ -8,13 +8,56 @@
+     disable = panel.querySelector("[data-notification-disable]"), test = panel.querySelector("[data-notification-test]");
+   const testStatus = panel.querySelector("[data-notification-test-status]"), providerStatus = panel.querySelector("[data-notification-provider-status]"),
+     workerStatus = panel.querySelector("[data-notification-worker-status]");
++  const soundControl = panel.querySelector("[data-notification-sound]"), soundStatus = panel.querySelector("[data-notification-sound-status]");
+   const store = globalThis.workspaceAttentionStore;
++  const silentSupported = Boolean(globalThis.Notification?.prototype && "silent" in Notification.prototype);
++  let soundGeneration = 0, soundBusy = false, savedSound, soundReady = false, soundFailed = false;
++  const renderSound = () => {
++    if (!soundControl) return;
++    soundControl.disabled = !silentSupported || soundBusy || typeof savedSound !== "boolean";
++    soundControl.checked = savedSound === true;
++    const text = !silentSupported ? "This browser does not support visual-only notifications." : soundBusy ? "Saving sound preference…" : soundFailed ?
++      "The sound preference could not be saved. Check the setting and try again." : typeof savedSound !== "boolean" ?
++      "The sound preference could not be read. Notifications will request silent display." : !soundReady ?
++      "Notification updates must be confirmed before this setting can take effect." : "";
++    setText(soundStatus, text);
++  };
++  async function refreshSound() {
++    if (!soundControl || soundBusy || pageClosed) return;
++    const generation = ++soundGeneration;
++    let value;
++    try { value = await store.readSound(); } catch (_) {}
++    if (generation !== soundGeneration || pageClosed || soundBusy) return;
++    savedSound = value; soundFailed = false; renderSound();
++  }
++  soundControl?.addEventListener("change", async () => {
++    if (soundBusy || pageClosed || !silentSupported) return;
++    const generation = ++soundGeneration, selected = soundControl.checked;
++    soundBusy = true; renderSound();
++    try {
++      const value = await store.writeSound(selected);
++      if (generation === soundGeneration && !pageClosed) {savedSound = value; soundFailed = false;}
++    } catch (_) {
++      // A timeout may leave an uncertain commit. Re-read rather than presenting
++      // the attempted value as saved; the helper aborts overdue writes.
++      let value;
++      try {value = await store.readSound();} catch (_) {}
++      if (generation === soundGeneration && !pageClosed) {savedSound = value; soundFailed = true;}
++    } finally {
++      soundBusy = false;
++      if (!pageClosed) {
++        if (generation === soundGeneration) renderSound();
++        else void refreshSound();
++      }
++    }
++  });
+   let pendingTest = null, pollTimer = null, pollGeneration = 0, pageClosed = false, workerUpdate = null, resumeRetired = false;
+   let refreshGeneration = 0, observationRetired = false, cancelReadiness = null;
+   const updateUnconfirmed = "The notification update could not be confirmed. Refresh this page to try again. Test results may be limited.";
+   const invalidateRefresh = (action = false) => {
+     refreshGeneration++;
+     if (cancelReadiness) {
++      soundReady = false; renderSound();
+       cancelReadiness();
+       if (action) setText(workerStatus, updateUnconfirmed);
+     }
+@@ -50,6 +93,7 @@
+     const generation = refreshGeneration, deadline = Date.now() + 10000;
+     const valid = () => current() && generation === refreshGeneration && !pageClosed && !observationRetired;
+     if (!valid()) return;
++    soundReady = false; renderSound();
+     setText(workerStatus, "Updating browser notifications… You can keep your tabs open.");
+     if (update && !workerUpdate) workerUpdate = Promise.resolve().then(() => registration.update());
+     const activated = await new Promise(resolve => {
+@@ -106,6 +150,7 @@
+       catch (_) {finish(false);}
+     });
+     if (valid() && controller === navigator.serviceWorker.controller && controller === registration.active && !registration.waiting && !registration.installing) {
++      soundReady = supported; renderSound();
+       setText(workerStatus, supported ? "" : "Detailed test results are unavailable. Refresh this page to check for a notification update.");
+     }
+   }
+@@ -378,14 +423,16 @@
+     if (event.data?.type === "notification-test-update" && event.data.identity === pendingTest?.identity) void pollTest();
+   });
+   navigator.serviceWorker?.addEventListener?.("controllerchange", () => void refresh());
+-  document.addEventListener?.("visibilitychange", () => { if (document.visibilityState === "visible") { void refresh(); if (pendingTest) void pollTest(); } });
+-  globalThis.addEventListener?.("pagehide", () => { pageClosed = true; invalidateRefresh(); stopTest(); });
+-  globalThis.addEventListener?.("pageshow", () => { pageClosed = false; void refresh(); if (pendingTest) void pollTest(); });
++  document.addEventListener?.("visibilitychange", () => { if (document.visibilityState === "visible") { void refreshSound(); void refresh(); if (pendingTest) void pollTest(); } });
++  globalThis.addEventListener?.("pagehide", () => { pageClosed = true; soundGeneration++; invalidateRefresh(); stopTest(); });
++  globalThis.addEventListener?.("pageshow", () => { pageClosed = false; void refreshSound(); void refresh(); if (pendingTest) void pollTest(); });
+   globalThis.addEventListener?.("storage", event => {
+     if ((event.key === key && event.newValue !== registrationId) || (event.key === cleanupKey && event.newValue)) {
+       invalidateRefresh(); observationRetired = true;
+       cancelTest(); registered = false; buttons();
+     }
+   });
++  document.addEventListener?.("session-section-change", event => { if (event.detail === "settings") void refreshSound(); });
++  void refreshSound();
+   void refresh();
+ })();
+diff --git a/portal/internal/web/templates/notifications.html b/portal/internal/web/templates/notifications.html
+index 0580cfa..2eafb7c 100644
+--- a/portal/internal/web/templates/notifications.html
++++ b/portal/internal/web/templates/notifications.html
+@@ -15,8 +15,8 @@
+   <main class="page">
+     {{template "browser-notifications"}}
+   </main>
+-  <script src="/static/session-attention-store.js?v=2" defer></script>
+-  <script src="/static/browser-notifications.js?v=3" defer></script>
++  <script src="/static/session-attention-store.js?v=3" defer></script>
++  <script src="/static/browser-notifications.js?v=4" defer></script>
+ </body>
+ </html>
+ {{end}}
+@@ -29,6 +29,9 @@
+   <p data-notification-test-status role="status" hidden></p>
+   <p data-notification-provider-status class="muted" hidden></p>
+   <p data-notification-worker-status class="muted" role="status" hidden></p>
++  <label><input type="checkbox" data-notification-sound aria-describedby="notification-sound-hint notification-sound-status" disabled> Play sound</label>
++  <p id="notification-sound-hint" class="muted">Turn off for visual-only notifications. Browser and system sound settings still apply.</p>
++  <p id="notification-sound-status" data-notification-sound-status role="status">Checking sound preference…</p>
+   <div class="notification-actions"><button type="button" data-notification-enable>Enable browser notifications</button><button type="button" data-notification-test disabled>Send test notification</button><button type="button" class="quiet" data-notification-disable disabled>Disable on this browser</button></div>
+ </section>
+ {{end}}

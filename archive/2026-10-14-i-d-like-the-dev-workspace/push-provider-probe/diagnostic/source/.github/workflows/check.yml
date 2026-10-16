@@ -1,0 +1,48 @@
+name: Check
+
+on:
+  pull_request:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fast:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: cachix/install-nix-action@v31.11.1
+        with:
+          extra_nix_config: |
+            extra-substituters = https://cache.numtide.com
+            extra-trusted-public-keys = niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=
+      - name: Evaluate all checks
+        run: nix flake check --no-build --print-build-logs
+      - name: Build package and focused checks
+        run: |
+          check_names=$(nix eval --json .#checks.x86_64-linux --apply builtins.attrNames)
+          mapfile -t checks < <(
+            jq -r '.[] | select(. != "host-module-idempotency" and . != "session-recovery-boot") | ".#checks.x86_64-linux." + .' <<< "$check_names"
+          )
+          nix build --no-link --print-build-logs "${checks[@]}"
+  host:
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - name: Enable VM acceleration
+        run: |
+          test -c /dev/kvm
+          sudo chmod a+rw /dev/kvm
+      - uses: cachix/install-nix-action@v31.11.1
+        with:
+          extra_nix_config: |
+            extra-substituters = https://cache.numtide.com
+            extra-trusted-public-keys = niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=
+      - name: Activation, renewal, rollback and user-service boot tests
+        run: |
+          nix build --no-link --print-build-logs \
+            .#checks.x86_64-linux.host-module-idempotency \
+            .#checks.x86_64-linux.session-recovery-boot

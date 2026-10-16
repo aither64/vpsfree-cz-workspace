@@ -1,0 +1,390 @@
+diff --git a/docs/browser-notifications-operations.md b/docs/browser-notifications-operations.md
+index 4c06a05..8a609a1 100644
+--- a/docs/browser-notifications-operations.md
++++ b/docs/browser-notifications-operations.md
+@@ -59,12 +59,12 @@ unregister, resubscribe, VAPID reset or document reload is part of activation.
+ Existing loaded scripts in older tabs are not replaced; use new or refreshed
+ controls for current notification behavior.
+ 
+-The workspace menu and full panel share the same Enable/Disable actions and
+-browser-local sound choice. Loading or opening the controls does not request
++The compact menu Notifications checkbox and full-panel buttons share the same
++Enable/Disable actions. Sound uses the same browser-local choice on both surfaces. Loading or opening the controls does not request
+ permission or change subscriptions. The worker may check for an update. Permission and
+ subscription changes require an explicit action. Browser Disable leaves session
+ mute preferences, title attention and reservation markers intact. Incomplete cleanup remains retryable
+-from either surface.
++in Notification settings; the menu shows a brief notice and a mixed checkbox.
+ 
+ The browser-local **Play sound** setting uses the existing attention database.
+ Checked leaves `silent` out of the display options; unchecked sets
+diff --git a/docs/browser-notifications.md b/docs/browser-notifications.md
+index 63be537..dd50219 100644
+--- a/docs/browser-notifications.md
++++ b/docs/browser-notifications.md
+@@ -42,17 +42,19 @@ finished**. They contain no prompts, commands or excerpts. Session names may
+ appear on the lock screen. The browser vendor's push service handles encrypted
+ delivery and can observe delivery metadata.
+ 
+-The workspace menu on index and session pages provides browser-wide delivery
+-controls and **Play sound**. The same controls appear in session Settings; the
+-**Browser notifications** link opens the full panel with Test and guidance.
+-Opening the menu reads the current state without requesting permission or
+-changing a subscription. Enable and Disable require an explicit click. Browser
+-Disable applies across sessions in this browser, while title attention and
+-reservation markers keep updating. Per-session notification settings remain
+-unchanged and apply again after browser Enable. A provider-accepted message may
+-still arrive after Disable.
+-
+-**Play sound** applies to notifications from this portal in the current browser
++The workspace menu on index and session pages has **Notifications** and **Sound**
++checkboxes. **Notification settings** opens the full panel with detailed status,
++Test and recovery controls, also available in session Settings. Notifications
++shows confirmed browser setup; a mixed, disabled checkbox means the state is
++uncertain and needs the settings page. Opening the menu reads the current state
++without requesting permission or changing a subscription. Changing Notifications
++uses the same explicit Enable or Disable action as the full panel. Disabling
++applies across sessions in this browser, while title attention and reservation
++markers keep updating. Per-session notification settings remain unchanged and
++apply again after browser Enable. A provider-accepted message may still arrive
++after Disable.
++
++**Sound** in the menu and **Play sound** in settings apply to notifications from this portal in the current browser
+ profile, across sessions and tests. It defaults on when no choice has been
+ saved. Turn it off for visual-only notifications. When checked, the
+ browser uses its default sound behavior; it does not guarantee a sound. Browser
+@@ -70,7 +72,7 @@ already displayed notification, enable delivery or mute a session.
+ 
+ Use **Send test notification** after enabling. The server waits ten seconds so
+ you can switch to another tab or app before checking delivery. Open
+-the full panel from **Browser notifications** in the workspace menu or use
++the full panel from **Notification settings** in the workspace menu or use
+ session Settings. The test result distinguishes arrival in this browser, whether
+ the browser accepted or rejected the display request, and whether it retained a
+ matching notification record. None of these confirms appearance on your screen.
+diff --git a/portal/internal/web/static/browser-notifications.js b/portal/internal/web/static/browser-notifications.js
+index d2f8ac2..3ce2ef8 100644
+--- a/portal/internal/web/static/browser-notifications.js
++++ b/portal/internal/web/static/browser-notifications.js
+@@ -4,9 +4,29 @@
+   const cleanupKey = `${key}.cleanup`;
+   const elements = name => [...document.querySelectorAll(`[data-notification-${name}]`)];
+   const statuses = elements("status"), enables = elements("enable"), disables = elements("disable"), tests = elements("test");
+-  if (!statuses.length) return;
+   const testStatus = elements("test-status"), providerStatus = elements("provider-status"), workerStatus = elements("worker-status");
+   const soundControls = elements("sound"), soundStatus = elements("sound-status");
++  const deliveryControls = elements("delivery"), menuErrors = elements("menu-error");
++  if (!statuses.length && !deliveryControls.length && !soundControls.length) return;
++  let menuValue = null, menuReading = false, menuAvailable = null;
++  let deliveryError = null, soundError = null, workerError = false;
++  const menuMessages = {
++    setup: "Notification setup needs attention.", read: "Could not check notifications.",
++    blocked: "Notifications are blocked.", unsupported: "Notifications are unavailable here.",
++    unavailable: "Notification delivery is unavailable.", action: "Could not update notifications.",
++    soundRead: "Could not read the sound setting.", soundSave: "Could not save the sound setting.",
++    soundUnsupported: "Sound control is unavailable.", worker: "Notification update unconfirmed.",
++  };
++  const renderMenu = () => {
++    deliveryControls.forEach(control => {
++      control.checked = menuValue === true;
++      control.indeterminate = menuValue === null;
++      control.disabled = busy || soundBusy || menuReading || pageClosed || observationRetired || menuValue === null ||
++        !supported || Notification.permission === "denied" || menuAvailable === false;
++    });
++    const problem = deliveryError || (!silentSupported ? "soundUnsupported" : soundError) || (workerError ? "worker" : null);
++    setText(menuErrors, menuMessages[problem] || "");
++  };
+   const setStatus = text => setText(statuses, text);
+   const store = globalThis.workspaceAttentionStore;
+   const silentSupported = Boolean(globalThis.Notification?.prototype && "silent" in Notification.prototype);
+@@ -21,6 +41,7 @@
+       "The sound setting could not be read. The browser will be asked to show notifications without sound." : !soundReady ?
+       "The notification update is unconfirmed. This sound setting may not take effect yet." : "";
+     setText(soundStatus, text);
++    renderMenu();
+   };
+   async function refreshSound() {
+     if (!soundControls.length || soundBusy || pageClosed) return;
+@@ -28,21 +49,21 @@
+     let value;
+     try { value = await store.readSound(); } catch (_) {}
+     if (generation !== soundGeneration || pageClosed || soundBusy) return;
+-    savedSound = value; soundFailed = false; renderSound();
++    savedSound = value; soundFailed = false; soundError = typeof value === "boolean" ? null : "soundRead"; renderSound();
+   }
+   soundControls.forEach(soundControl => soundControl.addEventListener("change", async () => {
+     if (busy || soundBusy || pageClosed || !silentSupported) return;
+     const generation = ++soundGeneration, selected = soundControl.checked;
+-    soundBusy = true; buttons();
++    soundError = null; soundBusy = true; buttons();
+     try {
+       const value = await store.writeSound(selected);
+-      if (generation === soundGeneration && !pageClosed) {savedSound = value; soundFailed = false;}
++      if (generation === soundGeneration && !pageClosed) {savedSound = value; soundFailed = false; soundError = null;}
+     } catch (_) {
+       // A timeout may leave an uncertain commit. Re-read rather than presenting
+       // the attempted value as saved; the helper aborts overdue writes.
+       let value;
+       try {value = await store.readSound();} catch (_) {}
+-      if (generation === soundGeneration && !pageClosed) {savedSound = value; soundFailed = true;}
++      if (generation === soundGeneration && !pageClosed) {savedSound = value; soundFailed = true; soundError = "soundSave";}
+     } finally {
+       soundBusy = false;
+       if (!pageClosed) {
+@@ -56,6 +77,7 @@
+   const updateUnconfirmed = "The notification update could not be confirmed. Refresh this page to try again. Test results may be limited.";
+   const invalidateRefresh = (action = false) => {
+     refreshGeneration++;
++    if (action) menuReading = false;
+     if (cancelReadiness) {
+       soundReady = false; renderSound();
+       cancelReadiness();
+@@ -93,7 +115,7 @@
+     const generation = refreshGeneration, deadline = Date.now() + 10000;
+     const valid = () => current() && generation === refreshGeneration && !pageClosed && !observationRetired;
+     if (!valid()) return;
+-    soundReady = false; renderSound();
++    workerError = false; soundReady = false; renderSound();
+     setText(workerStatus, "Updating browser notifications… You can keep your tabs open.");
+     if (update && !workerUpdate) workerUpdate = Promise.resolve().then(() => registration.update());
+     const activated = await new Promise(resolve => {
+@@ -128,9 +150,10 @@
+       inspect();
+     });
+     if (!valid()) return;
+-    if (!activated) {setText(workerStatus, updateUnconfirmed); return;}
++    if (!activated) {workerError = true; renderMenu(); setText(workerStatus, updateUnconfirmed); return;}
+     const controller = navigator.serviceWorker.controller;
+     if (!globalThis.MessageChannel) {
++      workerError = true; renderMenu();
+       setText(workerStatus, "Detailed test results are unavailable. Refresh this page to check for a notification update.");
+       return;
+     }
+@@ -150,7 +173,7 @@
+       catch (_) {finish(false);}
+     });
+     if (valid() && controller === navigator.serviceWorker.controller && controller === registration.active && !registration.waiting && !registration.installing) {
+-      soundReady = supported; renderSound();
++      workerError = !supported; soundReady = supported; renderSound();
+       setText(workerStatus, supported ? "" : "Detailed test results are unavailable. Refresh this page to check for a notification update.");
+     }
+   }
+@@ -273,7 +296,8 @@
+     invalidateRefresh();
+     const generation = refreshGeneration, identity = registrationId;
+     const current = () => generation === refreshGeneration && identity === registrationId && !busy && !pageClosed && !observationRetired;
+-    if (!supported) { setStatus("This browser build does not support background Web Push. Use a browser with Push API support."); buttons(); return; }
++    menuReading = true; renderMenu();
++    if (!supported) { menuReading = false; menuValue = null; deliveryError = "unsupported"; setStatus("This browser build does not support background Web Push. Use a browser with Push API support."); buttons(); return; }
+     let observedSubscription = localSubscription, observedKnown = localKnown;
+     try {
+       const local = await navigator.serviceWorker.getRegistration("/");
+@@ -283,8 +307,13 @@
+       const state = await api(`?registrationId=${encodeURIComponent(identity)}`);
+       if (!current()) return;
+       localSubscription = observedSubscription; localKnown = observedKnown;
+-      setText(providerStatus, lastProvider(state.result) ? `Last push-service result; it may be from another notification: ${lastProvider(state.result)}` : "");
++      menuAvailable = state.available;
++      const off = !state.registered && localKnown && !localSubscription && !registrationId && !pendingCleanup;
+       registered = Boolean(!pendingCleanup && state.registered && localSubscription && Notification.permission === "granted");
++      menuValue = registered && state.available ? true : off ? false : null;
++      deliveryError = pendingCleanup || (!off && !registered) ? "setup" : Notification.permission === "denied" ? "blocked" : !state.available ? "unavailable" : null;
++      menuReading = false;
++      setText(providerStatus, lastProvider(state.result) ? `Last push-service result; it may be from another notification: ${lastProvider(state.result)}` : "");
+       setStatus(pendingCleanup ? cleanupStatus() : localSubscription && !registered ? incomplete : Notification.permission === "denied" ? "Notifications are blocked. Change this site's notification permission in your browser settings." :
+         !state.available ? "Notification delivery is disabled on the server." : state.result === "expired" ? "The browser subscription expired. Enable notifications again." : registered ?
+         "Enabled on this browser." : "Disabled on this browser.");
+@@ -292,22 +321,26 @@
+     } catch (error) {
+       if (!current()) return;
+       localSubscription = observedSubscription; localKnown = observedKnown;
+-      registered = false; setStatus(pendingCleanup ? cleanupStatus() : localSubscription ? incomplete : error.message);
++      registered = false; menuValue = null; menuReading = false; deliveryError = pendingCleanup ? "setup" : "read"; setStatus(pendingCleanup ? cleanupStatus() : localSubscription ? incomplete : error.message);
+     }
+     if (current()) buttons();
+   }
+-  enables.forEach(control => control.addEventListener("click", async () => {
++  async function enableNotifications() {
+     if (soundBusy || busy || !supported || Notification.permission === "denied") return;
+     readCleanup();
+-    if (pendingCleanup) { setStatus(cleanupStatus()); buttons(); return; }
++    if (pendingCleanup) { menuValue = null; deliveryError = "setup"; setStatus(cleanupStatus()); buttons(); return; }
++    deliveryError = null; menuReading = false;
+     invalidateRefresh(true); observationRetired = false;
++    const generation = refreshGeneration, currentAction = () => generation === refreshGeneration && !pageClosed && !observationRetired;
+     cancelTest();
+     busy = true; buttons();
+     try {
+       const permission = await Notification.requestPermission();
++      if (currentAction() && permission !== "granted") deliveryError = permission === "denied" ? "blocked" : "action";
+       if (permission !== "granted") throw new Error(permission === "denied" ? "Notifications are blocked. Change this site's notification permission in your browser settings." : "Notification permission was not granted.");
+       const state = await api("");
+-      if (!state.available) throw new Error("Notification delivery is disabled on the server.");
++      if (currentAction()) menuAvailable = state.available;
++      if (!state.available) {if (currentAction()) deliveryError = "unavailable"; throw new Error("Notification delivery is disabled on the server.");}
+       const registration = await navigator.serviceWorker.register("/notification-worker.js", {scope: "/", updateViaCache: "none"});
+       await navigator.serviceWorker.ready;
+       let subscription = await registration.pushManager.getSubscription();
+@@ -332,14 +365,23 @@
+       localStorage.setItem(key, registrationId);
+       if (localStorage.getItem(key) !== registrationId) throw new Error("Browser registration could not be saved. Try enabling notifications again.");
+       if (replacement && !clearCleanup()) throw new Error();
++      if (currentAction()) {menuValue = true; deliveryError = null;}
+       registered = true; setStatus("Enabled on this browser. Send a test notification to check delivery.");
+       void workerReadiness(registration, true);
+-    } catch (error) { registered = false; setStatus(pendingCleanup ? disablingIncomplete : localSubscription ? incomplete : `Registration failed: ${error.message}`); }
++    } catch (error) {
++      registered = false;
++      if (currentAction()) {
++        menuValue = localKnown && !localSubscription && !registrationId && !pendingCleanup ? false : null;
++        deliveryError = pendingCleanup || localSubscription || registrationId ? "setup" : deliveryError || "action";
++      }
++      setStatus(pendingCleanup ? disablingIncomplete : localSubscription ? incomplete : `Registration failed: ${error.message}`); }
+     finally { busy = false; buttons(); }
+-  }));
+-  disables.forEach(control => control.addEventListener("click", async () => {
++  }
++  async function disableNotifications() {
+     if (soundBusy || busy) return;
++    deliveryError = null; menuReading = false;
+     invalidateRefresh(true);
++    const generation = refreshGeneration, currentAction = () => generation === refreshGeneration && !pageClosed && !observationRetired;
+     cancelTest();
+     busy = true; registered = false; buttons();
+     let registration = null, subscription = localSubscription, selector = null, currentBound = false;
+@@ -382,9 +424,21 @@
+     } catch (_) {}
+     if (serverAbsent && localKnown && !localSubscription && !registrationId) clearCleanup();
+     const complete = serverAbsent && localKnown && !localSubscription && !pendingCleanup && !registrationId;
++    if (currentAction()) {menuValue = complete ? false : null; deliveryError = complete ? null : "setup";}
+     setStatus(complete ? "Disabled on this browser. Site permission remains in your browser settings." :
+       localKnown && !localSubscription && !serverAbsent ? serverPending : disablingIncomplete);
+     busy = false; buttons();
++  }
++  enables.forEach(control => control.addEventListener("click", enableNotifications));
++  disables.forEach(control => control.addEventListener("click", disableNotifications));
++  deliveryControls.forEach(control => control.addEventListener("change", async () => {
++    const selected = control.checked, allowed = !control.disabled && !menuReading && !busy && !soundBusy && !pageClosed && !observationRetired;
++    // Native inputs toggle before change. Restore the last confirmed value
++    // synchronously; only the existing action's outcome can certify a new one.
++    buttons();
++    if (!allowed || menuValue === null || selected === menuValue) return;
++    if (selected) await enableNotifications();
++    else await disableNotifications();
+   }));
+   tests.forEach(control => control.addEventListener("click", async () => {
+     if (soundBusy || busy || !registered) return;
+@@ -430,7 +484,7 @@
+   globalThis.addEventListener?.("storage", event => {
+     if ((event.key === key && event.newValue !== registrationId) || (event.key === cleanupKey && event.newValue)) {
+       invalidateRefresh(); observationRetired = true;
+-      cancelTest(); registered = false; setStatus(incomplete); buttons();
++      cancelTest(); registered = false; menuValue = null; menuReading = false; deliveryError = "setup"; setStatus(incomplete); buttons();
+     }
+   });
+   document.addEventListener?.("session-section-change", event => { if (event.detail === "settings") void refreshSound(); });
+diff --git a/portal/internal/web/static/style.css b/portal/internal/web/static/style.css
+index 139dab5..f524e98 100644
+--- a/portal/internal/web/static/style.css
++++ b/portal/internal/web/static/style.css
+@@ -365,11 +365,10 @@ dialog::backdrop { background: rgba(0, 0, 0, .72); }
+ .sidebar-menu-toggle { flex: none; padding: .25rem .6rem; font-size: 1.4rem; line-height: 1; }
+ .sidebar-menu[popover] { max-height: calc(100vh - 1rem); overflow-y: auto; position: fixed; inset: auto; margin: 0; padding: .35rem; max-width: calc(100vw - 1rem); border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text); box-shadow: 0 8px 32px #0008; }
+ .sidebar-menu a { display: block; padding: .65rem .8rem; border-radius: 6px; }
+-.menu-notifications { width: 22rem; max-width: 100%; padding: .65rem .8rem; border-top: 1px solid var(--line); }
+-.menu-notifications p { margin: 0 0 .65rem; overflow-wrap: anywhere; }
+-.menu-notifications .notification-actions { margin-bottom: .85rem; }
+-.menu-notifications .checkbox { margin-bottom: .5rem; }
+-.menu-notifications > a { padding-left: 0; }
++.menu-notifications { max-width: 100%; padding: .6rem .8rem .3rem; border-top: 1px solid var(--line); }
++.menu-notifications p { margin: .45rem 0; overflow-wrap: anywhere; }
++.menu-notifications .checkbox { margin: 0 0 .45rem; color: var(--text); }
++.menu-notifications > a { padding: .25rem 0; font-size: .8rem; }
+ .sidebar-menu a:hover, .sidebar-menu a:focus-visible { background: var(--panel-2); }
+ .rail-icon { position: relative; display: inline-flex; align-items: center; justify-content: center; width: 1.25rem; flex: none; font-size: 1.2rem; }
+ .codex-waiting-indicator { position: absolute; top: -.08rem; right: -.12rem; width: .42rem; height: .42rem; border: 1px solid #10151d; border-radius: 999px; background: var(--warning); box-shadow: 0 0 0 1px color-mix(in srgb, var(--warning) 28%, transparent); }
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 2ac65d3..4b9d996 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -5,7 +5,7 @@
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Workspace</title>
+-  <link rel="stylesheet" href="/static/style.css?v=16">
++  <link rel="stylesheet" href="/static/style.css?v=17">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body data-index data-index-generated-at="{{.IndexGeneratedAt}}">
+@@ -94,7 +94,7 @@
+   </div>
+   <template id="session-card-template">{{template "session-card"}}</template>
+   <script src="/static/session-attention-store.js?v=3" defer></script>
+-  <script src="/static/browser-notifications.js?v=4" defer></script>
++  <script src="/static/browser-notifications.js?v=5" defer></script>
+   <script src="/static/preparation.js?v=4" defer></script>
+   <script src="/static/app.js?v=40" defer></script>
+   <script src="/static/coordination.js?v=4" defer></script>
+@@ -108,14 +108,10 @@
+   <a href="/operations" autofocus>Operations</a>
+   <a href="/automatic-archival">Automatic archival</a>
+   <section class="menu-notifications" aria-label="Browser notifications">
+-    <p class="muted">These controls apply to all sessions in this browser. Page title markers stay on.</p>
+-    <p data-notification-status role="status">Checking browser notifications…</p>
+-    <p data-notification-worker-status class="muted" role="status" hidden></p>
+-    <div class="notification-actions"><button type="button" data-notification-enable>Enable browser notifications</button><button type="button" class="quiet" data-notification-disable disabled>Disable on this browser</button></div>
+-    <label class="checkbox"><input type="checkbox" data-notification-sound aria-describedby="menu-notification-sound-hint menu-notification-sound-status" disabled> Play sound</label>
+-    <p id="menu-notification-sound-hint" class="muted">Turn off for visual-only notifications. Browser and system sound settings still apply.</p>
+-    <p id="menu-notification-sound-status" data-notification-sound-status role="status">Checking sound preference…</p>
+-    <a href="/browser-notifications">Browser notifications</a>
++    <label class="checkbox"><input type="checkbox" data-notification-delivery aria-describedby="menu-notification-error" disabled> Notifications</label>
++    <label class="checkbox"><input type="checkbox" data-notification-sound aria-describedby="menu-notification-error" disabled> Sound</label>
++    <p id="menu-notification-error" data-notification-menu-error class="muted" role="status" hidden></p>
++    <a href="/browser-notifications">Notification settings</a>
+   </section>
+ </nav>
+ {{end}}
+diff --git a/portal/internal/web/templates/notifications.html b/portal/internal/web/templates/notifications.html
+index f1266ec..4da0027 100644
+--- a/portal/internal/web/templates/notifications.html
++++ b/portal/internal/web/templates/notifications.html
+@@ -5,7 +5,7 @@
+   <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
+   <title>Browser notifications · {{.DisplayLabel}}</title>
+-  <link rel="stylesheet" href="/static/style.css?v=16">
++  <link rel="stylesheet" href="/static/style.css?v=17">
+ </head>
+ <body>
+   <header class="topbar">
+@@ -16,7 +16,7 @@
+     {{template "browser-notifications"}}
+   </main>
+   <script src="/static/session-attention-store.js?v=3" defer></script>
+-  <script src="/static/browser-notifications.js?v=4" defer></script>
++  <script src="/static/browser-notifications.js?v=5" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 6174f12..6b45f24 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -7,7 +7,7 @@
+   <meta name="style-nonce" content="{{.StyleNonce}}">
+   <title>{{.Session.Slug}} · Workspace</title>
+   <link rel="stylesheet" href="/codex/assets/conversation.css?v=5">
+-  <link rel="stylesheet" href="/static/style.css?v=16">
++  <link rel="stylesheet" href="/static/style.css?v=17">
+   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+ </head>
+ <body class="session-body" data-session="{{.Session.Slug}}" data-session-observation="{{.Session.ObservationIdentity}}" data-thread-id="{{if .SelectedThreadID}}{{.SelectedThreadID}}{{else}}{{.Session.Codex.ThreadID}}{{end}}" data-root-thread-id="{{.Session.Codex.ThreadID}}" data-conversation-id="{{.ConversationID}}" data-selected-member="{{.SelectedMember}}" data-lifecycle-target-id="{{.LifecycleTargetID}}" data-target-identity-version="2" data-archived="{{.Session.Archived}}" data-interactive="{{.Session.Interactive}}" data-execution-held="{{.Session.ExecutionHeld}}" data-lifecycle="{{.Session.Lifecycle}}" data-pending-lifecycle="{{.PendingLifecycle}}">
+@@ -255,7 +255,7 @@
+   </dialog>
+   <script src="/static/app.js?v=40" defer></script>
+   <script src="/static/session-attention-store.js?v=3" defer></script>
+-  <script src="/static/browser-notifications.js?v=4" defer></script>
++  <script src="/static/browser-notifications.js?v=5" defer></script>
+   <script src="/static/session-attention.js" defer></script>
+   <script src="/static/coordination.js?v=4" defer></script>
+ </body>

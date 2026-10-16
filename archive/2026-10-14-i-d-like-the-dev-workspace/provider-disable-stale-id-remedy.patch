@@ -1,0 +1,241 @@
+diff --git a/docs/browser-notifications-operations.md b/docs/browser-notifications-operations.md
+index fd3bf18..9947052 100644
+--- a/docs/browser-notifications-operations.md
++++ b/docs/browser-notifications-operations.md
+@@ -73,12 +73,16 @@ idempotently. Only matching registrations and their outbox entries are removed;
+ the lookup makes no outbound request and creates no registration or new private
+ state format. Existing clients can continue deleting by registration ID.
+ 
+-Before unsubscribing, the browser keeps one bounded cleanup selector in local
+-storage. A lost registration ID uses the endpoint digest, without retaining the
+-endpoint or subscription keys. Server failure does not prevent local
++Before unsubscribing, the browser keeps the current subscription's endpoint
++digest in one bounded cleanup receipt and retains any saved registration ID
++separately. A saved ID may belong to an older subscription after a replacement
++registration response is lost. Disable removes both through at most two
++idempotent requests, each with exactly one selector. It retains neither the
++endpoint nor subscription keys. Server failure does not prevent local
+ unsubscribe. The browser verifies local absence and retains unresolved server
+ cleanup across reload for an explicit Disable retry. Enable remains unavailable
+-while cleanup is pending. Fully disabled means both removals are confirmed.
++while cleanup is pending. Fully disabled requires both relevant server removals
++and local absence to be confirmed.
+ Browser storage failure can prevent retaining the selector across reload; the
+ current page keeps it in memory for retry.
+ 
+diff --git a/docs/browser-notifications.md b/docs/browser-notifications.md
+index 388298e..593445d 100644
+--- a/docs/browser-notifications.md
++++ b/docs/browser-notifications.md
+@@ -51,8 +51,10 @@ site permission unchanged. The two removals are independent: server failure does
+ not prevent local unsubscribe. If server cleanup remains uncertain, the browser
+ keeps a small deletion selector for an explicit Disable retry, including after
+ reload. It contains an ID or endpoint digest, not subscription keys or the
+-endpoint itself. Finish pending cleanup before enabling again. Fully disabled
+-means both removals are confirmed. A lost registration response or saved ID
++endpoint itself. A saved ID can refer to an older subscription; Disable also
++targets the current subscription's digest and waits for both server removals.
++Finish pending cleanup before enabling again. Fully disabled means those
++removals and local absence are confirmed. A lost registration response or saved ID
+ reports incomplete setup; Disable uses the endpoint digest without registering
+ the subscription again.
+ Denied permission requires a change in the browser's site settings.
+diff --git a/portal/internal/web/attention_browser_test.cjs b/portal/internal/web/attention_browser_test.cjs
+index 3b8ae25..33b5b57 100644
+--- a/portal/internal/web/attention_browser_test.cjs
++++ b/portal/internal/web/attention_browser_test.cjs
+@@ -199,6 +199,10 @@ async function notificationHarness(state, storage = new Map()) {
+       const body = options.body && JSON.parse(options.body); calls.push({url, body});
+       if (url.endsWith('/register')) {
+         state.registered = true;
++        if (state.serverRecords) {
++          state.serverRecords.set(state.replacementId, body.subscription.endpoint);
++          state.outbox.add(state.replacementId);
++        }
+         if (state.loseRegisterReply) {state.loseRegisterReply = false; throw Error('lost reply');}
+         return {ok: true, json: async () => ({registrationId: browserId})};
+       }
+@@ -207,11 +211,21 @@ async function notificationHarness(state, storage = new Map()) {
+         assert.ok(body.registrationId === browserId || body.endpointDigest === endpointDigest);
+         if (state.offline) throw Error('offline');
+         if (state.denied) return {ok: false, json: async () => ({error: 'Notification origin is invalid.'})};
++        if (state.failSelector && Object.hasOwn(body, state.failSelector)) throw Error('one deletion unavailable');
++        if (state.serverRecords) {
++          for (const [id, savedEndpoint] of state.serverRecords) {
++            const savedDigest = require('node:crypto').createHash('sha256').update(savedEndpoint).digest('hex');
++            if (body.registrationId === id || body.endpointDigest === savedDigest) {
++              state.serverRecords.delete(id); state.outbox.delete(id);
++            }
++          }
++        }
+         state.registered = false;
+-        if (state.loseDisableReply) {state.loseDisableReply = false; throw Error('lost reply');}
++        if (state.loseIdDeleteReply && body.registrationId) {state.loseIdDeleteReply = false; throw Error('lost reply');}
+         return {ok: true, json: async () => ({ok: true})};
+       }
+-      return {ok: true, json: async () => ({available: true, publicKey: 'Ag', registered: state.registered && url.includes(`registrationId=${browserId}`)})};
++      const queriedId = new URL(url, 'https://workspace.example').searchParams.get('registrationId');
++      return {ok: true, json: async () => ({available: true, publicKey: 'Ag', registered: state.serverRecords ? state.serverRecords.has(queriedId) : state.registered && queriedId === browserId})};
+     },
+   };
+   vm.runInNewContext(source('browser-notifications.js'), context);
+@@ -262,7 +276,7 @@ test('offline or denied lost-ID cleanup unsubscribes and survives reload for exp
+ });
+ 
+ test('known ID survives unknown deletion outcome and retries idempotently after reload', async () => {
+-  const state = {subscribed: true, registered: true, loseDisableReply: true};
++  const state = {subscribed: true, registered: true, loseIdDeleteReply: true};
+   const storage = new Map([[browserKey, browserId]]);
+   const h = await notificationHarness(state, storage);
+   await h.controls.disable.click();
+@@ -270,7 +284,7 @@ test('known ID survives unknown deletion outcome and retries idempotently after
+   assert.equal(storage.get(browserKey), browserId, 'lost response is not confirmation');
+   const reloaded = await notificationHarness(state, storage);
+   await reloaded.controls.disable.click();
+-  assert.deepEqual(reloaded.calls.find(call => call.url.endsWith('/disable')).body, {registrationId: browserId});
++  assert.deepEqual(reloaded.calls.find(call => call.body?.registrationId).body, {registrationId: browserId});
+   assert.equal(storage.has(browserKey), false); assert.equal(storage.has(cleanupKey), false);
+   assert.match(reloaded.controls.status.textContent, /^Disabled on this browser/);
+ });
+@@ -281,7 +295,7 @@ test('known-ID disable verifies normal removal, false results and retryable loca
+     const h = await notificationHarness(state, new Map([[browserKey, browserId]]));
+     await h.controls.disable.click();
+     assert.equal(state.registered, false);
+-    assert.deepEqual(h.calls.find(call => call.url.endsWith('/disable')).body, {registrationId: browserId});
++    assert.deepEqual(h.calls.find(call => call.body?.registrationId).body, {registrationId: browserId});
+     assert.equal(h.calls.some(call => call.url.endsWith('/register')), false);
+     if (localFailure) {
+       assert.equal(h.controls.status.textContent, 'Disabling is incomplete. Retry Disable.');
+@@ -301,7 +315,7 @@ test('uncertain local absence retains its selector and Disable control across re
+   assert.equal(state.registered, false); assert.equal(state.subscribed, false);
+   assert.equal(h.controls.status.textContent, 'Disabling is incomplete. Retry Disable.');
+   assert.equal(h.controls.disable.disabled, false);
+-  assert.deepEqual(JSON.parse(h.storage.get(cleanupKey)), {registrationId: browserId});
++  assert.deepEqual(JSON.parse(h.storage.get(cleanupKey)), {endpointDigest});
+   state.lookupFailure = false; state.verificationFails = false;
+   const reloaded = await notificationHarness(state, h.storage);
+   assert.equal(reloaded.controls.disable.disabled, false);
+@@ -309,3 +323,39 @@ test('uncertain local absence retains its selector and Disable control across re
+   assert.match(reloaded.controls.status.textContent, /^Disabled on this browser/);
+   assert.equal(h.storage.has(cleanupKey), false);
+ });
++
++test('stale saved ID and lost replacement reply retain both deletion obligations and outbox truth', async () => {
++  for (const failSelector of [null, 'registrationId', 'endpointDigest']) {
++    const replacementId = 'e'.repeat(64);
++    const state = {subscribed: false, registered: true, loseRegisterReply: true, replacementId, failSelector,
++      serverRecords: new Map([[browserId, 'https://fcm.googleapis.com/old-endpoint']]), outbox: new Set([browserId])};
++    const h = await notificationHarness(state, new Map([[browserKey, browserId]]));
++    await h.controls.enable.click();
++    assert.equal(h.storage.get(browserKey), browserId, 'lost reply leaves a stale saved ID');
++    assert.equal(state.subscribed, true); assert.equal(state.serverRecords.size, 2); assert.equal(state.outbox.size, 2);
++    await h.controls.disable.click();
++    assert.equal(state.subscribed, false, 'one failed deletion cannot block local unsubscribe');
++    const deletions = h.calls.filter(call => call.url.endsWith('/disable'));
++    assert.equal(deletions.length, 2, 'fixed current digest plus saved ID bound');
++    assert.deepEqual(deletions.map(call => Object.keys(call.body)[0]).sort(), ['endpointDigest', 'registrationId']);
++    assert.equal(h.calls.filter(call => call.url.endsWith('/register')).length, 1, 'Disable does not register');
++    if (failSelector) {
++      const remaining = failSelector === 'registrationId' ? browserId : replacementId;
++      assert.deepEqual([...state.serverRecords.keys()], [remaining]); assert.deepEqual([...state.outbox], [remaining]);
++      assert.equal(h.controls.status.textContent, 'Browser subscription removed; server cleanup is still pending. Retry Disable.');
++      assert.deepEqual(JSON.parse(h.storage.get(cleanupKey)), {endpointDigest});
++      assert.equal(h.storage.get(browserKey) || '', failSelector === 'registrationId' ? browserId : '');
++      const reloaded = await notificationHarness(state, h.storage);
++      assert.equal(reloaded.calls.some(call => call.body), false, 'reload does not delete');
++      assert.equal(reloaded.controls.disable.disabled, false);
++      state.failSelector = null;
++      await reloaded.controls.disable.click();
++      assert.ok(reloaded.calls.filter(call => call.url.endsWith('/disable')).length <= 2);
++      assert.match(reloaded.controls.status.textContent, /^Disabled on this browser/);
++    } else {
++      assert.match(h.controls.status.textContent, /^Disabled on this browser/);
++    }
++    assert.equal(state.serverRecords.size, 0); assert.equal(state.outbox.size, 0);
++    assert.equal(h.storage.has(browserKey), false); assert.equal(h.storage.has(cleanupKey), false);
++  }
++});
+diff --git a/portal/internal/web/static/browser-notifications.js b/portal/internal/web/static/browser-notifications.js
+index 51b62b2..69255b1 100644
+--- a/portal/internal/web/static/browser-notifications.js
++++ b/portal/internal/web/static/browser-notifications.js
+@@ -26,13 +26,15 @@
+     pendingCleanup = selector;
+     try { localStorage.setItem(cleanupKey, JSON.stringify(selector)); } catch (_) {}
+   };
+-  const clearCleanup = selector => {
++  const clearRegistration = id => {
++    if (!id || registrationId !== id) return;
++    try {
++      localStorage.removeItem(key);
++      if (!localStorage.getItem(key)) registrationId = "";
++    } catch (_) {}
++  };
++  const clearCleanup = () => {
+     try {
+-      if (selector.registrationId && registrationId === selector.registrationId) {
+-        localStorage.removeItem(key);
+-        if (localStorage.getItem(key)) return false;
+-        registrationId = "";
+-      }
+       localStorage.removeItem(cleanupKey);
+       if (localStorage.getItem(cleanupKey)) return false;
+       pendingCleanup = null;
+@@ -102,28 +104,38 @@
+   disable.addEventListener("click", async () => {
+     if (busy) return;
+     busy = true; registered = false; buttons();
+-    let registration = null, subscription = localSubscription, selector = null, serverAbsent = false;
++    let registration = null, subscription = localSubscription, selector = null, currentBound = false;
+     readCleanup();
+     try {
+       registration = await navigator.serviceWorker.getRegistration("/");
+       subscription = await registration?.pushManager.getSubscription() || subscription;
+     } catch (_) {}
++    selector = pendingCleanup;
++    if (!registrationId && selector?.registrationId) {
++      registrationId = selector.registrationId;
++      try { localStorage.setItem(key, registrationId); } catch (_) {}
++    }
++    currentBound = !subscription;
+     try {
+-      selector = pendingCleanup || (registrationId ? {registrationId} : null);
+-      if (!selector && subscription) {
++      if (subscription) {
+         const endpoint = subscription.endpoint || subscription.toJSON().endpoint;
+         if (typeof endpoint !== "string" || !endpoint) throw new Error();
+         const sum = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(endpoint));
+         selector = {endpointDigest: [...new Uint8Array(sum)].map(byte => byte.toString(16).padStart(2, "0")).join("")};
+-      }
+-      if (selector) {
+-        // Retain only one deletion selector before discarding the subscription.
+-        // Even a refused provider can be removed without registering it again.
+-        saveCleanup(selector);
+-        await api("/disable", selector);
+-        serverAbsent = true;
++        currentBound = true;
+       }
+     } catch (_) {}
++    selector ||= registrationId ? {registrationId} : null;
++    // The saved ID may predate a replacement whose register reply was lost.
++    // Keep its obligation separately from the current subscription's digest.
++    if (selector) saveCleanup(selector);
++    const knownId = registrationId;
++    const selectorRemoval = selector ? api("/disable", selector).then(() => true, () => false) : Promise.resolve(true);
++    const idRemoval = knownId ? selector?.registrationId === knownId ? selectorRemoval :
++      api("/disable", {registrationId: knownId}).then(() => true, () => false) : Promise.resolve(true);
++    const [selectorAbsent, idAbsent] = await Promise.all([selectorRemoval, idRemoval]);
++    if (idAbsent && currentBound) clearRegistration(knownId);
++    const serverAbsent = currentBound && Boolean(selector || knownId) && selectorAbsent && idAbsent;
+     // Local removal is independent of the server response. A false/throwing
+     // unsubscribe is followed by a read, which establishes actual absence.
+     try { if (subscription) await subscription.unsubscribe(); } catch (_) {}
+@@ -133,7 +145,7 @@
+       localSubscription = await registration?.pushManager.getSubscription() || null;
+       localKnown = true;
+     } catch (_) {}
+-    if (serverAbsent && localKnown && !localSubscription && clearCleanup(selector) && registrationId) saveCleanup({registrationId});
++    if (serverAbsent && localKnown && !localSubscription && !registrationId) clearCleanup();
+     const complete = serverAbsent && localKnown && !localSubscription && !pendingCleanup && !registrationId;
+     status.textContent = complete ? "Disabled on this browser. Site permission remains in your browser settings." :
+       localKnown && !localSubscription && !serverAbsent ? serverPending : disablingIncomplete;

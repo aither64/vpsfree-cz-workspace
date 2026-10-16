@@ -1,0 +1,80 @@
+diff --git a/portal/internal/web/notifications_browser_test.cjs b/portal/internal/web/notifications_browser_test.cjs
+index ae3b29a..af0c953 100644
+--- a/portal/internal/web/notifications_browser_test.cjs
++++ b/portal/internal/web/notifications_browser_test.cjs
+@@ -138,7 +138,7 @@ async function checkWorkerUpgrade(browser, engine) {
+       globalThis.fixtureSoundRegistration = await navigator.serviceWorker.getRegistration("/");
+       globalThis.fixtureSoundSubscription = (await fixtureSoundRegistration.pushManager.getSubscription())?.toJSON() || null;
+     });
+-    await sound.uncheck();
++    await sound.click();
+     await expect.poll(() => controls.evaluate(() => workspaceAttentionStore.readSound())).toBe(false);
+     await expect(sound).toBeEnabled(); await expect(sound).not.toBeChecked();
+     assert.equal(await controls.evaluate(async () => {
+@@ -151,8 +151,11 @@ async function checkWorkerUpgrade(browser, engine) {
+     const sessionSound = retained.locator("#browser-notifications [data-notification-sound]");
+     await retained.locator("#session-tab-settings").click();
+     await expect(sessionSound).toBeEnabled(); await expect(sessionSound).not.toBeChecked();
+-    await sessionSound.check();
++    await sessionSound.click();
+     await expect.poll(() => retained.evaluate(() => workspaceAttentionStore.readSound())).toBe(true);
++    await expect(sessionSound).toBeEnabled(); await expect(sessionSound).toBeChecked();
++    await expect(retained.locator("#sidebar-menu [data-notification-sound]")).toBeEnabled();
++    await expect(retained.locator("#sidebar-menu [data-notification-sound]")).toBeChecked();
+     await controls.reload();
+     await expect(controls.locator("[data-notification-sound]")).toBeEnabled();
+     await expect(controls.locator("[data-notification-sound]")).toBeChecked();
+@@ -192,8 +195,10 @@ async function checkWorkerUpgrade(browser, engine) {
+     await successor.evaluate(descriptor => self.dispatchEvent(new PushEvent("push", {data: JSON.stringify({...descriptor, version: 1, kind: "test", slug: "", route: "/"})})), descriptor);
+     await expect(controls.locator("[data-notification-test-status]")).toContainText("browser accepted the display request");
+     assert.equal(await successor.evaluate(() => Object.hasOwn(self.fixtureSoundDisplays[0], "silent")), false);
+-    await controls.locator("[data-notification-sound]").uncheck();
++    await expect(sound).toBeEnabled(); await expect(sound).toBeChecked();
++    await sound.click();
+     await expect.poll(() => controls.evaluate(() => workspaceAttentionStore.readSound())).toBe(false);
++    await expect(sound).toBeEnabled(); await expect(sound).not.toBeChecked();
+     const queuedSilent = controls.waitForResponse(response => new URL(response.url()).pathname === "/api/browser-notifications/test" && response.request().method() === "POST");
+     await controls.locator("[data-notification-test]").click();
+     const silentDescriptor = (await (await queuedSilent).json()).test;
+@@ -262,8 +267,9 @@ async function checkWorkerUpgrade(browser, engine) {
+       await expect(menu.locator("[data-notification-status]")).toHaveText("Disabled on this browser.");
+       const menuSound = menu.locator("[data-notification-sound]");
+       await expect(menuSound).toBeEnabled(); await expect(menuSound).toBeChecked();
+-      await menuSound.uncheck();
++      await menuSound.click();
+       await expect.poll(() => page.evaluate(() => workspaceAttentionStore.readSound())).toBe(false);
++      await expect(menuSound).toBeEnabled(); await expect(menuSound).not.toBeChecked();
+       await page.setViewportSize({width: 375, height: 812});
+       for (const button of await menu.locator("button").all()) {
+         const bounds = await button.boundingBox();
+@@ -291,8 +297,11 @@ async function checkWorkerUpgrade(browser, engine) {
+       await expect(page.locator("#browser-notifications")).toBeVisible();
+       await expect(page.locator("#browser-notifications [data-notification-sound]")).not.toBeChecked();
+       await toggle.click();
+-      await expect(menuSound).not.toBeChecked(); await menuSound.check();
++      await expect(menuSound).toBeEnabled(); await expect(menuSound).not.toBeChecked();
++      await menuSound.click();
+       await expect.poll(() => page.evaluate(() => workspaceAttentionStore.readSound())).toBe(true);
++      await expect(menuSound).toBeEnabled(); await expect(menuSound).toBeChecked();
++      await expect(page.locator("#browser-notifications [data-notification-sound]")).toBeEnabled();
+       await expect(page.locator("#browser-notifications [data-notification-sound]")).toBeChecked();
+       // Pointer-driven saving may move focus when the input is disabled. Check
+       // dismissal here, then keyboard restoration with known focus conditions.
+@@ -305,9 +314,15 @@ async function checkWorkerUpgrade(browser, engine) {
+       await page.keyboard.press("Escape");
+       await expect.poll(() => menu.evaluate(element => element.matches(":popover-open"))).toBe(false);
+       await expect(toggle).toBeFocused();
+-      await page.locator("#browser-notifications [data-notification-sound]").uncheck();
++      await expect(page.locator("#browser-notifications [data-notification-sound]")).toBeEnabled();
++      await expect(page.locator("#browser-notifications [data-notification-sound]")).toBeChecked();
++      await page.locator("#browser-notifications [data-notification-sound]").click();
+       await expect.poll(() => page.evaluate(() => workspaceAttentionStore.readSound())).toBe(false);
+-      await toggle.click(); await expect(menuSound).not.toBeChecked(); await page.keyboard.press("Escape");
++      await expect(page.locator("#browser-notifications [data-notification-sound]")).toBeEnabled();
++      await expect(page.locator("#browser-notifications [data-notification-sound]")).not.toBeChecked();
++      await toggle.click();
++      await expect(menuSound).toBeEnabled(); await expect(menuSound).not.toBeChecked();
++      await page.keyboard.press("Escape");
+       await checkControlSpacing(page);
+       await page.setViewportSize({width: 1280, height: 720});
+       await checkControlSpacing(page);

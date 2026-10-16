@@ -1,0 +1,1227 @@
+"use strict";
+
+const assert = require("node:assert/strict");
+const {pathToFileURL} = require("node:url");
+const {
+  currentCompletedPlan, planIdentity, planActionContext, pendingPlanImplementation, planRecoveryRequest,
+  workspaceArchivePresentation, automaticReasoningLabel, autoResolutionLabel, beforeRequestInputAction, createRequest, createSessionClient, createCodexLimitsReader,
+  captureTranscriptDisclosureState, captureTranscriptViewState, hasTranscriptPagingHelpers,
+  legacyTranscriptEntryKey, legacyTranscriptChanges, refreshLegacyTranscriptView,
+  cleanupCompletedDeleteStorage,
+  clearSlugStorage, clearThreadStorage,
+  deleteQueueAttempt, deleteRequestInputDraft,
+  deleteSendAttempt, loadQueueAttempts,
+  loadRequestInputDraft, loadSendAttempts, markTranscriptMessagesObserved,
+  createTranscriptAcknowledgementScheduler,
+  matchingSendAttempt, messageActionLabel, messageReceiptLabel, queueAttemptStorageKey,
+  queueAttemptStoragePrefix, requestInputDraftStorageKey, requireQueueAttempts,
+  sendAcknowledgementCandidates, sendAttemptStorageKey, shouldFollowTranscript, transcriptFollowOnScroll,
+  shouldSubmitMessage, storeQueueAttempt,
+  storeRequestInputDraft, storeSendAttempt, transcriptEntriesForFilter,
+  transcriptEntryVisible, transcriptErrorPresentation, wrapMarkdownTables, encodeQuestionAnswer,
+  fileChangeDiffs, formatElapsed, autoArchivePresentation, archiveFailurePresentation,
+  createPromptSnooze, promptIdentity, respondWithRecovery, createReadScope, createTimingClock, activityAge, activityPresentation, activityWaitLabel, activityStatusLabel, activityStatusPresentation, teamActivityPresentation, teamWorkPresentation, indexStatusFreshForPage, indexStatusOrder,
+  createLifecycleTargetState, lifecycleOperationMatches, lifecyclePresentation, lifecycleRecoveryAction, sessionTabFromHash, sessionTabFromLocation,
+  configureDurableAttemptStore, creationDraftCatalogRecovery, creationSubmitEligible, effortSelectionForModelRefresh, loadCreationDraft, planSessionCreationSettings, planSessionDraftKey,
+  renderCollaborationModes, storeCreationDraft, creationCLICommand,
+} = require("./static/app.js");
+
+assert.equal(creationCLICommand({name:"feature", team:"delegated", model:"gpt-6-sol", effort:"xhigh"}),
+  "dev-session start 'feature' --team 'delegated' --model 'gpt-6-sol' --effort 'xhigh'");
+assert.equal(creationCLICommand({name:"feature", model:"gpt-6-sol", effort:"high"}),
+  "dev-session start 'feature' --model 'gpt-6-sol' --effort 'high'");
+assert.equal(creationCLICommand({name:"", model:"gpt-6-sol", effort:"high"}), "");
+
+const archivalDiagnostic = 'command failed with exit 1: /nix/store/example/bin/workspace-portal thread require-idle\nworkspace-portal: Codex thread thread-1 is not idle (latest turn turn-1 has status "inProgress")';
+const archivalState = {enabled: true, hold: false, tier: "merged", checked_at: "2026-09-14T18:01:59Z",
+  eligible_at: "2026-09-21T18:01:59Z", blockers: ["Session has uncommitted worktree changes.", archivalDiagnostic]};
+const archivalView = autoArchivePresentation(archivalState);
+assert(archivalView.fields.find(([label]) => label === "Rule")[1].includes("once all registered branches are merged"));
+assert(archivalView.fields.some(([label]) => label === "Not before"));
+assert.deepEqual(archivalView.blockers, ["The session has uncommitted worktree changes.", "Codex has an active turn."]);
+assert.deepEqual(archivalView.diagnostics, [archivalDiagnostic]);
+for (const changes of [{enabled: false}, {hold: true}, {eligible_at: "invalid"}]) {
+  assert(!autoArchivePresentation({...archivalState, ...changes}).fields.some(([label]) => label === "Not before"));
+}
+assert.equal(autoArchivePresentation({}).fields.find(([label]) => label === "Last check")[1], "Waiting for the first scan.");
+for (const tier of ["complete", "empty"]) assert(!autoArchivePresentation({tier}).fields[1][1].startsWith("No automatic"));
+const unknownArchivalError = "command failed with exit 1: <script>unexpected</script>";
+assert.deepEqual(autoArchivePresentation({blockers: [unknownArchivalError]}).diagnostics, [unknownArchivalError]);
+assert(!autoArchivePresentation({blockers: [unknownArchivalError]}).blockers[0].includes("script"));
+assert.deepEqual(autoArchivePresentation({blockers: ["Automatic archival is disabled.", "Keep open is enabled."]}).blockers, []);
+assert.deepEqual(autoArchivePresentation({blockers: ["Codex thread thread-1 has 2 pending request(s)", "Codex thread thread-1 has 1 queued message(s)"]}).blockers,
+  ["Codex has pending requests.", "Codex has queued messages."]);
+
+const workspaceArchival = workspaceArchivePresentation({policy:{enabled:false},counts:{total:3,held:1},sessions:[
+  {slug:"z-broken",diagnostics:[{code:"legacy_record_invalid",category:"legacy_format",message:"Review legacy tracking."}]},
+  {slug:"a-held",tier:"merged",hold:true,activity_known:true},
+  {slug:"m-moved",tier:"complete",journal:{operation:"archive",phase:"tracking_committed"},diagnostics:[{code:"submission_unverified",category:"activity_unknown",message:"Submission proof is unknown."}]},
+]});
+assert(workspaceArchival.summary.includes("disabled"));
+assert.deepEqual(workspaceArchival.rows.map(row=>row.slug),["a-held","m-moved","z-broken"]);
+assert(workspaceArchival.rows[0].message.includes("Keep open"));
+assert(workspaceArchival.rows[1].message.includes("tracking_committed"));
+assert.equal(workspaceArchival.rows[2].href,"/z-broken/#settings");
+assert(workspaceArchival.rows[2].message.includes("Review legacy tracking."));
+assert(workspaceArchival.rows[1].message.startsWith("Activity not verified"));
+assert(workspaceArchival.rows[2].message.startsWith("Needs metadata repair"));
+const workspaceReasons = workspaceArchivePresentation({sessions: [
+  {slug: "repair", lifecycle: "abandoned", repair_needed: true},
+  {slug: "manifest", activity_known: true, diagnostics: [{code: "manifest_unverified", category: "legacy_format"}]},
+  {slug: "abandoned", lifecycle: "abandoned", activity_known: false},
+  {slug: "stale", tier: "merged", activity_known: true, diagnostics: [{code: "observation_stale", category: "observation_stale"}]},
+  {slug: "missing", tier: "complete"},
+  {slug: "blocked", activity_known: true, diagnostics: [{code: "no_archive_rule", category: "policy", message: "Session has no automatic archive rule."}]},
+  {slug: "ready", activity_known: true, tier: "empty"},
+]}).rows;
+const workspaceReason = slug => workspaceReasons.find(row => row.slug === slug).message;
+assert(workspaceReason("repair").startsWith("Needs metadata repair"));
+assert(workspaceReason("manifest").startsWith("Needs metadata repair"));
+assert(workspaceReason("abandoned").startsWith("Manual archive required"));
+assert(workspaceReason("stale").startsWith("Activity not verified"));
+assert(workspaceReason("missing").startsWith("Activity not verified"));
+assert(workspaceReason("blocked").startsWith("Session has no automatic archive rule."));
+assert(workspaceReason("ready").startsWith("14 days"));
+assert(!workspaceReasons.some(row => row.message.includes("No eligible rule")));
+assert.deepEqual(autoArchivePresentation({activity_known:false,diagnostics:[{code:"submission_unverified",category:"activity_unknown",message:"Submission proof is unknown."}]}).blockers,["Submission proof is unknown."]);
+
+const archiveOperation = {kind: "archive", state: "paused", options: {journalId: "journal-1"}};
+const failedArchive = {identity: "thread-1", operation: {id: "journal-1", identity: "thread-1"},
+  result: "deferred", checked_at: "2026-09-16T20:02:12Z",
+  blockers: ["command failed with exit 124: /nix/store/example/bin/workspace-portal thread retire"]};
+const lastArchiveFailure = {message: "Closing the conversation timed out.", attemptedAt: failedArchive.checked_at};
+assert.deepEqual(archiveFailurePresentation(archiveOperation, failedArchive, "thread-1"), lastArchiveFailure);
+const semanticArchiveFailure = {...failedArchive,identity:"bound-directory-target",root_thread_id:"thread-1",
+  operation:{id:"journal-1",identity:"bound-directory-target",identity_version:1,root_thread_id:"thread-1"},
+  diagnostics:[{code:"archive_proof_failed",category:"tracking",message:"Exact tracking proof is unavailable."}]};
+assert.equal(archiveFailurePresentation(archiveOperation,semanticArchiveFailure,"thread-1").message,"Exact tracking proof is unavailable.");
+const actualArchiveFailure = {...semanticArchiveFailure,
+  journal: {operation: "archive", phase: "clusters_released"},
+  last_attempt_at: "2026-10-07T12:06:43Z",
+  last_attempt_error: "archived tracking changed during recovery: example",
+  diagnostics: [
+    {code: "archive_proof_failed", category: "tracking", message: "Archival proof failed; retry after resolving the recorded failure."},
+    {code: "archive_operation_pending", category: "lifecycle_pending", message: "An accepted lifecycle operation needs its recorded retry."},
+    {code: "observation_stale", category: "observation_stale", message: "The cached observation is older than two hours."},
+  ]};
+assert.deepEqual(autoArchivePresentation(actualArchiveFailure).blockers,
+  ["Archiving session records: archived tracking changed during recovery: example"]);
+assert.deepEqual(autoArchivePresentation(actualArchiveFailure).diagnostics, [actualArchiveFailure.last_attempt_error]);
+assert.deepEqual(autoArchivePresentation({...actualArchiveFailure, journal: null,
+  last_attempt_error: "sample/sample: feature branch is not present on origin",
+  diagnostics: [{code: "cleanup_proof_failed", category: "merge_proof", message: "Cleanup or exact merge proof is not satisfied."}]}).blockers,
+  ["sample/sample: feature branch is not present on origin"]);
+assert.deepEqual(archiveFailurePresentation(archiveOperation, actualArchiveFailure, "thread-1"), {
+  message: "Archiving session records: archived tracking changed during recovery: example",
+  attemptedAt: actualArchiveFailure.last_attempt_at,
+});
+assert.deepEqual(autoArchivePresentation({...actualArchiveFailure,
+  last_attempt_error: "command failed with exit 1: fixture\nworkspace-portal: retained thread has queued messages"}).blockers,
+  ["Archiving session records: workspace-portal: retained thread has queued messages"]);
+assert.equal(archiveFailurePresentation(archiveOperation,{...semanticArchiveFailure,identity:"replacement-directory"},"thread-1"),null);
+
+assert.deepEqual(archiveFailurePresentation({...archiveOperation, state: "running"}, failedArchive, "thread-1"), lastArchiveFailure);
+assert.deepEqual(archiveFailurePresentation(archiveOperation, {...failedArchive,
+  blockers: ["command failed with exit 1: workspace-portal thread retire\nfind session conversation: context deadline exceeded"]}, "thread-1"), lastArchiveFailure);
+for (const changes of [{state: "complete"}, {kind: "delete"}, {options: {journalId: "another"}}, {options: {}}]) {
+  assert.equal(archiveFailurePresentation({...archiveOperation, ...changes}, failedArchive, "thread-1"), null);
+}
+for (const changes of [{identity: "another"}, {operation: {id: "journal-1", identity: "another"}},
+  {result: "archived"}, {checked_at: "invalid"}, {blockers: []}, {operation: null}]) {
+  assert.equal(archiveFailurePresentation(archiveOperation, {...failedArchive, ...changes}, "thread-1"), null);
+}
+assert.equal(archiveFailurePresentation(archiveOperation, failedArchive, ""), null);
+assert.equal(archiveFailurePresentation(archiveOperation, null, "thread-1"), null);
+assert(!archiveFailurePresentation(archiveOperation, {...failedArchive, blockers: [unknownArchivalError]}, "thread-1").message.includes("script"));
+
+const historicalPlan = {turnId: "old", kind: "plan", turnStatus: "completed", text: "Plan"};
+for (const latestTurnId of [undefined, "ordinary", "empty", "failed", "interrupted"]) {
+  assert.equal(currentCompletedPlan({latestTurnId, entries: [historicalPlan]}), undefined);
+}
+assert.equal(currentCompletedPlan({latestTurnId: "old", entries: [historicalPlan]}), historicalPlan);
+for (const turnStatus of ["inProgress", "failed", "interrupted"]) {
+  assert.equal(currentCompletedPlan({latestTurnId: "new", entries: [historicalPlan,
+    {...historicalPlan, turnId: "new", turnStatus}]}), undefined);
+}
+assert.notEqual(planIdentity("old", "same-digest"), planIdentity("new", "same-digest"));
+
+assert.equal(pendingPlanImplementation([{message: "Implement the plan."}], "turn", "current"), false);
+assert.equal(pendingPlanImplementation([{message: "Implement the plan.", context: "plan:turn:older"}], "turn", "current"), false);
+assert.equal(pendingPlanImplementation([{message: "Implement the plan.", context: "plan:turn:current"}], "turn", "current"), true);
+
+assert.equal(pendingPlanImplementation([{message: "Implement the plan.", context: planActionContext("old", "same")}], "new", "same"), false);
+assert.equal(pendingPlanImplementation([{message: "Implement the plan.", context: "plan:same"}], "new", "same"), false);
+assert.equal(matchingSendAttempt([{id: "old-id", message: "Implement the plan.", context: planActionContext("old", "same"), state: "accepted"}], "Implement the plan.", planActionContext("new", "same")), undefined);
+
+assert.deepEqual(planRecoveryRequest({id: "legacy", message: "Implement the plan.", context: `plan:${"a".repeat(64)}`}), {
+  action: "recover", planSha256: "a".repeat(64), clientUserMessageId: "legacy",
+});
+assert.equal(planRecoveryRequest({id: "new", message: "Implement the plan.", context: planActionContext("turn", "a".repeat(64))}), null);
+
+assert.equal(planRecoveryRequest({id: "new", message: "Implement the plan.", context: planActionContext("turn", "a".repeat(64))}, "turn"), null);
+assert.deepEqual(planRecoveryRequest({id: "old", message: "Implement the plan.", context: planActionContext("old-turn", "a".repeat(64))}, "new-turn"), {
+  action: "recover", planContextVersion: 2, planTurnId: "old-turn", planSha256: "a".repeat(64), clientUserMessageId: "old",
+});
+
+const baseURL = process.argv[2];
+if (!baseURL) throw new Error("browser contract test requires the server URL");
+const unitOnly = baseURL === "--unit";
+const testBaseURL = unitOnly ? "http://127.0.0.1" : baseURL;
+const origin = new URL(testBaseURL).origin;
+const allowedOrigin = process.argv[3] || origin;
+const fetchRequest = (path, options = {}) => fetch(new URL(path, testBaseURL), {
+  ...options,
+  headers: {Origin: allowedOrigin, ...(options.headers || {})},
+});
+const request = createRequest(fetchRequest);
+const conversationModulePath = process.argv[4];
+if (!conversationModulePath) throw new Error("browser contract test requires the shared browser module");
+
+(async () => {
+await require("./preparation_browser_contract_test.cjs")();
+const conversationAssets = await import(pathToFileURL(conversationModulePath).href);
+assert.equal(hasTranscriptPagingHelpers(conversationAssets), true);
+assert.equal(hasTranscriptPagingHelpers({
+  ...conversationAssets, createTranscriptHistory: undefined,
+}), false);
+configureDurableAttemptStore(conversationAssets.createDurableAttemptStore);
+const retainedHistory = conversationAssets.createTranscriptHistory();
+const recentReceipt = {turnId: "turn-1", itemId: "recent", kind: "userMessage",
+  clientUserMessageId: "recent", clientUserMessageDigest: "a".repeat(64)};
+const olderReceipt = {turnId: "turn-1", itemId: "older", kind: "userMessage",
+  clientUserMessageId: "older", clientUserMessageDigest: "b".repeat(64)};
+retainedHistory.applyNewest({threadId: "thread-1", entries: [recentReceipt],
+  hasOlder: true, olderCursor: "old-1"});
+let receiptAttempts = [{id: "recent"}, {id: "older"}];
+let finishRecentAcknowledgement;
+const acknowledgementBatches = [];
+const scheduleAcknowledgement = createTranscriptAcknowledgementScheduler(async () => {
+  const batch = sendAcknowledgementCandidates(retainedHistory.entries, receiptAttempts);
+  acknowledgementBatches.push(batch.map(attempt => attempt.id));
+  if (acknowledgementBatches.length === 1) {
+    await new Promise(resolve => { finishRecentAcknowledgement = resolve; });
+  }
+  receiptAttempts = receiptAttempts.filter(attempt => !batch.some(candidate => candidate.id === attempt.id));
+});
+scheduleAcknowledgement();
+await new Promise(resolve => setImmediate(resolve));
+retainedHistory.applyOlder({threadId: "thread-1", entries: [olderReceipt], hasOlder: false});
+retainedHistory.applyNewest({threadId: "thread-1", entries: [recentReceipt],
+  hasOlder: true, olderCursor: "new-1"});
+scheduleAcknowledgement();
+finishRecentAcknowledgement();
+await new Promise(resolve => setImmediate(resolve));
+assert.deepEqual(acknowledgementBatches, [["recent"], ["older"]]);
+assert.deepEqual(receiptAttempts, []);
+const compatibilityConversation = (fetchImplementation) => (
+  conversationAssets.createConversationClient({
+    id: "example",
+    basePath: "/codex",
+    conversationPath: "/api/sessions/example",
+    fetch: fetchImplementation,
+  })
+);
+const client = createSessionClient("example", request, compatibilityConversation(fetchRequest));
+
+// An account refresh can fail independently of the conversation. Keep the last
+// successful snapshot, and coalesce refocus and visibility events in one read.
+let limitsReadCount = 0;
+let finishLimitsRead;
+let failLimitsRead;
+const limitsChanges = [];
+const limitsReader = createCodexLimitsReader((path) => {
+  assert.equal(path, "/api/codex-limits");
+  limitsReadCount++;
+  return new Promise((resolve, reject) => {
+    finishLimitsRead = resolve;
+    failLimitsRead = reject;
+  });
+}, (snapshot, failed) => limitsChanges.push({snapshot, failed}));
+const initialLimitsRead = limitsReader.refresh();
+assert.equal(limitsReader.refresh(), initialLimitsRead);
+assert.equal(limitsReadCount, 1);
+failLimitsRead(new Error("temporarily unavailable"));
+await initialLimitsRead;
+assert.deepEqual(limitsChanges.pop(), {snapshot: null, failed: true});
+const weeklyLimits = {
+  windows: [{usedPercent: 23, windowDurationMins: 10080, resetsAt: 1789200000}],
+  updatedAt: "2026-09-11T10:00:00Z",
+};
+const recoveredLimitsRead = limitsReader.refresh();
+finishLimitsRead(weeklyLimits);
+await recoveredLimitsRead;
+assert.deepEqual(limitsChanges.pop(), {snapshot: weeklyLimits, failed: false});
+const staleLimitsRead = limitsReader.refresh();
+failLimitsRead(new Error("connection lost"));
+await staleLimitsRead;
+assert.deepEqual(limitsChanges.pop(), {snapshot: weeklyLimits, failed: true});
+const unreportedLimits = {windows: [], updatedAt: "2026-09-11T10:02:00Z"};
+const unreportedLimitsRead = limitsReader.refresh();
+finishLimitsRead(unreportedLimits);
+await unreportedLimitsRead;
+assert.deepEqual(limitsChanges.pop(), {snapshot: unreportedLimits, failed: false});
+
+// After switching A to B, an unavailable B must never retain A's quotas.
+let activeProvider = "A", providerRead = null;
+const providerChanges = [];
+const activeLimits = createCodexLimitsReader(() => new Promise((resolve, reject) => {providerRead = {resolve, reject};}),
+  (snapshot, failed) => providerChanges.push({snapshot, failed}),
+  {acceptSnapshot: snapshot => snapshot.provider.id === activeProvider});
+let providerRefresh = activeLimits.refresh();
+const aLimits = {provider:{id:"A"},windows:[{usedPercent:10}]};
+providerRead.resolve(aLimits); await providerRefresh;
+assert.deepEqual(providerChanges.pop(), {snapshot:aLimits,failed:false});
+activeProvider = "B"; activeLimits.invalidate({clearSnapshot:true});
+assert.deepEqual(providerChanges.pop(), {snapshot:null,failed:false});
+providerRefresh = activeLimits.refresh(); providerRead.reject(new Error("B unavailable")); await providerRefresh;
+assert.deepEqual(providerChanges.pop(), {snapshot:null,failed:true});
+providerRefresh = activeLimits.refresh(); providerRead.resolve(aLimits); await providerRefresh;
+assert.deepEqual(providerChanges.pop(), {snapshot:null,failed:true});
+
+// Waiting excludes idle gaps and includes the open wait.
+const timing = {
+  currentState: "waiting", workingMs: 60_000, waitingMs: 10_000,
+  betweenTurnsMs: 120_000, openWaitingMs: 5_000, stateSinceMs: 1000,
+  startedAtMs: 1000, observedAtMs: 76000, messages: 3, toolCalls: 7,
+};
+const waitingView = activityPresentation(timing, 2000);
+assert.equal(waitingView.working, "1m 00s");
+assert.equal(waitingView.waiting, "17s");
+assert.equal(waitingView.idle, "2m 00s");
+assert.equal(activityWaitLabel({...timing,waitReason:"sleep"}),"Sleeping · wakes automatically");
+assert.equal(activityWaitLabel({...timing,waitReason:"subagents"}),"Waiting for team members · resumes automatically");
+const teamView = teamActivityPresentation({state:"ready", snapshot:{...timing,sentMessages:42,receivedMessages:9,totalToolCalls:100}});
+assert.equal(teamView.sent, 42); assert.equal(teamView.received, 9); assert.equal(teamView.tools, 100);
+const uncertainTeam = teamActivityPresentation({state:"ready", snapshot:{currentState:"unclassified",latestTurnStatus:"inProgress",coverageComplete:false,unclassifiedMs:5000}});
+assert.equal(uncertainTeam.activity, "Turn in progress"); assert.equal(uncertainTeam.partial, true);
+assert.match(uncertainTeam.detail, /5s unclassified/);
+assert.equal(teamActivityPresentation({state:"ready",snapshot:{currentState:"working",coverageComplete:false}}).activity, "Active");
+assert.equal(teamActivityPresentation({state:"ready",snapshot:{currentState:"waiting",waitReason:"subagents"}}).activity, "Waiting for team");
+const teamMember = (address, currentState, waitReason, latestTurnStatus, state = "ready") =>
+  ({address, state, snapshot: {currentState, waitReason, latestTurnStatus, observedAtMs: Date.now()}});
+const ongoingMembers = [teamMember("reviewer0", "waiting", "subagents"), teamMember("implementer0", "working"),
+  teamMember("architect0", "waiting", "sleep"), teamMember("analyst0", "unclassified", "", "inProgress"),
+  teamMember("lead", "working"), teamMember("idle0", "idle"), teamMember("approval0", "waiting", "approval"),
+  teamMember("answer0", "waiting", "userInput"), teamMember("unknown0", "unclassified"),
+  teamMember("removed0", "working", "", "inProgress", "removed"), {address: "missing0", state: "ready"}];
+assert.deepEqual(teamWorkPresentation(ongoingMembers).members.map(row => row.address), ["analyst0", "architect0", "implementer0", "reviewer0"]);
+assert.equal(teamWorkPresentation(ongoingMembers).text,
+  "Other team members are working: analyst0 (turn in progress), architect0 (sleeping), implementer0, and 1 other.");
+assert.deepEqual(teamWorkPresentation(ongoingMembers, "implementer0").members.map(row => row.address), ["lead", "analyst0", "architect0", "reviewer0"]);
+assert.equal(teamWorkPresentation([teamMember("lead", "idle")]).text, "");
+assert.equal(teamWorkPresentation([teamMember("implementer0", "working")]).text, "Other team members are working: implementer0.");
+assert.match(teamWorkPresentation([...ongoingMembers, teamMember("worker0", "working")]).text, /and 2 others\.$/);
+const peerWork = {present: true, stale: false, label: "architect0 is working", text: "Other team members are working: architect0."};
+assert.equal(activityStatusLabel({currentState: "idle"}, false, peerWork), peerWork.label);
+assert.equal(activityStatusLabel({currentState: "waiting", waitReason: "sleep"}, true, peerWork),
+  "Sleeping (auto) · " + peerWork.label);
+assert.equal(activityStatusLabel({currentState: "waiting", waitReason: "approval"}, true, peerWork),
+  "Approval needed · " + peerWork.label);
+assert.equal(activityStatusLabel({currentState: "idle"}, false, {...peerWork, stale: true}), "Team status unavailable");
+assert.equal(activityStatusLabel({currentState: "working"}, true, peerWork), "Working");
+assert.equal(activityStatusLabel({currentState: "idle"}, false), "Idle");
+assert.deepEqual(activityStatusPresentation({currentState: "working"}, true), {label: "Working", detail: "Codex is working"});
+assert.deepEqual(activityStatusPresentation({currentState: "idle"}, false, peerWork), {label: peerWork.label, detail: peerWork.text});
+assert.equal(activityStatusPresentation({currentState: "waiting", waitReason: "sleep"}, true, peerWork).detail,
+  "Sleeping · wakes automatically · " + peerWork.text);
+assert.equal(activityStatusPresentation({currentState: "waiting"}, true).label, "Waiting (reason unknown)");
+assert.equal(activityStatusPresentation({currentState: "waiting", waitReason: "subagents"}, true).label, "Waiting for team (auto)");
+assert.equal(activityStatusPresentation({currentState: "waiting", waitReason: "userInput"}, true).label, "Answer needed");
+assert.equal(activityStatusPresentation({currentState: "unclassified"}, true).label, "In progress");
+assert.equal(teamWorkPresentation(ongoingMembers).label,
+  "analyst0 in progress; architect0 sleeping (auto); implementer0 working; +1");
+assert.equal(teamWorkPresentation([teamMember("architect0", "waiting", "sleep")]).label, "architect0 is sleeping (auto)");
+assert.equal(teamWorkPresentation([teamMember("reviewer0", "waiting", "subagents")]).label, "reviewer0 is waiting for team (auto)");
+assert.equal(teamWorkPresentation([teamMember("worker0", "unclassified", "", "inProgress")]).label, "worker0: in progress");
+assert.equal(teamWorkPresentation([teamMember("implementer10", "working"), teamMember("implementer2", "working")]).label,
+  "implementer2 working; implementer10 working");
+assert.equal(teamWorkPresentation(ongoingMembers).stale, false);
+const expiredMember = teamMember("implementer0", "working");
+expiredMember.snapshot.observedAtMs = Date.now() - 20000;
+assert.equal(teamWorkPresentation([expiredMember]).stale, true, "delivery must not renew expired observations");
+assert.equal(teamWorkPresentation([{address:"implementer0",state:"ready",snapshot:{currentState:"working"}}]).stale, true);
+assert.equal(waitingView.openWait, "7s");
+assert.equal(waitingView.counts, "3 messages · 7 tool calls");
+assert.equal(activityPresentation({...timing,currentState:"working"},2000).working,"1m 02s");
+assert.equal(activityPresentation({...timing,currentState:"working"},16000).working,"1m 00s");
+assert.equal(activityPresentation(timing,16000).stale,true);
+assert.equal(activityPresentation({messages:1,toolCalls:1},0).counts,"1 message · 1 tool call");
+
+assert.equal(automaticReasoningLabel(), "Automatic");
+assert.equal(automaticReasoningLabel({model: "bounded"}), "Automatic");
+assert.equal(messageActionLabel(false), "Send");
+assert.equal(messageActionLabel(true), "Steer now");
+assert.equal(shouldSubmitMessage({key: "Enter", shiftKey: false, isComposing: false}), true);
+assert.equal(shouldSubmitMessage({key: "Enter", shiftKey: true, isComposing: false}), false);
+assert.equal(shouldSubmitMessage({key: "Enter", shiftKey: false, isComposing: true}), false);
+assert.equal(shouldSubmitMessage({key: "a", shiftKey: false, isComposing: false}), false);
+assert.equal(shouldFollowTranscript({scrollHeight: 1000, clientHeight: 400, scrollTop: 580}), true);
+assert.equal(shouldFollowTranscript({scrollHeight: 1000, clientHeight: 400, scrollTop: 300}), false);
+// An attachment receipt hashes the exact generated prompt while checking the
+// separately trusted original text and IDs before acknowledging it.
+const attachedID = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+const attachedAttempt = {id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", message: "", attachmentIds: [attachedID], state: "unknown"};
+const attachedPending = new Map([[attachedAttempt.id, attachedAttempt]]);
+const wire = "Attached local files: server-generated path";
+const attachedDigest = require("node:crypto").createHash("sha256").update(wire).digest("hex");
+const attachedEntry = {clientUserMessageId: attachedAttempt.id, clientUserMessageDigest: attachedDigest, text: wire, displayText: "", attachments: [{id: attachedID}]};
+assert.deepEqual(await markTranscriptMessagesObserved(attachedPending, [{...attachedEntry, attachments: []}]), []);
+assert.deepEqual(await markTranscriptMessagesObserved(attachedPending, [{...attachedEntry, displayText: "changed"}]), []);
+assert.equal((await markTranscriptMessagesObserved(attachedPending, [attachedEntry]))[0].transcriptDigest, attachedDigest);
+
+// Composer/receipt resizing must not change following; actual scrolling must.
+const transcriptBeforeResize = {scrollHeight: 1000, clientHeight: 400, scrollTop: 600};
+const transcriptAfterResize = {...transcriptBeforeResize, clientHeight: 250};
+assert.equal(transcriptFollowOnScroll(true, transcriptAfterResize, false), true);
+assert.equal(transcriptFollowOnScroll(true, transcriptAfterResize, true), false);
+assert.equal(transcriptFollowOnScroll(false, transcriptBeforeResize, false), false);
+assert.equal(transcriptFollowOnScroll(false, transcriptBeforeResize, true), true);
+assert.deepEqual(indexStatusOrder([
+  {slug: "older", updatedAt: "2026-09-08T10:00:00Z"},
+  {slug: "newer-b", updatedAt: "2026-09-09T10:00:00Z"},
+  {slug: "newer-a", updatedAt: "2026-09-09T10:00:00Z"},
+]).map((entry) => entry.slug), ["newer-a", "newer-b", "older"]);
+assert.equal(indexStatusFreshForPage("2026-09-09T10:00:01Z", "2026-09-09T10:00:00Z"), false);
+assert.equal(indexStatusFreshForPage("2026-09-09T10:00:00Z", "2026-09-09T10:00:01Z"), true);
+assert.equal(activityAge("2026-09-09T09:59:30Z", Date.parse("2026-09-09T10:00:00Z")), "just now");
+assert.equal(activityAge("2026-09-09T09:55:00Z", Date.parse("2026-09-09T10:00:00Z")), "5m ago");
+assert.equal(sessionTabFromHash("#repositories", ["codex", "repositories"], "codex"), "repositories");
+assert.equal(sessionTabFromHash("#nested-tab", ["codex", "repositories"], "codex"), "codex");
+assert.equal(sessionTabFromHash("#%E0%A4%A", ["codex"], "codex"), "codex");
+for (const [location, expected] of [
+  [{search: "?tab=repositories", hash: "#new-L42"}, "repositories"],
+  [{search: "?tab=repositories", hash: "#old-L1"}, "repositories"],
+  [{search: "?tab=repositories", hash: ""}, "repositories"],
+  [{search: "?tab=repositories", hash: "#codex"}, "codex"],
+  [{search: "", hash: "#repositories"}, "repositories"],
+  [{search: "?tab=unrecognized", hash: "#new-L42"}, "codex"],
+  [{search: "?tab=repositories", hash: "#%E0%A4%A"}, "repositories"],
+]) assert.equal(sessionTabFromLocation(location, ["codex", "repositories"], "codex"), expected);
+const disclosureStates = captureTranscriptDisclosureState({
+  querySelectorAll: () => [
+    {
+      dataset: {transcriptEntryKey: '["turn-1","item-1"]'},
+      querySelector: () => ({open: true}),
+    },
+    {
+      dataset: {transcriptEntryKey: '["turn-1","item-2"]'},
+      querySelector: () => ({open: false}),
+    },
+  ],
+});
+assert.deepEqual(Array.from(disclosureStates), [
+  ['["turn-1","item-1"]', true],
+  ['["turn-1","item-2"]', false],
+]);
+const transcriptView = captureTranscriptViewState({
+  clientHeight: 400,
+  querySelectorAll: () => [],
+  scrollHeight: 1000,
+  scrollTop: 275,
+});
+assert.equal(transcriptView.scrollTop, 275);
+assert.equal(transcriptView.follow, false);
+assert.deepEqual(Array.from(transcriptView.disclosures), []);
+const legacyRow = (key, top, open) => ({
+  dataset: {transcriptEntryKey: key},
+  getBoundingClientRect: () => ({top, bottom: top + 40}),
+  querySelector: () => ({open}),
+});
+let legacyRows = [legacyRow("older", -50, false), legacyRow("expanded", 25, true)];
+const legacyContainer = {
+  scrollTop: 180,
+  scrollHeight: 800,
+  getBoundingClientRect: () => ({top: 0}),
+  querySelectorAll: () => legacyRows,
+};
+const legacyView = {disclosures: new Map()};
+refreshLegacyTranscriptView(legacyContainer, legacyView, false, (disclosures) => {
+  assert.deepEqual(Array.from(disclosures), [["older", false], ["expanded", true]]);
+  legacyRows = [legacyRow("new", -30, false), legacyRow("expanded", 75, disclosures.get("expanded"))];
+});
+assert.equal(legacyContainer.scrollTop, 230);
+assert.equal(legacyView.disclosures.get("expanded"), true);
+refreshLegacyTranscriptView(legacyContainer, legacyView, false, () => {
+  legacyRows = [legacyRow("replacement", 0, false)];
+});
+assert.equal(legacyContainer.scrollTop, 230);
+refreshLegacyTranscriptView(legacyContainer, legacyView, true, () => {
+  legacyContainer.scrollHeight = 1000;
+});
+assert.equal(legacyContainer.scrollTop, 1000);
+const legacyWindowEntry = (number) => ({
+  turnId: `turn-${number}`,
+  ...(number === 10 ? {} : {itemId: `item-${number}`}),
+  kind: number === 10 ? "error" : "agentMessage",
+  text: `output ${number}`,
+});
+const oldLegacyWindow = Array.from({length: 20}, (_, index) => legacyWindowEntry(index + 1));
+const newLegacyWindow = Array.from({length: 20}, (_, index) => legacyWindowEntry(index + 2));
+const keyFor = (entry, index, entries) => legacyTranscriptEntryKey(entry, index, entries);
+const retainedErrorKey = keyFor(oldLegacyWindow[9], 9, oldLegacyWindow);
+assert.equal(retainedErrorKey, keyFor(newLegacyWindow[8], 8, newLegacyWindow));
+assert.equal(keyFor(oldLegacyWindow[10], 10, oldLegacyWindow),
+  keyFor(newLegacyWindow[9], 9, newLegacyWindow));
+assert.deepEqual([...legacyTranscriptChanges(oldLegacyWindow, newLegacyWindow)],
+  [keyFor(newLegacyWindow[19], 19, newLegacyWindow)]);
+assert.equal(legacyTranscriptChanges(oldLegacyWindow, oldLegacyWindow.slice(1)).size, 0);
+assert.equal(legacyTranscriptChanges(newLegacyWindow, newLegacyWindow).size, 0);
+const updatedLegacyWindow = newLegacyWindow.map((entry, index) =>
+  index === 8 ? {...entry, text: "updated error"} : entry);
+assert.deepEqual([...legacyTranscriptChanges(newLegacyWindow, updatedLegacyWindow)], [retainedErrorKey]);
+let slidingRows = oldLegacyWindow.map((entry, index) =>
+  legacyRow(keyFor(entry, index, oldLegacyWindow), (index - 9) * 40, index === 9));
+const slidingContainer = {
+  scrollTop: 360,
+  scrollHeight: 800,
+  getBoundingClientRect: () => ({top: 0}),
+  querySelectorAll: () => slidingRows,
+};
+const slidingView = {disclosures: new Map()};
+refreshLegacyTranscriptView(slidingContainer, slidingView, false, (disclosures) => {
+  assert.equal(disclosures.get(retainedErrorKey), true);
+  slidingRows = newLegacyWindow.map((entry, index) => {
+    const key = keyFor(entry, index, newLegacyWindow);
+    return legacyRow(key, (index - 9) * 40, disclosures.get(key) === true);
+  });
+});
+assert.equal(slidingContainer.scrollTop, 320);
+assert.equal(slidingRows[8].querySelector("details").open, true);
+assert.equal(slidingRows.length, 20);
+assert.equal(slidingRows[19].dataset.transcriptEntryKey,
+  keyFor(newLegacyWindow[19], 19, newLegacyWindow));
+const filterEntries = [
+  {kind: "userMessage", text: "question"},
+  {kind: "reasoning", text: "condensed reasoning"},
+  {kind: "commandExecution", summary: "command"},
+  {kind: "error", summary: "failed"},
+];
+assert.equal(transcriptEntryVisible(filterEntries[0], "messages"), true);
+assert.equal(transcriptEntryVisible(filterEntries[1], "messages"), true);
+assert.equal(transcriptEntryVisible(filterEntries[1], "activity"), false);
+assert.equal(transcriptEntryVisible(filterEntries[2], "messages"), false);
+assert.equal(transcriptEntryVisible(filterEntries[3], "messages"), true);
+assert.deepEqual(
+  transcriptEntriesForFilter(filterEntries, "messages").map((entry) => entry.kind),
+  ["userMessage", "reasoning", "error"],
+);
+assert.deepEqual(
+  transcriptEntriesForFilter(filterEntries, "activity").map((entry) => entry.kind),
+  ["commandExecution", "error"],
+);
+assert.deepEqual(transcriptErrorPresentation({
+  kind: "error",
+  summary: "Turn failed",
+  text: "Selected model is at capacity. Please try a different model.",
+}), {
+  heading: "Turn failed",
+  message: "Selected model is at capacity. Please try a different model.",
+  details: "",
+});
+assert.deepEqual(transcriptErrorPresentation({
+  kind: "error", summary: "Turn failed", text: "Readable failure", details: "ignored diagnostics",
+}), {heading: "Turn failed", message: "Readable failure", details: "ignored diagnostics"});
+assert.deepEqual(transcriptErrorPresentation({
+  kind: "error", summary: "Unknown failure", details: JSON.stringify({code: "unknown"}),
+}), {heading: "Unknown failure", message: "", details: '{"code":"unknown"}'});
+assert.equal(formatElapsed(59_900), "59s");
+assert.equal(formatElapsed(62_000), "1m 02s");
+assert.equal(formatElapsed(3_661_000), "1h 01m");
+assert.deepEqual(lifecyclePresentation(
+  {kind: "archive", state: "running"}, "", 12_000,
+), {
+  detail: "Running · 12s elapsed", retry: false, title: "Archive: Starting", tone: "running",
+});
+assert.deepEqual(lifecyclePresentation(
+  {kind: "revive", state: "failed", phase: "runtime_starting", error: "lock unavailable"}, "", 0,
+), {
+  detail: "lock unavailable", retry: true, title: "Revive failed during runtime starting", tone: "failed",
+});
+assert.deepEqual(lifecyclePresentation(
+  {kind: "archive", state: "paused", phase: "tracking_committed"}, "archive", 4_000,
+), {
+  detail: "Paused · 4s since the last completed step",
+  retry: true,
+  title: "Archive: Tracking committed",
+  tone: "pending",
+});
+assert.deepEqual(lifecyclePresentation(
+  {kind: "delete", state: "complete"}, "", 0,
+), {
+  detail: "Finished", retry: false, title: "Delete complete", tone: "complete",
+});
+assert.deepEqual(lifecyclePresentation({state: "idle"}, "delete", 0), {
+  detail: "Retry delete to continue.", retry: true, title: "Delete needs attention", tone: "pending",
+});
+const completeArchiveRequest = {targetId: "target-a", mode: "complete"};
+assert.equal(lifecycleRecoveryAction("archive", completeArchiveRequest, {
+  kind: "archive", state: "running", receiptId: "receipt-1",
+  options: completeArchiveRequest,
+}), "monitor");
+assert.equal(lifecycleRecoveryAction("archive", completeArchiveRequest, {
+  kind: "archive", state: "failed", receiptId: "receipt-1",
+  options: completeArchiveRequest,
+}), "retry");
+assert.equal(lifecycleRecoveryAction("archive", completeArchiveRequest, {
+  kind: "archive", state: "paused", receiptId: "receipt-1",
+  options: completeArchiveRequest,
+}), "retry");
+assert.equal(lifecycleRecoveryAction("delete", {targetId: "target-a", force: true}, {
+  kind: "delete", state: "complete", receiptId: "receipt-1",
+  options: {targetId: "target-a", force: true, deletedThreadId: "thread-a"},
+}), "complete");
+assert.equal(lifecycleRecoveryAction("archive", completeArchiveRequest, {
+  kind: "revive", state: "failed", receiptId: "receipt-1",
+  options: completeArchiveRequest,
+}), "none");
+assert.equal(lifecycleRecoveryAction("archive", {journalId: "journal-a"}, {
+  kind: "archive", state: "running", receiptId: "replacement-receipt",
+  options: {journalId: "journal-a", mode: "complete"},
+}), "monitor");
+assert.equal(lifecycleRecoveryAction("archive", {journalId: "journal-a"}, {
+  kind: "archive", state: "failed", receiptId: "replacement-receipt",
+  options: {journalId: "journal-b", mode: "complete"},
+}), "none");
+assert.equal(lifecycleRecoveryAction("archive", {
+  journalId: "journal-a", receiptId: "receipt-a",
+}, {
+  kind: "archive", state: "failed", receiptId: "receipt-a",
+  options: {journalId: "journal-a", mode: "complete"},
+}), "unchanged");
+assert.equal(lifecycleRecoveryAction("delete", {
+  journalId: "journal-a", receiptId: "receipt-a",
+}, {
+  kind: "delete", state: "complete", receiptId: "receipt-a",
+  options: {journalId: "journal-a", deletedThreadId: "thread-a"},
+}), "complete");
+assert.equal(lifecycleOperationMatches("delete", "target-a", "", {
+  kind: "delete", receiptId: "receipt-1", options: {targetId: "target-a"},
+}), true);
+assert.equal(lifecycleOperationMatches("delete", "target-b", "", {
+  kind: "delete", receiptId: "receipt-1", options: {targetId: "target-a"},
+}), false);
+assert.equal(lifecycleOperationMatches("archive", "target-a", "archive", {
+  kind: "archive", receiptId: "receipt-1",
+  options: {journalExpected: true, journalId: "journal-1"},
+}), true);
+assert.equal(lifecycleOperationMatches("archive", "target-a", "", {
+  kind: "archive", receiptId: "receipt-1",
+  options: {journalExpected: true, journalId: "journal-1"},
+}), false);
+assert.equal(lifecycleRecoveryAction("archive", completeArchiveRequest, {
+  kind: "archive", state: "failed",
+  options: completeArchiveRequest,
+}), "none");
+assert.equal(lifecycleRecoveryAction("archive", completeArchiveRequest, {
+  kind: "archive", state: "running", receiptId: "receipt-1",
+  options: {targetId: "target-b", mode: "complete"},
+}), "none");
+assert.equal(lifecycleRecoveryAction("archive", completeArchiveRequest, {
+  kind: "archive", state: "failed", receiptId: "receipt-1",
+  options: {targetId: "target-a", mode: "abandoned"},
+}), "none");
+// A page loaded with the new bundle refreshes its target without changing an
+// already displayed confirmation. Settings/status snapshots share the owner.
+const browserTargets = createLifecycleTargetState({targetId: "target-a", targetIdentityVersion: 2, slug: "example", threadId: "root-a"});
+const originalConfirmation = browserTargets.confirmation();
+browserTargets.refresh({targetId: "target-a", targetIdentityVersion: 2, slug: "example", threadId: "root-a", lifecycle: "active"});
+assert(browserTargets.matches(originalConfirmation));
+browserTargets.refresh({targetId: "target-b", targetIdentityVersion: 2, slug: "example", threadId: "root-b", lifecycle: "active"});
+assert(!browserTargets.matches(originalConfirmation));
+assert.equal(originalConfirmation.threadId, "root-a");
+assert.equal(browserTargets.confirmation().threadId, "root-b");
+browserTargets.refresh({targetId: "unversioned-target"});
+assert.equal(browserTargets.current().targetId, "target-b");
+assert.equal(lifecycleOperationMatches("archive", "moved-target", "", {
+  kind: "archive", receiptId: "receipt-a", options: {targetId: "original-target", journalId: "journal-a", journalExpected: true},
+  currentTarget: {targetId: "moved-target", targetIdentityVersion: 2},
+}), true);
+assert.equal(lifecycleRecoveryAction("archive", {journalId: "journal-a", receiptId: "receipt-a"}, {
+  kind: "archive", receiptId: "receipt-a", state: "running", options: {journalId: "journal-a"},
+}), "monitor");
+assert.equal(lifecycleRecoveryAction("archive", completeArchiveRequest, {
+  kind: "archive", receiptId: "receipt-a", state: "failed", code: "target_changed", options: completeArchiveRequest,
+  currentTarget: {targetId: "target-b", targetIdentityVersion: 2},
+}), "confirm");
+const renderedDiffs = fileChangeDiffs(JSON.stringify([{
+  path: "portal/<script>alert(1)</script>.js",
+  kind: "update",
+  diff: "@@ -1 +1 @@\n-old value\n+<script>new value</script>\n",
+}]));
+assert.equal(renderedDiffs[0].path, "portal/<script>alert(1)</script>.js");
+assert.deepEqual(renderedDiffs[0].lines.map((line) => line.kind), [
+  "header", "header", "hunk", "deletion", "addition",
+]);
+assert.equal(renderedDiffs[0].lines.at(-1).text, "+<script>new value</script>");
+assert.deepEqual(fileChangeDiffs("not json"), []);
+let tableWrapperCount = 0;
+const table = {
+  parentElement: {classList: {contains: () => false}},
+  before(wrapper) { this.insertedBefore = wrapper; },
+};
+table.ownerDocument = {
+  createElement: () => {
+    tableWrapperCount += 1;
+    return {
+      className: "",
+      classList: {contains: (name) => name === "table-scroll"},
+      append(child) { child.parentElement = this; },
+    };
+  },
+};
+const markdownContainer = {querySelectorAll: () => [table]};
+wrapMarkdownTables(markdownContainer);
+wrapMarkdownTables(markdownContainer);
+assert.equal(tableWrapperCount, 1);
+assert.equal(table.insertedBefore.className, "table-scroll");
+assert.deepEqual(encodeQuestionAnswer({}, {kind: "option", choice: "First", note: "because"}), ["First", "user_note: because"]);
+assert.deepEqual(encodeQuestionAnswer({}, {kind: "other", note: "custom"}), ["user_note: custom"]);
+assert.deepEqual(encodeQuestionAnswer({}, {kind: "other", note: ""}), []);
+assert.deepEqual(encodeQuestionAnswer({}, {kind: "freeform", note: "answer"}), ["user_note: answer"]);
+assert.deepEqual(encodeQuestionAnswer({}, {}), []);
+assert.equal(autoResolutionLabel(1000, 2000, 62000, false), "");
+assert.equal(autoResolutionLabel(2000, 2000, 62000, false), "Auto-resolves unanswered in 60s.");
+assert.equal(autoResolutionLabel(2000, 2000, 62000, true), "Auto-resolution paused while you answer.");
+
+const selectedModes = [];
+const modeContainer = {
+  ownerDocument: {
+    createElement: () => ({
+      dataset: {},
+      addEventListener(_name, listener) { this.activate = listener; },
+    }),
+  },
+  replaceChildren(...children) { this.children = children; },
+};
+const modeButtons = renderCollaborationModes(modeContainer, [
+  {mode: "default", name: "Default"},
+  {mode: "plan", name: "Plan"},
+  {mode: "review", name: "Review", description: "Review the current change"},
+], (mode) => selectedModes.push(mode));
+assert.deepEqual(modeButtons.map((button) => button.dataset.codexMode), ["default", "plan", "review"]);
+assert.equal(modeButtons[2].textContent, "Review");
+assert.equal(modeButtons[2].title, "Review the current change");
+modeButtons[2].activate();
+assert.deepEqual(selectedModes, ["review"]);
+
+const stored = new Map();
+const storage = {
+  get length() { return stored.size; },
+  getItem: (key) => stored.has(key) ? stored.get(key) : null,
+  key: (index) => Array.from(stored.keys())[index] || null,
+  removeItem: (key) => stored.delete(key),
+  setItem: (key, value) => stored.set(key, value),
+};
+const creationDraftKey = "workspace-portal.creation-draft";
+const managedCreationDraft = {
+  name: "managed-draft", goal: "Keep this request", date: "2026-09-22",
+  team: "development", catalogDigest: "a".repeat(64), model: "model-lead", effort: "",
+};
+assert.equal(storeCreationDraft(storage, creationDraftKey, managedCreationDraft, "new"), true);
+assert.deepEqual(loadCreationDraft(storage, creationDraftKey, "new"), managedCreationDraft);
+stored.set(creationDraftKey, JSON.stringify({...managedCreationDraft, catalogDigest: "b".repeat(64), model: "retired-model", effort: "xhigh"}));
+assert.deepEqual(loadCreationDraft(storage, creationDraftKey, "new"), {
+  ...managedCreationDraft, catalogDigest: "b".repeat(64), model: "retired-model", effort: "xhigh",
+});
+assert.deepEqual(
+  creationDraftCatalogRecovery(managedCreationDraft, managedCreationDraft.catalogDigest),
+  {catalogChanged: false, requiresAcknowledgement: false, persistedCatalogDigest: managedCreationDraft.catalogDigest},
+);
+assert.deepEqual(
+  creationDraftCatalogRecovery(managedCreationDraft, "b".repeat(64)),
+  {catalogChanged: true, requiresAcknowledgement: true, persistedCatalogDigest: managedCreationDraft.catalogDigest},
+);
+assert.deepEqual(
+  creationDraftCatalogRecovery(managedCreationDraft, "b".repeat(64), true),
+  {catalogChanged: true, requiresAcknowledgement: false, persistedCatalogDigest: "b".repeat(64)},
+);
+assert.equal(storeCreationDraft(storage, creationDraftKey, {name: "broken", date: "not-a-date"}, "new"), false);
+const planDraftSnapshot = {planTurnId: "plan-turn", planSha256: "c".repeat(64)};
+const planDraftKey = planSessionDraftKey("example", planDraftSnapshot);
+assert.notEqual(planDraftKey, planSessionDraftKey("example", {...planDraftSnapshot, planTurnId: "next-turn"}));
+const planDraft = {name: "implementation", date: "2026-09-22", team: "development", catalogDigest: "d".repeat(64), model: "model-lead", effort: ""};
+assert.equal(storeCreationDraft(storage, planDraftKey, planDraft, "plan"), true);
+assert.deepEqual(loadCreationDraft(storage, planDraftKey, "plan"), planDraft);
+assert.deepEqual(
+  creationDraftCatalogRecovery(planDraft, planDraft.catalogDigest),
+  {catalogChanged: false, requiresAcknowledgement: false, persistedCatalogDigest: planDraft.catalogDigest},
+);
+assert.deepEqual(
+  creationDraftCatalogRecovery(planDraft, "e".repeat(64)),
+  {catalogChanged: true, requiresAcknowledgement: true, persistedCatalogDigest: planDraft.catalogDigest},
+);
+assert.deepEqual(
+  creationDraftCatalogRecovery(planDraft, "e".repeat(64), true),
+  {catalogChanged: true, requiresAcknowledgement: false, persistedCatalogDigest: "e".repeat(64)},
+);
+assert.deepEqual(
+  planSessionCreationSettings(true, {model: "source-model", reasoningEffort: "high"}, planDraft),
+  {team: "development", catalogDigest: "d".repeat(64), model: "model-lead", reasoningEffort: ""},
+);
+assert.deepEqual(
+  planSessionCreationSettings(false, {model: "source-model", reasoningEffort: "high"}, planDraft),
+  {model: "source-model", reasoningEffort: "high"},
+);
+assert.equal(effortSelectionForModelRefresh(true, "", "high"), "");
+assert.equal(effortSelectionForModelRefresh(true, "xhigh", "high"), "xhigh");
+assert.equal(effortSelectionForModelRefresh(false, "xhigh", "high"), "high");
+assert.equal(creationSubmitEligible({uploadReady: true, recoveryPending: false, inFlight: false}), true);
+assert.equal(creationSubmitEligible({uploadReady: false, recoveryPending: false, inFlight: false}), false);
+assert.equal(creationSubmitEligible({uploadReady: true, recoveryPending: true, inFlight: false}), false);
+assert.equal(creationSubmitEligible({uploadReady: true, recoveryPending: false, inFlight: true}), false);
+const firstAttempt = {
+  message: "retry after reload", id: "00000000-0000-4000-8000-000000000002",
+};
+const secondAttempt = {
+  message: "another tab", id: "00000000-0000-4000-8000-000000000003",
+};
+const firstTabSnapshot = loadQueueAttempts(storage, "example", "thread-1");
+const secondTabSnapshot = loadQueueAttempts(storage, "example", "thread-1");
+assert.deepEqual(firstTabSnapshot, []);
+assert.deepEqual(secondTabSnapshot, []);
+assert.equal(storeQueueAttempt(storage, "example", "thread-1", firstAttempt), true);
+assert.equal(storeQueueAttempt(storage, "example", "thread-1", secondAttempt), true);
+assert.deepEqual(loadQueueAttempts(storage, "example", "thread-1"), [firstAttempt, secondAttempt]);
+assert.equal(deleteQueueAttempt(storage, "example", "thread-1", firstAttempt.id), true);
+assert.deepEqual(loadQueueAttempts(storage, "example", "thread-1"), [secondAttempt]);
+assert.deepEqual(loadQueueAttempts(storage, "example", "thread-2"), []);
+assert.equal(
+  queueAttemptStorageKey("example", "thread-1", firstAttempt.id),
+  `workspace-portal.queue-attempt.example.thread-1.${firstAttempt.id}`,
+);
+stored.set(`${queueAttemptStoragePrefix("broken", "thread-1")}bad-id`, "not json");
+assert.equal(loadQueueAttempts(storage, "broken", "thread-1"), null);
+assert.throws(
+  () => requireQueueAttempts(storage, "broken", "thread-1"),
+  /messages cannot be submitted safely/,
+);
+assert.throws(
+  () => requireQueueAttempts(null, "example", "thread-1"),
+  /messages cannot be submitted safely/,
+);
+assert.deepEqual(requireQueueAttempts(storage, "example", "thread-1"), [secondAttempt]);
+
+const sendAttempt = {
+  message: "steer after reload", id: "00000000-0000-4000-8000-000000000005",
+  steered: true, context: "",
+};
+assert.equal(storeSendAttempt(storage, "example", "thread-1", sendAttempt), true);
+assert.deepEqual(loadSendAttempts(storage, "example", "thread-1"), [sendAttempt]);
+assert.equal(
+  sendAttemptStorageKey("example", "thread-1", sendAttempt.id),
+  `workspace-portal.send-attempt.example.thread-1.${sendAttempt.id}`,
+);
+assert.equal(deleteSendAttempt(storage, "example", "thread-1", sendAttempt.id), true);
+assert.deepEqual(loadSendAttempts(storage, "example", "thread-1"), []);
+assert.deepEqual(sendAcknowledgementCandidates([
+  {clientUserMessageId: "owned", clientUserMessageDigest: "a".repeat(64)},
+  {clientUserMessageId: "another-browser", clientUserMessageDigest: "b".repeat(64)},
+], [
+  {id: "owned", message: "mine"},
+]), [{id: "owned", message: "mine", transcriptDigest: "a".repeat(64)}]);
+assert.deepEqual(sendAcknowledgementCandidates([
+  {clientUserMessageId: "sending", clientUserMessageDigest: "a".repeat(64)},
+  {clientUserMessageId: "settled", clientUserMessageDigest: "b".repeat(64)},
+], [
+  {id: "sending", message: "still in flight"},
+  {id: "settled", message: "ready"},
+], new Set(["sending"])), [{
+  id: "settled", message: "ready", transcriptDigest: "b".repeat(64),
+}]);
+assert.deepEqual(sendAcknowledgementCandidates([
+  {clientUserMessageId: "unicode-space", clientUserMessageDigest: "a".repeat(64)},
+], [
+  {id: "unicode-space", message: "\u0085message\u0085"},
+]), [{
+  id: "unicode-space", message: "\u0085message\u0085", transcriptDigest: "a".repeat(64),
+}]);
+// Transport acceptance remains visible through reload; only a canonical ID
+// and digest match retires it, independently of acknowledgement availability.
+const digest = (text) => require("node:crypto").createHash("sha256").update(text).digest("hex");
+const acceptedSteer = {...sendAttempt, state: "accepted"};
+assert.equal(storeSendAttempt(storage, "example", "thread-1", acceptedSteer), true);
+const [reloadedSteer] = loadSendAttempts(storage, "example", "thread-1");
+assert.deepEqual(reloadedSteer, acceptedSteer);
+assert.equal(messageReceiptLabel(reloadedSteer), "Sent to Codex");
+assert.equal(messageReceiptLabel({state: "sending"}), "Sending…");
+assert.equal(messageReceiptLabel({state: "unknown"}), "Outcome unknown. Retry to check.");
+const observedReceipts = new Map([
+  [sendAttempt.id, reloadedSteer],
+  ["same-text", {...acceptedSteer, id: "same-text"}],
+  ["sending", {id: "sending", message: "still in flight", state: "sending"}],
+  ["unknown", {id: "unknown", message: "response lost", state: "unknown"}],
+  ["unicode-space", {id: "unicode-space", message: "\u0085message\u0085", state: "accepted"}],
+]);
+assert.deepEqual(await markTranscriptMessagesObserved(observedReceipts, [
+  {clientUserMessageId: sendAttempt.id, clientUserMessageDigest: "0".repeat(64)},
+  {clientUserMessageId: "unknown", text: "response lost"},
+]), []);
+assert.equal(observedReceipts.get(sendAttempt.id).state, "accepted");
+const observedChanges = await markTranscriptMessagesObserved(observedReceipts, [
+  {clientUserMessageId: sendAttempt.id, clientUserMessageDigest: digest(sendAttempt.message)},
+  {clientUserMessageId: "sending", clientUserMessageDigest: digest("still in flight")},
+  {clientUserMessageId: "unknown", clientUserMessageDigest: digest("response lost")},
+  {clientUserMessageId: "unicode-space", clientUserMessageDigest: digest("message")},
+]);
+assert.equal(observedChanges.length, 4);
+assert.equal(observedReceipts.get("same-text").state, "accepted");
+assert.equal(observedReceipts.get("sending").state, "observed");
+assert.equal(observedReceipts.get("unknown").state, "observed");
+const observedSteer = observedReceipts.get(sendAttempt.id);
+assert.equal(messageReceiptLabel(observedSteer), "");
+assert.equal(storeSendAttempt(storage, "example", "thread-1", observedSteer), true);
+const [awaitingAcknowledgement] = loadSendAttempts(storage, "example", "thread-1");
+assert.equal(awaitingAcknowledgement.state, "observed");
+assert.equal(awaitingAcknowledgement.transcriptDigest, digest(sendAttempt.message));
+assert.equal(messageReceiptLabel(awaitingAcknowledgement), "");
+// Repeated transcript refreshes, or a reload before an acknowledgement retry,
+// must not resurrect an already observed receipt.
+assert.deepEqual(await markTranscriptMessagesObserved(observedReceipts, [
+  {clientUserMessageId: sendAttempt.id, clientUserMessageDigest: digest(sendAttempt.message)},
+]), []);
+assert.equal(deleteSendAttempt(storage, "example", "thread-1", sendAttempt.id), true);
+assert.deepEqual(loadSendAttempts(storage, "example", "thread-1"), []);
+
+const planAAttempt = {
+  message: "Implement the plan.", id: "00000000-0000-4000-8000-000000000006",
+  steered: false, context: "plan:aaaaaaaa",
+};
+const planBAttempt = {
+  message: "Implement the plan.", id: "00000000-0000-4000-8000-000000000007",
+  steered: false, context: "plan:bbbbbbbb",
+};
+assert.equal(storeSendAttempt(storage, "example", "thread-1", planAAttempt), true);
+assert.equal(storeSendAttempt(storage, "example", "thread-1", planBAttempt), true);
+assert.deepEqual(loadSendAttempts(storage, "example", "thread-1"), [planAAttempt, planBAttempt]);
+assert.equal(
+  matchingSendAttempt(
+    loadSendAttempts(storage, "example", "thread-1"),
+    "Implement the plan.",
+    "plan:aaaaaaaa",
+  ).id,
+  planAAttempt.id,
+);
+assert.equal(
+  matchingSendAttempt(
+    loadSendAttempts(storage, "example", "thread-1"),
+    "Implement the plan.",
+    "plan:bbbbbbbb",
+  ).id,
+  planBAttempt.id,
+);
+assert.equal(deleteSendAttempt(storage, "example", "thread-1", planAAttempt.id), true);
+assert.equal(deleteSendAttempt(storage, "example", "thread-1", planBAttempt.id), true);
+
+const inputQuestions = [
+  {id: "normal", isSecret: false},
+  {id: "secret", isSecret: true},
+];
+assert.equal(storeRequestInputDraft(storage, "example", "thread-1", "request-1", inputQuestions, {
+  page: 1,
+  drafts: [
+    {kind: "option", choice: "First", note: "remember this"},
+    {kind: "freeform", choice: "", note: "never persist this"},
+  ],
+}), true);
+assert.deepEqual(
+  loadRequestInputDraft(storage, "example", "thread-1", "request-1", inputQuestions),
+  {
+    page: 1,
+    drafts: [
+      {kind: "option", choice: "First", note: "remember this"},
+      {},
+    ],
+  },
+);
+assert.match(
+  requestInputDraftStorageKey("example", "thread-1", "request-1"),
+  /^workspace-portal\.request-input\./,
+);
+assert.equal(deleteRequestInputDraft(storage, "example", "thread-1", "request-1"), true);
+storeRequestInputDraft(storage, "example", "thread-1", "unselected", inputQuestions, {
+  page: 0, drafts: [{note: "Choose an option later"}, {note: "Secret before choosing"}],
+});
+assert.deepEqual(loadRequestInputDraft(storage, "example", "thread-1", "unselected", inputQuestions).drafts,
+  [{kind: "", choice: "", note: "Choose an option later"}, {}]);
+deleteRequestInputDraft(storage, "example", "thread-1", "unselected");
+
+storeQueueAttempt(storage, "deleted", "thread-1", firstAttempt);
+storeSendAttempt(storage, "deleted", "thread-1", sendAttempt);
+storeRequestInputDraft(storage, "deleted", "thread-1", "request-2", inputQuestions, {
+  page: 0, drafts: [{kind: "option", choice: "First", note: "keep"}, {}],
+});
+storeQueueAttempt(storage, "deleted", "replacement-thread", secondAttempt);
+storeQueueAttempt(storage, "retained", "thread-1", secondAttempt);
+cleanupCompletedDeleteStorage([
+  {
+    slug: "deleted", kind: "delete", state: "complete",
+    options: {deletedThreadId: "thread-1"},
+  },
+  {slug: "retained", kind: "delete", state: "failed"},
+], [storage]);
+assert.deepEqual(loadQueueAttempts(storage, "deleted", "thread-1"), []);
+assert.deepEqual(loadSendAttempts(storage, "deleted", "thread-1"), []);
+assert.equal(loadRequestInputDraft(storage, "deleted", "thread-1", "request-2", inputQuestions), null);
+assert.deepEqual(loadQueueAttempts(storage, "deleted", "replacement-thread"), [secondAttempt]);
+assert.deepEqual(loadQueueAttempts(storage, "retained", "thread-1"), [secondAttempt]);
+
+assert.equal(storeQueueAttempt(storage, "example", "thread-2", firstAttempt), true);
+assert.equal(storeSendAttempt(storage, "example", "thread-1", sendAttempt), true);
+assert.equal(storeRequestInputDraft(
+  storage, "example", "thread-1", "request-1", inputQuestions,
+  {page: 0, drafts: [{kind: "freeform", note: "remove"}, {}]},
+), true);
+assert.equal(clearThreadStorage(storage, "example", "thread-1"), true);
+assert.deepEqual(loadQueueAttempts(storage, "example", "thread-1"), []);
+assert.deepEqual(loadSendAttempts(storage, "example", "thread-1"), []);
+assert.equal(loadRequestInputDraft(storage, "example", "thread-1", "request-1", inputQuestions), null);
+assert.deepEqual(loadQueueAttempts(storage, "example", "thread-2"), [firstAttempt]);
+
+// Hidden time never extends the last known working state. A stale value stays
+// visible during thirty seconds of visible recovery, then reports unavailability.
+let timingNow = 0;
+const clock = createTimingClock(() => timingNow);
+clock.received(); timingNow = 5000;
+assert.equal(clock.view().elapsed, 5000);
+clock.pause(); timingNow = 600_000; clock.resume();
+assert.deepEqual(clock.view(), {elapsed: 5000, stale: true, unavailable: false});
+timingNow += 29999; clock.failed(); assert.equal(clock.view().unavailable, false);
+timingNow += 1; assert.equal(clock.view().unavailable, true);
+clock.pause(); timingNow += 600_000; clock.resume(); assert.equal(clock.view().unavailable, false);
+clock.received(); assert.deepEqual(clock.view(), {elapsed: 0, stale: false, unavailable: false});
+const scope = createReadScope(), abandonedRead = scope.begin();
+scope.pause(); assert.equal(abandonedRead.signal.aborted, true); assert.equal(abandonedRead.isCurrent(), false);
+scope.resume(); const currentRead = scope.begin();
+assert.equal(abandonedRead.isCurrent(), false); assert.equal(currentRead.isCurrent(), true);
+abandonedRead.finish(); currentRead.finish();
+
+const automaticRequests = [];
+const automaticFetch = async (path, options = {}) => {
+  automaticRequests.push({path, body: options.body ? JSON.parse(options.body) : null});
+  return {ok: true, status: 200, json: async () => ({})};
+};
+const automaticClient = createSessionClient(
+  "example", createRequest(automaticFetch), compatibilityConversation(automaticFetch),
+);
+
+if (!unitOnly) {
+  let rejectOldSnooze, snoozeCalls = 0;
+  const oldSnooze = createPromptSnooze("offer-A", () => new Promise((_resolve, reject) => { rejectOldSnooze = reject; }));
+  const oldOperation = oldSnooze.pause(); await Promise.resolve();
+  const newSnooze = createPromptSnooze("offer-B", async () => { snoozeCalls++; });
+  await newSnooze.pause();
+  rejectOldSnooze(new Error("late failure")); await oldOperation;
+  assert.equal(oldSnooze.failed, true);
+  assert.equal(newSnooze.failed, false); assert.equal(newSnooze.paused, true);
+  assert.equal(snoozeCalls, 1, "old failure must not poison the replacement offer");
+  let attempts = 0;
+  const retrySnooze = createPromptSnooze("same-offer", async () => { if (++attempts === 1) throw new Error("temporary failure"); });
+  assert.equal(await retrySnooze.pause(), false);
+  assert.equal(await retrySnooze.pause(), false); assert.equal(attempts, 1, "editing alone must not repeatedly retry a failed request");
+  assert.equal(await retrySnooze.pause(true), true); assert.equal(attempts, 2, "explicit refresh must retry the same valid offer");
+  const offer = {id: "first", token: "offer-1", threadId: "thread", turnId: "turn", itemId: "item",
+    method: "item/tool/requestUserInput", kind: "userInput", authorityAvailable: true, questions: [{id: "q", question: "Choose"}]};
+  const replacement = {...offer, id: "second", token: "offer-2"};
+  assert.equal(promptIdentity(offer), promptIdentity(replacement));
+  for (const [error, restored, expected] of [
+    [{code: "prompt_transport", notSent: true}, replacement, 2],
+    [{code: "prompt_changed", notSent: true}, replacement, 2],
+    [{code: "prompt_transport", notSent: false}, replacement, 1],
+    [new Error("Network error"), replacement, 1],
+    [{code: "invalid_response", notSent: true}, replacement, 1],
+    [{code: "prompt_transport", notSent: true}, {...replacement, turnId: "another"}, 1],
+    [{code: "prompt_transport", notSent: true}, {...replacement, itemId: "another"}, 1],
+    [{code: "prompt_transport", notSent: true}, {...replacement, questions: [{id: "q", question: "Changed"}]}, 1],
+    [{code: "prompt_transport", notSent: true}, {...replacement, authorityAvailable: false}, 1],
+    [{code: "prompt_transport", notSent: true}, null, 1],
+  ]) {
+    let sends = 0;
+    try { await respondWithRecovery(offer, {answers: {}}, async entry => {
+      sends++; if (sends === 1) throw error; assert.equal(entry.token, "offer-2");
+    }, async () => restored); } catch (_) {}
+    assert.equal(sends, expected);
+  }
+  let repeatedSends = 0;
+  await assert.rejects(respondWithRecovery(offer, {}, async () => {
+    repeatedSends++; throw Object.assign(new Error("definitely unsent"), {code: "prompt_transport", notSent: true});
+  }, async () => replacement));
+  assert.equal(repeatedSends, 2, "a failed automatic retry never starts another retry");
+  let snoozedBeforeWizardAction = false;
+  await beforeRequestInputAction(async () => { snoozedBeforeWizardAction = true; });
+  assert.equal(snoozedBeforeWizardAction, true);
+
+  const sessionPage = await fetchRequest("/example/");
+  assert.equal(sessionPage.status, 200);
+  const sessionHTML = await sessionPage.text();
+  assert.match(sessionHTML, /href="#codex"[^>]+data-session-tab="codex"/);
+  assert.match(sessionHTML, /data-transcript-filter="all"/);
+  assert.match(sessionHTML, /data-transcript-filter="messages"/);
+  assert.match(sessionHTML, /data-transcript-filter="activity"/);
+  assert.match(sessionHTML, /id="codex-model"[^>]+data-existing-settings="true"/);
+  assert.match(sessionHTML, /id="codex-work"/);
+  assert.match(sessionHTML, /id="lifecycle-operation-status"/);
+  assert.match(sessionHTML, /id="codex-mode"[^>]*><\/div>/);
+  assert.doesNotMatch(sessionHTML, /data-codex-mode=/);
+  assert.match(sessionHTML, /codex-settings-dialog/);
+  assert.match(sessionHTML, /codex-settings-open/);
+  assert.doesNotMatch(sessionHTML, /codex-settings-apply|codex-settings-cancel/);
+
+  const details = await client.details();
+  assert.equal(details.repositoryCount, 0);
+  assert.equal(details.artifactCount, 2);
+  assert.match(details.artifactsHTML, /data-artifact-path="plan.md"/);
+  assert.match(sessionHTML, /aria-orientation="vertical"/);
+  assert.ok(sessionHTML.indexOf('id="transcript"') < sessionHTML.indexOf('id="queue-panel"'));
+  assert.ok(sessionHTML.indexOf('id="queue-panel"') < sessionHTML.indexOf('id="message-form"'));
+  const thread = await client.thread();
+  assert.equal(thread.threadId, "thread-1");
+  assert.equal(thread.status, "idle");
+  assert.equal(thread.entries[0].text, "contract response");
+
+  const pending = await client.pending();
+  assert.equal(pending[0].id, "approval-1");
+  assert.equal(pending[0].kind, "command");
+
+  const emptyFetch = async (path) => {
+    assert.match(path, /\/pending$/);
+    return {ok: true, status: 200, json: async () => null};
+  };
+  const legacyEmptyClient = createSessionClient(
+    "example", createRequest(emptyFetch), compatibilityConversation(emptyFetch),
+  );
+  assert.deepEqual(await legacyEmptyClient.pending(), []);
+
+  const changedTarget = {targetId: "target-current", targetIdentityVersion: 2, slug: "example", lifecycle: "active", threadId: "new-root"};
+  const rejectedLifecycleRequest = createRequest(async () => ({ok: false, status: 409,
+    json: async () => ({error: "Confirm the current session", code: "target_changed", currentTarget: changedTarget, receiptId: "failed-receipt"}),
+  }));
+  await assert.rejects(rejectedLifecycleRequest("/fixture"), error => error.code === "target_changed" &&
+    error.currentTarget.targetId === changedTarget.targetId && error.receiptId === "failed-receipt");
+  const explicitConfirmations = [];
+  const confirmationClient = createSessionClient("example", async (path, options) => {
+    explicitConfirmations.push({path, body: JSON.parse(options.body)});
+    return {state: "running", receiptId: "fresh-receipt"};
+  });
+  await confirmationClient.archive("abandoned", "target-current", "failed-receipt");
+  await confirmationClient.revive(true, "target-current", "failed-receipt");
+  await confirmationClient.deleteSession(true, "target-current", "failed-receipt");
+  assert.deepEqual(explicitConfirmations.map(request => request.body), [
+    {mode: "abandoned", targetId: "target-current", receiptId: "failed-receipt"},
+    {allowAbandoned: true, targetId: "target-current", receiptId: "failed-receipt"},
+    {force: true, targetId: "target-current", receiptId: "failed-receipt"},
+  ]);
+
+  const modes = await client.modes();
+  assert.deepEqual(modes.map((mode) => mode.mode), ["default", "plan"]);
+
+  await client.reconcileQueue();
+  const queue = await client.queue();
+  assert.equal(queue[0].id, "queued-1");
+  assert.equal(queue[0].text, "queued item");
+
+  await automaticClient.reconcileQueue();
+  await automaticClient.settings("model-1", "");
+  await automaticClient.acknowledgeMessages([{
+    clientUserMessageId: "00000000-0000-4000-8000-000000000004",
+    digest: "ea5068c45b6c755e5dd592e23c713559960f37c09b5da18873ebc3982f42d211",
+  }]);
+  await automaticClient.fork("forked", "2026-09-05", "model-1", "");
+  await automaticClient.archive("complete", "target-1");
+  await automaticClient.revive(true, "target-1");
+  await automaticClient.deleteSession(true, "deletion-target-1");
+  await automaticClient.retryOperation("receipt-1", "journal-1");
+  await automaticClient.retryOperation("receipt-2", "journal-2", true);
+  await automaticClient.dismissOperation("receipt-1");
+  await automaticClient.artifactPreview("notes/example.md");
+  assert.deepEqual(automaticRequests, [
+    {
+      path: "/api/sessions/example/queue/reconcile",
+      body: {},
+    },
+    {
+      path: "/api/sessions/example/settings",
+      body: {model: "model-1", reasoningEffort: ""},
+    },
+    {
+      path: "/api/sessions/example/message-ack",
+      body: {acknowledgements: [{
+        clientUserMessageId: "00000000-0000-4000-8000-000000000004",
+        digest: "ea5068c45b6c755e5dd592e23c713559960f37c09b5da18873ebc3982f42d211",
+      }]},
+    },
+    {
+      path: "/api/sessions/example/fork",
+      body: {name: "forked", creationDate: "2026-09-05", model: "model-1", reasoningEffort: "", browserNotificationsEnabled: true},
+    },
+    {
+      path: "/api/sessions/example/archive",
+      body: {mode: "complete", targetId: "target-1"},
+    },
+    {
+      path: "/api/sessions/example/revive",
+      body: {allowAbandoned: true, targetId: "target-1"},
+    },
+    {
+      path: "/api/sessions/example/delete",
+      body: {force: true, targetId: "deletion-target-1"},
+    },
+    {
+      path: "/api/sessions/example/operation/retry",
+      body: {receiptId: "receipt-1", journalId: "journal-1"},
+    },
+    {
+      path: "/api/sessions/example/operation/retry",
+      body: {receiptId: "receipt-2", journalId: "journal-2", force: true},
+    },
+    {
+      path: "/api/sessions/example/operation",
+      body: {receiptId: "receipt-1"},
+    },
+    {
+      path: "/api/sessions/example/artifact-preview?path=notes%2Fexample.md",
+      body: null,
+    },
+  ]);
+
+  assert.deepEqual(
+    await client.message("browser message", "00000000-0000-4000-8000-000000000004", true),
+    {
+      turnId: "turn-1",
+      clientUserMessageId: "00000000-0000-4000-8000-000000000004",
+      steered: true,
+    },
+  );
+  assert.deepEqual(await client.acknowledgeMessages([{
+    clientUserMessageId: "00000000-0000-4000-8000-000000000004",
+    digest: "ea5068c45b6c755e5dd592e23c713559960f37c09b5da18873ebc3982f42d211",
+  }]), {acknowledgedClientUserMessageIds: ["00000000-0000-4000-8000-000000000004"]});
+  assert.equal((await client.queueMessage(
+    "queue message", "00000000-0000-4000-8000-000000000001",
+  )).id, "queued-2");
+  assert.deepEqual(await client.deleteQueued("queued-1"), {ok: true});
+  assert.deepEqual(await client.deleteQueued("start"), {ok: true});
+  assert.deepEqual(await client.startQueue("queued-1"), {ok: true});
+  const unsupportedAutomatic = await fetchRequest("/codex/conversations/example/settings", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({model: "model-1", reasoningEffort: ""}),
+  });
+  assert.equal(unsupportedAutomatic.status, 400);
+  assert.equal((await client.settings(undefined, undefined, "plan")).collaborationMode, "plan");
+  assert.deepEqual(await client.interrupt(), {ok: true});
+  assert.deepEqual(await client.respond("approval-1", {decision: "accept"}), {ok: true});
+  assert.deepEqual(await client.snooze("question-1"), {ok: true});
+  assert.deepEqual(
+    await client.respond("question-1", {answers: {choice: {answers: ["yes"]}}}),
+    {ok: true},
+  );
+
+  const events = await fetchRequest(client.eventsPath());
+  assert.equal(events.status, 200);
+  assert.match(events.headers.get("content-type"), /^text\/event-stream/);
+  assert.match(await events.text(), /event: ready\ndata: \{"heartbeatIntervalMs":20000\}/);
+}
+})().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

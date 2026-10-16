@@ -1,0 +1,23 @@
+diff --git a/portal/internal/web/notifications_browser_test.cjs b/portal/internal/web/notifications_browser_test.cjs
+index 85c7eb1..ae3b29a 100644
+--- a/portal/internal/web/notifications_browser_test.cjs
++++ b/portal/internal/web/notifications_browser_test.cjs
+@@ -294,7 +294,17 @@ async function checkWorkerUpgrade(browser, engine) {
+       await expect(menuSound).not.toBeChecked(); await menuSound.check();
+       await expect.poll(() => page.evaluate(() => workspaceAttentionStore.readSound())).toBe(true);
+       await expect(page.locator("#browser-notifications [data-notification-sound]")).toBeChecked();
+-      await page.keyboard.press("Escape"); await expect(toggle).toBeFocused();
++      // Pointer-driven saving may move focus when the input is disabled. Check
++      // dismissal here, then keyboard restoration with known focus conditions.
++      await page.keyboard.press("Escape");
++      await expect.poll(() => menu.evaluate(element => element.matches(":popover-open"))).toBe(false);
++      await toggle.focus(); await page.keyboard.press("Enter");
++      await expect(page.getByRole("link", {name: "Operations", exact: true})).toBeFocused();
++      assert.equal(await menu.evaluate(element => element.matches(":popover-open") && element.contains(document.activeElement)), true,
++        "keyboard-open menu contains focus before Escape");
++      await page.keyboard.press("Escape");
++      await expect.poll(() => menu.evaluate(element => element.matches(":popover-open"))).toBe(false);
++      await expect(toggle).toBeFocused();
+       await page.locator("#browser-notifications [data-notification-sound]").uncheck();
+       await expect.poll(() => page.evaluate(() => workspaceAttentionStore.readSound())).toBe(false);
+       await toggle.click(); await expect(menuSound).not.toBeChecked(); await page.keyboard.press("Escape");

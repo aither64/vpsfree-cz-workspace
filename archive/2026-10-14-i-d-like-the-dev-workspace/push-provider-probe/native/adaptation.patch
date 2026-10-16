@@ -1,0 +1,516 @@
+--- committed/portal/internal/web/notifications_browser_test.go
++++ native/portal/internal/web/notifications_browser_test.go
+@@ -1,59 +1,193 @@
+ package web
+ 
+ import (
++	"bytes"
++	"context"
++	"encoding/json"
++	"io"
++	"log"
+ 	"net/http"
+ 	"net/http/httptest"
+ 	"os"
+ 	"os/exec"
+ 	"path/filepath"
+ 	"strings"
++	"sync"
+ 	"testing"
+ 	"time"
+ 
+ 	"github.com/aither64/dev-workspace/portal/internal/session"
+ )
+ 
+-// Real templates/CSP/worker route, with synthetic subscription and delivery.
+-// This proves plumbing, not provider acceptance or an operating-system display.
+-func TestNotificationsBrowser(t *testing.T) {
+-	if os.Getenv("PORTAL_BROWSER_TEST") != "1" {
+-		t.Skip("set PORTAL_BROWSER_TEST=1 for real browser notification plumbing")
++// Forward the actual response while retaining at most 4096 bytes in memory for
++// classification. No response body, request body or header is logged.
++type providerProbeResponse struct {
++	http.ResponseWriter
++	status int
++	body   bytes.Buffer
++}
++
++func (w *providerProbeResponse) WriteHeader(status int) {
++	if w.status == 0 {
++		w.status = status
++		w.ResponseWriter.WriteHeader(status)
++	}
++}
++
++func (w *providerProbeResponse) Write(data []byte) (int, error) {
++	if w.status == 0 {
++		w.WriteHeader(http.StatusOK)
++	}
++	if remaining := 4096 - w.body.Len(); remaining > 0 {
++		_, _ = w.body.Write(data[:min(remaining, len(data))])
++	}
++	return w.ResponseWriter.Write(data)
++}
++
++func providerProbeCategory(status int, body []byte) string {
++	if status >= 200 && status < 300 {
++		return "accepted"
++	}
++	var value struct {
++		Error string `json:"error"`
++	}
++	if json.Unmarshal(body, &value) != nil {
++		return "unclassified_response"
++	}
++	known := map[string]string{
++		"Workspace package changed. Reload before saving.":                 "package_admission",
++		"Notification origin is invalid.":                                  "origin_invalid",
++		"Browser notifications are unavailable.":                           "notifications_unavailable",
++		"Notification storage is unavailable.":                             "storage_unavailable",
++		"notification storage is unavailable":                              "storage_unavailable",
++		"invalid JSON request":                                             "invalid_json",
++		"request must contain one JSON value":                              "multiple_json_values",
++		"unsupported push provider endpoint":                               "unsupported_endpoint",
++		"invalid push public key":                                          "invalid_public_key",
++		"invalid push authentication key":                                  "invalid_auth_key",
++		"push subscription has expired":                                    "subscription_expired",
++		"This subscription belongs to another portal origin.":              "registration_origin_conflict",
++		"Registration could not be created.":                               "registration_randomness",
++		"Browser registration is unavailable. Enable notifications again.": "registration_unavailable",
++		"Browser notifications are disabled.":                              "notifications_disabled",
++		"Invalid notification action.":                                     "invalid_action",
++		"notification record limit reached":                                "record_limit",
++		"notification state exceeds its size limit":                        "state_size_limit",
++	}
++	if category, ok := known[value.Error]; ok {
++		return category
++	}
++	return "unclassified_product_error"
++}
++
++type providerProbeHTTP struct {
++	Sequence              int    `json:"sequence"`
++	Action                string `json:"action"`
++	Status                int    `json:"status"`
++	Category              string `json:"category"`
++	HostProfileCurrent    bool   `json:"hostProfileCurrent"`
++	ProviderAdmission     bool   `json:"providerAdmission"`
++	HostOriginMatched     bool   `json:"hostOriginMatched"`
++	MutationOriginMatched bool   `json:"mutationOriginMatched"`
++	RegistrationsBefore   int    `json:"registrationsBefore"`
++	RegistrationsAfter    int    `json:"registrationsAfter"`
++	StoreFailed           bool   `json:"storeFailed"`
++}
++
++// Disposable verification only. Exercise the shipped transport, registration,
++// worker and Test action; do not reconcile native activity or create sessions.
++func TestNotificationProviderProbe(t *testing.T) {
++	if os.Getenv("PORTAL_PROVIDER_PROBE") != "1" {
++		t.Skip("explicit provider probe required")
+ 	}
+ 	n := testNotifications(t)
+ 	prepareInteractiveConversation(t, n.server, "example")
+ 	fixture := httptest.NewUnstartedServer(nil)
++	fixture.Config.ErrorLog = log.New(io.Discard, "", 0)
+ 	n.server.config.BaseURL = "https://" + fixture.Listener.Addr().String()
+ 	n.server.trustedOrigins = []string{n.server.config.BaseURL}
+ 	summary, err := session.Find(n.server.config.Workspace, "example")
+ 	if err != nil {
+-		t.Fatal(err)
++		t.Fatal("fixture session unavailable")
+ 	}
+-	identity, err := session.ObservationIdentity(n.server.config.Workspace, "example", filepath.Join(n.server.config.Workspace, "work", "example"), summary.Codex.ThreadID)
++	identity, err := session.ObservationIdentity(n.server.config.Workspace, "example",
++		filepath.Join(n.server.config.Workspace, "work", "example"), summary.Codex.ThreadID)
+ 	if err != nil {
+-		t.Fatal(err)
++		t.Fatal("fixture identity unavailable")
+ 	}
+-	event := attentionEvent{Version: 1, ID: strings.Repeat("b", 64), Identity: identity, Revision: 1, Slug: "example", Kind: "input", Member: "implementer0", Route: "/example/?member=implementer0#codex", ExpiresAt: time.Now().Add(time.Minute).UnixMilli()}
+ 	handler := n.server.Handler()
++	var diagnosticsMu sync.Mutex
++	diagnostics := []providerProbeHTTP{}
++	sequence := 0
+ 	fixture.Config.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+-		if r.URL.Path == "/fixture/subscription" {
+-			n.server.writeJSON(w, http.StatusOK, testPushSubscription(t))
+-			return
++		switch {
++		case r.URL.Path == "/fixture/summary" && r.Method == http.MethodGet:
++			n.store.mu.Lock()
++			result := map[string]any{"registrations": len(n.store.state.Browsers), "pending": len(n.store.state.Outbox)}
++			n.store.mu.Unlock()
++			diagnosticsMu.Lock()
++			result["httpDiagnostics"] = append([]providerProbeHTTP{}, diagnostics...)
++			result["httpDiagnosticCount"] = sequence
++			diagnosticsMu.Unlock()
++			n.server.writeJSON(w, http.StatusOK, result)
++		case r.Method == http.MethodPost && (r.URL.Path == "/api/browser-notifications/register" ||
++			r.URL.Path == "/api/browser-notifications/disable" || r.URL.Path == "/api/browser-notifications/test"):
++			profile, profileErr := readHostProfileIdentity(n.server.config.HostProfile)
++			origin := n.server.notificationOrigin(r)
++			record := providerProbeHTTP{Action: strings.TrimPrefix(r.URL.Path, "/api/browser-notifications/"),
++				HostProfileCurrent: profileErr == nil && profile == n.server.hostProfile,
++				ProviderAdmission:  n.server.requireProviderAdmission() == nil,
++				HostOriginMatched:  origin != "", MutationOriginMatched: origin != "" && r.Header.Get("Origin") == origin}
++			n.store.mu.Lock()
++			record.RegistrationsBefore = len(n.store.state.Browsers)
++			n.store.mu.Unlock()
++			response := &providerProbeResponse{ResponseWriter: w}
++			handler.ServeHTTP(response, r)
++			record.Status = response.status
++			record.Category = providerProbeCategory(response.status, response.body.Bytes())
++			n.store.mu.Lock()
++			record.RegistrationsAfter, record.StoreFailed = len(n.store.state.Browsers), n.store.failed
++			n.store.mu.Unlock()
++			diagnosticsMu.Lock()
++			sequence++
++			record.Sequence = sequence
++			diagnostics = append(diagnostics, record)
++			if len(diagnostics) > 24 {
++				diagnostics = diagnostics[len(diagnostics)-24:]
++			}
++			diagnosticsMu.Unlock()
++		case r.URL.Path == "/api/sessions/example/attention" && r.Method == http.MethodGet:
++			n.server.writeJSON(w, http.StatusOK, map[string]any{"version": 1, "identity": identity,
++				"rootThread": "thread-1", "enabled": true, "fresh": true, "event": nil, "revision": 0})
++		case r.URL.Path == "/api/sessions/example/coordination":
++			n.server.writeJSON(w, http.StatusOK, map[string]any{"reservationHolders": []any{}})
++		default:
++			handler.ServeHTTP(w, r)
+ 		}
+-		if r.URL.Path == "/api/sessions/example/attention" && r.Method == http.MethodGet {
+-			n.server.writeJSON(w, http.StatusOK, map[string]any{"version": 1, "identity": identity, "rootThread": "thread-1", "enabled": true, "fresh": true, "event": event, "revision": 1})
+-			return
+-		}
+-		if r.URL.Path == "/api/sessions/example/coordination" {
+-			n.server.writeJSON(w, http.StatusOK, map[string]any{"reservationHolders": []any{}})
+-			return
+-		}
+-		handler.ServeHTTP(w, r)
+ 	})
+ 	fixture.StartTLS()
+ 	defer fixture.Close()
+-	command := exec.Command("node", "notifications_browser_test.cjs", fixture.URL)
++	ctx, cancel := context.WithCancel(context.Background())
++	var sender sync.WaitGroup
++	sender.Add(1)
++	go func() {
++		defer sender.Done()
++		ticker := time.NewTicker(time.Second)
++		defer ticker.Stop()
++		for {
++			select {
++			case <-ctx.Done():
++				return
++			case now := <-ticker.C:
++				n.sendNext(ctx, now)
++			}
++		}
++	}()
++	defer func() { cancel(); sender.Wait() }()
++	command := exec.CommandContext(ctx, "node", "notifications_browser_test.cjs", fixture.URL)
+ 	if out, err := command.CombinedOutput(); err != nil {
+-		t.Fatalf("notification browser plumbing: %v\n%s", err, out)
++		t.Log(string(out))
++		t.Fatal("provider probe harness did not complete; inspect sanitized results")
+ 	} else {
+ 		t.Log(string(out))
+ 	}
+--- committed/portal/internal/web/notifications_browser_test.cjs
++++ native/portal/internal/web/notifications_browser_test.cjs
+@@ -1,51 +1,252 @@
+ "use strict";
+-const assert = require("node:assert/strict");
+-const {chromium, firefox, expect} = require("@playwright/test");
++const fs = require("node:fs");
++const os = require("node:os");
++const path = require("node:path");
++const {chromium, firefox} = require("@playwright/test");
+ const base = process.argv[2];
++const resultPath = process.env.PROVIDER_PROBE_RESULT_FILE;
++const origin = new URL(base).origin;
++const safeResult = value => ["", "provider_accepted", "retrying", "provider_refused", "expired", "delivery_failed"].includes(value) ? value : "unknown";
++const safeError = error => ["TimeoutError", "Error", "AbortError", "NotAllowedError", "NotSupportedError", "SecurityError", "InvalidStateError", "InvalidAccessError", "NetworkError", "UnknownError", "OperationError", "QuotaExceededError", "TypeError", "RangeError", "NotFoundError", "NotReadableError", "InvalidModificationError"].includes(error?.name) ? error.name : "Error";
++const report = {sourceRevision: "e414ed31806d2b91620d5e5fad8b5b5ee56e07ac", platform: process.platform, headless: false,
++  providerTransport: "shipped_guardedPushClient_unmocked", syntheticPush: false, osDisplayVerified: false, macOSDisplayVerified: false, browsers: []};
++const incomplete = "Browser setup is incomplete. Disable it or enable notifications again.";
++function save() {
++  if (resultPath) fs.writeFileSync(resultPath, JSON.stringify(report, null, 2) + "\n", {mode: 0o600});
++}
++// Transparent diagnostics: every native method receives its original arguments
++// and returns its real result or rejection. No capability or key enters state.
++async function installDiagnostics(context, row) {
++  row.apiHTTP = [];
++  context.on("response", response => {
++    const url = new URL(response.url());
++    const action = ({"/api/browser-notifications": "state", "/api/browser-notifications/register": "register",
++      "/api/browser-notifications/disable": "disable", "/api/browser-notifications/test": "test"})[url.pathname];
++    if (url.origin === origin && action && row.apiHTTP.length < 24) row.apiHTTP.push({action, status: response.status()});
++  });
++  await context.addInitScript(targetOrigin => {
++    if (location.origin !== targetOrigin) return;
++    const state = globalThis.__providerProbeDiagnostics = {steps: [], storage: {getCalls: 0, setCalls: 0}};
++    const allowedNames = ["Error", "AbortError", "NotAllowedError", "NotSupportedError", "SecurityError", "InvalidStateError", "InvalidAccessError", "NetworkError", "UnknownError", "OperationError", "QuotaExceededError", "TypeError", "RangeError", "NotFoundError", "NotReadableError", "InvalidModificationError"];
++    const classify = error => {
++      const name = allowedNames.includes(error?.name) ? error.name : "Error";
++      const category = ({NotAllowedError: "permission", SecurityError: "security", NetworkError: "network",
++        NotSupportedError: "unsupported", InvalidStateError: "state", InvalidAccessError: "argument",
++        AbortError: "aborted", OperationError: "operation", QuotaExceededError: "quota", TypeError: "argument", RangeError: "argument",
++        NotFoundError: "not_found", NotReadableError: "not_readable", InvalidModificationError: "state"})[name] || "unclassified";
++      // Recognize only fixed browser messages, never return the message itself.
++      const known = new Map([["Registration failed - push service error", "push_service_error"],
++        ["Registration failed - push service not available", "push_service_unavailable"],
++        ["Error retrieving push subscription", "push_subscription_lookup"]]).get(error?.message);
++      return {name, category: known || category};
++    };
++    const shape = subscription => {
++      if (!subscription) return {present: false};
++      try {
++        const value = subscription.toJSON(), url = new URL(value.endpoint);
++        const decodeLength = text => {
++          if (typeof text !== "string" || text.length > 256) return -1;
++          try {return atob(text.replace(/-/g, "+").replace(/_/g, "/")).length;} catch (_) {return -1;}
++        };
++        const expires = value.expirationTime;
++        return {present: true, endpointHostname: /^(?=.{1,253}$)[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/i.test(url.hostname) ? url.hostname : "non_dns_hostname", endpointHttps: url.protocol === "https:", endpointHostAllowed: ["fcm.googleapis.com", "updates.push.services.mozilla.com"].includes(url.hostname),
++          endpointWithinLimit: value.endpoint.length <= 2048, endpointPortAllowed: !url.port || url.port === "443",
++          endpointPathPresent: Boolean(url.pathname), endpointHasCredentials: Boolean(url.username || url.password), endpointHasFragment: Boolean(url.hash),
++          publicKeyBytesValid: decodeLength(value.keys?.p256dh) === 65, authKeyBytesValid: decodeLength(value.keys?.auth) === 16,
++          publicKeyUnpadded: typeof value.keys?.p256dh === "string" && !value.keys.p256dh.includes("="),
++          authKeyUnpadded: typeof value.keys?.auth === "string" && !value.keys.auth.includes("="),
++          keyFieldsKnown: value.keys && Object.keys(value.keys).every(key => ["auth", "p256dh"].includes(key)),
++          expirationKind: expires === undefined ? "absent" : expires === null ? "null" : Number.isSafeInteger(expires) ? "integer" : typeof expires === "number" ? "fractional_or_unsafe_number" : "other",
++          expirationFuture: expires == null || (typeof expires === "number" && expires > Date.now())};
++      } catch (error) {return {present: true, inspectionError: classify(error)};}
++    };
++    const add = record => {if (state.steps.length < 24) state.steps.push(record);};
++    const wrap = (prototype, method, onSuccess) => {
++      const original = prototype?.[method];
++      if (typeof original !== "function") return;
++      prototype[method] = function(...args) {
++        const record = {stage: method, outcome: "pending"}; add(record);
++        if (method === "subscribe") record.options = {userVisibleOnly: args[0]?.userVisibleOnly === true,
++          publicKeyByteLengthValid: args[0]?.applicationServerKey?.byteLength === 65};
++        let promise;
++        try {promise = Reflect.apply(original, this, args);}
++        catch (error) {record.outcome = "rejected"; record.error = classify(error); throw error;}
++        return Promise.resolve(promise).then(value => {
++          record.outcome = "resolved";
++          if (onSuccess) {try {record.subscription = shape(value);} catch (_) {record.inspectionUnavailable = true;}}
++          return value;
++        }, error => {record.outcome = "rejected"; record.error = classify(error); throw error;});
++      };
++    };
++    try {
++      wrap(globalThis.ServiceWorkerContainer?.prototype, "register", false);
++      wrap(globalThis.PushManager?.prototype, "subscribe", true);
++      wrap(globalThis.PushManager?.prototype, "getSubscription", true);
++      const key = "workspace-browser-notifications.v1", get = Storage.prototype.getItem, set = Storage.prototype.setItem;
++      let savedValue;
++      Storage.prototype.getItem = function(name) {
++        if (name !== key) return Reflect.apply(get, this, [name]);
++        state.storage.getCalls++;
++        try {
++          const value = Reflect.apply(get, this, [name]);
++          state.storage.idPresent = Boolean(value);
++          if (savedValue !== undefined) state.storage.readbackMatched = value === savedValue;
++          return value;
++        } catch (error) {state.storage.getError = classify(error); throw error;}
++      };
++      Storage.prototype.setItem = function(name, value) {
++        if (name !== key) return Reflect.apply(set, this, [name, value]);
++        state.storage.setCalls++;
++        try {const result = Reflect.apply(set, this, [name, value]); savedValue = value; state.storage.setSucceeded = true; return result;}
++        catch (error) {state.storage.setError = classify(error); throw error;}
++      };
++      state.installed = true;
++    } catch (error) {state.installError = classify(error);}
++  }, origin);
++}
++async function browserDiagnostics(page) {
++  return page.evaluate(() => globalThis.__providerProbeDiagnostics || {installed: false});
++}
++async function summary(page) {
++  return page.evaluate(async () => {
++    const response = await fetch("/fixture/summary", {cache: "no-store"});
++    const value = await response.json();
++    return {registrations: value.registrations, pending: value.pending, httpDiagnosticCount: value.httpDiagnosticCount,
++      httpDiagnostics: value.httpDiagnostics};
++  });
++}
++async function deliveryEvidence(page) {
++  return page.evaluate(async () => {
++    const id = localStorage.getItem("workspace-browser-notifications.v1") || "";
++    const response = await fetch(`/api/browser-notifications?registrationId=${encodeURIComponent(id)}`, {cache: "no-store"});
++    const state = await response.json();
++    const registration = await navigator.serviceWorker.getRegistration("/");
++    const notifications = registration ? await registration.getNotifications() : [];
++    // Read counts only; endpoint capabilities, keys, IDs and payloads never leave
++    // this disposable browser profile or enter the result file.
++    const receiptCount = await new Promise(resolve => {
++      const open = indexedDB.open("workspace-session-attention", 1);
++      open.onerror = () => resolve(null);
++      open.onsuccess = () => {
++        const db = open.result;
++        if (!db.objectStoreNames.contains("sessions")) {db.close(); resolve(0); return;}
++        const tx = db.transaction("sessions", "readonly");
++        const read = tx.objectStore("sessions").getAll();
++        read.onerror = () => {db.close(); resolve(null);};
++        read.onsuccess = () => {const count = read.result.filter(record => record.event?.kind === "test").length; db.close(); resolve(count);};
++      };
++    });
++    return {registered: Boolean(state.registered), result: state.result || "", workerTestRecords: receiptCount,
++      notifications: notifications.length, testNotifications: notifications.filter(notification => notification.body === "Browser notification test").length};
++  });
++}
++async function cleanup(context, row) {
++  row.cleanup = "incomplete";
++  let page;
++  try {
++    page = context.pages().find(page => page.url().startsWith(origin + "/"));
++    if (!page) {page = await context.newPage(); await page.goto(`${base}/example/#settings`);}
++    const button = page.locator("[data-notification-disable]");
++    await page.waitForTimeout(1000);
++    if (await button.isEnabled()) {
++      await button.click();
++      await page.waitForFunction(() => document.querySelector("[data-notification-status]")?.textContent.startsWith("Disabled on this browser."), null, {timeout: 12000});
++    }
++  } catch (error) {row.cleanupError = safeError(error);}
++  if (!page || page.isClosed()) return;
++  try {
++    row.localSubscriptionRemaining = await page.evaluate(async () => {
++      const registration = await navigator.serviceWorker.getRegistration("/");
++      const subscription = await registration?.pushManager.getSubscription();
++      if (registration) (await registration.getNotifications()).forEach(notification => notification.close());
++      return Boolean(subscription);
++    });
++  } catch (error) {row.subscriptionCleanupError = safeError(error);}
++  try {row.storeAfterCleanup = await summary(page);} catch (error) {row.summaryCleanupError = safeError(error);}
++  try {row.browserAfterCleanup = await browserDiagnostics(page);} catch (error) {row.diagnosticCleanupError = safeError(error);}
++  row.cleanup = row.localSubscriptionRemaining === false && row.storeAfterCleanup?.registrations === 0 ? "complete" : "incomplete";
++}
+ (async () => {
++  save();
+   for (const engine of [chromium, firefox]) {
+-    const browser = await engine.launch({headless: true, ...(engine === chromium ? {channel: "chromium", args: ["--ignore-certificate-errors"]} : {})});
++    const row = {browser: engine.name(), phase: "launch", providerAccepted: false, workerReceiptVerified: false,
++      browserNotificationRecordVerified: false, zeroPortalTabsVerified: false, osDisplayVerified: false};
++    report.browsers.push(row); save();
++    const profile = fs.mkdtempSync(path.join(os.tmpdir(), `session-provider-probe-${engine.name()}-`));
++    let context;
+     try {
+-      const context = await browser.newContext({ignoreHTTPSErrors: true});
++      context = await engine.launchPersistentContext(profile, {headless: false, ignoreHTTPSErrors: true,
++        ...(engine === chromium ? {channel: "chromium", ignoreDefaultArgs: ["--disable-background-networking"],
++          args: ["--ignore-certificate-errors", "--allow-insecure-localhost"]} : {
++          firefoxUserPrefs: {"dom.push.serverURL": "wss://push.services.mozilla.com/", "dom.push.connection.enabled": true}})});
++      context.setDefaultTimeout(12000);
++      context.setDefaultNavigationTimeout(20000);
++      await installDiagnostics(context, row);
++      row.version = context.browser()?.version() || "unreported";
++      try {await context.grantPermissions(["notifications"], {origin}); row.permissionSetup = "granted";}
++      catch (error) {row.permissionSetup = "unavailable"; row.permissionError = safeError(error); row.phase = "permission_setup_unavailable"; continue;}
+       const page = await context.newPage();
+-      const errors = []; page.on("pageerror", error => errors.push(error.message));
++      page.setDefaultTimeout(12000);
+       await page.goto(`${base}/example/#settings`);
+-      await expect(page.locator("#browser-notifications")).toBeVisible();
+-      await expect(page.locator("#session-notifications-enabled")).toBeChecked();
+-      await expect(page.locator("#session-attention-status")).toContainText(/^(?!.*unavailable)/);
+-      assert.equal(await page.evaluate(() => Notification.permission), "default", "page load did not ask for permission");
+-      const workerAsset = await context.request.get(`${base}/notification-worker.js`);
+-      assert.equal(workerAsset.status(), 200);
+-      assert.equal(workerAsset.headers()["service-worker-allowed"], "/");
+-      assert.ok((await workerAsset.text()).includes('event.waitUntil(display(payload))'));
+-      if (engine === chromium) {
+-        const sub = await (await context.request.get(`${base}/fixture/subscription`)).json();
+-        await context.grantPermissions(["notifications"], {origin: base});
+-        await page.evaluate(sub => {
+-          const fake = {options: {}, toJSON: () => ({...sub, expirationTime: null}), unsubscribe: async () => true};
+-          PushManager.prototype.subscribe = async () => fake;
+-          PushManager.prototype.getSubscription = async () => fake;
+-        }, sub);
+-        await page.locator("[data-notification-enable]").click();
+-        await expect(page.locator("[data-notification-status]")).toContainText("Enabled on this browser");
+-        const worker = context.serviceWorkers()[0]; assert.ok(worker, "real root service worker registered through CSP");
+-        await worker.evaluate(() => {
+-          self.fixtureDisplays = [];
+-          self.registration.showNotification = async (title, options) => self.fixtureDisplays.push({title, ...options});
+-        });
+-        const payload = {version: 1, identity: await worker.evaluate(async () => (await (await fetch("/api/sessions/example/attention")).json()).identity), id: "b".repeat(64), revision: 1, slug: "example", kind: "input", member: "implementer0", route: "/example/?member=implementer0#codex", expiresAt: Date.now() + 60000};
+-        await page.close(); assert.equal(context.pages().length, 0);
+-        await worker.evaluate(payload => self.dispatchEvent(new PushEvent("push", {data: JSON.stringify(payload)})), payload);
+-        await expect.poll(() => worker.evaluate(() => self.fixtureDisplays.length)).toBe(1);
+-        assert.equal((await worker.evaluate(() => self.fixtureDisplays[0])).renotify, false);
+-        const reopened = await context.newPage(); await reopened.goto(`${base}/example/#settings`);
+-        await expect(reopened.locator("[data-notification-disable]")).toBeEnabled();
+-        await reopened.locator("[data-notification-disable]").click();
+-        await expect(reopened.locator("[data-notification-status]")).toContainText("Disabled on this browser");
++      row.serverBefore = await summary(page);
++      row.apiSupport = await page.evaluate(() => ({secureContext: isSecureContext, serviceWorker: "serviceWorker" in navigator,
++        push: "PushManager" in globalThis, notifications: "Notification" in globalThis, permission: globalThis.Notification?.permission || "unavailable"}));
++      if (!(row.apiSupport.secureContext && row.apiSupport.serviceWorker && row.apiSupport.push && row.apiSupport.notifications)) {row.phase = "browser_unsupported"; continue;}
++      row.phase = "register"; save();
++      await page.locator("[data-notification-enable]").click();
++      try {
++        await page.waitForFunction(incompleteText => {
++          const text = document.querySelector("[data-notification-status]")?.textContent || "";
++          return text.startsWith("Enabled on this browser") || text.startsWith("Registration failed:") || text === incompleteText || text.startsWith("Notifications are blocked");
++        }, incomplete, {timeout: 45000});
++      } catch (error) {
++        row.phase = "registration_incomplete"; row.registrationError = safeError(error);
++        row.browserAfterRegistration = await browserDiagnostics(page); row.serverAfterRegistration = await summary(page);
++        continue;
+       }
+-      assert.deepEqual(errors, [], `${engine.name()} loaded real notification UI without script errors`);
+-      console.log(`${engine.name()}: real template, CSP, permission separation and worker route passed${engine === chromium ? "; registered worker received synthetic push with zero tabs" : ""}`);
+-      await context.close();
+-    } finally {await browser.close();}
++      row.browserAfterRegistration = await browserDiagnostics(page);
++      row.serverAfterRegistration = await summary(page);
++      const enabled = await page.evaluate(() => document.querySelector("[data-notification-status]")?.textContent.startsWith("Enabled on this browser"));
++      if (!enabled) {
++        row.phase = "registration_unavailable";
++        row.registrationStatus = await page.evaluate(incompleteText => {
++          const text = document.querySelector("[data-notification-status]")?.textContent || "";
++          return text === incompleteText ? "local_incomplete" : text.startsWith("Notifications are blocked") ? "permission_denied" :
++            text.startsWith("Registration failed:") ? "registration_failed" : "unavailable";
++        }, incomplete);
++        continue;
++      }
++      row.registration = "enabled";
++      row.before = await deliveryEvidence(page); row.before.result = safeResult(row.before.result);
++      await page.locator("[data-notification-test]").click();
++      await page.waitForFunction(() => document.querySelector("[data-notification-status]")?.textContent.startsWith("A test notification will be sent in 10 seconds."));
++      row.phase = "test_queued"; save();
++      const blank = await context.newPage(); await blank.goto("about:blank");
++      for (const open of context.pages()) if (open.url().startsWith(origin + "/")) await open.close();
++      row.portalTabsDuringWait = context.pages().filter(open => open.url().startsWith(origin + "/")).length;
++      row.zeroPortalTabsVerified = row.portalTabsDuringWait === 0 && blank.url() === "about:blank";
++      await blank.bringToFront();
++      await blank.waitForTimeout(18000);
++      const reopened = await context.newPage(); await reopened.goto(`${base}/example/#settings`);
++      row.after = await deliveryEvidence(reopened); row.after.result = safeResult(row.after.result);
++      row.providerAccepted = row.after.result === "provider_accepted";
++      row.workerReceiptVerified = Number.isInteger(row.after.workerTestRecords) && row.after.workerTestRecords > (row.before.workerTestRecords || 0);
++      row.browserNotificationRecordVerified = row.after.testNotifications > row.before.testNotifications;
++      row.phase = row.providerAccepted && row.workerReceiptVerified && row.browserNotificationRecordVerified ? "delivery_evidence_observed" : "delivery_incomplete";
++    } catch (error) {row.phase = "harness_incomplete"; row.error = safeError(error);}
++    finally {
++      if (context) {
++        await cleanup(context, row);
++        try {await context.close(); row.browserClosed = true;}
++        catch (error) {row.browserClosed = false; row.closeError = safeError(error);}
++      }
++      // Explicit cleanup is limited to this fixture's freshly allocated profile.
++      if (!context || row.browserClosed) {
++        try {fs.rmSync(profile, {recursive: true, force: true}); row.profileRemoved = true;}
++        catch (error) {row.profileRemoved = false; row.profileError = safeError(error);}
++      } else {row.profileRemoved = false;}
++      save();
++    }
+   }
+-})().catch(error => {console.error(error); process.exitCode = 1;});
++  console.log(JSON.stringify(report));
++})().catch(error => {report.harnessError = safeError(error); save(); console.log(JSON.stringify(report)); process.exitCode = 1;});

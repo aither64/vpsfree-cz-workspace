@@ -1,0 +1,128 @@
+--- live-native-a5e41580/expected.json
++++ live-native-4ed9af55/expected.json
+@@ -1,9 +1,9 @@
+ {
+-  "sourceRevision": "a5e41580d6dbeae9cbb468c707c22106f159066c",
++  "sourceRevision": "4ed9af55127743b7564cb4dd01d10c9f7fee5120",
+   "origin": "https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz",
+   "sessionSlug": "2026-10-14-i-d-like-the-dev-workspace",
+   "assets": {
+-    "/static/browser-notifications.js": "3441e9483778ecbf86611ccd689bade11e7176a01f420868a513332b2e42e1e1",
++    "/static/browser-notifications.js": "cb007185812bb2f3e34a5859fa3e5ed33216751dc9200dd80392fd5ab2101a5a",
+     "/notification-worker.js": "4aa0d459a068ba6e9601c9e87fee5336942f0a1ed10567b2a0ccff5a96594188",
+     "/static/session-attention-store.js": "0a8069fb721ae79e29f871010dd9b6af264fa69aec5dd97f391bbe5946b1aae5"
+   },
+--- live-native-a5e41580/live-check.cjs
++++ live-native-4ed9af55/live-check.cjs
+@@ -181,7 +181,7 @@
+     const row = {browser: engine.name(), phase: "launch", providerAccepted: false, workerReceiptVerified: false,
+       browserNotificationRecordVerified: false, zeroPortalTabsVerified: false, osDisplayVerified: false};
+     report.browsers.push(row); save();
+-    const profile = fs.mkdtempSync(path.join(os.tmpdir(), `session-live-a5e41580-${engine.name()}-`));
++    const profile = fs.mkdtempSync(path.join(os.tmpdir(), `session-live-4ed9af55-${engine.name()}-`));
+     let context;
+     try {
+       if (!selectedMatches(candidate)) fail("selected_profile_mismatch");
+--- live-native-a5e41580/run.sh
++++ live-native-4ed9af55/run.sh
+@@ -2,7 +2,7 @@
+ set -eo pipefail
+ umask 077
+ tracking=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace
+-probe="$tracking/live-native-a5e41580"
++probe="$tracking/live-native-4ed9af55"
+ cd "$tracking"
+ if [[ "$(dev-session current)" != 2026-10-14-i-d-like-the-dev-workspace ]]; then
+   printf '%s\n' 'Refusing live acceptance: session identity mismatch.' >&2
+--- live-native-a5e41580/README.md
++++ live-native-4ed9af55/README.md
+@@ -1,10 +1,10 @@
+-# Native live notification acceptance for a5e41580
++# Native live notification acceptance for 4ed9af55
+ 
+ **UNRUN. This is static preparation, with no live or provider operation.**
+ 
+-This new bundle adapts executed `live-native-6e1d9a19/` for exact runtime
+-`a5e41580d6dbeae9cbb468c707c22106f159066c`. It preserves the predecessor,
+-its results and every earlier bundle. Workspace and configuration revisions in
++This new bundle adapts the accepted UNRUN `live-native-a5e41580/` for exact runtime
++`4ed9af55127743b7564cb4dd01d10c9f7fee5120`. It preserves the predecessor,
++its manifests and every earlier bundle/run. Workspace and configuration revisions in
+ `provenance.json` are explicitly null pending the lead's final pins. No final
+ preparation proof has been created. Source, pins and previous evidence are unchanged.
+ 
+@@ -17,12 +17,12 @@
+ verification watcher or its visible fallback:
+ 
+ ```sh
+-LIVE_PROFILE_PREPARED=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/profile-prepared-a5e41580.json bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/live-native-a5e41580/run.sh
++LIVE_PROFILE_PREPARED=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/profile-prepared-4ed9af55.json bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/live-native-4ed9af55/run.sh
+ ```
+ 
+ That filename is planned and absent. The existing `LIVE_PROFILE_PREPARED` may
+ instead name the genuine actual final record under this tracking root. The
+-default current proof is stale for a5e41580 and the unchanged runtime fence
++default current proof is stale for 4ed9af55 and the unchanged runtime fence
+ must refuse it. Never edit old coverage, source expectations or stale proof to
+ make a run proceed. A changed final source requires fresh matching preparation.
+ Consumer pins must be supplied by the lead; this packet does not guess them.
+@@ -38,8 +38,9 @@
+ 
+ The existing trusted preparation/candidate package, remote selected profile and
+ three served-asset hash fences run before Enable, before Test and after the
+-zero-tab window. Expected hashes are read independently from the a5e41580 Git
+-objects. All three differ from6e1; `asset-comparison.json` records both digests.
++zero-tab window. Expected hashes are read independently from the 4ed9af55 Git
++objects. The client differs from a5; worker/store are unchanged. `asset-comparison.json`
++records explicit comparisons and both digests.
+ The selected profile is read only through the existing trusted root SSH
+ `readlink -f` command. No server revision endpoint or fixture API is added.
+ 
+@@ -108,7 +109,7 @@
+ 
+ ```sh
+ source /home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/runtime-dev-env.sh
+-cd /home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/live-native-a5e41580
++cd /home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/live-native-4ed9af55
+ bash -n run.sh
+ node --check live-check.cjs
+ python3 -c 'import ast; ast.parse(open("run_live.py").read())'
+@@ -117,7 +118,7 @@
+ ```
+ 
+ See inventory.md, provenance.json, asset-comparison.json and adaptation.patch.
+-Preservation manifests cover the executed predecessor and all prior live files;
++Preservation manifests cover the UNRUN a5 predecessor and all prior live files;
+ checks run from the parent tracking root. No run/ exists here. There has been no
+ browser/display launch, SSH/HTTPS, credential read, provider/host/queue/reservation
+ or lifecycle operation, application check/build, Nix daemon call or source edit.
+--- live-native-a5e41580/provenance.json
++++ live-native-4ed9af55/provenance.json
+@@ -1,18 +1,20 @@
+ {
+-  "sourceRevision": "a5e41580d6dbeae9cbb468c707c22106f159066c",
++  "sourceRevision": "4ed9af55127743b7564cb4dd01d10c9f7fee5120",
+   "workspaceRevision": null,
+   "configurationRevision": null,
+   "compositionProvenanceStatus": "pending-lead-final-consumer-pins",
+-  "adaptedFrom": "live-native-6e1d9a19",
+-  "previousSourceRevision": "6e1d9a191724d376cad2a71f234f0e4d1c01f36f",
+-  "predecessorFilesPreserved": 25,
+-  "allPriorFilesPreserved": 65,
++  "adaptedFrom": "live-native-a5e41580",
++  "previousSourceRevision": "a5e41580d6dbeae9cbb468c707c22106f159066c",
++  "predecessorFilesPreserved": 16,
++  "allPriorFilesPreserved": 81,
+   "ownedDisplayRunnerSha256": "6f75a44cbd1f8cc378665b391b7216a2e57660d52324d9de1bf8aa94f224b757",
+   "purpose": "post-activation exact-test-correlated native acceptance preparation only",
+   "status": "UNRUN",
+   "liveOperationExecutedByMember": false,
+   "browserAssetsIdenticalToPreviousHead": false,
+   "authorizedActivationFinalPinsAndGenuinePreparationRecordRequired": true,
+-  "futurePreparationRecord": "profile-prepared-a5e41580.json",
+-  "newPreparationRecordCreatedByMember": false
++  "futurePreparationRecord": "profile-prepared-4ed9af55.json",
++  "newPreparationRecordCreatedByMember": false,
++  "workerAndStoreIdenticalToPreviousHead": true,
++  "clientMatchesLeadExpectedHash": true
+ }

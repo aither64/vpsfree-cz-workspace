@@ -1,0 +1,218 @@
+diff --git a/docs/browser-notifications-operations.md b/docs/browser-notifications-operations.md
+index a6cb43e..3722bd8 100644
+--- a/docs/browser-notifications-operations.md
++++ b/docs/browser-notifications-operations.md
+@@ -46,9 +46,14 @@ The successful Test reply adds only an exact event descriptor: `id`, `identity`,
+ `revision` and `expiresAt`. The client matches all four to the worker's bounded
+ local outcome. Reopen the controls after a background test to resume its check.
+ An old server or worker without these fields provides limited results, not proof
+-of delivery. New assets check/update an existing worker registration; a waiting
+-update requires closing portal tabs before reopening. No silent unregister,
+-resubscribe or VAPID reset is part of this check.
++of delivery. New or refreshed controls update the existing root registration.
++The successor skips waiting during installation and claims clients on activation,
++so other tabs can stay open. The page confirms its own controller, rather than
++only the registration's active worker, within a bounded ten-second check. Failed
++updates remain unconfirmed and can be checked again by refreshing the page. No
++unregister, resubscribe, VAPID reset or document reload is part of activation.
++Existing loaded scripts in older tabs are not replaced; use new or refreshed
++controls for current notification behavior.
+ 
+ ## Private state
+ 
+diff --git a/docs/browser-notifications.md b/docs/browser-notifications.md
+index 34683ef..fc691d5 100644
+--- a/docs/browser-notifications.md
++++ b/docs/browser-notifications.md
+@@ -43,7 +43,7 @@ appear on the lock screen. The browser vendor's push service handles encrypted
+ delivery and can observe delivery metadata.
+ 
+ Use **Send test notification** after enabling. The server waits ten seconds so
+-you can close all portal tabs or switch windows before checking delivery. Open
++you can switch to another tab or app before checking delivery. Open
+ these controls from **Browser notifications** in the workspace menu or from
+ session Settings. The test result distinguishes arrival in this browser, whether
+ the browser accepted or rejected the display request, and whether it retained a
+@@ -53,11 +53,14 @@ confirm this test. The page checks for a result until ten seconds after the
+ test's one-minute expiry and resumes the saved check after reopening. Missing
+ or unavailable results remain unconfirmed.
+ 
+-Existing subscribers may need a notification update before detailed test results
+-are available. The page checks the installed worker and reports a waiting or
+-unconfirmed update. Close all portal tabs and reopen when prompted. It never
+-unregisters the worker or replaces a subscription automatically. Each explicit
+-test gets a fresh notification entry; duplicate delivery of that test coalesces.
++New or refreshed notification controls check for an update to the installed
++worker. Updates activate automatically while other portal tabs stay open; no
++page is closed or reloaded, and unsent drafts stay intact. The page waits up to ten seconds for the updated worker to control it, then
++checks detailed Test support.
++An unsuccessful or unconfirmed update leaves those results limited; refresh the
++page to try again. Updating does not unregister the worker, replace a subscription
++or reset browser data. Each explicit test gets a fresh notification entry;
++duplicate delivery of that test coalesces.
+ Only older test entries for the same browser registration are closed. Session
+ notification tags and acknowledgement are unchanged.
+ 
+diff --git a/portal/internal/web/static/browser-notifications.js b/portal/internal/web/static/browser-notifications.js
+index be330b0..c26d8f1 100644
+--- a/portal/internal/web/static/browser-notifications.js
++++ b/portal/internal/web/static/browser-notifications.js
+@@ -9,8 +9,9 @@
+   const testStatus = panel.querySelector("[data-notification-test-status]"), providerStatus = panel.querySelector("[data-notification-provider-status]"),
+     workerStatus = panel.querySelector("[data-notification-worker-status]");
+   const store = globalThis.workspaceAttentionStore;
+-  let pendingTest = null, pollTimer = null, pollGeneration = 0, pageClosed = false, updatingWorker = false, resumeRetired = false;
+-  let refreshGeneration = 0, observationRetired = false;
++  let pendingTest = null, pollTimer = null, pollGeneration = 0, pageClosed = false, workerUpdate = null, resumeRetired = false;
++  let refreshGeneration = 0, observationRetired = false, cancelReadiness = null;
++  const invalidateRefresh = () => { refreshGeneration++; cancelReadiness?.(); };
+   const setText = (element, text) => { if (element) { element.textContent = text; element.hidden = !text; } };
+   const localResult = async promise => {
+     let timer;
+@@ -38,27 +39,69 @@
+     provider_refused: "The push service refused a notification.", delivery_failed: "A notification could not be sent.", expired: "A notification expired."})[value];
+   async function workerReadiness(registration, update = false, current = () => true) {
+     if (!registration) return;
+-    if (update && !updatingWorker) {
+-      updatingWorker = true;
+-      try { await registration.update?.(); } catch (_) { if (current()) setText(workerStatus, "The notification update could not be checked. Try reopening this page."); }
+-    }
+-    if (!current()) return;
+-    if (registration.waiting || registration.installing) {
+-      setText(workerStatus, "A notification update is waiting. Close portal tabs, then reopen this page.");
+-      return;
+-    }
+-    if (!registration.active || !globalThis.MessageChannel) {
+-      setText(workerStatus, "The notification update could not be confirmed. Test results may be limited.");
++    cancelReadiness?.();
++    const generation = refreshGeneration, deadline = Date.now() + 10000;
++    const valid = () => current() && generation === refreshGeneration && !pageClosed && !observationRetired;
++    if (!valid()) return;
++    const failed = "The notification update could not be confirmed. Refresh this page to try again. Test results may be limited.";
++    setText(workerStatus, "Updating browser notifications… You can keep your tabs open.");
++    if (update && !workerUpdate) workerUpdate = Promise.resolve().then(() => registration.update());
++    const activated = await new Promise(resolve => {
++      const workers = new Set();
++      let timer, finished = false, checkingUpdate = Boolean(workerUpdate);
++      const finish = value => {
++        if (finished) return;
++        finished = true; clearTimeout(timer);
++        registration.removeEventListener?.("updatefound", inspect);
++        navigator.serviceWorker.removeEventListener?.("controllerchange", inspect);
++        workers.forEach(worker => worker.removeEventListener?.("statechange", inspect));
++        if (cancelReadiness === cancel) cancelReadiness = null;
++        resolve(value);
++      };
++      const cancel = () => finish(false);
++      const inspect = () => {
++        if (!valid()) {finish(false); return;}
++        for (const worker of [registration.installing, registration.waiting, registration.active]) {
++          if (worker && !workers.has(worker)) {workers.add(worker); worker.addEventListener?.("statechange", inspect);}
++        }
++        const controller = navigator.serviceWorker.controller;
++        if (!checkingUpdate && !registration.installing && !registration.waiting && controller &&
++            controller === registration.active && controller.state === "activated") finish(true);
++      };
++      cancelReadiness = cancel;
++      timer = setTimeout(() => finish(false), Math.max(0, deadline - Date.now()));
++      registration.addEventListener?.("updatefound", inspect);
++      navigator.serviceWorker.addEventListener?.("controllerchange", inspect);
++      if (checkingUpdate) {
++        workerUpdate.then(() => {checkingUpdate = false; if (!finished) inspect();}, () => finish(false));
++      }
++      inspect();
++    });
++    if (!valid()) return;
++    if (!activated) {setText(workerStatus, failed); return;}
++    const controller = navigator.serviceWorker.controller;
++    if (!globalThis.MessageChannel) {
++      setText(workerStatus, "Detailed test results are unavailable. Refresh this page to check for a notification update.");
+       return;
+     }
+     const supported = await new Promise(resolve => {
+-      const channel = new MessageChannel();
+-      const timer = setTimeout(() => { channel.port1.close(); resolve(false); }, 1500);
+-      channel.port1.onmessage = event => { clearTimeout(timer); channel.port1.close(); resolve(event.data?.version === 1); };
+-      try { registration.active.postMessage({type: "notification-test-capabilities"}, [channel.port2]); }
+-      catch (_) { clearTimeout(timer); channel.port1.close(); resolve(false); }
++      const channel = new MessageChannel(); let finished = false, timer;
++      const finish = value => {
++        if (finished) return;
++        finished = true; clearTimeout(timer); channel.port1.close(); channel.port2.close?.();
++        if (cancelReadiness === cancel) cancelReadiness = null;
++        resolve(value);
++      };
++      const cancel = () => finish(false);
++      cancelReadiness = cancel;
++      timer = setTimeout(() => finish(false), Math.max(0, Math.min(1500, deadline - Date.now())));
++      channel.port1.onmessage = event => finish(event.data?.version === 1);
++      try {controller.postMessage({type: "notification-test-capabilities"}, [channel.port2]);}
++      catch (_) {finish(false);}
+     });
+-    if (current()) setText(workerStatus, supported ? "" : "Test results are limited until the notification update is active. Close portal tabs, then reopen this page.");
++    if (valid() && controller === navigator.serviceWorker.controller && controller === registration.active && !registration.waiting && !registration.installing) {
++      setText(workerStatus, supported ? "" : "Detailed test results are unavailable. Refresh this page to check for a notification update.");
++    }
+   }
+   async function pollTest() {
+     stopTest();
+@@ -175,7 +218,8 @@
+   };
+   async function refresh(resume = true) {
+     if (busy || pageClosed || observationRetired) return;
+-    const generation = ++refreshGeneration, identity = registrationId;
++    invalidateRefresh();
++    const generation = refreshGeneration, identity = registrationId;
+     const current = () => generation === refreshGeneration && identity === registrationId && !busy && !pageClosed && !observationRetired;
+     if (!supported) { status.textContent = "This browser build does not support background Web Push. Use a browser with Push API support."; buttons(); return; }
+     let observedSubscription = localSubscription, observedKnown = localKnown;
+@@ -204,7 +248,7 @@
+     if (busy || !supported || Notification.permission === "denied") return;
+     readCleanup();
+     if (pendingCleanup) { status.textContent = cleanupStatus(); buttons(); return; }
+-    refreshGeneration++; observationRetired = false;
++    invalidateRefresh(); observationRetired = false;
+     cancelTest();
+     busy = true; buttons();
+     try {
+@@ -243,7 +287,7 @@
+   });
+   disable.addEventListener("click", async () => {
+     if (busy) return;
+-    refreshGeneration++;
++    invalidateRefresh();
+     cancelTest();
+     busy = true; registered = false; buttons();
+     let registration = null, subscription = localSubscription, selector = null, currentBound = false;
+@@ -292,7 +336,7 @@
+   });
+   test.addEventListener("click", async () => {
+     if (busy || !registered) return;
+-    refreshGeneration++;
++    invalidateRefresh();
+     busy = true; buttons();
+     const retirement = cancelTest(), generation = pollGeneration, identity = registrationId;
+     setText(testStatus, "A matching test result is unavailable. Appearance on your screen is unconfirmed.");
+@@ -306,7 +350,7 @@
+       if (descriptor && (descriptor.identity !== `test-${registrationId}` || descriptor.expiresAt > Date.now() + 70000 || descriptor.expiresAt <= Date.now())) descriptor = null;
+       if (!descriptor) cancelTest();
+       pendingTest = descriptor;
+-      status.textContent = "A test notification will be sent in 10 seconds. Close portal tabs or switch windows to check background delivery.";
++      status.textContent = "A test notification will be sent in 10 seconds. Switch to another tab or app to check background delivery.";
+       setText(testStatus, pendingTest ? "Waiting for this test to reach the browser." : "A matching test result is unavailable. Appearance on your screen is unconfirmed.");
+       if (pendingTest) {
+         try { await localResult(store.saveTest(pendingTest)); } catch (_) { setText(testStatus, "This browser could not save the test check. Keep this page open to check the result."); }
+@@ -329,11 +373,11 @@
+   });
+   navigator.serviceWorker?.addEventListener?.("controllerchange", () => void refresh());
+   document.addEventListener?.("visibilitychange", () => { if (document.visibilityState === "visible") { void refresh(); if (pendingTest) void pollTest(); } });
+-  globalThis.addEventListener?.("pagehide", () => { pageClosed = true; refreshGeneration++; stopTest(); });
++  globalThis.addEventListener?.("pagehide", () => { pageClosed = true; invalidateRefresh(); stopTest(); });
+   globalThis.addEventListener?.("pageshow", () => { pageClosed = false; void refresh(); if (pendingTest) void pollTest(); });
+   globalThis.addEventListener?.("storage", event => {
+     if ((event.key === key && event.newValue !== registrationId) || (event.key === cleanupKey && event.newValue)) {
+-      refreshGeneration++; observationRetired = true;
++      invalidateRefresh(); observationRetired = true;
+       cancelTest(); registered = false; buttons();
+     }
+   });

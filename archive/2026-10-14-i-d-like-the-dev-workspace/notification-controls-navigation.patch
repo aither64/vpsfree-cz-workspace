@@ -1,0 +1,21 @@
+diff --git a/portal/internal/web/notifications_browser_test.cjs b/portal/internal/web/notifications_browser_test.cjs
+index af0c953..2fbac21 100644
+--- a/portal/internal/web/notifications_browser_test.cjs
++++ b/portal/internal/web/notifications_browser_test.cjs
+@@ -149,7 +149,15 @@ async function checkWorkerUpgrade(browser, engine) {
+     await expect(controls.locator("[data-notification-sound]")).toBeEnabled();
+     await expect(controls.locator("[data-notification-sound]")).not.toBeChecked();
+     const sessionSound = retained.locator("#browser-notifications [data-notification-sound]");
+-    await retained.locator("#session-tab-settings").click();
++    assert.equal(navigations, 0, "retained page has no unexpected navigation before Settings setup");
++    const settingsTransition = retained.waitForEvent("framenavigated", {
++      predicate: frame => frame === retained.mainFrame() && frame.url() === `${base}/example/#settings`, timeout: 5000,
++    });
++    await Promise.all([settingsTransition, retained.locator("#session-tab-settings").click()]);
++    assert.equal(navigations, 1, "Settings setup causes exactly one retained main-frame transition");
++    assert.equal(await retained.evaluate(() => location.hash === "#settings" && document.getElementById("settings")?.classList.contains("active")), true,
++      "retained page is in Settings after the intended transition");
++    navigations = 0;
+     await expect(sessionSound).toBeEnabled(); await expect(sessionSound).not.toBeChecked();
+     await sessionSound.click();
+     await expect.poll(() => retained.evaluate(() => workspaceAttentionStore.readSound())).toBe(true);

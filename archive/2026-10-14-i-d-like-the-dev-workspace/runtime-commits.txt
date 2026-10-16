@@ -1,0 +1,26 @@
+0bddd69473c1c18d7574fa195215910e680484e0
+portal: add maintained Web Push transport dependency
+
+Use webpush-go for standard payload encryption and VAPID authentication.
+Keep the existing Codex dependency and runtime version, and pin the Nix
+module closure to the updated Go dependency graph.
+
+a7000a2ae803c21274eb65d23ee63d2097fb8829
+portal: show session attention and deliver background Web Push
+
+Surface unseen blocking requests, successful settled lead responses and
+persistent machine reservations in the session title. Visible focused
+visits acknowledge browser-local attention without changing conversations
+or coordinator ownership.
+
+Observe sessions on the server and persist event baselines with a bounded
+outbox. Send standard encrypted Web Push through checked provider transport
+and display it through a root service worker when no portal tabs are open.
+Keep browser subscription actions explicit and session mute server-side;
+retain private VAPID material through package changes.
+
+New private notification state starts at schema 1. Creation preferences are
+optional strict booleans: old omitted receipts remain valid, while newly
+flagged receipts require the capable bundled helper and forward recovery.
+Lifecycle journals, roster formats and Codex protocol pins remain intact.
+

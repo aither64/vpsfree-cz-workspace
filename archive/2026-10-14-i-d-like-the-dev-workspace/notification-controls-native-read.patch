@@ -1,0 +1,57 @@
+diff --git a/portal/internal/web/notifications_browser_test.cjs b/portal/internal/web/notifications_browser_test.cjs
+index 2fbac21..9e9a3c6 100644
+--- a/portal/internal/web/notifications_browser_test.cjs
++++ b/portal/internal/web/notifications_browser_test.cjs
+@@ -134,17 +134,47 @@ async function checkWorkerUpgrade(browser, engine) {
+       if (request.method() === "POST" && ["/api/browser-notifications/register", "/api/browser-notifications/disable"].includes(new URL(request.url()).pathname)) registrationWrites++;
+     };
+     context.on("request", trackRegistration);
+-    await controls.evaluate(async () => {
++    const beforeNativeRead = await controls.evaluate(async () => {
++      globalThis.fixtureReadSoundSubscription = async registration => {
++        let subscription;
++        try {subscription = await registration.pushManager.getSubscription();}
++        catch (error) {
++          if (!(error instanceof DOMException) || !["AbortError", "InvalidStateError", "NotAllowedError", "NotSupportedError", "SecurityError", "UnknownError"].includes(error.name)) {
++            throw new Error("Native subscription read failed unexpectedly.");
++          }
++          return {read: "unavailable", category: error.name};
++        }
++        // Serialization is deliberately outside the native-read catch. Keep
++        // this identity solely in page memory, including actual readable null.
++        const identity = subscription === null ? null : JSON.stringify(subscription.toJSON());
++        if (subscription !== null && typeof identity !== "string") throw new Error("Native subscription identity could not be serialized.");
++        return {read: "readable", category: null, identity};
++      };
+       globalThis.fixtureSoundRegistration = await navigator.serviceWorker.getRegistration("/");
+-      globalThis.fixtureSoundSubscription = (await fixtureSoundRegistration.pushManager.getSubscription())?.toJSON() || null;
++      if (!fixtureSoundRegistration) throw new Error("Sound fixture requires an existing native registration.");
++      globalThis.fixtureSoundSubscription = await fixtureReadSoundSubscription(fixtureSoundRegistration);
++      return {read: fixtureSoundSubscription.read, category: fixtureSoundSubscription.category};
+     });
++    if (engine === chromium) assert.equal(beforeNativeRead.read, "readable", "Chromium native subscription is readable before sound save");
+     await sound.click();
+     await expect.poll(() => controls.evaluate(() => workspaceAttentionStore.readSound())).toBe(false);
+     await expect(sound).toBeEnabled(); await expect(sound).not.toBeChecked();
+-    assert.equal(await controls.evaluate(async () => {
++    const afterNativeRead = await controls.evaluate(async () => {
+       const registration = await navigator.serviceWorker.getRegistration("/");
+-      return registration === fixtureSoundRegistration && JSON.stringify((await registration.pushManager.getSubscription())?.toJSON() || null) === JSON.stringify(fixtureSoundSubscription);
+-    }), true, "preference does not replace registration or subscription");
++      if (!registration) throw new Error("Sound fixture lost its native registration.");
++      const after = await fixtureReadSoundSubscription(registration), before = fixtureSoundSubscription;
++      return {registrationSame: registration === fixtureSoundRegistration, read: after.read, category: after.category,
++        identitySame: before.read === "readable" && after.read === "readable" && before.identity === after.identity};
++    });
++    assert.equal(afterNativeRead.registrationSame, true, "sound preference retains the same native registration");
++    assert.equal(afterNativeRead.read, beforeNativeRead.read, "native subscription-read availability is unchanged after sound save");
++    assert.equal(afterNativeRead.category, beforeNativeRead.category, "native subscription-read category is unchanged after sound save");
++    if (afterNativeRead.read === "readable") assert.equal(afterNativeRead.identitySame, true, "sound preference retains readable native subscription identity");
++    else assert.equal(engine === firefox, true, "only Firefox may leave native subscription identity unverified");
++    // Two recognized unavailable reads verify category consistency, never
++    // subscription identity or absence. Only finite observations leave the page.
++    console.log(JSON.stringify({nativeSoundSubscription: {engine: engine.name(), read: afterNativeRead.read, category: afterNativeRead.category,
++      registrationSame: afterNativeRead.registrationSame, identityVerified: afterNativeRead.read === "readable" && afterNativeRead.identitySame}}));
+     await controls.reload();
+     await expect(controls.locator("[data-notification-sound]")).toBeEnabled();
+     await expect(controls.locator("[data-notification-sound]")).not.toBeChecked();

@@ -1,0 +1,96 @@
+--- live-native-0b403305/expected.json
++++ live-native-bb9e6291/expected.json
+@@ -1,5 +1,5 @@
+ {
+-  "sourceRevision": "0b403305e085aa01884cf56acea7c717f78f7e86",
++  "sourceRevision": "bb9e6291bec10227c961c36559fba406938f1eaa",
+   "origin": "https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz",
+   "sessionSlug": "2026-10-14-i-d-like-the-dev-workspace",
+   "settingsPath": "/2026-10-14-i-d-like-the-dev-workspace/#settings",
+--- live-native-0b403305/live-check.cjs
++++ live-native-bb9e6291/live-check.cjs
+@@ -143,7 +143,7 @@
+     const row = {browser: engine.name(), phase: "launch", providerAccepted: false, workerReceiptVerified: false,
+       browserNotificationRecordVerified: false, zeroPortalTabsVerified: false, osDisplayVerified: false};
+     report.browsers.push(row); save();
+-    const profile = fs.mkdtempSync(path.join(os.tmpdir(), `session-live-0b403305-${engine.name()}-`));
++    const profile = fs.mkdtempSync(path.join(os.tmpdir(), `session-live-bb9e6291-${engine.name()}-`));
+     let context;
+     try {
+       if (!selectedMatches(candidate)) fail("selected_profile_mismatch");
+--- live-native-0b403305/run.sh
++++ live-native-bb9e6291/run.sh
+@@ -2,7 +2,7 @@
+ set -eo pipefail
+ umask 077
+ tracking=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace
+-probe="$tracking/live-native-0b403305"
++probe="$tracking/live-native-bb9e6291"
+ cd "$tracking"
+ if [[ "$(dev-session current)" != 2026-10-14-i-d-like-the-dev-workspace ]]; then
+   printf '%s\n' 'Refusing live acceptance: session identity mismatch.' >&2
+--- live-native-0b403305/README.md
++++ live-native-bb9e6291/README.md
+@@ -1,9 +1,9 @@
+ # Post-activation live notification acceptance
+ 
+-Prepared only for runtime `0b403305e085aa01884cf56acea7c717f78f7e86` at the fixed
++Prepared only for runtime `bb9e6291bec10227c961c36559fba406938f1eaa` at the fixed
+ HTTPS portal origin and this session's Settings page. No live request, SSH
+ credential read, display launch or browser operation was performed during
+-preparation. The earlier `live-native-b8a6/` bundle and
++preparation. The earlier `live-native-0b403305/`, `live-native-b8a6/` bundles and
+ `live-notification-check.cjs` are preserved byte-for-byte. This new directory is an adaptation of that approved
+ headed-browser harness and owned-Xvfb runner.
+ 
+@@ -13,14 +13,14 @@
+ dev-session-monitor watcher or its visible fallback:
+ 
+ ```sh
+-LIVE_PROFILE_PREPARED=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/profile-prepared-0b403305.json bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/live-native-0b403305/run.sh
++LIVE_PROFILE_PREPARED=/home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/profile-prepared-bb9e6291.json bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-14-i-d-like-the-dev-workspace/live-native-bb9e6291/run.sh
+ ```
+ 
+ `LIVE_PROFILE_PREPARED` must name the actual final activation's trusted profile
+ preparation record under this tracking directory. At preparation time, the
+ default `profile-prepared.json` still covers the earlier e414ed3 runtime. The
+ harness deliberately refuses it. The command above names a new, not-yet-supplied
+-`profile-prepared-0b403305.json`; the lead must supply a genuine final preparation
++`profile-prepared-bb9e6291.json`; the lead must supply a genuine final preparation
+ record after authorized activation, or point the environment variable at that
+ record under this tracking directory. Do not edit the stale proof or its
+ coverage, or disable checks to make a run proceed.
+@@ -34,11 +34,11 @@
+ ## Revision and identity checks
+ 
+ The supplied profile preparation must bind `dev-workspace` coverage to exact
+-0b403305 and its candidate package must equal the selected remote profile's
++bb9e6291 and its candidate package must equal the selected remote profile's
+ resolved path. That path is read through the existing trusted root SSH connection using
+ only `readlink -f`. Before Enable, the authenticated browser also verifies the
+ served notification client, worker and shared store asset SHA-256 values against
+-the committed 0b403305 bytes in `expected.json`. The fixed page path and rendered
++the committed bb9e6291 bytes in `expected.json`. The fixed page path and rendered
+ session slug must match this conversation's session.
+ 
+ The trusted preparation record, selected package and served assets are checked
+@@ -49,12 +49,14 @@
+ Do not change this bundle's expected value in place.
+ 
+ The client, worker and shared store were independently read from committed
+-Git objects at b8a6 and 0b403305 and compared byte-for-byte. All three are
++Git objects at 0b403305 and bb9e6291 and compared byte-for-byte. All three are
+ identical; their SHA-256 values remain the same. `asset-comparison.json` records
+-each source path, public route and digest. `provenance.json` binds source
+-0b403305 to published workspace `823d2b61b06de1a0cbe7e8b31b90f5907ecd7926`
+-and configuration `0420df1c5272ff48441c14885a5f7fd042b5dcdb`; these pins are
+-provenance, not evidence of activation. VM/CI and activation remain lead-owned.
++each source path, public route and digest. `provenance.json` binds the exact
++refreshed runtime head. Final workspace/configuration pin revisions are explicitly
++pending the lead's supplied values; no final pin identity has been guessed or
++inherited from the earlier bundle. This packet remains preparation only until
++that provenance and genuine final activation proof are available. VM/CI,
++publication, composition and activation remain lead-owned.
+ 
+ ## Credentials and native delivery
+ 

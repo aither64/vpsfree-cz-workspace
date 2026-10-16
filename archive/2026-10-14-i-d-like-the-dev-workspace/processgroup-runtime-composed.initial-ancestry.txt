@@ -1,0 +1,72 @@
+commit 273a08cd99db9a271db14d4687856c5307dd4a98
+parents 92b2576d82a850fa4e24f889a8ff592a1e7f3e42
+Author: Jakub Skokan <jakub.skokan@havefun.cz>
+Date: 2026-10-14T18:22:19+02:00
+
+sessions: keep sensitive session records local
+
+Choose sensitivity when creating a session and preserve it through retries,
+forks, plans and lifecycle recovery. Local exclusions and private metadata
+keep tracking outside Git while retaining normal project repository work.
+
+Sensitive transitions retain ownership and content proofs without tracking
+commits. Older readers refuse the marker and package candidates must retain
+sensitive-session support alongside the existing coordination contract.
+
+commit ba8669b14536f72b559abc912bba8eac430111e4
+parents 273a08cd99db9a271db14d4687856c5307dd4a98
+Author: Jakub Skokan <jakub.skokan@havefun.cz>
+Date: 2026-10-14T22:46:08+02:00
+
+portal: clarify sensitive session controls and status
+
+Place sensitivity between the team selector and creation options, using
+the shared checkbox layout in creation and derivation forms. Show the
+immutable choice in session settings and keep index badges compact.
+
+Exercise desktop and mobile presentation with disposable browser fixtures.
+
+commit 3d60cedbcba868038fba8a2f3e73675890257ff6
+parents ba8669b14536f72b559abc912bba8eac430111e4
+Author: Jakub Skokan <jakub.skokan@havefun.cz>
+Date: 2026-10-15T00:00:45+02:00
+
+coordination: share bounded admission and isolate notification delivery
+
+Let ordinary coordinator operations and workers share lifecycle admission
+while retaining exclusive lifecycle writers and serialized ledger writes.
+Use monotonic bounded waits and immediate scheduler admission so contention
+does not produce repeated failed commands. Dispatch notification delivery
+to independent owner workers with retained identity and recovery checks.
+
+commit 69399c51355f59a07b7da87d301a5023fbc7a938
+parents 3d60cedbcba868038fba8a2f3e73675890257ff6
+Author: Jakub Skokan <jakub.skokan@havefun.cz>
+Date: 2026-10-15T00:01:18+02:00
+
+tests: cache Ruby suites and shard isolated test processes
+
+Package Ruby verification as independent checks with complete deterministic
+shard coverage and timing manifests. Filter inputs so portal changes reuse
+Ruby results while commands, fixtures, documentation contracts and tools
+invalidate them. Keep the aggregate as a mandatory package dependency and
+provide an unsharded diagnostic mode through the development environment.
+
+commit 832d9f1a6a21337dd44063ddf39f7a88cfc95450
+parents 69399c51355f59a07b7da87d301a5023fbc7a938
+Author: Jakub Skokan <jakub.skokan@havefun.cz>
+Date: 2026-10-15T00:01:19+02:00
+
+integration: compose resumable approved operations and certificates
+
+Reuse coordinator jobs, approvals and reservations in a journaled driver
+with atomic batch admission. Refresh only certified mechanical changes,
+recover exact requests and generated candidates after lost replies, and
+bind verification and preparation to their reviewed heads. Prepare merge
+snapshots again after profile selection changes the package generation.
+
+Persist run-specific completion records under lifecycle admission. Certify
+replacement lineage independently from exact derivation-based check reuse.
+Advertise the journal capability to fence incompatible package selection
+without changing existing ledger, snapshot or attempt formats.
+

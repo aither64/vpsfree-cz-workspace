@@ -1,0 +1,82 @@
+diff --git a/portal/internal/web/attention_browser_test.cjs b/portal/internal/web/attention_browser_test.cjs
+index c0d5e10a5a7073eff5418a6e2f60601d217309e0..c19f9eb49d5745f7406c71e5d3699602e54e68ff 100644
+--- a/portal/internal/web/attention_browser_test.cjs
++++ b/portal/internal/web/attention_browser_test.cjs
+@@ -1413,6 +1413,7 @@ test('compact action errors stay finite and current retry success clears only it
+   h.state.permissionReply = async () => {throw Error('private permission failure canary');};
+   toggle.checked = true; await toggle.change();
+   assert.equal(toggle.checked, false); assert.equal(toggle.indeterminate, false);
++  assert.equal(toggle.disabled, false, 'pre-native failure preserves confirmed off and permits retry');
+   assert.equal(h.menuControls['menu-error'].textContent, 'Could not update notifications.');
+   delete h.state.permissionReply;
+   const enable = h.controls.enable.click(); await enable;
+@@ -1423,3 +1424,27 @@ test('compact action errors stay finite and current retry success clears only it
+   assert.equal(blocked.menuControls['menu-error'].textContent, 'Notifications are blocked.');
+   assert.equal(blocked.menuControls.delivery.checked, false);
+ });
++
++for (const method of ['getSubscription', 'subscribe']) {
++  test(`compact Enable ${method} failure cannot certify off from an earlier absence read`, async () => {
++    const h = await feedbackHarness(testStoreHarness(), {menu: true, off: true}), toggle = h.menuControls.delivery;
++    assert.equal(toggle.checked, false); assert.equal(toggle.indeterminate, false); assert.equal(toggle.disabled, false);
++    let rejectNative, nativeCalls = 0;
++    h.registration.pushManager[method] = () => {
++      nativeCalls++;
++      return new Promise((_, reject) => {rejectNative = reject;});
++    };
++    toggle.checked = true; const action = toggle.change(); await h.flush();
++    assert.equal(nativeCalls, 1); assert.equal(typeof rejectNative, 'function');
++    assert.equal(toggle.checked, false, 'busy action keeps the previous confirmed value');
++    assert.equal(toggle.indeterminate, false); assert.equal(toggle.disabled, true);
++    rejectNative(Error('private native failure canary')); await action;
++    assert.equal(toggle.checked, false); assert.equal(toggle.indeterminate, true, 'failed native operation leaves absence unconfirmed');
++    assert.equal(toggle.disabled, true);
++    assert.equal(h.menuControls['menu-error'].textContent, 'Could not update notifications.');
++    assert.equal(h.menuControls['menu-error'].hidden, false);
++    assert.equal(h.calls.some(call => call.url.endsWith('/register') || call.url.endsWith('/disable')), false,
++      'no handle was returned and no server registration or cleanup was attempted');
++    assert.equal(h.state.subscribed, false);
++  });
++}
+diff --git a/portal/internal/web/static/browser-notifications.js b/portal/internal/web/static/browser-notifications.js
+index 3ce2ef8bed82ca464af5482d2c39e85e5cc7b8b7..c68f535205c6892c83a2a5cb908a9b4afd315cc9 100644
+--- a/portal/internal/web/static/browser-notifications.js
++++ b/portal/internal/web/static/browser-notifications.js
+@@ -334,6 +334,7 @@
+     const generation = refreshGeneration, currentAction = () => generation === refreshGeneration && !pageClosed && !observationRetired;
+     cancelTest();
+     busy = true; buttons();
++    let menuAbsenceConfirmed = localKnown && !localSubscription;
+     try {
+       const permission = await Notification.requestPermission();
+       if (currentAction() && permission !== "granted") deliveryError = permission === "denied" ? "blocked" : "action";
+@@ -343,14 +344,19 @@
+       if (!state.available) {if (currentAction()) deliveryError = "unavailable"; throw new Error("Notification delivery is disabled on the server.");}
+       const registration = await navigator.serviceWorker.register("/notification-worker.js", {scope: "/", updateViaCache: "none"});
+       await navigator.serviceWorker.ready;
++      menuAbsenceConfirmed = false;
+       let subscription = await registration.pushManager.getSubscription();
++      menuAbsenceConfirmed = !subscription;
+       localSubscription = subscription;
+       const applicationServerKey = Uint8Array.from(atob(state.publicKey.replace(/-/g, "+").replace(/_/g, "/")), char => char.charCodeAt(0));
+       if (subscription && subscription.options.applicationServerKey &&
+           [...new Uint8Array(subscription.options.applicationServerKey)].join() !== [...applicationServerKey].join()) {
+         throw new Error("The server's push key changed. Disable this browser subscription, then enable it again.");
+       }
+-      subscription ||= await registration.pushManager.subscribe({userVisibleOnly: true, applicationServerKey});
++      if (!subscription) {
++        menuAbsenceConfirmed = false;
++        subscription = await registration.pushManager.subscribe({userVisibleOnly: true, applicationServerKey});
++      }
+       localSubscription = subscription;
+       const value = subscription.toJSON();
+       const saved = await api("/register", {subscription: {endpoint: value.endpoint, keys: value.keys}, expirationTime: value.expirationTime ?? null});
+@@ -371,7 +377,7 @@
+     } catch (error) {
+       registered = false;
+       if (currentAction()) {
+-        menuValue = localKnown && !localSubscription && !registrationId && !pendingCleanup ? false : null;
++        menuValue = menuAbsenceConfirmed && !localSubscription && !registrationId && !pendingCleanup ? false : null;
+         deliveryError = pendingCleanup || localSubscription || registrationId ? "setup" : deliveryError || "action";
+       }
+       setStatus(pendingCleanup ? disablingIncomplete : localSubscription ? incomplete : `Registration failed: ${error.message}`); }
