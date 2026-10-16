@@ -40,11 +40,14 @@ the matching host module separately from the application profile.
 4. Submit the returned snapshot, approval, reservation and explicit dependencies.
    Merge-only work needs no machine reservation. Read status and keep doing useful
    independent work while claims or reservations are busy.
-5. If only waiting remains, keep the turn open with an interruptible tool wait
-   of at most 60 seconds. Resume on the coordinator's native notification and
-   reread status. Do not ask the user to restart the agent merely because another
-   session is deploying. A stale snapshot requires fresh preparation and the
-   applicable verification/review; an uncertain effect requires reconciliation.
+5. Prefer `coordination integrate --background` for approved operation batches.
+   Record its run ID. If only waiting remains, end the turn; the worker continues
+   and the coordinator wakes the retained session when agent action or review is
+   needed. Reread authoritative status on that message. Individual submitted jobs
+   also run independently and retain their native notifications. Do not poll
+   reservations, ask the user to restart the agent, or bypass a busy resource.
+   A stale snapshot requires fresh preparation and applicable verification/review;
+   an uncertain effect requires reconciliation.
 6. Keep the machine reservation during UI review, feedback and redeployment,
    including periods when the session's agent is idle. Release only after exact
    final integration proofs and explicit deployment/review completion. Keep the

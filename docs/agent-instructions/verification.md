@@ -6,7 +6,7 @@ to the coordination workspace unless the text specifies another repository.
 
 For queued merges/deployments, complete builds, tests and review before submitting
 the prepared snapshot. Resource contention is a wait, not a failed check. Follow
-[coordination](../coordination.md) for interruptible waiting and stale-snapshot
+[coordination](../coordination.md) for background continuation and stale-snapshot
 refresh; repeat only the checks/review required by the changed patch or baseline.
 
 Use separately exported Ruby checks and retained derivation/input receipts to

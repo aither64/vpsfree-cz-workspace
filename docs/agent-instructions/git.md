@@ -6,8 +6,8 @@ to the coordination workspace unless the text specifies another repository.
 
 Before feature integration, read [coordination](../coordination.md) in full.
 Prepare/rebase/review outside claims, then submit authorized merge jobs through
-the selected runtime. It executes the fast-forward/SSH procedure below. Waiting
-agents keep their turns open; a busy resource never authorizes a direct bypass.
+the selected runtime. It executes the fast-forward/SSH procedure below. Use background integration so waiting agents can end their turns and resume
+on native action or review messages. A busy resource never authorizes a direct bypass.
 
 ## Published branches and pull requests
 
