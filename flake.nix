@@ -42,11 +42,19 @@
           vpsadminos = ./config/vpsadminos-devcluster.json;
         };
       };
-      package = vpsfree-dev-workspace.lib.mkPackage {
-        inherit pkgs siteConfig teamConfig;
-        coordinationConfig = import ./config/coordination.nix;
-        integrationConfig = import ./config/integration.nix;
-      };
+      package =
+        (vpsfree-dev-workspace.lib.mkPackage {
+          inherit pkgs siteConfig teamConfig;
+          coordinationConfig = import ./config/coordination.nix;
+          integrationConfig = import ./config/integration.nix;
+        }).override
+          (previous: {
+            extensions = previous.extensions // {
+              skills = previous.extensions.skills // {
+                update-codex = "${self}/skills/update-codex";
+              };
+            };
+          });
     in
     {
       packages.${system} = {

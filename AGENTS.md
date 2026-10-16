@@ -18,6 +18,7 @@ file cannot be read, stop the affected action and report the missing guidance.
 
 | Before this activity | Read |
 | --- | --- |
+| Updating Codex | [Update skill](skills/update-codex/SKILL.md) |
 | Selecting affected projects or changing cross-project scope | [Project map](docs/agent-instructions/projects.md) |
 | Starting/resuming an initiative; writing plans, state, notes or handoffs | [Session setup and tracking](docs/agent-instructions/sessions.md) |
 | Cloning repositories; updating downstream configuration pins; creating/reusing worktrees or branches; fetching, pushing, rebasing, merging or cleaning them; committing coordination records; declaring an unmerged branch ready | [Git and worktrees](docs/agent-instructions/git.md) |
