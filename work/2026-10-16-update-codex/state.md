@@ -1,14 +1,18 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Codex 0.163.0 upgrade
 
 ## Current status
 
-The authorized upgrade is deployed and accepted. Ready for use; ready, awaiting
-merge approval for all four feature branches. No default-branch integration,
-reboot, session closure or reservation release has been authorized.
+The Codex 0.163.0 upgrade is complete. All four exact final feature heads are
+integrated into their remote master branches. Aitherdev's reservation is
+released at revision 7, and all 18 notifications are delivered. The user explicitly
+instructed "merge it and release aitherdev" for codex-web, dev-workspace,
+vpsfree-cz-configuration and workspace to refs/heads/master, followed by ordinary
+coordinator completion. Session, worktrees, branches and recovery roots remain.
+See [final integration and release](integration-completion.json).
 
 Aitherdev's system/profile links select lr6b9x40 at configuration aed7d507.
 The workspace profile is a335n75h and its actual managed native assembly is
@@ -22,20 +26,21 @@ Exact paths and accepted receipts are in [postactivation-acceptance.json](postac
 - [x] Coordinated system then workspace profile rollout and two bounded profile fixes.
 - [x] Real provider check, deployed profile safety, portal/terminal/thread acceptance.
 - [x] Preserve recovery roots, reconcile pending marker, settle jobs and notifications.
-- [ ] Integrate exact final feature heads after explicit repository/target approval.
-- [ ] Finish the coordinator reservation after integration proofs and explicit completion.
+- [x] Integrate all four exact final feature heads under recorded user approval.
+- [x] Finish the coordinator reservation after exact integration/live proofs and explicit completion.
 
-## Published final branches
+## Integrated final branches
 
-All use 2026-10-16-update-codex and are clean/published. Their bases, complete
-series and no-migration inventories are in [final-heads-login-fixed.json](final-heads-login-fixed.json).
+All use 2026-10-16-update-codex and are clean, published and integrated. Original
+reviewed/deployed ranges remain frozen in [final-heads-login-fixed.json](final-heads-login-fixed.json);
+final integration and replacement proofs are in [integration-completion.json](integration-completion.json).
 
 | Repository | Final head | Commits |
 | --- | --- | --- |
 | codex-web | a0561fad8decb794117f8959fa2dd629547c5ba7 | 2 |
 | dev-workspace | 3c57e2eab56c94fec5f456d8067def8717a0d418 | 2 |
 | vpsfree-cz-configuration | aed7d5071e24793d7bd811af11ccfa80e6f049d6 | 5 |
-| workspace | a158608e2baa41696cd2340c82b45460f56d77da | 2 |
+| workspace | 6bebd5ee14af006aedc4eff827b005a428682d78 | 2 |
 
 Worktrees are under worktrees/2026-10-16-update-codex/. No application migrations.
 Repeated dependency streams were consolidated. The two separate profile fixes
@@ -85,11 +90,13 @@ at empty prompt before another request. See [provider evidence](deepseek-canary.
 
 ## Deployment, recovery and ownership
 
-All four coordinator jobs succeeded; all nine notifications are delivered.
-Reservation 0c72d37a-dcdd-44bc-bd4a-bc9f9a462505 remains deployed_review for owner
-c7fbd286-e060-419b-b538-6675336ab1ce on vpsfree:aitherdev. Last machine job is
-02558206-3690-414d-8e55-06b2362fb903; attempt 5c5c1563-76a9-4a27-a467-8eb1fc124a7e.
-The profile job is 587f4fa9-f4df-4bf2-ab4d-42d0664f8edf. Keep the reservation.
+All four deployment jobs and all four merge jobs succeeded. Reservation
+0c72d37a-dcdd-44bc-bd4a-bc9f9a462505 is released (revision 7) for owner
+c7fbd286-e060-419b-b538-6675336ab1ce on vpsfree:aitherdev. The coordinator freshly
+verified exact remote integration, the independently reviewed patch_equivalent
+workspace lineage, unchanged system/profile identities, and settled jobs/deliveries.
+See [finish request](release-finish-request.json), [release receipt](release-result.json)
+and [final status](release-status.json).
 
 The pending Codex marker cleared through ordinary scheduled reconciliation.
 Previous system/workspace generations and native roots remain retained; all owned
@@ -111,11 +118,51 @@ fixes are in notes/dev-workspace/2026-10-16-codex-upgrade-verification.md.
 
 ## Next action
 
-No implementation, verification or deployment blocker remains. Await explicit
-integration direction for codex-web, dev-workspace, vpsfree-cz-configuration and
-workspace to master. Then refresh against current targets, preserve the reviewed
-history/patch-equivalence proofs as applicable, run required checks and use the
-coordinator. Do not infer merge approval from this successful deployment.
+No remaining work or blockers. Use installed $update-codex for the next upgrade.
+Keep the session and retained feature/recovery refs open; no archive, delete,
+reboot or session stop was requested.
 
 Session native anchor: 01a1450c-fb0c-7050-9438-501a9678a3c6. Portal:
 https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-16-update-codex/
+
+## Integration recovery
+
+User instruction: "merge it and release aitherdev". All four repositories target
+refs/heads/master. codex-web, dev-workspace and configuration merged unchanged
+through individual coordinator jobs 0b3ceba8, 538d592c and c7d28e63. Workspace
+was rebased from a158608e onto shared tracking master 7e923371 as 6bebd5ee; the
+feature diff is byte-identical and both range-diff entries are equal. The final
+comparison was captured and the refreshed feature published with an exact lease.
+
+Automatic run 1ff62d7b stopped before any job submission: the installed pin
+recipe's 256 KiB subprocess bound rejected the 10,836-path tracking archive
+difference. Its journal and scratch sources are retained as failed preparation
+evidence. Do not resume that original run; recovery uses ordinary exact-snapshot
+commands. The retained Astra/xhigh reviewer accepted the exact workspace rebase for
+normal patch_equivalent deployed lineage with no findings; see
+[rebase review](workspace-rebase-review-report.md). No coordinator ledger or driver
+journal was edited. Quick diff and deployment alignment checks passed; changed
+workspace check derivations required fresh checks after review.
+
+## Final integration verification
+
+Retained reviewer 01a14598-96f1-7e92-9212-eb4912342792 (gpt-6-astra/xhigh,
+read-only) accepted the workspace rebase under general/risk lanes with no
+findings. Both original ordered patches/messages and the complete feature diff
+are unchanged, no obsolete history or repeated update stream remains, and there
+are no migrations. The installed deployment remains compatible; no redeployment
+was required solely for the tracking/source-identity refresh.
+
+Fresh `nix flake check --print-build-logs --no-update-lock-file` passed for
+workspace 6bebd5ee in 299.4 seconds, including composed package verification.
+Exact check derivations are retained in workspace-integration-derivations.json.
+Codex-web master CI 38938901856 and runtime master CI 38938931839 passed;
+configuration/workspace had no applicable runs. Parent monitored the workspace
+checks while the single permitted utility watcher was occupied with runtime CI.
+All owned commands/watchers have ended.
+
+The large-tracking refresh limitation and successful ordinary-command recovery
+are recorded in notes/dev-workspace/2026-10-16-integration-large-tracking-baseline.md.
+Project skills and operations docs remain unchanged from their accepted final
+implementation; this phase added integration/release evidence and an investigation
+note only. Original acceptance/release artifacts remain frozen.
