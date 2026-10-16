@@ -1,0 +1,46 @@
+[
+  {
+    "repository": "dev-workspace",
+    "path": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-16-session-archive-local-first/dev-workspace",
+    "base": "2b22de8d273a3b75e6cdd62c398fdb2630871d5a",
+    "head": "73bc5c6e9a74f7bc667ea8f6f19ec3ad6d4b73ea",
+    "commits": [
+      "1b2a0e7e08ff92f7f09f469e0a0462fbbf8d8c48 codex: update the packaged runtime to 0.163.0",
+      "3c57e2eab56c94fec5f456d8067def8717a0d418 skills: provide layered runtime upgrade procedures",
+      "e5ba49240ee1697c14358c457e359060a9f25489 archive: recover clean checkouts from retained Git objects",
+      "73bc5c6e9a74f7bc667ea8f6f19ec3ad6d4b73ea sessions: close archives before syncing tracking"
+    ],
+    "stat": " AGENTS.md                                          |   4 +\n docs/codex-package.md                              |  33 ++-\n docs/dev-sessions.md                               |  26 ++-\n docs/session-archive-recovery.md                   |  53 ++++-\n docs/session-preparations.md                       |   2 +-\n flake.lock                                         |  38 +--\n flake.nix                                          |   2 +-\n libexec/dev-session                                | 259 +++++++++++++++++----\n libexec/workspace-archive-cleanup.rb               |  30 ++-\n libexec/workspace-archive-recovery.rb              | 217 +++++++++++++++--\n libexec/workspace-host                             |  47 +++-\n libexec/workspace-tracking-sync.rb                 | 193 +++++++++++++++\n nix/systemd/workspace-auto-archive@.service        |   2 +-\n nix/systemd/workspace-tracking-sync@.service       |   9 +\n nix/systemd/workspace-tracking-sync@.timer         |   9 +\n nix/tests/extension-catalog.nix                    |   6 +-\n nix/workspace-portal.nix                           |  12 +-\n portal/cmd/workspace-portal/naming_runtime.go      |   2 +-\n .../naming_runtime_integration_test.go             |  12 +-\n portal/cmd/workspace-portal/naming_runtime_test.go |   6 +-\n portal/go.mod                                      |   2 +-\n portal/go.sum                                      |   4 +-\n portal/internal/session/lifecycle.go               |   4 +-\n portal/internal/session/runtime-contract.json      |   3 +\n portal/internal/session/tracking_sync.go           |  79 +++++++\n portal/internal/web/archive_worker.go              | 112 +++++++++\n portal/internal/web/archive_worker_test.go         | 103 ++++++++\n portal/internal/web/operation_state.go             |  23 ++\n portal/internal/web/operation_store.go             |   6 +-\n portal/internal/web/server.go                      |  51 ++--\n portal/internal/web/static/app.js                  |  12 +-\n skills/update-dev-workspace-codex/SKILL.md         |  65 ++++++\n .../update-dev-workspace-codex/agents/openai.yaml  |   3 +\n test/dev_session/archive_cleanup_test.rb           | 231 ++++++++++++++++++\n test/dev_session/lifecycle_commands_test.rb        |  12 +-\n test/workspace_host/archive_recovery_test.rb       |   4 +-\n test/workspace_host/profile_transition_test.rb     |  28 +++\n 37 files changed, 1545 insertions(+), 159 deletions(-)\n",
+    "dirty": "",
+    "remote_default": "2b22de8d273a3b75e6cdd62c398fdb2630871d5a"
+  },
+  {
+    "repository": "workspace",
+    "path": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-16-session-archive-local-first/workspace",
+    "base": "5a9cb6b6f431f930d88fc0d8aa7b9c9cca652b4f",
+    "head": "5a7efca3f21924cc439567a6d725348d3b2b4dd3",
+    "commits": [
+      "078e8c88e625531b0ebe4658c05fb4f8112fd21c workspace: document local archive completion",
+      "87e225082fc8927020c75ec5ba1bb014136be137 workspace: select local-first archive runtime",
+      "5a7efca3f21924cc439567a6d725348d3b2b4dd3 skills: coordinate layered Codex updates"
+    ],
+    "stat": " AGENTS.md                              |  1 +\n docs/agent-instructions/lifecycle.md   | 17 ++++++--\n flake.lock                             | 46 ++++++++++-----------\n flake.nix                              | 20 ++++++---\n skills/update-codex/SKILL.md           | 74 ++++++++++++++++++++++++++++++++++\n skills/update-codex/agents/openai.yaml |  3 ++\n 6 files changed, 128 insertions(+), 33 deletions(-)\n",
+    "dirty": "",
+    "remote_default": "78a18cccbcd72fe91c68a7b9212628a7e13abe90"
+  },
+  {
+    "repository": "vpsfree-cz-configuration",
+    "path": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-16-session-archive-local-first/vpsfree-cz-configuration",
+    "base": "ae98e9dbf05cd3f6b2d0c32255a4cb2d58c3865b",
+    "head": "6c39b064661d5ccec5a229acb4f59ceafd97d10c",
+    "commits": [
+      "8f9b857dfd806d1b47d624d996e10ad0ce81c083 skills: describe aitherdev Codex upgrades",
+      "81ab9fad6778ed1880607997f08cd47d2c06f328 inputs: set llm-agents to e85b9921",
+      "3db63e7ec04fed297dbe38f41a636bf44ad05a01 aitherdev: remove obsolete Codex profile settings",
+      "6c39b064661d5ccec5a229acb4f59ceafd97d10c inputs: set devWorkspace to 73bc5c6e"
+    ],
+    "stat": " AGENTS.md                                        |  4 ++\n cluster/cz.vpsfree/machines/aitherdev/config.nix |  2 -\n docs/operations/codex-deepseek-aitherdev.md      | 38 +++++++++-----\n flake.lock                                       | 50 +++++++++---------\n skills/update-aitherdev-codex/SKILL.md           | 66 ++++++++++++++++++++++++\n skills/update-aitherdev-codex/agents/openai.yaml |  3 ++\n 6 files changed, 124 insertions(+), 39 deletions(-)\n",
+    "dirty": "",
+    "remote_default": "ae98e9dbf05cd3f6b2d0c32255a4cb2d58c3865b"
+  }
+]
