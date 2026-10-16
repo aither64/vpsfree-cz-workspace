@@ -1,0 +1,257 @@
+SHELL: 0
+
+START: 2026-10-16 08:36:23 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-16 08:36:23 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:36:23 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-16 08:36:23 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:36:23 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-16 08:36:23 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Fri, 16 Oct 2026 06:36:23 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-16 08:36:23 +0200
+COMMAND: test "$(sha256sum /etc/livepatch-test/corrected.ko | cut -d' ' -f1)" = 3d835f4ecc11e9e29ac6c4585022ec2be8664f10e4140ce21a301112fa215968
+END: 2026-10-16 08:36:24 +0200
+ELAPSED: 0.46s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:36:24 +0200
+COMMAND: insmod /etc/livepatch-test/corrected.ko
+END: 2026-10-16 08:36:26 +0200
+ELAPSED: 1.95s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:36:26 +0200
+COMMAND: test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-16 08:36:26 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:36:26 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-16 08:36:26 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+528
+---
+
+START: 2026-10-16 08:36:26 +0200
+COMMAND: getconf _NPROCESSORS_ONLN
+END: 2026-10-16 08:36:26 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+4
+---
+
+START: 2026-10-16 08:36:26 +0200
+COMMAND: test -e /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-16 08:36:26 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:36:26 +0200
+COMMAND: mkdir /sys/fs/cgroup/klp_perf_small_a /sys/fs/cgroup/klp_perf_small_b
+END: 2026-10-16 08:36:26 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:36:26 +0200
+COMMAND: /etc/livepatch-test/perf-cgroup-migration /sys/fs/cgroup/klp_perf_small_a /sys/fs/cgroup/klp_perf_small_b 1
+END: 2026-10-16 08:36:26 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+cgroup phase=a cpu=0 used=1 active_delta=200117219 inactive_delta=0
+cgroup phase=a cpu=1 used=0 active_delta=0 inactive_delta=0
+cgroup phase=a cpu=2 used=0 active_delta=0 inactive_delta=0
+cgroup phase=a cpu=3 used=0 active_delta=0 inactive_delta=0
+cgroup phase=b cpu=0 used=1 active_delta=200109114 inactive_delta=0
+cgroup phase=b cpu=1 used=0 active_delta=0 inactive_delta=0
+cgroup phase=b cpu=2 used=0 active_delta=0 inactive_delta=0
+cgroup phase=b cpu=3 used=0 active_delta=0 inactive_delta=0
+cgroup phase=a cpu=0 used=1 active_delta=200138569 inactive_delta=0
+cgroup phase=a cpu=1 used=0 active_delta=0 inactive_delta=0
+cgroup phase=a cpu=2 used=0 active_delta=0 inactive_delta=0
+cgroup phase=a cpu=3 used=0 active_delta=0 inactive_delta=0
+cgroup migration tasks=1 cpus=4 phases=3 passed
+---
+
+START: 2026-10-16 08:36:26 +0200
+COMMAND: rmdir /sys/fs/cgroup/klp_perf_small_a /sys/fs/cgroup/klp_perf_small_b
+END: 2026-10-16 08:36:27 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:36:27 +0200
+COMMAND: getconf _NPROCESSORS_ONLN
+END: 2026-10-16 08:36:27 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+4
+---
+
+START: 2026-10-16 08:36:27 +0200
+COMMAND: test -e /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-16 08:36:27 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:36:27 +0200
+COMMAND: mkdir /sys/fs/cgroup/klp_perf_large_a /sys/fs/cgroup/klp_perf_large_b
+END: 2026-10-16 08:36:27 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:36:27 +0200
+COMMAND: /etc/livepatch-test/perf-cgroup-migration /sys/fs/cgroup/klp_perf_large_a /sys/fs/cgroup/klp_perf_large_b 5
+END: 2026-10-16 08:36:27 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+cgroup phase=a cpu=0 used=1 active_delta=200123650 inactive_delta=0
+cgroup phase=a cpu=1 used=1 active_delta=200063397 inactive_delta=0
+cgroup phase=a cpu=2 used=1 active_delta=200109936 inactive_delta=0
+cgroup phase=a cpu=3 used=1 active_delta=200013295 inactive_delta=0
+cgroup phase=b cpu=0 used=1 active_delta=200125825 inactive_delta=0
+cgroup phase=b cpu=1 used=1 active_delta=199992313 inactive_delta=0
+cgroup phase=b cpu=2 used=1 active_delta=197882842 inactive_delta=0
+cgroup phase=b cpu=3 used=1 active_delta=195996423 inactive_delta=0
+cgroup phase=a cpu=0 used=1 active_delta=200103392 inactive_delta=0
+cgroup phase=a cpu=1 used=1 active_delta=199291882 inactive_delta=0
+cgroup phase=a cpu=2 used=1 active_delta=200102048 inactive_delta=0
+cgroup phase=a cpu=3 used=1 active_delta=199913737 inactive_delta=0
+cgroup migration tasks=5 cpus=4 phases=3 passed
+---
+
+START: 2026-10-16 08:36:27 +0200
+COMMAND: rmdir /sys/fs/cgroup/klp_perf_large_a /sys/fs/cgroup/klp_perf_large_b
+END: 2026-10-16 08:36:27 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:36:27 +0200
+COMMAND: /etc/livepatch-test/perf-flags p1
+END: 2026-10-16 08:36:27 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+attach group_fd=3 rc=-1 errno=19
+P1 verdict: ENODEV
+---
+
+START: 2026-10-16 08:36:27 +0200
+COMMAND: /etc/livepatch-test/perf-flags p3
+END: 2026-10-16 08:36:27 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+flags=0x1 rc=4 errno=0 (ok)
+---
+
+START: 2026-10-16 08:36:27 +0200
+COMMAND: /etc/livepatch-test/perf-flags p4
+END: 2026-10-16 08:36:27 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+flags=0x3 rc=-1 errno=22 (Invalid argument)
+---
+
+START: 2026-10-16 08:36:27 +0200
+COMMAND: /etc/livepatch-test/perf-flags p5
+END: 2026-10-16 08:37:22 +0200
+ELAPSED: 54.42s
+STATUS: 0
+OUTPUT:
+P5 attempts=100001 enodev=100000 success=0 other=0 internal=0 elapsed=54s
+---
+
+START: 2026-10-16 08:37:22 +0200
+COMMAND: dmesg | tail -n +529
+END: 2026-10-16 08:37:22 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:37:22 +0200
+COMMAND: if test -e /sys/kernel/livepatch/livepatch_7/enabled; then if test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1; then echo 0 > /sys/kernel/livepatch/livepatch_7/enabled; fi; while test -e /sys/kernel/livepatch/livepatch_7/transition && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" != 0; do sleep 0.1; done; fi; while test -d /sys/module/livepatch_7; do rmmod livepatch_7 && break; sleep 0.1; done; test ! -d /sys/module/livepatch_7
+END: 2026-10-16 08:37:27 +0200
+ELAPSED: 5.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-16 08:37:27 +0200
+COMMAND: poweroff -f
+END: 2026-10-16 08:37:28 +0200
+ELAPSED: 0.91s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Grabbing all containers
+---
+

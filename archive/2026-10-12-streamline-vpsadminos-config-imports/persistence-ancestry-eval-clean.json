@@ -1,0 +1,54 @@
+{
+  "latestStable": true,
+  "releases": {
+    "25.11": {
+      "actualRelease": "25.11",
+      "alternatives": {
+        "sysusers": true,
+        "userborn": true
+      },
+      "ancestry": true,
+      "directFilesystem": true,
+      "dry": true,
+      "legacyOrder": true,
+      "ordinary": true,
+      "preservedUnits": true,
+      "priorV2": true,
+      "standalone": true,
+      "topology": true
+    },
+    "26.05": {
+      "actualRelease": "26.05",
+      "alternatives": {
+        "sysusers": true,
+        "userborn": true
+      },
+      "ancestry": true,
+      "directFilesystem": true,
+      "dry": true,
+      "legacyOrder": true,
+      "ordinary": true,
+      "preservedUnits": true,
+      "priorV2": true,
+      "standalone": true,
+      "topology": true
+    },
+    "unstable": {
+      "actualRelease": "26.11",
+      "alternatives": {
+        "sysusers": true,
+        "userborn": true
+      },
+      "ancestry": true,
+      "directFilesystem": true,
+      "dry": true,
+      "legacyOrder": true,
+      "ordinary": true,
+      "preservedUnits": true,
+      "priorV2": true,
+      "standalone": true,
+      "topology": true
+    }
+  },
+  "shellFixture": "# Abort in the activation shell: its ERR trap alone permits later users.\nvpsadminosMountPersistedState() {\n  local source=\"$1\" target=\"$2\" options=\"$3\" ancestor=\"$1\" backing rootBacking sourceBacking mountStatus mounted=false\n  while [ ! -e \"$ancestor\" ]; do\n    ancestor=$(dirname -- \"$ancestor\") || return 1\n  done\n  [ -d \"$ancestor\" ] || { printf 'vpsAdminOS: state source ancestor is not a directory: %s\\n' \"$ancestor\" >&2; return 1; }\n  backing=$(findmnt --noheadings --output ID --target \"$ancestor\") || return 1\n  rootBacking=$(findmnt --noheadings --output ID --target /) || return 1\n  [ -n \"$backing\" ] && [ -n \"$rootBacking\" ] && [ \"$backing\" != \"$rootBacking\" ] || {\n    printf 'vpsAdminOS: state source requires an available non-root backing mount: %s\\n' \"$source\" >&2\n    return 1\n  }\n  if [ -e \"$target\" ]; then\n    if mountpoint -q -- \"$target\"; then\n      mounted=true\n      [ \"$source\" -ef \"$target\" ] || {\n        printf 'vpsAdminOS: state destination has a different mounted source: %s\\n' \"$target\" >&2\n        return 1\n      }\n    else\n      mountStatus=$?\n      # util-linux returns 32 for a directory that is not a mountpoint.\n      [ \"$mountStatus\" -eq 32 ] || return 1\n    fi\n  fi\n  # mkdir -p leaves existing parents and their metadata untouched.\n  if [ ! -d \"$source\" ]; then\n    mkdir -p -m 0755 -- \"$source\" || return 1\n  fi\n  sourceBacking=$(findmnt --noheadings --output ID --target \"$source\") || return 1\n  [ \"$sourceBacking\" = \"$backing\" ] || return 1\n  if \"$mounted\"; then\n    mount -t none -o \"remount,$options\" -- \"$source\" \"$target\" || return 1\n  else\n    if [ ! -d \"$target\" ]; then\n      mkdir -p -m 0755 -- \"$target\" || return 1\n    fi\n    mount -t none -o \"$options\" -- \"$source\" \"$target\" || return 1\n  fi\n  mountpoint -q -- \"$target\" && [ \"$source\" -ef \"$target\" ] || return 1\n}\nif ! vpsadminosMountPersistedState /persistent/var/lib/nixos /var/lib/nixos bind,x-gvfs-hide; then\n  printf 'vpsAdminOS: persisted state unavailable; refusing user allocation\\n' >&2\n  exit 1\nfi\n\nif ! vpsadminosMountPersistedState /persistent/var/log /var/log bind,x-gvfs-hide; then\n  printf 'vpsAdminOS: persisted state unavailable; refusing user allocation\\n' >&2\n  exit 1\nfi\n\n"
+}

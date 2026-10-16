@@ -1,0 +1,138 @@
+<page>navody:server:wireguard</page>
+
+====== WireGuard ======
+
+WireGuard is a VPN built into the Linux kernel. vpsAdminOS provides the required
+module, so you only need to install the userspace tools inside your VPS.
+
+This example connects two devices:
+
+  * the server at vpsFree.cz has the public address ''185.8.164.10/32'', UDP port ''51820'' and VPN address ''10.77.0.1'';
+  * the client has VPN address ''10.77.0.2''.
+
+''185.8.164.10/32'' is an example from the playground VPS range. Replace it
+with the server's real public IPv4 or IPv6 address. Enclose a literal IPv6
+address in brackets in ''Endpoint'', for example ''Endpoint = [2001:db8::10]:51820''.
+
+===== Installing the tools =====
+
+Install the ''wireguard-tools'' package from your distribution. For example:
+
+<code bash>
+# Debian and Ubuntu
+apt update
+apt install wireguard-tools
+
+# Fedora
+dnf install wireguard-tools
+
+# Alpine Linux
+apk add wireguard-tools
+
+# Arch Linux
+pacman -S wireguard-tools
+</code>
+
+The [[https://www.wireguard.com/install/|WireGuard project website]] links to
+current instructions for other systems.
+
+===== Keys =====
+
+Create a separate key pair on both the server and the client. Never send the
+private key to anybody or put it in a ticket or public repository.
+
+<code bash>
+install -d -m 700 /etc/wireguard
+umask 077
+wg genkey | tee /etc/wireguard/private.key | wg pubkey > /etc/wireguard/public.key
+</code>
+
+Display the public key with:
+
+<code bash>
+cat /etc/wireguard/public.key
+</code>
+
+In the examples below, replace ''SERVER_PRIVATE_KEY'', ''SERVER_PUBLIC_KEY'',
+''CLIENT_PRIVATE_KEY'' and ''CLIENT_PUBLIC_KEY'' with the corresponding
+values. Keep the configuration file readable by root only.
+
+===== Server configuration =====
+
+Create ''/etc/wireguard/wg0.conf'' on the server:
+
+<code ini>
+[Interface]
+Address = 10.77.0.1/24
+ListenPort = 51820
+PrivateKey = SERVER_PRIVATE_KEY
+
+[Peer]
+PublicKey = CLIENT_PUBLIC_KEY
+AllowedIPs = 10.77.0.2/32
+</code>
+
+===== Client configuration =====
+
+Create ''/etc/wireguard/wg0.conf'' on the client:
+
+<code ini>
+[Interface]
+Address = 10.77.0.2/24
+PrivateKey = CLIENT_PRIVATE_KEY
+
+[Peer]
+PublicKey = SERVER_PUBLIC_KEY
+AllowedIPs = 10.77.0.1/32
+Endpoint = 185.8.164.10:51820
+PersistentKeepalive = 25
+</code>
+
+''AllowedIPs'' specifies the addresses routed to the peer as well as the
+source addresses WireGuard accepts from it. This example routes traffic only
+between the two VPN addresses. It does not make the VPS a default gateway and
+does not configure NAT.
+
+Use ''PersistentKeepalive = 25'' when the client is behind NAT or a stateful
+firewall and has to remain reachable without sending other traffic. You can
+omit it when both peers are directly reachable. At least the side initiating
+the connection needs an ''Endpoint''; in this example, the server learns the
+client endpoint from received packets.
+
+On both machines, allow only ''root'' to read the configuration:
+
+<code bash>
+chmod 600 /etc/wireguard/wg0.conf
+</code>
+
+===== Firewall and startup =====
+
+If the server uses a firewall, allow incoming UDP port ''51820'' for IPv4 and
+IPv6 as appropriate for the ''Endpoint'' address. The TCP port with the same
+number is not needed. See [[manuals:server:firewall|Firewall]] for details.
+
+On a distribution with systemd, start the interface and enable it at boot:
+
+<code bash>
+systemctl enable --now wg-quick@wg0
+</code>
+
+On a system without systemd, you can start it directly:
+
+<code bash>
+wg-quick up wg0
+</code>
+
+Verify the configuration with:
+
+<code bash>
+wg show
+ping -c 3 10.77.0.1   # on the client
+ping -c 3 10.77.0.2   # on the server
+</code>
+
+In ''wg show'', pay particular attention to the latest handshake time and the
+transfer counters. If there is no handshake, check the public keys,
+''Endpoint'' and firewall rules. The official
+[[https://www.wireguard.com/quickstart/|WireGuard quick start]] explains the
+configuration in more detail.

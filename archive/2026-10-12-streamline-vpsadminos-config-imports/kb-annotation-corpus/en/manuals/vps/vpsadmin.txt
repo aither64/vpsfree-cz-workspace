@@ -1,0 +1,40 @@
+====== vpsAdmin ======
+
+[[https://vpsadmin.vpsfree.cz|vpsAdmin]] is our central information system.
+It is used to keep records of the members of our association and manage VPSs. The cornerstone of vpsAdmin
+is the [[manuals:vps:api|API]] used to create the
+[[https://vpsadmin.vpsfree.cz|web interface]] and [[manuals:vps:api#cli|CLI]]
+tools.
+
+===== Transactions =====
+
+Transactions are the way vpsAdmin makes changes that are requested by the user
+for the servers/VPSs. Changes are not made immediately – they are added to a queue and executed
+one by one.
+
+Transactions belong to groups of so-called “transaction chains”. Every
+operation (creating a VPS, start, stop, clone, etc.) is represented by
+one chain that groups several transactions together. In the transaction log found in the web interface,
+the right panel displays a list of the ten most recent chains and their progress
+expressed by a percentage. By clicking the ID of the chain, you can see what transactions it contains.
+
+In the ideal case, the chain is either executed completely or not at all. If, however,
+an unexpected or unresolved error occurs, an administrator will have to step in.
+
+Chains are also responsible for keeping the database consistent. Changes in
+the database are only executed if the chain finishes successfully. It can be a bit
+confusing if, for instance, the old hostname is still displayed even after it has been changed. When
+the chain is completed, the hostname will be updated to the correct version.
+
+===== Object Locks =====
+
+Each object (VPS, dataset, snapshot, etc.) can only be used for one operation
+at any given time. Locks are used to ensure consistency, so that
+vpsAdmin doesn’t lock itself out.
+
+If you get the error message: “Resource is locked. Please try
+again,” it means that the object you want to do something with is locked
+and you have to wait until it is available again.
+
+<note important>If error message “Resource is locked. Please try
+again,” keeps showing up, please let us know by mail on podpora@vpsfree.cz</note>

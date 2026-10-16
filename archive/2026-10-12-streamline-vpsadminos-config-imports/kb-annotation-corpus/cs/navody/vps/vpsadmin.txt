@@ -1,0 +1,38 @@
+<page>manuals:vps:vpsadmin</page>
+====== vpsAdmin ======
+
+[[https://vpsadmin.vpsfree.cz|vpsAdmin]] je náš centrální informační systém,
+který slouží k evidenci členů spolku a správě VPS. Základním kamenem vpsAdminu
+je [[navody:vps:api|API]], nad kterým je postaveno
+[[https://vpsadmin.vpsfree.cz|webové rozhraní]] a [[navody:vps:api#cli|CLI]]
+nástroje.
+
+===== Transakce =====
+
+Transakce jsou způsob, jakým vpsAdmin vykonáva změny na serverech/VPS vyžádané
+uživatelem. Změny nejsou provedeny hned, ale řadí se do fronty a jsou postupně
+vykonávány.
+
+Transakce spadají do skupin nazvaných „řetězec transakcí“. Každá
+operace (vytvoření VPS, start, stop, klon, atd.) je reprezentována
+jedním řetězcem, který seskupuje více transakcí. Ve webovém rozhraní v sekci **Transakce** v pravém panelu se zobrazuje seznam deseti posledních řetězců a jejich postup v
+procentech. Kliknutím na ID řetězce lze vidět, jaké transakce obsahuje.
+
+V ideálním případě se řetězec buď provede úplně a nebo vůbec. Pokud k
+dojde k neočekávané či neošetřené chybě, bude muset zasáhnout administrátor.
+
+Řetězce se starají také o udržování konzistence databáze. Změny v
+databázi se provedou, jen když řetězec doběhne úspěšně. Může to být trochu
+matoucí, když se např. po změně hostname stále zobrazuje to staré. Po
+dokončení řetězce se hostname aktualizuje a bude správně.
+
+===== Zámky objektů =====
+
+S každým objektem (VPS, dataset, snapshot, apod.) lze v jednu chvíli
+provádět jen jednu operaci. Zámky slouží k zaručení konzistence, aby si
+pod sebou vpsAdmin sám nepodřezal větev.
+
+Pokud na vás vyskočí chybová hláška: „Zdroj je uzamčen. Zkuste to prosím později.“ Znamená to, že objekt, se kterým chcete něco udělat, je uzamčen
+a musíte počkat, až bude k dispozici.
+
+<note important>Pokud chybová hláška „Zdroj je uzamčen. Zkuste to prosím později.“ přetrvává, napiš nám prosím na podpora@vpsfree.cz</note>

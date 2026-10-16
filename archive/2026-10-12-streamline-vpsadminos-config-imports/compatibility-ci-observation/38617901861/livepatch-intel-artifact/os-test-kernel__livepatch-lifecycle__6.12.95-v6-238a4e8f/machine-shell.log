@@ -1,0 +1,1492 @@
+SHELL: 0
+
+START: 2026-10-14 20:59:50 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-14 20:59:50 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:50 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-14 20:59:50 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:50 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-14 20:59:50 +0200
+ELAPSED: 0.06s
+STATUS: 6
+OUTPUT:
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+---
+
+START: 2026-10-14 20:59:51 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-14 20:59:51 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 14 Oct 2026 18:59:51 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-14 20:59:51 +0200
+COMMAND: test "$(uname -r)" = 6.12.95
+END: 2026-10-14 20:59:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:51 +0200
+COMMAND: grep -Eq '^vendor_id[[:space:]]*: GenuineIntel$' /proc/cpuinfo
+END: 2026-10-14 20:59:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:51 +0200
+COMMAND: grep -m1 '^flags' /proc/cpuinfo | grep -qw vmx
+END: 2026-10-14 20:59:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:51 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-14 20:59:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:51 +0200
+COMMAND: modprobe -r kvm_intel
+END: 2026-10-14 20:59:51 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:51 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-14 20:59:51 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:51 +0200
+COMMAND: cat /etc/livepatch-store-path
+END: 2026-10-14 20:59:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+/nix/store/2hamis54xzn5pkj5n7l4gi45mr46a89f-livepatch_7-6.12.95
+---
+
+START: 2026-10-14 20:59:51 +0200
+COMMAND: test -f /nix/store/2hamis54xzn5pkj5n7l4gi45mr46a89f-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko
+END: 2026-10-14 20:59:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:51 +0200
+COMMAND: sha256sum /nix/store/2hamis54xzn5pkj5n7l4gi45mr46a89f-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko
+END: 2026-10-14 20:59:53 +0200
+ELAPSED: 1.11s
+STATUS: 0
+OUTPUT:
+57213079758efd2a808875611491174f9f9b37d55c384196603286542c3a0a16  /nix/store/2hamis54xzn5pkj5n7l4gi45mr46a89f-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko
+---
+
+START: 2026-10-14 20:59:53 +0200
+COMMAND: test "$(modinfo -F name /nix/store/2hamis54xzn5pkj5n7l4gi45mr46a89f-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko)" = livepatch_7
+END: 2026-10-14 20:59:53 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:53 +0200
+COMMAND: modinfo -F vermagic /nix/store/2hamis54xzn5pkj5n7l4gi45mr46a89f-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko | grep -q '^6.12.95 '
+END: 2026-10-14 20:59:53 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:53 +0200
+COMMAND: mkdir -p /lib/modules
+END: 2026-10-14 20:59:53 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:53 +0200
+COMMAND: ln -snf /run/current-system/kernel-modules/lib/modules/6.12.95 /lib/modules/6.12.95.7
+END: 2026-10-14 20:59:53 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:53 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-14 20:59:53 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+531
+---
+
+START: 2026-10-14 20:59:53 +0200
+COMMAND: insmod /nix/store/2hamis54xzn5pkj5n7l4gi45mr46a89f-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko
+END: 2026-10-14 20:59:54 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:54 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7 && test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-14 20:59:54 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:54 +0200
+COMMAND: dmesg | tail -n +532
+END: 2026-10-14 20:59:54 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+[   19.013370] livepatch_7: loading out-of-tree module taints kernel.
+[   19.013379] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   19.013382] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   19.172354] livepatch: enabling patch 'livepatch_7'
+[   20.283283] livepatch: 'livepatch_7': starting patching transition
+[   20.470410] livepatch: 'livepatch_7': patching complete
+---
+
+START: 2026-10-14 20:59:54 +0200
+COMMAND: i=0; while test "$i" -lt 32; do sh -c : || exit 1; i=$((i + 1)); done
+END: 2026-10-14 20:59:55 +0200
+ELAPSED: 0.44s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:55 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-14 20:59:55 +0200
+ELAPSED: 0.37s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:55 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-14 20:59:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:55 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-14 20:59:55 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:55 +0200
+COMMAND: /etc/livepatch-lifecycle/kvm-smoke
+END: 2026-10-14 20:59:55 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-14 20:59:55 +0200
+COMMAND: test -e /sys/kernel/livepatch/livepatch_7/enabled
+END: 2026-10-14 20:59:55 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:55 +0200
+COMMAND: sh -c 'echo 0 > /sys/kernel/livepatch/livepatch_7/enabled'
+END: 2026-10-14 20:59:55 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:55 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 20:59:56 +0200
+ELAPSED: 0.05s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:57 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 20:59:57 +0200
+ELAPSED: 0.05s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:58 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 20:59:58 +0200
+ELAPSED: 0.04s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 20:59:59 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 20:59:59 +0200
+ELAPSED: 0.05s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:00 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:00 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:01 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:01 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:02 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:02 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:03 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:03 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:04 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:04 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:05 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:05 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:06 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:06 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:07 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:07 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:08 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:08 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:09 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:09 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:10 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:10 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:11 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:11 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:12 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:12 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:13 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:13 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:14 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:14 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:15 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:15 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:16 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:16 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:17 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:17 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:18 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:18 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:19 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:19 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:20 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:20 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:21 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:21 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:22 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:22 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:23 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:23 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:24 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:24 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:25 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:25 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:26 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:26 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:27 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:27 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:28 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:28 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:29 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:29 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:30 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:30 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:31 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:32 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:33 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:33 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:34 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:34 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:35 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:35 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:36 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:36 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: rmmod livepatch_7
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: dmesg | tail -n +532
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+[   19.013370] livepatch_7: loading out-of-tree module taints kernel.
+[   19.013379] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   19.013382] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   19.172354] livepatch: enabling patch 'livepatch_7'
+[   20.283283] livepatch: 'livepatch_7': starting patching transition
+[   20.470410] livepatch: 'livepatch_7': patching complete
+[   21.269326] livepatch: applying patch 'livepatch_7' to loading module 'kvm'
+[   21.349805] livepatch: applying patch 'livepatch_7' to loading module 'kvm_intel'
+[   21.631410] livepatch: 'livepatch_7': starting unpatching transition
+[   61.970373] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: i=0; while test "$i" -lt 32; do sh -c : || exit 1; i=$((i + 1)); done
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.17s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: /etc/livepatch-lifecycle/kvm-smoke
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: test "$(sha256sum /etc/livepatch-lifecycle/predecessor-intel.ko | cut -d' ' -f1)" = 960b13f1b461b95e29cccff58ddf0d3f3badf151046eb46eba36a9c8c7e5efe3
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.37s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: test "$(modinfo -F name /etc/livepatch-lifecycle/predecessor-intel.ko)" = livepatch_6
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: modinfo -F vermagic /etc/livepatch-lifecycle/predecessor-intel.ko | grep -q '^6.12.95 '
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: ln -snf /run/current-system/kernel-modules/lib/modules/6.12.95 /lib/modules/6.12.95.6
+END: 2026-10-14 21:00:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:37 +0200
+COMMAND: insmod /etc/livepatch-lifecycle/predecessor-intel.ko
+END: 2026-10-14 21:00:38 +0200
+ELAPSED: 0.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:38 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_6 && test "$(cat /sys/kernel/livepatch/livepatch_6/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_6/transition)" = 0
+END: 2026-10-14 21:00:38 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:39 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_6 && test "$(cat /sys/kernel/livepatch/livepatch_6/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_6/transition)" = 0
+END: 2026-10-14 21:00:39 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:40 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_6 && test "$(cat /sys/kernel/livepatch/livepatch_6/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_6/transition)" = 0
+END: 2026-10-14 21:00:40 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:40 +0200
+COMMAND: test "$(uname -r)" = 6.12.95.6
+END: 2026-10-14 21:00:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:40 +0200
+COMMAND: insmod /nix/store/2hamis54xzn5pkj5n7l4gi45mr46a89f-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko
+END: 2026-10-14 21:00:41 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:41 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7 && test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-14 21:00:41 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:41 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_6 || { test "$(cat /sys/kernel/livepatch/livepatch_6/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_6/transition)" = 0; }
+END: 2026-10-14 21:00:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:41 +0200
+COMMAND: dmesg | tail -n +532
+END: 2026-10-14 21:00:41 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[   19.013370] livepatch_7: loading out-of-tree module taints kernel.
+[   19.013379] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   19.013382] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   19.172354] livepatch: enabling patch 'livepatch_7'
+[   20.283283] livepatch: 'livepatch_7': starting patching transition
+[   20.470410] livepatch: 'livepatch_7': patching complete
+[   21.269326] livepatch: applying patch 'livepatch_7' to loading module 'kvm'
+[   21.349805] livepatch: applying patch 'livepatch_7' to loading module 'kvm_intel'
+[   21.631410] livepatch: 'livepatch_7': starting unpatching transition
+[   61.970373] livepatch: 'livepatch_7': unpatching complete
+[   63.693718] livepatch: enabling patch 'livepatch_6'
+[   64.117111] livepatch: 'livepatch_6': starting patching transition
+[   65.429401] livepatch: 'livepatch_6': patching complete
+[   66.466350] livepatch: enabling patch 'livepatch_7'
+[   66.806966] livepatch: 'livepatch_7': starting patching transition
+[   67.214380] livepatch: 'livepatch_7': patching complete
+---
+
+START: 2026-10-14 21:00:41 +0200
+COMMAND: i=0; while test "$i" -lt 32; do sh -c : || exit 1; i=$((i + 1)); done
+END: 2026-10-14 21:00:41 +0200
+ELAPSED: 0.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:41 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-14 21:00:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:41 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-14 21:00:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:41 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-14 21:00:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:41 +0200
+COMMAND: /etc/livepatch-lifecycle/kvm-smoke
+END: 2026-10-14 21:00:41 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-14 21:00:41 +0200
+COMMAND: rmmod livepatch_6
+END: 2026-10-14 21:00:41 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:41 +0200
+COMMAND: test -d /sys/module/livepatch_6
+END: 2026-10-14 21:00:41 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:41 +0200
+COMMAND: insmod /etc/livepatch-lifecycle/predecessor-intel.ko
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.09s
+STATUS: 1
+OUTPUT:
+insmod: ERROR: could not insert module /etc/livepatch-lifecycle/predecessor-intel.ko: Invalid parameters
+---
+
+START: 2026-10-14 21:00:42 +0200
+COMMAND: test -d /sys/module/livepatch_6
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:42 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7 && test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:42 +0200
+COMMAND: dmesg | tail -n +532
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+[   19.013370] livepatch_7: loading out-of-tree module taints kernel.
+[   19.013379] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   19.013382] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   19.172354] livepatch: enabling patch 'livepatch_7'
+[   20.283283] livepatch: 'livepatch_7': starting patching transition
+[   20.470410] livepatch: 'livepatch_7': patching complete
+[   21.269326] livepatch: applying patch 'livepatch_7' to loading module 'kvm'
+[   21.349805] livepatch: applying patch 'livepatch_7' to loading module 'kvm_intel'
+[   21.631410] livepatch: 'livepatch_7': starting unpatching transition
+[   61.970373] livepatch: 'livepatch_7': unpatching complete
+[   63.693718] livepatch: enabling patch 'livepatch_6'
+[   64.117111] livepatch: 'livepatch_6': starting patching transition
+[   65.429401] livepatch: 'livepatch_6': patching complete
+[   66.466350] livepatch: enabling patch 'livepatch_7'
+[   66.806966] livepatch: 'livepatch_7': starting patching transition
+[   67.214380] livepatch: 'livepatch_7': patching complete
+[   67.695886] livepatch: Livepatch patch (livepatch_6) is not compatible with the already installed livepatches.
+---
+
+START: 2026-10-14 21:00:42 +0200
+COMMAND: i=0; while test "$i" -lt 32; do sh -c : || exit 1; i=$((i + 1)); done
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:42 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:42 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:42 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:42 +0200
+COMMAND: /etc/livepatch-lifecycle/kvm-smoke
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-14 21:00:42 +0200
+COMMAND: test -e /sys/kernel/livepatch/livepatch_7/enabled
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:42 +0200
+COMMAND: sh -c 'echo 0 > /sys/kernel/livepatch/livepatch_7/enabled'
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:42 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:42 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:43 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:43 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:44 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:44 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:45 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:45 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:46 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:46 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:47 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:47 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:48 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:48 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:49 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:49 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:50 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:50 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:51 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:51 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:52 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:52 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:53 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:53 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:54 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:54 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:55 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:55 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:56 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:56 +0200
+ELAPSED: 0.04s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:57 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:57 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:58 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:00:58 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:00:59 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:00 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:01 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:01 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:02 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:02 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:03 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:03 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:04 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:04 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:05 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:05 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:06 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:06 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:07 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:07 +0200
+ELAPSED: 0.04s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:08 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:08 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:09 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:09 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:10 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:10 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:11 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:11 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:12 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:12 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:13 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:13 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:14 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:14 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:15 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:15 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:16 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:16 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:17 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:17 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:18 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:18 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:19 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:19 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:20 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-14 21:01:20 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:20 +0200
+COMMAND: rmmod livepatch_7
+END: 2026-10-14 21:01:20 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:20 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-14 21:01:20 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:20 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:01:20 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:20 +0200
+COMMAND: dmesg | tail -n +532
+END: 2026-10-14 21:01:20 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[   19.013370] livepatch_7: loading out-of-tree module taints kernel.
+[   19.013379] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   19.013382] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   19.172354] livepatch: enabling patch 'livepatch_7'
+[   20.283283] livepatch: 'livepatch_7': starting patching transition
+[   20.470410] livepatch: 'livepatch_7': patching complete
+[   21.269326] livepatch: applying patch 'livepatch_7' to loading module 'kvm'
+[   21.349805] livepatch: applying patch 'livepatch_7' to loading module 'kvm_intel'
+[   21.631410] livepatch: 'livepatch_7': starting unpatching transition
+[   61.970373] livepatch: 'livepatch_7': unpatching complete
+[   63.693718] livepatch: enabling patch 'livepatch_6'
+[   64.117111] livepatch: 'livepatch_6': starting patching transition
+[   65.429401] livepatch: 'livepatch_6': patching complete
+[   66.466350] livepatch: enabling patch 'livepatch_7'
+[   66.806966] livepatch: 'livepatch_7': starting patching transition
+[   67.214380] livepatch: 'livepatch_7': patching complete
+[   67.695886] livepatch: Livepatch patch (livepatch_6) is not compatible with the already installed livepatches.
+[   68.176342] livepatch: 'livepatch_7': starting unpatching transition
+[  105.751464] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-14 21:01:20 +0200
+COMMAND: i=0; while test "$i" -lt 32; do sh -c : || exit 1; i=$((i + 1)); done
+END: 2026-10-14 21:01:20 +0200
+ELAPSED: 0.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:20 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-14 21:01:20 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:20 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-14 21:01:20 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:20 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-14 21:01:20 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:01:20 +0200
+COMMAND: /etc/livepatch-lifecycle/kvm-smoke
+END: 2026-10-14 21:01:20 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-14 21:01:20 +0200
+COMMAND: poweroff -f
+END: 2026-10-14 21:01:21 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Grabbing all containers
+---
+

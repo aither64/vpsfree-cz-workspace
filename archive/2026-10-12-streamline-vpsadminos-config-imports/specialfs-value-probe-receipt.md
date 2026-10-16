@@ -1,0 +1,1 @@
+The expression and result retain the prior planning-only evaluation from parent tool session85818. The final write_stdin tool result was exit_code0 and returned the recorded JSON. That probe retained the upstream callback body; it proves the supported override/dependency/dry seam, not newly implemented bind preparation or runtime. No evaluation was rerun to save these artifacts.

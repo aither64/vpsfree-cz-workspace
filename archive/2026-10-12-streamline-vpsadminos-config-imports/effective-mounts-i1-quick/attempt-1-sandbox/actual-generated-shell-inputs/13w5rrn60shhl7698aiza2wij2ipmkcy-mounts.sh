@@ -1,0 +1,17 @@
+specialMount "none" "/" "x-initrd.mount" "tmpfs"
+
+specialMount "devtmpfs" "/dev" "nosuid,strictatime,mode=755,size=5%" "devtmpfs"
+
+specialMount "devpts" "/dev/pts" "nosuid,noexec,mode=620,ptmxmode=0666,gid=3" "devpts"
+
+specialMount "tmpfs" "/dev/shm" "nosuid,nodev,strictatime,mode=1777,size=50%" "tmpfs"
+
+specialMount "proc" "/proc" "nosuid,noexec,nodev" "proc"
+
+specialMount "tmpfs" "/run" "nosuid,nodev,strictatime,mode=755,size=25%" "tmpfs"
+
+specialMount "tmpfs" "/run/keys" "nosuid,nodev,mode=750" "tmpfs"
+
+specialMount "/fixture/backing storage/nixos" "/var/lib/nixos" "bind,x-gvfs-hide" "none"
+
+specialMount "/fixture/backing storage/log" "/var/log" "bind,x-gvfs-hide" "none"

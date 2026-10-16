@@ -1,0 +1,1987 @@
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/cs/navody/distribuce/nixos.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/cs/navody/distribuce/nixos.txt
+new file mode 100644
+index 00000000..c22c444f
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/cs/navody/distribuce/nixos.txt
+@@ -0,0 +1,87 @@
++<page>manuals:distributions:nixos</page>
++====== NixOS ======
++[[https://nixos.org|NixOS]] je distribuce založená na balíčkovacím systému Nix.
++Konfigurace systému a všech služeb se provádí deklarativně. Tato stránka popisuje
++použití NixOS na vpsFree.cz VPS. Pro více informací o NixOS obecně viz
++[[https://nixos.org/learn.html|dokumentace]].
++
++===== Podporované verze =====
++Poskytujeme šablony VPS pro stabilní vydání NixOS a průběžně pro NixOS unstable.
++
++Sami NixOS používáme na naší
++[[https://github.com/vpsfreecz/vpsfree-cz-configuration|infrastruktuře]].
++Naše virtualizační platforma [[navody:vps:vpsadminos|vpsAdminOS]] je dokonce
++na NixOS a nixpkgs založená.
++
++===== Prvotní konfigurace =====
++VPS je vytvořeno ze šablony, která obsahuje minimální systém a SSH.
++Pro přihlášení je možné použít [[navody:vps:sprava#heslo_roota|vygenerované heslo]],
++nebo si nechat [[navody:vps:sprava#automaticke_vlozeni_klicu|nahrát veřejný klíč]] přes
++vpsAdmin. Systém lze pak spravovat pomocí ''nixos-rebuild'':
++
++<code>
++nixos-rebuild switch --flake /etc/nixos#vps
++</code>
++
++Naše VPS jsou linuxové kontejnery, není zde zavaděč, jádro je sdílené a je potřeba
++určité nastavení pro správnou funkci NixOS. V šabloně je proto vpsAdminOS jako flake input a potřebný
++modul je importován do konfigurace systému.
++
++Při vytvoření VPS a reinstalaci systému je možné do VPS přes vpsAdmin nahrát a nasadit vlastní
++konfiguraci, viz [[navody:vps:userdata|user data]].
++
++===== Konfigurace kontejneru =====
++Pro stabilní vydání NixOS přidej do seznamu ''modules'' ve flake kompatibilní modul:
++
++<code nix>
++vpsadminos.nixosModules.containerStable
++</code>
++
++Modul vybere nastavení podle vydání tvého ''nixpkgs''. Při přechodu na jiné
++registrované stabilní vydání ponech tento import a aktualizuj input ''nixpkgs''.
++Udržuj aktuální také input ''vpsadminos''. Pokud jeho připnutá revize neobsahuje
++tvé vydání, vyhodnocení skončí chybou se seznamem dostupných vydání.
++''system.stateVersion'' řídí kompatibilitu s existujícím stavem; tento modul podle
++něj nevybírá nastavení a při aktualizaci NixOS obvykle zůstává beze změny.
++
++Vydání můžeš vybrat také přímo nebo pomocí řetězce s číslem vydání:
++
++<code nix>
++vpsadminos.nixosModules.containers."26.05"
++vpsadminos.nixosModules.containers.${nixpkgs.lib.trivial.release}
++</code>
++
++Každý řádek je samostatná varianta importu. ''containers'' je mapa vydání;
++importuj konkrétní položku. Starší názvy jako ''container_26_05'' zůstávají
++k dispozici. ''nixosModules.container'' je alias ''containerStable''.
++Pro NixOS unstable použij výslovně ''vpsadminos.nixosModules.containerUnstable''.
++Stabilní selektor nerozpoznává větev unstable.
++
++Konfigurace existujících VPS se automaticky nepřepisují. Pokud tvůj flake používá
++starší import pro konkrétní vydání, aktualizuj input vpsAdminOS a změň import na
++''containerStable''. Připnutou verzi nixpkgs a stateVersion přitom ponech.
++Nixpkgs pak můžeš aktualizovat samostatně. Přehled modulů a konfiguraci pomocí
++samostatného souboru popisuje
++[[https://vpsadminos.org/containers/nixos/|konfigurace NixOS kontejneru]].
++
++===== Správa VPS =====
++Přejdi na [[:domu|návody VPS]] pro více informací o naší infrastruktuře a možnostech VPS.
++
++===== Impermanence =====
++Viz [[navody:distribuce:nixos:impermanence]].
++
++===== GitHub API limit =====
++Nixpkgs se stahují z [[https://github.com/nixos/nixpkgs|GitHubu]] a [[https://nixos.wiki/wiki/Binary_Cache|Binary Cache]]. GitHub nepodporuje IPv6 a má limity buď [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-unauthenticated-users|per IPv4]] nebo [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-authenticated-users|per uživatel]].
++Při vyčerpání Nix (respektive GitHub API) zahlásí:
++<code>
++error: unable to download 'GITHUB_URL': HTTP error 403 ('')
++
++       response body:
++
++       {"message":"API rate limit exceeded for IP_ADDR. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}
++</code>
++Řešením je [[https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token|vyrobit si personal access token]] (Public repositories, v Permissions není potřeba nic) a [[https://search.nixos.org/options?channel=26.05&query=nix.settings&type=options#show=option%253Anix.settings|předat konfiguraci]] Nixu:
++<code>
++# configuration.nix
++nix.settings.access-tokens = [ "github.com=github_pat_TokenTokenChangeMe" ];
++</code>
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/cs/navody/distribuce/nixos/impermanence.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/cs/navody/distribuce/nixos/impermanence.txt
+new file mode 100644
+index 00000000..30e57a2e
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/cs/navody/distribuce/nixos/impermanence.txt
+@@ -0,0 +1,125 @@
++<page>manuals:distributions:nixos:impermanence</page>
++====== NixOS Impermanence ======
++
++Tato stránka popisuje použití modulu [[https://github.com/nix-community/impermanence|NixOS Impermanence]] na vpsFree.cz. Podporujeme impermanence s kořenovým souborovým systémem v dočasném ZFS datasetu, který poskytuje naše platforma. Je nutné přesunout Nix store do subdatasetu, což lze automaticky provést [[#pouziti_os_sablony|použitím OS šablony pro impermanence]] nebo to nastavit [[#manualni_konfigurace|manuálně]].
++
++Upozorňujeme, že při zapnutí impermanence bude kořenový souborový systém skutečně dočasný a jeho data se při každém startu VPS resetují. Tento dočasný dataset také není zálohován. Dávejte pozor, kde ukládáte svá data. Pokud nejsou na trvalém úložišti, budou ztracena.
++
++===== Použití OS šablony =====
++vpsAdmin obsahuje OS šablony, kde je impermanence předkonfigurována. Při vytváření nové VPS vyberte odpovídající šablonu (v názvu je uvedeno impermanence). Nová VPS bude mít ''/nix'' vyčleněný do subdatasetu. Root dataset bude připojen na ''/persistent'' a počáteční flake konfigurace NixOS bude nasazena do ''/etc/nixos'', viz ''/etc/nixos/flake.nix'' a ''/etc/nixos/configuration.nix''. Šablona také vytvoří ''/etc/nixos/flake.lock'', takže verze vpsAdminOS, ''nixpkgs'' a impermanence budou připnuté společně.
++
++Impermanence je přidána jako flake input. Pokud ji chcete aktualizovat, aktualizujte lock soubor a systém znovu sestavte:
++
++<code bash>
++cd /etc/nixos
++nix flake lock --update-input impermanence
++nixos-rebuild switch --flake /etc/nixos#vps
++</code>
++
++Upozorňujeme, že přeinstalace VPS nebude účinná, protože přeinstalace změní pouze root dataset. Nix store se nepřesune, pokud je již v subdatasetu. Ze stejného důvodu nemůžete pomocí přeinstalace převést existující VPS na impermanence. OS šablona automaticky nakonfiguruje VPS pouze při jeho vytvoření. Viz [[#manualni_konfigurace|manuální konfigurace]] pokud chcete zapnout impermanence na stávající VPS.
++
++===== Manuální konfigurace =====
++
++==== 1. Vytvoření NixOS VPS ====
++Vytvořte nový VPS a nechte ho spustit. Můžete také použít svůj stávající NixOS VPS.
++
++==== 2. Spuštění VPS v rescue módu ====
++V detailu VPS použijte formulář <vpsadmin-nav id="vps.boot-rescue.open">**Spustit VPS ze šablony (nouzový režim)**</vpsadmin-nav>. Nejlepší je vybrat jinou distribuci než NixOS, aby zde nebyl adresář ''/nix''. Použijte např. Alpine nebo Debian.
++
++==== 3. Vytvoření VPS subdatasetu pro Nix store ====
++V detailu VPS vytvořte subdataset ''nix'', který bude připojen na ''/nix'' (proto jsme v předchozím kroku nechtěli bootovat do NixOS). Možná budete muset uvolnit nějaké místo na disku, abyste mohli vytvořit dataset, což lze provést zmenšením root datasetu.
++
++==== 4. Přesun Nix store do subdatasetu ====
++Přihlaste se do VPS v rescue módu, buď přes SSH, nebo použijte vzdálenou konzoli. Root dataset je připojen na ''/mnt/vps'' a náš nový subdataset ''nix'' je připojen na ''/nix''. Chceme přesunout Nix store z root datasetu do subdatasetu.
++
++<code bash>
++mv /mnt/vps/nix/* /nix/
++</code>
++
++==== 5. Připojení root datasetu do /persistent ====
++V režimu impermanence bude váš kořenový souborový systém dočasný a při každém startu vymazán. Naše trvalé úložiště připojíme do ''/persistent''. Může to být root dataset, nebo můžete vytvořit další subdataset pro tento účel. Zde použijeme root dataset. V detailu VPS klikněte na odkaz <vpsadmin-nav id="datasets.mount.open">**Mount**</vpsadmin-nav> u prvního uvedeného datasetu (jeho název je ID VPS) a připojte ho do ''/persistent''.
++
++==== 6. Restart VPS ====
++Nyní restartujte VPS, čímž opustíte rescue mód.
++
++==== 7. Úprava flake konfigurace a přidání impermanence ====
++Šablony vpsAdminOS mají flakes zapnuté ve výchozím stavu. Vytvoř
++''/etc/nixos/flake.nix'' a své lokální nastavení ponech v
++''/etc/nixos/configuration.nix''.
++Příklad používá NixOS 25.11. Pro jiné stabilní vydání změň input ''nixpkgs''
++na odpovídající větev ''nixos-YY.MM''. Modul ''containerStable'' automaticky vybere
++nastavení pro dané vydání. Udržuj input vpsAdminOS aktuální, aby obsahoval modul
++pro zvolené vydání. Pro NixOS unstable použij ''github:NixOS/nixpkgs/nixos-unstable''
++a ''vpsadminos.nixosModules.containerUnstable''. Dostupné importy popisuje
++[[navody:distribuce:nixos#konfigurace_kontejneru|konfigurace kontejneru]].
++
++<file nix /etc/nixos/flake.nix>
++{
++  inputs = {
++    vpsadminos.url = "github:vpsfreecz/vpsadminos";
++    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
++    impermanence.url = "github:nix-community/impermanence";
++  };
++
++  outputs = { nixpkgs, vpsadminos, impermanence, ... }: {
++    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++      system = "x86_64-linux";
++      modules = [
++        vpsadminos.nixosModules.containerStable
++        impermanence.nixosModules.impermanence
++        ./configuration.nix
++      ];
++    };
++  };
++}
++</file>
++
++Poté rozšiřte svou konfiguraci a přidejte nastavení persistence:
++
++<file nix /etc/nixos/configuration.nix>
++{ ... }:
++{
++  environment.persistence."/persistent" = {
++    hideMounts = true;
++    directories = [
++      "/etc/nixos"
++      "/var/log"
++      "/var/lib/nixos"
++    ];
++    files = [
++      "/etc/machine-id"
++    ];
++  };
++}
++</file>
++
++Ujistěte se, že jsou flakes povolené, například:
++
++<code nix>
++nix.settings.experimental-features = [
++  "nix-command"
++  "flakes"
++];
++</code>
++
++Upozorňujeme, že ''/persistent'' musí odpovídat mountpointu datasetu, ale můžete si zvolit libovolný název. Datasety budou připojeny prostřednictvím vpsAdminOS, takže není nutné konfigurovat položky ''fileSystems''.
++
++Až budete hotovi, nasaďte novou konfiguraci pro další restart:
++
++<code bash>
++nixos-rebuild boot --flake /etc/nixos#vps
++</code>
++
++==== 8. Zapnutí funkce impermanence ====
++V detailu VPS ve formuláři <vpsadmin-nav id="vps.features.open">**Funkce**</vpsadmin-nav> zapněte funkci **NixOS Impermanence**. To nakonfiguruje VPS tak, aby při startu používal čistý, dočasný dataset. Jeho obsah bude při každém restartu ztracen a není zálohován. Zapnutí této funkce způsobí restart VPS do konfigurace, kterou jsme připravili v kroku **7**.
++
++Uvnitř VPS můžete zkontrolovat připojené souborové systémy:
++
++<code>
++root@nixos:/# df -hT | grep zfs
++tank/ct/11327.impermanence-c5a8b7 zfs     10G  768K   10G   1% /
++tank/ct/11327/nix                 zfs     20G  1.1G   19G   6% /nix
++tank/ct/11327                     zfs    100G  7.7M  120G   1% /persistent
++</code>
++
++''/'' je založeno na dočasném datasetu, ''11327'' se používá pro ''/persistent'' a ''11327/nix'' obsahuje Nix store.
+\ No newline at end of file
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/cs/navody/vps/userdata.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/cs/navody/vps/userdata.txt
+new file mode 100644
+index 00000000..de5d2eaf
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/cs/navody/vps/userdata.txt
+@@ -0,0 +1,217 @@
++<page>manuals:vps:userdata</page>
++====== User data =======
++Při vytvoření nebo reinstalaci VPS může vpsAdmin do VPS nahrát skript nebo konfiguraci
++pro [[https://cloud-init.io/|cloud-init]]. Tento skript nebo konfigurace se aplikuje při prvním
++spuštění VPS. Podporujeme tyto formáty prvotní konfigurace:
++
++  * [[#script|script]]
++  * [[#cloud-init_config|cloud-init config]]
++  * [[#cloud-init_script|cloud-init script]]
++  * [[#nixos_configuration|NixOS konfigurace]]
++  * [[#nixos_flake_configuration|NixOS flake konfigurace]]
++  * [[#nixos_flake_uri|NixOS flake URI]]
++
++Skripty a konfigurace je možné si do vpsAdminu uložit a při vytvoření/reinstalaci VPS
++vyberete způsob konfigurace. Správu uložených konfigurací najdeme ve vpsAdminu menu <vpsadmin-nav id="userdata.manage-vps.open">**VPS** -> **User data**</vpsadmin-nav>,
++popř. <vpsadmin-nav id="userdata.manage-profile.open">**Upravit profil** -> **User data**</vpsadmin-nav>. Při vytvoření/reinstalaci VPS lze konfiguraci vložit i přímo
++bez ukládání do vpsAdminu. Konfiguraci do vpsAdminu není nutné ukládat, jen vám to ulehčí opakované
++použítí konfigurací, které se nemění.
++
++Pro vývoj a testování je možné uloženou konfiguraci nahrát do VPS kdykoliv,
++<vpsadmin-nav id="userdata.deploy.open">**vpsAdmin** -> **VPS** -> **User data** -> Upravit položku ze seznamu a poté formulář **Nasadit do VPS**</vpsadmin-nav>.
++Tato akce pouze zapíše skript/konfiguraci na disk VPS, k jejímu spuštění dojde až při restartu VPS.
++
++===== Formáty konfigurace =====
++==== Script ====
++vpsAdmin do VPS nahraje zadaný skript a integruje jej do init systému VPS, tj. způsob
++záleží na použité distribuci. V distribucích se systemd je to služba ''vpsadmin-script.service''.
++Výstup ze spuštěného skriptu je uložen v journalu, tj. ''journalctl -u vpsadmin-script.service'', popř.
++v souboru ''/var/log/vpsadmin-script-output.log''.
++
++Příklad skriptu:
++
++<code bash>
++#!/bin/sh
++
++apt install -y nginx
++echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
++</code>
++
++Služba i skript se po spuštění automaticky smaže.
++
++Pokud skript přes vpsAdmin nahrajeme do existující VPS, spustíme ho následovně:
++
++<code bash>
++# systemd
++systemctl daemon-reload
++systemctl start vpsadmin-script.service
++
++# OpenRC
++service vpsadmin-script start
++</code>
++=== Proměnné prostředí ===
++Spuštěný skript má k dispozici tyto proměnné prostředí:
++
++  * ''VPSADMIN_VPS_ID'' - ID VPS
++
++==== cloud-init config ===
++Konfigurace pro cloud-init jako YAML, viz https://cloudinit.readthedocs.io/en/latest/explanation/format.html#cloud-config-data
++
++Příklad konfigurace:
++
++<code yaml>
++#cloud-config
++users:
++  - name: myuser
++    ssh_authorized_keys:
++      - "ssh-rsa AAAA..."
++packages:
++  - htop
++  - curl
++runcmd:
++  - echo "Hello, world!" > /root/welcome.txt
++</code>
++
++Výstup cloud-init je vidět v kernel logu a je uložen v souboru ''/var/log/cloud-init-output.log''.
++
++==== cloud-init script =====
++Skript spuštěný přes cloud-init, viz
++https://cloudinit.readthedocs.io/en/latest/explanation/format.html#user-data-script
++
++Výstup cloud-init je vidět v kernel logu a je uložen v souboru ''/var/log/cloud-init-output.log''.
++
++==== NixOS configuration ====
++Vložená konfigurace se uloží do ''/etc/vpsadmin-nixos/configuration.nix''
++a po startu VPS se provede ''nixos-rebuild switch''. Mějte na paměti, že vložená
++konfigurace musí importovat ''vpsadminos.nix'', nebo jej rovnou zahrnovat.
++
++Příklad konfigurace:
++
++<code nix>
++{ config, pkgs, lib, ... }:
++{
++  imports = [
++    /etc/nixos/vpsadminos.nix
++  ];
++
++  environment.systemPackages = with pkgs; [
++    vim
++  ];
++
++  services.openssh.enable = true;
++  services.openssh.settings.PermitRootLogin = "yes";
++  #users.extraUsers.root.openssh.authorizedKeys.keys =
++  #  [ "..." ];
++
++  systemd.extraConfig = ''
++    DefaultTimeoutStartSec=900s
++  '';
++
++  time.timeZone = "Europe/Amsterdam";
++
++  system.stateVersion = "24.11";
++}
++</code>
++
++Výstup příkazu ''nixos-rebuild'' je uložen do ''/var/log/vpsadmin-nixos-output.log''.
++
++==== NixOS flake configuration ====
++Konfigurace se uloží do souboru ''/etc/vpsadmin-nixos/flake.nix'' a spustí se příkaz ''nixos-rebuild switch --flake /etc/vpsadmin-nixos#vps''. Konfigurace pro systém ''vps'' musí být součástí vloženého ''flake.nix''.
++
++Příklad konfigurace:
++
++<code nix>
++{
++  inputs = {
++    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
++    vpsadminos.url = "github:vpsfreecz/vpsadminos/staging";
++  };
++
++  outputs = { self, nixpkgs, vpsadminos }: {
++    # Zde musí být konfigurace s názvem "vps"
++    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++      modules = [
++        ({ config, pkgs, lib, ... }:
++        {
++          imports = [
++            vpsadminos.nixosModules.containerStable
++          ];
++
++          environment.systemPackages = with pkgs; [
++            vim
++          ];
++
++          services.openssh.enable = true;
++          services.openssh.settings.PermitRootLogin = "yes";
++          #users.extraUsers.root.openssh.authorizedKeys.keys =
++          #  [ "..." ];
++
++          systemd.extraConfig = ''
++            DefaultTimeoutStartSec=900s
++          '';
++
++          time.timeZone = "Europe/Amsterdam";
++
++          nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
++
++          system.stateVersion = "24.11";
++        })
++      ];
++    };
++  };
++}
++</code>
++
++Výstup příkazu ''nixos-rebuild'' je uložen do ''/var/log/vpsadmin-nixos-output.log''.
++
++==== NixOS flake URI ====
++Po startu VPS se spustí příkaz ''nixos-rebuild switch --flake $flake_uri''. Tímto způsobem můžete
++jednoduše nasadit konfiguraci, kterou máte veřejně k dispozici třeba na GitHubu.
++
++Ukázka použití:
++
++<code nix>
++github:vpsfreecz/example-vps-flake#vps
++</code>
++
++Tuto konfiguraci najdete na https://github.com/vpsfreecz/example-vps-flake.
++
++Výstup příkazu ''nixos-rebuild'' je uložen do ''/var/log/vpsadmin-nixos-output.log''.
++
++===== Použítí s vpsfreectl =====
++Prvotní konfiguraci je možné do VPS nahrát také pomocí [[navody:vps:api|vpsfreectl]].
++Nejdříve si připravíme soubor se skriptem:
++
++<code bash>
++cat <<EOF > my-script.sh
++#!/bin/sh
++
++apt install -y nginx
++echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
++EOF
++</code>
++
++Nyní vytvoříme novou VPS:
++
++<code bash>
++vpsfreectl vps create -- \
++                      --hostname vps \
++                      --os-template 168 \
++                      --location 7 \
++                      --user-data-format script \
++                      --user-data-content @my-script.sh
++</code>
++
++Hodnota parametru ''--user-data-content'' začíná s ''@'' a ''vpsfreectl'' tak pošle obsah souboru ''my-script.sh''. OS template **168** je Ubuntu 24.04 (''vpsfreectl os_template list''), location **7** je [[navody:vps:stagingvps|Staging]] (''vpsfreectl location list''). Stejně tak můžeme skript
++nahrát při reinstalaci VPS:
++
++<code bash>
++vpsfreectl vps reinstall 123 -- --user-data-format script --user-data-content @my-script.sh
++</code>
++
++===== Podporované distribuce =====
++
++Všechny kromě následujících výjimek:
++
++  * script není podporován na Guix, NixOS a Slackware
++  * cloud-init není podporován na Guix, NixOS, Slackware a Void Linuxu
+\ No newline at end of file
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/en/manuals/distributions/nixos.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/en/manuals/distributions/nixos.txt
+new file mode 100644
+index 00000000..6c8d35ae
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/en/manuals/distributions/nixos.txt
+@@ -0,0 +1,87 @@
++====== NixOS ======
++[[https://nixos.org|NixOS]] is a distribution based on the Nix package manager.
++It allows one to declaratively configure the system and its services. This page
++describes NixOS specifics on vpsFree.cz's VPS. For more information about NixOS
++in general, see its [[https://nixos.org/learn.html|documentation]].
++
++===== Supported versions =====
++We provide templates for the stable releases and continually for unstable.
++
++NixOS is used heavily at vpsFree.cz for its
++[[https://github.com/vpsfreecz/vpsfree-cz-configuration|infrastructure and services]],
++so we make sure that it works reliably. We use mainly the current stable release.
++Our virtualization platform [[manuals:vps:vpsadminos|vpsAdminOS]] is actually
++based on NixOS and nixpkgs.
++
++===== Initial configuration =====
++The VPS is created from a template which contains a minimal system with SSH.
++You can log in using a [[manuals:vps:management#root_password|generated password]]
++or [[manuals:vps:management#ssh_public_keys|deploy your public key]] using vpsAdmin.
++The system can then be configured using :
++
++<code>
++nixos-rebuild switch --flake /etc/nixos#vps
++</code>
++
++Note that our VPS are Linux containers, so there is no boot loader, the kernel is shared
++and some configuration is required for the VPS to work properly. The template handles this by using vpsAdminOS as flake input and importing the necessary module.
++
++It is possible to deploy custom configuration using vpsAdmin on VPS creation and reinstallation,
++see [[manuals:vps:userdata|user data]].
++
++===== Container configuration =====
++For stable NixOS releases, include the compatibility module in your flake's
++''modules'' list:
++
++<code nix>
++vpsadminos.nixosModules.containerStable
++</code>
++
++It selects the module using your ''nixpkgs'' release. When upgrading to another
++registered stable release, keep this import and update the ''nixpkgs'' input.
++Keep the ''vpsadminos'' input up to date too. If its pinned revision does not
++include your release, evaluation fails and lists the available releases.
++''system.stateVersion'' controls compatibility with existing state; it does not
++select this module and normally stays unchanged during a NixOS upgrade.
++
++You can also select a release explicitly or look it up using the release string:
++
++<code nix>
++vpsadminos.nixosModules.containers."26.05"
++vpsadminos.nixosModules.containers.${nixpkgs.lib.trivial.release}
++</code>
++
++Each line is an alternative module import. ''containers'' is a lookup map;
++import a release entry. The older names such as ''container_26_05'' remain
++available. ''nixosModules.container'' is an alias of ''containerStable''.
++For NixOS unstable, explicitly use ''vpsadminos.nixosModules.containerUnstable''.
++The stable selector does not detect the unstable channel.
++
++Existing VPS configurations are not rewritten automatically. If your flake uses
++an older release-specific import, update the vpsAdminOS input and switch the
++import to ''containerStable'' while keeping your nixpkgs pin and stateVersion.
++You can then upgrade nixpkgs separately. For the module reference and the
++standalone-file configuration, see
++[[https://vpsadminos.org/containers/nixos/|NixOS guest configuration]].
++
++===== VPS management =====
++See the [[:home|VPS manuals]] for more information about our infrastructure and possibilities.
++
++===== Impermanence =====
++See [[manuals:distributions:nixos:impermanence]].
++
++===== GitHub API limit =====
++Nixpkgs  are downloaded from [[https://github.com/nixos/nixpkgs|GitHub]] and [[https://nixos.wiki/wiki/Binary_Cache|Binary Cache]]. GitHub does not support IPv6 and rate limits either  [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-unauthenticated-users|per IPv4]] or [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-authenticated-users|per user]].
++After exhausting the API limit, Nix (or rather GitHub API) complains:
++<code>
++error: unable to download 'GITHUB_URL': HTTP error 403 ('')
++
++       response body:
++
++       {"message":"API rate limit exceeded for IP_ADDR. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}
++</code>
++The solution is to [[https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token|create personal access token]] (Public repositories, the Permissions could be blank) and enter [[https://search.nixos.org/options?channel=26.05&query=nix.settings&type=options#show=option%253Anix.settings|the configuration]] to Nix:
++<code>
++# configuration.nix
++nix.settings.access-tokens = [ "github.com=github_pat_TokenTokenChangeMe" ];
++</code>
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/en/manuals/distributions/nixos/impermanence.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/en/manuals/distributions/nixos/impermanence.txt
+new file mode 100644
+index 00000000..5fab43de
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/en/manuals/distributions/nixos/impermanence.txt
+@@ -0,0 +1,158 @@
++<page>manuals:distributions:nixos:impermanence</page>
++====== NixOS Impermanence ======
++
++This page describes usage of [[https://github.com/nix-community/impermanence|NixOS Impermanence]] module
++at vpsFree.cz. We support impermanence with root filesystem in a temporary ZFS dataset that is
++provided by our platform. It is necessary to move the Nix store to a subdataset, which can be
++done automatically [[#using_os_template|using the OS template for impermanence]], or you can
++set it up [[#manual_configuration|manually]].
++
++Please note that when you enable impermanence, the root file system is indeed temporary
++and its data reset on each VPS start. The temporary dataset also isn't backed up. Be mindful
++of where you store your data. If it isn't in a persistent location, it will be lost.
++
++===== Using OS template =====
++vpsAdmin contains OS templates where impermanence is preconfigured. When creating a new VPS,
++choose the appropriate template (impermanence is in its name). The new VPS will have ''/nix''
++separated in a subdataset. The root dataset will be mounted to ''/persistent'' and initial
++flake-based NixOS configuration will be deployed to ''/etc/nixos'', see ''/etc/nixos/flake.nix''
++and ''/etc/nixos/configuration.nix''. The template also writes ''/etc/nixos/flake.lock'', so
++versions of vpsAdminOS, ''nixpkgs'' and impermanence are pinned together.
++
++Impermanence is included as a flake input. To update it, update the flake lock and rebuild
++the system:
++
++<code bash>
++cd /etc/nixos
++nix flake lock --update-input impermanence
++nixos-rebuild switch --flake /etc/nixos#vps
++</code>
++
++Note that reinstalling the VPS will be ineffective, as reinstall changes only the root dataset.
++It will not touch the Nix store when it is moved to a subdataset. For the same reason, you
++cannot convert an existing VPS to impermanence using reinstall. The OS template will
++auto-configure the VPS only on creation. See [[#manual_configuration|manual configuration]] if you'd like to
++enable impermanence on an existing VPS.
++
++===== Manual configuration =====
++
++==== 1. Create a NixOS VPS ====
++Create a new VPS and let it start. You can also reuse your existing NixOS VPS.
++
++==== 2. Start the VPS in rescue mode ====
++In VPS details, use form <vpsadmin-nav id="vps.boot-rescue.open">**Boot VPS from template (rescue mode)**</vpsadmin-nav>. It's best
++to choose a different distribution than NixOS, so that there's no ''/nix'' directory.
++Use e.g. Alpine or Debian.
++
++==== 3. Create VPS subdataset for the Nix store ====
++In VPS details, create subdataset ''nix'', which will be mounted to ''/nix'' (this is why we didn't
++want to boot into NixOS in the previous step). You might have to free some diskspace in order to be
++able to create the dataset, you can do that by shrinking the root dataset.
++
++==== 4. Move the Nix store to the subdataset ====
++Login to the VPS while in rescue mode, either over SSH or use the remote console.
++The root dataset is mounted at ''/mnt/vps'' and our new subdataset ''nix'' is mounted at
++''/nix''. We want to move the Nix store from the root dataset to the subdataset.
++
++<code bash>
++mv /mnt/vps/nix/* /nix/
++</code>
++
++==== 5. Mount root dataset to /persistent ====
++In the impermanence mode, your root file system will be temporary and cleared on
++every start. We must mount our persistent storage to ''/persistent''. This can be either
++the root dataset, or you can create another subdataset for that purpose. We'll use the root
++dataset. In VPS details, click on <vpsadmin-nav id="datasets.mount.open">**Mount**</vpsadmin-nav> link of the first listed dataset
++(its name is the VPS ID) and mount it to ''/persistent''.
++
++==== 6. Restart the VPS ====
++Now restart the VPS, you will leave the rescue mode.
++
++==== 7. Edit your flake configuration and add impermanence ====
++vpsAdminOS templates enable flakes by default. Create ''/etc/nixos/flake.nix'' and
++keep your local settings in ''/etc/nixos/configuration.nix''.
++The example uses NixOS 25.11. For another stable release, change the
++''nixpkgs'' input to its ''nixos-YY.MM'' branch. The ''containerStable'' module
++selects the compatibility settings for that release automatically. Keep the
++vpsAdminOS input up to date so it includes the module for your chosen release.
++For NixOS unstable, use ''github:NixOS/nixpkgs/nixos-unstable'' and
++''vpsadminos.nixosModules.containerUnstable'' instead. See
++[[manuals:distributions:nixos#container_configuration|container configuration]]
++for the available imports.
++
++<file nix /etc/nixos/flake.nix>
++{
++  inputs = {
++    vpsadminos.url = "github:vpsfreecz/vpsadminos";
++    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
++    impermanence.url = "github:nix-community/impermanence";
++  };
++
++  outputs = { nixpkgs, vpsadminos, impermanence, ... }: {
++    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++      system = "x86_64-linux";
++      modules = [
++        vpsadminos.nixosModules.containerStable
++        impermanence.nixosModules.impermanence
++        ./configuration.nix
++      ];
++    };
++  };
++}
++</file>
++
++Then extend your configuration and add the persistence settings:
++
++<file nix /etc/nixos/configuration.nix>
++{ ... }:
++{
++  environment.persistence."/persistent" = {
++    hideMounts = true;
++    directories = [
++      "/etc/nixos"
++      "/var/log"
++      "/var/lib/nixos"
++    ];
++    files = [
++      "/etc/machine-id"
++    ];
++  };
++}
++</file>
++
++Ensure flakes are enabled, for example:
++
++<code nix>
++nix.settings.experimental-features = [
++  "nix-command"
++  "flakes"
++];
++</code>
++
++Note that ''/persistent'' must match the dataset mountpoint, but you can choose an arbitrary name
++if you like. The datasets will be mounted by vpsAdminOS, so you don't have to configure ''fileSystems''
++entries yourself.
++
++When you're done, deploy the new configuration for the next restart:
++
++<code bash>
++nixos-rebuild boot --flake /etc/nixos#vps
++</code>
++
++==== 8. Turn on impermanence feature ====
++In VPS details, open <vpsadmin-nav id="vps.features.open">**Features**</vpsadmin-nav> and enable the **NixOS Impermanence** feature. This will configure your VPS so that it
++is started with a clean, temporary dataset. Its contents will be lost on every reboot and it's not
++backed up. Turning on the feature will cause the VPS to restart into the configuration we've prepared
++in step **7**.
++
++Inside the VPS, you can check the mounted filesystems:
++
++<code>
++root@nixos:/# df -hT | grep zfs
++tank/ct/11327.impermanence-c5a8b7 zfs     10G  768K   10G   1% /
++tank/ct/11327/nix                 zfs     20G  1.1G   19G   6% /nix
++tank/ct/11327                     zfs    100G  7.7M  120G   1% /persistent
++</code>
++
++''/'' is based in a temporary dataset, ''11327'' is used for ''/persistent'' and ''11327/nix''
++contains the Nix store.
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/en/manuals/vps/userdata.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/en/manuals/vps/userdata.txt
+new file mode 100644
+index 00000000..5f4d981d
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/en/manuals/vps/userdata.txt
+@@ -0,0 +1,204 @@
++====== User Data ======
++When creating or reinstalling a VPS, vpsAdmin can upload a script or configuration for [[https://cloud-init.io/|cloud-init]] into the VPS. This script or configuration is applied on the first startup of the VPS. We support these formats for the initial configuration:
++
++  * [[#script|script]]
++  * [[#cloud-init_config|cloud-init config]]
++  * [[#cloud-init_script|cloud-init script]]
++  * [[#nixos_configuration|NixOS configuration]]
++  * [[#nixos_flake_configuration|NixOS flake configuration]]
++  * [[#nixos_flake_uri|NixOS flake URI]]
++
++Scripts and configurations can be stored in vpsAdmin, and you can select the configuration method when creating/reinstalling a VPS. You can manage stored configurations in vpsAdmin under <vpsadmin-nav id="userdata.manage-vps.open">**VPS** -> **User data**</vpsadmin-nav>, or <vpsadmin-nav id="userdata.manage-profile.open">**Edit profile** -> **User data**</vpsadmin-nav>. Alternatively, you can provide a configuration directly during the creation/reinstallation of a VPS without saving it in vpsAdmin. Saving configurations is optional but can simplify repeated use of unchanged configurations.
++
++For development and testing, you can deploy a stored configuration to a VPS at any time:
++<vpsadmin-nav id="userdata.deploy.open">**vpsAdmin** -> **VPS** -> **User data** -> Edit an entry from the list, then use the **Deploy to VPS** form</vpsadmin-nav>. This action will only create the script/configuration files inside the VPS, it will not run/apply
++it.
++
++===== Configuration Formats =====
++==== Script ====
++vpsAdmin uploads the specified script to the VPS and integrates it into the VPS's init system, depending on the distribution. In systemd-based distributions, this is handled by the ''vpsadmin-script.service''. The script's output is stored in the journal, accessible via ''journalctl -u vpsadmin-script.service'', or in the file ''/var/log/vpsadmin-script-output.log''.
++
++Example script:
++
++<code bash>
++#!/bin/sh
++
++apt install -y nginx
++echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
++</code>
++
++The service and script are automatically deleted after execution.
++
++If you upload a script to an existing VPS via vpsAdmin, you can run it manually as follows:
++
++<code bash>
++# systemd
++systemctl daemon-reload
++systemctl start vpsadmin-script.service
++
++# OpenRC
++service vpsadmin-script start
++</code>
++
++=== Environment Variables ===
++The executed script has access to the following environment variables:
++
++  * ''VPSADMIN_VPS_ID'' - VPS ID
++
++==== cloud-init config ====
++Configuration for cloud-init in YAML format, see https://cloudinit.readthedocs.io/en/latest/explanation/format.html#cloud-config-data
++
++Example configuration:
++
++<code yaml>
++#cloud-config
++users:
++  - name: myuser
++    ssh_authorized_keys:
++      - "ssh-rsa AAAA..."
++packages:
++  - htop
++  - curl
++runcmd:
++  - echo "Hello, world!" > /root/welcome.txt
++</code>
++
++The cloud-init output can be seen in the kernel log and is stored in ''/var/log/cloud-init-output.log''.
++
++==== cloud-init script ====
++A script executed via cloud-init, see
++https://cloudinit.readthedocs.io/en/latest/explanation/format.html#user-data-script
++
++The cloud-init output can be seen in the kernel log and is stored in ''/var/log/cloud-init-output.log''.
++
++==== NixOS Configuration ====
++The provided configuration is saved to ''/etc/vpsadmin-nixos/configuration.nix'' and upon VPS startup, the command ''nixos-rebuild switch'' is executed. Keep in mind that the provided configuration must import ''vpsadminos.nix'' or include it directly.
++
++Example configuration:
++
++<code nix>
++{ config, pkgs, lib, ... }:
++{
++  imports = [
++    /etc/nixos/vpsadminos.nix
++  ];
++
++  environment.systemPackages = with pkgs; [
++    vim
++  ];
++
++  services.openssh.enable = true;
++  services.openssh.settings.PermitRootLogin = "yes";
++  #users.extraUsers.root.openssh.authorizedKeys.keys =
++  #  [ "..." ];
++
++  systemd.extraConfig = ''
++    DefaultTimeoutStartSec=900s
++  '';
++
++  time.timeZone = "Europe/Amsterdam";
++
++  system.stateVersion = "24.11";
++}
++</code>
++
++The output of the ''nixos-rebuild'' command is stored in ''/var/log/vpsadmin-nixos-output.log''.
++
++==== NixOS Flake Configuration ====
++The configuration is saved to the file ''/etc/vpsadmin-nixos/flake.nix'', and the command ''nixos-rebuild switch --flake /etc/vpsadmin-nixos#vps'' is executed. The configuration for the ''vps'' system must be included within the provided ''flake.nix''.
++
++Example configuration:
++
++<code nix>
++{
++  inputs = {
++    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
++    vpsadminos.url = "github:vpsfreecz/vpsadminos/staging";
++  };
++
++  outputs = { self, nixpkgs, vpsadminos }: {
++    # The configuration must include a system named "vps"
++    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++      modules = [
++        ({ config, pkgs, lib, ... }:
++        {
++          imports = [
++            vpsadminos.nixosModules.containerStable
++          ];
++
++          environment.systemPackages = with pkgs; [
++            vim
++          ];
++
++          services.openssh.enable = true;
++          services.openssh.settings.PermitRootLogin = "yes";
++          #users.extraUsers.root.openssh.authorizedKeys.keys =
++          #  [ "..." ];
++
++          systemd.extraConfig = ''
++            DefaultTimeoutStartSec=900s
++          '';
++
++          time.timeZone = "Europe/Amsterdam";
++
++          nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
++
++          system.stateVersion = "24.11";
++        })
++      ];
++    };
++  };
++}
++</code>
++
++The output of the ''nixos-rebuild'' command is stored in ''/var/log/vpsadmin-nixos-output.log''.
++
++==== NixOS Flake URI ====
++Upon VPS startup, the command ''nixos-rebuild switch --flake $flake_uri'' is executed. This allows you to easily deploy a configuration that is publicly available, for example, on GitHub.
++
++Example configuration:
++
++<code nix>
++github:vpsfreecz/example-vps-flake#vps
++</code>
++
++You can find this configuration at https://github.com/vpsfreecz/example-vps-flake.
++
++The output of the ''nixos-rebuild'' command is stored in ''/var/log/vpsadmin-nixos-output.log''.
++
++===== Usage with vpsfreectl =====
++The initial configuration can also be uploaded to a VPS using [[manuals:vps:api|vpsfreectl]].
++First, prepare a file with the script:
++
++<code bash>
++cat <<EOF > my-script.sh
++#!/bin/sh
++
++apt install -y nginx
++echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
++EOF
++</code>
++
++Now create a new VPS:
++
++<code bash>
++vpsfreectl vps create -- \
++                      --hostname vps \
++                      --os-template 168 \
++                      --location 7 \
++                      --user-data-format script \
++                      --user-data-content @my-script.sh
++</code>
++
++The parameter ''--user-data-content'' starts with ''@'', which instructs ''vpsfreectl'' to send the content of the ''my-script.sh'' file. OS template **168** corresponds to Ubuntu 24.04 (''vpsfreectl os_template list''), and location **7** is [[manuals:vps:stagingvps|Staging]] (''vpsfreectl location list''). You can also upload a script when reinstalling a VPS:
++
++<code bash>
++vpsfreectl vps reinstall 123 -- --user-data-format script --user-data-content @my-script.sh
++</code>
++
++===== Supported distributions =====
++
++All distributions are supported with the following exceptions:
++
++  * script is not supported on Guix, NixOS and Slackware
++  * cloud-init is not supported on Guix, NixOS, Slackware and Void Linux
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/index.json b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/index.json
+new file mode 100644
+index 00000000..f1b48232
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-candidate/index.json
+@@ -0,0 +1,53 @@
++{
++  "pages": [
++    {
++      "language": "cs",
++      "id": "navody:distribuce:nixos",
++      "file": "cs/navody/distribuce/nixos.txt",
++      "changed": true,
++      "source_sha256": "ac711a5f4b720e0e3d215e0a145f6f57270175338fdbc255c9297be40552de19",
++      "candidate_sha256": "f6c4526b6bb251d520c17c46672add18aa473ee15e1e704f2cdd4e7b7f6e362b"
++    },
++    {
++      "language": "cs",
++      "id": "navody:distribuce:nixos:impermanence",
++      "file": "cs/navody/distribuce/nixos/impermanence.txt",
++      "changed": true,
++      "source_sha256": "909f7dfd8eea753a6a7090b53554e4a8ffbf7bf8722d1ff0e07bbcfacfffba5e",
++      "candidate_sha256": "344a29910bd1669a038011d8fdacefd9a7f528209452946792c98d21e3fbb57a"
++    },
++    {
++      "language": "cs",
++      "id": "navody:vps:userdata",
++      "file": "cs/navody/vps/userdata.txt",
++      "changed": true,
++      "source_sha256": "acf501af4b67c862484a3acc302d1edb3b1a89984d8d8cd3e8dd5c0de4a415e7",
++      "candidate_sha256": "6973611501468a7dbac1057886024a799e4da192d51aef6b6bdab221083bc446"
++    },
++    {
++      "language": "en",
++      "id": "manuals:distributions:nixos",
++      "file": "en/manuals/distributions/nixos.txt",
++      "changed": true,
++      "source_sha256": "23cd6b2dbacbd29271f8c0253da55698c70e9647ef4dc495754b3c7055567ae7",
++      "candidate_sha256": "40382e71b71cee7ad26f399579739cda2ae0c1aee09011639d19fb3813c56710"
++    },
++    {
++      "language": "en",
++      "id": "manuals:distributions:nixos:impermanence",
++      "file": "en/manuals/distributions/nixos/impermanence.txt",
++      "changed": true,
++      "source_sha256": "729d4b06896890410f17bf574c0fa811fd1c47410f4c7c278eac79f9faf99616",
++      "candidate_sha256": "8c8a8b1f39e4ed87a9acadf6d4bed5156516d97bdee72814abff2ebd03bc0af0"
++    },
++    {
++      "language": "en",
++      "id": "manuals:vps:userdata",
++      "file": "en/manuals/vps/userdata.txt",
++      "changed": true,
++      "source_sha256": "3487ab5abe77698a0dd407c4a580123717d9145ce30f961435f9f1e5d8b1b469",
++      "candidate_sha256": "8ad954be19922dcbd3bc7cbf2b5bcbd9b96391b7fd14a0113ca66e4a90d57696"
++    }
++  ],
++  "media": []
++}
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-release-cs.yml b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-release-cs.yml
+new file mode 100644
+index 00000000..ff7b600a
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-release-cs.yml
+@@ -0,0 +1,28 @@
++---
++schema: 5
++wiki: cz
++pages:
++- id: navody:distribuce:nixos
++  policy: update
++  source_sha256: ac711a5f4b720e0e3d215e0a145f6f57270175338fdbc255c9297be40552de19
++  file: kb-candidate/cs/navody/distribuce/nixos.txt
++  sha256: f6c4526b6bb251d520c17c46672add18aa473ee15e1e704f2cdd4e7b7f6e362b
++  source_revision: 1786384170
++  summary: Doplnění automatického výběru stabilního vydání, přímých importů a konfigurace
++    unstable
++- id: navody:distribuce:nixos:impermanence
++  policy: update
++  source_sha256: 909f7dfd8eea753a6a7090b53554e4a8ffbf7bf8722d1ff0e07bbcfacfffba5e
++  file: kb-candidate/cs/navody/distribuce/nixos/impermanence.txt
++  sha256: 344a29910bd1669a038011d8fdacefd9a7f528209452946792c98d21e3fbb57a
++  source_revision: 1783888026
++  summary: Použití modulu pro stabilní vydání bez převodu názvu verze
++- id: navody:vps:userdata
++  policy: update
++  source_sha256: acf501af4b67c862484a3acc302d1edb3b1a89984d8d8cd3e8dd5c0de4a415e7
++  file: kb-candidate/cs/navody/vps/userdata.txt
++  sha256: 6973611501468a7dbac1057886024a799e4da192d51aef6b6bdab221083bc446
++  source_revision: 1783888028
++  summary: Použití modulu podle stabilního vydání v příkladu NixOS flake
++media: []
++deletions: []
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-release-en.yml b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-release-en.yml
+new file mode 100644
+index 00000000..c8f207da
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-release-en.yml
+@@ -0,0 +1,32 @@
++---
++schema: 5
++wiki: org
++pages:
++- id: manuals:distributions:nixos
++  policy: update
++  source_sha256: 23cd6b2dbacbd29271f8c0253da55698c70e9647ef4dc495754b3c7055567ae7
++  file: kb-candidate/en/manuals/distributions/nixos.txt
++  sha256: 40382e71b71cee7ad26f399579739cda2ae0c1aee09011639d19fb3813c56710
++  source_revision: 1786384142
++  language_counterpart: navody:distribuce:nixos
++  summary: Document automatic stable-release selection, exact release imports and
++    explicit unstable configuration
++- id: manuals:distributions:nixos:impermanence
++  policy: update
++  source_sha256: 729d4b06896890410f17bf574c0fa811fd1c47410f4c7c278eac79f9faf99616
++  file: kb-candidate/en/manuals/distributions/nixos/impermanence.txt
++  sha256: 8c8a8b1f39e4ed87a9acadf6d4bed5156516d97bdee72814abff2ebd03bc0af0
++  source_revision: 1783888250
++  language_counterpart: navody:distribuce:nixos:impermanence
++  summary: Use the release-aware stable container module and identify the Features
++    form
++- id: manuals:vps:userdata
++  policy: update
++  source_sha256: 3487ab5abe77698a0dd407c4a580123717d9145ce30f961435f9f1e5d8b1b469
++  file: kb-candidate/en/manuals/vps/userdata.txt
++  sha256: 8ad954be19922dcbd3bc7cbf2b5bcbd9b96391b7fd14a0113ca66e4a90d57696
++  source_revision: 1783888251
++  language_counterpart: navody:vps:userdata
++  summary: Use the release-aware stable module in the NixOS flake example
++media: []
++deletions: []
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/cs/navody/distribuce/nixos.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/cs/navody/distribuce/nixos.txt
+new file mode 100644
+index 00000000..1c6d59ee
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/cs/navody/distribuce/nixos.txt
+@@ -0,0 +1,53 @@
++<page>manuals:distributions:nixos</page>
++====== NixOS ======
++[[https://nixos.org|NixOS]] je distribuce založená na balíčkovacím systému Nix.
++Konfigurace systému a všech služeb se provádí deklarativně. Tato stránka popisuje
++použití NixOS na vpsFree.cz VPS. Pro více informací o NixOS obecně viz
++[[https://nixos.org/learn.html|dokumentace]].
++
++===== Podporované verze =====
++Poskytujeme šablony VPS pro stabilní vydání NixOS a průběžně pro NixOS unstable.
++
++Sami NixOS používáme na naší
++[[https://github.com/vpsfreecz/vpsfree-cz-configuration|infrastruktuře]].
++Naše virtualizační platforma [[navody:vps:vpsadminos|vpsAdminOS]] je dokonce
++na NixOS a nixpkgs založená.
++
++===== Prvotní konfigurace =====
++VPS je vytvořeno ze šablony, která obsahuje minimální systém a SSH.
++Pro přihlášení je možné použít [[navody:vps:sprava#heslo_roota|vygenerované heslo]],
++nebo si nechat [[navody:vps:sprava#automaticke_vlozeni_klicu|nahrát veřejný klíč]] přes
++vpsAdmin. Systém lze pak spravovat pomocí ''nixos-rebuild'':
++
++<code>
++nixos-rebuild switch --flake /etc/nixos#vps
++</code>
++
++Naše VPS jsou linuxové kontejnery, není zde zavaděč, jádro je sdílené a je potřeba
++určité nastavení pro správnou funkci NixOS. V šabloně je proto vpsAdminOS jako flake input a potřebný
++modul je importován do konfigurace systému.
++
++Při vytvoření VPS a reinstalaci systému je možné do VPS přes vpsAdmin nahrát a nasadit vlastní
++konfiguraci, viz [[navody:vps:userdata|user data]].
++
++===== Správa VPS =====
++Přejdi na [[:domu|návody VPS]] pro více informací o naší infrastruktuře a možnostech VPS.
++
++===== Impermanence =====
++Viz [[navody:distribuce:nixos:impermanence]].
++
++===== GitHub API limit =====
++Nixpkgs se stahují z [[https://github.com/nixos/nixpkgs|GitHubu]] a [[https://nixos.wiki/wiki/Binary_Cache|Binary Cache]]. GitHub nepodporuje IPv6 a má limity buď [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-unauthenticated-users|per IPv4]] nebo [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-authenticated-users|per uživatel]].
++Při vyčerpání Nix (respektive GitHub API) zahlásí:
++<code>
++error: unable to download 'GITHUB_URL': HTTP error 403 ('')
++
++       response body:
++
++       {"message":"API rate limit exceeded for IP_ADDR. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}
++</code>
++Řešením je [[https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token|vyrobit si personal access token]] (Public repositories, v Permissions není potřeba nic) a [[https://search.nixos.org/options?channel=26.05&query=nix.settings&type=options#show=option%253Anix.settings|předat konfiguraci]] Nixu:
++<code>
++# configuration.nix
++nix.settings.access-tokens = [ "github.com=github_pat_TokenTokenChangeMe" ];
++</code>
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/cs/navody/distribuce/nixos/impermanence.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/cs/navody/distribuce/nixos/impermanence.txt
+new file mode 100644
+index 00000000..c944db1c
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/cs/navody/distribuce/nixos/impermanence.txt
+@@ -0,0 +1,121 @@
++<page>manuals:distributions:nixos:impermanence</page>
++====== NixOS Impermanence ======
++
++Tato stránka popisuje použití modulu [[https://github.com/nix-community/impermanence|NixOS Impermanence]] na vpsFree.cz. Podporujeme impermanence s kořenovým souborovým systémem v dočasném ZFS datasetu, který poskytuje naše platforma. Je nutné přesunout Nix store do subdatasetu, což lze automaticky provést [[#pouziti_os_sablony|použitím OS šablony pro impermanence]] nebo to nastavit [[#manualni_konfigurace|manuálně]].
++
++Upozorňujeme, že při zapnutí impermanence bude kořenový souborový systém skutečně dočasný a jeho data se při každém startu VPS resetují. Tento dočasný dataset také není zálohován. Dávejte pozor, kde ukládáte svá data. Pokud nejsou na trvalém úložišti, budou ztracena.
++
++===== Použití OS šablony =====
++vpsAdmin obsahuje OS šablony, kde je impermanence předkonfigurována. Při vytváření nové VPS vyberte odpovídající šablonu (v názvu je uvedeno impermanence). Nová VPS bude mít ''/nix'' vyčleněný do subdatasetu. Root dataset bude připojen na ''/persistent'' a počáteční flake konfigurace NixOS bude nasazena do ''/etc/nixos'', viz ''/etc/nixos/flake.nix'' a ''/etc/nixos/configuration.nix''. Šablona také vytvoří ''/etc/nixos/flake.lock'', takže verze vpsAdminOS, ''nixpkgs'' a impermanence budou připnuté společně.
++
++Impermanence je přidána jako flake input. Pokud ji chcete aktualizovat, aktualizujte lock soubor a systém znovu sestavte:
++
++<code bash>
++cd /etc/nixos
++nix flake lock --update-input impermanence
++nixos-rebuild switch --flake /etc/nixos#vps
++</code>
++
++Upozorňujeme, že přeinstalace VPS nebude účinná, protože přeinstalace změní pouze root dataset. Nix store se nepřesune, pokud je již v subdatasetu. Ze stejného důvodu nemůžete pomocí přeinstalace převést existující VPS na impermanence. OS šablona automaticky nakonfiguruje VPS pouze při jeho vytvoření. Viz [[#manualni_konfigurace|manuální konfigurace]] pokud chcete zapnout impermanence na stávající VPS.
++
++===== Manuální konfigurace =====
++
++==== 1. Vytvoření NixOS VPS ====
++Vytvořte nový VPS a nechte ho spustit. Můžete také použít svůj stávající NixOS VPS.
++
++==== 2. Spuštění VPS v rescue módu ====
++V detailu VPS použijte formulář <vpsadmin-nav id="vps.boot-rescue.open">**Spustit VPS ze šablony (nouzový režim)**</vpsadmin-nav>. Nejlepší je vybrat jinou distribuci než NixOS, aby zde nebyl adresář ''/nix''. Použijte např. Alpine nebo Debian.
++
++==== 3. Vytvoření VPS subdatasetu pro Nix store ====
++V detailu VPS vytvořte subdataset ''nix'', který bude připojen na ''/nix'' (proto jsme v předchozím kroku nechtěli bootovat do NixOS). Možná budete muset uvolnit nějaké místo na disku, abyste mohli vytvořit dataset, což lze provést zmenšením root datasetu.
++
++==== 4. Přesun Nix store do subdatasetu ====
++Přihlaste se do VPS v rescue módu, buď přes SSH, nebo použijte vzdálenou konzoli. Root dataset je připojen na ''/mnt/vps'' a náš nový subdataset ''nix'' je připojen na ''/nix''. Chceme přesunout Nix store z root datasetu do subdatasetu.
++
++<code bash>
++mv /mnt/vps/nix/* /nix/
++</code>
++
++==== 5. Připojení root datasetu do /persistent ====
++V režimu impermanence bude váš kořenový souborový systém dočasný a při každém startu vymazán. Naše trvalé úložiště připojíme do ''/persistent''. Může to být root dataset, nebo můžete vytvořit další subdataset pro tento účel. Zde použijeme root dataset. V detailu VPS klikněte na odkaz <vpsadmin-nav id="datasets.mount.open">**Mount**</vpsadmin-nav> u prvního uvedeného datasetu (jeho název je ID VPS) a připojte ho do ''/persistent''.
++
++==== 6. Restart VPS ====
++Nyní restartujte VPS, čímž opustíte rescue mód.
++
++==== 7. Úprava flake konfigurace a přidání impermanence ====
++Šablony vpsAdminOS mají flakes zapnuté ve výchozím stavu. Vytvořte ''/etc/nixos/flake.nix'' a své lokální nastavení ponechte v ''/etc/nixos/configuration.nix''. Následující příklad používá stabilní větev ''nixpkgs'', kterou používá vpsAdminOS. Pokud používáte jinou stabilní verzi, zvolte odpovídající větev ''nixos-YY.MM''. Pokud používáte NixOS unstable, nahraďte ''github:NixOS/nixpkgs/nixos-25.11'' za ''github:NixOS/nixpkgs/nixos-unstable'' a v příkladu nahraďte řádek se stabilním modulem kontejneru za ''vpsadminos.nixosModules.containerUnstable''.
++
++<file nix /etc/nixos/flake.nix>
++{
++  inputs = {
++    vpsadminos.url = "github:vpsfreecz/vpsadminos";
++    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
++    impermanence.url = "github:nix-community/impermanence";
++  };
++
++  outputs = { nixpkgs, vpsadminos, impermanence, ... }:
++    let
++      containerModule = "container_${builtins.replaceStrings [ "." ] [ "_" ] nixpkgs.lib.trivial.release}";
++    in
++    {
++      nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++        system = "x86_64-linux";
++        modules = [
++          vpsadminos.nixosModules.${containerModule}
++          impermanence.nixosModules.impermanence
++          ./configuration.nix
++        ];
++      };
++    };
++}
++</file>
++
++Poté rozšiřte svou konfiguraci a přidejte nastavení persistence:
++
++<file nix /etc/nixos/configuration.nix>
++{ ... }:
++{
++  environment.persistence."/persistent" = {
++    hideMounts = true;
++    directories = [
++      "/etc/nixos"
++      "/var/log"
++      "/var/lib/nixos"
++    ];
++    files = [
++      "/etc/machine-id"
++    ];
++  };
++}
++</file>
++
++Ujistěte se, že jsou flakes povolené, například:
++
++<code nix>
++nix.settings.experimental-features = [
++  "nix-command"
++  "flakes"
++];
++</code>
++
++Upozorňujeme, že ''/persistent'' musí odpovídat mountpointu datasetu, ale můžete si zvolit libovolný název. Datasety budou připojeny prostřednictvím vpsAdminOS, takže není nutné konfigurovat položky ''fileSystems''.
++
++Až budete hotovi, nasaďte novou konfiguraci pro další restart:
++
++<code bash>
++nixos-rebuild boot --flake /etc/nixos#vps
++</code>
++
++==== 8. Zapnutí funkce impermanence ====
++V detailu VPS ve formuláři <vpsadmin-nav id="vps.features.open">**Funkce**</vpsadmin-nav> zapněte funkci **NixOS Impermanence**. To nakonfiguruje VPS tak, aby při startu používal čistý, dočasný dataset. Jeho obsah bude při každém restartu ztracen a není zálohován. Zapnutí této funkce způsobí restart VPS do konfigurace, kterou jsme připravili v kroku **7**.
++
++Uvnitř VPS můžete zkontrolovat připojené souborové systémy:
++
++<code>
++root@nixos:/# df -hT | grep zfs
++tank/ct/11327.impermanence-c5a8b7 zfs     10G  768K   10G   1% /
++tank/ct/11327/nix                 zfs     20G  1.1G   19G   6% /nix
++tank/ct/11327                     zfs    100G  7.7M  120G   1% /persistent
++</code>
++
++''/'' je založeno na dočasném datasetu, ''11327'' se používá pro ''/persistent'' a ''11327/nix'' obsahuje Nix store.
+\ No newline at end of file
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/cs/navody/vps/userdata.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/cs/navody/vps/userdata.txt
+new file mode 100644
+index 00000000..18451517
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/cs/navody/vps/userdata.txt
+@@ -0,0 +1,217 @@
++<page>manuals:vps:userdata</page>
++====== User data =======
++Při vytvoření nebo reinstalaci VPS může vpsAdmin do VPS nahrát skript nebo konfiguraci
++pro [[https://cloud-init.io/|cloud-init]]. Tento skript nebo konfigurace se aplikuje při prvním
++spuštění VPS. Podporujeme tyto formáty prvotní konfigurace:
++
++  * [[#script|script]]
++  * [[#cloud-init_config|cloud-init config]]
++  * [[#cloud-init_script|cloud-init script]]
++  * [[#nixos_configuration|NixOS konfigurace]]
++  * [[#nixos_flake_configuration|NixOS flake konfigurace]]
++  * [[#nixos_flake_uri|NixOS flake URI]]
++
++Skripty a konfigurace je možné si do vpsAdminu uložit a při vytvoření/reinstalaci VPS
++vyberete způsob konfigurace. Správu uložených konfigurací najdeme ve vpsAdminu menu <vpsadmin-nav id="userdata.manage-vps.open">**VPS** -> **User data**</vpsadmin-nav>,
++popř. <vpsadmin-nav id="userdata.manage-profile.open">**Upravit profil** -> **User data**</vpsadmin-nav>. Při vytvoření/reinstalaci VPS lze konfiguraci vložit i přímo
++bez ukládání do vpsAdminu. Konfiguraci do vpsAdminu není nutné ukládat, jen vám to ulehčí opakované
++použítí konfigurací, které se nemění.
++
++Pro vývoj a testování je možné uloženou konfiguraci nahrát do VPS kdykoliv,
++<vpsadmin-nav id="userdata.deploy.open">**vpsAdmin** -> **VPS** -> **User data** -> Upravit položku ze seznamu a poté formulář **Nasadit do VPS**</vpsadmin-nav>.
++Tato akce pouze zapíše skript/konfiguraci na disk VPS, k jejímu spuštění dojde až při restartu VPS.
++
++===== Formáty konfigurace =====
++==== Script ====
++vpsAdmin do VPS nahraje zadaný skript a integruje jej do init systému VPS, tj. způsob
++záleží na použité distribuci. V distribucích se systemd je to služba ''vpsadmin-script.service''.
++Výstup ze spuštěného skriptu je uložen v journalu, tj. ''journalctl -u vpsadmin-script.service'', popř.
++v souboru ''/var/log/vpsadmin-script-output.log''.
++
++Příklad skriptu:
++
++<code bash>
++#!/bin/sh
++
++apt install -y nginx
++echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
++</code>
++
++Služba i skript se po spuštění automaticky smaže.
++
++Pokud skript přes vpsAdmin nahrajeme do existující VPS, spustíme ho následovně:
++
++<code bash>
++# systemd
++systemctl daemon-reload
++systemctl start vpsadmin-script.service
++
++# OpenRC
++service vpsadmin-script start
++</code>
++=== Proměnné prostředí ===
++Spuštěný skript má k dispozici tyto proměnné prostředí:
++
++  * ''VPSADMIN_VPS_ID'' - ID VPS
++
++==== cloud-init config ===
++Konfigurace pro cloud-init jako YAML, viz https://cloudinit.readthedocs.io/en/latest/explanation/format.html#cloud-config-data
++
++Příklad konfigurace:
++
++<code yaml>
++#cloud-config
++users:
++  - name: myuser
++    ssh_authorized_keys:
++      - "ssh-rsa AAAA..."
++packages:
++  - htop
++  - curl
++runcmd:
++  - echo "Hello, world!" > /root/welcome.txt
++</code>
++
++Výstup cloud-init je vidět v kernel logu a je uložen v souboru ''/var/log/cloud-init-output.log''.
++
++==== cloud-init script =====
++Skript spuštěný přes cloud-init, viz
++https://cloudinit.readthedocs.io/en/latest/explanation/format.html#user-data-script
++
++Výstup cloud-init je vidět v kernel logu a je uložen v souboru ''/var/log/cloud-init-output.log''.
++
++==== NixOS configuration ====
++Vložená konfigurace se uloží do ''/etc/vpsadmin-nixos/configuration.nix''
++a po startu VPS se provede ''nixos-rebuild switch''. Mějte na paměti, že vložená
++konfigurace musí importovat ''vpsadminos.nix'', nebo jej rovnou zahrnovat.
++
++Příklad konfigurace:
++
++<code nix>
++{ config, pkgs, lib, ... }:
++{
++  imports = [
++    /etc/nixos/vpsadminos.nix
++  ];
++
++  environment.systemPackages = with pkgs; [
++    vim
++  ];
++
++  services.openssh.enable = true;
++  services.openssh.settings.PermitRootLogin = "yes";
++  #users.extraUsers.root.openssh.authorizedKeys.keys =
++  #  [ "..." ];
++
++  systemd.extraConfig = ''
++    DefaultTimeoutStartSec=900s
++  '';
++
++  time.timeZone = "Europe/Amsterdam";
++
++  system.stateVersion = "24.11";
++}
++</code>
++
++Výstup příkazu ''nixos-rebuild'' je uložen do ''/var/log/vpsadmin-nixos-output.log''.
++
++==== NixOS flake configuration ====
++Konfigurace se uloží do souboru ''/etc/vpsadmin-nixos/flake.nix'' a spustí se příkaz ''nixos-rebuild switch --flake /etc/vpsadmin-nixos#vps''. Konfigurace pro systém ''vps'' musí být součástí vloženého ''flake.nix''.
++
++Příklad konfigurace:
++
++<code nix>
++{
++  inputs = {
++    nixpkgs.url = github:NixOS/nixpkgs/nixos-24.11;
++    vpsadminos.url = github:vpsfreecz/vpsadminos/staging;
++  };
++  
++  outputs = { self, nixpkgs, vpsadminos }: {
++    # Zde musí být konfigurace s názvem "vps"
++    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++      modules = [
++        ({ config, pkgs, lib, ... }:
++        {
++          imports = [
++            vpsadminos.nixosConfigurations.container
++          ];
++
++          environment.systemPackages = with pkgs; [
++            vim
++          ];
++
++          services.openssh.enable = true;
++          services.openssh.settings.PermitRootLogin = "yes";
++          #users.extraUsers.root.openssh.authorizedKeys.keys =
++          #  [ "..." ];
++
++          systemd.extraConfig = ''
++            DefaultTimeoutStartSec=900s
++          '';
++
++          time.timeZone = "Europe/Amsterdam";
++
++          nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
++
++          system.stateVersion = "24.11";
++        })
++      ];
++    };
++  };
++}
++</code>
++
++Výstup příkazu ''nixos-rebuild'' je uložen do ''/var/log/vpsadmin-nixos-output.log''.
++
++==== NixOS flake URI ====
++Po startu VPS se spustí příkaz ''nixos-rebuild switch --flake $flake_uri''. Tímto způsobem můžete
++jednoduše nasadit konfiguraci, kterou máte veřejně k dispozici třeba na GitHubu.
++
++Ukázka použití:
++
++<code nix>
++github:vpsfreecz/example-vps-flake#vps
++</code>
++
++Tuto konfiguraci najdete na https://github.com/vpsfreecz/example-vps-flake.
++
++Výstup příkazu ''nixos-rebuild'' je uložen do ''/var/log/vpsadmin-nixos-output.log''.
++
++===== Použítí s vpsfreectl =====
++Prvotní konfiguraci je možné do VPS nahrát také pomocí [[navody:vps:api|vpsfreectl]].
++Nejdříve si připravíme soubor se skriptem:
++
++<code bash>
++cat <<EOF > my-script.sh
++#!/bin/sh
++
++apt install -y nginx
++echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
++EOF
++</code>
++
++Nyní vytvoříme novou VPS:
++
++<code bash>
++vpsfreectl vps create -- \
++                      --hostname vps \
++                      --os-template 168 \
++                      --location 7 \
++                      --user-data-format script \
++                      --user-data-content @my-script.sh
++</code>
++
++Hodnota parametru ''--user-data-content'' začíná s ''@'' a ''vpsfreectl'' tak pošle obsah souboru ''my-script.sh''. OS template **168** je Ubuntu 24.04 (''vpsfreectl os_template list''), location **7** je [[navody:vps:stagingvps|Staging]] (''vpsfreectl location list''). Stejně tak můžeme skript
++nahrát při reinstalaci VPS:
++
++<code bash>
++vpsfreectl vps reinstall 123 -- --user-data-format script --user-data-content @my-script.sh
++</code>
++
++===== Podporované distribuce =====
++
++Všechny kromě následujících výjimek:
++
++  * script není podporován na Guix, NixOS a Slackware
++  * cloud-init není podporován na Guix, NixOS, Slackware a Void Linuxu
+\ No newline at end of file
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/en/manuals/distributions/nixos.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/en/manuals/distributions/nixos.txt
+new file mode 100644
+index 00000000..16256792
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/en/manuals/distributions/nixos.txt
+@@ -0,0 +1,52 @@
++====== NixOS ======
++[[https://nixos.org|NixOS]] is a distribution based on the Nix package manager.
++It allows one to declaratively configure the system and its services. This page
++describes NixOS specifics on vpsFree.cz's VPS. For more information about NixOS
++in general, see its [[https://nixos.org/learn.html|documentation]].
++
++===== Supported versions =====
++We provide templates for the stable releases and continually for unstable.
++
++NixOS is used heavily at vpsFree.cz for its
++[[https://github.com/vpsfreecz/vpsfree-cz-configuration|infrastructure and services]],
++so we make sure that it works reliably. We use mainly the current stable release.
++Our virtualization platform [[manuals:vps:vpsadminos|vpsAdminOS]] is actually
++based on NixOS and nixpkgs.
++
++===== Initial configuration =====
++The VPS is created from a template which contains a minimal system with SSH.
++You can log in using a [[manuals:vps:management#root_password|generated password]]
++or [[manuals:vps:management#ssh_public_keys|deploy your public key]] using vpsAdmin.
++The system can then be configured using :
++
++<code>
++nixos-rebuild switch --flake /etc/nixos#vps
++</code>
++
++Note that our VPS are Linux containers, so there is no boot loader, the kernel is shared
++and some configuration is required for the VPS to work properly. The template handles this by using vpsAdminOS as flake input and importing the necessary module.
++
++It is possible to deploy custom configuration using vpsAdmin on VPS creation and reinstallation,
++see [[manuals:vps:userdata|user data]].
++
++===== VPS management =====
++See the [[:home|VPS manuals]] for more information about our infrastructure and possibilities.
++
++===== Impermanence =====
++See [[manuals:distributions:nixos:impermanence]].
++
++===== GitHub API limit =====
++Nixpkgs  are downloaded from [[https://github.com/nixos/nixpkgs|GitHub]] and [[https://nixos.wiki/wiki/Binary_Cache|Binary Cache]]. GitHub does not support IPv6 and rate limits either  [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-unauthenticated-users|per IPv4]] or [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-authenticated-users|per user]].
++After exhausting the API limit, Nix (or rather GitHub API) complains:
++<code>
++error: unable to download 'GITHUB_URL': HTTP error 403 ('')
++
++       response body:
++
++       {"message":"API rate limit exceeded for IP_ADDR. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}
++</code>
++The solution is to [[https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token|create personal access token]] (Public repositories, the Permissions could be blank) and enter [[https://search.nixos.org/options?channel=26.05&query=nix.settings&type=options#show=option%253Anix.settings|the configuration]] to Nix:
++<code>
++# configuration.nix
++nix.settings.access-tokens = [ "github.com=github_pat_TokenTokenChangeMe" ];
++</code>
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/en/manuals/distributions/nixos/impermanence.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/en/manuals/distributions/nixos/impermanence.txt
+new file mode 100644
+index 00000000..68d6a584
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/en/manuals/distributions/nixos/impermanence.txt
+@@ -0,0 +1,159 @@
++<page>manuals:distributions:nixos:impermanence</page>
++====== NixOS Impermanence ======
++
++This page describes usage of [[https://github.com/nix-community/impermanence|NixOS Impermanence]] module
++at vpsFree.cz. We support impermanence with root filesystem in a temporary ZFS dataset that is
++provided by our platform. It is necessary to move the Nix store to a subdataset, which can be
++done automatically [[#using_os_template|using the OS template for impermanence]], or you can
++set it up [[#manual_configuration|manually]].
++
++Please note that when you enable impermanence, the root file system is indeed temporary
++and its data reset on each VPS start. The temporary dataset also isn't backed up. Be mindful
++of where you store your data. If it isn't in a persistent location, it will be lost.
++
++===== Using OS template =====
++vpsAdmin contains OS templates where impermanence is preconfigured. When creating a new VPS,
++choose the appropriate template (impermanence is in its name). The new VPS will have ''/nix''
++separated in a subdataset. The root dataset will be mounted to ''/persistent'' and initial
++flake-based NixOS configuration will be deployed to ''/etc/nixos'', see ''/etc/nixos/flake.nix''
++and ''/etc/nixos/configuration.nix''. The template also writes ''/etc/nixos/flake.lock'', so
++versions of vpsAdminOS, ''nixpkgs'' and impermanence are pinned together.
++
++Impermanence is included as a flake input. To update it, update the flake lock and rebuild
++the system:
++
++<code bash>
++cd /etc/nixos
++nix flake lock --update-input impermanence
++nixos-rebuild switch --flake /etc/nixos#vps
++</code>
++
++Note that reinstalling the VPS will be ineffective, as reinstall changes only the root dataset.
++It will not touch the Nix store when it is moved to a subdataset. For the same reason, you
++cannot convert an existing VPS to impermanence using reinstall. The OS template will
++auto-configure the VPS only on creation. See [[#manual_configuration|manual configuration]] if you'd like to
++enable impermanence on an existing VPS.
++
++===== Manual configuration =====
++
++==== 1. Create a NixOS VPS ====
++Create a new VPS and let it start. You can also reuse your existing NixOS VPS.
++
++==== 2. Start the VPS in rescue mode ====
++In VPS details, use form <vpsadmin-nav id="vps.boot-rescue.open">**Boot VPS from template (rescue mode)**</vpsadmin-nav>. It's best
++to choose a different distribution than NixOS, so that there's no ''/nix'' directory.
++Use e.g. Alpine or Debian.
++
++==== 3. Create VPS subdataset for the Nix store ====
++In VPS details, create subdataset ''nix'', which will be mounted to ''/nix'' (this is why we didn't
++want to boot into NixOS in the previous step). You might have to free some diskspace in order to be
++able to create the dataset, you can do that by shrinking the root dataset.
++
++==== 4. Move the Nix store to the subdataset ====
++Login to the VPS while in rescue mode, either over SSH or use the remote console.
++The root dataset is mounted at ''/mnt/vps'' and our new subdataset ''nix'' is mounted at
++''/nix''. We want to move the Nix store from the root dataset to the subdataset.
++
++<code bash>
++mv /mnt/vps/nix/* /nix/
++</code>
++
++==== 5. Mount root dataset to /persistent ====
++In the impermanence mode, your root file system will be temporary and cleared on
++every start. We must mount our persistent storage to ''/persistent''. This can be either
++the root dataset, or you can create another subdataset for that purpose. We'll use the root
++dataset. In VPS details, click on <vpsadmin-nav id="datasets.mount.open">**Mount**</vpsadmin-nav> link of the first listed dataset
++(its name is the VPS ID) and mount it to ''/persistent''.
++
++==== 6. Restart the VPS ====
++Now restart the VPS, you will leave the rescue mode.
++
++==== 7. Edit your flake configuration and add impermanence ====
++vpsAdminOS templates enable flakes by default. Create ''/etc/nixos/flake.nix'' and
++keep your local settings in ''/etc/nixos/configuration.nix''. The example below follows the
++stable ''nixpkgs'' branch used by vpsAdminOS. If you're using another stable release, use the
++matching ''nixos-YY.MM'' branch. If you're using NixOS unstable, replace
++''github:NixOS/nixpkgs/nixos-25.11'' with ''github:NixOS/nixpkgs/nixos-unstable'' and
++replace the stable container module line in the example with
++''vpsadminos.nixosModules.containerUnstable''.
++
++<file nix /etc/nixos/flake.nix>
++{
++  inputs = {
++    vpsadminos.url = "github:vpsfreecz/vpsadminos";
++    nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
++    impermanence.url = "github:nix-community/impermanence";
++  };
++
++  outputs = { nixpkgs, vpsadminos, impermanence, ... }:
++    let
++      containerModule = "container_${builtins.replaceStrings [ "." ] [ "_" ] nixpkgs.lib.trivial.release}";
++    in
++    {
++      nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++        system = "x86_64-linux";
++        modules = [
++          vpsadminos.nixosModules.${containerModule}
++          impermanence.nixosModules.impermanence
++          ./configuration.nix
++        ];
++      };
++    };
++}
++</file>
++
++Then extend your configuration and add the persistence settings:
++
++<file nix /etc/nixos/configuration.nix>
++{ ... }:
++{
++  environment.persistence."/persistent" = {
++    hideMounts = true;
++    directories = [
++      "/etc/nixos"
++      "/var/log"
++      "/var/lib/nixos"
++    ];
++    files = [
++      "/etc/machine-id"
++    ];
++  };
++}
++</file>
++
++Ensure flakes are enabled, for example:
++
++<code nix>
++nix.settings.experimental-features = [
++  "nix-command"
++  "flakes"
++];
++</code>
++
++Note that ''/persistent'' must match the dataset mountpoint, but you can choose an arbitrary name
++if you like. The datasets will be mounted by vpsAdminOS, so you don't have to configure ''fileSystems''
++entries yourself.
++
++When you're done, deploy the new configuration for the next restart:
++
++<code bash>
++nixos-rebuild boot --flake /etc/nixos#vps
++</code>
++
++==== 8. Turn on impermanence feature ====
++In VPS details, enable the **NixOS Impermanence** feature. This will configure your VPS so that it
++is started with a clean, temporary dataset. Its contents will be lost on every reboot and it's not
++backed up. Turning on the feature will cause the VPS to restart into the configuration we've prepared
++in step **7**.
++
++Inside the VPS, you can check the mounted filesystems:
++
++<code>
++root@nixos:/# df -hT | grep zfs
++tank/ct/11327.impermanence-c5a8b7 zfs     10G  768K   10G   1% /
++tank/ct/11327/nix                 zfs     20G  1.1G   19G   6% /nix
++tank/ct/11327                     zfs    100G  7.7M  120G   1% /persistent
++</code>
++
++''/'' is based in a temporary dataset, ''11327'' is used for ''/persistent'' and ''11327/nix''
++contains the Nix store.
+\ No newline at end of file
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/en/manuals/vps/userdata.txt b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/en/manuals/vps/userdata.txt
+new file mode 100644
+index 00000000..47062a68
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/en/manuals/vps/userdata.txt
+@@ -0,0 +1,204 @@
++====== User Data ======
++When creating or reinstalling a VPS, vpsAdmin can upload a script or configuration for [[https://cloud-init.io/|cloud-init]] into the VPS. This script or configuration is applied on the first startup of the VPS. We support these formats for the initial configuration:
++
++  * [[#script|script]]
++  * [[#cloud-init_config|cloud-init config]]
++  * [[#cloud-init_script|cloud-init script]]
++  * [[#nixos_configuration|NixOS configuration]]
++  * [[#nixos_flake_configuration|NixOS flake configuration]]
++  * [[#nixos_flake_uri|NixOS flake URI]]
++
++Scripts and configurations can be stored in vpsAdmin, and you can select the configuration method when creating/reinstalling a VPS. You can manage stored configurations in vpsAdmin under <vpsadmin-nav id="userdata.manage-vps.open">**VPS** -> **User data**</vpsadmin-nav>, or <vpsadmin-nav id="userdata.manage-profile.open">**Edit profile** -> **User data**</vpsadmin-nav>. Alternatively, you can provide a configuration directly during the creation/reinstallation of a VPS without saving it in vpsAdmin. Saving configurations is optional but can simplify repeated use of unchanged configurations.
++
++For development and testing, you can deploy a stored configuration to a VPS at any time:
++<vpsadmin-nav id="userdata.deploy.open">**vpsAdmin** -> **VPS** -> **User data** -> Edit an entry from the list, then use the **Deploy to VPS** form</vpsadmin-nav>. This action will only create the script/configuration files inside the VPS, it will not run/apply
++it.
++
++===== Configuration Formats =====
++==== Script ====
++vpsAdmin uploads the specified script to the VPS and integrates it into the VPS's init system, depending on the distribution. In systemd-based distributions, this is handled by the ''vpsadmin-script.service''. The script's output is stored in the journal, accessible via ''journalctl -u vpsadmin-script.service'', or in the file ''/var/log/vpsadmin-script-output.log''.
++
++Example script:
++
++<code bash>
++#!/bin/sh
++
++apt install -y nginx
++echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
++</code>
++
++The service and script are automatically deleted after execution.
++
++If you upload a script to an existing VPS via vpsAdmin, you can run it manually as follows:
++
++<code bash>
++# systemd
++systemctl daemon-reload
++systemctl start vpsadmin-script.service
++
++# OpenRC
++service vpsadmin-script start
++</code>
++
++=== Environment Variables ===
++The executed script has access to the following environment variables:
++
++  * ''VPSADMIN_VPS_ID'' - VPS ID
++
++==== cloud-init config ====
++Configuration for cloud-init in YAML format, see https://cloudinit.readthedocs.io/en/latest/explanation/format.html#cloud-config-data
++
++Example configuration:
++
++<code yaml>
++#cloud-config
++users:
++  - name: myuser
++    ssh_authorized_keys:
++      - "ssh-rsa AAAA..."
++packages:
++  - htop
++  - curl
++runcmd:
++  - echo "Hello, world!" > /root/welcome.txt
++</code>
++
++The cloud-init output can be seen in the kernel log and is stored in ''/var/log/cloud-init-output.log''.
++
++==== cloud-init script ====
++A script executed via cloud-init, see
++https://cloudinit.readthedocs.io/en/latest/explanation/format.html#user-data-script
++
++The cloud-init output can be seen in the kernel log and is stored in ''/var/log/cloud-init-output.log''.
++
++==== NixOS Configuration ====
++The provided configuration is saved to ''/etc/vpsadmin-nixos/configuration.nix'' and upon VPS startup, the command ''nixos-rebuild switch'' is executed. Keep in mind that the provided configuration must import ''vpsadminos.nix'' or include it directly.
++
++Example configuration:
++
++<code nix>
++{ config, pkgs, lib, ... }:
++{
++  imports = [
++    /etc/nixos/vpsadminos.nix
++  ];
++
++  environment.systemPackages = with pkgs; [
++    vim
++  ];
++
++  services.openssh.enable = true;
++  services.openssh.settings.PermitRootLogin = "yes";
++  #users.extraUsers.root.openssh.authorizedKeys.keys =
++  #  [ "..." ];
++
++  systemd.extraConfig = ''
++    DefaultTimeoutStartSec=900s
++  '';
++
++  time.timeZone = "Europe/Amsterdam";
++
++  system.stateVersion = "24.11";
++}
++</code>
++
++The output of the ''nixos-rebuild'' command is stored in ''/var/log/vpsadmin-nixos-output.log''.
++
++==== NixOS Flake Configuration ====
++The configuration is saved to the file ''/etc/vpsadmin-nixos/flake.nix'', and the command ''nixos-rebuild switch --flake /etc/vpsadmin-nixos#vps'' is executed. The configuration for the ''vps'' system must be included within the provided ''flake.nix''.
++
++Example configuration:
++
++<code nix>
++{
++  inputs = {
++    nixpkgs.url = github:NixOS/nixpkgs/nixos-24.11;
++    vpsadminos.url = github:vpsfreecz/vpsadminos/staging;
++  };
++  
++  outputs = { self, nixpkgs, vpsadminos }: {
++    # The configuration must include a system named "vps"
++    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++      modules = [
++        ({ config, pkgs, lib, ... }:
++        {
++          imports = [
++            vpsadminos.nixosConfigurations.container
++          ];
++
++          environment.systemPackages = with pkgs; [
++            vim
++          ];
++
++          services.openssh.enable = true;
++          services.openssh.settings.PermitRootLogin = "yes";
++          #users.extraUsers.root.openssh.authorizedKeys.keys =
++          #  [ "..." ];
++
++          systemd.extraConfig = ''
++            DefaultTimeoutStartSec=900s
++          '';
++
++          time.timeZone = "Europe/Amsterdam";
++
++          nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
++
++          system.stateVersion = "24.11";
++        })
++      ];
++    };
++  };
++}
++</code>
++
++The output of the ''nixos-rebuild'' command is stored in ''/var/log/vpsadmin-nixos-output.log''.
++
++==== NixOS Flake URI ====
++Upon VPS startup, the command ''nixos-rebuild switch --flake $flake_uri'' is executed. This allows you to easily deploy a configuration that is publicly available, for example, on GitHub.
++
++Example configuration:
++
++<code nix>
++github:vpsfreecz/example-vps-flake#vps
++</code>
++
++You can find this configuration at https://github.com/vpsfreecz/example-vps-flake.
++
++The output of the ''nixos-rebuild'' command is stored in ''/var/log/vpsadmin-nixos-output.log''.
++
++===== Usage with vpsfreectl =====
++The initial configuration can also be uploaded to a VPS using [[manuals:vps:api|vpsfreectl]].
++First, prepare a file with the script:
++
++<code bash>
++cat <<EOF > my-script.sh
++#!/bin/sh
++
++apt install -y nginx
++echo "Hello from VPS $VPSADMIN_VPS_ID" > /var/www/html/index.html
++EOF
++</code>
++
++Now create a new VPS:
++
++<code bash>
++vpsfreectl vps create -- \
++                      --hostname vps \
++                      --os-template 168 \
++                      --location 7 \
++                      --user-data-format script \
++                      --user-data-content @my-script.sh
++</code>
++
++The parameter ''--user-data-content'' starts with ''@'', which instructs ''vpsfreectl'' to send the content of the ''my-script.sh'' file. OS template **168** corresponds to Ubuntu 24.04 (''vpsfreectl os_template list''), and location **7** is [[manuals:vps:stagingvps|Staging]] (''vpsfreectl location list''). You can also upload a script when reinstalling a VPS:
++
++<code bash>
++vpsfreectl vps reinstall 123 -- --user-data-format script --user-data-content @my-script.sh
++</code>
++
++===== Supported distributions =====
++
++All distributions are supported with the following exceptions:
++
++  * script is not supported on Guix, NixOS and Slackware
++  * cloud-init is not supported on Guix, NixOS, Slackware and Void Linux
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/index.json b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/index.json
+new file mode 100644
+index 00000000..3444dd97
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/kb-review-source/index.json
+@@ -0,0 +1,42 @@
++{
++  "cs": [
++    {
++      "id": "navody:distribuce:nixos",
++      "file": "cs/navody/distribuce/nixos.txt",
++      "revision": 1786384170,
++      "sha256": "ac711a5f4b720e0e3d215e0a145f6f57270175338fdbc255c9297be40552de19"
++    },
++    {
++      "id": "navody:distribuce:nixos:impermanence",
++      "file": "cs/navody/distribuce/nixos/impermanence.txt",
++      "revision": 1783888026,
++      "sha256": "909f7dfd8eea753a6a7090b53554e4a8ffbf7bf8722d1ff0e07bbcfacfffba5e"
++    },
++    {
++      "id": "navody:vps:userdata",
++      "file": "cs/navody/vps/userdata.txt",
++      "revision": 1783888028,
++      "sha256": "acf501af4b67c862484a3acc302d1edb3b1a89984d8d8cd3e8dd5c0de4a415e7"
++    }
++  ],
++  "en": [
++    {
++      "id": "manuals:distributions:nixos",
++      "file": "en/manuals/distributions/nixos.txt",
++      "revision": 1786384142,
++      "sha256": "23cd6b2dbacbd29271f8c0253da55698c70e9647ef4dc495754b3c7055567ae7"
++    },
++    {
++      "id": "manuals:distributions:nixos:impermanence",
++      "file": "en/manuals/distributions/nixos/impermanence.txt",
++      "revision": 1783888250,
++      "sha256": "729d4b06896890410f17bf574c0fa811fd1c47410f4c7c278eac79f9faf99616"
++    },
++    {
++      "id": "manuals:vps:userdata",
++      "file": "en/manuals/vps/userdata.txt",
++      "revision": 1783888251,
++      "sha256": "3487ab5abe77698a0dd407c4a580123717d9145ce30f961435f9f1e5d8b1b469"
++    }
++  ]
++}
+diff --git a/work/2026-10-12-streamline-vpsadminos-config-imports/release-changes.yml b/work/2026-10-12-streamline-vpsadminos-config-imports/release-changes.yml
+new file mode 100644
+index 00000000..b8d58049
+--- /dev/null
++++ b/work/2026-10-12-streamline-vpsadminos-config-imports/release-changes.yml
+@@ -0,0 +1,41 @@
++{
++  "schema": 1,
++  "changes": [
++    {
++      "language": "cs",
++      "id": "navody:distribuce:nixos",
++      "action": "write",
++      "summary": "Doplnění automatického výběru stabilního vydání, přímých importů a konfigurace unstable"
++    },
++    {
++      "language": "cs",
++      "id": "navody:distribuce:nixos:impermanence",
++      "action": "write",
++      "summary": "Použití modulu pro stabilní vydání bez převodu názvu verze"
++    },
++    {
++      "language": "cs",
++      "id": "navody:vps:userdata",
++      "action": "write",
++      "summary": "Použití modulu podle stabilního vydání v příkladu NixOS flake"
++    },
++    {
++      "language": "en",
++      "id": "manuals:distributions:nixos",
++      "action": "write",
++      "summary": "Document automatic stable-release selection, exact release imports and explicit unstable configuration"
++    },
++    {
++      "language": "en",
++      "id": "manuals:distributions:nixos:impermanence",
++      "action": "write",
++      "summary": "Use the release-aware stable container module and identify the Features form"
++    },
++    {
++      "language": "en",
++      "id": "manuals:vps:userdata",
++      "action": "write",
++      "summary": "Use the release-aware stable module in the NixOS flake example"
++    }
++  ]
++}

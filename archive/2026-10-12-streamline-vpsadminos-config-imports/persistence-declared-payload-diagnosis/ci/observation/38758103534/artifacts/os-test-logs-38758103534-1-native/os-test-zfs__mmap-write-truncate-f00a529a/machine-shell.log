@@ -1,0 +1,205 @@
+SHELL: 0
+
+START: 2026-10-15 19:10:57 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 19:10:57 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:10:57 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 19:10:57 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:10:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:11:00 +0200
+ELAPSED: 2.93s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:11:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:11:02 +0200
+ELAPSED: 0.82s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:11:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:11:04 +0200
+ELAPSED: 1.07s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:11:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:11:06 +0200
+ELAPSED: 1.01s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:11:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:11:10 +0200
+ELAPSED: 2.7s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:11:11 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:11:12 +0200
+ELAPSED: 0.94s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:11:13 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:11:14 +0200
+ELAPSED: 1.15s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 19:11:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:11:16 +0200
+ELAPSED: 1.1s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 19:11:17 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:11:18 +0200
+ELAPSED: 1.21s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 19:11:18 +0200
+COMMAND: dirname "$(dirname "$(readlink -f "$(command -v zfs)")")"
+END: 2026-10-15 19:11:18 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+/nix/store/aqqn7bygx3hgm88szdpb0ikl2dhgrrh4-zfs-user-2.3-vpsadminos
+---
+
+START: 2026-10-15 19:11:18 +0200
+COMMAND: test -x /nix/store/aqqn7bygx3hgm88szdpb0ikl2dhgrrh4-zfs-user-2.3-vpsadminos/share/zfs/zfs-tests/bin/mmap_write_truncate
+END: 2026-10-15 19:11:18 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:11:18 +0200
+COMMAND: zfs create -o recordsize=128K -o mountpoint=/mmap-write-truncate tank/mmap-write-truncate
+END: 2026-10-15 19:11:18 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:11:18 +0200
+COMMAND: mkdir -p /mmap-write-truncate/direct /mmap-write-truncate/lower /mmap-write-truncate/upper /mmap-write-truncate/work /mnt/mmap-write-truncate
+END: 2026-10-15 19:11:18 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:11:18 +0200
+COMMAND: mount -t overlay overlay -o lowerdir=/mmap-write-truncate/lower,upperdir=/mmap-write-truncate/upper,workdir=/mmap-write-truncate/work /mnt/mmap-write-truncate
+END: 2026-10-15 19:11:19 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:11:19 +0200
+COMMAND: timeout --kill-after=5 60 /nix/store/aqqn7bygx3hgm88szdpb0ikl2dhgrrh4-zfs-user-2.3-vpsadminos/share/zfs/zfs-tests/bin/mmap_write_truncate /mmap-write-truncate/direct/source /mmap-write-truncate/direct/destination
+END: 2026-10-15 19:11:19 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+truncate=0 prefix=0: correct return, data and unlock
+truncate=1 prefix=0: correct return, data and unlock
+truncate=1 prefix=1: correct return, data and unlock
+---
+
+START: 2026-10-15 19:11:19 +0200
+COMMAND: timeout --kill-after=5 60 /nix/store/aqqn7bygx3hgm88szdpb0ikl2dhgrrh4-zfs-user-2.3-vpsadminos/share/zfs/zfs-tests/bin/mmap_write_truncate /mnt/mmap-write-truncate/source /mnt/mmap-write-truncate/destination
+END: 2026-10-15 19:11:19 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+truncate=0 prefix=0: correct return, data and unlock
+truncate=1 prefix=0: correct return, data and unlock
+truncate=1 prefix=1: correct return, data and unlock
+---
+
+START: 2026-10-15 19:11:19 +0200
+COMMAND: umount /mnt/mmap-write-truncate
+END: 2026-10-15 19:11:19 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:11:19 +0200
+COMMAND: zfs destroy tank/mmap-write-truncate
+END: 2026-10-15 19:11:19 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:11:19 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 19:11:20 +0200
+ELAPSED: 1.38s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

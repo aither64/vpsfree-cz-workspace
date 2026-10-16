@@ -1,0 +1,2127 @@
+SHELL: 0
+
+START: 2026-10-14 21:19:11 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-14 21:19:11 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:11 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-14 21:19:11 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:11 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-14 21:19:11 +0200
+ELAPSED: 0.09s
+STATUS: 6
+OUTPUT:
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+---
+
+START: 2026-10-14 21:19:12 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-14 21:19:12 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 14 Oct 2026 19:19:12 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-14 21:19:12 +0200
+COMMAND: test "$(uname -r)" = 6.12.95
+END: 2026-10-14 21:19:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:12 +0200
+COMMAND: test "$(sha256sum /etc/livepatch-test/corrected.ko | cut -d' ' -f1)" = 57213079758efd2a808875611491174f9f9b37d55c384196603286542c3a0a16
+END: 2026-10-14 21:19:13 +0200
+ELAPSED: 1.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:13 +0200
+COMMAND: test "$(sha256sum /etc/livepatch-test/released-v5.ko | cut -d' ' -f1)" = b31f64403d9d55f62e3d59e4bbefcbddcbda4fa66a2dc0689f9bb7cd7e927984
+END: 2026-10-14 21:19:13 +0200
+ELAPSED: 0.37s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:13 +0200
+COMMAND: test "$(sha256sum /etc/livepatch-test/predecessor.ko | cut -d' ' -f1)" = 960b13f1b461b95e29cccff58ddf0d3f3badf151046eb46eba36a9c8c7e5efe3
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.53s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: mkdir -p /lib/modules
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: ln -snf /run/current-system/kernel-modules/lib/modules/6.12.95 /lib/modules/6.12.95.5
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: ln -snf /run/current-system/kernel-modules/lib/modules/6.12.95 /lib/modules/6.12.95.7
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: test -d /sys/module/livepatch_5
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: test -d /sys/module/livepatch_6
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe fuse
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: mountpoint -q /sys/fs/fuse/connections || mount -t fusectl fusectl /sys/fs/fuse/connections
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe nfsv4
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe l2tp_ppp
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe af_packet
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe sctp
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe libceph
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe nf_tables
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe nfnetlink_queue
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe nft_queue
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe ip_set_hash_ip
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe ip_vs
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe bridge
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe br_netfilter
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe nf_conntrack_sip
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe nf_nat_sip
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe sctp_diag
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe vsock_loopback
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe xfrm_user
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: insmod /etc/livepatch-test/pernet-hold.ko
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: insmod /etc/livepatch-test/probe.ko
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: rpcinfo -t 127.0.0.1 nfs 4
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+program 100003 version 4 ready and waiting
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: pgrep -x tlshd
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.08s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+536
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: grep -Eq '^vendor_id[[:space:]]*: GenuineIntel$' /proc/cpuinfo
+END: 2026-10-14 21:19:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:14 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: /etc/livepatch-test/kvm-smoke
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: dmesg
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+[    0.000000] Linux version 6.12.95 (nixbld@localhost) (gcc (GCC) 15.2.0, GNU ld (GNU Binutils) 2.46) #1-vpsAdminOS SMP PREEMPT_DYNAMIC Sun Jul  5 16:42:06 UTC 2026
+[    0.000000] Command line: console=ttyS0 init=/nix/store/sdkbg96raksxcp27w9b3kska1s8x4979-vpsadminos-system-vpsadminos-26.05.git.96b6905/init root=/dev/vda net.ifnames=0 cgroup.memory=nokmem loglevel=4 lsm=landlock,yama,bpf quiet panic=-1
+[    0.000000] BIOS-provided physical RAM map:
+[    0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+[    0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000000100000-0x00000000bffdcfff] usable
+[    0.000000] BIOS-e820: [mem 0x00000000bffdd000-0x00000000bfffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+[    0.000000] BIOS-e820: [mem 0x0000000100000000-0x000000023fffffff] usable
+[    0.000000] NX (Execute Disable) protection: active
+[    0.000000] APIC: Static calls initialized
+[    0.000000] SMBIOS 2.8 present.
+[    0.000000] DMI: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org 04/01/2014
+[    0.000000] DMI: Memory slots populated: 1/1
+[    0.000000] Hypervisor detected: KVM
+[    0.000000] last_pfn = 0xbffdd max_arch_pfn = 0x400000000
+[    0.000000] kvm-clock: Using msrs 4b564d01 and 4b564d00
+[    0.000002] kvm-clock: using sched offset of 652421245 cycles
+[    0.000005] clocksource: kvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns
+[    0.000011] tsc: Detected 2095.082 MHz processor
+[    0.001061] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+[    0.001066] e820: remove [mem 0x000a0000-0x000fffff] usable
+[    0.001075] last_pfn = 0x240000 max_arch_pfn = 0x400000000
+[    0.001128] MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+[    0.001134] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+[    0.001203] last_pfn = 0xbffdd max_arch_pfn = 0x400000000
+[    0.010660] found SMP MP-table at [mem 0x000f54a0-0x000f54af]
+[    0.010687] Using GB pages for direct mapping
+[    0.010984] RAMDISK: [mem 0xbf67c000-0xbffcffff]
+[    0.011001] ACPI: Early table checksum verification disabled
+[    0.011006] ACPI: RSDP 0x00000000000F52A0 000014 (v00 BOCHS )
+[    0.011014] ACPI: RSDT 0x00000000BFFE25A2 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.011023] ACPI: FACP 0x00000000BFFE2356 000074 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.011052] ACPI: DSDT 0x00000000BFFE0040 002316 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.011059] ACPI: FACS 0x00000000BFFE0000 000040
+[    0.011064] ACPI: APIC 0x00000000BFFE23CA 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.011070] ACPI: HPET 0x00000000BFFE245A 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.011076] ACPI: SRAT 0x00000000BFFE2492 0000E8 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.011082] ACPI: WAET 0x00000000BFFE257A 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+[    0.011087] ACPI: Reserving FACP table memory at [mem 0xbffe2356-0xbffe23c9]
+[    0.011090] ACPI: Reserving DSDT table memory at [mem 0xbffe0040-0xbffe2355]
+[    0.011092] ACPI: Reserving FACS table memory at [mem 0xbffe0000-0xbffe003f]
+[    0.011094] ACPI: Reserving APIC table memory at [mem 0xbffe23ca-0xbffe2459]
+[    0.011095] ACPI: Reserving HPET table memory at [mem 0xbffe245a-0xbffe2491]
+[    0.011097] ACPI: Reserving SRAT table memory at [mem 0xbffe2492-0xbffe2579]
+[    0.011099] ACPI: Reserving WAET table memory at [mem 0xbffe257a-0xbffe25a1]
+[    0.011184] ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0x0009ffff]
+[    0.011191] ACPI: SRAT: Node 0 PXM 0 [mem 0x00100000-0xbfffffff]
+[    0.011197] ACPI: SRAT: Node 0 PXM 0 [mem 0x100000000-0x23fffffff]
+[    0.011204] NUMA: Node 0 [mem 0x00001000-0x0009ffff] + [mem 0x00100000-0xbfffffff] -> [mem 0x00001000-0xbfffffff]
+[    0.011213] NUMA: Node 0 [mem 0x00001000-0xbfffffff] + [mem 0x100000000-0x23fffffff] -> [mem 0x00001000-0x23fffffff]
+[    0.011226] NODE_DATA(0) allocated [mem 0x23fffc0c0-0x23fffffff]
+[    0.011402] Zone ranges:
+[    0.011403]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+[    0.011406]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+[    0.011409]   Normal   [mem 0x0000000100000000-0x000000023fffffff]
+[    0.011412] Movable zone start for each node
+[    0.011414] Early memory node ranges
+[    0.011414]   node   0: [mem 0x0000000000001000-0x000000000009efff]
+[    0.011417]   node   0: [mem 0x0000000000100000-0x00000000bffdcfff]
+[    0.011420]   node   0: [mem 0x0000000100000000-0x000000023fffffff]
+[    0.011424] Initmem setup node 0 [mem 0x0000000000001000-0x000000023fffffff]
+[    0.011454] On node 0, zone DMA: 1 pages in unavailable ranges
+[    0.011911] On node 0, zone DMA: 97 pages in unavailable ranges
+[    0.113408] On node 0, zone Normal: 35 pages in unavailable ranges
+[    0.114510] ACPI: PM-Timer IO Port: 0x608
+[    0.114535] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+[    0.114583] IOAPIC[0]: apic_id 0, version 17, address 0xfec00000, GSI 0-23
+[    0.114589] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+[    0.114592] ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+[    0.114595] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+[    0.114598] ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+[    0.114600] ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+[    0.114608] ACPI: Using ACPI (MADT) for SMP configuration information
+[    0.114610] ACPI: HPET id: 0x8086a201 base: 0xfed00000
+[    0.114617] TSC deadline timer available
+[    0.114628] CPU topo: Max. logical packages:   1
+[    0.114630] CPU topo: Max. logical dies:       1
+[    0.114631] CPU topo: Max. dies per package:   1
+[    0.114641] CPU topo: Max. threads per core:   1
+[    0.114643] CPU topo: Num. cores per package:     4
+[    0.114644] CPU topo: Num. threads per package:   4
+[    0.114645] CPU topo: Allowing 4 present CPUs plus 0 hotplug CPUs
+[    0.114673] kvm-guest: APIC: eoi() replaced with kvm_guest_apic_eoi_write()
+[    0.114693] kvm-guest: KVM setup pv remote TLB flush
+[    0.114699] kvm-guest: setup PV sched yield
+[    0.114729] PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
+[    0.114732] PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff]
+[    0.114735] PM: hibernation: Registered nosave memory: [mem 0xbffdd000-0xffffffff]
+[    0.114739] [mem 0xc0000000-0xfeffbfff] available for PCI devices
+[    0.114741] Booting paravirtualized kernel on KVM
+[    0.114744] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns
+[    0.124170] setup_percpu: NR_CPUS:384 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+[    0.128370] percpu: Embedded 59 pages/cpu s204376 r8192 d29096 u524288
+[    0.128400] pcpu-alloc: s204376 r8192 d29096 u524288 alloc=1*2097152
+[    0.128404] pcpu-alloc: [0] 0 1 2 3 
+[    0.128465] kvm-guest: PV spinlocks enabled
+[    0.128469] PV qspinlock hash table entries: 256 (order: 0, 4096 bytes, linear)
+[    0.128474] Kernel command line: console=ttyS0 init=/nix/store/sdkbg96raksxcp27w9b3kska1s8x4979-vpsadminos-system-vpsadminos-26.05.git.96b6905/init root=/dev/vda net.ifnames=0 cgroup.memory=nokmem loglevel=4 lsm=landlock,yama,bpf quiet panic=-1
+[    0.128720] random: crng init done
+[    0.144894] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+[    0.152912] Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+[    0.153128] Fallback order for Node 0: 0 
+[    0.153137] Built 1 zonelists, mobility grouping on.  Total pages: 2097019
+[    0.153140] Policy zone: Normal
+[    0.153154] mem auto-init: stack:all(zero), heap alloc:on, heap free:on
+[    0.153156] mem auto-init: clearing system memory may take some time...
+[    0.153164] software IO TLB: area num 4.
+[    6.576682] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+[    6.589941] ftrace: allocating 48560 entries in 192 pages
+[    6.589947] ftrace: allocated 192 pages with 2 groups
+[    6.591309] Dynamic Preempt: none
+[    6.591392] rcu: Preemptible hierarchical RCU implementation.
+[    6.591393] rcu: 	RCU event tracing is enabled.
+[    6.591394] rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=4.
+[    6.591397] 	Trampoline variant of Tasks RCU enabled.
+[    6.591397] 	Rude variant of Tasks RCU enabled.
+[    6.591398] 	Tracing variant of Tasks RCU enabled.
+[    6.591399] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+[    6.591401] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+[    6.591411] RCU Tasks: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    6.591414] RCU Tasks Rude: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    6.591417] RCU Tasks Trace: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+[    6.604465] NR_IRQS: 24832, nr_irqs: 456, preallocated irqs: 16
+[    6.604734] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+[    6.605053] Console: colour *CGA 80x25
+[    6.605170] printk: legacy console [ttyS0] enabled
+[    6.605251] ACPI: Core revision 20240827
+[    6.605609] clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+[    6.605916] APIC: Switch to symmetric I/O mode setup
+[    6.606269] x2apic enabled
+[    6.606739] APIC: Switched APIC routing to: physical x2apic
+[    6.606745] kvm-guest: APIC: send_IPI_mask() replaced with kvm_send_ipi_mask()
+[    6.606754] kvm-guest: APIC: send_IPI_mask_allbutself() replaced with kvm_send_ipi_mask_allbutself()
+[    6.606759] kvm-guest: setup PV IPIs
+[    6.608355] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+[    6.608398] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x1e330abbade, max_idle_ns: 440795251159 ns
+[    6.608410] Calibrating delay loop (skipped) preset value.. 4190.16 BogoMIPS (lpj=2095082)
+[    6.608602] x86/cpu: User Mode Instruction Prevention (UMIP) activated
+[    6.608722] Last level iTLB entries: 4KB 0, 2MB 0, 4MB 0
+[    6.608726] Last level dTLB entries: 4KB 0, 2MB 0, 4MB 0, 1GB 0
+[    6.608746] Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+[    6.608753] Spectre V2 : Spectre BHI mitigation: SW BHB clearing on syscall and VM exit
+[    6.608755] Spectre V2 : Mitigation: Enhanced / Automatic IBRS
+[    6.608757] Spectre V2 : Spectre v2 / PBRSB-eIBRS: Retire a single CALL on VMEXIT
+[    6.608759] RETBleed: Mitigation: Enhanced IBRS
+[    6.608763] Spectre V2 : mitigation: Enabling conditional Indirect Branch Prediction Barrier
+[    6.608767] Speculative Store Bypass: Mitigation: Speculative Store Bypass disabled via prctl
+[    6.608776] TAA: Mitigation: TSX disabled
+[    6.608778] MMIO Stale Data: Mitigation: Clear CPU buffers
+[    6.608781] active return thunk: its_return_thunk
+[    6.608790] ITS: Mitigation: Aligned branch/return thunks
+[    6.608830] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+[    6.608833] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+[    6.608835] x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
+[    6.608837] x86/fpu: Supporting XSAVE feature 0x008: 'MPX bounds registers'
+[    6.608840] x86/fpu: Supporting XSAVE feature 0x010: 'MPX CSR'
+[    6.608842] x86/fpu: Supporting XSAVE feature 0x020: 'AVX-512 opmask'
+[    6.608844] x86/fpu: Supporting XSAVE feature 0x040: 'AVX-512 Hi256'
+[    6.608846] x86/fpu: Supporting XSAVE feature 0x080: 'AVX-512 ZMM_Hi256'
+[    6.608849] x86/fpu: Supporting XSAVE feature 0x200: 'Protection Keys User registers'
+[    6.608852] x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
+[    6.608855] x86/fpu: xstate_offset[3]:  832, xstate_sizes[3]:   64
+[    6.608858] x86/fpu: xstate_offset[4]:  896, xstate_sizes[4]:   64
+[    6.608861] x86/fpu: xstate_offset[5]:  960, xstate_sizes[5]:   64
+[    6.608864] x86/fpu: xstate_offset[6]: 1024, xstate_sizes[6]:  512
+[    6.608867] x86/fpu: xstate_offset[7]: 1536, xstate_sizes[7]: 1024
+[    6.608869] x86/fpu: xstate_offset[9]: 2560, xstate_sizes[9]:    8
+[    6.608872] x86/fpu: Enabled xstate features 0x2ff, context size is 2568 bytes, using 'compacted' format.
+[    6.684638] Freeing SMP alternatives memory: 40K
+[    6.684648] pid_max: default: 32768 minimum: 301
+[    6.684741] LSM: initializing lsm=capability,landlock,yama,bpf
+[    6.684873] landlock: Up and running.
+[    6.684875] Yama: becoming mindful.
+[    6.685242] LSM support for eBPF active
+[    6.685277] Mount-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    6.685283] Mountpoint-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+[    6.685818] smpboot: CPU0: Intel(R) Xeon(R) Gold 6230R CPU @ 2.10GHz (family: 0x6, model: 0x55, stepping: 0x7)
+[    6.686238] Performance Events: Skylake events, full-width counters, Intel PMU driver.
+[    6.686297] ... version:                2
+[    6.686300] ... bit width:              48
+[    6.686302] ... generic registers:      4
+[    6.686303] ... value mask:             0000ffffffffffff
+[    6.686306] ... max period:             00007fffffffffff
+[    6.686309] ... fixed-purpose events:   3
+[    6.686310] ... event mask:             000000070000000f
+[    6.686404] signal: max sigframe size: 3632
+[    6.686404] rcu: Hierarchical SRCU implementation.
+[    6.686404] rcu: 	Max phase no-delay instances is 400.
+[    6.686404] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+[    6.689876] smp: Bringing up secondary CPUs ...
+[    6.690111] smpboot: x86: Booting SMP configuration:
+[    6.690113] .... node  #0, CPUs:      #1 #2 #3
+[    6.692487] smp: Brought up 1 node, 4 CPUs
+[    6.692495] smpboot: Total of 4 processors activated (16760.65 BogoMIPS)
+[    9.489200] node 0 deferred pages initialised in 2797ms
+[    9.489489] Memory: 8118220K/8388076K available (18432K kernel code, 2633K rwdata, 11944K rodata, 3128K init, 2620K bss, 263924K reserved, 0K cma-reserved)
+[    9.490730] devtmpfs: initialized
+[    9.490730] x86/mm: Memory block size: 128MB
+[    9.493525] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+[    9.493536] futex hash table entries: 1024 (order: 4, 65536 bytes, linear)
+[    9.493669] pinctrl core: initialized pinctrl subsystem
+[    9.494702] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+[    9.495025] audit: initializing netlink subsys (disabled)
+[    9.495041] audit: type=2000 audit(1792005541.478:1): state=initialized audit_enabled=0 res=1
+[    9.495041] thermal_sys: Registered thermal governor 'bang_bang'
+[    9.495041] thermal_sys: Registered thermal governor 'step_wise'
+[    9.495041] thermal_sys: Registered thermal governor 'user_space'
+[    9.495412] cpuidle: using governor ladder
+[    9.495421] cpuidle: using governor menu
+[    9.495603] acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5
+[    9.495995] PCI: Using configuration type 1 for base access
+[    9.496240] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+[    9.496506] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+[    9.496506] HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page
+[    9.496506] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+[    9.496506] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+[    9.497621] ACPI: Added _OSI(Module Device)
+[    9.497625] ACPI: Added _OSI(Processor Device)
+[    9.497627] ACPI: Added _OSI(Processor Aggregator Device)
+[    9.498637] ACPI: 1 ACPI AML tables successfully acquired and loaded
+[    9.501777] ACPI: Interpreter enabled
+[    9.501801] ACPI: PM: (supports S0 S3 S4 S5)
+[    9.501805] ACPI: Using IOAPIC for interrupt routing
+[    9.501838] PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+[    9.501840] PCI: Using E820 reservations for host bridge windows
+[    9.502074] ACPI: Enabled 2 GPEs in block 00 to 0F
+[    9.506992] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+[    9.507006] acpi PNP0A03:00: _OSC: OS supports [ASPM ClockPM Segments MSI HPX-Type3]
+[    9.507010] acpi PNP0A03:00: _OSC: not requesting OS control; OS requires [ExtendedConfig ASPM ClockPM MSI]
+[    9.507027] acpi PNP0A03:00: fail to add MMCONFIG information, can't access extended configuration space under this bridge
+[    9.507528] acpiphp: Slot [2] registered
+[    9.507578] acpiphp: Slot [3] registered
+[    9.507649] acpiphp: Slot [4] registered
+[    9.507695] acpiphp: Slot [5] registered
+[    9.507737] acpiphp: Slot [6] registered
+[    9.507789] acpiphp: Slot [7] registered
+[    9.507830] acpiphp: Slot [8] registered
+[    9.507871] acpiphp: Slot [9] registered
+[    9.507911] acpiphp: Slot [10] registered
+[    9.507954] acpiphp: Slot [11] registered
+[    9.507995] acpiphp: Slot [12] registered
+[    9.508035] acpiphp: Slot [13] registered
+[    9.508078] acpiphp: Slot [14] registered
+[    9.508120] acpiphp: Slot [15] registered
+[    9.508159] acpiphp: Slot [16] registered
+[    9.508199] acpiphp: Slot [17] registered
+[    9.508241] acpiphp: Slot [18] registered
+[    9.508281] acpiphp: Slot [19] registered
+[    9.508319] acpiphp: Slot [20] registered
+[    9.508360] acpiphp: Slot [21] registered
+[    9.508402] acpiphp: Slot [22] registered
+[    9.509433] acpiphp: Slot [23] registered
+[    9.509474] acpiphp: Slot [24] registered
+[    9.509512] acpiphp: Slot [25] registered
+[    9.509555] acpiphp: Slot [26] registered
+[    9.509614] acpiphp: Slot [27] registered
+[    9.509654] acpiphp: Slot [28] registered
+[    9.509696] acpiphp: Slot [29] registered
+[    9.509736] acpiphp: Slot [30] registered
+[    9.509776] acpiphp: Slot [31] registered
+[    9.509803] PCI host bridge to bus 0000:00
+[    9.509810] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+[    9.509814] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+[    9.509817] pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
+[    9.509820] pci_bus 0000:00: root bus resource [mem 0xc0000000-0xfebfffff window]
+[    9.509823] pci_bus 0000:00: root bus resource [mem 0xe0000000000-0xe007fffffff window]
+[    9.509827] pci_bus 0000:00: root bus resource [bus 00-ff]
+[    9.509937] pci 0000:00:00.0: [8086:1237] type 00 class 0x060000 conventional PCI endpoint
+[    9.511160] pci 0000:00:01.0: [8086:7000] type 00 class 0x060100 conventional PCI endpoint
+[    9.512629] pci 0000:00:01.1: [8086:7010] type 00 class 0x010180 conventional PCI endpoint
+[    9.519068] pci 0000:00:01.1: BAR 4 [io  0xc100-0xc10f]
+[    9.521448] pci 0000:00:01.1: BAR 0 [io  0x01f0-0x01f7]: legacy IDE quirk
+[    9.521456] pci 0000:00:01.1: BAR 1 [io  0x03f6]: legacy IDE quirk
+[    9.521459] pci 0000:00:01.1: BAR 2 [io  0x0170-0x0177]: legacy IDE quirk
+[    9.521461] pci 0000:00:01.1: BAR 3 [io  0x0376]: legacy IDE quirk
+[    9.521903] pci 0000:00:01.3: [8086:7113] type 00 class 0x068000 conventional PCI endpoint
+[    9.522998] pci 0000:00:01.3: quirk: [io  0x0600-0x063f] claimed by PIIX4 ACPI
+[    9.523022] pci 0000:00:01.3: quirk: [io  0x0700-0x070f] claimed by PIIX4 SMB
+[    9.523707] pci 0000:00:02.0: [8086:2922] type 00 class 0x010601 conventional PCI endpoint
+[    9.534163] pci 0000:00:02.0: BAR 4 [io  0xc0c0-0xc0df]
+[    9.535125] pci 0000:00:02.0: BAR 5 [mem 0xfebc0000-0xfebc0fff]
+[    9.539234] pci 0000:00:03.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint
+[    9.541414] pci 0000:00:03.0: BAR 0 [io  0xc0e0-0xc0ff]
+[    9.545310] pci 0000:00:03.0: BAR 1 [mem 0xfebc1000-0xfebc1fff]
+[    9.551416] pci 0000:00:03.0: BAR 4 [mem 0xe0000000000-0xe0000003fff 64bit pref]
+[    9.554416] pci 0000:00:03.0: ROM [mem 0xfeb80000-0xfebbffff pref]
+[    9.557868] pci 0000:00:04.0: [1af4:1003] type 00 class 0x078000 conventional PCI endpoint
+[    9.560388] pci 0000:00:04.0: BAR 0 [io  0xc080-0xc0bf]
+[    9.562413] pci 0000:00:04.0: BAR 1 [mem 0xfebc2000-0xfebc2fff]
+[    9.569372] pci 0000:00:04.0: BAR 4 [mem 0xe0000004000-0xe0000007fff 64bit pref]
+[    9.574051] pci 0000:00:05.0: [1af4:105a] type 00 class 0x018000 conventional PCI endpoint
+[    9.577157] pci 0000:00:05.0: BAR 1 [mem 0xfebc3000-0xfebc3fff]
+[    9.582415] pci 0000:00:05.0: BAR 4 [mem 0xe0000008000-0xe000000bfff 64bit pref]
+[    9.585992] pci 0000:00:06.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+[    9.621420] pci 0000:00:06.0: BAR 0 [io  0xc000-0xc07f]
+[    9.649420] pci 0000:00:06.0: BAR 1 [mem 0xfebc4000-0xfebc4fff]
+[    9.761422] pci 0000:00:06.0: BAR 4 [mem 0xe000000c000-0xe000000ffff 64bit pref]
+[    9.809944] ACPI: PCI: Interrupt link LNKA configured for IRQ 10
+[    9.810187] ACPI: PCI: Interrupt link LNKB configured for IRQ 10
+[    9.810415] ACPI: PCI: Interrupt link LNKC configured for IRQ 11
+[    9.810674] ACPI: PCI: Interrupt link LNKD configured for IRQ 11
+[    9.810836] ACPI: PCI: Interrupt link LNKS configured for IRQ 9
+[    9.811600] iommu: Default domain type: Translated
+[    9.811605] iommu: DMA domain TLB invalidation policy: lazy mode
+[    9.812481] NetLabel: Initializing
+[    9.812481] NetLabel:  domain hash size = 128
+[    9.812481] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+[    9.812483] NetLabel:  unlabeled traffic allowed by default
+[    9.812486] PCI: Using ACPI for IRQ routing
+[    9.812489] PCI: pci_cache_line_size set to 64 bytes
+[    9.813163] e820: reserve RAM buffer [mem 0x0009fc00-0x0009ffff]
+[    9.813170] e820: reserve RAM buffer [mem 0xbffdd000-0xbfffffff]
+[    9.813438] vgaarb: loaded
+[    9.813440] hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0
+[    9.813451] hpet0: 3 comparators, 64-bit 100.000000 MHz counter
+[    9.817514] clocksource: Switched to clocksource kvm-clock
+[    9.817672] VFS: Disk quotas dquot_6.6.0
+[    9.817686] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+[    9.817913] netfs: FS-Cache loaded
+[    9.817983] pnp: PnP ACPI init
+[    9.818168] pnp 00:02: [dma 2]
+[    9.818752] pnp: PnP ACPI: found 6 devices
+[    9.827327] clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+[    9.827467] NET: Registered PF_INET protocol family
+[    9.827526] IP idents hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+[    9.850909] tcp_listen_portaddr_hash hash table entries: 4096 (order: 4, 65536 bytes, linear)
+[    9.850926] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+[    9.850935] TCP established hash table entries: 65536 (order: 7, 524288 bytes, linear)
+[    9.851027] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+[    9.851346] TCP: Hash tables configured (established 65536 bind 65536)
+[    9.851377] UDP hash table entries: 4096 (order: 5, 131072 bytes, linear)
+[    9.851398] UDP-Lite hash table entries: 4096 (order: 5, 131072 bytes, linear)
+[    9.851467] NET: Registered PF_UNIX/PF_LOCAL protocol family
+[    9.851849] RPC: Registered named UNIX socket transport module.
+[    9.851855] RPC: Registered udp transport module.
+[    9.851858] RPC: Registered tcp transport module.
+[    9.851860] RPC: Registered tcp-with-tls transport module.
+[    9.851862] RPC: Registered tcp NFSv4.1 backchannel transport module.
+[    9.851868] NET: Registered PF_XDP protocol family
+[    9.851884] pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+[    9.851891] pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+[    9.851894] pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+[    9.851898] pci_bus 0000:00: resource 7 [mem 0xc0000000-0xfebfffff window]
+[    9.851902] pci_bus 0000:00: resource 8 [mem 0xe0000000000-0xe007fffffff window]
+[    9.852026] pci 0000:00:01.0: PIIX3: Enabling Passive Release
+[    9.852054] pci 0000:00:00.0: Limiting direct PCI/PCI transfers
+[    9.852280] PCI: CLS 0 bytes, default 64
+[    9.852404] PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
+[    9.852407] software IO TLB: mapped [mem 0x00000000bb67c000-0x00000000bf67c000] (64MB)
+[    9.852513] Trying to unpack rootfs image as initramfs...
+[    9.852545] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x1e330abbade, max_idle_ns: 440795251159 ns
+[    9.853425] Initialise system trusted keyrings
+[    9.853585] workingset: timestamp_bits=40 max_order=21 bucket_order=0
+[    9.853608] zbud: loaded
+[    9.985271] Freeing initrd memory: 9552K
+[   10.129932] ZFS: Loaded module v2.3.5-1, ZFS pool version 5000, ZFS filesystem version 5
+[   10.151437] Key type asymmetric registered
+[   10.151445] Asymmetric key parser 'x509' registered
+[   10.151509] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 252)
+[   10.151513] io scheduler mq-deadline registered
+[   10.152805] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+[   10.153215] 00:04: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+[   10.154308] ACPI: bus type drm_connector registered
+[   10.158590] brd: module loaded
+[   10.158609] intel_pstate: CPU model not supported
+[   10.158653] drop_monitor: Initializing network drop monitor service
+[   10.158778] Initializing XFRM netlink socket
+[   10.158789] IPsec XFRM device driver
+[   10.158827] NET: Registered PF_INET6 protocol family
+[   10.159410] Segment Routing with IPv6
+[   10.159429] In-situ OAM (IOAM) with IPv6
+[   10.159754] NET: Registered PF_KEY protocol family
+[   10.160583] IPI shorthand broadcast: enabled
+[   10.326855] sched_clock: Marking stable (10324004328, 2660337)->(10367326137, -40661472)
+[   10.327924] registered taskstats version 1
+[   10.328437] Loading compiled-in X.509 certificates
+[   10.330215] Loaded X.509 cert 'Build time autogenerated kernel key: 89a0df75822810628826fa91c31c2ff684103e02'
+[   10.337546] Demotion targets for Node 0: null
+[   10.337780] Key type .fscrypt registered
+[   10.337785] Key type fscrypt-provisioning registered
+[   10.338395] RAS: Correctable Errors collector initialized.
+[   10.344914] clk: Disabling unused clocks
+[   10.348202] Freeing unused kernel image (initmem) memory: 3128K
+[   10.348235] Write protecting the kernel read-only data: 30720k
+[   10.348696] Freeing unused kernel image (rodata/data gap) memory: 344K
+[   10.383864] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+[   10.383880] Run /init as init process
+[   10.383883]   with arguments:
+[   10.383886]     /init
+[   10.383888]   with environment:
+[   10.383890]     HOME=/
+[   10.383893]     TERM=linux
+[   10.432737] SCSI subsystem initialized
+[   10.475323] libata version 3.00 loaded.
+[   10.487979] ahci 0000:00:02.0: version 3.0
+[   10.489249] ACPI: \_SB_.LNKB: Enabled at IRQ 10
+[   10.490922] ahci 0000:00:02.0: AHCI vers 0001.0000, 32 command slots, 1.5 Gbps, SATA mode
+[   10.490930] ahci 0000:00:02.0: 6/6 ports implemented (port mask 0x3f)
+[   10.490934] ahci 0000:00:02.0: flags: 64bit ncq only 
+[   10.493497] scsi host0: ahci
+[   10.493807] scsi host1: ahci
+[   10.494045] scsi host2: ahci
+[   10.494330] scsi host3: ahci
+[   10.494561] scsi host4: ahci
+[   10.494802] scsi host5: ahci
+[   10.494927] ata1: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0100 irq 24 lpm-pol 1
+[   10.494945] ata2: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0180 irq 24 lpm-pol 1
+[   10.494962] ata3: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0200 irq 24 lpm-pol 1
+[   10.494978] ata4: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0280 irq 24 lpm-pol 1
+[   10.494994] ata5: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0300 irq 24 lpm-pol 1
+[   10.495011] ata6: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0380 irq 24 lpm-pol 1
+[   10.806554] ata4: SATA link down (SStatus 0 SControl 300)
+[   10.806920] ata2: SATA link down (SStatus 0 SControl 300)
+[   10.807312] ata1: SATA link down (SStatus 0 SControl 300)
+[   10.807673] ata5: SATA link down (SStatus 0 SControl 300)
+[   10.808036] ata3: SATA link down (SStatus 0 SControl 300)
+[   10.808427] ata6: SATA link down (SStatus 0 SControl 300)
+[   10.845682] device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@lists.linux.dev
+[   10.882676] ACPI: bus type USB registered
+[   10.882737] usbcore: registered new interface driver usbfs
+[   10.882757] usbcore: registered new interface driver hub
+[   10.882781] usbcore: registered new device driver usb
+[   10.910460] hid: raw HID events driver (C) Jiri Kosina
+[   10.937936] usbcore: registered new interface driver usbhid
+[   10.937943] usbhid: USB HID core driver
+[   10.965324] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+[   10.966874] serio: i8042 KBD port at 0x60,0x64 irq 1
+[   10.966892] serio: i8042 AUX port at 0x60,0x64 irq 12
+[   10.968369] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0
+[   11.008208] isci: Intel(R) C600 SAS Controller Driver - version 1.2.0
+[   11.019149] loop: module loaded
+[   11.139787] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+[   11.164063] tun: Universal TUN/TAP device driver, 1.6
+[   11.234038] ACPI: \_SB_.LNKC: Enabled at IRQ 11
+[   11.253115] ACPI: \_SB_.LNKD: Enabled at IRQ 11
+[   11.641961] ACPI: \_SB_.LNKA: Enabled at IRQ 10
+[   11.673125] virtio_blk virtio3: 4/0/0 default/read/poll queues
+[   11.675921] virtio_blk virtio3: [vda] 974864 512-byte logical blocks (499 MB/476 MiB)
+[   11.771973] udevd[169]: starting version 3.2.14
+[   11.773428] udevd[170]: starting eudev-3.2.14
+[   11.802906] ata_piix 0000:00:01.1: version 2.13
+[   11.807936] scsi host6: ata_piix
+[   11.808994] scsi host7: ata_piix
+[   11.809062] ata7: PATA max MWDMA2 cmd 0x1f0 ctl 0x3f6 bmdma 0xc100 irq 14 lpm-pol 0
+[   11.809065] ata8: PATA max MWDMA2 cmd 0x170 ctl 0x376 bmdma 0xc108 irq 15 lpm-pol 0
+[   11.968107] ata8: found unknown device (class 0)
+[   11.969515] ata8.00: ATAPI: QEMU DVD-ROM, 2.5+, max UDMA/100
+[   11.971942] scsi 7:0:0:0: CD-ROM            QEMU     QEMU DVD-ROM     2.5+ PQ: 0 ANSI: 5
+[   12.001886] sr 7:0:0:0: [sr0] scsi3-mmc drive: 4x/4x cd/rw xa/form2 tray
+[   12.027341] cdrom: Uniform CD-ROM driver Revision: 3.20
+[   12.040907] sr 7:0:0:0: Attached scsi CD-ROM sr0
+[   13.310740] vpsAdminOS 26.05.git.96b6905 with kernel 6.12.95
+[   13.415458] Mirror/redirect action on
+[   13.423880] NET: Registered PF_ALG protocol family
+[   13.434908] NET: Registered PF_PACKET protocol family
+[   13.584056] bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.
+[   13.589137] Bridge firewalling registered
+[   13.605924] PPP generic driver version 2.4.2
+[   13.608447] PPP BSD Compression module registered
+[   13.682542] Key type ceph registered
+[   13.682896] libceph: loaded (mon/osd proto 15/24)
+[   13.741704] ceph: loaded (mds proto 32)
+[   13.753682] Key type dns_resolver registered
+[   13.962948] Key type cifs.spnego registered
+[   13.962959] Key type cifs.idmap registered
+[   13.987803] u32 classifier
+[   13.987810]     Performance counters on
+[   13.987812]     input device check on
+[   13.987813]     Actions configured
+[   14.012561] cryptd: max_cpu_qlen set to 1000
+[   14.082336] fuse: init (API version 7.41)
+[   14.092850] gre: GRE over IPv4 demultiplexor driver
+[   14.246846] ip_gre: GRE over IPv4 tunneling driver
+[   14.311278] IPVS: Registered protocols (TCP, UDP, AH, ESP)
+[   14.311335] IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+[   14.311402] IPVS: ipvs loaded.
+[   14.316638] IPVS: [dh] scheduler registered.
+[   14.322362] IPVS: [fo] scheduler registered.
+[   14.332302] IPVS: [lblc] scheduler registered.
+[   14.336949] IPVS: [lblcr] scheduler registered.
+[   14.342598] IPVS: [lc] scheduler registered.
+[   14.346905] IPVS: [nq] scheduler registered.
+[   14.352905] IPVS: [ovf] scheduler registered.
+[   14.364772] IPVS: [sip] pe registered.
+[   14.370718] IPVS: [rr] scheduler registered.
+[   14.374971] IPVS: [sed] scheduler registered.
+[   14.380875] IPVS: [sh] scheduler registered.
+[   14.385248] IPVS: [wlc] scheduler registered.
+[   14.389643] IPVS: [wrr] scheduler registered.
+[   14.396754] ipip: IPv4 and MPLS over IPv4 tunneling driver
+[   14.457003] l2tp_core: L2TP core driver, V2.0
+[   14.464825] l2tp_netlink: L2TP netlink interface
+[   14.468735] l2tp_eth: L2TP ethernet pseudowire support (L2TPv3)
+[   14.476256] l2tp_ip: L2TP IP encapsulation support (L2TPv3)
+[   14.483712] l2tp_ip6: L2TP IP encapsulation support for IPv6 (L2TPv3)
+[   14.494320] NET: Registered PF_PPPOX protocol family
+[   14.499152] l2tp_ppp: PPPoL2TP kernel driver, V2.0
+[   15.142641] NFS: Registering the id_resolver key type
+[   15.142658] Key type id_resolver registered
+[   15.142660] Key type id_legacy registered
+[   15.289033] PPP Deflate Compression module registered
+[   15.394163] sctp: Hash tables configured (bind 256/256)
+[   15.560865] NET: Registered PF_VSOCK protocol family
+[   15.611507] wireguard: WireGuard 1.0.0 loaded. See www.wireguard.com for information.
+[   15.611513] wireguard: Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+[   15.961004] xt_time: kernel timezone is -0000
+[   16.014405] Spectre V2 : WARNING: Unprivileged eBPF is enabled with eIBRS on, data leaks possible via Spectre v2 BHB attacks!
+[   17.242976] udevd[792]: starting version 3.2.14
+[   17.551908] udevd[792]: starting eudev-3.2.14
+[   18.218802] rtc_cmos 00:05: RTC can wake from S4
+[   18.221836] Floppy drive(s): fd0 is 2.88M AMI BIOS
+[   18.228144] rtc_cmos 00:05: registered as rtc0
+[   18.228529] rtc_cmos 00:05: alarms up to one day, y3k, 242 bytes nvram, hpet irqs
+[   18.230794] input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input3
+[   18.233411] FDC 0 is a S82078B
+[   18.235262] ACPI: button: Power Button [PWRF]
+[   18.235976] piix4_smbus 0000:00:01.3: SMBus Host Controller at 0x700, revision 0
+[   18.236033] i2c i2c-0: Memory type 0x07 not supported yet, not instantiating SPD
+[   18.277265] parport_pc 00:03: reported by Plug and Play ACPI
+[   18.277416] parport0: PC-style at 0x378, irq 7 [PCSPP(,...)]
+[   18.317140] RAPL PMU: API unit is 2^-32 Joules, 0 fixed counters, 10737418240 ms ovfl timer
+[   18.352735] AES CTR mode by8 optimization enabled
+[   18.632995] ppdev: user-space parallel port driver
+[   18.642888] input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input2
+[   18.657842] mousedev: PS/2 mouse device common for all mice
+[   18.801422] Key type encrypted registered
+[   18.833315] EDAC MC: Ver: 3.0.0
+[   19.209187] lxcbr0: entered promiscuous mode
+[   19.439951] NFSD: Unable to initialize client recovery tracking! (-2)
+[   19.439959] NFSD: Is nfsdcld running? If not, enable CONFIG_NFSD_LEGACY_CLIENT_TRACKING.
+[   19.439961] NFSD: starting 90-second grace period (net f0000000)
+[   22.765454] livepatch_test_pernet_hold: loading out-of-tree module taints kernel.
+[   22.765464] livepatch_test_pernet_hold: module verification failed: signature and/or required key missing - tainting kernel
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+536
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+536
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: modprobe tun
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: ip tuntap add dev klp_tap0 mode tap
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: ip link set klp_tap0 up
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: sh -c 'echo 1 > /sys/module/livepatch_test_probe/parameters/probe_capture_args'
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: awk '$3 == "tun_set_headroom" && $4 == "[tun]" { print "0x" $1; exit }' /proc/kallsyms
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.46s
+STATUS: 0
+OUTPUT:
+0xffffffffc0a510d0
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: sh -c 'echo 0 > /sys/module/livepatch_test_probe/parameters/probe_address'
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: sh -c 'echo 0xffffffffc0a510d0 > /sys/module/livepatch_test_probe/parameters/probe_address'
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: sh -c 'echo "klp_tap0 65535" > /sys/module/livepatch_test_probe/parameters/set_rx_headroom'
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: test "$(cat /sys/module/livepatch_test_probe/parameters/probe_hits)" -gt 0
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: test "$(( $(cat /sys/module/livepatch_test_probe/parameters/probe_arg1) ))" = 65535
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: sh -c 'echo 0 > /sys/module/livepatch_test_probe/parameters/probe_address'
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: sh -c 'echo 0 > /sys/module/livepatch_test_probe/parameters/probe_capture_args'
+END: 2026-10-14 21:19:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:15 +0200
+COMMAND: insmod /etc/livepatch-test/corrected.ko
+END: 2026-10-14 21:19:17 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:17 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7 && test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-14 21:19:17 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:17 +0200
+COMMAND: awk '$3 == "tun_get_user" && $4 == "[livepatch_7]" { print "0x" $1; exit }' /proc/kallsyms
+END: 2026-10-14 21:19:17 +0200
+ELAPSED: 0.28s
+STATUS: 0
+OUTPUT:
+0xffffffffc1ed4520
+---
+
+START: 2026-10-14 21:19:17 +0200
+COMMAND: sh -c 'echo 0 > /sys/module/livepatch_test_probe/parameters/probe_address'
+END: 2026-10-14 21:19:17 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:17 +0200
+COMMAND: sh -c 'echo 0xffffffffc1ed4520 > /sys/module/livepatch_test_probe/parameters/probe_address'
+END: 2026-10-14 21:19:17 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:17 +0200
+COMMAND: /etc/livepatch-test/tap-write klp_tap0 60
+END: 2026-10-14 21:19:17 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:17 +0200
+COMMAND: test "$(cat /sys/module/livepatch_test_probe/parameters/probe_hits)" -gt 0
+END: 2026-10-14 21:19:17 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:17 +0200
+COMMAND: /etc/livepatch-test/tap-write klp_tap0 1
+END: 2026-10-14 21:19:17 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+write: Invalid argument
+---
+
+START: 2026-10-14 21:19:17 +0200
+COMMAND: sh -c 'echo 0 > /sys/module/livepatch_test_probe/parameters/probe_address'
+END: 2026-10-14 21:19:17 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:17 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/enabled 2>/dev/null
+END: 2026-10-14 21:19:18 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-10-14 21:19:18 +0200
+COMMAND: sh -c 'echo 0 > /sys/kernel/livepatch/livepatch_7/enabled'
+END: 2026-10-14 21:19:18 +0200
+ELAPSED: 0.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:18 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:18 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:19 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:19 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:20 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:20 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:21 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:21 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:22 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:22 +0200
+ELAPSED: 0.05s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:23 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:23 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:24 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:24 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:25 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:25 +0200
+ELAPSED: 0.05s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:26 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:26 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:27 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:27 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:28 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:28 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:29 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:29 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:30 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:30 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:31 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:31 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:32 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:32 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:33 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:33 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:34 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:34 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:35 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:35 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:36 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:36 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:37 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:37 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:38 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:38 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:39 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:39 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:40 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:40 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:41 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:41 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:42 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:42 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:43 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:43 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:44 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:44 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:45 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:45 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:46 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:46 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:47 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:47 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:48 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:48 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:49 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:49 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:50 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:50 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:51 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:51 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:52 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:52 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:53 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:53 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:54 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:55 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:56 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:56 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:57 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:57 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: rmmod livepatch_7
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: test -e /sys/module/livepatch_test_pernet_hold/parameters/hold && echo 0 > /sys/module/livepatch_test_pernet_hold/parameters/hold 2>/dev/null || true; for parameter in probe_hold probe_spin_hold probe_clone_arg2 probe_capture_args probe_match_arg0 probe_address probe2_address probe3_address shadow_failures; do path=/sys/module/livepatch_test_probe/parameters/$parameter; test -e "$path" && echo 0 > "$path" 2>/dev/null || true; done
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: test -s /run/livepatch-transition-stress/pid
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: test -s /run/livepatch-bpf/pid
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: nft delete table inet klp_pre >/dev/null 2>&1 || true; ipset destroy klp_pre_ip >/dev/null 2>&1 || true; ip link del klp_prebr0 >/dev/null 2>&1 || true; ip netns del klp_prens0 >/dev/null 2>&1 || true; ip xfrm policy delete src 198.19.0.1/32 dst 198.19.0.2/32 dir out >/dev/null 2>&1 || true
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: for pidfile in /run/livepatch-ipset-dump/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; ipset destroy >/dev/null 2>&1 || true; rm -f /run/livepatch-ipset-dump/fifo
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: for pidfile in /run/livepatch-tcp/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; ip netns del klp_tcp_a >/dev/null 2>&1 || true; ip netns del klp_tcp_b >/dev/null 2>&1 || true
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: for pidfile in /run/livepatch-sunrpc/*/pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill -KILL -- "-$pid" >/dev/null 2>&1 || true; done; for target in /run/livepatch-sunrpc/*/mnt; do mountpoint -q "$target" || continue; umount -l "$target" >/dev/null 2>&1 || true; done; rm -rf /run/livepatch-sunrpc
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: for pidfile in /run/livepatch-nft-batch/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; nft delete table inet klp_batch >/dev/null 2>&1 || true; rm -rf /run/livepatch-nft-batch
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: for pidfile in /run/livepatch-multicast/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; ip link del klp_mc_peer >/dev/null 2>&1 || true; ip netns del klp_mc >/dev/null 2>&1 || true
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: if test -s /run/livepatch-vsock/pid; then pid=$(cat /run/livepatch-vsock/pid); kill "$pid" >/dev/null 2>&1 || true; fi; rm -rf /run/livepatch-vsock
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: ip netns del klp_xfrm_a >/dev/null 2>&1 || true; ip netns del klp_xfrm_b >/dev/null 2>&1 || true; rm -rf /run/livepatch-xfrm
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: for pidfile in /run/livepatch-nfs/*/pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill -KILL -- "-$pid" >/dev/null 2>&1 || true; done; if mountpoint -q /run/livepatch-nfs/mnt; then attempt=0; while mountpoint -q /run/livepatch-nfs/mnt && test $attempt -lt 300; do umount /run/livepatch-nfs/mnt >/dev/null 2>&1 && break; attempt=$((attempt + 1)); sleep 0.1; done; mountpoint -q /run/livepatch-nfs/mnt && umount -l /run/livepatch-nfs/mnt >/dev/null 2>&1 || true; fi; rm -rf /run/livepatch-nfs; rm -f /tmp/klp-nfs-lock
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: ip link del klp_stp_br0 >/dev/null 2>&1 || true; ip link del klp_stp_br1 >/dev/null 2>&1 || true; ip link del klp_stp_p0 >/dev/null 2>&1 || true
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: nft delete table bridge klp_frag >/dev/null 2>&1 || true; for pidfile in /run/livepatch-fragment/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; ip link del klp_frag_br >/dev/null 2>&1 || true; ip netns del klp_frag_a >/dev/null 2>&1 || true; ip netns del klp_frag_b >/dev/null 2>&1 || true; ip netns del klp_frag_c >/dev/null 2>&1 || true
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: iptables -w -D nixos-fw -i klp_ipvs_host -m mark --mark 1 -j nixos-fw-accept >/dev/null 2>&1 || true; iptables -w -t mangle -D nixos-fw-rpfilter -i klp_ipvs_host -j RETURN >/dev/null 2>&1 || true; ipvsadm -C >/dev/null 2>&1 || true; nft delete table ip klp_ipvs >/dev/null 2>&1 || true; ip rule del priority 100 fwmark 1 lookup 100 >/dev/null 2>&1 || true; ip route del local 0.0.0.0/0 dev lo table 100 >/dev/null 2>&1 || true; ip link del klp_ipvs_out >/dev/null 2>&1 || true; ip link del klp_ipvs_host >/dev/null 2>&1 || true; ip netns del klp_ipvs_client >/dev/null 2>&1 || true
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: iptables -w -t mangle -D nixos-fw-rpfilter -i klp_nfq_br -j RETURN >/dev/null 2>&1 || true; ip6tables -w -t mangle -D nixos-fw-rpfilter -i klp_nfq_br -j RETURN >/dev/null 2>&1 || true; for pidfile in /run/livepatch-nfqueue/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; for pidfile in /run/livepatch-nfqueue/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); attempt=0; while kill -0 "$pid" >/dev/null 2>&1 && test "$attempt" -lt 100; do attempt=$((attempt + 1)); sleep 0.1; done; done; nft delete table bridge klp_nfq >/dev/null 2>&1 || true; ip link del klp_nfq_br >/dev/null 2>&1 || true; ip link del klp_nfq_a0 >/dev/null 2>&1 || true; ip link del klp_nfq_b0 >/dev/null 2>&1 || true; ip netns del klp_nfq_a >/dev/null 2>&1 || true; ip netns del klp_nfq_b >/dev/null 2>&1 || true
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: for name in transition resend abort close replacement; do state=/run/livepatch-fuse/$name; if test -s "$state/connection"; then connection=$(cat "$state/connection"); abort=/sys/fs/fuse/connections/$connection/abort; test -e "$abort" && echo 1 > "$abort" 2>/dev/null || true; fi; if test -s "$state/pid"; then pid=$(cat "$state/pid"); kill "$pid" >/dev/null 2>&1 || true; fi; umount -l "$state/mnt" >/dev/null 2>&1 || true; done
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: if test -d /run/livepatch-v5; then sh -c 'echo 1 > /sys/module/livepatch_test_probe/parameters/svm_x2apic_restore' >/dev/null 2>&1 || true; sh -c 'echo 1 > /sys/module/livepatch_test_probe/parameters/sctp_transport_count' >/dev/null 2>&1 || true; sh -c 'echo 0 > /sys/module/livepatch_test_probe/parameters/sctp_asoc_address' >/dev/null 2>&1 || true; touch /run/livepatch-v5/svm.release1 /run/livepatch-v5/svm.release2 /run/livepatch-v5/sctp.release >/dev/null 2>&1 || true; for pidfile in /run/livepatch-v5/svm.pid /run/livepatch-v5/sctp.pid /run/livepatch-v5/sip.pid /run/livepatch-v5/fast1.pid /run/livepatch-v5/fast2.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; fi
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: if test -d /run/livepatch-v6; then touch /run/livepatch-v6/sctp.send /run/livepatch-v6/sctp.release >/dev/null 2>&1 || true; if test -s /run/livepatch-v6/sctp.pid; then pid=$(cat /run/livepatch-v6/sctp.pid); kill "$pid" >/dev/null 2>&1 || true; fi; fi; nft delete table inet klp_sctp_v6 >/dev/null 2>&1 || true; ip link del klp_vxlan_v6 >/dev/null 2>&1 || true; sh -c 'echo 0 > /sys/module/livepatch_test_probe/parameters/sctp_asoc_address' >/dev/null 2>&1 || true; rm -rf /run/livepatch-v6
+END: 2026-10-14 21:19:58 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:58 +0200
+COMMAND: nft delete table inet klp_obj_pre_a >/dev/null 2>&1 || true; nft delete table inet klp_obj_pre_b >/dev/null 2>&1 || true; nft delete table inet klp_obj_post_a >/dev/null 2>&1 || true; nft delete table inet klp_obj_post_b >/dev/null 2>&1 || true; nft delete table ip klp_headroom >/dev/null 2>&1 || true; nft delete table ip klp_sip >/dev/null 2>&1 || true; ip link del klp_head_br >/dev/null 2>&1 || true; ip tuntap del dev klp_tap0 mode tap >/dev/null 2>&1 || ip link del klp_tap0 >/dev/null 2>&1 || true; ip netns del klp_head_a >/dev/null 2>&1 || true; ip netns del klp_head_b >/dev/null 2>&1 || true; ip link del klp_sip_a0 >/dev/null 2>&1 || true; ip link del klp_sip_b0 >/dev/null 2>&1 || true; ip netns del klp_sip_a >/dev/null 2>&1 || true; ip netns del klp_sip_b >/dev/null 2>&1 || true; ip link del klp_fast_br >/dev/null 2>&1 || true; ip netns del klp_fast >/dev/null 2>&1 || true; rm -rf /run/livepatch-v5
+END: 2026-10-14 21:19:59 +0200
+ELAPSED: 0.21s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:59 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/enabled 2>/dev/null
+END: 2026-10-14 21:19:59 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:59 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-14 21:19:59 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:59 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_5/enabled 2>/dev/null
+END: 2026-10-14 21:19:59 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:59 +0200
+COMMAND: test -d /sys/module/livepatch_5
+END: 2026-10-14 21:19:59 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:59 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_6/enabled 2>/dev/null
+END: 2026-10-14 21:19:59 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:59 +0200
+COMMAND: test -d /sys/module/livepatch_6
+END: 2026-10-14 21:19:59 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:59 +0200
+COMMAND: for module in fuse nfsv4 nf_tables nfnetlink_queue nft_queue ip_set_hash_ip ip_set_hash_ipmac ip_set_hash_ipmark ip_set_hash_ipport ip_set_hash_ipportip ip_set_hash_ipportnet ip_set_hash_mac ip_set_hash_net ip_set_hash_netiface ip_set_hash_netnet ip_set_hash_netport ip_set_hash_netportnet ip_vs bridge nf_conntrack_bridge br_netfilter nf_conntrack_sip nf_nat_sip sctp_diag vxlan vsock_loopback xfrm_user; do modprobe "$module" >/dev/null 2>&1 || true; done
+END: 2026-10-14 21:19:59 +0200
+ELAPSED: 0.18s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:59 +0200
+COMMAND: dmesg | tail -n +537
+END: 2026-10-14 21:19:59 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[   23.952726] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   24.056868] livepatch: enabling patch 'livepatch_7'
+[   25.304283] livepatch: 'livepatch_7': starting patching transition
+[   25.480822] livepatch: 'livepatch_7': patching complete
+[   26.033868] livepatch: 'livepatch_7': starting unpatching transition
+[   65.715717] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-14 21:19:59 +0200
+COMMAND: i=0; while test "$i" -lt 64; do sh -c : || exit 1; i=$((i + 1)); done
+END: 2026-10-14 21:19:59 +0200
+ELAPSED: 0.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:19:59 +0200
+COMMAND: sleep 6
+END: 2026-10-14 21:20:05 +0200
+ELAPSED: 6.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:05 +0200
+COMMAND: dmesg | tail -n +537
+END: 2026-10-14 21:20:05 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[   23.952726] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   24.056868] livepatch: enabling patch 'livepatch_7'
+[   25.304283] livepatch: 'livepatch_7': starting patching transition
+[   25.480822] livepatch: 'livepatch_7': patching complete
+[   26.033868] livepatch: 'livepatch_7': starting unpatching transition
+[   65.715717] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-14 21:20:05 +0200
+COMMAND: test -e /sys/module/livepatch_test_pernet_hold/parameters/hold && echo 0 > /sys/module/livepatch_test_pernet_hold/parameters/hold 2>/dev/null || true; for parameter in probe_hold probe_spin_hold probe_clone_arg2 probe_capture_args probe_match_arg0 probe_address probe2_address probe3_address shadow_failures; do path=/sys/module/livepatch_test_probe/parameters/$parameter; test -e "$path" && echo 0 > "$path" 2>/dev/null || true; done
+END: 2026-10-14 21:20:05 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:05 +0200
+COMMAND: test -s /run/livepatch-transition-stress/pid
+END: 2026-10-14 21:20:05 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:05 +0200
+COMMAND: test -s /run/livepatch-bpf/pid
+END: 2026-10-14 21:20:05 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:05 +0200
+COMMAND: nft delete table inet klp_pre >/dev/null 2>&1 || true; ipset destroy klp_pre_ip >/dev/null 2>&1 || true; ip link del klp_prebr0 >/dev/null 2>&1 || true; ip netns del klp_prens0 >/dev/null 2>&1 || true; ip xfrm policy delete src 198.19.0.1/32 dst 198.19.0.2/32 dir out >/dev/null 2>&1 || true
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: for pidfile in /run/livepatch-ipset-dump/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; ipset destroy >/dev/null 2>&1 || true; rm -f /run/livepatch-ipset-dump/fifo
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: for pidfile in /run/livepatch-tcp/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; ip netns del klp_tcp_a >/dev/null 2>&1 || true; ip netns del klp_tcp_b >/dev/null 2>&1 || true
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: for pidfile in /run/livepatch-sunrpc/*/pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill -KILL -- "-$pid" >/dev/null 2>&1 || true; done; for target in /run/livepatch-sunrpc/*/mnt; do mountpoint -q "$target" || continue; umount -l "$target" >/dev/null 2>&1 || true; done; rm -rf /run/livepatch-sunrpc
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: for pidfile in /run/livepatch-nft-batch/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; nft delete table inet klp_batch >/dev/null 2>&1 || true; rm -rf /run/livepatch-nft-batch
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: for pidfile in /run/livepatch-multicast/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; ip link del klp_mc_peer >/dev/null 2>&1 || true; ip netns del klp_mc >/dev/null 2>&1 || true
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: if test -s /run/livepatch-vsock/pid; then pid=$(cat /run/livepatch-vsock/pid); kill "$pid" >/dev/null 2>&1 || true; fi; rm -rf /run/livepatch-vsock
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: ip netns del klp_xfrm_a >/dev/null 2>&1 || true; ip netns del klp_xfrm_b >/dev/null 2>&1 || true; rm -rf /run/livepatch-xfrm
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: for pidfile in /run/livepatch-nfs/*/pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill -KILL -- "-$pid" >/dev/null 2>&1 || true; done; if mountpoint -q /run/livepatch-nfs/mnt; then attempt=0; while mountpoint -q /run/livepatch-nfs/mnt && test $attempt -lt 300; do umount /run/livepatch-nfs/mnt >/dev/null 2>&1 && break; attempt=$((attempt + 1)); sleep 0.1; done; mountpoint -q /run/livepatch-nfs/mnt && umount -l /run/livepatch-nfs/mnt >/dev/null 2>&1 || true; fi; rm -rf /run/livepatch-nfs; rm -f /tmp/klp-nfs-lock
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: ip link del klp_stp_br0 >/dev/null 2>&1 || true; ip link del klp_stp_br1 >/dev/null 2>&1 || true; ip link del klp_stp_p0 >/dev/null 2>&1 || true
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: nft delete table bridge klp_frag >/dev/null 2>&1 || true; for pidfile in /run/livepatch-fragment/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; ip link del klp_frag_br >/dev/null 2>&1 || true; ip netns del klp_frag_a >/dev/null 2>&1 || true; ip netns del klp_frag_b >/dev/null 2>&1 || true; ip netns del klp_frag_c >/dev/null 2>&1 || true
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: iptables -w -D nixos-fw -i klp_ipvs_host -m mark --mark 1 -j nixos-fw-accept >/dev/null 2>&1 || true; iptables -w -t mangle -D nixos-fw-rpfilter -i klp_ipvs_host -j RETURN >/dev/null 2>&1 || true; ipvsadm -C >/dev/null 2>&1 || true; nft delete table ip klp_ipvs >/dev/null 2>&1 || true; ip rule del priority 100 fwmark 1 lookup 100 >/dev/null 2>&1 || true; ip route del local 0.0.0.0/0 dev lo table 100 >/dev/null 2>&1 || true; ip link del klp_ipvs_out >/dev/null 2>&1 || true; ip link del klp_ipvs_host >/dev/null 2>&1 || true; ip netns del klp_ipvs_client >/dev/null 2>&1 || true
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: iptables -w -t mangle -D nixos-fw-rpfilter -i klp_nfq_br -j RETURN >/dev/null 2>&1 || true; ip6tables -w -t mangle -D nixos-fw-rpfilter -i klp_nfq_br -j RETURN >/dev/null 2>&1 || true; for pidfile in /run/livepatch-nfqueue/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; for pidfile in /run/livepatch-nfqueue/*.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); attempt=0; while kill -0 "$pid" >/dev/null 2>&1 && test "$attempt" -lt 100; do attempt=$((attempt + 1)); sleep 0.1; done; done; nft delete table bridge klp_nfq >/dev/null 2>&1 || true; ip link del klp_nfq_br >/dev/null 2>&1 || true; ip link del klp_nfq_a0 >/dev/null 2>&1 || true; ip link del klp_nfq_b0 >/dev/null 2>&1 || true; ip netns del klp_nfq_a >/dev/null 2>&1 || true; ip netns del klp_nfq_b >/dev/null 2>&1 || true
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: for name in transition resend abort close replacement; do state=/run/livepatch-fuse/$name; if test -s "$state/connection"; then connection=$(cat "$state/connection"); abort=/sys/fs/fuse/connections/$connection/abort; test -e "$abort" && echo 1 > "$abort" 2>/dev/null || true; fi; if test -s "$state/pid"; then pid=$(cat "$state/pid"); kill "$pid" >/dev/null 2>&1 || true; fi; umount -l "$state/mnt" >/dev/null 2>&1 || true; done
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: if test -d /run/livepatch-v5; then sh -c 'echo 1 > /sys/module/livepatch_test_probe/parameters/svm_x2apic_restore' >/dev/null 2>&1 || true; sh -c 'echo 1 > /sys/module/livepatch_test_probe/parameters/sctp_transport_count' >/dev/null 2>&1 || true; sh -c 'echo 0 > /sys/module/livepatch_test_probe/parameters/sctp_asoc_address' >/dev/null 2>&1 || true; touch /run/livepatch-v5/svm.release1 /run/livepatch-v5/svm.release2 /run/livepatch-v5/sctp.release >/dev/null 2>&1 || true; for pidfile in /run/livepatch-v5/svm.pid /run/livepatch-v5/sctp.pid /run/livepatch-v5/sip.pid /run/livepatch-v5/fast1.pid /run/livepatch-v5/fast2.pid; do test -s "$pidfile" || continue; pid=$(cat "$pidfile"); kill "$pid" >/dev/null 2>&1 || true; done; fi
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: if test -d /run/livepatch-v6; then touch /run/livepatch-v6/sctp.send /run/livepatch-v6/sctp.release >/dev/null 2>&1 || true; if test -s /run/livepatch-v6/sctp.pid; then pid=$(cat /run/livepatch-v6/sctp.pid); kill "$pid" >/dev/null 2>&1 || true; fi; fi; nft delete table inet klp_sctp_v6 >/dev/null 2>&1 || true; ip link del klp_vxlan_v6 >/dev/null 2>&1 || true; sh -c 'echo 0 > /sys/module/livepatch_test_probe/parameters/sctp_asoc_address' >/dev/null 2>&1 || true; rm -rf /run/livepatch-v6
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: nft delete table inet klp_obj_pre_a >/dev/null 2>&1 || true; nft delete table inet klp_obj_pre_b >/dev/null 2>&1 || true; nft delete table inet klp_obj_post_a >/dev/null 2>&1 || true; nft delete table inet klp_obj_post_b >/dev/null 2>&1 || true; nft delete table ip klp_headroom >/dev/null 2>&1 || true; nft delete table ip klp_sip >/dev/null 2>&1 || true; ip link del klp_head_br >/dev/null 2>&1 || true; ip tuntap del dev klp_tap0 mode tap >/dev/null 2>&1 || ip link del klp_tap0 >/dev/null 2>&1 || true; ip netns del klp_head_a >/dev/null 2>&1 || true; ip netns del klp_head_b >/dev/null 2>&1 || true; ip link del klp_sip_a0 >/dev/null 2>&1 || true; ip link del klp_sip_b0 >/dev/null 2>&1 || true; ip netns del klp_sip_a >/dev/null 2>&1 || true; ip netns del klp_sip_b >/dev/null 2>&1 || true; ip link del klp_fast_br >/dev/null 2>&1 || true; ip netns del klp_fast >/dev/null 2>&1 || true; rm -rf /run/livepatch-v5
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/enabled 2>/dev/null
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_5/enabled 2>/dev/null
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: test -d /sys/module/livepatch_5
+END: 2026-10-14 21:20:06 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:06 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_6/enabled 2>/dev/null
+END: 2026-10-14 21:20:07 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:07 +0200
+COMMAND: test -d /sys/module/livepatch_6
+END: 2026-10-14 21:20:07 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:07 +0200
+COMMAND: for module in fuse nfsv4 nf_tables nfnetlink_queue nft_queue ip_set_hash_ip ip_set_hash_ipmac ip_set_hash_ipmark ip_set_hash_ipport ip_set_hash_ipportip ip_set_hash_ipportnet ip_set_hash_mac ip_set_hash_net ip_set_hash_netiface ip_set_hash_netnet ip_set_hash_netport ip_set_hash_netportnet ip_vs bridge nf_conntrack_bridge br_netfilter nf_conntrack_sip nf_nat_sip sctp_diag vxlan vsock_loopback xfrm_user; do modprobe "$module" >/dev/null 2>&1 || true; done
+END: 2026-10-14 21:20:07 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:07 +0200
+COMMAND: rmmod livepatch_test_pernet_hold >/dev/null 2>&1 || true
+END: 2026-10-14 21:20:07 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:07 +0200
+COMMAND: rmmod livepatch_test_probe >/dev/null 2>&1 || true
+END: 2026-10-14 21:20:07 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:20:07 +0200
+COMMAND: poweroff -f
+END: 2026-10-14 21:20:08 +0200
+ELAPSED: 1.39s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Grabbing all containers
+---
+

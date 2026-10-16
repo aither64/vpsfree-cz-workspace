@@ -1,0 +1,96 @@
+3147:Done. The new configuration is Preservation after initial-rebuild:
+3148:  machine-id: expected <426fa27891c24f7dbcc4e2a967e9f8cc>, current <426fa27891c24f7dbcc4e2a967e9f8cc>
+3149:  UID: expected <995>, current <995>
+3150:  GID: expected <993>, current <993>
+3151:  payload: expected <vpsadminos-impermanence-preservation>, current <vpsadminos-impermanence-preservation>
+3152:  ownership: expected <995:993>, current <995:993>
+3153:
+3154:Allocation map /var/lib/nixos/uid-map:
+3155:{"dhcpcd":999,"messagebus":4,"nixbld1":30001,"nixbld10":30010,"nixbld11":30011,"nixbld12":30012,"nixbld13":30013,"nixbld14":30014,"nixbld15":30015,"nixbld16":30016,"nixbld17":30017,"nixbld18":30018,"nixbld19":30019,"nixbld2":30002,"nixbld20":30020,"nixbld21":30021,"nixbld22":30022,"nixbld23":30023,"nixbld24":30024,"nixbld25":30025,"nixbld26":30026,"nixbld27":30027,"nixbld28":30028,"nixbld29":30029,"nixbld3":30003,"nixbld30":30030,"nixbld31":30031,"nixbld32":30032,"nixbld4":30004,"nixbld5":30005,"nixbld6":30006,"nixbld7":30007,"nixbld8":30008,"nixbld9":30009,"nobody":65534,"nscd":998,"preservation-test":995,"root":0,"sshd":997,"systemd-coredump":151,"systemd-network":152,"systemd-oom":996,"systemd-resolve":153}
+3156:Allocation map /var/lib/nixos/gid-map:
+3157:{"adm":55,"audio":17,"cdrom":24,"clock":327,"dhcpcd":999,"dialout":27,"disk":6,"floppy":18,"input":174,"keys":96,"kmem":2,"kvm":302,"lp":20,"messagebus":4,"nixbld":30000,"nogroup":65534,"nscd":998,"preservation-test":993,"render":303,"resolvconf":997,"root":0,"sgx":304,"shadow":318,"sshd":996,"systemd-coredump":995,"systemd-journal":62,"systemd-network":152,"systemd-oom":994,"systemd-resolve":153,"tape":25,"tty":3,"users":100,"utmp":29,"uucp":19,"video":26,"wheel":1}
+3158:Allocation map /persistent/var/lib/nixos/uid-map:
+3159:{"dhcpcd":999,"messagebus":4,"nixbld1":30001,"nixbld10":30010,"nixbld11":30011,"nixbld12":30012,"nixbld13":30013,"nixbld14":30014,"nixbld15":30015,"nixbld16":30016,"nixbld17":30017,"nixbld18":30018,"nixbld19":30019,"nixbld2":30002,"nixbld20":30020,"nixbld21":30021,"nixbld22":30022,"nixbld23":30023,"nixbld24":30024,"nixbld25":30025,"nixbld26":30026,"nixbld27":30027,"nixbld28":30028,"nixbld29":30029,"nixbld3":30003,"nixbld30":30030,"nixbld31":30031,"nixbld32":30032,"nixbld4":30004,"nixbld5":30005,"nixbld6":30006,"nixbld7":30007,"nixbld8":30008,"nixbld9":30009,"nobody":65534,"nscd":998,"preservation-test":995,"root":0,"sshd":997,"systemd-coredump":151,"systemd-network":152,"systemd-oom":996,"systemd-resolve":153}
+3160:Allocation map /persistent/var/lib/nixos/gid-map:
+3161:{"adm":55,"audio":17,"cdrom":24,"clock":327,"dhcpcd":999,"dialout":27,"disk":6,"floppy":18,"input":174,"keys":96,"kmem":2,"kvm":302,"lp":20,"messagebus":4,"nixbld":30000,"nogroup":65534,"nscd":998,"preservation-test":993,"render":303,"resolvconf":997,"root":0,"sgx":304,"shadow":318,"sshd":996,"systemd-coredump":995,"systemd-journal":62,"systemd-network":152,"systemd-oom":994,"systemd-resolve":153,"tape":25,"tty":3,"users":100,"utmp":29,"uucp":19,"video":26,"wheel":1}
+3162:Mount and backing identity /var/lib/nixos:
+3163:TARGET         SOURCE                                        FSTYPE OPTIONS
+3164:/var/lib/nixos tank/ct/test-a8ab638f[/private/var/lib/nixos] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+3165:/var/lib/nixos owner=0:0 mode=755 device:inode=76:385
+3166:
+3167:Mount and backing identity /persistent/var/lib/nixos:
+3168:TARGET      SOURCE                          FSTYPE OPTIONS
+3169:/persistent tank/ct/test-a8ab638f[/private] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+3170:/persistent/var/lib/nixos owner=0:0 mode=755 device:inode=76:385
+3171:
+3172:Mount and backing identity /var/lib/preservation-test:
+3173:TARGET                     SOURCE                                                    FSTYPE OPTIONS
+3174:/var/lib/preservation-test tank/ct/test-a8ab638f[/private/var/lib/preservation-test] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+3175:/var/lib/preservation-test owner=0:0 mode=755 device:inode=76:12
+3176:
+3177:Mount and backing identity /persistent/var/lib/preservation-test:
+3178:TARGET      SOURCE                          FSTYPE OPTIONS
+3179:/persistent tank/ct/test-a8ab638f[/private] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+3180:/persistent/var/lib/preservation-test owner=0:0 mode=755 device:inode=76:12
+3181:
+3182:Persistent payload backing state:
+3183:/var/lib/preservation-test/payload owner=995:993 mode=644 device:inode=76:13
+3184:/persistent/var/lib/preservation-test/payload owner=995:993 mode=644 device:inode=76:13
+3185:
+3186:Boot mount and activation order:
+3187:37:if [ ! -e /proc/1 ]; then
+3188:53:    source /nix/store/k4ijvl4lr5pc3q06yl41bhvcap4101qv-mounts.sh
+3189:136:echo "running activation script..."
+3190:137:$systemConfig/activate
+3191:1:specialMount "devtmpfs" "/dev" "nosuid,strictatime,mode=755,size=5%" "devtmpfs"
+3192:3:specialMount "devpts" "/dev/pts" "nosuid,noexec,mode=620,ptmxmode=0666,gid=3" "devpts"
+3193:5:specialMount "tmpfs" "/dev/shm" "nosuid,nodev,strictatime,mode=1777,size=50%" "tmpfs"
+3194:7:specialMount "proc" "/proc" "nosuid,noexec,nodev" "proc"
+3195:9:specialMount "tmpfs" "/run" "nosuid,nodev,strictatime,mode=755,size=25%" "tmpfs"
+3196:11:specialMount "tmpfs" "/run/keys" "nosuid,nodev,mode=750" "tmpfs"
+3197:13:specialMount "/persistent/var/lib/nixos" "/var/lib/nixos" "bind,x-gvfs-hide" "none"
+3198:15:specialMount "/persistent/var/log" "/var/log" "bind,x-gvfs-hide" "none"
+3199:
+3200:User and persistence activation steps:
+3201:21:#### Activation script snippet binsh:
+3202:31:  printf "Activation script snippet '%s' failed (%s)\n" "binsh" "$_localstatus"
+3203:34:#### Activation script snippet users:
+3204:40:-w /nix/store/dyx8qsmgnsz2csfzwn723gbd2jvp0j7g-update-users-groups.pl /nix/store/dmx0gjkz01rqnvs3nfpv66g3b6ccxsz8-users-groups.json
+3205:43:  printf "Activation script snippet '%s' failed (%s)\n" "users" "$_localstatus"
+3206:46:#### Activation script snippet createPersistentStorageDirs:
+3207:50:  printf "Activation script snippet '%s' failed (%s)\n" "createPersistentStorageDirs" "$_localstatus"
+3208:53:#### Activation script snippet specialfs:
+3209:67:  mount -t "$fsType" -o "$options" "$device" "$mountPoint"
+3210:69:source /nix/store/k4ijvl4lr5pc3q06yl41bhvcap4101qv-mounts.sh
+3211:72:  printf "Activation script snippet '%s' failed (%s)\n" "specialfs" "$_localstatus"
+3212:75:#### Activation script snippet etc:
+3213:82:  printf "Activation script snippet '%s' failed (%s)\n" "etc" "$_localstatus"
+3214:85:#### Activation script snippet hashes:
+3215:103:  printf "Activation script snippet '%s' failed (%s)\n" "hashes" "$_localstatus"
+3216:106:#### Activation script snippet persist-files:
+3217:110:  printf "Activation script snippet '%s' failed (%s)\n" "persist-files" "$_localstatus"
+3218:113:#### Activation script snippet usrbinenv:
+3219:121:  printf "Activation script snippet '%s' failed (%s)\n" "usrbinenv" "$_localstatus"
+3220:building the system configuration...
+3221:these 12 derivations will be built:
+3222:  /nix/store/6hs7lvaa7rxrh7i9ihamsqr9ggr408pw-system-path.drv
+3223:  /nix/store/d0hllfr75plysmy722y5m4r5pim61ha1-dbus-1.drv
+3224:  /nix/store/b24dkm3084hcki46w4isx8ma1kjy4q5h-X-Restart-Triggers-dbus-broker.drv
+3225:  /nix/store/5g4gp1jqsfb2705bg8gq3rkg6pgs188l-unit-dbus-broker.service.drv
+3226:  /nix/store/2kgzzn5p26df5dw59wwvnaaw7fyz09jy-user-units.drv
+3227:  /nix/store/qh7zz8zihpb4g5wyr6w599j11mhzcwbn-unit-dbus-broker.service.drv
+3228:  /nix/store/88z12c9b4cidnq65cr3whglfsji7rk1d-system-units.drv
+3229:  /nix/store/fz4bvbm66v82dbyc1hbi5cixk0579g83-etc.drv
+3230:  /nix/store/jbly0hb02yxmcfdc3fz7qngrfcgpmyp2-users-groups.json.drv
+3231:  /nix/store/m7psazc2n5yyljpzg7yw6i6rrxa0aray-dry-activate.drv
+3232:  /nix/store/x2frbhnll4h3a74wd52lfjpv1rrnxrzl-activate.drv
+3233:  /nix/store/z01nx3s7l7qzaym7pvd1h2fxd4ywqz16-nixos-system-nixos-26.05.20261012.7993f34.drv
+3234:building '/nix/store/6hs7lvaa7rxrh7i9ihamsqr9ggr408pw-system-path.drv'...
+3235:building '/nix/store/jbly0hb02yxmcfdc3fz7qngrfcgpmyp2-users-groups.json.drv'...
+3236:building '/nix/store/m7psazc2n5yyljpzg7yw6i6rrxa0aray-dry-activate.drv'...
+3237:building '/nix/store/d0hllfr75plysmy722y5m4r5pim61ha1-dbus-1.drv'...
+3238:building '/nix/store/b24dkm3084hcki46w4isx8ma1kjy4q5h-X-Restart-Triggers-dbus-broker.drv'...
+3239:building '/nix/store/5g4gp1jqsfb2705bg8gq3rkg6pgs188l-unit-dbus-broker.service.drv'...
+3240:building '/nix/store/qh7zz8zihpb4g5wyr6w599j11mhzcwbn-unit-dbus-broker.service.drv'...
+3241:building '/nix/store/2kgzzn5p26df5dw59wwvnaaw7fyz09jy-user-units.drv'...
+3242:building '/nix/store/88z12c9b4cidnq65cr3whglfsji7rk1d-system-units.drv'...

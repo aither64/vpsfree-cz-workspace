@@ -1,0 +1,65 @@
+diff --git a/tests/suite/dist-config/nixos-persistence-upgrade.nix b/tests/suite/dist-config/nixos-persistence-upgrade.nix
+index 33ae0a1a4..c8bdc335f 100644
+--- a/tests/suite/dist-config/nixos-persistence-upgrade.nix
++++ b/tests/suite/dist-config/nixos-persistence-upgrade.nix
+@@ -10,11 +10,18 @@ import ../../make-test.nix (
+     allClosures = lib.concatMap (
+       v: builtins.attrValues v.generations ++ builtins.attrValues (v.failures or { })
+     ) (builtins.attrValues guests.variants);
+-    registration = pkgs.closureInfo { rootPaths = allClosures; };
++    registrations = lib.mapAttrs (
++      _: variant:
++      pkgs.closureInfo {
++        rootPaths =
++          builtins.attrValues variant.generations ++ builtins.attrValues (variant.failures or { });
++      }
++    ) guests.variants;
+     script =
+       name: variant:
+       let
+         g = variant.generations;
++        registration = registrations.${name};
+         storage =
+           if variant.layout == "root" then
+             "/root-storage"
+@@ -120,12 +127,19 @@ import ../../make-test.nix (
+               "osctl ct new --skip-image --distribution nixos --version ${variant.release} --arch x86_64 #{ct}",
+               "osctl ct unset start-menu #{ct}",
+               "osctl ct dataset new #{ct} nix",
+-              # Shared closures are read-only; the host overlay store cannot be
+-              # ID-mapped. Container datasets keep their native mappings.
+-              "osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store --no-map-ids #{ct}",
+             )
+             rootfs = machine.osctl_json("ct show #{ct}").fetch('rootfs')
+             nix_root = machine.osctl_json("ct mounts ls #{ct}").find { |mount| mount.fetch('mountpoint') == '/nix' }.fetch('fs')
++            # Use the declarative NixOS container's stopped-store copy contract.
++            # Native mapping exposes these root-owned copies as guest root.
++            machine.succeeds(<<~SHELL)
++              set -e
++              mkdir -p "#{nix_root}/store"
++              while IFS= read -r store_path; do
++                cp -a "$store_path" "#{nix_root}/store/"
++              done < ${registration}/store-paths
++              cp ${registration}/registration "#{nix_root}/nix-path-registration"
++            SHELL
+             machine.all_succeed(
+               "mkdir -p #{nix_root}/var/nix/profiles #{rootfs}/sbin #{rootfs}/etc #{rootfs}/var",
+               "ln -s ${initial} #{nix_root}/var/nix/profiles/system",
+@@ -156,7 +170,7 @@ import ../../make-test.nix (
+             machine.succeeds("osctl ct start #{ct}")
+             wait_for_guest_ready.call('initial boot')
+             expect(exec_guest.call('nixos-version')).to start_with('${guests.expectedRelease variant.release}')
+-            exec_guest.call('nix-store --load-db < ${registration}/registration')
++            exec_guest.call('nix-store --load-db < /nix/nix-path-registration')
+             ${lib.optionalString (variant.layout != "fresh") ''
+               # The old boot has already mounted state. A normal old live
+               # switch establishes healthy persisted maps; no ID/map repair.
+@@ -242,7 +256,7 @@ import ../../make-test.nix (
+     machine = import ../../machines/vpsadminos/with-tank.nix {
+       inherit pkgs;
+       config = {
+-        system.extraDependencies = allClosures ++ [ registration ];
++        system.extraDependencies = allClosures ++ builtins.attrValues registrations;
+       };
+     };
+     testScripts = lib.mapAttrs' (name: variant: {

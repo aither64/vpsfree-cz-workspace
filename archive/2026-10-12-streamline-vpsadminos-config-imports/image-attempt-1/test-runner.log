@@ -1,0 +1,54 @@
+error:
+       … while calling the 'getAttr' builtin
+         at /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/nix/evaluate-tests.nix:103:63:
+          102| else if mode == "testJson" then
+          103|   if directSingleTestAvailable then directTest.test.json else builtins.getAttr testPath tests
+             |                                                               ^
+          104| else
+
+       … while evaluating the attribute 'test.json'
+         at /nix/store/bnahikd1zf4271n989bqwz9m2pgj7jv2-source/tests/make-template.nix:56:30:
+           55|   instance = templateAttrs.instance;
+           56|   inherit (testAttrs) config json;
+             |                              ^
+           57| }
+
+       … while evaluating the option `system.activationScripts.etc.text':
+
+       … while evaluating definitions from `/nix/store/5asg9p28d93d13jq7ddpqc25djza5wml-source/nixos/modules/system/etc/etc-activation.nix':
+
+       … while evaluating definitions from `/nix/store/5asg9p28d93d13jq7ddpqc25djza5wml-source/nixos/modules/system/etc/etc.nix':
+
+       … while evaluating the option `environment.etc."runit/services/channel-registration/run".source':
+
+       … while evaluating the option `runit.services.channel-registration.run':
+
+       … while evaluating definitions from `/nix/store/bnahikd1zf4271n989bqwz9m2pgj7jv2-source/os/modules/installer/cd-dvd/channel.nix':
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: cannot coerce null to a string: null
+/nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/nix_cli.rb:96:in 'TestRunner::NixCli#run!': nix-build --out-link /tmp/os-test-runner/os-test-image-scripts__test__nixos-26.05-6efb094f/config.json /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/nix/evaluate-tests.nix --arg repoRoot /nix/store/bnahikd1zf4271n989bqwz9m2pgj7jv2-source --argstr system x86_64-linux --argstr mode testJson --argstr testPath image-scripts/test@nixos-26.05 --argstr testArgsJson {} failed (1) (RuntimeError)
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/nix_cli.rb:34:in 'TestRunner::NixCli#build_test_json'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_config.rb:28:in 'TestRunner::TestConfig#build'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_config.rb:10:in 'TestRunner::TestConfig.build'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:50:in 'TestRunner::TestEvaluator#initialize'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/executor.rb:622:in 'Class#new'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/executor.rb:622:in 'block in TestRunner::Executor#run_test_locked'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_state.rb:44:in 'block (2 levels) in TestRunner::TestState.fork'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_state.rb:40:in 'Process.fork'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_state.rb:40:in 'block in TestRunner::TestState.fork'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_state.rb:39:in 'Thread::Mutex#synchronize'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_state.rb:39:in 'TestRunner::TestState.fork'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/executor.rb:613:in 'TestRunner::Executor#run_test_locked'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/executor.rb:601:in 'block in TestRunner::Executor#run_test'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_state.rb:26:in 'TestRunner::TestState.with_lock'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/executor.rb:600:in 'TestRunner::Executor#run_test'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/executor.rb:552:in 'TestRunner::Executor#run_test_attempt'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/executor.rb:484:in 'block in TestRunner::Executor#run_test_with_retries'
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/executor.rb:483:in 'TestRunner::Executor#run_test_with_retries'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/executor.rb:193:in 'block in TestRunner::Executor#run_worker'
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/executor.rb:182:in 'TestRunner::Executor#run_worker'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/executor.rb:167:in 'block in TestRunner::Executor#start_worker'

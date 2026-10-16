@@ -1,0 +1,53 @@
+CHECK nixfmt
+COMMAND ["/nix/store/ffrsk7yvqqmlj7d40hs2prkqgly2gr2q-nixfmt-1.5.0/bin/nixfmt", "--check", "os/lib/nixos-container/stable/vpsadminos-25.11.nix", "os/lib/nixos-container/stable/vpsadminos-26.05.nix", "os/lib/nixos-container/stable/vpsadminos.nix", "os/lib/nixos-container/unstable/vpsadminos.nix", "tests/suite/dist-config/nixos-persistence-upgrade.nix"]
+STATUS 0
+
+CHECK parse os/lib/nixos-container/stable/vpsadminos-25.11.nix
+COMMAND ["nix-instantiate", "--parse", "os/lib/nixos-container/stable/vpsadminos-25.11.nix"]
+STATUS 0
+
+CHECK parse os/lib/nixos-container/stable/vpsadminos-26.05.nix
+COMMAND ["nix-instantiate", "--parse", "os/lib/nixos-container/stable/vpsadminos-26.05.nix"]
+STATUS 0
+
+CHECK parse os/lib/nixos-container/stable/vpsadminos.nix
+COMMAND ["nix-instantiate", "--parse", "os/lib/nixos-container/stable/vpsadminos.nix"]
+STATUS 0
+
+CHECK parse os/lib/nixos-container/unstable/vpsadminos.nix
+COMMAND ["nix-instantiate", "--parse", "os/lib/nixos-container/unstable/vpsadminos.nix"]
+STATUS 0
+
+CHECK parse tests/suite/dist-config/nixos-persistence-upgrade.nix
+COMMAND ["nix-instantiate", "--parse", "tests/suite/dist-config/nixos-persistence-upgrade.nix"]
+STATUS 0
+
+CHECK shell syntax
+COMMAND ["bash", "-n", "tests/nixos-container-persistence-shell.sh"]
+STATUS 0
+
+CHECK helper static syntax
+COMMAND ["bash", "-n", "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-effective-mounts-i1/helper-template.sh"]
+STATUS 0
+
+CHECK suite static Ruby syntax
+COMMAND ["/nix/store/m0nfdb4mhfgwkgss4ymyqmvviwy30i6y-ruby-3.4.9/bin/ruby", "-c", "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-effective-mounts-i1/suite-template.rb"]
+Syntax OK
+STATUS 0
+
+CHECK whitespace
+COMMAND ["git", "diff", "--check"]
+STATUS 0
+
+CHECK inverse patch read-only check
+COMMAND ["git", "apply", "--check", "--whitespace=error-all", "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-effective-mounts-i1/inverse.patch"]
+STATUS 0
+
+CHECK index empty
+COMMAND ["git", "diff", "--cached", "--quiet"]
+STATUS 0
+
+CHECK latest stable equals 26.05
+COMMAND ["cmp", "os/lib/nixos-container/stable/vpsadminos-26.05.nix", "os/lib/nixos-container/stable/vpsadminos.nix"]
+STATUS 0
+

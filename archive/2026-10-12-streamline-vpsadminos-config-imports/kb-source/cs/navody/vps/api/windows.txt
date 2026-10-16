@@ -1,0 +1,35 @@
+====== Windows ======
+Instalace ve Windows 10 využitím Ubuntu Linux subsystem:
+
+  - ve Windows 10 povolit developer mode, nechat nainstalovat
+  - přes Programy a funkce otevřít přidání součástí Windows, úplně dole zvolit Linux subsystem, nechat nainstalovat a restartovat počítač
+  - po restartu jako admin spustit v nabídce Start bash
+  - vytvořit Unix username a heslo
+  - stisknout y a nechat nainstalovat základ Ubuntu
+
+===== Instalace závislostí =====
+
+<code bash>
+sudo apt-get install ruby2.1 ruby2.1-dev libssl-dev make g++
+</code>
+
+===== Quick & Dirty fix pro nastavení ruby2.1 jako výchozího namísto 1.9 =====
+
+<code bash>
+sudo rm /usr/bin/ruby /usr/bin/gem /usr/bin/irb /usr/bin/rdoc /usr/bin/erb
+sudo ln -s /usr/bin/ruby2.1 /usr/bin/ruby
+sudo ln -s /usr/bin/gem2.1 /usr/bin/gem
+sudo ln -s /usr/bin/irb2.1 /usr/bin/irb
+sudo ln -s /usr/bin/rdoc2.1 /usr/bin/rdoc
+sudo ln -s /usr/bin/erb2.1 /usr/bin/erb
+sudo gem update --system
+sudo gem pristine --all
+</code>
+
+Zdroj: http://blog.costan.us/2014/04/restoring-ruby-20-on-ubuntu-1404.html
+
+===== Instalace vpsfree-client =====
+
+<code bash>
+sudo gem install vpsfree-client
+</code>

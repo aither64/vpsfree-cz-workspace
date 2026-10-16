@@ -1,0 +1,40 @@
+<page>navody:server:nixos-mailserver</page>
+
+====== NixOS Mailserver ======
+
+[[https://gitlab.com/simple-nixos-mailserver/nixos-mailserver|NixOS Mailserver]]
+is a community NixOS module and a simple way to run your own mail server. One
+declarative configuration sets up mail delivery, mailboxes with IMAP access,
+spam filtering, DKIM and TLS. You manage accounts, domains, certificates and
+other options with the rest of the NixOS configuration.
+
+===== What you need =====
+
+A self-hosted mail server needs a domain and access to its DNS records, a public
+IP address with configurable [[manuals:vps:rdns|reverse DNS (PTR)]], and
+reachable port ''25/tcp''. You will then configure ''MX'', ''SPF'', ''DKIM'' and
+''DMARC'' records according to the project documentation.
+
+===== Installation =====
+
+NixOS Mailserver publishes a ''nixos-YY.MM'' branch for the corresponding NixOS
+and ''nixpkgs'' release. Select your system version in the project's
+[[https://gitlab.com/simple-nixos-mailserver/nixos-mailserver#release-branches|release overview]]
+and select the same version in the switcher on
+[[https://nixos-mailserver.readthedocs.io/|Read the Docs]]. Then follow the
+[[https://nixos-mailserver.readthedocs.io/en/latest/setup-guide.html|current setup guide]],
+which covers adding the module, accounts, certificates and the required DNS
+records.
+
+Before moving to a new release, read its
+[[https://nixos-mailserver.readthedocs.io/en/latest/release-notes.html|release notes]]
+and any applicable
+[[https://nixos-mailserver.readthedocs.io/en/latest/migrations.html|migration instructions]].
+
+===== External checks =====
+
+After deployment, use
+[[https://mxtoolbox.com/SuperTool.aspx|MXToolbox SuperTool]] to check the public
+DNS records, SMTP reachability, reverse DNS and whether the IP address appears
+on blocklists. This can reveal configuration mistakes that are not visible
+from the VPS itself.

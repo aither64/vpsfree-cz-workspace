@@ -1,0 +1,223 @@
+SHELL: 0
+
+START: 2026-10-14 22:18:01 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-14 22:18:01 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 22:18:01 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-14 22:18:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 22:18:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:18:04 +0200
+ELAPSED: 2.82s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:18:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:18:06 +0200
+ELAPSED: 0.95s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:18:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:18:08 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:18:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:18:09 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:18:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:18:11 +0200
+ELAPSED: 0.79s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:18:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:18:13 +0200
+ELAPSED: 0.85s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:18:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:18:15 +0200
+ELAPSED: 0.99s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:18:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:18:17 +0200
+ELAPSED: 0.98s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-14 22:18:18 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:18:19 +0200
+ELAPSED: 0.7s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-14 22:18:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:18:20 +0200
+ELAPSED: 0.75s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-14 22:18:20 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-14 22:18:20 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 14 Oct 2026 20:18:20 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-14 22:18:20 +0200
+COMMAND: osctl ct new --distribution fedora --version latest podman-d146
+END: 2026-10-14 22:18:33 +0200
+ELAPSED: 12.68s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-14 22:18:33 +0200
+COMMAND: osctl ct unset start-menu podman-d146
+END: 2026-10-14 22:18:34 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 22:18:34 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 podman-d146 eth0
+END: 2026-10-14 22:18:35 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 22:18:35 +0200
+COMMAND: osctl ct devices add -p podman-d146 char 10 200 rwm /dev/net/tun
+END: 2026-10-14 22:18:36 +0200
+ELAPSED: 0.8s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 22:18:36 +0200
+COMMAND: osctl ct set dns-resolver podman-d146 1.1.1.1
+END: 2026-10-14 22:18:36 +0200
+ELAPSED: 0.74s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 22:18:36 +0200
+COMMAND: osctl ct start podman-d146
+END: 2026-10-14 22:18:39 +0200
+ELAPSED: 2.11s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-14 22:18:39 +0200
+COMMAND: osctl ct exec podman-d146 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-14 22:18:41 +0200
+ELAPSED: 2.37s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-10-14 22:18:42 +0200
+COMMAND: osctl ct exec podman-d146 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-14 22:18:44 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=2.32 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2.323/2.323/2.323/0.000 ms
+---
+
+START: 2026-10-14 22:18:44 +0200
+COMMAND: osctl ct exec podman-d146 dnf -y install podman

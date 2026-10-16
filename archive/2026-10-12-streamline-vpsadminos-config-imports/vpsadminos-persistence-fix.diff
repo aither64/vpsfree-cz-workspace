@@ -1,0 +1,1261 @@
+diff --git a/docs/containers/nixos.md b/docs/containers/nixos.md
+index c7c7d59db..86a12fa9a 100644
+--- a/docs/containers/nixos.md
++++ b/docs/containers/nixos.md
+@@ -117,3 +117,33 @@ imports. To restore former latest-stable behavior for a modern generic import,
+ restore the prior vpsAdminOS pin or choose an appropriate explicit module.
+ The import change introduces no persisted state or data conversion. A separate
+ NixOS release upgrade retains that release's normal rollback constraints.
++
++## Persistent allocation state
++
++The 25.11, 26.05, latest stable and unstable compatibility modules mount the
++selected `/var/lib/nixos` and `/var/log` directory binds before legacy user
++allocation. LXC mounts `/proc` before starting init, which causes NixOS to skip
++its early mount path. User allocation must see the saved maps before it runs;
++mounting them later leaves newly allocated IDs in `/etc/passwd` and `/etc/group`
++while exposing the original maps and file ownership on persistent storage.
++
++The compatibility step prepares absent backing directories and checks the
++mount before allowing allocation. Its source must be below an available mount
++separate from `/`; the supplied images use the host-mounted `/persistent`
++dataset. Custom root-backed sources are rejected, including layouts that
++previously activated successfully. Provision sources on separate backing
++storage before adopting the correction. Missing storage or a destination
++already mounted from a different source aborts activation before allocation.
++The step preserves existing content and metadata; absent directories receive
++root ownership and mode 0755. Custom sources requiring different ownership
++before allocation must be provisioned beforehand. Impermanence retains its
++normal later ownership and mode handling. Sysusers and userborn keep their
++existing activation paths.
++
++This preserves identities in healthy guests. It does not recover a guest whose
++UIDs or GIDs have already changed.
++Before rebuilding such a guest, compare and save its account IDs, allocation
++maps and persistent dataset. A rebuild can replace the saved maps with the
++current drifted IDs. Account or file ownership repair requires a separate
++recovery decision. Earlier generations still read the same map format, but a
++rollback restart can reintroduce the ordering defect.
+diff --git a/os/lib/nixos-container/stable/vpsadminos-25.11.nix b/os/lib/nixos-container/stable/vpsadminos-25.11.nix
+index 85e0f0f22..0d75d64ab 100644
+--- a/os/lib/nixos-container/stable/vpsadminos-25.11.nix
++++ b/os/lib/nixos-container/stable/vpsadminos-25.11.nix
+@@ -21,6 +21,121 @@ let
+     mkForce
+     ;
+ 
++  legacyUsers = !config.systemd.sysusers.enable && !config.services.userborn.enable;
++  bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
++  bootNeededFileSystems = lib.pipe config.fileSystems [
++    (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
++    (builtins.mapAttrs (
++      path: v:
++      lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
++        "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
++        (lib.intersectAttrs bootSpecialFileSystemOpts v)
++    ))
++  ];
++  bootNeededBindMounts = lib.filter (
++    mount:
++    (mount.enable or true)
++    && mount ? where
++    && mount ? what
++    && (mount.type or null) == "none"
++    && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
++    && builtins.elem mount.where utils.pathsNeededForBoot
++  ) config.systemd.mounts;
++  isPersistedState =
++    mount:
++    legacyUsers
++    && builtins.elem mount.where [
++      "/var/lib/nixos"
++      "/var/log"
++    ];
++  persistedStateMounts = map (mount: {
++    device = mount.what;
++    mountPoint = mount.where;
++    options = lib.splitString "," (mount.options or "");
++    depends = [ ];
++  }) (lib.filter isPersistedState bootNeededBindMounts);
++  persistedStatePaths = map (mount: mount.mountPoint) persistedStateMounts;
++  remainingSpecialMounts = builtins.attrValues config.boot.specialFileSystems;
++  crossPhaseMounts = lib.concatMap (
++    moved:
++    map (remaining: "${moved.mountPoint} -> ${remaining.mountPoint}") (
++      lib.filter (utils.fsBefore moved) remainingSpecialMounts
++    )
++  ) persistedStateMounts;
++  persistedStateOrder = lib.toposort utils.fsBefore persistedStateMounts;
++  orderedPersistedState =
++    if !lib.all (mount: lib.hasPrefix "/" mount.device) persistedStateMounts then
++      throw "vpsAdminOS persisted state binds require absolute directory sources."
++    else if builtins.length persistedStatePaths != builtins.length (lib.unique persistedStatePaths) then
++      throw "vpsAdminOS persisted state binds have duplicate destinations: ${lib.concatStringsSep ", " persistedStatePaths}"
++    else if
++      lib.any (path: builtins.hasAttr path config.boot.specialFileSystems) persistedStatePaths
++    then
++      throw "vpsAdminOS persisted state binds also have a special filesystem definition; remove the duplicate definition for ${lib.concatStringsSep ", " persistedStatePaths}."
++    else if crossPhaseMounts != [ ] then
++      throw "vpsAdminOS cannot mount persisted state after specialfs: ${lib.concatStringsSep ", " crossPhaseMounts}. Remove the dependency on a moved state bind."
++    else if !(persistedStateOrder ? result) then
++      throw "vpsAdminOS persisted state bind dependency cycle: ${lib.concatStringsSep ", " persistedStatePaths}"
++    else
++      persistedStateOrder.result;
++
++  persistedStateScript = ''
++    # Abort in the activation shell: its ERR trap alone permits later users.
++    vpsadminosMountPersistedState() {
++      local source="$1" target="$2" options="$3" ancestor="$1" backing rootBacking sourceBacking mountStatus mounted=false
++      while [ ! -e "$ancestor" ]; do
++        ancestor=$(dirname -- "$ancestor") || return 1
++      done
++      [ -d "$ancestor" ] || { printf 'vpsAdminOS: state source ancestor is not a directory: %s\n' "$ancestor" >&2; return 1; }
++      backing=$(findmnt --noheadings --output ID --target "$ancestor") || return 1
++      rootBacking=$(findmnt --noheadings --output ID --target /) || return 1
++      [ -n "$backing" ] && [ -n "$rootBacking" ] && [ "$backing" != "$rootBacking" ] || {
++        printf 'vpsAdminOS: state source requires an available non-root backing mount: %s\n' "$source" >&2
++        return 1
++      }
++      if [ -e "$target" ]; then
++        if mountpoint -q -- "$target"; then
++          mounted=true
++          [ "$source" -ef "$target" ] || {
++            printf 'vpsAdminOS: state destination has a different mounted source: %s\n' "$target" >&2
++            return 1
++          }
++        else
++          mountStatus=$?
++          # util-linux returns 32 for a directory that is not a mountpoint.
++          [ "$mountStatus" -eq 32 ] || return 1
++        fi
++      fi
++      # mkdir -p leaves existing parents and their metadata untouched.
++      if [ ! -d "$source" ]; then
++        mkdir -p -m 0755 -- "$source" || return 1
++      fi
++      sourceBacking=$(findmnt --noheadings --output ID --target "$source") || return 1
++      [ "$sourceBacking" = "$backing" ] || return 1
++      if "$mounted"; then
++        mount -t none -o "remount,$options" -- "$source" "$target" || return 1
++      else
++        if [ ! -d "$target" ]; then
++          mkdir -p -m 0755 -- "$target" || return 1
++        fi
++        mount -t none -o "$options" -- "$source" "$target" || return 1
++      fi
++      mountpoint -q -- "$target" && [ "$source" -ef "$target" ] || return 1
++    }
++    ${lib.concatMapStringsSep "\n" (mount: ''
++      if ! vpsadminosMountPersistedState ${
++        lib.escapeShellArgs [
++          mount.device
++          mount.mountPoint
++          (lib.concatStringsSep "," mount.options)
++        ]
++      }; then
++        printf 'vpsAdminOS: persisted state unavailable; refusing user allocation\n' >&2
++        exit 1
++      fi
++    '') orderedPersistedState}
++  '';
++
+   nameservers = [
+     "1.1.1.1"
+     "2606:4700:4700::1111"
+@@ -65,56 +180,37 @@ in
+   boot.systemdExecutable = mkDefault "/run/current-system/systemd/lib/systemd/systemd systemd.unified_cgroup_hierarchy=0";
+   console.enable = true;
+ 
+-  # Mount paths that are needed for boot (e.g. /persistent and /var/lib/nixos)
+-  # earlier. This fixes UIDs and GIDs changing on reboot when using
+-  # impermanence.
+-  #
+-  # In a VM or on bare metal, impermanence mounts boot-critical bind mounts in
+-  # the initrd. vpsAdminOS containers do not have an initrd, so replay those
+-  # mounts through boot.specialFileSystems before activation runs.
++  # Containers have no initrd. Promote ordinary boot mounts to specialfs, but
++  # prepare legacy allocation-state binds separately before users: LXC's proc
++  # mount skips stage 2's pre-activation special mounts on fresh boot.
+   boot.specialFileSystems =
+     let
+-      bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
+-
+-      bootNeededFileSystems = lib.pipe config.fileSystems [
+-        (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
+-        (builtins.mapAttrs (
+-          path: v:
+-          lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
+-            "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
+-            (lib.intersectAttrs bootSpecialFileSystemOpts v)
+-        ))
+-      ];
+-
+-      bootNeededBindMounts = builtins.listToAttrs (
+-        builtins.map
+-          (mount: {
+-            name = mount.where;
+-            value = lib.intersectAttrs bootSpecialFileSystemOpts {
+-              device = mount.what;
+-              fsType = mount.type or "none";
+-              options = lib.splitString "," (mount.options or "");
+-            };
+-          })
+-          (
+-            lib.filter (
+-              mount:
+-              (mount.enable or true)
+-              && mount ? where
+-              && mount ? what
+-              && (mount.type or null) == "none"
+-              && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
+-              && builtins.elem mount.where utils.pathsNeededForBoot
+-            ) config.systemd.mounts
+-          )
++      remainingBindMounts = builtins.listToAttrs (
++        map (mount: {
++          name = mount.where;
++          value = lib.intersectAttrs bootSpecialFileSystemOpts {
++            device = mount.what;
++            fsType = mount.type;
++            options = lib.splitString "," (mount.options or "");
++          };
++        }) (lib.filter (mount: !isPersistedState mount) bootNeededBindMounts)
+       );
+     in
+     bootNeededFileSystems
+-    // bootNeededBindMounts
++    // remainingBindMounts
+     // {
+       "/run/keys".fsType = mkForce "tmpfs";
+     };
+ 
++  system.activationScripts = lib.mkIf (legacyUsers && persistedStateMounts != [ ]) {
++    vpsadminosPersistedState = {
++      deps = [ "specialfs" ];
++      text = persistedStateScript;
++      supportsDryActivation = false;
++    };
++    users.deps = [ "vpsadminosPersistedState" ];
++  };
++
+   # Overrides for <nixpkgs/nixos/modules/virtualisation/container-config.nix>
+   documentation.enable = mkOverride 500 true;
+   documentation.nixos.enable = mkOverride 500 true;
+diff --git a/os/lib/nixos-container/stable/vpsadminos-26.05.nix b/os/lib/nixos-container/stable/vpsadminos-26.05.nix
+index ca56009b6..8bbac4289 100644
+--- a/os/lib/nixos-container/stable/vpsadminos-26.05.nix
++++ b/os/lib/nixos-container/stable/vpsadminos-26.05.nix
+@@ -21,6 +21,121 @@ let
+     mkForce
+     ;
+ 
++  legacyUsers = !config.systemd.sysusers.enable && !config.services.userborn.enable;
++  bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
++  bootNeededFileSystems = lib.pipe config.fileSystems [
++    (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
++    (builtins.mapAttrs (
++      path: v:
++      lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
++        "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
++        (lib.intersectAttrs bootSpecialFileSystemOpts v)
++    ))
++  ];
++  bootNeededBindMounts = lib.filter (
++    mount:
++    (mount.enable or true)
++    && mount ? where
++    && mount ? what
++    && (mount.type or null) == "none"
++    && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
++    && builtins.elem mount.where utils.pathsNeededForBoot
++  ) config.systemd.mounts;
++  isPersistedState =
++    mount:
++    legacyUsers
++    && builtins.elem mount.where [
++      "/var/lib/nixos"
++      "/var/log"
++    ];
++  persistedStateMounts = map (mount: {
++    device = mount.what;
++    mountPoint = mount.where;
++    options = lib.splitString "," (mount.options or "");
++    depends = [ ];
++  }) (lib.filter isPersistedState bootNeededBindMounts);
++  persistedStatePaths = map (mount: mount.mountPoint) persistedStateMounts;
++  remainingSpecialMounts = builtins.attrValues config.boot.specialFileSystems;
++  crossPhaseMounts = lib.concatMap (
++    moved:
++    map (remaining: "${moved.mountPoint} -> ${remaining.mountPoint}") (
++      lib.filter (utils.fsBefore moved) remainingSpecialMounts
++    )
++  ) persistedStateMounts;
++  persistedStateOrder = lib.toposort utils.fsBefore persistedStateMounts;
++  orderedPersistedState =
++    if !lib.all (mount: lib.hasPrefix "/" mount.device) persistedStateMounts then
++      throw "vpsAdminOS persisted state binds require absolute directory sources."
++    else if builtins.length persistedStatePaths != builtins.length (lib.unique persistedStatePaths) then
++      throw "vpsAdminOS persisted state binds have duplicate destinations: ${lib.concatStringsSep ", " persistedStatePaths}"
++    else if
++      lib.any (path: builtins.hasAttr path config.boot.specialFileSystems) persistedStatePaths
++    then
++      throw "vpsAdminOS persisted state binds also have a special filesystem definition; remove the duplicate definition for ${lib.concatStringsSep ", " persistedStatePaths}."
++    else if crossPhaseMounts != [ ] then
++      throw "vpsAdminOS cannot mount persisted state after specialfs: ${lib.concatStringsSep ", " crossPhaseMounts}. Remove the dependency on a moved state bind."
++    else if !(persistedStateOrder ? result) then
++      throw "vpsAdminOS persisted state bind dependency cycle: ${lib.concatStringsSep ", " persistedStatePaths}"
++    else
++      persistedStateOrder.result;
++
++  persistedStateScript = ''
++    # Abort in the activation shell: its ERR trap alone permits later users.
++    vpsadminosMountPersistedState() {
++      local source="$1" target="$2" options="$3" ancestor="$1" backing rootBacking sourceBacking mountStatus mounted=false
++      while [ ! -e "$ancestor" ]; do
++        ancestor=$(dirname -- "$ancestor") || return 1
++      done
++      [ -d "$ancestor" ] || { printf 'vpsAdminOS: state source ancestor is not a directory: %s\n' "$ancestor" >&2; return 1; }
++      backing=$(findmnt --noheadings --output ID --target "$ancestor") || return 1
++      rootBacking=$(findmnt --noheadings --output ID --target /) || return 1
++      [ -n "$backing" ] && [ -n "$rootBacking" ] && [ "$backing" != "$rootBacking" ] || {
++        printf 'vpsAdminOS: state source requires an available non-root backing mount: %s\n' "$source" >&2
++        return 1
++      }
++      if [ -e "$target" ]; then
++        if mountpoint -q -- "$target"; then
++          mounted=true
++          [ "$source" -ef "$target" ] || {
++            printf 'vpsAdminOS: state destination has a different mounted source: %s\n' "$target" >&2
++            return 1
++          }
++        else
++          mountStatus=$?
++          # util-linux returns 32 for a directory that is not a mountpoint.
++          [ "$mountStatus" -eq 32 ] || return 1
++        fi
++      fi
++      # mkdir -p leaves existing parents and their metadata untouched.
++      if [ ! -d "$source" ]; then
++        mkdir -p -m 0755 -- "$source" || return 1
++      fi
++      sourceBacking=$(findmnt --noheadings --output ID --target "$source") || return 1
++      [ "$sourceBacking" = "$backing" ] || return 1
++      if "$mounted"; then
++        mount -t none -o "remount,$options" -- "$source" "$target" || return 1
++      else
++        if [ ! -d "$target" ]; then
++          mkdir -p -m 0755 -- "$target" || return 1
++        fi
++        mount -t none -o "$options" -- "$source" "$target" || return 1
++      fi
++      mountpoint -q -- "$target" && [ "$source" -ef "$target" ] || return 1
++    }
++    ${lib.concatMapStringsSep "\n" (mount: ''
++      if ! vpsadminosMountPersistedState ${
++        lib.escapeShellArgs [
++          mount.device
++          mount.mountPoint
++          (lib.concatStringsSep "," mount.options)
++        ]
++      }; then
++        printf 'vpsAdminOS: persisted state unavailable; refusing user allocation\n' >&2
++        exit 1
++      fi
++    '') orderedPersistedState}
++  '';
++
+   nameservers = [
+     "1.1.1.1"
+     "2606:4700:4700::1111"
+@@ -65,56 +180,37 @@ in
+   boot.systemdExecutable = mkDefault "/run/current-system/systemd/lib/systemd/systemd systemd.unified_cgroup_hierarchy=0";
+   console.enable = true;
+ 
+-  # Mount paths that are needed for boot (e.g. /persistent and /var/lib/nixos)
+-  # earlier. This fixes UIDs and GIDs changing on reboot when using
+-  # impermanence.
+-  #
+-  # In a VM or on bare metal, impermanence mounts boot-critical bind mounts in
+-  # the initrd. vpsAdminOS containers do not have an initrd, so replay those
+-  # mounts through boot.specialFileSystems before activation runs.
++  # Containers have no initrd. Promote ordinary boot mounts to specialfs, but
++  # prepare legacy allocation-state binds separately before users: LXC's proc
++  # mount skips stage 2's pre-activation special mounts on fresh boot.
+   boot.specialFileSystems =
+     let
+-      bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
+-
+-      bootNeededFileSystems = lib.pipe config.fileSystems [
+-        (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
+-        (builtins.mapAttrs (
+-          path: v:
+-          lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
+-            "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
+-            (lib.intersectAttrs bootSpecialFileSystemOpts v)
+-        ))
+-      ];
+-
+-      bootNeededBindMounts = builtins.listToAttrs (
+-        builtins.map
+-          (mount: {
+-            name = mount.where;
+-            value = lib.intersectAttrs bootSpecialFileSystemOpts {
+-              device = mount.what;
+-              fsType = mount.type or "none";
+-              options = lib.splitString "," (mount.options or "");
+-            };
+-          })
+-          (
+-            lib.filter (
+-              mount:
+-              (mount.enable or true)
+-              && mount ? where
+-              && mount ? what
+-              && (mount.type or null) == "none"
+-              && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
+-              && builtins.elem mount.where utils.pathsNeededForBoot
+-            ) config.systemd.mounts
+-          )
++      remainingBindMounts = builtins.listToAttrs (
++        map (mount: {
++          name = mount.where;
++          value = lib.intersectAttrs bootSpecialFileSystemOpts {
++            device = mount.what;
++            fsType = mount.type;
++            options = lib.splitString "," (mount.options or "");
++          };
++        }) (lib.filter (mount: !isPersistedState mount) bootNeededBindMounts)
+       );
+     in
+     bootNeededFileSystems
+-    // bootNeededBindMounts
++    // remainingBindMounts
+     // {
+       "/run/keys".fsType = mkForce "tmpfs";
+     };
+ 
++  system.activationScripts = lib.mkIf (legacyUsers && persistedStateMounts != [ ]) {
++    vpsadminosPersistedState = {
++      deps = [ "specialfs" ];
++      text = persistedStateScript;
++      supportsDryActivation = false;
++    };
++    users.deps = [ "vpsadminosPersistedState" ];
++  };
++
+   # Overrides for <nixpkgs/nixos/modules/virtualisation/container-config.nix>
+   documentation.enable = mkOverride 500 true;
+   documentation.nixos.enable = mkOverride 500 true;
+diff --git a/os/lib/nixos-container/stable/vpsadminos.nix b/os/lib/nixos-container/stable/vpsadminos.nix
+index ca56009b6..8bbac4289 100644
+--- a/os/lib/nixos-container/stable/vpsadminos.nix
++++ b/os/lib/nixos-container/stable/vpsadminos.nix
+@@ -21,6 +21,121 @@ let
+     mkForce
+     ;
+ 
++  legacyUsers = !config.systemd.sysusers.enable && !config.services.userborn.enable;
++  bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
++  bootNeededFileSystems = lib.pipe config.fileSystems [
++    (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
++    (builtins.mapAttrs (
++      path: v:
++      lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
++        "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
++        (lib.intersectAttrs bootSpecialFileSystemOpts v)
++    ))
++  ];
++  bootNeededBindMounts = lib.filter (
++    mount:
++    (mount.enable or true)
++    && mount ? where
++    && mount ? what
++    && (mount.type or null) == "none"
++    && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
++    && builtins.elem mount.where utils.pathsNeededForBoot
++  ) config.systemd.mounts;
++  isPersistedState =
++    mount:
++    legacyUsers
++    && builtins.elem mount.where [
++      "/var/lib/nixos"
++      "/var/log"
++    ];
++  persistedStateMounts = map (mount: {
++    device = mount.what;
++    mountPoint = mount.where;
++    options = lib.splitString "," (mount.options or "");
++    depends = [ ];
++  }) (lib.filter isPersistedState bootNeededBindMounts);
++  persistedStatePaths = map (mount: mount.mountPoint) persistedStateMounts;
++  remainingSpecialMounts = builtins.attrValues config.boot.specialFileSystems;
++  crossPhaseMounts = lib.concatMap (
++    moved:
++    map (remaining: "${moved.mountPoint} -> ${remaining.mountPoint}") (
++      lib.filter (utils.fsBefore moved) remainingSpecialMounts
++    )
++  ) persistedStateMounts;
++  persistedStateOrder = lib.toposort utils.fsBefore persistedStateMounts;
++  orderedPersistedState =
++    if !lib.all (mount: lib.hasPrefix "/" mount.device) persistedStateMounts then
++      throw "vpsAdminOS persisted state binds require absolute directory sources."
++    else if builtins.length persistedStatePaths != builtins.length (lib.unique persistedStatePaths) then
++      throw "vpsAdminOS persisted state binds have duplicate destinations: ${lib.concatStringsSep ", " persistedStatePaths}"
++    else if
++      lib.any (path: builtins.hasAttr path config.boot.specialFileSystems) persistedStatePaths
++    then
++      throw "vpsAdminOS persisted state binds also have a special filesystem definition; remove the duplicate definition for ${lib.concatStringsSep ", " persistedStatePaths}."
++    else if crossPhaseMounts != [ ] then
++      throw "vpsAdminOS cannot mount persisted state after specialfs: ${lib.concatStringsSep ", " crossPhaseMounts}. Remove the dependency on a moved state bind."
++    else if !(persistedStateOrder ? result) then
++      throw "vpsAdminOS persisted state bind dependency cycle: ${lib.concatStringsSep ", " persistedStatePaths}"
++    else
++      persistedStateOrder.result;
++
++  persistedStateScript = ''
++    # Abort in the activation shell: its ERR trap alone permits later users.
++    vpsadminosMountPersistedState() {
++      local source="$1" target="$2" options="$3" ancestor="$1" backing rootBacking sourceBacking mountStatus mounted=false
++      while [ ! -e "$ancestor" ]; do
++        ancestor=$(dirname -- "$ancestor") || return 1
++      done
++      [ -d "$ancestor" ] || { printf 'vpsAdminOS: state source ancestor is not a directory: %s\n' "$ancestor" >&2; return 1; }
++      backing=$(findmnt --noheadings --output ID --target "$ancestor") || return 1
++      rootBacking=$(findmnt --noheadings --output ID --target /) || return 1
++      [ -n "$backing" ] && [ -n "$rootBacking" ] && [ "$backing" != "$rootBacking" ] || {
++        printf 'vpsAdminOS: state source requires an available non-root backing mount: %s\n' "$source" >&2
++        return 1
++      }
++      if [ -e "$target" ]; then
++        if mountpoint -q -- "$target"; then
++          mounted=true
++          [ "$source" -ef "$target" ] || {
++            printf 'vpsAdminOS: state destination has a different mounted source: %s\n' "$target" >&2
++            return 1
++          }
++        else
++          mountStatus=$?
++          # util-linux returns 32 for a directory that is not a mountpoint.
++          [ "$mountStatus" -eq 32 ] || return 1
++        fi
++      fi
++      # mkdir -p leaves existing parents and their metadata untouched.
++      if [ ! -d "$source" ]; then
++        mkdir -p -m 0755 -- "$source" || return 1
++      fi
++      sourceBacking=$(findmnt --noheadings --output ID --target "$source") || return 1
++      [ "$sourceBacking" = "$backing" ] || return 1
++      if "$mounted"; then
++        mount -t none -o "remount,$options" -- "$source" "$target" || return 1
++      else
++        if [ ! -d "$target" ]; then
++          mkdir -p -m 0755 -- "$target" || return 1
++        fi
++        mount -t none -o "$options" -- "$source" "$target" || return 1
++      fi
++      mountpoint -q -- "$target" && [ "$source" -ef "$target" ] || return 1
++    }
++    ${lib.concatMapStringsSep "\n" (mount: ''
++      if ! vpsadminosMountPersistedState ${
++        lib.escapeShellArgs [
++          mount.device
++          mount.mountPoint
++          (lib.concatStringsSep "," mount.options)
++        ]
++      }; then
++        printf 'vpsAdminOS: persisted state unavailable; refusing user allocation\n' >&2
++        exit 1
++      fi
++    '') orderedPersistedState}
++  '';
++
+   nameservers = [
+     "1.1.1.1"
+     "2606:4700:4700::1111"
+@@ -65,56 +180,37 @@ in
+   boot.systemdExecutable = mkDefault "/run/current-system/systemd/lib/systemd/systemd systemd.unified_cgroup_hierarchy=0";
+   console.enable = true;
+ 
+-  # Mount paths that are needed for boot (e.g. /persistent and /var/lib/nixos)
+-  # earlier. This fixes UIDs and GIDs changing on reboot when using
+-  # impermanence.
+-  #
+-  # In a VM or on bare metal, impermanence mounts boot-critical bind mounts in
+-  # the initrd. vpsAdminOS containers do not have an initrd, so replay those
+-  # mounts through boot.specialFileSystems before activation runs.
++  # Containers have no initrd. Promote ordinary boot mounts to specialfs, but
++  # prepare legacy allocation-state binds separately before users: LXC's proc
++  # mount skips stage 2's pre-activation special mounts on fresh boot.
+   boot.specialFileSystems =
+     let
+-      bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
+-
+-      bootNeededFileSystems = lib.pipe config.fileSystems [
+-        (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
+-        (builtins.mapAttrs (
+-          path: v:
+-          lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
+-            "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
+-            (lib.intersectAttrs bootSpecialFileSystemOpts v)
+-        ))
+-      ];
+-
+-      bootNeededBindMounts = builtins.listToAttrs (
+-        builtins.map
+-          (mount: {
+-            name = mount.where;
+-            value = lib.intersectAttrs bootSpecialFileSystemOpts {
+-              device = mount.what;
+-              fsType = mount.type or "none";
+-              options = lib.splitString "," (mount.options or "");
+-            };
+-          })
+-          (
+-            lib.filter (
+-              mount:
+-              (mount.enable or true)
+-              && mount ? where
+-              && mount ? what
+-              && (mount.type or null) == "none"
+-              && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
+-              && builtins.elem mount.where utils.pathsNeededForBoot
+-            ) config.systemd.mounts
+-          )
++      remainingBindMounts = builtins.listToAttrs (
++        map (mount: {
++          name = mount.where;
++          value = lib.intersectAttrs bootSpecialFileSystemOpts {
++            device = mount.what;
++            fsType = mount.type;
++            options = lib.splitString "," (mount.options or "");
++          };
++        }) (lib.filter (mount: !isPersistedState mount) bootNeededBindMounts)
+       );
+     in
+     bootNeededFileSystems
+-    // bootNeededBindMounts
++    // remainingBindMounts
+     // {
+       "/run/keys".fsType = mkForce "tmpfs";
+     };
+ 
++  system.activationScripts = lib.mkIf (legacyUsers && persistedStateMounts != [ ]) {
++    vpsadminosPersistedState = {
++      deps = [ "specialfs" ];
++      text = persistedStateScript;
++      supportsDryActivation = false;
++    };
++    users.deps = [ "vpsadminosPersistedState" ];
++  };
++
+   # Overrides for <nixpkgs/nixos/modules/virtualisation/container-config.nix>
+   documentation.enable = mkOverride 500 true;
+   documentation.nixos.enable = mkOverride 500 true;
+diff --git a/os/lib/nixos-container/unstable/vpsadminos.nix b/os/lib/nixos-container/unstable/vpsadminos.nix
+index 66383b30a..b26d47c89 100644
+--- a/os/lib/nixos-container/unstable/vpsadminos.nix
++++ b/os/lib/nixos-container/unstable/vpsadminos.nix
+@@ -21,6 +21,121 @@ let
+     mkForce
+     ;
+ 
++  legacyUsers = !config.systemd.sysusers.enable && !config.services.userborn.enable;
++  bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
++  bootNeededFileSystems = lib.pipe config.fileSystems [
++    (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
++    (builtins.mapAttrs (
++      path: v:
++      lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
++        "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
++        (lib.intersectAttrs bootSpecialFileSystemOpts v)
++    ))
++  ];
++  bootNeededBindMounts = lib.filter (
++    mount:
++    (mount.enable or true)
++    && mount ? where
++    && mount ? what
++    && (mount.type or null) == "none"
++    && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
++    && builtins.elem mount.where utils.pathsNeededForBoot
++  ) config.systemd.mounts;
++  isPersistedState =
++    mount:
++    legacyUsers
++    && builtins.elem mount.where [
++      "/var/lib/nixos"
++      "/var/log"
++    ];
++  persistedStateMounts = map (mount: {
++    device = mount.what;
++    mountPoint = mount.where;
++    options = lib.splitString "," (mount.options or "");
++    depends = [ ];
++  }) (lib.filter isPersistedState bootNeededBindMounts);
++  persistedStatePaths = map (mount: mount.mountPoint) persistedStateMounts;
++  remainingSpecialMounts = builtins.attrValues config.boot.specialFileSystems;
++  crossPhaseMounts = lib.concatMap (
++    moved:
++    map (remaining: "${moved.mountPoint} -> ${remaining.mountPoint}") (
++      lib.filter (utils.fsBefore moved) remainingSpecialMounts
++    )
++  ) persistedStateMounts;
++  persistedStateOrder = lib.toposort utils.fsBefore persistedStateMounts;
++  orderedPersistedState =
++    if !lib.all (mount: lib.hasPrefix "/" mount.device) persistedStateMounts then
++      throw "vpsAdminOS persisted state binds require absolute directory sources."
++    else if builtins.length persistedStatePaths != builtins.length (lib.unique persistedStatePaths) then
++      throw "vpsAdminOS persisted state binds have duplicate destinations: ${lib.concatStringsSep ", " persistedStatePaths}"
++    else if
++      lib.any (path: builtins.hasAttr path config.boot.specialFileSystems) persistedStatePaths
++    then
++      throw "vpsAdminOS persisted state binds also have a special filesystem definition; remove the duplicate definition for ${lib.concatStringsSep ", " persistedStatePaths}."
++    else if crossPhaseMounts != [ ] then
++      throw "vpsAdminOS cannot mount persisted state after specialfs: ${lib.concatStringsSep ", " crossPhaseMounts}. Remove the dependency on a moved state bind."
++    else if !(persistedStateOrder ? result) then
++      throw "vpsAdminOS persisted state bind dependency cycle: ${lib.concatStringsSep ", " persistedStatePaths}"
++    else
++      persistedStateOrder.result;
++
++  persistedStateScript = ''
++    # Abort in the activation shell: its ERR trap alone permits later users.
++    vpsadminosMountPersistedState() {
++      local source="$1" target="$2" options="$3" ancestor="$1" backing rootBacking sourceBacking mountStatus mounted=false
++      while [ ! -e "$ancestor" ]; do
++        ancestor=$(dirname -- "$ancestor") || return 1
++      done
++      [ -d "$ancestor" ] || { printf 'vpsAdminOS: state source ancestor is not a directory: %s\n' "$ancestor" >&2; return 1; }
++      backing=$(findmnt --noheadings --output ID --target "$ancestor") || return 1
++      rootBacking=$(findmnt --noheadings --output ID --target /) || return 1
++      [ -n "$backing" ] && [ -n "$rootBacking" ] && [ "$backing" != "$rootBacking" ] || {
++        printf 'vpsAdminOS: state source requires an available non-root backing mount: %s\n' "$source" >&2
++        return 1
++      }
++      if [ -e "$target" ]; then
++        if mountpoint -q -- "$target"; then
++          mounted=true
++          [ "$source" -ef "$target" ] || {
++            printf 'vpsAdminOS: state destination has a different mounted source: %s\n' "$target" >&2
++            return 1
++          }
++        else
++          mountStatus=$?
++          # util-linux returns 32 for a directory that is not a mountpoint.
++          [ "$mountStatus" -eq 32 ] || return 1
++        fi
++      fi
++      # mkdir -p leaves existing parents and their metadata untouched.
++      if [ ! -d "$source" ]; then
++        mkdir -p -m 0755 -- "$source" || return 1
++      fi
++      sourceBacking=$(findmnt --noheadings --output ID --target "$source") || return 1
++      [ "$sourceBacking" = "$backing" ] || return 1
++      if "$mounted"; then
++        mount -t none -o "remount,$options" -- "$source" "$target" || return 1
++      else
++        if [ ! -d "$target" ]; then
++          mkdir -p -m 0755 -- "$target" || return 1
++        fi
++        mount -t none -o "$options" -- "$source" "$target" || return 1
++      fi
++      mountpoint -q -- "$target" && [ "$source" -ef "$target" ] || return 1
++    }
++    ${lib.concatMapStringsSep "\n" (mount: ''
++      if ! vpsadminosMountPersistedState ${
++        lib.escapeShellArgs [
++          mount.device
++          mount.mountPoint
++          (lib.concatStringsSep "," mount.options)
++        ]
++      }; then
++        printf 'vpsAdminOS: persisted state unavailable; refusing user allocation\n' >&2
++        exit 1
++      fi
++    '') orderedPersistedState}
++  '';
++
+   nameservers = [
+     "1.1.1.1"
+     "2606:4700:4700::1111"
+@@ -65,56 +180,37 @@ in
+   boot.systemdExecutable = mkDefault "/run/current-system/systemd/lib/systemd/systemd systemd.unified_cgroup_hierarchy=0";
+   console.enable = true;
+ 
+-  # Mount paths that are needed for boot (e.g. /persistent and /var/lib/nixos)
+-  # earlier. This fixes UIDs and GIDs changing on reboot when using
+-  # impermanence.
+-  #
+-  # In a VM or on bare metal, impermanence mounts boot-critical bind mounts in
+-  # the initrd. vpsAdminOS containers do not have an initrd, so replay those
+-  # mounts through boot.specialFileSystems before activation runs.
++  # Containers have no initrd. Promote ordinary boot mounts to specialfs, but
++  # prepare legacy allocation-state binds separately before users: LXC's proc
++  # mount skips stage 2's pre-activation special mounts on fresh boot.
+   boot.specialFileSystems =
+     let
+-      bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
+-
+-      bootNeededFileSystems = lib.pipe config.fileSystems [
+-        (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
+-        (builtins.mapAttrs (
+-          path: v:
+-          lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
+-            "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
+-            (lib.intersectAttrs bootSpecialFileSystemOpts v)
+-        ))
+-      ];
+-
+-      bootNeededBindMounts = builtins.listToAttrs (
+-        builtins.map
+-          (mount: {
+-            name = mount.where;
+-            value = lib.intersectAttrs bootSpecialFileSystemOpts {
+-              device = mount.what;
+-              fsType = mount.type or "none";
+-              options = lib.splitString "," (mount.options or "");
+-            };
+-          })
+-          (
+-            lib.filter (
+-              mount:
+-              (mount.enable or true)
+-              && mount ? where
+-              && mount ? what
+-              && (mount.type or null) == "none"
+-              && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
+-              && builtins.elem mount.where utils.pathsNeededForBoot
+-            ) config.systemd.mounts
+-          )
++      remainingBindMounts = builtins.listToAttrs (
++        map (mount: {
++          name = mount.where;
++          value = lib.intersectAttrs bootSpecialFileSystemOpts {
++            device = mount.what;
++            fsType = mount.type;
++            options = lib.splitString "," (mount.options or "");
++          };
++        }) (lib.filter (mount: !isPersistedState mount) bootNeededBindMounts)
+       );
+     in
+     bootNeededFileSystems
+-    // bootNeededBindMounts
++    // remainingBindMounts
+     // {
+       "/run/keys".fsType = mkForce "tmpfs";
+     };
+ 
++  system.activationScripts = lib.mkIf (legacyUsers && persistedStateMounts != [ ]) {
++    vpsadminosPersistedState = {
++      deps = [ "specialfs" ];
++      text = persistedStateScript;
++      supportsDryActivation = false;
++    };
++    users.deps = [ "vpsadminosPersistedState" ];
++  };
++
+   # Overrides for <nixpkgs/nixos/modules/virtualisation/container-config.nix>
+   documentation.enable = mkOverride 500 true;
+   documentation.nixos.enable = mkOverride 500 true;
+diff --git a/tests/nixos-container-eval.sh b/tests/nixos-container-eval.sh
+index 79a1e344c..943206f95 100644
+--- a/tests/nixos-container-eval.sh
++++ b/tests/nixos-container-eval.sh
+@@ -6,9 +6,14 @@ cd "$(dirname "${BASH_SOURCE[0]}")/.."
+ nix eval --impure --json --file tests/nixos-container-modules-eval.nix
+ nix eval --impure --json --file tests/nixos-container-templates-eval.nix
+ nix eval --impure --json --file tests/nixos-container-standalone-eval.nix
++nix eval --impure --json --file tests/nixos-container-persistence-eval.nix
+ 
+ error_log=$(mktemp)
+-trap 'rm -f "$error_log"' EXIT
++activation_snippet=$(mktemp)
++trap 'rm -f "$error_log" "$activation_snippet"' EXIT
++nix eval --impure --raw --file tests/nixos-container-persistence-eval.nix \
++  --apply 'checks: checks.shellFixture' > "$activation_snippet"
++bash tests/nixos-container-persistence-shell.sh "$activation_snippet"
+ for release in 21.11 99.99 26_05 unstable ''; do
+   if nix eval --impure --json --file tests/nixos-container-unsupported-eval.nix \
+     --apply "select: select \"$release\"" 2>"$error_log"; then
+diff --git a/tests/nixos-container-modules-eval.nix b/tests/nixos-container-modules-eval.nix
+index 274bc5abd..6f96a7e33 100644
+--- a/tests/nixos-container-modules-eval.nix
++++ b/tests/nixos-container-modules-eval.nix
+@@ -30,6 +30,8 @@ let
+     config = {
+       fileSystems = { };
+       systemd.mounts = [ ];
++      systemd.sysusers.enable = false;
++      services.userborn.enable = false;
+     };
+     options.boot.specialFileSystems.type.getSubOptions = _: { };
+     utils = {
+diff --git a/tests/nixos-container-persistence-eval.nix b/tests/nixos-container-persistence-eval.nix
+new file mode 100644
+index 000000000..f130da391
+--- /dev/null
++++ b/tests/nixos-container-persistence-eval.nix
+@@ -0,0 +1,234 @@
++# Evaluate generated activation text without building or mounting anything.
++let
++  vpsadminos = builtins.getFlake (toString ../.);
++  fixtures = import ./fixtures/nixos-container-releases.nix { inherit vpsadminos; };
++  lib = vpsadminos.inputs.nixpkgs.lib;
++  baselineDirectory = builtins.getEnv "VPSADMINOS_PERSISTENCE_BASELINE";
++  rawPath =
++    release:
++    if release == "unstable" then "unstable/vpsadminos.nix" else "stable/vpsadminos-${release}.nix";
++  raw = release: import (../os/lib/nixos-container + "/${rawPath release}");
++  persistence = {
++    imports = [ vpsadminos.inputs.impermanence.nixosModules.impermanence ];
++    environment.persistence."/persistent" = {
++      hideMounts = true;
++      directories = [
++        "/var/lib/nixos"
++        "/var/log"
++      ];
++    };
++  };
++  evaluate =
++    release: module: extra:
++    (fixtures.${release}.lib.nixosSystem {
++      system = "x86_64-linux";
++      modules = [
++        module
++        {
++          system.stateVersion = "22.11";
++          fileSystems."/" = {
++            device = "none";
++            fsType = "tmpfs";
++          };
++        }
++      ]
++      ++ extra;
++    }).config;
++  check = label: condition: if condition then true else throw "Persistence check failed: ${label}";
++  contains = needle: text: lib.hasInfix (builtins.unsafeDiscardStringContext needle) text;
++  matches = needle: text: lib.filter (contains needle) (lib.splitString "\n" text);
++  position =
++    needle: text:
++    let
++      lines = lib.splitString "\n" text;
++      numbered = lib.imap0 (index: line: { inherit index line; }) lines;
++    in
++    (lib.findFirst (entry: contains needle entry.line) { index = -1; } numbered).index;
++  forceScript = c: builtins.deepSeq c.system.activationScripts.script true;
++  failed = c: !(builtins.tryEval (forceScript c)).success;
++  manualBind = source: target: {
++    what = source;
++    where = target;
++    type = "none";
++    options = "bind,x-gvfs-hide";
++  };
++  script = c: c.system.activationScripts.script;
++  checkRelease =
++    release:
++    let
++      ordinary = evaluate release (raw release) [ ];
++      persisted = evaluate release (raw release) [ persistence ];
++      standaloneFile = builtins.toFile "vpsadminos-persistence-${release}.nix" (
++        builtins.readFile (../os/lib/nixos-container + "/${rawPath release}")
++      );
++      standalone = evaluate release (import standaloneFile) [ persistence ];
++      current = script persisted;
++      upstreamSource = "source ${persisted.system.build.earlyMountScript}";
++      step = "#### Activation script snippet vpsadminosPersistedState:";
++      alternative =
++        backend:
++        evaluate release (raw release) [
++          persistence
++          {
++            systemd.sysusers.enable = backend == "sysusers";
++            services.userborn.enable = backend == "userborn";
++          }
++        ];
++      baseline = extra: evaluate release (import (baselineDirectory + "/${rawPath release}")) extra;
++      ancestry = evaluate release (raw release) [
++        {
++          systemd.mounts = [
++            (manualBind "/persistent/state" "/var/lib/nixos")
++            (manualBind "/var/lib/nixos/log" "/var/log")
++          ];
++        }
++      ];
++      crossPhase = evaluate release (raw release) [
++        {
++          systemd.mounts = [
++            (manualBind "/persistent/state" "/var/lib/nixos")
++            (manualBind "/var/lib/nixos/store" "/nix")
++          ];
++        }
++      ];
++      cycle = evaluate release (raw release) [
++        {
++          systemd.mounts = [
++            (manualBind "/var/log/state" "/var/lib/nixos")
++            (manualBind "/var/lib/nixos/log" "/var/log")
++          ];
++        }
++      ];
++      duplicate = evaluate release (raw release) [
++        persistence
++        {
++          boot.specialFileSystems."/var/lib/nixos" = {
++            device = "/another/state";
++            fsType = "none";
++            options = [ "bind" ];
++          };
++        }
++      ];
++      relative = evaluate release (raw release) [
++        {
++          systemd.mounts = [ (manualBind "relative/state" "/var/lib/nixos") ];
++        }
++      ];
++      direct = evaluate release (raw release) [
++        {
++          fileSystems."/var/log" = {
++            device = "/direct/log";
++            fsType = "none";
++            options = [ "bind" ];
++          };
++        }
++      ];
++    in
++    {
++      actualRelease = persisted.system.nixos.release;
++      legacyOrder = check "${release} specialfs -> persisted state -> users" (
++        position upstreamSource current >= 0
++        && position step current >= 0
++        && position "-update-users-groups.pl" current >= 0
++        && position upstreamSource current < position step current
++        && position step current < position "-update-users-groups.pl" current
++        && persisted.system.activationScripts.vpsadminosPersistedState.deps == [ "specialfs" ]
++        && builtins.elem "vpsadminosPersistedState" persisted.system.activationScripts.users.deps
++        && builtins.length (matches "specialMount()" current) == 1
++        && builtins.length (matches upstreamSource current) == 1
++      );
++      preservedUnits = check "${release} bindings and options remain in systemd units" (
++        lib.all
++          (target: lib.any (m: m.where == target && m.options == "bind,x-gvfs-hide") persisted.systemd.mounts)
++          [
++            "/var/lib/nixos"
++            "/var/log"
++          ]
++        && !(persisted.boot.specialFileSystems ? "/var/lib/nixos")
++        && !(persisted.boot.specialFileSystems ? "/var/log")
++      );
++      standalone = check "${release} copied raw file retains complete activation behavior" (
++        script standalone == current
++      );
++      dry = check "${release} dry activation has no preparation or mount work" (
++        !contains "vpsadminosMountPersistedState" persisted.system.dryActivationScript
++        && !contains "mount -t" persisted.system.dryActivationScript
++        && contains "-update-users-groups.pl" persisted.system.dryActivationScript
++      );
++      ordinary = check "${release} no selected bindings" (
++        !(ordinary.system.activationScripts ? vpsadminosPersistedState)
++        && !builtins.elem "vpsadminosPersistedState" ordinary.system.activationScripts.users.deps
++        && forceScript ordinary
++      );
++      ancestry = check "${release} selected source ancestry determines order" (
++        position (lib.escapeShellArgs [
++          "/persistent/state"
++          "/var/lib/nixos"
++        ]) (script ancestry) < position (lib.escapeShellArgs [
++          "/var/lib/nixos/log"
++          "/var/log"
++        ]) (script ancestry)
++      );
++      topology = check "${release} generated scripts force topology errors" (
++        failed crossPhase && failed cycle && failed duplicate && failed relative
++      );
++      directFilesystem = check "${release} direct filesystem definitions stay upstream" (
++        !(direct.system.activationScripts ? vpsadminosPersistedState)
++        && direct.boot.specialFileSystems."/var/log".device == "/direct/log"
++        && forceScript direct
++      );
++      alternatives = lib.genAttrs [ "sysusers" "userborn" ] (
++        backend:
++        let
++          c = alternative backend;
++        in
++        check "${release} ${backend} retains original promotion and users shape" (
++          !(c.system.activationScripts ? vpsadminosPersistedState)
++          && c.system.activationScripts.users == ""
++          && c.boot.specialFileSystems."/var/lib/nixos".device == "/persistent/var/lib/nixos"
++          && c.boot.specialFileSystems."/var/log".device == "/persistent/var/log"
++          && forceScript c
++        )
++      );
++      priorV2 =
++        if baselineDirectory == "" then
++          "not requested"
++        else
++          check "${release} ordinary and alternate scripts exactly match prior v2" (
++            script ordinary == script (baseline [ ])
++            && ordinary.system.dryActivationScript == (baseline [ ]).system.dryActivationScript
++            &&
++              lib.all
++                (
++                  backend:
++                  let
++                    old = baseline [
++                      persistence
++                      {
++                        systemd.sysusers.enable = backend == "sysusers";
++                        services.userborn.enable = backend == "userborn";
++                      }
++                    ];
++                    c = alternative backend;
++                  in
++                  script c == script old && c.system.dryActivationScript == old.system.dryActivationScript
++                )
++                [
++                  "sysusers"
++                  "userborn"
++                ]
++          );
++    };
++in
++{
++  releases = lib.genAttrs [ "25.11" "26.05" "unstable" ] checkRelease;
++  latestStable = check "latest stable is self-contained and equivalent to 26.05" (
++    builtins.readFile ../os/lib/nixos-container/stable/vpsadminos.nix
++    == builtins.readFile ../os/lib/nixos-container/stable/vpsadminos-26.05.nix
++  );
++  # The shell harness reads this actual generated snippet and substitutes only
++  # its configured source/destination arguments with temporary fixture paths.
++  shellFixture =
++    (evaluate "26.05" (raw "26.05") [ persistence ])
++    .system.activationScripts.vpsadminosPersistedState.text;
++}
+diff --git a/tests/nixos-container-persistence-shell.sh b/tests/nixos-container-persistence-shell.sh
+new file mode 100644
+index 000000000..41d866c4a
+--- /dev/null
++++ b/tests/nixos-container-persistence-shell.sh
+@@ -0,0 +1,124 @@
++#!/usr/bin/env bash
++# Command doubles exercise the actual generated activation snippet. No mounts
++# or account operations are performed; all filesystem changes stay in fixtures.
++set -euo pipefail
++snippet=$1
++fixture_root=$(mktemp -d)
++trap 'rm -rf "$fixture_root"' EXIT
++
++for scenario in fresh existing_metadata missing_backing root_backing failed_bind matching_live wrong_live failed_lookup failed_mount_lookup wrong_result source_file; do
++  case_root="$fixture_root/$scenario"
++  backing="$case_root/backing storage"
++  source="$backing/state"
++  target="$case_root/state target"
++  log_source="$backing/log"
++  log_target="$case_root/log target"
++  mkdir -p "$backing"
++  before_metadata=
++  case "$scenario" in
++    existing_metadata)
++      mkdir "$source"
++      chmod 0710 "$source"
++      printf 'existing data\n' > "$source/payload"
++      before_metadata=$(stat -c '%u:%g:%a:%i' "$source")
++      ;;
++    matching_live)
++      mkdir "$source"
++      ln -s "$source" "$target"
++      touch "$case_root/mounted-state"
++      ;;
++    wrong_live)
++      mkdir "$case_root/wrong"
++      ln -s "$case_root/wrong" "$target"
++      touch "$case_root/mounted-state"
++      ;;
++    missing_backing) rmdir "$backing" ;;
++    source_file) touch "$source" ;;
++    failed_mount_lookup) mkdir "$target" ;;
++  esac
++
++  # Replace only the configured call arguments, including paths with spaces.
++  sed \
++    -e "s|/persistent/var/lib/nixos|'$source'|g" \
++    -e "s|/persistent/var/log|'$log_source'|g" \
++    -e "s|/var/lib/nixos|'$target'|g" \
++    -e "s|/var/log|'$log_target'|g" \
++    "$snippet" > "$case_root/activation.sh"
++  bash -n "$case_root/activation.sh"
++
++  # Run in a child shell so the actual explicit exit can prevent the allocator
++  # marker, even with NixOS's non-fatal ERR trap and conditional helper calls.
++  set +e
++  (
++    set +e
++    umask 0022
++    _status=0
++    trap '_status=1' ERR
++    findmnt() {
++      local path="${*: -1}"
++      [ "$scenario" != failed_lookup ] || return 1
++      if [ "$path" = / ] || [ "$scenario" = root_backing ] || [ "$scenario" = missing_backing ]; then
++        printf '1\n'
++      else
++        printf '42\n'
++      fi
++    }
++    mountpoint() {
++      local path="${*: -1}"
++      [ "$scenario" != failed_mount_lookup ] || return 1
++      if [ "$path" = "$case_root/state target" ]; then
++        test -f "$case_root/mounted-state" || return 32
++      else
++        test -f "$case_root/mounted-log" || return 32
++      fi
++    }
++    mount() {
++      printf '%s\n' "$*" >> "$case_root/mount-calls"
++      [ "$scenario" != failed_bind ] || return 1
++      local from="${*: -2:1}" to="${*: -1}" options="$4"
++      if [[ "$options" != remount,* ]]; then
++        rmdir "$to" || return 1
++        if [ "$scenario" = wrong_result ]; then
++          ln -s "$case_root/backing storage" "$to" || return 1
++        else
++          ln -s "$from" "$to" || return 1
++        fi
++        if [ "$to" = "$case_root/state target" ]; then touch "$case_root/mounted-state"; else touch "$case_root/mounted-log"; fi
++      fi
++    }
++    . "$case_root/activation.sh"
++    touch "$case_root/allocator-reached"
++  ) > "$case_root/output" 2>&1
++  status=$?
++  set -e
++  case "$scenario" in
++    fresh|existing_metadata|matching_live)
++      [ "$status" = 0 ] && [ -f "$case_root/allocator-reached" ] || { cat "$case_root/output"; exit 1; }
++      [ "$source" -ef "$target" ] && [ "$log_source" -ef "$log_target" ]
++      [ "$(wc -l < "$case_root/mount-calls")" = 2 ]
++      if [ "$scenario" = matching_live ]; then
++        [[ "$(head -n 1 "$case_root/mount-calls")" == *'remount,bind,x-gvfs-hide'* ]]
++      else
++        [[ "$(head -n 1 "$case_root/mount-calls")" == *'-o bind,x-gvfs-hide'* ]]
++      fi
++      ;;
++    *)
++      [ "$status" != 0 ] && [ ! -f "$case_root/allocator-reached" ] || { cat "$case_root/output"; exit 1; }
++      case "$scenario" in
++        wrong_live|missing_backing|root_backing|failed_lookup|failed_mount_lookup|source_file) [ ! -f "$case_root/mount-calls" ] ;;
++      esac
++      ;;
++  esac
++  if [ "$scenario" = existing_metadata ]; then
++    [ "$before_metadata" = "$(stat -c '%u:%g:%a:%i' "$source")" ]
++    [ "$(cat "$source/payload")" = 'existing data' ]
++  fi
++  if [ "$scenario" = fresh ]; then
++    [ "$(stat -c '%a' "$source")" = 755 ]
++  fi
++  if [ "$scenario" = wrong_live ]; then
++    [ ! -e "$source" ]
++    [ "$target" -ef "$case_root/wrong" ]
++  fi
++  printf 'PASS %s\n' "$scenario"
++done

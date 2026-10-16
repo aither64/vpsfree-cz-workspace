@@ -1,0 +1,576 @@
+SHELL: 2
+
+START: 2026-10-15 17:32:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:32:39 +0200
+ELAPSED: 2.44s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:32:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:32:41 +0200
+ELAPSED: 1.0s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:32:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:32:43 +0200
+ELAPSED: 1.02s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:32:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:32:45 +0200
+ELAPSED: 0.88s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:32:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:32:47 +0200
+ELAPSED: 1.19s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:32:48 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:32:49 +0200
+ELAPSED: 0.87s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:32:50 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:32:51 +0200
+ELAPSED: 1.2s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:32:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:32:53 +0200
+ELAPSED: 1.17s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 17:32:54 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:32:55 +0200
+ELAPSED: 1.11s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 17:32:56 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:32:57 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 17:32:57 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 17:32:57 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 15:32:57 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 17:32:57 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-10-15 17:32:58 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:32:58 +0200
+COMMAND: osctl ct new --distribution alpine --map-mode native kmisc-attrs-native-dbd5
+END: 2026-10-15 17:33:02 +0200
+ELAPSED: 4.3s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 17:33:02 +0200
+COMMAND: osctl ct start kmisc-attrs-native-dbd5
+END: 2026-10-15 17:33:05 +0200
+ELAPSED: 2.72s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 17:33:05 +0200
+COMMAND: osctl ct new --distribution alpine --map-mode zfs kmisc-attrs-zfs-11b0
+END: 2026-10-15 17:33:10 +0200
+ELAPSED: 4.62s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 17:33:10 +0200
+COMMAND: osctl ct start kmisc-attrs-zfs-11b0
+END: 2026-10-15 17:33:13 +0200
+ELAPSED: 3.1s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 17:33:13 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 /bin/sh -c 'printf initial > /immutable-zfs.file'
+END: 2026-10-15 17:33:16 +0200
+ELAPSED: 2.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:33:16 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 chattr +i /immutable-zfs.file
+END: 2026-10-15 17:33:18 +0200
+ELAPSED: 2.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:33:18 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 lsattr /immutable-zfs.file
+END: 2026-10-15 17:33:21 +0200
+ELAPSED: 2.89s
+STATUS: 0
+OUTPUT:
+----i--------------- /immutable-zfs.file
+---
+
+START: 2026-10-15 17:33:21 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 /bin/sh -c 'printf replaced > /immutable-zfs.file'
+END: 2026-10-15 17:33:24 +0200
+ELAPSED: 2.74s
+STATUS: 1
+OUTPUT:
+/bin/sh: can't create /immutable-zfs.file: Operation not permitted
+error: executed command failed
+---
+
+START: 2026-10-15 17:33:24 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 /bin/sh -c 'printf appended >> /immutable-zfs.file'
+END: 2026-10-15 17:33:26 +0200
+ELAPSED: 2.21s
+STATUS: 1
+OUTPUT:
+/bin/sh: can't create /immutable-zfs.file: Operation not permitted
+error: executed command failed
+---
+
+START: 2026-10-15 17:33:26 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 rm /immutable-zfs.file
+END: 2026-10-15 17:33:28 +0200
+ELAPSED: 2.36s
+STATUS: 1
+OUTPUT:
+rm: can't remove '/immutable-zfs.file': Operation not permitted
+error: executed command failed
+---
+
+START: 2026-10-15 17:33:28 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 chattr -i /immutable-zfs.file
+END: 2026-10-15 17:33:31 +0200
+ELAPSED: 2.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:33:31 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 lsattr /immutable-zfs.file
+END: 2026-10-15 17:33:33 +0200
+ELAPSED: 2.4s
+STATUS: 0
+OUTPUT:
+-------------------- /immutable-zfs.file
+---
+
+START: 2026-10-15 17:33:33 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 /bin/sh -c 'printf replaced > /immutable-zfs.file'
+END: 2026-10-15 17:33:36 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:33:36 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 rm /immutable-zfs.file
+END: 2026-10-15 17:33:38 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:33:38 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 /bin/sh -c 'printf initial > /append-only-zfs.file'
+END: 2026-10-15 17:33:40 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:33:40 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 chattr +a /append-only-zfs.file
+END: 2026-10-15 17:33:42 +0200
+ELAPSED: 2.24s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:33:42 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 lsattr /append-only-zfs.file
+END: 2026-10-15 17:33:45 +0200
+ELAPSED: 2.44s
+STATUS: 0
+OUTPUT:
+-----a-------------- /append-only-zfs.file
+---
+
+START: 2026-10-15 17:33:45 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 /bin/sh -c 'printf appended >> /append-only-zfs.file'
+END: 2026-10-15 17:33:48 +0200
+ELAPSED: 2.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:33:48 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 /bin/sh -c 'printf replaced > /append-only-zfs.file'
+END: 2026-10-15 17:33:50 +0200
+ELAPSED: 2.09s
+STATUS: 1
+OUTPUT:
+/bin/sh: can't create /append-only-zfs.file: Operation not permitted
+error: executed command failed
+---
+
+START: 2026-10-15 17:33:50 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 rm /append-only-zfs.file
+END: 2026-10-15 17:33:52 +0200
+ELAPSED: 2.42s
+STATUS: 1
+OUTPUT:
+rm: can't remove '/append-only-zfs.file': Operation not permitted
+error: executed command failed
+---
+
+START: 2026-10-15 17:33:52 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 chattr -a /append-only-zfs.file
+END: 2026-10-15 17:33:54 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:33:54 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 lsattr /append-only-zfs.file
+END: 2026-10-15 17:33:57 +0200
+ELAPSED: 2.55s
+STATUS: 0
+OUTPUT:
+-------------------- /append-only-zfs.file
+---
+
+START: 2026-10-15 17:33:57 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 /bin/sh -c 'printf replaced > /append-only-zfs.file'
+END: 2026-10-15 17:34:00 +0200
+ELAPSED: 3.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:00 +0200
+COMMAND: osctl ct exec kmisc-attrs-zfs-11b0 rm /append-only-zfs.file
+END: 2026-10-15 17:34:03 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:03 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 /bin/sh -c 'printf initial > /append-only-native.file'
+END: 2026-10-15 17:34:05 +0200
+ELAPSED: 2.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:05 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 chattr +a /append-only-native.file
+END: 2026-10-15 17:34:09 +0200
+ELAPSED: 3.37s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:09 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 lsattr /append-only-native.file
+END: 2026-10-15 17:34:11 +0200
+ELAPSED: 2.43s
+STATUS: 0
+OUTPUT:
+-----a-------------- /append-only-native.file
+---
+
+START: 2026-10-15 17:34:11 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 /bin/sh -c 'printf appended >> /append-only-native.file'
+END: 2026-10-15 17:34:14 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:14 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 /bin/sh -c 'printf replaced > /append-only-native.file'
+END: 2026-10-15 17:34:16 +0200
+ELAPSED: 2.34s
+STATUS: 1
+OUTPUT:
+/bin/sh: can't create /append-only-native.file: Operation not permitted
+error: executed command failed
+---
+
+START: 2026-10-15 17:34:16 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 rm /append-only-native.file
+END: 2026-10-15 17:34:18 +0200
+ELAPSED: 2.38s
+STATUS: 1
+OUTPUT:
+rm: can't remove '/append-only-native.file': Operation not permitted
+error: executed command failed
+---
+
+START: 2026-10-15 17:34:18 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 chattr -a /append-only-native.file
+END: 2026-10-15 17:34:21 +0200
+ELAPSED: 2.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:21 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 lsattr /append-only-native.file
+END: 2026-10-15 17:34:24 +0200
+ELAPSED: 2.8s
+STATUS: 0
+OUTPUT:
+-------------------- /append-only-native.file
+---
+
+START: 2026-10-15 17:34:24 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 /bin/sh -c 'printf replaced > /append-only-native.file'
+END: 2026-10-15 17:34:26 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:26 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 rm /append-only-native.file
+END: 2026-10-15 17:34:30 +0200
+ELAPSED: 3.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:30 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 /bin/sh -c 'printf initial > /immutable-native.file'
+END: 2026-10-15 17:34:32 +0200
+ELAPSED: 2.91s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:32 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 chattr +i /immutable-native.file
+END: 2026-10-15 17:34:35 +0200
+ELAPSED: 2.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:35 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 lsattr /immutable-native.file
+END: 2026-10-15 17:34:38 +0200
+ELAPSED: 3.05s
+STATUS: 0
+OUTPUT:
+----i--------------- /immutable-native.file
+---
+
+START: 2026-10-15 17:34:38 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 /bin/sh -c 'printf replaced > /immutable-native.file'
+END: 2026-10-15 17:34:41 +0200
+ELAPSED: 2.64s
+STATUS: 1
+OUTPUT:
+/bin/sh: can't create /immutable-native.file: Operation not permitted
+error: executed command failed
+---
+
+START: 2026-10-15 17:34:41 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 /bin/sh -c 'printf appended >> /immutable-native.file'
+END: 2026-10-15 17:34:44 +0200
+ELAPSED: 2.44s
+STATUS: 1
+OUTPUT:
+/bin/sh: can't create /immutable-native.file: Operation not permitted
+error: executed command failed
+---
+
+START: 2026-10-15 17:34:44 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 rm /immutable-native.file
+END: 2026-10-15 17:34:46 +0200
+ELAPSED: 2.32s
+STATUS: 1
+OUTPUT:
+rm: can't remove '/immutable-native.file': Operation not permitted
+error: executed command failed
+---
+
+START: 2026-10-15 17:34:46 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 chattr -i /immutable-native.file
+END: 2026-10-15 17:34:48 +0200
+ELAPSED: 2.52s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:48 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 lsattr /immutable-native.file
+END: 2026-10-15 17:34:51 +0200
+ELAPSED: 2.64s
+STATUS: 0
+OUTPUT:
+-------------------- /immutable-native.file
+---
+
+START: 2026-10-15 17:34:51 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 /bin/sh -c 'printf replaced > /immutable-native.file'
+END: 2026-10-15 17:34:54 +0200
+ELAPSED: 2.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:54 +0200
+COMMAND: osctl ct exec kmisc-attrs-native-dbd5 rm /immutable-native.file
+END: 2026-10-15 17:34:56 +0200
+ELAPSED: 2.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:56 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-10-15 17:34:57 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+kmisc-attrs-native-dbd5
+kmisc-oom-1395
+kmisc-attrs-zfs-11b0
+kmisc-oom-8d8c
+---
+
+START: 2026-10-15 17:34:57 +0200
+COMMAND: osctl ct del -f --prune kmisc-attrs-native-dbd5 >/dev/null 2>&1 || true
+END: 2026-10-15 17:34:59 +0200
+ELAPSED: 1.96s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:34:59 +0200
+COMMAND: osctl ct del -f --prune kmisc-attrs-zfs-11b0 >/dev/null 2>&1 || true
+END: 2026-10-15 17:35:01 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+
+---
+

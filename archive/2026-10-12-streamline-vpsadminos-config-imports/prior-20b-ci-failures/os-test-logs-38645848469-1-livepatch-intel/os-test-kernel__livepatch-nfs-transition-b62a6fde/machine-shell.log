@@ -1,0 +1,1800 @@
+SHELL: 0
+
+START: 2026-10-15 04:16:49 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 04:16:50 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:50 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 04:16:50 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:50 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 04:16:50 +0200
+ELAPSED: 0.1s
+STATUS: 6
+OUTPUT:
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+---
+
+START: 2026-10-15 04:16:51 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 04:16:51 +0200
+ELAPSED: 0.11s
+STATUS: 6
+OUTPUT:
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+---
+
+START: 2026-10-15 04:16:52 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 04:16:52 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 02:16:52 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 04:16:52 +0200
+COMMAND: test "$(uname -r)" = 6.12.95
+END: 2026-10-15 04:16:52 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:52 +0200
+COMMAND: test "$(sha256sum /etc/livepatch-nfs-transition/module.ko | cut -d' ' -f1)" = 07e31de3675816ded0d10fa8f23a073d6137c7587a77741bc192e8e09ae6c8e2
+END: 2026-10-15 04:16:53 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:53 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-15 04:16:53 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+534
+---
+
+START: 2026-10-15 04:16:53 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 04:16:53 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:53 +0200
+COMMAND: modprobe nfsv4 && modprobe veth
+END: 2026-10-15 04:16:53 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:53 +0200
+COMMAND: for p in /proc/[0-9]*; do s=$(cat "$p/stack" 2>/dev/null) || continue; case "$s" in *nfs4_run_state_manager*) echo "$p";; esac; done | head -5
+END: 2026-10-15 04:16:54 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:54 +0200
+COMMAND: mkdir -p /run/livepatch-nfs/old/mnt
+END: 2026-10-15 04:16:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:54 +0200
+COMMAND: unshare --user --map-root-user --net sh -ec 'echo $$ > /run/livepatch-nfs/old/pid; exec sleep 3600' > /run/livepatch-nfs/old/holder.log 2>&1 < /dev/null &
+END: 2026-10-15 04:16:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:54 +0200
+COMMAND: test -s /run/livepatch-nfs/old/pid
+END: 2026-10-15 04:16:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:54 +0200
+COMMAND: cat /run/livepatch-nfs/old/pid
+END: 2026-10-15 04:16:54 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+2513
+---
+
+START: 2026-10-15 04:16:54 +0200
+COMMAND: test "$(readlink /proc/2513/ns/user)" != "$(readlink /proc/1/ns/user)"
+END: 2026-10-15 04:16:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:54 +0200
+COMMAND: ip link add lp-old type veth peer name lp-peer
+END: 2026-10-15 04:16:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:54 +0200
+COMMAND: ip link set lp-peer netns 2513
+END: 2026-10-15 04:16:54 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:54 +0200
+COMMAND: ip addr add 192.0.2.1/30 dev lp-old && ip link set lp-old up
+END: 2026-10-15 04:16:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:54 +0200
+COMMAND: nsenter -t 2513 --net sh -ec 'ip link set lo up; ip addr add 192.0.2.2/30 dev lp-peer; ip link set lp-peer up'
+END: 2026-10-15 04:16:54 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:54 +0200
+COMMAND: nsenter -t 2513 --net mount -t nfs -o vers=4.2,proto=tcp,nosharecache 192.0.2.1:/ /run/livepatch-nfs/old/mnt
+END: 2026-10-15 04:16:54 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:16:54 +0200
+COMMAND: dd if=/dev/zero of=/run/livepatch-nfs/old/mnt/swap-old bs=1M count=32 conv=fsync
+END: 2026-10-15 04:18:22 +0200
+ELAPSED: 88.18s
+STATUS: 0
+OUTPUT:
+32+0 records in
+32+0 records out
+33554432 bytes (34 MB, 32 MiB) copied, 0.0537849 s, 624 MB/s
+---
+
+START: 2026-10-15 04:18:22 +0200
+COMMAND: chmod 600 /run/livepatch-nfs/old/mnt/swap-old && mkswap /run/livepatch-nfs/old/mnt/swap-old && swapon /run/livepatch-nfs/old/mnt/swap-old
+END: 2026-10-15 04:18:23 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+Setting up swapspace version 1, size = 32 MiB (33550336 bytes)
+no label, UUID=059263e3-ae1e-4167-9aac-fdc4b1d43f4f
+---
+
+START: 2026-10-15 04:18:23 +0200
+COMMAND: for p in /proc/[0-9]*; do s=$(cat "$p/stack" 2>/dev/null) || continue; case "$s" in *nfs4_run_state_manager*) echo "$p";; esac; done | head -5
+END: 2026-10-15 04:18:24 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+/proc/2728
+---
+
+START: 2026-10-15 04:18:24 +0200
+COMMAND: grep -q nfs4_run_state_manager /proc/2728/wchan
+END: 2026-10-15 04:18:24 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:24 +0200
+COMMAND: cat /proc/2728/stack
+END: 2026-10-15 04:18:24 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+[<0>] nfs4_run_state_manager+0xbb3/0xd20 [nfsv4]
+[<0>] kthread+0xe1/0x110
+[<0>] ret_from_fork+0x38/0x50
+[<0>] ret_from_fork_asm+0x1a/0x30
+---
+
+START: 2026-10-15 04:18:24 +0200
+COMMAND: awk '{print $22}' /proc/2728/stat
+END: 2026-10-15 04:18:24 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+11190
+---
+
+START: 2026-10-15 04:18:24 +0200
+COMMAND: for p in /proc/[0-9]*; do s=$(cat "$p/stack" 2>/dev/null) || continue; case "$s" in *nfs4_run_state_manager*) echo "$p";; esac; done | head -5
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+/proc/2728
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: mkdir -p /run/livepatch-nfs/other/mnt
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: unshare --user --map-root-user --net sh -ec 'echo $$ > /run/livepatch-nfs/other/pid; exec sleep 3600' > /run/livepatch-nfs/other/holder.log 2>&1 < /dev/null &
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: test -s /run/livepatch-nfs/other/pid
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: cat /run/livepatch-nfs/other/pid
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+3713
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: test "$(readlink /proc/3713/ns/user)" != "$(readlink /proc/1/ns/user)"
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: ip link add lp-other type veth peer name lp-peer
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: ip link set lp-peer netns 3713
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: ip addr add 192.0.2.5/30 dev lp-other && ip link set lp-other up
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: nsenter -t 3713 --net sh -ec 'ip link set lo up; ip addr add 192.0.2.6/30 dev lp-peer; ip link set lp-peer up'
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: nsenter -t 3713 --net mount -t nfs -o vers=4.2,proto=tcp,nosharecache 192.0.2.5:/ /run/livepatch-nfs/other/mnt
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: dd if=/dev/zero of=/run/livepatch-nfs/other/mnt/swap-other bs=1M count=32 conv=fsync
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+32+0 records in
+32+0 records out
+33554432 bytes (34 MB, 32 MiB) copied, 0.0511036 s, 657 MB/s
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: chmod 600 /run/livepatch-nfs/other/mnt/swap-other && mkswap /run/livepatch-nfs/other/mnt/swap-other && swapon /run/livepatch-nfs/other/mnt/swap-other
+END: 2026-10-15 04:18:25 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+Setting up swapspace version 1, size = 32 MiB (33550336 bytes)
+no label, UUID=43fbbb5d-f66a-4438-9255-c45c9ee3990b
+---
+
+START: 2026-10-15 04:18:25 +0200
+COMMAND: for p in /proc/[0-9]*; do s=$(cat "$p/stack" 2>/dev/null) || continue; case "$s" in *nfs4_run_state_manager*) echo "$p";; esac; done | head -5
+END: 2026-10-15 04:18:26 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+/proc/2728
+/proc/3775
+---
+
+START: 2026-10-15 04:18:26 +0200
+COMMAND: grep -q nfs4_run_state_manager /proc/3775/wchan
+END: 2026-10-15 04:18:26 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:26 +0200
+COMMAND: cat /proc/3775/stack
+END: 2026-10-15 04:18:26 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+[<0>] nfs4_run_state_manager+0xbb3/0xd20 [nfsv4]
+[<0>] kthread+0xe1/0x110
+[<0>] ret_from_fork+0x38/0x50
+[<0>] ret_from_fork_asm+0x1a/0x30
+---
+
+START: 2026-10-15 04:18:26 +0200
+COMMAND: awk '{print $22}' /proc/3775/stat
+END: 2026-10-15 04:18:26 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+11429
+---
+
+START: 2026-10-15 04:18:26 +0200
+COMMAND: insmod /etc/livepatch-nfs-transition/module.ko
+END: 2026-10-15 04:18:28 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:28 +0200
+COMMAND: test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 04:18:28 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:28 +0200
+COMMAND: awk '{print $22}' /proc/2728/stat
+END: 2026-10-15 04:18:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+11190
+---
+
+START: 2026-10-15 04:18:28 +0200
+COMMAND: cat /proc/2728/stack
+END: 2026-10-15 04:18:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+[<0>] nfs4_run_state_manager+0xbb3/0xd20 [nfsv4]
+[<0>] kthread+0xe1/0x110
+[<0>] ret_from_fork+0x38/0x50
+[<0>] ret_from_fork_asm+0x1a/0x30
+---
+
+START: 2026-10-15 04:18:28 +0200
+COMMAND: awk '{print $22}' /proc/3775/stat
+END: 2026-10-15 04:18:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+11429
+---
+
+START: 2026-10-15 04:18:28 +0200
+COMMAND: cat /proc/3775/stack
+END: 2026-10-15 04:18:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+[<0>] nfs4_run_state_manager+0xbb3/0xd20 [nfsv4]
+[<0>] kthread+0xe1/0x110
+[<0>] ret_from_fork+0x38/0x50
+[<0>] ret_from_fork_asm+0x1a/0x30
+---
+
+START: 2026-10-15 04:18:28 +0200
+COMMAND: awk '$1 == "/run/livepatch-nfs/old/mnt/swap-old" { print $4 }' /proc/swaps
+END: 2026-10-15 04:18:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-15 04:18:28 +0200
+COMMAND: nsenter -t 2513 --net unshare --mount sh -ec 'mount --make-rslave /; mount -t sysfs sysfs /sys; test "$(cat /sys/fs/nfs/net/nfs_client/shutdown)" = 0; echo 1 > /sys/fs/nfs/net/nfs_client/shutdown; test "$(cat /sys/fs/nfs/net/nfs_client/shutdown)" = 1'
+END: 2026-10-15 04:18:28 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:28 +0200
+COMMAND: test ! -d /proc/2728
+END: 2026-10-15 04:18:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:28 +0200
+COMMAND: awk '$1 == "/run/livepatch-nfs/old/mnt/swap-old" { print $4 }' /proc/swaps
+END: 2026-10-15 04:18:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-15 04:18:28 +0200
+COMMAND: for p in /proc/[0-9]*; do s=$(cat "$p/stack" 2>/dev/null) || continue; case "$s" in *nfs4_run_state_manager*) echo "$p";; esac; done | head -5
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+/proc/3775
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: mkdir -p /run/livepatch-nfs/new/mnt
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: unshare --user --map-root-user --net sh -ec 'echo $$ > /run/livepatch-nfs/new/pid; exec sleep 3600' > /run/livepatch-nfs/new/holder.log 2>&1 < /dev/null &
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: test -s /run/livepatch-nfs/new/pid
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: cat /run/livepatch-nfs/new/pid
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+4859
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: test "$(readlink /proc/4859/ns/user)" != "$(readlink /proc/1/ns/user)"
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: ip link add lp-new type veth peer name lp-peer
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: ip link set lp-peer netns 4859
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: ip addr add 192.0.2.9/30 dev lp-new && ip link set lp-new up
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: nsenter -t 4859 --net sh -ec 'ip link set lo up; ip addr add 192.0.2.10/30 dev lp-peer; ip link set lp-peer up'
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: nsenter -t 4859 --net mount -t nfs -o vers=4.2,proto=tcp,nosharecache 192.0.2.9:/ /run/livepatch-nfs/new/mnt
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: dd if=/dev/zero of=/run/livepatch-nfs/new/mnt/swap-new bs=1M count=32 conv=fsync
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+32+0 records in
+32+0 records out
+33554432 bytes (34 MB, 32 MiB) copied, 0.0564894 s, 594 MB/s
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: chmod 600 /run/livepatch-nfs/new/mnt/swap-new && mkswap /run/livepatch-nfs/new/mnt/swap-new && swapon /run/livepatch-nfs/new/mnt/swap-new
+END: 2026-10-15 04:18:29 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+Setting up swapspace version 1, size = 32 MiB (33550336 bytes)
+no label, UUID=04c47bb6-aea5-4aa1-b224-639cc6b8d9f4
+---
+
+START: 2026-10-15 04:18:29 +0200
+COMMAND: for p in /proc/[0-9]*; do s=$(cat "$p/stack" 2>/dev/null) || continue; case "$s" in *nfs4_run_state_manager*) echo "$p";; esac; done | head -5
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+/proc/3775
+/proc/4911
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: grep -q nfs4_run_state_manager /proc/4911/wchan
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: cat /proc/4911/stack
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+[<0>] nfs4_run_state_manager+0xbb3/0xd20 [nfsv4]
+[<0>] kthread+0xe1/0x110
+[<0>] ret_from_fork+0x38/0x50
+[<0>] ret_from_fork_asm+0x1a/0x30
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: awk '{print $22}' /proc/4911/stat
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+11852
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: awk '$1 == "/run/livepatch-nfs/new/mnt/swap-new" { print $4 }' /proc/swaps
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: nsenter -t 4859 --net unshare --mount sh -ec 'mount --make-rslave /; mount -t sysfs sysfs /sys; test "$(cat /sys/fs/nfs/net/nfs_client/shutdown)" = 0; echo 1 > /sys/fs/nfs/net/nfs_client/shutdown; test "$(cat /sys/fs/nfs/net/nfs_client/shutdown)" = 1'
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: test ! -d /proc/4911
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: awk '$1 == "/run/livepatch-nfs/new/mnt/swap-new" { print $4 }' /proc/swaps
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: awk '{print $22}' /proc/3775/stat
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+11429
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: printf neighbor-alive | dd of=/run/livepatch-nfs/other/mnt/neighbor-witness conv=fsync
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+0+1 records in
+0+1 records out
+14 bytes copied, 0.000480702 s, 29.1 kB/s
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: cat /run/livepatch-nfs/other/mnt/neighbor-witness
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+neighbor-alive
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: echo 0 > /sys/kernel/livepatch/livepatch_7/enabled
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:30 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 04:18:30 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:31 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 04:18:31 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:32 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 04:18:32 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:33 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 04:18:34 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:35 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 04:18:35 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: rmmod livepatch_7
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: awk '{print $22}' /proc/3775/stat
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+11429
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: printf neighbor-unpatched | dd of=/run/livepatch-nfs/other/mnt/neighbor-witness conv=fsync
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0+1 records in
+0+1 records out
+18 bytes copied, 0.000478844 s, 37.6 kB/s
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: cat /run/livepatch-nfs/other/mnt/neighbor-witness
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+neighbor-unpatched
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: swapoff /run/livepatch-nfs/other/mnt/swap-other
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: umount /run/livepatch-nfs/other/mnt
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: kill 3713
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: test ! -d /proc/3713
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: ! ip link show lp-other
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+Device "lp-other" does not exist.
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: test ! -d /run/livepatch-nfs/load || touch /run/livepatch-nfs/load/stop
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: dmesg | tail -n +535
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[  111.910182] Adding 32764k swap on /run/livepatch-nfs/old/mnt/swap-old.  Priority:-2 extents:1 across:32764k 
+[  114.299156] Adding 32764k swap on /run/livepatch-nfs/other/mnt/swap-other.  Priority:-3 extents:1 across:32764k 
+[  115.455862] livepatch_7: loading out-of-tree module taints kernel.
+[  115.455872] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[  115.455876] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[  115.593620] livepatch: enabling patch 'livepatch_7'
+[  116.750874] livepatch: 'livepatch_7': starting patching transition
+[  116.930409] livepatch: 'livepatch_7': patching complete
+[  118.521702] Adding 32764k swap on /run/livepatch-nfs/new/mnt/swap-new.  Priority:-4 extents:1 across:32764k 
+[  119.785366] livepatch: 'livepatch_7': starting unpatching transition
+[  124.012797] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[  124.167408] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+546
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: modprobe nfsv4
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: mkdir -p /run/livepatch-nfs/mnt1
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: mount -t nfs -o vers=4.2,proto=tcp,nosharecache 127.0.0.1:/ /run/livepatch-nfs/mnt1
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: touch /run/livepatch-nfs/mnt1/klp-nfs-lock-1
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: mkdir -p /run/livepatch-nfs/mnt2
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: mount -t nfs -o vers=4.2,proto=tcp,nosharecache 127.0.0.1:/ /run/livepatch-nfs/mnt2
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: touch /run/livepatch-nfs/mnt2/klp-nfs-lock-2
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: mkdir -p /run/livepatch-nfs/mnt3
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: mount -t nfs -o vers=4.2,proto=tcp,nosharecache 127.0.0.1:/ /run/livepatch-nfs/mnt3
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: touch /run/livepatch-nfs/mnt3/klp-nfs-lock-3
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: mkdir -p /run/livepatch-nfs/mnt4
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: mount -t nfs -o vers=4.2,proto=tcp,nosharecache 127.0.0.1:/ /run/livepatch-nfs/mnt4
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: touch /run/livepatch-nfs/mnt4/klp-nfs-lock-4
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: dd if=/dev/zero of=/run/livepatch-nfs/mnt1/swapfile bs=1M count=32
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+32+0 records in
+32+0 records out
+33554432 bytes (34 MB, 32 MiB) copied, 0.0458977 s, 731 MB/s
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: chmod 600 /run/livepatch-nfs/mnt1/swapfile
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: mkswap /run/livepatch-nfs/mnt1/swapfile
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+Setting up swapspace version 1, size = 32 MiB (33550336 bytes)
+no label, UUID=1d56dc01-d88f-4771-aaef-daa23c116e68
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: swapon /run/livepatch-nfs/mnt1/swapfile
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: mkdir /run/livepatch-nfs/load
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: ( sh -ec 'for i in $(seq 1 8); do (while ! test -e /run/livepatch-nfs/load/stop; do :; done; touch /run/livepatch-nfs/load/done.$i) & done; wait'; echo $? > /run/livepatch-nfs/load/exit ) > /run/livepatch-nfs/load/log 2>&1 &
+END: 2026-10-15 04:18:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:36 +0200
+COMMAND: for p in /proc/[0-9]*; do s=$(cat "$p/stack" 2>/dev/null) || continue; case "$s" in *nfs4_run_state_manager*) echo "$p";; esac; done | head -5
+END: 2026-10-15 04:18:38 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+/proc/5640
+---
+
+START: 2026-10-15 04:18:38 +0200
+COMMAND: insmod /etc/livepatch-nfs-transition/module.ko
+END: 2026-10-15 04:18:40 +0200
+ELAPSED: 1.91s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:40 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/enabled 2>&1 || true
+END: 2026-10-15 04:18:40 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-10-15 04:18:40 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/transition 2>&1 || true
+END: 2026-10-15 04:18:40 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-15 04:18:40 +0200
+COMMAND: ls /sys/kernel/livepatch/ 2>&1 || true
+END: 2026-10-15 04:18:40 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+livepatch_7
+---
+
+START: 2026-10-15 04:18:40 +0200
+COMMAND: sh -c 'echo 0 > /sys/kernel/livepatch/livepatch_7/enabled'
+END: 2026-10-15 04:18:40 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:40 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/enabled 2>&1 || true
+END: 2026-10-15 04:18:40 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-15 04:18:40 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/transition 2>&1 || true
+END: 2026-10-15 04:18:40 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-10-15 04:18:40 +0200
+COMMAND: test -e /sys/kernel/livepatch/livepatch_7/enabled && echo present || echo gone
+END: 2026-10-15 04:18:40 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+present
+---
+
+START: 2026-10-15 04:18:40 +0200
+COMMAND: ls /sys/kernel/livepatch/ 2>&1 || true
+END: 2026-10-15 04:18:40 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+livepatch_7
+---
+
+START: 2026-10-15 04:18:50 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/enabled 2>&1 || true
+END: 2026-10-15 04:18:50 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+cat: /sys/kernel/livepatch/livepatch_7/enabled: No such file or directory
+---
+
+START: 2026-10-15 04:18:50 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/transition 2>&1 || true
+END: 2026-10-15 04:18:50 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+cat: /sys/kernel/livepatch/livepatch_7/transition: No such file or directory
+---
+
+START: 2026-10-15 04:18:50 +0200
+COMMAND: test -e /sys/kernel/livepatch/livepatch_7/enabled && echo present || echo gone
+END: 2026-10-15 04:18:50 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+gone
+---
+
+START: 2026-10-15 04:18:50 +0200
+COMMAND: ls /sys/kernel/livepatch/ 2>&1 || true
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: dmesg 2>/dev/null | grep -iE "livepatch|unpatch" | tail -4 || true
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+[  129.206429] livepatch: 'livepatch_7': patching complete
+[  129.450408] livepatch: 'livepatch_7': starting unpatching transition
+[  133.579272] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[  133.955341] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: rmmod livepatch_7
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.04s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -e /sys/kernel/livepatch/livepatch_7/enabled && echo present || echo gone
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+gone
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: swapoff /run/livepatch-nfs/mnt1/swapfile
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: touch /run/livepatch-nfs/load/stop
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -e /run/livepatch-nfs/load/exit
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test "$(cat /run/livepatch-nfs/load/exit)" = 0
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -e /run/livepatch-nfs/load/done.1
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -e /run/livepatch-nfs/load/done.2
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -e /run/livepatch-nfs/load/done.3
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -e /run/livepatch-nfs/load/done.4
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -e /run/livepatch-nfs/load/done.5
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -e /run/livepatch-nfs/load/done.6
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -e /run/livepatch-nfs/load/done.7
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -e /run/livepatch-nfs/load/done.8
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: umount /run/livepatch-nfs/mnt1
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: umount /run/livepatch-nfs/mnt2
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: umount /run/livepatch-nfs/mnt3
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: umount /run/livepatch-nfs/mnt4
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test ! -d /run/livepatch-nfs/load || touch /run/livepatch-nfs/load/stop
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: dmesg | tail -n +547
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[  125.713723] Adding 32764k swap on /run/livepatch-nfs/mnt1/swapfile.  Priority:-4 extents:1 across:32764k 
+[  127.628135] livepatch: enabling patch 'livepatch_7'
+[  128.808716] livepatch: 'livepatch_7': starting patching transition
+[  129.206429] livepatch: 'livepatch_7': patching complete
+[  129.450408] livepatch: 'livepatch_7': starting unpatching transition
+[  133.579272] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[  133.955341] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+553
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: modprobe nfsv4
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: mkdir -p /run/livepatch-nfs/mnt
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: mount -t nfs -o vers=4.2,proto=tcp,nosharecache 127.0.0.1:/ /run/livepatch-nfs/mnt
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: touch /run/livepatch-nfs/mnt/klp-nfs-lock
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: dd if=/dev/zero of=/run/livepatch-nfs/mnt/swapfile bs=1M count=32
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+32+0 records in
+32+0 records out
+33554432 bytes (34 MB, 32 MiB) copied, 0.0491808 s, 682 MB/s
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: chmod 600 /run/livepatch-nfs/mnt/swapfile
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: mkswap /run/livepatch-nfs/mnt/swapfile
+END: 2026-10-15 04:18:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+Setting up swapspace version 1, size = 32 MiB (33550336 bytes)
+no label, UUID=1102b11e-3b20-43a5-a524-c53ff1d51438
+---
+
+START: 2026-10-15 04:18:51 +0200
+COMMAND: swapon /run/livepatch-nfs/mnt/swapfile
+END: 2026-10-15 04:18:52 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:52 +0200
+COMMAND: grep -q 'swapfile' /proc/swaps
+END: 2026-10-15 04:18:52 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:52 +0200
+COMMAND: for p in /proc/[0-9]*; do s=$(cat "$p/stack" 2>/dev/null) || continue; case "$s" in *nfs4_run_state_manager*) echo "$p";; esac; done | head -5
+END: 2026-10-15 04:18:52 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+/proc/6399
+---
+
+START: 2026-10-15 04:18:52 +0200
+COMMAND: cat /proc/6399/wchan 2>/dev/null || true
+END: 2026-10-15 04:18:52 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+nfs4_run_state_manager
+---
+
+START: 2026-10-15 04:18:52 +0200
+COMMAND: insmod /etc/livepatch-nfs-transition/module.ko
+END: 2026-10-15 04:18:54 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:54 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/enabled 2>&1 || true
+END: 2026-10-15 04:18:54 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-10-15 04:18:54 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/transition 2>&1 || true
+END: 2026-10-15 04:18:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-15 04:18:54 +0200
+COMMAND: ls /sys/kernel/livepatch/ 2>&1 || true
+END: 2026-10-15 04:18:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+livepatch_7
+---
+
+START: 2026-10-15 04:18:54 +0200
+COMMAND: sh -c 'echo 0 > /sys/kernel/livepatch/livepatch_7/enabled'
+END: 2026-10-15 04:18:54 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:18:54 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/enabled 2>&1 || true
+END: 2026-10-15 04:18:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-15 04:18:54 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/transition 2>&1 || true
+END: 2026-10-15 04:18:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-10-15 04:18:54 +0200
+COMMAND: test -e /sys/kernel/livepatch/livepatch_7/enabled && echo present || echo gone
+END: 2026-10-15 04:18:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+present
+---
+
+START: 2026-10-15 04:18:54 +0200
+COMMAND: ls /sys/kernel/livepatch/ 2>&1 || true
+END: 2026-10-15 04:18:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+livepatch_7
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/enabled 2>&1 || true
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+cat: /sys/kernel/livepatch/livepatch_7/enabled: No such file or directory
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: cat /sys/kernel/livepatch/livepatch_7/transition 2>&1 || true
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+cat: /sys/kernel/livepatch/livepatch_7/transition: No such file or directory
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: test -e /sys/kernel/livepatch/livepatch_7/enabled && echo present || echo gone
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+gone
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: ls /sys/kernel/livepatch/ 2>&1 || true
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: dmesg 2>/dev/null | grep -iE "livepatch|unpatch" | tail -4 || true
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[  143.003528] livepatch: 'livepatch_7': patching complete
+[  143.129363] livepatch: 'livepatch_7': starting unpatching transition
+[  146.852735] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[  147.007386] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: rmmod livepatch_7
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: test -e /sys/kernel/livepatch/livepatch_7/enabled && echo present || echo gone
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+gone
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: swapoff /run/livepatch-nfs/mnt/swapfile
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: umount /run/livepatch-nfs/mnt
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: test ! -d /run/livepatch-nfs/load || touch /run/livepatch-nfs/load/stop
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: dmesg | tail -n +554
+END: 2026-10-15 04:19:04 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[  140.877100] Adding 32764k swap on /run/livepatch-nfs/mnt/swapfile.  Priority:-4 extents:1 across:32764k 
+[  142.041235] livepatch: enabling patch 'livepatch_7'
+[  142.828790] livepatch: 'livepatch_7': starting patching transition
+[  143.003528] livepatch: 'livepatch_7': patching complete
+[  143.129363] livepatch: 'livepatch_7': starting unpatching transition
+[  146.852735] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[  147.007386] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-15 04:19:04 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 04:19:06 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Grabbing all containers
+---
+

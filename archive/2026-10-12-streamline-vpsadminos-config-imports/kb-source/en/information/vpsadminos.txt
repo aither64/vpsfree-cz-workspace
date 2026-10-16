@@ -1,0 +1,38 @@
+<page>information:vpsadminos</page>
+====== Virtualization platform vpsAdminOS ======
+
+We use [[https://vpsadminos.org|vpsAdminOS]] as our platform to run VPS.
+It is a Linux distribution focused on container virtualization. We develop
+it ourselves.
+
+Under most circumstances, the VPS behaves like a physical Linux server
+(or a fully virtualized virtual server) with the given distribution. It has
+its users, its application and data.
+
+The difference from full virtualization is that the Linux kernel is shared
+between all VPS on one node. The VPS does not have its own hardware, it does
+not have its own disks or a boot loader. Running all VPS under one kernel allows
+us to effectively share system resources, such as CPU, memory and disk space. For more
+information, see [[manuals:vps:vpsadminos]].
+
+We use ZFS for storage, where each VPS has its own dataset. See [[manuals:vps:datasets]]
+for more information.
+
+===== Can I boot my own ISO? =====
+
+No. You can use the [[manuals:vps:vpsadminos:recovery#rescue_mode|rescue mode]]
+to access the VPS's file system and upload your own system.
+
+===== Can I use my own kernel? =====
+
+No, the kernel is shared. Even if you install your own kernel, it will not be
+used. The VPS is started simply by running ''/sbin/init'' when the kernel is
+already loaded.
+
+The only way to use your own kernel is with [[manuals:vps:kvm|KVM]]. You can use
+it to run your own fully virtualized machine inside the VPS.
+
+===== Can I add my own kernel modules? =====
+
+No. All necessary modules should already be provided by us. If you'd like some
+new module to be loaded, please contact our support.

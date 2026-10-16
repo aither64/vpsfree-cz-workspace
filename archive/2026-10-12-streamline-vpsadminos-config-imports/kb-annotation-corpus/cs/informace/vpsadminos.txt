@@ -1,0 +1,36 @@
+<page>information:vpsadminos</page>
+====== Virtualizační technologie vpsAdminOS ======
+
+Pro provoz VPS používáme [[https://vpsadminos.org|vpsAdminOS]]. Jedná se o námi
+udržovanou linuxovou distribuci zaměřenou na kontejnerovou virtualizaci.
+
+VPS se ve většině situací chová stejně jako fyzický linuxový server (nebo plně
+virtualizovaný virtuální server) s danou distribucí. Má svoje účty, svoje
+aplikace, svoje data.
+
+Rozdíl oproti plné virtualizaci spočívá v tom, že VPS sdílí s hostitelem linuxové
+jádro. VPS nemá svůj vlastní hardware, nemá vlastní disky ani zavaděč. Běh všech
+VPS pod jedním jádrem nám umožnuje efektivně sdílet systémové prostředky jako
+CPU, paměť a disky. Více info viz [[navody:vps:vpsadminos]].
+
+Jako úložiště používáme ZFS, kde má každé VPS svůj vlastní dataset. Více viz
+[[navody:vps:datasety|datasety]].
+
+===== Mohu nabootovat vlastní ISO? =====
+
+Ne. Lze použít [[navody:vps:vpsadminos:oprava#nouzovy_rezim|nouzový režim]]
+a nastartovat VPS z vybrané šablony distribuce. Z nouzového režimu je možné se
+zvenku dostat k souborovému systému VPS a nahrát tam svůj vlastní systém.
+
+===== Mohu mít vlastní jádro? =====
+
+Ani po instalaci vlastního jádra ve VPS nedojde k jeho použití, ani žádné mít
+nainstalované nemusíte. Boot VPS spočívá ve spuštění **/sbin/init** uvnitř VPS.
+
+Jediná cesta jak provozovat vlastní jádro je s využitím [[navody:vps:kvm|KVM]]
+pro spuštění plně virtualizovaného systému uvnitř naší VPS.
+
+===== Mohu do kernelu zavést vlastní moduly? =====
+
+Ne, všechny potřebné moduly už by tam měly být. Vlastní moduly do sdíleného jádra
+zavádět nelze. Pokud nějaký modul chybí, napiš prosím na podporu.

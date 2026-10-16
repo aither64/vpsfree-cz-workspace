@@ -1,0 +1,38 @@
+--- a/tests/suite/dist-config/nixos-persistence-upgrade.nix
++++ b/tests/suite/dist-config/nixos-persistence-upgrade.nix
+@@ -280,11 +280,31 @@
+                 expect(trace).to match(/^\++ source .*mounts/)
+                 expect(trace).to match(/^\++ exit 1$/)
+                 expect(trace).not_to match(/^\+.*perl.*-update-users-groups\.pl/)
+-                if %w[nonbind nonbind-remount required-remount ancestor-bind].include?(failure)
+-                  expect(trace).to match(/^\++ mount -t /)
++                operation = case failure
++                when 'nonbind'
++                  ['ext4', '/dev/no-such-persistence-device', '/var/log', %w[mode=0755]]
++                when 'nonbind-remount'
++                  ['tmpfs', 'tmpfs', '/var/log', %w[remount size=invalid]]
++                when 'required-remount'
++                  ['tmpfs', 'tmpfs', '/required-storage', %w[remount size=invalid]]
++                when 'ancestor-bind'
++                  ['none', '/persistent/var/lib', '/var/lib', %w[bind remount]]
+                 end
+-                expect(trace).to include('/dev/no-such-persistence-device') if failure == 'nonbind'
+-                expect(trace).to include('size=invalid') if %w[nonbind-remount required-remount].include?(failure)
++                if operation
++                  fs_type, mount_source, mount_target, required_options = operation
++                  lines = trace.lines
++                  mount_position = lines.index do |line|
++                    next false unless line.match?(/\A\++ mount -t /)
++                    argv = Shellwords.split(line.sub(/\A\++ /, ""))
++                    argv.length == 7 && argv.first(4) == ['mount', '-t', fs_type, '-o'] &&
++                      argv.last(2) == [mount_source, mount_target] &&
++                      (required_options - argv[4].split(',')).empty?
++                  end
++                  refusal_position = lines.index { |line| line.match?(/\A\++ printf .*refusing user allocation/) }
++                  expect(mount_position).not_to be_nil
++                  expect(refusal_position).not_to be_nil
++                  expect(mount_position).to be < refusal_position
++                end
+                 expect(trace).to include('REQUIRED_STILL_PRESENT') if failure == 'required-remount'
+                 expect(exec_guest.call('sha256sum /etc/passwd /etc/group /var/lib/nixos/uid-map /var/lib/nixos/gid-map /var/lib/preservation-test/payload')).to eq(saved_files)
+                 expect(snapshot.call(true)).to eq(healthy)

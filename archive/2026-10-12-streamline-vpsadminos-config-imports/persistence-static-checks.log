@@ -1,0 +1,46 @@
+$ bash -n /home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-static-shell-snippet.sh
+exit 0
+
+$ bash tests/nixos-container-persistence-shell.sh /home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-static-shell-snippet.sh
+exit 0
+PASS fresh
+PASS existing_metadata
+PASS missing_backing
+PASS root_backing
+PASS failed_bind
+PASS matching_live
+PASS wrong_live
+PASS failed_lookup
+PASS failed_mount_lookup
+PASS wrong_result
+PASS source_file
+
+$ git diff --check
+exit 0
+
+$ bash -n tests/nixos-container-eval.sh tests/nixos-container-persistence-shell.sh image-scripts/tests/nixos_rebuild.sh
+exit 0
+
+$ nix-instantiate --parse os/lib/nixos-container/stable/vpsadminos-25.11.nix
+exit 0
+
+$ nix-instantiate --parse os/lib/nixos-container/stable/vpsadminos-26.05.nix
+exit 0
+
+$ nix-instantiate --parse os/lib/nixos-container/stable/vpsadminos.nix
+exit 0
+
+$ nix-instantiate --parse os/lib/nixos-container/unstable/vpsadminos.nix
+exit 0
+
+$ nix-instantiate --parse tests/nixos-container-persistence-eval.nix
+exit 0
+
+$ nix-instantiate --parse tests/nixos-container-modules-eval.nix
+exit 0
+
+Nested image Bash fragment 1: syntax exit0
+Nested image Bash fragment 2: syntax exit0
+Nested image Bash fragment 3: syntax exit0
+Nested image Bash fragment 4: syntax exit0
+Latest stable ==26.05 byte-for-byte. Static helper double tests use extracted literal helper with synthesized calls; parent must also run actual generated snippet.

@@ -1,0 +1,1501 @@
+8367: START: 2026-10-15 15:43:53 +0200
+8368: COMMAND: osctl ct new --skip-image --distribution nixos --version 26.05 --arch x86_64 testct-d77f
+8369: END: 2026-10-15 15:43:54 +0200
+8370: ELAPSED: 1.55s
+8371: STATUS: 0
+8372: OUTPUT:
+8373: Allocated block #0 from ID range default
+8374: Registering user tank:testct-d77f
+8375: Creating root dataset
+8376: Configuring LXC home
+8377: Generating LXC configuration
+8378: Preparing log file
+8379: Preparing user script hook dir
+8380: ---
+8381: 
+8382: START: 2026-10-15 15:43:54 +0200
+8383: COMMAND: osctl ct unset start-menu testct-d77f
+8384: END: 2026-10-15 15:43:56 +0200
+8385: ELAPSED: 1.14s
+8386: STATUS: 0
+8387: OUTPUT:
+8388: 
+8389: ---
+8390: 
+8391: START: 2026-10-15 15:43:56 +0200
+8392: COMMAND: osctl ct dataset new testct-d77f nix
+8393: END: 2026-10-15 15:43:57 +0200
+8394: ELAPSED: 1.76s
+8395: STATUS: 0
+8396: OUTPUT:
+8397: 
+8398: ---
+8399: 
+8400: START: 2026-10-15 15:43:57 +0200
+8401: COMMAND: osctl -j ct show testct-d77f
+8402: END: 2026-10-15 15:43:58 +0200
+8403: ELAPSED: 1.09s
+8404: STATUS: 0
+8405: OUTPUT:
+8406: {"pool":"tank","id":"testct-d77f","user":"testct-d77f","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-d77f","rootfs":"/tank/ct/testct-d77f/private","boot_dataset":"tank/ct/testct-d77f","boot_rootfs":"/tank/ct/testct-d77f/private","lxc_path":"/run/osctl/pools/tank/users/testct-d77f/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-d77f/group.default/cts/testct-d77f","group_path":"osctl/pool.tank/group.default/user.testct-d77f/ct.testct-d77f/user-owned","distribution":"nixos","version":"26.05","arch":"x86_64","vendor":null,"variant":null,"state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":false,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-d77f.log","memory":null,"cpu_us":null,"loadavg":null}
+8407: ---
+8408: 
+8409: START: 2026-10-15 15:43:58 +0200
+8410: COMMAND: osctl -j ct mounts ls testct-d77f
+8411: END: 2026-10-15 15:43:59 +0200
+8412: ELAPSED: 0.88s
+8413: STATUS: 0
+8414: OUTPUT:
+8415: [{"fs":"/tank/ct/testct-d77f/nix/private","mountpoint":"/nix","type":"bind","opts":"bind,create=dir,rw","automount":true,"dataset":"nix","map_ids":true,"temporary":false}]
+8416: ---
+8417: 
+8418: START: 2026-10-15 15:43:59 +0200
+8419: COMMAND: set -e
+8420: # The fresh dataset root is 0750; /nix needs non-root traversal.
+8421: chmod 0755 "/tank/ct/testct-d77f/nix/private"
+8422: mkdir -p "/tank/ct/testct-d77f/nix/private/store"
+8423: while IFS= read -r store_path; do
+8424:   cp -a "$store_path" "/tank/ct/testct-d77f/nix/private/store/"
+8425: done < /nix/store/yfjhimqrqkylv2vkrcf6s3a0ir0n6yn5-closure-info/store-paths
+8426: cp /nix/store/yfjhimqrqkylv2vkrcf6s3a0ir0n6yn5-closure-info/registration "/tank/ct/testct-d77f/nix/private/nix-path-registration"
+8427: END: 2026-10-15 15:44:24 +0200
+8428: ELAPSED: 25.05s
+8429: STATUS: 0
+8430: OUTPUT:
+8431: 
+8432: ---
+8433: 
+8434: START: 2026-10-15 15:44:24 +0200
+8435: COMMAND: mkdir -p /tank/ct/testct-d77f/nix/private/var/nix/profiles /tank/ct/testct-d77f/private/sbin /tank/ct/testct-d77f/private/etc /tank/ct/testct-d77f/private/var
+8436: END: 2026-10-15 15:44:24 +0200
+8437: ELAPSED: 0.07s
+8438: STATUS: 0
+8439: OUTPUT:
+8440: 
+8441: ---
+8442: 
+8443: START: 2026-10-15 15:44:24 +0200
+8444: COMMAND: ln -s /nix/store/pqmh1r9qwczn3rqfy27izmvx8alljcma-nixos-system-persistence-fixture-26.05pre-git /tank/ct/testct-d77f/nix/private/var/nix/profiles/system
+8445: END: 2026-10-15 15:44:24 +0200
+8446: ELAPSED: 0.05s
+8447: STATUS: 0
+8448: OUTPUT:
+8449: 
+8450: ---
+8451: 
+8452: START: 2026-10-15 15:44:24 +0200
+8453: COMMAND: ln -s /nix/store/pqmh1r9qwczn3rqfy27izmvx8alljcma-nixos-system-persistence-fixture-26.05pre-git/init /tank/ct/testct-d77f/private/sbin/init
+8454: END: 2026-10-15 15:44:25 +0200
+8455: ELAPSED: 0.05s
+8456: STATUS: 0
+8457: OUTPUT:
+8458: 
+8459: ---
+8460: 
+8461: START: 2026-10-15 15:44:25 +0200
+8462: COMMAND: osctl ct mounts new --fs /tank/ct/testct-d77f/private --type bind --opts bind,create=dir,rw --mountpoint /persistent testct-d77f
+8463: END: 2026-10-15 15:44:26 +0200
+8464: ELAPSED: 1.21s
+8465: STATUS: 0
+8466: OUTPUT:
+8467: 
+8468: ---
+8469: 
+8470: START: 2026-10-15 15:44:26 +0200
+8471: COMMAND: osctl ct set impermanence testct-d77f
+8472: END: 2026-10-15 15:44:27 +0200
+8473: ELAPSED: 1.15s
+8474: STATUS: 0
+8475: OUTPUT:
+8476: 
+8477: ---
+8478: 
+8479: START: 2026-10-15 15:44:27 +0200
+8480: COMMAND: mkdir -p /tank/ct/testct-d77f/private/backing/var/lib/nixos /tank/ct/testct-d77f/private/backing/var/lib/preservation-test /tank/ct/testct-d77f/private/backing/var/log /tank/ct/testct-d77f/private/backing/etc
+8481: END: 2026-10-15 15:44:27 +0200
+8482: ELAPSED: 0.05s
+8483: STATUS: 0
+8484: OUTPUT:
+8485: 
+8486: ---
+8487: 
+8488: START: 2026-10-15 15:44:27 +0200
+8489: COMMAND: touch /tank/ct/testct-d77f/private/backing/etc/machine-id
+8490: END: 2026-10-15 15:44:27 +0200
+8491: ELAPSED: 0.05s
+8492: STATUS: 0
+8493: OUTPUT:
+8494: 
+8495: ---
+8496: 
+8497: START: 2026-10-15 15:44:27 +0200
+8498: COMMAND: install -d -m 710 -o 42 -g 43 /tank/ct/testct-d77f/private/backing/var/lib/nixos
+8499: END: 2026-10-15 15:44:27 +0200
+8500: ELAPSED: 0.07s
+8501: STATUS: 0
+8502: OUTPUT:
+8503: 
+8504: ---
+8505: 
+8506: START: 2026-10-15 15:44:27 +0200
+8507: COMMAND: stat -c '%u:%g:%a:%i' /tank/ct/testct-d77f/private/backing/var/lib/nixos
+8508: END: 2026-10-15 15:44:27 +0200
+8509: ELAPSED: 0.07s
+8510: STATUS: 0
+8511: OUTPUT:
+8512: 42:43:710:10
+8513: ---
+8514: 
+8515: START: 2026-10-15 15:44:27 +0200
+8516: COMMAND: osctl ct start testct-d77f
+8517: END: 2026-10-15 15:44:31 +0200
+8518: ELAPSED: 4.21s
+8519: STATUS: 0
+8520: OUTPUT:
+8521: Starting container
+8522: Connecting console
+8523: Waiting for the container to start
+8524: ---
+8525: 
+8526: START: 2026-10-15 15:44:31 +0200
+8527: COMMAND: osctl ct exec testct-d77f systemctl is-system-running --wait
+8528: END: 2026-10-15 15:45:06 +0200
+8529: ELAPSED: 34.44s
+8530: STATUS: 0
+8531: OUTPUT:
+8532: running
+8533: ---
+8534: 
+8535: START: 2026-10-15 15:45:06 +0200
+8536: COMMAND: osctl ct exec testct-d77f bash -c nixos-version
+8537: END: 2026-10-15 15:45:08 +0200
+8538: ELAPSED: 2.73s
+8539: STATUS: 0
+8540: OUTPUT:
+8541: 26.05pre-git (Yarara)
+8542: ---
+8543: 
+8544: START: 2026-10-15 15:45:08 +0200
+8545: COMMAND: osctl ct exec testct-d77f bash -c nix-store\ --load-db\ \<\ /nix/nix-path-registration
+8546: END: 2026-10-15 15:45:12 +0200
+8547: ELAPSED: 3.31s
+8548: STATUS: 0
+8549: OUTPUT:
+8550: 
+8551: ---
+8552: 
+8553: START: 2026-10-15 15:45:12 +0200
+8554: COMMAND: osctl ct exec testct-d77f bash -c nix-env\ -p\ /nix/var/nix/profiles/system\ --set\ /nix/store/pqmh1r9qwczn3rqfy27izmvx8alljcma-nixos-system-persistence-fixture-26.05pre-git\ \&\&\ /nix/store/pqmh1r9qwczn3rqfy27izmvx8alljcma-nixos-system-persistence-fixture-26.05pre-git/bin/switch-to-configuration\ switch
+8555: END: 2026-10-15 15:45:18 +0200
+8556: ELAPSED: 6.53s
+8557: STATUS: 0
+8558: OUTPUT:
+8559: Checking switch inhibitors... done
+8560: stopping the following units: sys-kernel-debug.mount
+8561: activating the configuration...
+8562: setting up /etc...
+8563: restarting sysinit-reactivation.target
+8564: the following new units were started: sysinit-reactivation.target, systemd-tmpfiles-resetup.service
+8565: ---
+8566: 
+8567: START: 2026-10-15 15:45:18 +0200
+8568: COMMAND: osctl ct exec testct-d77f bash -c readlink\ /run/current-system
+8569: END: 2026-10-15 15:45:21 +0200
+8570: ELAPSED: 2.89s
+8571: STATUS: 0
+8572: OUTPUT:
+8573: /nix/store/pqmh1r9qwczn3rqfy27izmvx8alljcma-nixos-system-persistence-fixture-26.05pre-git
+8574: ---
+8575: 
+8576: START: 2026-10-15 15:45:21 +0200
+8577: COMMAND: osctl ct exec testct-d77f bash -c printf\ \'\%s\\n\'\ persistence-upgrade-payload\ \>\ /var/lib/preservation-test/payload\ \&\&\ chown\ preservation-test:preservation-test\ /var/lib/preservation-test/payload
+8578: END: 2026-10-15 15:45:24 +0200
+8579: ELAPSED: 2.81s
+8580: STATUS: 0
+8581: OUTPUT:
+8582: 
+8583: ---
+8584: 
+8585: START: 2026-10-15 15:45:24 +0200
+8586: COMMAND: osctl ct exec testct-d77f bash -c id\ -u\ preservation-test\;\ id\ -g\ preservation-test
+8587: END: 2026-10-15 15:45:27 +0200
+8588: ELAPSED: 2.82s
+8589: STATUS: 0
+8590: OUTPUT:
+8591: 997
+8592: 997
+8593: ---
+8594: 
+8595: START: 2026-10-15 15:45:27 +0200
+8596: COMMAND: osctl ct exec testct-d77f bash -c jq\ -n\ --slurpfile\ u\ /var/lib/nixos/uid-map\ --slurpfile\ g\ /var/lib/nixos/gid-map\ --arg\ name\ preservation-test\ \'\[\$u\[0\]\[\$name\],\ \$g\[0\]\[\$name\]\]\'
+8597: END: 2026-10-15 15:45:30 +0200
+8598: ELAPSED: 2.84s
+8599: STATUS: 0
+8600: OUTPUT:
+8601: [
+8602:   997,
+8603:   997
+8604: ]
+8605: ---
+8606: 
+8607: START: 2026-10-15 15:45:30 +0200
+8608: COMMAND: osctl ct exec testct-d77f bash -c jq\ -n\ --slurpfile\ u\ /guest-backing/var/lib/nixos/uid-map\ --slurpfile\ g\ /guest-backing/var/lib/nixos/gid-map\ --arg\ name\ preservation-test\ \'\[\$u\[0\]\[\$name\],\ \$g\[0\]\[\$name\]\]\'
+8609: END: 2026-10-15 15:45:33 +0200
+8610: ELAPSED: 2.85s
+8611: STATUS: 0
+8612: OUTPUT:
+8613: [
+8614:   997,
+8615:   997
+8616: ]
+8617: ---
+8618: 
+8619: START: 2026-10-15 15:45:33 +0200
+8620: COMMAND: osctl ct exec testct-d77f bash -c test\ /guest-backing/var/lib/nixos\ -ef\ /var/lib/nixos
+8621: END: 2026-10-15 15:45:35 +0200
+8622: ELAPSED: 2.72s
+8623: STATUS: 0
+8624: OUTPUT:
+8625: 
+8626: ---
+8627: 
+8628: START: 2026-10-15 15:45:35 +0200
+8629: COMMAND: osctl ct exec testct-d77f bash -c mountpoint\ -q\ /var/lib/nixos\ \&\&\ test\ /guest-backing/var/lib/nixos\ -ef\ /var/lib/nixos
+8630: END: 2026-10-15 15:45:38 +0200
+8631: ELAPSED: 2.78s
+8632: STATUS: 0
+8633: OUTPUT:
+8634: 
+8635: ---
+8636: 
+8637: START: 2026-10-15 15:45:38 +0200
+8638: COMMAND: osctl ct exec testct-d77f bash -c awk\ \'\$5\ \=\=\ \"/var/lib/nixos\"\ \{n++\}\ END\ \{print\ n+0\}\'\ /proc/self/mountinfo
+8639: END: 2026-10-15 15:45:41 +0200
+8640: ELAPSED: 2.6s
+8641: STATUS: 0
+8642: OUTPUT:
+8643: 1
+8644: ---
+8645: 
+8646: START: 2026-10-15 15:45:41 +0200
+8647: COMMAND: osctl ct exec testct-d77f bash -c mountpoint\ -q\ /var/log\ \&\&\ test\ /guest-backing/var/log\ -ef\ /var/log
+8648: END: 2026-10-15 15:45:43 +0200
+8649: ELAPSED: 2.79s
+8650: STATUS: 0
+8651: OUTPUT:
+8652: 
+8653: ---
+8654: 
+8655: START: 2026-10-15 15:45:43 +0200
+8656: COMMAND: osctl ct exec testct-d77f bash -c awk\ \'\$5\ \=\=\ \"/var/log\"\ \{n++\}\ END\ \{print\ n+0\}\'\ /proc/self/mountinfo
+8657: END: 2026-10-15 15:45:46 +0200
+8658: ELAPSED: 2.65s
+8659: STATUS: 0
+8660: OUTPUT:
+8661: 1
+8662: ---
+8663: 
+8664: START: 2026-10-15 15:45:46 +0200
+8665: COMMAND: osctl ct exec testct-d77f bash -c test\ /guest-backing/var/log\ -ef\ /var/log
+8666: END: 2026-10-15 15:45:49 +0200
+8667: ELAPSED: 2.73s
+8668: STATUS: 0
+8669: OUTPUT:
+8670: 
+8671: ---
+8672: 
+8673: START: 2026-10-15 15:45:49 +0200
+8674: COMMAND: osctl ct exec testct-d77f bash -c test\ /guest-backing/var/lib/preservation-test/payload\ -ef\ /var/lib/preservation-test/payload\ \&\&\ test\ /guest-backing/etc/machine-id\ -ef\ /etc/machine-id
+8675: END: 2026-10-15 15:45:52 +0200
+8676: ELAPSED: 2.85s
+8677: STATUS: 0
+8678: OUTPUT:
+8679: 
+8680: ---
+8681: 
+8682: START: 2026-10-15 15:45:52 +0200
+8683: COMMAND: osctl ct exec testct-d77f bash -c findmnt\ -n\ -o\ OPTIONS\ --mountpoint\ /var/lib/nixos
+8684: END: 2026-10-15 15:45:54 +0200
+8685: ELAPSED: 2.61s
+8686: STATUS: 0
+8687: OUTPUT:
+8688: rw,relatime,idmapped,xattr,noacl,casesensitive
+8689: ---
+8690: 
+8691: START: 2026-10-15 15:45:54 +0200
+8692: COMMAND: osctl ct exec testct-d77f bash -c findmnt\ -n\ -o\ OPTIONS\ --mountpoint\ /var/log
+8693: END: 2026-10-15 15:45:57 +0200
+8694: ELAPSED: 2.96s
+8695: STATUS: 0
+8696: OUTPUT:
+8697: rw,relatime,idmapped,xattr,noacl,casesensitive
+8698: ---
+8699: 
+8700: START: 2026-10-15 15:45:57 +0200
+8701: COMMAND: osctl ct exec testct-d77f bash -c cat\ /etc/machine-id
+8702: END: 2026-10-15 15:46:00 +0200
+8703: ELAPSED: 2.73s
+8704: STATUS: 0
+8705: OUTPUT:
+8706: f1ac7f39a1324f09b4e72bef2cab2a8d
+8707: ---
+8708: 
+8709: START: 2026-10-15 15:46:00 +0200
+8710: COMMAND: osctl ct exec testct-d77f bash -c sha256sum\ /var/lib/preservation-test/payload
+8711: END: 2026-10-15 15:46:03 +0200
+8712: ELAPSED: 2.65s
+8713: STATUS: 0
+8714: OUTPUT:
+8715: 025febd36fc4f7feda6464afa73be986dfe98d44927dbaa71feacb95d20ebc57  /var/lib/preservation-test/payload
+8716: ---
+8717: 
+8718: START: 2026-10-15 15:46:03 +0200
+8719: COMMAND: osctl ct exec testct-d77f bash -c stat\ -c\ \'\%u:\%g\'\ /var/lib/preservation-test/payload
+8720: END: 2026-10-15 15:46:05 +0200
+8721: ELAPSED: 2.8s
+8722: STATUS: 0
+8723: OUTPUT:
+8724: 997:997
+8725: ---
+8726: 
+8727: START: 2026-10-15 15:46:05 +0200
+8728: COMMAND: osctl ct exec testct-d77f bash -c stat\ -c\ \'\%u:\%g:\%a:\%i\'\ /guest-backing/var/lib/nixos
+8729: END: 2026-10-15 15:46:08 +0200
+8730: ELAPSED: 2.82s
+8731: STATUS: 0
+8732: OUTPUT:
+8733: 42:43:710:10
+8734: ---
+8735: 
+8736: START: 2026-10-15 15:46:08 +0200
+8737: COMMAND: osctl ct exec testct-d77f bash -c stat\ -c\ \'\%u:\%g:\%a:\%i\'\ /var/lib/preservation-test
+8738: END: 2026-10-15 15:46:11 +0200
+8739: ELAPSED: 2.86s
+8740: STATUS: 0
+8741: OUTPUT:
+8742: 0:0:755:11
+8743: ---
+8744: 
+8745: START: 2026-10-15 15:46:11 +0200
+8746: COMMAND: set +e
+8747: 
+8748: section() {
+8749:   printf '\n===== %s =====\n' "$*"
+8750: }
+8751: 
+8752: run() {
+8753:   section "$*"
+8754:   "$@" 2>&1
+8755: }
+8756: 
+8757: run_sh() {
+8758:   section "$1"
+8759:   sh -c "$1" 2>&1
+8760: }
+8761: 
+8762: show_file() {
+8763:   file="$1"
+8764:   [ -e "$file" ] || return 0
+8765:   section "$file"
+8766:   cat "$file" 2>&1
+8767: }
+8768: 
+8769: show_glob() {
+8770:   pattern="$1"
+8771: 
+8772:   for file in $pattern; do
+8773:     [ -e "$file" ] || continue
+8774:     show_file "$file"
+8775:   done
+8776: }
+8777: 
+8778: run date -Ins
+8779: run uname -a
+8780: run uptime
+8781: run free -m
+8782: run df -h
+8783: show_glob '/proc/pressure/*'
+8784: # A routed guest can remain running while its host route is unusable.
+8785: # Snapshot route selection and link state before teardown removes the veth.
+8786: run_sh 'timeout 10 ip -o link show'
+8787: run_sh 'timeout 10 ip -4 addr show'
+8788: run_sh 'timeout 10 ip -4 rule show'
+8789: run_sh 'timeout 10 ip -4 route show table all'
+8790: run dmesg -T
+8791: run ps -eo pid,ppid,stat,comm,args
+8792: run ps -eLo pid,tid,stat,wchan:32,comm
+8793: 
+8794: # A timed-out module loader can remain running rather than blocked.
+8795: # Prioritize it without letting other blocked threads exhaust the cap.
+8796: section 'module loader and blocked task kernel stacks (at most 32 threads)'
+8797: ps -eLo pid=,tid=,stat=,comm= |
+8798:   awk '
+8799:     $4 ~ /^(insmod|modprobe)$/ {
+8800:       if (loader_count < 32) loaders[++loader_count] = $1 " " $2
+8801:       next
+8802:     }
+8803:     $3 ~ /^D/ && blocked_count < 32 { blocked[++blocked_count] = $1 " " $2 }
+8804:     END {
+8805:       for (i = 1; i <= loader_count; i++) print loaders[i]
+8806:       for (i = 1; i <= blocked_count; i++) print blocked[i]
+8807:     }
+8808:   ' |
+8809:   head -n 32 |
+8810:   while read -r pid tid; do
+8811:     run timeout 2 cat "/proc/$pid/task/$tid/wchan" "/proc/$pid/task/$tid/stack"
+8812:   done
+8813: 
+8814: 
+8815: # A ps snapshot shows blocked tasks but not what they await. Capture
+8816: # a bounded set of kernel stacks before teardown changes their state.
+8817: section 'D-state and ZFS sync-task kernel stacks'
+8818: ps -eo pid=,stat=,comm= |
+8819:   awk '$2 ~ /^D/ || $3 == "dp_sync_taskq" { print $1, $2, $3 }' |
+8820:   head -n 16 |
+8821:   while read -r pid state comm; do
+8822:     section "/proc/$pid/stack ($state $comm)"
+8823:     timeout 2 cat "/proc/$pid/stack" 2>&1
+8824:   done
+8825: 
+8826: run_sh 'sv status /service/*'
+8827: 
+8828: if command -v osctl >/dev/null 2>&1; then
+8829:   # RPC clients can block in a Ruby pipe read without entering D-state.
+8830:   # Snapshot them before diagnostic container queries create new workers.
+8831:   section 'osctld Ruby thread backtraces'
+8832:   timeout 10 osctl debug threads ls 2>&1
+8833:   printf 'osctl debug threads ls status=%s\n' "$?"
+8834: 
+8835:   run_sh 'timeout 10 osctl pool ls'
+8836:   run_sh 'timeout 10 osctl ct ls'
+8837:   run_sh 'timeout 10 osctl ct ls -H -o pool,id,state,init_pid 2>/dev/null || true'
+8838: 
+8839:   # DNS readiness failures need the guest's state, not only host routes.
+8840:   # Avoid the attach helper under investigation; never change networking.
+8841:   section 'Running guest resolver/address/route state'
+8842:   {
+8843:     timeout 10 osctl ct ls -H -o pool,id,state,init_pid
+8844:     printf 'guest PID listing status=%s\n' "$?" >&2
+8845:   } |
+8846:     awk '$3 == "running" && $4 ~ /^[1-9][0-9]*$/ { print $1, $2, $4 }' |
+8847:     head -n 16 |
+8848:     while read -r pool id pid; do
+8849:       section "$pool:$id network (init $pid)"
+8850:       timeout 5 nsenter -t "$pid" -n -- sh -c \
+8851:         'ip -o link show; ip -4 addr show; ip -6 addr show; ip -4 route show table all; ip -6 route show table all' 2>&1
+8852:       section "$pool:$id guest resolver/network/package identity (init $pid)"
+8853:       # Resolve absolute symlinks inside the guest root as well.
+8854:       timeout 2 nsenter -t "$pid" -m -r -- /bin/sh -c \
+8855:         'PATH=/run/current-system/sw/bin:/usr/sbin:/usr/bin:/sbin:/bin
+8856:          for file in /etc/os-release /etc/resolv.conf /etc/nsswitch.conf /etc/network/interfaces /etc/network/interfaces.d/*; do
+8857:            [ -r "$file" ] || continue
+8858:            printf "\n--- %s ---\n" "$file"
+8859:            cat "$file"
+8860:          done
+8861:          printf "\n--- DHCP client executables ---\n"
+8862:          for client in dhcpcd dhclient udhcpc; do command -v "$client"; done
+8863:          if command -v dpkg-query >/dev/null 2>&1; then
+8864:            printf "\n--- DHCP/network/resolver package status ---\n"
+8865:            dpkg-query -s ifupdown dhcpcd-base isc-dhcp-client udhcpc systemd-resolved
+8866:          fi' 2>&1
+8867:       printf 'guest resolver/network/package snapshot status=%s\n' "$?"
+8868:       # Correct DHCP configuration and an installed client do not explain
+8869:       # a missing lease. Keep the service's original startup error too.
+8870:       # Do not filter by boot ID: an invalidated proc bind can change it.
+8871:       section "$pool:$id guest networking journal (init $pid)"
+8872:       timeout -k 1 5 nsenter -t "$pid" -m -r -- /bin/sh -c \
+8873:         'PATH=/run/current-system/sw/bin:/usr/sbin:/usr/bin:/sbin:/bin
+8874:          if command -v journalctl >/dev/null 2>&1; then
+8875:            journalctl --no-pager -n 80 -o short-iso-precise \
+8876:              -u networking.service -u systemd-networkd.service \
+8877:              -u NetworkManager.service -u "dhcpcd*" -u "ifup*"
+8878:          else
+8879:            printf "guest journalctl is unavailable\n"
+8880:          fi' 2>&1
+8881:       printf 'guest networking journal snapshot status=%s\n' "$?"
+8882:     done
+8883: fi
+8884: 
+8885: run_sh 'ls -la /run/osctl /run/osctl/pools /service/osctld /var/log /tank/log /tank/log/ct 2>/dev/null'
+8886: 
+8887: show_file /var/log/osctld
+8888: show_file /var/log/messages
+8889: show_glob '/tank/log/ct/*'
+8890: show_glob '/tank/log/ct/*.destroyed'
+8891: show_glob '/tmp/osctld-restart-jobs/*'
+8892: show_glob '/tmp/osctld-restart-blocks/*/*'
+8893: END: 2026-10-15 15:46:19 +0200
+8894: ELAPSED: 7.88s
+8895: STATUS: 0
+8896: OUTPUT:
+8897: 
+8898: ===== date -Ins =====
+8899: 2026-10-15T15:46:11,730699419+02:00
+8900: 
+8901: ===== uname -a =====
+8902: Linux vpsadminos 6.12.109 #1-vpsAdminOS SMP PREEMPT_DYNAMIC Tue Sep  8 13:12:06 UTC 2026 x86_64 GNU/Linux
+8903: 
+8904: ===== uptime =====
+8905:  15:46:11  up   0:55,  5 users,  load average: 1.04, 1.06, 1.03
+8906: 
+8907: ===== free -m =====
+8908:                total        used        free      shared  buff/cache   available
+8909: Mem:            7951        4010        4561          17        1922        3941
+8910: Swap:              0           0           0
+8911: 
+8912: ===== df -h =====
+8913: Filesystem                               Size  Used Avail Use% Mounted on
+8914: root                                     6.0G   12M  6.0G   1% /
+8915: /dev/vda                                 845M  845M     0 100% /nix/.ro-store
+8916: tmpfs                                    2.0G     0  2.0G   0% /nix/.overlay-store
+8917: overlay                                  2.0G     0  2.0G   0% /nix/store
+8918: devtmpfs                                 398M     0  398M   0% /dev
+8919: tmpfs                                    3.9G     0  3.9G   0% /tmp
+8920: tmpfs                                    2.0G  4.1M  2.0G   1% /run
+8921: tmpfs                                    3.9G  4.0K  3.9G   1% /dev/shm
+8922: tmpfs                                    3.9G  1.2M  3.9G   1% /run/wrappers
+8923: vmSharedDir                              984G  865G   69G  93% /run/osvm/shared-dir
+8924: tank                                     8.8G  128K  8.8G   1% /tank
+8925: tank/ct                                  8.8G  128K  8.8G   1% /tank/ct
+8926: tank/conf                                8.8G  128K  8.8G   1% /tank/conf
+8927: tank/hook                                8.8G  128K  8.8G   1% /tank/hook
+8928: tank/log                                 8.8G  128K  8.8G   1% /tank/log
+8929: tank/repository                          8.8G  128K  8.8G   1% /tank/repository
+8930: tank/migration                           8.8G  128K  8.8G   1% /tank/migration
+8931: tank/trash                               8.8G  128K  8.8G   1% /tank/trash
+8932: tank/ct/testct-d77f                      8.8G  256K  8.8G   1% /tank/ct/testct-d77f
+8933: tank/ct/testct-d77f/nix                  9.3G  440M  8.8G   5% /tank/ct/testct-d77f/nix
+8934: tank/ct/testct-d77f.impermanence-ffe342  8.8G  256K  8.8G   1% /tank/ct/testct-d77f.impermanence-ffe342
+8935: 
+8936: ===== timeout 10 ip -o link show =====
+8937: 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000\    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+8938: 2: ip6tnl0@NONE: <NOARP> mtu 1452 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/tunnel6 :: brd :: permaddr b2e9:a430:e02::
+8939: 3: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq state UP mode DEFAULT group default qlen 1000\    link/ether 52:54:00:7f:43:32 brd ff:ff:ff:ff:ff:ff
+8940: 4: dummy0: <BROADCAST,NOARP> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/ether 12:3d:70:07:ea:4b brd ff:ff:ff:ff:ff:ff
+8941: 5: ifb0: <BROADCAST,NOARP> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 32\    link/ether 26:42:f2:65:14:66 brd ff:ff:ff:ff:ff:ff
+8942: 6: ifb1: <BROADCAST,NOARP> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 32\    link/ether da:30:21:cd:3b:db brd ff:ff:ff:ff:ff:ff
+8943: 7: gre0@NONE: <NOARP> mtu 1476 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/gre 0.0.0.0 brd 0.0.0.0
+8944: 8: gretap0@NONE: <BROADCAST,MULTICAST> mtu 1462 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/ether 00:00:00:00:00:00 brd ff:ff:ff:ff:ff:ff
+8945: 9: erspan0@NONE: <BROADCAST,MULTICAST> mtu 1450 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/ether 00:00:00:00:00:00 brd ff:ff:ff:ff:ff:ff
+8946: 10: tunl0@NONE: <NOARP> mtu 1480 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/ipip 0.0.0.0 brd 0.0.0.0
+8947: 11: lxcbr0: <BROADCAST,MULTICAST,PROMISC,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000\    link/ether 26:a7:0d:1b:29:83 brd ff:ff:ff:ff:ff:ff
+8948: 12: osrtr0: <BROADCAST,NOARP> mtu 1500 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/ether ca:db:f8:8d:d5:1d brd ff:ff:ff:ff:ff:ff
+8949: 
+8950: ===== timeout 10 ip -4 addr show =====
+8951: 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+8952:     inet 127.0.0.1/8 scope host lo
+8953:        valid_lft forever preferred_lft forever
+8954: 3: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc fq state UP group default qlen 1000
+8955:     inet 10.0.2.15/32 scope global eth0
+8956:        valid_lft forever preferred_lft forever
+8957: 11: lxcbr0: <BROADCAST,MULTICAST,PROMISC,UP,LOWER_UP> mtu 1500 qdisc noqueue state UNKNOWN group default qlen 1000
+8958:     inet 192.168.1.1/32 scope global lxcbr0
+8959:        valid_lft forever preferred_lft forever
+8960: 12: osrtr0: <BROADCAST,NOARP> mtu 1500 qdisc noop state DOWN group default qlen 1000
+8961:     inet 255.255.255.254/32 scope global osrtr0
+8962:        valid_lft forever preferred_lft forever
+8963: 
+8964: ===== timeout 10 ip -4 rule show =====
+8965: 0:	from all lookup local
+8966: 32766:	from all lookup main
+8967: 32767:	from all lookup default
+8968: 
+8969: ===== timeout 10 ip -4 route show table all =====
+8970: default via 10.0.2.2 dev eth0 
+8971: 10.0.2.0/24 dev eth0 scope link 
+8972: 192.168.1.0/24 dev lxcbr0 scope link 
+8973: local 10.0.2.15 dev eth0 table local proto kernel scope host src 10.0.2.15 
+8974: local 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 
+8975: local 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 
+8976: broadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1 
+8977: local 192.168.1.1 dev lxcbr0 table local proto kernel scope host src 192.168.1.1 
+8978: local 255.255.255.254 dev osrtr0 table local proto kernel scope host src 255.255.255.254 
+8979: 
+8980: ===== dmesg -T =====
+8981: [Thu Oct 15 14:50:15 2026] Linux version 6.12.109 (nixbld@localhost) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-vpsAdminOS SMP PREEMPT_DYNAMIC Tue Sep  8 13:12:06 UTC 2026
+8982: [Thu Oct 15 14:50:15 2026] Command line: console=ttyS0 init=/nix/store/hd5sb0w38xgik2085acm2s0fl8946rnl-vpsadminos-system-vpsadminos-26.05.git.edb90d2fe/init root=/dev/vda net.ifnames=0 cgroup.memory=nokmem loglevel=4 lsm=landlock,yama,bpf quiet panic=-1
+8983: [Thu Oct 15 14:50:15 2026] BIOS-provided physical RAM map:
+8984: [Thu Oct 15 14:50:15 2026] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+8985: [Thu Oct 15 14:50:15 2026] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+8986: [Thu Oct 15 14:50:15 2026] BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved
+8987: [Thu Oct 15 14:50:15 2026] BIOS-e820: [mem 0x0000000000100000-0x00000000bffdbfff] usable
+8988: [Thu Oct 15 14:50:15 2026] BIOS-e820: [mem 0x00000000bffdc000-0x00000000bfffffff] reserved
+8989: [Thu Oct 15 14:50:15 2026] BIOS-e820: [mem 0x00000000feffc000-0x00000000feffffff] reserved
+8990: [Thu Oct 15 14:50:15 2026] BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+8991: [Thu Oct 15 14:50:15 2026] BIOS-e820: [mem 0x0000000100000000-0x000000023fffffff] usable
+8992: [Thu Oct 15 14:50:15 2026] BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff] reserved
+8993: [Thu Oct 15 14:50:15 2026] NX (Execute Disable) protection: active
+8994: [Thu Oct 15 14:50:15 2026] APIC: Static calls initialized
+8995: [Thu Oct 15 14:50:15 2026] SMBIOS 2.8 present.
+8996: [Thu Oct 15 14:50:15 2026] DMI: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org 04/01/2014
+8997: [Thu Oct 15 14:50:15 2026] DMI: Memory slots populated: 1/1
+8998: [Thu Oct 15 14:50:15 2026] Hypervisor detected: KVM
+8999: [Thu Oct 15 14:50:15 2026] last_pfn = 0xbffdc max_arch_pfn = 0x400000000
+9000: [Thu Oct 15 14:50:15 2026] kvm-clock: Using msrs 4b564d01 and 4b564d00
+9001: [Thu Oct 15 14:50:15 2026] kvm-clock: using sched offset of 1337154635 cycles
+9002: [Thu Oct 15 14:50:15 2026] clocksource: kvm-clock: mask: 0xffffffffffffffff max_cycles: 0x1cd42e4dffb, max_idle_ns: 881590591483 ns
+9003: [Thu Oct 15 14:50:15 2026] tsc: Detected 1996.250 MHz processor
+9004: [Thu Oct 15 14:50:15 2026] e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+9005: [Thu Oct 15 14:50:15 2026] e820: remove [mem 0x000a0000-0x000fffff] usable
+9006: [Thu Oct 15 14:50:15 2026] last_pfn = 0x240000 max_arch_pfn = 0x400000000
+9007: [Thu Oct 15 14:50:15 2026] MTRR map: 4 entries (3 fixed + 1 variable; max 19), built from 8 variable MTRRs
+9008: [Thu Oct 15 14:50:15 2026] x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+9009: [Thu Oct 15 14:50:15 2026] last_pfn = 0xbffdc max_arch_pfn = 0x400000000
+9010: [Thu Oct 15 14:50:15 2026] found SMP MP-table at [mem 0x000f54a0-0x000f54af]
+9011: [Thu Oct 15 14:50:15 2026] Using GB pages for direct mapping
+9012: [Thu Oct 15 14:50:15 2026] RAMDISK: [mem 0xbf686000-0xbffcffff]
+9013: [Thu Oct 15 14:50:15 2026] ACPI: Early table checksum verification disabled
+9014: [Thu Oct 15 14:50:15 2026] ACPI: RSDP 0x00000000000F52A0 000014 (v00 BOCHS )
+9015: [Thu Oct 15 14:50:15 2026] ACPI: RSDT 0x00000000BFFE25A2 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+9016: [Thu Oct 15 14:50:15 2026] ACPI: FACP 0x00000000BFFE2356 000074 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+9017: [Thu Oct 15 14:50:15 2026] ACPI: DSDT 0x00000000BFFE0040 002316 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+9018: [Thu Oct 15 14:50:15 2026] ACPI: FACS 0x00000000BFFE0000 000040
+9019: [Thu Oct 15 14:50:15 2026] ACPI: APIC 0x00000000BFFE23CA 000090 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+9020: [Thu Oct 15 14:50:15 2026] ACPI: HPET 0x00000000BFFE245A 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+9021: [Thu Oct 15 14:50:15 2026] ACPI: SRAT 0x00000000BFFE2492 0000E8 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+9022: [Thu Oct 15 14:50:15 2026] ACPI: WAET 0x00000000BFFE257A 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+9023: [Thu Oct 15 14:50:15 2026] ACPI: Reserving FACP table memory at [mem 0xbffe2356-0xbffe23c9]
+9024: [Thu Oct 15 14:50:15 2026] ACPI: Reserving DSDT table memory at [mem 0xbffe0040-0xbffe2355]
+9025: [Thu Oct 15 14:50:15 2026] ACPI: Reserving FACS table memory at [mem 0xbffe0000-0xbffe003f]
+9026: [Thu Oct 15 14:50:15 2026] ACPI: Reserving APIC table memory at [mem 0xbffe23ca-0xbffe2459]
+9027: [Thu Oct 15 14:50:15 2026] ACPI: Reserving HPET table memory at [mem 0xbffe245a-0xbffe2491]
+9028: [Thu Oct 15 14:50:15 2026] ACPI: Reserving SRAT table memory at [mem 0xbffe2492-0xbffe2579]
+9029: [Thu Oct 15 14:50:15 2026] ACPI: Reserving WAET table memory at [mem 0xbffe257a-0xbffe25a1]
+9030: [Thu Oct 15 14:50:15 2026] ACPI: SRAT: Node 0 PXM 0 [mem 0x00000000-0x0009ffff]
+9031: [Thu Oct 15 14:50:15 2026] ACPI: SRAT: Node 0 PXM 0 [mem 0x00100000-0xbfffffff]
+9032: [Thu Oct 15 14:50:15 2026] ACPI: SRAT: Node 0 PXM 0 [mem 0x100000000-0x23fffffff]
+9033: [Thu Oct 15 14:50:15 2026] NUMA: Node 0 [mem 0x00001000-0x0009ffff] + [mem 0x00100000-0xbfffffff] -> [mem 0x00001000-0xbfffffff]
+9034: [Thu Oct 15 14:50:15 2026] NUMA: Node 0 [mem 0x00001000-0xbfffffff] + [mem 0x100000000-0x23fffffff] -> [mem 0x00001000-0x23fffffff]
+9035: [Thu Oct 15 14:50:15 2026] NODE_DATA(0) allocated [mem 0x23fffc0c0-0x23fffffff]
+9036: [Thu Oct 15 14:50:15 2026] Zone ranges:
+9037: [Thu Oct 15 14:50:15 2026]   DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+9038: [Thu Oct 15 14:50:15 2026]   DMA32    [mem 0x0000000001000000-0x00000000ffffffff]
+9039: [Thu Oct 15 14:50:15 2026]   Normal   [mem 0x0000000100000000-0x000000023fffffff]
+9040: [Thu Oct 15 14:50:15 2026] Movable zone start for each node
+9041: [Thu Oct 15 14:50:15 2026] Early memory node ranges
+9042: [Thu Oct 15 14:50:15 2026]   node   0: [mem 0x0000000000001000-0x000000000009efff]
+9043: [Thu Oct 15 14:50:15 2026]   node   0: [mem 0x0000000000100000-0x00000000bffdbfff]
+9044: [Thu Oct 15 14:50:15 2026]   node   0: [mem 0x0000000100000000-0x000000023fffffff]
+9045: [Thu Oct 15 14:50:15 2026] Initmem setup node 0 [mem 0x0000000000001000-0x000000023fffffff]
+9046: [Thu Oct 15 14:50:15 2026] On node 0, zone DMA: 1 pages in unavailable ranges
+9047: [Thu Oct 15 14:50:15 2026] On node 0, zone DMA: 97 pages in unavailable ranges
+9048: [Thu Oct 15 14:50:16 2026] On node 0, zone Normal: 36 pages in unavailable ranges
+9049: [Thu Oct 15 14:50:16 2026] ACPI: PM-Timer IO Port: 0x608
+9050: [Thu Oct 15 14:50:16 2026] ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+9051: [Thu Oct 15 14:50:16 2026] IOAPIC[0]: apic_id 0, version 17, address 0xfec00000, GSI 0-23
+9052: [Thu Oct 15 14:50:16 2026] ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+9053: [Thu Oct 15 14:50:16 2026] ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+9054: [Thu Oct 15 14:50:16 2026] ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+9055: [Thu Oct 15 14:50:16 2026] ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+9056: [Thu Oct 15 14:50:16 2026] ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+9057: [Thu Oct 15 14:50:16 2026] ACPI: Using ACPI (MADT) for SMP configuration information
+9058: [Thu Oct 15 14:50:16 2026] ACPI: HPET id: 0x8086a201 base: 0xfed00000
+9059: [Thu Oct 15 14:50:16 2026] TSC deadline timer available
+9060: [Thu Oct 15 14:50:16 2026] CPU topo: Max. logical packages:   1
+9061: [Thu Oct 15 14:50:16 2026] CPU topo: Max. logical dies:       1
+9062: [Thu Oct 15 14:50:16 2026] CPU topo: Max. dies per package:   1
+9063: [Thu Oct 15 14:50:16 2026] CPU topo: Max. threads per core:   1
+9064: [Thu Oct 15 14:50:16 2026] CPU topo: Num. cores per package:     4
+9065: [Thu Oct 15 14:50:16 2026] CPU topo: Num. threads per package:   4
+9066: [Thu Oct 15 14:50:16 2026] CPU topo: Allowing 4 present CPUs plus 0 hotplug CPUs
+9067: [Thu Oct 15 14:50:16 2026] kvm-guest: APIC: eoi() replaced with kvm_guest_apic_eoi_write()
+9068: [Thu Oct 15 14:50:16 2026] kvm-guest: KVM setup pv remote TLB flush
+9069: [Thu Oct 15 14:50:16 2026] kvm-guest: setup PV sched yield
+9070: [Thu Oct 15 14:50:16 2026] PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
+9071: [Thu Oct 15 14:50:16 2026] PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff]
+9072: [Thu Oct 15 14:50:16 2026] PM: hibernation: Registered nosave memory: [mem 0xbffdc000-0xffffffff]
+9073: [Thu Oct 15 14:50:16 2026] [mem 0xc0000000-0xfeffbfff] available for PCI devices
+9074: [Thu Oct 15 14:50:16 2026] Booting paravirtualized kernel on KVM
+9075: [Thu Oct 15 14:50:16 2026] clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1910969940391419 ns
+9076: [Thu Oct 15 14:50:16 2026] setup_percpu: NR_CPUS:384 nr_cpumask_bits:4 nr_cpu_ids:4 nr_node_ids:1
+9077: [Thu Oct 15 14:50:16 2026] percpu: Embedded 59 pages/cpu s204376 r8192 d29096 u524288
+9078: [Thu Oct 15 14:50:16 2026] pcpu-alloc: s204376 r8192 d29096 u524288 alloc=1*2097152
+9079: [Thu Oct 15 14:50:16 2026] pcpu-alloc: [0] 0 1 2 3 
+9080: [Thu Oct 15 14:50:16 2026] kvm-guest: PV spinlocks enabled
+9081: [Thu Oct 15 14:50:16 2026] PV qspinlock hash table entries: 256 (order: 0, 4096 bytes, linear)
+9082: [Thu Oct 15 14:50:16 2026] Kernel command line: console=ttyS0 init=/nix/store/hd5sb0w38xgik2085acm2s0fl8946rnl-vpsadminos-system-vpsadminos-26.05.git.edb90d2fe/init root=/dev/vda net.ifnames=0 cgroup.memory=nokmem loglevel=4 lsm=landlock,yama,bpf quiet panic=-1
+9083: [Thu Oct 15 14:50:16 2026] random: crng init done
+9084: [Thu Oct 15 14:50:16 2026] Dentry cache hash table entries: 1048576 (order: 11, 8388608 bytes, linear)
+9085: [Thu Oct 15 14:50:16 2026] Inode-cache hash table entries: 524288 (order: 10, 4194304 bytes, linear)
+9086: [Thu Oct 15 14:50:16 2026] Fallback order for Node 0: 0 
+9087: [Thu Oct 15 14:50:16 2026] Built 1 zonelists, mobility grouping on.  Total pages: 2097018
+9088: [Thu Oct 15 14:50:16 2026] Policy zone: Normal
+9089: [Thu Oct 15 14:50:16 2026] mem auto-init: stack:all(zero), heap alloc:on, heap free:on
+9090: [Thu Oct 15 14:50:16 2026] mem auto-init: clearing system memory may take some time...
+9091: [Thu Oct 15 14:50:16 2026] software IO TLB: area num 4.
+9092: [Thu Oct 15 14:51:13 2026] SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=4, Nodes=1
+9093: [Thu Oct 15 14:51:13 2026] ftrace: allocating 41799 entries in 164 pages
+9094: [Thu Oct 15 14:51:13 2026] ftrace: allocated 164 pages with 3 groups
+9095: [Thu Oct 15 14:51:13 2026] Dynamic Preempt: none
+9096: [Thu Oct 15 14:51:13 2026] rcu: Preemptible hierarchical RCU implementation.
+9097: [Thu Oct 15 14:51:13 2026] rcu: 	RCU event tracing is enabled.
+9098: [Thu Oct 15 14:51:13 2026] rcu: 	RCU restricting CPUs from NR_CPUS=384 to nr_cpu_ids=4.
+9099: [Thu Oct 15 14:51:13 2026] 	Trampoline variant of Tasks RCU enabled.
+9100: [Thu Oct 15 14:51:13 2026] 	Rude variant of Tasks RCU enabled.
+9101: [Thu Oct 15 14:51:13 2026] 	Tracing variant of Tasks RCU enabled.
+9102: [Thu Oct 15 14:51:13 2026] rcu: RCU calculated value of scheduler-enlistment delay is 100 jiffies.
+9103: [Thu Oct 15 14:51:13 2026] rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=4
+9104: [Thu Oct 15 14:51:13 2026] RCU Tasks: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+9105: [Thu Oct 15 14:51:13 2026] RCU Tasks Rude: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+9106: [Thu Oct 15 14:51:13 2026] RCU Tasks Trace: Setting shift to 2 and lim to 1 rcu_task_cb_adjust=1 rcu_task_cpu_ids=4.
+9107: [Thu Oct 15 14:51:13 2026] NR_IRQS: 24832, nr_irqs: 456, preallocated irqs: 16
+9108: [Thu Oct 15 14:51:13 2026] rcu: srcu_init: Setting srcu_struct sizes based on contention.
+9109: [Thu Oct 15 14:51:13 2026] clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 1911260446275000 ns
+9110: [Thu Oct 15 14:51:13 2026] Console: colour *CGA 80x25
+9111: [Thu Oct 15 14:51:13 2026] printk: legacy console [ttyS0] enabled
+9112: [Thu Oct 15 14:51:13 2026] ACPI: Core revision 20240827
+9113: [Thu Oct 15 14:51:13 2026] clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+9114: [Thu Oct 15 14:51:13 2026] APIC: Switch to symmetric I/O mode setup
+9115: [Thu Oct 15 14:51:13 2026] x2apic enabled
+9116: [Thu Oct 15 14:51:13 2026] APIC: Switched APIC routing to: physical x2apic
+9117: [Thu Oct 15 14:51:13 2026] kvm-guest: APIC: send_IPI_mask() replaced with kvm_send_ipi_mask()
+9118: [Thu Oct 15 14:51:13 2026] kvm-guest: APIC: send_IPI_mask_allbutself() replaced with kvm_send_ipi_mask_allbutself()
+9119: [Thu Oct 15 14:51:13 2026] kvm-guest: setup PV IPIs
+9120: [Thu Oct 15 14:51:13 2026] ..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+9121: [Thu Oct 15 14:51:13 2026] clocksource: tsc-early: mask: 0xffffffffffffffff max_cycles: 0x398caf77d7a, max_idle_ns: 881590459467 ns
+9122: [Thu Oct 15 14:51:13 2026] Calibrating delay loop (skipped) preset value.. 3992.50 BogoMIPS (lpj=1996250)
+9123: [Thu Oct 15 14:51:13 2026] AMD Zen1 DIV0 bug detected. Disable SMT for full protection.
+9124: [Thu Oct 15 14:51:13 2026] AMD Zen1 FPDSS bug detected, enabling mitigation.
+9125: [Thu Oct 15 14:51:13 2026] Last level iTLB entries: 4KB 512, 2MB 255, 4MB 127
+9126: [Thu Oct 15 14:51:13 2026] Last level dTLB entries: 4KB 512, 2MB 255, 4MB 127, 1GB 0
+9127: [Thu Oct 15 14:51:13 2026] Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+9128: [Thu Oct 15 14:51:13 2026] Spectre V2 : Mitigation: Retpolines
+9129: [Thu Oct 15 14:51:13 2026] Spectre V2 : Spectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT
+9130: [Thu Oct 15 14:51:13 2026] Spectre V2 : Enabling Speculation Barrier for firmware calls
+9131: [Thu Oct 15 14:51:13 2026] active return thunk: retbleed_return_thunk
+9132: [Thu Oct 15 14:51:13 2026] RETBleed: Mitigation: untrained return thunk
+9133: [Thu Oct 15 14:51:13 2026] Spectre V2 : mitigation: Enabling conditional Indirect Branch Prediction Barrier
+9134: [Thu Oct 15 14:51:13 2026] Speculative Store Bypass: Mitigation: Speculative Store Bypass disabled via prctl
+9135: [Thu Oct 15 14:51:13 2026] Speculative Return Stack Overflow: IBPB-extending microcode not applied!
+9136: [Thu Oct 15 14:51:13 2026] Speculative Return Stack Overflow: WARNING: See https://kernel.org/doc/html/latest/admin-guide/hw-vuln/srso.html for mitigation options.
+9137: [Thu Oct 15 14:51:13 2026] active return thunk: srso_return_thunk
+9138: [Thu Oct 15 14:51:13 2026] Speculative Return Stack Overflow: Vulnerable: Safe RET, no microcode
+9139: [Thu Oct 15 14:51:13 2026] x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+9140: [Thu Oct 15 14:51:13 2026] x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+9141: [Thu Oct 15 14:51:13 2026] x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
+9142: [Thu Oct 15 14:51:13 2026] x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
+9143: [Thu Oct 15 14:51:13 2026] x86/fpu: Enabled xstate features 0x7, context size is 832 bytes, using 'compacted' format.
+9144: [Thu Oct 15 14:51:13 2026] Freeing SMP alternatives memory: 36K
+9145: [Thu Oct 15 14:51:13 2026] pid_max: default: 32768 minimum: 301
+9146: [Thu Oct 15 14:51:13 2026] LSM: initializing lsm=capability,landlock,yama,bpf
+9147: [Thu Oct 15 14:51:13 2026] landlock: Up and running.
+9148: [Thu Oct 15 14:51:13 2026] Yama: becoming mindful.
+9149: [Thu Oct 15 14:51:13 2026] LSM support for eBPF active
+9150: [Thu Oct 15 14:51:13 2026] Mount-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+9151: [Thu Oct 15 14:51:13 2026] Mountpoint-cache hash table entries: 16384 (order: 5, 131072 bytes, linear)
+9152: [Thu Oct 15 14:51:13 2026] smpboot: CPU0: AMD EPYC 7551 32-Core Processor (family: 0x17, model: 0x1, stepping: 0x2)
+9153: [Thu Oct 15 14:51:13 2026] Performance Events: Fam17h+ core perfctr, AMD PMU driver.
+9154: [Thu Oct 15 14:51:13 2026] ... version:                0
+9155: [Thu Oct 15 14:51:13 2026] ... bit width:              48
+9156: [Thu Oct 15 14:51:13 2026] ... generic registers:      6
+9157: [Thu Oct 15 14:51:13 2026] ... value mask:             0000ffffffffffff
+9158: [Thu Oct 15 14:51:13 2026] ... max period:             00007fffffffffff
+9159: [Thu Oct 15 14:51:13 2026] ... fixed-purpose events:   0
+9160: [Thu Oct 15 14:51:13 2026] ... event mask:             000000000000003f
+9161: [Thu Oct 15 14:51:13 2026] signal: max sigframe size: 1776
+9162: [Thu Oct 15 14:51:13 2026] rcu: Hierarchical SRCU implementation.
+9163: [Thu Oct 15 14:51:13 2026] rcu: 	Max phase no-delay instances is 400.
+9164: [Thu Oct 15 14:51:13 2026] Timer migration: 1 hierarchy levels; 8 children per group; 1 crossnode level
+9165: [Thu Oct 15 14:51:13 2026] smp: Bringing up secondary CPUs ...
+9166: [Thu Oct 15 14:51:13 2026] smpboot: x86: Booting SMP configuration:
+9167: [Thu Oct 15 14:51:13 2026] .... node  #0, CPUs:      #1 #2 #3
+9168: [Thu Oct 15 14:51:13 2026] smp: Brought up 1 node, 4 CPUs
+9169: [Thu Oct 15 14:51:13 2026] smpboot: Total of 4 processors activated (15970.00 BogoMIPS)
+9170: [Thu Oct 15 14:52:47 2026] node 0 deferred pages initialised in 93433ms
+9171: [Thu Oct 15 14:52:47 2026] Memory: 8125412K/8388072K available (16384K kernel code, 2486K rwdata, 10236K rodata, 2848K init, 1444K bss, 257744K reserved, 0K cma-reserved)
+9172: [Thu Oct 15 14:52:47 2026] devtmpfs: initialized
+9173: [Thu Oct 15 14:52:47 2026] x86/mm: Memory block size: 128MB
+9174: [Thu Oct 15 14:52:47 2026] futex hash table entries: 1024 (order: 4, 65536 bytes, linear)
+9175: [Thu Oct 15 14:52:47 2026] pinctrl core: initialized pinctrl subsystem
+9176: [Thu Oct 15 14:52:47 2026] NET: Registered PF_NETLINK/PF_ROUTE protocol family
+9177: [Thu Oct 15 14:52:47 2026] audit: initializing netlink subsys (disabled)
+9178: [Thu Oct 15 14:52:47 2026] audit: type=2000 audit(1792068740.549:1): state=initialized audit_enabled=0 res=1
+9179: [Thu Oct 15 14:52:47 2026] thermal_sys: Registered thermal governor 'bang_bang'
+9180: [Thu Oct 15 14:52:47 2026] thermal_sys: Registered thermal governor 'step_wise'
+9181: [Thu Oct 15 14:52:47 2026] thermal_sys: Registered thermal governor 'user_space'
+9182: [Thu Oct 15 14:52:47 2026] cpuidle: using governor ladder
+9183: [Thu Oct 15 14:52:47 2026] cpuidle: using governor menu
+9184: [Thu Oct 15 14:52:47 2026] acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5
+9185: [Thu Oct 15 14:52:47 2026] PCI: Using configuration type 1 for base access
+9186: [Thu Oct 15 14:52:47 2026] PCI: Using configuration type 1 for extended access
+9187: [Thu Oct 15 14:52:47 2026] kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+9188: [Thu Oct 15 14:52:47 2026] HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+9189: [Thu Oct 15 14:52:47 2026] HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page
+9190: [Thu Oct 15 14:52:47 2026] HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+9191: [Thu Oct 15 14:52:47 2026] HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+9192: [Thu Oct 15 14:52:47 2026] ACPI: Added _OSI(Module Device)
+9193: [Thu Oct 15 14:52:47 2026] ACPI: Added _OSI(Processor Device)
+9194: [Thu Oct 15 14:52:47 2026] ACPI: Added _OSI(Processor Aggregator Device)
+9195: [Thu Oct 15 14:52:47 2026] ACPI: 1 ACPI AML tables successfully acquired and loaded
+9196: [Thu Oct 15 14:52:47 2026] ACPI: Interpreter enabled
+9197: [Thu Oct 15 14:52:47 2026] ACPI: PM: (supports S0 S3 S4 S5)
+9198: [Thu Oct 15 14:52:47 2026] ACPI: Using IOAPIC for interrupt routing
+9199: [Thu Oct 15 14:52:47 2026] PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+9200: [Thu Oct 15 14:52:47 2026] PCI: Using E820 reservations for host bridge windows
+9201: [Thu Oct 15 14:52:47 2026] ACPI: Enabled 2 GPEs in block 00 to 0F
+9202: [Thu Oct 15 14:52:47 2026] ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+9203: [Thu Oct 15 14:52:47 2026] acpi PNP0A03:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI HPX-Type3]
+9204: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [2] registered
+9205: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [3] registered
+9206: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [4] registered
+9207: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [5] registered
+9208: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [6] registered
+9209: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [7] registered
+9210: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [8] registered
+9211: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [9] registered
+9212: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [10] registered
+9213: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [11] registered
+9214: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [12] registered
+9215: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [13] registered
+9216: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [14] registered
+9217: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [15] registered
+9218: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [16] registered
+9219: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [17] registered
+9220: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [18] registered
+9221: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [19] registered
+9222: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [20] registered
+9223: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [21] registered
+9224: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [22] registered
+9225: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [23] registered
+9226: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [24] registered
+9227: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [25] registered
+9228: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [26] registered
+9229: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [27] registered
+9230: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [28] registered
+9231: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [29] registered
+9232: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [30] registered
+9233: [Thu Oct 15 14:52:47 2026] acpiphp: Slot [31] registered
+9234: [Thu Oct 15 14:52:47 2026] PCI host bridge to bus 0000:00
+9235: [Thu Oct 15 14:52:47 2026] pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+9236: [Thu Oct 15 14:52:47 2026] pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+9237: [Thu Oct 15 14:52:47 2026] pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
+9238: [Thu Oct 15 14:52:47 2026] pci_bus 0000:00: root bus resource [mem 0xc0000000-0xfebfffff window]
+9239: [Thu Oct 15 14:52:47 2026] pci_bus 0000:00: root bus resource [mem 0xe0000000000-0xe007fffffff window]
+9240: [Thu Oct 15 14:52:47 2026] pci_bus 0000:00: root bus resource [bus 00-ff]
+9241: [Thu Oct 15 14:52:47 2026] pci 0000:00:00.0: [8086:1237] type 00 class 0x060000 conventional PCI endpoint
+9242: [Thu Oct 15 14:52:47 2026] pci 0000:00:01.0: [8086:7000] type 00 class 0x060100 conventional PCI endpoint
+9243: [Thu Oct 15 14:52:47 2026] pci 0000:00:01.1: [8086:7010] type 00 class 0x010180 conventional PCI endpoint
+9244: [Thu Oct 15 14:52:47 2026] pci 0000:00:01.1: BAR 4 [io  0xc100-0xc10f]
+9245: [Thu Oct 15 14:52:47 2026] pci 0000:00:01.1: BAR 0 [io  0x01f0-0x01f7]: legacy IDE quirk
+9246: [Thu Oct 15 14:52:47 2026] pci 0000:00:01.1: BAR 1 [io  0x03f6]: legacy IDE quirk
+9247: [Thu Oct 15 14:52:47 2026] pci 0000:00:01.1: BAR 2 [io  0x0170-0x0177]: legacy IDE quirk
+9248: [Thu Oct 15 14:52:47 2026] pci 0000:00:01.1: BAR 3 [io  0x0376]: legacy IDE quirk
+9249: [Thu Oct 15 14:52:47 2026] pci 0000:00:01.3: [8086:7113] type 00 class 0x068000 conventional PCI endpoint
+9250: [Thu Oct 15 14:52:47 2026] pci 0000:00:01.3: quirk: [io  0x0600-0x063f] claimed by PIIX4 ACPI
+9251: [Thu Oct 15 14:52:47 2026] pci 0000:00:01.3: quirk: [io  0x0700-0x070f] claimed by PIIX4 SMB
+9252: [Thu Oct 15 14:52:47 2026] pci 0000:00:02.0: [8086:2922] type 00 class 0x010601 conventional PCI endpoint
+9253: [Thu Oct 15 14:52:47 2026] pci 0000:00:02.0: BAR 4 [io  0xc0c0-0xc0df]
+9254: [Thu Oct 15 14:52:47 2026] pci 0000:00:02.0: BAR 5 [mem 0xfebc0000-0xfebc0fff]
+9255: [Thu Oct 15 14:52:47 2026] pci 0000:00:03.0: [1af4:1000] type 00 class 0x020000 conventional PCI endpoint
+9256: [Thu Oct 15 14:52:47 2026] pci 0000:00:03.0: BAR 0 [io  0xc0e0-0xc0ff]
+9257: [Thu Oct 15 14:52:47 2026] pci 0000:00:03.0: BAR 1 [mem 0xfebc1000-0xfebc1fff]
+9258: [Thu Oct 15 14:52:47 2026] pci 0000:00:03.0: BAR 4 [mem 0xe0000000000-0xe0000003fff 64bit pref]
+9259: [Thu Oct 15 14:52:47 2026] pci 0000:00:03.0: ROM [mem 0xfeb80000-0xfebbffff pref]
+9260: [Thu Oct 15 14:52:47 2026] pci 0000:00:04.0: [1af4:1003] type 00 class 0x078000 conventional PCI endpoint
+9261: [Thu Oct 15 14:52:47 2026] pci 0000:00:04.0: BAR 0 [io  0xc080-0xc0bf]
+9262: [Thu Oct 15 14:52:47 2026] pci 0000:00:04.0: BAR 1 [mem 0xfebc2000-0xfebc2fff]
+9263: [Thu Oct 15 14:52:47 2026] pci 0000:00:04.0: BAR 4 [mem 0xe0000004000-0xe0000007fff 64bit pref]
+9264: [Thu Oct 15 14:52:47 2026] pci 0000:00:05.0: [1af4:105a] type 00 class 0x018000 conventional PCI endpoint
+9265: [Thu Oct 15 14:52:47 2026] pci 0000:00:05.0: BAR 1 [mem 0xfebc3000-0xfebc3fff]
+9266: [Thu Oct 15 14:52:47 2026] pci 0000:00:05.0: BAR 4 [mem 0xe0000008000-0xe000000bfff 64bit pref]
+9267: [Thu Oct 15 14:52:47 2026] pci 0000:00:06.0: [1af4:1001] type 00 class 0x010000 conventional PCI endpoint
+9268: [Thu Oct 15 14:52:47 2026] pci 0000:00:06.0: BAR 0 [io  0xc000-0xc07f]
+9269: [Thu Oct 15 14:52:47 2026] pci 0000:00:06.0: BAR 1 [mem 0xfebc4000-0xfebc4fff]
+9270: [Thu Oct 15 14:52:47 2026] pci 0000:00:06.0: BAR 4 [mem 0xe000000c000-0xe000000ffff 64bit pref]
+9271: [Thu Oct 15 14:52:47 2026] ACPI: PCI: Interrupt link LNKA configured for IRQ 10
+9272: [Thu Oct 15 14:52:47 2026] ACPI: PCI: Interrupt link LNKB configured for IRQ 10
+9273: [Thu Oct 15 14:52:47 2026] ACPI: PCI: Interrupt link LNKC configured for IRQ 11
+9274: [Thu Oct 15 14:52:47 2026] ACPI: PCI: Interrupt link LNKD configured for IRQ 11
+9275: [Thu Oct 15 14:52:47 2026] ACPI: PCI: Interrupt link LNKS configured for IRQ 9
+9276: [Thu Oct 15 14:52:47 2026] iommu: Default domain type: Translated
+9277: [Thu Oct 15 14:52:47 2026] iommu: DMA domain TLB invalidation policy: lazy mode
+9278: [Thu Oct 15 14:52:47 2026] NetLabel: Initializing
+9279: [Thu Oct 15 14:52:47 2026] NetLabel:  domain hash size = 128
+9280: [Thu Oct 15 14:52:47 2026] NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+9281: [Thu Oct 15 14:52:47 2026] NetLabel:  unlabeled traffic allowed by default
+9282: [Thu Oct 15 14:52:47 2026] PCI: Using ACPI for IRQ routing
+9283: [Thu Oct 15 14:52:47 2026] PCI: pci_cache_line_size set to 64 bytes
+9284: [Thu Oct 15 14:52:47 2026] e820: reserve RAM buffer [mem 0x0009fc00-0x0009ffff]
+9285: [Thu Oct 15 14:52:47 2026] e820: reserve RAM buffer [mem 0xbffdc000-0xbfffffff]
+9286: [Thu Oct 15 14:52:47 2026] vgaarb: loaded
+9287: [Thu Oct 15 14:52:47 2026] hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0
+9288: [Thu Oct 15 14:52:47 2026] hpet0: 3 comparators, 64-bit 100.000000 MHz counter
+9289: [Thu Oct 15 14:52:47 2026] clocksource: Switched to clocksource kvm-clock
+9290: [Thu Oct 15 14:52:47 2026] VFS: Disk quotas dquot_6.6.0
+9291: [Thu Oct 15 14:52:47 2026] VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+9292: [Thu Oct 15 14:52:47 2026] netfs: FS-Cache loaded
+9293: [Thu Oct 15 14:52:47 2026] pnp: PnP ACPI init
+9294: [Thu Oct 15 14:52:47 2026] pnp 00:02: [dma 2]
+9295: [Thu Oct 15 14:52:47 2026] pnp: PnP ACPI: found 6 devices
+9296: [Thu Oct 15 14:52:47 2026] clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+9297: [Thu Oct 15 14:52:47 2026] NET: Registered PF_INET protocol family
+9298: [Thu Oct 15 14:52:47 2026] IP idents hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+9299: [Thu Oct 15 14:52:47 2026] tcp_listen_portaddr_hash hash table entries: 4096 (order: 4, 65536 bytes, linear)
+9300: [Thu Oct 15 14:52:47 2026] Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+9301: [Thu Oct 15 14:52:47 2026] TCP established hash table entries: 65536 (order: 7, 524288 bytes, linear)
+9302: [Thu Oct 15 14:52:47 2026] TCP bind hash table entries: 65536 (order: 9, 2097152 bytes, linear)
+9303: [Thu Oct 15 14:52:47 2026] TCP: Hash tables configured (established 65536 bind 65536)
+9304: [Thu Oct 15 14:52:47 2026] UDP hash table entries: 4096 (order: 5, 131072 bytes, linear)
+9305: [Thu Oct 15 14:52:47 2026] UDP-Lite hash table entries: 4096 (order: 5, 131072 bytes, linear)
+9306: [Thu Oct 15 14:52:47 2026] NET: Registered PF_UNIX/PF_LOCAL protocol family
+9307: [Thu Oct 15 14:52:47 2026] RPC: Registered named UNIX socket transport module.
+9308: [Thu Oct 15 14:52:47 2026] RPC: Registered udp transport module.
+9309: [Thu Oct 15 14:52:47 2026] RPC: Registered tcp transport module.
+9310: [Thu Oct 15 14:52:47 2026] RPC: Registered tcp-with-tls transport module.
+9311: [Thu Oct 15 14:52:47 2026] RPC: Registered tcp NFSv4.1 backchannel transport module.
+9312: [Thu Oct 15 14:52:47 2026] NET: Registered PF_XDP protocol family
+9313: [Thu Oct 15 14:52:47 2026] pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+9314: [Thu Oct 15 14:52:47 2026] pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+9315: [Thu Oct 15 14:52:47 2026] pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+9316: [Thu Oct 15 14:52:47 2026] pci_bus 0000:00: resource 7 [mem 0xc0000000-0xfebfffff window]
+9317: [Thu Oct 15 14:52:47 2026] pci_bus 0000:00: resource 8 [mem 0xe0000000000-0xe007fffffff window]
+9318: [Thu Oct 15 14:52:47 2026] pci 0000:00:01.0: PIIX3: Enabling Passive Release
+9319: [Thu Oct 15 14:52:47 2026] pci 0000:00:00.0: Limiting direct PCI/PCI transfers
+9320: [Thu Oct 15 14:52:47 2026] PCI: CLS 0 bytes, default 64
+9321: [Thu Oct 15 14:52:47 2026] PCI-DMA: Using software bounce buffering for IO (SWIOTLB)
+9322: [Thu Oct 15 14:52:47 2026] software IO TLB: mapped [mem 0x00000000bb686000-0x00000000bf686000] (64MB)
+9323: [Thu Oct 15 14:52:47 2026] clocksource: tsc: mask: 0xffffffffffffffff max_cycles: 0x398caf77d7a, max_idle_ns: 881590459467 ns
+9324: [Thu Oct 15 14:52:47 2026] Trying to unpack rootfs image as initramfs...
+9325: [Thu Oct 15 14:52:47 2026] Initialise system trusted keyrings
+9326: [Thu Oct 15 14:52:47 2026] workingset: timestamp_bits=40 max_order=21 bucket_order=0
+9327: [Thu Oct 15 14:52:47 2026] zbud: loaded
+9328: [Thu Oct 15 14:52:47 2026] Key type asymmetric registered
+9329: [Thu Oct 15 14:52:47 2026] Asymmetric key parser 'x509' registered
+9330: [Thu Oct 15 14:52:47 2026] Block layer SCSI generic (bsg) driver version 0.4 loaded (major 252)
+9331: [Thu Oct 15 14:52:47 2026] io scheduler mq-deadline registered
+9332: [Thu Oct 15 14:52:47 2026] Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+9333: [Thu Oct 15 14:52:47 2026] 00:04: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+9334: [Thu Oct 15 14:52:48 2026] ACPI: bus type drm_connector registered
+9335: [Thu Oct 15 14:52:48 2026] brd: module loaded
+9336: [Thu Oct 15 14:52:48 2026] drop_monitor: Initializing network drop monitor service
+9337: [Thu Oct 15 14:52:48 2026] Initializing XFRM netlink socket
+9338: [Thu Oct 15 14:52:48 2026] IPsec XFRM device driver
+9339: [Thu Oct 15 14:52:48 2026] NET: Registered PF_INET6 protocol family
+9340: [Thu Oct 15 14:52:48 2026] Segment Routing with IPv6
+9341: [Thu Oct 15 14:52:48 2026] In-situ OAM (IOAM) with IPv6
+9342: [Thu Oct 15 14:52:48 2026] NET: Registered PF_KEY protocol family
+9343: [Thu Oct 15 14:52:48 2026] IPI shorthand broadcast: enabled
+9344: [Thu Oct 15 14:52:48 2026] registered taskstats version 1
+9345: [Thu Oct 15 14:52:48 2026] Loading compiled-in X.509 certificates
+9346: [Thu Oct 15 14:52:48 2026] Freeing initrd memory: 9512K
+9347: [Thu Oct 15 14:52:48 2026] Loaded X.509 cert 'Build time autogenerated kernel key: ed0c757644a5f32c661c544e3bd3af6958141ada'
+9348: [Thu Oct 15 14:52:48 2026] Demotion targets for Node 0: null
+9349: [Thu Oct 15 14:52:48 2026] Key type .fscrypt registered
+9350: [Thu Oct 15 14:52:48 2026] Key type fscrypt-provisioning registered
+9351: [Thu Oct 15 14:52:48 2026] RAS: Correctable Errors collector initialized.
+9352: [Thu Oct 15 14:52:48 2026] Unstable clock detected, switching default tracing clock to "global"
+9353:                            If you want to keep using the local clock, then add:
+9354:                              "trace_clock=local"
+9355:                            on the kernel command line
+9356: [Thu Oct 15 14:52:48 2026] clk: Disabling unused clocks
+9357: [Thu Oct 15 14:52:48 2026] Freeing unused kernel image (initmem) memory: 2848K
+9358: [Thu Oct 15 14:52:48 2026] Write protecting the kernel read-only data: 26624k
+9359: [Thu Oct 15 14:52:48 2026] Freeing unused kernel image (rodata/data gap) memory: 4K
+9360: [Thu Oct 15 14:52:49 2026] x86/mm: Checked W+X mappings: passed, no W+X pages found.
+9361: [Thu Oct 15 14:52:49 2026] Run /init as init process
+9362: [Thu Oct 15 14:52:49 2026]   with arguments:
+9363: [Thu Oct 15 14:52:49 2026]     /init
+9364: [Thu Oct 15 14:52:49 2026]   with environment:
+9365: [Thu Oct 15 14:52:49 2026]     HOME=/
+9366: [Thu Oct 15 14:52:49 2026]     TERM=linux
+9367: [Thu Oct 15 14:52:49 2026] SCSI subsystem initialized
+9368: [Thu Oct 15 14:52:49 2026] libata version 3.00 loaded.
+9369: [Thu Oct 15 14:52:49 2026] ahci 0000:00:02.0: version 3.0
+9370: [Thu Oct 15 14:52:49 2026] ACPI: \_SB_.LNKB: Enabled at IRQ 10
+9371: [Thu Oct 15 14:52:49 2026] ahci 0000:00:02.0: AHCI vers 0001.0000, 32 command slots, 1.5 Gbps, SATA mode
+9372: [Thu Oct 15 14:52:49 2026] ahci 0000:00:02.0: 6/6 ports implemented (port mask 0x3f)
+9373: [Thu Oct 15 14:52:49 2026] ahci 0000:00:02.0: flags: 64bit ncq only 
+9374: [Thu Oct 15 14:52:49 2026] scsi host0: ahci
+9375: [Thu Oct 15 14:52:49 2026] scsi host1: ahci
+9376: [Thu Oct 15 14:52:49 2026] scsi host2: ahci
+9377: [Thu Oct 15 14:52:49 2026] scsi host3: ahci
+9378: [Thu Oct 15 14:52:49 2026] scsi host4: ahci
+9379: [Thu Oct 15 14:52:49 2026] scsi host5: ahci
+9380: [Thu Oct 15 14:52:49 2026] ata1: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0100 irq 24 lpm-pol 1
+9381: [Thu Oct 15 14:52:49 2026] ata2: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0180 irq 24 lpm-pol 1
+9382: [Thu Oct 15 14:52:49 2026] ata3: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0200 irq 24 lpm-pol 1
+9383: [Thu Oct 15 14:52:49 2026] ata4: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0280 irq 24 lpm-pol 1
+9384: [Thu Oct 15 14:52:49 2026] ata5: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0300 irq 24 lpm-pol 1
+9385: [Thu Oct 15 14:52:49 2026] ata6: SATA max UDMA/133 abar m4096@0xfebc0000 port 0xfebc0380 irq 24 lpm-pol 1
+9386: [Thu Oct 15 14:52:49 2026] ata2: SATA link down (SStatus 0 SControl 300)
+9387: [Thu Oct 15 14:52:49 2026] ata3: SATA link down (SStatus 0 SControl 300)
+9388: [Thu Oct 15 14:52:49 2026] ata4: SATA link down (SStatus 0 SControl 300)
+9389: [Thu Oct 15 14:52:49 2026] ata1: SATA link up 1.5 Gbps (SStatus 113 SControl 300)
+9390: [Thu Oct 15 14:52:49 2026] ata1.00: Model 'QEMU HARDDISK', rev '2.5+', applying quirks: bridgeok
+9391: [Thu Oct 15 14:52:49 2026] ata1.00: LPM support broken, forcing max_power
+9392: [Thu Oct 15 14:52:49 2026] ata1.00: ATA-7: QEMU HARDDISK, 2.5+, max UDMA/100
+9393: [Thu Oct 15 14:52:49 2026] ata1.00: 20971520 sectors, multi 16: LBA48 NCQ (depth 32)
+9394: [Thu Oct 15 14:52:49 2026] ata1.00: LPM support broken, forcing max_power
+9395: [Thu Oct 15 14:52:49 2026] ata1.00: configured for UDMA/100
+9396: [Thu Oct 15 14:52:49 2026] scsi 0:0:0:0: Direct-Access     ATA      QEMU HARDDISK    2.5+ PQ: 0 ANSI: 5
+9397: [Thu Oct 15 14:52:49 2026] ata5: SATA link down (SStatus 0 SControl 300)
+9398: [Thu Oct 15 14:52:49 2026] ata6: SATA link down (SStatus 0 SControl 300)
+9399: [Thu Oct 15 14:52:49 2026] device-mapper: ioctl: 4.48.0-ioctl (2023-03-01) initialised: dm-devel@lists.linux.dev
+9400: [Thu Oct 15 14:52:49 2026] ACPI: bus type USB registered
+9401: [Thu Oct 15 14:52:49 2026] usbcore: registered new interface driver usbfs
+9402: [Thu Oct 15 14:52:49 2026] usbcore: registered new interface driver hub
+9403: [Thu Oct 15 14:52:49 2026] usbcore: registered new device driver usb
+9404: [Thu Oct 15 14:52:49 2026] hid: raw HID events driver (C) Jiri Kosina
+9405: [Thu Oct 15 14:52:50 2026] usbcore: registered new interface driver usbhid
+9406: [Thu Oct 15 14:52:50 2026] usbhid: USB HID core driver
+9407: [Thu Oct 15 14:52:50 2026] i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+9408: [Thu Oct 15 14:52:50 2026] serio: i8042 KBD port at 0x60,0x64 irq 1
+9409: [Thu Oct 15 14:52:50 2026] serio: i8042 AUX port at 0x60,0x64 irq 12
+9410: [Thu Oct 15 14:52:50 2026] input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0
+9411: [Thu Oct 15 14:52:50 2026] isci: Intel(R) C600 SAS Controller Driver - version 1.2.0
+9412: [Thu Oct 15 14:52:50 2026] loop: module loaded
+9413: [Thu Oct 15 14:52:50 2026] sd 0:0:0:0: [sda] 20971520 512-byte logical blocks: (10.7 GB/10.0 GiB)
+9414: [Thu Oct 15 14:52:50 2026] sd 0:0:0:0: [sda] Write Protect is off
+9415: [Thu Oct 15 14:52:50 2026] sd 0:0:0:0: [sda] Mode Sense: 00 3a 00 00
+9416: [Thu Oct 15 14:52:50 2026] sd 0:0:0:0: [sda] Write cache: enabled, read cache: enabled, doesn't support DPO or FUA
+9417: [Thu Oct 15 14:52:50 2026] sd 0:0:0:0: [sda] Preferred minimum I/O size 512 bytes
+9418: [Thu Oct 15 14:52:50 2026] sd 0:0:0:0: [sda] Attached SCSI disk
+9419: [Thu Oct 15 14:52:50 2026] squashfs: version 4.0 (2009/01/31) Phillip Lougher
+9420: [Thu Oct 15 14:52:50 2026] tun: Universal TUN/TAP device driver, 1.6
+9421: [Thu Oct 15 14:52:50 2026] ACPI: \_SB_.LNKC: Enabled at IRQ 11
+9422: [Thu Oct 15 14:52:50 2026] ACPI: \_SB_.LNKD: Enabled at IRQ 11
+9423: [Thu Oct 15 14:52:50 2026] ACPI: \_SB_.LNKA: Enabled at IRQ 10
+9424: [Thu Oct 15 14:52:50 2026] virtio_blk virtio3: 4/0/0 default/read/poll queues
+9425: [Thu Oct 15 14:52:50 2026] virtio_blk virtio3: [vda] 1730448 512-byte logical blocks (886 MB/845 MiB)
+9426: [Thu Oct 15 14:52:51 2026] udevd[159]: starting version 3.2.14
+9427: [Thu Oct 15 14:52:51 2026] udevd[160]: starting eudev-3.2.14
+9428: [Thu Oct 15 14:52:51 2026] ata_piix 0000:00:01.1: version 2.13
+9429: [Thu Oct 15 14:52:51 2026] scsi host6: ata_piix
+9430: [Thu Oct 15 14:52:51 2026] scsi host7: ata_piix
+9431: [Thu Oct 15 14:52:51 2026] ata7: PATA max MWDMA2 cmd 0x1f0 ctl 0x3f6 bmdma 0xc100 irq 14 lpm-pol 0
+9432: [Thu Oct 15 14:52:51 2026] ata8: PATA max MWDMA2 cmd 0x170 ctl 0x376 bmdma 0xc108 irq 15 lpm-pol 0
+9433: [Thu Oct 15 14:52:55 2026] vpsAdminOS 26.05.git.edb90d2fe with kernel 6.12.109
+9434: [Thu Oct 15 14:52:55 2026] Mirror/redirect action on
+9435: [Thu Oct 15 14:52:55 2026] NET: Registered PF_ALG protocol family
+9436: [Thu Oct 15 14:52:55 2026] NET: Registered PF_PACKET protocol family
+9437: [Thu Oct 15 14:52:55 2026] bridge: filtering via arp/ip/ip6tables is no longer available by default. Update your scripts to load br_netfilter if you need this.
+9438: [Thu Oct 15 14:52:55 2026] Bridge firewalling registered
+9439: [Thu Oct 15 14:52:55 2026] PPP generic driver version 2.4.2
+9440: [Thu Oct 15 14:52:55 2026] PPP BSD Compression module registered
+9441: [Thu Oct 15 14:52:56 2026] Key type ceph registered
+9442: [Thu Oct 15 14:52:56 2026] libceph: loaded (mon/osd proto 15/24)
+9443: [Thu Oct 15 14:52:56 2026] ceph: loaded (mds proto 32)
+9444: [Thu Oct 15 14:52:56 2026] Key type dns_resolver registered
+9445: [Thu Oct 15 14:52:56 2026] hrtimer: interrupt took 3095775 ns
+9446: [Thu Oct 15 14:52:59 2026] Key type cifs.spnego registered
+9447: [Thu Oct 15 14:52:59 2026] Key type cifs.idmap registered
+9448: [Thu Oct 15 14:52:59 2026] u32 classifier
+9449: [Thu Oct 15 14:52:59 2026]     Performance counters on
+9450: [Thu Oct 15 14:52:59 2026]     input device check on
+9451: [Thu Oct 15 14:52:59 2026]     Actions configured
+9452: [Thu Oct 15 14:53:00 2026] cryptd: max_cpu_qlen set to 1000
+9453: [Thu Oct 15 14:53:02 2026] fuse: init (API version 7.41)
+9454: [Thu Oct 15 14:53:02 2026] gre: GRE over IPv4 demultiplexor driver
+9455: [Thu Oct 15 14:53:07 2026] ip_gre: GRE over IPv4 tunneling driver
+9456: [Thu Oct 15 14:53:08 2026] IPVS: Registered protocols (TCP, UDP, AH, ESP)
+9457: [Thu Oct 15 14:53:08 2026] IPVS: Connection hash table configured (size=4096, memory=32Kbytes)
+9458: [Thu Oct 15 14:53:08 2026] IPVS: ipvs loaded.
+9459: [Thu Oct 15 14:53:08 2026] IPVS: [dh] scheduler registered.
+9460: [Thu Oct 15 14:53:08 2026] IPVS: [fo] scheduler registered.
+9461: [Thu Oct 15 14:53:09 2026] IPVS: [lblc] scheduler registered.
+9462: [Thu Oct 15 14:53:09 2026] IPVS: [lblcr] scheduler registered.
+9463: [Thu Oct 15 14:53:09 2026] IPVS: [lc] scheduler registered.
+9464: [Thu Oct 15 14:53:09 2026] IPVS: [nq] scheduler registered.
+9465: [Thu Oct 15 14:53:09 2026] IPVS: [ovf] scheduler registered.
+9466: [Thu Oct 15 14:53:10 2026] IPVS: [sip] pe registered.
+9467: [Thu Oct 15 14:53:10 2026] IPVS: [rr] scheduler registered.
+9468: [Thu Oct 15 14:53:10 2026] IPVS: [sed] scheduler registered.
+9469: [Thu Oct 15 14:53:10 2026] IPVS: [sh] scheduler registered.
+9470: [Thu Oct 15 14:53:10 2026] IPVS: [wlc] scheduler registered.
+9471: [Thu Oct 15 14:53:11 2026] IPVS: [wrr] scheduler registered.
+9472: [Thu Oct 15 14:53:11 2026] ipip: IPv4 and MPLS over IPv4 tunneling driver
+9473: [Thu Oct 15 14:53:12 2026] l2tp_core: L2TP core driver, V2.0
+9474: [Thu Oct 15 14:53:13 2026] l2tp_netlink: L2TP netlink interface
+9475: [Thu Oct 15 14:53:13 2026] l2tp_eth: L2TP ethernet pseudowire support (L2TPv3)
+9476: [Thu Oct 15 14:53:13 2026] l2tp_ip: L2TP IP encapsulation support (L2TPv3)
+9477: [Thu Oct 15 14:53:13 2026] l2tp_ip6: L2TP IP encapsulation support for IPv6 (L2TPv3)
+9478: [Thu Oct 15 14:53:13 2026] NET: Registered PF_PPPOX protocol family
+9479: [Thu Oct 15 14:53:13 2026] l2tp_ppp: PPPoL2TP kernel driver, V2.0
+9480: [Thu Oct 15 14:53:27 2026] NFS: Registering the id_resolver key type
+9481: [Thu Oct 15 14:53:27 2026] Key type id_resolver registered
+9482: [Thu Oct 15 14:53:27 2026] Key type id_legacy registered
+9483: [Thu Oct 15 14:53:31 2026] PPP Deflate Compression module registered
+9484: [Thu Oct 15 14:53:34 2026] sctp: Hash tables configured (bind 256/256)
+9485: [Thu Oct 15 14:53:38 2026] NET: Registered PF_VSOCK protocol family
+9486: [Thu Oct 15 14:53:39 2026] wireguard: WireGuard 1.0.0 loaded. See www.wireguard.com for information.
+9487: [Thu Oct 15 14:53:39 2026] wireguard: Copyright (C) 2015-2019 Jason A. Donenfeld <Jason@zx2c4.com>. All Rights Reserved.
+9488: [Thu Oct 15 14:53:46 2026] xt_time: kernel timezone is -0000
+9489: [Thu Oct 15 14:53:55 2026] ZFS: Loaded module v2.3.5-1, ZFS pool version 5000, ZFS filesystem version 5
+9490: [Thu Oct 15 14:53:58 2026] udevd[891]: starting version 3.2.14
+9491: [Thu Oct 15 14:53:59 2026] udevd[891]: starting eudev-3.2.14
+9492: [Thu Oct 15 14:54:01 2026] input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input2
+9493: [Thu Oct 15 14:54:01 2026] ACPI: button: Power Button [PWRF]
+9494: [Thu Oct 15 14:54:01 2026] piix4_smbus 0000:00:01.3: SMBus Host Controller at 0x700, revision 0
+9495: [Thu Oct 15 14:54:01 2026] i2c i2c-0: Memory type 0x07 not supported yet, not instantiating SPD
+9496: [Thu Oct 15 14:54:01 2026] AES CTR mode by8 optimization enabled
+9497: [Thu Oct 15 14:54:01 2026] Floppy drive(s): fd0 is 2.88M AMI BIOS
+9498: [Thu Oct 15 14:54:01 2026] rtc_cmos 00:05: RTC can wake from S4
+9499: [Thu Oct 15 14:54:01 2026] FDC 0 is a S82078B
+9500: [Thu Oct 15 14:54:01 2026] rtc_cmos 00:05: registered as rtc0
+9501: [Thu Oct 15 14:54:01 2026] rtc_cmos 00:05: alarms up to one day, y3k, 242 bytes nvram, hpet irqs
+9502: [Thu Oct 15 14:54:01 2026] parport_pc 00:03: reported by Plug and Play ACPI
+9503: [Thu Oct 15 14:54:01 2026] parport0: PC-style at 0x378, irq 7 [PCSPP(,...)]
+9504: [Thu Oct 15 14:54:02 2026] input: ImExPS/2 Generic Explorer Mouse as /devices/platform/i8042/serio1/input/input3
+9505: [Thu Oct 15 14:54:03 2026] ppdev: user-space parallel port driver
+9506: [Thu Oct 15 14:54:03 2026] mousedev: PS/2 mouse device common for all mice
+9507: [Thu Oct 15 14:54:03 2026] kvm_amd: TSC scaling supported
+9508: [Thu Oct 15 14:54:03 2026] kvm_amd: Nested Virtualization enabled
+9509: [Thu Oct 15 14:54:03 2026] kvm_amd: Nested Paging enabled
+9510: [Thu Oct 15 14:54:03 2026] kvm_amd: LBR virtualization supported
+9511: [Thu Oct 15 14:54:03 2026] kvm_amd: Virtual VMLOAD VMSAVE supported
+9512: [Thu Oct 15 14:54:03 2026] kvm_amd: Virtual GIF supported
+9513: [Thu Oct 15 14:54:03 2026] EDAC MC: Ver: 3.0.0
+9514: [Thu Oct 15 14:54:04 2026] lxcbr0: entered promiscuous mode
+9515: [Thu Oct 15 14:54:17 2026]  sda: sda1 sda9
+9516: [Thu Oct 15 14:56:33 2026] cgroup namespace loadavg tracking started
+9517: [Thu Oct 15 14:56:35 2026] [ testct-e1de ] booting system configuration /nix/store/90p33y5h579j3jfhlwsf7pln1a7fvn4d-nixos-system-persistence-fixture-26.05pre-git
+9518: [Thu Oct 15 14:56:35 2026] [ testct-e1de ] stage-2-init: running activation script...
+9519: [Thu Oct 15 14:56:35 2026] [ testct-e1de ] stage-2-init: Warning: Source directory '/persistent/var/lib/preservation-test' does not exist; it will be created for you with the following permissions: owner: 'preservation-test:preservation-test', mode: '0750'.
+9520: [Thu Oct 15 14:56:35 2026] [ testct-e1de ] stage-2-init: setting up /etc...
+9521: [Thu Oct 15 14:56:35 2026] [ testct-e1de ] stage-2-init: Creating initial /etc/machine-id
+9522: [Thu Oct 15 14:56:36 2026] [ testct-e1de ] systemd-journald[130]: Collecting audit messages is disabled.
+9523: [Thu Oct 15 14:56:36 2026] [ testct-e1de ] systemd-journald[130]: Received client request to flush runtime journal.
+9524: [Thu Oct 15 15:00:13 2026] [ testct-e1de ] systemd-journald[130]: Received SIGTERM from PID 1 (systemd-shutdow).
+9525: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] booting system configuration /nix/store/2iq1xg1sb2q7drgpp79zqj6wqkwlbms9-nixos-system-persistence-fixture-26.05pre-git
+9526: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: running activation script...
+9527: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving group 'a-preservation-test' with GID 993
+9528: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving group 'dhcpcd' with GID 999
+9529: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving group 'nscd' with GID 998
+9530: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving group 'preservation-test' with GID 997
+9531: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving group 'resolvconf' with GID 996
+9532: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving group 'systemd-coredump' with GID 995
+9533: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving group 'systemd-oom' with GID 994
+9534: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving user 'a-preservation-test' with UID 995
+9535: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving user 'dhcpcd' with UID 999
+9536: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving user 'nscd' with UID 998
+9537: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving user 'preservation-test' with UID 997
+9538: [Thu Oct 15 15:00:16 2026] [ testct-fe02 ] stage-2-init: reviving user 'systemd-oom' with UID 996
+9539: [Thu Oct 15 15:00:17 2026] [ testct-fe02 ] stage-2-init: setting up /etc...
+9540: [Thu Oct 15 15:00:17 2026] [ testct-fe02 ] systemd-journald[124]: Collecting audit messages is disabled.
+9541: [Thu Oct 15 15:00:18 2026] [ testct-fe02 ] systemd-journald[124]: Received client request to flush runtime journal.
+9542: [Thu Oct 15 15:02:34 2026] [ testct-c9fb ] booting system configuration /nix/store/lwnqi3s2bq7sdaa28sz9l93727r81dp8-nixos-system-persistence-fixture-26.05pre-git
+9543: [Thu Oct 15 15:02:34 2026] [ testct-c9fb ] stage-2-init: running activation script...
+9544: [Thu Oct 15 15:02:34 2026] [ testct-c9fb ] stage-2-init: Warning: Source directory '/persistent/var/lib/preservation-test' does not exist; it will be created for you with the following permissions: owner: 'preservation-test:preservation-test', mode: '0750'.
+9545: [Thu Oct 15 15:02:35 2026] [ testct-c9fb ] stage-2-init: setting up /etc...
+9546: [Thu Oct 15 15:02:35 2026] [ testct-c9fb ] stage-2-init: Creating initial /etc/machine-id
+9547: [Thu Oct 15 15:02:36 2026] [ testct-c9fb ] systemd-journald[120]: Collecting audit messages is disabled.
+9548: [Thu Oct 15 15:02:36 2026] [ testct-c9fb ] systemd-journald[120]: Received client request to flush runtime journal.
+9549: [Thu Oct 15 15:07:06 2026] [ testct-c9fb ] systemd-journald[120]: Received SIGTERM from PID 1 (systemd-shutdow).
+9550: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] booting system configuration /nix/store/s2zv9v3r8cvc6g8dc10dbrrx5fddk9zw-nixos-system-persistence-fixture-26.05pre-git
+9551: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: running activation script...
+9552: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving group 'a-preservation-test' with GID 993
+9553: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving group 'dhcpcd' with GID 999
+9554: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving group 'nscd' with GID 998
+9555: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving group 'preservation-test' with GID 997
+9556: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving group 'resolvconf' with GID 996
+9557: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving group 'systemd-coredump' with GID 995
+9558: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving group 'systemd-oom' with GID 994
+9559: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving user 'a-preservation-test' with UID 995
+9560: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving user 'dhcpcd' with UID 999
+9561: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving user 'nscd' with UID 998
+9562: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving user 'preservation-test' with UID 997
+9563: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: reviving user 'systemd-oom' with UID 996
+9564: [Thu Oct 15 15:07:10 2026] [ testct-e110 ] stage-2-init: setting up /etc...
+9565: [Thu Oct 15 15:07:11 2026] [ testct-e110 ] systemd-journald[124]: Collecting audit messages is disabled.
+9566: [Thu Oct 15 15:07:11 2026] [ testct-e110 ] systemd-journald[124]: Received client request to flush runtime journal.
+9567: [Thu Oct 15 15:09:22 2026] [ testct-d05e ] booting system configuration /nix/store/v6h99xqq1j7hkpnhxi9i1zhch0ixv11h-nixos-system-persistence-fixture-26.05pre-git
+9568: [Thu Oct 15 15:09:22 2026] [ testct-d05e ] stage-2-init: running activation script...
+9569: [Thu Oct 15 15:09:23 2026] [ testct-d05e ] stage-2-init: Warning: Source directory '/persistent/var/log' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0755'.
+9570: [Thu Oct 15 15:09:23 2026] [ testct-d05e ] stage-2-init: Warning: Source directory '/persistent/var/lib/preservation-test' does not exist; it will be created for you with the following permissions: owner: 'preservation-test:preservation-test', mode: '0750'.
+9571: [Thu Oct 15 15:09:23 2026] [ testct-d05e ] stage-2-init: setting up /etc...
+9572: [Thu Oct 15 15:09:23 2026] [ testct-d05e ] stage-2-init: Creating initial /etc/machine-id
+9573: [Thu Oct 15 15:09:24 2026] [ testct-d05e ] systemd-journald[137]: Collecting audit messages is disabled.
+9574: [Thu Oct 15 15:09:24 2026] [ testct-d05e ] systemd-journald[137]: Received client request to flush runtime journal.
+9575: [Thu Oct 15 15:14:23 2026] [ testct-d05e ] systemd-journald[137]: Received SIGTERM from PID 1 (systemd-shutdow).
+9576: [Thu Oct 15 15:14:26 2026] [ testct-0e26 ] booting system configuration /nix/store/jyinbn06b2csaydgh795lv7fflliivf1-nixos-system-persistence-fixture-26.05pre-git
+9577: [Thu Oct 15 15:14:26 2026] [ testct-0e26 ] stage-2-init: running activation script...
+9578: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving group 'a-preservation-test' with GID 993
+9579: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving group 'dhcpcd' with GID 999
+9580: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving group 'nscd' with GID 998
+9581: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving group 'preservation-test' with GID 997
+9582: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving group 'resolvconf' with GID 996
+9583: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving group 'systemd-coredump' with GID 995
+9584: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving group 'systemd-oom' with GID 994
+9585: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving user 'a-preservation-test' with UID 995
+9586: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving user 'dhcpcd' with UID 999
+9587: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving user 'nscd' with UID 998
+9588: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving user 'preservation-test' with UID 997
+9589: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: reviving user 'systemd-oom' with UID 996
+9590: [Thu Oct 15 15:14:27 2026] [ testct-0e26 ] stage-2-init: setting up /etc...
+9591: [Thu Oct 15 15:14:28 2026] [ testct-0e26 ] systemd-journald[140]: Collecting audit messages is disabled.
+9592: [Thu Oct 15 15:14:28 2026] [ testct-0e26 ] systemd-journald[140]: Received client request to flush runtime journal.
+9593: [Thu Oct 15 15:16:44 2026] [ testct-45c5 ] booting system configuration /nix/store/j4cjydv60p2qwildg0dqgswpvdn30440-nixos-system-persistence-fixture-26.05pre-git
+9594: [Thu Oct 15 15:16:44 2026] [ testct-45c5 ] stage-2-init: running activation script...
+9595: [Thu Oct 15 15:16:45 2026] [ testct-45c5 ] stage-2-init: Warning: Source directory '/persistent/var/lib/preservation-test' does not exist; it will be created for you with the following permissions: owner: 'preservation-test:preservation-test', mode: '0750'.
+9596: [Thu Oct 15 15:16:45 2026] [ testct-45c5 ] stage-2-init: setting up /etc...
+9597: [Thu Oct 15 15:16:45 2026] [ testct-45c5 ] stage-2-init: Creating initial /etc/machine-id
+9598: [Thu Oct 15 15:16:46 2026] [ testct-45c5 ] systemd-journald[154]: Collecting audit messages is disabled.
+9599: [Thu Oct 15 15:16:46 2026] [ testct-45c5 ] systemd-journald[154]: Received client request to flush runtime journal.
+9600: [Thu Oct 15 15:20:42 2026] [ testct-45c5 ] systemd-journald[154]: Received SIGTERM from PID 1 (systemd-shutdow).
+9601: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] booting system configuration /nix/store/jyinbn06b2csaydgh795lv7fflliivf1-nixos-system-persistence-fixture-26.05pre-git
+9602: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: running activation script...
+9603: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving group 'a-preservation-test' with GID 993
+9604: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving group 'dhcpcd' with GID 999
+9605: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving group 'nscd' with GID 998
+9606: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving group 'preservation-test' with GID 997
+9607: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving group 'resolvconf' with GID 996
+9608: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving group 'systemd-coredump' with GID 995
+9609: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving group 'systemd-oom' with GID 994
+9610: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving user 'a-preservation-test' with UID 995
+9611: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving user 'dhcpcd' with UID 999
+9612: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving user 'nscd' with UID 998
+9613: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving user 'preservation-test' with UID 997
+9614: [Thu Oct 15 15:20:46 2026] [ testct-5674 ] stage-2-init: reviving user 'systemd-oom' with UID 996
+9615: [Thu Oct 15 15:20:47 2026] [ testct-5674 ] stage-2-init: setting up /etc...
+9616: [Thu Oct 15 15:20:48 2026] [ testct-5674 ] systemd-journald[140]: Collecting audit messages is disabled.
+9617: [Thu Oct 15 15:20:48 2026] [ testct-5674 ] systemd-journald[140]: Received client request to flush runtime journal.
+9618: [Thu Oct 15 15:23:04 2026] [ testct-3bf0 ] booting system configuration /nix/store/rm09ygrj7nh22c8q5ix8ynv7m7jb1ann-nixos-system-persistence-fixture-26.05pre-git
+9619: [Thu Oct 15 15:23:05 2026] [ testct-3bf0 ] stage-2-init: running activation script...
+9620: [Thu Oct 15 15:23:05 2026] [ testct-3bf0 ] stage-2-init: Warning: Source directory '/persistent/var/lib' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0755'.
+9621: [Thu Oct 15 15:23:05 2026] [ testct-3bf0 ] stage-2-init: Warning: Source directory '/persistent/var/lib/preservation-test' does not exist; it will be created for you with the following permissions: owner: 'preservation-test:preservation-test', mode: '0750'.
+9622: [Thu Oct 15 15:23:05 2026] [ testct-3bf0 ] stage-2-init: setting up /etc...
+9623: [Thu Oct 15 15:23:06 2026] [ testct-3bf0 ] stage-2-init: Creating initial /etc/machine-id
+9624: [Thu Oct 15 15:23:07 2026] [ testct-3bf0 ] systemd-journald[127]: Collecting audit messages is disabled.
+9625: [Thu Oct 15 15:23:07 2026] [ testct-3bf0 ] systemd-journald[127]: Received client request to flush runtime journal.
+9626: [Thu Oct 15 15:27:55 2026] [ testct-3bf0 ] systemd-journald[127]: Received SIGTERM from PID 1 (systemd-shutdow).
+9627: [Thu Oct 15 15:27:59 2026] [ testct-258e ] booting system configuration /nix/store/s9xd506hamx0azdrgcbblhz80b1ysqsi-nixos-system-persistence-fixture-26.05pre-git
+9628: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: running activation script...
+9629: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving group 'a-preservation-test' with GID 993
+9630: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving group 'dhcpcd' with GID 999
+9631: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving group 'nscd' with GID 998
+9632: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving group 'preservation-test' with GID 997
+9633: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving group 'resolvconf' with GID 996
+9634: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving group 'systemd-coredump' with GID 995
+9635: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving group 'systemd-oom' with GID 994
+9636: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving user 'a-preservation-test' with UID 995
+9637: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving user 'dhcpcd' with UID 999
+9638: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving user 'nscd' with UID 998
+9639: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving user 'preservation-test' with UID 997
+9640: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: reviving user 'systemd-oom' with UID 996
+9641: [Thu Oct 15 15:27:59 2026] [ testct-258e ] stage-2-init: setting up /etc...
+9642: [Thu Oct 15 15:28:00 2026] [ testct-258e ] systemd-journald[121]: Collecting audit messages is disabled.
+9643: [Thu Oct 15 15:28:00 2026] [ testct-258e ] systemd-journald[121]: Received client request to flush runtime journal.
+9644: [Thu Oct 15 15:30:15 2026] [ testct-ce29 ] booting system configuration /nix/store/4y0n3ym2fmshb9zjkrfqf8p84jdc8nlw-nixos-system-persistence-fixture-26.05pre-git
+9645: [Thu Oct 15 15:30:15 2026] [ testct-ce29 ] stage-2-init: running activation script...
+9646: [Thu Oct 15 15:30:16 2026] [ testct-ce29 ] stage-2-init: Warning: Source directory '/persistent/var/lib/preservation-test' does not exist; it will be created for you with the following permissions: owner: 'preservation-test:preservation-test', mode: '0750'.
+9647: [Thu Oct 15 15:30:16 2026] [ testct-ce29 ] stage-2-init: setting up /etc...
+9648: [Thu Oct 15 15:30:16 2026] [ testct-ce29 ] stage-2-init: Creating initial /etc/machine-id
+9649: [Thu Oct 15 15:30:17 2026] [ testct-ce29 ] systemd-journald[125]: Collecting audit messages is disabled.
+9650: [Thu Oct 15 15:30:17 2026] [ testct-ce29 ] systemd-journald[125]: Received client request to flush runtime journal.
+9651: [Thu Oct 15 15:34:52 2026] [ testct-ce29 ] systemd-journald[125]: Received SIGTERM from PID 1 (systemd-shutdow).
+9652: [Thu Oct 15 15:34:55 2026] [ testct-0dd1 ] booting system configuration /nix/store/2iq1xg1sb2q7drgpp79zqj6wqkwlbms9-nixos-system-persistence-fixture-26.05pre-git
+9653: [Thu Oct 15 15:34:55 2026] [ testct-0dd1 ] stage-2-init: running activation script...
+9654: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving group 'a-preservation-test' with GID 993
+9655: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving group 'dhcpcd' with GID 999
+9656: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving group 'nscd' with GID 998
+9657: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving group 'preservation-test' with GID 997
+9658: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving group 'resolvconf' with GID 996
+9659: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving group 'systemd-coredump' with GID 995
+9660: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving group 'systemd-oom' with GID 994
+9661: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving user 'a-preservation-test' with UID 995
+9662: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving user 'dhcpcd' with UID 999
+9663: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving user 'nscd' with UID 998
+9664: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving user 'preservation-test' with UID 997
+9665: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: reviving user 'systemd-oom' with UID 996
+9666: [Thu Oct 15 15:34:56 2026] [ testct-0dd1 ] stage-2-init: setting up /etc...
+9667: [Thu Oct 15 15:34:57 2026] [ testct-0dd1 ] systemd-journald[124]: Collecting audit messages is disabled.
+9668: [Thu Oct 15 15:34:57 2026] [ testct-0dd1 ] systemd-journald[124]: Received client request to flush runtime journal.
+9669: [Thu Oct 15 15:37:08 2026] [ testct-5c27 ] booting system configuration /nix/store/crria2dswzrllikbjlnrbm393csdspaw-nixos-system-persistence-fixture-26.05pre-git
+9670: [Thu Oct 15 15:37:08 2026] [ testct-5c27 ] stage-2-init: running activation script...
+9671: [Thu Oct 15 15:37:08 2026] [ testct-5c27 ] stage-2-init: Warning: Source directory '/persistent/var/log' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0755'.
+9672: [Thu Oct 15 15:37:08 2026] [ testct-5c27 ] stage-2-init: Warning: Source directory '/persistent/var/lib/preservation-test' does not exist; it will be created for you with the following permissions: owner: 'preservation-test:preservation-test', mode: '0750'.
+9673: [Thu Oct 15 15:37:09 2026] [ testct-5c27 ] stage-2-init: setting up /etc...
+9674: [Thu Oct 15 15:37:09 2026] [ testct-5c27 ] stage-2-init: Creating initial /etc/machine-id
+9675: [Thu Oct 15 15:37:10 2026] [ testct-5c27 ] systemd-journald[141]: Collecting audit messages is disabled.
+9676: [Thu Oct 15 15:37:10 2026] [ testct-5c27 ] systemd-journald[141]: Received client request to flush runtime journal.
+9677: [Thu Oct 15 15:42:04 2026] [ testct-5c27 ] systemd-journald[141]: Received SIGTERM from PID 1 (systemd-shutdow).
+9678: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] booting system configuration /nix/store/7f6gyrgzamvxsvl9dkp7sl9v5fkrmw9p-nixos-system-persistence-fixture-26.05pre-git
+9679: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: running activation script...
+9680: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving group 'a-preservation-test' with GID 993
+9681: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving group 'dhcpcd' with GID 999
+9682: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving group 'nscd' with GID 998
+9683: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving group 'preservation-test' with GID 997
+9684: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving group 'resolvconf' with GID 996
+9685: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving group 'systemd-coredump' with GID 995
+9686: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving group 'systemd-oom' with GID 994
+9687: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving user 'a-preservation-test' with UID 995
+9688: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving user 'dhcpcd' with UID 999
+9689: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving user 'nscd' with UID 998
+9690: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving user 'preservation-test' with UID 997
+9691: [Thu Oct 15 15:42:08 2026] [ testct-d069 ] stage-2-init: reviving user 'systemd-oom' with UID 996
+9692: [Thu Oct 15 15:42:09 2026] [ testct-d069 ] stage-2-init: setting up /etc...
+9693: [Thu Oct 15 15:42:09 2026] [ testct-d069 ] systemd-journald[144]: Collecting audit messages is disabled.
+9694: [Thu Oct 15 15:42:09 2026] [ testct-d069 ] systemd-journald[144]: Received client request to flush runtime journal.
+9695: [Thu Oct 15 15:44:31 2026] [ testct-10c7 ] booting system configuration /nix/store/pqmh1r9qwczn3rqfy27izmvx8alljcma-nixos-system-persistence-fixture-26.05pre-git
+9696: [Thu Oct 15 15:44:31 2026] [ testct-10c7 ] stage-2-init: running activation script...
+9697: [Thu Oct 15 15:44:32 2026] [ testct-10c7 ] stage-2-init: Warning: Source directory '/guest-backing' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0755'.
+9698: [Thu Oct 15 15:44:32 2026] [ testct-10c7 ] stage-2-init: Warning: Source directory '/guest-backing/var' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0755'.
+9699: [Thu Oct 15 15:44:32 2026] [ testct-10c7 ] stage-2-init: Warning: Source directory '/guest-backing/var/lib' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0755'.
+9700: [Thu Oct 15 15:44:32 2026] [ testct-10c7 ] stage-2-init: Warning: Source directory '/guest-backing/var/lib/nixos' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0710'.
+9701: [Thu Oct 15 15:44:32 2026] [ testct-10c7 ] stage-2-init: Warning: Source directory '/guest-backing/var/log' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0755'.
+9702: [Thu Oct 15 15:44:32 2026] [ testct-10c7 ] stage-2-init: Warning: Source directory '/guest-backing/var/lib/preservation-test' does not exist; it will be created for you with the following permissions: owner: 'preservation-test:preservation-test', mode: '0750'.
+9703: [Thu Oct 15 15:44:32 2026] [ testct-10c7 ] stage-2-init: Warning: Source directory '/guest-backing/etc' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0755'.
+9704: [Thu Oct 15 15:44:32 2026] [ testct-10c7 ] stage-2-init: setting up /etc...
+9705: [Thu Oct 15 15:44:33 2026] [ testct-10c7 ] systemd-journald[151]: Collecting audit messages is disabled.
+9706: [Thu Oct 15 15:44:33 2026] [ testct-10c7 ] systemd-journald[151]: Received client request to flush runtime journal.
+9707: 
+9708: ===== ps -eo pid,ppid,stat,comm,args =====
+9709:     PID    PPID STAT COMMAND         COMMAND
+9710:       1       0 Ss   runit           runit
+9711:       2       0 S    kthreadd        [kthreadd]
+9712:       3       2 S    pool_workqueue_ [pool_workqueue_release]
+9713:       4       2 I<   kworker/R-kvfre [kworker/R-kvfree_rcu_reclaim]
+9714:       5       2 I<   kworker/R-rcu_g [kworker/R-rcu_gp]
+9715:       6       2 I<   kworker/R-sync_ [kworker/R-sync_wq]
+9716:       7       2 I<   kworker/R-slub_ [kworker/R-slub_flushwq]
+9717:       8       2 I<   kworker/R-netns [kworker/R-netns]
+9718:      10       2 I<   kworker/0:0H-ev [kworker/0:0H-events_highpri]
+9719:      13       2 I<   kworker/R-mm_pe [kworker/R-mm_percpu_wq]
+9720:      14       2 I    rcu_tasks_kthre [rcu_tasks_kthread]
+9721:      15       2 I    rcu_tasks_rude_ [rcu_tasks_rude_kthread]
+9722:      16       2 I    rcu_tasks_trace [rcu_tasks_trace_kthread]
+9723:      17       2 S    ksoftirqd/0     [ksoftirqd/0]
+9724:      18       2 I    rcu_preempt     [rcu_preempt]
+9725:      19       2 S    rcu_exp_par_gp_ [rcu_exp_par_gp_kthread_worker/0]
+9726:      20       2 S    rcu_exp_gp_kthr [rcu_exp_gp_kthread_worker]
+9727:      21       2 S    migration/0     [migration/0]
+9728:      22       2 S    idle_inject/0   [idle_inject/0]
+9729:      23       2 S    cpuhp/0         [cpuhp/0]
+9730:      24       2 S    cpuhp/1         [cpuhp/1]
+9731:      25       2 S    idle_inject/1   [idle_inject/1]
+9732:      26       2 S    migration/1     [migration/1]
+9733:      27       2 S    ksoftirqd/1     [ksoftirqd/1]
+9734:      29       2 I<   kworker/1:0H-ev [kworker/1:0H-events_highpri]
+9735:      30       2 S    cpuhp/2         [cpuhp/2]
+9736:      31       2 S    idle_inject/2   [idle_inject/2]
+9737:      32       2 S    migration/2     [migration/2]
+9738:      33       2 S    ksoftirqd/2     [ksoftirqd/2]
+9739:      35       2 I<   kworker/2:0H-ev [kworker/2:0H-events_highpri]
+9740:      36       2 S    cpuhp/3         [cpuhp/3]
+9741:      37       2 S    idle_inject/3   [idle_inject/3]
+9742:      38       2 S    migration/3     [migration/3]
+9743:      39       2 S    ksoftirqd/3     [ksoftirqd/3]
+9744:      41       2 I<   kworker/3:0H-ev [kworker/3:0H-events_highpri]
+9745:      49       2 S    kdevtmpfs       [kdevtmpfs]
+9746:      50       2 I<   kworker/R-inet_ [kworker/R-inet_frag_wq]
+9747:      51       2 S    kauditd         [kauditd]
+9748:      52       2 S    khungtaskd      [khungtaskd]
+9749:      53       2 S    oom_reaper      [oom_reaper]
+9750:      54       2 I<   kworker/R-write [kworker/R-writeback]
+9751:      55       2 S    kcompactd0      [kcompactd0]
+9752:      56       2 SN   ksmd            [ksmd]
+9753:      57       2 SN   khugepaged      [khugepaged]
+9754:      58       2 I<   kworker/R-kinte [kworker/R-kintegrityd]
+9755:      59       2 I<   kworker/R-kbloc [kworker/R-kblockd]
+9756:      60       2 S    irq/9-acpi      [irq/9-acpi]
+9757:      61       2 I<   kworker/R-devfr [kworker/R-devfreq_wq]
+9758:      63       2 I<   kworker/R-quota [kworker/R-quota_events_unbound]
+9759:      64       2 I<   kworker/R-rpcio [kworker/R-rpciod]
+9760:      65       2 I<   kworker/2:1H-kb [kworker/2:1H-kblockd]
+9761:      66       2 I<   kworker/R-xprti [kworker/R-xprtiod]
+9762:      67       2 S    kswapd0         [kswapd0]
+9763:      68       2 I<   kworker/R-nfsio [kworker/R-nfsiod]
+9764:      69       2 I<   kworker/R-mld   [kworker/R-mld]
+9765:      70       2 I<   kworker/R-ipv6_ [kworker/R-ipv6_addrconf]
+9766:      71       2 I<   kworker/1:1H-kb [kworker/1:1H-kblockd]
+9767:      72       2 I<   kworker/R-kstrp [kworker/R-kstrp]
+9768:      76       2 I<   kworker/u17:0   [kworker/u17:0]
+9769:      77       2 I<   kworker/0:1H-kb [kworker/0:1H-kblockd]
+9770:      88       2 I<   kworker/R-ata_s [kworker/R-ata_sff]
+9771:      90       2 S    scsi_eh_0       [scsi_eh_0]
+9772:      91       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_0]
+9773:      92       2 S    scsi_eh_1       [scsi_eh_1]
+9774:      93       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_1]
+9775:      94       2 S    scsi_eh_2       [scsi_eh_2]
+9776:      95       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_2]
+9777:      96       2 S    scsi_eh_3       [scsi_eh_3]
+9778:      97       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_3]
+9779:      98       2 S    scsi_eh_4       [scsi_eh_4]
+9780:      99       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_4]
+9781:     100       2 S    scsi_eh_5       [scsi_eh_5]
+9782:     101       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_5]
+9783:     125       2 I<   kworker/R-nvme- [kworker/R-nvme-wq]
+9784:     126       2 I<   kworker/R-nvme- [kworker/R-nvme-reset-wq]
+9785:     127       2 I<   kworker/R-nvme- [kworker/R-nvme-delete-wq]
+9786:     129       2 I<   kworker/3:1H-kb [kworker/3:1H-kblockd]
+9787:     180       2 S    scsi_eh_6       [scsi_eh_6]
+9788:     181       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_6]
+9789:     182       2 S    scsi_eh_7       [scsi_eh_7]
+9790:     183       2 I<   kworker/R-scsi_ [kworker/R-scsi_tmf_7]
+9791:     359       2 I<   kworker/R-ceph- [kworker/R-ceph-msgr]
+9792:     361       2 I<   kworker/R-cifsi [kworker/R-cifsiod]
+9793:     362       2 I<   kworker/R-smb3d [kworker/R-smb3decryptd]
+9794:     363       2 I<   kworker/R-cifsf [kworker/R-cifsfileinfoput]
+9795:     364       2 I<   kworker/R-cifso [kworker/R-cifsoplockd]
+9796:     365       2 I<   kworker/R-defer [kworker/R-deferredclose]
+9797:     366       2 I<   kworker/R-serve [kworker/R-serverclose]
+9798:     367       2 I<   kworker/R-cfid_ [kworker/R-cfid_put_wq]
+9799:     368       2 I<   kworker/R-cifs- [kworker/R-cifs-dfscache]
+9800:     381       2 I<   kworker/R-crypt [kworker/R-cryptd]
+9801:     627       2 S    spl_system_task [spl_system_task]
+9802:     628       2 S    spl_system_task [spl_system_task]
+9803:     629       2 S    spl_system_task [spl_system_task]
+9804:     630       2 S    spl_system_task [spl_system_task]
+9805:     631       2 S    spl_system_task [spl_system_task]
+9806:     632       2 S    spl_system_task [spl_system_task]
+9807:     633       2 S    spl_system_task [spl_system_task]
+9808:     634       2 S    spl_system_task [spl_system_task]
+9809:     635       2 S    spl_system_task [spl_system_task]
+9810:     636       2 S    spl_system_task [spl_system_task]
+9811:     637       2 S    spl_system_task [spl_system_task]
+9812:     638       2 S    spl_system_task [spl_system_task]
+9813:     639       2 S    spl_system_task [spl_system_task]
+9814:     640       2 S    spl_system_task [spl_system_task]
+9815:     641       2 S    spl_system_task [spl_system_task]
+9816:     642       2 S    spl_system_task [spl_system_task]
+9817:     643       2 S    spl_system_task [spl_system_task]
+9818:     644       2 S    spl_system_task [spl_system_task]
+9819:     645       2 S    spl_system_task [spl_system_task]
+9820:     646       2 S    spl_system_task [spl_system_task]
+9821:     647       2 S    spl_system_task [spl_system_task]
+9822:     648       2 S    spl_system_task [spl_system_task]
+9823:     649       2 S    spl_system_task [spl_system_task]
+9824:     650       2 S    spl_system_task [spl_system_task]
+9825:     651       2 S    spl_system_task [spl_system_task]
+9826:     652       2 S    spl_system_task [spl_system_task]
+9827:     653       2 S    spl_system_task [spl_system_task]
+9828:     654       2 S    spl_system_task [spl_system_task]
+9829:     655       2 S    spl_system_task [spl_system_task]
+9830:     656       2 S    spl_system_task [spl_system_task]
+9831:     657       2 S    spl_system_task [spl_system_task]
+9832:     658       2 S    spl_system_task [spl_system_task]
+9833:     659       2 S    spl_system_task [spl_system_task]
+9834:     660       2 S    spl_system_task [spl_system_task]
+9835:     661       2 S    spl_system_task [spl_system_task]
+9836:     662       2 S    spl_system_task [spl_system_task]
+9837:     663       2 S    spl_system_task [spl_system_task]
+9838:     664       2 S    spl_system_task [spl_system_task]
+9839:     665       2 S    spl_system_task [spl_system_task]
+9840:     666       2 S    spl_system_task [spl_system_task]
+9841:     667       2 S    spl_system_task [spl_system_task]
+9842:     668       2 S    spl_system_task [spl_system_task]
+9843:     669       2 S    spl_system_task [spl_system_task]
+9844:     670       2 S    spl_system_task [spl_system_task]
+9845:     671       2 S    spl_system_task [spl_system_task]
+9846:     672       2 S    spl_system_task [spl_system_task]
+9847:     673       2 S    spl_system_task [spl_system_task]
+9848:     674       2 S    spl_system_task [spl_system_task]
+9849:     675       2 S    spl_system_task [spl_system_task]
+9850:     676       2 S    spl_system_task [spl_system_task]
+9851:     677       2 S    spl_system_task [spl_system_task]
+9852:     678       2 S    spl_system_task [spl_system_task]
+9853:     679       2 S    spl_system_task [spl_system_task]
+9854:     680       2 S    spl_system_task [spl_system_task]
+9855:     681       2 S    spl_system_task [spl_system_task]
+9856:     682       2 S    spl_system_task [spl_system_task]
+9857:     683       2 S    spl_system_task [spl_system_task]
+9858:     684       2 S    spl_system_task [spl_system_task]
+9859:     685       2 S    spl_system_task [spl_system_task]
+9860:     686       2 S    spl_system_task [spl_system_task]
+9861:     687       2 S    spl_system_task [spl_system_task]
+9862:     688       2 S    spl_system_task [spl_system_task]
+9863:     689       2 S    spl_system_task [spl_system_task]
+9864:     690       2 S    spl_system_task [spl_system_task]
+9865:     691       2 S    spl_delay_taskq [spl_delay_taskq]
+9866:     692       2 S    spl_delay_taskq [spl_delay_taskq]
+9867:     693       2 S    spl_delay_taskq [spl_delay_taskq]

@@ -1,0 +1,175 @@
+SHELL: 2
+
+START: 2026-10-15 04:28:18 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:28:21 +0200
+ELAPSED: 2.77s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:28:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:28:23 +0200
+ELAPSED: 1.1s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:28:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:28:25 +0200
+ELAPSED: 1.27s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:28:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:28:27 +0200
+ELAPSED: 1.12s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:28:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:28:30 +0200
+ELAPSED: 1.19s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:28:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:28:32 +0200
+ELAPSED: 1.46s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:28:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:28:34 +0200
+ELAPSED: 0.97s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 04:28:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:28:37 +0200
+ELAPSED: 2.1s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 04:28:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:28:39 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 04:28:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:28:41 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:28:41 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 04:28:41 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 02:28:41 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 04:28:41 +0200
+COMMAND: osctl ct new --distribution devuan --version latest testct-7ef9
+END: 2026-10-15 04:29:41 +0200
+ELAPSED: 59.21s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:29:41 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/6863f69a-nix--store--avaa80ayamlnrv5qy1fm2y883asn155k-dist-config-nonsystemd-rundir-script.sh" "/tmp/testct-7ef9-test-script.sh"
+END: 2026-10-15 04:29:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:29:41 +0200
+COMMAND: osctl ct runscript -r testct-7ef9 /tmp/testct-7ef9-test-script.sh
+END: 2026-10-15 04:29:46 +0200
+ELAPSED: 5.27s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:29:46 +0200
+COMMAND: osctl ct del -f --prune testct-7ef9
+END: 2026-10-15 04:29:55 +0200
+ELAPSED: 8.69s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-7ef9
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 04:29:55 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-15 04:30:28 +0200
+ELAPSED: 33.26s
+STATUS: 0
+OUTPUT:
+
+---
+

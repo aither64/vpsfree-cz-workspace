@@ -1,0 +1,163 @@
+<page>manuals:vps:incidents</page>
+====== Upozornění na incidenty ======
+Pokud IP adresy z naší sítě rozesílají spam, popř. útočí na cizí systémy, často
+o tom dostáváme tzv. abuse notices. Tyto upozornění přeposíláme jednotlivým
+členům, kteří by měli sjednat nápravu. Upozornění mohou být i preventivního
+charakteru, např. když máte veřejně dostupné služby, které jsou zneužitelné.
+
+===== Accessible-MySQL =====
+Na portu **3306** máš přes **IPv4** veřejně dostupnou MySQL/MariaDB databází.
+Pokud je to možné, tak nejlepší je nastavit databází tak, aby poslouchala
+jen na localhostu, např. v ''my.cnf'':
+
+<code>
+[mysqld]
+bind-address = 127.0.0.1
+</code>
+
+Chceš-li se k databází připojovat odjinud, můžeš povolit přístup konkrétním
+IP adresám pomocí firewallu.
+
+===== Accessible-PostgreSQL =====
+Na portu **5432** máš přes **IPv4** veřejně dostupnou PostgreSQL databází.
+Pokud je to možné, tak nejlepší je nastavit databází tak, aby poslouchala
+jen na localhostu. V ''postgresql.conf'':
+
+<code>
+listen_addresses = localhost
+</code>
+
+Chceš-li se k databází připojovat odjinud, můžeš povolit přístup konkrétním
+IP adresám pomocí firewallu.
+
+===== Accessible-SMB =====
+Na VPS máš nainstalovanou službu samba (smbd), která je dostupná z internetu,
+což se obecně nedoporučuje. Je vhodné použít buď VPN a povolit přístup jen
+přes síť VPN, nebo použít bezpečnější protokol, např. SFTP přes SSH.
+
+===== DNS-Open-Resolvers =====
+Na portu **53** máš spuštěný DNS resolver, který je po **IPv4** dostupný z internetu.
+DNS resolver by měl buď poslouchat jen na localhostu, nebo musí být nastaven tak, aby
+odpovídal jen na dotazy z vybraných sítí, např. adresy tvých VPS, síť z tvojí VPN, atp.
+
+Volně dostupné DNS resolvery jsou zneužívány k amplifikačním útokům -- požadavek je mnohem
+menší než odpověd, kterou DNS resolver zasílá zpět. Útočník toho využije a nechá odpověď
+zaslat na adresu oběti.
+
+===== IPv6-Accessible-MySQL =====
+Na portu **3306** máš přes **IPv6** veřejně dostupnou MySQL/MariaDB databází.
+Pokud je to možné, tak nejlepší je nastavit databází tak, aby poslouchala
+jen na localhostu, např. v ''my.cnf'':
+
+<code>
+[mysqld]
+bind-address = ::1
+</code>
+
+Chceš-li se k databází připojovat odjinud, můžeš povolit přístup konkrétním
+IP adresám pomocí firewallu.
+
+===== IPv6-Accessible-PostgreSQL =====
+Na portu **5432** máš přes **IPv6** veřejně dostupnou PostgreSQL databází.
+Pokud je to možné, tak nejlepší je nastavit databází tak, aby poslouchala
+jen na localhostu. V ''postgresql.conf'':
+
+<code>
+listen_addresses = localhost
+</code>
+
+Chceš-li se k databází připojovat odjinud, můžeš povolit přístup konkrétním
+IP adresám pomocí firewallu.
+
+===== IPv6-DNS-Open-Resolvers =====
+Na portu **53** máš spuštěný DNS resolver, který je po **IPv6** dostupný z internetu.
+DNS resolver by měl buď poslouchat jen na localhostu, nebo musí být nastaven tak, aby
+odpovídal jen na dotazy z vybraných sítí, např. adresy tvých VPS, síť z tvojí VPN, atp.
+
+Volně dostupné DNS resolvery jsou zneužívány k amplifikačním útokům -- požadavek je mnohem
+menší než odpověd, kterou DNS resolver zasílá zpět. Útočník toho využije a nechá odpověď
+zaslat na adresu oběti.
+
+===== malware =====
+Ve VPS ti běží malware. Pravděpodobně máš bezpečností chybu v nějakém webu nebo jiné
+veřejně dostupné službě. Možné je taky slabé heslo na SSH. Malware často udělá z VPS
+součást botnetu, který pak útočí na jiné systémy, rozesílá spam a nebo těží kryptoměny.
+
+Důležitá indicie je uživatel, pod kterým malware běží, a umístění spustitelného
+souboru. Pokud je to třeba uživatel ''www-data'', je hned jasné, že se tam dostal přes
+nějaký web. V reportu je dále uvedeno umístění spustitelného souboru -- sám to zjistíš
+s ''ls -l /proc/<pid>/exe'' a cgroup. Pomocí cgroup třeba identifikuješ, jestli
+proces běží v nějakém docker kontejneru -- porovnej cestu v cgroup s ''docker ps''.
+Pozor na to, že ''/proc/<pid>/cmdline'' (tj. to, co vidíš v topu a ps) může být vymyšlený.
+
+Jestliže malware běží pod neprivilegovaným uživatelem, může stačit procesy ukončit,
+aktualizovat web, systém, změnit heslo uživatele, atp. Počítej s tím, že to mělo přístup
+všude v systému, kam se dostane daný uživatel. Malware často používá cron
+k opětovnému spuštění, zkontroluj jestli něco není ve ''/var/spool/cron''.
+
+Pokud malware běží pod rootem, tak máš větší problém, protože pokud s tím dopředu nepočítáš,
+tak už s jistotou nezjistíš, co všechno změnil a kde si udělal zadní vrátka. Má přístup
+ke všem tvým souborům, včetně konfiguračních souborů s hesly. Balíčkovací
+systémy mívají funkci kontroly integrity nainstalovaných souborů, to už ale nezahrne
+všemožné konfigurační soubory a tvoje aplikace a data. Nejjistější je VPS přeinstalovat
+a nastavit jej znovu.
+
+===== oomd =====
+VPS se v danou chvíli pohybovalo na hraně limitu paměti, tj. procesy jsou zdrženy
+čekáním na volnou paměť, a současně drželo sdílené zámky v kernelu, což mělo negativní
+vliv na ostatní VPS a celý node.
+
+Je nutné si pohlídat konfiguraci služeb tak, aby se při dočasném navýšení provozu
+nespouštělo více obsluhujících procesů (typicky web server, apache2 workery, PHP, atp.),
+než kolik se do VPS vejde.
+
+===== open-memcached =====
+memcached bývá zneužíván k amplification útokům, kdy útočník využije tvůj memcached
+server k útoku na oběť díky tomu, že odpověd serveru je mnohem větší, než původní
+požadavek. Pokud memcached používáš jen lokálně, nejlépe ho nastav tak, aby
+poslouchal jen na localhostu. Jestliže k memcached přistupuješ z vícero VPS,
+nastav si firewall tak, aby nebyl dostupný z veřejného Internetu.
+
+===== open-portmapper =====
+Portmapper, resp. rpcbind, je základní součást NFSv3. rpcbind máš spuštěn nejspíše
+protože používáš [[navody:vps:exporty|NAS]]. Pomocí portmapperu se NFS klient
+dozví, na které porty na NFS serveru se má připojit. rpcbind by neměl být dostupný
+z veřejného Internetu, neboť může být zneužitý k tzv. amplification útoku. Odpověd
+rpcbindu je totiž několikanásobně větší než původní požadavek. Útočník toho může využít
+a nechat odpovědi z tvého serveru zasílat na adresu oběti.
+
+Portmapper poslouchá na portu **111**. Tento port můžeme uzavřít, avšak je nutné
+povolit existující spojení:
+
+<code>
+iptables -A INPUT -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
+
+iptables -A INPUT -p tcp --dport 111 -j DROP
+iptables -A INPUT -p udp --dport 111 -j DROP
+
+ip6tables -A INPUT -p tcp --dport 111 -j DROP
+ip6tables -A INPUT -p udp --dport 111 -j DROP
+</code>
+
+Takto nastavené pravidla vydrží jen do prvního restartu VPS. Způsob perzistentní
+konfigurace firewallu záleží na použité distribuci.
+
+==== Debian ====
+Jednou z možností je balíček [[https://packages.debian.org/stable/admin/iptables-persistent|iptables-persistent]], který přes službu netfilter-persistent automaticky po bootu aplikuje uložená pravidla: 
+
+<code>
+/etc/iptables/rules.v4
+/etc/iptables/rules.v6
+</code>
+
+Při instalaci se balíček zeptá, zda si přejete aktuální pravidla uložit. Využívá iptables-save a iptables-restore. Pravidla si můžeme uložit ručně:
+<code>
+iptables-save > /etc/iptables/rules.v4
+ip6tables-save > /etc/iptables/rules.v6
+</code>
+
+Příklady a zdroj: https://www.cyberciti.biz/faq/how-to-save-iptables-firewall-rules-permanently-on-linux/
+
+===== Open-Redis =====
+Ve VPS máš službu redis, která je dostupná z internetu. Ve výchozím stavu běží na portu **6379**.
+Je vhodné redis nastavit tak, aby poslouchal jen na localhostu, případně jej zabezpečit firewallem.

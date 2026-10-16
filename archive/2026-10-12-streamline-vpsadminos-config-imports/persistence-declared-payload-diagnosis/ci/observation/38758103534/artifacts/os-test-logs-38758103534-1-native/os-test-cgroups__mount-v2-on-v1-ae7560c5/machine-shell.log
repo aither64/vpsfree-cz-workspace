@@ -1,0 +1,481 @@
+SHELL: 0
+
+START: 2026-10-15 17:27:56 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:27:59 +0200
+ELAPSED: 3.25s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:28:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:28:02 +0200
+ELAPSED: 1.32s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:28:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:28:04 +0200
+ELAPSED: 1.24s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:28:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:28:06 +0200
+ELAPSED: 1.15s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:28:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:28:08 +0200
+ELAPSED: 1.27s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:28:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:28:11 +0200
+ELAPSED: 1.88s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 17:28:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:28:14 +0200
+ELAPSED: 1.35s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 17:28:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:28:16 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 17:28:16 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 17:28:16 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 15:28:16 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 17:28:16 +0200
+COMMAND: osctl ct new --distribution void --version latest-glibc testct-1a25
+END: 2026-10-15 17:28:27 +0200
+ELAPSED: 10.25s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 17:28:27 +0200
+COMMAND: osctl ct unset start-menu testct-1a25
+END: 2026-10-15 17:28:28 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:28:28 +0200
+COMMAND: osctl ct start testct-1a25
+END: 2026-10-15 17:28:31 +0200
+ELAPSED: 2.89s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 17:28:41 +0200
+COMMAND: osctl ct exec testct-1a25 cat /proc/mounts
+END: 2026-10-15 17:28:44 +0200
+ELAPSED: 3.09s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-1a25 / zfs rw,relatime,idmapped,xattr,noacl,casesensitive 0 0
+none /dev tmpfs rw,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys/net proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys proc ro,relatime 0 0
+proc /proc/sysrq-trigger proc ro,relatime 0 0
+sysfs /sys sysfs rw,relatime 0 0
+sys /sys/fs/fuse/connections sysfs rw,nosuid,nodev,noexec,relatime 0 0
+tmpfs /sys/kernel/debug tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+tmpfs /sys/kernel/tracing tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+securityfs /sys/kernel/security securityfs rw,relatime 0 0
+sys /sys/fs/pstore sysfs rw,nosuid,nodev,noexec,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+tmpfs /dev/.osctl-mount-helper tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+bpf /sys/fs/bpf bpf rw,nosuid,nodev,noexec,relatime,uid=1000000,gid=1000000,mode=700 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/console devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty1 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty2 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty3 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty4 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty5 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty6 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+none /proc/sys/kernel/random/boot_id tmpfs ro,nosuid,nodev,noexec,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+run /run tmpfs rw,nosuid,nodev,relatime,mode=755,uid=0,gid=0 0 0
+shm /dev/shm tmpfs rw,nosuid,nodev,relatime,uid=0,gid=0 0 0
+cgroup2 /sys/fs/cgroup cgroup2 rw,relatime 0 0
+tmpfs /sys/fs/cgroup tmpfs ro,relatime,uid=0,gid=0 0 0
+cgroup /sys/fs/cgroup/systemd cgroup rw,nosuid,nodev,noexec,relatime,name=systemd 0 0
+cgroup /sys/fs/cgroup/hugetlb cgroup rw,nosuid,nodev,noexec,relatime,hugetlb 0 0
+cgroup /sys/fs/cgroup/rdma cgroup rw,nosuid,nodev,noexec,relatime,rdma 0 0
+cgroup /sys/fs/cgroup/perf_event cgroup rw,nosuid,nodev,noexec,relatime,perf_event 0 0
+cgroup /sys/fs/cgroup/pids cgroup rw,nosuid,nodev,noexec,relatime,pids 0 0
+cgroup /sys/fs/cgroup/net_cls,net_prio cgroup rw,nosuid,nodev,noexec,relatime,net_cls,net_prio 0 0
+cgroup /sys/fs/cgroup/freezer cgroup rw,nosuid,nodev,noexec,relatime,freezer 0 0
+cgroup /sys/fs/cgroup/devices cgroup rw,nosuid,nodev,noexec,relatime,devices 0 0
+cgroup /sys/fs/cgroup/memory cgroup rw,nosuid,nodev,noexec,relatime,memory 0 0
+cgroup /sys/fs/cgroup/cpu,cpuacct cgroup rw,nosuid,nodev,noexec,relatime,cpu,cpuacct 0 0
+cgroup /sys/fs/cgroup/cpuset cgroup rw,nosuid,nodev,noexec,relatime,cpuset 0 0
+cgroup2 /sys/fs/cgroup/unified cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+---
+
+START: 2026-10-15 17:28:44 +0200
+COMMAND: osctl ct exec testct-1a25 cat /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-15 17:28:46 +0200
+ELAPSED: 2.3s
+STATUS: 1
+OUTPUT:
+cat: /sys/fs/cgroup/cgroup.controllers: No such file or directory
+error: executed command failed
+---
+
+START: 2026-10-15 17:28:46 +0200
+COMMAND: osctl ct del -f --prune testct-1a25
+END: 2026-10-15 17:28:52 +0200
+ELAPSED: 6.25s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-1a25
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 17:28:52 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-15 17:29:29 +0200
+ELAPSED: 36.37s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/debian/testing-20261010/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/void/musl-20261010/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/void/glibc-20261010/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/arch/20261010/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/gentoo/musl-systemd-20261010/image-stream.tar
+---
+
+START: 2026-10-15 17:29:29 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 17:29:30 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 17:29:30 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 17:29:30 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 15:29:30 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 17:29:30 +0200
+COMMAND: osctl ct new --distribution nixos --version stable testct-03c8
+END: 2026-10-15 17:30:07 +0200
+ELAPSED: 36.78s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 17:30:07 +0200
+COMMAND: osctl ct unset start-menu testct-03c8
+END: 2026-10-15 17:30:08 +0200
+ELAPSED: 1.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:30:08 +0200
+COMMAND: osctl ct start testct-03c8
+END: 2026-10-15 17:30:11 +0200
+ELAPSED: 3.11s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 17:30:11 +0200
+COMMAND: osctl ct exec testct-03c8 systemctl is-system-running
+END: 2026-10-15 17:30:14 +0200
+ELAPSED: 2.76s
+STATUS: 1
+OUTPUT:
+initializing
+error: executed command failed
+---
+
+START: 2026-10-15 17:30:15 +0200
+COMMAND: osctl ct exec testct-03c8 systemctl is-system-running
+END: 2026-10-15 17:30:18 +0200
+ELAPSED: 3.29s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-15 17:30:19 +0200
+COMMAND: osctl ct exec testct-03c8 systemctl is-system-running
+END: 2026-10-15 17:30:22 +0200
+ELAPSED: 3.14s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-15 17:30:23 +0200
+COMMAND: osctl ct exec testct-03c8 systemctl is-system-running
+END: 2026-10-15 17:30:27 +0200
+ELAPSED: 3.23s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-15 17:30:28 +0200
+COMMAND: osctl ct exec testct-03c8 systemctl is-system-running
+END: 2026-10-15 17:30:31 +0200
+ELAPSED: 2.99s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-15 17:30:32 +0200
+COMMAND: osctl ct exec testct-03c8 systemctl is-system-running
+END: 2026-10-15 17:30:34 +0200
+ELAPSED: 2.77s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-15 17:30:35 +0200
+COMMAND: osctl ct exec testct-03c8 systemctl is-system-running
+END: 2026-10-15 17:30:38 +0200
+ELAPSED: 2.87s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-15 17:30:39 +0200
+COMMAND: osctl ct exec testct-03c8 systemctl is-system-running
+END: 2026-10-15 17:30:42 +0200
+ELAPSED: 2.98s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-15 17:30:43 +0200
+COMMAND: osctl ct exec testct-03c8 systemctl is-system-running
+END: 2026-10-15 17:30:46 +0200
+ELAPSED: 2.65s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-15 17:30:47 +0200
+COMMAND: osctl ct exec testct-03c8 systemctl is-system-running
+END: 2026-10-15 17:30:50 +0200
+ELAPSED: 2.64s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-10-15 17:31:00 +0200
+COMMAND: osctl ct exec testct-03c8 cat /proc/mounts
+END: 2026-10-15 17:31:02 +0200
+ELAPSED: 2.75s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-03c8 / zfs rw,relatime,idmapped,xattr,noacl,casesensitive 0 0
+none /dev tmpfs rw,nosuid,size=407136k,mode=755,uid=0,gid=0 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys/net proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys proc ro,relatime 0 0
+proc /proc/sysrq-trigger proc ro,relatime 0 0
+sysfs /sys sysfs rw,relatime 0 0
+sys /sys/fs/fuse/connections sysfs rw,nosuid,nodev,noexec,relatime 0 0
+tmpfs /sys/kernel/debug tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+tmpfs /sys/kernel/tracing tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+securityfs /sys/kernel/security securityfs rw,relatime 0 0
+sys /sys/fs/pstore sysfs rw,nosuid,nodev,noexec,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+tmpfs /dev/.osctl-mount-helper tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+bpf /sys/fs/bpf bpf rw,nosuid,nodev,noexec,relatime,uid=1065536,gid=1065536,mode=700 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,size=2035672k,mode=755,uid=0,gid=0 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+devpts /dev/console devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+devpts /dev/tty1 devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+devpts /dev/tty2 devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+devpts /dev/tty3 devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+devpts /dev/tty4 devpts rw,nosuid,noexec,relatime,gid=1065539,mode=620,ptmxmode=666 0 0
+none /proc/sys/kernel/random/boot_id tmpfs ro,nosuid,nodev,noexec,relatime,size=407136k,mode=755,uid=0,gid=0 0 0
+tank/ct/testct-03c8 /nix/store zfs ro,nosuid,nodev,relatime,idmapped,xattr,noacl,casesensitive 0 0
+tmpfs /dev/shm tmpfs rw,nosuid,nodev,uid=0,gid=0 0 0
+tmpfs /run/keys tmpfs rw,nosuid,nodev,relatime,mode=750,uid=0,gid=0 0 0
+cgroup2 /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+none /run/credentials/systemd-journald.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+tmpfs /run/wrappers tmpfs rw,nodev,relatime,mode=755,uid=0,gid=0 0 0
+none /run/credentials/console-getty.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@3.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@2.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@4.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@1.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+---
+
+START: 2026-10-15 17:31:02 +0200
+COMMAND: osctl ct exec testct-03c8 cat /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-15 17:31:06 +0200
+ELAPSED: 3.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 17:31:06 +0200
+COMMAND: osctl ct del -f --prune testct-03c8
+END: 2026-10-15 17:31:09 +0200
+ELAPSED: 3.47s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-03c8
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 17:31:09 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-15 17:31:24 +0200
+ELAPSED: 14.88s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/fedora/44/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/gentoo/systemd-20261010/image-stream.tar
+---
+
+START: 2026-10-15 17:31:45 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 17:31:56 +0200
+ELAPSED: 10.4s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

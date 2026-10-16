@@ -1,0 +1,64 @@
+214: START: 2026-10-14 22:31:40 +0200
+215: COMMAND: osctl ct mounts new --fs /tank/ct/testct-1fb2/private --type bind --opts bind,create=dir,rw --mountpoint /persistent testct-1fb2
+216: END: 2026-10-14 22:31:41 +0200
+217: ELAPSED: 1.13s
+218: STATUS: 0
+219: OUTPUT:
+220: 
+221: ---
+222: 
+223: START: 2026-10-14 22:31:41 +0200
+224: COMMAND: osctl ct set impermanence testct-1fb2
+225: END: 2026-10-14 22:31:42 +0200
+226: ELAPSED: 1.15s
+227: STATUS: 0
+228: OUTPUT:
+229: 
+230: ---
+231: 
+232: START: 2026-10-14 22:31:42 +0200
+233: COMMAND: osctl ct start testct-1fb2
+234: END: 2026-10-14 22:31:46 +0200
+235: ELAPSED: 4.45s
+236: STATUS: 0
+237: OUTPUT:
+238: Starting container
+239: Connecting console
+240: Waiting for the container to start
+241: ---
+242: 
+243: START: 2026-10-14 22:31:46 +0200
+244: COMMAND: osctl ct exec testct-1fb2 systemctl is-system-running --wait
+245: END: 2026-10-14 22:31:49 +0200
+246: ELAPSED: 2.82s
+247: STATUS: 1
+248: OUTPUT:
+249: Failed to connect to system scope bus via local transport: No such file or directory
+250: error: executed command failed
+251: ---
+252: 
+253: START: 2026-10-14 22:31:50 +0200
+254: COMMAND: osctl ct exec testct-1fb2 systemctl is-system-running --wait
+255: END: 2026-10-14 22:32:13 +0200
+256: ELAPSED: 22.64s
+257: STATUS: 1
+258: OUTPUT:
+259: degraded
+260: error: executed command failed
+261: ---
+262: 
+623: START: 2026-10-14 22:34:46 +0200
+624: ACTION: protocol-timeout
+625: PHASE: replies_consumed
+626: END: 2026-10-14 22:34:46 +0200
+627: ELAPSED: 0.0s
+628: ERROR: OsVm::TimeoutError: Timeout occurred while running command 'osctl ct exec testct-1fb2 systemctl is-system-running --wait', output: "degraded\nerror: executed command failed\n"
+629: PROTOCOL_ERROR: OsVm::TimeoutError: Timeout occurred while running command 'osctl ct exec testct-1fb2 systemctl is-system-running --wait', output: "degraded\nerror: executed command failed\n"
+630: REPLY_BUFFER_BYTES: 44
+631: REPLY_BUFFER_PREFIX: "\n:osvm-1ab2b52b1e1fdfc12d50935148b2e23e:124\n"
+632: ---
+633: 
+2449: ===== tank:testct-1fb2 guest networking journal (init 2748) =====
+2450: An error was encountered while opening journal file or directory /var/log/journal/a8432e052ed24b0eab2500d7cf90e309/system.journal, ignoring file: Bad file descriptor
+2451: -- No entries --
+2452: guest networking journal snapshot status=0

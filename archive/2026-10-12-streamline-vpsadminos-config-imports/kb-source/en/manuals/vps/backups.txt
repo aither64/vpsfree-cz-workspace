@@ -1,0 +1,456 @@
+<page>manuals:vps:backups</page>
+====== Backups ======
+
+Backups are implemented using ZFS snapshots. A snapshot captures the state
+of the dataset and all data in it at the time of its creation.
+If the data are later changed, you can still access the data as it was when the snapshot
+was created. You can [[manuals:vps:exports|read]] data from snapshots or restore
+dataset to a snapshot,
+but that will delete all data changed or added since the snapshot was created.
+
+Snapshots can be seen and created in <vpsadmin-nav id="backups.vps.open">the Backups -> VPS backups menu</vpsadmin-nav>.
+
+{{:en:screenshots:vpsadmin:backups:vps-backups.png?300|}}
+
+VPS backups are made every day at 1:00 AM CET/CEST, when each node
+creates a snapshot of all the datasets at once. Then the snapshots are moved to
+backuper2.prg. Snapshots are kept for 14 days, older snapshot are deleted. In addition
+to these daily snapshots, you can create 6 extra snapshots.
+The created snapshots cannot be
+deleted, you have to wait until they are automatically deleted by daily backups. 
+
+Beware! NAS **is not backed up** to backuper.prg. Snapshots are
+local only and their only purpose is protection against the damage or unwanted deletion of data.
+
+===== Snapshot deletion =====
+Only NAS snapshots can be deleted. VPS snapshots can only be deleted by rotation of daily backups.
+
+====== Restoring Backups ======
+
+Restoring always works on the dataset level. If a VPS has subdatasets, rootfs is restored
+from the backup, subdatasets are not restored. I.e. it is possible to restore
+any dataset and this doesn’t have any effect on other datasets.
+
+You can only make snapshots of an NAS **manually**. Since it is not backed up to the
+backuper, the restore process behaves the same way as ''zfs rollback -r'', i.e. restoring to
+an older snapshot **deletes** all newer snapshots. It is an **irreversible** operation.
+
+In order to restore data from a backup on an NAS without deleting snapshots, mount the selected 
+snapshot to a VPS and copy the data.
+
+====== Downloading Backups ======
+
+Backups can be either downloaded through an online interface or [[manuals:vps:API#cli|a CLI]].
+The CLI has the advantage of not having to wait for an e-mail with a link to the backup download location –
+we can start the download immediately or automate the whole process. We can either download
+a tar.gz archive or the ZFS data stream directly (even incrementally).
+
+===== Incremental Backups =====
+
+An incremental backup only contains the data that has changed since the previous snapshot.
+In order to help the client identify which snapshots can be downloaded incrementally,
+each snapshot contains a //history indicator// (number). Snapshots with the same
+identifier can be moved incrementally. The history flow can be interrupted by a VPS reinstallation
+or using a backup to restore. Afterwards, the history identifier is increased by 1 and 
+the full backup needs to be downloaded again.
+
+The history identifier is shown in the table with a list of snapshots in <vpsadmin-nav id="backups.vps.open">the Backups -> VPS backups menu</vpsadmin-nav>.
+
+===== Downloading the Backup as a File =====
+
+<code>
+$ vpsfreectl snapshot download --help
+snapshot download [SNAPSHOT_ID]      Download a snapshot as an archive or a stream
+
+Command options:
+    -f, --format FORMAT              archive, stream or incremental_stream
+    -I, --from-snapshot SNAPSHOT_ID  Download snapshot incrementally from SNAPSHOT_ID
+    -d, --[no-]delete-after          Delete the file from the server after successful download
+    -F, --force                      Overwrite existing files if necessary
+    -o, --output FILE                Save the download to FILE
+    -q, --quiet                      Print only errors
+    -r, --resume                     Resume cancelled download
+    -s, --[no-]send-mail             Send mail after the file for download is completed
+    -x, --max-rate N                 Maximum download speed in kB/s
+        --[no-]checksum              Verify checksum of the downloaded data (enabled)
+</code>
+
+If the snapshot ID isn’t passed on to the program as an argument, it displays an interactive
+prompt:
+
+<code>
+$ vpsfreectl snapshot download
+Dataset 14
+  (1) @2015-12-04T00:00:02Z
+VPS #198
+  (2) @2015-12-01T09:08:28Z
+  (3) @2015-12-01T09:10:10Z
+  (4) @2015-12-01T11:25:55Z
+  (5) @2015-12-01T11:36:03Z
+  (6) @2015-12-01T11:54:51Z
+  (7) @2015-12-01T11:55:19Z
+  (8) @2015-12-01T12:02:27Z
+  (9) @2015-12-01T12:27:50Z
+  (10) @2015-12-01T12:37:50Z
+  (11) @2015-12-01T12:55:46Z
+  (12) @2016-02-29T09:56:03Z
+  (13) @2016-02-29T10:08:31Z
+  (14) @2016-02-29T10:08:35Z
+Pick a snapshot for download:
+
+</code>
+
+We will be downloading the 4th snapshot (''@2015-12-01T11:25:55Z''):
+
+<code>
+Pick a snapshot for download: 4
+The download is being prepared...
+Downloading to 198__2015-12-01T12-25-56.tar.gz
+Time: 00:01:37 Downloading 0.3 GB: [=====================================================================================] 100% 992 kB/s
+</code>
+
+Using the ''%%--format%%'' option we choose whether we want to download a tar.gz archive, a data
+stream or an incremental data stream. Under default settings, the tar.gz archive
+is downloaded.
+
+We can either let vpsAdmin name the file
+([[https://api.vpsfree.cz/v2.0/#root-snapshot_download-show|SnapshotDownload#Show.file_name]]),
+or choose our own location using the ''%%--output%%'' option. If ''%%--output=-%%'' is used,
+the output is redirected to stdout.
+
+The program enables pausing the download (you need to use ''CTRL+C'') and then resuming it
+again. If the ''%%--resume%%'' or ''%%--force%%'' options are not used,
+the program asks the user whether it should resume the download or start
+over.
+
+<note>
+The download can only start if the prepared file has not been deleted on the server
+in the meantime (the ''%%-[no-]delete-after%%'' option), which takes as long as a week since the first 
+download attempt.
+</note>
+
+===== ZFS Data Stream =====
+
+<code>
+$ vpsfreectl snapshot send --help
+snapshot send SNAPSHOT_ID            Download a snapshot stream and write it on stdout
+
+Command options:
+    -I, --from-snapshot SNAPSHOT_ID  Download snapshot incrementally from SNAPSHOT_ID
+    -d, --[no-]delete-after          Delete the file from the server after successful download
+    -q, --quiet                      Print only errors
+    -s, --[no-]send-mail             Send mail after the file for download is completed
+    -x, --max-rate N                 Maximum download speed in kB/s
+        --[no-]checksum              Verify checksum of the downloaded data (enabled)
+</code>
+
+The difference from ''snapshot download'' is that a data stream is written directly to stdout
+in an uncompressed form so that we can mount it directly from
+''zfs recv'':
+
+<code>
+$ vpsfreectl snapshot send <id> | zfs recv -F <dataset>
+</code>
+
+An incremental data stream can be requested using the ''%%-I, --from-snapshot%%'' option
+
+<code>
+$ vpsfreectl snapshot send <id2> -- --from-snapshot <id1> | zfs recv -F <dataset>
+</code>
+
+===== Automated Backup Downloads =====
+
+Automated backup downloads are performed using the ''backup vps'' and
+''backup dataset'' commands. They are used the same way, the only difference being that the former uses the VPS ID as its argument
+while the latter uses the dataset ID.
+
+These commands require ZFS to be installed, zpool to be created and root permissions.
+The program can be run directly under root, otherwise it will use sudo when running.
+
+Upon startup, snapshots with the current history identifier are downloaded, as long as they
+do not exist locally yet. If possible, they are downloaded incrementally. In order for
+incremental transfer to work, the program must find the snapshot which is present locally and
+on the server at the same time. This means that backups have to be downloaded at least
+once every 14 days since the newest local snapshot gets deleted from the server after that time period
+and the program won’t be able to resume downloading backups – there won’t be
+any common snapshot.
+
+<code>
+$ vpsfreectl backup vps --help
+backup vps [VPS_ID] FILESYSTEM       Backup VPS locally
+
+Command options:
+    -p, --pretend                    Print what would the program do
+    -r, --[no-]rotate                Delete old snapshots (enabled)
+    -m, --min-snapshots N            Keep at least N snapshots (30)
+    -M, --max-snapshots N            Keep at most N snapshots (45)
+    -a, --max-age N                  Delete snapshots older then N days (30)
+    -x, --max-rate N                 Maximum download speed in kB/s
+    -q, --quiet                      Print only errors
+    -s, --safe-download              Download to a temp file (needs 2x disk space)
+        --retry-attemps N            Retry N times to recover from download error (10)
+    -i, --init-snapshots N           Download max N snapshots initially
+        --[no-]checksum              Verify checksum of the downloaded data (enabled)
+    -d, --[no-]delete-after          Delete the file from the server after successful download (enabled)
+        --no-snapshots-as-error      Consider no snapshots to download as an error
+        --[no-]sudo                  Use sudo to run zfs if not run as root (enabled)
+</code>
+
+If the program does not receive the VPS/Dataset ID as an argument, it either asks the user for it
+or it tries to identify the ID itself. The ''FILESYSTEM'' argument always needs to be
+provided. It should contain the name of the dataset where we want to store the backups.
+
+<note warning>
+The first argument of the program is the **VPS/dataset ID**, which can be confusing if a dataset
+is used, since the ID is not identical to the dataset name, but both are usually
+numbers.
+</note>
+
+Before we actually run the program, the ''%%--pretend%%'' option might come in handy – it 
+shows us what the program would do, i.e. which snapshots it would download and potentially
+delete.
+
+The ''%%--[no-]rotate%%'' option can be used to (de)activate the deletion of older snapshots in order to
+make room for the new ones. Unless we change other settings, we will have at least
+30 snapshots (which currently means 30 daily histories) and a maximum of 45 snapshots
+(if we create some ourselves) and snapshots older than 30 days will be
+deleted.
+
+The content of the ''FILESYSTEM'' dataset is managed by the program itself and the user
+should not create more subdatasets/snapshots in it. The downloaded snapshots are placed in
+subdatasets, which are named according to the history identifier.
+
+==== Usage Example ====
+
+<code>
+$ vpsfreectl backup vps storage/backup/199
+(1) VPS #198
+(2) VPS #199
+(3) VPS #202
+Pick a dataset to backup: 2
+Will download 8 snapshots:
+  @2016-03-07T18:12:58
+  @2016-03-07T18:13:21
+  @2016-03-07T18:18:35
+  @2016-03-10T10:18:03
+  @2016-03-10T10:18:30
+  @2016-03-10T11:49:00
+  @2016-03-10T14:28:00
+  @2016-03-10T14:33:12
+
+Performing a full receive of @2016-03-07T18:12:58 to storage/backup/199/1
+The download is being prepared...
+Time: 00:00:56 Downloading 0.3 GB: [====================================================================================] 100% 1755 kB/s
+Performing an incremental receive of @2016-03-07T18:12:58 - @2016-03-10T14:33:12 to storage/backup/199/1
+The download is being prepared...
+Time: 00:00:00 Downloading 0.0 GB: [=======================================================================================] 100% 0 kB/s
+</code>
+
+We can notice that the program downloads the first snapshot in full size and
+all the following ones incrementally.
+
+A list of snapshots can be displayed using ''zfs list'':
+<code>
+$ sudo zfs list -r -t snapshot storage/backup/199
+NAME                                       USED  AVAIL  REFER  MOUNTPOINT
+storage/backup/199/1@2016-03-07T18:12:58     8K      -   284M  -
+storage/backup/199/1@2016-03-07T18:13:21     8K      -   284M  -
+storage/backup/199/1@2016-03-07T18:18:35     8K      -   284M  -
+storage/backup/199/1@2016-03-10T10:18:03     8K      -   285M  -
+storage/backup/199/1@2016-03-10T10:18:30     8K      -   285M  -
+storage/backup/199/1@2016-03-10T11:49:00   160K      -   285M  -
+storage/backup/199/1@2016-03-10T14:28:00   160K      -   285M  -
+storage/backup/199/1@2016-03-10T14:33:12      0      -   285M  -
+</code>
+
+We can access our own data using the special ''.zfs'' folder:
+<code>
+$ ls -1 /storage/backup/199/1/.zfs/snapshot
+2016-03-07T18:12:58
+2016-03-07T18:13:21
+2016-03-07T18:18:35
+2016-03-10T10:18:03
+2016-03-10T10:18:30
+2016-03-10T11:49:00
+2016-03-10T14:28:00
+2016-03-10T14:33:12
+</code>
+
+Cron can be used to download backups regularly. The crontab record can look like
+this:
+
+<code>
+MAILTO=your@email
+
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+# |  |  |  |  |
+# *  *  *  *  * user-name command to be executed
+  0  7  *  *  * root      vpsfreectl backup vps 199 storage/backup/199 -- --max-rate 1000
+</code>
+
+This means that the program runs every day at 7:00 AM (at this point, the backups
+in vpsFree should already have been be moved to backuper.prg) the backups will be downloaded using a maximum speed of
+1 MB/s. Cron will send us the output of the command to the email set in the
+''MAILTO'' variable. However, if we just want to check if it works, it is unnecessary for the email to be sent every day.
+This is why the program has the ''%%--quiet%%'' option, which ensures that only potential
+errors are printed.
+
+<note>
+If we download the backups using the root user, but ''vpsfreectl'' was installed
+by a standard user, the program has to be
+[[manuals:vps:API#cli|installed]] again with all dependencies.
+</note>
+
+==== Downloading a Full Backup Using a Slow/Unreliable Connection ====
+
+With default settings, the ''backup'' command does not enable us to pause and resume the download
+since it doesn’t download the data to a file, but it directly sends it to ZFS. If we only have
+a slow and unreliable connection at our disposal, it can happen that the download
+fails and it is necessary to start over. However, we can use the
+''%%--safe-download%%'' option to help ourselves. The option first downloads the data as a file and only then
+does it send it to ZFS. Because of this, the download can be paused and later
+resumed at any point. The disadvantage of this procedure is that it requires twice as much space on the hard drive since the data
+is simultaneously stored in a temporary file and the ZFS dataset. The temporary file is created
+in the folder from which the program is running.
+
+Another problem can be encountered after a long period of downloading. This is because when the program is first started,
+it downloads all snapshots from the oldest to the newest one. If, however,
+downloading the oldest snapshot takes too long, it can be deleted from the
+server, which causes us to be unable to use it for incremental downloads later on and
+we have to download the full backup again. To solve cases like this one, there is the
+''%%--init-snapshots N%%'' option, which tells the program that we only want to download ''N''
+most recent snapshots. The safest method is using ''%%--init-snapshots 1%%'', then
+we have 14 days to finish the download (the last pause can occur after 7
+days). However, this is no cure-all since if the program is closed and run again on a different day,
+the last snapshot will be different and the download process will start over unless
+''%%--init-snapshots%%'' has the proper value.
+
+==== Detecting Missing Backups ====
+
+Sometimes it can happen that the daily backup doesn’t occur and so the program doesn’t have
+anything to download. This situation typically isn’t considered an error – all the
+snapshots have simply been downloaded and the program doesn’t have anything to do. However, if
+backups are downloaded automatically using Cron, we have no way of finding out that
+no backups are being downloaded. This is why the program has the
+''%%--no-snapshots-as-error%%'' option, which ensures that if the program doesn’t have anything to 
+download, it returns an error. Errors are not hidden by the ''%%--quiet%%'' option,
+so Cron will send it to us via email and we will find out about the outage.
+
+==== Downloading backups with a standard user account using sudo ====
+
+If we don’t want to install or run ''vpsfree-client'' using the root user, the program can
+run under an unprivileged user as well. In this case, sudo is used in order to work with ZFS.
+
+In the following example, we will install and use the program under the user 
+''vpsfree''. First we create the user and install ''vpsfree-client'':
+
+<code>
+# useradd -m -d /home/vpsfree -s /bin/bash vpsfree
+# su vpsfree
+$ gem install --user-install vpsfree-client
+</code>
+
+Add the following lines to ''/etc/sudoers.d/zfs'':
+
+<code>
+Defaults:vpsfree !requiretty
+vpsfree ALL=(root) NOPASSWD: /sbin/zfs
+</code>
+
+The user ''vpsfree'' will be able to run ''zfs'' as a root user even without the password,
+which is necessary if we want to run it using Cron.
+
+Now we’ll try to run the program manually and then move it to the crontab. Let’s try
+requesting and saving an authentication token:
+
+<code>
+# su vpsfree
+$ vpsfreectl --auth token --new-token --token-lifetime permanent --save user current
+</code>
+
+If you get an error stating that the program doesn’t exist, you will need to specify the whole
+path or add the correct directory to ''$PATH''. Gems are installed to
+''~/.gem/ruby/<Ruby version>/'', on my system the path to the executables is specifically
+''/home/vpsfree/.gem/ruby/2.0.0/bin''.
+
+When we have a working client, we can download the first backup to the dataset that we
+have created. In this example, VPS #123 will be backed up to the ''storage/backup/vps/123''
+dataset.
+
+<code>
+# su vpsfree
+$ sudo zfs create -p storage/backup/vps/123
+$ vpsfreectl backup vps 123 storage/backup/vps/123
+</code>
+
+We will use Cron for regular downloads of further backups.
+Open the ''etc/cron.d/vpsfree'' file and add:
+
+<code>
+PATH=/bin:/usr/bin:/home/vpsfree/.gem/ruby/2.0.0/bin
+MAILTO=your@email
+HOME=/home/vpsfree
+
+0 7 * * * vpsfree vpsfreectl backup vps storage/backup/vps/123 -- --quiet
+</code>
+
+''PATH'' states the directory containing ''vpsfreectl''. Note that
+we no longer need to provide the VPS ID for the program – the program stores it when it runs the first time.
+
+=== Downloading Backups Under a Standard User by Delegating Permissions ===
+
+Solaris/OpenIndiana and FreeBSD enable delegating the permissions to control datasets
+to various users. In this case, the program does not need root permissions at all, and neither does it need
+sudo.
+
+We will assign the required permissions to the user ''vpsfree''.
+
+<code>
+# zfs create storage/backup/123
+# zfs allow vpsfree create,mount,destroy,receive storage/backup/123
+</code>
+
+In order for the user to be able to create subdatasets and connect them, the user needs permissions on
+the directory and file levels:
+
+<code>
+# chown vpsfree:vpsfree /storage/backup/123
+</code>
+
+<note>
+It is necessary to modify the kernel settings in FreeBSD so that it allows users to mount:
+
+<code>
+# sysctl vfs.usermount=1
+</code>
+</note>
+
+Now we can start downloading the backups. We use the ''%%--no-sudo%%'' option to ensure that the
+program doesn’t try to use sudo.
+
+<code>
+# su vpsfree
+$ vpsfreectl backup vps 123 storage/backup/123 -- --no-sudo
+</code>
+
+
+===== General Options =====
+  * ''%%--[no-]delete-after%%'' decides whether the downloaded file should be deleted from the server after a successful download attempt
+  * ''%%--[no-]send-mail%%'' indicates whether we want to receive emails informing us that the backup on the server is ready for download
+  * ''%%--max-rate N%%'' sets the maximum download speed in kB/s
+  * ''%%--quiet%%'' disables all outputs, only errors are displayed
+  * ''%%--no-checksum%%'' turns off the checksum count and checks (sha256, which can cause delays)
+
+====== Restoring Downloaded Backups ======
+Restoring VPS from a downloaded backup so far isn’t automated in any way. The downloaded
+backup can be uploaded to the VPS using [[manuals:vps:vpsadminos:recovery#rescue_mode|rescue mode]].
+
+When the VPS is started into a rescue mode, we have access to the VPS's disk "from the outside", similar to booting a live CD. Unpack the backup to the directory where the
+VPS's disk is mounted. After the VPS is restarted, it will start from the restored system.
+In case the backup contains a different Linux distribution than was there before, it is
+necessary to update the distribution info in vpsAdmin.

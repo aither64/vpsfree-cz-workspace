@@ -1,0 +1,22 @@
+All checks exited 0:
+- nix-instantiate --parse tests/suite/dist-config/nixos-persistence-upgrade.nix
+- /nix/store/ffrsk7yvqqmlj7d40hs2prkqgly2gr2q-nixfmt-1.5.0/bin/nixfmt --check tests/suite/dist-config/nixos-persistence-upgrade.nix
+- /nix/store/m0nfdb4mhfgwkgss4ymyqmvviwy30i6y-ruby-3.4.9/bin/ruby -c persistence-store-fixture-diagnosis/upgrade-template.rb
+  Output: Syntax OK
+- bash -n persistence-store-fixture-diagnosis/store-copy-template.sh
+- git diff --check
+- python3 persistence-store-fixture-diagnosis/prepare-static-evidence.py
+  Expected six replacements and exact inverse comparison: PASS
+
+The Ruby/Bash files are static templates with inert Nix path placeholders.
+All optional Ruby bodies are included. These checks do not evaluate Nix or
+execute the setup, guest, runner, or mount operations.
+
+Only tests/suite/dist-config/nixos-persistence-upgrade.nix differs in product.
+Product index is empty. No stage/commit/ref/push/Nix evaluation/build/runtime
+or lifecycle operation performed. Original log hashes verified unchanged.
+
+HEAD: 67e3f88c9e60d1d7cc9c3cb8685e68fa47bdd7a5
+HEAD tree: b3390be05ce2875101e34168e94775bb20d23234
+Suite SHA256: 2354e5ab31f0180e7bb5fec6d472e91e5ccbc61aaef4d9162c3dfa09dc0fcb83
+Diff: 1 file, 20 insertions, 6 deletions.

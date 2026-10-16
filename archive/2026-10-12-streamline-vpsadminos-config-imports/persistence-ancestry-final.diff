@@ -1,0 +1,34 @@
+diff --git a/tests/nixos-container-persistence-eval.nix b/tests/nixos-container-persistence-eval.nix
+index f130da391..b3adad2f3 100644
+--- a/tests/nixos-container-persistence-eval.nix
++++ b/tests/nixos-container-persistence-eval.nix
+@@ -160,15 +160,20 @@ let
+         && !builtins.elem "vpsadminosPersistedState" ordinary.system.activationScripts.users.deps
+         && forceScript ordinary
+       );
+-      ancestry = check "${release} selected source ancestry determines order" (
+-        position (lib.escapeShellArgs [
+-          "/persistent/state"
+-          "/var/lib/nixos"
+-        ]) (script ancestry) < position (lib.escapeShellArgs [
+-          "/var/lib/nixos/log"
+-          "/var/log"
+-        ]) (script ancestry)
+-      );
++      ancestry =
++        let
++          statePosition = position (lib.escapeShellArgs [
++            "/persistent/state"
++            "/var/lib/nixos"
++          ]) (script ancestry);
++          logPosition = position (lib.escapeShellArgs [
++            "/var/lib/nixos/log"
++            "/var/log"
++          ]) (script ancestry);
++        in
++        check "${release} selected source ancestry determines order" (
++          statePosition >= 0 && logPosition >= 0 && statePosition < logPosition
++        );
+       topology = check "${release} generated scripts force topology errors" (
+         failed crossPhase && failed cycle && failed duplicate && failed relative
+       );

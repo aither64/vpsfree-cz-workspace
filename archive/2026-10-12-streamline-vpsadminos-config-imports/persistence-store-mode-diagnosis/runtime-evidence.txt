@@ -1,0 +1,343 @@
+
+=== /tmp/ni.ljm4450b/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-shell.log:161-217 ===
+161: COMMAND: osctl ct unset start-menu testct-cd33
+162: END: 2026-10-14 23:45:26 +0200
+163: ELAPSED: 1.16s
+164: STATUS: 0
+165: OUTPUT:
+166: 
+167: ---
+168: 
+169: START: 2026-10-14 23:45:26 +0200
+170: COMMAND: osctl ct dataset new testct-cd33 nix
+171: END: 2026-10-14 23:45:28 +0200
+172: ELAPSED: 1.77s
+173: STATUS: 0
+174: OUTPUT:
+175: 
+176: ---
+177: 
+178: START: 2026-10-14 23:45:28 +0200
+179: COMMAND: osctl -j ct show testct-cd33
+180: END: 2026-10-14 23:45:29 +0200
+181: ELAPSED: 1.27s
+182: STATUS: 0
+183: OUTPUT:
+184: {"pool":"tank","id":"testct-cd33","user":"testct-cd33","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-cd33","rootfs":"/tank/ct/testct-cd33/private","boot_dataset":"tank/ct/testct-cd33","boot_rootfs":"/tank/ct/testct-cd33/private","lxc_path":"/run/osctl/pools/tank/users/testct-cd33/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-cd33/group.default/cts/testct-cd33","group_path":"osctl/pool.tank/group.default/user.testct-cd33/ct.testct-cd33/user-owned","distribution":"nixos","version":"26.05","arch":"x86_64","vendor":null,"variant":null,"state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":false,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-cd33.log","memory":null,"cpu_us":null,"loadavg":null}
+185: ---
+186: 
+187: START: 2026-10-14 23:45:29 +0200
+188: COMMAND: osctl -j ct mounts ls testct-cd33
+189: END: 2026-10-14 23:45:30 +0200
+190: ELAPSED: 1.11s
+191: STATUS: 0
+192: OUTPUT:
+193: [{"fs":"/tank/ct/testct-cd33/nix/private","mountpoint":"/nix","type":"bind","opts":"bind,create=dir,rw","automount":true,"dataset":"nix","map_ids":true,"temporary":false}]
+194: ---
+195: 
+196: START: 2026-10-14 23:45:30 +0200
+197: COMMAND: set -e
+198: mkdir -p "/tank/ct/testct-cd33/nix/private/store"
+199: while IFS= read -r store_path; do
+200:   cp -a "$store_path" "/tank/ct/testct-cd33/nix/private/store/"
+201: done < /nix/store/7095fqkyns8my87jh2kgkyiml5k35kr8-closure-info/store-paths
+202: cp /nix/store/7095fqkyns8my87jh2kgkyiml5k35kr8-closure-info/registration "/tank/ct/testct-cd33/nix/private/nix-path-registration"
+203: END: 2026-10-14 23:46:57 +0200
+204: ELAPSED: 86.81s
+205: STATUS: 0
+206: OUTPUT:
+207: 
+208: ---
+209: 
+210: START: 2026-10-14 23:46:57 +0200
+211: COMMAND: mkdir -p /tank/ct/testct-cd33/nix/private/var/nix/profiles /tank/ct/testct-cd33/private/sbin /tank/ct/testct-cd33/private/etc /tank/ct/testct-cd33/private/var
+212: END: 2026-10-14 23:46:57 +0200
+213: ELAPSED: 0.07s
+214: STATUS: 0
+215: OUTPUT:
+216: 
+217: ---
+
+=== /tmp/ni.ljm4450b/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-shell.log:242-264 ===
+242: OUTPUT:
+243: 
+244: ---
+245: 
+246: START: 2026-10-14 23:46:59 +0200
+247: COMMAND: osctl ct set impermanence testct-cd33
+248: END: 2026-10-14 23:47:00 +0200
+249: ELAPSED: 1.2s
+250: STATUS: 0
+251: OUTPUT:
+252: 
+253: ---
+254: 
+255: START: 2026-10-14 23:47:00 +0200
+256: COMMAND: osctl ct start testct-cd33
+257: END: 2026-10-14 23:47:05 +0200
+258: ELAPSED: 4.95s
+259: STATUS: 0
+260: OUTPUT:
+261: Starting container
+262: Connecting console
+263: Waiting for the container to start
+264: ---
+
+=== /tmp/ni.ljm4450b/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-shell.log:742-766 ===
+742: REPLY_BUFFER_BYTES: 44
+743: REPLY_BUFFER_PREFIX: "\n:osvm-3bd622bc7f6b6621d040a16186b3815d:124\n"
+744: ---
+745: 
+746: START: 2026-10-14 23:50:05 +0200
+747: COMMAND: { timeout -k 2 20 osctl ct exec testct-cd33 bash -c systemctl\ --failed\ --plain\ --no-pager; } 2>&1 | head -c 32768
+748: END: 2026-10-14 23:50:08 +0200
+749: ELAPSED: 2.83s
+750: STATUS: 0
+751: OUTPUT:
+752: UNIT                LOAD   ACTIVE SUB    DESCRIPTION
+753: dbus-broker.service loaded failed failed D-Bus System Message Bus
+754: dhcpcd.service      loaded failed failed DHCP Client
+755: nscd.service        loaded failed failed Name Service Cache Daemon (nsncd)
+756: dbus.socket         loaded failed failed D-Bus System Message Bus Socket
+757: 
+758: Legend: LOAD   → Reflects whether the unit definition was properly loaded.
+759:         ACTIVE → The high-level unit activation state, i.e. generalization of SUB.
+760:         SUB    → The low-level unit activation state, values depend on unit type.
+761: 
+762: 4 loaded units listed.
+763: ---
+764: 
+765: START: 2026-10-14 23:50:08 +0200
+766: COMMAND: { timeout -k 2 20 osctl ct exec testct-cd33 bash -c journalctl\ -b\ --no-pager\ -n\ 160\ -o\ short-iso-precise; } 2>&1 | head -c 32768
+
+=== /tmp/ni.ljm4450b/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-shell.log:1070-1117 ===
+1070: 2026-10-14T21:47:10.555055+00:00 persistence-fixture (dhcpcd)[444]: dhcpcd.service: Failed to execute /nix/store/c3injdhy11811g764bj0fdd6w5pyfm3m-dhcpcd-10.3.1/sbin/dhcpcd: Permission denied
+1071: 2026-10-14T21:47:10.555238+00:00 persistence-fixture (dhcpcd)[444]: dhcpcd.service: Failed at step EXEC spawning /nix/store/c3injdhy11811g764bj0fdd6w5pyfm3m-dhcpcd-10.3.1/sbin/dhcpcd: Permission denied
+1072: 2026-10-14T21:47:10.559879+00:00 persistence-fixture systemd[1]: dhcpcd.service: Control process exited, code=exited, status=203/EXEC
+1073: 2026-10-14T21:47:10.560707+00:00 persistence-fixture systemd[1]: dhcpcd.service: Failed with result 'exit-code'.
+1074: 2026-10-14T21:47:10.562394+00:00 persistence-fixture systemd[1]: Failed to start DHCP Client.
+1075: 2026-10-14T21:47:10.911937+00:00 persistence-fixture systemd[1]: dhcpcd.service: Scheduled restart job, restart counter is at 4.
+1076: 2026-10-14T21:47:10.916471+00:00 persistence-fixture systemd[1]: dhcpcd.service: bpf-firewall: Attaching egress BPF program to cgroup /sys/fs/cgroup/system.slice/dhcpcd.service failed: Invalid argument
+1077: 2026-10-14T21:47:10.920913+00:00 persistence-fixture systemd[1]: Starting DHCP Client...
+1078: 2026-10-14T21:47:11.131305+00:00 persistence-fixture (dhcpcd)[454]: dhcpcd.service: Failed to execute /nix/store/c3injdhy11811g764bj0fdd6w5pyfm3m-dhcpcd-10.3.1/sbin/dhcpcd: Permission denied
+1079: 2026-10-14T21:47:11.131438+00:00 persistence-fixture (dhcpcd)[454]: dhcpcd.service: Failed at step EXEC spawning /nix/store/c3injdhy11811g764bj0fdd6w5pyfm3m-dhcpcd-10.3.1/sbin/dhcpcd: Permission denied
+1080: 2026-10-14T21:47:11.139886+00:00 persistence-fixture systemd[1]: dhcpcd.service: Control process exited, code=exited, status=203/EXEC
+1081: 2026-10-14T21:47:11.141049+00:00 persistence-fixture systemd[1]: dhcpcd.service: Failed with result 'exit-code'.
+1082: 2026-10-14T21:47:11.143224+00:00 persistence-fixture systemd[1]: Failed to start DHCP Client.
+1083: 2026-10-14T21:47:11.490899+00:00 persistence-fixture systemd[1]: dhcpcd.service: Scheduled restart job, restart counter is at 5.
+1084: 2026-10-14T21:47:11.491092+00:00 persistence-fixture systemd[1]: dhcpcd.service: Start request repeated too quickly.
+1085: 2026-10-14T21:47:11.491246+00:00 persistence-fixture systemd[1]: dhcpcd.service: Failed with result 'start-limit-hit'.
+1086: 2026-10-14T21:47:11.491420+00:00 persistence-fixture systemd[1]: Failed to start DHCP Client.
+1087: 
+1088: --- failed unit nscd.service ---
+1089: × nscd.service - Name Service Cache Daemon (nsncd)
+1090:      Loaded: loaded (/etc/systemd/system/nscd.service; enabled; preset: ignored)
+1091:      Active: failed (Result: start-limit-hit) since Wed 2026-10-14 21:47:09 UTC; 3min 5s ago
+1092:  Invocation: a734614cfa0a4cb2b330a4a4c8977d47
+1093:     Process: 294 ExecStart=/nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd (code=killed, signal=TERM)
+1094:    Main PID: 294 (code=killed, signal=TERM)
+1095:          IP: 0B in, 0B out
+1096:    Mem peak: 1.7M
+1097:         CPU: 14ms
+1098: 
+1099: Oct 14 21:47:09 persistence-fixture systemd[1]: nscd.service: Scheduled restart job immediately on client request, restart counter is at 2.
+1100: Oct 14 21:47:09 persistence-fixture systemd[1]: nscd.service: bpf-firewall: Attaching egress BPF program to cgroup /sys/fs/cgroup/system.slice/nscd.service failed: Invalid argument
+1101: Oct 14 21:47:09 persistence-fixture systemd[1]: Starting Name Service Cache Daemon (nsncd)...
+1102: Oct 14 21:47:09 persistence-fixture systemd[1]: nscd.service: Deactivated successfully.
+1103: Oct 14 21:47:09 persistence-fixture systemd[1]: Stopped Name Service Cache Daemon (nsncd).
+1104: Oct 14 21:47:09 persistence-fixture systemd[1]: nscd.service: Start request repeated too quickly.
+1105: Oct 14 21:47:09 persistence-fixture systemd[1]: nscd.service: Failed with result 'start-limit-hit'.
+1106: Oct 14 21:47:09 persistence-fixture systemd[1]: Failed to start Name Service Cache Daemon (nsncd).
+1107: ActiveState=failed
+1108: SubState=failed
+1109: Result=start-limit-hit
+1110: ExecMainCode=2
+1111: ExecMainStatus=15
+1112: 2026-10-14T21:47:08.972309+00:00 persistence-fixture systemd[1]: nscd.service: bpf-firewall: Attaching egress BPF program to cgroup /sys/fs/cgroup/system.slice/nscd.service failed: Invalid argument
+1113: 2026-10-14T21:47:08.975037+00:00 persistence-fixture systemd[1]: Starting Name Service Cache Daemon (nsncd)...
+1114: 2026-10-14T21:47:09.037713+00:00 persistence-fixture (nsncd)[246]: nscd.service: Failed to execute /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+1115: 2026-10-14T21:47:09.037876+00:00 persistence-fixture (nsncd)[246]: nscd.service: Failed at step EXEC spawning /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+1116: 2026-10-14T21:47:09.044003+00:00 persistence-fixture systemd[1]: nscd.service: Main process exited, code=exited, status=203/EXEC
+1117: 2026-10-14T21:47:09.044527+00:00 persistence-fixture systemd[1]: nscd.service: Failed with result 'exit-code'.
+
+=== /tmp/ni.ljm4450b/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-shell.log:3090-3097 ===
+3090: 2026-10-14T23:47:03.213723+02:00 vpsadminos osctld[2322]: [#<OsCtld::Devices::V2::BpfProgram:0x0000738478b1a920>] devcgprog attach /run/osctl/bpf/osctl/progs/946a3e34004 /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-cd33/ct.testct-cd33 /run/osctl/bpf/osctl/pools/tank/links/devcg-946a3e34004-on-run-osctl-cgroup-osctl-pool\x2etank-group\x2edefault-user\x2etestct\x2dcd33-ct\x2etestct\x2dcd33
+3091: 2026-10-14T23:47:03.243985+02:00 vpsadminos osctld[2322]: [#<OsCtld::Mount::SharedDir:0x0000738476f52ad0>] mount --bind "/run/osctl/pools/tank/mounts/testct-cd33" "/run/osctl/pools/tank/mounts/testct-cd33"
+3092: 2026-10-14T23:47:03.283064+02:00 vpsadminos osctld[2322]: [#<OsCtld::Mount::SharedDir:0x0000738476f52ad0>] mount --make-rshared "/run/osctl/pools/tank/mounts/testct-cd33"
+3093: 2026-10-14T23:47:03.330990+02:00 vpsadminos osctld[2322]: [bpf-fs] mount -t bpf -o nosuid,nodev,noexec,uid\=1000000,gid\=1000000,mode\=700 bpf /run/osctl/ct-bpf/tank/testct-cd33
+3094: 2026-10-14T23:47:03.383183+02:00 vpsadminos osctld[2322]: [bpf-fs] mount --make-rprivate /run/osctl/ct-bpf/tank/testct-cd33
+3095: 2026-10-14T23:47:03.729341+02:00 vpsadminos osctld[2322]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_pre_mount'
+3096: 2026-10-14T23:47:03.735222+02:00 vpsadminos osctld[2322]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:testct-cd33
+3097: 2026-10-14T23:47:03.741367+02:00 vpsadminos osctld[2322]: [#<OsCtld::Mount::SharedDir:0x0000738476f52ad0>] mount --bind -o X-mount.idmap\=/proc/3418/ns/user /tank/ct/testct-cd33.impermanence-6b3723/private /run/osctl/pools/tank/mounts/testct-cd33/90e3d3e337d424b741bfa61a4475288d39fd8ec37829f5e312f5223bcf91cd5e
+
+=== /tmp/ni.ljm4450b/os-test-dist-config__nixos-persistence-upgrade-8c45b496/test-runner.log:810-851 ===
+810: × dbus-broker.service - D-Bus System Message Bus
+811:      Loaded: loaded (/etc/systemd/system/dbus-broker.service; enabled; preset: ignored)
+812:     Drop-In: /nix/store/3yyx65lrjh1nhsd0k1z8byzi58kwskxv-system-units/dbus-broker.service.d
+813:              └─overrides.conf
+814:      Active: failed (Result: start-limit-hit) since Wed 2026-10-14 21:47:09 UTC; 3min 4s ago
+815:    Duration: 9ms
+816:  Invocation: 5847e5bf4e0c42af9dbd148af488bc8f
+817: TriggeredBy: × dbus.socket
+818:        Docs: man:dbus-broker-launch(1)
+819:     Process: 426 ExecStart=/nix/store/yly12cgk8diwbba5pjdr7g0b3hk8db0c-dbus-broker-37/bin/dbus-broker-launch --scope system --audit (code=exited, status=1/FAILURE)
+820:    Main PID: 426 (code=exited, status=1/FAILURE)
+821:          IP: 0B in, 0B out
+822:    Mem peak: 1.9M
+823:         CPU: 88ms
+824: 
+825: Oct 14 21:47:09 persistence-fixture systemd[1]: Starting D-Bus System Message Bus...
+826: Oct 14 21:47:09 persistence-fixture dbus-broker-launch[426]: Looking up NSS user entry for 'systemd-timesync'...
+827: Oct 14 21:47:09 persistence-fixture dbus-broker-launch[426]: NSS returned no entry for 'systemd-timesync'
+828: Oct 14 21:47:09 persistence-fixture dbus-broker-launch[426]: Invalid user-name in /nix/store/gh70j08s81fcww0hzszjjvh7p39m0jir-system-path/share/dbus-1/system.d/org.freedesktop.timesync1.conf +16: user="systemd-timesync"
+829: Oct 14 21:47:09 persistence-fixture systemd[1]: Started D-Bus System Message Bus.
+830: Oct 14 21:47:09 persistence-fixture dbus-broker-launch[430]: ERROR launcher_run_child @ ../src/launch/launcher.c +366: Permission denied
+831: Oct 14 21:47:09 persistence-fixture dbus-broker-launch[426]: ERROR service_add @ ../src/launch/service.c +1011: Transport endpoint is not connected
+832: Oct 14 21:47:09 persistence-fixture dbus-broker-launch[426]:       launcher_add_services @ ../src/launch/launcher.c +823
+833: Oct 14 21:47:09 persistence-fixture dbus-broker-launch[426]:       launcher_run @ ../src/launch/launcher.c +1437
+834: Oct 14 21:47:09 persistence-fixture dbus-broker-launch[426]:       run @ ../src/launch/main.c +152
+835: Oct 14 21:47:09 persistence-fixture dbus-broker-launch[426]:       main @ ../src/launch/main.c +178
+836: Oct 14 21:47:09 persistence-fixture dbus-broker-launch[426]: Exiting due to fatal error: -107
+837: Oct 14 21:47:09 persistence-fixture systemd[1]: dbus-broker.service: Main process exited, code=exited, status=1/FAILURE
+838: Oct 14 21:47:09 persistence-fixture systemd[1]: dbus-broker.service: Failed with result 'exit-code'.
+839: Oct 14 21:47:09 persistence-fixture systemd[1]: dbus-broker.service: Start request repeated too quickly.
+840: Oct 14 21:47:09 persistence-fixture systemd[1]: dbus-broker.service: Failed with result 'start-limit-hit'.
+841: Oct 14 21:47:09 persistence-fixture systemd[1]: Failed to start D-Bus System Message Bus.
+842: ActiveState=failed
+843: SubState=failed
+844: Result=start-limit-hit
+845: ExecMainCode=1
+846: ExecMainStatus=1
+847: 2026-10-14T21:47:09.578502+00:00 persistence-fixture dbus-broker-launch[406]:       launcher_add_services @ ../src/launch/launcher.c +823
+848: 2026-10-14T21:47:09.578502+00:00 persistence-fixture dbus-broker-launch[406]:       launcher_run @ ../src/launch/launcher.c +1437
+849: 2026-10-14T21:47:09.578502+00:00 persistence-fixture dbus-broker-launch[406]:       run @ ../src/launch/main.c +152
+850: 2026-10-14T21:47:09.579050+00:00 persistence-fixture dbus-broker-launch[406]:       main @ ../src/launch/main.c +178
+851: 2026-10-14T21:47:09.579050+00:00 persistence-fixture dbus-broker-launch[406]: Exiting due to fatal error: -107
+
+=== /tmp/ni.ljm4450b/os-test-dist-config__nixos-persistence-upgrade-8c45b496/test-runner.log:950-1019 ===
+950: --- failed unit nscd.service ---
+951: × nscd.service - Name Service Cache Daemon (nsncd)
+952:      Loaded: loaded (/etc/systemd/system/nscd.service; enabled; preset: ignored)
+953:      Active: failed (Result: start-limit-hit) since Wed 2026-10-14 21:47:09 UTC; 3min 5s ago
+954:  Invocation: a734614cfa0a4cb2b330a4a4c8977d47
+955:     Process: 294 ExecStart=/nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd (code=killed, signal=TERM)
+956:    Main PID: 294 (code=killed, signal=TERM)
+957:          IP: 0B in, 0B out
+958:    Mem peak: 1.7M
+959:         CPU: 14ms
+960: 
+961: Oct 14 21:47:09 persistence-fixture systemd[1]: nscd.service: Scheduled restart job immediately on client request, restart counter is at 2.
+962: Oct 14 21:47:09 persistence-fixture systemd[1]: nscd.service: bpf-firewall: Attaching egress BPF program to cgroup /sys/fs/cgroup/system.slice/nscd.service failed: Invalid argument
+963: Oct 14 21:47:09 persistence-fixture systemd[1]: Starting Name Service Cache Daemon (nsncd)...
+964: Oct 14 21:47:09 persistence-fixture systemd[1]: nscd.service: Deactivated successfully.
+965: Oct 14 21:47:09 persistence-fixture systemd[1]: Stopped Name Service Cache Daemon (nsncd).
+966: Oct 14 21:47:09 persistence-fixture systemd[1]: nscd.service: Start request repeated too quickly.
+967: Oct 14 21:47:09 persistence-fixture systemd[1]: nscd.service: Failed with result 'start-limit-hit'.
+968: Oct 14 21:47:09 persistence-fixture systemd[1]: Failed to start Name Service Cache Daemon (nsncd).
+969: ActiveState=failed
+970: SubState=failed
+971: Result=start-limit-hit
+972: ExecMainCode=2
+973: ExecMainStatus=15
+974: 2026-10-14T21:47:08.972309+00:00 persistence-fixture systemd[1]: nscd.service: bpf-firewall: Attaching egress BPF program to cgroup /sys/fs/cgroup/system.slice/nscd.service failed: Invalid argument
+975: 2026-10-14T21:47:08.975037+00:00 persistence-fixture systemd[1]: Starting Name Service Cache Daemon (nsncd)...
+976: 2026-10-14T21:47:09.037713+00:00 persistence-fixture (nsncd)[246]: nscd.service: Failed to execute /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+977: 2026-10-14T21:47:09.037876+00:00 persistence-fixture (nsncd)[246]: nscd.service: Failed at step EXEC spawning /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+978: 2026-10-14T21:47:09.044003+00:00 persistence-fixture systemd[1]: nscd.service: Main process exited, code=exited, status=203/EXEC
+979: 2026-10-14T21:47:09.044527+00:00 persistence-fixture systemd[1]: nscd.service: Failed with result 'exit-code'.
+980: 2026-10-14T21:47:09.045909+00:00 persistence-fixture systemd[1]: Failed to start Name Service Cache Daemon (nsncd).
+981: 2026-10-14T21:47:09.056717+00:00 persistence-fixture systemd[1]: nscd.service: Scheduled restart job immediately on client request, restart counter is at 1.
+982: 2026-10-14T21:47:09.058624+00:00 persistence-fixture systemd[1]: nscd.service: bpf-firewall: Attaching egress BPF program to cgroup /sys/fs/cgroup/system.slice/nscd.service failed: Invalid argument
+983: 2026-10-14T21:47:09.061484+00:00 persistence-fixture systemd[1]: Starting Name Service Cache Daemon (nsncd)...
+984: 2026-10-14T21:47:09.098951+00:00 persistence-fixture (nsncd)[260]: nscd.service: Failed to execute /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+985: 2026-10-14T21:47:09.099072+00:00 persistence-fixture (nsncd)[260]: nscd.service: Failed at step EXEC spawning /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+986: 2026-10-14T21:47:09.104452+00:00 persistence-fixture systemd[1]: nscd.service: Main process exited, code=exited, status=203/EXEC
+987: 2026-10-14T21:47:09.104782+00:00 persistence-fixture systemd[1]: nscd.service: Failed with result 'exit-code'.
+988: 2026-10-14T21:47:09.105648+00:00 persistence-fixture systemd[1]: Failed to start Name Service Cache Daemon (nsncd).
+989: 2026-10-14T21:47:09.111563+00:00 persistence-fixture systemd[1]: nscd.service: Scheduled restart job immediately on client request, restart counter is at 2.
+990: 2026-10-14T21:47:09.112959+00:00 persistence-fixture systemd[1]: nscd.service: bpf-firewall: Attaching egress BPF program to cgroup /sys/fs/cgroup/system.slice/nscd.service failed: Invalid argument
+991: 2026-10-14T21:47:09.115860+00:00 persistence-fixture systemd[1]: Starting Name Service Cache Daemon (nsncd)...
+992: 2026-10-14T21:47:09.137276+00:00 persistence-fixture systemd[1]: nscd.service: Deactivated successfully.
+993: 2026-10-14T21:47:09.137792+00:00 persistence-fixture systemd[1]: Stopped Name Service Cache Daemon (nsncd).
+994: 2026-10-14T21:47:09.144738+00:00 persistence-fixture systemd[1]: nscd.service: Start request repeated too quickly.
+995: 2026-10-14T21:47:09.144795+00:00 persistence-fixture systemd[1]: nscd.service: Failed with result 'start-limit-hit'.
+996: 2026-10-14T21:47:09.145093+00:00 persistence-fixture systemd[1]: Failed to start Name Service Cache Daemon (nsncd).
+997: 
+998: --- failed unit dbus.socket ---
+999: × dbus.socket - D-Bus System Message Bus Socket
+1000:      Loaded: loaded (/etc/systemd/system/dbus.socket; linked; preset: ignored)
+1001:      Active: failed (Result: service-start-limit-hit) since Wed 2026-10-14 21:47:09 UTC; 3min 4s ago
+1002:    Duration: 941ms
+1003:  Invocation: 5442bf1a35ff46b6a2eff71e15e2ab3e
+1004:    Triggers: ● dbus-broker.service
+1005:      Listen: /run/dbus/system_bus_socket (Stream)
+1006: 
+1007: Oct 14 21:47:08 persistence-fixture systemd[1]: Listening on D-Bus System Message Bus Socket.
+1008: Oct 14 21:47:09 persistence-fixture systemd[1]: dbus.socket: Failed with result 'service-start-limit-hit'.
+1009: ActiveState=failed
+1010: SubState=failed
+1011: Result=service-start-limit-hit
+1012: 2026-10-14T21:47:08.950557+00:00 persistence-fixture systemd[1]: Listening on D-Bus System Message Bus Socket.
+1013: 2026-10-14T21:47:09.891780+00:00 persistence-fixture systemd[1]: dbus.socket: Failed with result 'service-start-limit-hit'.
+1014: [2026-10-14 23:50:15 +0200] [1/1] 'upgrade-26.05 old-to-new persistence adoption retains dynamic accounts, maps, data and bind identity' failed in 291.25s
+1015: 
+1016: 1 examples failed:
+1017: upgrade-26.05 old-to-new persistence adoption retains dynamic accounts, maps, data and bind identity
+1018: Timeout occurred while running command 'osctl ct exec testct-cd33 systemctl is-system-running --wait', output: "error: SIGTERM\n"
+1019: 
+
+=== /tmp/ni.ljm4450b/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-failure-diagnostics.log:3453-3478 ===
+3453: 2026-10-14T23:47:03.330990+02:00 vpsadminos osctld[2322]: [bpf-fs] mount -t bpf -o nosuid,nodev,noexec,uid\=1000000,gid\=1000000,mode\=700 bpf /run/osctl/ct-bpf/tank/testct-cd33
+3454: 2026-10-14T23:47:03.378691+02:00 vpsadminos kernel.modprobe: action=deny -q -- bpf_preload
+3455: 2026-10-14T23:47:03.383183+02:00 vpsadminos osctld[2322]: [bpf-fs] mount --make-rprivate /run/osctl/ct-bpf/tank/testct-cd33
+3456: 2026-10-14T23:47:03.438422+02:00 vpsadminos kernel: cgroup namespace loadavg tracking started
+3457: 2026-10-14T23:47:03.729341+02:00 vpsadminos osctld[2322]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_pre_mount'
+3458: 2026-10-14T23:47:03.735222+02:00 vpsadminos osctld[2322]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:testct-cd33
+3459: 2026-10-14T23:47:03.741367+02:00 vpsadminos osctld[2322]: [#<OsCtld::Mount::SharedDir:0x0000738476f52ad0>] mount --bind -o X-mount.idmap\=/proc/3418/ns/user /tank/ct/testct-cd33.impermanence-6b3723/private /run/osctl/pools/tank/mounts/testct-cd33/90e3d3e337d424b741bfa61a4475288d39fd8ec37829f5e312f5223bcf91cd5e
+3460: 2026-10-14T23:47:03.760501+02:00 vpsadminos osctld[2322]: [#<OsCtld::Mount::SharedDir:0x0000738476f52ad0>] mount --bind -o X-mount.idmap\=/proc/3418/ns/user /tank/ct/testct-cd33/nix/private /run/osctl/pools/tank/mounts/testct-cd33/beaef6fdff172c47c8cc32a6fe0714558d6cc68d00b5461284b9be0961504721
+3461: 2026-10-14T23:47:03.786341+02:00 vpsadminos osctld[2322]: [#<OsCtld::Mount::SharedDir:0x0000738476f52ad0>] mount --bind -o X-mount.idmap\=/proc/3418/ns/user /tank/ct/testct-cd33/private /run/osctl/pools/tank/mounts/testct-cd33/ceb664662aa4e575740d2f88936fb0688f486afd29bb6e20ac17f186a1b7b11b
+3462: 2026-10-14T23:47:04.088325+02:00 vpsadminos osctld[2322]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_post_mount'
+3463: 2026-10-14T23:47:04.093557+02:00 vpsadminos osctld[2322]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:testct-cd33
+3464: 2026-10-14T23:47:04.094606+02:00 vpsadminos osctld[2322]: [#<OsCtld::Mount::SharedDir:0x0000738476f52ad0>] umount "/run/osctl/pools/tank/mounts/testct-cd33/90e3d3e337d424b741bfa61a4475288d39fd8ec37829f5e312f5223bcf91cd5e"
+3465: 2026-10-14T23:47:04.158793+02:00 vpsadminos osctld[2322]: [#<OsCtld::Mount::SharedDir:0x0000738476f52ad0>] umount "/run/osctl/pools/tank/mounts/testct-cd33/beaef6fdff172c47c8cc32a6fe0714558d6cc68d00b5461284b9be0961504721"
+3466: 2026-10-14T23:47:04.208408+02:00 vpsadminos osctld[2322]: [#<OsCtld::Mount::SharedDir:0x0000738476f52ad0>] umount "/run/osctl/pools/tank/mounts/testct-cd33/ceb664662aa4e575740d2f88936fb0688f486afd29bb6e20ac17f186a1b7b11b"
+3467: 2026-10-14T23:47:04.705996+02:00 vpsadminos osctld[2322]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_autodev'
+3468: 2026-10-14T23:47:04.711775+02:00 vpsadminos osctld[2322]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:testct-cd33
+3469: 2026-10-14T23:47:05.017813+02:00 vpsadminos osctld[2322]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_on_start'
+3470: 2026-10-14T23:47:05.059090+02:00 vpsadminos osctld[881]: D, [2026-10-14T23:47:05.056093 #3454] DEBUG -- : [testct-cd33] Using OsCtld::DistConfig::Distributions::NixOS::Configurator for nixos
+3471: 2026-10-14T23:47:05.059440+02:00 vpsadminos osctld[881]: D, [2026-10-14T23:47:05.057966 #3454] DEBUG -- : [testct-cd33] Using distribution-specific network configuration
+3472: 2026-10-14T23:47:05.174562+02:00 vpsadminos osctld[2322]: [monitor] Container tank:testct-cd33 entered state RUNNING
+3473: 2026-10-14T23:47:05.223323+02:00 vpsadminos kernel: [ testct-b13e ] booting system configuration /nix/store/hnpdj50cvl8dg8x7mh6ir4adl7vd0wk1-nixos-system-persistence-fixture-26.05pre-git
+3474: 2026-10-14T23:47:05.340297+02:00 vpsadminos kernel: [ testct-b13e ] stage-2-init: running activation script...
+3475: 2026-10-14T23:47:05.736458+02:00 vpsadminos kernel: [ testct-b13e ] stage-2-init: Warning: Source directory '/persistent/var/lib' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0755'.
+3476: 2026-10-14T23:47:05.791177+02:00 vpsadminos kernel: [ testct-b13e ] stage-2-init: Warning: Source directory '/persistent/var/lib/nixos' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0710'.
+3477: 2026-10-14T23:47:05.826327+02:00 vpsadminos kernel: [ testct-b13e ] stage-2-init: Warning: Source directory '/persistent/var/log' does not exist; it will be created for you with the following permissions: owner: 'root:root', mode: '0755'.
+3478: 2026-10-14T23:47:05.890336+02:00 vpsadminos kernel: [ testct-b13e ] stage-2-init: Warning: Source directory '/persistent/var/lib/preservation-test' does not exist; it will be created for you with the following permissions: owner: 'preservation-test:preservation-test', mode: '0750'.
+
+=== /tmp/ni.ljm4450b/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-log.log:1-26 ===
+1: START: 2026-10-14 23:42:08 +0200
+2: ACTION: start
+3: END: 2026-10-14 23:42:08 +0200
+4: ELAPSED: 0.0s
+5: ---
+6: 
+7: START: 2026-10-14 23:50:22 +0200
+8: ACTION: stop
+9: END: 2026-10-14 23:50:22 +0200
+10: ELAPSED: 0.0s
+11: ---
+12: 
+13: START: 2026-10-14 23:50:35 +0200
+14: ACTION: qemu_exit
+15: STATUS: 0
+16: END: 2026-10-14 23:50:35 +0200
+17: ELAPSED: 0.0s
+18: ---
+19: 
+20: START: 2026-10-14 23:50:35 +0200
+21: ACTION: kill
+22: SIGNAL: NONE
+23: END: 2026-10-14 23:50:35 +0200
+24: ELAPSED: 0.0s
+25: ---
+26: 

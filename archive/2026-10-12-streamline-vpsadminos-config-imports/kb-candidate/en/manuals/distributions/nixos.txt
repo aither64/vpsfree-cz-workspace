@@ -1,0 +1,87 @@
+====== NixOS ======
+[[https://nixos.org|NixOS]] is a distribution based on the Nix package manager.
+It allows one to declaratively configure the system and its services. This page
+describes NixOS specifics on vpsFree.cz's VPS. For more information about NixOS
+in general, see its [[https://nixos.org/learn.html|documentation]].
+
+===== Supported versions =====
+We provide templates for the stable releases and continually for unstable.
+
+NixOS is used heavily at vpsFree.cz for its
+[[https://github.com/vpsfreecz/vpsfree-cz-configuration|infrastructure and services]],
+so we make sure that it works reliably. We use mainly the current stable release.
+Our virtualization platform [[manuals:vps:vpsadminos|vpsAdminOS]] is actually
+based on NixOS and nixpkgs.
+
+===== Initial configuration =====
+The VPS is created from a template which contains a minimal system with SSH.
+You can log in using a [[manuals:vps:management#root_password|generated password]]
+or [[manuals:vps:management#ssh_public_keys|deploy your public key]] using vpsAdmin.
+The system can then be configured using :
+
+<code>
+nixos-rebuild switch --flake /etc/nixos#vps
+</code>
+
+Note that our VPS are Linux containers, so there is no boot loader, the kernel is shared
+and some configuration is required for the VPS to work properly. The template handles this by using vpsAdminOS as flake input and importing the necessary module.
+
+It is possible to deploy custom configuration using vpsAdmin on VPS creation and reinstallation,
+see [[manuals:vps:userdata|user data]].
+
+===== Container configuration =====
+For stable NixOS releases, include the compatibility module in your flake's
+''modules'' list:
+
+<code nix>
+vpsadminos.nixosModules.containerStable
+</code>
+
+It selects the module using your ''nixpkgs'' release. When upgrading to another
+registered stable release, keep this import and update the ''nixpkgs'' input.
+Keep the ''vpsadminos'' input up to date too. If its pinned revision does not
+include your release, evaluation fails and lists the available releases.
+''system.stateVersion'' controls compatibility with existing state; it does not
+select this module and normally stays unchanged during a NixOS upgrade.
+
+You can also select a release explicitly or look it up using the release string:
+
+<code nix>
+vpsadminos.nixosModules.containers."26.05"
+vpsadminos.nixosModules.containers.${nixpkgs.lib.trivial.release}
+</code>
+
+Each line is an alternative module import. ''containers'' is a lookup map;
+import a release entry. The older names such as ''container_26_05'' remain
+available. ''nixosModules.container'' is an alias of ''containerStable''.
+For NixOS unstable, explicitly use ''vpsadminos.nixosModules.containerUnstable''.
+The stable selector does not detect the unstable channel.
+
+Existing VPS configurations are not rewritten automatically. If your flake uses
+an older release-specific import, update the vpsAdminOS input and switch the
+import to ''containerStable'' while keeping your nixpkgs pin and stateVersion.
+You can then upgrade nixpkgs separately. For the module reference and the
+standalone-file configuration, see
+[[https://vpsadminos.org/containers/nixos/|NixOS guest configuration]].
+
+===== VPS management =====
+See the [[:home|VPS manuals]] for more information about our infrastructure and possibilities.
+
+===== Impermanence =====
+See [[manuals:distributions:nixos:impermanence]].
+
+===== GitHub API limit =====
+Nixpkgs  are downloaded from [[https://github.com/nixos/nixpkgs|GitHub]] and [[https://nixos.wiki/wiki/Binary_Cache|Binary Cache]]. GitHub does not support IPv6 and rate limits either  [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-unauthenticated-users|per IPv4]] or [[https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api?apiVersion=2026-03-10#primary-rate-limit-for-authenticated-users|per user]].
+After exhausting the API limit, Nix (or rather GitHub API) complains:
+<code>
+error: unable to download 'GITHUB_URL': HTTP error 403 ('')
+
+       response body:
+
+       {"message":"API rate limit exceeded for IP_ADDR. (But here's the good news: Authenticated requests get a higher rate limit. Check out the documentation for more details.)","documentation_url":"https://docs.github.com/rest/overview/resources-in-the-rest-api#rate-limiting"}
+</code>
+The solution is to [[https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token|create personal access token]] (Public repositories, the Permissions could be blank) and enter [[https://search.nixos.org/options?channel=26.05&query=nix.settings&type=options#show=option%253Anix.settings|the configuration]] to Nix:
+<code>
+# configuration.nix
+nix.settings.access-tokens = [ "github.com=github_pat_TokenTokenChangeMe" ];
+</code>

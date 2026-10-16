@@ -1,0 +1,173 @@
+machine: machine
+diagnostic collection failed: OsVm::UnrecoverableTimeoutError: Timeout occurred while running command 'set +e
+
+section() {
+  printf '\n===== %s =====\n' "$*"
+}
+
+run() {
+  section "$*"
+  "$@" 2>&1
+}
+
+run_sh() {
+  section "$1"
+  sh -c "$1" 2>&1
+}
+
+show_file() {
+  file="$1"
+  [ -e "$file" ] || return 0
+  section "$file"
+  cat "$file" 2>&1
+}
+
+show_glob() {
+  pattern="$1"
+
+  for file in $pattern; do
+    [ -e "$file" ] || continue
+    show_file "$file"
+  done
+}
+
+run date -Ins
+run uname -a
+run uptime
+run free -m
+run df -h
+show_glob '/proc/pressure/*'
+# A routed guest can remain running while its host route is unusable.
+# Snapshot route selection and link state before teardown removes the veth.
+run_sh 'timeout 10 ip -o link show'
+run_sh 'timeout 10 ip -4 addr show'
+run_sh 'timeout 10 ip -4 rule show'
+run_sh 'timeout 10 ip -4 route show table all'
+run dmesg -T
+run ps -eo pid,ppid,stat,comm,args
+run ps -eLo pid,tid,stat,wchan:32,comm
+
+# A timed-out module loader can remain running rather than blocked.
+# Prioritize it without letting other blocked threads exhaust the cap.
+section 'module loader and blocked task kernel stacks (at most 32 threads)'
+ps -eLo pid=,tid=,stat=,comm= |
+  awk '
+    $4 ~ /^(insmod|modprobe)$/ {
+      if (loader_count < 32) loaders[++loader_count] = $1 " " $2
+      next
+    }
+    $3 ~ /^D/ && blocked_count < 32 { blocked[++blocked_count] = $1 " " $2 }
+    END {
+      for (i = 1; i <= loader_count; i++) print loaders[i]
+      for (i = 1; i <= blocked_count; i++) print blocked[i]
+    }
+  ' |
+  head -n 32 |
+  while read -r pid tid; do
+    run timeout 2 cat "/proc/$pid/task/$tid/wchan" "/proc/$pid/task/$tid/stack"
+  done
+
+
+# A ps snapshot shows blocked tasks but not what they await. Capture
+# a bounded set of kernel stacks before teardown changes their state.
+section 'D-state and ZFS sync-task kernel stacks'
+ps -eo pid=,stat=,comm= |
+  awk '$2 ~ /^D/ || $3 == "dp_sync_taskq" { print $1, $2, $3 }' |
+  head -n 16 |
+  while read -r pid state comm; do
+    section "/proc/$pid/stack ($state $comm)"
+    timeout 2 cat "/proc/$pid/stack" 2>&1
+  done
+
+run_sh 'sv status /service/*'
+
+if command -v osctl >/dev/null 2>&1; then
+  # RPC clients can block in a Ruby pipe read without entering D-state.
+  # Snapshot them before diagnostic container queries create new workers.
+  section 'osctld Ruby thread backtraces'
+  timeout 10 osctl debug threads ls 2>&1
+  printf 'osctl debug threads ls status=%s\n' "$?"
+
+  run_sh 'timeout 10 osctl pool ls'
+  run_sh 'timeout 10 osctl ct ls'
+  run_sh 'timeout 10 osctl ct ls -H -o pool,id,state,init_pid 2>/dev/null || true'
+
+  # DNS readiness failures need the guest's state, not only host routes.
+  # Avoid the attach helper under investigation; never change networking.
+  section 'Running guest resolver/address/route state'
+  {
+    timeout 10 osctl ct ls -H -o pool,id,state,init_pid
+    printf 'guest PID listing status=%s\n' "$?" >&2
+  } |
+    awk '$3 == "running" && $4 ~ /^[1-9][0-9]*$/ { print $1, $2, $4 }' |
+    head -n 16 |
+    while read -r pool id pid; do
+      section "$pool:$id network (init $pid)"
+      timeout 5 nsenter -t "$pid" -n -- sh -c \
+        'ip -o link show; ip -4 addr show; ip -6 addr show; ip -4 route show table all; ip -6 route show table all' 2>&1
+      section "$pool:$id guest resolver/network/package identity (init $pid)"
+      # Resolve absolute symlinks inside the guest root as well.
+      timeout 2 nsenter -t "$pid" -m -r -- /bin/sh -c \
+        'PATH=/run/current-system/sw/bin:/usr/sbin:/usr/bin:/sbin:/bin
+         for file in /etc/os-release /etc/resolv.conf /etc/nsswitch.conf /etc/network/interfaces /etc/network/interfaces.d/*; do
+           [ -r "$file" ] || continue
+           printf "\n--- %s ---\n" "$file"
+           cat "$file"
+         done
+         printf "\n--- DHCP client executables ---\n"
+         for client in dhcpcd dhclient udhcpc; do command -v "$client"; done
+         if command -v dpkg-query >/dev/null 2>&1; then
+           printf "\n--- DHCP/network/resolver package status ---\n"
+           dpkg-query -s ifupdown dhcpcd-base isc-dhcp-client udhcpc systemd-resolved
+         fi' 2>&1
+      printf 'guest resolver/network/package snapshot status=%s\n' "$?"
+      # Correct DHCP configuration and an installed client do not explain
+      # a missing lease. Keep the service's original startup error too.
+      # Do not filter by boot ID: an invalidated proc bind can change it.
+      section "$pool:$id guest networking journal (init $pid)"
+      timeout -k 1 5 nsenter -t "$pid" -m -r -- /bin/sh -c \
+        'PATH=/run/current-system/sw/bin:/usr/sbin:/usr/bin:/sbin:/bin
+         if command -v journalctl >/dev/null 2>&1; then
+           journalctl --no-pager -n 80 -o short-iso-precise \
+             -u networking.service -u systemd-networkd.service \
+             -u NetworkManager.service -u "dhcpcd*" -u "ifup*"
+         else
+           printf "guest journalctl is unavailable\n"
+         fi' 2>&1
+      printf 'guest networking journal snapshot status=%s\n' "$?"
+    done
+fi
+
+run_sh 'ls -la /run/osctl /run/osctl/pools /service/osctld /var/log /tank/log /tank/log/ct 2>/dev/null'
+
+show_file /var/log/osctld
+show_file /var/log/messages
+show_glob '/tank/log/ct/*'
+show_glob '/tank/log/ct/*.destroyed'
+show_glob '/tmp/osctld-restart-jobs/*'
+show_glob '/tmp/osctld-restart-blocks/*/*'
+'
+/nix/store/0q58ka54v9140x107n0b0cb6apfm0j85-osvm/lib/osvm/shell.rb:426:in 'OsVm::Shell#execute_command'
+/nix/store/0q58ka54v9140x107n0b0cb6apfm0j85-osvm/lib/osvm/shell.rb:180:in 'block (2 levels) in OsVm::Shell#execute'
+/nix/store/0q58ka54v9140x107n0b0cb6apfm0j85-osvm/lib/osvm/shell.rb:174:in 'Thread::Mutex#synchronize'
+/nix/store/0q58ka54v9140x107n0b0cb6apfm0j85-osvm/lib/osvm/shell.rb:174:in 'block in OsVm::Shell#execute'
+/nix/store/m0nfdb4mhfgwkgss4ymyqmvviwy30i6y-ruby-3.4.9/lib/ruby/3.4.0/timeout.rb:185:in 'block in Timeout.timeout'
+/nix/store/m0nfdb4mhfgwkgss4ymyqmvviwy30i6y-ruby-3.4.9/lib/ruby/3.4.0/timeout.rb:192:in 'Timeout.timeout'
+/nix/store/0q58ka54v9140x107n0b0cb6apfm0j85-osvm/lib/osvm/shell.rb:518:in 'OsVm::Shell#with_deadline'
+/nix/store/0q58ka54v9140x107n0b0cb6apfm0j85-osvm/lib/osvm/shell.rb:161:in 'OsVm::Shell#execute'
+/nix/store/0q58ka54v9140x107n0b0cb6apfm0j85-osvm/lib/osvm/machine.rb:473:in 'OsVm::Machine#execute'
+/run/github-runner/runner/vpsadminos/vpsadminos/tests/runner/extensions/vpsadminos_logs.rb:13:in 'VpsadminosFailureLogs.collect'
+/run/github-runner/runner/vpsadminos/vpsadminos/tests/runner/extensions/vpsadminos_logs.rb:189:in 'block (2 levels) in <top (required)>'
+/run/github-runner/runner/vpsadminos/vpsadminos/tests/runner/extensions/vpsadminos_logs.rb:185:in 'Hash#each_value'
+/run/github-runner/runner/vpsadminos/vpsadminos/tests/runner/extensions/vpsadminos_logs.rb:185:in 'block in <top (required)>'
+/nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/hook.rb:31:in 'block in TestRunner::Hook.call'
+/nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/hook.rb:29:in 'Array#each'
+/nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/hook.rb:29:in 'Enumerable#inject'
+/nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/hook.rb:29:in 'TestRunner::Hook.call'
+/nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:561:in 'TestRunner::TestEvaluator#call_after_test_script_hook'
+/nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:110:in 'block (3 levels) in TestRunner::TestEvaluator#run'
+/nix/store/0q58ka54v9140x107n0b0cb6apfm0j85-osvm/lib/osvm/machine.rb:148:in 'OsVm::Machine.with_shell'
+/nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:105:in 'block (2 levels) in TestRunner::TestEvaluator#run'
+/nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:604:in 'block (3 levels) in TestRunner::TestEvaluator#run_script_workers'
+<internal:kernel>:168:in 'Kernel#loop'
+/nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:594:in 'block (2 levels) in TestRunner::TestEvaluator#run_script_workers'

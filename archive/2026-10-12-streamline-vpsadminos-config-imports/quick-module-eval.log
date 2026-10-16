@@ -1,0 +1,30 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos' is dirty
+Successfully installed bundler-4.0.23
+1 gem installed
+Bundle complete! 6 Gemfile dependencies, 44 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+copying path '/nix/store/r5l65vg4gi4dnx54zkwagfb8jmlqniy5-source' from 'https://cache.nixos.org'...
+{"exports":true,"groupedSyntax":true,"guestLibrary":true,"legacy":true,"realReleases":{"24.11":true,"25.11":true,"26.05":true},"selectorMatrix":{"22.11":true,"23.05":true,"23.11":true,"24.05":true,"24.11":true,"25.05":true,"25.11":true,"26.05":true},"unsupported":true}
+error:
+       … while evaluating attribute 'stable'
+         at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/nixos-container-templates-eval.nix:133:3:
+          132| {
+          133|   stable = evaluateTemplate "stable" false;
+             |   ^
+          134|   stableImpermanence = evaluateTemplate "stable" true;
+
+       … while evaluating a branch condition
+         at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/nixos-container-templates-eval.nix:15:28:
+           14|   revision = vpsadminos.rev or (builtins.substring 0 40 vpsadminos.dirtyRev);
+           15|   check = name: condition: if condition then true else throw "NixOS template check failed: ${name}";
+             |                            ^
+           16|   evaluateTemplate =
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: attribute 'dirtyRev' missing
+       at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/nixos-container-templates-eval.nix:14:57:
+           13|   homeManagerNode = lock.nodes.${impermanenceNode.inputs."home-manager"};
+           14|   revision = vpsadminos.rev or (builtins.substring 0 40 vpsadminos.dirtyRev);
+             |                                                         ^
+           15|   check = name: condition: if condition then true else throw "NixOS template check failed: ${name}";

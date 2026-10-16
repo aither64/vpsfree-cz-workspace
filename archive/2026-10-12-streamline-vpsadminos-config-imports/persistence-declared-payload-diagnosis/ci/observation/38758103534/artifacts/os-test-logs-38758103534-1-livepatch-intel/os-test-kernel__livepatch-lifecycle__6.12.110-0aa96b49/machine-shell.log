@@ -1,0 +1,187 @@
+SHELL: 0
+
+START: 2026-10-15 18:27:26 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 18:27:26 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:26 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 18:27:26 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:26 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 18:27:26 +0200
+ELAPSED: 0.04s
+STATUS: 6
+OUTPUT:
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 16:27:27 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+532
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: test "$(uname -r)" = 6.12.110
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: grep -Eq '^vendor_id[[:space:]]*: GenuineIntel$' /proc/cpuinfo
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: grep -m1 '^flags' /proc/cpuinfo | grep -qw vmx
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: test -z "$(ls -A /sys/kernel/livepatch 2>/dev/null)"
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: test -d /sys/module/livepatch_6
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: test -r /sys/fs/nfs/net/nfs_client/shutdown && test -r /sys/fs/nfs/net/nfs_client/shutdown_tree
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: test "$(cat /sys/fs/nfs/net/nfs_client/shutdown)" = 0
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: test "$(cat /sys/fs/nfs/net/nfs_client/shutdown_tree)" = 0
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: /etc/livepatch-lifecycle/kvm-smoke
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: dmesg | tail -n +533
+END: 2026-10-15 18:27:27 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 18:27:27 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 18:27:40 +0200
+ELAPSED: 12.81s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Unable to connect to osctld: socket not found
+Waiting for osctld to prepare for shutdown...... ok
+---
+

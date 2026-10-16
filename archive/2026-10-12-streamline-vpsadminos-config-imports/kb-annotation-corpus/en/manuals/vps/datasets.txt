@@ -1,0 +1,80 @@
+<page>manuals:vps:datasets</page>
+====== Datasets ======
+
+Dataset is a term from the ZFS filesystem that we're using everywhere. You can imagine it as
+a formatted partition on disk containg directories and files. For example, btrfs has
+a similar concept called //subvolumes//.
+
+The dataset in vpsAdmin directly represents the ZFS dataset on the hard drive. Datasets
+are used for VPS (each VPS has its own dataset) and NAS data. A VPS dataset can be used
+the same way as an NAS, but are located in different locations (VPS details and the NAS menu).
+The operations you can carry out with them are the same, such as creating snapshots, restoring
+to snapshots or mounting datasets to VPS.
+
+{{:en:screenshots:vpsadmin:datasets:vps-dataset-list.png?300|}}
+
+Why should we even bother with datasets? Especially because of the option to set
+quotas and ZFS properties for various data/apps.
+
+VpsAdmin allows users to create subdatasets and configure ZFS properties.
+
+{{:navody:vps:dataset.png?300|}}
+
+You can use the properties to optimize database performance, etc. In most cases
+you don’t need to deal with them at all.
+
+Reserved dataset names are: ''private'', ''vpsadmin'', ''branch-*'' and ''tree.*''.
+These names cannot be used.
+
+===== Dataset Size and the Space Taken Up =====
+There are three columns in the list of datasets: //Used space//, //Referenced space//
+and //Available space//. //Used space// includes the space taken up by the dataset, its snapshots
+and all children. //Referenced space// only displays the space that the given dataset takes up,
+neither snapshots nor subsets are included.
+
+//Available space// displays free space in the current dataset in relation to its set quota.
+
+===== Dataset Quotas =====
+//Reference quota// is used for VPS datasets – the space taken up by snapshots
+and subdatasets is not included. On the other hand, NAS datasets use //Quota// – the space
+taken up by snapshots and subdatasets is included. VpsAdmin automatically suggests the correct type of quota depending on the context.
+
+In the case of VPS, we don’t want the space taken up by snapshots to be included in the taken up space
+since this would reduce the VPS drive size by the amount of data
+that all the created snapshots take up.
+Each dataset is separate and it doesn’t share space with its parent datasets, nor with its
+children.
+
+On the other hand, NAS uses the ''Quota'' property, which includes the space taken up
+by snapshots and subdatasets. If snapshots are made on the NAS, they will
+take up space from the total. It plays no role that the NAS subdataset can be
+assigned a bigger quota than the user has at their disposal since it is the quota from
+the top-level dataset that is applied, i.e. in the default state the value is 250 GB.
+
+This means thatin order to create a VPS subdataset, we first need to free up space, i.e.
+another VPS (sub)dataset needs to be shrunk by at least 10 GB. On an NAS, only the quota from the highest-level dataset
+is applied and the subdataset quotas can have any settings.
+
+===== Mount NAS Dataset to a VPS ====
+For VPS using [[manuals:vps:vpsadminos|vpsAdminOS]], create an [[manuals:vps:exports|export]]
+and mount it inside the VPS using NFS.
+
+===== Mounts =====
+vpsAdmin mounts are used only to mount VPS subdatasets.
+NAS datasets and snapshots are mounted using [[manuals:vps:exports|exports]].
+
+Mounts can be seen in the VPS details:
+
+{{:en:screenshots:vpsadmin:datasets:mount-list.png?300|}}
+
+We do not recommend nesting mount points in the incorrect order. The situation when
+a ''one/two'' dataset is mounted above the ''one'' dataset has not been solved.
+
+{{:en:screenshots:vpsadmin:datasets:mount-dataset-form.png?300|}}
+
+Mounts can be temporarily disabled using the “Disable/Enable” button. This setting is
+persistent between VPS restarts.
+
+===== More Information =====
+  * [[manuals:vps:backups|Backups]]
+  * [[manuals:vps:exports|Exports of datasets and snapshots]]

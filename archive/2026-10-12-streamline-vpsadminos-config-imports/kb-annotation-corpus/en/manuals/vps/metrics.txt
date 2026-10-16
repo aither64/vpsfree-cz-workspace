@@ -1,0 +1,19 @@
+====== Metrics for Prometheus ======
+vpsAdmin exports metrics for the monitoring system [[https://prometheus.io|Prometheus]].
+You can add these metrics to your own monitoring setup, whether it runs in your VPS or elsewhere.
+
+The metrics include information about your VPS, such as CPU and memory usage, load average, data transfers, OOM reports, and node status. They also cover your membership, including the date until which it is paid.
+
+To set this up, go to <vpsadmin-nav id="member.metrics-access-tokens.open">**Edit profile** -> **Metrics access tokens**</vpsadmin-nav> in vpsAdmin and create an access token. vpsAdmin will show you a scrape URL to add to your monitoring configuration. VPS status is updated every two minutes, so there is no benefit in fetching the data more frequently. Open the scrape URL in your browser for a complete list of the available metrics.
+
+===== Account security =====
+The metrics also describe the current authentication state of your account. The names below use the default ''vpsadmin_'' prefix:
+
+  * ''vpsadmin_user_password_generation'' is the password version. It increases whenever your password changes, so you can use it to detect a change.
+  * ''vpsadmin_user_password_reset_required'' is ''1'' when you must choose a new password and ''0'' otherwise.
+  * ''vpsadmin_user_multi_factor_auth_enabled'' is ''1'' when multi-factor authentication is enabled for the account and ''0'' otherwise.
+  * ''vpsadmin_user_multi_factor_auth_method_count{method="totp"}'' and ''vpsadmin_user_multi_factor_auth_method_count{method="webauthn"}'' show the number of enabled TOTP authenticators and passkeys.
+
+===== Metrics versioning =====
+The metric ''vpsadmin_metrics_version'' indicates the metrics version, unless you have changed the prefix. The current version is ''1.1''. The first number increases for a backward-incompatible change, for example ''1.0 -> 2.0''. The number after the decimal point may increase when metrics are added without changing the meaning of existing metrics.
+<page>manuals:vps:metrics</page>

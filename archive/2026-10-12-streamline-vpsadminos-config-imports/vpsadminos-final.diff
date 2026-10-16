@@ -1,0 +1,796 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index cd82a55b0..9c33551b9 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -104,6 +104,9 @@ jobs:
+       - name: Check NixOS container image repository module
+         run: nix eval --impure --raw --file tests/nixos-container-image-repository-eval.nix
+ 
++      - name: Check NixOS guest compatibility modules and generated flakes
++        run: bash tests/nixos-container-eval.sh
++
+       - name: Check NixOS disk image reuse
+         run: nix build .#checks.x86_64-linux.nixos-disk-image-reuse --no-link
+ 
+diff --git a/docs/containers/nixos.md b/docs/containers/nixos.md
+new file mode 100644
+index 000000000..c7c7d59db
+--- /dev/null
++++ b/docs/containers/nixos.md
+@@ -0,0 +1,119 @@
++# NixOS guests
++
++NixOS guests need a compatibility module to boot and use networking supplied by
++the vpsAdminOS host. Import it from the vpsAdminOS flake, or download the
++self-contained module for your guest's release.
++
++## Stable flake imports
++
++Use `vpsadminos.nixosModules.containerStable` in the guest's module list:
++
++```nix
++{
++  inputs = {
++    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
++    vpsadminos.url = "github:vpsfreecz/vpsadminos";
++  };
++
++  outputs = { nixpkgs, vpsadminos, ... }: {
++    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++      system = "x86_64-linux";
++      modules = [
++        vpsadminos.nixosModules.containerStable
++        ./configuration.nix
++      ];
++    };
++  };
++}
++```
++
++The selector uses the guest's nixpkgs release. The import can stay unchanged
++when you upgrade the guest to another known stable release. `nixosModules.container` is an equivalent alias.
++
++Selection is independent of `system.stateVersion`. Keep that setting at the
++value appropriate for your installation; changing the guest's nixpkgs release
++does not require changing stateVersion. The vpsAdminOS flake's own nixpkgs input
++also does not determine which guest module is selected.
++
++The release map contains `22.11`, `23.05`, `23.11`, `24.05`,
++`24.11`, `25.05`, `25.11` and `26.05`. These modules remain available for
++compatibility; their availability does not imply upstream security support.
++You can select a release explicitly with a literal key:
++
++```nix
++vpsadminos.nixosModules.containers."26.05"
++```
++
++Or use the guest nixpkgs input's release without converting dots to underscores:
++
++```nix
++vpsadminos.nixosModules.containers.${nixpkgs.lib.trivial.release}
++```
++
++Each leaf is an importable module. `nixosModules.containers` is a lookup map and
++must not itself be imported. Consumers that enumerate `nixosModules` must handle
++this map separately.
++
++An unknown release fails during evaluation. The selector's error names the
++release, lists known releases and advises updating the vpsAdminOS input or
++selecting the explicit unstable module. There is no fallback to unstable.
++Direct lookup of a missing grouped key produces Nix's missing-attribute error.
++
++## Unstable guests
++
++Use `vpsadminos.nixosModules.containerUnstable` with nixpkgs unstable. The stable
++selector uses the release number and cannot identify the source branch. If an
++unstable snapshot reports a known stable release number, the stable selector
++chooses that release's module. A version suffix such as `pre-git` also does not
++reliably identify unstable.
++
++## Existing imports and generated configurations
++
++Existing underscore exports such as `nixosModules.container_24_11` keep their
++exact release-specific behavior. The legacy exports
++`nixosConfigurations.container` and `nixosConfigurations.containerStable` keep
++using the raw latest-stable module, independently of the guest release.
++`nixosConfigurations.containerUnstable` remains the explicit unstable module.
++These legacy values are modules, rather than evaluated NixOS systems.
++
++Stable image templates generate `nixosModules.containerStable`; unstable
++templates generate `nixosModules.containerUnstable`. The ordinary and
++impermanence variants use the same choice. First boot copies configuration files
++only when they are absent, so an image update does not rewrite an existing
++guest configuration.
++
++The grouped exports and release-aware selectors require a vpsAdminOS revision
++that provides this interface. Earlier revisions accept `containerStable` but
++use their latest-stable module. Keep the generated lockfile, or lock an
++appropriate published revision before relying on the selector.
++
++## Standalone module
++
++For a configuration without the flake import, download the versioned stable file
++matching the guest's release, for example:
++
++```sh
++curl -o /etc/nixos/vpsadminos.nix \
++  https://raw.githubusercontent.com/vpsfreecz/vpsadminos/staging/os/lib/nixos-container/stable/vpsadminos-26.05.nix
++```
++
++Import `./vpsadminos.nix` from the guest configuration. The raw versioned files,
++`stable/vpsadminos.nix` (latest stable), and `unstable/vpsadminos.nix` are each
++self-contained; no companion files are required. A downloaded file cannot
++automatically select another release. The root
++`os/lib/nixos-container/vpsadminos.nix` is a guard and is not the download target.
++
++## Changing an existing guest import
++
++Update the vpsAdminOS input to a revision with this interface, change the import,
++and evaluate the configuration with the existing guest nixpkgs pin and
++stateVersion before activation. Compare the result with the matching explicit
++release module. Guests adopt independently when rebuilt; no coordinated update
++of hosts or running nodes is required.
++
++Keep the prior lockfile and NixOS generations for recovery. Reverting to a
++vpsAdminOS revision without grouped exports also requires reverting grouped
++imports. To restore former latest-stable behavior for a modern generic import,
++restore the prior vpsAdminOS pin or choose an appropriate explicit module.
++The import change introduces no persisted state or data conversion. A separate
++NixOS release upgrade retains that release's normal rollback constraints.
+diff --git a/flake.nix b/flake.nix
+index dd8e63bed..6c15871ae 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -52,14 +52,33 @@
+       nixpkgsRevisionFor =
+         pkgs: if toString pkgs.path == toString nixpkgs.outPath then nixpkgsRevision else null;
+       containerStableModule = import ./os/lib/nixos-container/stable/vpsadminos.nix;
+-      containerStable2211Module = import ./os/lib/nixos-container/stable/vpsadminos-22.11.nix;
+-      containerStable2305Module = import ./os/lib/nixos-container/stable/vpsadminos-23.05.nix;
+-      containerStable2311Module = import ./os/lib/nixos-container/stable/vpsadminos-23.11.nix;
+-      containerStable2405Module = import ./os/lib/nixos-container/stable/vpsadminos-24.05.nix;
+-      containerStable2411Module = import ./os/lib/nixos-container/stable/vpsadminos-24.11.nix;
+-      containerStable2505Module = import ./os/lib/nixos-container/stable/vpsadminos-25.05.nix;
+-      containerStable2511Module = import ./os/lib/nixos-container/stable/vpsadminos-25.11.nix;
+-      containerStable2605Module = import ./os/lib/nixos-container/stable/vpsadminos-26.05.nix;
++      containerReleaseModules = {
++        "22.11" = import ./os/lib/nixos-container/stable/vpsadminos-22.11.nix;
++        "23.05" = import ./os/lib/nixos-container/stable/vpsadminos-23.05.nix;
++        "23.11" = import ./os/lib/nixos-container/stable/vpsadminos-23.11.nix;
++        "24.05" = import ./os/lib/nixos-container/stable/vpsadminos-24.05.nix;
++        "24.11" = import ./os/lib/nixos-container/stable/vpsadminos-24.11.nix;
++        "25.05" = import ./os/lib/nixos-container/stable/vpsadminos-25.05.nix;
++        "25.11" = import ./os/lib/nixos-container/stable/vpsadminos-25.11.nix;
++        "26.05" = import ./os/lib/nixos-container/stable/vpsadminos-26.05.nix;
++      };
++      containerReleaseAliases = nixpkgs.lib.mapAttrs' (release: module: {
++        name = "container_${nixpkgs.lib.replaceStrings [ "." ] [ "_" ] release}";
++        value = module;
++      }) containerReleaseModules;
++      containerStableSelector =
++        { lib, ... }:
++        {
++          # Imports must use the guest evaluator's lib, before config is available.
++          imports = [
++            (containerReleaseModules.${lib.trivial.release} or (throw (
++              "vpsAdminOS: unsupported stable NixOS release '${lib.trivial.release}'. "
++              + "Known stable releases: ${nixpkgs.lib.concatStringsSep ", " (builtins.attrNames containerReleaseModules)}. "
++              + "Update the vpsadminos input, or explicitly select nixosModules.containerUnstable when using unstable."
++            ))
++            )
++          ];
++        };
+       containerUnstableModule = import ./os/lib/nixos-container/unstable/vpsadminos.nix;
+       testFramework =
+         let
+@@ -242,18 +261,12 @@
+             };
+           };
+ 
+-        container = containerStableModule;
+-        containerStable = containerStableModule;
+-        container_22_11 = containerStable2211Module;
+-        container_23_05 = containerStable2305Module;
+-        container_23_11 = containerStable2311Module;
+-        container_24_05 = containerStable2405Module;
+-        container_24_11 = containerStable2411Module;
+-        container_25_05 = containerStable2505Module;
+-        container_25_11 = containerStable2511Module;
+-        container_26_05 = containerStable2605Module;
++        containers = containerReleaseModules;
++        container = containerStableSelector;
++        containerStable = containerStableSelector;
+         containerUnstable = containerUnstableModule;
+-      };
++      }
++      // containerReleaseAliases;
+ 
+       nixosConfigurations = {
+         container = containerStableModule;
+diff --git a/image-scripts/tests/nixos_rebuild.sh b/image-scripts/tests/nixos_rebuild.sh
+index 4ea3b1122..7bc66fec9 100644
+--- a/image-scripts/tests/nixos_rebuild.sh
++++ b/image-scripts/tests/nixos_rebuild.sh
+@@ -52,5 +52,74 @@ wait_for_network || fail "network unreachable"
+ wait_for_flake || fail "flake configuration not created"
+ wait_for_dns || fail "DNS not working"
+ 
++if [ "$VARIANT" == "impermanence" ] ; then
++	machine_id=$(osctl ct exec $CTID cat /etc/machine-id) \
++		|| fail "unable to read initial machine-id"
++	[ -n "$machine_id" ] || fail "empty initial machine-id"
++
++	# Add an allocated system identity and persistent payload to the generated
++	# configuration, leaving its original persistence settings and imports intact.
++	osctl ct exec $CTID bash -c 'cat > /etc/nixos/preservation-test.nix <<"EOF"
++{ ... }:
++{
++  users.groups.preservation-test = {};
++  users.users.preservation-test = {
++    isSystemUser = true;
++    group = "preservation-test";
++  };
++  environment.persistence."/persistent".directories = [
++    "/var/lib/preservation-test"
++  ];
++}
++EOF
++sed -i "/^{$/a\  imports = [ ./preservation-test.nix ];" /etc/nixos/configuration.nix' \
++		|| fail "unable to configure impermanence preservation fixture"
++fi
++
+ osctl ct exec $CTID nixos-rebuild switch --flake /etc/nixos#vps \
+ 	|| fail "unable to run nixos-rebuild switch"
++
++if [ "$VARIANT" == "impermanence" ] ; then
++	osctl ct exec $CTID bash -c '
++printf "%s\n" "vpsadminos-impermanence-preservation" > /var/lib/preservation-test/payload
++chown preservation-test:preservation-test /var/lib/preservation-test/payload
++' || fail "unable to create impermanence payload"
++
++	[ "$(osctl ct exec $CTID cat /etc/machine-id)" == "$machine_id" ] \
++		|| fail "machine-id changed after initial rebuild"
++	identity=$(osctl ct exec $CTID id -u preservation-test) \
++		|| fail "unable to read fixture UID"
++	group_identity=$(osctl ct exec $CTID id -g preservation-test) \
++		|| fail "unable to read fixture GID"
++
++	function test_preservation {
++		[ "$(osctl ct exec $CTID cat /etc/machine-id)" == "$machine_id" ] \
++			|| fail "machine-id changed after $1"
++		[ "$(osctl ct exec $CTID id -u preservation-test)" == "$identity" ] \
++			|| fail "fixture UID changed after $1"
++		[ "$(osctl ct exec $CTID id -g preservation-test)" == "$group_identity" ] \
++			|| fail "fixture GID changed after $1"
++		[ "$(osctl ct exec $CTID cat /var/lib/preservation-test/payload)" == "vpsadminos-impermanence-preservation" ] \
++			|| fail "persistent payload changed after $1"
++		[ "$(osctl ct exec $CTID stat -c %u:%g /var/lib/preservation-test/payload)" == "$identity:$group_identity" ] \
++			|| fail "persistent payload ownership changed after $1"
++	}
++
++	# An earlier-sorting identity changes fresh allocation order. Without the
++	# persisted UID/GID maps, a restart could otherwise allocate the same IDs
++	# accidentally and hide a regression.
++	osctl ct exec $CTID bash -c 'sed -i "/^}$/i\  users.groups.a-preservation-test = {};\n  users.users.a-preservation-test = { isSystemUser = true; group = \"a-preservation-test\"; };" /etc/nixos/preservation-test.nix' \
++		|| fail "unable to extend allocated identity fixture"
++	osctl ct exec $CTID nixos-rebuild switch --flake /etc/nixos#vps \
++		|| fail "unable to rebuild impermanence fixture"
++	test_preservation rebuild
++fi
++
++osctl ct restart $CTID || fail "unable to restart rebuilt container"
++wait_for_network || fail "network unreachable after restart"
++wait_for_flake || fail "flake configuration missing after restart"
++wait_for_dns || fail "DNS not working after restart"
++
++if [ "$VARIANT" == "impermanence" ] ; then
++	test_preservation restart
++fi
+diff --git a/mkdocs.yml b/mkdocs.yml
+index e8e87134a..74d8eb016 100644
+--- a/mkdocs.yml
++++ b/mkdocs.yml
+@@ -12,6 +12,7 @@ nav:
+     - Resources: 'user-guide/resources.md'
+     - Mounts: 'user-guide/mounts.md'
+ - Containers:
++    - NixOS guests: 'containers/nixos.md'
+     - User namespaces: 'containers/user-namespaces.md'
+     - Administration: 'containers/administration.md'
+     - Datasets: 'containers/datasets.md'
+diff --git a/os/lib/nixos-container/stable/impermanence.nix b/os/lib/nixos-container/stable/impermanence.nix
+index 1a0e2b029..8712a3f29 100644
+--- a/os/lib/nixos-container/stable/impermanence.nix
++++ b/os/lib/nixos-container/stable/impermanence.nix
+@@ -14,7 +14,6 @@
+   ...
+ }:
+ let
+-  containerModule = "container_${lib.replaceStrings [ "." ] [ "_" ] lib.trivial.release}";
+   impermanenceModule = impermanence;
+   flakeClone = import ../template-flake.nix {
+     inherit
+@@ -23,7 +22,7 @@ let
+       nixpkgsNode
+       pkgs
+       ;
+-    inherit containerModule;
++    containerModule = "containerStable";
+     includeImpermanence = true;
+   };
+   flakeLockClone = import ../template-flake-lock.nix {
+diff --git a/os/lib/nixos-container/stable/minimal.nix b/os/lib/nixos-container/stable/minimal.nix
+index 1fa13838d..02b9e4144 100644
+--- a/os/lib/nixos-container/stable/minimal.nix
++++ b/os/lib/nixos-container/stable/minimal.nix
+@@ -13,14 +13,13 @@
+   ...
+ }:
+ let
+-  containerModule = "container_${lib.replaceStrings [ "." ] [ "_" ] lib.trivial.release}";
+   flakeClone = import ../template-flake.nix {
+     inherit
+       lib
+       nixpkgsNode
+       pkgs
+       ;
+-    inherit containerModule;
++    containerModule = "containerStable";
+   };
+   flakeLockClone = import ../template-flake-lock.nix {
+     inherit
+diff --git a/tests/fixtures/nixos-container-releases.nix b/tests/fixtures/nixos-container-releases.nix
+new file mode 100644
+index 000000000..808ef8e2f
+--- /dev/null
++++ b/tests/fixtures/nixos-container-releases.nix
+@@ -0,0 +1,32 @@
++{ vpsadminos }:
++let
++  # Source fixtures resolved from the official nixos-24.11 and nixos-25.11
++  # branches on 2026-10-14. Keep production flake inputs and locks unchanged.
++  historical =
++    locked:
++    let
++      source = builtins.fetchTree (
++        {
++          type = "github";
++          owner = "NixOS";
++          repo = "nixpkgs";
++        }
++        // locked
++      );
++    in
++    # getFlake requires a context-free locator. fetchTree has already fetched
++    # and hash-verified this immutable source; only the locator loses context.
++    builtins.getFlake (builtins.unsafeDiscardStringContext "path:${source.outPath}");
++in
++{
++  "24.11" = historical {
++    rev = "50ab793786d9de88ee30ec4e4c24fb4236fc2674";
++    narHash = "sha256-/bVBlRpECLVzjV19t5KMdMFWSwKLtb5RyXdjz3LJT+g=";
++  };
++  "25.11" = historical {
++    rev = "b6018f87da91d19d0ab4cf979885689b469cdd41";
++    narHash = "sha256-twXPFqFsrrY5r28Zh7Homgcp2gUMBgQ6WDS98Q/3xFI=";
++  };
++  "26.05" = vpsadminos.inputs.nixpkgs;
++  unstable = vpsadminos.inputs.nixpkgsUnstable;
++}
+diff --git a/tests/nixos-container-eval.sh b/tests/nixos-container-eval.sh
+new file mode 100644
+index 000000000..79a1e344c
+--- /dev/null
++++ b/tests/nixos-container-eval.sh
+@@ -0,0 +1,30 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++cd "$(dirname "${BASH_SOURCE[0]}")/.."
++
++nix eval --impure --json --file tests/nixos-container-modules-eval.nix
++nix eval --impure --json --file tests/nixos-container-templates-eval.nix
++nix eval --impure --json --file tests/nixos-container-standalone-eval.nix
++
++error_log=$(mktemp)
++trap 'rm -f "$error_log"' EXIT
++for release in 21.11 99.99 26_05 unstable ''; do
++  if nix eval --impure --json --file tests/nixos-container-unsupported-eval.nix \
++    --apply "select: select \"$release\"" 2>"$error_log"; then
++    echo "Unsupported release $release unexpectedly succeeded" >&2
++    exit 1
++  fi
++  error_text=$(cat "$error_log")
++  for expected in \
++    "unsupported stable NixOS release '$release'" \
++    'Known stable releases: 22.11, 23.05, 23.11, 24.05, 24.11, 25.05, 25.11, 26.05' \
++    'Update the vpsadminos input' \
++    'nixosModules.containerUnstable'; do
++    if [[ "$error_text" != *"$expected"* ]]; then
++      cat "$error_log" >&2
++      echo "Missing unsupported-release guidance: $expected" >&2
++      exit 1
++    fi
++  done
++done
+diff --git a/tests/nixos-container-modules-eval.nix b/tests/nixos-container-modules-eval.nix
+new file mode 100644
+index 000000000..274bc5abd
+--- /dev/null
++++ b/tests/nixos-container-modules-eval.nix
+@@ -0,0 +1,190 @@
++# Run with nix eval --impure --json --file tests/nixos-container-modules-eval.nix.
++# Historical inputs use real option declarations, not a modern lib with a
++# substituted release string. Fetch failures are distinct from assertion errors.
++let
++  vpsadminos = builtins.getFlake (toString ../.);
++  lib = vpsadminos.inputs.nixpkgs.lib;
++  fixtures = import ./fixtures/nixos-container-releases.nix { inherit vpsadminos; };
++  modules = vpsadminos.nixosModules;
++  releases = [
++    "22.11"
++    "23.05"
++    "23.11"
++    "24.05"
++    "24.11"
++    "25.05"
++    "25.11"
++    "26.05"
++  ];
++  alias = release: "container_${lib.replaceStrings [ "." ] [ "_" ] release}";
++  nameservers = [
++    "1.1.1.1"
++    "2606:4700:4700::1111"
++  ];
++  check = name: condition: if condition then true else throw "NixOS container check failed: ${name}";
++
++  # Exercise every selector leaf without pretending these are historical NixOS
++  # evaluations. The real release evaluations below verify option compatibility.
++  moduleArgs = {
++    inherit lib;
++    config = {
++      fileSystems = { };
++      systemd.mounts = [ ];
++    };
++    options.boot.specialFileSystems.type.getSubOptions = _: { };
++    utils = {
++      fsNeededForBoot = _: false;
++      pathsNeededForBoot = [ ];
++    };
++    pkgs = {
++      iproute2 = "/iproute2";
++      bash = "/bash";
++    };
++  };
++  moduleValue = module: builtins.toJSON (module moduleArgs);
++  selectedValue =
++    selector: release:
++    moduleValue (
++      builtins.head
++        (selector {
++          lib = lib // {
++            trivial = lib.trivial // {
++              inherit release;
++              version = "${release}pre-git";
++            };
++          };
++        }).imports
++    );
++  unknownReleases = [
++    "21.11"
++    "99.99"
++    "26_05"
++    "unstable"
++    ""
++  ];
++
++  evaluate =
++    nixpkgs: module:
++    nixpkgs.lib.nixosSystem {
++      system = "x86_64-linux";
++      modules = [
++        module
++        { system.stateVersion = "22.11"; }
++      ];
++    };
++  configuration =
++    evaluated:
++    let
++      c = evaluated.config;
++    in
++    {
++      release = c.system.nixos.release;
++      stateVersion = c.system.stateVersion;
++      isContainer = c.boot.isContainer;
++      initScript = c.boot.loader.initScript.enable;
++      nameservers = c.networking.nameservers;
++      resolved =
++        if lib.versionAtLeast c.system.nixos.release "26.05" then
++          c.services.resolved.settings.Resolve.FallbackDNS
++        else
++          c.services.resolved.fallbackDns;
++      networkingSetup = c.systemd.services.networking-setup.serviceConfig.ExecStart;
++      oomd = c.systemd.services.systemd-oomd.enable;
++      audit = c.systemd.sockets.systemd-journald-audit.enable;
++      runKeys = c.boot.specialFileSystems."/run/keys".fsType;
++      toplevel = c.system.build.toplevel.drvPath;
++    };
++  # This exact import is reused for each guest release, with stateVersion fixed.
++  stableImport = modules.containerStable;
++  realReleaseCheck =
++    release: nixpkgs:
++    let
++      explicit = configuration (evaluate nixpkgs modules.containers.${release});
++      automatic = configuration (evaluate nixpkgs stableImport);
++      generic = configuration (evaluate nixpkgs modules.container);
++      underscore = configuration (evaluate nixpkgs modules.${alias release});
++    in
++    check "real ${release} guest and unchanged stable import" (
++      nixpkgs.lib.trivial.release == release
++      && automatic == explicit
++      && generic == explicit
++      && underscore == explicit
++      && automatic.release == release
++      && automatic.stateVersion == "22.11"
++      && automatic.isContainer
++      && automatic.initScript
++      && automatic.nameservers == nameservers
++      && automatic.resolved == nameservers
++      && !automatic.oomd
++      && !automatic.audit
++      && automatic.runKeys == "tmpfs"
++    );
++  stable = fixtures."26.05";
++  unstable = fixtures.unstable;
++  rawStable = import ../os/lib/nixos-container/stable/vpsadminos.nix;
++  rawUnstable = import ../os/lib/nixos-container/unstable/vpsadminos.nix;
++in
++{
++  exports = check "exact grouped keys, derived aliases, and no containerAuto" (
++    builtins.attrNames modules.containers == releases
++    && !(modules ? containerAuto)
++    && lib.all (release: modules ? ${alias release}) releases
++  );
++  selectorMatrix = builtins.listToAttrs (
++    map (
++      release:
++      let
++        original = moduleValue (import (../os/lib/nixos-container/stable + "/vpsadminos-${release}.nix"));
++      in
++      {
++        name = release;
++        value = check "selector and aliases for ${release}" (
++          moduleValue modules.containers.${release} == original
++          && selectedValue modules.containerStable release == original
++          && selectedValue modules.container release == original
++          && moduleValue modules.${alias release} == original
++        );
++      }
++    ) releases
++  );
++  unsupported = check "unknown releases fail during import selection" (
++    lib.all (
++      release:
++      !(builtins.tryEval (
++        builtins.deepSeq
++          (modules.containerStable {
++            lib = lib // {
++              trivial = lib.trivial // {
++                inherit release;
++              };
++            };
++          }).imports
++          true
++      )).success
++    ) unknownReleases
++  );
++  realReleases = lib.genAttrs [ "24.11" "25.11" "26.05" ] (
++    release: realReleaseCheck release fixtures.${release}
++  );
++  guestLibrary = check "24.11 guest is distinct from captured 26.05 input" (
++    lib.trivial.release == "26.05" && fixtures."24.11".lib.trivial.release == "24.11"
++  );
++  legacy = check "legacy latest stable and unstable exports retain raw behavior" (
++    configuration (evaluate stable vpsadminos.nixosConfigurations.container)
++    == configuration (evaluate stable rawStable)
++    &&
++      configuration (evaluate stable vpsadminos.nixosConfigurations.containerStable)
++      == configuration (evaluate stable rawStable)
++    &&
++      configuration (evaluate unstable vpsadminos.nixosConfigurations.containerUnstable)
++      == configuration (evaluate unstable rawUnstable)
++    &&
++      configuration (evaluate unstable modules.containerUnstable)
++      == configuration (evaluate unstable rawUnstable)
++  );
++  # Literal quoted and guest-nixpkgs interpolated lookups must both import a leaf.
++  groupedSyntax = check "quoted and interpolated release keys" (
++    configuration (evaluate stable modules.containers."26.05")
++    == configuration (evaluate stable modules.containers.${stable.lib.trivial.release})
++  );
++}
+diff --git a/tests/nixos-container-standalone-eval.nix b/tests/nixos-container-standalone-eval.nix
+index 24567b032..08bb1dfc0 100644
+--- a/tests/nixos-container-standalone-eval.nix
++++ b/tests/nixos-container-standalone-eval.nix
+@@ -8,11 +8,13 @@ let
+       standalone = builtins.toFile "vpsadminos-${channel}.nix" (
+         builtins.readFile (../os/lib/nixos-container + "/${channel}/vpsadminos.nix")
+       );
+-      evaluated = import (vpsadminos.nixpkgsPath + "/nixos/lib/eval-config.nix") {
++      nixpkgs =
++        if channel == "stable" then vpsadminos.inputs.nixpkgs else vpsadminos.inputs.nixpkgsUnstable;
++      evaluated = import (nixpkgs + "/nixos/lib/eval-config.nix") {
+         system = builtins.currentSystem;
+         modules = [
+           (toString standalone)
+-          { system.stateVersion = "26.05"; }
++          { system.stateVersion = nixpkgs.lib.trivial.release; }
+         ];
+       };
+     in
+diff --git a/tests/nixos-container-templates-eval.nix b/tests/nixos-container-templates-eval.nix
+new file mode 100644
+index 000000000..e2b55dfaf
+--- /dev/null
++++ b/tests/nixos-container-templates-eval.nix
+@@ -0,0 +1,139 @@
++# Capture the actual template modules' writeText outputs as evaluator files.
++# This checks rendered flakes/configuration/locks without building tarballs.
++let
++  # Generated locks must name the checkout's actual Git revision, including
++  # dirtyRev during development. A plain path flake has no revision metadata.
++  vpsadminos = builtins.getFlake "git+file://${toString ../.}";
++  stable = vpsadminos.inputs.nixpkgs;
++  unstable = vpsadminos.inputs.nixpkgsUnstable;
++  lib = stable.lib;
++  lock = builtins.fromJSON (builtins.readFile ../flake.lock);
++  stableNixpkgsNode = lock.nodes.${lock.nodes.root.inputs.nixpkgs};
++  unstableNixpkgsNode = lock.nodes.${lock.nodes.root.inputs.nixpkgsUnstable};
++  impermanenceNode = lock.nodes.${lock.nodes.root.inputs.impermanence};
++  impermanenceNixpkgsNode = lock.nodes.${impermanenceNode.inputs.nixpkgs};
++  homeManagerNode = lock.nodes.${impermanenceNode.inputs."home-manager"};
++  revision = vpsadminos.rev or (builtins.substring 0 40 vpsadminos.dirtyRev);
++  check = name: condition: if condition then true else throw "NixOS template check failed: ${name}";
++  evaluateTemplate =
++    channel: includeImpermanence:
++    let
++      nixpkgs = if channel == "stable" then stable else unstable;
++      nixpkgsNode = if channel == "stable" then stableNixpkgsNode else unstableNixpkgsNode;
++      guestLib = nixpkgs.lib;
++      pkgs = nixpkgs.legacyPackages.x86_64-linux;
++      # The first-boot cp commands identify each file as actually emitted by the
++      # template. No second implementation of the renderer is used here.
++      rendered =
++        import
++          (
++            ../os/lib/nixos-container
++            + "/${channel}/${if includeImpermanence then "impermanence" else "minimal"}.nix"
++          )
++          {
++            inherit
++              impermanenceNode
++              impermanenceNixpkgsNode
++              homeManagerNode
++              nixpkgsNode
++              stableNixpkgsNode
++              unstableNixpkgsNode
++              ;
++            impermanence = vpsadminos.inputs.impermanence;
++            vpsadminosGithubRev = revision;
++            lib = guestLib;
++            pkgs = pkgs // {
++              writeText = builtins.toFile;
++            };
++            modulesPath = "${nixpkgs}/nixos/modules";
++            config.nix.package.out = "/nix-package";
++          };
++      copyLines = lib.filter (line: lib.hasPrefix "cp /nix/store/" line) (
++        map lib.trim (lib.splitString "\n" rendered.boot.postBootCommands)
++      );
++      files = builtins.listToAttrs (
++        map (
++          line:
++          let
++            words = lib.splitString " " line;
++          in
++          {
++            name = builtins.baseNameOf (builtins.elemAt words 2);
++            value = builtins.elemAt words 1;
++          }
++        ) copyLines
++      );
++      guestLock = builtins.fromJSON (builtins.readFile files."flake.lock");
++      guestFlake = import files."flake.nix";
++      # Resolve ./configuration.nix next to the real generated flake text.
++      # builtins.toFile cannot create a directory; rewrite only this file path.
++      resolvedFlake = builtins.toFile "resolved-template-flake.nix" (
++        lib.replaceStrings [ "./configuration.nix" ] [ files."configuration.nix" ] (
++          builtins.readFile files."flake.nix"
++        )
++      );
++      guestInputs = {
++        inherit nixpkgs vpsadminos;
++      }
++      // lib.optionalAttrs includeImpermanence {
++        impermanence = vpsadminos.inputs.impermanence;
++      };
++      evaluated = (import resolvedFlake).outputs guestInputs;
++      config = evaluated.nixosConfigurations.vps.config;
++      moduleName = if channel == "stable" then "containerStable" else "containerUnstable";
++      expectedModule = vpsadminos.nixosModules.${moduleName};
++      explicit = nixpkgs.lib.nixosSystem {
++        system = "x86_64-linux";
++        modules = [
++          expectedModule
++          files."configuration.nix"
++        ]
++        ++ lib.optional includeImpermanence vpsadminos.inputs.impermanence.nixosModules.impermanence;
++        specialArgs.inputs = guestInputs;
++      };
++      follows =
++        if includeImpermanence then
++          [
++            "impermanence"
++            "nixpkgs"
++          ]
++        else
++          [
++            "vpsadminos"
++            "impermanence"
++            "nixpkgs"
++          ];
++    in
++    check "${channel}/${if includeImpermanence then "impermanence" else "minimal"}" (
++      guestFlake.inputs.nixpkgs.url
++      == "github:${nixpkgsNode.original.owner}/${nixpkgsNode.original.repo}/${nixpkgsNode.original.ref}"
++      && guestLock.version == 7
++      && guestLock.nodes.root.inputs.nixpkgs == "nixpkgs"
++      && guestLock.nodes.root.inputs.vpsadminos == "vpsadminos"
++      && (guestLock.nodes.root.inputs ? impermanence) == includeImpermanence
++      && guestLock.nodes.nixpkgs.locked == nixpkgsNode.locked
++      && guestLock.nodes.vpsadminos-nixpkgs.locked == stableNixpkgsNode.locked
++      && guestLock.nodes.vpsadminos-nixpkgs-unstable.locked == unstableNixpkgsNode.locked
++      && guestLock.nodes.vpsadminos.locked.rev == revision
++      && guestLock.nodes."home-manager".inputs.nixpkgs == follows
++      && config.system.stateVersion == guestLib.trivial.release
++      && config.boot.isContainer
++      && config.system.build.toplevel.drvPath == explicit.config.system.build.toplevel.drvPath
++      && lib.hasInfix "vpsadminos.nixosModules.${moduleName}" (builtins.readFile files."flake.nix")
++      && (
++        !includeImpermanence
++        || (
++          lib.any (
++            directory: directory.directory == "/var/lib/nixos"
++          ) config.environment.persistence."/persistent".directories
++          && lib.any (file: file.file == "/etc/machine-id") config.environment.persistence."/persistent".files
++        )
++      )
++    );
++in
++{
++  stable = evaluateTemplate "stable" false;
++  stableImpermanence = evaluateTemplate "stable" true;
++  unstable = evaluateTemplate "unstable" false;
++  unstableImpermanence = evaluateTemplate "unstable" true;
++}
+diff --git a/tests/nixos-container-unsupported-eval.nix b/tests/nixos-container-unsupported-eval.nix
+new file mode 100644
+index 000000000..c3a2c85bb
+--- /dev/null
++++ b/tests/nixos-container-unsupported-eval.nix
+@@ -0,0 +1,14 @@
++release:
++let
++  vpsadminos = builtins.getFlake (toString ../.);
++  lib = vpsadminos.inputs.nixpkgs.lib;
++in
++builtins.deepSeq
++  (vpsadminos.nixosModules.containerStable {
++    lib = lib // {
++      trivial = lib.trivial // {
++        inherit release;
++      };
++    };
++  }).imports
++  true

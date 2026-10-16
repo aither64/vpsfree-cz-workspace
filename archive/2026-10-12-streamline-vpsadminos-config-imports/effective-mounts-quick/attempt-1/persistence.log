@@ -1,0 +1,19 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos' is dirty
+error:
+       … while calling the 'deepSeq' builtin
+         at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/nixos-container-persistence-check.nix:29:1:
+           28| in
+           29| builtins.deepSeq evaluation.assertions (
+             | ^
+           30|   pkgs.runCommand "nixos-container-persistence"
+
+       … while evaluating the attribute 'releases'
+         at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/nixos-container-persistence-eval.nix:528:5:
+          527|   assertions = {
+          528|     releases = lib.genAttrs [ "25.11" "26.05" "unstable" ] checkRelease;
+             |     ^
+          529|     latestStable = check "latest stable equals self-contained 26.05" (
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: Persistence check failed: 25.11 direct filesystems checked before allocation

@@ -1,0 +1,5 @@
+Single launch authorized now: source frozen and six source hashes verified against implementer receipt. No check batch is running. From canonical cwd /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos run ONCE:
+
+nix develop --profile result/config-imports-dev-shell --command bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/effective-mounts-review/i1-checks.sh
+
+Expected HEAD bf74af0b76accdf844ad6ffbea75db6c409f386e plus exact six frozen unstaged paths. Launcher verifies effective-mounts-i1-quick/source.sha256. Capture wrapper combined output there as wrapper.log; preserve actual terminal wrapper.status and elapsed-seconds. Child writes individual logs/statuses and final status. Own execution tool handle. No duplicate, retry, source edit, diagnosis, acceptance, nested agents or ref action. Stop only owned unexpected local Linux compilation and report exact derivation; no generic quiet timeout. Return terminal evidence and bounded failure excerpt. All other watcher constraints from your initial brief remain.

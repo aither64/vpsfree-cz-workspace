@@ -1,0 +1,293 @@
+--- source/cs/navody/distribuce/nixos.txt
++++ candidate/cs/navody/distribuce/nixos.txt
+@@ -30,6 +30,40 @@
+ Při vytvoření VPS a reinstalaci systému je možné do VPS přes vpsAdmin nahrát a nasadit vlastní
+ konfiguraci, viz [[navody:vps:userdata|user data]].
+ 
++===== Konfigurace kontejneru =====
++Pro stabilní vydání NixOS přidej do seznamu ''modules'' ve flake kompatibilní modul:
++
++<code nix>
++vpsadminos.nixosModules.containerStable
++</code>
++
++Modul vybere nastavení podle vydání tvého ''nixpkgs''. Při přechodu na jiné
++registrované stabilní vydání ponech tento import a aktualizuj input ''nixpkgs''.
++Udržuj aktuální také input ''vpsadminos''. Pokud jeho připnutá revize neobsahuje
++tvé vydání, vyhodnocení skončí chybou se seznamem dostupných vydání.
++''system.stateVersion'' řídí kompatibilitu s existujícím stavem; tento modul podle
++něj nevybírá nastavení a při aktualizaci NixOS obvykle zůstává beze změny.
++
++Vydání můžeš vybrat také přímo nebo pomocí řetězce s číslem vydání:
++
++<code nix>
++vpsadminos.nixosModules.containers."26.05"
++vpsadminos.nixosModules.containers.${nixpkgs.lib.trivial.release}
++</code>
++
++Každý řádek je samostatná varianta importu. ''containers'' je mapa vydání;
++importuj konkrétní položku. Starší názvy jako ''container_26_05'' zůstávají
++k dispozici. ''nixosModules.container'' je alias ''containerStable''.
++Pro NixOS unstable použij výslovně ''vpsadminos.nixosModules.containerUnstable''.
++Stabilní selektor nerozpoznává větev unstable.
++
++Konfigurace existujících VPS se automaticky nepřepisují. Pokud tvůj flake používá
++starší import pro konkrétní vydání, aktualizuj input vpsAdminOS a změň import na
++''containerStable''. Připnutou verzi nixpkgs a stateVersion přitom ponech.
++Nixpkgs pak můžeš aktualizovat samostatně. Přehled modulů a konfiguraci pomocí
++samostatného souboru popisuje
++[[https://vpsadminos.org/containers/nixos/|konfigurace NixOS kontejneru]].
++
+ ===== Správa VPS =====
+ Přejdi na [[:domu|návody VPS]] pro více informací o naší infrastruktuře a možnostech VPS.
+ 
+--- source/cs/navody/distribuce/nixos/impermanence.txt
++++ candidate/cs/navody/distribuce/nixos/impermanence.txt
+@@ -27,7 +27,7 @@
+ V detailu VPS použijte formulář <vpsadmin-nav id="vps.boot-rescue.open">**Spustit VPS ze šablony (nouzový režim)**</vpsadmin-nav>. Nejlepší je vybrat jinou distribuci než NixOS, aby zde nebyl adresář ''/nix''. Použijte např. Alpine nebo Debian.
+ 
+ ==== 3. Vytvoření VPS subdatasetu pro Nix store ====
+-V detailu VPS vytvořte subdataset ''nix'', který bude připojen na ''/nix'' (proto jsme v předchozím kroku nechtěli bootovat do NixOS). Možná budete muset uvolnit nějaké místo na disku, abyste mohli vytvořit dataset, což lze provést zmenšením root datasetu.
++V detailu VPS <vpsadmin-nav id="datasets.create.open">vytvoř subdataset ''nix''</vpsadmin-nav>, který bude připojen na ''/nix'' (proto jsme v předchozím kroku nechtěli bootovat do NixOS). Možná budeš muset uvolnit nějaké místo na disku, abys mohl vytvořit dataset, což lze provést zmenšením root datasetu.
+ 
+ ==== 4. Přesun Nix store do subdatasetu ====
+ Přihlaste se do VPS v rescue módu, buď přes SSH, nebo použijte vzdálenou konzoli. Root dataset je připojen na ''/mnt/vps'' a náš nový subdataset ''nix'' je připojen na ''/nix''. Chceme přesunout Nix store z root datasetu do subdatasetu.
+@@ -37,13 +37,21 @@
+ </code>
+ 
+ ==== 5. Připojení root datasetu do /persistent ====
+-V režimu impermanence bude váš kořenový souborový systém dočasný a při každém startu vymazán. Naše trvalé úložiště připojíme do ''/persistent''. Může to být root dataset, nebo můžete vytvořit další subdataset pro tento účel. Zde použijeme root dataset. V detailu VPS klikněte na odkaz <vpsadmin-nav id="datasets.mount.open">**Mount**</vpsadmin-nav> u prvního uvedeného datasetu (jeho název je ID VPS) a připojte ho do ''/persistent''.
++V režimu impermanence bude tvůj kořenový souborový systém dočasný a při každém startu vymazán. Naše trvalé úložiště připojíme do ''/persistent''. Může to být root dataset, nebo si pro tento účel můžeš <vpsadmin-nav id="datasets.create.open">vytvořit další subdataset</vpsadmin-nav>. Zde použijeme root dataset. V detailu VPS klikni na odkaz <vpsadmin-nav id="datasets.mount.open">**Mount**</vpsadmin-nav> u prvního uvedeného datasetu (jeho název je ID VPS) a připoj ho do ''/persistent''.
+ 
+ ==== 6. Restart VPS ====
+ Nyní restartujte VPS, čímž opustíte rescue mód.
+ 
+ ==== 7. Úprava flake konfigurace a přidání impermanence ====
+-Šablony vpsAdminOS mají flakes zapnuté ve výchozím stavu. Vytvořte ''/etc/nixos/flake.nix'' a své lokální nastavení ponechte v ''/etc/nixos/configuration.nix''. Následující příklad používá stabilní větev ''nixpkgs'', kterou používá vpsAdminOS. Pokud používáte jinou stabilní verzi, zvolte odpovídající větev ''nixos-YY.MM''. Pokud používáte NixOS unstable, nahraďte ''github:NixOS/nixpkgs/nixos-25.11'' za ''github:NixOS/nixpkgs/nixos-unstable'' a v příkladu nahraďte řádek se stabilním modulem kontejneru za ''vpsadminos.nixosModules.containerUnstable''.
++Šablony vpsAdminOS mají flakes zapnuté ve výchozím stavu. Vytvoř
++''/etc/nixos/flake.nix'' a své lokální nastavení ponech v
++''/etc/nixos/configuration.nix''.
++Příklad používá NixOS 25.11. Pro jiné stabilní vydání změň input ''nixpkgs''
++na odpovídající větev ''nixos-YY.MM''. Modul ''containerStable'' automaticky vybere
++nastavení pro dané vydání. Udržuj input vpsAdminOS aktuální, aby obsahoval modul
++pro zvolené vydání. Pro NixOS unstable použij ''github:NixOS/nixpkgs/nixos-unstable''
++a ''vpsadminos.nixosModules.containerUnstable''. Dostupné importy popisuje
++[[navody:distribuce:nixos#konfigurace_kontejneru|konfigurace kontejneru]].
+ 
+ <file nix /etc/nixos/flake.nix>
+ {
+@@ -53,20 +61,16 @@
+     impermanence.url = "github:nix-community/impermanence";
+   };
+ 
+-  outputs = { nixpkgs, vpsadminos, impermanence, ... }:
+-    let
+-      containerModule = "container_${builtins.replaceStrings [ "." ] [ "_" ] nixpkgs.lib.trivial.release}";
+-    in
+-    {
+-      nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
+-        system = "x86_64-linux";
+-        modules = [
+-          vpsadminos.nixosModules.${containerModule}
+-          impermanence.nixosModules.impermanence
+-          ./configuration.nix
+-        ];
+-      };
++  outputs = { nixpkgs, vpsadminos, impermanence, ... }: {
++    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++      system = "x86_64-linux";
++      modules = [
++        vpsadminos.nixosModules.containerStable
++        impermanence.nixosModules.impermanence
++        ./configuration.nix
++      ];
+     };
++  };
+ }
+ </file>
+ 
+@@ -118,4 +122,4 @@
+ tank/ct/11327                     zfs    100G  7.7M  120G   1% /persistent
+ </code>
+ 
+-''/'' je založeno na dočasném datasetu, ''11327'' se používá pro ''/persistent'' a ''11327/nix'' obsahuje Nix store.+''/'' je založeno na dočasném datasetu, ''11327'' se používá pro ''/persistent'' a ''11327/nix'' obsahuje Nix store.
+--- source/cs/navody/vps/userdata.txt
++++ candidate/cs/navody/vps/userdata.txt
+@@ -123,10 +123,10 @@
+ <code nix>
+ {
+   inputs = {
+-    nixpkgs.url = github:NixOS/nixpkgs/nixos-24.11;
+-    vpsadminos.url = github:vpsfreecz/vpsadminos/staging;
++    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
++    vpsadminos.url = "github:vpsfreecz/vpsadminos/staging";
+   };
+-  
++
+   outputs = { self, nixpkgs, vpsadminos }: {
+     # Zde musí být konfigurace s názvem "vps"
+     nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
+@@ -134,7 +134,7 @@
+         ({ config, pkgs, lib, ... }:
+         {
+           imports = [
+-            vpsadminos.nixosConfigurations.container
++            vpsadminos.nixosModules.containerStable
+           ];
+ 
+           environment.systemPackages = with pkgs; [
+--- source/en/manuals/distributions/nixos.txt
++++ candidate/en/manuals/distributions/nixos.txt
+@@ -29,6 +29,41 @@
+ It is possible to deploy custom configuration using vpsAdmin on VPS creation and reinstallation,
+ see [[manuals:vps:userdata|user data]].
+ 
++===== Container configuration =====
++For stable NixOS releases, include the compatibility module in your flake's
++''modules'' list:
++
++<code nix>
++vpsadminos.nixosModules.containerStable
++</code>
++
++It selects the module using your ''nixpkgs'' release. When upgrading to another
++registered stable release, keep this import and update the ''nixpkgs'' input.
++Keep the ''vpsadminos'' input up to date too. If its pinned revision does not
++include your release, evaluation fails and lists the available releases.
++''system.stateVersion'' controls compatibility with existing state; it does not
++select this module and normally stays unchanged during a NixOS upgrade.
++
++You can also select a release explicitly or look it up using the release string:
++
++<code nix>
++vpsadminos.nixosModules.containers."26.05"
++vpsadminos.nixosModules.containers.${nixpkgs.lib.trivial.release}
++</code>
++
++Each line is an alternative module import. ''containers'' is a lookup map;
++import a release entry. The older names such as ''container_26_05'' remain
++available. ''nixosModules.container'' is an alias of ''containerStable''.
++For NixOS unstable, explicitly use ''vpsadminos.nixosModules.containerUnstable''.
++The stable selector does not detect the unstable channel.
++
++Existing VPS configurations are not rewritten automatically. If your flake uses
++an older release-specific import, update the vpsAdminOS input and switch the
++import to ''containerStable'' while keeping your nixpkgs pin and stateVersion.
++You can then upgrade nixpkgs separately. For the module reference and the
++standalone-file configuration, see
++[[https://vpsadminos.org/containers/nixos/|NixOS guest configuration]].
++
+ ===== VPS management =====
+ See the [[:home|VPS manuals]] for more information about our infrastructure and possibilities.
+ 
+--- source/en/manuals/distributions/nixos/impermanence.txt
++++ candidate/en/manuals/distributions/nixos/impermanence.txt
+@@ -45,7 +45,7 @@
+ Use e.g. Alpine or Debian.
+ 
+ ==== 3. Create VPS subdataset for the Nix store ====
+-In VPS details, create subdataset ''nix'', which will be mounted to ''/nix'' (this is why we didn't
++In VPS details, <vpsadmin-nav id="datasets.create.open">create subdataset ''nix''</vpsadmin-nav>, which will be mounted to ''/nix'' (this is why we didn't
+ want to boot into NixOS in the previous step). You might have to free some diskspace in order to be
+ able to create the dataset, you can do that by shrinking the root dataset.
+ 
+@@ -61,7 +61,7 @@
+ ==== 5. Mount root dataset to /persistent ====
+ In the impermanence mode, your root file system will be temporary and cleared on
+ every start. We must mount our persistent storage to ''/persistent''. This can be either
+-the root dataset, or you can create another subdataset for that purpose. We'll use the root
++the root dataset, or you can <vpsadmin-nav id="datasets.create.open">create another subdataset</vpsadmin-nav> for that purpose. We'll use the root
+ dataset. In VPS details, click on <vpsadmin-nav id="datasets.mount.open">**Mount**</vpsadmin-nav> link of the first listed dataset
+ (its name is the VPS ID) and mount it to ''/persistent''.
+ 
+@@ -70,12 +70,15 @@
+ 
+ ==== 7. Edit your flake configuration and add impermanence ====
+ vpsAdminOS templates enable flakes by default. Create ''/etc/nixos/flake.nix'' and
+-keep your local settings in ''/etc/nixos/configuration.nix''. The example below follows the
+-stable ''nixpkgs'' branch used by vpsAdminOS. If you're using another stable release, use the
+-matching ''nixos-YY.MM'' branch. If you're using NixOS unstable, replace
+-''github:NixOS/nixpkgs/nixos-25.11'' with ''github:NixOS/nixpkgs/nixos-unstable'' and
+-replace the stable container module line in the example with
+-''vpsadminos.nixosModules.containerUnstable''.
++keep your local settings in ''/etc/nixos/configuration.nix''.
++The example uses NixOS 25.11. For another stable release, change the
++''nixpkgs'' input to its ''nixos-YY.MM'' branch. The ''containerStable'' module
++selects the compatibility settings for that release automatically. Keep the
++vpsAdminOS input up to date so it includes the module for your chosen release.
++For NixOS unstable, use ''github:NixOS/nixpkgs/nixos-unstable'' and
++''vpsadminos.nixosModules.containerUnstable'' instead. See
++[[manuals:distributions:nixos#container_configuration|container configuration]]
++for the available imports.
+ 
+ <file nix /etc/nixos/flake.nix>
+ {
+@@ -85,20 +88,16 @@
+     impermanence.url = "github:nix-community/impermanence";
+   };
+ 
+-  outputs = { nixpkgs, vpsadminos, impermanence, ... }:
+-    let
+-      containerModule = "container_${builtins.replaceStrings [ "." ] [ "_" ] nixpkgs.lib.trivial.release}";
+-    in
+-    {
+-      nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
+-        system = "x86_64-linux";
+-        modules = [
+-          vpsadminos.nixosModules.${containerModule}
+-          impermanence.nixosModules.impermanence
+-          ./configuration.nix
+-        ];
+-      };
++  outputs = { nixpkgs, vpsadminos, impermanence, ... }: {
++    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++      system = "x86_64-linux";
++      modules = [
++        vpsadminos.nixosModules.containerStable
++        impermanence.nixosModules.impermanence
++        ./configuration.nix
++      ];
+     };
++  };
+ }
+ </file>
+ 
+@@ -141,7 +140,7 @@
+ </code>
+ 
+ ==== 8. Turn on impermanence feature ====
+-In VPS details, enable the **NixOS Impermanence** feature. This will configure your VPS so that it
++In VPS details, open <vpsadmin-nav id="vps.features.open">**Features**</vpsadmin-nav> and enable the **NixOS Impermanence** feature. This will configure your VPS so that it
+ is started with a clean, temporary dataset. Its contents will be lost on every reboot and it's not
+ backed up. Turning on the feature will cause the VPS to restart into the configuration we've prepared
+ in step **7**.
+@@ -156,4 +155,4 @@
+ </code>
+ 
+ ''/'' is based in a temporary dataset, ''11327'' is used for ''/persistent'' and ''11327/nix''
+-contains the Nix store.+contains the Nix store.
+--- source/en/manuals/vps/userdata.txt
++++ candidate/en/manuals/vps/userdata.txt
+@@ -112,10 +112,10 @@
+ <code nix>
+ {
+   inputs = {
+-    nixpkgs.url = github:NixOS/nixpkgs/nixos-24.11;
+-    vpsadminos.url = github:vpsfreecz/vpsadminos/staging;
++    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
++    vpsadminos.url = "github:vpsfreecz/vpsadminos/staging";
+   };
+-  
++
+   outputs = { self, nixpkgs, vpsadminos }: {
+     # The configuration must include a system named "vps"
+     nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
+@@ -123,7 +123,7 @@
+         ({ config, pkgs, lib, ... }:
+         {
+           imports = [
+-            vpsadminos.nixosConfigurations.container
++            vpsadminos.nixosModules.containerStable
+           ];
+ 
+           environment.systemPackages = with pkgs; [

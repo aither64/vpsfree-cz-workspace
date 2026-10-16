@@ -1,0 +1,26 @@
+diff --git a/tests/suite/dist-config/nixos-persistence-upgrade.nix b/tests/suite/dist-config/nixos-persistence-upgrade.nix
+index 43a23045e..8c41af8ac 100644
+--- a/tests/suite/dist-config/nixos-persistence-upgrade.nix
++++ b/tests/suite/dist-config/nixos-persistence-upgrade.nix
+@@ -90,7 +90,9 @@ import ../../make-test.nix (
+               "osctl ct new --skip-image --distribution nixos --version ${variant.release} --arch x86_64 #{ct}",
+               "osctl ct unset start-menu #{ct}",
+               "osctl ct dataset new #{ct} nix",
+-              "osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store #{ct}",
++              # Shared closures are read-only; the host overlay store cannot be
++              # ID-mapped. Container datasets keep their native mappings.
++              "osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store --no-map-ids #{ct}",
+             )
+             rootfs = machine.osctl_json("ct show #{ct}").fetch('rootfs')
+             nix_root = machine.osctl_json("ct mounts ls #{ct}").find { |mount| mount.fetch('mountpoint') == '/nix' }.fetch('fs')
+@@ -101,7 +103,9 @@ import ../../make-test.nix (
+             )
+             ${lib.optionalString (variant.layout != "root") ''
+               machine.all_succeed(
+-                "osctl ct mounts dataset #{ct} / /persistent",
++                # The CLI mounts subdatasets; '/' denotes root only in image
++                # configuration. Bind this container's queried private root.
++                "osctl ct mounts new --fs #{rootfs} --type bind --opts bind,create=dir,rw --mountpoint /persistent #{ct}",
+                 "osctl ct set impermanence #{ct}",
+               )
+             ''}

@@ -1,0 +1,885 @@
+SHELL: 0
+
+START: 2026-10-15 04:08:20 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 04:08:20 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:20 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 04:08:20 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:20 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 04:08:20 +0200
+ELAPSED: 0.05s
+STATUS: 6
+OUTPUT:
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+---
+
+START: 2026-10-15 04:08:21 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 04:08:21 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 02:08:21 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 04:08:21 +0200
+COMMAND: test "$(uname -r)" = 6.12.95
+END: 2026-10-15 04:08:21 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:21 +0200
+COMMAND: grep -Eq '^vendor_id[[:space:]]*: GenuineIntel$' /proc/cpuinfo
+END: 2026-10-15 04:08:21 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:21 +0200
+COMMAND: grep -m1 '^flags' /proc/cpuinfo | grep -qw vmx
+END: 2026-10-15 04:08:21 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:21 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-15 04:08:21 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:21 +0200
+COMMAND: modprobe -r kvm_intel
+END: 2026-10-15 04:08:21 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:21 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-15 04:08:21 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:21 +0200
+COMMAND: cat /etc/livepatch-store-path
+END: 2026-10-15 04:08:21 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/nix/store/cqsicnbirpf3rl5zz8z5adkbz2c019gv-livepatch_7-6.12.95
+---
+
+START: 2026-10-15 04:08:21 +0200
+COMMAND: test -f /nix/store/cqsicnbirpf3rl5zz8z5adkbz2c019gv-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko
+END: 2026-10-15 04:08:22 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:22 +0200
+COMMAND: sha256sum /nix/store/cqsicnbirpf3rl5zz8z5adkbz2c019gv-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko
+END: 2026-10-15 04:08:23 +0200
+ELAPSED: 1.11s
+STATUS: 0
+OUTPUT:
+07e31de3675816ded0d10fa8f23a073d6137c7587a77741bc192e8e09ae6c8e2  /nix/store/cqsicnbirpf3rl5zz8z5adkbz2c019gv-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko
+---
+
+START: 2026-10-15 04:08:23 +0200
+COMMAND: test "$(modinfo -F name /nix/store/cqsicnbirpf3rl5zz8z5adkbz2c019gv-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko)" = livepatch_7
+END: 2026-10-15 04:08:23 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:23 +0200
+COMMAND: modinfo -F vermagic /nix/store/cqsicnbirpf3rl5zz8z5adkbz2c019gv-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko | grep -q '^6.12.95 '
+END: 2026-10-15 04:08:23 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:23 +0200
+COMMAND: mkdir -p /lib/modules
+END: 2026-10-15 04:08:23 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:23 +0200
+COMMAND: ln -snf /run/current-system/kernel-modules/lib/modules/6.12.95 /lib/modules/6.12.95.7
+END: 2026-10-15 04:08:23 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:23 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-15 04:08:23 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+531
+---
+
+START: 2026-10-15 04:08:23 +0200
+COMMAND: insmod /nix/store/cqsicnbirpf3rl5zz8z5adkbz2c019gv-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko
+END: 2026-10-15 04:08:24 +0200
+ELAPSED: 1.17s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:24 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7 && test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 04:08:24 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:24 +0200
+COMMAND: dmesg | tail -n +532
+END: 2026-10-15 04:08:24 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[   21.824485] livepatch_7: loading out-of-tree module taints kernel.
+[   21.824493] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   21.824496] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   21.915547] livepatch: enabling patch 'livepatch_7'
+[   22.761247] livepatch: 'livepatch_7': starting patching transition
+[   22.937176] livepatch: 'livepatch_7': patching complete
+---
+
+START: 2026-10-15 04:08:24 +0200
+COMMAND: i=0; while test "$i" -lt 32; do sh -c : || exit 1; i=$((i + 1)); done
+END: 2026-10-15 04:08:24 +0200
+ELAPSED: 0.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:24 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-15 04:08:24 +0200
+ELAPSED: 0.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:24 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-15 04:08:24 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:24 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-15 04:08:24 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:24 +0200
+COMMAND: /etc/livepatch-lifecycle/kvm-smoke
+END: 2026-10-15 04:08:24 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-15 04:08:24 +0200
+COMMAND: test -e /sys/kernel/livepatch/livepatch_7/enabled
+END: 2026-10-15 04:08:25 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:25 +0200
+COMMAND: sh -c 'echo 0 > /sys/kernel/livepatch/livepatch_7/enabled'
+END: 2026-10-15 04:08:25 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:25 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-15 04:08:25 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:26 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-15 04:08:26 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:27 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-15 04:08:27 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:28 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-15 04:08:28 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:29 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-15 04:08:29 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: rmmod livepatch_7
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: dmesg | tail -n +532
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[   21.824485] livepatch_7: loading out-of-tree module taints kernel.
+[   21.824493] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   21.824496] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   21.915547] livepatch: enabling patch 'livepatch_7'
+[   22.761247] livepatch: 'livepatch_7': starting patching transition
+[   22.937176] livepatch: 'livepatch_7': patching complete
+[   23.374899] livepatch: applying patch 'livepatch_7' to loading module 'kvm'
+[   23.431197] livepatch: applying patch 'livepatch_7' to loading module 'kvm_intel'
+[   23.599031] livepatch: 'livepatch_7': starting unpatching transition
+[   27.884412] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[   28.041065] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: i=0; while test "$i" -lt 32; do sh -c : || exit 1; i=$((i + 1)); done
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: /etc/livepatch-lifecycle/kvm-smoke
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: test "$(sha256sum /etc/livepatch-lifecycle/predecessor-intel.ko | cut -d' ' -f1)" = b31f64403d9d55f62e3d59e4bbefcbddcbda4fa66a2dc0689f9bb7cd7e927984
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.34s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: test "$(modinfo -F name /etc/livepatch-lifecycle/predecessor-intel.ko)" = livepatch_5
+END: 2026-10-15 04:08:30 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:30 +0200
+COMMAND: modinfo -F vermagic /etc/livepatch-lifecycle/predecessor-intel.ko | grep -q '^6.12.95 '
+END: 2026-10-15 04:08:31 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:31 +0200
+COMMAND: ln -snf /run/current-system/kernel-modules/lib/modules/6.12.95 /lib/modules/6.12.95.5
+END: 2026-10-15 04:08:31 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:31 +0200
+COMMAND: insmod /etc/livepatch-lifecycle/predecessor-intel.ko
+END: 2026-10-15 04:08:31 +0200
+ELAPSED: 0.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:31 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_5 && test "$(cat /sys/kernel/livepatch/livepatch_5/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_5/transition)" = 0
+END: 2026-10-15 04:08:31 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:32 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_5 && test "$(cat /sys/kernel/livepatch/livepatch_5/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_5/transition)" = 0
+END: 2026-10-15 04:08:32 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:33 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_5 && test "$(cat /sys/kernel/livepatch/livepatch_5/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_5/transition)" = 0
+END: 2026-10-15 04:08:33 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:33 +0200
+COMMAND: test "$(uname -r)" = 6.12.95.5
+END: 2026-10-15 04:08:33 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:33 +0200
+COMMAND: insmod /nix/store/cqsicnbirpf3rl5zz8z5adkbz2c019gv-livepatch_7-6.12.95/lib/modules/6.12.95/extra/livepatch_7.ko
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7 && test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_5 || { test "$(cat /sys/kernel/livepatch/livepatch_5/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_5/transition)" = 0; }
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: dmesg | tail -n +532
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[   21.824485] livepatch_7: loading out-of-tree module taints kernel.
+[   21.824493] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   21.824496] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   21.915547] livepatch: enabling patch 'livepatch_7'
+[   22.761247] livepatch: 'livepatch_7': starting patching transition
+[   22.937176] livepatch: 'livepatch_7': patching complete
+[   23.374899] livepatch: applying patch 'livepatch_7' to loading module 'kvm'
+[   23.431197] livepatch: applying patch 'livepatch_7' to loading module 'kvm_intel'
+[   23.599031] livepatch: 'livepatch_7': starting unpatching transition
+[   27.884412] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[   28.041065] livepatch: 'livepatch_7': unpatching complete
+[   29.663379] livepatch: enabling patch 'livepatch_5'
+[   30.104598] livepatch: 'livepatch_5': starting patching transition
+[   32.051624] livepatch: 'livepatch_5': patching complete
+[   32.392499] livepatch: enabling patch 'livepatch_7'
+[   33.117840] livepatch: 'livepatch_7': starting patching transition
+[   33.972577] livepatch: 'livepatch_7': patching complete
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: i=0; while test "$i" -lt 32; do sh -c : || exit 1; i=$((i + 1)); done
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.21s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: /etc/livepatch-lifecycle/kvm-smoke
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: rmmod livepatch_5
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: test -d /sys/module/livepatch_5
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: insmod /etc/livepatch-lifecycle/predecessor-intel.ko
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.09s
+STATUS: 1
+OUTPUT:
+insmod: ERROR: could not insert module /etc/livepatch-lifecycle/predecessor-intel.ko: Invalid parameters
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: test -d /sys/module/livepatch_5
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7 && test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: dmesg | tail -n +532
+END: 2026-10-15 04:08:36 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[   21.824485] livepatch_7: loading out-of-tree module taints kernel.
+[   21.824493] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   21.824496] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   21.915547] livepatch: enabling patch 'livepatch_7'
+[   22.761247] livepatch: 'livepatch_7': starting patching transition
+[   22.937176] livepatch: 'livepatch_7': patching complete
+[   23.374899] livepatch: applying patch 'livepatch_7' to loading module 'kvm'
+[   23.431197] livepatch: applying patch 'livepatch_7' to loading module 'kvm_intel'
+[   23.599031] livepatch: 'livepatch_7': starting unpatching transition
+[   27.884412] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[   28.041065] livepatch: 'livepatch_7': unpatching complete
+[   29.663379] livepatch: enabling patch 'livepatch_5'
+[   30.104598] livepatch: 'livepatch_5': starting patching transition
+[   32.051624] livepatch: 'livepatch_5': patching complete
+[   32.392499] livepatch: enabling patch 'livepatch_7'
+[   33.117840] livepatch: 'livepatch_7': starting patching transition
+[   33.972577] livepatch: 'livepatch_7': patching complete
+[   34.448924] livepatch: Livepatch patch (livepatch_5) is not compatible with the already installed livepatches.
+---
+
+START: 2026-10-15 04:08:36 +0200
+COMMAND: i=0; while test "$i" -lt 32; do sh -c : || exit 1; i=$((i + 1)); done
+END: 2026-10-15 04:08:36 +0200
+ELAPSED: 0.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:36 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-15 04:08:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:36 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-15 04:08:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:36 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-15 04:08:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:36 +0200
+COMMAND: /etc/livepatch-lifecycle/kvm-smoke
+END: 2026-10-15 04:08:36 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-15 04:08:36 +0200
+COMMAND: test -e /sys/kernel/livepatch/livepatch_7/enabled
+END: 2026-10-15 04:08:36 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:36 +0200
+COMMAND: sh -c 'echo 0 > /sys/kernel/livepatch/livepatch_7/enabled'
+END: 2026-10-15 04:08:36 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:36 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-15 04:08:36 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:37 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-15 04:08:37 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:38 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-15 04:08:38 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:39 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-15 04:08:39 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:40 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7 || { test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 0 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0; }
+END: 2026-10-15 04:08:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:40 +0200
+COMMAND: rmmod livepatch_7
+END: 2026-10-15 04:08:40 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:40 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 04:08:40 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:40 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 04:08:40 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:40 +0200
+COMMAND: dmesg | tail -n +532
+END: 2026-10-15 04:08:40 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[   21.824485] livepatch_7: loading out-of-tree module taints kernel.
+[   21.824493] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   21.824496] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   21.915547] livepatch: enabling patch 'livepatch_7'
+[   22.761247] livepatch: 'livepatch_7': starting patching transition
+[   22.937176] livepatch: 'livepatch_7': patching complete
+[   23.374899] livepatch: applying patch 'livepatch_7' to loading module 'kvm'
+[   23.431197] livepatch: applying patch 'livepatch_7' to loading module 'kvm_intel'
+[   23.599031] livepatch: 'livepatch_7': starting unpatching transition
+[   27.884412] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[   28.041065] livepatch: 'livepatch_7': unpatching complete
+[   29.663379] livepatch: enabling patch 'livepatch_5'
+[   30.104598] livepatch: 'livepatch_5': starting patching transition
+[   32.051624] livepatch: 'livepatch_5': patching complete
+[   32.392499] livepatch: enabling patch 'livepatch_7'
+[   33.117840] livepatch: 'livepatch_7': starting patching transition
+[   33.972577] livepatch: 'livepatch_7': patching complete
+[   34.448924] livepatch: Livepatch patch (livepatch_5) is not compatible with the already installed livepatches.
+[   34.931533] livepatch: 'livepatch_7': starting unpatching transition
+[   38.680035] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[   38.832569] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-15 04:08:40 +0200
+COMMAND: i=0; while test "$i" -lt 32; do sh -c : || exit 1; i=$((i + 1)); done
+END: 2026-10-15 04:08:40 +0200
+ELAPSED: 0.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:40 +0200
+COMMAND: modprobe kvm_intel
+END: 2026-10-15 04:08:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:40 +0200
+COMMAND: test -c /dev/kvm
+END: 2026-10-15 04:08:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:40 +0200
+COMMAND: test -d /sys/module/kvm_intel
+END: 2026-10-15 04:08:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:40 +0200
+COMMAND: /etc/livepatch-lifecycle/kvm-smoke
+END: 2026-10-15 04:08:40 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+kvm smoke passed
+---
+
+START: 2026-10-15 04:08:40 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 04:08:42 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Grabbing all containers
+---
+

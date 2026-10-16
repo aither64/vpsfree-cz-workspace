@@ -1,0 +1,142 @@
+=== /nix/store/hnpdj50cvl8dg8x7mh6ir4adl7vd0wk1-nixos-system-persistence-fixture-26.05pre-git/etc/systemd/system/nscd.service ===
+[Unit]
+Before=nss-lookup.target nss-user-lookup.target
+Description=Name Service Cache Daemon (nsncd)
+Wants=nss-lookup.target nss-user-lookup.target
+
+[Service]
+Environment="LD_LIBRARY_PATH=/nix/store/kmzlca218j6j1ar292fxj7707qzypij8-systemd-260.5/lib"
+Environment="LOCALE_ARCHIVE=/nix/store/dc427sjs33dci797apv4lvsg1a69szn0-glibc-locales-2.42-100/lib/locale/locale-archive"
+Environment="PATH=/nix/store/bhv6xyvqw6gjs3j488gi1z6wdv18bdpa-coreutils-9.11/bin:/nix/store/nl0wq6d4bpjrxmlax141liq0qr9z87gn-findutils-4.10.0/bin:/nix/store/cqhgy07rpxdwk9kd2qlc3cw4s9ajzm9f-gnugrep-3.12/bin:/nix/store/0s17nja4n8b63by0nlg1m31mxn2bq1g1-gnused-4.10/bin:/nix/store/kmzlca218j6j1ar292fxj7707qzypij8-systemd-260.5/bin:/nix/store/bhv6xyvqw6gjs3j488gi1z6wdv18bdpa-coreutils-9.11/sbin:/nix/store/nl0wq6d4bpjrxmlax141liq0qr9z87gn-findutils-4.10.0/sbin:/nix/store/cqhgy07rpxdwk9kd2qlc3cw4s9ajzm9f-gnugrep-3.12/sbin:/nix/store/0s17nja4n8b63by0nlg1m31mxn2bq1g1-gnused-4.10/sbin:/nix/store/kmzlca218j6j1ar292fxj7707qzypij8-systemd-260.5/sbin"
+Environment="TZDIR=/nix/store/mkbbamycmw838fwxk21jz0nw3mhnmk16-tzdata-2026c/share/zoneinfo"
+Environment=NSNCD_HANDOFF_TIMEOUT=10
+ExecStart=/nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd
+Group=nscd
+NoNewPrivileges=true
+PIDFile=/run/nscd/nscd.pid
+PrivateTmp=true
+ProtectHome=read-only
+ProtectSystem=strict
+RemoveIPC=true
+Restart=always
+RestrictSUIDSGID=true
+RuntimeDirectory=nscd
+Type=notify
+User=nscd
+
+[Install]
+WantedBy=multi-user.target
+
+=== /nix/store/hnpdj50cvl8dg8x7mh6ir4adl7vd0wk1-nixos-system-persistence-fixture-26.05pre-git/etc/systemd/system/dhcpcd.service ===
+[Unit]
+After=resolvconf.service
+Before=network-online.target
+ConditionCapability=CAP_NET_ADMIN
+Description=DHCP Client
+Documentation=man:dhcpcd(8)
+Wants=network.target resolvconf.service
+X-Restart-Triggers=/nix/store/ds9f01rhk71ypa5mjrgifbwm73rrs87k-X-Restart-Triggers-dhcpcd
+
+[Service]
+Environment="LOCALE_ARCHIVE=/nix/store/dc427sjs33dci797apv4lvsg1a69szn0-glibc-locales-2.42-100/lib/locale/locale-archive"
+Environment="PATH=/nix/store/c3injdhy11811g764bj0fdd6w5pyfm3m-dhcpcd-10.3.1/bin:/nix/store/b0v2lpk08crqargn1b2fr3lhv8zy8r7d-openresolv-3.17.4/bin:/nix/store/c5l35kz52pymkbsdridzrbm1qfiky94w-hostname/bin:/nix/store/bhv6xyvqw6gjs3j488gi1z6wdv18bdpa-coreutils-9.11/bin:/nix/store/nl0wq6d4bpjrxmlax141liq0qr9z87gn-findutils-4.10.0/bin:/nix/store/cqhgy07rpxdwk9kd2qlc3cw4s9ajzm9f-gnugrep-3.12/bin:/nix/store/0s17nja4n8b63by0nlg1m31mxn2bq1g1-gnused-4.10/bin:/nix/store/kmzlca218j6j1ar292fxj7707qzypij8-systemd-260.5/bin:/nix/store/c3injdhy11811g764bj0fdd6w5pyfm3m-dhcpcd-10.3.1/sbin:/nix/store/b0v2lpk08crqargn1b2fr3lhv8zy8r7d-openresolv-3.17.4/sbin:/nix/store/c5l35kz52pymkbsdridzrbm1qfiky94w-hostname/sbin:/nix/store/bhv6xyvqw6gjs3j488gi1z6wdv18bdpa-coreutils-9.11/sbin:/nix/store/nl0wq6d4bpjrxmlax141liq0qr9z87gn-findutils-4.10.0/sbin:/nix/store/cqhgy07rpxdwk9kd2qlc3cw4s9ajzm9f-gnugrep-3.12/sbin:/nix/store/0s17nja4n8b63by0nlg1m31mxn2bq1g1-gnused-4.10/sbin:/nix/store/kmzlca218j6j1ar292fxj7707qzypij8-systemd-260.5/sbin"
+Environment="TZDIR=/nix/store/mkbbamycmw838fwxk21jz0nw3mhnmk16-tzdata-2026c/share/zoneinfo"
+X-StopIfChanged=false
+AmbientCapabilities=CAP_NET_ADMIN
+AmbientCapabilities=CAP_NET_RAW
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_ADMIN
+CapabilityBoundingSet=CAP_NET_RAW
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+DeviceAllow=
+ExecReload=/nix/store/c3injdhy11811g764bj0fdd6w5pyfm3m-dhcpcd-10.3.1/sbin/dhcpcd --rebind
+ExecStart=@/nix/store/c3injdhy11811g764bj0fdd6w5pyfm3m-dhcpcd-10.3.1/sbin/dhcpcd dhcpcd --quiet  --config /nix/store/waw2cngbvwby7dsvx2gi3p6kk4fwljkw-dhcpcd.conf
+ExecStartPre=+/nix/store/gyrmr5zzh99p9qssmixyjxilbpy858m9-migrate-dhcpcd
+Group=dhcpcd
+LockPersonality=true
+MemoryDenyWriteExecute=true
+NoNewPrivileges=true
+PIDFile=/run/dhcpcd/pid
+PrivateDevices=true
+PrivateMounts=true
+PrivateTmp=true
+PrivateUsers=false
+ProtectClock=true
+ProtectControlGroups=true
+ProtectHome=tmpfs
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectProc=invisible
+ProtectSystem=strict
+ReadWritePaths=/proc/sys/net/ipv4
+ReadWritePaths=/proc/sys/net/ipv6
+ReadWritePaths=/run/resolvconf
+ReadWritePaths=/etc/resolv.conf
+RemoveIPC=true
+Restart=always
+RestrictAddressFamilies=AF_UNIX
+RestrictAddressFamilies=AF_INET
+RestrictAddressFamilies=AF_INET6
+RestrictAddressFamilies=AF_NETLINK
+RestrictAddressFamilies=AF_PACKET
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RuntimeDirectory=dhcpcd
+StateDirectory=dhcpcd
+SupplementaryGroups=resolvconf
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@aio
+SystemCallFilter=~@keyring
+SystemCallFilter=~@memlock
+SystemCallFilter=~@mount
+SystemCallFilter=~@privileged
+SystemCallFilter=~@resources
+Type=forking
+UMask=0027
+User=dhcpcd
+
+[Install]
+WantedBy=multi-user.target network-online.target
+
+=== /nix/store/hnpdj50cvl8dg8x7mh6ir4adl7vd0wk1-nixos-system-persistence-fixture-26.05pre-git/etc/systemd/system/dbus-broker.service ===
+[Unit]
+Description=D-Bus System Message Bus
+Documentation=man:dbus-broker-launch(1)
+DefaultDependencies=false
+After=dbus.socket
+Before=basic.target shutdown.target
+Requires=dbus.socket
+Conflicts=shutdown.target
+
+[Service]
+Type=notify-reload
+Sockets=dbus.socket
+OOMScoreAdjust=-900
+LimitNOFILE=16384
+ProtectSystem=full
+PrivateTmp=true
+PrivateDevices=true
+ExecStart=/nix/store/yly12cgk8diwbba5pjdr7g0b3hk8db0c-dbus-broker-37/bin/dbus-broker-launch --scope system --audit
+
+[Install]
+Alias=dbus.service
+
+=== /nix/store/hnpdj50cvl8dg8x7mh6ir4adl7vd0wk1-nixos-system-persistence-fixture-26.05pre-git/etc/systemd/system/logrotate-checkconf.service ===
+[Unit]
+Description=Logrotate configuration check
+
+[Service]
+Environment="LOCALE_ARCHIVE=/nix/store/dc427sjs33dci797apv4lvsg1a69szn0-glibc-locales-2.42-100/lib/locale/locale-archive"
+Environment="PATH=/nix/store/bhv6xyvqw6gjs3j488gi1z6wdv18bdpa-coreutils-9.11/bin:/nix/store/nl0wq6d4bpjrxmlax141liq0qr9z87gn-findutils-4.10.0/bin:/nix/store/cqhgy07rpxdwk9kd2qlc3cw4s9ajzm9f-gnugrep-3.12/bin:/nix/store/0s17nja4n8b63by0nlg1m31mxn2bq1g1-gnused-4.10/bin:/nix/store/kmzlca218j6j1ar292fxj7707qzypij8-systemd-260.5/bin:/nix/store/bhv6xyvqw6gjs3j488gi1z6wdv18bdpa-coreutils-9.11/sbin:/nix/store/nl0wq6d4bpjrxmlax141liq0qr9z87gn-findutils-4.10.0/sbin:/nix/store/cqhgy07rpxdwk9kd2qlc3cw4s9ajzm9f-gnugrep-3.12/sbin:/nix/store/0s17nja4n8b63by0nlg1m31mxn2bq1g1-gnused-4.10/sbin:/nix/store/kmzlca218j6j1ar292fxj7707qzypij8-systemd-260.5/sbin"
+Environment="TZDIR=/nix/store/mkbbamycmw838fwxk21jz0nw3mhnmk16-tzdata-2026c/share/zoneinfo"
+ExecStart=/nix/store/dhmd7w654dbxkrgcx2pnc2sv47k3bz8w-logrotate-3.22.0/sbin/logrotate  --debug /nix/store/3pvsf009b3vdpm3s5ip38zjm8z8xapab-logrotate.conf
+RemainAfterExit=true
+Type=oneshot
+
+[Install]
+WantedBy=multi-user.target
+

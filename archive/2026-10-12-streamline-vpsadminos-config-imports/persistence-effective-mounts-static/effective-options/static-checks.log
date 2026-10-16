@@ -1,0 +1,73 @@
+CHECK nixfmt
+COMMAND ["/nix/store/ffrsk7yvqqmlj7d40hs2prkqgly2gr2q-nixfmt-1.5.0/bin/nixfmt", "--check", "os/lib/nixos-container/stable/vpsadminos-25.11.nix", "os/lib/nixos-container/stable/vpsadminos-26.05.nix", "os/lib/nixos-container/stable/vpsadminos.nix", "os/lib/nixos-container/unstable/vpsadminos.nix", "tests/nixos-container-persistence-eval.nix", "tests/nixos-container-persistence-check.nix", "tests/fixtures/nixos-persistence-guests.nix", "tests/suite/dist-config/nixos-persistence-upgrade.nix", "tests/nixos-container-modules-eval.nix"]
+STATUS 0
+
+CHECK parse os/lib/nixos-container/stable/vpsadminos-25.11.nix
+COMMAND ["nix-instantiate", "--parse", "os/lib/nixos-container/stable/vpsadminos-25.11.nix"]
+STATUS 0
+
+CHECK parse os/lib/nixos-container/stable/vpsadminos-26.05.nix
+COMMAND ["nix-instantiate", "--parse", "os/lib/nixos-container/stable/vpsadminos-26.05.nix"]
+STATUS 0
+
+CHECK parse os/lib/nixos-container/stable/vpsadminos.nix
+COMMAND ["nix-instantiate", "--parse", "os/lib/nixos-container/stable/vpsadminos.nix"]
+STATUS 0
+
+CHECK parse os/lib/nixos-container/unstable/vpsadminos.nix
+COMMAND ["nix-instantiate", "--parse", "os/lib/nixos-container/unstable/vpsadminos.nix"]
+STATUS 0
+
+CHECK parse tests/nixos-container-persistence-eval.nix
+COMMAND ["nix-instantiate", "--parse", "tests/nixos-container-persistence-eval.nix"]
+STATUS 0
+
+CHECK parse tests/nixos-container-persistence-check.nix
+COMMAND ["nix-instantiate", "--parse", "tests/nixos-container-persistence-check.nix"]
+STATUS 0
+
+CHECK parse tests/fixtures/nixos-persistence-guests.nix
+COMMAND ["nix-instantiate", "--parse", "tests/fixtures/nixos-persistence-guests.nix"]
+STATUS 0
+
+CHECK parse tests/suite/dist-config/nixos-persistence-upgrade.nix
+COMMAND ["nix-instantiate", "--parse", "tests/suite/dist-config/nixos-persistence-upgrade.nix"]
+STATUS 0
+
+CHECK parse tests/nixos-container-modules-eval.nix
+COMMAND ["nix-instantiate", "--parse", "tests/nixos-container-modules-eval.nix"]
+STATUS 0
+
+CHECK bash /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/nixos-container-persistence-shell.sh
+COMMAND ["bash", "-n", "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/nixos-container-persistence-shell.sh"]
+STATUS 0
+
+CHECK bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-effective-mounts-static/helpers-template.sh
+COMMAND ["bash", "-n", "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-effective-mounts-static/helpers-template.sh"]
+STATUS 0
+
+CHECK bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-effective-mounts-static/store-copy-template.sh
+COMMAND ["bash", "-n", "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-effective-mounts-static/store-copy-template.sh"]
+STATUS 0
+
+CHECK bash /home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-effective-mounts-static/readiness-template.sh
+COMMAND ["bash", "-n", "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-effective-mounts-static/readiness-template.sh"]
+STATUS 0
+
+CHECK Ruby static template
+COMMAND ["/nix/store/m0nfdb4mhfgwkgss4ymyqmvviwy30i6y-ruby-3.4.9/bin/ruby", "-c", "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-effective-mounts-static/suite-template.rb"]
+Syntax OK
+STATUS 0
+
+CHECK whitespace
+COMMAND ["git", "diff", "--check"]
+STATUS 0
+
+CHECK index unchanged/empty
+COMMAND ["git", "diff", "--cached", "--quiet"]
+STATUS 0
+
+CHECK latest stable identical
+COMMAND ["cmp", "os/lib/nixos-container/stable/vpsadminos-26.05.nix", "os/lib/nixos-container/stable/vpsadminos.nix"]
+STATUS 0
+

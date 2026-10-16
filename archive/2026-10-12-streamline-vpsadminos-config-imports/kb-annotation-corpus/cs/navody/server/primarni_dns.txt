@@ -1,0 +1,29 @@
+<page>manuals:server:primary_dns</page>
+====== Primární DNS servery =======
+vpsFree.cz provozuje sdílené DNS servery, které můžeš použít jako autoritativní
+servery pro své domény. Postup nastavení je následující:
+
+  - V menu <vpsadmin-nav id="dns.primary-zones.open">**DNS** -> **Primární zóny**</vpsadmin-nav> si vytvoříš zónu pro tvou doménu. Název zóny je jednoduše název domény, tj. nejčastěji doména druhého řádu. Můžeš však delegovat i domény vyšších řádů.
+  - U registrátora domény je potřeba přenastavit nameservery na naše sdílené, přidělené servery uvidíš v detailu zóny (např. //ns3.vpsfree.cz// a //ns4.vpsfree.cz//).
+  - DNS záznamy dále nastavuješ přes rozhraní vpsAdminu.
+  
+Podporujeme následující DNS záznamy: A, AAAA, CAA, CNAME, DS, MX, NS, PTR, SRV, SSHFP, TLSA a TXT.
+
+===== Dynamické záznamy =====
+Pro A a AAAA záznamy si můžeš nechat vygenerovat unikátní odkaz, jehož navštívením se hodnota daného
+DNS záznamu přenastaví na adresu, ze které byl HTTP požadavek vykonán. Použiješ to např. když máš
+doma veřejnou adresu, která ale není statická a může se měnit. Na routeru v cronu nebo v reakci
+na změnu adresy spustíš wget/curl a udržíš tak DNS záznamy aktuální.
+
+===== DNSSEC =====
+DNSSEC podporujeme, pro nastavení však musíš předat DNSKEY/DS záznam nadřazené zóně, o postupu se informuj u svého registrátora. DNSSEC se aktivuje v detailu zóny ve vpsAdminu, klíče jsou automaticky
+vygenerovány a zóna podepsána; používáme výchozí politiku BINDu. DNSKEY/DS záznamy si zobrazíš kliknutím
+na **Zobrazit záznamy DNSKEY a DS** v detailu zóny.
+
+===== Vlastní sekundární servery =====
+Ve VPS si můžeš spustit vlastní DNS server a použít ho jako další sekundární server. Ve vpsAdminu jej
+přidáš v detailu zóny přes formulář **Sekundární servery**. vpsAdmin ti pak ukáže, jak by mohla
+vypadat jeho konfigurace. Až budeš mít server funkční, můžeš ho u registrátora domény přidat mezi
+nameservery.
+
+Alternativně můžeš tímto způsobem exportovat záznamy z našich serverů a importovat je k sobě.

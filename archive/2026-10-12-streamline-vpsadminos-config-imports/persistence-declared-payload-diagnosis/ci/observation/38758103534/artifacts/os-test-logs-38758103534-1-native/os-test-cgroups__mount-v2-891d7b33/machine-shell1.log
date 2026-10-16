@@ -1,0 +1,791 @@
+SHELL: 1
+
+START: 2026-10-15 19:19:45 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 19:19:45 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:19:45 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 19:19:45 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:19:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:19:47 +0200
+ELAPSED: 2.82s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:19:48 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:19:50 +0200
+ELAPSED: 1.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:19:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:19:54 +0200
+ELAPSED: 2.78s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:19:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:19:57 +0200
+ELAPSED: 1.7s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:19:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:19:59 +0200
+ELAPSED: 1.7s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:20:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:20:02 +0200
+ELAPSED: 1.38s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 19:20:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:20:04 +0200
+ELAPSED: 1.19s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 19:20:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:20:06 +0200
+ELAPSED: 1.24s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 19:20:06 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 19:20:06 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 17:20:06 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 19:20:06 +0200
+COMMAND: osctl ct new --distribution opensuse --version latest testct-e76d
+END: 2026-10-15 19:21:11 +0200
+ELAPSED: 64.87s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 19:21:11 +0200
+COMMAND: osctl ct unset start-menu testct-e76d
+END: 2026-10-15 19:21:12 +0200
+ELAPSED: 1.27s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:21:12 +0200
+COMMAND: osctl ct start testct-e76d
+END: 2026-10-15 19:21:15 +0200
+ELAPSED: 2.56s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 19:21:25 +0200
+COMMAND: osctl ct exec testct-e76d cat /proc/mounts
+END: 2026-10-15 19:21:28 +0200
+ELAPSED: 3.16s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-e76d / zfs rw,relatime,idmapped,xattr,noacl,casesensitive 0 0
+none /dev tmpfs rw,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys/net proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys proc ro,relatime 0 0
+proc /proc/sysrq-trigger proc ro,relatime 0 0
+sysfs /sys sysfs rw,relatime 0 0
+sys /sys/fs/fuse/connections sysfs rw,nosuid,nodev,noexec,relatime 0 0
+tmpfs /sys/kernel/debug tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+tmpfs /sys/kernel/tracing tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+securityfs /sys/kernel/security securityfs rw,relatime 0 0
+sys /sys/fs/pstore sysfs rw,nosuid,nodev,noexec,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+tmpfs /dev/.osctl-mount-helper tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+bpf /sys/fs/bpf bpf rw,nosuid,nodev,noexec,relatime,uid=1065536,gid=1065536,mode=700 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,relatime,mode=755,uid=0,gid=0 0 0
+none /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/console devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty1 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty2 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty3 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty4 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+none /proc/sys/kernel/random/boot_id tmpfs ro,nosuid,nodev,noexec,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+tmpfs /dev/shm tmpfs rw,nosuid,nodev,uid=0,gid=0 0 0
+ramfs /run/credentials/systemd-journald.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+tmpfs /tmp tmpfs rw,nosuid,nodev,size=4071348k,nr_inodes=1048576,uid=0,gid=0 0 0
+ramfs /run/credentials/container-getty@1.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/container-getty@4.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/console-getty.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/container-getty@2.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/container-getty@3.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+---
+
+START: 2026-10-15 19:21:28 +0200
+COMMAND: osctl ct exec testct-e76d cat /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-15 19:21:31 +0200
+ELAPSED: 3.03s
+STATUS: 0
+OUTPUT:
+cpuset cpu memory hugetlb pids rdma misc
+---
+
+START: 2026-10-15 19:21:31 +0200
+COMMAND: osctl ct del -f --prune testct-e76d
+END: 2026-10-15 19:21:34 +0200
+ELAPSED: 2.52s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-e76d
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 19:21:34 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-15 19:21:53 +0200
+ELAPSED: 19.91s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/almalinux/9/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/debian/testing-20261010/image-stream.tar
+---
+
+START: 2026-10-15 19:21:53 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:21:55 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 19:21:55 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 19:21:55 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 17:21:55 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 19:21:55 +0200
+COMMAND: osctl ct new --distribution slackware --version latest testct-17ef
+END: 2026-10-15 19:22:16 +0200
+ELAPSED: 21.59s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 19:22:16 +0200
+COMMAND: osctl ct unset start-menu testct-17ef
+END: 2026-10-15 19:22:17 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:22:17 +0200
+COMMAND: osctl ct start testct-17ef
+END: 2026-10-15 19:22:21 +0200
+ELAPSED: 3.4s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 19:22:31 +0200
+COMMAND: osctl ct exec testct-17ef cat /proc/mounts
+END: 2026-10-15 19:22:34 +0200
+ELAPSED: 2.85s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-17ef / zfs rw,relatime,idmapped,xattr,noacl,casesensitive 0 0
+none /dev tmpfs rw,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys/net proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys proc ro,relatime 0 0
+proc /proc/sysrq-trigger proc ro,relatime 0 0
+sysfs /sys sysfs rw,relatime 0 0
+sys /sys/fs/fuse/connections sysfs rw,nosuid,nodev,noexec,relatime 0 0
+tmpfs /sys/kernel/debug tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+tmpfs /sys/kernel/tracing tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+securityfs /sys/kernel/security securityfs rw,relatime 0 0
+sys /sys/fs/pstore sysfs rw,nosuid,nodev,noexec,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+none /dev/shm tmpfs rw,nosuid,nodev,relatime,uid=0,gid=0 0 0
+tmpfs /dev/.osctl-mount-helper tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+bpf /sys/fs/bpf bpf rw,nosuid,nodev,noexec,relatime,uid=1000000,gid=1000000,mode=700 0 0
+none /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/console devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty1 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty2 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty3 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty4 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1028 0 0
+none /proc/sys/kernel/random/boot_id tmpfs ro,nosuid,nodev,noexec,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,noexec,relatime,size=32768k,mode=755,uid=0,gid=0 0 0
+---
+
+START: 2026-10-15 19:22:34 +0200
+COMMAND: osctl ct exec testct-17ef cat /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-15 19:22:36 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+cpuset cpu memory hugetlb pids rdma misc
+---
+
+START: 2026-10-15 19:22:36 +0200
+COMMAND: osctl ct del -f --prune testct-17ef
+END: 2026-10-15 19:22:39 +0200
+ELAPSED: 2.64s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-17ef
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 19:22:39 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-15 19:22:52 +0200
+ELAPSED: 13.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:22:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:22:53 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 19:22:53 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 19:22:53 +0200
+ELAPSED: 0.19s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 17:22:53 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 19:22:53 +0200
+COMMAND: osctl ct new --distribution gentoo --version latest-systemd testct-5e55
+END: 2026-10-15 19:23:28 +0200
+ELAPSED: 34.74s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 19:23:28 +0200
+COMMAND: osctl ct unset start-menu testct-5e55
+END: 2026-10-15 19:23:29 +0200
+ELAPSED: 0.78s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:23:29 +0200
+COMMAND: osctl ct start testct-5e55
+END: 2026-10-15 19:23:32 +0200
+ELAPSED: 3.56s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 19:23:42 +0200
+COMMAND: osctl ct exec testct-5e55 cat /proc/mounts
+END: 2026-10-15 19:23:45 +0200
+ELAPSED: 2.65s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-5e55 / zfs rw,relatime,idmapped,xattr,noacl,casesensitive 0 0
+none /dev tmpfs rw,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys/net proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys proc ro,relatime 0 0
+proc /proc/sysrq-trigger proc ro,relatime 0 0
+sysfs /sys sysfs rw,relatime 0 0
+sys /sys/fs/fuse/connections sysfs rw,nosuid,nodev,noexec,relatime 0 0
+tmpfs /sys/kernel/debug tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+tmpfs /sys/kernel/tracing tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+securityfs /sys/kernel/security securityfs rw,relatime 0 0
+sys /sys/fs/pstore sysfs rw,nosuid,nodev,noexec,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+none /dev/shm tmpfs rw,nosuid,nodev,relatime,uid=0,gid=0 0 0
+tmpfs /dev/.osctl-mount-helper tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+bpf /sys/fs/bpf bpf rw,nosuid,nodev,noexec,relatime,uid=1065536,gid=1065536,mode=700 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,relatime,mode=755,uid=0,gid=0 0 0
+none /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/console devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty1 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty2 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty3 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty4 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+none /proc/sys/kernel/random/boot_id tmpfs ro,nosuid,nodev,noexec,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+tmpfs /tmp tmpfs rw,nosuid,nodev,size=4071348k,nr_inodes=1048576,uid=0,gid=0 0 0
+none /run/credentials/systemd-journald.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/systemd-networkd.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/console-getty.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@4.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@3.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@1.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@2.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+---
+
+START: 2026-10-15 19:23:45 +0200
+COMMAND: osctl ct exec testct-5e55 cat /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-15 19:23:47 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+cpuset cpu memory hugetlb pids rdma misc
+---
+
+START: 2026-10-15 19:23:47 +0200
+COMMAND: osctl ct del -f --prune testct-5e55
+END: 2026-10-15 19:23:51 +0200
+ELAPSED: 3.83s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-5e55
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 19:23:51 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-15 19:24:01 +0200
+ELAPSED: 10.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:24:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:24:02 +0200
+ELAPSED: 1.29s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 19:24:02 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 19:24:02 +0200
+ELAPSED: 0.19s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 17:24:02 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 19:24:02 +0200
+COMMAND: osctl ct new --distribution gentoo --version latest-musl-systemd testct-e0b0
+END: 2026-10-15 19:24:54 +0200
+ELAPSED: 52.01s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 19:24:54 +0200
+COMMAND: osctl ct unset start-menu testct-e0b0
+END: 2026-10-15 19:24:55 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:24:55 +0200
+COMMAND: osctl ct start testct-e0b0
+END: 2026-10-15 19:24:58 +0200
+ELAPSED: 2.93s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 19:25:08 +0200
+COMMAND: osctl ct exec testct-e0b0 cat /proc/mounts
+END: 2026-10-15 19:25:11 +0200
+ELAPSED: 2.97s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-e0b0 / zfs rw,relatime,idmapped,xattr,noacl,casesensitive 0 0
+none /dev tmpfs rw,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys/net proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys proc ro,relatime 0 0
+proc /proc/sysrq-trigger proc ro,relatime 0 0
+sysfs /sys sysfs rw,relatime 0 0
+sys /sys/fs/fuse/connections sysfs rw,nosuid,nodev,noexec,relatime 0 0
+tmpfs /sys/kernel/debug tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+tmpfs /sys/kernel/tracing tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+securityfs /sys/kernel/security securityfs rw,relatime 0 0
+sys /sys/fs/pstore sysfs rw,nosuid,nodev,noexec,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+none /dev/shm tmpfs rw,nosuid,nodev,relatime,uid=0,gid=0 0 0
+tmpfs /dev/.osctl-mount-helper tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+bpf /sys/fs/bpf bpf rw,nosuid,nodev,noexec,relatime,uid=1131072,gid=1131072,mode=700 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,relatime,mode=755,uid=0,gid=0 0 0
+none /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/console devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty1 devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty2 devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty3 devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty4 devpts rw,nosuid,noexec,relatime,gid=1131077,mode=620,ptmxmode=666,max=1028 0 0
+none /proc/sys/kernel/random/boot_id tmpfs ro,nosuid,nodev,noexec,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+tmpfs /tmp tmpfs rw,nosuid,nodev,size=4071348k,nr_inodes=1048576,uid=0,gid=0 0 0
+none /run/credentials/systemd-journald.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/systemd-networkd.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/console-getty.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@3.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@1.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@4.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@2.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+---
+
+START: 2026-10-15 19:25:11 +0200
+COMMAND: osctl ct exec testct-e0b0 cat /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-15 19:25:14 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+cpuset cpu memory hugetlb pids rdma misc
+---
+
+START: 2026-10-15 19:25:14 +0200
+COMMAND: osctl ct del -f --prune testct-e0b0
+END: 2026-10-15 19:25:16 +0200
+ELAPSED: 2.76s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-e0b0
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 19:25:16 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-15 19:25:43 +0200
+ELAPSED: 26.53s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/fedora/44/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/void/musl-20261010/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/rocky/8/image-stream.tar
+---
+
+START: 2026-10-15 19:25:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:25:44 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 19:25:44 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 19:25:44 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 17:25:44 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 19:25:44 +0200
+COMMAND: osctl ct new --distribution centos --version latest-10-stream testct-5269
+END: 2026-10-15 19:25:57 +0200
+ELAPSED: 12.86s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 19:25:57 +0200
+COMMAND: osctl ct unset start-menu testct-5269
+END: 2026-10-15 19:25:58 +0200
+ELAPSED: 0.9s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:25:58 +0200
+COMMAND: osctl ct start testct-5269
+END: 2026-10-15 19:26:01 +0200
+ELAPSED: 3.02s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 19:26:11 +0200
+COMMAND: osctl ct exec testct-5269 cat /proc/mounts
+END: 2026-10-15 19:26:13 +0200
+ELAPSED: 2.61s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-5269 / zfs rw,relatime,idmapped,xattr,noacl,casesensitive 0 0
+none /dev tmpfs rw,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys/net proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys proc ro,relatime 0 0
+proc /proc/sysrq-trigger proc ro,relatime 0 0
+sysfs /sys sysfs rw,relatime 0 0
+sys /sys/fs/fuse/connections sysfs rw,nosuid,nodev,noexec,relatime 0 0
+tmpfs /sys/kernel/debug tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+tmpfs /sys/kernel/tracing tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+securityfs /sys/kernel/security securityfs rw,relatime 0 0
+sys /sys/fs/pstore sysfs rw,nosuid,nodev,noexec,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+tmpfs /dev/.osctl-mount-helper tmpfs ro,nosuid,nodev,size=2035676k,mode=755 0 0
+bpf /sys/fs/bpf bpf rw,nosuid,nodev,noexec,relatime,uid=1065536,gid=1065536,mode=700 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,relatime,mode=755,uid=0,gid=0 0 0
+none /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/console devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty1 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty2 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty3 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+devpts /dev/tty4 devpts rw,nosuid,noexec,relatime,gid=1065541,mode=620,ptmxmode=666,max=1028 0 0
+none /proc/sys/kernel/random/boot_id tmpfs ro,nosuid,nodev,noexec,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+tmpfs /dev/shm tmpfs rw,nosuid,nodev,uid=0,gid=0 0 0
+ramfs /run/credentials/systemd-journald.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/container-getty@3.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/console-getty.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/container-getty@4.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/container-getty@1.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+ramfs /run/credentials/container-getty@2.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+---
+
+START: 2026-10-15 19:26:13 +0200
+COMMAND: osctl ct exec testct-5269 cat /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-15 19:26:16 +0200
+ELAPSED: 2.71s
+STATUS: 0
+OUTPUT:
+cpuset cpu memory hugetlb pids rdma misc
+---
+
+START: 2026-10-15 19:26:16 +0200
+COMMAND: osctl ct del -f --prune testct-5269
+END: 2026-10-15 19:26:19 +0200
+ELAPSED: 2.73s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-5269
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 19:26:19 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-15 19:26:20 +0200
+ELAPSED: 1.1s
+STATUS: 0
+OUTPUT:
+
+---
+

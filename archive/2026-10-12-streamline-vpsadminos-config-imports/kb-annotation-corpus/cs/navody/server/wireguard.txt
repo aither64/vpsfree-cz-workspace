@@ -1,0 +1,138 @@
+<page>manuals:server:wireguard</page>
+
+====== WireGuard ======
+
+WireGuard je VPN zabudovaná v linuxovém jádře. Potřebný modul poskytuje
+vpsAdminOS, takže ve VPS stačí nainstalovat uživatelské nástroje.
+
+Tento příklad propojí dvě zařízení:
+
+  * server ve vpsFree.cz má veřejnou adresu ''185.8.164.10/32'', UDP port ''51820'' a adresu ve VPN ''10.77.0.1'';
+  * klient má adresu ve VPN ''10.77.0.2''.
+
+''185.8.164.10/32'' je příklad z rozsahu playground VPS. V konfiguraci jej
+nahraď skutečnou veřejnou IPv4 nebo IPv6 adresou serveru. Samotnou IPv6 adresu
+uzavři v ''Endpoint'' do hranatých závorek, například
+''Endpoint = [2001:db8::10]:51820''.
+
+===== Instalace nástrojů =====
+
+Nainstaluj balíček ''wireguard-tools'' ze své distribuce. Například:
+
+<code bash>
+# Debian a Ubuntu
+apt update
+apt install wireguard-tools
+
+# Fedora
+dnf install wireguard-tools
+
+# Alpine Linux
+apk add wireguard-tools
+
+# Arch Linux
+pacman -S wireguard-tools
+</code>
+
+Aktuální odkazy pro další systémy najdeš na
+[[https://www.wireguard.com/install/|webu projektu WireGuard]].
+
+===== Klíče =====
+
+Na serveru i klientovi vytvoř samostatný pár klíčů. Soukromý klíč nikomu
+neposílej a nevkládej ho do tiketů ani veřejných repozitářů.
+
+<code bash>
+install -d -m 700 /etc/wireguard
+umask 077
+wg genkey | tee /etc/wireguard/private.key | wg pubkey > /etc/wireguard/public.key
+</code>
+
+Veřejný klíč vypíšeš příkazem:
+
+<code bash>
+cat /etc/wireguard/public.key
+</code>
+
+V následujících příkladech nahraď ''SERVER_PRIVATE_KEY'',
+''SERVER_PUBLIC_KEY'', ''CLIENT_PRIVATE_KEY'' a ''CLIENT_PUBLIC_KEY''
+odpovídajícími hodnotami. Soubor s konfigurací musí zůstat čitelný jen pro
+roota.
+
+===== Konfigurace serveru =====
+
+Na serveru vytvoř ''/etc/wireguard/wg0.conf'':
+
+<code ini>
+[Interface]
+Address = 10.77.0.1/24
+ListenPort = 51820
+PrivateKey = SERVER_PRIVATE_KEY
+
+[Peer]
+PublicKey = CLIENT_PUBLIC_KEY
+AllowedIPs = 10.77.0.2/32
+</code>
+
+===== Konfigurace klienta =====
+
+Na klientovi vytvoř ''/etc/wireguard/wg0.conf'':
+
+<code ini>
+[Interface]
+Address = 10.77.0.2/24
+PrivateKey = CLIENT_PRIVATE_KEY
+
+[Peer]
+PublicKey = SERVER_PUBLIC_KEY
+AllowedIPs = 10.77.0.1/32
+Endpoint = 185.8.164.10:51820
+PersistentKeepalive = 25
+</code>
+
+''AllowedIPs'' určuje adresy, které se směrují k danému protějšku, a zároveň
+adresy, ze kterých WireGuard od něj přijme pakety. Tento příklad směruje pouze
+provoz mezi dvěma adresami VPN. Nedělá z VPS výchozí bránu a nenastavuje NAT.
+
+''PersistentKeepalive = 25'' použij, pokud je klient za NATem nebo stavovým
+firewallem a má zůstat dosažitelný i bez vlastního provozu. Pokud jsou oba
+protějšky přímo dosažitelné, řádek můžeš vynechat. ''Endpoint'' potřebuje
+alespoň strana, která spojení zahajuje; server se v tomto příkladu naučí
+adresu klienta z přijatých paketů.
+
+Na obou strojích povol čtení konfigurace pouze uživateli ''root'':
+
+<code bash>
+chmod 600 /etc/wireguard/wg0.conf
+</code>
+
+===== Firewall a spuštění =====
+
+Používáš-li na serveru firewall, povol příchozí UDP port ''51820'' pro IPv4 i
+IPv6 podle adresy v ''Endpoint''. TCP port stejného čísla není potřeba. Více
+informací najdeš v článku [[navody:server:firewall|Firewall]].
+
+Na distribuci se systemd spusť rozhraní a nastav jeho start po bootu:
+
+<code bash>
+systemctl enable --now wg-quick@wg0
+</code>
+
+Na systému bez systemd jej můžeš spustit přímo:
+
+<code bash>
+wg-quick up wg0
+</code>
+
+Konfiguraci ověř příkazy:
+
+<code bash>
+wg show
+ping -c 3 10.77.0.1   # na klientovi
+ping -c 3 10.77.0.2   # na serveru
+</code>
+
+Ve výstupu ''wg show'' sleduj zejména čas posledního handshake a počítadla
+přenesených dat. Pokud handshake neproběhne, zkontroluj veřejné klíče,
+''Endpoint'' a pravidla firewallu. Podrobnosti ke konfiguraci popisuje
+[[https://www.wireguard.com/quickstart/|oficiální rychlý start WireGuardu]].

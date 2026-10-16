@@ -1,0 +1,201 @@
+<page>manuals:distributions:guix</page>
+
+<kb-managed
+  source="contract/pages/navody-distribuce-guix.txt"
+  test="kb/guix#*"
+/>
+
+====== GNU Guix System ======
+
+[[https://guix.gnu.org/|GNU Guix System]] je distribuce, ve které se systém,
+služby a balíčky popisují deklarativně v jazyce Guile Scheme. Podobně jako
+[[navody:distribuce:nixos|NixOS]] vytváří při změnách nové generace systému, ke
+kterým se můžeš vrátit.
+
+===== Jak funguje šablona =====
+
+Šablona vpsFree obsahuje minimální Guix System s OpenSSH a dvěma soubory:
+
+  * ''/etc/config/system.scm'' je tvoje hlavní konfigurace systému;
+  * ''/etc/config/vpsadminos.scm'' zajišťuje běh Guixu v kontejneru vpsAdminOS.
+
+''system.scm'' vyhledá v modulu ''vpsadminos'' základ
+''%ct-operating-system-base'' a zdědí jeho nastavení. Vyhledání modulu a dědění
+zachovej: základ obsahuje kontejnerový bootloader, souborové systémy, zástupný
+kernel, balíčky, služby a síťovou integraci. Aktuální podobu obou souborů najdeš
+v
+[[https://github.com/vpsfreecz/vpsadminos/tree/staging/image-scripts/images/guix|adresáři šablony pro Guix v repozitáři vpsAdminOS]].
+
+Jádro spravuje vpsAdminOS, proto do konfigurace nepřidávej vlastní linuxový
+kernel ani běžný bootloader pro fyzický stroj.
+
+===== Úprava konfigurace =====
+
+Nejdřív uprav ''/etc/config/system.scm''. Najdeš v něm výchozí hostname, časové
+pásmo a locale, které můžeš změnit. Můžeš přidat také přímo vyhodnocovaná pole,
+například ''packages''. Vyhledání ''platform-system'' a řádek
+''(inherit platform-system)'' zachovej, aby zůstala aktivní nastavení pro tuto
+platformu.
+
+Při změně služeb nejdřív odvoď seznam služeb mimo záznam
+''operating-system'', ulož jej do proměnné a tu přiřaď poli ''services''.
+Stejný postup používá příklad nasazení níže. Guix vyhodnocuje pole služeb až po
+načtení konfigurace, proto nesmí záviset na vazbách v dočasném konfiguračním
+modulu.
+
+Konfiguraci aktivuj jako ''root'':
+
+<code bash>
+#!/usr/bin/env bash
+set -eo pipefail
+
+# Použij revizi Guixu, která sestavila aktivní systémovou generaci.
+export GUIX_PROFILE=/run/current-system/profile
+# shellcheck disable=SC1091
+. "$GUIX_PROFILE/etc/profile"
+hash guix
+
+test -r /etc/config/system.scm
+test -r /etc/config/vpsadminos.scm
+test -r /run/current-system/channels.scm
+guix time-machine -C /run/current-system/channels.scm -- \
+  system reconfigure -L /etc/config /etc/config/system.scm
+</code>
+
+''guix time-machine'' použije kanály zaznamenané v aktivní generaci, takže
+reconfigure nezávisí na pozdějších změnách historie kanálů. Přepínač
+''-L /etc/config'' zpřístupní modul ''vpsadminos''. Příkaz sestaví a rovnou
+aktivuje novou generaci. Před odhlášením ověř, že běží SSH a služby, které
+potřebuješ. Podrobnosti popisují manuály k
+[[https://guix.gnu.org/manual/en/html_node/Invoking-guix-time_002dmachine.html|guix time-machine]]
+a [[https://guix.gnu.org/manual/en/html_node/Invoking-guix-system.html|guix system]].
+
+===== Aktualizace Guixu =====
+
+Ukázka výše vybere revizi Guixu a kanály, které sestavily právě aktivní
+systémovou generaci. Reconfigure proto nevyžaduje před každou změnou
+''guix pull'' a opakované nasazení zůstává předvídatelné.
+
+Když chceš Guix záměrně aktualizovat, nejdřív si pomocí ''guix describe''
+zaznamenej současné kanály. Potom spusť ''guix pull'', načti aktualizovaný profil
+podle pokynů příkazu a znovu proveď reconfigure. Před změnou si přečti novinky a
+počítej s tím, že sestavení může trvat déle a potřebovat více paměti a místa.
+Práci s kanály a připnutými revizemi vysvětluje
+[[https://guix.gnu.org/manual/en/html_node/Channels.html|manuál ke kanálům]].
+
+===== Síť a SSH =====
+
+Síť nenastavuj pomocí ''static-networking-service-type''. vpsAdminOS při
+každém startu vytvoří ''/ifcfg.add'' podle aktuálních adres a služba
+''vpsadminos-networking'' jej spustí. Vlastní síťové služby přidávej až nad
+tuto vrstvu.
+
+Výchozí šablona kvůli pohodlnému prvnímu přihlášení povoluje SSH pro ''root''.
+Po zprovoznění klíčů můžeš přihlášení zpřísnit podle návodu
+[[navody:server:ssh]].
+
+===== Nasazení pomocí guix deploy =====
+
+Pokud spravuješ více Guix VPS, můžeš jejich konfigurace držet na jednom
+řídicím Guix systému a nasazovat je pomocí
+[[https://guix.gnu.org/manual/en/html_node/Invoking-guix-deploy.html|guix deploy]].
+Následující úplná konfigurace je výchozí bod pro jednu VPS. Ty spravuješ jen
+''deploy.scm''; kontejnerové detaily se dál načítají z udržovaného modulu
+''/etc/config/vpsadminos.scm''.
+
+Na řídicím systému potřebuješ SSH klíč
+''/root/.ssh/id_ed25519'' a jeho veřejnou část musíš před prvním nasazením
+přidat uživateli ''root'' na cílové VPS. Přihlášení klíčem nejdřív vyzkoušej.
+Na cílové VPS spusť ''cat /etc/ssh/ssh_host_ed25519_key.pub'' a otisk získaného
+klíče ověř podle [[navody:server:ssh|návodu pro SSH]]. Do konfigurace patří celý
+řádek začínající ''ssh-ed25519'', ne jen otisk.
+
+Ulož tuto konfiguraci jako ''/etc/config/deploy.scm'' na řídicím systému a
+nahraď adresu a hostitelský klíč cílové VPS:
+
+<code scheme>
+;; Načti udržovanou integraci kontejnerů vpsAdminOS.
+(add-to-load-path "/etc/config")
+(use-modules (gnu)
+             (gnu machine)
+             (gnu machine ssh)
+             (gnu services base))
+(use-service-modules ssh)
+
+(let* ((platform-system
+        (module-ref (resolve-interface '(vpsadminos))
+                    '%ct-operating-system-base))
+       ;; Tyto soubory jsou na stroji, ze kterého spouštíš guix deploy.
+       (controller-signing-key
+        (local-file "/etc/guix/signing-key.pub"))
+       (root-ssh-key
+        (local-file "/root/.ssh/id_ed25519.pub"))
+       ;; Sestav seznam služeb dříve, než jej přiřadíš zpožděně vyhodnocovanému poli.
+       (user-services
+        (cons
+         (simple-service 'controller-signing-key
+                         guix-service-type
+                         (guix-extension
+                          (authorized-keys
+                           (list controller-signing-key))))
+         (modify-services
+             (operating-system-user-services platform-system)
+           (openssh-service-type config =>
+             (openssh-configuration
+              (inherit config)
+              (permit-root-login 'prohibit-password)
+              (password-authentication? #f)
+              (authorized-keys
+               `(("root" ,root-ssh-key))))))))
+       (system
+        (operating-system
+          (inherit platform-system)
+          (host-name "guix-target")
+          (timezone "Etc/UTC")
+          (locale "en_US.utf8")
+          (services user-services)))
+       (target-machine
+        (machine
+          (operating-system system)
+          (environment managed-host-environment-type)
+          (configuration
+           (machine-ssh-configuration
+            ;; Nahraď adresu a hostitelský klíč údaji cílové VPS.
+            (host-name "192.0.2.3")
+            (system "x86_64-linux")
+            (user "root")
+            (identity "/root/.ssh/id_ed25519")
+            (host-key "ssh-ed25519 REPLACE_WITH_TARGET_HOST_KEY")
+            (authorize? #t)
+            (allow-downgrades? #f)
+            ;; vpsAdminOS poskytuje jádro a používá zástupný kořen /dev/null.
+            ;; Guix proto nemůže provést kontroly souborového systému a initrd určené pro fyzický stroj.
+            (safety-checks? #f))))))
+  (list target-machine))
+</code>
+
+Nejdřív konfiguraci načti bez nasazení příkazem ''guix time-machine -C
+/run/current-system/channels.scm -- deploy -L /etc/config
+/etc/config/deploy.scm --dry-run''. Potom spusť stejný příkaz bez
+''--dry-run''. První nasazení automaticky autorizuje podpisový klíč řídicího
+systému na cíli a deklarace jej zachová i v nové generaci.
+
+Konfigurace úmyslně povoluje pro ''root'' jen přihlášení klíčem a ověřuje
+hostitelský klíč cíle. Nastavení ''safety-checks? #f'' vypíná kontroly fyzických
+souborových systémů a modulů initrd, které v kontejneru nedávají smysl:
+vpsAdminOS poskytuje jádro a integrační modul používá pomocný kořenový systém
+''/dev/null'', který současný Guix neumí zkontrolovat. Ochrana před downgradem
+zůstává zapnutá. Pokud nasazení selže, oprav jeho příčinu místo povolení
+''allow-downgrades?''.
+
+===== Generace a obnova =====
+
+Generace zobrazíš příkazem ''guix system list-generations''. Před odstraněním
+starých generací ověř, že je nový systém funkční. Příkazy pro návrat a práci
+s generacemi popisuje
+[[https://guix.gnu.org/manual/en/html_node/Invoking-guix-system.html|manuál Guixu]].
+
+Pokud nová konfigurace nenaběhne nebo ztratíš SSH, postupuj podle návodu pro
+[[navody:vps:konzole|vzdálenou konzoli]]. Obnovení starší generace Guixu
+popisuje návod ke [[navody:vps:start_menu|start menu vpsAdminOS]]. Konfiguraci
+pak oprav a znovu spusť reconfigure.

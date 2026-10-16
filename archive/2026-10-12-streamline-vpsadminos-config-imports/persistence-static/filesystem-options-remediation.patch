@@ -1,0 +1,13 @@
+diff --git a/tests/nixos-container-persistence-eval.nix b/tests/nixos-container-persistence-eval.nix
+index 40dce6e51..0cd99f9c1 100644
+--- a/tests/nixos-container-persistence-eval.nix
++++ b/tests/nixos-container-persistence-eval.nix
+@@ -287,7 +287,7 @@ let
+         fileSystems."/fixture/backing storage" = {
+           device = if mode == "filesystem" then "tmpfs" else "/fixture/host storage";
+           fsType = if mode == "filesystem" then "tmpfs" else "none";
+-          options = lib.optional (mode != "filesystem") "bind";
++          options = if mode == "filesystem" then [ "defaults" ] else [ "bind" ];
+           neededForBoot = true;
+         };
+       }

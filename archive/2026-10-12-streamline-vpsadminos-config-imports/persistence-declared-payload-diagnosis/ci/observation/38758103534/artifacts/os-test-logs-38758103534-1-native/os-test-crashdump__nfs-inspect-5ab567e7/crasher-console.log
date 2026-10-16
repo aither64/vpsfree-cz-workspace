@@ -1,0 +1,192 @@
+c[?7l[2J[0mSeaBIOS (version rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org)
+
+
+iPXE (http://ipxe.org) 00:03.0 C000 PCI2.10 PnP PMM+BEFD1A50+BEF31A50 C000
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+
+
+iPXE (http://ipxe.org) 00:04.0 C100 PCI2.10 PnP PMM BEFD1A50 BEF31A50 C100
+Press Ctrl-B to configure iPXE (PCI 00:04.0)...                                                                               
+
+
+Booting from ROM...
+c[?7l[2J
+[1;32m<<< vpsAdminOS Stage 1 >>>[0m
+
+running udev...
+kbd_mode: KDSKBMODE: Inappropriate ioctl for device
+%Gcreated directory: '/mnt/nix/.overlay-store/work'
+created directory: '/mnt/nix/.overlay-store/rw'
+
+[1;32m<<< vpsAdminOS Stage 2 >>>[0m
+
+setting up /etc...
+- runit: $Id: c66c1e3b98d1b630bd51b1d56aaed5c2994e8c9d $: booting.
+- runit: enter stage: /etc/runit/1
+* Applying /etc/sysctl.d/55-nixos-aslr-entropy.conf ...
+* Applying /etc/sysctl.d/60-nixos.conf ...
+vm.mmap_rnd_bits = 32
+vm.mmap_rnd_compat_bits = 16
+fs.aio-max-nr = 3221225471
+fs.inotify.max_queued_events = 2147483647
+fs.inotify.max_user_instances = 2147483647
+fs.inotify.max_user_watches = 2147483647
+fs.nr_open = 4194304
+fs.protected_hardlinks = 1
+fs.protected_symlinks = 1
+kernel.dmesg_restrict = 1
+kernel.keys.maxbytes = 2500000
+kernel.keys.maxkeys = 100000
+kernel.kptr_restrict = 1
+kernel.modprobe = /nix/store/bcx5jqj8lrm9bvjgw3x3a5ih5fa2vw63-kernel-modprobe-wrapper
+kernel.pid_max = 4194304
+kernel.printk = 4
+kernel.pty.max = 16384
+kernel.pty.reserve = 1024
+kernel.sysctl_unprivileged_bpf_time_adjust_nsec = 5000000
+kernel.threads-max = 4194304
+kernel.unprivileged_bpf_disabled = 0
+net.core.default_qdisc = fq
+net.ipv4.neigh.default.gc_thresh1 = 2048
+net.ipv4.neigh.default.gc_thresh2 = 4096
+net.ipv4.neigh.default.gc_thresh3 = 8192
+net.ipv4.route.max_size = 2147483647
+net.ipv4.tcp_congestion_control = bbr
+net.ipv6.neigh.default.gc_thresh1 = 2048
+net.ipv6.neigh.default.gc_thresh2 = 4096
+net.ipv6.neigh.default.gc_thresh3 = 8192
+net.ipv6.route.max_size = 2147483647
+net.netfilter.nf_log_all_netns = 1
+vm.max_map_count = 1048576
+vm.min_free_kbytes = 1048576
+vm.min_slab_ratio = 12
+vm.overcommit_ratio = 3200
+vm.swappiness = 0
+- runit: leave stage: /etc/runit/1
+- runit: enter stage: /etc/runit/2
+lxcbr-dnsmasq waiting for interface lxcbr0
+ok: run: eudev: (pid 898) 0s
+Waiting for /dev/virtio-ports/org.osvm.shell0
+/var/cron: No such file or directory
+/var/cron: created
+tabs: No such file or directory
+tabs: created
+
+crasher login: root (automatic login)
+
+Waiting for rpcbind to start
+Generating public/private rsa key pair.
+rsyslogd: getaddrinfo failed obtaining local hostname - using 'crasher' instead; error: System error [v8.2608.0]
+lxcbr-dnsmasq waiting for interface lxcbr0
+Waiting for /dev/virtio-ports/org.osvm.shell0
+[?2004h
+[1;31m[]0;root@crasher: ~root@crasher:~]#[0m sm-notify: Version 2.9.1 starting
+sm-notify: No hosts to notify; exiting
+Your identification has been saved in /etc/ssh/ssh_host_rsa_key
+Your public key has been saved in /etc/ssh/ssh_host_rsa_key.pub
+The key fingerprint is:
+SHA256:uoRCjraP6Y4wYij/4Nzf9i7gnOk3QOP7ZIeAV8fNI2g root@crasher
+The key's randomart image is:
++---[RSA 4096]----+
+|                 |
+|         o o     |
+|        E + +    |
+|     .oo . . .   |
+|  . .oo.S        |
+|.+   o+o .       |
+|Bo+ .oo*+ .      |
+|B=++ .*==.       |
+|+*=ooo++o=o      |
++----[SHA256]-----+
+Generating public/private ed25519 key pair.
+Your identification has been saved in /etc/ssh/ssh_host_ed25519_key
+Your public key has been saved in /etc/ssh/ssh_host_ed25519_key.pub
+The key fingerprint is:
+SHA256:HXLba/N7ETfPbdIpmE1lnA9tfGt6PFK84Wv9uL8125I root@crasher
+The key's randomart image is:
++--[ED25519 256]--+
+|              .o.|
+|              .==|
+|        . o   +o+|
+|         + + . Oo|
+|        S o * *oX|
+|           o *.O*|
+|            + +=*|
+|           . oE+B|
+|              *O*|
++----[SHA256]-----+
+lxcbr-dnsmasq waiting for interface lxcbr0
+Service eudev-trigger successfully finished
+Service cpufreq successfully finished
+Service networking successfully finished
+Waiting for service restrict-proc-sysfs to start
+Waiting for service set-clock to start
+15 Oct 20:24:47 ntpdate[2001]: adjust time server 81.25.28.124 offset +0.031236 sec
+System clock set
+Service set-clock successfully finished
+[   67.703516] sysrq: Trigger a crash
+[   67.704617] Kernel panic - not syncing: sysrq triggered crash
+[   67.706153] CPU: 2 UID: 0 PID: 2197 Comm: bash Kdump: loaded Not tainted 6.12.109 #1-vpsAdminOS
+[   67.708619] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org 04/01/2014
+[   67.711891] In memory cgroup /system/service/test-shell
+[   67.713437] Call Trace:
+[   67.714213]  <TASK>
+[   67.714966]  dump_stack_lvl+0x5f/0x90
+[   67.716083]  panic+0x11b/0x2e0
+[   67.717075]  sysrq_handle_crash+0x1a/0x20
+[   67.718301]  __handle_sysrq.cold+0xbb/0x10e
+[   67.719587]  write_sysrq_trigger+0x62/0xb0
+[   67.720803]  proc_reg_write+0x5a/0xd0
+[   67.721938]  vfs_write+0x111/0x4d0
+[   67.723002]  ksys_write+0x70/0x100
+[   67.723990]  do_syscall_64+0xae/0x1f0
+[   67.725079]  entry_SYSCALL_64_after_hwframe+0x77/0x7f
+[   67.726567] RIP: 0033:0x715a5180113e
+[   67.727575] Code: 03 00 00 59 5e 48 83 f8 fc 74 39 c9 31 d2 31 c9 31 f6 31 ff 45 31 c0 45 31 c9 45 31 d2 45 31 db c3 0f 1f 00 48 8b 45 10 0f 05 <c9> 31 d2 31 c9 31 f6 31 ff 45 31 c0 45 31 c9 45 31 d2 45 31 db c3
+[   67.732410] RSP: 002b:00007ffe6f0e7b30 EFLAGS: 00000202 ORIG_RAX: 0000000000000001
+[   67.734486] RAX: ffffffffffffffda RBX: 0000000000000002 RCX: 0000715a5180113e
+[   67.736414] RDX: 0000000000000002 RSI: 00005608eb40d190 RDI: 0000000000000001
+[   67.738331] RBP: 00007ffe6f0e7b40 R08: 0000000000000000 R09: 0000000000000000
+[   67.740156] R10: 0000000000000000 R11: 0000000000000202 R12: 0000715a519635c0
+[   67.742047] R13: 00005608eb40d190 R14: 0000000000000002 R15: 00005608eb40caa0
+[   67.743928]  </TASK>
+
+[1;32m<<< vpsAdminOS Stage 1 >>>[0m
+
+running udev...
+Configuring crashdump NFS test network
+kbd_mode: KDSKBMODE: Inappropriate ioctl for device
+%Gelfcorehdr=0x3e000000 root=/dev/vda softlockup_panic=1 net.ifnames=0 cgroup.memory=nokmem loglevel=4 lsm=landlock,yama,bpf init=/nix/store/w73bc6rhi8vgpaz58mkxc54bks7m7pl8-vpsadminos-system-crasher-26.05.git.d3bf74b/init reset_devices irqpoll modprobe.blacklist=zfs,spl this_is_a_crash_kernel console=ttyS0
+This is a crash kernel
+Crash initrd NFS upload test
+open files limit: 1024
+-r--------    1 0        0        6479216640 Oct 15 18:25 [0;0m/proc/vmcore[m
+Mounting NFS
+mount.nfs: timeout set for Thu Oct 15 18:27:32 2026
+mount.nfs: trying text-based options 'vers=4.2,addr=192.168.10.12,clientaddr=192.168.10.11'
+Target dir /mnt/crashdump/crasher/20261015T182532
+Saving metadata
+Dumping dmesg
+The kernel version is not supported.
+The makedumpfile operation may be incomplete.
+
+The dmesg log is saved to /mnt/crashdump/crasher/20261015T182532/dmesg.
+
+makedumpfile Completed.
+makedumpfile exited with 0
+Collecting crash inspection data
+crash-collect: profile essential
+crash-collect: synced sys.txt
+crash-collect: synced log.txt
+crash-collect: synced bt-panic.txt
+crash-collect: synced bt-active.txt
+crash-collect: synced bt-sleeping-uninterruptible.txt
+crash-collect: synced ps-summary.txt
+crash-collect: synced tasks.txt
+crash-collect: synced status and timings
+crash-collect exited with 0
+Syncing filesystems
+Rebooting
+[   73.831255] reboot: Restarting system

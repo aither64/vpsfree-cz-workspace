@@ -1,0 +1,33 @@
+====== Gentoo ======
+
+Na této stránce najdete popis a řešení problémů, na které můžete s Gentoo u vpsFree.cz.
+
+===== Instalace ===== 
+
+Po úspěšném přihlášení je vhodné spustit následující příkazy, po kterých bude systém aktualizovaný, vyčištěný a připravený k použití. Samozřejmě je dobré si nejprve zjistit, co který příkaz dělá.
+
+    eselect profile list
+    eselect profile set číslo (selinux | hardened | desktop | multilib | uclibc | systemd)
+
+    emerge-webrsync
+    emerge --sync
+
+    emerge -vu1 portage
+    emerge --sync
+
+    emerge --update --newuse --deep --with-bdeps=y -a @world --backtrack=30 --verbose-conflicts
+    emerge -avq --jobs=5 --load-average=10 -DuN world
+    emerge -vDNu @world
+    emerge -ac
+
+    gcc-config 1
+
+===== Poznámky, drobnosti =====
+
+Je dobré pamatovat na to, že nemáte k dispozici Gentoo gernel, nýbrž vpsAdminOS.
+
+===== Kontakty =====
+
+  * [[:uzivatele/pavlix]]
+  * [[jakub@jirutka.cz|Jakub Jirůtka]]
+  * [[http://www.abclinuxu.cz/Mail?url=/Profile/6592|Vencour z AbcL]]

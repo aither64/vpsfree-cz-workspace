@@ -1,0 +1,149 @@
+<page>manuals:server:ssh</page>
+
+====== SSH ======
+
+SSH poskytuje šifrovaný vzdálený terminál a bezpečný přenos souborů. Na VPS se
+obvykle připojíš jako uživatel ''root'':
+
+<code bash>
+ssh root@ADRESA_VPS
+</code>
+
+Aktuální IP adresy najdeš v detailu VPS ve vpsAdminu:
+
+{{:cs:screenshots:vpsadmin:getting-started:ssh-connection.png?500|IP adresy a příkaz pro připojení přes SSH}}
+
+===== Ověření klíče serveru =====
+
+Při prvním připojení zobrazí SSH otisk hostitelského klíče serveru.
+<vpsadmin-nav id="vps.details.open">Ve vpsAdminu otevři detail své VPS a
+porovnej otisk s tabulkou **Hostitelské klíče SSH**.</vpsadmin-nav> Klíč potvrď jen tehdy,
+když se otisky shodují. Ověření brání tomu, aby ses připojil k jinému serveru,
+který se za tvoji VPS pouze vydává.
+
+{{:cs:screenshots:vpsadmin:ssh-keys:host-key-fingerprints.png?600|Otisky hostitelských klíčů SSH ve vpsAdminu}}
+
+Po přeinstalaci VPS nebo úmyslném vygenerování nových hostitelských klíčů se
+otisk změní. Starý záznam odstraň až po ověření důvodu změny a nového otisku:
+
+<code bash>
+ssh-keygen -R ADRESA_VPS
+</code>
+
+Nevysvětlené varování o změně hostitelského klíče neobcházej vypnutím jeho
+kontroly.
+
+===== Přihlašování veřejným klíčem =====
+
+Veřejný klíč je pro běžné přihlašování vhodnější než heslo. Soukromá část
+zůstává na tvém počítači; nikdy ji neposílej na server ani jiné osobě. Pro nový
+klíč použij Ed25519 a nastav mu silnou přístupovou frázi:
+
+<code bash>
+ssh-keygen -t ed25519 -a 64 -C "muj-pocitac"
+</code>
+
+Výchozí umístění klíče je ''~/.ssh/id_ed25519''. Přístupová fráze chrání
+soukromý klíč při ztrátě nebo napadení počítače. Abys ji nemusel zadávat při
+každém přihlášení, použij ''ssh-agent'' nebo systémovou klíčenku.
+
+Nová VPS dovoluje první přihlášení roota heslem, takže veřejný klíč
+nahraj přímo:
+
+<code bash>
+ssh-copy-id root@ADRESA_VPS
+</code>
+
+<vpsadmin-nav id="member.public-keys.add">Klíč může spravovat také vpsAdmin.
+Při jeho přidání můžeš zvolit automatické nahrávání do nových a
+přeinstalovaných VPS. Otevři **Upravit profil → Veřejné klíče → Přidat veřejný
+klíč** a vlož obsah souboru
+''~/.ssh/id_ed25519.pub''.</vpsadmin-nav>
+
+{{:cs:screenshots:vpsadmin:ssh-keys:add-public-key.png?300|Přidání veřejného klíče}}
+
+V detailu běžící VPS je také formulář pro dodatečné nahrání některého z
+uložených veřejných klíčů:
+
+{{:cs:screenshots:vpsadmin:ssh-keys:deploy-public-key.png?300|Nahrání veřejného klíče do VPS}}
+
+Každý klíč, který už nepoužíváš nebo jehož soukromá část mohla uniknout, odstraň
+ze serverů. <vpsadmin-nav id="member.public-keys.open">V **Upravit profil →
+Veřejné klíče** jej odstraň také z vpsAdminu.</vpsadmin-nav>
+
+===== Přístup uživatele root =====
+
+Šablony vpsFree ve výchozím nastavení dovolují přihlášení uživatele ''root''
+přes SSH. Je to praktické pro první přihlášení, ale heslo
+uživatele ''root'' je zároveň častým cílem automatických útoků.
+
+Přímé přihlášení roota můžeš ponechat, ale povolit ho jen veřejným klíčem. V
+konfiguraci ''sshd'' nastav:
+
+<code>
+PubkeyAuthentication yes
+PermitRootLogin prohibit-password
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+</code>
+
+Nastavení bývá v ''/etc/ssh/sshd_config'' nebo v souboru načítaném z adresáře
+''/etc/ssh/sshd_config.d/''. U již existujících nastavení záleží na pořadí, ve
+kterém je ''sshd'' načte, proto vždy zkontroluj výslednou konfiguraci příkazem
+''sshd -T''.
+
+Pokud přímé přihlášení roota nechceš vůbec, vytvoř běžný účet se ''sudo''.
+Nejprve ověř jeho klíč a funkční ''sudo'', teprve potom nastav
+''PermitRootLogin no''. Postup vytvoření správcovského účtu se liší podle
+distribuce. Přímé přihlášení roota nezakazuj, dokud nový účet skutečně
+nefunguje.
+
+Na NixOS nepiš do generovaného ''sshd_config''. Použij volby
+''services.openssh.settings'' v systémové konfiguraci; podrobnosti najdeš ve
+[[https://search.nixos.org/options?query=services.openssh|vyhledávači voleb NixOS]].
+
+===== Bezpečný postup změny konfigurace =====
+
+Chyba v nastavení SSH tě může od VPS odříznout. Postupuj proto takto:
+
+  - Nech otevřené původní funkční SSH spojení a změny prováděj v něm.
+  - V druhém terminálu nejprve ověř, že se přihlásíš novým klíčem. Pro cílený test můžeš použít:<code bash>ssh -o PreferredAuthentications=publickey -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no root@ADRESA_VPS</code>
+  - Teprve potom vypni přihlašování heslem nebo přístup roota.
+  - Před načtením změn zkontroluj syntaxi a výsledné hodnoty:<code bash>sshd -t
+sshd -T | grep -E '^(pubkeyauthentication|permitrootlogin|passwordauthentication|kbdinteractiveauthentication) '</code>
+  - Pokud kontrola nehlásí chybu, načti konfiguraci bez ukončení běžících spojení:<code bash>systemctl reload sshd 2>/dev/null || systemctl reload ssh</code>
+  - Otevři úplně nové SSH spojení, vyzkoušej přihlášení i ''sudo'', pokud ho používáš, a až potom zavři původní relaci.
+
+Příkaz ''sshd -t'' musí skončit bez výstupu a s návratovým kódem 0. Pokud
+selže, konfiguraci nenačítej a nejprve chybu oprav.
+
+===== Když se odřízneš =====
+
+Pokud nové SSH spojení nefunguje, **nezavírej původní relaci**. Vrať změnu,
+spusť ''sshd -t'', znovu načti službu a zkontroluj také
+[[navody:server:firewall|firewall]].
+
+Když už žádná SSH relace nezůstala, návod ke [[navody:vps:konzole|vzdálené
+konzoli ve vpsAdminu]] tě provede obnovením přístupu. Konzole funguje nezávisle
+na SSH i síťovém firewallu. Během restartu se v ní objeví
+[[navody:vps:start_menu|start menu]]; volba **Run shell** spustí ''/bin/sh''
+přímo ve VPS, takže konfiguraci opravíš bez přihlášení přes SSH.
+
+Pokud běžný systém stále běží a v konzoli se můžeš přihlásit, oprav nebo obnov
+konfiguraci, ověř ji a restartuj příslušnou službu:
+
+<code bash>
+sshd -t
+systemctl restart sshd 2>/dev/null || systemctl restart ssh
+</code>
+
+V prostředí **Run shell** neběží systemd, takže v něm ''systemctl'' nepoužívej.
+Obnov funkční konfiguraci, ukonči shell příkazem ''exit'' a ve start menu zvol
+**Start system**. Potom vyzkoušej nové SSH spojení. Vzdálená konzole je pro
+takovou opravu určená, takže se nemusíš bát ji použít.
+
+===== Další dokumentace =====
+
+  * [[https://man.openbsd.org/ssh|manuál klienta OpenSSH]]
+  * [[https://man.openbsd.org/sshd_config|referenční příručka sshd_config]]
+  * [[https://documentation.ubuntu.com/server/how-to/security/openssh-server/|OpenSSH server v dokumentaci Ubuntu]]

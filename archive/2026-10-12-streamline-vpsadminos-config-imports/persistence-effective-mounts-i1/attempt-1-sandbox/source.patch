@@ -1,0 +1,202 @@
+diff --git a/os/lib/nixos-container/stable/vpsadminos-25.11.nix b/os/lib/nixos-container/stable/vpsadminos-25.11.nix
+index 937a6d6a8..c0bfa80e2 100644
+--- a/os/lib/nixos-container/stable/vpsadminos-25.11.nix
++++ b/os/lib/nixos-container/stable/vpsadminos-25.11.nix
+@@ -93,6 +93,9 @@ let
+       parent=$(dirname -- "$path") || return 1
+       vpsadminosPrepareStateDirectory "$parent" || return 1
+       mkdir -m 0755 -- "$path" || return 1
++      # Clear inherited group and special bits on this new directory only.
++      chown 0:0 -- "$path" || return 1
++      chmod 00755 -- "$path" || return 1
+     }
+     vpsadminosMountRequired() {
+       local source="$1" target="$2" options="$3" fsType="$4" selected="$5" directoryBind="$6"
+diff --git a/os/lib/nixos-container/stable/vpsadminos-26.05.nix b/os/lib/nixos-container/stable/vpsadminos-26.05.nix
+index 1371e39b2..21da3753e 100644
+--- a/os/lib/nixos-container/stable/vpsadminos-26.05.nix
++++ b/os/lib/nixos-container/stable/vpsadminos-26.05.nix
+@@ -93,6 +93,9 @@ let
+       parent=$(dirname -- "$path") || return 1
+       vpsadminosPrepareStateDirectory "$parent" || return 1
+       mkdir -m 0755 -- "$path" || return 1
++      # Clear inherited group and special bits on this new directory only.
++      chown 0:0 -- "$path" || return 1
++      chmod 00755 -- "$path" || return 1
+     }
+     vpsadminosMountRequired() {
+       local source="$1" target="$2" options="$3" fsType="$4" selected="$5" directoryBind="$6"
+diff --git a/os/lib/nixos-container/stable/vpsadminos.nix b/os/lib/nixos-container/stable/vpsadminos.nix
+index 1371e39b2..21da3753e 100644
+--- a/os/lib/nixos-container/stable/vpsadminos.nix
++++ b/os/lib/nixos-container/stable/vpsadminos.nix
+@@ -93,6 +93,9 @@ let
+       parent=$(dirname -- "$path") || return 1
+       vpsadminosPrepareStateDirectory "$parent" || return 1
+       mkdir -m 0755 -- "$path" || return 1
++      # Clear inherited group and special bits on this new directory only.
++      chown 0:0 -- "$path" || return 1
++      chmod 00755 -- "$path" || return 1
+     }
+     vpsadminosMountRequired() {
+       local source="$1" target="$2" options="$3" fsType="$4" selected="$5" directoryBind="$6"
+diff --git a/os/lib/nixos-container/unstable/vpsadminos.nix b/os/lib/nixos-container/unstable/vpsadminos.nix
+index c0b88cceb..cda3a8266 100644
+--- a/os/lib/nixos-container/unstable/vpsadminos.nix
++++ b/os/lib/nixos-container/unstable/vpsadminos.nix
+@@ -93,6 +93,9 @@ let
+       parent=$(dirname -- "$path") || return 1
+       vpsadminosPrepareStateDirectory "$parent" || return 1
+       mkdir -m 0755 -- "$path" || return 1
++      # Clear inherited group and special bits on this new directory only.
++      chown 0:0 -- "$path" || return 1
++      chmod 00755 -- "$path" || return 1
+     }
+     vpsadminosMountRequired() {
+       local source="$1" target="$2" options="$3" fsType="$4" selected="$5" directoryBind="$6"
+diff --git a/tests/nixos-container-persistence-shell.sh b/tests/nixos-container-persistence-shell.sh
+index b5be7cf2d..618ea9957 100644
+--- a/tests/nixos-container-persistence-shell.sh
++++ b/tests/nixos-container-persistence-shell.sh
+@@ -25,8 +25,8 @@ esac
+ for option in "${required_options[@]}"; do
+   [[ ",$selected_options," == *",$option,"* ]]
+ done
+-scenarios=(fresh existing_metadata matching_live failed_bind failed_remount failed_mount_lookup wrong_result failed_mkdir dangling_target)
+-if "$fixture_bind_state"; then scenarios+=(missing_parents wrong_live source_file parent_file failed_lookup dangling_source); fi
++scenarios=(fresh existing_metadata matching_live failed_bind failed_remount failed_mount_lookup wrong_result failed_mkdir failed_chown failed_chmod dangling_target)
++if "$fixture_bind_state"; then scenarios+=(missing_parents setgid_parent wrong_live source_file parent_file failed_lookup dangling_source); fi
+ case "$mode" in
+   declared|filesystem|transitive) scenarios+=(missing_backing failed_required_remount) ;;
+   undeclared) scenarios+=(root_backing absent_undeclared) ;;
+@@ -50,8 +50,13 @@ for fixture_scenario in "${scenarios[@]}"; do
+   fi
+   log_source="$fixture_backing/log"
+   before_metadata=
++  fixture_parent_metadata=
+   case "$fixture_scenario" in
+     missing_parents) fixture_source="$(dirname "$fixture_source")/new-parent/state" ;;
++    setgid_parent)
++      fixture_source_parent=$(dirname "$fixture_source")
++      chmod 2775 "$fixture_source_parent"
++      fixture_parent_metadata=$(stat -Lc '%u:%g:%a:%i' "$fixture_source_parent") ;;
+     existing_metadata)
+       if "$fixture_bind_state"; then metadata_path="$fixture_source"; else metadata_path="$fixture_target"; fi
+       mkdir "$metadata_path"; chmod 0710 "$metadata_path"
+@@ -125,7 +130,29 @@ for fixture_scenario in "${scenarios[@]}"; do
+     mkdir() {
+       [ "$fixture_scenario" != failed_mkdir ] || return 1
+       if ! "$fixture_bind_state" && [[ "$*" == *"$fixture_source"* ]]; then return 1; fi
+-      command mkdir "$@"
++      command mkdir "$@" || return 1
++      if [ "$#" = 4 ] && [ "$1" = -m ] && [ "$2" = 0755 ] && [ "$3" = -- ]; then
++        printf '%s\n' "$4" >> "$fixture_case_root/created-directories"
++        if [ "$fixture_scenario" = setgid_parent ] && [ "$4" = "$fixture_source" ]; then
++          stat -c '%a' "$4" > "$fixture_case_root/inherited-mode"
++        fi
++      fi
++    }
++    # A non-root pure sandbox cannot chown to root. Check the numeric request
++    # and fresh-only path; the registered guest tests verify actual ownership.
++    chown() {
++      [ "$#" = 3 ] && [ "$1" = 0:0 ] && [ "$2" = -- ] || return 1
++      grep -Fxq -- "$3" "$fixture_case_root/created-directories" || return 1
++      printf '%s\n' "$3" >> "$fixture_case_root/chown-calls"
++      [ "$fixture_scenario" != failed_chown ]
++    }
++    chmod() {
++      if [ "$#" = 3 ] && [ "$1" = 00755 ] && [ "$2" = -- ]; then
++        grep -Fxq -- "$3" "$fixture_case_root/created-directories" || return 1
++        printf '%s\n' "$3" >> "$fixture_case_root/chmod-calls"
++        [ "$fixture_scenario" != failed_chmod ] || return 1
++      fi
++      command chmod "$@"
+     }
+     mount() {
+       printf '%s\n' "$*" >> "$fixture_case_root/mount-calls"
+@@ -155,11 +182,17 @@ for fixture_scenario in "${scenarios[@]}"; do
+   status=$?
+   set -e
+   case "$fixture_scenario" in
+-    fresh|missing_parents|existing_metadata|matching_live|matching_backing|root_backing|absent_undeclared|failed_unrelated)
++    fresh|missing_parents|setgid_parent|existing_metadata|matching_live|matching_backing|root_backing|absent_undeclared|failed_unrelated)
+       [ "$status" = 0 ] && [ -f "$fixture_case_root/allocator-reached" ] || { cat "$fixture_case_root/output"; exit 1; }
+       if "$fixture_bind_state"; then [ "$fixture_source" -ef "$fixture_target" ]; else [ -f "$fixture_source" ]; fi
+       if "$exact"; then [ "$log_source" -ef "$fixture_log_target" ]; fi
+       [ "$(wc -l < "$fixture_case_root/mount-calls")" = "$expected_calls" ]
++      if [ -f "$fixture_case_root/created-directories" ]; then
++        cmp "$fixture_case_root/created-directories" "$fixture_case_root/chown-calls"
++        cmp "$fixture_case_root/created-directories" "$fixture_case_root/chmod-calls"
++      else
++        [ ! -e "$fixture_case_root/chown-calls" ] && [ ! -e "$fixture_case_root/chmod-calls" ]
++      fi
+       if [ "$fixture_scenario" = matching_live ]; then
+         [ "$(cat "$fixture_case_root/target-options")" = "remount,$expected_selected_options" ]
+         [ "$(grep -Fc -- " $fixture_target" "$fixture_case_root/mount-calls")" = 1 ]
+@@ -179,12 +212,19 @@ for fixture_scenario in "${scenarios[@]}"; do
+     [ "$(stat -c '%a' "$fixture_source")" = 755 ]
+     [ "$(stat -c '%a' "$(dirname "$fixture_source")")" = 755 ]
+   fi
++  if [ "$fixture_scenario" = setgid_parent ]; then
++    [ "$(cat "$fixture_case_root/inherited-mode")" = 2755 ]
++    [ "$(stat -c '%a' "$fixture_source")" = 755 ]
++    [ "$fixture_parent_metadata" = "$(stat -Lc '%u:%g:%a:%i' "$fixture_source_parent")" ]
++  fi
+   case "$fixture_scenario" in
+     wrong_backing|missing_backing|failed_required_remount|missing_dependency) [ ! -e "$fixture_source" ]; [ ! -e "$fixture_host/nixos" ] ;;
+     missing_backing_source) [ ! -e "$fixture_host" ] ;;
+     missing_transitive) [ ! -e "$fixture_host/bridge" ] ;;
+     wrong_live) [ ! -e "$fixture_source" ]; [ "$fixture_target" -ef "$fixture_case_root/wrong" ] ;;
+     failed_remount) [ -f "$fixture_case_root/mounted-state" ]; [ "$(cat "$fixture_target/payload")" = 'matching data' ] ;;
++    failed_chown) [ -s "$fixture_case_root/chown-calls" ]; [ ! -e "$fixture_case_root/chmod-calls" ] ;;
++    failed_chmod) [ -s "$fixture_case_root/chown-calls" ]; [ -s "$fixture_case_root/chmod-calls" ] ;;
+   esac
+   printf 'PASS %s %s\n' "$mode" "$fixture_scenario"
+ done
+diff --git a/tests/suite/dist-config/nixos-persistence-upgrade.nix b/tests/suite/dist-config/nixos-persistence-upgrade.nix
+index e0e59c107..e0d0b7f9d 100644
+--- a/tests/suite/dist-config/nixos-persistence-upgrade.nix
++++ b/tests/suite/dist-config/nixos-persistence-upgrade.nix
+@@ -31,6 +31,7 @@ import ../../make-test.nix (
+             "/persistent";
+         initial = if variant.fresh then g.newInitial else g.oldInitial;
+         failurePaths = lib.mapAttrs (_: path: toString path) (variant.failures or { });
++        setgidParent = variant.fresh && variant.layout == "ancestor-lib";
+       in
+       ''
+         require 'json'
+@@ -107,6 +108,9 @@ import ../../make-test.nix (
+             'payload' => exec_guest.call('sha256sum /var/lib/preservation-test/payload').split.first,
+             'owner' => exec_guest.call("stat -c '%u:%g' /var/lib/preservation-test/payload"),
+             'metadata' => exec_guest.call("stat -c '%u:%g:%a:%i' ${variant.sourceDirectory}"),
++            ${lib.optionalString setgidParent ''
++              'source_parent_metadata' => exec_guest.call("stat -c '%u:%g:%a:%i' ${builtins.dirOf variant.sourceDirectory}"),
++            ''}
+             'payload_directory' => exec_guest.call("stat -c '%u:%g:%a:%i' /var/lib/preservation-test")
+           }
+         end
+@@ -171,6 +175,14 @@ import ../../make-test.nix (
+             ${lib.optionalString (variant.layout == "dependent") ''
+               machine.succeeds("mkdir -p #{rootfs}/var/lib/nixos/usr")
+             ''}
++            ${lib.optionalString setgidParent ''
++              # Only provision the absent source's parent, before allocation.
++              # The candidate must clear inherited group/SGID on its new child.
++              source_parent = File.dirname("#{rootfs}${variant.sourcePathInRoot}")
++              machine.succeeds("install -d -m 02775 -o 0 -g 1234 #{source_parent}")
++              expected_source_parent_metadata = machine.succeeds("stat -c '%u:%g:%a:%i' #{source_parent}")[1].strip
++              expect(expected_source_parent_metadata.split(':').first(3).join(':')).to eq('0:1234:2775')
++            ''}
+             ${lib.optionalString (variant.fresh) ''
+               machine.fails("test -e #{rootfs}${variant.sourcePathInRoot}")
+             ''}
+@@ -196,6 +208,9 @@ import ../../make-test.nix (
+             expect(original.fetch('machine_id')).to match(/\A[0-9a-f]{32}\z/)
+             expect(original.fetch('metadata').split(':').first(3).join(':')).to eq('${variant.sourceMetadata}')
+             expect(original.fetch('metadata')).to eq(expected_source_metadata) if expected_source_metadata
++            ${lib.optionalString setgidParent ''
++              expect(original.fetch('source_parent_metadata')).to eq(expected_source_parent_metadata)
++            ''}
+             expect(original.fetch('payload_directory').split(':').first(3).join(':')).to eq(original.fetch('ids').fetch('preservation-test').join(':') + ':750')
+ 
+             switch.call('${if variant.fresh then g.newChallenge else g.oldChallenge}')

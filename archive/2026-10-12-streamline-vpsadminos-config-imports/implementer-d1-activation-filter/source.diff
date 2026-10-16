@@ -1,0 +1,13 @@
+diff --git a/image-scripts/tests/nixos_rebuild.sh b/image-scripts/tests/nixos_rebuild.sh
+index 7f8de15b8..92e8cfeb6 100644
+--- a/image-scripts/tests/nixos_rebuild.sh
++++ b/image-scripts/tests/nixos_rebuild.sh
+@@ -130,7 +130,7 @@ if [ -n "$mount_script" ] && [ -f "$mount_script" ]; then
+   grep -n -E "persistent|var/lib/nixos|specialMount" "$mount_script"
+ fi
+ printf "\nUser and persistence activation steps:\n"
+-grep -n -E "update-users-groups|uid-map|gid-map|persistent|(^|[[:space:]])mount([[:space:]]|$)" /run/current-system/activate
++grep -n -E "specialfs|Activation script snippet|source[[:space:]]+.*-mounts[.]sh|update-users-groups|uid-map|gid-map|persistent|(^|[[:space:]])mount([[:space:]]|$)" /run/current-system/activate
+ ' || printf 'Unable to collect all read-only preservation diagnostics after %s\n' "$phase"
+ 
+ 		[ "$current_machine_id" == "$machine_id" ] || { echo "machine-id changed after $phase"; failed=1; }

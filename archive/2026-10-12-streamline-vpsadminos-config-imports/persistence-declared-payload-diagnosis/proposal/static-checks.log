@@ -1,0 +1,13 @@
+CHECK nixfmt proposed only
+COMMAND ["/nix/store/ffrsk7yvqqmlj7d40hs2prkqgly2gr2q-nixfmt-1.5.0/bin/nixfmt", "--check", "persistence-declared-payload-diagnosis/proposal/proposed.nix"]
+STATUS 0
+CHECK Nix syntax only
+COMMAND ["nix-instantiate", "--parse", "persistence-declared-payload-diagnosis/proposal/proposed.nix"]
+STATUS 0
+CHECK Ruby static template syntax
+COMMAND ["/nix/store/m0nfdb4mhfgwkgss4ymyqmvviwy30i6y-ruby-3.4.9/bin/ruby", "-c", "persistence-declared-payload-diagnosis/proposal/suite-template.rb"]
+Syntax OK
+STATUS 0
+CHECK Bash proposed fragment syntax
+COMMAND ["bash", "-n", "persistence-declared-payload-diagnosis/proposal/payload-setup.sh"]
+STATUS 0

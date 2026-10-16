@@ -1,0 +1,19 @@
+--- old/upgrade-unstable
++++ new/upgrade-unstable
+@@ -80,7 +80,7 @@
+ describe 'upgrade-unstable old-to-new persistence adoption' do
+   it 'retains dynamic accounts, maps, data and bind identity' do
+     puts 'Old compatibility source: 1150e37b1cc997b1728f2fda806a3433ef55b798 (sha256-PdZ1g1KtuxL/3T1E01jKhj3Npmkd4G8EJIzS0OSiaMA=)'
+-    puts 'Candidate compatibility source: /nix/store/i838ihpbivxhni39vjcmfg4bnhzb0703-hzblqf1z79akb3wrck2xqmfi791g0xk4-source'
++    puts 'Candidate compatibility source: /nix/store/j6fxv9cnyfxqrf485jwjcb9j6ncw6js5-vpsadminos'
+     puts 'Guest release unstable; stateVersion 22.11'
+     puts 'Prepared old-to-new generations /nix/store/qk1fj6290fawxvlnjbkdmlrfkai61yjn-nixos-system-persistence-fixture-26.11pre-git -> /nix/store/7wn254qyp0hw5xw4hlccxq4fdajg03v0-nixos-system-persistence-fixture-26.11pre-git -> /nix/store/gjrcn0s1svzvkdyg4zbysyrgxcanzgn6-nixos-system-persistence-fixture-26.11pre-git'
+ 
+@@ -132,6 +132,7 @@
+ # switch establishes healthy persisted maps; no ID/map repair.
+ switch.call('/nix/store/qk1fj6290fawxvlnjbkdmlrfkai61yjn-nixos-system-persistence-fixture-26.11pre-git')
+ 
++    
+     exec_guest.call("printf '%s\\n' persistence-upgrade-payload > /var/lib/preservation-test/payload && chown preservation-test:preservation-test /var/lib/preservation-test/payload")
+     original = snapshot.call(false)
+     expect(original.fetch('payload')).to eq(Digest::SHA256.hexdigest("persistence-upgrade-payload\n"))

@@ -1,0 +1,14 @@
+=== Admin cheatsheet ===
+
+== výměna VZ SSD ==
+
+<code>
+1. výběr disku k výměně
+2. cat /proc/mdstat
+3. mdadm --manage /dev/md0 --fail /dev/sdX (označí jako failed a přestane se používat)
+4. mdadm --manage /dev/md0 --remove /dev/sdX (odstranění z raidu)
+5. zpool offline vz XXX (pro logs i cache)
+6. mdadm --manage /dev/md0 --add /dev/sdX
+7. /sbin/mdadm --detail /dev/md0 - ukáže progress výměny
+8. zpool replace vz OLD NEW (náhrada + scrub)
+</code>

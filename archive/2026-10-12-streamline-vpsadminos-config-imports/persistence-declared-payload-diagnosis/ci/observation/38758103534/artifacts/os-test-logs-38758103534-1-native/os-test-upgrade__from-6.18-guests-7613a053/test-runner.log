@@ -1,0 +1,179 @@
+this derivation will be built:
+  /nix/store/5z1zdld44lrmlvqy8a5c33f364lb5789-os-test-upgrade-from-6.18-guests.json.drv
+building '/nix/store/5z1zdld44lrmlvqy8a5c33f364lb5789-os-test-upgrade-from-6.18-guests.json.drv'...
+/nix/store/x86n3hdbbjlyyqwzjgks24b07wp2lv8q-os-test-upgrade-from-6.18-guests.json
+[2026-10-15 19:37:35 +0200] Running script default
+nmguest NetworkManager PID changed: 108 -> 696
+nmguest NetworkManager PID changed: 108 -> 696
+nmguest NetworkManager PID changed: 108 -> 696
+nmguest NetworkManager PID changed: 108 -> 696
+nmguest NetworkManager PID changed: 108 -> 696
+[2026-10-15 21:13:37 +0200] Exception occurred while running script default in 5762.18s
+[2026-10-15 21:13:37 +0200] (eval at /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:656):94:in 'TestRunner::TestEvaluator#assert_guest_ready': guest nixold readiness failed (1): degraded (RuntimeError)
+error: executed command failed
+
+  UNIT             LOAD   ACTIVE SUB    DESCRIPTION
+● firewall.service loaded failed failed Firewall
+
+LOAD   = Reflects whether the unit definition was properly loaded.
+ACTIVE = The high-level unit activation state, i.e. generalization of SUB.
+SUB    = The low-level unit activation state, values depend on unit type.
+1 loaded units listed.
+
+394520ca-0f19-41af-9a82-1db10250ccc5
+
+IDX BOOT ID                          FIRST ENTRY                  LAST ENTRY
+ -1 65861fc5594a4a6c8a028d04ac1c46fd Thu 2026-10-15 19:47:13 CEST Thu 2026-10-15 21:12:23 CEST
+  0 394520ca0f1941af9a821db10250ccc5 Thu 2026-10-15 21:12:30 CEST Thu 2026-10-15 21:13:00 CEST
+
+Oct 15 19:47:15 nixos dhcpcd[255]: dhcpcd_prestartinterface: Cannot assign requested address
+Oct 15 19:47:15 nixos dhcpcd[255]: dhcpcd_prestartinterface: Cannot assign requested address
+Oct 15 19:47:45 nixos dhcpcd[255]: timed out
+-- Boot 394520ca0f1941af9a821db10250ccc5 --
+Oct 15 21:12:30 nixos (modprobe)[157]: modprobe@fuse.service: Failed at step CGROUP spawning /nix/store/8l0988cr5r3h24a5j2lwn9wqam0nfhqf-kmod-30/sbin/modprobe: Permission denied
+Oct 15 21:12:30 nixos (ll-start)[159]: firewall.service: Failed at step CGROUP spawning /nix/store/821rklqb07vs1icsd54x2svxwllmc8vf-firewall-start/bin/firewall-start: Permission denied
+Oct 15 21:12:30 nixos dhcpcd[185]: dhcpcd_prestartinterface: Cannot assign requested address
+Oct 15 21:12:30 nixos dhcpcd[185]: dhcpcd_prestartinterface: Cannot assign requested address
+Oct 15 21:13:00 nixos dhcpcd[185]: timed out
+
+
+--- guest access state ---
+uid=0(root) gid=0(root) groups=0(root)
+
+--- guest runtime versions ---
+6.18.49
+systemd 251 (251.16)
++PAM +AUDIT -SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY -P11KIT -QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -XKBCOMMON +UTMP -SYSVINIT default-hierarchy=unified
+/dev directory 755 0:0 0:0
+/dev/null character special file 666 0:0 1:3
+/dev/console character special file 620 0:3 88:0
+/dev/tty character special file 666 0:0 5:0
+/dev/pts directory 755 0:0 0:0
+/sys/fs/cgroup directory 775 65534:0 0:0
+# file: /dev/null
+# owner: root
+# group: root
+user::rw-
+group::rw-
+other::rw-
+
+# file: /dev/console
+# owner: root
+# group: tty
+user::rw-
+group::-w-
+other::---
+
+
+--- /proc/self namespace and credentials ---
+0::/osctl.attach.89f022d49bd7d92d5274e0d822f9919c
+         0    1393216      65536
+         0    1393216      65536
+Name:	grep
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+Groups:	 
+CapInh:	0000000000000000
+CapPrm:	000001ffffffffff
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+NoNewPrivs:	0
+Seccomp:	2
+
+--- /proc/1 namespace and credentials ---
+0::/init.scope
+         0    1393216      65536
+         0    1393216      65536
+Name:	systemd
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+Groups:	 
+CapInh:	0000000000000000
+CapPrm:	000001ffffffffff
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+NoNewPrivs:	0
+Seccomp:	2
+
+--- init mount table ---
+168 110 0:89 /private / rw,relatime,idmapped shared:6 - zfs tank/ct/nixold rw,xattr,noacl,casesensitive
+169 168 0:63 / /dev rw,nosuid - tmpfs none rw,size=407148k,mode=755,uid=0,gid=0
+170 168 0:64 / /proc rw,nosuid,nodev,noexec,relatime shared:16 - proc proc rw
+173 170 0:64 /sysrq-trigger /proc/sysrq-trigger ro,relatime shared:17 - proc proc rw
+174 168 0:65 / /sys rw,relatime shared:18 - sysfs sysfs rw
+175 174 0:22 /fs/fuse/connections /sys/fs/fuse/connections rw,nosuid,nodev,noexec,relatime shared:19 - sysfs sys rw
+176 174 0:32 /osctl/debugfs /sys/kernel/debug ro,nosuid,nodev shared:20 - tmpfs tmpfs rw,size=2035724k,mode=755
+177 174 0:32 /osctl/tracing /sys/kernel/tracing ro,nosuid,nodev shared:21 - tmpfs tmpfs rw,size=2035724k,mode=755
+178 174 0:7 / /sys/kernel/security rw,relatime shared:23 - securityfs securityfs rw
+179 174 0:22 /fs/pstore /sys/fs/pstore rw,nosuid,nodev,noexec,relatime shared:27 - sysfs sys rw
+180 169 0:62 / /dev/mqueue rw,relatime - mqueue mqueue rw
+181 169 0:32 /osctl/pools/tank/mounts/nixold /dev/.osctl-mount-helper ro,nosuid,nodev master:292 - tmpfs tmpfs rw,size=2035724k,mode=755
+182 174 0:61 / /sys/fs/bpf rw,nosuid,nodev,noexec,relatime - bpf bpf rw,uid=1393216,gid=1393216,mode=700
+183 168 0:66 / /run rw,nosuid,nodev shared:30 - tmpfs tmpfs rw,size=2035724k,mode=755,uid=0,gid=0
+184 174 0:36 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime shared:29 - cgroup2 none rw
+165 169 0:67 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+166 169 0:67 /0 /dev/console rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+167 169 0:67 /1 /dev/tty1 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+171 169 0:67 /2 /dev/tty2 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+172 169 0:67 /3 /dev/tty3 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+185 169 0:67 /4 /dev/tty4 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+186 170 0:63 /.lxc-boot-id /proc/sys/kernel/random/boot_id ro,nosuid,nodev,noexec,relatime shared:7 - tmpfs none rw,size=407148k,mode=755,uid=0,gid=0
+116 168 0:89 /private/nix/store /nix/store ro,relatime,idmapped shared:6 - zfs tank/ct/nixold rw,xattr,noacl,casesensitive
+117 169 0:68 / /dev/shm rw,nosuid,nodev - tmpfs tmpfs rw,uid=0,gid=0
+118 183 0:69 / /run/keys rw,nosuid,nodev,relatime shared:8 - tmpfs tmpfs rw,mode=750,uid=0,gid=0
+119 183 0:70 / /run/wrappers rw,nodev,relatime shared:9 - tmpfs tmpfs rw,mode=755,uid=0,gid=0
+
+--- failed unit settings and cgroup ownership (up to 8) ---
+
+Result=exit-code
+ExecMainStatus=219
+ExecStart={ path=/nix/store/821rklqb07vs1icsd54x2svxwllmc8vf-firewall-start/bin/firewall-start ; argv[]=firewall-start ; ignore_errors=no ; start_time=[Thu 2026-10-15 21:12:30 CEST] ; stop_time=[Thu 2026-10-15 21:12:30 CEST] ; pid=159 ; code=exited ; status=219 }
+Slice=system.slice
+ControlGroup=
+Delegate=no
+StandardInput=null
+TTYPath=
+SecureBits=0
+CapabilityBoundingSet=cap_chown cap_dac_override cap_dac_read_search cap_fowner cap_fsetid cap_kill cap_setgid cap_setuid cap_setpcap cap_linux_immutable cap_net_bind_service cap_net_broadcast cap_net_admin cap_net_raw cap_ipc_lock cap_ipc_owner cap_sys_module cap_sys_rawio cap_sys_chroot cap_sys_ptrace cap_sys_pacct cap_sys_admin cap_sys_boot cap_sys_nice cap_sys_resource cap_sys_time cap_sys_tty_config cap_mknod cap_lease cap_audit_write cap_audit_control cap_setfcap cap_mac_override cap_mac_admin cap_syslog cap_wake_alarm cap_block_suspend cap_audit_read cap_perfmon cap_bpf cap_checkpoint_restore
+AmbientCapabilities=
+User=
+Group=
+DynamicUser=no
+ProtectControlGroups=no
+PrivateUsers=no
+NoNewPrivileges=no
+SystemCallFilter=~
+SystemCallErrorNumber=2147483646
+RestrictNamespaces=no
+Id=firewall.service
+FragmentPath=/etc/systemd/system/firewall.service
+DropInPaths=
+
+--- latest failed unit journal, without boot filter: firewall.service ---
+[    5.442313] nixos systemd[1]: Finished Firewall.
+InferredControlGroup=/system.slice/firewall.service (from Slice; unit path may be absent)
+/sys/fs/cgroup directory 775 65534:0
+/sys/fs/cgroup/cgroup.procs regular empty file 664 65534:0
+stat: cannot statx '/sys/fs/cgroup/tasks': No such file or directory
+stat: cannot statx '/sys/fs/cgroup/system.slice/firewall.service': No such file or directory
+stat: cannot statx '/sys/fs/cgroup/system.slice/firewall.service/cgroup.procs': No such file or directory
+stat: cannot statx '/sys/fs/cgroup/system.slice/firewall.service/tasks': No such file or directory
+/sys/fs/cgroup/system.slice directory 755 0:0
+/sys/fs/cgroup/system.slice/cgroup.procs regular empty file 644 0:0
+stat: cannot statx '/sys/fs/cgroup/system.slice/tasks': No such file or directory
+
+	from (eval at /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:656):1086:in 'block (2 levels) in TestRunner::TestEvaluator#test_script'
+	from (eval at /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:656):1083:in 'Hash#each'
+	from (eval at /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:656):1083:in 'block in TestRunner::TestEvaluator#test_script'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:656:in 'Binding#eval'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:656:in 'block in TestRunner::TestEvaluator#test_script'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:755:in 'TestRunner::TestEvaluator#with_script_state'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:655:in 'TestRunner::TestEvaluator#test_script'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:620:in 'TestRunner::TestEvaluator#run_script'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:106:in 'block (3 levels) in TestRunner::TestEvaluator#run'
+	from /nix/store/0q58ka54v9140x107n0b0cb6apfm0j85-osvm/lib/osvm/machine.rb:148:in 'OsVm::Machine.with_shell'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:105:in 'block (2 levels) in TestRunner::TestEvaluator#run'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:604:in 'block (3 levels) in TestRunner::TestEvaluator#run_script_workers'
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:594:in 'block (2 levels) in TestRunner::TestEvaluator#run_script_workers'
+inherited Fedora44/minimal NetworkManager daemon version: 1.56.1

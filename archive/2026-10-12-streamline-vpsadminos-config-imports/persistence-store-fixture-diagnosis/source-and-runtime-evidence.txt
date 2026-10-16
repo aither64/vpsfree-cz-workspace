@@ -1,0 +1,615 @@
+
+=== /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/os/modules/osctl/containers/nixos.nix:26-29 ===
+26:     let
+27:       toplevel = cfg.path;
+28:       closureInfo = pkgs.closureInfo { rootPaths = [ toplevel ]; };
+29: 
+
+=== /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/os/modules/osctl/containers/nixos.nix:150-185 ===
+150:                "$rootfs/nix/var/nix/profiles"
+151: 
+152:       ln -sf /run/current-system "$rootfs/nix/var/nix/gcroots/current-system"
+153: 
+154:       ${optionalString (!cfg.shareStore) ''
+155:         if [ "$currentState" == "running" ] ; then
+156:           PATH="${sshOverride}/bin:$PATH" \
+157:             nix copy \
+158:             --to ssh://nowhere \
+159:             ${toplevel}
+160: 
+161:           if [ "$?" == 0 ] ; then
+162:             storePopulated=y
+163:             registerPaths=n
+164:           else
+165:             echo "Unable to populate /nix/store at runtime"
+166:             ${osctlPool} ct stop ${name}
+167:             originalState="$currentState"
+168:             currentState="stopped"
+169:           fi
+170:         fi
+171: 
+172:         if [ "$storePopulated" != "y" ] ; then
+173:           count=$(cat ${closureInfo}/store-paths | wc -l)
+174:           i=1
+175: 
+176:           for storePath in $(cat ${closureInfo}/store-paths) ; do
+177:             dst="$rootfs/''${storePath:1}"
+178: 
+179:             if [ -e "$dst" ] ; then
+180:               echo "[$i/$count] Found $storePath"
+181: 
+182:             else
+183:               echo "[$i/$count] Copying $storePath"
+184:               cp -a $storePath $dst
+185:             fi
+
+=== /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/os/modules/osctl/containers/nixos.nix:208-216 ===
+208:         echo "Configuring current system"
+209: 
+210:         ${optionalString (!cfg.shareStore) ''
+211:           [ "$registerPaths" == "y" ] && \
+212:             cat ${closureInfo}/registration >> "$rootfs/nix/nix-path-registration"
+213:         ''}
+214: 
+215:         nix-env -p "$rootfs/nix/var/nix/profiles/system" --set ${toplevel}
+216:         ln -sf ${toplevel}/init "$rootfs/sbin/init"
+
+=== /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/osctld/lib/osctld/user_control/commands/ct_pre_mount.rb:28-43 ===
+28:         rc = ct.get_run_conf
+29: 
+30:         ct.mounts.shared_dir.map_and_push(rc.rootfs, opts[:client_pid])
+31: 
+32:         begin
+33:           ct.mounts.each do |mnt|
+34:             next unless mnt.map_ids
+35: 
+36:             ct.mounts.shared_dir.map_and_push(mnt.fs, opts[:client_pid])
+37:           end
+38:         rescue SystemCommandFailed
+39:           log(:warn, 'Failed to map and push a mount, cleaning up')
+40: 
+41:           ct.mounts.shared_dir.cleanup_pushed(rc.rootfs)
+42: 
+43:           ct.mounts.each do |mnt|
+
+=== /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/osctld/lib/osctld/mount/shared_dir.rb:70-94 ===
+70:     # @param user_ns [IO, Integer] opened user namespace or the earlier hook PID
+71:     # @param [String] path to the mountpoint, same in both init and ct mount namespaces
+72:     def map_and_push(dir, user_ns)
+73:       host_path = host_path_for(dir)
+74:       user_ns_path =
+75:         if user_ns.respond_to?(:fileno)
+76:           File.join('/proc', Process.pid.to_s, 'fd', user_ns.fileno.to_s)
+77:         else
+78:           File.join('/proc', user_ns.to_s, 'ns', 'user')
+79:         end
+80: 
+81:       Dir.mkdir(host_path)
+82:       syscmd_argv([
+83:                     'mount',
+84:                     '--bind',
+85:                     '-o', "X-mount.idmap=#{user_ns_path}",
+86:                     dir,
+87:                     host_path
+88:                   ])
+89: 
+90:       host_path
+91:     end
+92: 
+93:     # Cleanup after {#map_and_push}
+94:     # @param dir [String]
+
+=== /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/osctld/lib/osctld/mount/entry.rb:4-21 ===
+4:     attr_reader :mountpoint, :type, :opts, :automount, :dataset, :map_ids, :temp, :in_config
+5: 
+6:     # Load from config
+7:     def self.load(ct, cfg)
+8:       dataset = cfg['dataset'] && OsCtl::Lib::Zfs::Dataset.new(
+9:         cfg['dataset'] == '/' ? ct.dataset.name : File.join(ct.dataset.name, cfg['dataset']),
+10:         base: ct.dataset.name
+11:       )
+12: 
+13:       new(
+14:         cfg['fs'],
+15:         cfg['mountpoint'],
+16:         cfg['type'],
+17:         cfg['opts'],
+18:         cfg['automount'],
+19:         dataset:,
+20:         map_ids: cfg.fetch('map_ids', !dataset.nil?),
+21:         temp: cfg['temporary']
+
+=== /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/osctld/lib/osctld/mount/entry.rb:35-42 ===
+35:     end
+36: 
+37:     def fs
+38:       dataset ? dataset.private_path : @fs
+39:     end
+40: 
+41:     def lxc_mountpoint
+42:       ret = String.new(mountpoint)
+
+=== /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/osctld/lib/osctld/container/builder.rb:119-153 ===
+119:     # @param image [String] image path
+120:     # @param member [String] file from the tar to use
+121:     # @param compression [:gzip, :off] compression type
+122:     # @param ds [OsCtl::Lib::Zfs::Dataset]
+123:     def from_tar_stream(image, member, compression, ds = nil)
+124:       ds_builder.from_tar_stream(image, member, compression, ds || ctrc.dataset)
+125:     end
+126: 
+127:     def shift_or_mount_dataset
+128:       if ctrc.map_mode == 'zfs'
+129:         ds_builder.shift_dataset(
+130:           ctrc.dataset,
+131:           uid_map: ctrc.uid_map,
+132:           gid_map: ctrc.gid_map
+133:         )
+134:       else
+135:         ctrc.dataset.mount
+136:       end
+137:     end
+138: 
+139:     def setup_ct_dir
+140:       # Chown to 0:0, zfs will shift it using the mapping
+141:       File.chown(0, 0, ctrc.dir)
+142:       File.chmod(0o770, ctrc.dir)
+143:     end
+144: 
+145:     def setup_rootfs
+146:       if Dir.exist?(ctrc.rootfs)
+147:         File.chmod(0o755, ctrc.rootfs)
+148:       else
+149:         Dir.mkdir(ctrc.rootfs, 0o755)
+150:       end
+151: 
+152:       File.chown(0, 0, ctrc.rootfs)
+153:     end
+
+=== /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/suite/osctl/ct-map-mode.nix:80-108 ===
+80:           fail "expected map_mode=#{mode}, got #{custom_mode.inspect}"
+81:         end
+82: 
+83:         machine.succeeds("osctl ct start testct")
+84: 
+85:         _, running = machine.succeeds("osctl ct exec testct systemctl is-system-running --wait")
+86: 
+87:         if running.strip != 'running'
+88:           fail "expected the system to be running, got #{running.inspect}"
+89:         end
+90: 
+91:         # Permissions of root dataset
+92:         _, inside_owner = machine.succeeds("osctl ct exec testct stat -c %u:%g /var")
+93: 
+94:         if inside_owner.strip != '0:0'
+95:           fail "expected  inside owner to be 0:0, got #{inside_owner.inspect}"
+96:         end
+97: 
+98:         _, rootfs_str = machine.succeeds("osctl ct show -H -o rootfs testct")
+99:         rootfs = rootfs_str.strip
+100: 
+101:         _, host_owner = machine.succeeds("stat -c %u:%g #{rootfs}/var")
+102: 
+103:         _, dataset_str = machine.succeeds("osctl ct show -H -o dataset testct")
+104:         dataset = dataset_str.strip
+105: 
+106:         _, zfs_get = machine.succeeds("zfs get -H -o value uidmap,gidmap #{dataset}")
+107:         zfs_props = zfs_get.strip.split
+108: 
+
+=== /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/suite/osctl/ct-map-mode.nix:119-136 ===
+119:           if uid <= 0 || gid <= 0
+120:             fail "expected host owner to be shifted, got #{host_owner.inspect}"
+121:           elsif zfs_props == %w[none none]
+122:             fail "expected uidmap/gidmap to be set, got #{zfs_props.inspect}"
+123:           end
+124:         end
+125: 
+126:         # Permissions of a subdataset
+127:         machine.all_succeed(
+128:           "osctl ct dataset new testct mysubdataset",
+129:           "osctl ct exec testct /bin/sh -c 'echo hello > /mysubdataset/hello.txt'"
+130:         )
+131: 
+132:         _, sub_inside_owner = machine.succeeds("osctl ct exec testct stat -c %u:%g /mysubdataset/hello.txt")
+133: 
+134:         if sub_inside_owner.strip != '0:0'
+135:           fail "expected subdataset inside owner to be 0:0, got #{sub_inside_owner.inspect}"
+136:         end
+
+=== /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/suite/osctl/ct-map-mode.nix:157-179 ===
+157: 
+158:           if uid <= 0 || gid <= 0
+159:             fail "expected subdataset host owner to be shifted, got #{sub_host_owner.inspect}"
+160:           elsif sub_zfs_props == %w[none none]
+161:             fail "expected subdataset uidmap/gidmap to be set, got #{sub_zfs_props.inspect}"
+162:           end
+163:         end
+164: 
+165:         # Check the subdataset is mounted after restart
+166:         machine.succeeds("osctl ct restart testct")
+167: 
+168:         _, hello = machine.succeeds("osctl ct cat testct /mysubdataset/hello.txt")
+169: 
+170:         if hello.strip != 'hello'
+171:           fail "/mysubdataset/hello.txt not found, expected 'hello', got #{hello.inspect}"
+172:         end
+173: 
+174:         machine.all_succeed(
+175:           "osctl healthcheck -a",
+176:           "osctl ct del -f testct"
+177:         )
+178:       end
+179:     '';
+
+=== /tmp/ni.boon4yad/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-shell.log:161-194 ===
+161: COMMAND: osctl ct dataset new testct-8293 nix
+162: END: 2026-10-14 23:02:44 +0200
+163: ELAPSED: 2.01s
+164: STATUS: 0
+165: OUTPUT:
+166: 
+167: ---
+168: 
+169: START: 2026-10-14 23:02:44 +0200
+170: COMMAND: osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store --no-map-ids testct-8293
+171: END: 2026-10-14 23:02:45 +0200
+172: ELAPSED: 1.75s
+173: STATUS: 0
+174: OUTPUT:
+175: 
+176: ---
+177: 
+178: START: 2026-10-14 23:02:45 +0200
+179: COMMAND: osctl -j ct show testct-8293
+180: END: 2026-10-14 23:02:47 +0200
+181: ELAPSED: 1.53s
+182: STATUS: 0
+183: OUTPUT:
+184: {"pool":"tank","id":"testct-8293","user":"testct-8293","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-8293","rootfs":"/tank/ct/testct-8293/private","boot_dataset":"tank/ct/testct-8293","boot_rootfs":"/tank/ct/testct-8293/private","lxc_path":"/run/osctl/pools/tank/users/testct-8293/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-8293/group.default/cts/testct-8293","group_path":"osctl/pool.tank/group.default/user.testct-8293/ct.testct-8293/user-owned","distribution":"nixos","version":"26.05","arch":"x86_64","vendor":null,"variant":null,"state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":false,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-8293.log","memory":null,"cpu_us":null,"loadavg":null}
+185: ---
+186: 
+187: START: 2026-10-14 23:02:47 +0200
+188: COMMAND: osctl -j ct mounts ls testct-8293
+189: END: 2026-10-14 23:02:48 +0200
+190: ELAPSED: 1.17s
+191: STATUS: 0
+192: OUTPUT:
+193: [{"fs":"/tank/ct/testct-8293/nix/private","mountpoint":"/nix","type":"bind","opts":"bind,create=dir,rw","automount":true,"dataset":"nix","map_ids":true,"temporary":false},{"fs":"/nix/store","mountpoint":"/nix/store","type":"bind","opts":"bind,ro,create=dir","automount":true,"dataset":null,"map_ids":false,"temporary":false}]
+194: ---
+
+=== /tmp/ni.boon4yad/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-shell.log:242-271 ===
+242: COMMAND: osctl ct start testct-8293
+243: END: 2026-10-14 23:02:56 +0200
+244: ELAPSED: 5.19s
+245: STATUS: 0
+246: OUTPUT:
+247: Starting container
+248: Connecting console
+249: Waiting for the container to start
+250: ---
+251: 
+252: START: 2026-10-14 23:02:56 +0200
+253: COMMAND: osctl ct exec testct-8293 systemctl is-system-running --wait
+254: END: 2026-10-14 23:02:59 +0200
+255: ELAPSED: 3.46s
+256: STATUS: 1
+257: OUTPUT:
+258: Failed to connect to system scope bus via local transport: No such file or directory
+259: error: executed command failed
+260: ---
+261: 
+262: START: 2026-10-14 23:03:00 +0200
+263: COMMAND: osctl ct exec testct-8293 systemctl is-system-running --wait
+264: END: 2026-10-14 23:03:04 +0200
+265: ELAPSED: 3.37s
+266: STATUS: 1
+267: OUTPUT:
+268: degraded
+269: error: executed command failed
+270: ---
+271: 
+
+=== /tmp/ni.boon4yad/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-shell.log:663-701 ===
+663: COMMAND: osctl ct exec testct-8293 systemctl is-system-running --wait
+664: END: 2026-10-14 23:05:56 +0200
+665: ELAPSED: 2.47s
+666: STATUS: -1
+667: OUTPUT:
+668: error: SIGTERM
+669: ---
+670: 
+671: START: 2026-10-14 23:05:56 +0200
+672: ACTION: protocol-timeout
+673: PHASE: replies_consumed
+674: END: 2026-10-14 23:05:56 +0200
+675: ELAPSED: 0.0s
+676: ERROR: OsVm::TimeoutError: Timeout occurred while running command 'osctl ct exec testct-8293 systemctl is-system-running --wait', output: "error: SIGTERM\n"
+677: PROTOCOL_ERROR: OsVm::TimeoutError: Timeout occurred while running command 'osctl ct exec testct-8293 systemctl is-system-running --wait', output: "error: SIGTERM\n"
+678: REPLY_BUFFER_BYTES: 44
+679: REPLY_BUFFER_PREFIX: "\n:osvm-54cd3cc64c4bd8597bd229ac16f6bf3b:124\n"
+680: ---
+681: 
+682: START: 2026-10-14 23:05:56 +0200
+683: COMMAND: { timeout -k 2 20 osctl ct exec testct-8293 bash -c systemctl\ --failed\ --plain\ --no-pager; } 2>&1 | head -c 32768
+684: END: 2026-10-14 23:05:59 +0200
+685: ELAPSED: 2.91s
+686: STATUS: 0
+687: OUTPUT:
+688: UNIT                        LOAD   ACTIVE SUB    DESCRIPTION
+689: dbus-broker.service         loaded failed failed D-Bus System Message Bus
+690: dhcpcd.service              loaded failed failed DHCP Client
+691: logrotate-checkconf.service loaded failed failed Logrotate configuration check
+692: nscd.service                loaded failed failed Name Service Cache Daemon (nsncd)
+693: dbus.socket                 loaded failed failed D-Bus System Message Bus Socket
+694: 
+695: Legend: LOAD   → Reflects whether the unit definition was properly loaded.
+696:         ACTIVE → The high-level unit activation state, i.e. generalization of SUB.
+697:         SUB    → The low-level unit activation state, values depend on unit type.
+698: 
+699: 5 loaded units listed.
+700: ---
+701: 
+
+=== /tmp/ni.boon4yad/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-shell.log:1030-1062 ===
+1030:     Process: 242 ExecStart=/nix/store/dhmd7w654dbxkrgcx2pnc2sv47k3bz8w-logrotate-3.22.0/sbin/logrotate --debug /nix/store/3pvsf009b3vdpm3s5ip38zjm8z8xapab-logrotate.conf (code=exited, status=1/FAILURE)
+1031:    Main PID: 242 (code=exited, status=1/FAILURE)
+1032:          IP: 0B in, 0B out
+1033:    Mem peak: 1.7M
+1034:         CPU: 42ms
+1035: 
+1036: Oct 14 21:03:02 persistence-fixture systemd[1]: Starting Logrotate configuration check...
+1037: Oct 14 21:03:02 persistence-fixture logrotate[242]: warning: logrotate in debug mode does nothing except printing debug messages!  Consider using verbose mode (-v) instead if this is not what you want.
+1038: Oct 14 21:03:02 persistence-fixture logrotate[242]: error: Ignoring /nix/store/3pvsf009b3vdpm3s5ip38zjm8z8xapab-logrotate.conf because the file owner is wrong (should be root or user with uid 0).
+1039: Oct 14 21:03:02 persistence-fixture logrotate[242]: Reading state from file: /var/lib/logrotate.status
+1040: Oct 14 21:03:02 persistence-fixture logrotate[242]: state file /var/lib/logrotate.status does not exist
+1041: Oct 14 21:03:02 persistence-fixture logrotate[242]: Allocating hash table for state file, size 64 entries
+1042: Oct 14 21:03:02 persistence-fixture logrotate[242]: Handling 0 logs
+1043: Oct 14 21:03:02 persistence-fixture systemd[1]: logrotate-checkconf.service: Main process exited, code=exited, status=1/FAILURE
+1044: Oct 14 21:03:02 persistence-fixture systemd[1]: logrotate-checkconf.service: Failed with result 'exit-code'.
+1045: Oct 14 21:03:02 persistence-fixture systemd[1]: Failed to start Logrotate configuration check.
+1046: ActiveState=failed
+1047: SubState=failed
+1048: Result=exit-code
+1049: ExecMainCode=1
+1050: ExecMainStatus=1
+1051: 2026-10-14T21:03:02.275940+00:00 persistence-fixture systemd[1]: logrotate-checkconf.service: bpf-firewall: Attaching egress BPF program to cgroup /sys/fs/cgroup/system.slice/logrotate-checkconf.service failed: Invalid argument
+1052: 2026-10-14T21:03:02.278822+00:00 persistence-fixture systemd[1]: Starting Logrotate configuration check...
+1053: 2026-10-14T21:03:02.321064+00:00 persistence-fixture logrotate[242]: warning: logrotate in debug mode does nothing except printing debug messages!  Consider using verbose mode (-v) instead if this is not what you want.
+1054: 2026-10-14T21:03:02.327575+00:00 persistence-fixture logrotate[242]: error: Ignoring /nix/store/3pvsf009b3vdpm3s5ip38zjm8z8xapab-logrotate.conf because the file owner is wrong (should be root or user with uid 0).
+1055: 2026-10-14T21:03:02.327575+00:00 persistence-fixture logrotate[242]: Reading state from file: /var/lib/logrotate.status
+1056: 2026-10-14T21:03:02.327575+00:00 persistence-fixture logrotate[242]: state file /var/lib/logrotate.status does not exist
+1057: 2026-10-14T21:03:02.327575+00:00 persistence-fixture logrotate[242]: Allocating hash table for state file, size 64 entries
+1058: 2026-10-14T21:03:02.327575+00:00 persistence-fixture logrotate[242]: Handling 0 logs
+1059: 2026-10-14T21:03:02.331551+00:00 persistence-fixture systemd[1]: logrotate-checkconf.service: Main process exited, code=exited, status=1/FAILURE
+1060: 2026-10-14T21:03:02.333525+00:00 persistence-fixture systemd[1]: logrotate-checkconf.service: Failed with result 'exit-code'.
+1061: 2026-10-14T21:03:02.337551+00:00 persistence-fixture systemd[1]: Failed to start Logrotate configuration check.
+1062: 
+
+=== /tmp/ni.boon4yad/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-shell.log:1064-1104 ===
+1064: × nscd.service - Name Service Cache Daemon (nsncd)
+1065:      Loaded: loaded (/etc/systemd/system/nscd.service; enabled; preset: ignored)
+1066:      Active: failed (Result: start-limit-hit) since Wed 2026-10-14 21:03:02 UTC; 3min 3s ago
+1067:  Invocation: c349f1d317fb46ceb4b453165e75c07d
+1068:     Process: 271 ExecStart=/nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd (code=exited, status=203/EXEC)
+1069:    Main PID: 271 (code=exited, status=203/EXEC)
+1070:          IP: 0B in, 0B out
+1071:    Mem peak: 1.7M
+1072:         CPU: 26ms
+1073: 
+1074: Oct 14 21:03:02 persistence-fixture systemd[1]: nscd.service: Start request repeated too quickly.
+1075: Oct 14 21:03:02 persistence-fixture systemd[1]: nscd.service: Failed with result 'start-limit-hit'.
+1076: Oct 14 21:03:02 persistence-fixture systemd[1]: Failed to start Name Service Cache Daemon (nsncd).
+1077: ActiveState=failed
+1078: SubState=failed
+1079: Result=start-limit-hit
+1080: ExecMainCode=1
+1081: ExecMainStatus=203
+1082: 2026-10-14T21:03:02.282377+00:00 persistence-fixture systemd[1]: nscd.service: bpf-firewall: Attaching egress BPF program to cgroup /sys/fs/cgroup/system.slice/nscd.service failed: Invalid argument
+1083: 2026-10-14T21:03:02.287927+00:00 persistence-fixture systemd[1]: Starting Name Service Cache Daemon (nsncd)...
+1084: 2026-10-14T21:03:02.362633+00:00 persistence-fixture (nsncd)[243]: nscd.service: Failed to execute /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+1085: 2026-10-14T21:03:02.362797+00:00 persistence-fixture (nsncd)[243]: nscd.service: Failed at step EXEC spawning /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+1086: 2026-10-14T21:03:02.372419+00:00 persistence-fixture systemd[1]: nscd.service: Main process exited, code=exited, status=203/EXEC
+1087: 2026-10-14T21:03:02.372855+00:00 persistence-fixture systemd[1]: nscd.service: Failed with result 'exit-code'.
+1088: 2026-10-14T21:03:02.373762+00:00 persistence-fixture systemd[1]: Failed to start Name Service Cache Daemon (nsncd).
+1089: 2026-10-14T21:03:02.391597+00:00 persistence-fixture systemd[1]: nscd.service: Scheduled restart job immediately on client request, restart counter is at 1.
+1090: 2026-10-14T21:03:02.393887+00:00 persistence-fixture systemd[1]: nscd.service: bpf-firewall: Attaching egress BPF program to cgroup /sys/fs/cgroup/system.slice/nscd.service failed: Invalid argument
+1091: 2026-10-14T21:03:02.398106+00:00 persistence-fixture systemd[1]: Starting Name Service Cache Daemon (nsncd)...
+1092: 2026-10-14T21:03:02.452949+00:00 persistence-fixture (nsncd)[254]: nscd.service: Failed to execute /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+1093: 2026-10-14T21:03:02.453086+00:00 persistence-fixture (nsncd)[254]: nscd.service: Failed at step EXEC spawning /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+1094: 2026-10-14T21:03:02.459471+00:00 persistence-fixture systemd[1]: nscd.service: Main process exited, code=exited, status=203/EXEC
+1095: 2026-10-14T21:03:02.461876+00:00 persistence-fixture systemd[1]: nscd.service: Failed with result 'exit-code'.
+1096: 2026-10-14T21:03:02.462813+00:00 persistence-fixture systemd[1]: Failed to start Name Service Cache Daemon (nsncd).
+1097: 2026-10-14T21:03:02.469745+00:00 persistence-fixture systemd[1]: nscd.service: Scheduled restart job immediately on client request, restart counter is at 2.
+1098: 2026-10-14T21:03:02.471739+00:00 persistence-fixture systemd[1]: nscd.service: bpf-firewall: Attaching egress BPF program to cgroup /sys/fs/cgroup/system.slice/nscd.service failed: Invalid argument
+1099: 2026-10-14T21:03:02.473757+00:00 persistence-fixture systemd[1]: Starting Name Service Cache Daemon (nsncd)...
+1100: 2026-10-14T21:03:02.507135+00:00 persistence-fixture (nsncd)[271]: nscd.service: Failed to execute /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+1101: 2026-10-14T21:03:02.507279+00:00 persistence-fixture (nsncd)[271]: nscd.service: Failed at step EXEC spawning /nix/store/jvmwidjmlhz6jm4lsh0nkfi5mni6qpbx-nsncd-1.5.3/bin/nsncd: Permission denied
+1102: 2026-10-14T21:03:02.513195+00:00 persistence-fixture systemd[1]: nscd.service: Main process exited, code=exited, status=203/EXEC
+1103: 2026-10-14T21:03:02.514973+00:00 persistence-fixture systemd[1]: nscd.service: Failed with result 'exit-code'.
+1104: 2026-10-14T21:03:02.516002+00:00 persistence-fixture systemd[1]: Failed to start Name Service Cache Daemon (nsncd).
+
+=== /tmp/ni.boon4yad/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-shell.log:3090-3098 ===
+3090: 2026-10-14T23:02:54.045924+02:00 vpsadminos osctld[2327]: [group=tank:/default] Configuring group 'osctl/pool.tank/default'
+3091: 2026-10-14T23:02:54.051492+02:00 vpsadminos osctld[2327]: [#<OsCtld::Devices::V2::BpfProgram:0x00007fc608148630>] devcgprog attach /run/osctl/bpf/osctl/progs/946a3e34004 /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-8293/ct.testct-8293 /run/osctl/bpf/osctl/pools/tank/links/devcg-946a3e34004-on-run-osctl-cgroup-osctl-pool\x2etank-group\x2edefault-user\x2etestct\x2d8293-ct\x2etestct\x2d8293
+3092: 2026-10-14T23:02:54.073183+02:00 vpsadminos osctld[2327]: [#<OsCtld::Mount::SharedDir:0x00007fc6065911f8>] mount --bind "/run/osctl/pools/tank/mounts/testct-8293" "/run/osctl/pools/tank/mounts/testct-8293"
+3093: 2026-10-14T23:02:54.102796+02:00 vpsadminos osctld[2327]: [#<OsCtld::Mount::SharedDir:0x00007fc6065911f8>] mount --make-rshared "/run/osctl/pools/tank/mounts/testct-8293"
+3094: 2026-10-14T23:02:54.153436+02:00 vpsadminos osctld[2327]: [bpf-fs] mount -t bpf -o nosuid,nodev,noexec,uid\=1000000,gid\=1000000,mode\=700 bpf /run/osctl/ct-bpf/tank/testct-8293
+3095: 2026-10-14T23:02:54.207820+02:00 vpsadminos osctld[2327]: [bpf-fs] mount --make-rprivate /run/osctl/ct-bpf/tank/testct-8293
+3096: 2026-10-14T23:02:54.642860+02:00 vpsadminos osctld[2327]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_pre_mount'
+3097: 2026-10-14T23:02:54.648112+02:00 vpsadminos osctld[2327]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:testct-8293
+3098: 2026-10-14T23:02:54.652649+02:00 vpsadminos osctld[2327]: [#<OsCtld::Mount::SharedDir:0x00007fc6065911f8>] mount --bind -o X-mount.idmap\=/proc/2782/ns/user /tank/ct/testct-8293.impermanence-8064e4/private /run/osctl/pools/tank/mounts/testct-8293/c477421d75713bf84b125697823b97f5e106c9e6bfc42b76edfddd7e25740681
+
+=== /tmp/ni.boon4yad/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-failure-diagnostics.log:19-42 ===
+19: ===== df -h =====
+20: Filesystem                               Size  Used Avail Use% Mounted on
+21: root                                     6.0G   11M  6.0G   1% /
+22: /dev/vda                                 844M  844M     0 100% /nix/.ro-store
+23: tmpfs                                    2.0G     0  2.0G   0% /nix/.overlay-store
+24: overlay                                  2.0G     0  2.0G   0% /nix/store
+25: devtmpfs                                 398M     0  398M   0% /dev
+26: tmpfs                                    3.9G     0  3.9G   0% /tmp
+27: tmpfs                                    2.0G  4.1M  2.0G   1% /run
+28: tmpfs                                    3.9G  4.0K  3.9G   1% /dev/shm
+29: tmpfs                                    3.9G  1.2M  3.9G   1% /run/wrappers
+30: vmSharedDir                              984G  811G  123G  87% /run/osvm/shared-dir
+31: tank                                     9.3G  128K  9.3G   1% /tank
+32: tank/ct                                  9.3G  128K  9.3G   1% /tank/ct
+33: tank/conf                                9.3G  128K  9.3G   1% /tank/conf
+34: tank/hook                                9.3G  128K  9.3G   1% /tank/hook
+35: tank/log                                 9.3G  128K  9.3G   1% /tank/log
+36: tank/repository                          9.3G  128K  9.3G   1% /tank/repository
+37: tank/migration                           9.3G  128K  9.3G   1% /tank/migration
+38: tank/trash                               9.3G  128K  9.3G   1% /tank/trash
+39: tank/ct/testct-8293                      9.3G  256K  9.3G   1% /tank/ct/testct-8293
+40: tank/ct/testct-8293/nix                  9.3G  128K  9.3G   1% /tank/ct/testct-8293/nix
+41: tank/ct/testct-8293.impermanence-8064e4  9.3G  256K  9.3G   1% /tank/ct/testct-8293.impermanence-8064e4
+42: 
+
+=== /tmp/ni.boon4yad/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-failure-diagnostics.log:1590-1671 ===
+1590: tank   testct-8293   running   2776
+1591: 
+1592: ===== Running guest resolver/address/route state =====
+1593: guest PID listing status=0
+1594: 
+1595: ===== tank:testct-8293 network (init 2776) =====
+1596: 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000\    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+1597: 2: ip6tnl0@NONE: <NOARP> mtu 1452 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/tunnel6 :: brd :: permaddr 8e33:12dc:6fda::
+1598: 3: gre0@NONE: <NOARP> mtu 1476 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/gre 0.0.0.0 brd 0.0.0.0
+1599: 4: gretap0@NONE: <BROADCAST,MULTICAST> mtu 1462 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/ether 00:00:00:00:00:00 brd ff:ff:ff:ff:ff:ff
+1600: 5: erspan0@NONE: <BROADCAST,MULTICAST> mtu 1450 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/ether 00:00:00:00:00:00 brd ff:ff:ff:ff:ff:ff
+1601: 6: tunl0@NONE: <NOARP> mtu 1480 qdisc noop state DOWN mode DEFAULT group default qlen 1000\    link/ipip 0.0.0.0 brd 0.0.0.0
+1602: 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+1603:     inet 127.0.0.1/8 scope host lo
+1604:        valid_lft forever preferred_lft forever
+1605: 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 state UNKNOWN qlen 1000
+1606:     inet6 ::1/128 scope host noprefixroute 
+1607:        valid_lft forever preferred_lft forever
+1608: local 127.0.0.0/8 dev lo table local proto kernel scope host src 127.0.0.1 
+1609: local 127.0.0.1 dev lo table local proto kernel scope host src 127.0.0.1 
+1610: broadcast 127.255.255.255 dev lo table local proto kernel scope link src 127.0.0.1 
+1611: local ::1 dev lo table local proto kernel metric 0 pref medium
+1612: 
+1613: ===== tank:testct-8293 guest resolver/network/package identity (init 2776) =====
+1614: 
+1615: --- /etc/os-release ---
+1616: ANSI_COLOR="0;38;2;126;186;228"
+1617: BUG_REPORT_URL="https://github.com/NixOS/nixpkgs/issues"
+1618: BUILD_ID="26.05pre-git"
+1619: CPE_NAME="cpe:/o:nixos:nixos:26.05"
+1620: DEFAULT_HOSTNAME=nixos
+1621: DOCUMENTATION_URL="https://nixos.org/learn.html"
+1622: HOME_URL="https://nixos.org/"
+1623: ID=nixos
+1624: ID_LIKE=""
+1625: IMAGE_ID=""
+1626: IMAGE_VERSION=""
+1627: LOGO="nix-snowflake"
+1628: NAME=NixOS
+1629: PRETTY_NAME="NixOS 26.05 (Yarara)"
+1630: SUPPORT_END="2026-12-31"
+1631: SUPPORT_URL="https://nixos.org/community.html"
+1632: VARIANT=""
+1633: VARIANT_ID=""
+1634: VENDOR_NAME=NixOS
+1635: VENDOR_URL="https://nixos.org/"
+1636: VERSION="26.05 (Yarara)"
+1637: VERSION_CODENAME=yarara
+1638: VERSION_ID="26.05"
+1639: 
+1640: --- /etc/resolv.conf ---
+1641: # Generated by resolvconf
+1642: nameserver 1.1.1.1
+1643: nameserver 2606:4700:4700::1111
+1644: options edns0
+1645: 
+1646: --- /etc/nsswitch.conf ---
+1647: passwd:    files systemd
+1648: group:     files [success=merge] systemd
+1649: shadow:    files systemd
+1650: sudoers:   files
+1651: 
+1652: hosts:     mymachines files myhostname dns
+1653: networks:  files
+1654: 
+1655: ethers:    files
+1656: services:  files
+1657: protocols: files
+1658: rpc:       files
+1659: 
+1660: subuid:    files
+1661: subgid:    files
+1662: 
+1663: --- DHCP client executables ---
+1664: /run/current-system/sw/bin/dhcpcd
+1665: guest resolver/network/package snapshot status=0
+1666: 
+1667: ===== tank:testct-8293 guest networking journal (init 2776) =====
+1668: An error was encountered while opening journal file or directory /var/log/journal/cf2faa25cff2421ca7abdc27a7b2615d/system.journal, ignoring file: Bad file descriptor
+1669: -- No entries --
+1670: guest networking journal snapshot status=0
+1671: 
+
+=== /tmp/ni.boon4yad/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-failure-diagnostics.log:1819-1827 ===
+1819: 2026-10-14T23:02:54.153436+02:00 vpsadminos osctld[2327]: [bpf-fs] mount -t bpf -o nosuid,nodev,noexec,uid\=1000000,gid\=1000000,mode\=700 bpf /run/osctl/ct-bpf/tank/testct-8293
+1820: 2026-10-14T23:02:54.207820+02:00 vpsadminos osctld[2327]: [bpf-fs] mount --make-rprivate /run/osctl/ct-bpf/tank/testct-8293
+1821: 2026-10-14T23:02:54.642860+02:00 vpsadminos osctld[2327]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_pre_mount'
+1822: 2026-10-14T23:02:54.648112+02:00 vpsadminos osctld[2327]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:testct-8293
+1823: 2026-10-14T23:02:54.652649+02:00 vpsadminos osctld[2327]: [#<OsCtld::Mount::SharedDir:0x00007fc6065911f8>] mount --bind -o X-mount.idmap\=/proc/2782/ns/user /tank/ct/testct-8293.impermanence-8064e4/private /run/osctl/pools/tank/mounts/testct-8293/c477421d75713bf84b125697823b97f5e106c9e6bfc42b76edfddd7e25740681
+1824: 2026-10-14T23:02:54.679500+02:00 vpsadminos osctld[2327]: [#<OsCtld::Mount::SharedDir:0x00007fc6065911f8>] mount --bind -o X-mount.idmap\=/proc/2782/ns/user /tank/ct/testct-8293/nix/private /run/osctl/pools/tank/mounts/testct-8293/55354b406b68e5322160738e0e71bb7983c11e68e3bcb7d998972a5939a4f37b
+1825: 2026-10-14T23:02:54.710331+02:00 vpsadminos osctld[2327]: [#<OsCtld::Mount::SharedDir:0x00007fc6065911f8>] mount --bind -o X-mount.idmap\=/proc/2782/ns/user /tank/ct/testct-8293/private /run/osctl/pools/tank/mounts/testct-8293/f9cddd2b5359e09a862df40850ae6d984476be6a6fe8640a5b8878297ee4e747
+1826: 2026-10-14T23:02:55.039535+02:00 vpsadminos osctld[2327]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_post_mount'
+1827: 2026-10-14T23:02:55.044542+02:00 vpsadminos osctld[2327]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:testct-8293
+
+=== /tmp/ni.boon4yad/os-test-dist-config__nixos-persistence-upgrade-8c45b496/test-runner.log:1030-1052 ===
+1030: [2026-10-14 23:06:06 +0200] [1/1] 'upgrade-26.05 old-to-new persistence adoption retains dynamic accounts, maps, data and bind identity' failed in 206.96s
+1031: 
+1032: 1 examples failed:
+1033: upgrade-26.05 old-to-new persistence adoption retains dynamic accounts, maps, data and bind identity
+1034: Timeout occurred while running command 'osctl ct exec testct-8293 systemctl is-system-running --wait', output: "error: SIGTERM\n"
+1035: 
+1036: 
+1037: [2026-10-14 23:06:06 +0200] Exception occurred while running script upgrade-26.05 in 420.53s
+1038: [2026-10-14 23:06:06 +0200] /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:728:in 'TestRunner::TestEvaluator#run_examples': One or more examples failed (RuntimeError)
+1039: 	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:660:in 'block in TestRunner::TestEvaluator#test_script'
+1040: 	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:755:in 'TestRunner::TestEvaluator#with_script_state'
+1041: 	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:655:in 'TestRunner::TestEvaluator#test_script'
+1042: 	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:620:in 'TestRunner::TestEvaluator#run_script'
+1043: 	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:106:in 'block (3 levels) in TestRunner::TestEvaluator#run'
+1044: 	from /nix/store/0q58ka54v9140x107n0b0cb6apfm0j85-osvm/lib/osvm/machine.rb:148:in 'OsVm::Machine.with_shell'
+1045: 	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:105:in 'block (2 levels) in TestRunner::TestEvaluator#run'
+1046: 	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:604:in 'block (3 levels) in TestRunner::TestEvaluator#run_script_workers'
+1047: 	from <internal:kernel>:168:in 'Kernel#loop'
+1048: 	from /nix/store/9s4mqyhphshadla6ghsqg8jmnqpjv07q-test-runner/lib/test-runner/test_evaluator.rb:594:in 'block (2 levels) in TestRunner::TestEvaluator#run_script_workers'
+1049: Old compatibility source: 1150e37b1cc997b1728f2fda806a3433ef55b798 (sha256-PdZ1g1KtuxL/3T1E01jKhj3Npmkd4G8EJIzS0OSiaMA=)
+1050: Candidate compatibility source: /nix/store/za5vim2jr5f59p8yxyv20jpdajvc5nmh-7ddcdq8l5p36f8666mh7vr3idij51fii-source
+1051: Guest release 26.05; stateVersion 22.11
+1052: Prepared old-to-new generations /nix/store/hnpdj50cvl8dg8x7mh6ir4adl7vd0wk1-nixos-system-persistence-fixture-26.05pre-git -> /nix/store/9qsxv610715iz7jq6qmpnpsix64gwpki-nixos-system-persistence-fixture-26.05pre-git -> /nix/store/g652sbiy7jyi4ax6467wji7alvm63np5-nixos-system-persistence-fixture-26.05pre-git
+
+=== /tmp/ni.boon4yad/os-test-dist-config__nixos-persistence-upgrade-8c45b496/machine-log.log:1-26 ===
+1: START: 2026-10-14 22:59:05 +0200
+2: ACTION: start
+3: END: 2026-10-14 22:59:05 +0200
+4: ELAPSED: 0.0s
+5: ---
+6: 
+7: START: 2026-10-14 23:06:13 +0200
+8: ACTION: stop
+9: END: 2026-10-14 23:06:13 +0200
+10: ELAPSED: 0.0s
+11: ---
+12: 
+13: START: 2026-10-14 23:06:24 +0200
+14: ACTION: qemu_exit
+15: STATUS: 0
+16: END: 2026-10-14 23:06:24 +0200
+17: ELAPSED: 0.0s
+18: ---
+19: 
+20: START: 2026-10-14 23:06:24 +0200
+21: ACTION: kill
+22: SIGNAL: NONE
+23: END: 2026-10-14 23:06:24 +0200
+24: ELAPSED: 0.0s
+25: ---
+26: 

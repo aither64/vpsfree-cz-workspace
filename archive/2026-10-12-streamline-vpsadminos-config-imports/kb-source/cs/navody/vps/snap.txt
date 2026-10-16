@@ -1,0 +1,71 @@
+<page>manuals:vps:snap</page>
+
+====== Snap ve VPS ======
+
+Snap můžeš ve VPS na vpsAdminOS používat. Potřebuje službu ''snapd'' a přístup
+k FUSE. Nové VPS mají FUSE zapnuté a jsou pro Snap připravené; stačí
+nainstalovat balíčky distribuce.
+
+===== Instalace na Ubuntu =====
+
+Aktuální postup pro podporované verze najdeš v
+[[https://snapcraft.io/docs/installing-snap-on-ubuntu|dokumentaci Snapu pro Ubuntu]].
+Pokud příkaz ''snap'' v systému ještě není, nainstaluj ''snapd'':
+
+<code bash>
+apt update
+apt install snapd
+</code>
+
+Na systému se systemd zkontroluj, že běží jeho socket, a počkej na dokončení
+počátečního nastavení:
+
+<code bash>
+systemctl enable --now snapd.socket
+snap wait system seed.loaded
+</code>
+
+Pro jinou distribuci použij
+[[https://snapcraft.io/docs/installing-snapd|aktuální instalační návod Snapu]].
+Názvy balíčků a způsob spuštění služby se mohou lišit.
+
+===== Ověření =====
+
+Instalaci ověř jednoduchým snapem:
+
+<code bash>
+snap install hello-world
+snap run hello-world
+</code>
+
+Stav systému a zprávy služby zjistíš příkazy:
+
+<code bash>
+snap version
+snap debug sandbox-features
+systemctl status snapd --no-pager
+journalctl -u snapd -n 100 --no-pager
+</code>
+
+Jednotlivé snapy mohou vyžadovat další oprávnění nebo funkce, které v
+kontejnerové VPS nejsou dostupné. Funkčnost ''hello-world'' proto nezaručuje,
+že bude fungovat každá aplikace.
+
+===== VPS bez /dev/fuse =====
+
+Pokud VPS nemá zařízení ''/dev/fuse'', zkontroluj její nastavení:
+
+<code bash>
+test -c /dev/fuse && echo "FUSE je dostupné"
+</code>
+
+<vpsadmin-nav id="vps.features.open">
+Ve formuláři **Funkce** přímo v detailu VPS zapni **FUSE**. U nově vytvořených
+VPS je zapnuté ve výchozím nastavení. Při změně funkce se VPS
+automaticky restartuje; počkej, až znovu naběhne, a test zopakuj.
+</vpsadmin-nav>
+
+{{:cs:screenshots:vpsadmin:vps-management:feature-settings.png?direct|Funkce VPS}}
+
+Pokud snap stále selhává, pošli [[informace:podpora|podpoře]] ID VPS, název
+snapu a relevantní výstup z ''journalctl -u snapd''.

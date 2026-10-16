@@ -1,0 +1,17 @@
+All exit 0, from the indicated product/session directory:
+
+product: nix-instantiate --parse tests/suite/dist-config/nixos-persistence-upgrade.nix > /dev/null
+product: /nix/store/ffrsk7yvqqmlj7d40hs2prkqgly2gr2q-nixfmt-1.5.0/bin/nixfmt --check tests/suite/dist-config/nixos-persistence-upgrade.nix
+session: for script in persistence-store-mode-diagnosis/static-ruby/*.rb; do /nix/store/m0nfdb4mhfgwkgss4ymyqmvviwy30i6y-ruby-3.4.9/bin/ruby -c "$script" || exit; done
+  Eight outputs: Syntax OK
+session: bash -n persistence-store-mode-diagnosis/store-copy-template.sh
+session: python3 persistence-store-mode-diagnosis/prepare-static-evidence.py
+  Expected/inverse byte comparison PASS; HEAD matches prior suite SHA256.
+product: git diff --check
+product: git diff --cached --quiet
+
+HEAD: 6abc650f378a8cd4cc8ef4ecc25d74929ab6e1ed
+HEAD tree: 9393d0e2ef98af874f845934f49a8f79fcd15a33
+Suite SHA256: 9275ca80ba39615e76a96cd9c0d7138a32116693b74da81a577021af5cca65f3
+Only product diff: tests/suite/dist-config/nixos-persistence-upgrade.nix, +2/-0.
+Unstaged, index empty. No Nix evaluation, build, runtime, or ref/commit action.

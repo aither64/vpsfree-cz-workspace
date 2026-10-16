@@ -1,0 +1,7 @@
+# Focused readiness diagnostic runtime
+
+Exact reviewed/published67e3f88c/treeb339, runtime-attempt.gv8q4a89, state /tmp/ni.boon4yad. Only upgrade26.05/jobs1/no-destructive. Fresh Luna/low watcher ran once, about15m, runtime.status1 and test-result unexpected_failure. Runner/VM exited; no preservation or upgrade pass. Image built, no unexpected local kernel compile reported.
+
+Failure-only diagnostics ran after original readiness timeout, collecting actual failed units, boot/unit journals and service Result/EXEC status. Original failure still propagates. Old26.05 initial boot is degraded: dbus-broker.service,dhcpcd.service,logrotate-checkconf.service,nscd.service,dbus.socket. nsncd/dhcpcd EXEC Permission denied (203/EXEC); dbus broker child Permission denied; logrotate says its Nix-store config owner is wrong (must be uid0). This is before old live switches or healthy preservation baseline. No identity/data repair or assertion relaxation occurred.
+
+Unmapped shared host-store ownership is a concrete suspected fixture relation, not yet a proven explanation of every EXEC failure. Implementer0 assigned source/log cause tracing and narrow existing-API store provisioning correction only if established. Product provider/raw/inputs/accounts/stateVersion/invariants stay frozen. No blind rerun. Original state/logs remain retained; log-hashes.json binds key files and decisive-lines.txt records bounded source line references.

@@ -1,0 +1,84 @@
+<page>navody:vps:docker</page>
+
+====== Docker in a VPS ======
+
+You can run Docker Engine in a VPS on vpsAdminOS without special platform
+configuration. The VPS shares the Linux kernel with its physical node, but you
+manage Docker and its containers normally from inside your VPS.
+
+===== Installation =====
+
+Follow the current instructions for your distribution. Do not copy old
+repository setup commands from third-party guides: signing keys, repository
+names and supported releases change.
+
+  * [[https://wiki.alpinelinux.org/wiki/Docker|Alpine Linux]]
+  * [[https://wiki.archlinux.org/title/Docker|Arch Linux]]
+  * [[https://docs.docker.com/engine/install/debian/|Debian]]
+  * [[https://docs.docker.com/engine/install/fedora/|Fedora]]
+  * [[https://wiki.nixos.org/wiki/Docker|NixOS]]
+  * [[https://docs.docker.com/engine/install/ubuntu/|Ubuntu]]
+
+The [[https://docs.docker.com/engine/install/|Docker Engine installation
+overview]] lists all installation methods. Packages provided by a distribution
+may use different names or follow a different release cycle; follow that
+distribution's documentation when you use them.
+
+After installation, start the service as described by your distribution. On a
+distribution with systemd, this is usually:
+
+<code bash>
+systemctl enable --now docker
+</code>
+
+===== Verifying the installation =====
+
+First check the daemon and the system information it sees:
+
+<code bash>
+docker info
+docker run --rm hello-world
+</code>
+
+You can also verify network connectivity from a container:
+
+<code bash>
+docker run --rm alpine ping -c 3 vpsfree.cz
+</code>
+
+If a command fails, inspect the service and its recent log entries:
+
+<code bash>
+systemctl status docker --no-pager
+journalctl -u docker -n 100 --no-pager
+</code>
+
+Use ''docker logs NAME_OR_ID'' to view the output of a particular container.
+
+===== Access and security =====
+
+Run the commands above as ''root'' or through ''sudo''. Membership in the
+''docker'' group effectively grants root privileges inside the VPS. Add only
+trusted users to it; see Docker's
+[[https://docs.docker.com/engine/install/linux-postinstall/|post-installation documentation]]
+for details.
+
+A container port is not reachable externally until you publish it with
+''--publish''/''-p'' or Compose. For example, ''-p 8080:80'' usually listens on
+all VPS addresses, while ''-p 127.0.0.1:8080:80'' exposes the port locally
+only. Publish only the ports you actually need.
+
+Docker creates its own packet-filtering rules for published ports, and a
+published port can bypass rules configured with UFW or firewalld. Read
+Docker's
+[[https://docs.docker.com/engine/network/packet-filtering-firewalls/|firewall documentation]]
+before deployment and test the service from another machine. See
+[[manuals:server:firewall|Firewall]] for the basics.
+
+===== VPS container limitations =====
+
+Docker containers use the kernel provided by vpsAdminOS. You cannot load your
+own kernel modules or replace the VPS kernel. Most common images work without
+changes. If you encounter a permission error or a missing kernel feature, send
+[[information:support|support]] the VPS ID, image name and the exact command
+that reproduces the problem.

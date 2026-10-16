@@ -1,0 +1,151 @@
+3-11: COMMAND: mkdir -p "/run/osvm/shared-dir" STATUS: 0
+12-20: COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir" STATUS: 0
+21-29: COMMAND: osctl pool show -H -o state tank STATUS: 1
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+30-38: COMMAND: osctl pool show -H -o state tank STATUS: 1
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+39-47: COMMAND: osctl pool show -H -o state tank STATUS: 1
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+48-56: COMMAND: osctl pool show -H -o state tank STATUS: 1
+error: pool not found
+---
+
+57-66: COMMAND: osctl pool show -H -o state tank STATUS: 0
+67-76: COMMAND: osctl pool show -H -o state tank STATUS: 0
+77-99: COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org STATUS: 0
+100-114: COMMAND: osctl ct new --skip-image --distribution nixos --version 26.05 --arch x86_64 testct-318b STATUS: 0
+115-123: COMMAND: osctl ct unset start-menu testct-318b STATUS: 0
+124-132: COMMAND: osctl ct dataset new testct-318b nix STATUS: 0
+133-141: COMMAND: osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store testct-318b STATUS: 0
+142-150: COMMAND: osctl -j ct show testct-318b STATUS: 0
+151-159: COMMAND: osctl -j ct mounts ls testct-318b STATUS: 0
+160-168: COMMAND: mkdir -p /tank/ct/testct-318b/nix/private/var/nix/profiles /tank/ct/testct-318b/private/sbin /tank/ct/testct-318b/private/etc /tank/ct/testct-318b/private/var STATUS: 0
+169-177: COMMAND: ln -s /nix/store/6lxymzhh7ip93vgq92pyzm50dh5rxj8l-nixos-system-persistence-fixture-26.05pre-git /tank/ct/testct-318b/nix/private/var/nix/profiles/system STATUS: 0
+178-186: COMMAND: ln -s /nix/store/6lxymzhh7ip93vgq92pyzm50dh5rxj8l-nixos-system-persistence-fixture-26.05pre-git/init /tank/ct/testct-318b/private/sbin/init STATUS: 0
+187-195: COMMAND: osctl ct mounts dataset testct-318b / /persistent STATUS: 1
+error: dataset tank/ct/testct-318b/ does not exist
+---
+
+196-3622: automatic failure diagnostics; all original output preserved in source log
+3623-3632: COMMAND: osctl pool show -H -o state tank STATUS: 0
+3633-3655: COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org STATUS: 0
+3656-3670: COMMAND: osctl ct new --skip-image --distribution nixos --version 25.11 --arch x86_64 testct-433a STATUS: 0
+3671-3679: COMMAND: osctl ct unset start-menu testct-433a STATUS: 0
+3680-3688: COMMAND: osctl ct dataset new testct-433a nix STATUS: 0
+3689-3697: COMMAND: osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store testct-433a STATUS: 0
+3698-3706: COMMAND: osctl -j ct show testct-433a STATUS: 0
+3707-3715: COMMAND: osctl -j ct mounts ls testct-433a STATUS: 0
+3716-3724: COMMAND: mkdir -p /tank/ct/testct-433a/nix/private/var/nix/profiles /tank/ct/testct-433a/private/sbin /tank/ct/testct-433a/private/etc /tank/ct/testct-433a/private/var STATUS: 0
+3725-3733: COMMAND: ln -s /nix/store/h83d79hmr884w9kgm9adpx9gnm6bqzyx-nixos-system-persistence-fixture-25.11pre-git /tank/ct/testct-433a/nix/private/var/nix/profiles/system STATUS: 0
+3734-3742: COMMAND: ln -s /nix/store/h83d79hmr884w9kgm9adpx9gnm6bqzyx-nixos-system-persistence-fixture-25.11pre-git/init /tank/ct/testct-433a/private/sbin/init STATUS: 0
+3743-3751: COMMAND: osctl ct mounts dataset testct-433a / /persistent STATUS: 1
+error: dataset tank/ct/testct-433a/ does not exist
+---
+
+3752-7270: automatic failure diagnostics; all original output preserved in source log
+7271-7280: COMMAND: osctl pool show -H -o state tank STATUS: 0
+7281-7303: COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org STATUS: 0
+7304-7318: COMMAND: osctl ct new --skip-image --distribution nixos --version 26.05 --arch x86_64 testct-5c5f STATUS: 0
+7319-7327: COMMAND: osctl ct unset start-menu testct-5c5f STATUS: 0
+7328-7336: COMMAND: osctl ct dataset new testct-5c5f nix STATUS: 0
+7337-7345: COMMAND: osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store testct-5c5f STATUS: 0
+7346-7354: COMMAND: osctl -j ct show testct-5c5f STATUS: 0
+7355-7363: COMMAND: osctl -j ct mounts ls testct-5c5f STATUS: 0
+7364-7372: COMMAND: mkdir -p /tank/ct/testct-5c5f/nix/private/var/nix/profiles /tank/ct/testct-5c5f/private/sbin /tank/ct/testct-5c5f/private/etc /tank/ct/testct-5c5f/private/var STATUS: 0
+7373-7381: COMMAND: ln -s /nix/store/bqrqc3wiszh5lxssgwb0xag2sfwi452i-nixos-system-persistence-fixture-26.05pre-git /tank/ct/testct-5c5f/nix/private/var/nix/profiles/system STATUS: 0
+7382-7390: COMMAND: ln -s /nix/store/bqrqc3wiszh5lxssgwb0xag2sfwi452i-nixos-system-persistence-fixture-26.05pre-git/init /tank/ct/testct-5c5f/private/sbin/init STATUS: 0
+7391-7399: COMMAND: osctl ct mounts dataset testct-5c5f / /persistent STATUS: 1
+error: dataset tank/ct/testct-5c5f/ does not exist
+---
+
+7400-11001: automatic failure diagnostics; all original output preserved in source log
+11002-11011: COMMAND: osctl pool show -H -o state tank STATUS: 0
+11012-11034: COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org STATUS: 0
+11035-11049: COMMAND: osctl ct new --skip-image --distribution nixos --version 26.05 --arch x86_64 testct-9dbf STATUS: 0
+11050-11058: COMMAND: osctl ct unset start-menu testct-9dbf STATUS: 0
+11059-11067: COMMAND: osctl ct dataset new testct-9dbf nix STATUS: 0
+11068-11076: COMMAND: osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store testct-9dbf STATUS: 0
+11077-11085: COMMAND: osctl -j ct show testct-9dbf STATUS: 0
+11086-11094: COMMAND: osctl -j ct mounts ls testct-9dbf STATUS: 0
+11095-11103: COMMAND: mkdir -p /tank/ct/testct-9dbf/nix/private/var/nix/profiles /tank/ct/testct-9dbf/private/sbin /tank/ct/testct-9dbf/private/etc /tank/ct/testct-9dbf/private/var STATUS: 0
+11104-11112: COMMAND: ln -s /nix/store/hnpdj50cvl8dg8x7mh6ir4adl7vd0wk1-nixos-system-persistence-fixture-26.05pre-git /tank/ct/testct-9dbf/nix/private/var/nix/profiles/system STATUS: 0
+11113-11121: COMMAND: ln -s /nix/store/hnpdj50cvl8dg8x7mh6ir4adl7vd0wk1-nixos-system-persistence-fixture-26.05pre-git/init /tank/ct/testct-9dbf/private/sbin/init STATUS: 0
+11122-11130: COMMAND: osctl ct mounts dataset testct-9dbf / /persistent STATUS: 1
+error: dataset tank/ct/testct-9dbf/ does not exist
+---
+
+11131-14816: automatic failure diagnostics; all original output preserved in source log
+14817-14826: COMMAND: osctl pool show -H -o state tank STATUS: 0
+14827-14849: COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org STATUS: 0
+14850-14864: COMMAND: osctl ct new --skip-image --distribution nixos --version 26.05 --arch x86_64 testct-6a8d STATUS: 0
+14865-14873: COMMAND: osctl ct unset start-menu testct-6a8d STATUS: 0
+14874-14882: COMMAND: osctl ct dataset new testct-6a8d nix STATUS: 0
+14883-14891: COMMAND: osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store testct-6a8d STATUS: 0
+14892-14900: COMMAND: osctl -j ct show testct-6a8d STATUS: 0
+14901-14909: COMMAND: osctl -j ct mounts ls testct-6a8d STATUS: 0
+14910-14918: COMMAND: mkdir -p /tank/ct/testct-6a8d/nix/private/var/nix/profiles /tank/ct/testct-6a8d/private/sbin /tank/ct/testct-6a8d/private/etc /tank/ct/testct-6a8d/private/var STATUS: 0
+14919-14927: COMMAND: ln -s /nix/store/cpvg2cq7yh04rvzpmwl38c6m2y2pvcf9-nixos-system-persistence-fixture-26.05pre-git /tank/ct/testct-6a8d/nix/private/var/nix/profiles/system STATUS: 0
+14928-14936: COMMAND: ln -s /nix/store/cpvg2cq7yh04rvzpmwl38c6m2y2pvcf9-nixos-system-persistence-fixture-26.05pre-git/init /tank/ct/testct-6a8d/private/sbin/init STATUS: 0
+14937-14945: COMMAND: osctl ct mounts dataset testct-6a8d / /persistent STATUS: 1
+error: dataset tank/ct/testct-6a8d/ does not exist
+---
+
+14946-18715: automatic failure diagnostics; all original output preserved in source log
+18716-18725: COMMAND: osctl pool show -H -o state tank STATUS: 0
+18726-18748: COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org STATUS: 0
+18749-18763: COMMAND: osctl ct new --skip-image --distribution nixos --version 26.05 --arch x86_64 testct-1048 STATUS: 0
+18764-18772: COMMAND: osctl ct unset start-menu testct-1048 STATUS: 0
+18773-18781: COMMAND: osctl ct dataset new testct-1048 nix STATUS: 0
+18782-18790: COMMAND: osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store testct-1048 STATUS: 0
+18791-18799: COMMAND: osctl -j ct show testct-1048 STATUS: 0
+18800-18808: COMMAND: osctl -j ct mounts ls testct-1048 STATUS: 0
+18809-18817: COMMAND: mkdir -p /tank/ct/testct-1048/nix/private/var/nix/profiles /tank/ct/testct-1048/private/sbin /tank/ct/testct-1048/private/etc /tank/ct/testct-1048/private/var STATUS: 0
+18818-18826: COMMAND: ln -s /nix/store/hnpdj50cvl8dg8x7mh6ir4adl7vd0wk1-nixos-system-persistence-fixture-26.05pre-git /tank/ct/testct-1048/nix/private/var/nix/profiles/system STATUS: 0
+18827-18835: COMMAND: ln -s /nix/store/hnpdj50cvl8dg8x7mh6ir4adl7vd0wk1-nixos-system-persistence-fixture-26.05pre-git/init /tank/ct/testct-1048/private/sbin/init STATUS: 0
+18836-18844: COMMAND: osctl ct mounts dataset testct-1048 / /persistent STATUS: 1
+error: dataset tank/ct/testct-1048/ does not exist
+---
+
+18845-22697: automatic failure diagnostics; all original output preserved in source log
+22698-22707: COMMAND: osctl pool show -H -o state tank STATUS: 0
+22708-22730: COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org STATUS: 0
+22731-22745: COMMAND: osctl ct new --skip-image --distribution nixos --version unstable --arch x86_64 testct-8b59 STATUS: 0
+22746-22754: COMMAND: osctl ct unset start-menu testct-8b59 STATUS: 0
+22755-22763: COMMAND: osctl ct dataset new testct-8b59 nix STATUS: 0
+22764-22772: COMMAND: osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store testct-8b59 STATUS: 0
+22773-22781: COMMAND: osctl -j ct show testct-8b59 STATUS: 0
+22782-22790: COMMAND: osctl -j ct mounts ls testct-8b59 STATUS: 0
+22791-22799: COMMAND: mkdir -p /tank/ct/testct-8b59/nix/private/var/nix/profiles /tank/ct/testct-8b59/private/sbin /tank/ct/testct-8b59/private/etc /tank/ct/testct-8b59/private/var STATUS: 0
+22800-22808: COMMAND: ln -s /nix/store/qk1fj6290fawxvlnjbkdmlrfkai61yjn-nixos-system-persistence-fixture-26.11pre-git /tank/ct/testct-8b59/nix/private/var/nix/profiles/system STATUS: 0
+22809-22817: COMMAND: ln -s /nix/store/qk1fj6290fawxvlnjbkdmlrfkai61yjn-nixos-system-persistence-fixture-26.11pre-git/init /tank/ct/testct-8b59/private/sbin/init STATUS: 0
+22818-22826: COMMAND: osctl ct mounts dataset testct-8b59 / /persistent STATUS: 1
+error: dataset tank/ct/testct-8b59/ does not exist
+---
+
+22827-26764: automatic failure diagnostics; all original output preserved in source log
+26765-26774: COMMAND: osctl pool show -H -o state tank STATUS: 0
+26775-26797: COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org STATUS: 0
+26798-26812: COMMAND: osctl ct new --skip-image --distribution nixos --version 26.05 --arch x86_64 testct-0c87 STATUS: 0
+26813-26821: COMMAND: osctl ct unset start-menu testct-0c87 STATUS: 0
+26822-26830: COMMAND: osctl ct dataset new testct-0c87 nix STATUS: 0
+26831-26839: COMMAND: osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store testct-0c87 STATUS: 0
+26840-26848: COMMAND: osctl -j ct show testct-0c87 STATUS: 0
+26849-26857: COMMAND: osctl -j ct mounts ls testct-0c87 STATUS: 0
+26858-26866: COMMAND: mkdir -p /tank/ct/testct-0c87/nix/private/var/nix/profiles /tank/ct/testct-0c87/private/sbin /tank/ct/testct-0c87/private/etc /tank/ct/testct-0c87/private/var STATUS: 0
+26867-26875: COMMAND: ln -s /nix/store/fbxa0zyrlq9prw7b1vbjy5v21ip5varv-nixos-system-persistence-fixture-26.05pre-git /tank/ct/testct-0c87/nix/private/var/nix/profiles/system STATUS: 0
+26876-26884: COMMAND: ln -s /nix/store/fbxa0zyrlq9prw7b1vbjy5v21ip5varv-nixos-system-persistence-fixture-26.05pre-git/init /tank/ct/testct-0c87/private/sbin/init STATUS: 0
+26885-26896: COMMAND: osctl ct start testct-0c87 STATUS: 1
+error: container failed to start
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+26897-31052: automatic failure diagnostics; all original output preserved in source log
+31053-31078: COMMAND: poweroff -f STATUS: 0

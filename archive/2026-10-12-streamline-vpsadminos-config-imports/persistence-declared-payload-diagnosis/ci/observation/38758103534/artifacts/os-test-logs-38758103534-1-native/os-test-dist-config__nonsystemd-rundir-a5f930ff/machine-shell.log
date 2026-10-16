@@ -1,0 +1,184 @@
+SHELL: 0
+
+START: 2026-10-15 19:27:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:27:08 +0200
+ELAPSED: 3.47s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:27:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:27:11 +0200
+ELAPSED: 1.46s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:27:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:27:13 +0200
+ELAPSED: 1.21s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:27:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:27:15 +0200
+ELAPSED: 1.34s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:27:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:27:18 +0200
+ELAPSED: 1.62s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:27:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:27:21 +0200
+ELAPSED: 1.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:27:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:27:24 +0200
+ELAPSED: 2.3s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 19:27:25 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:27:27 +0200
+ELAPSED: 1.69s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 19:27:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:27:29 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 19:27:29 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 19:27:29 +0200
+ELAPSED: 0.19s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 17:27:29 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 19:27:29 +0200
+COMMAND: osctl ct new --distribution gentoo --version latest-openrc testct-8334
+END: 2026-10-15 19:28:48 +0200
+ELAPSED: 78.25s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 19:28:48 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/fb61c253-nix--store--zk4gc6bffpkbn6sr81fgqspcnry87q35-dist-config-nonsystemd-rundir-script.sh" "/tmp/testct-8334-test-script.sh"
+END: 2026-10-15 19:28:48 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:28:48 +0200
+COMMAND: osctl ct runscript -r testct-8334 /tmp/testct-8334-test-script.sh
+END: 2026-10-15 19:28:52 +0200
+ELAPSED: 4.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:28:52 +0200
+COMMAND: osctl ct del -f --prune testct-8334
+END: 2026-10-15 19:28:54 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-8334
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 19:28:54 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-15 19:29:16 +0200
+ELAPSED: 22.14s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/void/glibc-20261010/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/chimera/20260926/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/slackware/15.0/image-stream.tar
+---
+
+START: 2026-10-15 19:29:24 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 19:29:38 +0200
+ELAPSED: 14.46s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

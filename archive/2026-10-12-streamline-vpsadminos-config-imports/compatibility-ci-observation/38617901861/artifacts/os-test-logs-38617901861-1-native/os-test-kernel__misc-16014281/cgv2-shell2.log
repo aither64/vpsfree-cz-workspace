@@ -1,0 +1,190 @@
+SHELL: 2
+
+START: 2026-10-14 21:56:08 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 21:56:11 +0200
+ELAPSED: 2.43s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 21:56:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 21:56:13 +0200
+ELAPSED: 1.11s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 21:56:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 21:56:15 +0200
+ELAPSED: 0.93s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 21:56:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 21:56:17 +0200
+ELAPSED: 1.04s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 21:56:18 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 21:56:19 +0200
+ELAPSED: 1.15s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 21:56:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 21:56:21 +0200
+ELAPSED: 1.04s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 21:56:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 21:56:23 +0200
+ELAPSED: 1.16s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 21:56:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 21:56:25 +0200
+ELAPSED: 0.81s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-14 21:56:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 21:56:27 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-14 21:56:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 21:56:29 +0200
+ELAPSED: 0.87s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-14 21:56:29 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-14 21:56:29 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 14 Oct 2026 19:56:29 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-14 21:56:29 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-10-14 21:56:30 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:56:30 +0200
+COMMAND: osctl ct new --distribution alpine kmisc-mknod-ad07
+END: 2026-10-14 21:56:36 +0200
+ELAPSED: 6.12s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-14 21:56:36 +0200
+COMMAND: osctl ct start kmisc-mknod-ad07
+END: 2026-10-14 21:56:38 +0200
+ELAPSED: 2.52s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-14 21:56:38 +0200
+COMMAND: osctl ct exec kmisc-mknod-ad07 mknod /my-char-device c 84 3
+END: 2026-10-14 21:56:41 +0200
+ELAPSED: 2.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:56:41 +0200
+COMMAND: osctl ct exec kmisc-mknod-ad07 mknod /my-block-device b 50 26
+END: 2026-10-14 21:56:44 +0200
+ELAPSED: 2.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:56:44 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-10-14 21:56:45 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+kmisc-attrs-native-5e52
+kmisc-mknod-ad07
+kmisc-oom-e2d4
+kmisc-nice-3bd9
+kmisc-attrs-zfs-f5d7
+kmisc-oom-3f17
+---
+
+START: 2026-10-14 21:56:45 +0200
+COMMAND: osctl ct del -f --prune kmisc-mknod-ad07 >/dev/null 2>&1 || true
+END: 2026-10-14 21:56:47 +0200
+ELAPSED: 2.27s
+STATUS: 0
+OUTPUT:
+
+---
+

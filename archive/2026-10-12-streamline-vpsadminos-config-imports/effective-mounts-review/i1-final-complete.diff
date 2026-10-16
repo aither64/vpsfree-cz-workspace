@@ -1,0 +1,3531 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index cd82a55b0..5969196e7 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -104,6 +104,12 @@ jobs:
+       - name: Check NixOS container image repository module
+         run: nix eval --impure --raw --file tests/nixos-container-image-repository-eval.nix
+ 
++      - name: Check NixOS guest compatibility modules and generated flakes
++        run: bash tests/nixos-container-eval.sh
++
++      - name: Check NixOS persistent activation
++        run: nix build .#checks.x86_64-linux.nixos-container-persistence --no-link
++
+       - name: Check NixOS disk image reuse
+         run: nix build .#checks.x86_64-linux.nixos-disk-image-reuse --no-link
+ 
+diff --git a/docs/containers/nixos.md b/docs/containers/nixos.md
+new file mode 100644
+index 000000000..1c2a244aa
+--- /dev/null
++++ b/docs/containers/nixos.md
+@@ -0,0 +1,179 @@
++# NixOS guests
++
++NixOS guests need a compatibility module to boot and use networking supplied by
++the vpsAdminOS host. Import it from the vpsAdminOS flake, or download the
++self-contained module for your guest's release.
++
++## Stable flake imports
++
++Use `vpsadminos.nixosModules.containerStable` in the guest's module list:
++
++```nix
++{
++  inputs = {
++    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
++    vpsadminos.url = "github:vpsfreecz/vpsadminos";
++  };
++
++  outputs = { nixpkgs, vpsadminos, ... }: {
++    nixosConfigurations.vps = nixpkgs.lib.nixosSystem {
++      system = "x86_64-linux";
++      modules = [
++        vpsadminos.nixosModules.containerStable
++        ./configuration.nix
++      ];
++    };
++  };
++}
++```
++
++The selector uses the guest's nixpkgs release. The import can stay unchanged
++when you upgrade the guest to another known stable release. `nixosModules.container` is an equivalent alias.
++
++Selection is independent of `system.stateVersion`. Keep that setting at the
++value appropriate for your installation; changing the guest's nixpkgs release
++does not require changing stateVersion. The vpsAdminOS flake's own nixpkgs input
++also does not determine which guest module is selected.
++
++The release map contains `22.11`, `23.05`, `23.11`, `24.05`,
++`24.11`, `25.05`, `25.11` and `26.05`. These modules remain available for
++compatibility; their availability does not imply upstream security support.
++You can select a release explicitly with a literal key:
++
++```nix
++vpsadminos.nixosModules.containers."26.05"
++```
++
++Or use the guest nixpkgs input's release without converting dots to underscores:
++
++```nix
++vpsadminos.nixosModules.containers.${nixpkgs.lib.trivial.release}
++```
++
++Each leaf is an importable module. `nixosModules.containers` is a lookup map and
++must not itself be imported. Consumers that enumerate `nixosModules` must handle
++this map separately.
++
++An unknown release fails during evaluation. The selector's error names the
++release, lists known releases and advises updating the vpsAdminOS input or
++selecting the explicit unstable module. There is no fallback to unstable.
++Direct lookup of a missing grouped key produces Nix's missing-attribute error.
++
++## Unstable guests
++
++Use `vpsadminos.nixosModules.containerUnstable` with nixpkgs unstable. The stable
++selector uses the release number and cannot identify the source branch. If an
++unstable snapshot reports a known stable release number, the stable selector
++chooses that release's module. A version suffix such as `pre-git` also does not
++reliably identify unstable.
++
++## Existing imports and generated configurations
++
++Existing underscore exports such as `nixosModules.container_24_11` continue to
++import the named release module. The legacy exports
++`nixosConfigurations.container` and `nixosConfigurations.containerStable` keep
++using the raw latest-stable module, independently of the guest release.
++`nixosConfigurations.containerUnstable` remains the explicit unstable module.
++These legacy values are modules, rather than evaluated NixOS systems.
++
++Stable image templates generate `nixosModules.containerStable`; unstable
++templates generate `nixosModules.containerUnstable`. The ordinary and
++impermanence variants use the same choice. First boot copies configuration files
++only when they are absent, so an image update does not rewrite an existing
++guest configuration.
++
++The grouped exports and release-aware selectors require a vpsAdminOS revision
++that provides this interface. Earlier revisions accept `containerStable` but
++use their latest-stable module. Keep the generated lockfile, or lock an
++appropriate published revision before relying on the selector.
++
++## Standalone module
++
++For a configuration without the flake import, download the versioned stable file
++matching the guest's release, for example:
++
++```sh
++curl -o /etc/nixos/vpsadminos.nix \
++  https://raw.githubusercontent.com/vpsfreecz/vpsadminos/staging/os/lib/nixos-container/stable/vpsadminos-26.05.nix
++```
++
++Import `./vpsadminos.nix` from the guest configuration. The raw versioned files,
++`stable/vpsadminos.nix` (latest stable), and `unstable/vpsadminos.nix` are each
++self-contained; no companion files are required. A downloaded file cannot
++automatically select another release. The root
++`os/lib/nixos-container/vpsadminos.nix` is a guard and is not the download target.
++
++## Changing an existing guest import
++
++Update the vpsAdminOS input to a revision with this interface, change the import,
++and evaluate the configuration with the existing guest nixpkgs pin and
++stateVersion before activation. Compare the result with the matching explicit
++release module. Guests adopt independently when rebuilt; no coordinated update
++of hosts or running nodes is required.
++
++Keep the prior lockfile and NixOS generations for recovery. Reverting to a
++vpsAdminOS revision without grouped exports also requires reverting grouped
++imports. To restore former latest-stable behavior for a modern generic import,
++restore the prior vpsAdminOS pin or choose an appropriate explicit module.
++The import change introduces no persisted state or data conversion. A separate
++NixOS release upgrade retains that release's normal rollback constraints.
++
++## Persistent allocation state
++
++The 25.11, 26.05, latest stable and unstable compatibility modules establish
++early mounts covering `/var/lib/nixos` or `/var/log` before legacy user
++allocation. This includes persistence of `/var` or `/var/lib` and mounts
++declared through `fileSystems`, as well as impermanence directory binds. The
++effective `boot.specialFileSystems` declarations determine which mounts run.
++Root `/` is already available when activation starts and does not by itself
++enable this adapter.
++
++LXC mounts `/proc` before starting init, which causes NixOS to skip its early
++mount path. User allocation must see the saved maps before it runs; mounting
++them later leaves newly allocated IDs in `/etc/passwd` and `/etc/group` while
++exposing the original maps and file ownership on persistent storage.
++
++The compatibility module uses NixOS's global early-mount order. For selected
++directory binds, it creates only absent source directories and parents, with
++root ownership and mode 0755. Existing content, ownership and modes remain
++untouched. Pre-provision sources that need another owner or mode. Impermanence
++uses existing source metadata; it does not later apply the configured owner or
++mode to a source that this adapter has already created.
++
++Sources can reside on persistent `/` or on a separate backing mount. The supplied
++images use the host-mounted `/persistent` dataset; guests need no block device
++or storage-layout change. For backing mounts declared in NixOS's early mount
++set, activation checks that the covering mountpoints are present before
++creating source directories. Declared directory binds must also match their
++configured source directory. A failed selected mount, or a mount it depends
++on, stops activation before legacy allocation, including a failed remount whose
++target remains mounted. A directory bind destination mounted from a different
++source also stops activation. Matching live binds retain their source and
++configured remount options.
++
++Selected filesystems of other types and their prerequisites retain their
++configured mount/remount operations and require a successful operation and a
++mounted destination. Their device, UUID or
++network source is not treated as a directory. These checks do not establish
++arbitrary device identity or durability; for example, an explicitly configured
++tmpfs at `/var` still provides temporary storage.
++
++Host-supplied storage that has no guest early-mount declaration must already be
++available. The guest cannot distinguish an intentionally root-backed directory
++from stale directories exposed when an undeclared host mount is missing. Mount
++presence and directory identity do not prove that storage will survive a host
++failure.
++
++A healthy guest can adopt by updating its vpsAdminOS input or downloaded module
++and rebuilding with its existing nixpkgs pin, stateVersion and storage layout.
++Guests adopt independently without host coordination. Sysusers and userborn
++keep their existing activation paths. An explicit guest replacement of the
++specialfs activation script remains responsible for its own mount behavior.
++
++This preserves identities in healthy guests. It does not recover a guest whose
++UIDs or GIDs have already changed.
++Before rebuilding such a guest, compare and save its account IDs, allocation
++maps and persistent dataset. A rebuild can replace the saved maps with the
++current drifted IDs. Account or file ownership repair requires a separate
++recovery decision. Earlier generations still read the same map format, but a
++rollback restart can reintroduce the ordering defect.
+diff --git a/flake.nix b/flake.nix
+index dd8e63bed..0b6830c5b 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -52,14 +52,33 @@
+       nixpkgsRevisionFor =
+         pkgs: if toString pkgs.path == toString nixpkgs.outPath then nixpkgsRevision else null;
+       containerStableModule = import ./os/lib/nixos-container/stable/vpsadminos.nix;
+-      containerStable2211Module = import ./os/lib/nixos-container/stable/vpsadminos-22.11.nix;
+-      containerStable2305Module = import ./os/lib/nixos-container/stable/vpsadminos-23.05.nix;
+-      containerStable2311Module = import ./os/lib/nixos-container/stable/vpsadminos-23.11.nix;
+-      containerStable2405Module = import ./os/lib/nixos-container/stable/vpsadminos-24.05.nix;
+-      containerStable2411Module = import ./os/lib/nixos-container/stable/vpsadminos-24.11.nix;
+-      containerStable2505Module = import ./os/lib/nixos-container/stable/vpsadminos-25.05.nix;
+-      containerStable2511Module = import ./os/lib/nixos-container/stable/vpsadminos-25.11.nix;
+-      containerStable2605Module = import ./os/lib/nixos-container/stable/vpsadminos-26.05.nix;
++      containerReleaseModules = {
++        "22.11" = import ./os/lib/nixos-container/stable/vpsadminos-22.11.nix;
++        "23.05" = import ./os/lib/nixos-container/stable/vpsadminos-23.05.nix;
++        "23.11" = import ./os/lib/nixos-container/stable/vpsadminos-23.11.nix;
++        "24.05" = import ./os/lib/nixos-container/stable/vpsadminos-24.05.nix;
++        "24.11" = import ./os/lib/nixos-container/stable/vpsadminos-24.11.nix;
++        "25.05" = import ./os/lib/nixos-container/stable/vpsadminos-25.05.nix;
++        "25.11" = import ./os/lib/nixos-container/stable/vpsadminos-25.11.nix;
++        "26.05" = import ./os/lib/nixos-container/stable/vpsadminos-26.05.nix;
++      };
++      containerReleaseAliases = nixpkgs.lib.mapAttrs' (release: module: {
++        name = "container_${nixpkgs.lib.replaceStrings [ "." ] [ "_" ] release}";
++        value = module;
++      }) containerReleaseModules;
++      containerStableSelector =
++        { lib, ... }:
++        {
++          # Imports must use the guest evaluator's lib, before config is available.
++          imports = [
++            (containerReleaseModules.${lib.trivial.release} or (throw (
++              "vpsAdminOS: unsupported stable NixOS release '${lib.trivial.release}'. "
++              + "Known stable releases: ${nixpkgs.lib.concatStringsSep ", " (builtins.attrNames containerReleaseModules)}. "
++              + "Update the vpsadminos input, or explicitly select nixosModules.containerUnstable when using unstable."
++            ))
++            )
++          ];
++        };
+       containerUnstableModule = import ./os/lib/nixos-container/unstable/vpsadminos.nix;
+       testFramework =
+         let
+@@ -242,18 +261,12 @@
+             };
+           };
+ 
+-        container = containerStableModule;
+-        containerStable = containerStableModule;
+-        container_22_11 = containerStable2211Module;
+-        container_23_05 = containerStable2305Module;
+-        container_23_11 = containerStable2311Module;
+-        container_24_05 = containerStable2405Module;
+-        container_24_11 = containerStable2411Module;
+-        container_25_05 = containerStable2505Module;
+-        container_25_11 = containerStable2511Module;
+-        container_26_05 = containerStable2605Module;
++        containers = containerReleaseModules;
++        container = containerStableSelector;
++        containerStable = containerStableSelector;
+         containerUnstable = containerUnstableModule;
+-      };
++      }
++      // containerReleaseAliases;
+ 
+       nixosConfigurations = {
+         container = containerStableModule;
+@@ -784,6 +797,16 @@
+           nixos-disk-image-reuse = import ./tests/nixos-disk-image-reuse-check.nix {
+             inherit nixpkgs system testFramework;
+           };
++          nixos-container-persistence = import ./tests/nixos-container-persistence-check.nix {
++            pkgs = import nixpkgs { inherit system; };
++            source = self.outPath;
++            inherit
++              system
++              nixpkgs
++              nixpkgsUnstable
++              impermanence
++              ;
++          };
+           os-eval = sys.config.system.build.toplevel;
+           vpsadminos-disk-image-reuse = import ./tests/vpsadminos-disk-image-reuse-check.nix {
+             inherit nixpkgs system testFramework;
+diff --git a/image-scripts/tests/nixos_rebuild.sh b/image-scripts/tests/nixos_rebuild.sh
+index 4ea3b1122..92e8cfeb6 100644
+--- a/image-scripts/tests/nixos_rebuild.sh
++++ b/image-scripts/tests/nixos_rebuild.sh
+@@ -52,5 +52,111 @@ wait_for_network || fail "network unreachable"
+ wait_for_flake || fail "flake configuration not created"
+ wait_for_dns || fail "DNS not working"
+ 
++if [ "$VARIANT" == "impermanence" ] ; then
++	machine_id=$(osctl ct exec $CTID cat /etc/machine-id) \
++		|| fail "unable to read initial machine-id"
++	[ -n "$machine_id" ] || fail "empty initial machine-id"
++
++	# Add an allocated system identity and persistent payload to the generated
++	# configuration, leaving its original persistence settings and imports intact.
++	osctl ct exec $CTID bash -c 'cat > /etc/nixos/preservation-test.nix <<"EOF"
++{ ... }:
++{
++  users.groups.preservation-test = {};
++  users.users.preservation-test = {
++    isSystemUser = true;
++    group = "preservation-test";
++  };
++  environment.persistence."/persistent".directories = [
++    "/var/lib/preservation-test"
++  ];
++}
++EOF
++sed -i "/^{$/a\  imports = [ ./preservation-test.nix ];" /etc/nixos/configuration.nix' \
++		|| fail "unable to configure impermanence preservation fixture"
++fi
++
+ osctl ct exec $CTID nixos-rebuild switch --flake /etc/nixos#vps \
+ 	|| fail "unable to run nixos-rebuild switch"
++
++if [ "$VARIANT" == "impermanence" ] ; then
++	osctl ct exec $CTID bash -c '
++printf "%s\n" "vpsadminos-impermanence-preservation" > /var/lib/preservation-test/payload
++chown preservation-test:preservation-test /var/lib/preservation-test/payload
++' || fail "unable to create impermanence payload"
++
++	identity=$(osctl ct exec $CTID id -u preservation-test) \
++		|| fail "unable to read fixture UID"
++	group_identity=$(osctl ct exec $CTID id -g preservation-test) \
++		|| fail "unable to read fixture GID"
++
++	function test_preservation {
++		local phase="$1" failed=0
++		local current_machine_id current_identity current_group_identity
++		local current_payload current_ownership
++
++		# Collect every invariant before reporting failure, so one changed ID
++		# cannot hide the state of the other identity or the persistent payload.
++		current_machine_id=$(osctl ct exec $CTID cat /etc/machine-id) || failed=1
++		current_identity=$(osctl ct exec $CTID id -u preservation-test) || failed=1
++		current_group_identity=$(osctl ct exec $CTID id -g preservation-test) || failed=1
++		current_payload=$(osctl ct exec $CTID cat /var/lib/preservation-test/payload) || failed=1
++		current_ownership=$(osctl ct exec $CTID stat -c %u:%g /var/lib/preservation-test/payload) || failed=1
++
++		printf 'Preservation after %s:\n' "$phase"
++		printf '  machine-id: expected <%s>, current <%s>\n' "$machine_id" "$current_machine_id"
++		printf '  UID: expected <%s>, current <%s>\n' "$identity" "$current_identity"
++		printf '  GID: expected <%s>, current <%s>\n' "$group_identity" "$current_group_identity"
++		printf '  payload: expected <%s>, current <%s>\n' "vpsadminos-impermanence-preservation" "$current_payload"
++		printf '  ownership: expected <%s>, current <%s>\n' "$identity:$group_identity" "$current_ownership"
++
++		# Read-only evidence from both the visible mount and its backing storage.
++		osctl ct exec $CTID bash -c '
++for path in /var/lib/nixos/uid-map /var/lib/nixos/gid-map /persistent/var/lib/nixos/uid-map /persistent/var/lib/nixos/gid-map; do
++  printf "\nAllocation map %s:\n" "$path"
++  if [ -f "$path" ]; then cat "$path"; else printf "missing\n"; fi
++done
++for path in /var/lib/nixos /persistent/var/lib/nixos /var/lib/preservation-test /persistent/var/lib/preservation-test; do
++  printf "\nMount and backing identity %s:\n" "$path"
++  findmnt --target "$path" --output TARGET,SOURCE,FSTYPE,OPTIONS
++  stat -c "%n owner=%u:%g mode=%a device:inode=%d:%i" "$path"
++done
++printf "\nPersistent payload backing state:\n"
++stat -c "%n owner=%u:%g mode=%a device:inode=%d:%i" /var/lib/preservation-test/payload /persistent/var/lib/preservation-test/payload
++printf "\nBoot mount and activation order:\n"
++grep -n -E "proc/1|source .*mounts|running activation|systemConfig/activate" /run/current-system/init
++mount_script=$(sed -n "s/^[[:space:]]*source \([^[:space:]]*-mounts\.sh\).*$/\1/p" /run/current-system/init)
++if [ -n "$mount_script" ] && [ -f "$mount_script" ]; then
++  grep -n -E "persistent|var/lib/nixos|specialMount" "$mount_script"
++fi
++printf "\nUser and persistence activation steps:\n"
++grep -n -E "specialfs|Activation script snippet|source[[:space:]]+.*-mounts[.]sh|update-users-groups|uid-map|gid-map|persistent|(^|[[:space:]])mount([[:space:]]|$)" /run/current-system/activate
++' || printf 'Unable to collect all read-only preservation diagnostics after %s\n' "$phase"
++
++		[ "$current_machine_id" == "$machine_id" ] || { echo "machine-id changed after $phase"; failed=1; }
++		[ "$current_identity" == "$identity" ] || { echo "fixture UID changed after $phase"; failed=1; }
++		[ "$current_group_identity" == "$group_identity" ] || { echo "fixture GID changed after $phase"; failed=1; }
++		[ "$current_payload" == "vpsadminos-impermanence-preservation" ] || { echo "persistent payload changed after $phase"; failed=1; }
++		[ "$current_ownership" == "$identity:$group_identity" ] || { echo "persistent payload ownership changed after $phase"; failed=1; }
++		[ "$failed" -eq 0 ] || fail "impermanence preservation failed after $phase"
++	}
++	test_preservation initial-rebuild
++
++	# An earlier-sorting identity changes fresh allocation order. Without the
++	# persisted UID/GID maps, a restart could otherwise allocate the same IDs
++	# accidentally and hide a regression.
++	osctl ct exec $CTID bash -c 'sed -i "/^}$/i\  users.groups.a-preservation-test = {};\n  users.users.a-preservation-test = { isSystemUser = true; group = \"a-preservation-test\"; };" /etc/nixos/preservation-test.nix' \
++		|| fail "unable to extend allocated identity fixture"
++	osctl ct exec $CTID nixos-rebuild switch --flake /etc/nixos#vps \
++		|| fail "unable to rebuild impermanence fixture"
++	test_preservation rebuild
++fi
++
++osctl ct restart $CTID || fail "unable to restart rebuilt container"
++wait_for_network || fail "network unreachable after restart"
++wait_for_flake || fail "flake configuration missing after restart"
++wait_for_dns || fail "DNS not working after restart"
++
++if [ "$VARIANT" == "impermanence" ] ; then
++	test_preservation restart
++fi
+diff --git a/mkdocs.yml b/mkdocs.yml
+index e8e87134a..74d8eb016 100644
+--- a/mkdocs.yml
++++ b/mkdocs.yml
+@@ -12,6 +12,7 @@ nav:
+     - Resources: 'user-guide/resources.md'
+     - Mounts: 'user-guide/mounts.md'
+ - Containers:
++    - NixOS guests: 'containers/nixos.md'
+     - User namespaces: 'containers/user-namespaces.md'
+     - Administration: 'containers/administration.md'
+     - Datasets: 'containers/datasets.md'
+diff --git a/os/lib/nixos-container/stable/impermanence.nix b/os/lib/nixos-container/stable/impermanence.nix
+index 1a0e2b029..8712a3f29 100644
+--- a/os/lib/nixos-container/stable/impermanence.nix
++++ b/os/lib/nixos-container/stable/impermanence.nix
+@@ -14,7 +14,6 @@
+   ...
+ }:
+ let
+-  containerModule = "container_${lib.replaceStrings [ "." ] [ "_" ] lib.trivial.release}";
+   impermanenceModule = impermanence;
+   flakeClone = import ../template-flake.nix {
+     inherit
+@@ -23,7 +22,7 @@ let
+       nixpkgsNode
+       pkgs
+       ;
+-    inherit containerModule;
++    containerModule = "containerStable";
+     includeImpermanence = true;
+   };
+   flakeLockClone = import ../template-flake-lock.nix {
+diff --git a/os/lib/nixos-container/stable/minimal.nix b/os/lib/nixos-container/stable/minimal.nix
+index 1fa13838d..02b9e4144 100644
+--- a/os/lib/nixos-container/stable/minimal.nix
++++ b/os/lib/nixos-container/stable/minimal.nix
+@@ -13,14 +13,13 @@
+   ...
+ }:
+ let
+-  containerModule = "container_${lib.replaceStrings [ "." ] [ "_" ] lib.trivial.release}";
+   flakeClone = import ../template-flake.nix {
+     inherit
+       lib
+       nixpkgsNode
+       pkgs
+       ;
+-    inherit containerModule;
++    containerModule = "containerStable";
+   };
+   flakeLockClone = import ../template-flake-lock.nix {
+     inherit
+diff --git a/os/lib/nixos-container/stable/vpsadminos-25.11.nix b/os/lib/nixos-container/stable/vpsadminos-25.11.nix
+index 85e0f0f22..c0bfa80e2 100644
+--- a/os/lib/nixos-container/stable/vpsadminos-25.11.nix
++++ b/os/lib/nixos-container/stable/vpsadminos-25.11.nix
+@@ -21,6 +21,163 @@ let
+     mkForce
+     ;
+ 
++  legacyUsers = !config.systemd.sysusers.enable && !config.services.userborn.enable;
++  bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
++  bootNeededFileSystems = lib.pipe config.fileSystems [
++    (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
++    (builtins.mapAttrs (
++      path: v:
++      lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
++        "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
++        (lib.intersectAttrs bootSpecialFileSystemOpts v)
++    ))
++  ];
++  bootNeededBindMounts = lib.filter (
++    mount:
++    (mount.enable or true)
++    && mount ? where
++    && mount ? what
++    && (mount.type or null) == "none"
++    && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
++    && builtins.elem mount.where utils.pathsNeededForBoot
++  ) config.systemd.mounts;
++  coversPath = parent: path: parent == path || lib.hasPrefix "${lib.removeSuffix "/" parent}/" path;
++  earlyMounts = builtins.attrValues config.boot.specialFileSystems;
++  directoryBind =
++    mount:
++    lib.any (option: builtins.elem option mount.options) [
++      "bind"
++      "rbind"
++    ];
++  persistedStateMounts = lib.filter (
++    mount:
++    mount.mountPoint != "/"
++    && lib.any (coversPath mount.mountPoint) [
++      "/var/lib/nixos"
++      "/var/log"
++    ]
++  ) earlyMounts;
++  selectedStateMount =
++    mount: lib.any (selected: selected.mountPoint == mount.mountPoint) persistedStateMounts;
++  # Membership only: the upstream earlyMountScript still orders every mount.
++  requiredStateMounts = map (entry: entry.mount) (
++    lib.genericClosure {
++      startSet = map (mount: {
++        key = mount.mountPoint;
++        inherit mount;
++      }) persistedStateMounts;
++      operator =
++        entry:
++        map (mount: {
++          key = mount.mountPoint;
++          inherit mount;
++        }) (lib.filter (mount: utils.fsBefore mount entry.mount) earlyMounts);
++    }
++  );
++  backingMounts =
++    source:
++    lib.concatMap (mount: [
++      (if directoryBind mount then "bind" else "filesystem")
++      (toString mount.device)
++      mount.mountPoint
++    ]) (lib.filter (mount: coversPath mount.mountPoint source) earlyMounts);
++
++  persistedSpecialfs = ''
++    # Only missing directories receive root/0755 defaults; keep existing metadata.
++    vpsadminosPrepareStateDirectory() {
++      local path="$1" parent
++      if [ -e "$path" ] || [ -L "$path" ]; then
++        [ -d "$path" ] || return 1
++        return 0
++      fi
++      parent=$(dirname -- "$path") || return 1
++      vpsadminosPrepareStateDirectory "$parent" || return 1
++      mkdir -m 0755 -- "$path" || return 1
++      # Clear inherited group and special bits on this new directory only.
++      chown 0:0 -- "$path" || return 1
++      chmod 00755 -- "$path" || return 1
++    }
++    vpsadminosMountRequired() {
++      local source="$1" target="$2" options="$3" fsType="$4" selected="$5" directoryBind="$6"
++      local backingType backingSource backing mounted=false mountStatus
++      shift 6
++      # Exact declared early mountpoints must be available, including / when
++      # configured. Undeclared host binds retain their existing host contract.
++      while [ "$#" -gt 0 ]; do
++        backingType="$1" backingSource="$2" backing="$3"
++        shift 3
++        mountpoint -q -- "$backing" || return 1
++        if [ "$backingType" = bind ]; then
++          [ -d "$backingSource" ] && [ -d "$backing" ] && [ "$backingSource" -ef "$backing" ] || return 1
++        fi
++      done
++      if [ -e "$target" ] || [ -L "$target" ]; then
++        [ -d "$target" ] || return 1
++        if mountpoint -q -- "$target"; then
++          mounted=true
++          if "$directoryBind" && ! { [ -d "$source" ] && [ "$source" -ef "$target" ]; }; then
++            printf 'vpsAdminOS: state destination has a different mounted source: %s\n' "$target" >&2
++            return 1
++          fi
++        else
++          mountStatus=$?
++          # util-linux returns 32 for a directory that is not a mountpoint.
++          [ "$mountStatus" -eq 32 ] || return 1
++        fi
++      fi
++      if "$directoryBind"; then
++        if "$selected"; then
++          vpsadminosPrepareStateDirectory "$source" || return 1
++        else
++          # A prerequisite bind must not hide unavailable storage with mkdir.
++          [ -d "$source" ] || return 1
++        fi
++      fi
++      if "$mounted"; then
++        mount -t "$fsType" -o "remount,$options" "$source" "$target" || return 1
++      else
++        vpsadminosPrepareStateDirectory "$target" || return 1
++        mount -t "$fsType" -o "$options" "$source" "$target" || return 1
++      fi
++      mountpoint -q -- "$target" || return 1
++      if "$directoryBind"; then
++        [ -d "$source" ] && [ "$source" -ef "$target" ] || return 1
++      fi
++    }
++    specialMount() {
++      local device="$1" mountPoint="$2" options="$3" fsType="$4"
++      ${lib.concatMapStringsSep "\n" (mount: ''
++        if [ "$device" = ${lib.escapeShellArg (toString mount.device)} ] && [ "$mountPoint" = ${lib.escapeShellArg mount.mountPoint} ] && [ "$options" = ${lib.escapeShellArg (lib.concatStringsSep "," mount.options)} ] && [ "$fsType" = ${lib.escapeShellArg mount.fsType} ]; then
++          # Exit the parent activation shell: its ERR trap alone permits users.
++          if ! vpsadminosMountRequired "$device" "$mountPoint" "$options" "$fsType" ${
++            if selectedStateMount mount then "true" else "false"
++          } ${if directoryBind mount then "true" else "false"} ${
++            lib.escapeShellArgs (
++              if directoryBind mount && selectedStateMount mount then
++                backingMounts (toString mount.device)
++              else
++                [ ]
++            )
++          }; then
++            printf 'vpsAdminOS: persisted state unavailable; refusing user allocation\n' >&2
++            exit 1
++          fi
++          return 0
++        fi
++      '') requiredStateMounts}
++      # Keep this fallback aligned with upstream activation-script.nix specialfs.
++      # The global earlyMountScript remains responsible for all mount ordering.
++      if mountpoint -q "$mountPoint"; then
++        local options="remount,$options"
++      else
++        mkdir -p "$mountPoint"
++        chmod 0755 "$mountPoint"
++      fi
++      mount -t "$fsType" -o "$options" "$device" "$mountPoint"
++    }
++    source ${config.system.build.earlyMountScript}
++  '';
++
+   nameservers = [
+     "1.1.1.1"
+     "2606:4700:4700::1111"
+@@ -65,56 +222,35 @@ in
+   boot.systemdExecutable = mkDefault "/run/current-system/systemd/lib/systemd/systemd systemd.unified_cgroup_hierarchy=0";
+   console.enable = true;
+ 
+-  # Mount paths that are needed for boot (e.g. /persistent and /var/lib/nixos)
+-  # earlier. This fixes UIDs and GIDs changing on reboot when using
+-  # impermanence.
+-  #
+-  # In a VM or on bare metal, impermanence mounts boot-critical bind mounts in
+-  # the initrd. vpsAdminOS containers do not have an initrd, so replay those
+-  # mounts through boot.specialFileSystems before activation runs.
++  # Containers have no initrd. Keep the complete promotion and global mount
++  # order, including state binds: LXC's proc mount can skip stage 2's mounts.
+   boot.specialFileSystems =
+     let
+-      bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
+-
+-      bootNeededFileSystems = lib.pipe config.fileSystems [
+-        (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
+-        (builtins.mapAttrs (
+-          path: v:
+-          lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
+-            "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
+-            (lib.intersectAttrs bootSpecialFileSystemOpts v)
+-        ))
+-      ];
+-
+-      bootNeededBindMounts = builtins.listToAttrs (
+-        builtins.map
+-          (mount: {
+-            name = mount.where;
+-            value = lib.intersectAttrs bootSpecialFileSystemOpts {
+-              device = mount.what;
+-              fsType = mount.type or "none";
+-              options = lib.splitString "," (mount.options or "");
+-            };
+-          })
+-          (
+-            lib.filter (
+-              mount:
+-              (mount.enable or true)
+-              && mount ? where
+-              && mount ? what
+-              && (mount.type or null) == "none"
+-              && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
+-              && builtins.elem mount.where utils.pathsNeededForBoot
+-            ) config.systemd.mounts
+-          )
++      bootNeededBinds = builtins.listToAttrs (
++        map (mount: {
++          name = mount.where;
++          value = lib.intersectAttrs bootSpecialFileSystemOpts {
++            device = mount.what;
++            fsType = mount.type or "none";
++            options = lib.splitString "," (mount.options or "");
++          };
++        }) bootNeededBindMounts
+       );
+     in
+     bootNeededFileSystems
+-    // bootNeededBindMounts
++    // bootNeededBinds
+     // {
+       "/run/keys".fsType = mkForce "tmpfs";
+     };
+ 
++  system.activationScripts = lib.mkIf (legacyUsers && persistedStateMounts != [ ]) {
++    specialfs = mkOverride 90 {
++      text = persistedSpecialfs;
++      supportsDryActivation = false;
++    };
++    users.deps = [ "specialfs" ];
++  };
++
+   # Overrides for <nixpkgs/nixos/modules/virtualisation/container-config.nix>
+   documentation.enable = mkOverride 500 true;
+   documentation.nixos.enable = mkOverride 500 true;
+diff --git a/os/lib/nixos-container/stable/vpsadminos-26.05.nix b/os/lib/nixos-container/stable/vpsadminos-26.05.nix
+index ca56009b6..21da3753e 100644
+--- a/os/lib/nixos-container/stable/vpsadminos-26.05.nix
++++ b/os/lib/nixos-container/stable/vpsadminos-26.05.nix
+@@ -21,6 +21,163 @@ let
+     mkForce
+     ;
+ 
++  legacyUsers = !config.systemd.sysusers.enable && !config.services.userborn.enable;
++  bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
++  bootNeededFileSystems = lib.pipe config.fileSystems [
++    (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
++    (builtins.mapAttrs (
++      path: v:
++      lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
++        "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
++        (lib.intersectAttrs bootSpecialFileSystemOpts v)
++    ))
++  ];
++  bootNeededBindMounts = lib.filter (
++    mount:
++    (mount.enable or true)
++    && mount ? where
++    && mount ? what
++    && (mount.type or null) == "none"
++    && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
++    && builtins.elem mount.where utils.pathsNeededForBoot
++  ) config.systemd.mounts;
++  coversPath = parent: path: parent == path || lib.hasPrefix "${lib.removeSuffix "/" parent}/" path;
++  earlyMounts = builtins.attrValues config.boot.specialFileSystems;
++  directoryBind =
++    mount:
++    lib.any (option: builtins.elem option mount.options) [
++      "bind"
++      "rbind"
++    ];
++  persistedStateMounts = lib.filter (
++    mount:
++    mount.mountPoint != "/"
++    && lib.any (coversPath mount.mountPoint) [
++      "/var/lib/nixos"
++      "/var/log"
++    ]
++  ) earlyMounts;
++  selectedStateMount =
++    mount: lib.any (selected: selected.mountPoint == mount.mountPoint) persistedStateMounts;
++  # Membership only: the upstream earlyMountScript still orders every mount.
++  requiredStateMounts = map (entry: entry.mount) (
++    lib.genericClosure {
++      startSet = map (mount: {
++        key = mount.mountPoint;
++        inherit mount;
++      }) persistedStateMounts;
++      operator =
++        entry:
++        map (mount: {
++          key = mount.mountPoint;
++          inherit mount;
++        }) (lib.filter (mount: utils.fsBefore mount entry.mount) earlyMounts);
++    }
++  );
++  backingMounts =
++    source:
++    lib.concatMap (mount: [
++      (if directoryBind mount then "bind" else "filesystem")
++      (toString mount.device)
++      mount.mountPoint
++    ]) (lib.filter (mount: coversPath mount.mountPoint source) earlyMounts);
++
++  persistedSpecialfs = ''
++    # Only missing directories receive root/0755 defaults; keep existing metadata.
++    vpsadminosPrepareStateDirectory() {
++      local path="$1" parent
++      if [ -e "$path" ] || [ -L "$path" ]; then
++        [ -d "$path" ] || return 1
++        return 0
++      fi
++      parent=$(dirname -- "$path") || return 1
++      vpsadminosPrepareStateDirectory "$parent" || return 1
++      mkdir -m 0755 -- "$path" || return 1
++      # Clear inherited group and special bits on this new directory only.
++      chown 0:0 -- "$path" || return 1
++      chmod 00755 -- "$path" || return 1
++    }
++    vpsadminosMountRequired() {
++      local source="$1" target="$2" options="$3" fsType="$4" selected="$5" directoryBind="$6"
++      local backingType backingSource backing mounted=false mountStatus
++      shift 6
++      # Exact declared early mountpoints must be available, including / when
++      # configured. Undeclared host binds retain their existing host contract.
++      while [ "$#" -gt 0 ]; do
++        backingType="$1" backingSource="$2" backing="$3"
++        shift 3
++        mountpoint -q -- "$backing" || return 1
++        if [ "$backingType" = bind ]; then
++          [ -d "$backingSource" ] && [ -d "$backing" ] && [ "$backingSource" -ef "$backing" ] || return 1
++        fi
++      done
++      if [ -e "$target" ] || [ -L "$target" ]; then
++        [ -d "$target" ] || return 1
++        if mountpoint -q -- "$target"; then
++          mounted=true
++          if "$directoryBind" && ! { [ -d "$source" ] && [ "$source" -ef "$target" ]; }; then
++            printf 'vpsAdminOS: state destination has a different mounted source: %s\n' "$target" >&2
++            return 1
++          fi
++        else
++          mountStatus=$?
++          # util-linux returns 32 for a directory that is not a mountpoint.
++          [ "$mountStatus" -eq 32 ] || return 1
++        fi
++      fi
++      if "$directoryBind"; then
++        if "$selected"; then
++          vpsadminosPrepareStateDirectory "$source" || return 1
++        else
++          # A prerequisite bind must not hide unavailable storage with mkdir.
++          [ -d "$source" ] || return 1
++        fi
++      fi
++      if "$mounted"; then
++        mount -t "$fsType" -o "remount,$options" "$source" "$target" || return 1
++      else
++        vpsadminosPrepareStateDirectory "$target" || return 1
++        mount -t "$fsType" -o "$options" "$source" "$target" || return 1
++      fi
++      mountpoint -q -- "$target" || return 1
++      if "$directoryBind"; then
++        [ -d "$source" ] && [ "$source" -ef "$target" ] || return 1
++      fi
++    }
++    specialMount() {
++      local device="$1" mountPoint="$2" options="$3" fsType="$4"
++      ${lib.concatMapStringsSep "\n" (mount: ''
++        if [ "$device" = ${lib.escapeShellArg (toString mount.device)} ] && [ "$mountPoint" = ${lib.escapeShellArg mount.mountPoint} ] && [ "$options" = ${lib.escapeShellArg (lib.concatStringsSep "," mount.options)} ] && [ "$fsType" = ${lib.escapeShellArg mount.fsType} ]; then
++          # Exit the parent activation shell: its ERR trap alone permits users.
++          if ! vpsadminosMountRequired "$device" "$mountPoint" "$options" "$fsType" ${
++            if selectedStateMount mount then "true" else "false"
++          } ${if directoryBind mount then "true" else "false"} ${
++            lib.escapeShellArgs (
++              if directoryBind mount && selectedStateMount mount then
++                backingMounts (toString mount.device)
++              else
++                [ ]
++            )
++          }; then
++            printf 'vpsAdminOS: persisted state unavailable; refusing user allocation\n' >&2
++            exit 1
++          fi
++          return 0
++        fi
++      '') requiredStateMounts}
++      # Keep this fallback aligned with upstream activation-script.nix specialfs.
++      # The global earlyMountScript remains responsible for all mount ordering.
++      if mountpoint -q "$mountPoint"; then
++        local options="remount,$options"
++      else
++        mkdir -p "$mountPoint"
++        chmod 0755 "$mountPoint"
++      fi
++      mount -t "$fsType" -o "$options" "$device" "$mountPoint"
++    }
++    source ${config.system.build.earlyMountScript}
++  '';
++
+   nameservers = [
+     "1.1.1.1"
+     "2606:4700:4700::1111"
+@@ -65,56 +222,35 @@ in
+   boot.systemdExecutable = mkDefault "/run/current-system/systemd/lib/systemd/systemd systemd.unified_cgroup_hierarchy=0";
+   console.enable = true;
+ 
+-  # Mount paths that are needed for boot (e.g. /persistent and /var/lib/nixos)
+-  # earlier. This fixes UIDs and GIDs changing on reboot when using
+-  # impermanence.
+-  #
+-  # In a VM or on bare metal, impermanence mounts boot-critical bind mounts in
+-  # the initrd. vpsAdminOS containers do not have an initrd, so replay those
+-  # mounts through boot.specialFileSystems before activation runs.
++  # Containers have no initrd. Keep the complete promotion and global mount
++  # order, including state binds: LXC's proc mount can skip stage 2's mounts.
+   boot.specialFileSystems =
+     let
+-      bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
+-
+-      bootNeededFileSystems = lib.pipe config.fileSystems [
+-        (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
+-        (builtins.mapAttrs (
+-          path: v:
+-          lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
+-            "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
+-            (lib.intersectAttrs bootSpecialFileSystemOpts v)
+-        ))
+-      ];
+-
+-      bootNeededBindMounts = builtins.listToAttrs (
+-        builtins.map
+-          (mount: {
+-            name = mount.where;
+-            value = lib.intersectAttrs bootSpecialFileSystemOpts {
+-              device = mount.what;
+-              fsType = mount.type or "none";
+-              options = lib.splitString "," (mount.options or "");
+-            };
+-          })
+-          (
+-            lib.filter (
+-              mount:
+-              (mount.enable or true)
+-              && mount ? where
+-              && mount ? what
+-              && (mount.type or null) == "none"
+-              && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
+-              && builtins.elem mount.where utils.pathsNeededForBoot
+-            ) config.systemd.mounts
+-          )
++      bootNeededBinds = builtins.listToAttrs (
++        map (mount: {
++          name = mount.where;
++          value = lib.intersectAttrs bootSpecialFileSystemOpts {
++            device = mount.what;
++            fsType = mount.type or "none";
++            options = lib.splitString "," (mount.options or "");
++          };
++        }) bootNeededBindMounts
+       );
+     in
+     bootNeededFileSystems
+-    // bootNeededBindMounts
++    // bootNeededBinds
+     // {
+       "/run/keys".fsType = mkForce "tmpfs";
+     };
+ 
++  system.activationScripts = lib.mkIf (legacyUsers && persistedStateMounts != [ ]) {
++    specialfs = mkOverride 90 {
++      text = persistedSpecialfs;
++      supportsDryActivation = false;
++    };
++    users.deps = [ "specialfs" ];
++  };
++
+   # Overrides for <nixpkgs/nixos/modules/virtualisation/container-config.nix>
+   documentation.enable = mkOverride 500 true;
+   documentation.nixos.enable = mkOverride 500 true;
+diff --git a/os/lib/nixos-container/stable/vpsadminos.nix b/os/lib/nixos-container/stable/vpsadminos.nix
+index ca56009b6..21da3753e 100644
+--- a/os/lib/nixos-container/stable/vpsadminos.nix
++++ b/os/lib/nixos-container/stable/vpsadminos.nix
+@@ -21,6 +21,163 @@ let
+     mkForce
+     ;
+ 
++  legacyUsers = !config.systemd.sysusers.enable && !config.services.userborn.enable;
++  bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
++  bootNeededFileSystems = lib.pipe config.fileSystems [
++    (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
++    (builtins.mapAttrs (
++      path: v:
++      lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
++        "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
++        (lib.intersectAttrs bootSpecialFileSystemOpts v)
++    ))
++  ];
++  bootNeededBindMounts = lib.filter (
++    mount:
++    (mount.enable or true)
++    && mount ? where
++    && mount ? what
++    && (mount.type or null) == "none"
++    && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
++    && builtins.elem mount.where utils.pathsNeededForBoot
++  ) config.systemd.mounts;
++  coversPath = parent: path: parent == path || lib.hasPrefix "${lib.removeSuffix "/" parent}/" path;
++  earlyMounts = builtins.attrValues config.boot.specialFileSystems;
++  directoryBind =
++    mount:
++    lib.any (option: builtins.elem option mount.options) [
++      "bind"
++      "rbind"
++    ];
++  persistedStateMounts = lib.filter (
++    mount:
++    mount.mountPoint != "/"
++    && lib.any (coversPath mount.mountPoint) [
++      "/var/lib/nixos"
++      "/var/log"
++    ]
++  ) earlyMounts;
++  selectedStateMount =
++    mount: lib.any (selected: selected.mountPoint == mount.mountPoint) persistedStateMounts;
++  # Membership only: the upstream earlyMountScript still orders every mount.
++  requiredStateMounts = map (entry: entry.mount) (
++    lib.genericClosure {
++      startSet = map (mount: {
++        key = mount.mountPoint;
++        inherit mount;
++      }) persistedStateMounts;
++      operator =
++        entry:
++        map (mount: {
++          key = mount.mountPoint;
++          inherit mount;
++        }) (lib.filter (mount: utils.fsBefore mount entry.mount) earlyMounts);
++    }
++  );
++  backingMounts =
++    source:
++    lib.concatMap (mount: [
++      (if directoryBind mount then "bind" else "filesystem")
++      (toString mount.device)
++      mount.mountPoint
++    ]) (lib.filter (mount: coversPath mount.mountPoint source) earlyMounts);
++
++  persistedSpecialfs = ''
++    # Only missing directories receive root/0755 defaults; keep existing metadata.
++    vpsadminosPrepareStateDirectory() {
++      local path="$1" parent
++      if [ -e "$path" ] || [ -L "$path" ]; then
++        [ -d "$path" ] || return 1
++        return 0
++      fi
++      parent=$(dirname -- "$path") || return 1
++      vpsadminosPrepareStateDirectory "$parent" || return 1
++      mkdir -m 0755 -- "$path" || return 1
++      # Clear inherited group and special bits on this new directory only.
++      chown 0:0 -- "$path" || return 1
++      chmod 00755 -- "$path" || return 1
++    }
++    vpsadminosMountRequired() {
++      local source="$1" target="$2" options="$3" fsType="$4" selected="$5" directoryBind="$6"
++      local backingType backingSource backing mounted=false mountStatus
++      shift 6
++      # Exact declared early mountpoints must be available, including / when
++      # configured. Undeclared host binds retain their existing host contract.
++      while [ "$#" -gt 0 ]; do
++        backingType="$1" backingSource="$2" backing="$3"
++        shift 3
++        mountpoint -q -- "$backing" || return 1
++        if [ "$backingType" = bind ]; then
++          [ -d "$backingSource" ] && [ -d "$backing" ] && [ "$backingSource" -ef "$backing" ] || return 1
++        fi
++      done
++      if [ -e "$target" ] || [ -L "$target" ]; then
++        [ -d "$target" ] || return 1
++        if mountpoint -q -- "$target"; then
++          mounted=true
++          if "$directoryBind" && ! { [ -d "$source" ] && [ "$source" -ef "$target" ]; }; then
++            printf 'vpsAdminOS: state destination has a different mounted source: %s\n' "$target" >&2
++            return 1
++          fi
++        else
++          mountStatus=$?
++          # util-linux returns 32 for a directory that is not a mountpoint.
++          [ "$mountStatus" -eq 32 ] || return 1
++        fi
++      fi
++      if "$directoryBind"; then
++        if "$selected"; then
++          vpsadminosPrepareStateDirectory "$source" || return 1
++        else
++          # A prerequisite bind must not hide unavailable storage with mkdir.
++          [ -d "$source" ] || return 1
++        fi
++      fi
++      if "$mounted"; then
++        mount -t "$fsType" -o "remount,$options" "$source" "$target" || return 1
++      else
++        vpsadminosPrepareStateDirectory "$target" || return 1
++        mount -t "$fsType" -o "$options" "$source" "$target" || return 1
++      fi
++      mountpoint -q -- "$target" || return 1
++      if "$directoryBind"; then
++        [ -d "$source" ] && [ "$source" -ef "$target" ] || return 1
++      fi
++    }
++    specialMount() {
++      local device="$1" mountPoint="$2" options="$3" fsType="$4"
++      ${lib.concatMapStringsSep "\n" (mount: ''
++        if [ "$device" = ${lib.escapeShellArg (toString mount.device)} ] && [ "$mountPoint" = ${lib.escapeShellArg mount.mountPoint} ] && [ "$options" = ${lib.escapeShellArg (lib.concatStringsSep "," mount.options)} ] && [ "$fsType" = ${lib.escapeShellArg mount.fsType} ]; then
++          # Exit the parent activation shell: its ERR trap alone permits users.
++          if ! vpsadminosMountRequired "$device" "$mountPoint" "$options" "$fsType" ${
++            if selectedStateMount mount then "true" else "false"
++          } ${if directoryBind mount then "true" else "false"} ${
++            lib.escapeShellArgs (
++              if directoryBind mount && selectedStateMount mount then
++                backingMounts (toString mount.device)
++              else
++                [ ]
++            )
++          }; then
++            printf 'vpsAdminOS: persisted state unavailable; refusing user allocation\n' >&2
++            exit 1
++          fi
++          return 0
++        fi
++      '') requiredStateMounts}
++      # Keep this fallback aligned with upstream activation-script.nix specialfs.
++      # The global earlyMountScript remains responsible for all mount ordering.
++      if mountpoint -q "$mountPoint"; then
++        local options="remount,$options"
++      else
++        mkdir -p "$mountPoint"
++        chmod 0755 "$mountPoint"
++      fi
++      mount -t "$fsType" -o "$options" "$device" "$mountPoint"
++    }
++    source ${config.system.build.earlyMountScript}
++  '';
++
+   nameservers = [
+     "1.1.1.1"
+     "2606:4700:4700::1111"
+@@ -65,56 +222,35 @@ in
+   boot.systemdExecutable = mkDefault "/run/current-system/systemd/lib/systemd/systemd systemd.unified_cgroup_hierarchy=0";
+   console.enable = true;
+ 
+-  # Mount paths that are needed for boot (e.g. /persistent and /var/lib/nixos)
+-  # earlier. This fixes UIDs and GIDs changing on reboot when using
+-  # impermanence.
+-  #
+-  # In a VM or on bare metal, impermanence mounts boot-critical bind mounts in
+-  # the initrd. vpsAdminOS containers do not have an initrd, so replay those
+-  # mounts through boot.specialFileSystems before activation runs.
++  # Containers have no initrd. Keep the complete promotion and global mount
++  # order, including state binds: LXC's proc mount can skip stage 2's mounts.
+   boot.specialFileSystems =
+     let
+-      bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
+-
+-      bootNeededFileSystems = lib.pipe config.fileSystems [
+-        (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
+-        (builtins.mapAttrs (
+-          path: v:
+-          lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
+-            "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
+-            (lib.intersectAttrs bootSpecialFileSystemOpts v)
+-        ))
+-      ];
+-
+-      bootNeededBindMounts = builtins.listToAttrs (
+-        builtins.map
+-          (mount: {
+-            name = mount.where;
+-            value = lib.intersectAttrs bootSpecialFileSystemOpts {
+-              device = mount.what;
+-              fsType = mount.type or "none";
+-              options = lib.splitString "," (mount.options or "");
+-            };
+-          })
+-          (
+-            lib.filter (
+-              mount:
+-              (mount.enable or true)
+-              && mount ? where
+-              && mount ? what
+-              && (mount.type or null) == "none"
+-              && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
+-              && builtins.elem mount.where utils.pathsNeededForBoot
+-            ) config.systemd.mounts
+-          )
++      bootNeededBinds = builtins.listToAttrs (
++        map (mount: {
++          name = mount.where;
++          value = lib.intersectAttrs bootSpecialFileSystemOpts {
++            device = mount.what;
++            fsType = mount.type or "none";
++            options = lib.splitString "," (mount.options or "");
++          };
++        }) bootNeededBindMounts
+       );
+     in
+     bootNeededFileSystems
+-    // bootNeededBindMounts
++    // bootNeededBinds
+     // {
+       "/run/keys".fsType = mkForce "tmpfs";
+     };
+ 
++  system.activationScripts = lib.mkIf (legacyUsers && persistedStateMounts != [ ]) {
++    specialfs = mkOverride 90 {
++      text = persistedSpecialfs;
++      supportsDryActivation = false;
++    };
++    users.deps = [ "specialfs" ];
++  };
++
+   # Overrides for <nixpkgs/nixos/modules/virtualisation/container-config.nix>
+   documentation.enable = mkOverride 500 true;
+   documentation.nixos.enable = mkOverride 500 true;
+diff --git a/os/lib/nixos-container/unstable/vpsadminos.nix b/os/lib/nixos-container/unstable/vpsadminos.nix
+index 66383b30a..cda3a8266 100644
+--- a/os/lib/nixos-container/unstable/vpsadminos.nix
++++ b/os/lib/nixos-container/unstable/vpsadminos.nix
+@@ -21,6 +21,163 @@ let
+     mkForce
+     ;
+ 
++  legacyUsers = !config.systemd.sysusers.enable && !config.services.userborn.enable;
++  bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
++  bootNeededFileSystems = lib.pipe config.fileSystems [
++    (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
++    (builtins.mapAttrs (
++      path: v:
++      lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
++        "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
++        (lib.intersectAttrs bootSpecialFileSystemOpts v)
++    ))
++  ];
++  bootNeededBindMounts = lib.filter (
++    mount:
++    (mount.enable or true)
++    && mount ? where
++    && mount ? what
++    && (mount.type or null) == "none"
++    && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
++    && builtins.elem mount.where utils.pathsNeededForBoot
++  ) config.systemd.mounts;
++  coversPath = parent: path: parent == path || lib.hasPrefix "${lib.removeSuffix "/" parent}/" path;
++  earlyMounts = builtins.attrValues config.boot.specialFileSystems;
++  directoryBind =
++    mount:
++    lib.any (option: builtins.elem option mount.options) [
++      "bind"
++      "rbind"
++    ];
++  persistedStateMounts = lib.filter (
++    mount:
++    mount.mountPoint != "/"
++    && lib.any (coversPath mount.mountPoint) [
++      "/var/lib/nixos"
++      "/var/log"
++    ]
++  ) earlyMounts;
++  selectedStateMount =
++    mount: lib.any (selected: selected.mountPoint == mount.mountPoint) persistedStateMounts;
++  # Membership only: the upstream earlyMountScript still orders every mount.
++  requiredStateMounts = map (entry: entry.mount) (
++    lib.genericClosure {
++      startSet = map (mount: {
++        key = mount.mountPoint;
++        inherit mount;
++      }) persistedStateMounts;
++      operator =
++        entry:
++        map (mount: {
++          key = mount.mountPoint;
++          inherit mount;
++        }) (lib.filter (mount: utils.fsBefore mount entry.mount) earlyMounts);
++    }
++  );
++  backingMounts =
++    source:
++    lib.concatMap (mount: [
++      (if directoryBind mount then "bind" else "filesystem")
++      (toString mount.device)
++      mount.mountPoint
++    ]) (lib.filter (mount: coversPath mount.mountPoint source) earlyMounts);
++
++  persistedSpecialfs = ''
++    # Only missing directories receive root/0755 defaults; keep existing metadata.
++    vpsadminosPrepareStateDirectory() {
++      local path="$1" parent
++      if [ -e "$path" ] || [ -L "$path" ]; then
++        [ -d "$path" ] || return 1
++        return 0
++      fi
++      parent=$(dirname -- "$path") || return 1
++      vpsadminosPrepareStateDirectory "$parent" || return 1
++      mkdir -m 0755 -- "$path" || return 1
++      # Clear inherited group and special bits on this new directory only.
++      chown 0:0 -- "$path" || return 1
++      chmod 00755 -- "$path" || return 1
++    }
++    vpsadminosMountRequired() {
++      local source="$1" target="$2" options="$3" fsType="$4" selected="$5" directoryBind="$6"
++      local backingType backingSource backing mounted=false mountStatus
++      shift 6
++      # Exact declared early mountpoints must be available, including / when
++      # configured. Undeclared host binds retain their existing host contract.
++      while [ "$#" -gt 0 ]; do
++        backingType="$1" backingSource="$2" backing="$3"
++        shift 3
++        mountpoint -q -- "$backing" || return 1
++        if [ "$backingType" = bind ]; then
++          [ -d "$backingSource" ] && [ -d "$backing" ] && [ "$backingSource" -ef "$backing" ] || return 1
++        fi
++      done
++      if [ -e "$target" ] || [ -L "$target" ]; then
++        [ -d "$target" ] || return 1
++        if mountpoint -q -- "$target"; then
++          mounted=true
++          if "$directoryBind" && ! { [ -d "$source" ] && [ "$source" -ef "$target" ]; }; then
++            printf 'vpsAdminOS: state destination has a different mounted source: %s\n' "$target" >&2
++            return 1
++          fi
++        else
++          mountStatus=$?
++          # util-linux returns 32 for a directory that is not a mountpoint.
++          [ "$mountStatus" -eq 32 ] || return 1
++        fi
++      fi
++      if "$directoryBind"; then
++        if "$selected"; then
++          vpsadminosPrepareStateDirectory "$source" || return 1
++        else
++          # A prerequisite bind must not hide unavailable storage with mkdir.
++          [ -d "$source" ] || return 1
++        fi
++      fi
++      if "$mounted"; then
++        mount -t "$fsType" -o "remount,$options" "$source" "$target" || return 1
++      else
++        vpsadminosPrepareStateDirectory "$target" || return 1
++        mount -t "$fsType" -o "$options" "$source" "$target" || return 1
++      fi
++      mountpoint -q -- "$target" || return 1
++      if "$directoryBind"; then
++        [ -d "$source" ] && [ "$source" -ef "$target" ] || return 1
++      fi
++    }
++    specialMount() {
++      local device="$1" mountPoint="$2" options="$3" fsType="$4"
++      ${lib.concatMapStringsSep "\n" (mount: ''
++        if [ "$device" = ${lib.escapeShellArg (toString mount.device)} ] && [ "$mountPoint" = ${lib.escapeShellArg mount.mountPoint} ] && [ "$options" = ${lib.escapeShellArg (lib.concatStringsSep "," mount.options)} ] && [ "$fsType" = ${lib.escapeShellArg mount.fsType} ]; then
++          # Exit the parent activation shell: its ERR trap alone permits users.
++          if ! vpsadminosMountRequired "$device" "$mountPoint" "$options" "$fsType" ${
++            if selectedStateMount mount then "true" else "false"
++          } ${if directoryBind mount then "true" else "false"} ${
++            lib.escapeShellArgs (
++              if directoryBind mount && selectedStateMount mount then
++                backingMounts (toString mount.device)
++              else
++                [ ]
++            )
++          }; then
++            printf 'vpsAdminOS: persisted state unavailable; refusing user allocation\n' >&2
++            exit 1
++          fi
++          return 0
++        fi
++      '') requiredStateMounts}
++      # Keep this fallback aligned with upstream activation-script.nix specialfs.
++      # The global earlyMountScript remains responsible for all mount ordering.
++      if mountpoint -q "$mountPoint"; then
++        local options="remount,$options"
++      else
++        mkdir -p "$mountPoint"
++        chmod 0755 "$mountPoint"
++      fi
++      mount -t "$fsType" -o "$options" "$device" "$mountPoint"
++    }
++    source ${config.system.build.earlyMountScript}
++  '';
++
+   nameservers = [
+     "1.1.1.1"
+     "2606:4700:4700::1111"
+@@ -65,56 +222,35 @@ in
+   boot.systemdExecutable = mkDefault "/run/current-system/systemd/lib/systemd/systemd systemd.unified_cgroup_hierarchy=0";
+   console.enable = true;
+ 
+-  # Mount paths that are needed for boot (e.g. /persistent and /var/lib/nixos)
+-  # earlier. This fixes UIDs and GIDs changing on reboot when using
+-  # impermanence.
+-  #
+-  # In a VM or on bare metal, impermanence mounts boot-critical bind mounts in
+-  # the initrd. vpsAdminOS containers do not have an initrd, so replay those
+-  # mounts through boot.specialFileSystems before activation runs.
++  # Containers have no initrd. Keep the complete promotion and global mount
++  # order, including state binds: LXC's proc mount can skip stage 2's mounts.
+   boot.specialFileSystems =
+     let
+-      bootSpecialFileSystemOpts = options.boot.specialFileSystems.type.getSubOptions { };
+-
+-      bootNeededFileSystems = lib.pipe config.fileSystems [
+-        (lib.filterAttrs (_: v: utils.fsNeededForBoot v))
+-        (builtins.mapAttrs (
+-          path: v:
+-          lib.warnIf (v.autoFormat || v.autoResize || v.encrypted.enable || v.overlay.workdir != null)
+-            "fileSystems.${path} has options set that are not supported by boot.specialFileSystems."
+-            (lib.intersectAttrs bootSpecialFileSystemOpts v)
+-        ))
+-      ];
+-
+-      bootNeededBindMounts = builtins.listToAttrs (
+-        builtins.map
+-          (mount: {
+-            name = mount.where;
+-            value = lib.intersectAttrs bootSpecialFileSystemOpts {
+-              device = mount.what;
+-              fsType = mount.type or "none";
+-              options = lib.splitString "," (mount.options or "");
+-            };
+-          })
+-          (
+-            lib.filter (
+-              mount:
+-              (mount.enable or true)
+-              && mount ? where
+-              && mount ? what
+-              && (mount.type or null) == "none"
+-              && builtins.elem "bind" (lib.splitString "," (mount.options or ""))
+-              && builtins.elem mount.where utils.pathsNeededForBoot
+-            ) config.systemd.mounts
+-          )
++      bootNeededBinds = builtins.listToAttrs (
++        map (mount: {
++          name = mount.where;
++          value = lib.intersectAttrs bootSpecialFileSystemOpts {
++            device = mount.what;
++            fsType = mount.type or "none";
++            options = lib.splitString "," (mount.options or "");
++          };
++        }) bootNeededBindMounts
+       );
+     in
+     bootNeededFileSystems
+-    // bootNeededBindMounts
++    // bootNeededBinds
+     // {
+       "/run/keys".fsType = mkForce "tmpfs";
+     };
+ 
++  system.activationScripts = lib.mkIf (legacyUsers && persistedStateMounts != [ ]) {
++    specialfs = mkOverride 90 {
++      text = persistedSpecialfs;
++      supportsDryActivation = false;
++    };
++    users.deps = [ "specialfs" ];
++  };
++
+   # Overrides for <nixpkgs/nixos/modules/virtualisation/container-config.nix>
+   documentation.enable = mkOverride 500 true;
+   documentation.nixos.enable = mkOverride 500 true;
+diff --git a/tests/all-tests.nix b/tests/all-tests.nix
+index f47b35d48..d928b8e79 100644
+--- a/tests/all-tests.nix
++++ b/tests/all-tests.nix
+@@ -215,6 +215,7 @@ let
+           "defaults"
+           "dist-config/netif-bridge"
+           "dist-config/nixos-resolvers"
++          "dist-config/nixos-persistence-upgrade"
+           {
+             test = "dist-config/netif-routed";
+             args = {
+diff --git a/tests/fixtures/nixos-container-persistence.nix b/tests/fixtures/nixos-container-persistence.nix
+new file mode 100644
+index 000000000..ca568cfea
+--- /dev/null
++++ b/tests/fixtures/nixos-container-persistence.nix
+@@ -0,0 +1,45 @@
++# Immutable sources shared by the pure check and registered upgrade suite.
++{
++  system,
++  nixpkgs ? null,
++  nixpkgsUnstable ? null,
++  impermanence ? null,
++}:
++let
++  lock = builtins.fromJSON (builtins.readFile ../../flake.lock);
++  fetch = locked: builtins.fetchTree ({ type = "github"; } // locked);
++  fromLock = name: fetch lock.nodes.${lock.nodes.root.inputs.${name}}.locked;
++  release = source: {
++    inherit source;
++    lib = (import (source + "/lib")) // {
++      nixosSystem = args: import (source + "/nixos/lib/eval-config.nix") (args // { inherit system; });
++    };
++  };
++  oldMetadata = {
++    owner = "vpsfreecz";
++    repo = "vpsadminos";
++    rev = "1150e37b1cc997b1728f2fda806a3433ef55b798";
++    narHash = "sha256-PdZ1g1KtuxL/3T1E01jKhj3Npmkd4G8EJIzS0OSiaMA=";
++  };
++in
++{
++  releases = {
++    "25.11" =
++      release
++        (fetch {
++          owner = "NixOS";
++          repo = "nixpkgs";
++          rev = "b6018f87da91d19d0ab4cf979885689b469cdd41";
++          narHash = "sha256-twXPFqFsrrY5r28Zh7Homgcp2gUMBgQ6WDS98Q/3xFI=";
++        }).outPath;
++    "26.05" = release (if nixpkgs == null then (fromLock "nixpkgs").outPath else nixpkgs.outPath);
++    unstable = release (
++      if nixpkgsUnstable == null then (fromLock "nixpkgsUnstable").outPath else nixpkgsUnstable.outPath
++    );
++  };
++  impermanenceModule =
++    (if impermanence == null then (fromLock "impermanence").outPath else impermanence.outPath)
++    + "/nixos.nix";
++  oldSource = (fetch oldMetadata).outPath;
++  inherit oldMetadata;
++}
+diff --git a/tests/fixtures/nixos-container-releases.nix b/tests/fixtures/nixos-container-releases.nix
+new file mode 100644
+index 000000000..808ef8e2f
+--- /dev/null
++++ b/tests/fixtures/nixos-container-releases.nix
+@@ -0,0 +1,32 @@
++{ vpsadminos }:
++let
++  # Source fixtures resolved from the official nixos-24.11 and nixos-25.11
++  # branches on 2026-10-14. Keep production flake inputs and locks unchanged.
++  historical =
++    locked:
++    let
++      source = builtins.fetchTree (
++        {
++          type = "github";
++          owner = "NixOS";
++          repo = "nixpkgs";
++        }
++        // locked
++      );
++    in
++    # getFlake requires a context-free locator. fetchTree has already fetched
++    # and hash-verified this immutable source; only the locator loses context.
++    builtins.getFlake (builtins.unsafeDiscardStringContext "path:${source.outPath}");
++in
++{
++  "24.11" = historical {
++    rev = "50ab793786d9de88ee30ec4e4c24fb4236fc2674";
++    narHash = "sha256-/bVBlRpECLVzjV19t5KMdMFWSwKLtb5RyXdjz3LJT+g=";
++  };
++  "25.11" = historical {
++    rev = "b6018f87da91d19d0ab4cf979885689b469cdd41";
++    narHash = "sha256-twXPFqFsrrY5r28Zh7Homgcp2gUMBgQ6WDS98Q/3xFI=";
++  };
++  "26.05" = vpsadminos.inputs.nixpkgs;
++  unstable = vpsadminos.inputs.nixpkgsUnstable;
++}
+diff --git a/tests/fixtures/nixos-persistence-guests.nix b/tests/fixtures/nixos-persistence-guests.nix
+new file mode 100644
+index 000000000..ce49ea31c
+--- /dev/null
++++ b/tests/fixtures/nixos-persistence-guests.nix
+@@ -0,0 +1,329 @@
++# Prepared generations share every definition/input at the old-to-new boundary.
++{ system, source }:
++let
++  fixtures = import ./nixos-container-persistence.nix { inherit system; };
++  rawPath =
++    release:
++    if release == "unstable" then "unstable/vpsadminos.nix" else "stable/vpsadminos-${release}.nix";
++  storageFor =
++    layout:
++    if layout == "root" then
++      "/root-storage"
++    else if layout == "declared" then
++      "/guest-backing"
++    else
++      "/persistent";
++  ancestor =
++    layout:
++    if layout == "ancestor-var" then
++      "/var"
++    else if layout == "ancestor-lib" then
++      "/var/lib"
++    else
++      null;
++  stateTarget = layout: if ancestor layout == null then "/var/lib/nixos" else ancestor layout;
++  exact = layout: ancestor layout == null && layout != "direct";
++  definitions =
++    release: layout: challenge: failure:
++    {
++      lib,
++      pkgs,
++      modulesPath,
++      ...
++    }:
++    let
++      storage = storageFor layout;
++      ancestorFailure = builtins.elem failure [
++        "ancestor-bind"
++        "ancestor-conflict"
++      ];
++      requiredFailure = builtins.elem failure [
++        "missing"
++        "wrong-backing"
++        "required-remount"
++      ];
++      nonBindFailure = builtins.elem failure [
++        "nonbind"
++        "nonbind-remount"
++        "nonbind-positive"
++      ];
++    in
++    {
++      imports = [
++        (modulesPath + "/virtualisation/container-config.nix")
++        fixtures.impermanenceModule
++      ];
++      system.stateVersion = "22.11";
++      networking.hostName = "persistence-fixture";
++      networking.firewall.enable = false;
++      systemd.sysusers.enable = false;
++      services.userborn.enable = false;
++      nix.settings.experimental-features = [
++        "nix-command"
++        "flakes"
++      ];
++      environment.systemPackages = [
++        pkgs.jq
++        pkgs.util-linux
++      ];
++      users.groups.preservation-test = { };
++      users.users.preservation-test = {
++        isSystemUser = true;
++        group = "preservation-test";
++      };
++      users.groups.a-preservation-test = lib.mkIf challenge { };
++      users.users.a-preservation-test = lib.mkIf challenge {
++        isSystemUser = true;
++        group = "a-preservation-test";
++      };
++      environment.persistence.${storage} = {
++        hideMounts = true;
++        directories =
++          lib.optionals (layout != "direct") (
++            if ancestor layout != null then
++              [
++                {
++                  directory = ancestor layout;
++                  mode = "0710";
++                }
++              ]
++            else
++              [
++                {
++                  directory = "/var/lib/nixos";
++                  mode = "0710";
++                }
++                "/var/log"
++              ]
++          )
++          ++ [
++            {
++              directory = "/var/lib/preservation-test";
++              user = "preservation-test";
++              group = "preservation-test";
++              mode = "0750";
++            }
++          ];
++        files = [ "/etc/machine-id" ];
++      };
++      fileSystems = lib.mkMerge [
++        (lib.mkIf (layout == "direct") {
++          "/var/lib/nixos" = {
++            device = "${storage}/var/lib/nixos";
++            fsType = "none";
++            options = [
++              "bind"
++              "x-gvfs-hide"
++            ];
++          };
++        })
++        (lib.mkIf (layout == "declared") {
++          "/guest-backing" = {
++            device = "/persistent/backing";
++            fsType = "none";
++            options = [
++              "bind"
++              "x-gvfs-hide"
++            ];
++            neededForBoot = true;
++          };
++        })
++        (lib.mkIf requiredFailure {
++          "/required-storage" = {
++            device = if failure == "required-remount" then "tmpfs" else "/persistent/required";
++            fsType = if failure == "required-remount" then "tmpfs" else "none";
++            options =
++              if failure == "required-remount" then
++                [
++                  "remount"
++                  "size=invalid"
++                ]
++              else
++                [ "bind" ];
++            neededForBoot = true;
++          };
++        })
++        (lib.mkIf nonBindFailure {
++          "/var/log" = {
++            device = if failure == "nonbind" then "/dev/no-such-persistence-device" else "tmpfs";
++            fsType = if failure == "nonbind" then "ext4" else "tmpfs";
++            options = if failure == "nonbind-remount" then [ "size=invalid" ] else [ "mode=0755" ];
++          };
++        })
++      ];
++      systemd.mounts = lib.mkMerge [
++        (lib.mkIf (layout == "dependent") [
++          {
++            what = "/var/lib/nixos/usr";
++            where = "/usr";
++            type = "none";
++            options = "bind,x-gvfs-hide";
++          }
++        ])
++        (lib.mkIf (failure != null) (
++          lib.mkForce (
++            if nonBindFailure then
++              [ ]
++            else
++              [
++                {
++                  what =
++                    if requiredFailure then
++                      "/required-storage/absent-state"
++                    else if ancestorFailure then
++                      "/persistent/var/lib"
++                    else
++                      "/persistent/var/lib/nixos";
++                  where = if ancestorFailure then "/var/lib" else "/var/lib/nixos";
++                  type = "none";
++                  # MS_BIND|MS_REMOUNT requires a live mount; the private namespace
++                  # removes the target for deterministic bind-failure cases.
++                  options =
++                    if
++                      builtins.elem failure [
++                        "bind"
++                        "ancestor-bind"
++                      ]
++                    then
++                      "bind,remount"
++                    else
++                      "bind,x-gvfs-hide";
++                }
++              ]
++          )
++        ))
++      ];
++    };
++  make =
++    release: layout: base: challenge: failure:
++    let
++      c =
++        (fixtures.releases.${release}.lib.nixosSystem {
++          inherit system;
++          modules = [
++            (import (base + "/os/lib/nixos-container/${rawPath release}"))
++            (definitions release layout challenge failure)
++          ];
++        }).config;
++    in
++    assert
++      !(
++        ancestor layout != null
++        || builtins.elem failure [
++          "ancestor-bind"
++          "ancestor-conflict"
++        ]
++      )
++      || (!(c.boot.specialFileSystems ? "/var/lib/nixos") && !(c.boot.specialFileSystems ? "/var/log"));
++    assert
++      !(
++        layout == "direct"
++        || builtins.elem failure [
++          "nonbind"
++          "nonbind-remount"
++          "nonbind-positive"
++        ]
++      )
++      || builtins.all (
++        mount:
++        !(builtins.elem (mount.where or "") [
++          "/var/lib/nixos"
++          "/var/log"
++        ])
++      ) c.systemd.mounts;
++    c.system.build.toplevel;
++  generations = release: layout: {
++    oldInitial = make release layout fixtures.oldSource false null;
++    oldChallenge = make release layout fixtures.oldSource true null;
++    newInitial = make release layout source false null;
++    newChallenge = make release layout source true null;
++  };
++  variant =
++    release: layout: fresh:
++    let
++      storage = storageFor layout;
++      target = stateTarget layout;
++    in
++    {
++      inherit release layout fresh;
++      generations = generations release layout;
++      mounts = [
++        {
++          source = "${storage}${target}";
++          inherit target;
++        }
++      ]
++      ++ (
++        if exact layout then
++          [
++            {
++              source = "${storage}/var/log";
++              target = "/var/log";
++            }
++          ]
++        else
++          [ ]
++      );
++      stateBacking = "${storage}/var/lib/nixos";
++      sourceDirectory = "${storage}${target}";
++      sourcePathInRoot =
++        if layout == "root" then
++          "${storage}${target}"
++        else if layout == "declared" then
++          "/backing${target}"
++        else
++          target;
++      # Numeric ownership tests pre-existing source metadata only. Both fixture
++      # accounts and every saved allocation remain dynamically assigned.
++      sourceMetadata = if fresh || ancestor layout != null then "0:0:755" else "42:43:710";
++      absentExactMounts =
++        if ancestor layout != null then
++          [
++            "/var/lib/nixos"
++            "/var/log"
++          ]
++        else if layout == "direct" then
++          [ "/var/log" ]
++        else
++          [ ];
++      logBacking = if exact layout || layout == "ancestor-var" then "${storage}/var/log" else null;
++    };
++in
++{
++  inherit (fixtures) oldMetadata oldSource;
++  expectedRelease = release: fixtures.releases.${release}.lib.trivial.release;
++  variants = {
++    upgrade-25_11 = variant "25.11" "supplied" false;
++    upgrade-26_05 = variant "26.05" "supplied" false;
++    upgrade-unstable = variant "unstable" "supplied" false;
++    root-backed-26_05 = variant "26.05" "root" false;
++    declared-backing-26_05 = variant "26.05" "declared" false;
++    dependent-mount-26_05 = variant "26.05" "dependent" false;
++    fresh-26_05 = variant "26.05" "supplied" true;
++    ancestor-var-26_05 = variant "26.05" "ancestor-var" false;
++    ancestor-var-lib-26_05 = variant "26.05" "ancestor-lib" false;
++    direct-filesystem-bind-26_05 = variant "26.05" "direct" false;
++    fresh-ancestor-26_05 = variant "26.05" "ancestor-lib" true;
++    storage-failures-26_05 = (variant "26.05" "failures" false) // {
++      failures = builtins.listToAttrs (
++        map
++          (failure: {
++            name = failure;
++            value = make "26.05" "supplied" source true failure;
++          })
++          [
++            "missing"
++            "bind"
++            "conflict"
++            "wrong-backing"
++            "ancestor-bind"
++            "ancestor-conflict"
++            "nonbind"
++            "nonbind-remount"
++            "nonbind-positive"
++            "required-remount"
++          ]
++      );
++    };
++  };
++}
+diff --git a/tests/nixos-container-eval.sh b/tests/nixos-container-eval.sh
+new file mode 100644
+index 000000000..79a1e344c
+--- /dev/null
++++ b/tests/nixos-container-eval.sh
+@@ -0,0 +1,30 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++cd "$(dirname "${BASH_SOURCE[0]}")/.."
++
++nix eval --impure --json --file tests/nixos-container-modules-eval.nix
++nix eval --impure --json --file tests/nixos-container-templates-eval.nix
++nix eval --impure --json --file tests/nixos-container-standalone-eval.nix
++
++error_log=$(mktemp)
++trap 'rm -f "$error_log"' EXIT
++for release in 21.11 99.99 26_05 unstable ''; do
++  if nix eval --impure --json --file tests/nixos-container-unsupported-eval.nix \
++    --apply "select: select \"$release\"" 2>"$error_log"; then
++    echo "Unsupported release $release unexpectedly succeeded" >&2
++    exit 1
++  fi
++  error_text=$(cat "$error_log")
++  for expected in \
++    "unsupported stable NixOS release '$release'" \
++    'Known stable releases: 22.11, 23.05, 23.11, 24.05, 24.11, 25.05, 25.11, 26.05' \
++    'Update the vpsadminos input' \
++    'nixosModules.containerUnstable'; do
++    if [[ "$error_text" != *"$expected"* ]]; then
++      cat "$error_log" >&2
++      echo "Missing unsupported-release guidance: $expected" >&2
++      exit 1
++    fi
++  done
++done
+diff --git a/tests/nixos-container-modules-eval.nix b/tests/nixos-container-modules-eval.nix
+new file mode 100644
+index 000000000..eaa5f6ece
+--- /dev/null
++++ b/tests/nixos-container-modules-eval.nix
+@@ -0,0 +1,194 @@
++# Run with nix eval --impure --json --file tests/nixos-container-modules-eval.nix.
++# Historical inputs use real option declarations, not a modern lib with a
++# substituted release string. Fetch failures are distinct from assertion errors.
++let
++  vpsadminos = builtins.getFlake (toString ../.);
++  lib = vpsadminos.inputs.nixpkgs.lib;
++  fixtures = import ./fixtures/nixos-container-releases.nix { inherit vpsadminos; };
++  modules = vpsadminos.nixosModules;
++  releases = [
++    "22.11"
++    "23.05"
++    "23.11"
++    "24.05"
++    "24.11"
++    "25.05"
++    "25.11"
++    "26.05"
++  ];
++  alias = release: "container_${lib.replaceStrings [ "." ] [ "_" ] release}";
++  nameservers = [
++    "1.1.1.1"
++    "2606:4700:4700::1111"
++  ];
++  check = name: condition: if condition then true else throw "NixOS container check failed: ${name}";
++
++  # Exercise every selector leaf without pretending these are historical NixOS
++  # evaluations. The real release evaluations below verify option compatibility.
++  moduleArgs = {
++    inherit lib;
++    config = {
++      boot.specialFileSystems = { };
++      fileSystems = { };
++      system.build.earlyMountScript = "/mock-early-mounts.sh";
++      systemd.mounts = [ ];
++      systemd.sysusers.enable = false;
++      services.userborn.enable = false;
++    };
++    options.boot.specialFileSystems.type.getSubOptions = _: { };
++    utils = {
++      fsNeededForBoot = _: false;
++      pathsNeededForBoot = [ ];
++    };
++    pkgs = {
++      iproute2 = "/iproute2";
++      bash = "/bash";
++    };
++  };
++  moduleValue = module: builtins.toJSON (module moduleArgs);
++  selectedValue =
++    selector: release:
++    moduleValue (
++      builtins.head
++        (selector {
++          lib = lib // {
++            trivial = lib.trivial // {
++              inherit release;
++              version = "${release}pre-git";
++            };
++          };
++        }).imports
++    );
++  unknownReleases = [
++    "21.11"
++    "99.99"
++    "26_05"
++    "unstable"
++    ""
++  ];
++
++  evaluate =
++    nixpkgs: module:
++    nixpkgs.lib.nixosSystem {
++      system = "x86_64-linux";
++      modules = [
++        module
++        { system.stateVersion = "22.11"; }
++      ];
++    };
++  configuration =
++    evaluated:
++    let
++      c = evaluated.config;
++    in
++    {
++      release = c.system.nixos.release;
++      stateVersion = c.system.stateVersion;
++      isContainer = c.boot.isContainer;
++      initScript = c.boot.loader.initScript.enable;
++      nameservers = c.networking.nameservers;
++      resolved =
++        if lib.versionAtLeast c.system.nixos.release "26.05" then
++          c.services.resolved.settings.Resolve.FallbackDNS
++        else
++          c.services.resolved.fallbackDns;
++      networkingSetup = c.systemd.services.networking-setup.serviceConfig.ExecStart;
++      oomd = c.systemd.services.systemd-oomd.enable;
++      audit = c.systemd.sockets.systemd-journald-audit.enable;
++      runKeys = c.boot.specialFileSystems."/run/keys".fsType;
++      toplevel = c.system.build.toplevel.drvPath;
++    };
++  # This exact import is reused for each guest release, with stateVersion fixed.
++  stableImport = modules.containerStable;
++  realReleaseCheck =
++    release: nixpkgs:
++    let
++      explicit = configuration (evaluate nixpkgs modules.containers.${release});
++      automatic = configuration (evaluate nixpkgs stableImport);
++      generic = configuration (evaluate nixpkgs modules.container);
++      underscore = configuration (evaluate nixpkgs modules.${alias release});
++    in
++    check "real ${release} guest and unchanged stable import" (
++      nixpkgs.lib.trivial.release == release
++      && automatic == explicit
++      && generic == explicit
++      && underscore == explicit
++      && automatic.release == release
++      && automatic.stateVersion == "22.11"
++      && automatic.isContainer
++      && automatic.initScript
++      && automatic.nameservers == nameservers
++      && automatic.resolved == nameservers
++      && !automatic.oomd
++      && !automatic.audit
++      && automatic.runKeys == "tmpfs"
++    );
++  stable = fixtures."26.05";
++  unstable = fixtures.unstable;
++  rawStable = import ../os/lib/nixos-container/stable/vpsadminos.nix;
++  rawUnstable = import ../os/lib/nixos-container/unstable/vpsadminos.nix;
++in
++{
++  exports = check "exact grouped keys, derived aliases, and no containerAuto" (
++    builtins.attrNames modules.containers == releases
++    && !(modules ? containerAuto)
++    && lib.all (release: modules ? ${alias release}) releases
++  );
++  selectorMatrix = builtins.listToAttrs (
++    map (
++      release:
++      let
++        original = moduleValue (import (../os/lib/nixos-container/stable + "/vpsadminos-${release}.nix"));
++      in
++      {
++        name = release;
++        value = check "selector and aliases for ${release}" (
++          moduleValue modules.containers.${release} == original
++          && selectedValue modules.containerStable release == original
++          && selectedValue modules.container release == original
++          && moduleValue modules.${alias release} == original
++        );
++      }
++    ) releases
++  );
++  unsupported = check "unknown releases fail during import selection" (
++    lib.all (
++      release:
++      !(builtins.tryEval (
++        builtins.deepSeq
++          (modules.containerStable {
++            lib = lib // {
++              trivial = lib.trivial // {
++                inherit release;
++              };
++            };
++          }).imports
++          true
++      )).success
++    ) unknownReleases
++  );
++  realReleases = lib.genAttrs [ "24.11" "25.11" "26.05" ] (
++    release: realReleaseCheck release fixtures.${release}
++  );
++  guestLibrary = check "24.11 guest is distinct from captured 26.05 input" (
++    lib.trivial.release == "26.05" && fixtures."24.11".lib.trivial.release == "24.11"
++  );
++  legacy = check "legacy latest stable and unstable exports retain raw behavior" (
++    configuration (evaluate stable vpsadminos.nixosConfigurations.container)
++    == configuration (evaluate stable rawStable)
++    &&
++      configuration (evaluate stable vpsadminos.nixosConfigurations.containerStable)
++      == configuration (evaluate stable rawStable)
++    &&
++      configuration (evaluate unstable vpsadminos.nixosConfigurations.containerUnstable)
++      == configuration (evaluate unstable rawUnstable)
++    &&
++      configuration (evaluate unstable modules.containerUnstable)
++      == configuration (evaluate unstable rawUnstable)
++  );
++  # Literal quoted and guest-nixpkgs interpolated lookups must both import a leaf.
++  groupedSyntax = check "quoted and interpolated release keys" (
++    configuration (evaluate stable modules.containers."26.05")
++    == configuration (evaluate stable modules.containers.${stable.lib.trivial.release})
++  );
++}
+diff --git a/tests/nixos-container-persistence-check.nix b/tests/nixos-container-persistence-check.nix
+new file mode 100644
+index 000000000..4c0b7f7aa
+--- /dev/null
++++ b/tests/nixos-container-persistence-check.nix
+@@ -0,0 +1,50 @@
++{
++  pkgs,
++  source,
++  system,
++  nixpkgs,
++  nixpkgsUnstable,
++  impermanence,
++}:
++let
++  fixtures = import ./fixtures/nixos-container-persistence.nix {
++    inherit
++      system
++      nixpkgs
++      nixpkgsUnstable
++      impermanence
++      ;
++  };
++  evaluation = import ./nixos-container-persistence-eval.nix {
++    inherit source system;
++    inherit (pkgs) lib;
++    inherit (fixtures) oldSource impermanenceModule;
++    fixtures = fixtures.releases;
++  };
++  shellFixtures = pkgs.lib.mapAttrs (name: fixture: {
++    snippet = pkgs.writeText "persistent-specialfs-${name}.sh" fixture.snippet;
++    inherit (fixture) earlyMountScript mode selectedOptions;
++  }) evaluation.shellFixtures;
++in
++builtins.deepSeq evaluation.assertions (
++  pkgs.runCommand "nixos-container-persistence"
++    {
++      nativeBuildInputs = [
++        pkgs.bash
++        pkgs.coreutils
++        pkgs.util-linux
++        pkgs.gnused
++        pkgs.gawk
++      ];
++      passthru = { inherit evaluation shellFixtures; };
++    }
++    ''
++      ${pkgs.lib.concatMapStringsSep "\n" (name: ''
++        bash ${./nixos-container-persistence-shell.sh} ${shellFixtures.${name}.snippet} ${
++          shellFixtures.${name}.earlyMountScript
++        } ${shellFixtures.${name}.mode} ${pkgs.lib.escapeShellArg shellFixtures.${name}.selectedOptions}
++      '') (builtins.attrNames shellFixtures)}
++      mkdir "$out"
++      cp ${pkgs.writeText "persistence-evaluation.json" (builtins.toJSON evaluation.assertions)} "$out/evaluation.json"
++    ''
++)
+diff --git a/tests/nixos-container-persistence-eval.nix b/tests/nixos-container-persistence-eval.nix
+new file mode 100644
+index 000000000..a24a06f8b
+--- /dev/null
++++ b/tests/nixos-container-persistence-eval.nix
+@@ -0,0 +1,596 @@
++# Explicit inputs keep this evaluator usable in normal pure flake checks.
++{
++  source,
++  fixtures,
++  oldSource,
++  impermanenceModule,
++  lib,
++  system,
++}:
++let
++  rawPath =
++    release:
++    if release == "unstable" then "unstable/vpsadminos.nix" else "stable/vpsadminos-${release}.nix";
++  raw = base: release: import (base + "/os/lib/nixos-container/${rawPath release}");
++  evaluate =
++    release: module: extra:
++    (fixtures.${release}.lib.nixosSystem {
++      inherit system;
++      modules = [
++        module
++        {
++          system.stateVersion = "22.11";
++          fileSystems."/" = {
++            device = "none";
++            fsType = "tmpfs";
++          };
++        }
++      ]
++      ++ extra;
++    }).config;
++  persistence = {
++    imports = [ impermanenceModule ];
++    environment.persistence."/persistent" = {
++      hideMounts = true;
++      directories = [
++        "/var/lib/nixos"
++        "/var/log"
++      ];
++    };
++  };
++  bind = what: where: {
++    inherit what where;
++    type = "none";
++    options = "bind,x-gvfs-hide";
++  };
++  manual = mounts: { systemd.mounts = mounts; };
++  persistedAncestor = target: {
++    imports = [ impermanenceModule ];
++    environment.persistence."/persistent".directories = [ target ];
++  };
++  filesystem = device: target: fsType: options: {
++    fileSystems.${target} = { inherit device fsType options; };
++  };
++  contains = needle: text: lib.hasInfix (builtins.unsafeDiscardStringContext needle) text;
++  position =
++    needle: text:
++    (lib.findFirst (entry: contains needle entry.line) { index = -1; } (
++      lib.imap0 (index: line: { inherit index line; }) (lib.splitString "\n" text)
++    )).index;
++  count = needle: text: builtins.length (lib.filter (contains needle) (lib.splitString "\n" text));
++  before =
++    first: second: text:
++    position first text >= 0 && position second text >= 0 && position first text < position second text;
++  check = label: condition: if condition then true else throw "Persistence check failed: ${label}";
++  script = c: c.system.activationScripts.script;
++  mounts = c: c.system.build.earlyMountScript.text;
++  force = c: builtins.deepSeq [ (script c) (mounts c) c.system.dryActivationScript ] true;
++  adapted =
++    c:
++    before "source ${c.system.build.earlyMountScript}" "-update-users-groups.pl" (script c)
++    && builtins.elem "specialfs" c.system.activationScripts.users.deps
++    && count "source ${c.system.build.earlyMountScript}" (script c) == 1
++    && count "specialMount()" (script c) == 1
++    && contains "vpsadminosMountRequired" c.system.activationScripts.specialfs.text
++    && force c;
++  noExactBinds =
++    c:
++    lib.all (path: !(builtins.hasAttr path c.boot.specialFileSystems)) [
++      "/var/lib/nixos"
++      "/var/log"
++    ];
++  checkRelease =
++    release:
++    let
++      current = extra: evaluate release (raw source release) extra;
++      baseline = extra: evaluate release (raw oldSource release) extra;
++      ordinary = current [ ];
++      persisted = current [ persistence ];
++      copied = builtins.toFile "vpsadminos-persistence-${release}.nix" (
++        builtins.readFile (source + "/os/lib/nixos-container/${rawPath release}")
++      );
++      standalone = evaluate release (import copied) [ persistence ];
++      alternative =
++        base: backend:
++        evaluate release (raw base release) [
++          persistence
++          {
++            systemd.sysusers.enable = backend == "sysusers";
++            services.userborn.enable = backend == "userborn";
++          }
++        ];
++      ancestry = current [
++        (manual [
++          (bind "/persistent/state" "/var/lib/nixos")
++          (bind "/var/lib/nixos/log" "/var/log")
++        ])
++      ];
++      dependent = current [
++        (manual [
++          (bind "/persistent/state" "/var/lib/nixos")
++          (bind "/var/lib/nixos/usr" "/usr")
++        ])
++      ];
++      root = current [ (manual [ (bind "/root-state/nixos" "/var/lib/nixos") ]) ];
++      declared = current [
++        (manual [ (bind "/custom/backing/state" "/var/lib/nixos") ])
++        {
++          fileSystems."/custom/backing" = {
++            device = "/host/custom";
++            fsType = "none";
++            options = [ "bind" ];
++            neededForBoot = true;
++          };
++        }
++      ];
++      nearPrefix = current [
++        (manual [ (bind "/custom/backing-other/state" "/var/lib/nixos") ])
++        {
++          fileSystems."/custom/backing" = {
++            device = "/host/custom";
++            fsType = "none";
++            options = [ "bind" ];
++            neededForBoot = true;
++          };
++        }
++      ];
++      nonBind = current [
++        (manual [ (bind "/custom/backing/state" "/var/lib/nixos") ])
++        {
++          fileSystems."/custom/backing" = {
++            device = "tmpfs";
++            fsType = "tmpfs";
++            neededForBoot = true;
++          };
++        }
++      ];
++      cycle = current [
++        (manual [
++          (bind "/var/log/state" "/var/lib/nixos")
++          (bind "/var/lib/nixos/log" "/var/log")
++        ])
++      ];
++      # The upstream builder selects .result directly, so a deliberate cycle
++      # produces a hard missing-attribute error that tryEval cannot catch.
++      # Inspect the same pinned upstream topology without building its script.
++      cycleUtils = import (fixtures.${release}.source + "/nixos/lib/utils.nix") {
++        config = cycle;
++        lib = fixtures.${release}.lib;
++        pkgs = import fixtures.${release}.source { inherit system; };
++      };
++      cycleOrder = fixtures.${release}.lib.toposort cycleUtils.fsBefore (
++        builtins.attrValues cycle.boot.specialFileSystems
++      );
++      forced = current [
++        persistence
++        { system.activationScripts.specialfs = lib.mkForce "guest-specialfs"; }
++      ];
++      direct = current [
++        {
++          fileSystems."/var/log" = {
++            device = "/direct/log";
++            fsType = "none";
++            options = [ "bind" ];
++          };
++        }
++      ];
++      ancestorVar = current [ (persistedAncestor "/var") ];
++      ancestorLib = current [ (persistedAncestor "/var/lib") ];
++      directState = current [ (filesystem "/direct/state" "/var/lib/nixos" "none" [ "bind" ]) ];
++      directNonBind = current [
++        (filesystem "tmpfs" "/var/log" "tmpfs" [
++          "defaults"
++          "mode=0755"
++        ])
++      ];
++      rbind = current [
++        (filesystem "/recursive/var" "/var" "auto" [
++          "rbind"
++          "ro"
++        ])
++      ];
++      effective = current [
++        (manual [ (bind "/original/state" "/var/lib/nixos") ])
++        {
++          boot.specialFileSystems."/var/lib/nixos" = lib.mkForce {
++            device = "/effective/state";
++            fsType = "auto";
++            options = [
++              "rbind"
++              "ro"
++            ];
++            depends = [ "/explicit" ];
++          };
++          fileSystems."/explicit" = {
++            device = "tmpfs";
++            fsType = "tmpfs";
++            neededForBoot = true;
++          };
++        }
++      ];
++      controls = {
++        disabled = {
++          boot.specialFileSystems."/var" = {
++            enable = false;
++            device = "tmpfs";
++            fsType = "tmpfs";
++          };
++        };
++        near = {
++          boot.specialFileSystems."/var/log-old" = {
++            device = "/other";
++            fsType = "none";
++            options = [ "bind" ];
++          };
++        };
++        nearVariable = {
++          boot.specialFileSystems."/variable" = {
++            device = "/other";
++            fsType = "none";
++            options = [ "bind" ];
++          };
++        };
++        nearState = {
++          boot.specialFileSystems."/var/lib/nixos-other" = {
++            device = "/other";
++            fsType = "none";
++            options = [ "bind" ];
++          };
++        };
++        rootOnly = { };
++      };
++      transitive = current [
++        (filesystem "/bridge/state" "/var/lib/nixos" "none" [ "bind" ])
++        {
++          fileSystems."/bridge" = {
++            device = "/required/bridge";
++            fsType = "none";
++            options = [ "bind" ];
++            neededForBoot = true;
++          };
++          fileSystems."/required" = {
++            device = "/host/required";
++            fsType = "none";
++            options = [ "rbind" ];
++            neededForBoot = true;
++          };
++          fileSystems."/unrelated" = {
++            device = "tmpfs";
++            fsType = "tmpfs";
++            neededForBoot = true;
++          };
++        }
++      ];
++      old = baseline [ persistence ];
++      upstreamSource = "source ${persisted.system.build.earlyMountScript}";
++    in
++    {
++      actualRelease = persisted.system.nixos.release;
++      legacyOrder = check "${release} global specialfs before real allocator" (
++        before upstreamSource "-update-users-groups.pl" (script persisted)
++        && builtins.elem "specialfs" persisted.system.activationScripts.users.deps
++        && count upstreamSource (script persisted) == 1
++        && count "specialMount()" (script persisted) == 1
++        && force persisted
++      );
++      promotion = check "${release} complete promotion and units/options" (
++        mounts persisted == mounts old
++        &&
++          lib.all
++            (
++              target:
++              persisted.boot.specialFileSystems.${target}.options == [
++                "bind"
++                "x-gvfs-hide"
++              ]
++              && lib.any (m: m.where == target && m.options == "bind,x-gvfs-hide") persisted.systemd.mounts
++            )
++            [
++              "/var/lib/nixos"
++              "/var/log"
++            ]
++      );
++      standalone = check "${release} copied self-contained file" (script standalone == script persisted);
++      dry = check "${release} dry omits mounts and prep" (
++        lib.all
++          (
++            c:
++            !contains "vpsadminosPrepareStateDirectory" c.system.dryActivationScript
++            && !contains "source ${c.system.build.earlyMountScript}" c.system.dryActivationScript
++            && contains "-update-users-groups.pl" c.system.dryActivationScript
++          )
++          [
++            persisted
++            ancestorVar
++            ancestorLib
++            directState
++            directNonBind
++            rbind
++            effective
++          ]
++      );
++      ordinary = check "${release} ordinary exact baseline equivalence" (
++        script ordinary == script (baseline [ ])
++        && ordinary.system.dryActivationScript == (baseline [ ]).system.dryActivationScript
++        && force ordinary
++      );
++      alternatives = lib.genAttrs [ "sysusers" "userborn" ] (
++        backend:
++        let
++          c = alternative source backend;
++          b = alternative oldSource backend;
++        in
++        check "${release} ${backend} exact baseline equivalence" (
++          c.system.activationScripts.users == ""
++          && script c == script b
++          && c.system.dryActivationScript == b.system.dryActivationScript
++          && force c
++        )
++      );
++      ancestry = check "${release} selected source ancestry" (
++        before "\"/persistent/state\" \"/var/lib/nixos\"" "\"/var/lib/nixos/log\" \"/var/log\"" (
++          mounts ancestry
++        )
++        && force ancestry
++      );
++      topology = check "${release} valid selected-to-ordinary topology" (
++        before "\"/persistent/state\" \"/var/lib/nixos\"" "\"/var/lib/nixos/usr\" \"/usr\"" (
++          mounts dependent
++        )
++        && force dependent
++      );
++      root = check "${release} root-backed source allowed" (
++        force root
++        && contains (lib.escapeShellArg "/root-state/nixos") root.system.activationScripts.specialfs.text
++      );
++      declared = check "${release} declared backing in original global order" (
++        before "\"/host/custom\" \"/custom/backing\"" "\"/custom/backing/state\" \"/var/lib/nixos\"" (
++          mounts declared
++        )
++        && contains (lib.escapeShellArgs [
++          "bind"
++          "/host/custom"
++          "/custom/backing"
++        ]) declared.system.activationScripts.specialfs.text
++        && force declared
++      );
++      pathComponents = check "${release} backing checks respect path components" (
++        !contains (lib.escapeShellArgs [
++          "bind"
++          "/host/custom"
++          "/custom/backing"
++        ]) nearPrefix.system.activationScripts.specialfs.text
++        && force nearPrefix
++      );
++      nonBindBacking = check "${release} non-bind backing retains presence-only check" (
++        contains (lib.escapeShellArgs [
++          "filesystem"
++          "tmpfs"
++          "/custom/backing"
++        ]) nonBind.system.activationScripts.specialfs.text
++        && force nonBind
++      );
++      cycle = check "${release} upstream topology reports the selected-bind cycle" (
++        !(cycleOrder ? result)
++        && cycleOrder ? cycle
++        && cycleOrder.cycle != [ ]
++        && lib.all (path: builtins.elem path (map (mount: mount.mountPoint) cycleOrder.cycle)) [
++          "/var/lib/nixos"
++          "/var/log"
++        ]
++      );
++      mkForce = check "${release} guest mkForce retains precedence" (
++        forced.system.activationScripts.specialfs == "guest-specialfs" && force forced
++      );
++      direct = check "${release} direct filesystems checked before allocation" (
++        adapted direct
++        && adapted directState
++        && adapted directNonBind
++        && adapted rbind
++        && contains (lib.escapeShellArg "/direct/log") direct.system.activationScripts.specialfs.text
++        && lib.all (option: builtins.elem option directNonBind.boot.specialFileSystems."/var/log".options) [
++          "defaults"
++          "mode=0755"
++        ]
++        && contains (lib.escapeShellArg (
++          lib.concatStringsSep "," directNonBind.boot.specialFileSystems."/var/log".options
++        )) directNonBind.system.activationScripts.specialfs.text
++        && lib.all (option: builtins.elem option rbind.boot.specialFileSystems."/var".options) [
++          "rbind"
++          "ro"
++        ]
++        && contains (lib.escapeShellArg (
++          lib.concatStringsSep "," rbind.boot.specialFileSystems."/var".options
++        )) rbind.system.activationScripts.specialfs.text
++      );
++      ancestors = check "${release} impermanence ancestors without exact state/log entries" (
++        adapted ancestorVar
++        && adapted ancestorLib
++        && noExactBinds ancestorVar
++        && noExactBinds ancestorLib
++        && contains (lib.escapeShellArg "/var") ancestorVar.system.activationScripts.specialfs.text
++        && contains (lib.escapeShellArg "/var/lib") ancestorLib.system.activationScripts.specialfs.text
++      );
++      effectiveEntry = check "${release} effective source/type/options/dependencies" (
++        adapted effective
++        && effective.boot.specialFileSystems."/var/lib/nixos".device == "/effective/state"
++        && effective.boot.specialFileSystems."/var/lib/nixos".fsType == "auto"
++        &&
++          effective.boot.specialFileSystems."/var/lib/nixos".options == [
++            "rbind"
++            "ro"
++          ]
++        && effective.boot.specialFileSystems."/var/lib/nixos".depends == [ "/explicit" ]
++        && contains (lib.escapeShellArg "/effective/state") effective.system.activationScripts.specialfs.text
++        && contains (lib.escapeShellArg "rbind,ro") effective.system.activationScripts.specialfs.text
++        && !contains (lib.escapeShellArg "/original/state") effective.system.activationScripts.specialfs.text
++        && contains (lib.escapeShellArg "/explicit") effective.system.activationScripts.specialfs.text
++      );
++      selectionControls = lib.mapAttrs (
++        name: extra:
++        check "${release} ${name} does not enable adapter" (
++          let
++            c = current [ extra ];
++          in
++          !contains "vpsadminosMountRequired" (script c) && force c
++        )
++      ) controls;
++      requiredPredecessors =
++        check "${release} transitive required membership without unrelated callbacks"
++          (
++            adapted transitive
++            && before "\"/host/required\" \"/required\"" "\"/required/bridge\" \"/bridge\"" (mounts transitive)
++            && before "\"/required/bridge\" \"/bridge\"" "\"/bridge/state\" \"/var/lib/nixos\"" (
++              mounts transitive
++            )
++            && contains (lib.escapeShellArg "/host/required") transitive.system.activationScripts.specialfs.text
++            && contains (lib.escapeShellArg "/required/bridge") transitive.system.activationScripts.specialfs.text
++            && !contains (lib.escapeShellArg "/unrelated") transitive.system.activationScripts.specialfs.text
++          );
++    };
++  shellConfig =
++    release: mode:
++    let
++      target =
++        if mode == "var" then
++          "/var"
++        else if mode == "var-lib" then
++          "/var/lib"
++        else
++          "/var/lib/nixos";
++      sourcePath =
++        if mode == "transitive" then "/fixture/bridge/state" else "/fixture/backing storage/nixos";
++      exact = builtins.elem mode [
++        "declared"
++        "undeclared"
++        "filesystem"
++      ];
++    in
++    evaluate release (raw source release) (
++      [
++        (
++          if mode == "nonbind" then
++            filesystem "/fixture/device-file" "/var/log" "tmpfs" [
++              "defaults"
++              "mode=0755"
++            ]
++          else if
++            builtins.elem mode [
++              "direct"
++              "rbind"
++              "transitive"
++              "explicit"
++            ]
++          then
++            filesystem sourcePath target "auto" [
++              (if mode == "rbind" then "rbind" else "bind")
++              "x-gvfs-hide"
++            ]
++          else
++            manual (
++              [ (bind sourcePath target) ] ++ lib.optional exact (bind "/fixture/backing storage/log" "/var/log")
++            )
++        )
++      ]
++      ++
++        lib.optional
++          (builtins.elem mode [
++            "declared"
++            "filesystem"
++          ])
++          {
++            fileSystems."/fixture/backing storage" = {
++              device = if mode == "filesystem" then "tmpfs" else "/fixture/host storage";
++              fsType = if mode == "filesystem" then "tmpfs" else "none";
++              options = if mode == "filesystem" then [ "defaults" ] else [ "bind" ];
++              neededForBoot = true;
++            };
++          }
++      ++ lib.optional (mode == "transitive") {
++        fileSystems."/fixture/backing storage" = {
++          device = "/fixture/host storage";
++          fsType = "none";
++          options = [ "rbind" ];
++          neededForBoot = true;
++        };
++        fileSystems."/fixture/bridge" = {
++          device = "/fixture/backing storage/bridge";
++          fsType = "none";
++          options = [ "bind" ];
++          neededForBoot = true;
++        };
++      }
++      ++ lib.optional (mode == "explicit") {
++        fileSystems."/var/lib/nixos".depends = [ "/fixture/dependency" ];
++        fileSystems."/fixture/dependency" = {
++          device = "fixture-dependency";
++          fsType = "tmpfs";
++          neededForBoot = true;
++        };
++        fileSystems."/fixture/unrelated" = {
++          device = "fixture-unrelated";
++          fsType = "tmpfs";
++          neededForBoot = true;
++        };
++      }
++    );
++in
++{
++  assertions = {
++    releases = lib.genAttrs [ "25.11" "26.05" "unstable" ] checkRelease;
++    latestStable = check "latest stable equals self-contained 26.05" (
++      builtins.readFile (source + "/os/lib/nixos-container/stable/vpsadminos.nix")
++      == builtins.readFile (source + "/os/lib/nixos-container/stable/vpsadminos-26.05.nix")
++    );
++  };
++  shellFixtures = builtins.listToAttrs (
++    lib.concatMap
++      (
++        release:
++        map
++          (
++            mode:
++            let
++              c = shellConfig release mode;
++            in
++            {
++              name = "${release}-${mode}";
++              value = {
++                snippet = c.system.activationScripts.specialfs.text;
++                earlyMountScript = c.system.build.earlyMountScript;
++                selectedOptions =
++                  lib.concatStringsSep ","
++                    c.boot.specialFileSystems.${
++                      if mode == "var" then
++                        "/var"
++                      else if mode == "var-lib" then
++                        "/var/lib"
++                      else if mode == "nonbind" then
++                        "/var/log"
++                      else
++                        "/var/lib/nixos"
++                    }.options;
++                inherit mode;
++              };
++            }
++          )
++          [
++            "declared"
++            "undeclared"
++            "filesystem"
++            "var"
++            "var-lib"
++            "direct"
++            "rbind"
++            "nonbind"
++            "transitive"
++            "explicit"
++          ]
++      )
++      [
++        "25.11"
++        "26.05"
++        "unstable"
++      ]
++  );
++}
+diff --git a/tests/nixos-container-persistence-shell.sh b/tests/nixos-container-persistence-shell.sh
+new file mode 100644
+index 000000000..7924a749b
+--- /dev/null
++++ b/tests/nixos-container-persistence-shell.sh
+@@ -0,0 +1,217 @@
++#!/usr/bin/env bash
++# Layout-specific doubles run generated callbacks. The allocator marker proves
++# shell control flow only; registered VM tests use the real account allocator.
++set -euo pipefail
++snippet=$1
++early_mounts=$2
++mode=$3
++selected_options=$4
++fixture_root=$(mktemp -d)
++trap 'rm -rf "$fixture_root"' EXIT
++fixture_bind_state=true
++exact=false
++configured_target=/var/lib/nixos
++case "$mode" in
++  declared|undeclared|filesystem) exact=true ;;
++  var) configured_target=/var ;;
++  var-lib) configured_target=/var/lib ;;
++  nonbind) fixture_bind_state=false; configured_target=/var/log ;;
++esac
++case "$mode" in
++  nonbind) required_options=(defaults mode=0755) ;;
++  rbind) required_options=(rbind x-gvfs-hide) ;;
++  *) required_options=(bind x-gvfs-hide) ;;
++esac
++for option in "${required_options[@]}"; do
++  [[ ",$selected_options," == *",$option,"* ]]
++done
++scenarios=(fresh existing_metadata matching_live failed_bind failed_remount failed_mount_lookup wrong_result failed_mkdir failed_chown failed_chmod dangling_target)
++if "$fixture_bind_state"; then scenarios+=(missing_parents wrong_live source_file parent_file failed_lookup dangling_source); fi
++case "$mode" in
++  declared|filesystem|transitive) scenarios+=(missing_backing failed_required_remount) ;;
++  undeclared) scenarios+=(root_backing absent_undeclared) ;;
++esac
++case "$mode" in declared|transitive) scenarios+=(matching_backing wrong_backing missing_backing_source) ;; esac
++if [ "$mode" = transitive ]; then scenarios+=(missing_transitive); fi
++if [ "$mode" = explicit ]; then scenarios+=(missing_dependency failed_unrelated); fi
++for fixture_scenario in "${scenarios[@]}"; do
++  fixture_case_root="$fixture_root/$fixture_scenario"
++  fixture_backing="$fixture_case_root/backing storage"
++  fixture_host="$fixture_case_root/host storage"
++  fixture_bridge="$fixture_case_root/bridge"
++  fixture_dependency="$fixture_case_root/dependency"
++  fixture_target="$fixture_case_root/state_target"
++  fixture_log_target="$fixture_case_root/log_target"
++  mkdir -p "$fixture_host/bridge"
++  case "$mode" in declared|transitive) ln -s "$fixture_host" "$fixture_backing" ;; *) mkdir "$fixture_backing" ;; esac
++  if [ "$mode" = transitive ]; then ln -s "$fixture_backing/bridge" "$fixture_bridge"; fixture_source="$fixture_bridge/state"
++  elif "$fixture_bind_state"; then fixture_source="$fixture_backing/nixos"
++  else fixture_source="$fixture_case_root/device-file"; touch "$fixture_source"
++  fi
++  log_source="$fixture_backing/log"
++  before_metadata=
++  case "$fixture_scenario" in
++    missing_parents) fixture_source="$(dirname "$fixture_source")/new-parent/state" ;;
++    existing_metadata)
++      if "$fixture_bind_state"; then metadata_path="$fixture_source"; else metadata_path="$fixture_target"; fi
++      mkdir "$metadata_path"; chmod 0710 "$metadata_path"
++      printf 'existing data\n' > "$metadata_path/payload"
++      before_metadata=$(stat -c '%u:%g:%a:%i' "$metadata_path") ;;
++    matching_live|failed_remount)
++      if "$fixture_bind_state"; then mkdir "$fixture_source"; ln -s "$fixture_source" "$fixture_target"; else mkdir "$fixture_target"; fi
++      printf 'matching data\n' > "$fixture_target/payload"
++      touch "$fixture_case_root/mounted-state" ;;
++    wrong_live)
++      mkdir "$fixture_case_root/wrong"; ln -s "$fixture_case_root/wrong" "$fixture_target"; touch "$fixture_case_root/mounted-state" ;;
++    source_file) touch "$fixture_source" ;;
++    dangling_source) ln -s "$fixture_case_root/absent" "$fixture_source" ;;
++    dangling_target) ln -s "$fixture_case_root/absent" "$fixture_target" ;;
++    wrong_backing)
++      mkdir "$fixture_case_root/wrong backing"; rm "$fixture_backing"; ln -s "$fixture_case_root/wrong backing" "$fixture_backing" ;;
++    missing_backing_source) rmdir "$fixture_host/bridge" "$fixture_host" ;;
++    missing_transitive) rmdir "$fixture_host/bridge" ;;
++    parent_file)
++      if [ "$mode" = transitive ]; then rm "$fixture_bridge"; touch "$fixture_bridge"
++      elif [ -L "$fixture_backing" ]; then rm "$fixture_backing"; touch "$fixture_backing"
++      else rmdir "$fixture_backing"; touch "$fixture_backing"
++      fi ;;
++    failed_mount_lookup) mkdir "$fixture_target" ;;
++  esac
++  rewrite() {
++    sed -e "s|/fixture/backing storage/nixos|$fixture_source|g" \
++      -e "s|/fixture/bridge/state|$fixture_source|g" \
++      -e "s|/fixture/backing storage|$fixture_backing|g" \
++      -e "s|/fixture/host storage|$fixture_host|g" \
++      -e "s|/fixture/bridge|$fixture_bridge|g" \
++      -e "s|/fixture/dependency|$fixture_dependency|g" \
++      -e "s|/fixture/device-file|$fixture_source|g" \
++      -e "s|/fixture/unrelated|$fixture_case_root/unrelated|g" \
++      -e "s|\"$configured_target\"|\"$fixture_target\"|g" \
++      -e "s|'$configured_target'|'$fixture_target'|g" \
++      -e "s|= $configured_target ]|= '$fixture_target' ]|g" \
++      -e "s|\"/var/log\"|\"$fixture_log_target\"|g" \
++      -e "s|'/var/log'|'$fixture_log_target'|g" \
++      -e "s|= /var/log ]|= '$fixture_log_target' ]|g" "$1"
++  }
++  expected_selected_options=$(rewrite <(printf '%s\n' "$selected_options"))
++  # Filter fixture calls; host /proc,/sys,/run paths are never touched.
++  awk '/^specialMount "\/fixture\// || /^specialMount "fixture-/ || /^specialMount .* "\/fixture\// { print }' "$early_mounts" > "$fixture_case_root/selected.sh"
++  expected_calls=$(wc -l < "$fixture_case_root/selected.sh")
++  rewrite "$fixture_case_root/selected.sh" > "$fixture_case_root/mounts.sh"
++  rewrite "$snippet" | sed -E "s|^[[:space:]]*source .*|source '$fixture_case_root/mounts.sh'|" > "$fixture_case_root/activation.sh"
++  bash -n "$fixture_case_root/activation.sh"
++  bash -n "$fixture_case_root/mounts.sh"
++  set +e
++  (
++    set +e
++    umask 0077
++    _status=0
++    trap '_status=1' ERR
++    mountpoint() {
++      local path="${*: -1}"
++      if [ "$path" = / ]; then return 0; fi
++      case "$path" in
++        "$fixture_backing") [ "$fixture_scenario" != missing_backing ] || return 32; return 0 ;;
++        "$fixture_bridge") return 0 ;;
++        "$fixture_dependency") [ "$fixture_scenario" != missing_dependency ] || return 32; return 0 ;;
++      esac
++      [ "$fixture_scenario" != failed_mount_lookup ] || return 1
++      if [ "$path" = "$fixture_target" ]; then test -f "$fixture_case_root/mounted-state" || return 32
++      elif [ "$path" = "$fixture_log_target" ]; then test -f "$fixture_case_root/mounted-log" || return 32
++      else return 32
++      fi
++    }
++    dirname() { [ "$fixture_scenario" != failed_lookup ] || return 1; command dirname "$@"; }
++    mkdir() {
++      [ "$fixture_scenario" != failed_mkdir ] || return 1
++      if ! "$fixture_bind_state" && [[ "$*" == *"$fixture_source"* ]]; then return 1; fi
++      command mkdir "$@" || return 1
++      if [ "$#" = 4 ] && [ "$1" = -m ] && [ "$2" = 0755 ] && [ "$3" = -- ]; then
++        printf '%s\n' "$4" >> "$fixture_case_root/created-directories"
++      fi
++    }
++    # A non-root pure sandbox cannot chown to root. Check the numeric request
++    # and fresh-only path; the registered guest tests verify actual ownership.
++    chown() {
++      [ "$#" = 3 ] && [ "$1" = 0:0 ] && [ "$2" = -- ] || return 1
++      grep -Fxq -- "$3" "$fixture_case_root/created-directories" || return 1
++      printf '%s\n' "$3" >> "$fixture_case_root/chown-calls"
++      [ "$fixture_scenario" != failed_chown ]
++    }
++    chmod() {
++      if [ "$#" = 3 ] && [ "$1" = 00755 ] && [ "$2" = -- ]; then
++        grep -Fxq -- "$3" "$fixture_case_root/created-directories" || return 1
++        printf '%s\n' "$3" >> "$fixture_case_root/chmod-calls"
++        [ "$fixture_scenario" != failed_chmod ] || return 1
++      fi
++      command chmod "$@"
++    }
++    mount() {
++      printf '%s\n' "$*" >> "$fixture_case_root/mount-calls"
++      local from="${*: -2:1}" to="${*: -1}" options="$4"
++      if [ "$to" = "$fixture_target" ]; then printf '%s\n' "$options" >> "$fixture_case_root/target-options"; fi
++      if [ "$to" = "$fixture_backing" ]; then
++        [ "$fixture_scenario" != missing_backing ] && [ "$fixture_scenario" != failed_required_remount ]; return
++      fi
++      if [ "$to" = "$fixture_bridge" ]; then return 0; fi
++      if [ "$to" = "$fixture_dependency" ]; then [ "$fixture_scenario" != missing_dependency ]; return; fi
++      if [ "$to" = "$fixture_case_root/unrelated" ]; then [ "$fixture_scenario" != failed_unrelated ]; return; fi
++      [ "$fixture_scenario" != failed_bind ] && [ "$fixture_scenario" != failed_remount ] || return 1
++      if [[ "$options" != remount,* ]]; then
++        if "$fixture_bind_state"; then
++          rmdir "$to" || return 1
++          if [ "$fixture_scenario" = wrong_result ]; then ln -s "$fixture_backing" "$to" || return 1
++          else ln -s "$from" "$to" || return 1
++          fi
++        elif [ "$fixture_scenario" = wrong_result ]; then return 0
++        fi
++        if [ "$to" = "$fixture_target" ]; then touch "$fixture_case_root/mounted-state"; else touch "$fixture_case_root/mounted-log"; fi
++      fi
++    }
++    . "$fixture_case_root/activation.sh"
++    touch "$fixture_case_root/allocator-reached"
++  ) > "$fixture_case_root/output" 2>&1
++  status=$?
++  set -e
++  case "$fixture_scenario" in
++    fresh|missing_parents|existing_metadata|matching_live|matching_backing|root_backing|absent_undeclared|failed_unrelated)
++      [ "$status" = 0 ] && [ -f "$fixture_case_root/allocator-reached" ] || { cat "$fixture_case_root/output"; exit 1; }
++      if "$fixture_bind_state"; then [ "$fixture_source" -ef "$fixture_target" ]; else [ -f "$fixture_source" ]; fi
++      if "$exact"; then [ "$log_source" -ef "$fixture_log_target" ]; fi
++      [ "$(wc -l < "$fixture_case_root/mount-calls")" = "$expected_calls" ]
++      if [ -f "$fixture_case_root/created-directories" ]; then
++        cmp "$fixture_case_root/created-directories" "$fixture_case_root/chown-calls"
++        cmp "$fixture_case_root/created-directories" "$fixture_case_root/chmod-calls"
++      else
++        [ ! -e "$fixture_case_root/chown-calls" ] && [ ! -e "$fixture_case_root/chmod-calls" ]
++      fi
++      if [ "$fixture_scenario" = matching_live ]; then
++        [ "$(cat "$fixture_case_root/target-options")" = "remount,$expected_selected_options" ]
++        [ "$(grep -Fc -- " $fixture_target" "$fixture_case_root/mount-calls")" = 1 ]
++        [ "$(cat "$fixture_target/payload")" = 'matching data' ]
++      fi ;;
++    *) [ "$status" != 0 ] && [ ! -f "$fixture_case_root/allocator-reached" ] || { cat "$fixture_case_root/output"; exit 1; } ;;
++  esac
++  if [ "$fixture_scenario" = existing_metadata ]; then
++    [ "$before_metadata" = "$(stat -c '%u:%g:%a:%i' "$metadata_path")" ]
++    [ "$(cat "$metadata_path/payload")" = 'existing data' ]
++  fi
++  if [ "$fixture_scenario" = fresh ]; then
++    if "$fixture_bind_state"; then [ "$(stat -c '%a' "$fixture_source")" = 755 ]; fi
++    [ "$(stat -Lc '%a' "$fixture_target")" = 755 ]
++  fi
++  if [ "$fixture_scenario" = missing_parents ]; then
++    [ "$(stat -c '%a' "$fixture_source")" = 755 ]
++    [ "$(stat -c '%a' "$(dirname "$fixture_source")")" = 755 ]
++  fi
++  case "$fixture_scenario" in
++    wrong_backing|missing_backing|failed_required_remount|missing_dependency) [ ! -e "$fixture_source" ]; [ ! -e "$fixture_host/nixos" ] ;;
++    missing_backing_source) [ ! -e "$fixture_host" ] ;;
++    missing_transitive) [ ! -e "$fixture_host/bridge" ] ;;
++    wrong_live) [ ! -e "$fixture_source" ]; [ "$fixture_target" -ef "$fixture_case_root/wrong" ] ;;
++    failed_remount) [ -f "$fixture_case_root/mounted-state" ]; [ "$(cat "$fixture_target/payload")" = 'matching data' ] ;;
++    failed_chown) [ -s "$fixture_case_root/chown-calls" ]; [ ! -e "$fixture_case_root/chmod-calls" ] ;;
++    failed_chmod) [ -s "$fixture_case_root/chown-calls" ]; [ -s "$fixture_case_root/chmod-calls" ] ;;
++  esac
++  printf 'PASS %s %s\n' "$mode" "$fixture_scenario"
++done
+diff --git a/tests/nixos-container-standalone-eval.nix b/tests/nixos-container-standalone-eval.nix
+index 24567b032..08bb1dfc0 100644
+--- a/tests/nixos-container-standalone-eval.nix
++++ b/tests/nixos-container-standalone-eval.nix
+@@ -8,11 +8,13 @@ let
+       standalone = builtins.toFile "vpsadminos-${channel}.nix" (
+         builtins.readFile (../os/lib/nixos-container + "/${channel}/vpsadminos.nix")
+       );
+-      evaluated = import (vpsadminos.nixpkgsPath + "/nixos/lib/eval-config.nix") {
++      nixpkgs =
++        if channel == "stable" then vpsadminos.inputs.nixpkgs else vpsadminos.inputs.nixpkgsUnstable;
++      evaluated = import (nixpkgs + "/nixos/lib/eval-config.nix") {
+         system = builtins.currentSystem;
+         modules = [
+           (toString standalone)
+-          { system.stateVersion = "26.05"; }
++          { system.stateVersion = nixpkgs.lib.trivial.release; }
+         ];
+       };
+     in
+diff --git a/tests/nixos-container-templates-eval.nix b/tests/nixos-container-templates-eval.nix
+new file mode 100644
+index 000000000..e2b55dfaf
+--- /dev/null
++++ b/tests/nixos-container-templates-eval.nix
+@@ -0,0 +1,139 @@
++# Capture the actual template modules' writeText outputs as evaluator files.
++# This checks rendered flakes/configuration/locks without building tarballs.
++let
++  # Generated locks must name the checkout's actual Git revision, including
++  # dirtyRev during development. A plain path flake has no revision metadata.
++  vpsadminos = builtins.getFlake "git+file://${toString ../.}";
++  stable = vpsadminos.inputs.nixpkgs;
++  unstable = vpsadminos.inputs.nixpkgsUnstable;
++  lib = stable.lib;
++  lock = builtins.fromJSON (builtins.readFile ../flake.lock);
++  stableNixpkgsNode = lock.nodes.${lock.nodes.root.inputs.nixpkgs};
++  unstableNixpkgsNode = lock.nodes.${lock.nodes.root.inputs.nixpkgsUnstable};
++  impermanenceNode = lock.nodes.${lock.nodes.root.inputs.impermanence};
++  impermanenceNixpkgsNode = lock.nodes.${impermanenceNode.inputs.nixpkgs};
++  homeManagerNode = lock.nodes.${impermanenceNode.inputs."home-manager"};
++  revision = vpsadminos.rev or (builtins.substring 0 40 vpsadminos.dirtyRev);
++  check = name: condition: if condition then true else throw "NixOS template check failed: ${name}";
++  evaluateTemplate =
++    channel: includeImpermanence:
++    let
++      nixpkgs = if channel == "stable" then stable else unstable;
++      nixpkgsNode = if channel == "stable" then stableNixpkgsNode else unstableNixpkgsNode;
++      guestLib = nixpkgs.lib;
++      pkgs = nixpkgs.legacyPackages.x86_64-linux;
++      # The first-boot cp commands identify each file as actually emitted by the
++      # template. No second implementation of the renderer is used here.
++      rendered =
++        import
++          (
++            ../os/lib/nixos-container
++            + "/${channel}/${if includeImpermanence then "impermanence" else "minimal"}.nix"
++          )
++          {
++            inherit
++              impermanenceNode
++              impermanenceNixpkgsNode
++              homeManagerNode
++              nixpkgsNode
++              stableNixpkgsNode
++              unstableNixpkgsNode
++              ;
++            impermanence = vpsadminos.inputs.impermanence;
++            vpsadminosGithubRev = revision;
++            lib = guestLib;
++            pkgs = pkgs // {
++              writeText = builtins.toFile;
++            };
++            modulesPath = "${nixpkgs}/nixos/modules";
++            config.nix.package.out = "/nix-package";
++          };
++      copyLines = lib.filter (line: lib.hasPrefix "cp /nix/store/" line) (
++        map lib.trim (lib.splitString "\n" rendered.boot.postBootCommands)
++      );
++      files = builtins.listToAttrs (
++        map (
++          line:
++          let
++            words = lib.splitString " " line;
++          in
++          {
++            name = builtins.baseNameOf (builtins.elemAt words 2);
++            value = builtins.elemAt words 1;
++          }
++        ) copyLines
++      );
++      guestLock = builtins.fromJSON (builtins.readFile files."flake.lock");
++      guestFlake = import files."flake.nix";
++      # Resolve ./configuration.nix next to the real generated flake text.
++      # builtins.toFile cannot create a directory; rewrite only this file path.
++      resolvedFlake = builtins.toFile "resolved-template-flake.nix" (
++        lib.replaceStrings [ "./configuration.nix" ] [ files."configuration.nix" ] (
++          builtins.readFile files."flake.nix"
++        )
++      );
++      guestInputs = {
++        inherit nixpkgs vpsadminos;
++      }
++      // lib.optionalAttrs includeImpermanence {
++        impermanence = vpsadminos.inputs.impermanence;
++      };
++      evaluated = (import resolvedFlake).outputs guestInputs;
++      config = evaluated.nixosConfigurations.vps.config;
++      moduleName = if channel == "stable" then "containerStable" else "containerUnstable";
++      expectedModule = vpsadminos.nixosModules.${moduleName};
++      explicit = nixpkgs.lib.nixosSystem {
++        system = "x86_64-linux";
++        modules = [
++          expectedModule
++          files."configuration.nix"
++        ]
++        ++ lib.optional includeImpermanence vpsadminos.inputs.impermanence.nixosModules.impermanence;
++        specialArgs.inputs = guestInputs;
++      };
++      follows =
++        if includeImpermanence then
++          [
++            "impermanence"
++            "nixpkgs"
++          ]
++        else
++          [
++            "vpsadminos"
++            "impermanence"
++            "nixpkgs"
++          ];
++    in
++    check "${channel}/${if includeImpermanence then "impermanence" else "minimal"}" (
++      guestFlake.inputs.nixpkgs.url
++      == "github:${nixpkgsNode.original.owner}/${nixpkgsNode.original.repo}/${nixpkgsNode.original.ref}"
++      && guestLock.version == 7
++      && guestLock.nodes.root.inputs.nixpkgs == "nixpkgs"
++      && guestLock.nodes.root.inputs.vpsadminos == "vpsadminos"
++      && (guestLock.nodes.root.inputs ? impermanence) == includeImpermanence
++      && guestLock.nodes.nixpkgs.locked == nixpkgsNode.locked
++      && guestLock.nodes.vpsadminos-nixpkgs.locked == stableNixpkgsNode.locked
++      && guestLock.nodes.vpsadminos-nixpkgs-unstable.locked == unstableNixpkgsNode.locked
++      && guestLock.nodes.vpsadminos.locked.rev == revision
++      && guestLock.nodes."home-manager".inputs.nixpkgs == follows
++      && config.system.stateVersion == guestLib.trivial.release
++      && config.boot.isContainer
++      && config.system.build.toplevel.drvPath == explicit.config.system.build.toplevel.drvPath
++      && lib.hasInfix "vpsadminos.nixosModules.${moduleName}" (builtins.readFile files."flake.nix")
++      && (
++        !includeImpermanence
++        || (
++          lib.any (
++            directory: directory.directory == "/var/lib/nixos"
++          ) config.environment.persistence."/persistent".directories
++          && lib.any (file: file.file == "/etc/machine-id") config.environment.persistence."/persistent".files
++        )
++      )
++    );
++in
++{
++  stable = evaluateTemplate "stable" false;
++  stableImpermanence = evaluateTemplate "stable" true;
++  unstable = evaluateTemplate "unstable" false;
++  unstableImpermanence = evaluateTemplate "unstable" true;
++}
+diff --git a/tests/nixos-container-unsupported-eval.nix b/tests/nixos-container-unsupported-eval.nix
+new file mode 100644
+index 000000000..c3a2c85bb
+--- /dev/null
++++ b/tests/nixos-container-unsupported-eval.nix
+@@ -0,0 +1,14 @@
++release:
++let
++  vpsadminos = builtins.getFlake (toString ../.);
++  lib = vpsadminos.inputs.nixpkgs.lib;
++in
++builtins.deepSeq
++  (vpsadminos.nixosModules.containerStable {
++    lib = lib // {
++      trivial = lib.trivial // {
++        inherit release;
++      };
++    };
++  }).imports
++  true
+diff --git a/tests/suite/dist-config/nixos-persistence-upgrade.nix b/tests/suite/dist-config/nixos-persistence-upgrade.nix
+new file mode 100644
+index 000000000..e0d0b7f9d
+--- /dev/null
++++ b/tests/suite/dist-config/nixos-persistence-upgrade.nix
+@@ -0,0 +1,349 @@
++import ../../make-test.nix (
++  { pkgs }:
++  let
++    inherit (pkgs) lib;
++    guests = import ../../fixtures/nixos-persistence-guests.nix {
++      system = pkgs.system;
++      source = ../../..;
++    };
++    variantName = name: lib.replaceStrings [ "_" ] [ "." ] name;
++    allClosures = lib.concatMap (
++      v: builtins.attrValues v.generations ++ builtins.attrValues (v.failures or { })
++    ) (builtins.attrValues guests.variants);
++    registrations = lib.mapAttrs (
++      _: variant:
++      pkgs.closureInfo {
++        rootPaths =
++          builtins.attrValues variant.generations ++ builtins.attrValues (variant.failures or { });
++      }
++    ) guests.variants;
++    script =
++      name: variant:
++      let
++        g = variant.generations;
++        registration = registrations.${name};
++        storage =
++          if variant.layout == "root" then
++            "/root-storage"
++          else if variant.layout == "declared" then
++            "/guest-backing"
++          else
++            "/persistent";
++        initial = if variant.fresh then g.newInitial else g.oldInitial;
++        failurePaths = lib.mapAttrs (_: path: toString path) (variant.failures or { });
++        setgidParent = variant.fresh && variant.layout == "ancestor-lib";
++      in
++      ''
++        require 'json'
++        require 'digest'
++        require 'shellwords'
++
++        machine.start unless machine.running?
++        machine.wait_for_osctl_pool('tank')
++        machine.wait_until_online
++        ct = get_container_id
++        exec_guest = lambda do |command|
++          machine.succeeds("osctl ct exec #{ct} bash -c #{Shellwords.escape(command)}")[1].strip
++        end
++        wait_for_guest_ready = lambda do |phase|
++          begin
++            machine.wait_until_succeeds("osctl ct exec #{ct} systemctl is-system-running --wait", timeout: 180)
++          rescue StandardError => readiness_error
++            # Keep the failed guest's evidence without accepting degraded or
++            # allowing a diagnostic error to replace the readiness failure.
++            [
++              'systemctl --failed --plain --no-pager',
++              'journalctl -b --no-pager -n 160 -o short-iso-precise',
++              <<~'GUEST',
++                systemctl --failed --plain --no-legend --no-pager | head -n 8 |
++                  while read -r unit rest; do
++                    printf '\n--- failed unit %s ---\n' "$unit"
++                    systemctl status "$unit" --no-pager --full --lines=40
++                    systemctl show "$unit" -p ActiveState -p SubState -p Result -p ExecMainCode -p ExecMainStatus
++                    journalctl -b -u "$unit" --no-pager -n 40 -o short-iso-precise
++                  done
++              GUEST
++            ].each do |diagnostic|
++              begin
++                command = "timeout -k 2 20 osctl ct exec #{ct} bash -c #{Shellwords.escape(diagnostic)}"
++                status, output = machine.execute("{ #{command}; } 2>&1 | head -c 32768", timeout: 25)
++                warn "NixOS guest #{ct} #{phase} readiness diagnostic (#{status}): #{diagnostic}\n#{output}"
++              rescue StandardError => diagnostic_error
++                warn "NixOS guest #{ct} #{phase} readiness diagnostic unavailable: #{diagnostic_error.class}: #{diagnostic_error.message}"
++              end
++            end
++            raise readiness_error
++          end
++        end
++        switch = lambda do |generation|
++          exec_guest.call("nix-env -p /nix/var/nix/profiles/system --set #{generation} && #{generation}/bin/switch-to-configuration switch")
++          expect(exec_guest.call('readlink /run/current-system')).to eq(generation)
++        end
++        layout = JSON.parse('${builtins.toJSON { inherit (variant) mounts absentExactMounts logBacking; }}')
++        snapshot = lambda do |challenge|
++          accounts = challenge ? %w[preservation-test a-preservation-test] : %w[preservation-test]
++          ids = accounts.to_h do |account|
++            live = exec_guest.call("id -u #{account}; id -g #{account}").split.map(&:to_i)
++            saved = JSON.parse(exec_guest.call("jq -n --slurpfile u /var/lib/nixos/uid-map --slurpfile g /var/lib/nixos/gid-map --arg name #{account} '[$u[0][$name], $g[0][$name]]'"))
++            backing = JSON.parse(exec_guest.call("jq -n --slurpfile u ${variant.stateBacking}/uid-map --slurpfile g ${variant.stateBacking}/gid-map --arg name #{account} '[$u[0][$name], $g[0][$name]]'"))
++            expect(live).to eq(saved), "live IDs differ from allocation maps for #{account}"
++            expect(saved).to eq(backing), "visible and backing maps differ for #{account}"
++            [account, live]
++          end
++          exec_guest.call('test ${variant.stateBacking} -ef /var/lib/nixos')
++          layout.fetch('mounts').each do |pair|
++            target = pair.fetch('target')
++            exec_guest.call("mountpoint -q #{target} && test #{pair.fetch('source')} -ef #{target}")
++            expect(exec_guest.call("awk '$5 == \"#{target}\" {n++} END {print n+0}' /proc/self/mountinfo")).to eq('1')
++          end
++          layout.fetch('absentExactMounts').each do |target|
++            expect(exec_guest.call("awk '$5 == \"#{target}\" {n++} END {print n+0}' /proc/self/mountinfo")).to eq('0')
++          end
++          exec_guest.call("test #{layout.fetch('logBacking')} -ef /var/log") if layout.fetch('logBacking')
++          exec_guest.call('test ${storage}/var/lib/preservation-test/payload -ef /var/lib/preservation-test/payload && test ${storage}/etc/machine-id -ef /etc/machine-id')
++          {
++            'ids' => ids,
++            'mount_options' => layout.fetch('mounts').to_h { |pair| target = pair.fetch('target'); [target, exec_guest.call("findmnt -n -o OPTIONS --mountpoint #{target}")] },
++            'machine_id' => exec_guest.call('cat /etc/machine-id'),
++            'payload' => exec_guest.call('sha256sum /var/lib/preservation-test/payload').split.first,
++            'owner' => exec_guest.call("stat -c '%u:%g' /var/lib/preservation-test/payload"),
++            'metadata' => exec_guest.call("stat -c '%u:%g:%a:%i' ${variant.sourceDirectory}"),
++            ${lib.optionalString setgidParent ''
++              'source_parent_metadata' => exec_guest.call("stat -c '%u:%g:%a:%i' ${builtins.dirOf variant.sourceDirectory}"),
++            ''}
++            'payload_directory' => exec_guest.call("stat -c '%u:%g:%a:%i' /var/lib/preservation-test")
++          }
++        end
++
++        describe '${variantName name} ${
++          if variant.fresh then "fresh persistence initialization" else "old-to-new persistence adoption"
++        }' do
++          it 'retains dynamic accounts, maps, data and bind identity' do
++            puts 'Old compatibility source: ${guests.oldMetadata.rev} (${guests.oldMetadata.narHash})'
++            puts 'Candidate compatibility source: ${../../..}'
++            puts 'Guest release ${variant.release}; stateVersion 22.11'
++            ${
++              if variant.fresh then
++                ''
++                  puts 'Fresh candidate generations ${g.newInitial} -> ${g.newChallenge}'
++                ''
++              else
++                ''
++                  puts 'Prepared old-to-new generations ${g.oldInitial} -> ${g.oldChallenge} -> ${g.newChallenge}'
++                ''
++            }
++            machine.all_succeed(
++              "osctl ct new --skip-image --distribution nixos --version ${variant.release} --arch x86_64 #{ct}",
++              "osctl ct unset start-menu #{ct}",
++              "osctl ct dataset new #{ct} nix",
++            )
++            rootfs = machine.osctl_json("ct show #{ct}").fetch('rootfs')
++            nix_root = machine.osctl_json("ct mounts ls #{ct}").find { |mount| mount.fetch('mountpoint') == '/nix' }.fetch('fs')
++            # Use the declarative NixOS container's stopped-store copy contract.
++            # Native mapping exposes these root-owned copies as guest root.
++            machine.succeeds(<<~SHELL)
++              set -e
++              # The fresh dataset root is 0750; /nix needs non-root traversal.
++              chmod 0755 "#{nix_root}"
++              mkdir -p "#{nix_root}/store"
++              while IFS= read -r store_path; do
++                cp -a "$store_path" "#{nix_root}/store/"
++              done < ${registration}/store-paths
++              cp ${registration}/registration "#{nix_root}/nix-path-registration"
++            SHELL
++            machine.all_succeed(
++              "mkdir -p #{nix_root}/var/nix/profiles #{rootfs}/sbin #{rootfs}/etc #{rootfs}/var",
++              "ln -s ${initial} #{nix_root}/var/nix/profiles/system",
++              "ln -s ${initial}/init #{rootfs}/sbin/init",
++            )
++            ${lib.optionalString (variant.layout != "root") ''
++              machine.all_succeed(
++                # The CLI mounts subdatasets; '/' denotes root only in image
++                # configuration. Bind this container's queried private root.
++                "osctl ct mounts new --fs #{rootfs} --type bind --opts bind,create=dir,rw --mountpoint /persistent #{ct}",
++                "osctl ct set impermanence #{ct}",
++              )
++            ''}
++            ${lib.optionalString (variant.layout == "declared") ''
++              # Provision the old configuration's declared backing sources;
++              # this is setup, before any accounts or data exist.
++              machine.all_succeed(
++                "mkdir -p #{rootfs}/backing/var/lib/nixos #{rootfs}/backing/var/lib/preservation-test #{rootfs}/backing/var/log #{rootfs}/backing/etc",
++                "touch #{rootfs}/backing/etc/machine-id",
++              )
++            ''}
++            ${lib.optionalString (variant.layout == "dependent") ''
++              machine.succeeds("mkdir -p #{rootfs}/var/lib/nixos/usr")
++            ''}
++            ${lib.optionalString setgidParent ''
++              # Only provision the absent source's parent, before allocation.
++              # The candidate must clear inherited group/SGID on its new child.
++              source_parent = File.dirname("#{rootfs}${variant.sourcePathInRoot}")
++              machine.succeeds("install -d -m 02775 -o 0 -g 1234 #{source_parent}")
++              expected_source_parent_metadata = machine.succeeds("stat -c '%u:%g:%a:%i' #{source_parent}")[1].strip
++              expect(expected_source_parent_metadata.split(':').first(3).join(':')).to eq('0:1234:2775')
++            ''}
++            ${lib.optionalString (variant.fresh) ''
++              machine.fails("test -e #{rootfs}${variant.sourcePathInRoot}")
++            ''}
++            expected_source_metadata = nil
++            ${lib.optionalString (!variant.fresh) ''
++              # Provision custom source metadata before any guest accounts/data.
++              machine.succeeds("install -d -m ${builtins.elemAt (lib.splitString ":" variant.sourceMetadata) 2} -o ${builtins.elemAt (lib.splitString ":" variant.sourceMetadata) 0} -g ${builtins.elemAt (lib.splitString ":" variant.sourceMetadata) 1} #{rootfs}${variant.sourcePathInRoot}")
++              expected_source_metadata = machine.succeeds("stat -c '%u:%g:%a:%i' #{rootfs}${variant.sourcePathInRoot}")[1].strip
++            ''}
++            machine.succeeds("osctl ct start #{ct}")
++            wait_for_guest_ready.call('initial boot')
++            expect(exec_guest.call('nixos-version')).to start_with('${guests.expectedRelease variant.release}')
++            exec_guest.call('nix-store --load-db < /nix/nix-path-registration')
++            ${lib.optionalString (!variant.fresh) ''
++              # The old boot has already mounted state. A normal old live
++              # switch establishes healthy persisted maps; no ID/map repair.
++              switch.call('${g.oldInitial}')
++            ''}
++            exec_guest.call("printf '%s\\n' persistence-upgrade-payload > /var/lib/preservation-test/payload && chown preservation-test:preservation-test /var/lib/preservation-test/payload")
++            original = snapshot.call(false)
++            expect(original.fetch('payload')).to eq(Digest::SHA256.hexdigest("persistence-upgrade-payload\n"))
++            expect(original.fetch('owner')).to eq(original.fetch('ids').fetch('preservation-test').join(':'))
++            expect(original.fetch('machine_id')).to match(/\A[0-9a-f]{32}\z/)
++            expect(original.fetch('metadata').split(':').first(3).join(':')).to eq('${variant.sourceMetadata}')
++            expect(original.fetch('metadata')).to eq(expected_source_metadata) if expected_source_metadata
++            ${lib.optionalString setgidParent ''
++              expect(original.fetch('source_parent_metadata')).to eq(expected_source_parent_metadata)
++            ''}
++            expect(original.fetch('payload_directory').split(':').first(3).join(':')).to eq(original.fetch('ids').fetch('preservation-test').join(':') + ':750')
++
++            switch.call('${if variant.fresh then g.newChallenge else g.oldChallenge}')
++            healthy = snapshot.call(true)
++            expect(healthy.reject { |key, _| key == 'ids' }).to eq(original.reject { |key, _| key == 'ids' })
++            expect(healthy.fetch('ids').fetch('preservation-test')).to eq(original.fetch('ids').fetch('preservation-test'))
++            expect(healthy.fetch('ids').fetch('a-preservation-test')).not_to eq(healthy.fetch('ids').fetch('preservation-test'))
++            ${lib.optionalString (!variant.fresh) ''
++              # Keep this old guest running: an old restart is the known defect.
++              # Only the raw compatibility source changes in this generation.
++              switch.call('${g.newChallenge}')
++              expect(snapshot.call(true)).to eq(healthy)
++            ''}
++            switch.call('${g.newChallenge}')
++            expect(snapshot.call(true)).to eq(healthy)
++            machine.succeeds("osctl ct restart #{ct}")
++            wait_for_guest_ready.call('restart')
++            expect(exec_guest.call('readlink /run/current-system')).to eq('${g.newChallenge}')
++            expect(snapshot.call(true)).to eq(healthy)
++            ${lib.optionalString (variant.layout == "declared") ''
++              exec_guest.call('test /persistent/backing -ef /guest-backing')
++              expect(exec_guest.call("findmnt -n -o OPTIONS --mountpoint /guest-backing")).to include('rw')
++            ''}
++            ${lib.optionalString (variant.layout == "dependent") ''
++              exec_guest.call('test /persistent/var/lib/nixos/usr -ef /usr')
++              expect(exec_guest.call("awk '$5 == \"/usr\" {n++} END {print n+0}' /proc/self/mountinfo")).to eq('1')
++            ''}
++            ${lib.optionalString (variant.layout == "failures") ''
++              saved_files = exec_guest.call('sha256sum /etc/passwd /etc/group /var/lib/nixos/uid-map /var/lib/nixos/gid-map /var/lib/preservation-test/payload')
++              # Positive execution control uses the complete generated activation
++              # and real allocator; trace markers do not replace it.
++              positive = "/root/persistence-#{ct}-positive.log"
++              machine.succeeds("osctl ct exec #{ct} bash -c #{Shellwords.escape('echo TRACE_BEGIN; bash -x ${g.newChallenge}/activate; rc=$?; echo TRACE_END:$rc; exit $rc')} > #{positive} 2>&1")
++              trace = machine.succeeds("cat #{positive}")[1]
++              expect(trace).to include('TRACE_BEGIN', 'TRACE_END:0')
++              expect(trace).to match(/^\+.*perl.*-update-users-groups\.pl/)
++              failures = JSON.parse('${builtins.toJSON failurePaths}')
++              # Visibility/order control: this log tmpfs is private to this
++              # activation; durable allocation state stays on its healthy bind.
++              nonbind = failures.delete('nonbind-positive')
++              nonbind_log = "/root/persistence-#{ct}-nonbind-positive.log"
++              command = "set -e; umount /var/log; echo TRACE_BEGIN; bash -x #{nonbind}/activate; rc=$?; echo TRACE_END:$rc; exit $rc"
++              machine.succeeds("osctl ct exec #{ct} unshare --mount --propagation private bash -c #{Shellwords.escape(command)} > #{nonbind_log} 2>&1")
++              trace = machine.succeeds("cat #{nonbind_log}")[1]
++              expect(trace).to include('TRACE_BEGIN', 'TRACE_END:0')
++              mount_position = trace.index(/^\++ mount -t tmpfs .* \/var\/log$/)
++              allocator_position = trace.index(/^\+.*perl.*-update-users-groups\.pl/)
++              expect(mount_position).not_to be_nil
++              expect(allocator_position).not_to be_nil
++              expect(mount_position).to be < allocator_position
++              expect(snapshot.call(true)).to eq(healthy)
++              failures.each do |failure, generation|
++                # Isolate real mount faults without changing the live guest's
++                # configured storage, maps or mounted destinations.
++                preparation = case failure
++                when 'missing'
++                  'test ! -e /persistent/required'
++                when 'bind'
++                  'umount /var/lib/nixos'
++                when 'conflict'
++                  'umount /var/lib/nixos; mkdir -p /run/wrong-state; mount --bind /run/wrong-state /var/lib/nixos'
++                when 'wrong-backing'
++                  'mkdir -p /persistent/required /required-storage /run/wrong-backing; mount --bind /run/wrong-backing /required-storage; test ! -e /required-storage/absent-state'
++                when 'ancestor-bind'
++                  'umount /var/lib/nixos; umount /var/lib/preservation-test; ! mountpoint -q /var/lib'
++                when 'ancestor-conflict'
++                  'umount /var/lib/nixos; umount /var/lib/preservation-test; mkdir -p /run/wrong-ancestor; mount --bind /run/wrong-ancestor /var/lib'
++                when 'nonbind'
++                  'umount /var/log; test ! -e /dev/no-such-persistence-device'
++                when 'nonbind-remount'
++                  'umount /var/log; mount -t tmpfs tmpfs /var/log'
++                when 'required-remount'
++                  'mkdir -p /required-storage; mount -t tmpfs tmpfs /required-storage; test ! -e /required-storage/absent-state'
++                end
++                # Each preparation must succeed; no artificial allocator marker.
++                after_failure = failure == 'required-remount' ? 'mountpoint -q /required-storage && test ! -e /required-storage/absent-state && echo REQUIRED_STILL_PRESENT' : 'true'
++                command = "set -e; #{preparation}; set +e; echo TRACE_BEGIN; bash -x #{generation}/activate; rc=$?; echo TRACE_END:$rc; #{after_failure}; exit $rc"
++                log = "/root/persistence-#{ct}-#{failure}.log"
++                machine.fails("osctl ct exec #{ct} unshare --mount --propagation private bash -c #{Shellwords.escape(command)} > #{log} 2>&1")
++                trace = machine.succeeds("cat #{log}")[1]
++                expect(trace).to include('TRACE_BEGIN', 'TRACE_END:1', 'refusing user allocation')
++                expect(trace).to match(/^\++ source .*mounts/)
++                expect(trace).to match(/^\++ exit 1$/)
++                expect(trace).not_to match(/^\+.*perl.*-update-users-groups\.pl/)
++                operation = case failure
++                when 'nonbind'
++                  ['ext4', '/dev/no-such-persistence-device', '/var/log', %w[mode=0755]]
++                when 'nonbind-remount'
++                  ['tmpfs', 'tmpfs', '/var/log', %w[remount size=invalid]]
++                when 'required-remount'
++                  ['tmpfs', 'tmpfs', '/required-storage', %w[remount size=invalid]]
++                when 'ancestor-bind'
++                  ['none', '/persistent/var/lib', '/var/lib', %w[bind remount]]
++                end
++                if operation
++                  fs_type, mount_source, mount_target, required_options = operation
++                  lines = trace.lines
++                  mount_position = lines.index do |line|
++                    next false unless line.match?(/\A\++ mount -t /)
++                    argv = Shellwords.split(line.sub(/\A\++ /, ""))
++                    argv.length == 7 && argv.first(4) == ['mount', '-t', fs_type, '-o'] &&
++                      argv.last(2) == [mount_source, mount_target] &&
++                      (required_options - argv[4].split(',')).empty?
++                  end
++                  refusal_position = lines.index { |line| line.match?(/\A\++ printf .*refusing user allocation/) }
++                  expect(mount_position).not_to be_nil
++                  expect(refusal_position).not_to be_nil
++                  expect(mount_position).to be < refusal_position
++                end
++                expect(trace).to include('REQUIRED_STILL_PRESENT') if failure == 'required-remount'
++                expect(exec_guest.call('sha256sum /etc/passwd /etc/group /var/lib/nixos/uid-map /var/lib/nixos/gid-map /var/lib/preservation-test/payload')).to eq(saved_files)
++                expect(snapshot.call(true)).to eq(healthy)
++                exec_guest.call('test ! -e /persistent/required/absent-state && test ! -e /run/wrong-backing/absent-state') if failure == 'wrong-backing'
++              end
++            ''}
++            machine.succeeds("osctl ct del -f --prune #{ct}")
++          end
++        end
++      '';
++  in
++  {
++    name = "dist-config-nixos-persistence-upgrade";
++    description = "Pinned old-to-new NixOS persistence input adoption with real legacy allocation";
++    tags = [ "ci" ];
++    machine = import ../../machines/vpsadminos/with-tank.nix {
++      inherit pkgs;
++      config = {
++        system.extraDependencies = allClosures ++ builtins.attrValues registrations;
++      };
++    };
++    testScripts = lib.mapAttrs' (name: variant: {
++      name = variantName name;
++      value.script = script name variant;
++    }) guests.variants;
++  }
++)

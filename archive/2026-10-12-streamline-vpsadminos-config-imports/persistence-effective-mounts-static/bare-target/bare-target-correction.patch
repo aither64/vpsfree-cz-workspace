@@ -1,0 +1,14 @@
+--- before/tests/nixos-container-persistence-shell.sh
++++ after/tests/nixos-container-persistence-shell.sh
+@@ -88,8 +88,10 @@
+       -e "s|/fixture/unrelated|$fixture_case_root/unrelated|g" \
+       -e "s|\"$configured_target\"|\"$fixture_target\"|g" \
+       -e "s|'$configured_target'|'$fixture_target'|g" \
++      -e "s|= $configured_target ]|= '$fixture_target' ]|g" \
+       -e "s|\"/var/log\"|\"$fixture_log_target\"|g" \
+-      -e "s|'/var/log'|'$fixture_log_target'|g" "$1"
++      -e "s|'/var/log'|'$fixture_log_target'|g" \
++      -e "s|= /var/log ]|= '$fixture_log_target' ]|g" "$1"
+   }
+   # Filter fixture calls; host /proc,/sys,/run paths are never touched.
+   awk '/^specialMount "\/fixture\// || /^specialMount "fixture-/ || /^specialMount .* "\/fixture\// { print }' "$early_mounts" > "$fixture_case_root/selected.sh"

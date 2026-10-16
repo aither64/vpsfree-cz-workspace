@@ -1,0 +1,77 @@
+3251:Done. The new configuration is Preservation after rebuild:
+3252:  machine-id: expected <f137472cecd54b8894e1e138996ffecb>, current <f137472cecd54b8894e1e138996ffecb>
+3253:  UID: expected <995>, current <995>
+3254:  GID: expected <993>, current <993>
+3255:  payload: expected <vpsadminos-impermanence-preservation>, current <vpsadminos-impermanence-preservation>
+3256:  ownership: expected <995:993>, current <995:993>
+3257:
+3258:Allocation map /var/lib/nixos/uid-map:
+3259:{"a-preservation-test":994,"dhcpcd":999,"messagebus":4,"nixbld1":30001,"nixbld10":30010,"nixbld11":30011,"nixbld12":30012,"nixbld13":30013,"nixbld14":30014,"nixbld15":30015,"nixbld16":30016,"nixbld17":30017,"nixbld18":30018,"nixbld19":30019,"nixbld2":30002,"nixbld20":30020,"nixbld21":30021,"nixbld22":30022,"nixbld23":30023,"nixbld24":30024,"nixbld25":30025,"nixbld26":30026,"nixbld27":30027,"nixbld28":30028,"nixbld29":30029,"nixbld3":30003,"nixbld30":30030,"nixbld31":30031,"nixbld32":30032,"nixbld4":30004,"nixbld5":30005,"nixbld6":30006,"nixbld7":30007,"nixbld8":30008,"nixbld9":30009,"nobody":65534,"nscd":998,"preservation-test":995,"root":0,"sshd":997,"systemd-coredump":151,"systemd-network":152,"systemd-oom":996,"systemd-resolve":153}
+3260:Allocation map /var/lib/nixos/gid-map:
+3261:{"a-preservation-test":992,"adm":55,"audio":17,"cdrom":24,"clock":327,"dhcpcd":999,"dialout":27,"disk":6,"floppy":18,"input":174,"keys":96,"kmem":2,"kvm":302,"lp":20,"messagebus":4,"nixbld":30000,"nogroup":65534,"nscd":998,"preservation-test":993,"render":303,"resolvconf":997,"root":0,"sgx":304,"shadow":318,"sshd":996,"systemd-coredump":995,"systemd-journal":62,"systemd-network":152,"systemd-oom":994,"systemd-resolve":153,"tape":25,"tty":3,"users":100,"utmp":29,"uucp":19,"video":26,"wheel":1}
+3262:Allocation map /persistent/var/lib/nixos/uid-map:
+3263:{"a-preservation-test":994,"dhcpcd":999,"messagebus":4,"nixbld1":30001,"nixbld10":30010,"nixbld11":30011,"nixbld12":30012,"nixbld13":30013,"nixbld14":30014,"nixbld15":30015,"nixbld16":30016,"nixbld17":30017,"nixbld18":30018,"nixbld19":30019,"nixbld2":30002,"nixbld20":30020,"nixbld21":30021,"nixbld22":30022,"nixbld23":30023,"nixbld24":30024,"nixbld25":30025,"nixbld26":30026,"nixbld27":30027,"nixbld28":30028,"nixbld29":30029,"nixbld3":30003,"nixbld30":30030,"nixbld31":30031,"nixbld32":30032,"nixbld4":30004,"nixbld5":30005,"nixbld6":30006,"nixbld7":30007,"nixbld8":30008,"nixbld9":30009,"nobody":65534,"nscd":998,"preservation-test":995,"root":0,"sshd":997,"systemd-coredump":151,"systemd-network":152,"systemd-oom":996,"systemd-resolve":153}
+3264:Allocation map /persistent/var/lib/nixos/gid-map:
+3265:{"a-preservation-test":992,"adm":55,"audio":17,"cdrom":24,"clock":327,"dhcpcd":999,"dialout":27,"disk":6,"floppy":18,"input":174,"keys":96,"kmem":2,"kvm":302,"lp":20,"messagebus":4,"nixbld":30000,"nogroup":65534,"nscd":998,"preservation-test":993,"render":303,"resolvconf":997,"root":0,"sgx":304,"shadow":318,"sshd":996,"systemd-coredump":995,"systemd-journal":62,"systemd-network":152,"systemd-oom":994,"systemd-resolve":153,"tape":25,"tty":3,"users":100,"utmp":29,"uucp":19,"video":26,"wheel":1}
+3266:Mount and backing identity /var/lib/nixos:
+3267:TARGET         SOURCE                                        FSTYPE OPTIONS
+3268:/var/lib/nixos tank/ct/test-1ddcaaac[/private/var/lib/nixos] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+3269:/var/lib/nixos owner=0:0 mode=755 device:inode=76:385
+3270:
+3271:Mount and backing identity /persistent/var/lib/nixos:
+3272:TARGET      SOURCE                          FSTYPE OPTIONS
+3273:/persistent tank/ct/test-1ddcaaac[/private] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+3274:/persistent/var/lib/nixos owner=0:0 mode=755 device:inode=76:385
+3275:
+3276:Mount and backing identity /var/lib/preservation-test:
+3277:TARGET                     SOURCE                                                    FSTYPE OPTIONS
+3278:/var/lib/preservation-test tank/ct/test-1ddcaaac[/private/var/lib/preservation-test] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+3279:/var/lib/preservation-test owner=0:0 mode=755 device:inode=76:5
+3280:
+3281:Mount and backing identity /persistent/var/lib/preservation-test:
+3282:TARGET      SOURCE                          FSTYPE OPTIONS
+3283:/persistent tank/ct/test-1ddcaaac[/private] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+3284:/persistent/var/lib/preservation-test owner=0:0 mode=755 device:inode=76:5
+3285:
+3286:Persistent payload backing state:
+3287:/var/lib/preservation-test/payload owner=995:993 mode=644 device:inode=76:387
+3288:/persistent/var/lib/preservation-test/payload owner=995:993 mode=644 device:inode=76:387
+3289:
+3290:Boot mount and activation order:
+3291:37:if [ ! -e /proc/1 ]; then
+3292:53:    source /nix/store/k4ijvl4lr5pc3q06yl41bhvcap4101qv-mounts.sh
+3293:136:echo "running activation script..."
+3294:137:$systemConfig/activate
+3295:1:specialMount "devtmpfs" "/dev" "nosuid,strictatime,mode=755,size=5%" "devtmpfs"
+3296:3:specialMount "devpts" "/dev/pts" "nosuid,noexec,mode=620,ptmxmode=0666,gid=3" "devpts"
+3297:5:specialMount "tmpfs" "/dev/shm" "nosuid,nodev,strictatime,mode=1777,size=50%" "tmpfs"
+3298:7:specialMount "proc" "/proc" "nosuid,noexec,nodev" "proc"
+3299:9:specialMount "tmpfs" "/run" "nosuid,nodev,strictatime,mode=755,size=25%" "tmpfs"
+3300:11:specialMount "tmpfs" "/run/keys" "nosuid,nodev,mode=750" "tmpfs"
+3301:13:specialMount "/persistent/var/lib/nixos" "/var/lib/nixos" "bind,x-gvfs-hide" "none"
+3302:15:specialMount "/persistent/var/log" "/var/log" "bind,x-gvfs-hide" "none"
+3303:
+3304:User and persistence activation steps:
+3305:21:#### Activation script snippet binsh:
+3306:31:  printf "Activation script snippet '%s' failed (%s)\n" "binsh" "$_localstatus"
+3307:34:#### Activation script snippet users:
+3308:40:-w /nix/store/dyx8qsmgnsz2csfzwn723gbd2jvp0j7g-update-users-groups.pl /nix/store/m26c1vcxya57z022g8igwy8xk4gy74n9-users-groups.json
+3309:43:  printf "Activation script snippet '%s' failed (%s)\n" "users" "$_localstatus"
+3310:46:#### Activation script snippet createPersistentStorageDirs:
+3311:50:  printf "Activation script snippet '%s' failed (%s)\n" "createPersistentStorageDirs" "$_localstatus"
+3312:53:#### Activation script snippet specialfs:
+3313:67:  mount -t "$fsType" -o "$options" "$device" "$mountPoint"
+3314:69:source /nix/store/k4ijvl4lr5pc3q06yl41bhvcap4101qv-mounts.sh
+3315:72:  printf "Activation script snippet '%s' failed (%s)\n" "specialfs" "$_localstatus"
+3316:75:#### Activation script snippet etc:
+3317:82:  printf "Activation script snippet '%s' failed (%s)\n" "etc" "$_localstatus"
+3318:85:#### Activation script snippet hashes:
+3319:103:  printf "Activation script snippet '%s' failed (%s)\n" "hashes" "$_localstatus"
+3320:106:#### Activation script snippet persist-files:
+3321:110:  printf "Activation script snippet '%s' failed (%s)\n" "persist-files" "$_localstatus"
+3322:113:#### Activation script snippet usrbinenv:
+3323:121:  printf "Activation script snippet '%s' failed (%s)\n" "usrbinenv" "$_localstatus"
+3324:Stopping container
+3325:Starting container
+3326:Connecting console
+3327:Waiting for the container to start

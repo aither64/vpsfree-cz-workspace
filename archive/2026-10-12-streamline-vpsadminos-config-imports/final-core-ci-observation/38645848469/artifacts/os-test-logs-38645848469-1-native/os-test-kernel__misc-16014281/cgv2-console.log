@@ -1,0 +1,151 @@
+c[?7l[2J[0mSeaBIOS (version rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org)
+
+
+iPXE (http://ipxe.org) 00:03.0 C000 PCI2.10 PnP PMM+BEFD1AA0+BEF31AA0 C000
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from ROM...
+c[?7l[2J
+[1;32m<<< vpsAdminOS Stage 1 >>>[0m
+
+running udev...
+kbd_mode: KDSKBMODE: Inappropriate ioctl for device
+%Gcreated directory: '/mnt/nix/.overlay-store/work'
+created directory: '/mnt/nix/.overlay-store/rw'
+
+[1;32m<<< vpsAdminOS Stage 2 >>>[0m
+
+setting up /etc...
+- runit: $Id: c66c1e3b98d1b630bd51b1d56aaed5c2994e8c9d $: booting.
+- runit: enter stage: /etc/runit/1
+* Applying /etc/sysctl.d/55-nixos-aslr-entropy.conf ...
+* Applying /etc/sysctl.d/60-nixos.conf ...
+vm.mmap_rnd_bits = 32
+vm.mmap_rnd_compat_bits = 16
+fs.aio-max-nr = 3221225471
+fs.inotify.max_queued_events = 2147483647
+fs.inotify.max_user_instances = 2147483647
+fs.inotify.max_user_watches = 2147483647
+fs.nr_open = 4194304
+fs.protected_hardlinks = 1
+fs.protected_symlinks = 1
+kernel.bpf_container_tracing_enabled = 1
+kernel.dmesg_restrict = 1
+kernel.keys.maxbytes = 2500000
+kernel.keys.maxkeys = 100000
+kernel.kptr_restrict = 1
+kernel.modprobe = /nix/store/bcx5jqj8lrm9bvjgw3x3a5ih5fa2vw63-kernel-modprobe-wrapper
+kernel.pid_max = 4194304
+kernel.printk = 4
+kernel.pty.max = 16384
+kernel.pty.reserve = 1024
+kernel.sysctl_unprivileged_bpf_time_adjust_nsec = 5000000
+kernel.threads-max = 4194304
+kernel.unprivileged_bpf_disabled = 1
+net.core.default_qdisc = fq
+net.ipv4.neigh.default.gc_thresh1 = 2048
+net.ipv4.neigh.default.gc_thresh2 = 4096
+net.ipv4.neigh.default.gc_thresh3 = 8192
+net.ipv4.route.max_size = 2147483647
+net.ipv4.tcp_congestion_control = bbr
+net.ipv6.neigh.default.gc_thresh1 = 2048
+net.ipv6.neigh.default.gc_thresh2 = 4096
+net.ipv6.neigh.default.gc_thresh3 = 8192
+net.ipv6.route.max_size = 2147483647
+net.netfilter.nf_log_all_netns = 1
+vm.max_map_count = 1048576
+vm.min_free_kbytes = 1048576
+vm.min_slab_ratio = 12
+vm.overcommit_ratio = 3200
+vm.swappiness = 0
+- runit: leave stage: /etc/runit/1
+- runit: enter stage: /etc/runit/2
+Waiting for /dev/virtio-ports/org.osvm.shell1
+Waiting for /dev/virtio-ports/org.osvm.shell4
+./run: line 12: /sys/module/spl/parameters/spl_taskq_thread_dynamic: Permission denied
+Waiting for /dev/virtio-ports/org.osvm.shell2
+lxcbr-dnsmasq waiting for interface lxcbr0
+ok: run: eudev: (pid 819) 0s
+/var/cron: No such file or directory
+/var/cron: created
+tabs: No such file or directory
+tabs: created
+
+vpsadminos login: root (automatic login)
+
+Generating public/private rsa key pair.
+Waiting for rpcbind to start
+rsyslogd: getaddrinfo failed obtaining local hostname - using 'vpsadminos' instead; error: System error [v8.2608.0]
+Your identification has been saved in /etc/ssh/ssh_host_rsa_key
+Your public key has been saved in /etc/ssh/ssh_host_rsa_key.pub
+The key fingerprint is:
+SHA256:xw6pB/T4x/elLSW1EpjIuv1HYpBp81/K3qF6i9SUB74 root@vpsadminos
+The key's randomart image is:
++---[RSA 4096]----+
+|                 |
+|                 |
+|      . . + o.   |
+|     . o @ o..o .|
+|      o S *  +.o.|
+|       = = +oo+o.|
+|      . = =.*E++.|
+|       o o...B++.|
+|          .+=++o.|
++----[SHA256]-----+
+Generating public/private ed25519 key pair.
+Your identification has been saved in /etc/ssh/ssh_host_ed25519_key
+Your public key has been saved in /etc/ssh/ssh_host_ed25519_key.pub
+The key fingerprint is:
+SHA256:ITJJJG8j5KB6Gmiae8pjxablAfqwc8Y0bsivDNwN39I root@vpsadminos
+The key's randomart image is:
++--[ED25519 256]--+
+|. o.o            |
+|.+ + .           |
+|. o B . .        |
+|o. o + . .       |
+|=.+.    S        |
+|*=+*+ o          |
+|*X*o.+ E         |
+|B*O.  .          |
+|+@+.             |
++----[SHA256]-----+
+Waiting for /dev/virtio-ports/org.osvm.shell2
+[?2004h
+[1;31m[]0;root@vpsadminos: ~root@vpsadminos:~]#[0m Waiting for /dev/virtio-ports/org.osvm.shell4
+lxcbr-dnsmasq waiting for interface lxcbr0
+sm-notify: Version 2.9.1 starting
+sm-notify: No hosts to notify; exiting
+Service eudev-trigger successfully finished
+lxcbr-dnsmasq waiting for interface lxcbr0
+Service cpufreq successfully finished
+Service networking successfully finished
+Waiting for service restrict-proc-sysfs to start
+Waiting for service set-clock to start
+15 Oct 06:25:19 ntpdate[1926]: adjust time server 37.221.242.99 offset +0.039127 sec
+System clock set
+Service set-clock successfully finished
+[   56.720387] [ kmisc-o-ab9f ] Memory cgroup out of memory: Killed process 6251 (awk) total-vm:113748kB, anon-rss:89652kB, file-rss:68kB, shmem-rss:0kB, UID:1000000 pgtables:224kB oom_score_adj:0
+[   63.873727] [ kmisc-o-ab9f ] Memory cgroup out of memory: Killed process 6556 (awk) total-vm:113748kB, anon-rss:89652kB, file-rss:16kB, shmem-rss:0kB, UID:1000000 pgtables:232kB oom_score_adj:0
+[   71.557535] [ kmisc-o-ab9f ] Memory cgroup out of memory: Killed process 6670 (awk) total-vm:113748kB, anon-rss:89648kB, file-rss:44kB, shmem-rss:0kB, UID:1000000 pgtables:236kB oom_score_adj:0
+[   78.202374] [ kmisc-o-ab9f ] Memory cgroup out of memory: Killed process 6771 (awk) total-vm:113748kB, anon-rss:89524kB, file-rss:8kB, shmem-rss:0kB, UID:1000000 pgtables:224kB oom_score_adj:0
+[   85.520825] [ kmisc-o-ab9f ] Memory cgroup out of memory: Killed process 6877 (awk) total-vm:113748kB, anon-rss:89528kB, file-rss:36kB, shmem-rss:0kB, UID:1000000 pgtables:228kB oom_score_adj:0
+[   97.819649] [ kmisc-o-ef68 ] Memory cgroup out of memory: Killed process 7056 (awk) total-vm:113748kB, anon-rss:89528kB, file-rss:72kB, shmem-rss:0kB, UID:1327680 pgtables:232kB oom_score_adj:0
+[  105.407483] [ kmisc-o-ef68 ] Memory cgroup out of memory: Killed process 7157 (awk) total-vm:113748kB, anon-rss:89656kB, file-rss:8kB, shmem-rss:0kB, UID:1327680 pgtables:228kB oom_score_adj:0
+[  116.407298] [ kmisc-o-ef68 ] Memory cgroup out of memory: Killed process 7265 (awk) total-vm:113748kB, anon-rss:89528kB, file-rss:44kB, shmem-rss:0kB, UID:1327680 pgtables:224kB oom_score_adj:0
+[  125.035844] [ kmisc-o-ef68 ] Memory cgroup out of memory: Killed process 7366 (awk) total-vm:113748kB, anon-rss:89392kB, file-rss:48kB, shmem-rss:0kB, UID:1327680 pgtables:224kB oom_score_adj:0
+[  133.081990] [ kmisc-o-ef68 ] Memory cgroup out of memory: Killed process 7473 (awk) total-vm:113748kB, anon-rss:89528kB, file-rss:48kB, shmem-rss:0kB, UID:1327680 pgtables:228kB oom_score_adj:0
+[  140.829896] [ kmisc-o-ef68 ] Memory cgroup out of memory: Killed process 7574 (awk) total-vm:113748kB, anon-rss:89648kB, file-rss:16kB, shmem-rss:0kB, UID:1327680 pgtables:232kB oom_score_adj:0
+[  149.227312] [ kmisc-o-ef68 ] Memory cgroup out of memory: Killed process 7684 (awk) total-vm:113748kB, anon-rss:89652kB, file-rss:36kB, shmem-rss:0kB, UID:1327680 pgtables:220kB oom_score_adj:0
+[  157.437844] [ kmisc-o-ef68 ] Memory cgroup out of memory: Killed process 7879 (awk) total-vm:113748kB, anon-rss:89652kB, file-rss:36kB, shmem-rss:0kB, UID:1327680 pgtables:224kB oom_score_adj:0
+[  164.553473] [ kmisc-o-ef68 ] Memory cgroup out of memory: Killed process 8003 (awk) total-vm:113748kB, anon-rss:89652kB, file-rss:24kB, shmem-rss:0kB, UID:1327680 pgtables:224kB oom_score_adj:0
+[  171.793667] [ kmisc-o-ef68 ] Memory cgroup out of memory: Killed process 8062 (awk) total-vm:113748kB, anon-rss:89652kB, file-rss:36kB, shmem-rss:0kB, UID:1327680 pgtables:224kB oom_score_adj:0
+- runit: leave stage: /etc/runit/2
+- runit: enter stage: /etc/runit/3
+Grabbing pools
+Grabbing all containers
+and down we go
+- runit: leave stage: /etc/runit/3
+- runit: sending KILL signal to all processes...
+- runit: power off...
+[  189.452690] reboot: Power down

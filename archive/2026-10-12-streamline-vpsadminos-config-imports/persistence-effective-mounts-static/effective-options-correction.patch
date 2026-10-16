@@ -1,0 +1,110 @@
+--- before/tests/nixos-container-persistence-eval.nix
++++ after/tests/nixos-container-persistence-eval.nix
+@@ -388,8 +388,20 @@
+         && adapted directNonBind
+         && adapted rbind
+         && contains (lib.escapeShellArg "/direct/log") direct.system.activationScripts.specialfs.text
+-        && contains (lib.escapeShellArg "defaults,mode=0755") directNonBind.system.activationScripts.specialfs.text
+-        && contains (lib.escapeShellArg "rbind,ro") rbind.system.activationScripts.specialfs.text
++        && lib.all (option: builtins.elem option directNonBind.boot.specialFileSystems."/var/log".options) [
++          "defaults"
++          "mode=0755"
++        ]
++        && contains (lib.escapeShellArg (
++          lib.concatStringsSep "," directNonBind.boot.specialFileSystems."/var/log".options
++        )) directNonBind.system.activationScripts.specialfs.text
++        && lib.all (option: builtins.elem option rbind.boot.specialFileSystems."/var".options) [
++          "rbind"
++          "ro"
++        ]
++        && contains (lib.escapeShellArg (
++          lib.concatStringsSep "," rbind.boot.specialFileSystems."/var".options
++        )) rbind.system.activationScripts.specialfs.text
+       );
+       ancestors = check "${release} impermanence ancestors without exact state/log entries" (
+         adapted ancestorVar
+@@ -546,6 +558,18 @@
+               value = {
+                 snippet = c.system.activationScripts.specialfs.text;
+                 earlyMountScript = c.system.build.earlyMountScript;
++                selectedOptions =
++                  lib.concatStringsSep ","
++                    c.boot.specialFileSystems.${
++                      if mode == "var" then
++                        "/var"
++                      else if mode == "var-lib" then
++                        "/var/lib"
++                      else if mode == "nonbind" then
++                        "/var/log"
++                      else
++                        "/var/lib/nixos"
++                    }.options;
+                 inherit mode;
+               };
+             }
+--- before/tests/nixos-container-persistence-shell.sh
++++ after/tests/nixos-container-persistence-shell.sh
+@@ -5,6 +5,7 @@
+ snippet=$1
+ early_mounts=$2
+ mode=$3
++selected_options=$4
+ fixture_root=$(mktemp -d)
+ trap 'rm -rf "$fixture_root"' EXIT
+ bind_state=true
+@@ -16,6 +17,14 @@
+   var-lib) configured_target=/var/lib ;;
+   nonbind) bind_state=false; configured_target=/var/log ;;
+ esac
++case "$mode" in
++  nonbind) required_options=(defaults mode=0755) ;;
++  rbind) required_options=(rbind x-gvfs-hide) ;;
++  *) required_options=(bind x-gvfs-hide) ;;
++esac
++for option in "${required_options[@]}"; do
++  [[ ",$selected_options," == *",$option,"* ]]
++done
+ scenarios=(fresh existing_metadata matching_live failed_bind failed_remount failed_mount_lookup wrong_result failed_mkdir dangling_target)
+ if "$bind_state"; then scenarios+=(missing_parents wrong_live source_file parent_file failed_lookup dangling_source); fi
+ case "$mode" in
+@@ -118,6 +127,7 @@
+     mount() {
+       printf '%s\n' "$*" >> "$case_root/mount-calls"
+       local from="${*: -2:1}" to="${*: -1}" options="$4"
++      if [ "$to" = "$target" ]; then printf '%s\n' "$options" >> "$case_root/target-options"; fi
+       if [ "$to" = "$backing" ]; then
+         [ "$scenario" != missing_backing ] && [ "$scenario" != failed_required_remount ]; return
+       fi
+@@ -148,11 +158,7 @@
+       if "$exact"; then [ "$log_source" -ef "$log_target" ]; fi
+       [ "$(wc -l < "$case_root/mount-calls")" = "$expected_calls" ]
+       if [ "$scenario" = matching_live ]; then
+-        if ! "$bind_state"; then expected_options=defaults,mode=0755
+-        elif [ "$mode" = rbind ]; then expected_options=rbind,x-gvfs-hide
+-        else expected_options=bind,x-gvfs-hide
+-        fi
+-        [[ "$(grep -F -- " $target" "$case_root/mount-calls")" == *"remount,$expected_options"* ]]
++        [ "$(cat "$case_root/target-options")" = "remount,$selected_options" ]
+         [ "$(grep -Fc -- " $target" "$case_root/mount-calls")" = 1 ]
+         [ "$(cat "$target/payload")" = 'matching data' ]
+       fi ;;
+--- before/tests/nixos-container-persistence-check.nix
++++ after/tests/nixos-container-persistence-check.nix
+@@ -23,7 +23,7 @@
+   };
+   shellFixtures = pkgs.lib.mapAttrs (name: fixture: {
+     snippet = pkgs.writeText "persistent-specialfs-${name}.sh" fixture.snippet;
+-    inherit (fixture) earlyMountScript mode;
++    inherit (fixture) earlyMountScript mode selectedOptions;
+   }) evaluation.shellFixtures;
+ in
+ builtins.deepSeq evaluation.assertions (
+@@ -42,7 +42,7 @@
+       ${pkgs.lib.concatMapStringsSep "\n" (name: ''
+         bash ${./nixos-container-persistence-shell.sh} ${shellFixtures.${name}.snippet} ${
+           shellFixtures.${name}.earlyMountScript
+-        } ${shellFixtures.${name}.mode}
++        } ${shellFixtures.${name}.mode} ${pkgs.lib.escapeShellArg shellFixtures.${name}.selectedOptions}
+       '') (builtins.attrNames shellFixtures)}
+       mkdir "$out"
+       cp ${pkgs.writeText "persistence-evaluation.json" (builtins.toJSON evaluation.assertions)} "$out/evaluation.json"

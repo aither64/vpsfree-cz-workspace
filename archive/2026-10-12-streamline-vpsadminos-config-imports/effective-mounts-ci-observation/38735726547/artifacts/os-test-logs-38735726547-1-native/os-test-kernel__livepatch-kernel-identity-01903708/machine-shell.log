@@ -1,0 +1,499 @@
+SHELL: 0
+
+START: 2026-10-15 16:11:59 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 16:11:59 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:11:59 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 16:11:59 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:11:59 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 16:11:59 +0200
+ELAPSED: 0.04s
+STATUS: 6
+OUTPUT:
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+---
+
+START: 2026-10-15 16:12:00 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 16:12:00 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 14:12:00 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 16:12:00 +0200
+COMMAND: uname -r
+END: 2026-10-15 16:12:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+6.12.95
+---
+
+START: 2026-10-15 16:12:00 +0200
+COMMAND: cat /etc/vpsadminos/livepatch-monitor.json
+END: 2026-10-15 16:12:00 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+{"kernelImage":"/nix/store/050sh2hfrnpc8j5abr2npp7bnlxvpb8a-linux-6.12.95-frozen-boot/bzImage","kernelNotes":"/nix/store/wl1l3ln7vrhnkwy0mlvwdjqdisl4ac6w-livepatch-kernel-notes-6.12.95","kernelVersion":"6.12.95","module":"livepatch_7","patchVersion":7,"patches":[{"name":"bp-6.12.95-production","version":7}]}
+---
+
+START: 2026-10-15 16:12:00 +0200
+COMMAND: readlink -f "$(command -v live-patches)"
+END: 2026-10-15 16:12:00 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+/nix/store/0bzps65kmpq3lqc5lj9v7g714p4r4mwv-live-patches/bin/live-patches
+---
+
+START: 2026-10-15 16:12:00 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-15 16:12:00 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+518
+---
+
+START: 2026-10-15 16:12:00 +0200
+COMMAND: test -s /nix/store/wl1l3ln7vrhnkwy0mlvwdjqdisl4ac6w-livepatch-kernel-notes-6.12.95
+END: 2026-10-15 16:12:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:00 +0200
+COMMAND: /nix/store/aqq53g5lgr9n9hxzmbblpfzds5z067ca-diffutils-3.12/bin/cmp /nix/store/wl1l3ln7vrhnkwy0mlvwdjqdisl4ac6w-livepatch-kernel-notes-6.12.95 /sys/kernel/notes
+END: 2026-10-15 16:12:00 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:00 +0200
+COMMAND: test "$(readlink -f /run/booted-system/kernel)" = /nix/store/050sh2hfrnpc8j5abr2npp7bnlxvpb8a-linux-6.12.95-frozen-boot/bzImage
+END: 2026-10-15 16:12:00 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:00 +0200
+COMMAND: live-patches load
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+live-patches: loading and applying livepatch_7...
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: live-patches status
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[ loaded enabled            ] livepatch_7
+                    contains: bp-6.12.95-production(v7)
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: printf wrong-kernel > /run/wrong-kernel-notes
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: unshare --mount sh -c 'mount --make-rslave /; mount --bind /run/wrong-kernel-notes /sys/kernel/notes; live-patches load'
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.04s
+STATUS: 1
+OUTPUT:
+live-patches: configured module does not match the running boot kernel
+live-patches: existing livepatches are unchanged; boot the configured kernel before managing this module
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: unshare --mount sh -c 'mount --make-rslave /; mount --bind /run/wrong-kernel-notes /sys/kernel/notes; live-patches unload'
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+live-patches: configured module does not match the running boot kernel
+live-patches: existing livepatches are unchanged; boot the configured kernel before managing this module
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: unshare --mount sh -c 'mount --make-rslave /; mount --bind /run/wrong-kernel-notes /sys/kernel/notes; live-patches status'
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.04s
+STATUS: 1
+OUTPUT:
+live-patches: configured module does not match the running boot kernel
+live-patches: existing livepatches are unchanged; boot the configured kernel before managing this module
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: /nix/store/aqq53g5lgr9n9hxzmbblpfzds5z067ca-diffutils-3.12/bin/cmp /nix/store/wl1l3ln7vrhnkwy0mlvwdjqdisl4ac6w-livepatch-kernel-notes-6.12.95 /sys/kernel/notes
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: mkdir -p /run/wrong-boot; ln -s /run/wrong-kernel-notes /run/wrong-boot/kernel
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: unshare --mount sh -c 'mount --make-rslave /; mount --bind /run/wrong-boot /run/booted-system; /nix/store/aqq53g5lgr9n9hxzmbblpfzds5z067ca-diffutils-3.12/bin/cmp /nix/store/wl1l3ln7vrhnkwy0mlvwdjqdisl4ac6w-livepatch-kernel-notes-6.12.95 /sys/kernel/notes || exit 2; /nix/store/0bzps65kmpq3lqc5lj9v7g714p4r4mwv-live-patches/bin/live-patches load'
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+/nix/store/0bzps65kmpq3lqc5lj9v7g714p4r4mwv-live-patches/bin/live-patches: line 1: readlink: command not found
+live-patches: configured module does not match the running boot kernel
+live-patches: existing livepatches are unchanged; boot the configured kernel before managing this module
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: unshare --mount sh -c 'mount --make-rslave /; mount --bind /run/wrong-boot /run/booted-system; /nix/store/aqq53g5lgr9n9hxzmbblpfzds5z067ca-diffutils-3.12/bin/cmp /nix/store/wl1l3ln7vrhnkwy0mlvwdjqdisl4ac6w-livepatch-kernel-notes-6.12.95 /sys/kernel/notes || exit 2; /nix/store/0bzps65kmpq3lqc5lj9v7g714p4r4mwv-live-patches/bin/live-patches unload'
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+/nix/store/0bzps65kmpq3lqc5lj9v7g714p4r4mwv-live-patches/bin/live-patches: line 1: readlink: command not found
+live-patches: configured module does not match the running boot kernel
+live-patches: existing livepatches are unchanged; boot the configured kernel before managing this module
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: test "$(readlink -f /run/booted-system/kernel)" = /nix/store/050sh2hfrnpc8j5abr2npp7bnlxvpb8a-linux-6.12.95-frozen-boot/bzImage
+END: 2026-10-15 16:12:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:02 +0200
+COMMAND: live-patches unload
+END: 2026-10-15 16:12:07 +0200
+ELAPSED: 5.16s
+STATUS: 0
+OUTPUT:
+live-patches: disabling livepatch_7... 90 ....
+live-patches: unloading livepatch_7...
+---
+
+START: 2026-10-15 16:12:07 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 16:12:07 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:07 +0200
+COMMAND: live-patches load
+END: 2026-10-15 16:12:09 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+live-patches: loading and applying livepatch_7...
+---
+
+START: 2026-10-15 16:12:09 +0200
+COMMAND: test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 16:12:09 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:09 +0200
+COMMAND: live-patches unload
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 5.19s
+STATUS: 0
+OUTPUT:
+live-patches: disabling livepatch_7... 90 ....
+live-patches: unloading livepatch_7...
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: test "$(readlink -f /run/booted-system/kernel)" = /nix/store/050sh2hfrnpc8j5abr2npp7bnlxvpb8a-linux-6.12.95-frozen-boot/bzImage
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: /nix/store/aqq53g5lgr9n9hxzmbblpfzds5z067ca-diffutils-3.12/bin/cmp /nix/store/wl1l3ln7vrhnkwy0mlvwdjqdisl4ac6w-livepatch-kernel-notes-6.12.95 /sys/kernel/notes
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: mkdir -p /run/livepatch-test-bin
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: ln -sfn /nix/store/bhv6xyvqw6gjs3j488gi1z6wdv18bdpa-coreutils-9.11/bin/false /run/livepatch-test-bin/insmod
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: PATH=/run/livepatch-test-bin:$PATH /nix/store/0bzps65kmpq3lqc5lj9v7g714p4r4mwv-live-patches/bin/live-patches load
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 0.05s
+STATUS: 1
+OUTPUT:
+live-patches: loading and applying livepatch_7...
+coreutils: unknown program 'insmod'
+live-patches: loading and applying livepatch_7 FAILED
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: test -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: test -d /sys/module/livepatch_7
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 0.04s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: rm -f /run/livepatch-test-bin/insmod
+END: 2026-10-15 16:12:14 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:14 +0200
+COMMAND: live-patches load
+END: 2026-10-15 16:12:16 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+live-patches: loading and applying livepatch_7...
+---
+
+START: 2026-10-15 16:12:16 +0200
+COMMAND: test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-15 16:12:16 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:16 +0200
+COMMAND: live-patches unload
+END: 2026-10-15 16:12:21 +0200
+ELAPSED: 5.17s
+STATUS: 0
+OUTPUT:
+live-patches: disabling livepatch_7... 90 ....
+live-patches: unloading livepatch_7...
+---
+
+START: 2026-10-15 16:12:21 +0200
+COMMAND: test ! -d /sys/kernel/livepatch/livepatch_7
+END: 2026-10-15 16:12:21 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 16:12:21 +0200
+COMMAND: dmesg | tail -n +519
+END: 2026-10-15 16:12:21 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+[   20.419533] livepatch_7: loading out-of-tree module taints kernel.
+[   20.419544] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   20.419546] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   20.568964] livepatch: enabling patch 'livepatch_7'
+[   21.721233] livepatch: 'livepatch_7': starting patching transition
+[   21.908443] livepatch: 'livepatch_7': patching complete
+[   22.419416] livepatch: 'livepatch_7': starting unpatching transition
+[   27.202392] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[   27.351489] livepatch: 'livepatch_7': unpatching complete
+[   27.762097] livepatch: enabling patch 'livepatch_7'
+[   28.815234] livepatch: 'livepatch_7': starting patching transition
+[   28.987462] livepatch: 'livepatch_7': patching complete
+[   29.094424] livepatch: 'livepatch_7': starting unpatching transition
+[   33.637076] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[   33.933380] livepatch: 'livepatch_7': unpatching complete
+[   35.001592] livepatch: enabling patch 'livepatch_7'
+[   36.199024] livepatch: 'livepatch_7': starting patching transition
+[   36.372460] livepatch: 'livepatch_7': patching complete
+[   36.483398] livepatch: 'livepatch_7': starting unpatching transition
+[   40.728091] livepatch: batched rollback teardown retired 295 of 295 ftrace operations
+[   40.879485] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-15 16:12:21 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 16:12:23 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Grabbing all containers
+---
+

@@ -1,0 +1,67 @@
+diff --git a/skills/mandatory-change-review/references/general-review.md b/skills/mandatory-change-review/references/general-review.md
+index fdfac0a..a4de98f 100644
+--- a/skills/mandatory-change-review/references/general-review.md
++++ b/skills/mandatory-change-review/references/general-review.md
+@@ -50,8 +50,15 @@ Review scope, correctness, commit history, tests, and documentation.
+ - A mechanical-content review exemption does not exempt generated updates
+   from consolidation or from an otherwise required whole-branch history review.
+ - Check commit messages against applicable `AGENTS.md` rules. Messages must
+-  describe the final result and rationale, not the development process. Do not
+-  reformat generated messages such as `confctl` commits.
++  state the finished change, concrete problem, rationale and consequential
++  compatibility in matter-of-fact terms. Flag agent/development `vN` labels,
++  chronological development history, temporary checks/runtime-pending notes
++  and review narration in hand-written shipping descriptions; these belong in
++  session records. Preserve actual release/dependency versions, upstream-authored
++  messages/provenance, credits and sign-offs, and generated `confctl` messages.
++- When retained policy contradicts the user's explicit instructions, flag the
++  stale policy and reconcile it through the task owner; do not force the stale
++  preference onto the deliverable.
+ 
+ Use these vpsAdmin-specific commit red flags:
+ 
+@@ -74,6 +81,10 @@ Use these vpsAdmin-specific commit red flags:
+   and regression coverage for unexpected input, missing or conflicting state,
+   rollback/error paths, authorization failures, mixed-version flows, and
+   repeated or partially completed operations.
++- Trace added tests through their actual normal entrypoints and CI. Check
++  naming and placement against repository conventions and distinguish pure
++  checks from runtime cases. Ad-hoc test presence or a one-off invocation does
++  not establish discoverability; avoid duplicate runners.
+ - For tests transferring containers, VPS datasets, backups, or replacement
+   datasets, require a known file and contents or equivalent checksum before and
+   after the transfer. Metadata-only assertions are insufficient.
+diff --git a/skills/mandatory-change-review/references/risk-review.md b/skills/mandatory-change-review/references/risk-review.md
+index 6e8f275..2620dfd 100644
+--- a/skills/mandatory-change-review/references/risk-review.md
++++ b/skills/mandatory-change-review/references/risk-review.md
+@@ -41,6 +41,13 @@ rollback, and mixed-version operation.
+ - Require explicit rationale and operator actions for intentional incompatible
+   changes. For vpsAdminOS, call out and justify any change requiring coordinated
+   updates of all machines or nodes.
++- Treat new prerequisites or rejection of previously working layouts in a
++  compatibility fix as contract changes. Documentation alone does not prove
++  their necessity; assess the causal evidence and effects on existing users.
++- Support upgrade compatibility claims with actual old-to-new evidence for
++  the affected state and inputs. Distinguish a fresh corrected-image pass from
++  updating an existing old guest's input and activating it. Match the evidence
++  to the claimed path without imposing an unrelated universal test matrix.
+ - Check schema/data migrations for safe conversion, constraints, failure and
+   rollback behavior, and compatibility with the immediately preceding deployed
+   schema.
+diff --git a/skills/mandatory-change-review/references/scope-review.md b/skills/mandatory-change-review/references/scope-review.md
+index 2f94d00..e9a3c66 100644
+--- a/skills/mandatory-change-review/references/scope-review.md
++++ b/skills/mandatory-change-review/references/scope-review.md
+@@ -20,6 +20,11 @@ boundaries, shared abstractions, consumers, and repetition.
+ - Check whether reviewer-driven fixes broadened the product contract instead
+   of correcting behavior inside the chosen boundary. Prefer recording a clear
+   non-goal or residual risk when supporting it would be disproportionate.
++- In compatibility fixes, examine newly invented prerequisites and rejected
++  previously working layouts. Require evidence that the restriction is needed
++  for the requested correction; documenting it alone does not establish that
++  necessity. Consider existing consumers and a narrower correction before
++  accepting the additional failure mode.
+ - Look for obsolete branch iterations, defensive layers, tests, and
+   documentation that can be removed after the final design is chosen. Count
+   maintenance surface, concepts, and failure modes, not only lines of code.

@@ -1,0 +1,131 @@
++ set +e
++ umask 0077
++ _status=0
++ trap _status=1 ERR
++ . /tmp/tmp.qmzl6Go1V0/fresh/activation.sh
+++ source /tmp/tmp.qmzl6Go1V0/fresh/mounts.sh
++++ specialMount '/tmp/tmp.qmzl6Go1V0/fresh/host storage' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' x-initrd.mount,bind none
++++ local 'device=/tmp/tmp.qmzl6Go1V0/fresh/host storage' 'mountPoint=/tmp/tmp.qmzl6Go1V0/fresh/backing storage' options=x-initrd.mount,bind fsType=none
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/host storage' = '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/host storage' = '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/host storage' = none ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/host storage' = '/tmp/tmp.qmzl6Go1V0/fresh/host storage' ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' = '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' ']'
++++ '[' x-initrd.mount,bind = x-initrd.mount,bind ']'
++++ '[' none = none ']'
++++ vpsadminosMountRequired '/tmp/tmp.qmzl6Go1V0/fresh/host storage' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' x-initrd.mount,bind none false true
++++ local 'source=/tmp/tmp.qmzl6Go1V0/fresh/host storage' 'target=/tmp/tmp.qmzl6Go1V0/fresh/backing storage' options=x-initrd.mount,bind fsType=none selected=false directoryBind=true
++++ local backingType backingSource backing mounted=false mountStatus
++++ shift 6
++++ '[' 0 -gt 0 ']'
++++ '[' -e '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' ']'
++++ '[' -d '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' ']'
++++ mountpoint -q -- '/tmp/tmp.qmzl6Go1V0/fresh/backing storage'
++++ local 'path=/tmp/tmp.qmzl6Go1V0/fresh/backing storage'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' = / ']'
++++ case "$path" in
++++ '[' fresh '!=' missing_backing ']'
++++ return 0
++++ mounted=true
++++ true
++++ '[' -d '/tmp/tmp.qmzl6Go1V0/fresh/host storage' ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/host storage' -ef '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' ']'
++++ true
++++ false
++++ '[' -d '/tmp/tmp.qmzl6Go1V0/fresh/host storage' ']'
++++ true
++++ mount -t none -o remount,x-initrd.mount,bind '/tmp/tmp.qmzl6Go1V0/fresh/host storage' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage'
++++ printf '%s\n' '-t none -o remount,x-initrd.mount,bind /tmp/tmp.qmzl6Go1V0/fresh/host storage /tmp/tmp.qmzl6Go1V0/fresh/backing storage'
++++ local 'from=/tmp/tmp.qmzl6Go1V0/fresh/host storage' 'to=/tmp/tmp.qmzl6Go1V0/fresh/backing storage' options=remount,x-initrd.mount,bind
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' = /tmp/tmp.qmzl6Go1V0/fresh/state_target ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' = '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' ']'
++++ '[' fresh '!=' missing_backing ']'
++++ '[' fresh '!=' failed_required_remount ']'
++++ return
++++ mountpoint -q -- '/tmp/tmp.qmzl6Go1V0/fresh/backing storage'
++++ local 'path=/tmp/tmp.qmzl6Go1V0/fresh/backing storage'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' = / ']'
++++ case "$path" in
++++ '[' fresh '!=' missing_backing ']'
++++ return 0
++++ true
++++ '[' -d '/tmp/tmp.qmzl6Go1V0/fresh/host storage' ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/host storage' -ef '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' ']'
++++ return 0
++++ specialMount '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' /tmp/tmp.qmzl6Go1V0/fresh/state_target bind,x-gvfs-hide none
++++ local 'device=/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' mountPoint=/tmp/tmp.qmzl6Go1V0/fresh/state_target options=bind,x-gvfs-hide fsType=none
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' = '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/state_target = /var/lib/nixos ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' = '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' = none ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' = '/tmp/tmp.qmzl6Go1V0/fresh/host storage' ']'
++++ mountpoint -q /tmp/tmp.qmzl6Go1V0/fresh/state_target
++++ local path=/tmp/tmp.qmzl6Go1V0/fresh/state_target
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/state_target = / ']'
++++ case "$path" in
++++ '[' fresh '!=' failed_mount_lookup ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/state_target = /tmp/tmp.qmzl6Go1V0/fresh/state_target ']'
++++ test -f /tmp/tmp.qmzl6Go1V0/fresh/mounted-state
++++ return 32
++++ mkdir -p /tmp/tmp.qmzl6Go1V0/fresh/state_target
++++ '[' fresh '!=' failed_mkdir ']'
++++ true
++++ command mkdir -p /tmp/tmp.qmzl6Go1V0/fresh/state_target
++++ chmod 0755 /tmp/tmp.qmzl6Go1V0/fresh/state_target
++++ mount -t none -o bind,x-gvfs-hide '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' /tmp/tmp.qmzl6Go1V0/fresh/state_target
++++ printf '%s\n' '-t none -o bind,x-gvfs-hide /tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos /tmp/tmp.qmzl6Go1V0/fresh/state_target'
++++ local 'from=/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' to=/tmp/tmp.qmzl6Go1V0/fresh/state_target options=bind,x-gvfs-hide
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/state_target = /tmp/tmp.qmzl6Go1V0/fresh/state_target ']'
++++ printf '%s\n' bind,x-gvfs-hide
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/state_target = '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/state_target = /tmp/tmp.qmzl6Go1V0/fresh/bridge ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/state_target = /tmp/tmp.qmzl6Go1V0/fresh/dependency ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/state_target = /tmp/tmp.qmzl6Go1V0/fresh/unrelated ']'
++++ '[' fresh '!=' failed_bind ']'
++++ '[' fresh '!=' failed_remount ']'
++++ [[ bind,x-gvfs-hide != remount,* ]]
++++ true
++++ rmdir /tmp/tmp.qmzl6Go1V0/fresh/state_target
++++ '[' fresh = wrong_result ']'
++++ ln -s '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' /tmp/tmp.qmzl6Go1V0/fresh/state_target
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/state_target = /tmp/tmp.qmzl6Go1V0/fresh/state_target ']'
++++ touch /tmp/tmp.qmzl6Go1V0/fresh/mounted-state
++++ specialMount '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' /tmp/tmp.qmzl6Go1V0/fresh/log_target bind,x-gvfs-hide none
++++ local 'device=/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' mountPoint=/tmp/tmp.qmzl6Go1V0/fresh/log_target options=bind,x-gvfs-hide fsType=none
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' = '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/nixos' ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' = '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/log_target = /var/log ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' = none ']'
++++ '[' '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' = '/tmp/tmp.qmzl6Go1V0/fresh/host storage' ']'
++++ mountpoint -q /tmp/tmp.qmzl6Go1V0/fresh/log_target
++++ local path=/tmp/tmp.qmzl6Go1V0/fresh/log_target
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/log_target = / ']'
++++ case "$path" in
++++ '[' fresh '!=' failed_mount_lookup ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/log_target = /tmp/tmp.qmzl6Go1V0/fresh/state_target ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/log_target = /tmp/tmp.qmzl6Go1V0/fresh/log_target ']'
++++ test -f /tmp/tmp.qmzl6Go1V0/fresh/mounted-log
++++ return 32
++++ mkdir -p /tmp/tmp.qmzl6Go1V0/fresh/log_target
++++ '[' fresh '!=' failed_mkdir ']'
++++ true
++++ command mkdir -p /tmp/tmp.qmzl6Go1V0/fresh/log_target
++++ chmod 0755 /tmp/tmp.qmzl6Go1V0/fresh/log_target
++++ mount -t none -o bind,x-gvfs-hide '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' /tmp/tmp.qmzl6Go1V0/fresh/log_target
++++ printf '%s\n' '-t none -o bind,x-gvfs-hide /tmp/tmp.qmzl6Go1V0/fresh/backing storage/log /tmp/tmp.qmzl6Go1V0/fresh/log_target'
++++ local 'from=/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' to=/tmp/tmp.qmzl6Go1V0/fresh/log_target options=bind,x-gvfs-hide
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/log_target = /tmp/tmp.qmzl6Go1V0/fresh/state_target ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/log_target = '/tmp/tmp.qmzl6Go1V0/fresh/backing storage' ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/log_target = /tmp/tmp.qmzl6Go1V0/fresh/bridge ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/log_target = /tmp/tmp.qmzl6Go1V0/fresh/dependency ']'
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/log_target = /tmp/tmp.qmzl6Go1V0/fresh/unrelated ']'
++++ '[' fresh '!=' failed_bind ']'
++++ '[' fresh '!=' failed_remount ']'
++++ [[ bind,x-gvfs-hide != remount,* ]]
++++ true
++++ rmdir /tmp/tmp.qmzl6Go1V0/fresh/log_target
++++ '[' fresh = wrong_result ']'
++++ ln -s '/tmp/tmp.qmzl6Go1V0/fresh/backing storage/log' /tmp/tmp.qmzl6Go1V0/fresh/log_target
++++ '[' /tmp/tmp.qmzl6Go1V0/fresh/log_target = /tmp/tmp.qmzl6Go1V0/fresh/state_target ']'
++++ touch /tmp/tmp.qmzl6Go1V0/fresh/mounted-log
++ touch /tmp/tmp.qmzl6Go1V0/fresh/allocator-reached

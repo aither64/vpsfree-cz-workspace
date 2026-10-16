@@ -1,0 +1,151 @@
+<page>navody:server:ssh</page>
+
+====== SSH ======
+
+SSH provides an encrypted remote terminal and secure file transfer. You will
+usually connect to a VPS as ''root'':
+
+<code bash>
+ssh root@VPS_ADDRESS
+</code>
+
+The current VPS addresses are shown in its vpsAdmin details:
+
+{{:en:screenshots:vpsadmin:getting-started:ssh-connection.png?500|VPS addresses and the SSH connection command}}
+
+===== Verifying the server key =====
+
+On the first connection, SSH displays the fingerprint of the server's host key.
+<vpsadmin-nav id="vps.details.open">Open your VPS details in vpsAdmin and
+compare the fingerprint with the **SSH host keys** table.</vpsadmin-nav> Accept
+the key only when the fingerprints match. This check prevents you from
+connecting to another server impersonating your VPS.
+
+{{:en:screenshots:vpsadmin:ssh-keys:host-key-fingerprints.png?600|SSH host-key fingerprints in vpsAdmin}}
+
+The fingerprint changes after reinstalling the VPS or deliberately generating
+new host keys. Remove the old entry only after verifying why it changed and
+checking the new fingerprint:
+
+<code bash>
+ssh-keygen -R VPS_ADDRESS
+</code>
+
+Do not work around an unexplained host-key warning by disabling the check.
+
+===== Public-key authentication =====
+
+A public key is better suited to regular logins than a password. Its private
+part stays on your computer; never send it to the server or to another person.
+Use Ed25519 for a new key and protect it with a strong passphrase:
+
+<code bash>
+ssh-keygen -t ed25519 -a 64 -C "my-computer"
+</code>
+
+The default key location is ''~/.ssh/id_ed25519''. The passphrase protects the
+private key if your computer is lost or compromised. An ''ssh-agent'' or the
+system keyring can remember it securely between logins.
+
+A new VPS allows the initial root login with a password, so copy the public key
+directly:
+
+<code bash>
+ssh-copy-id root@VPS_ADDRESS
+</code>
+
+<vpsadmin-nav id="member.public-keys.add">vpsAdmin can also manage the key. When
+adding it, you can enable automatic deployment to newly created and reinstalled
+VPSes. Open **Edit profile → Public keys → Add public key** and paste the
+contents of ''~/.ssh/id_ed25519.pub''.</vpsadmin-nav>
+
+{{:en:screenshots:vpsadmin:ssh-keys:add-public-key.png?300|Adding a public key}}
+
+The details of a running VPS also contain a form for deploying one of the saved
+public keys later:
+
+{{:en:screenshots:vpsadmin:ssh-keys:deploy-public-key.png?300|Deploying a public key to a VPS}}
+
+Remove a key from your servers when you no longer use it or its private part may
+have been exposed. <vpsadmin-nav id="member.public-keys.open">Also remove it
+from **Edit profile → Public keys** in vpsAdmin.</vpsadmin-nav>
+
+===== Root access =====
+
+The vpsFree templates allow ''root'' to log in over SSH by default. This is
+convenient for the first login, but the root
+password is also a common target of automated attacks.
+
+You can keep direct root login but allow it only with public keys. Set these
+options in the ''sshd'' configuration:
+
+<code>
+PubkeyAuthentication yes
+PermitRootLogin prohibit-password
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+</code>
+
+The configuration is usually in ''/etc/ssh/sshd_config'' or in an included
+file under ''/etc/ssh/sshd_config.d/''. The order in which ''sshd'' reads
+existing settings matters, so always inspect the resulting configuration with
+''sshd -T''.
+
+To disable direct root login completely, create a regular account with
+''sudo''. Verify its key and working ''sudo'' before setting ''PermitRootLogin
+no''. The procedure for creating an administrator account varies by
+distribution. Do not disable direct root login until the new account actually
+works.
+
+On NixOS, do not edit the generated ''sshd_config''. Use
+''services.openssh.settings'' in the system configuration; see the
+[[https://search.nixos.org/options?query=services.openssh|NixOS option search]]
+for details.
+
+===== Changing the configuration safely =====
+
+A configuration mistake can lock you out of the VPS. Use this sequence:
+
+  - Keep the original working SSH connection open and make changes there.
+  - In a second terminal, first verify that the new key works. For a targeted test, use:<code bash>ssh -o PreferredAuthentications=publickey -o PasswordAuthentication=no -o KbdInteractiveAuthentication=no root@VPS_ADDRESS</code>
+  - Only then disable password authentication or root access.
+  - Check the syntax and resulting values before loading the change:<code bash>sshd -t
+sshd -T | grep -E '^(pubkeyauthentication|permitrootlogin|passwordauthentication|kbdinteractiveauthentication) '</code>
+  - If the check reports no error, reload the configuration without terminating existing connections:<code bash>systemctl reload sshd 2>/dev/null || systemctl reload ssh</code>
+  - Open a completely new SSH connection, test the login and ''sudo'' if you use it, and only then close the original session.
+
+The ''sshd -t'' command must exit without output and with status 0. If it fails,
+do not reload the configuration; fix the reported error first.
+
+===== If you lock yourself out =====
+
+If a new SSH connection does not work, **do not close the original session**.
+Revert the change, run ''sshd -t'', reload the service, and also check the
+[[manuals:server:firewall|firewall]].
+
+If no SSH session remains, the [[manuals:vps:console|vpsAdmin remote console
+guide]] walks you through recovery. The console works independently of SSH and
+the network firewall. During a restart it displays the
+[[manuals:vps:start_menu|start menu]]; **Run shell** starts ''/bin/sh'' directly
+inside the VPS, so you can repair the configuration without logging in over
+SSH.
+
+If the normal system is still running and you can log in from the console, fix
+or restore the configuration, validate it, and restart the appropriate service:
+
+<code bash>
+sshd -t
+systemctl restart sshd 2>/dev/null || systemctl restart ssh
+</code>
+
+systemd is not running in the **Run shell** environment, so do not use
+''systemctl'' there. Restore a working configuration, leave the shell with
+''exit'', and select **Start system** in the start menu. Then test a new SSH
+connection. The remote console is intended for exactly this kind of recovery,
+so do not hesitate to use it.
+
+===== Further documentation =====
+
+  * [[https://man.openbsd.org/ssh|OpenSSH client manual]]
+  * [[https://man.openbsd.org/sshd_config|sshd_config reference]]
+  * [[https://documentation.ubuntu.com/server/how-to/security/openssh-server/|OpenSSH server in the Ubuntu documentation]]

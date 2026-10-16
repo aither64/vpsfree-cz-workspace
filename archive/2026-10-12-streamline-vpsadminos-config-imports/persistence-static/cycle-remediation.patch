@@ -1,0 +1,47 @@
+diff --git a/tests/nixos-container-persistence-eval.nix b/tests/nixos-container-persistence-eval.nix
+index 0a0bf512b..40dce6e51 100644
+--- a/tests/nixos-container-persistence-eval.nix
++++ b/tests/nixos-container-persistence-eval.nix
+@@ -58,7 +58,6 @@ let
+   script = c: c.system.activationScripts.script;
+   mounts = c: c.system.build.earlyMountScript.text;
+   force = c: builtins.deepSeq [ (script c) (mounts c) c.system.dryActivationScript ] true;
+-  failure = c: !(builtins.tryEval (force c)).success;
+   checkRelease =
+     release:
+     let
+@@ -130,6 +129,17 @@ let
+           (bind "/var/lib/nixos/log" "/var/log")
+         ])
+       ];
++      # The upstream builder selects .result directly, so a deliberate cycle
++      # produces a hard missing-attribute error that tryEval cannot catch.
++      # Inspect the same pinned upstream topology without building its script.
++      cycleUtils = import (fixtures.${release}.source + "/nixos/lib/utils.nix") {
++        config = cycle;
++        lib = fixtures.${release}.lib;
++        pkgs = import fixtures.${release}.source { inherit system; };
++      };
++      cycleOrder = fixtures.${release}.lib.toposort cycleUtils.fsBefore (
++        builtins.attrValues cycle.boot.specialFileSystems
++      );
+       forced = current [
+         persistence
+         { system.activationScripts.specialfs = lib.mkForce "guest-specialfs"; }
+@@ -239,7 +249,15 @@ let
+         ]) nonBind.system.activationScripts.specialfs.text
+         && force nonBind
+       );
+-      cycle = check "${release} upstream cycle remains an error" (failure cycle);
++      cycle = check "${release} upstream topology reports the selected-bind cycle" (
++        !(cycleOrder ? result)
++        && cycleOrder ? cycle
++        && cycleOrder.cycle != [ ]
++        && lib.all (path: builtins.elem path (map (mount: mount.mountPoint) cycleOrder.cycle)) [
++          "/var/lib/nixos"
++          "/var/log"
++        ]
++      );
+       mkForce = check "${release} guest mkForce retains precedence" (
+         forced.system.activationScripts.specialfs == "guest-specialfs" && force forced
+       );

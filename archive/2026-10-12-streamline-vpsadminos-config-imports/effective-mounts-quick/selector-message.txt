@@ -1,0 +1,30 @@
+os: select NixOS guest compatibility by release (v5)
+
+Generic stable imports currently choose the latest raw compatibility module,
+even for a guest pinned to an older nixpkgs release. Select the module using
+the guest evaluator's release and generate containerStable imports so a
+supported guest upgrade does not require another import edit.
+
+Expose one literal-key release map and derive the retained underscore aliases
+from it. Keep legacy nixosConfigurations aliases on the latest stable file
+and unstable selection explicit. Unknown stable releases fail with guidance
+for updating the input or selecting the explicit unstable module. Raw files
+remain self-contained and guests retain their nixpkgs pin and stateVersion.
+
+Add real-release, template, standalone and unsupported-release evaluation.
+Image checks compare accounts, maps, machine-id and known payload ownership
+across rebuild and restart, and collect all preservation results and mount
+ordering diagnostics before aggregate failure. Guests adopt independently;
+no host coordination, map conversion or recovery of drifted IDs is included.
+
+Release, template, standalone, negative evaluation, hooks and documentation
+checks passed on the retained implementation. Prior exact-head image runtime
+passed separately; current effective-mount verification belongs to the
+independent persistence owner and is recorded in session receipts.
+
+Development history:
+- v1: introduce release selection, grouped exports, templates and coverage.
+- v2: collect preservation results and allocation/mount failure diagnostics.
+- v3: expose specialfs snippet and sourced-mount lines in those diagnostics.
+- v4: describe the finished interface and independent guest adoption.
+- v5: restore policy-compliant versioning and the complete logical history.

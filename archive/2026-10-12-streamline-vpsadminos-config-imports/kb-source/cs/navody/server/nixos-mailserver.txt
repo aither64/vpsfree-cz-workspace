@@ -1,0 +1,40 @@
+<page>manuals:server:nixos-mailserver</page>
+
+====== NixOS Mailserver ======
+
+[[https://gitlab.com/simple-nixos-mailserver/nixos-mailserver|NixOS Mailserver]]
+je komunitní modul pro NixOS a jednoduchý způsob, jak provozovat vlastní
+poštovní server. Z jedné deklarativní konfigurace nastaví příjem a odesílání
+pošty, schránky s přístupem přes IMAP, filtrování spamu, DKIM a TLS. Účty,
+domény, certifikáty a další volby spravuješ společně se zbytkem konfigurace
+NixOS.
+
+===== Co potřebuješ =====
+
+Pro vlastní poštovní server potřebuješ doménu a přístup k jejím DNS záznamům,
+veřejnou IP adresu s nastavitelným [[navody:vps:rdns|reverzním záznamem (PTR)]]
+a dostupný port ''25/tcp''. V DNS potom nastavíš zejména záznamy ''MX'',
+''SPF'', ''DKIM'' a ''DMARC'' podle dokumentace projektu.
+
+===== Instalace =====
+
+NixOS Mailserver vydává větev ''nixos-YY.MM'' pro odpovídající vydání NixOS a
+''nixpkgs''. V
+[[https://gitlab.com/simple-nixos-mailserver/nixos-mailserver#release-branches|přehledu vydání]]
+vyber větev pro svoji verzi systému a stejnou verzi nastav také v přepínači na
+[[https://nixos-mailserver.readthedocs.io/|Read the Docs]]. Potom pokračuj podle
+[[https://nixos-mailserver.readthedocs.io/en/latest/setup-guide.html|aktuálního návodu k instalaci]],
+který popisuje přidání modulu, konfiguraci účtů, certifikátů a potřebných DNS
+záznamů.
+
+Při přechodu na nové vydání si přečti
+[[https://nixos-mailserver.readthedocs.io/en/latest/release-notes.html|poznámky k vydání]]
+a případné
+[[https://nixos-mailserver.readthedocs.io/en/latest/migrations.html|pokyny k migraci]].
+
+===== Ověření z internetu =====
+
+Po nasazení můžeš veřejné DNS záznamy, dostupnost SMTP, reverzní DNS a výskyt IP
+adresy na blocklistech zkontrolovat pomocí
+[[https://mxtoolbox.com/SuperTool.aspx|MXToolbox SuperTool]]. Výsledek ti pomůže
+odhalit chyby v nastavení, které z pohledu samotné VPS nemusí být vidět.

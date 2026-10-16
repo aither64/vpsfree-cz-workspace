@@ -1,0 +1,147 @@
+SHELL: 0
+
+START: 2026-10-15 04:38:53 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 04:38:53 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:38:53 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 04:38:53 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:38:53 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:38:56 +0200
+ELAPSED: 2.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:38:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:38:58 +0200
+ELAPSED: 0.96s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:38:59 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:39:00 +0200
+ELAPSED: 1.22s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:39:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:39:02 +0200
+ELAPSED: 1.4s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:39:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:39:04 +0200
+ELAPSED: 1.11s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:39:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:39:07 +0200
+ELAPSED: 1.13s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:39:08 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:39:09 +0200
+ELAPSED: 1.0s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:39:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:39:12 +0200
+ELAPSED: 2.01s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 04:39:13 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:39:14 +0200
+ELAPSED: 1.36s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:39:14 +0200
+COMMAND: mkdir "/scripts"
+END: 2026-10-15 04:39:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:39:14 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/c0a68562-nix--store--nr21zqb2yi7c396xgzhfiapc7cqp98fj-fallocate-deadlock-reproducer.py" "/scripts/reproducer.py"
+END: 2026-10-15 04:39:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:39:14 +0200
+COMMAND: /scripts/reproducer.py --self-test-outcomes
+END: 2026-10-15 04:39:14 +0200
+ELAPSED: 0.27s
+STATUS: 0
+OUTPUT:
+FALLOCATE_OUTCOME_SELF_TEST=ok
+---
+
+START: 2026-10-15 04:39:14 +0200
+COMMAND: echo 8 4 1 7 > /proc/sys/kernel/printk
+END: 2026-10-15 04:39:14 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:39:14 +0200
+COMMAND: ZFS_FALLOCATE_DEADLOCK_SIZE_MB=2048 ZFS_FALLOCATE_DEADLOCK_ATTEMPTS=12 ZFS_FALLOCATE_DEADLOCK_READERS=64 ZFS_FALLOCATE_DEADLOCK_RELEASE_DELAYS_MS=0,1,2,5,10,20,50,100,250,500,1000,2000 ZFS_FALLOCATE_DEADLOCK_ATTEMPT_TIMEOUT=75 ZFS_FALLOCATE_DEADLOCK_STABLE_SECONDS=5 /scripts/reproducer.py > /run/osvm/shared-dir/fallocate-reproducer.log 2>&1
+END: 2026-10-15 04:39:55 +0200
+ELAPSED: 40.87s
+STATUS: 0
+OUTPUT:
+
+---
+

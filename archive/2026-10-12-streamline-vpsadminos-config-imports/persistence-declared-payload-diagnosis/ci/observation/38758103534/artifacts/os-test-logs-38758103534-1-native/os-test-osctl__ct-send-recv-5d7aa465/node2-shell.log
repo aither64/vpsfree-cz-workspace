@@ -1,0 +1,2236 @@
+SHELL: 0
+
+START: 2026-10-15 20:28:48 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 20:28:49 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:28:49 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 20:28:49 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:28:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:28:51 +0200
+ELAPSED: 2.96s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:28:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:28:54 +0200
+ELAPSED: 1.4s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:28:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:28:58 +0200
+ELAPSED: 3.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:28:59 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:29:00 +0200
+ELAPSED: 0.98s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:29:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:29:03 +0200
+ELAPSED: 1.34s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:29:04 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:29:06 +0200
+ELAPSED: 1.83s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:29:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:29:08 +0200
+ELAPSED: 1.55s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 20:29:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:29:10 +0200
+ELAPSED: 0.87s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 20:29:11 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:29:12 +0200
+ELAPSED: 1.19s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:29:12 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 20:29:12 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 18:29:12 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 20:29:12 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:29:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.518 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.518/0.518/0.518/0.000 ms
+---
+
+START: 2026-10-15 20:29:15 +0200
+COMMAND: osctl send key gen -f -t ed25519
+END: 2026-10-15 20:29:16 +0200
+ELAPSED: 1.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:29:16 +0200
+COMMAND: cat $(osctl send key path public)
+END: 2026-10-15 20:29:17 +0200
+ELAPSED: 1.43s
+STATUS: 0
+OUTPUT:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH/JuxzPCbs2BXCuO+Cg33y1u7MACBXkjTJVNwEk2jZm tank@vpsadminos
+---
+
+START: 2026-10-15 20:29:19 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:29:20 +0200
+ELAPSED: 1.25s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:29:21 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIFAysmVuH3La+HswBqMzZY+HwyWpghv4GXani0GsRo7O\ tank@vpsadminos | osctl receive authorized-keys add node1
+END: 2026-10-15 20:29:22 +0200
+ELAPSED: 1.28s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:29:49 +0200
+COMMAND: osctl -j ct show testct-426c
+END: 2026-10-15 20:29:50 +0200
+ELAPSED: 1.27s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-426c","user":"testct-426c","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-426c","rootfs":"/tank/ct/testct-426c/private","boot_dataset":"tank/ct/testct-426c","boot_rootfs":"/tank/ct/testct-426c/private","lxc_path":"/run/osctl/pools/tank/users/testct-426c/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-426c/group.default/cts/testct-426c","group_path":"osctl/pool.tank/group.default/user.testct-426c/ct.testct-426c/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-426c.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 20:30:03 +0200
+COMMAND: osctl -j ct show testct-426c
+END: 2026-10-15 20:30:04 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-426c","user":"testct-426c","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-426c","rootfs":"/tank/ct/testct-426c/private","boot_dataset":"tank/ct/testct-426c","boot_rootfs":"/tank/ct/testct-426c/private","lxc_path":"/run/osctl/pools/tank/users/testct-426c/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-426c/group.default/cts/testct-426c","group_path":"osctl/pool.tank/group.default/user.testct-426c/ct.testct-426c/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":2775,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-426c.log","memory":6610944,"cpu_us":2174371,"cpu_user_us":1303963,"cpu_system_us":870407,"loadavg":[0.07,0.02,0.0]}
+---
+
+START: 2026-10-15 20:30:04 +0200
+COMMAND: osctl ct exec testct-426c true
+END: 2026-10-15 20:30:07 +0200
+ELAPSED: 2.8s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:08 +0200
+COMMAND: osctl -j ct show testct-426c
+END: 2026-10-15 20:30:09 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-426c","user":"testct-426c","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-426c","rootfs":"/tank/ct/testct-426c/private","boot_dataset":"tank/ct/testct-426c","boot_rootfs":"/tank/ct/testct-426c/private","lxc_path":"/run/osctl/pools/tank/users/testct-426c/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-426c/group.default/cts/testct-426c","group_path":"osctl/pool.tank/group.default/user.testct-426c/ct.testct-426c/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":2775,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-426c.log","memory":6770688,"cpu_us":3774957,"cpu_user_us":2582274,"cpu_system_us":1192682,"loadavg":[0.07,0.02,0.0]}
+---
+
+START: 2026-10-15 20:30:09 +0200
+COMMAND: grep -q '^send_log:' /tank/conf/ct/testct-426c.yml
+END: 2026-10-15 20:30:09 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:11 +0200
+COMMAND: osctl ct del -f --prune testct-426c >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:13 +0200
+ELAPSED: 2.38s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:30:16 +0200
+ELAPSED: 1.18s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:30:16 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 20:30:16 +0200
+ELAPSED: 0.15s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 18:30:16 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 20:30:16 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:30:16 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.566 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.566/0.566/0.566/0.000 ms
+---
+
+START: 2026-10-15 20:30:19 +0200
+COMMAND: osctl send key gen -f -t ed25519
+END: 2026-10-15 20:30:20 +0200
+ELAPSED: 1.28s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:20 +0200
+COMMAND: cat $(osctl send key path public)
+END: 2026-10-15 20:30:21 +0200
+ELAPSED: 1.24s
+STATUS: 0
+OUTPUT:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIABw8PL/C9RtW9ac1dqyC9+IKoKf7mN+uwtmnplZFx1g tank@vpsadminos
+---
+
+START: 2026-10-15 20:30:22 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:23 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:24 +0200
+COMMAND: osctl ct del -f --prune testct-2216 >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:25 +0200
+ELAPSED: 1.21s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:25 +0200
+COMMAND: osctl receive authorized-keys del node1-repeat >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:26 +0200
+ELAPSED: 1.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:26 +0200
+COMMAND: osctl receive authorized-keys del node1-once >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:27 +0200
+ELAPSED: 0.86s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:27 +0200
+COMMAND: osctl receive authorized-keys del node1-from-ok >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:28 +0200
+ELAPSED: 0.89s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:28 +0200
+COMMAND: osctl receive authorized-keys del node1-from-bad >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:29 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:40 +0200
+COMMAND: osctl ct del -f --prune testct-2216 >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:42 +0200
+ELAPSED: 1.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:42 +0200
+COMMAND: osctl receive authorized-keys del node1-repeat >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:43 +0200
+ELAPSED: 1.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:43 +0200
+COMMAND: osctl receive authorized-keys del node1-once >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:44 +0200
+ELAPSED: 1.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:44 +0200
+COMMAND: osctl receive authorized-keys del node1-from-ok >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:45 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:45 +0200
+COMMAND: osctl receive authorized-keys del node1-from-bad >/dev/null 2>&1 || true
+END: 2026-10-15 20:30:46 +0200
+ELAPSED: 1.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:46 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz\ tank@vpsadminos | osctl receive authorized-keys add --passphrase repeat node1-repeat
+END: 2026-10-15 20:30:47 +0200
+ELAPSED: 1.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:30:56 +0200
+COMMAND: osctl -j receive authorized-keys ls
+END: 2026-10-15 20:30:57 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+[{"name":"node1-repeat","pubkey":"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz tank@vpsadminos","from":null,"ctid":null,"passphrase":"repeat","single_use":false,"in_use":false}]
+---
+
+START: 2026-10-15 20:30:57 +0200
+COMMAND: osctl ct del -f --prune testct-2216
+END: 2026-10-15 20:31:00 +0200
+ELAPSED: 2.52s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-2216
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 20:31:02 +0200
+COMMAND: osctl -j receive authorized-keys ls
+END: 2026-10-15 20:31:03 +0200
+ELAPSED: 1.34s
+STATUS: 0
+OUTPUT:
+[{"name":"node1-repeat","pubkey":"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz tank@vpsadminos","from":null,"ctid":null,"passphrase":"repeat","single_use":false,"in_use":false}]
+---
+
+START: 2026-10-15 20:31:06 +0200
+COMMAND: osctl ct show testct-2216
+END: 2026-10-15 20:31:07 +0200
+ELAPSED: 1.12s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 20:31:08 +0200
+COMMAND: osctl ct del -f --prune testct-2216 >/dev/null 2>&1 || true
+END: 2026-10-15 20:31:09 +0200
+ELAPSED: 1.31s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:09 +0200
+COMMAND: osctl receive authorized-keys del node1-repeat >/dev/null 2>&1 || true
+END: 2026-10-15 20:31:11 +0200
+ELAPSED: 1.38s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:11 +0200
+COMMAND: osctl receive authorized-keys del node1-once >/dev/null 2>&1 || true
+END: 2026-10-15 20:31:12 +0200
+ELAPSED: 1.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:12 +0200
+COMMAND: osctl receive authorized-keys del node1-from-ok >/dev/null 2>&1 || true
+END: 2026-10-15 20:31:13 +0200
+ELAPSED: 1.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:13 +0200
+COMMAND: osctl receive authorized-keys del node1-from-bad >/dev/null 2>&1 || true
+END: 2026-10-15 20:31:14 +0200
+ELAPSED: 0.91s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:14 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz\ tank@vpsadminos | osctl receive authorized-keys add --passphrase once --single-use node1-once
+END: 2026-10-15 20:31:15 +0200
+ELAPSED: 1.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:24 +0200
+COMMAND: osctl -j receive authorized-keys ls
+END: 2026-10-15 20:31:25 +0200
+ELAPSED: 1.09s
+STATUS: 0
+OUTPUT:
+[]
+---
+
+START: 2026-10-15 20:31:25 +0200
+COMMAND: osctl ct del -f --prune testct-2216
+END: 2026-10-15 20:31:27 +0200
+ELAPSED: 2.25s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-2216
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 20:31:28 +0200
+COMMAND: osctl ct show testct-2216
+END: 2026-10-15 20:31:30 +0200
+ELAPSED: 1.17s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 20:31:31 +0200
+COMMAND: osctl ct del -f --prune testct-2216 >/dev/null 2>&1 || true
+END: 2026-10-15 20:31:32 +0200
+ELAPSED: 1.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:32 +0200
+COMMAND: osctl receive authorized-keys del node1-repeat >/dev/null 2>&1 || true
+END: 2026-10-15 20:31:33 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:33 +0200
+COMMAND: osctl receive authorized-keys del node1-once >/dev/null 2>&1 || true
+END: 2026-10-15 20:31:34 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:34 +0200
+COMMAND: osctl receive authorized-keys del node1-from-ok >/dev/null 2>&1 || true
+END: 2026-10-15 20:31:35 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:35 +0200
+COMMAND: osctl receive authorized-keys del node1-from-bad >/dev/null 2>&1 || true
+END: 2026-10-15 20:31:36 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:36 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz\ tank@vpsadminos | osctl receive authorized-keys add --passphrase once --single-use node1-once
+END: 2026-10-15 20:31:38 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:38 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz\ tank@vpsadminos | osctl receive authorized-keys add --passphrase repeat node1-repeat
+END: 2026-10-15 20:31:39 +0200
+ELAPSED: 1.34s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:31:47 +0200
+COMMAND: osctl -j receive authorized-keys ls
+END: 2026-10-15 20:31:48 +0200
+ELAPSED: 0.84s
+STATUS: 0
+OUTPUT:
+[{"name":"node1-once","pubkey":"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz tank@vpsadminos","from":null,"ctid":null,"passphrase":"once","single_use":true,"in_use":false},{"name":"node1-repeat","pubkey":"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz tank@vpsadminos","from":null,"ctid":null,"passphrase":"repeat","single_use":false,"in_use":false}]
+---
+
+START: 2026-10-15 20:31:48 +0200
+COMMAND: osctl -j receive authorized-keys ls
+END: 2026-10-15 20:31:49 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+[{"name":"node1-once","pubkey":"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz tank@vpsadminos","from":null,"ctid":null,"passphrase":"once","single_use":true,"in_use":false},{"name":"node1-repeat","pubkey":"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz tank@vpsadminos","from":null,"ctid":null,"passphrase":"repeat","single_use":false,"in_use":false}]
+---
+
+START: 2026-10-15 20:31:49 +0200
+COMMAND: osctl -j receive authorized-keys ls
+END: 2026-10-15 20:31:50 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+[{"name":"node1-once","pubkey":"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz tank@vpsadminos","from":null,"ctid":null,"passphrase":"once","single_use":true,"in_use":false},{"name":"node1-repeat","pubkey":"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz tank@vpsadminos","from":null,"ctid":null,"passphrase":"repeat","single_use":false,"in_use":false}]
+---
+
+START: 2026-10-15 20:31:50 +0200
+COMMAND: osctl ct del -f --prune testct-2216
+END: 2026-10-15 20:31:52 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-2216
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 20:32:00 +0200
+COMMAND: osctl -j receive authorized-keys ls
+END: 2026-10-15 20:32:01 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+[{"name":"node1-repeat","pubkey":"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz tank@vpsadminos","from":null,"ctid":null,"passphrase":"repeat","single_use":false,"in_use":false}]
+---
+
+START: 2026-10-15 20:32:01 +0200
+COMMAND: osctl -j receive authorized-keys ls
+END: 2026-10-15 20:32:02 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+[{"name":"node1-repeat","pubkey":"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz tank@vpsadminos","from":null,"ctid":null,"passphrase":"repeat","single_use":false,"in_use":false}]
+---
+
+START: 2026-10-15 20:32:03 +0200
+COMMAND: osctl ct del -f --prune testct-2216 >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:05 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:05 +0200
+COMMAND: osctl receive authorized-keys del node1-repeat >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:06 +0200
+ELAPSED: 1.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:06 +0200
+COMMAND: osctl receive authorized-keys del node1-once >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:07 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:07 +0200
+COMMAND: osctl receive authorized-keys del node1-from-ok >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:08 +0200
+ELAPSED: 1.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:08 +0200
+COMMAND: osctl receive authorized-keys del node1-from-bad >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:09 +0200
+ELAPSED: 1.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:09 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz\ tank@vpsadminos | osctl receive authorized-keys add --from 192.168.10.11 --passphrase from-ok node1-from-ok
+END: 2026-10-15 20:32:10 +0200
+ELAPSED: 0.91s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:14 +0200
+COMMAND: osctl ct show testct-2216
+END: 2026-10-15 20:32:15 +0200
+ELAPSED: 1.06s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 20:32:15 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIJHVTlr0ZJpMa3LpI6lQZEw8gw8weN3Jh31Jf6euwfvz\ tank@vpsadminos | osctl receive authorized-keys add --from 203.0.113.\* --passphrase from-bad node1-from-bad
+END: 2026-10-15 20:32:16 +0200
+ELAPSED: 0.86s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:17 +0200
+COMMAND: osctl ct show testct-2216
+END: 2026-10-15 20:32:19 +0200
+ELAPSED: 1.02s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 20:32:20 +0200
+COMMAND: osctl ct del -f --prune testct-2216 >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:21 +0200
+ELAPSED: 1.19s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:21 +0200
+COMMAND: osctl receive authorized-keys del node1-repeat >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:22 +0200
+ELAPSED: 0.75s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:22 +0200
+COMMAND: osctl receive authorized-keys del node1-once >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:22 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:22 +0200
+COMMAND: osctl receive authorized-keys del node1-from-ok >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:24 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:24 +0200
+COMMAND: osctl receive authorized-keys del node1-from-bad >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:25 +0200
+ELAPSED: 1.17s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:27 +0200
+COMMAND: osctl ct del -f --prune testct-2216 >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:28 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:29 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:32:30 +0200
+ELAPSED: 1.22s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:32:30 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 20:32:30 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 18:32:30 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 20:32:30 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:32:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.735 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.735/0.735/0.735/0.000 ms
+---
+
+START: 2026-10-15 20:32:33 +0200
+COMMAND: osctl send key gen -f -t ed25519
+END: 2026-10-15 20:32:34 +0200
+ELAPSED: 1.19s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:34 +0200
+COMMAND: cat $(osctl send key path public)
+END: 2026-10-15 20:32:35 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPyAohHSUZK/g9DlppYgmUmN1MmkOxzL6Ct7GryN58Xf tank@vpsadminos
+---
+
+START: 2026-10-15 20:32:36 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:37 +0200
+ELAPSED: 1.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:38 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIK/mhugmwsFHWWa72glhOBHrdJ9FMRACprbcF54qtt8G\ tank@vpsadminos | osctl receive authorized-keys add node1
+END: 2026-10-15 20:32:39 +0200
+ELAPSED: 0.84s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:32:57 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:32:59 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:33:05 +0200
+COMMAND: osctl -j ct show testct-c9c9
+END: 2026-10-15 20:33:06 +0200
+ELAPSED: 1.13s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-c9c9","user":"testct-c9c9","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-c9c9","rootfs":"/tank/ct/testct-c9c9/private","boot_dataset":"tank/ct/testct-c9c9","boot_rootfs":"/tank/ct/testct-c9c9/private","lxc_path":"/run/osctl/pools/tank/users/testct-c9c9/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-c9c9/group.default/cts/testct-c9c9","group_path":"osctl/pool.tank/group.default/user.testct-c9c9/ct.testct-c9c9/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-c9c9.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 20:33:06 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:33:07 +0200
+ELAPSED: 0.86s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:33:08 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIK/mhugmwsFHWWa72glhOBHrdJ9FMRACprbcF54qtt8G\ tank@vpsadminos | osctl receive authorized-keys add node1
+END: 2026-10-15 20:33:09 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:33:15 +0200
+COMMAND: osctl -j ct show testct-c9c9
+END: 2026-10-15 20:33:17 +0200
+ELAPSED: 1.22s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-c9c9","user":"testct-c9c9","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-c9c9","rootfs":"/tank/ct/testct-c9c9/private","boot_dataset":"tank/ct/testct-c9c9","boot_rootfs":"/tank/ct/testct-c9c9/private","lxc_path":"/run/osctl/pools/tank/users/testct-c9c9/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-c9c9/group.default/cts/testct-c9c9","group_path":"osctl/pool.tank/group.default/user.testct-c9c9/ct.testct-c9c9/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":6625,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-c9c9.log","memory":5828608,"cpu_us":1449722,"cpu_user_us":866661,"cpu_system_us":583061,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 20:33:17 +0200
+COMMAND: osctl ct exec testct-c9c9 true
+END: 2026-10-15 20:33:19 +0200
+ELAPSED: 2.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:33:20 +0200
+COMMAND: grep -q '^send_log:' /tank/conf/ct/testct-c9c9.yml
+END: 2026-10-15 20:33:20 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:33:20 +0200
+COMMAND: osctl ct exec testct-c9c9 /bin/sh -c "cat /tmp/send-transfer/before-failed-state"
+END: 2026-10-15 20:33:23 +0200
+ELAPSED: 2.56s
+STATUS: 0
+OUTPUT:
+before-failed-state
+---
+
+START: 2026-10-15 20:33:23 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:33:24 +0200
+ELAPSED: 1.24s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:33:25 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIK/mhugmwsFHWWa72glhOBHrdJ9FMRACprbcF54qtt8G\ tank@vpsadminos | osctl receive authorized-keys add node1
+END: 2026-10-15 20:33:26 +0200
+ELAPSED: 0.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:33:27 +0200
+COMMAND: osctl ct del -f --prune testct-c9c9 >/dev/null 2>&1 || true
+END: 2026-10-15 20:33:29 +0200
+ELAPSED: 2.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:33:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:33:31 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:33:31 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 20:33:31 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 18:33:31 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 20:33:31 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:33:31 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.664 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.664/0.664/0.664/0.000 ms
+---
+
+START: 2026-10-15 20:33:33 +0200
+COMMAND: osctl send key gen -f -t ed25519
+END: 2026-10-15 20:33:34 +0200
+ELAPSED: 1.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:33:34 +0200
+COMMAND: cat $(osctl send key path public)
+END: 2026-10-15 20:33:35 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIFoUpQgTqkURzoZ3w4hD1jMHkN12br2/ukCDbHPjqbd tank@vpsadminos
+---
+
+START: 2026-10-15 20:33:36 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:33:37 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:33:38 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAILASfxNb3a3T7PDaaB/G3Yea1JvXlvatYeoNJY6hKs+t\ tank@vpsadminos | osctl receive authorized-keys add node1
+END: 2026-10-15 20:33:38 +0200
+ELAPSED: 0.81s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:33:56 +0200
+COMMAND: pgrep -a -f 'zfs recv -F -u' || true
+END: 2026-10-15 20:33:56 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+7255 bash -c set -euo pipefail; pgrep -a -f 'zfs recv -F -u' || true
+---
+
+START: 2026-10-15 20:33:57 +0200
+COMMAND: pgrep -a -f 'zfs recv -F -u' || true
+END: 2026-10-15 20:33:57 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+7260 bash -c set -euo pipefail; pgrep -a -f 'zfs recv -F -u' || true
+---
+
+START: 2026-10-15 20:33:58 +0200
+COMMAND: pgrep -a -f 'zfs recv -F -u' || true
+END: 2026-10-15 20:33:58 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+7277 zfs recv -F -u tank/ct/testct-6073
+7283 bash -c set -euo pipefail; pgrep -a -f 'zfs recv -F -u' || true
+---
+
+START: 2026-10-15 20:33:58 +0200
+COMMAND: kill -KILL 7277
+END: 2026-10-15 20:33:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:34:13 +0200
+COMMAND: osctl ct show testct-6073
+END: 2026-10-15 20:34:14 +0200
+ELAPSED: 0.95s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 20:34:26 +0200
+COMMAND: osctl ct show testct-6073
+END: 2026-10-15 20:34:27 +0200
+ELAPSED: 0.98s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 20:34:34 +0200
+COMMAND: osctl ct del -f --prune testct-6073 >/dev/null 2>&1 || true
+END: 2026-10-15 20:34:35 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:34:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:34:37 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:34:37 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 20:34:37 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 18:34:37 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 20:34:37 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:34:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.697 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.697/0.697/0.697/0.000 ms
+---
+
+START: 2026-10-15 20:34:39 +0200
+COMMAND: osctl send key gen -f -t ed25519
+END: 2026-10-15 20:34:40 +0200
+ELAPSED: 1.33s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:34:40 +0200
+COMMAND: cat $(osctl send key path public)
+END: 2026-10-15 20:34:42 +0200
+ELAPSED: 1.3s
+STATUS: 0
+OUTPUT:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBjNfsCNeNtU9tLRjC4whQT1Jmt79FJqAxOGE8IHADvt tank@vpsadminos
+---
+
+START: 2026-10-15 20:34:42 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:34:43 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:34:44 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIO4N+arinpBoeq5aJk8h8u9CqqriknouNVdhYEfwHQ4V\ tank@vpsadminos | osctl receive authorized-keys add node1
+END: 2026-10-15 20:34:45 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:35:15 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 20:35:16 +0200
+ELAPSED: 0.44s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 7621) 1s
+---
+
+START: 2026-10-15 20:35:16 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 20:35:16 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 7621) 1s
+---
+
+START: 2026-10-15 20:35:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:35:16 +0200
+ELAPSED: 0.86s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:35:17 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:35:18 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 20:35:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:35:21 +0200
+ELAPSED: 1.27s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:35:21 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:35:21 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=1.18 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 1.178/1.178/1.178/0.000 ms
+---
+
+START: 2026-10-15 20:35:21 +0200
+COMMAND: osctl -j ct show testct-da4d
+END: 2026-10-15 20:35:22 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-da4d","user":"testct-da4d","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-da4d","rootfs":"/tank/ct/testct-da4d/private","boot_dataset":"tank/ct/testct-da4d","boot_rootfs":"/tank/ct/testct-da4d/private","lxc_path":"/run/osctl/pools/tank/users/testct-da4d/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-da4d/group.default/cts/testct-da4d","group_path":"osctl/pool.tank/group.default/user.testct-da4d/ct.testct-da4d/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-da4d.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 20:35:31 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 20:35:31 +0200
+ELAPSED: 0.44s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 7755) 0s
+---
+
+START: 2026-10-15 20:35:31 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 20:35:31 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 7755) 0s
+---
+
+START: 2026-10-15 20:35:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:35:32 +0200
+ELAPSED: 0.81s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:35:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:35:34 +0200
+ELAPSED: 1.03s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 20:35:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:35:36 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:35:36 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:35:36 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.531 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.531/0.531/0.531/0.000 ms
+---
+
+START: 2026-10-15 20:35:36 +0200
+COMMAND: osctl -j ct show testct-da4d
+END: 2026-10-15 20:35:38 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-da4d","user":"testct-da4d","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-da4d","rootfs":"/tank/ct/testct-da4d/private","boot_dataset":"tank/ct/testct-da4d","boot_rootfs":"/tank/ct/testct-da4d/private","lxc_path":"/run/osctl/pools/tank/users/testct-da4d/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-da4d/group.default/cts/testct-da4d","group_path":"osctl/pool.tank/group.default/user.testct-da4d/ct.testct-da4d/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-da4d.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 20:35:45 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 20:35:46 +0200
+ELAPSED: 0.44s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 7876) 1s
+---
+
+START: 2026-10-15 20:35:46 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 20:35:46 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 7876) 1s
+---
+
+START: 2026-10-15 20:35:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:35:47 +0200
+ELAPSED: 0.75s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:35:48 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:35:49 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 20:35:50 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:35:51 +0200
+ELAPSED: 1.3s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:35:51 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:35:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.758 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.758/0.758/0.758/0.000 ms
+---
+
+START: 2026-10-15 20:35:51 +0200
+COMMAND: osctl -j ct show testct-da4d
+END: 2026-10-15 20:35:52 +0200
+ELAPSED: 1.24s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-da4d","user":"testct-da4d","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-da4d","rootfs":"/tank/ct/testct-da4d/private","boot_dataset":"tank/ct/testct-da4d","boot_rootfs":"/tank/ct/testct-da4d/private","lxc_path":"/run/osctl/pools/tank/users/testct-da4d/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-da4d/group.default/cts/testct-da4d","group_path":"osctl/pool.tank/group.default/user.testct-da4d/ct.testct-da4d/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-da4d.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 20:36:09 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 20:36:09 +0200
+ELAPSED: 0.44s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 8428) 0s
+---
+
+START: 2026-10-15 20:36:09 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 20:36:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 8428) 0s
+---
+
+START: 2026-10-15 20:36:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:36:10 +0200
+ELAPSED: 0.94s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:36:11 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:36:12 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 20:36:13 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:36:14 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:36:14 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:36:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.686 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.686/0.686/0.686/0.000 ms
+---
+
+START: 2026-10-15 20:36:14 +0200
+COMMAND: osctl -j ct show testct-da4d
+END: 2026-10-15 20:36:16 +0200
+ELAPSED: 1.13s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-da4d","user":"testct-da4d","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-da4d","rootfs":"/tank/ct/testct-da4d/private","boot_dataset":"tank/ct/testct-da4d","boot_rootfs":"/tank/ct/testct-da4d/private","lxc_path":"/run/osctl/pools/tank/users/testct-da4d/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-da4d/group.default/cts/testct-da4d","group_path":"osctl/pool.tank/group.default/user.testct-da4d/ct.testct-da4d/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":8039,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-da4d.log","memory":5906432,"cpu_us":1595721,"cpu_user_us":942492,"cpu_system_us":653228,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 20:36:16 +0200
+COMMAND: osctl ct exec testct-da4d true
+END: 2026-10-15 20:36:18 +0200
+ELAPSED: 2.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:36:22 +0200
+COMMAND: osctl -j ct show testct-da4d
+END: 2026-10-15 20:36:23 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-da4d","user":"testct-da4d","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-da4d","rootfs":"/tank/ct/testct-da4d/private","boot_dataset":"tank/ct/testct-da4d","boot_rootfs":"/tank/ct/testct-da4d/private","lxc_path":"/run/osctl/pools/tank/users/testct-da4d/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-da4d/group.default/cts/testct-da4d","group_path":"osctl/pool.tank/group.default/user.testct-da4d/ct.testct-da4d/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":8039,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-da4d.log","memory":5906432,"cpu_us":3048302,"cpu_user_us":2108742,"cpu_system_us":939559,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 20:36:23 +0200
+COMMAND: grep -q '^send_log:' /tank/conf/ct/testct-da4d.yml
+END: 2026-10-15 20:36:23 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:36:23 +0200
+COMMAND: osctl ct exec testct-da4d /bin/sh -c "cat /tmp/send-transfer/restart-base"
+END: 2026-10-15 20:36:25 +0200
+ELAPSED: 2.71s
+STATUS: 0
+OUTPUT:
+restart-base
+---
+
+START: 2026-10-15 20:36:25 +0200
+COMMAND: osctl ct exec testct-da4d /bin/sh -c "cat /tmp/send-transfer/restart-sync"
+END: 2026-10-15 20:36:27 +0200
+ELAPSED: 2.09s
+STATUS: 0
+OUTPUT:
+restart-sync
+---
+
+START: 2026-10-15 20:36:27 +0200
+COMMAND: osctl ct exec testct-da4d /bin/sh -c "cat /tmp/send-transfer/restart-state"
+END: 2026-10-15 20:36:30 +0200
+ELAPSED: 2.8s
+STATUS: 0
+OUTPUT:
+restart-state
+---
+
+START: 2026-10-15 20:36:30 +0200
+COMMAND: osctl ct exec testct-da4d /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 20:36:32 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 20:36:32 +0200
+COMMAND: osctl ct exec testct-da4d /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 20:36:35 +0200
+ELAPSED: 2.25s
+STATUS: 0
+OUTPUT:
+send-restart-service
+---
+
+START: 2026-10-15 20:36:36 +0200
+COMMAND: osctl ct del -f --prune testct-da4d >/dev/null 2>&1 || true
+END: 2026-10-15 20:36:38 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:36:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:36:40 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:36:40 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 20:36:40 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 18:36:40 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 20:36:40 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:36:40 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.582 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.582/0.582/0.582/0.000 ms
+---
+
+START: 2026-10-15 20:36:42 +0200
+COMMAND: osctl send key gen -f -t ed25519
+END: 2026-10-15 20:36:43 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:36:43 +0200
+COMMAND: cat $(osctl send key path public)
+END: 2026-10-15 20:36:44 +0200
+ELAPSED: 0.76s
+STATUS: 0
+OUTPUT:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBocurwX23JZ+K7FQmzYLXNSsthxhVFzrz9I1z014NLD tank@vpsadminos
+---
+
+START: 2026-10-15 20:36:45 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:36:46 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:36:47 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIOTwAbWJC8NnKJ7Az2sYpMrRHhOUZUac0HXQALYgoWLo\ tank@vpsadminos | osctl receive authorized-keys add node1
+END: 2026-10-15 20:36:47 +0200
+ELAPSED: 0.81s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:36:47 +0200
+COMMAND: osctl ct show testct-0114
+END: 2026-10-15 20:36:48 +0200
+ELAPSED: 0.9s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 20:37:35 +0200
+COMMAND: osctl -j ct show testct-0114
+END: 2026-10-15 20:37:36 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-0114","user":"testct-0114","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-0114","rootfs":"/tank/ct/testct-0114/private","boot_dataset":"tank/ct/testct-0114","boot_rootfs":"/tank/ct/testct-0114/private","lxc_path":"/run/osctl/pools/tank/users/testct-0114/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-0114/group.default/cts/testct-0114","group_path":"osctl/pool.tank/group.default/user.testct-0114/ct.testct-0114/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":9020,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-0114.log","memory":5906432,"cpu_us":1717004,"cpu_user_us":1009696,"cpu_system_us":707308,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-15 20:37:36 +0200
+COMMAND: osctl ct exec testct-0114 true
+END: 2026-10-15 20:37:39 +0200
+ELAPSED: 2.38s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:37:40 +0200
+COMMAND: osctl -j ct show testct-0114
+END: 2026-10-15 20:37:41 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-0114","user":"testct-0114","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-0114","rootfs":"/tank/ct/testct-0114/private","boot_dataset":"tank/ct/testct-0114","boot_rootfs":"/tank/ct/testct-0114/private","lxc_path":"/run/osctl/pools/tank/users/testct-0114/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-0114/group.default/cts/testct-0114","group_path":"osctl/pool.tank/group.default/user.testct-0114/ct.testct-0114/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":9020,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-0114.log","memory":5906432,"cpu_us":3252896,"cpu_user_us":2253279,"cpu_system_us":999617,"loadavg":[0.15,0.03,0.01]}
+---
+
+START: 2026-10-15 20:37:41 +0200
+COMMAND: grep -q '^send_log:' /tank/conf/ct/testct-0114.yml
+END: 2026-10-15 20:37:41 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:37:41 +0200
+COMMAND: osctl ct exec testct-0114 /bin/sh -c "cat /tmp/send-transfer/before-rootfs"
+END: 2026-10-15 20:37:44 +0200
+ELAPSED: 2.83s
+STATUS: 0
+OUTPUT:
+before-rootfs
+---
+
+START: 2026-10-15 20:37:44 +0200
+COMMAND: osctl ct exec testct-0114 /bin/sh -c "cat /tmp/send-transfer/after-rootfs"
+END: 2026-10-15 20:37:46 +0200
+ELAPSED: 2.81s
+STATUS: 0
+OUTPUT:
+after-rootfs
+---
+
+START: 2026-10-15 20:37:46 +0200
+COMMAND: osctl ct exec testct-0114 /bin/sh -c "cat /tmp/send-transfer/after-sync"
+END: 2026-10-15 20:37:49 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+after-sync
+---
+
+START: 2026-10-15 20:37:49 +0200
+COMMAND: osctl ct exec testct-0114 /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 20:37:51 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 20:37:51 +0200
+COMMAND: osctl ct exec testct-0114 /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 20:37:54 +0200
+ELAPSED: 2.6s
+STATUS: 0
+OUTPUT:
+send-service
+---
+
+START: 2026-10-15 20:37:54 +0200
+COMMAND: osctl ct exec testct-0114 /bin/sh -c "mkdir -p /tmp/send-transfer && printf '%s\\n' \"before-return\" > /tmp/send-transfer/before-return"
+END: 2026-10-15 20:37:56 +0200
+ELAPSED: 2.39s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:37:56 +0200
+COMMAND: osctl ct send testct-0114 node1
+END: 2026-10-15 20:38:08 +0200
+ELAPSED: 12.36s
+STATUS: 0
+OUTPUT:
+* Sending config
+* Sending rootfs
+> Syncing /
+* Sending state
+> Stopping container
+> Syncing /
+> Starting on the target node
+* Cleaning up
+> Stopping container
+> Stopping container
+> Verifying recovery cleanup
+> Disconnecting console
+> Removing shared mount directory
+> Moving dataset to trash
+> Removing LXC configuration and script hooks
+> Unregistering container
+> Removing cgroups
+> Unregistering user tank:testct-0114
+> Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 20:38:12 +0200
+COMMAND: osctl ct show testct-0114
+END: 2026-10-15 20:38:13 +0200
+ELAPSED: 1.0s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 20:38:32 +0200
+COMMAND: osctl ct del -f --prune testct-0114 >/dev/null 2>&1 || true
+END: 2026-10-15 20:38:33 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:38:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:38:35 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:38:35 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 20:38:36 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 18:38:36 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 20:38:36 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:38:36 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.548 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.548/0.548/0.548/0.000 ms
+---
+
+START: 2026-10-15 20:38:38 +0200
+COMMAND: osctl send key gen -f -t ed25519
+END: 2026-10-15 20:38:39 +0200
+ELAPSED: 1.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:38:39 +0200
+COMMAND: cat $(osctl send key path public)
+END: 2026-10-15 20:38:40 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPL/MrWgSWYsiWAy0tigCj16XhbL9yR/5ECe4f3c8DYf tank@vpsadminos
+---
+
+START: 2026-10-15 20:38:41 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:38:42 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:38:43 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAINQgbLbcRQSzilveGoQJ/wn0b0DnW1VsULEsH4HZHaXl\ tank@vpsadminos | osctl receive authorized-keys add node1
+END: 2026-10-15 20:38:43 +0200
+ELAPSED: 0.79s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:38:59 +0200
+COMMAND: install -d -m 700 /tank/hook/ct/testct-2f9d
+cat > /tank/hook/ct/testct-2f9d/pre-start <<'EOF'
+#!/bin/sh
+exit 1
+
+EOF
+chmod 700 /tank/hook/ct/testct-2f9d/pre-start
+END: 2026-10-15 20:38:59 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:39:07 +0200
+COMMAND: osctl -j ct show testct-2f9d
+END: 2026-10-15 20:39:08 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-2f9d","user":"testct-2f9d","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-2f9d","rootfs":"/tank/ct/testct-2f9d/private","boot_dataset":"tank/ct/testct-2f9d","boot_rootfs":"/tank/ct/testct-2f9d/private","lxc_path":"/run/osctl/pools/tank/users/testct-2f9d/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-2f9d/group.default/cts/testct-2f9d","group_path":"osctl/pool.tank/group.default/user.testct-2f9d/ct.testct-2f9d/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-2f9d.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 20:39:08 +0200
+COMMAND: rm -f /tank/hook/ct/testct-2f9d/pre-start
+END: 2026-10-15 20:39:08 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:39:12 +0200
+COMMAND: osctl -j ct show testct-2f9d
+END: 2026-10-15 20:39:13 +0200
+ELAPSED: 1.08s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-2f9d","user":"testct-2f9d","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-2f9d","rootfs":"/tank/ct/testct-2f9d/private","boot_dataset":"tank/ct/testct-2f9d","boot_rootfs":"/tank/ct/testct-2f9d/private","lxc_path":"/run/osctl/pools/tank/users/testct-2f9d/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-2f9d/group.default/cts/testct-2f9d","group_path":"osctl/pool.tank/group.default/user.testct-2f9d/ct.testct-2f9d/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":10234,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-2f9d.log","memory":6115328,"cpu_us":1646755,"cpu_user_us":1018745,"cpu_system_us":628010,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 20:39:13 +0200
+COMMAND: osctl ct exec testct-2f9d true
+END: 2026-10-15 20:39:16 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:39:19 +0200
+COMMAND: grep -q '^send_log:' /tank/conf/ct/testct-2f9d.yml
+END: 2026-10-15 20:39:19 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:39:19 +0200
+COMMAND: rm -f /tank/hook/ct/testct-2f9d/pre-start
+END: 2026-10-15 20:39:19 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:39:20 +0200
+COMMAND: osctl ct del -f --prune testct-2f9d >/dev/null 2>&1 || true
+END: 2026-10-15 20:39:22 +0200
+ELAPSED: 2.15s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:39:23 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:39:24 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:39:24 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 20:39:24 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 18:39:24 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 20:39:24 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:39:24 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.584 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.584/0.584/0.584/0.000 ms
+---
+
+START: 2026-10-15 20:39:26 +0200
+COMMAND: osctl send key gen -f -t ed25519
+END: 2026-10-15 20:39:27 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:39:27 +0200
+COMMAND: cat $(osctl send key path public)
+END: 2026-10-15 20:39:28 +0200
+ELAPSED: 1.25s
+STATUS: 0
+OUTPUT:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINs+KzLlnHUhXpkjz+o1XYZoqI+dE/r2lFvPYuSrF4XW tank@vpsadminos
+---
+
+START: 2026-10-15 20:39:29 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:39:30 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:39:31 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIFms3MdOKoeGDaheVWTxblhialBdpbIfb6l8Z8Lv1Vg5\ tank@vpsadminos | osctl receive authorized-keys add node1
+END: 2026-10-15 20:39:33 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:39:51 +0200
+COMMAND: osctl -j ct show testct-cd3a
+END: 2026-10-15 20:39:52 +0200
+ELAPSED: 1.28s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-cd3a","user":"testct-cd3a","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-cd3a","rootfs":"/tank/ct/testct-cd3a/private","boot_dataset":"tank/ct/testct-cd3a","boot_rootfs":"/tank/ct/testct-cd3a/private","lxc_path":"/run/osctl/pools/tank/users/testct-cd3a/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-cd3a/group.default/cts/testct-cd3a","group_path":"osctl/pool.tank/group.default/user.testct-cd3a/ct.testct-cd3a/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-cd3a.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 20:40:03 +0200
+COMMAND: osctl -j ct show testct-cd3a
+END: 2026-10-15 20:40:04 +0200
+ELAPSED: 1.11s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-cd3a","user":"testct-cd3a","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-cd3a","rootfs":"/tank/ct/testct-cd3a/private","boot_dataset":"tank/ct/testct-cd3a","boot_rootfs":"/tank/ct/testct-cd3a/private","lxc_path":"/run/osctl/pools/tank/users/testct-cd3a/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-cd3a/group.default/cts/testct-cd3a","group_path":"osctl/pool.tank/group.default/user.testct-cd3a/ct.testct-cd3a/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":10943,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-cd3a.log","memory":5816320,"cpu_us":1563084,"cpu_user_us":969488,"cpu_system_us":593595,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-15 20:40:04 +0200
+COMMAND: osctl ct exec testct-cd3a true
+END: 2026-10-15 20:40:06 +0200
+ELAPSED: 2.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:40:08 +0200
+COMMAND: grep -q '^send_log:' /tank/conf/ct/testct-cd3a.yml
+END: 2026-10-15 20:40:08 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:40:09 +0200
+COMMAND: osctl ct del -f --prune testct-cd3a >/dev/null 2>&1 || true
+END: 2026-10-15 20:40:11 +0200
+ELAPSED: 2.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:40:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:40:13 +0200
+ELAPSED: 1.09s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:40:13 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 20:40:13 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 18:40:13 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 20:40:13 +0200
+COMMAND: ping -c 1 node1
+END: 2026-10-15 20:40:13 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PING node1 (192.168.10.11) 56(84) bytes of data.
+64 bytes from node1 (192.168.10.11): icmp_seq=1 ttl=64 time=0.598 ms
+
+--- node1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.598/0.598/0.598/0.000 ms
+---
+
+START: 2026-10-15 20:40:15 +0200
+COMMAND: osctl send key gen -f -t ed25519
+END: 2026-10-15 20:40:16 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:40:16 +0200
+COMMAND: cat $(osctl send key path public)
+END: 2026-10-15 20:40:17 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIAYP1PduhNcoVk/laslF/youfYrutMFKdWH1KNDr7aNn tank@vpsadminos
+---
+
+START: 2026-10-15 20:40:18 +0200
+COMMAND: osctl receive authorized-keys del node1 >/dev/null 2>&1 || true
+END: 2026-10-15 20:40:19 +0200
+ELAPSED: 0.91s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:40:20 +0200
+COMMAND: printf '%s\n' ssh-ed25519\ AAAAC3NzaC1lZDI1NTE5AAAAIKx3ajdih5wcSpOmWCDhM0kmPLos7UHA4uGyGJYR1oGb\ tank@vpsadminos | osctl receive authorized-keys add node1
+END: 2026-10-15 20:40:21 +0200
+ELAPSED: 1.18s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:40:37 +0200
+COMMAND: pgrep -a -f 'zfs recv -F -u' || true
+END: 2026-10-15 20:40:37 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+11540 bash -c set -euo pipefail; pgrep -a -f 'zfs recv -F -u' || true
+---
+
+START: 2026-10-15 20:40:38 +0200
+COMMAND: pgrep -a -f 'zfs recv -F -u' || true
+END: 2026-10-15 20:40:38 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+11547 bash -c set -euo pipefail; pgrep -a -f 'zfs recv -F -u' || true
+---
+
+START: 2026-10-15 20:40:39 +0200
+COMMAND: pgrep -a -f 'zfs recv -F -u' || true
+END: 2026-10-15 20:40:39 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+11556 zfs recv -F -u tank/ct/testct-3b95
+11568 bash -c set -euo pipefail; pgrep -a -f 'zfs recv -F -u' || true
+---
+
+START: 2026-10-15 20:40:39 +0200
+COMMAND: kill -STOP 11556
+END: 2026-10-15 20:40:39 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:40:39 +0200
+COMMAND: ps -o stat= -p 11556 | grep -q '^T'
+END: 2026-10-15 20:40:39 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:40:40 +0200
+COMMAND: kill -CONT 11556 >/dev/null 2>&1 || true
+END: 2026-10-15 20:40:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:40:51 +0200
+COMMAND: osctl ct show testct-3b95
+END: 2026-10-15 20:40:52 +0200
+ELAPSED: 1.17s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 20:41:06 +0200
+COMMAND: osctl ct show testct-3b95
+END: 2026-10-15 20:41:07 +0200
+ELAPSED: 0.94s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 20:41:14 +0200
+COMMAND: osctl ct del -f --prune testct-3b95 >/dev/null 2>&1 || true
+END: 2026-10-15 20:41:15 +0200
+ELAPSED: 0.86s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:41:37 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 20:41:38 +0200
+ELAPSED: 1.41s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

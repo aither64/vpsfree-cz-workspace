@@ -1,0 +1,210 @@
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	﻿2026-10-14T18:56:30.3835738Z ##[group]Run set -euo pipefail
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3837819Z ^[[36;1mset -euo pipefail^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3839350Z ^[[36;1m^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3841794Z ^[[36;1m# Prepare normal repository fixtures, preserving every main/perf^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3845404Z ^[[36;1m# identity assertion. The expected hash is a reviewed source pin,^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3848477Z ^[[36;1m# not a checksum computed from the module being tested.^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3850930Z ^[[36;1munset VPSADMINOS_LIVEPATCH_SINGLE_SERIES_MODULE \^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3853618Z ^[[36;1m  VPSADMINOS_LIVEPATCH_MODULE_NAME VPSADMINOS_LIVEPATCH_EXAMPLE_FILTER \^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3856053Z ^[[36;1m  VPSADMINOS_ONLY_LIVEPATCH_TEST^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3857902Z ^[[36;1mnix eval --impure --raw --expr \^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3860284Z ^[[36;1m  '(import ./tests/fixtures/livepatch {}).correctedSha256' \^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3862841Z ^[[36;1m  > "$TEST_RUNNER_STATE_DIR/livepatch-corrected-sha256.txt"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3866321Z ^[[36;1mexport VPSADMINOS_LIVEPATCH_CORRECTED_SHA256="$(cat "$TEST_RUNNER_STATE_DIR/livepatch-corrected-sha256.txt")"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3871569Z ^[[36;1mnix-build tests/fixtures/livepatch -A corrected \^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3874072Z ^[[36;1m  --out-link "$TEST_RUNNER_STATE_DIR/livepatch-corrected" \^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3876634Z ^[[36;1m  > "$TEST_RUNNER_STATE_DIR/livepatch-corrected-path.txt"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3879544Z ^[[36;1mnix-build tests/fixtures/livepatch -A releasedV5 \^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3882121Z ^[[36;1m  --out-link "$TEST_RUNNER_STATE_DIR/livepatch-released-v5" \^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3884732Z ^[[36;1m  > "$TEST_RUNNER_STATE_DIR/livepatch-released-v5-path.txt"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3887137Z ^[[36;1mnix-build tests/fixtures/livepatch -A shippedV6 \^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3890258Z ^[[36;1m  --out-link "$TEST_RUNNER_STATE_DIR/livepatch-predecessor-v6" \^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3894041Z ^[[36;1m  > "$TEST_RUNNER_STATE_DIR/livepatch-predecessor-v6-path.txt"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3900474Z ^[[36;1mexport VPSADMINOS_LIVEPATCH_CORRECTED_MODULE="$(cat "$TEST_RUNNER_STATE_DIR/livepatch-corrected-path.txt")"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3908174Z ^[[36;1mexport VPSADMINOS_LIVEPATCH_RELEASED_V5_MODULE="$(cat "$TEST_RUNNER_STATE_DIR/livepatch-released-v5-path.txt")"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3916363Z ^[[36;1mexport VPSADMINOS_LIVEPATCH_PREDECESSOR_MODULE="$(cat "$TEST_RUNNER_STATE_DIR/livepatch-predecessor-v6-path.txt")"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3922153Z ^[[36;1m^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3924290Z ^[[36;1margs=(^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3926515Z ^[[36;1m  test^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3929031Z ^[[36;1m  --state-dir "$TEST_RUNNER_STATE_DIR"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3932351Z ^[[36;1m  --fresh^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3934835Z ^[[36;1m  --jobs 1^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3937356Z ^[[36;1m  --tag "livepatch-intel"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3940102Z ^[[36;1m)^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3942206Z ^[[36;1m^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3944350Z ^[[36;1mif [[ "false" == "true" ]]; then^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3947721Z ^[[36;1m  # Step 25 requires 128 *guest* vCPUs. Admit one such VM using^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3952016Z ^[[36;1m  # the normal runner's CPU-only oversubscription option. Keep^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3956210Z ^[[36;1m  # memory admission unchanged; never pretend these are 128^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3960934Z ^[[36;1m  # physical host CPUs or lower the guest/task requirements.^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3964934Z ^[[36;1m  host_cpus=$(nproc)^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3968316Z ^[[36;1m  cpu_factor=$(((128 + host_cpus - 1) / host_cpus))^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3972991Z ^[[36;1m  printf '128 guest vCPUs on %s host-visible CPUs; factor=%s\n' \^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3977170Z ^[[36;1m    "$host_cpus" "$cpu_factor"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3982806Z ^[[36;1m  args+=(--max-cpus 128 --cpu-overcommit "$cpu_factor")^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3986463Z ^[[36;1mfi^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3988854Z ^[[36;1m^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.3992284Z ^[[36;1m./test-runner.sh "${args[@]}" | tee "$TEST_RUNNER_STATE_DIR/test.log"^[[0m
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.4004842Z shell: /nix/store/pkf547jp8a92k4wmxikkyby58w10pysr-bash-interactive-5.3p9/bin/bash -e {0}
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.4007831Z env:
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.4009014Z   VPSADMINOS_CONFIG: 
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.4010929Z   TEST_RUNNER_STATE_DIR: /tmp/os-test-runner-109335108-38617901861-1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.4013028Z   VPSADMINOS_ENABLE_LIVEPATCH_TEST: 1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:30.4014611Z ##[endgroup]
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:45.4831621Z this derivation will be built:
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:45.4833378Z   /nix/store/1vv1dbpyyibzqpgrdvk8dradajy9cqcz-test-runner-repository-source.drv
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:56:45.5417050Z building '/nix/store/1vv1dbpyyibzqpgrdvk8dradajy9cqcz-test-runner-repository-source.drv'...
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9265561Z The following test scripts will be run:
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9266622Z   kernel/livepatch-inet-frag
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9267365Z   kernel/livepatch-lifecycle@6.12.110#intel
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9268267Z   kernel/livepatch-lifecycle@6.12.95#intel
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9269119Z   kernel/livepatch-lifecycle@6.12.95-v6#intel
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9270087Z   kernel/livepatch-nfs-transition
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9270957Z   kernel/livepatch-perf-v7
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9271719Z   kernel/livepatch-qualification@intel-retention-v5
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9272776Z   kernel/livepatch-qualification@intel-retention-v6
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9273722Z   kernel/livepatch-sctp-hostile
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9274609Z   kernel/livepatch-tun-intel
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9275388Z   osctl/nfs-cancellation
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9275897Z 
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9335263Z [2026-10-14 20:58:51 +0200] Running 11 scripts of 11 tests, at most 1 tests at a time
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9338291Z [2026-10-14 20:58:51 +0200] Resource detection: memory assigned=100.0 GiB, available-at-start=98.6 GiB, reserve=8.0 GiB, limit=90.6 GiB; shm assigned=375.1 GiB, available-at-start=375.1 GiB, reserve=8.0 GiB, limit=367.1 GiB
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9341317Z [2026-10-14 20:58:51 +0200] Resource limits: memory=0 MiB/90.6 GiB, shm=0 MiB/367.1 GiB, cpus=0/72, running=0
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9343099Z [2026-10-14 20:58:51 +0200] State directory is /tmp/os-test-runner-109335108-38617901861-1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9345233Z [2026-10-14 20:58:51 +0200] Reserved resources for 'kernel/livepatch-lifecycle@6.12.95-v6': machines=1, memory=8.0 GiB, shm=8.0 GiB, cpus=4; pool: memory=8.0 GiB/90.6 GiB, shm=8.0 GiB/367.1 GiB, cpus=4/72, running=1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T18:58:51.9347541Z [2026-10-14 20:58:51 +0200] [1/11] Running test 'kernel/livepatch-lifecycle@6.12.95-v6' (#intel)
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:01:20.9328461Z [2026-10-14 21:01:20 +0200] [1/11] Script 'kernel/livepatch-lifecycle@6.12.95-v6#intel' successful in 108.38 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:01:28.6050585Z [2026-10-14 21:01:28 +0200] [1/11] Test 'kernel/livepatch-lifecycle@6.12.95-v6' successful in 156.66 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:01:28.6053791Z [2026-10-14 21:01:28 +0200] Reserved resources for 'kernel/livepatch-inet-frag': machines=1, memory=2.0 GiB, shm=2.0 GiB, cpus=2; pool: memory=2.0 GiB/90.6 GiB, shm=2.0 GiB/367.1 GiB, cpus=2/72, running=1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:01:28.6056357Z [2026-10-14 21:01:28 +0200] [2/11] Running test 'kernel/livepatch-inet-frag' (#default)
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:02:55.0851572Z [2026-10-14 21:02:55 +0200] [2/11] Example [1/1] 'Generic inet fragment-queue creation arms the timer only after locked hash insertion under v7, unlike the native baseline' succeeded in 43.08 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:02:59.7368650Z [2026-10-14 21:02:59 +0200] [2/11] Test 'kernel/livepatch-inet-frag' successful in 91.13 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:02:59.7374132Z [2026-10-14 21:02:59 +0200] Reserved resources for 'kernel/livepatch-qualification@intel-retention-v6': machines=1, memory=8.0 GiB, shm=8.0 GiB, cpus=4; pool: memory=8.0 GiB/90.6 GiB, shm=8.0 GiB/367.1 GiB, cpus=4/72, running=1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:02:59.7379677Z [2026-10-14 21:02:59 +0200] [3/11] Running test 'kernel/livepatch-qualification@intel-retention-v6' (#default)
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:03:51.9343959Z [2026-10-14 21:03:51 +0200] Status: passing; 2 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 1 running, 8 remaining
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:08:36.9080308Z [2026-10-14 21:08:36 +0200] [3/11] Example [1/1] '6.12.95 cumulative livepatch qualifies the exact predecessor at the declared task, CPU, age and memory envelope' succeeded in 285.98 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:08:51.9348896Z [2026-10-14 21:08:51 +0200] Status: passing; 2 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 1 running, 8 remaining
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:08:54.5365040Z [2026-10-14 21:08:54 +0200] [3/11] Test 'kernel/livepatch-qualification@intel-retention-v6' successful in 354.8 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:08:54.5370690Z [2026-10-14 21:08:54 +0200] Reserved resources for 'kernel/livepatch-perf-v7': machines=1, memory=8.0 GiB, shm=8.0 GiB, cpus=4; pool: memory=8.0 GiB/90.6 GiB, shm=8.0 GiB/367.1 GiB, cpus=4/72, running=1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:08:54.5373855Z [2026-10-14 21:08:54 +0200] [4/11] Running test 'kernel/livepatch-perf-v7' (#default)
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:09:46.8851293Z [2026-10-14 21:09:46 +0200] [4/11] Example [1/7] 'perf witnesses over livepatch_7 moves cgroup-filtered counters with a small taskset' succeeded in 0.75 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:09:47.5940987Z [2026-10-14 21:09:47 +0200] [4/11] Example [2/7] 'perf witnesses over livepatch_7 moves cgroup-filtered counters with a large taskset' succeeded in 0.71 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:09:47.6087706Z [2026-10-14 21:09:47 +0200] [4/11] Example [3/7] 'perf witnesses over livepatch_7 rejects a sibling attach to a remove-on-exec group leader with ENODEV (P1)' succeeded in 0.01 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:09:47.6239467Z [2026-10-14 21:09:47 +0200] [4/11] Example [4/7] 'perf witnesses over livepatch_7 records the FD_NO_GROUP observation (P3)' succeeded in 0.02 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:09:47.6407649Z [2026-10-14 21:09:47 +0200] [4/11] Example [5/7] 'perf witnesses over livepatch_7 records the FD_NO_GROUP|FD_OUTPUT observation (P4)' succeeded in 0.02 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:10:39.0554588Z [2026-10-14 21:10:39 +0200] [4/11] Example [6/7] 'perf witnesses over livepatch_7 survives the bounded exec/open race (P5)' succeeded in 51.41 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:10:39.0840153Z [2026-10-14 21:10:39 +0200] [4/11] Example [7/7] 'perf witnesses over livepatch_7 leaves no kernel fault after the perf rows' succeeded in 0.03 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:11:27.7498298Z [2026-10-14 21:11:27 +0200] [4/11] Test 'kernel/livepatch-perf-v7' successful in 153.21 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:11:27.7503814Z [2026-10-14 21:11:27 +0200] Reserved resources for 'kernel/livepatch-nfs-transition': machines=1, memory=8.0 GiB, shm=8.0 GiB, cpus=4; pool: memory=8.0 GiB/90.6 GiB, shm=8.0 GiB/367.1 GiB, cpus=4/72, running=1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:11:27.7506731Z [2026-10-14 21:11:27 +0200] [5/11] Running test 'kernel/livepatch-nfs-transition' (#default)
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:13:51.9352478Z [2026-10-14 21:13:51 +0200] Status: passing; 4 succeeded as expected, 0 failed as expected, 0 unexpectedly failed, 0 unexpectedly succeeded; 1 running, 6 remaining
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:14:45.8020107Z [2026-10-14 21:14:45 +0200] [5/11] Example [1/3] 'NFS cancellation livepatch with a parked state manager cancels legacy and new managers only in the selected namespace' succeeded in 149.81 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:15:30.8320214Z [2026-10-14 21:15:30 +0200] [5/11] Example [2/3] 'NFS cancellation livepatch with a parked state manager activates and reverses while the NFSv4 state manager is idle' succeeded in 44.95 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:16:53.6202582Z [2026-10-14 21:16:53 +0200] [5/11] Example [3/3] 'NFS cancellation livepatch with a parked state manager activates with four NFSv4 mounts and a parked manager under load' succeeded in 82.69 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:17:02.1362426Z [2026-10-14 21:17:02 +0200] [5/11] Test 'kernel/livepatch-nfs-transition' successful in 334.39 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:17:02.1364426Z [2026-10-14 21:17:02 +0200] Reserved resources for 'osctl/nfs-cancellation': machines=1, memory=8.0 GiB, shm=8.0 GiB, cpus=4; pool: memory=8.0 GiB/90.6 GiB, shm=8.0 GiB/367.1 GiB, cpus=4/72, running=1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:17:02.1368749Z [2026-10-14 21:17:02 +0200] [6/11] Running test 'osctl/nfs-cancellation' (#default)
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:18:21.8384559Z [2026-10-14 21:18:21 +0200] [6/11] Test 'osctl/nfs-cancellation' failed after 79.7 seconds, see /tmp/os-test-runner-109335108-38617901861-1/os-test-osctl__nfs-cancellation-e35cd711
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:18:21.8394132Z [2026-10-14 21:18:21 +0200] Reserved resources for 'kernel/livepatch-tun-intel': machines=1, memory=8.0 GiB, shm=8.0 GiB, cpus=4; pool: memory=8.0 GiB/90.6 GiB, shm=8.0 GiB/367.1 GiB, cpus=4/72, running=1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:18:21.8396984Z [2026-10-14 21:18:21 +0200] [7/11] Running test 'kernel/livepatch-tun-intel' (#default)
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:18:51.9354694Z [2026-10-14 21:18:51 +0200] Status: failed; 5 succeeded as expected, 0 failed as expected, 1 unexpectedly failed, 0 unexpectedly succeeded; 1 running, 4 remaining
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:18:51.9357354Z [2026-10-14 21:18:51 +0200] Unexpectedly failed test scripts: osctl/nfs-cancellation
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:19:58.1336355Z [2026-10-14 21:19:58 +0200] [7/11] Example [1/1] '6.12.95 cumulative livepatch clamps a preactivation-oversized TUN align at use time' succeeded in 42.95 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:20:16.5102396Z [2026-10-14 21:20:16 +0200] [7/11] Test 'kernel/livepatch-tun-intel' successful in 114.67 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:20:16.5134194Z [2026-10-14 21:20:16 +0200] Reserved resources for 'kernel/livepatch-lifecycle@6.12.110': machines=1, memory=8.0 GiB, shm=8.0 GiB, cpus=4; pool: memory=8.0 GiB/90.6 GiB, shm=8.0 GiB/367.1 GiB, cpus=4/72, running=1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:20:16.5137819Z [2026-10-14 21:20:16 +0200] [8/11] Running test 'kernel/livepatch-lifecycle@6.12.110' (#intel)
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:21:20.6201994Z [2026-10-14 21:21:20 +0200] [8/11] Script 'kernel/livepatch-lifecycle@6.12.110#intel' successful in 29.38 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:21:43.9227745Z [2026-10-14 21:21:43 +0200] [8/11] Test 'kernel/livepatch-lifecycle@6.12.110' successful in 87.41 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:21:43.9230506Z [2026-10-14 21:21:43 +0200] Reserved resources for 'kernel/livepatch-sctp-hostile': machines=1, memory=8.0 GiB, shm=8.0 GiB, cpus=4; pool: memory=8.0 GiB/90.6 GiB, shm=8.0 GiB/367.1 GiB, cpus=4/72, running=1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:21:43.9232472Z [2026-10-14 21:21:43 +0200] [9/11] Running test 'kernel/livepatch-sctp-hostile' (#default)
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:23:51.9357950Z [2026-10-14 21:23:51 +0200] Status: failed; 7 succeeded as expected, 0 failed as expected, 1 unexpectedly failed, 0 unexpectedly succeeded; 1 running, 2 remaining
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:23:51.9360891Z [2026-10-14 21:23:51 +0200] Unexpectedly failed test scripts: osctl/nfs-cancellation
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:28:51.9362414Z [2026-10-14 21:28:51 +0200] Status: failed; 7 succeeded as expected, 0 failed as expected, 1 unexpectedly failed, 0 unexpectedly succeeded; 1 running, 2 remaining
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:28:51.9366203Z [2026-10-14 21:28:51 +0200] Unexpectedly failed test scripts: osctl/nfs-cancellation
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:29:30.9567766Z [2026-10-14 21:29:30 +0200] [9/11] Example [1/1] 'SCTP retransmission-path livepatch under a hostile ASCONF transaction completes 100 hostile DEL-IP cycles and keeps the host alive' succeeded in 414.2 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:29:38.3806740Z [2026-10-14 21:29:38 +0200] [9/11] Test 'kernel/livepatch-sctp-hostile' successful in 474.46 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:29:38.3812591Z [2026-10-14 21:29:38 +0200] Reserved resources for 'kernel/livepatch-qualification@intel-retention-v5': machines=1, memory=8.0 GiB, shm=8.0 GiB, cpus=4; pool: memory=8.0 GiB/90.6 GiB, shm=8.0 GiB/367.1 GiB, cpus=4/72, running=1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:29:38.3816316Z [2026-10-14 21:29:38 +0200] [10/11] Running test 'kernel/livepatch-qualification@intel-retention-v5' (#default)
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:33:51.9365925Z [2026-10-14 21:33:51 +0200] Status: failed; 8 succeeded as expected, 0 failed as expected, 1 unexpectedly failed, 0 unexpectedly succeeded; 1 running, 1 remaining
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:33:51.9369038Z [2026-10-14 21:33:51 +0200] Unexpectedly failed test scripts: osctl/nfs-cancellation
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:34:58.9069906Z [2026-10-14 21:34:58 +0200] [10/11] Example [1/1] '6.12.95 cumulative livepatch qualifies the exact predecessor at the declared task, CPU, age and memory envelope' succeeded in 285.54 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:35:17.9796672Z [2026-10-14 21:35:17 +0200] [10/11] Test 'kernel/livepatch-qualification@intel-retention-v5' successful in 339.6 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:35:17.9801601Z [2026-10-14 21:35:17 +0200] Reserved resources for 'kernel/livepatch-lifecycle@6.12.95': machines=1, memory=8.0 GiB, shm=8.0 GiB, cpus=4; pool: memory=8.0 GiB/90.6 GiB, shm=8.0 GiB/367.1 GiB, cpus=4/72, running=1
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:35:17.9804235Z [2026-10-14 21:35:17 +0200] [11/11] Running test 'kernel/livepatch-lifecycle@6.12.95' (#intel)
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:37:36.1265047Z [2026-10-14 21:37:36 +0200] [11/11] Script 'kernel/livepatch-lifecycle@6.12.95#intel' successful in 109.11 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:37:45.4291111Z [2026-10-14 21:37:45 +0200] [11/11] Test 'kernel/livepatch-lifecycle@6.12.95' successful in 147.45 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:37:45.4294993Z [2026-10-14 21:37:45 +0200] Run 11 test scripts of 11 tests in 2333.5 seconds
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:37:45.4296782Z [2026-10-14 21:37:45 +0200] 10 tests successful
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:37:45.4298412Z [2026-10-14 21:37:45 +0200] 1 tests should have succeeded, but failed
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:37:45.4301272Z [2026-10-14 21:37:45 +0200] Unexpectedly failed test scripts:
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:37:45.4302986Z [2026-10-14 21:37:45 +0200]   osctl/nfs-cancellation
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:37:45.4304218Z 
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:37:45.4305205Z error: one or more tests did not have expected results
+Livepatch lifecycle (intel)	Run livepatch lifecycle tests	2026-10-14T19:37:45.4577048Z ##[error]Process completed with exit code 1.
+Livepatch lifecycle (intel)	Evaluate test results	﻿2026-10-14T19:37:49.2308368Z Prepare all required actions
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2399090Z ##[group]Run ./.github/actions/evaluate-test-results
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2399719Z with:
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2400156Z   log-file: /tmp/os-test-runner-109335108-38617901861-1/test.log
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2400708Z env:
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2401006Z   VPSADMINOS_CONFIG: 
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2401510Z   TEST_RUNNER_STATE_DIR: /tmp/os-test-runner-109335108-38617901861-1
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2402074Z ##[endgroup]
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2429721Z ##[start-action display=Run set -euo pipefail;id=__self.evaluate]
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2455186Z ##[group]Run set -euo pipefail
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2455718Z ^[[36;1mset -euo pipefail^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2456090Z ^[[36;1m^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2456564Z ^[[36;1mlog_file="/tmp/os-test-runner-109335108-38617901861-1/test.log"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2457177Z ^[[36;1m^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2457496Z ^[[36;1mif [ ! -f "$log_file" ]; then^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2458005Z ^[[36;1m  echo "::error::Test log '$log_file' not found"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2458576Z ^[[36;1m  exit 1^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2458892Z ^[[36;1mfi^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2459270Z ^[[36;1m^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2459806Z ^[[36;1m# Disable pipefail while grepping so missing matches do not fail the step^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2460468Z ^[[36;1mset +o pipefail^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2461510Z ^[[36;1mEXPECTED_SUCCESSFUL=$(grep -oP "\d+ tests successful" "$log_file" | cut -f1 -d ' ')^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2462576Z ^[[36;1mEXPECTED_FAILED=$(grep -oP "\d+ tests failed as expected" "$log_file" | cut -f1 -d ' ')^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2463724Z ^[[36;1mUNEXPECTED_FAILED=$(grep -oP "\d+ tests should have succeeded" "$log_file" | cut -f1 -d ' ')^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2464857Z ^[[36;1mUNEXPECTED_SUCCESSFUL=$(grep -oP "\d+ tests should have failed" "$log_file" | cut -f1 -d ' ')^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2465649Z ^[[36;1mset -o pipefail^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2466130Z ^[[36;1m^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2466732Z ^[[36;1mecho "expected_successful=${EXPECTED_SUCCESSFUL:-0}" >>"$GITHUB_OUTPUT"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2467641Z ^[[36;1mecho "expected_failed=${EXPECTED_FAILED:-0}" >>"$GITHUB_OUTPUT"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2468483Z ^[[36;1mecho "unexpected_failed=${UNEXPECTED_FAILED:-0}" >>"$GITHUB_OUTPUT"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2469566Z ^[[36;1mecho "unexpected_successful=${UNEXPECTED_SUCCESSFUL:-0}" >>"$GITHUB_OUTPUT"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2470299Z ^[[36;1m^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2470675Z ^[[36;1m{^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2471082Z ^[[36;1m  echo '### Test summary'^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2471602Z ^[[36;1m  echo ""^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2472041Z ^[[36;1m  echo "| Result | Count |"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2472548Z ^[[36;1m  echo "|--------|-------|"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2473203Z ^[[36;1m  echo "| ✅ Successful (expected) | ${EXPECTED_SUCCESSFUL:-0} |"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2474029Z ^[[36;1m  echo "| ⚠️ Failed (expected) | ${EXPECTED_FAILED:-0} |"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2474779Z ^[[36;1m  echo "| ❌ Failed (unexpected) | ${UNEXPECTED_FAILED:-0} |"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2475589Z ^[[36;1m  echo "| ❌ Successful (unexpected) | ${UNEXPECTED_SUCCESSFUL:-0} |"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2476928Z ^[[36;1m  echo ""^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2477371Z ^[[36;1m} >>"$GITHUB_STEP_SUMMARY"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2477854Z ^[[36;1m^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2478254Z ^[[36;1mCOMPLETED_TESTS=$((^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2478751Z ^[[36;1m  ${EXPECTED_SUCCESSFUL:-0} +^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2479423Z ^[[36;1m  ${EXPECTED_FAILED:-0} +^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2479939Z ^[[36;1m  ${UNEXPECTED_FAILED:-0} +^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2480467Z ^[[36;1m  ${UNEXPECTED_SUCCESSFUL:-0}^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2480977Z ^[[36;1m))^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2481457Z ^[[36;1mif [ "$COMPLETED_TESTS" -eq 0 ]; then^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2482290Z ^[[36;1m  echo "::error::No completed test results; check the native test glob/tag and runner log"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2483086Z ^[[36;1m  exit 1^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2483490Z ^[[36;1mfi^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2483941Z ^[[36;1m^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2484570Z ^[[36;1mif [ "${UNEXPECTED_FAILED:-0}" -gt 0 ] || [ "${UNEXPECTED_SUCCESSFUL:-0}" -gt 0 ]; then^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2486219Z ^[[36;1m  echo "::error::${UNEXPECTED_FAILED:-0} tests unexpectedly failed, ${UNEXPECTED_SUCCESSFUL:-0} tests unexpectedly succeeded"^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2487227Z ^[[36;1m  exit 1^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2487635Z ^[[36;1mfi^[[0m
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2491987Z shell: /nix/store/pkf547jp8a92k4wmxikkyby58w10pysr-bash-interactive-5.3p9/bin/bash --noprofile --norc -e -o pipefail {0}
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2493022Z env:
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2493415Z   VPSADMINOS_CONFIG: 
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2494023Z   TEST_RUNNER_STATE_DIR: /tmp/os-test-runner-109335108-38617901861-1
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2494687Z ##[endgroup]
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2801241Z ##[error]1 tests unexpectedly failed, 0 tests unexpectedly succeeded
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2803756Z ##[error]Process completed with exit code 1.
+Livepatch lifecycle (intel)	Evaluate test results	2026-10-14T19:37:49.2828786Z ##[end-action id=__self.evaluate;outcome=failure;conclusion=failure;duration_ms=39]

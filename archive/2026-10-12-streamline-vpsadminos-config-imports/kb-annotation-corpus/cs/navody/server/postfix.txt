@@ -1,0 +1,49 @@
+<page>manuals:server:postfix</page>
+====== Více domén na jednom mail serveru ======
+
+Běžnou úlohou na VPS je příjem a odesílání pošty pro více různých domén. Předpokládejme, že potřebujete přijímat poštu pro domény ''domena1.cz'', ''domena2.cz'' a ''domena3.cz''.
+
+Nejprve si na svém serveru nastavte [[navody:vps:rdns|reverzní záznam]], aby vám důvěřovaly ostatní mail servery a neházely vaši poštu do spamu. Důležité je, že server **může ležet v jiné doméně** než pro kterou přijímá poštu. Předpokládejme, že se tedy server jmenuje ''posta.mujserver.cz'' a pro toto jméno máte zavedené reverzní záznamy.
+
+U všech výše zmíněných domén musíte nastavit **MX záznam** tak, aby ukazoval na náš poštovní server. Říkáme tím, že o poštu pro tuto doménu se nám stará konkrétní server. Je lhostejné, že leží v jiné doméně. Výsledek bude tedy následující:
+
+<code>domena1.cz. MX 10 posta.mujserver.cz.
+domena2.cz. MX 10 posta.mujserver.cz.
+domena3.cz. MX 10 posta.mujserver.cz.</code>
+
+V konfiguraci serveru musíme nastavit, aby se představoval svým správným jménem, ke kterému jsme vytvořili reverzní záznam v DNS. V souboru ''/etc/postfix/main.cf'' tedy musíme mít řádku:
+
+<code>myhostname = posta.mujserver.cz</code>
+
+====== Příjem pošty a přeposílání ======
+
+V souboru ''/etc/postfix/main.cf'' je potřeba nastavit cestu k souboru, který bude obsahovat seznam spravovaných domén a seznam adres příjemců. Řádek v konfiguraci bude vypadat následovně:
+
+<code>
+virtual_alias_maps = hash:/etc/postfix/virtual
+</code>
+
+Do něj vepíšeme domény, adresy a uživatele, kterým se pošta z vypsaných adres uloží. Vše pochopíte z příkladu:
+
+<code>
+domena1.cz     domena
+domena2.cz     domena
+domena3.cz     domena
+
+petr@domena1.cz     petr
+petr@domena2.cz     petr
+petr@domena3.cz     petr
+spravce@domena1.cz     pavel
+
+externista@domena2.cz    jiri@jinadomena.cz
+
+kancelar@domena3.cz      adela, martina, pavla
+</code>
+
+Poté musíte nechat data zpracovat a vytvořit databázový soubor pro Postfix.
+
+<code>postmap /etc/postfix/virtual</code>
+
+Pokud provádíte jiné změny nastavení než jen úpravu tabulky příjemců, je potřeba nechat Postfix načíst změny:
+
+<code>/etc/init.d/postfix reload</code>

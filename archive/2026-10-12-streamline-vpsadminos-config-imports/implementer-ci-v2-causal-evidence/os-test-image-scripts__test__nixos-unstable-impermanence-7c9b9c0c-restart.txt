@@ -1,0 +1,96 @@
+2161:Preservation after restart:
+2162:  machine-id: expected <20a86d8fe5dc474a82c6996dfb94c5a4>, current <20a86d8fe5dc474a82c6996dfb94c5a4>
+2163:  UID: expected <995>, current <996>
+2164:  GID: expected <993>, current <996>
+2165:  payload: expected <vpsadminos-impermanence-preservation>, current <vpsadminos-impermanence-preservation>
+2166:  ownership: expected <995:993>, current <995:993>
+2167:
+2168:Allocation map /var/lib/nixos/uid-map:
+2169:{"a-preservation-test":994,"dhcpcd":999,"messagebus":4,"nixbld1":30001,"nixbld10":30010,"nixbld11":30011,"nixbld12":30012,"nixbld13":30013,"nixbld14":30014,"nixbld15":30015,"nixbld16":30016,"nixbld17":30017,"nixbld18":30018,"nixbld19":30019,"nixbld2":30002,"nixbld20":30020,"nixbld21":30021,"nixbld22":30022,"nixbld23":30023,"nixbld24":30024,"nixbld25":30025,"nixbld26":30026,"nixbld27":30027,"nixbld28":30028,"nixbld29":30029,"nixbld3":30003,"nixbld30":30030,"nixbld31":30031,"nixbld32":30032,"nixbld4":30004,"nixbld5":30005,"nixbld6":30006,"nixbld7":30007,"nixbld8":30008,"nixbld9":30009,"nobody":65534,"nscd":998,"preservation-test":995,"root":0,"sshd":997,"systemd-coredump":151,"systemd-network":152,"systemd-oom":996,"systemd-resolve":153}
+2170:Allocation map /var/lib/nixos/gid-map:
+2171:{"a-preservation-test":992,"adm":55,"audio":17,"cdrom":24,"clock":327,"dhcpcd":999,"dialout":27,"disk":6,"floppy":18,"input":174,"keys":96,"kmem":2,"kvm":302,"lp":20,"messagebus":4,"nixbld":30000,"nogroup":65534,"nscd":998,"preservation-test":993,"render":303,"resolvconf":997,"root":0,"sgx":304,"shadow":318,"sshd":996,"systemd-coredump":995,"systemd-journal":62,"systemd-network":152,"systemd-oom":994,"systemd-resolve":153,"tape":25,"tty":3,"users":100,"utmp":29,"uucp":19,"video":26,"wheel":1}
+2172:Allocation map /persistent/var/lib/nixos/uid-map:
+2173:{"a-preservation-test":994,"dhcpcd":999,"messagebus":4,"nixbld1":30001,"nixbld10":30010,"nixbld11":30011,"nixbld12":30012,"nixbld13":30013,"nixbld14":30014,"nixbld15":30015,"nixbld16":30016,"nixbld17":30017,"nixbld18":30018,"nixbld19":30019,"nixbld2":30002,"nixbld20":30020,"nixbld21":30021,"nixbld22":30022,"nixbld23":30023,"nixbld24":30024,"nixbld25":30025,"nixbld26":30026,"nixbld27":30027,"nixbld28":30028,"nixbld29":30029,"nixbld3":30003,"nixbld30":30030,"nixbld31":30031,"nixbld32":30032,"nixbld4":30004,"nixbld5":30005,"nixbld6":30006,"nixbld7":30007,"nixbld8":30008,"nixbld9":30009,"nobody":65534,"nscd":998,"preservation-test":995,"root":0,"sshd":997,"systemd-coredump":151,"systemd-network":152,"systemd-oom":996,"systemd-resolve":153}
+2174:Allocation map /persistent/var/lib/nixos/gid-map:
+2175:{"a-preservation-test":992,"adm":55,"audio":17,"cdrom":24,"clock":327,"dhcpcd":999,"dialout":27,"disk":6,"floppy":18,"input":174,"keys":96,"kmem":2,"kvm":302,"lp":20,"messagebus":4,"nixbld":30000,"nogroup":65534,"nscd":998,"preservation-test":993,"render":303,"resolvconf":997,"root":0,"sgx":304,"shadow":318,"sshd":996,"systemd-coredump":995,"systemd-journal":62,"systemd-network":152,"systemd-oom":994,"systemd-resolve":153,"tape":25,"tty":3,"users":100,"utmp":29,"uucp":19,"video":26,"wheel":1}
+2176:Mount and backing identity /var/lib/nixos:
+2177:TARGET         SOURCE                                        FSTYPE OPTIONS
+2178:/var/lib/nixos tank/ct/test-79caca4b[/private/var/lib/nixos] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+2179:/var/lib/nixos owner=0:0 mode=755 device:inode=76:6
+2180:
+2181:Mount and backing identity /persistent/var/lib/nixos:
+2182:TARGET      SOURCE                          FSTYPE OPTIONS
+2183:/persistent tank/ct/test-79caca4b[/private] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+2184:/persistent/var/lib/nixos owner=0:0 mode=755 device:inode=76:6
+2185:
+2186:Mount and backing identity /var/lib/preservation-test:
+2187:TARGET                     SOURCE                                                    FSTYPE OPTIONS
+2188:/var/lib/preservation-test tank/ct/test-79caca4b[/private/var/lib/preservation-test] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+2189:/var/lib/preservation-test owner=0:0 mode=755 device:inode=76:12
+2190:
+2191:Mount and backing identity /persistent/var/lib/preservation-test:
+2192:TARGET      SOURCE                          FSTYPE OPTIONS
+2193:/persistent tank/ct/test-79caca4b[/private] zfs    rw,relatime,idmapped,xattr,noacl,casesensitive
+2194:/persistent/var/lib/preservation-test owner=0:0 mode=755 device:inode=76:12
+2195:
+2196:Persistent payload backing state:
+2197:/var/lib/preservation-test/payload owner=995:993 mode=644 device:inode=76:387
+2198:/persistent/var/lib/preservation-test/payload owner=995:993 mode=644 device:inode=76:387
+2199:
+2200:Boot mount and activation order:
+2201:37:if [ ! -e /proc/1 ]; then
+2202:53:    source /nix/store/20g2776m4biphawvszll7kcyrpplwiha-mounts.sh
+2203:136:echo "running activation script..."
+2204:137:$systemConfig/activate
+2205:1:specialMount "devtmpfs" "/dev" "nosuid,strictatime,mode=755,size=5%" "devtmpfs"
+2206:3:specialMount "devpts" "/dev/pts" "nosuid,noexec,mode=620,ptmxmode=0666,gid=3" "devpts"
+2207:5:specialMount "tmpfs" "/dev/shm" "nosuid,nodev,strictatime,mode=1777,size=50%" "tmpfs"
+2208:7:specialMount "proc" "/proc" "nosuid,noexec,nodev" "proc"
+2209:9:specialMount "tmpfs" "/run" "nosuid,nodev,strictatime,mode=755,size=25%" "tmpfs"
+2210:11:specialMount "tmpfs" "/run/keys" "nosuid,nodev,mode=750" "tmpfs"
+2211:13:specialMount "/persistent/var/lib/nixos" "/var/lib/nixos" "bind,x-gvfs-hide" "none"
+2212:15:specialMount "/persistent/var/log" "/var/log" "bind,x-gvfs-hide" "none"
+2213:
+2214:User and persistence activation steps:
+2215:21:#### Activation script snippet binsh:
+2216:31:  printf "Activation script snippet '%s' failed (%s)\n" "binsh" "$_localstatus"
+2217:34:#### Activation script snippet users:
+2218:40:-w /nix/store/dyx8qsmgnsz2csfzwn723gbd2jvp0j7g-update-users-groups.pl /nix/store/47yp7ny43j83wbv2q143v0qhp5s4ac44-users-groups.json
+2219:43:  printf "Activation script snippet '%s' failed (%s)\n" "users" "$_localstatus"
+2220:46:#### Activation script snippet createPersistentStorageDirs:
+2221:50:  printf "Activation script snippet '%s' failed (%s)\n" "createPersistentStorageDirs" "$_localstatus"
+2222:53:#### Activation script snippet specialfs:
+2223:67:  mount -t "$fsType" -o "$options" "$device" "$mountPoint"
+2224:69:source /nix/store/20g2776m4biphawvszll7kcyrpplwiha-mounts.sh
+2225:72:  printf "Activation script snippet '%s' failed (%s)\n" "specialfs" "$_localstatus"
+2226:75:#### Activation script snippet etc:
+2227:82:  printf "Activation script snippet '%s' failed (%s)\n" "etc" "$_localstatus"
+2228:85:#### Activation script snippet persist-files:
+2229:89:  printf "Activation script snippet '%s' failed (%s)\n" "persist-files" "$_localstatus"
+2230:92:#### Activation script snippet usrbinenv:
+2231:100:  printf "Activation script snippet '%s' failed (%s)\n" "usrbinenv" "$_localstatus"
+2232:fixture UID changed after restart
+2233:fixture GID changed after restart
+2234:impermanence preservation failed after restart
+2235:
+2236:I, [2026-10-14T14:32:07.990587 #2635]  INFO -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237a8c228>] Cleaning up assets of test 'nixos_rebuild'
+2237:I, [2026-10-14T14:32:24.384471 #2635]  INFO -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237a83e48>] Created container 'test-e48b89af' for test 'packages'
+2238:A, [2026-10-14T14:32:24.404927 #2635]   ANY -- : [#<OsCtl::Image::Operations::Nix::RunInShell:0x0000736237b1fdc0>] nix --extra-experimental-features nix-command\ flakes develop --file /etc/vpsadminos-image-scripts/shell-test-flake.nix --command /tmp/nix-develop-run20261014-2635-ch4wro
+2239:W, [2026-10-14T14:32:25.448640 #2635]  WARN -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237a83e48>] Test 'packages' successful
+2240:I, [2026-10-14T14:32:25.448811 #2635]  INFO -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237a83e48>] Cleaning up assets of test 'packages'
+2241:I, [2026-10-14T14:32:39.683269 #2635]  INFO -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237b16180>] Created container 'test-698d56a9' for test 'passwd_started'
+2242:A, [2026-10-14T14:32:39.703833 #2635]   ANY -- : [#<OsCtl::Image::Operations::Nix::RunInShell:0x0000736237b13340>] nix --extra-experimental-features nix-command\ flakes develop --file /etc/vpsadminos-image-scripts/shell-test-flake.nix --command /tmp/nix-develop-run20261014-2635-pir0uq
+2243:W, [2026-10-14T14:32:54.241321 #2635]  WARN -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237b16180>] Test 'passwd_started' successful
+2244:I, [2026-10-14T14:32:54.241427 #2635]  INFO -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237b16180>] Cleaning up assets of test 'passwd_started'
+2245:I, [2026-10-14T14:33:08.619938 #2635]  INFO -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237b4e530>] Created container 'test-6880431a' for test 'passwd_stopped'
+2246:A, [2026-10-14T14:33:08.640475 #2635]   ANY -- : [#<OsCtl::Image::Operations::Nix::RunInShell:0x0000736237b49d50>] nix --extra-experimental-features nix-command\ flakes develop --file /etc/vpsadminos-image-scripts/shell-test-flake.nix --command /tmp/nix-develop-run20261014-2635-4yxji4
+2247:W, [2026-10-14T14:33:09.653014 #2635]  WARN -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237b4e530>] Test 'passwd_stopped' successful
+2248:I, [2026-10-14T14:33:09.653130 #2635]  INFO -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237b4e530>] Cleaning up assets of test 'passwd_stopped'
+2249:I, [2026-10-14T14:33:23.843252 #2635]  INFO -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237b46830>] Created container 'test-4be3f011' for test 'rootfs_size'
+2250:A, [2026-10-14T14:33:23.857752 #2635]   ANY -- : [#<OsCtl::Image::Operations::Nix::RunInShell:0x0000736237b43270>] nix --extra-experimental-features nix-command\ flakes develop --file /etc/vpsadminos-image-scripts/shell-test-flake.nix --command /tmp/nix-develop-run20261014-2635-mh8bs4
+2251:W, [2026-10-14T14:33:25.505082 #2635]  WARN -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237b46830>] Test 'rootfs_size' successful
+2252:I, [2026-10-14T14:33:25.505218 #2635]  INFO -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237b46830>] Cleaning up assets of test 'rootfs_size'
+2253:I, [2026-10-14T14:33:40.181624 #2635]  INFO -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237d4f960>] Created container 'test-cff03eae' for test 'ssh_key'
+2254:A, [2026-10-14T14:33:40.199590 #2635]   ANY -- : [#<OsCtl::Image::Operations::Nix::RunInShell:0x0000736237d4c4e0>] nix --extra-experimental-features nix-command\ flakes develop --file /etc/vpsadminos-image-scripts/shell-test-flake.nix --command /tmp/nix-develop-run20261014-2635-zs1hkh
+2255:W, [2026-10-14T14:33:52.463999 #2635]  WARN -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237d4f960>] Test 'ssh_key' successful
+2256:I, [2026-10-14T14:33:52.464239 #2635]  INFO -- : [#<OsCtl::Image::Operations::Test::Run:0x0000736237d4f960>] Cleaning up assets of test 'ssh_key'

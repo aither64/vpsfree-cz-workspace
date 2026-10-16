@@ -1,0 +1,178 @@
+# Effective early mount selection: source and static receipt
+
+Implementation is frozen and unstaged on
+`f2b1960dc94ed73936b97f961514dbab164bfbe3`, base tree
+`28183c576eb408cbf8acefa5f5cd21e7550b68e0`. No refs or index changes.
+The lead's separate `docs/containers/nixos.md` diff is preserved and excluded
+from this technical patch and hash inventory.
+
+Verified session/current matches the developer binding; both environment
+markers are absent. Live roster revision 18 retains implementer0 ready with
+gpt-6.1-sol, xhigh and workspace_write. The accepted full design was read,
+SHA256 `c80fea979d8fe48c48d98b78a81b21dd8ea596e31d0c45e8eda296abdb1382b9`.
+Applicable current workspace procedures and restored product AGENTS/patch
+version/history policy were read. No instruction/history changes were made.
+
+## Exact technical inventory
+
+Ten assigned paths changed:
+
+- The four self-contained raw modules at stable/vpsadminos-25.11.nix,
+  stable/vpsadminos-26.05.nix, stable/vpsadminos.nix and unstable/vpsadminos.nix
+  under os/lib/nixos-container.
+- tests/nixos-container-persistence-eval.nix
+- tests/nixos-container-persistence-shell.sh
+- tests/nixos-container-persistence-check.nix
+- tests/fixtures/nixos-persistence-guests.nix
+- tests/suite/dist-config/nixos-persistence-upgrade.nix
+- tests/nixos-container-modules-eval.nix
+
+`technical.patch` contains only these paths. `owned-sha256.json` records each
+exact SHA256. No production inputs, locks, stateVersion, selectors, backend,
+host, daemon, API, KB or other technical source changed.
+
+## Causal implementation
+
+The raw modules now select enabled effective non-root early entries covering
+/var/lib/nixos or /var/log, including /var, /var/lib and direct filesystem
+declarations. They use the effective device/type/options/dependencies after
+module merging. Bind/rbind classification uses option tokens.
+
+Finite required membership is keyed by mountPoint using genericClosure and
+the pinned utils.fsBefore relation. It adds transitive predecessors only to
+the checked callback membership; the existing upstream earlyMountScript still
+owns ordering, cycles and the single execution sequence. No sorter, scheduler,
+phase or replay was introduced.
+
+Selected binds prepare only absent directories, preserve live directory
+identity and existing metadata, and check configured mount/remount results.
+Required predecessor binds require existing directory sources and do not
+initialize them. Selected non-bind filesystems and non-bind predecessors check
+type/options/operation and exact mountpoint without directory device checks.
+All required failures explicitly exit the activation parent before users,
+including failed remounts at still-present mountpoints. Matching binds retain
+their configured remount path; conflicting binds are not replaced or stacked.
+
+The unchanged recursive helper explicitly creates each absent level as 0755.
+There is no owner/mode repair, allocation/map change or deferred metadata phase.
+Ordinary callbacks, full promotion, legacy backend guard, priority90,
+dry/mkForce and standalone behavior retain their existing contracts.
+
+## Tests prepared, not executed
+
+The normal pure check is retained. Evaluation assertions cover actual pinned
+25.11, 26.05 and unstable, ancestor-only persistence without exact state/log
+entries, direct bind/nonbind and rbind, effective source/type/options/depends,
+disabled and three near-prefix controls, root-only behavior, transitive and
+explicit prerequisites, source-before-real-allocator, source-once, global order
+and cycle reporting, ordinary/backend exact baseline equality, dry omission,
+guest mkForce, standalone copying and latest-stable equality.
+
+The shell gate consumes thirty release/layout fixtures: ten layouts on each
+of the three inputs. Layout-aware command doubles cover exact/ancestor binds,
+direct bind/rbind/nonbind, declared bind/filesystem backing, transitive and
+explicit dependencies, and an unrelated callback that may fail without making
+allocation fatal. Cases preserve restrictive existing metadata and payload,
+check 0755 missing parents, matching remount options/no stacking, wrong live
+sources/results, absent backing, still-present failed required remount,
+non-directory/dangling paths and injected dirname/mkdir/mountpoint errors.
+The nonbind positive uses a regular-file device token, so applying directory
+preparation/identity to it cannot pass. These markers prove shell control flow
+only; no shell case has been executed in this assignment.
+
+The registered suite declares exactly these twelve scripts:
+
+```text
+upgrade-25.11
+upgrade-26.05
+upgrade-unstable
+root-backed-26.05
+declared-backing-26.05
+dependent-mount-26.05
+storage-failures-26.05
+fresh-26.05
+ancestor-var-26.05
+ancestor-var-lib-26.05
+direct-filesystem-bind-26.05
+fresh-ancestor-26.05
+```
+
+Fixture layout data supplies actual mount pairs, allocation-state backing,
+source directory, expected metadata, optional log backing and absent exact
+mountpoints. Ancestor fixtures replace exact state/log declarations. Their
+merged early-set absence is asserted during generation construction. Direct
+filesystem and all three nonbind controls assert no exact systemd state/log
+entries. As the lead requested, nonbind controls force systemd.mounts=[] and
+use only direct fileSystems /var/log while the healthy live allocation-state
+mount remains available.
+
+Adoption still changes only compatibility source at the old-to-new boundary,
+with dynamic accounts, unchanged inputs/stateVersion22.11/storage and no old
+restart. Native bounded store copying, profile seeding, /nix0755 setup and
+the failure-only readiness wrapper are unchanged. Snapshots check both live
+IDs and visible/backing maps; actual state-directory identity; declared mount
+identity/options/count1; zero exact state/log mounts for ancestor layouts;
+machine-id, payload checksum/owner; source metadata/inode; and explicit payload
+directory account ownership/mode0750.
+
+Custom exact state sources are pre-provisioned before boot/accounts/data as
+numeric42:43/mode0710 solely to exercise preservation of existing directory
+metadata; this does not set either dynamic account's IDs. Ancestor /var and
+/var/lib sources are provisioned root:root0755 so service traversal is healthy.
+Fresh exact/ancestor sources remain absent until candidate initialization,
+explicitly expect root:root0755 despite the configured0710 request, and retain
+that metadata through all later identity/data assertions. This is initial
+fixture provisioning, not changing saved guest content.
+
+Storage-failures retains its real allocator/complete trace positive control,
+adds a direct tmpfs log activation control before real Perl allocation, and
+adds ancestor bind/conflict, direct nonbind mount/remount and required backing
+remount failures. The required-remount fault uses an invalid tmpfs size and
+proves its mountpoint remains present afterward. Negatives retain explicit
+exit1, no executed real allocator, unchanged passwd/group/maps/payload and
+healthy snapshots outside their private mount namespace. No acceptance check
+was relaxed.
+
+## Static evidence and remaining checks
+
+All approved static checks passed: nine Nix parsers, prepared nixfmt --check,
+Bash syntax for the shell test and extracted helper/store/readiness fragments,
+prepared Ruby -c on the combined static suite template, whitespace, empty index
+and latest-stable byte equality. Exact commands/statuses are in
+`static-checks.log`/`static-checks.json`. The static Ruby template includes all
+conditional bodies with inert Nix placeholders. The helper template omits only
+generated tuple-dispatch rows. Neither is an evaluated final script.
+
+`prepare.py` additionally proves identical persistence blocks in all four raw
+files, raw content outside that block unchanged, original promotion/ordinary
+fallback/recursive helper unchanged, native store/profile and readiness code
+unchanged, and selector mock changed only by its inert boot.specialFileSystems
+field. `source-comparison.txt` records the results.
+
+No Nix evaluation/build, shell test execution, VM/runtime, hook batch,
+staging/commit/ref/push or roster/lifecycle action was launched. Actual option
+merging, generated scripts and runtime remain pending parent verification;
+this receipt makes no upgrade acceptance claim. No material design deviation
+was needed. The lead owns prose, history reconstruction, hooks and final review.
+
+Parent-owned normal dependent commands, through a fresh watcher:
+
+```sh
+nix build .#checks.x86_64-linux.nixos-container-persistence --no-link --print-build-logs
+nix develop --profile result/config-imports-dev-shell --command bash tests/nixos-container-eval.sh
+./test-runner.sh ls 'dist-config/nixos-persistence-upgrade*'
+nix develop --profile result/config-imports-dev-shell --command overcommit --run
+```
+
+Optional exact export for evaluated snippets, assertions and all twelve normal
+suite scripts (including the source contracts needed for KB reconciliation):
+
+```sh
+nix develop --profile result/config-imports-dev-shell --command nix eval --impure --json --file /home/aither/workspace/ai/vpsfree.cz/work/2026-10-12-streamline-vpsadminos-config-imports/persistence-effective-mounts-static/exports.nix
+```
+
+The export was parsed/formatted only. It is a session artifact, not another
+product runner. Parent final committed-head template checks, independent review
+and authorized twelve-script/image runtime gates remain in the accepted design.
+
+https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-12-streamline-vpsadminos-config-imports/

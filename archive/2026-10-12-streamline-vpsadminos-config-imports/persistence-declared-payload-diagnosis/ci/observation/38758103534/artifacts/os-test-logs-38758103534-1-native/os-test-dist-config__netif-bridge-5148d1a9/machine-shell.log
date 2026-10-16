@@ -1,0 +1,696 @@
+SHELL: 0
+
+START: 2026-10-15 19:01:49 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 19:01:49 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:01:49 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 19:01:49 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:01:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:01:51 +0200
+ELAPSED: 2.49s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:01:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:01:53 +0200
+ELAPSED: 1.09s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:01:54 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:01:56 +0200
+ELAPSED: 1.16s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:01:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:01:58 +0200
+ELAPSED: 1.34s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:01:59 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:02:00 +0200
+ELAPSED: 1.33s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:02:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:02:03 +0200
+ELAPSED: 1.25s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:02:04 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:02:05 +0200
+ELAPSED: 1.06s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 19:02:06 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:02:06 +0200
+ELAPSED: 0.77s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 19:02:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 19:02:09 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 19:02:09 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 19:02:10 +0200
+ELAPSED: 0.24s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 17:02:10 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 19:02:10 +0200
+COMMAND: ip address add 198.51.100.1/32 dev lo
+END: 2026-10-15 19:02:10 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:02:10 +0200
+COMMAND: ip -6 address add 2001:db8:618::1/128 dev lo
+END: 2026-10-15 19:02:10 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:02:10 +0200
+COMMAND: ip -6 address add fd00:618::1/64 dev lxcbr0
+END: 2026-10-15 19:02:10 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:02:10 +0200
+COMMAND: osctl ct new --distribution arch testct-7e81
+END: 2026-10-15 19:02:26 +0200
+ELAPSED: 16.57s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 19:02:26 +0200
+COMMAND: osctl ct unset start-menu testct-7e81
+END: 2026-10-15 19:02:27 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:02:27 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 --no-dhcp --gateway-v4 192.168.1.1 --gateway-v6 fd00:618::1 testct-7e81 eth0
+END: 2026-10-15 19:02:29 +0200
+ELAPSED: 1.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:02:29 +0200
+COMMAND: osctl ct netif ip add testct-7e81 eth0 192.168.1.70/24
+END: 2026-10-15 19:02:30 +0200
+ELAPSED: 1.08s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:02:30 +0200
+COMMAND: osctl ct netif ip add testct-7e81 eth0 fd00:618::70/64
+END: 2026-10-15 19:02:31 +0200
+ELAPSED: 1.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:02:31 +0200
+COMMAND: osctl ct start testct-7e81
+END: 2026-10-15 19:02:34 +0200
+ELAPSED: 3.04s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 19:02:34 +0200
+COMMAND: osctl ct exec testct-7e81 true
+END: 2026-10-15 19:02:36 +0200
+ELAPSED: 2.37s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:02:36 +0200
+COMMAND: osctl ct exec testct-7e81 systemctl is-system-running --wait
+END: 2026-10-15 19:02:39 +0200
+ELAPSED: 2.27s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-10-15 19:02:39 +0200
+COMMAND: osctl ct exec testct-7e81 systemctl is-active systemd-networkd.service
+END: 2026-10-15 19:02:41 +0200
+ELAPSED: 2.18s
+STATUS: 0
+OUTPUT:
+active
+---
+
+START: 2026-10-15 19:02:41 +0200
+COMMAND: osctl ct exec testct-7e81 grep -Fx Gateway=192.168.1.1 /etc/systemd/network/eth0.network
+END: 2026-10-15 19:02:43 +0200
+ELAPSED: 2.62s
+STATUS: 0
+OUTPUT:
+Gateway=192.168.1.1
+---
+
+START: 2026-10-15 19:02:43 +0200
+COMMAND: osctl ct exec testct-7e81 grep -Fx Gateway=fd00:618::1 /etc/systemd/network/eth0.network
+END: 2026-10-15 19:02:46 +0200
+ELAPSED: 2.82s
+STATUS: 0
+OUTPUT:
+Gateway=fd00:618::1
+---
+
+START: 2026-10-15 19:02:46 +0200
+COMMAND: osctl ct exec testct-7e81 ip -4 route show default | grep -F 'via 192.168.1.1 dev eth0'
+END: 2026-10-15 19:02:48 +0200
+ELAPSED: 2.1s
+STATUS: 0
+OUTPUT:
+default via 192.168.1.1 dev eth0 proto static 
+---
+
+START: 2026-10-15 19:02:48 +0200
+COMMAND: osctl ct exec testct-7e81 ip -6 route show default | grep -F 'via fd00:618::1 dev eth0'
+END: 2026-10-15 19:02:51 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+default via fd00:618::1 dev eth0 proto static metric 1024 pref medium
+---
+
+START: 2026-10-15 19:02:51 +0200
+COMMAND: osctl ct exec testct-7e81 ping -c 1 198.51.100.1
+END: 2026-10-15 19:02:53 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+PING 198.51.100.1 (198.51.100.1) 56(84) bytes of data.
+64 bytes from 198.51.100.1: icmp_seq=1 ttl=64 time=0.183 ms
+
+--- 198.51.100.1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.183/0.183/0.183/0.000 ms
+---
+
+START: 2026-10-15 19:02:53 +0200
+COMMAND: osctl ct exec testct-7e81 ping -6 -c 1 2001:db8:618::1
+END: 2026-10-15 19:02:56 +0200
+ELAPSED: 2.56s
+STATUS: 0
+OUTPUT:
+PING 2001:db8:618::1 (2001:db8:618::1) 56 data bytes
+64 bytes from 2001:db8:618::1: icmp_seq=1 ttl=64 time=0.149 ms
+
+--- 2001:db8:618::1 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.149/0.149/0.149/0.000 ms
+---
+
+START: 2026-10-15 19:02:56 +0200
+COMMAND: ping -c 1 192.168.1.70
+END: 2026-10-15 19:02:56 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.168.1.70 (192.168.1.70) 56(84) bytes of data.
+64 bytes from 192.168.1.70: icmp_seq=1 ttl=64 time=0.087 ms
+
+--- 192.168.1.70 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.087/0.087/0.087/0.000 ms
+---
+
+START: 2026-10-15 19:02:56 +0200
+COMMAND: osctl ct del -f --prune testct-7e81
+END: 2026-10-15 19:02:58 +0200
+ELAPSED: 2.64s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-7e81
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 19:02:58 +0200
+COMMAND: osctl ct new --distribution arch testct-2bca
+END: 2026-10-15 19:03:09 +0200
+ELAPSED: 10.34s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 19:03:09 +0200
+COMMAND: osctl ct unset start-menu testct-2bca
+END: 2026-10-15 19:03:09 +0200
+ELAPSED: 0.89s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:03:09 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 testct-2bca eth0
+END: 2026-10-15 19:03:11 +0200
+ELAPSED: 1.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:03:11 +0200
+COMMAND: osctl ct netif ip add testct-2bca eth0 192.168.1.71/24
+END: 2026-10-15 19:03:12 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:03:12 +0200
+COMMAND: osctl ct netif ip add testct-2bca eth0 fd00:618::71/64
+END: 2026-10-15 19:03:12 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:03:12 +0200
+COMMAND: osctl ct start testct-2bca
+END: 2026-10-15 19:03:15 +0200
+ELAPSED: 2.71s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 19:03:15 +0200
+COMMAND: osctl ct exec testct-2bca systemctl is-system-running --wait
+END: 2026-10-15 19:03:18 +0200
+ELAPSED: 2.62s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-10-15 19:03:18 +0200
+COMMAND: osctl ct exec testct-2bca systemctl is-active systemd-networkd.service
+END: 2026-10-15 19:03:20 +0200
+ELAPSED: 2.41s
+STATUS: 0
+OUTPUT:
+active
+---
+
+START: 2026-10-15 19:03:20 +0200
+COMMAND: osctl ct exec testct-2bca grep -Fx DHCP=true /etc/systemd/network/eth0.network
+END: 2026-10-15 19:03:23 +0200
+ELAPSED: 2.51s
+STATUS: 0
+OUTPUT:
+DHCP=true
+---
+
+START: 2026-10-15 19:03:23 +0200
+COMMAND: osctl ct exec testct-2bca grep -Fx Address=192.168.1.71/24 /etc/systemd/network/eth0.network
+END: 2026-10-15 19:03:25 +0200
+ELAPSED: 2.5s
+STATUS: 0
+OUTPUT:
+Address=192.168.1.71/24
+---
+
+START: 2026-10-15 19:03:25 +0200
+COMMAND: osctl ct exec testct-2bca grep -Fx Address=fd00:618::71/64 /etc/systemd/network/eth0.network
+END: 2026-10-15 19:03:28 +0200
+ELAPSED: 2.42s
+STATUS: 0
+OUTPUT:
+Address=fd00:618::71/64
+---
+
+START: 2026-10-15 19:03:28 +0200
+COMMAND: osctl ct exec testct-2bca ip -4 addr show dev eth0 | grep -F 192.168.1.71/24
+END: 2026-10-15 19:03:30 +0200
+ELAPSED: 2.29s
+STATUS: 0
+OUTPUT:
+    inet 192.168.1.71/24 brd 192.168.1.255 scope global eth0
+---
+
+START: 2026-10-15 19:03:30 +0200
+COMMAND: osctl ct exec testct-2bca ip -6 addr show dev eth0 | grep -F fd00:618::71/64
+END: 2026-10-15 19:03:32 +0200
+ELAPSED: 2.37s
+STATUS: 0
+OUTPUT:
+    inet6 fd00:618::71/64 scope global 
+---
+
+START: 2026-10-15 19:03:32 +0200
+COMMAND: osctl ct exec testct-2bca grep -F 'Gateway=' /etc/systemd/network/eth0.network
+END: 2026-10-15 19:03:35 +0200
+ELAPSED: 2.58s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-15 19:03:35 +0200
+COMMAND: osctl ct exec testct-2bca ip -4 route show default | grep -F 'dev eth0'
+END: 2026-10-15 19:03:37 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+default via 192.168.1.1 dev eth0 proto dhcp src 192.168.1.136 metric 1024 
+---
+
+START: 2026-10-15 19:03:37 +0200
+COMMAND: ping -c 1 192.168.1.71
+END: 2026-10-15 19:03:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.168.1.71 (192.168.1.71) 56(84) bytes of data.
+64 bytes from 192.168.1.71: icmp_seq=1 ttl=64 time=0.082 ms
+
+--- 192.168.1.71 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.082/0.082/0.082/0.000 ms
+---
+
+START: 2026-10-15 19:03:37 +0200
+COMMAND: osctl ct exec testct-2bca systemctl show -p MainPID --value systemd-networkd.service
+END: 2026-10-15 19:03:40 +0200
+ELAPSED: 2.31s
+STATUS: 0
+OUTPUT:
+68
+---
+
+START: 2026-10-15 19:03:40 +0200
+COMMAND: osctl ct exec testct-2bca networkctl --json=short status eth0
+END: 2026-10-15 19:03:42 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+{"Index":7,"Name":"eth0","Kind":"veth","Type":"ether","Driver":"veth","Flags":69699,"FlagsString":"up,broadcast,running,multicast,lower-up","KernelOperationalState":6,"KernelOperationalStateString":"up","MTU":1500,"MinimumMTU":68,"MaximumMTU":65535,"HardwareAddress":[10,177,42,80,182,202],"BroadcastAddress":[255,255,255,255,255,255],"IPv6LinkLocalAddressString":"fe80::8459:48ff:fe06:3668","IPv6LinkLocalAddress":[254,128,0,0,0,0,0,0,132,89,72,255,254,6,54,104],"AdministrativeState":"configured","OperationalState":"routable","CarrierState":"carrier","AddressState":"routable","IPv4AddressState":"routable","IPv6AddressState":"routable","OnlineState":"online","NetworkFile":"/etc/systemd/network/eth0.network","NetworkFileDropins":[],"RequiredForOnline":true,"RequiredFamilyForOnline":"any","ActivationPolicy":"up","LinkFile":"/usr/lib/systemd/network/99-default.link","DNS":[{"Family":2,"AddressString":"192.168.1.1","Address":[192,168,1,1],"ConfigSource":"DHCPv4","ConfigProviderString":"192.168.1.1","ConfigProvider":[192,168,1,1]}],"DNSSettings":[{"LLMNR":"yes","ConfigSource":"static"},{"MDNS":"no","ConfigSource":"static"}],"Addresses":[{"Family":2,"AddressString":"192.168.1.71","Address":[192,168,1,71],"PrefixLength":24,"ConfigSource":"static","BroadcastString":"192.168.1.255","Broadcast":[192,168,1,255],"Scope":0,"ScopeString":"global","Flags":128,"FlagsString":"permanent","ConfigState":"configured"},{"Family":10,"AddressString":"fd00:618::71","Address":[253,0,6,24,0,0,0,0,0,0,0,0,0,0,0,113],"PrefixLength":64,"ConfigSource":"static","Scope":0,"ScopeString":"global","Flags":128,"FlagsString":"permanent","ConfigState":"configured"},{"Family":2,"AddressString":"192.168.1.136","Address":[192,168,1,136],"PrefixLength":24,"ConfigSource":"DHCPv4","ConfigProviderString":"192.168.1.1","ConfigProvider":[192,168,1,1],"BroadcastString":"192.168.1.255","Broadcast":[192,168,1,255],"Scope":0,"ScopeString":"global","Flags":1,"FlagsString":"secondary","PreferredLifetimeUSec":86406251859,"PreferredLifetimeUsec":86406251859,"ValidLifetimeUSec":86406251859,"ValidLifetimeUsec":86406251859,"ConfigState":"configured"},{"Family":10,"AddressString":"fe80::8459:48ff:fe06:3668","Address":[254,128,0,0,0,0,0,0,132,89,72,255,254,6,54,104],"PrefixLength":64,"ConfigSource":"foreign","Scope":253,"ScopeString":"link","Flags":128,"FlagsString":"permanent","ConfigState":"configured"}],"Routes":[{"Family":2,"DestinationString":"192.168.1.1","Destination":[192,168,1,1],"DestinationPrefixLength":32,"PreferredSourceString":"192.168.1.136","PreferredSource":[192,168,1,136],"TOS":0,"Scope":253,"Protocol":16,"Type":1,"Priority":1024,"Table":254,"Flags":0,"ConfigSource":"DHCPv4","ConfigProviderString":"192.168.1.1","ConfigProvider":[192,168,1,1],"ScopeString":"link","ProtocolString":"16","TypeString":"unicast","TableString":"main","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":10,"DestinationString":"fe80::8459:48ff:fe06:3668","Destination":[254,128,0,0,0,0,0,0,132,89,72,255,254,6,54,104],"DestinationPrefixLength":128,"TOS":0,"Scope":0,"Protocol":2,"Type":2,"Priority":0,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"global","ProtocolString":"kernel","TypeString":"local","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":2,"DestinationString":"0.0.0.0","Destination":[0,0,0,0],"DestinationPrefixLength":0,"GatewayString":"192.168.1.1","Gateway":[192,168,1,1],"PreferredSourceString":"192.168.1.136","PreferredSource":[192,168,1,136],"TOS":0,"Scope":0,"Protocol":16,"Type":1,"Priority":1024,"Table":254,"Flags":0,"ConfigSource":"DHCPv4","ConfigProviderString":"192.168.1.1","ConfigProvider":[192,168,1,1],"ScopeString":"global","ProtocolString":"16","TypeString":"unicast","TableString":"main","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":10,"DestinationString":"fe80::","Destination":[254,128,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"DestinationPrefixLength":64,"TOS":0,"Scope":0,"Protocol":2,"Type":1,"Priority":256,"Table":254,"Flags":0,"ConfigSource":"foreign","ScopeString":"global","ProtocolString":"kernel","TypeString":"unicast","TableString":"main","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":2,"DestinationString":"192.168.1.71","Destination":[192,168,1,71],"DestinationPrefixLength":32,"PreferredSourceString":"192.168.1.71","PreferredSource":[192,168,1,71],"TOS":0,"Scope":254,"Protocol":2,"Type":2,"Priority":0,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"host","ProtocolString":"kernel","TypeString":"local","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":10,"DestinationString":"fd00:618::71","Destination":[253,0,6,24,0,0,0,0,0,0,0,0,0,0,0,113],"DestinationPrefixLength":128,"TOS":0,"Scope":0,"Protocol":2,"Type":2,"Priority":0,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"global","ProtocolString":"kernel","TypeString":"local","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":2,"DestinationString":"192.168.1.136","Destination":[192,168,1,136],"DestinationPrefixLength":32,"PreferredSourceString":"192.168.1.71","PreferredSource":[192,168,1,71],"TOS":0,"Scope":254,"Protocol":2,"Type":2,"Priority":0,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"host","ProtocolString":"kernel","TypeString":"local","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":10,"DestinationString":"ff00::","Destination":[255,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"DestinationPrefixLength":8,"TOS":0,"Scope":0,"Protocol":2,"Type":5,"Priority":256,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"global","ProtocolString":"kernel","TypeString":"multicast","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":10,"DestinationString":"fd00:618::","Destination":[253,0,6,24,0,0,0,0,0,0,0,0,0,0,0,0],"DestinationPrefixLength":64,"TOS":0,"Scope":0,"Protocol":2,"Type":1,"Priority":256,"Table":254,"Flags":0,"ConfigSource":"foreign","ScopeString":"global","ProtocolString":"kernel","TypeString":"unicast","TableString":"main","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":2,"DestinationString":"192.168.1.0","Destination":[192,168,1,0],"DestinationPrefixLength":24,"PreferredSourceString":"192.168.1.71","PreferredSource":[192,168,1,71],"TOS":0,"Scope":253,"Protocol":2,"Type":1,"Priority":0,"Table":254,"Flags":0,"ConfigSource":"foreign","ScopeString":"link","ProtocolString":"kernel","TypeString":"unicast","TableString":"main","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":2,"DestinationString":"192.168.1.255","Destination":[192,168,1,255],"DestinationPrefixLength":32,"PreferredSourceString":"192.168.1.71","PreferredSource":[192,168,1,71],"TOS":0,"Scope":253,"Protocol":2,"Type":3,"Priority":0,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"link","ProtocolString":"kernel","TypeString":"broadcast","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"}],"DHCPv4Client":{"Lease":{"LeaseTimestampUSec":6241898,"Timeout1USec":43206241898,"Timeout2USec":75606241898,"Hostname":"testct-2bca","Message":{"op":2,"htype":1,"hops":0,"xid":1300906099,"secs":4,"flags":0,"ciaddr":"00000000","yiaddr":"c0a80188","siaddr":"c0a80101","giaddr":"00000000","chaddr":"0ab12a50b6ca","options":[{"tag":1,"data":"ffffff00"},{"tag":3,"data":"c0a80101"},{"tag":6,"data":"c0a80101"},{"tag":12,"data":"7465737463742d32626361"},{"tag":28,"data":"c0a801ff"},{"tag":51,"data":"00015180"},{"tag":53,"data":"05"},{"tag":54,"data":"c0a80101"},{"tag":58,"data":"0000a8c0"},{"tag":59,"data":"00012750"}]}},"ClientIdentifier":[255,61,38,32,65,0,2,0,0,171,17,14,88,121,116,188,115,92,104]},"DHCPv6Client":{"DUID":[0,2,0,0,171,17,14,88,121,116,188,115,92,104]}}
+---
+
+START: 2026-10-15 19:03:42 +0200
+COMMAND: osctl ct exec testct-2bca networkctl renew eth0
+END: 2026-10-15 19:03:44 +0200
+ELAPSED: 2.25s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:03:44 +0200
+COMMAND: osctl ct exec testct-2bca networkctl --json=short status eth0
+END: 2026-10-15 19:03:47 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+{"Index":7,"Name":"eth0","Kind":"veth","Type":"ether","Driver":"veth","Flags":69699,"FlagsString":"up,broadcast,running,multicast,lower-up","KernelOperationalState":6,"KernelOperationalStateString":"up","MTU":1500,"MinimumMTU":68,"MaximumMTU":65535,"HardwareAddress":[10,177,42,80,182,202],"BroadcastAddress":[255,255,255,255,255,255],"IPv6LinkLocalAddressString":"fe80::8459:48ff:fe06:3668","IPv6LinkLocalAddress":[254,128,0,0,0,0,0,0,132,89,72,255,254,6,54,104],"AdministrativeState":"configured","OperationalState":"routable","CarrierState":"carrier","AddressState":"routable","IPv4AddressState":"routable","IPv6AddressState":"routable","OnlineState":"online","NetworkFile":"/etc/systemd/network/eth0.network","NetworkFileDropins":[],"RequiredForOnline":true,"RequiredFamilyForOnline":"any","ActivationPolicy":"up","LinkFile":"/usr/lib/systemd/network/99-default.link","DNS":[{"Family":2,"AddressString":"192.168.1.1","Address":[192,168,1,1],"ConfigSource":"DHCPv4","ConfigProviderString":"192.168.1.1","ConfigProvider":[192,168,1,1]}],"DNSSettings":[{"LLMNR":"yes","ConfigSource":"static"},{"MDNS":"no","ConfigSource":"static"}],"Addresses":[{"Family":2,"AddressString":"192.168.1.71","Address":[192,168,1,71],"PrefixLength":24,"ConfigSource":"static","BroadcastString":"192.168.1.255","Broadcast":[192,168,1,255],"Scope":0,"ScopeString":"global","Flags":128,"FlagsString":"permanent","ConfigState":"configured"},{"Family":10,"AddressString":"fd00:618::71","Address":[253,0,6,24,0,0,0,0,0,0,0,0,0,0,0,113],"PrefixLength":64,"ConfigSource":"static","Scope":0,"ScopeString":"global","Flags":128,"FlagsString":"permanent","ConfigState":"configured"},{"Family":2,"AddressString":"192.168.1.136","Address":[192,168,1,136],"PrefixLength":24,"ConfigSource":"DHCPv4","ConfigProviderString":"192.168.1.1","ConfigProvider":[192,168,1,1],"BroadcastString":"192.168.1.255","Broadcast":[192,168,1,255],"Scope":0,"ScopeString":"global","Flags":1,"FlagsString":"secondary","PreferredLifetimeUSec":86431211694,"PreferredLifetimeUsec":86431211694,"ValidLifetimeUSec":86431211694,"ValidLifetimeUsec":86431211694,"ConfigState":"configured"},{"Family":10,"AddressString":"fe80::8459:48ff:fe06:3668","Address":[254,128,0,0,0,0,0,0,132,89,72,255,254,6,54,104],"PrefixLength":64,"ConfigSource":"foreign","Scope":253,"ScopeString":"link","Flags":128,"FlagsString":"permanent","ConfigState":"configured"}],"Routes":[{"Family":2,"DestinationString":"192.168.1.1","Destination":[192,168,1,1],"DestinationPrefixLength":32,"PreferredSourceString":"192.168.1.136","PreferredSource":[192,168,1,136],"TOS":0,"Scope":253,"Protocol":16,"Type":1,"Priority":1024,"Table":254,"Flags":0,"ConfigSource":"DHCPv4","ConfigProviderString":"192.168.1.1","ConfigProvider":[192,168,1,1],"ScopeString":"link","ProtocolString":"16","TypeString":"unicast","TableString":"main","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":10,"DestinationString":"fe80::8459:48ff:fe06:3668","Destination":[254,128,0,0,0,0,0,0,132,89,72,255,254,6,54,104],"DestinationPrefixLength":128,"TOS":0,"Scope":0,"Protocol":2,"Type":2,"Priority":0,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"global","ProtocolString":"kernel","TypeString":"local","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":2,"DestinationString":"0.0.0.0","Destination":[0,0,0,0],"DestinationPrefixLength":0,"GatewayString":"192.168.1.1","Gateway":[192,168,1,1],"PreferredSourceString":"192.168.1.136","PreferredSource":[192,168,1,136],"TOS":0,"Scope":0,"Protocol":16,"Type":1,"Priority":1024,"Table":254,"Flags":0,"ConfigSource":"DHCPv4","ConfigProviderString":"192.168.1.1","ConfigProvider":[192,168,1,1],"ScopeString":"global","ProtocolString":"16","TypeString":"unicast","TableString":"main","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":10,"DestinationString":"fe80::","Destination":[254,128,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"DestinationPrefixLength":64,"TOS":0,"Scope":0,"Protocol":2,"Type":1,"Priority":256,"Table":254,"Flags":0,"ConfigSource":"foreign","ScopeString":"global","ProtocolString":"kernel","TypeString":"unicast","TableString":"main","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":2,"DestinationString":"192.168.1.71","Destination":[192,168,1,71],"DestinationPrefixLength":32,"PreferredSourceString":"192.168.1.71","PreferredSource":[192,168,1,71],"TOS":0,"Scope":254,"Protocol":2,"Type":2,"Priority":0,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"host","ProtocolString":"kernel","TypeString":"local","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":10,"DestinationString":"fd00:618::71","Destination":[253,0,6,24,0,0,0,0,0,0,0,0,0,0,0,113],"DestinationPrefixLength":128,"TOS":0,"Scope":0,"Protocol":2,"Type":2,"Priority":0,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"global","ProtocolString":"kernel","TypeString":"local","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":2,"DestinationString":"192.168.1.136","Destination":[192,168,1,136],"DestinationPrefixLength":32,"PreferredSourceString":"192.168.1.71","PreferredSource":[192,168,1,71],"TOS":0,"Scope":254,"Protocol":2,"Type":2,"Priority":0,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"host","ProtocolString":"kernel","TypeString":"local","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":10,"DestinationString":"ff00::","Destination":[255,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"DestinationPrefixLength":8,"TOS":0,"Scope":0,"Protocol":2,"Type":5,"Priority":256,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"global","ProtocolString":"kernel","TypeString":"multicast","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":10,"DestinationString":"fd00:618::","Destination":[253,0,6,24,0,0,0,0,0,0,0,0,0,0,0,0],"DestinationPrefixLength":64,"TOS":0,"Scope":0,"Protocol":2,"Type":1,"Priority":256,"Table":254,"Flags":0,"ConfigSource":"foreign","ScopeString":"global","ProtocolString":"kernel","TypeString":"unicast","TableString":"main","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":2,"DestinationString":"192.168.1.0","Destination":[192,168,1,0],"DestinationPrefixLength":24,"PreferredSourceString":"192.168.1.71","PreferredSource":[192,168,1,71],"TOS":0,"Scope":253,"Protocol":2,"Type":1,"Priority":0,"Table":254,"Flags":0,"ConfigSource":"foreign","ScopeString":"link","ProtocolString":"kernel","TypeString":"unicast","TableString":"main","Preference":0,"FlagsString":"","ConfigState":"configured"},{"Family":2,"DestinationString":"192.168.1.255","Destination":[192,168,1,255],"DestinationPrefixLength":32,"PreferredSourceString":"192.168.1.71","PreferredSource":[192,168,1,71],"TOS":0,"Scope":253,"Protocol":2,"Type":3,"Priority":0,"Table":255,"Flags":0,"ConfigSource":"foreign","ScopeString":"link","ProtocolString":"kernel","TypeString":"broadcast","TableString":"local","Preference":0,"FlagsString":"","ConfigState":"configured"}],"DHCPv4Client":{"Lease":{"LeaseTimestampUSec":31210909,"Timeout1USec":37850210909,"Timeout2USec":70250210909,"Hostname":"testct-2bca","Message":{"op":2,"htype":1,"hops":0,"xid":1300906099,"secs":28,"flags":0,"ciaddr":"c0a80188","yiaddr":"c0a80188","siaddr":"c0a80101","giaddr":"00000000","chaddr":"0ab12a50b6ca","options":[{"tag":1,"data":"ffffff00"},{"tag":3,"data":"c0a80101"},{"tag":6,"data":"c0a80101"},{"tag":12,"data":"7465737463742d32626361"},{"tag":28,"data":"c0a801ff"},{"tag":51,"data":"00015180"},{"tag":53,"data":"05"},{"tag":54,"data":"c0a80101"},{"tag":58,"data":"000093bb"},{"tag":59,"data":"0001124b"}]}},"ClientIdentifier":[255,61,38,32,65,0,2,0,0,171,17,14,88,121,116,188,115,92,104]},"DHCPv6Client":{"DUID":[0,2,0,0,171,17,14,88,121,116,188,115,92,104]}}
+---
+
+START: 2026-10-15 19:03:47 +0200
+COMMAND: osctl ct exec testct-2bca systemctl show -p MainPID --value systemd-networkd.service
+END: 2026-10-15 19:03:49 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+68
+---
+
+START: 2026-10-15 19:03:49 +0200
+COMMAND: osctl ct exec testct-2bca ip -4 addr show dev eth0 | grep -F 192.168.1.71/24
+END: 2026-10-15 19:03:51 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+    inet 192.168.1.71/24 brd 192.168.1.255 scope global eth0
+---
+
+START: 2026-10-15 19:03:51 +0200
+COMMAND: osctl ct exec testct-2bca ip -6 addr show dev eth0 | grep -F fd00:618::71/64
+END: 2026-10-15 19:03:53 +0200
+ELAPSED: 2.11s
+STATUS: 0
+OUTPUT:
+    inet6 fd00:618::71/64 scope global 
+---
+
+START: 2026-10-15 19:03:53 +0200
+COMMAND: osctl ct exec testct-2bca ip -4 route show default | grep -F 'dev eth0'
+END: 2026-10-15 19:03:55 +0200
+ELAPSED: 2.09s
+STATUS: 0
+OUTPUT:
+default via 192.168.1.1 dev eth0 proto dhcp src 192.168.1.136 metric 1024 
+---
+
+START: 2026-10-15 19:03:55 +0200
+COMMAND: ping -c 1 192.168.1.71
+END: 2026-10-15 19:03:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.168.1.71 (192.168.1.71) 56(84) bytes of data.
+64 bytes from 192.168.1.71: icmp_seq=1 ttl=64 time=0.065 ms
+
+--- 192.168.1.71 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.065/0.065/0.065/0.000 ms
+---
+
+START: 2026-10-15 19:03:55 +0200
+COMMAND: osctl ct exec testct-2bca grep -F 'Gateway=' /etc/systemd/network/eth0.network
+END: 2026-10-15 19:03:58 +0200
+ELAPSED: 2.23s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-15 19:03:58 +0200
+COMMAND: osctl ct netif ip add testct-2bca eth0 192.168.1.72/24
+END: 2026-10-15 19:04:00 +0200
+ELAPSED: 2.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:04:00 +0200
+COMMAND: osctl ct netif ip del testct-2bca eth0 192.168.1.71/24
+END: 2026-10-15 19:04:03 +0200
+ELAPSED: 2.48s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:04:03 +0200
+COMMAND: osctl ct exec testct-2bca systemctl restart systemd-networkd
+END: 2026-10-15 19:04:05 +0200
+ELAPSED: 2.53s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:04:05 +0200
+COMMAND: osctl ct exec testct-2bca ip -4 addr show dev eth0 | grep -F 192.168.1.72/24
+END: 2026-10-15 19:04:08 +0200
+ELAPSED: 2.44s
+STATUS: 0
+OUTPUT:
+    inet 192.168.1.72/24 brd 192.168.1.255 scope global secondary eth0
+---
+
+START: 2026-10-15 19:04:08 +0200
+COMMAND: osctl ct exec testct-2bca grep -Fx Address=192.168.1.72/24 /etc/systemd/network/eth0.network
+END: 2026-10-15 19:04:10 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+Address=192.168.1.72/24
+---
+
+START: 2026-10-15 19:04:10 +0200
+COMMAND: osctl ct exec testct-2bca ip -4 route show default | grep -F 'dev eth0'
+END: 2026-10-15 19:04:12 +0200
+ELAPSED: 2.45s
+STATUS: 0
+OUTPUT:
+default via 192.168.1.1 dev eth0 proto dhcp src 192.168.1.136 metric 1024 
+---
+
+START: 2026-10-15 19:04:12 +0200
+COMMAND: osctl ct exec testct-2bca grep -F 'Gateway=' /etc/systemd/network/eth0.network
+END: 2026-10-15 19:04:15 +0200
+ELAPSED: 2.35s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-15 19:04:15 +0200
+COMMAND: osctl ct exec testct-2bca ip -4 addr show dev eth0 | grep -F 192.168.1.71/24
+END: 2026-10-15 19:04:17 +0200
+ELAPSED: 2.63s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:04:17 +0200
+COMMAND: osctl ct del -f --prune testct-2bca
+END: 2026-10-15 19:04:20 +0200
+ELAPSED: 2.32s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-2bca
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 19:04:20 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 19:04:35 +0200
+ELAPSED: 15.33s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

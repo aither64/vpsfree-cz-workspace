@@ -1,0 +1,83 @@
+<page>manuals:vps:docker</page>
+
+====== Docker ve VPS ======
+
+Docker Engine můžeš ve VPS na vpsAdminOS používat bez zvláštního nastavení
+platformy. VPS sdílí linuxové jádro s fyzickým nodem, ale Docker a jeho
+kontejnery spravuješ běžným způsobem uvnitř své VPS.
+
+===== Instalace =====
+
+Použij aktuální návod pro svou distribuci. Nekopíruj staré příkazy pro přidání
+repozitáře z jiných návodů: podpisové klíče, názvy repozitářů i podporované
+verze se mění.
+
+  * [[https://wiki.alpinelinux.org/wiki/Docker|Alpine Linux]]
+  * [[https://wiki.archlinux.org/title/Docker|Arch Linux]]
+  * [[https://docs.docker.com/engine/install/debian/|Debian]]
+  * [[https://docs.docker.com/engine/install/fedora/|Fedora]]
+  * [[https://wiki.nixos.org/wiki/Docker|NixOS]]
+  * [[https://docs.docker.com/engine/install/ubuntu/|Ubuntu]]
+
+Přehled všech metod instalace najdeš v
+[[https://docs.docker.com/engine/install/|dokumentaci Docker Engine]]. Balíčky
+z repozitáře distribuce mohou mít jiné názvy nebo sledovat jiný vydávací
+cyklus; řiď se dokumentací zvolené distribuce.
+
+Po instalaci spusť službu podle návodu distribuce. Na distribuci se systemd to
+bývá:
+
+<code bash>
+systemctl enable --now docker
+</code>
+
+===== Ověření instalace =====
+
+Nejprve zkontroluj stav démona a jeho pohled na systém:
+
+<code bash>
+docker info
+docker run --rm hello-world
+</code>
+
+Síťové spojení z kontejneru můžeš ověřit například takto:
+
+<code bash>
+docker run --rm alpine ping -c 3 vpsfree.cz
+</code>
+
+Pokud příkaz selže, podívej se na stav služby a její poslední záznamy:
+
+<code bash>
+systemctl status docker --no-pager
+journalctl -u docker -n 100 --no-pager
+</code>
+
+Výstup konkrétního kontejneru zobrazíš příkazem ''docker logs NAZEV_NEBO_ID''.
+
+===== Přístup a bezpečnost =====
+
+Příkazy výše spouštěj jako ''root'' nebo přes ''sudo''. Členství ve skupině
+''docker'' prakticky umožňuje získat oprávnění roota ve VPS. Přidávej do ní
+proto jen uživatele, kterým důvěřuješ; podrobnosti popisuje
+[[https://docs.docker.com/engine/install/linux-postinstall/|oficiální návod po instalaci]].
+
+Port kontejneru se zvenčí nezpřístupní, dokud jej nepublikuješ pomocí
+''--publish''/''-p'' nebo Compose. Například ''-p 8080:80'' obvykle naslouchá
+na všech adresách VPS, zatímco ''-p 127.0.0.1:8080:80'' jej zpřístupní jen
+lokálně. Publikuj pouze porty, které skutečně potřebuješ.
+
+Docker si kvůli publikovaným portům vytváří vlastní pravidla filtrování a
+publikovaný port může obejít pravidla nastavená pomocí UFW nebo firewalld.
+Před nasazením si přečti
+[[https://docs.docker.com/engine/network/packet-filtering-firewalls/|dokumentaci Dockeru k firewallu]]
+a ověř dostupnost služby z jiného stroje. Základy firewallu popisuje článek
+[[navody:server:firewall|Firewall]].
+
+===== Omezení kontejnerové VPS =====
+
+Kontejnery Dockeru používají jádro dodané vpsAdminOS. Nemůžeš načíst vlastní
+jaderné moduly ani vyměnit jádro VPS. Většina běžných obrazů funguje bez
+úprav; pokud narazíš na chybu oprávnění nebo chybějící funkci jádra, pošli
+[[informace:podpora|podpoře]] ID VPS, použitý obraz a přesný příkaz, kterým lze
+problém zopakovat.

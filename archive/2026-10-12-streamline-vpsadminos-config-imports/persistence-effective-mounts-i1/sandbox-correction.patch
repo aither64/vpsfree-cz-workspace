@@ -1,0 +1,56 @@
+--- before/tests/nixos-container-persistence-shell.sh
++++ after/tests/nixos-container-persistence-shell.sh
+@@ -26,7 +26,7 @@
+   [[ ",$selected_options," == *",$option,"* ]]
+ done
+ scenarios=(fresh existing_metadata matching_live failed_bind failed_remount failed_mount_lookup wrong_result failed_mkdir failed_chown failed_chmod dangling_target)
+-if "$fixture_bind_state"; then scenarios+=(missing_parents setgid_parent wrong_live source_file parent_file failed_lookup dangling_source); fi
++if "$fixture_bind_state"; then scenarios+=(missing_parents wrong_live source_file parent_file failed_lookup dangling_source); fi
+ case "$mode" in
+   declared|filesystem|transitive) scenarios+=(missing_backing failed_required_remount) ;;
+   undeclared) scenarios+=(root_backing absent_undeclared) ;;
+@@ -50,13 +50,8 @@
+   fi
+   log_source="$fixture_backing/log"
+   before_metadata=
+-  fixture_parent_metadata=
+   case "$fixture_scenario" in
+     missing_parents) fixture_source="$(dirname "$fixture_source")/new-parent/state" ;;
+-    setgid_parent)
+-      fixture_source_parent=$(dirname "$fixture_source")
+-      chmod 2775 "$fixture_source_parent"
+-      fixture_parent_metadata=$(stat -Lc '%u:%g:%a:%i' "$fixture_source_parent") ;;
+     existing_metadata)
+       if "$fixture_bind_state"; then metadata_path="$fixture_source"; else metadata_path="$fixture_target"; fi
+       mkdir "$metadata_path"; chmod 0710 "$metadata_path"
+@@ -133,9 +128,6 @@
+       command mkdir "$@" || return 1
+       if [ "$#" = 4 ] && [ "$1" = -m ] && [ "$2" = 0755 ] && [ "$3" = -- ]; then
+         printf '%s\n' "$4" >> "$fixture_case_root/created-directories"
+-        if [ "$fixture_scenario" = setgid_parent ] && [ "$4" = "$fixture_source" ]; then
+-          stat -c '%a' "$4" > "$fixture_case_root/inherited-mode"
+-        fi
+       fi
+     }
+     # A non-root pure sandbox cannot chown to root. Check the numeric request
+@@ -182,7 +174,7 @@
+   status=$?
+   set -e
+   case "$fixture_scenario" in
+-    fresh|missing_parents|setgid_parent|existing_metadata|matching_live|matching_backing|root_backing|absent_undeclared|failed_unrelated)
++    fresh|missing_parents|existing_metadata|matching_live|matching_backing|root_backing|absent_undeclared|failed_unrelated)
+       [ "$status" = 0 ] && [ -f "$fixture_case_root/allocator-reached" ] || { cat "$fixture_case_root/output"; exit 1; }
+       if "$fixture_bind_state"; then [ "$fixture_source" -ef "$fixture_target" ]; else [ -f "$fixture_source" ]; fi
+       if "$exact"; then [ "$log_source" -ef "$fixture_log_target" ]; fi
+@@ -211,11 +203,6 @@
+   if [ "$fixture_scenario" = missing_parents ]; then
+     [ "$(stat -c '%a' "$fixture_source")" = 755 ]
+     [ "$(stat -c '%a' "$(dirname "$fixture_source")")" = 755 ]
+-  fi
+-  if [ "$fixture_scenario" = setgid_parent ]; then
+-    [ "$(cat "$fixture_case_root/inherited-mode")" = 2755 ]
+-    [ "$(stat -c '%a' "$fixture_source")" = 755 ]
+-    [ "$fixture_parent_metadata" = "$(stat -Lc '%u:%g:%a:%i' "$fixture_source_parent")" ]
+   fi
+   case "$fixture_scenario" in
+     wrong_backing|missing_backing|failed_required_remount|missing_dependency) [ ! -e "$fixture_source" ]; [ ! -e "$fixture_host/nixos" ] ;;

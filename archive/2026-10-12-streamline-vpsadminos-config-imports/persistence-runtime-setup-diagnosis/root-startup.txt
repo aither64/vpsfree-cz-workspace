@@ -1,0 +1,134 @@
+26798: START: 2026-10-14 21:43:41 +0200
+26799: COMMAND: osctl ct new --skip-image --distribution nixos --version 26.05 --arch x86_64 testct-0c87
+26800: END: 2026-10-14 21:43:43 +0200
+26801: ELAPSED: 1.82s
+26802: STATUS: 0
+26803: OUTPUT:
+26804: Allocated block #7 from ID range default
+26805: Registering user tank:testct-0c87
+26806: Creating root dataset
+26807: Configuring LXC home
+26808: Generating LXC configuration
+26809: Preparing log file
+26810: Preparing user script hook dir
+26811: ---
+26812: 
+26813: START: 2026-10-14 21:43:43 +0200
+26814: COMMAND: osctl ct unset start-menu testct-0c87
+26815: END: 2026-10-14 21:43:44 +0200
+26816: ELAPSED: 1.22s
+26817: STATUS: 0
+26818: OUTPUT:
+26819: 
+26820: ---
+26821: 
+26822: START: 2026-10-14 21:43:44 +0200
+26823: COMMAND: osctl ct dataset new testct-0c87 nix
+26824: END: 2026-10-14 21:43:46 +0200
+26825: ELAPSED: 1.87s
+26826: STATUS: 0
+26827: OUTPUT:
+26828: 
+26829: ---
+26830: 
+26831: START: 2026-10-14 21:43:46 +0200
+26832: COMMAND: osctl ct mounts new --fs /nix/store --type bind --opts bind,ro,create=dir --mountpoint /nix/store testct-0c87
+26833: END: 2026-10-14 21:43:47 +0200
+26834: ELAPSED: 1.27s
+26835: STATUS: 0
+26836: OUTPUT:
+26837: 
+26838: ---
+26839: 
+26840: START: 2026-10-14 21:43:47 +0200
+26841: COMMAND: osctl -j ct show testct-0c87
+26842: END: 2026-10-14 21:43:48 +0200
+26843: ELAPSED: 1.22s
+26844: STATUS: 0
+26845: OUTPUT:
+26846: {"pool":"tank","id":"testct-0c87","user":"testct-0c87","group":"/default","uid_map":[{"ns_id":0,"host_id":1458752,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1458752,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-0c87","rootfs":"/tank/ct/testct-0c87/private","boot_dataset":"tank/ct/testct-0c87","boot_rootfs":"/tank/ct/testct-0c87/private","lxc_path":"/run/osctl/pools/tank/users/testct-0c87/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-0c87/group.default/cts/testct-0c87","group_path":"osctl/pool.tank/group.default/user.testct-0c87/ct.testct-0c87/user-owned","distribution":"nixos","version":"26.05","arch":"x86_64","vendor":null,"variant":null,"state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":false,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-0c87.log","memory":null,"cpu_us":null,"loadavg":null}
+26847: ---
+26848: 
+26849: START: 2026-10-14 21:43:48 +0200
+26850: COMMAND: osctl -j ct mounts ls testct-0c87
+26851: END: 2026-10-14 21:43:49 +0200
+26852: ELAPSED: 0.95s
+26853: STATUS: 0
+26854: OUTPUT:
+26855: [{"fs":"/tank/ct/testct-0c87/nix/private","mountpoint":"/nix","type":"bind","opts":"bind,create=dir,rw","automount":true,"dataset":"nix","map_ids":true,"temporary":false},{"fs":"/nix/store","mountpoint":"/nix/store","type":"bind","opts":"bind,ro,create=dir","automount":true,"dataset":null,"map_ids":true,"temporary":false}]
+26856: ---
+26857: 
+26858: START: 2026-10-14 21:43:49 +0200
+26859: COMMAND: mkdir -p /tank/ct/testct-0c87/nix/private/var/nix/profiles /tank/ct/testct-0c87/private/sbin /tank/ct/testct-0c87/private/etc /tank/ct/testct-0c87/private/var
+26860: END: 2026-10-14 21:43:49 +0200
+26861: ELAPSED: 0.06s
+26862: STATUS: 0
+26863: OUTPUT:
+26864: 
+26865: ---
+26866: 
+26867: START: 2026-10-14 21:43:49 +0200
+26868: COMMAND: ln -s /nix/store/fbxa0zyrlq9prw7b1vbjy5v21ip5varv-nixos-system-persistence-fixture-26.05pre-git /tank/ct/testct-0c87/nix/private/var/nix/profiles/system
+26869: END: 2026-10-14 21:43:49 +0200
+26870: ELAPSED: 0.05s
+26871: STATUS: 0
+26872: OUTPUT:
+26873: 
+26874: ---
+26875: 
+26876: START: 2026-10-14 21:43:49 +0200
+26877: COMMAND: ln -s /nix/store/fbxa0zyrlq9prw7b1vbjy5v21ip5varv-nixos-system-persistence-fixture-26.05pre-git/init /tank/ct/testct-0c87/private/sbin/init
+26878: END: 2026-10-14 21:43:49 +0200
+26879: ELAPSED: 0.06s
+26880: STATUS: 0
+26881: OUTPUT:
+26882: 
+26883: ---
+26884: 
+26885: START: 2026-10-14 21:43:49 +0200
+26886: COMMAND: osctl ct start testct-0c87
+26887: END: 2026-10-14 21:43:52 +0200
+26888: ELAPSED: 2.68s
+26889: STATUS: 1
+26890: OUTPUT:
+26891: error: container failed to start
+26892: Starting container
+26893: Connecting console
+26894: Waiting for the container to start
+26895: ---
+26896: 
+30951: 2026-10-14T21:43:45.300469+02:00 vpsadminos osctld[2877]: [tank/ct/testct-0c87] zfs get -o value name tank/ct/testct-0c87
+30952: 2026-10-14T21:43:45.394821+02:00 vpsadminos osctld[2877]: [tank/ct/testct-0c87/nix] zfs get -o value name tank/ct/testct-0c87/nix
+30953: 2026-10-14T21:43:45.469739+02:00 vpsadminos osctld[2877]: [tank/ct/testct-0c87/nix] zfs create -o canmount=noauto tank/ct/testct-0c87/nix
+30954: 2026-10-14T21:43:45.617633+02:00 vpsadminos zed: eid=87 class=history_event pool='tank'
+30955: 2026-10-14T21:43:45.668788+02:00 vpsadminos zed: eid=88 class=history_event pool='tank'
+30956: 2026-10-14T21:43:45.705757+02:00 vpsadminos osctld[2877]: [tank/ct/testct-0c87/nix] zfs list -H -o name,mounted -t filesystem  tank/ct/testct-0c87/nix
+30957: 2026-10-14T21:43:45.785743+02:00 vpsadminos osctld[2877]: [tank/ct/testct-0c87/nix] zfs mount  tank/ct/testct-0c87/nix
+30958: 2026-10-14T21:43:45.864597+02:00 vpsadminos kernel.modprobe: action=deny -q -- net-pf-16-proto-16-family-sunrpc
+30959: 2026-10-14T21:43:45.872487+02:00 vpsadminos osctld[2877]: [tank/ct/testct-0c87/nix] zfs get -H -o value mountpoint tank/ct/testct-0c87/nix
+30960: 2026-10-14T21:43:45.941720+02:00 vpsadminos osctld[2877]: [tank/ct/testct-0c87/nix] zfs get -o value name tank/ct/testct-0c87/nix
+30961: 2026-10-14T21:43:46.014244+02:00 vpsadminos osctld[2877]: [tank/ct/testct-0c87/nix] zfs get -H -o value mountpoint tank/ct/testct-0c87/nix
+30962: 2026-10-14T21:43:47.312834+02:00 vpsadminos osctld[2877]: [OsCtld::Daemon::ClientHandler] Received command 'ct_mount_create'
+30963: 2026-10-14T21:43:48.508714+02:00 vpsadminos osctld[2877]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+30964: 2026-10-14T21:43:49.474153+02:00 vpsadminos osctld[2877]: [OsCtld::Daemon::ClientHandler] Received command 'ct_mount_list'
+30965: 2026-10-14T21:43:50.661558+02:00 vpsadminos osctld[2877]: [OsCtld::Daemon::ClientHandler] Received command 'ct_start'
+30966: 2026-10-14T21:43:50.679690+02:00 vpsadminos osctld[2877]: [tank/ct/testct-0c87] zfs list -H -o name,mounted -t filesystem -r tank/ct/testct-0c87
+30967: 2026-10-14T21:43:51.083061+02:00 vpsadminos osctld[2877]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_wrapper_start'
+30968: 2026-10-14T21:43:51.085422+02:00 vpsadminos osctld[2877]: [ct=tank:testct-0c87] Reattaching wrapper, PID 4666 -> osctl/pool.tank/group.default/user.testct-0c87/ct.testct-0c87/user-owned
+30969: 2026-10-14T21:43:51.096779+02:00 vpsadminos osctld[2877]: [ct=tank:testct-0c87] Set /proc/4666/oom_score_adj=0
+30970: 2026-10-14T21:43:51.125317+02:00 vpsadminos osctld[2877]: [monitor] Container tank:testct-0c87 entered state STARTING
+30971: 2026-10-14T21:43:51.319898+02:00 vpsadminos osctld[2877]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_pre_start'
+30972: 2026-10-14T21:43:51.322702+02:00 vpsadminos osctld[2877]: [tank/ct/testct-0c87] zfs list -H -o name,mounted -t filesystem -r tank/ct/testct-0c87
+30973: 2026-10-14T21:43:51.412937+02:00 vpsadminos osctld[2877]: [ct=tank:testct-0c87] Configuring cgroups
+30974: 2026-10-14T21:43:51.414712+02:00 vpsadminos osctld[2877]: [group=tank:/] Configuring group 'osctl/pool.tank'
+30975: 2026-10-14T21:43:51.415236+02:00 vpsadminos osctld[2877]: [group=tank:/default] Configuring group 'osctl/pool.tank/default'
+30976: 2026-10-14T21:43:51.419554+02:00 vpsadminos osctld[2877]: [#<OsCtld::Devices::V2::BpfProgram:0x00007fcc79e074a8>] devcgprog attach /run/osctl/bpf/osctl/progs/946a3e34004 /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-0c87/ct.testct-0c87 /run/osctl/bpf/osctl/pools/tank/links/devcg-946a3e34004-on-run-osctl-cgroup-osctl-pool\x2etank-group\x2edefault-user\x2etestct\x2d0c87-ct\x2etestct\x2d0c87
+30996: 2026-10-14T21:43:52.286922+02:00 vpsadminos lxc[1]: testct-0c87: conf - ../src/lxc/conf.c:lxc_setup:3950 - Failed to setup rootfs
+30997: 2026-10-14T21:43:52.287275+02:00 vpsadminos lxc[1]: testct-0c87: start - ../src/lxc/start.c:do_start:1306 - Failed to setup container "testct-0c87"
+30998: 2026-10-14T21:43:52.288949+02:00 vpsadminos lxc[4666]: testct-0c87: sync - ../src/lxc/sync.c:sync_wait:34 - An error occurred in another process (expected sequence number 3)
+30999: 2026-10-14T21:43:52.290385+02:00 vpsadminos osctld[2877]: [monitor] Container tank:testct-0c87 entered state ABORTING
+31000: 2026-10-14T21:43:52.290528+02:00 vpsadminos lxc[4666]: testct-0c87: start - ../src/lxc/start.c:__lxc_start:2180 - Failed to spawn container "testct-0c87"
+31001: 2026-10-14T21:43:52.293453+02:00 vpsadminos osctld[2877]: [monitor] Container tank:testct-0c87 entered state STOPPING
+31002: 2026-10-14T21:43:52.495365+02:00 vpsadminos osctld[2877]: [monitor] Container tank:testct-0c87 entered state STOPPED
+31003: 2026-10-14T21:43:52.521094+02:00 vpsadminos osctld[2877]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_post_stop'
+31004: 2026-10-14T21:43:52.523827+02:00 vpsadminos osctld[2877]: [bpf-fs] umount -f /run/osctl/ct-bpf/tank/testct-0c87

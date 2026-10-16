@@ -1,0 +1,36 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos' is dirty
+copying path '/nix/store/r5l65vg4gi4dnx54zkwagfb8jmlqniy5-source' from 'https://cache.nixos.org'...
+error:
+       … while calling the 'derivationStrict' builtin
+         at «nix-internal»/derivation-internal.nix:37:12:
+           36|
+           37|   strict = derivationStrict drvAttrs;
+             |            ^
+           38|
+
+       … while evaluating derivation 'nixos-container-persistence'
+         whose name attribute is located at «github:NixOS/nixpkgs/7993f34ee47e28a3d607a525aadc6c94b73be728?narHash=sha256-ZGq3ptZzA%2BoO0N/Wi/F%2BGbuTijLkYExD01LvpNFAvr0%3D»/pkgs/stdenv/generic/make-derivation.nix:647:11
+
+       … while evaluating attribute 'buildCommand' of derivation 'nixos-container-persistence'
+         at «github:NixOS/nixpkgs/7993f34ee47e28a3d607a525aadc6c94b73be728?narHash=sha256-ZGq3ptZzA%2BoO0N/Wi/F%2BGbuTijLkYExD01LvpNFAvr0%3D»/pkgs/build-support/trivial-builders/default.nix:81:17:
+           80|         enableParallelBuilding = true;
+           81|         inherit buildCommand name;
+             |                 ^
+           82|         passAsFile = [ "buildCommand" ] ++ (derivationArgs.passAsFile or [ ]);
+
+       … while evaluating the option `system.activationScripts':
+
+       … while evaluating definitions from `/nix/store/5asg9p28d93d13jq7ddpqc25djza5wml-source/nixos/modules/system/activation/activation-script.nix':
+
+       … while evaluating definitions from `/nix/store/5asg9p28d93d13jq7ddpqc25djza5wml-source/nixos/modules/tasks/filesystems.nix':
+
+       … while evaluating the option `boot.specialFileSystems."/fixture/backing storage".options':
+
+       … while evaluating definitions from `/nix/store/gqhyzr6r2ahjysx5qcqxx63dq7j5npv4-source/tests/nixos-container-persistence-eval.nix':
+
+       … while evaluating the option `fileSystems."/fixture/backing storage".options':
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: A definition for option `fileSystems."/fixture/backing storage".options' is not of type `non-empty (list of string (with check: non-empty))'. TypeError: Definition values:
+       - In `/nix/store/gqhyzr6r2ahjysx5qcqxx63dq7j5npv4-source/tests/nixos-container-persistence-eval.nix': [ ]

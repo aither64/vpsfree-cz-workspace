@@ -1,0 +1,60 @@
+<page>manuals:vps:playgroundvps</page>
+====== Playground VPS ======
+
+Pro účely testování máte možnost si vytvořit další VPS s omezenou životností. Říkáme mu playground VPS, je **zdarma**, ale má omezenou životnost na **jeden měsíc** – je ale možno se individuálně domluvit na prodloužení životnosti, [[informace:podpora|pište na podporu]]. Každý člen může mít dva playground VPS, po expiraci a smazání playground VPS je možno vytvořit další. Playground je samostatná lokace z hlediska našeho setupu, tedy stejně jako produkční Praha a Brno má svoje rozsahy IP adres a nelze je přidělit mimo playground lokaci.
+
+===== K čemu slouží playground VPS =====
+  * testování nových konfigurací systému
+  * testování nových distribucí
+  * celkově testování a "hraní si" čehokoliv / s čímkoliv
+
+===== K čemu neslouží playground VPS =====
+  * jako sekundární VPS (tzn. VPS dlouhodobě v provozu)
+  * dlouhodobé vývojové prostředí pro vaší aplikaci - pgnd je na otestovaní riskantních přechodů, ne na dlouhodobý vývoj
+===== Vytvoření VPS =====
+Playground VPS si můžete založit ve vpsAdminu. Můžeme si vytvořit buď čistou (prázdnou) VPS, nebo naklonovat již existující server.
+
+==== Založení čisté VPS ====
+
+Čistou VPS vytvoříme v sekci VPS kliknutím na odkaz <vpsadmin-nav id="vps.create.open">„Nové VPS“</vpsadmin-nav> v pravém sloupci vpsAdminu. Následně musíme zvolit, že chceme založit nový VPS v prostředí Playground.
+
+{{:cs:screenshots:vpsadmin:playground:create-vps-form.png?300|}}
+
+Poté zvolíme parametry vytvářeného VPS a založí se nám nový Playground VPS.
+
+==== Naklonování již existující VPS ====
+
+Pro testování různých konfigurací nad produkčním systémem se může hodit funkce klonování VPS. Na nově vytvořeném VPS pak budeme mít kopii původního systému (včetně dat) z klonovaného VPS.
+
+Klonování se provádí v detailu VPS, který chceme naklonovat. V pravém sloupci klikněte na <vpsadmin-nav id="vps.clone.open">**Klonovat VPS**</vpsadmin-nav> a poté zvolte klonování do prostředí Playground.
+
+{{:cs:screenshots:vpsadmin:playground:clone-vps-form.png?300|}}
+
+Pozor na to, klonování je možné pouze, pokud již **nemáte** vytvořené playground VPS.
+
+Tento proces může chvíli trvat v závislosti na velikosti a typu dat na klonované VPS. Proces klonování je možné sledovat v sekci **Transakce**.
+
+===== Prohození VPS  (swap) =====
+
+Na playground nebo i [[navody:vps:vpsadminos#testovaci_prostredi|staging]] VPS si můžeš
+připravit nový systém nebo konfiguraci a potom toto nové VPS přenést do produkce.
+Funkce <vpsadmin-nav id="vps.swap.open">**Prohodit VPS**</vpsadmin-nav> přenese playground VPS do produkce, vymění se IP adresy a původní produkční VPS
+se přenese zase na playground. <vpsadmin-nav id="vps.swap.open">**Prohodit VPS**</vpsadmin-nav> lze provést z detailu produkční VPS.
+
+{{:cs:screenshots:vpsadmin:playground:swap-vps-action.png?700|}}
+
+Je důležité vyvolat swap z detailu produkční VPS a ne naopak. Tento VPS se pak považuje
+za hlavní a je u něj minimalizována nedostupnost.
+
+Co přesně se při swapu VPS stane nám vpsAdmin před jeho provedením ukáže:
+
+{{:cs:screenshots:vpsadmin:playground:swap-vps-preview.png?400|}}
+
+Swap se skládá ze dvou migrací VPS. Nejprve se přesune playground do produkce, prohodí se IP
+adresy, nová VPS se spustí a poté se původní produkční VPS přesouvá na playground. V přehledu
+jsou zeleně označeny položky, které se mezi VPS prohodí.
+===== Doménové záznamy k playground VPS =====
+
+Na našich DNS serverech jsou automaticky generována doménová jména pro všechny playground VPS. Slouží k tomu, abyste měli možnost si vyzkoušet nové nastavení a nepotřebovali přitom vlastní doménu.
+
+Doménová jména jsou odvozena od IP adresy vaší playground VPS. Pokud tedy dostanete adresu 185.8.164.10, máte k dispozici jméno 10.164.8.185.pgnd.vpsfree.cz a všechna další jména vyšších řádů, tedy například testovaci.10.164.8.185.pgnd.vpsfree.cz.

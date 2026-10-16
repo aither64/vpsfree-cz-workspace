@@ -1,0 +1,322 @@
+SHELL: 0
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: sv check ebpf-livepatch
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+ok: run: ebpf-livepatch: (pid 917) 2s
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: test -s /run/ebpf-livepatch/current-generation
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: cat /run/ebpf-livepatch/current-generation
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+1792084356012760320-1015
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: find /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015 -mindepth 1 -maxdepth 1 -printf '%f\n' | sort
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+override_uname__uname_fentry
+override_uname__uname_fexit
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: find /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations -mindepth 1 -maxdepth 1 -type d -printf '%f\n'
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1792084356012760320-1015
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: test -s /run/ebpf-livepatch/1792084356012760320-1015.attached-at
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: cat /run/ebpf-livepatch/current-generation
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1792084356012760320-1015
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: find /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015 -mindepth 1 -maxdepth 1 -printf '%f\n' | sort
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+override_uname__uname_fentry
+override_uname__uname_fexit
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: /nix/store/bl9w45rrv8nk3wjqbi93pv55b7iw86b2-bpftools-6.18.7/bin/bpftool -j link show pinned /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015/override_uname__uname_fentry
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.12s
+STATUS: 255
+OUTPUT:
+{"id":1,"type":"tracing","prog_id":7,"prog_type":"tracing","attach_type":"trace_fentry","target_obj_id":1,"target_btf_id":47290,"cookie":0}
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: /nix/store/bl9w45rrv8nk3wjqbi93pv55b7iw86b2-bpftools-6.18.7/bin/bpftool -j link show pinned /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015/override_uname__uname_fexit
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.05s
+STATUS: 255
+OUTPUT:
+{"id":2,"type":"tracing","prog_id":9,"prog_type":"tracing","attach_type":"trace_fexit","target_obj_id":1,"target_btf_id":47290,"cookie":0}
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: mount --bind /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations
+mount -o remount,bind,ro /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: /service/ebpf-livepatch/control/1
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+mkdir: cannot create directory ‘/sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084358332982987-1891’: Read-only file system
+ebpf-livepatch: unable to activate pinned generation; keeping current programs
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: cat /run/ebpf-livepatch/current-generation
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1792084356012760320-1015
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: find /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015 -mindepth 1 -maxdepth 1 -printf '%f\n' | sort
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+override_uname__uname_fentry
+override_uname__uname_fexit
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: find /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015 -mindepth 1 -maxdepth 1 -printf '%f\n' | sort
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+override_uname__uname_fentry
+override_uname__uname_fexit
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: /nix/store/bl9w45rrv8nk3wjqbi93pv55b7iw86b2-bpftools-6.18.7/bin/bpftool -j link show pinned /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015/override_uname__uname_fentry
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.04s
+STATUS: 255
+OUTPUT:
+{"id":1,"type":"tracing","prog_id":7,"prog_type":"tracing","attach_type":"trace_fentry","target_obj_id":1,"target_btf_id":47290,"cookie":0}
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: /nix/store/bl9w45rrv8nk3wjqbi93pv55b7iw86b2-bpftools-6.18.7/bin/bpftool -j link show pinned /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015/override_uname__uname_fexit
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.04s
+STATUS: 255
+OUTPUT:
+{"id":2,"type":"tracing","prog_id":9,"prog_type":"tracing","attach_type":"trace_fexit","target_obj_id":1,"target_btf_id":47290,"cookie":0}
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: mount -o remount,bind,rw /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations
+umount /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: cat /run/ebpf-livepatch/current-generation
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1792084356012760320-1015
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: find /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015 -mindepth 1 -maxdepth 1 -printf '%f\n' | sort
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+override_uname__uname_fentry
+override_uname__uname_fexit
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: /nix/store/bl9w45rrv8nk3wjqbi93pv55b7iw86b2-bpftools-6.18.7/bin/bpftool -j link show pinned /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015/override_uname__uname_fentry
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.04s
+STATUS: 255
+OUTPUT:
+{"id":1,"type":"tracing","prog_id":7,"prog_type":"tracing","attach_type":"trace_fentry","target_obj_id":1,"target_btf_id":47290,"cookie":0}
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: /nix/store/bl9w45rrv8nk3wjqbi93pv55b7iw86b2-bpftools-6.18.7/bin/bpftool -j link show pinned /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015/override_uname__uname_fexit
+END: 2026-10-15 19:12:38 +0200
+ELAPSED: 0.07s
+STATUS: 255
+OUTPUT:
+{"id":2,"type":"tracing","prog_id":9,"prog_type":"tracing","attach_type":"trace_fexit","target_obj_id":1,"target_btf_id":47290,"cookie":0}
+---
+
+START: 2026-10-15 19:12:38 +0200
+COMMAND: /nix/store/9ncx1igbymgv4j5g21l3fpx0hq7xylx9-vpsadminos-system-vpsadminos-26.05.git.d3bf74b/bin/switch-to-configuration test
+END: 2026-10-15 19:12:44 +0200
+ELAPSED: 5.51s
+STATUS: 0
+OUTPUT:
+probing runit services...
+probing pools...
+stopping deprecated services...
+stopping changed services...
+activating the configuration...
+setting up /etc...
+reloading changed services...
+> sv 1 ebpf-livepatch
+restarting changed services...
+runit will start new services...
+> osctl activate --system
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 19:12:44 +0200
+COMMAND: test "$(cat /run/ebpf-livepatch/current-generation)" != 1792084356012760320-1015 && test ! -e /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084356012760320-1015
+END: 2026-10-15 19:12:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:12:44 +0200
+COMMAND: cat /run/ebpf-livepatch/current-generation
+END: 2026-10-15 19:12:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1792084362841597042-2473
+---
+
+START: 2026-10-15 19:12:44 +0200
+COMMAND: find /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations/1792084362841597042-2473 -mindepth 1 -maxdepth 1 -printf '%f\n' | sort
+END: 2026-10-15 19:12:44 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:12:44 +0200
+COMMAND: find /sys/fs/bpf/vpsadminos/ebpf-livepatch/generations -mindepth 1 -maxdepth 1 -type d -printf '%f\n'
+END: 2026-10-15 19:12:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1792084362841597042-2473
+---
+
+START: 2026-10-15 19:12:44 +0200
+COMMAND: test -s /run/ebpf-livepatch/1792084362841597042-2473.attached-at
+END: 2026-10-15 19:12:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 19:12:44 +0200
+COMMAND: /nix/store/bl9w45rrv8nk3wjqbi93pv55b7iw86b2-bpftools-6.18.7/bin/bpftool link show id 1
+END: 2026-10-15 19:12:44 +0200
+ELAPSED: 0.04s
+STATUS: 254
+OUTPUT:
+Error: failed to get link with ID 1: No such file or directory
+---
+
+START: 2026-10-15 19:12:44 +0200
+COMMAND: /nix/store/bl9w45rrv8nk3wjqbi93pv55b7iw86b2-bpftools-6.18.7/bin/bpftool link show id 2
+END: 2026-10-15 19:12:44 +0200
+ELAPSED: 0.04s
+STATUS: 254
+OUTPUT:
+Error: failed to get link with ID 2: No such file or directory
+---
+
+START: 2026-10-15 19:12:44 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 19:12:52 +0200
+ELAPSED: 8.33s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Unable to connect to osctld: socket not found
+Waiting for osctld to prepare for shutdown..... ok
+---
+

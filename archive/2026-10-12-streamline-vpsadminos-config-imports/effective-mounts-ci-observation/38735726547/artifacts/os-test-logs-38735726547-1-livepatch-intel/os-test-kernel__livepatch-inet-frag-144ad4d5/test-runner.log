@@ -1,0 +1,99 @@
+these 9 derivations will be built:
+  /nix/store/l9mzmjk8lryl2rb1fb0sisj1y388c54i-system-path.drv
+  /nix/store/1dgn781i2wdfyycyffnjdrb77f10hz11-system-crontab.drv
+  /nix/store/zmar52wb83l2z5fnr7vd8s7nc7pik0hg-crontabs.drv
+  /nix/store/4h2pl7xmgaahy5d4nkca57s25l5cc0jk-etc.drv
+  /nix/store/r29lf6lschdapi9gfi0jnsxjx81qjx2h-stage-2-init.sh.drv
+  /nix/store/r89vgb7kd1n54phsbd6if0llj0lja876-vpsadminos-system-vpsadminos-26.05.git.edb90d2.drv
+  /nix/store/q73rdlqym3p9d6a3qdm2x20cckmbr32p-closure-info.drv
+  /nix/store/dv1db7rfkmczvps5szs4sp59xkv5f9v8-squashfs.img.drv
+  /nix/store/13sahzvx4jqc01w3brv99d9sdp4j45yz-os-test-kernel-livepatch-inet-frag.json.drv
+building '/nix/store/l9mzmjk8lryl2rb1fb0sisj1y388c54i-system-path.drv'...
+structuredAttrs is enabled
+created 6985 symlinks in user environment
+building '/nix/store/r29lf6lschdapi9gfi0jnsxjx81qjx2h-stage-2-init.sh.drv'...
+building '/nix/store/1dgn781i2wdfyycyffnjdrb77f10hz11-system-crontab.drv'...
+Running phase: patchPhase
+Running phase: updateAutotoolsGnuConfigScriptsPhase
+Running phase: configurePhase
+no configure script, doing nothing
+Running phase: buildPhase
+Running phase: checkPhase
+building '/nix/store/zmar52wb83l2z5fnr7vd8s7nc7pik0hg-crontabs.drv'...
+Running phase: installPhase
+no Makefile or custom installPhase, doing nothing
+Running phase: fixupPhase
+shrinking RPATHs of ELF executables and libraries in /nix/store/cp1amx8xxbqnywwmzznyklvv0fx5zq8b-stage-2-init.sh
+checking for references to /build/ in /nix/store/cp1amx8xxbqnywwmzznyklvv0fx5zq8b-stage-2-init.sh...
+patching script interpreter paths in /nix/store/cp1amx8xxbqnywwmzznyklvv0fx5zq8b-stage-2-init.sh
+building '/nix/store/4h2pl7xmgaahy5d4nkca57s25l5cc0jk-etc.drv'...
+building '/nix/store/r89vgb7kd1n54phsbd6if0llj0lja876-vpsadminos-system-vpsadminos-26.05.git.edb90d2.drv'...
+building '/nix/store/q73rdlqym3p9d6a3qdm2x20cckmbr32p-closure-info.drv'...
+structuredAttrs is enabled
+building '/nix/store/dv1db7rfkmczvps5szs4sp59xkv5f9v8-squashfs.img.drv'...
+Parallel mksquashfs: Using 48 processors
+Creating 4.0 filesystem on /nix/store/7rc1ai34wg1llbc44h3dmmjzl5i82a7k-squashfs.img, block size 1048576.
+
+
+Squashfs 4.0 filesystem, zstd compressed, data block size 1048576
+        compressed data, compressed metadata, compressed fragments,
+        compressed xattrs, compressed ids
+        duplicates are removed
+Filesystem size 454764.49 Kbytes (444.11 Mbytes)
+        35.24% of uncompressed filesystem size (1290620.01 Kbytes)
+Inode table size 574922 bytes (561.45 Kbytes)
+        20.88% of uncompressed inode table size (2753864 bytes)
+Directory table size 606828 bytes (592.61 Kbytes)
+        43.06% of uncompressed directory table size (1409406 bytes)
+Number of duplicate files found 7181
+Number of inodes 63330
+Number of files 41027
+Number of fragments 697
+Number of symbolic links 12992
+Number of device nodes 0
+Number of fifo nodes 0
+Number of socket nodes 0
+Number of directories 9311
+Number of hard-links 0
+Number of ids (unique uids + gids) 1
+Number of uids 1
+        root (0)
+Number of gids 1
+        root (0)
+building '/nix/store/13sahzvx4jqc01w3brv99d9sdp4j45yz-os-test-kernel-livepatch-inet-frag.json.drv'...
+/nix/store/jh105207pd7c0pz7f8fwnsgdx440zadn-os-test-kernel-livepatch-inet-frag.json
+[2026-10-15 16:44:06 +0200] Running script default
+[2026-10-15 16:44:06 +0200] Evaluating examples
+[2026-10-15 16:44:19 +0200] [1/1] Evaluating 'Generic inet fragment-queue creation arms the timer only after locked hash insertion under v7, unlike the native baseline'
+[2026-10-15 16:44:25 +0200] [1/1] 'Generic inet fragment-queue creation arms the timer only after locked hash insertion under v7, unlike the native baseline' succeeded in 6.4s
+[2026-10-15 16:44:25 +0200] Script default finished in 19.03s
+VULNERABLE BASELINE: timer registration before hashing, without the queue lock
+NATIVE inet-frag timer call observations:
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 1/1   #P:2
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+        fragment-1944    [001] d.Z..    11.564122: native_timer: (inet_frag_find+0x22f/0x730) timer=0xffffa24d8e570d28 next=0x0 lock=0
+TARGET: inserted hash node and held queue lock at timer registration
+TARGET inet-frag timer call observations:
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 1/1   #P:2
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+        fragment-2036    [001] D.Z1.    13.081880: target_timer: (inet_frag_find+0x3b6/0x790 [livepatch_7]) timer=0xffffa24d8e570d28 next=0xffffa24d8b228ad9 lock=1

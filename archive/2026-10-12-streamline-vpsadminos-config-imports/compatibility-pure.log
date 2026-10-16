@@ -1,0 +1,30 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos' is dirty
+error:
+       … while calling the 'deepSeq' builtin
+         at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/nixos-container-persistence-check.nix:29:1:
+           28| in
+           29| builtins.deepSeq evaluation.assertions (
+             | ^
+           30|   pkgs.runCommand "nixos-container-persistence"
+
+       … while evaluating the attribute 'releases'
+         at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-streamline-vpsadminos-config-imports/vpsadminos/tests/nixos-container-persistence-eval.nix:280:5:
+          279|   assertions = {
+          280|     releases = lib.genAttrs [ "25.11" "26.05" "unstable" ] checkRelease;
+             |     ^
+          281|     latestStable = check "latest stable equals self-contained 26.05" (
+
+       … while evaluating the option `system.activationScripts':
+
+       … while evaluating definitions from `/nix/store/4k79ns9drp02wyvcix81c7nnz4hn8psi-source/nixos/modules/system/activation/activation-script.nix':
+
+       … while evaluating definitions from `/nix/store/4k79ns9drp02wyvcix81c7nnz4hn8psi-source/nixos/modules/tasks/filesystems.nix':
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: attribute 'result' missing
+       at «github:NixOS/nixpkgs/b6018f87da91d19d0ab4cf979885689b469cdd41?narHash=sha256-twXPFqFsrrY5r28Zh7Homgcp2gUMBgQ6WDS98Q/3xFI%3D»/nixos/modules/tasks/filesystems.nix:490:55:
+          489|     system.build.fileSystems = fileSystems;
+          490|     system.build.earlyMountScript = makeSpecialMounts (toposort fsBefore (
+             |                                                       ^
+          491|       attrValues config.boot.specialFileSystems

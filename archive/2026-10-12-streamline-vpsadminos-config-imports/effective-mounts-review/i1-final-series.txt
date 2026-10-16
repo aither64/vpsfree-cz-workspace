@@ -1,0 +1,90 @@
+commit b2669ce00d440c1e05eb07b0e5bb4d201f3e5161
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 14 12:07:29 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Thu Oct 15 12:59:25 2026 +0200
+
+    os: select NixOS guest compatibility by release (v5)
+    
+    Generic stable imports currently choose the latest raw compatibility module,
+    even for a guest pinned to an older nixpkgs release. Select the module using
+    the guest evaluator's release and generate containerStable imports so a
+    supported guest upgrade does not require another import edit.
+    
+    Expose one literal-key release map and derive the retained underscore aliases
+    from it. Keep legacy nixosConfigurations aliases on the latest stable file
+    and unstable selection explicit. Unknown stable releases fail with guidance
+    for updating the input or selecting the explicit unstable module. Raw files
+    remain self-contained and guests retain their nixpkgs pin and stateVersion.
+    
+    Add real-release, template, standalone and unsupported-release evaluation.
+    Image checks compare accounts, maps, machine-id and known payload ownership
+    across rebuild and restart, and collect all preservation results and mount
+    ordering diagnostics before aggregate failure. Guests adopt independently;
+    no host coordination, map conversion or recovery of drifted IDs is included.
+    
+    Release, template, standalone, negative evaluation, hooks and documentation
+    checks passed on the retained implementation. Prior exact-head image runtime
+    passed separately; current effective-mount verification belongs to the
+    independent persistence owner and is recorded in session receipts.
+    
+    Development history:
+    - v1: introduce release selection, grouped exports, templates and coverage.
+    - v2: collect preservation results and allocation/mount failure diagnostics.
+    - v3: expose specialfs snippet and sourced-mount lines in those diagnostics.
+    - v4: describe the finished interface and independent guest adoption.
+    - v5: restore policy-compliant versioning and the complete logical history.
+
+commit edb90d2fe2190d88d8b9d2d21bd0def79eedc898
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 14 16:13:20 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Thu Oct 15 14:32:04 2026 +0200
+
+    os: expose persisted allocation maps before legacy users (v9)
+    
+    LXC supplies proc before init, so NixOS can skip its early mount path.
+    Activation then allocates accounts before saved UID/GID maps become visible.
+    A later bind exposes intact maps while passwd/group already contain new IDs,
+    leaving persisted numeric ownership disconnected from the live accounts.
+    
+    Select effective non-root early mounts covering allocation state or logs,
+    including ancestor persistence and direct filesystem declarations. Prepare
+    missing directory-bind sources at their existing upstream callback position
+    and make legacy users depend on specialfs. Use the existing fsBefore relation
+    only to identify required predecessors; upstream owns all order and cycles.
+    Check required mount/remount results and bind identity, and explicitly exit
+    activation before allocation on failure. Unrelated callbacks retain their
+    existing behavior. Non-bind devices are not treated as directory sources.
+    
+    Preserve configured tuples, matching live binds and existing metadata. Missing
+    selected sources receive root/0755 defaults; custom owner and mode require
+    pre-provisioning. Keep root-backed layouts, dry activation, alternative account
+    backends, guest specialfs overrides and standalone raw-file use. This changes
+    no account algorithm, stateVersion or persisted format and requires no host
+    coordination. Existing drift needs separate recovery; rollback can restore
+    the old ordering defect.
+    
+    Add three-release evaluation and generated shell checks plus twelve registered
+    runtime variants for adoption, ancestors, direct binds and fresh allocation.
+    Private-namespace controls retain complete activation and the real allocator;
+    negative cases compare saved accounts/maps/data and refuse before allocation.
+    Provide bounded failure-only guest diagnostics and native private-store setup.
+    Three-release evaluation, generated shell checks, actual script syntax,
+    templates, documentation and declared hooks passed. Exact-head runtime evidence
+    is retained separately; prior eight-case/image acceptance applies only to its
+    recorded source.
+    
+    Development history:
+    - v1: establish selected state binds before legacy allocation.
+    - v2: strengthen ancestry regression to require both expected mount calls.
+    - v3: use the upstream global callback, root-backed sources and explicit abort;
+      add pure checks and registered source-only adoption/failure coverage.
+    - v4: correct root CLI binding and shared-store mapping in disposable setup.
+    - v5: capture bounded guest diagnostics only after readiness failure.
+    - v6: copy per-variant closures and registration into the mapped private store.
+    - v7: initialize the fresh fixture /nix root with mode0755 for traversal.
+    - v8: select effective ancestors/direct filesystems, check required predecessors
+      and add layout-aware coverage with explicit fresh/existing metadata policy.
+    - v9: enforce numeric root ownership and full0755 on new directories under
+      setgid parents; check metadata-command failures and preserve parent metadata.

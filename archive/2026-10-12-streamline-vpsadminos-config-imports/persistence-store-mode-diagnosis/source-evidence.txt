@@ -1,0 +1,265 @@
+
+=== osctld/lib/osctld/commands/dataset/create.rb:25-35 ===
+25:             if ct.map_mode == 'zfs'
+26:               properties.update({
+27:                 uidmap: ct.uid_map.map(&:to_s).join(','),
+28:                 gidmap: ct.gid_map.map(&:to_s).join(',')
+29:               })
+30:             end
+31: 
+32:             ds.create!(properties:)
+33:             ds.mount
+34:             ds.create_private!
+35: 
+
+=== osctld/lib/osctld/commands/dataset/create.rb:39-63 ===
+39:           error!('unable to create dataset, perhaps a parent dataset is missing?')
+40:         end
+41: 
+42:         next ok if created.empty? || !opts[:mount]
+43: 
+44:         # Mount newly created parents
+45:         created[0..-2].each do |ds|
+46:           parent_mnt = parent_mountpoint(ct, ds)
+47:           next unless parent_mnt
+48: 
+49:           mount(ct, ds, File.join(parent_mnt, ds.base_name))
+50:         end
+51: 
+52:         # Mount target dataset
+53:         parent_mnt = parent_mountpoint(ct, wanted_ds)
+54: 
+55:         if opts[:mountpoint]
+56:           mount(ct, wanted_ds, opts[:mountpoint])
+57: 
+58:         elsif parent_mnt
+59:           mount(ct, wanted_ds, File.join(parent_mnt, wanted_ds.base_name))
+60:         end
+61: 
+62:         ok
+63:       end
+
+=== osctld/lib/osctld/commands/dataset/create.rb:69-82 ===
+69:       call_cmd!(
+70:         Commands::Container::MountDataset,
+71:         id: ct.id,
+72:         pool: ct.pool.name,
+73:         name: ds.relative_name,
+74:         mountpoint:,
+75:         mode: 'rw',
+76:         automount: opts[:mount]
+77:       )
+78:     end
+79: 
+80:     def parent_mountpoint(ct, ds)
+81:       parent = ds.parent
+82: 
+
+=== libosctl/lib/libosctl/zfs/dataset.rb:80-94 ===
+80:     # @param opts [Hash] options
+81:     # @option opts [Boolean] :parents create the private dir for all parents
+82:     #                                 as well
+83:     def create_private!(**opts)
+84:       if opts[:parents]
+85:         parents.each do |ds|
+86:           break if Dir.exist?(ds.private_path)
+87: 
+88:           ds.create_private!
+89:         end
+90:       end
+91: 
+92:       Dir.mkdir(private_path, 0o750)
+93:     end
+94: 
+
+=== osctld/lib/osctld/commands/container/mount_dataset.rb:23-38 ===
+23:         mnt = Mount::Entry.new(
+24:           nil,
+25:           opts[:mountpoint],
+26:           'bind',
+27:           m_opts.join(','),
+28:           opts[:automount],
+29:           dataset: ds,
+30:           map_ids: true
+31:         )
+32: 
+33:         if ct.mounts.find_at(mnt.mountpoint)
+34:           next error("mountpoint '#{mnt.mountpoint}' is already mounted")
+35:         end
+36: 
+37:         ct.mounts.add(mnt)
+38:         ok
+
+=== osctld/lib/osctld/mount/entry.rb:35-42 ===
+35:     end
+36: 
+37:     def fs
+38:       dataset ? dataset.private_path : @fs
+39:     end
+40: 
+41:     def lxc_mountpoint
+42:       ret = String.new(mountpoint)
+
+=== osctld/lib/osctld/user_control/commands/ct_pre_mount.rb:29-42 ===
+29: 
+30:         ct.mounts.shared_dir.map_and_push(rc.rootfs, opts[:client_pid])
+31: 
+32:         begin
+33:           ct.mounts.each do |mnt|
+34:             next unless mnt.map_ids
+35: 
+36:             ct.mounts.shared_dir.map_and_push(mnt.fs, opts[:client_pid])
+37:           end
+38:         rescue SystemCommandFailed
+39:           log(:warn, 'Failed to map and push a mount, cleaning up')
+40: 
+41:           ct.mounts.shared_dir.cleanup_pushed(rc.rootfs)
+42: 
+
+=== image-scripts/include/nixos.sh:54-76 ===
+54: 	tar -xzf result/$result_dir/tarball/*.tar.gz -C "$INSTALL"
+55: 	mv "$INSTALL/nix-path-registration" "$INSTALL/nix/nix-path-registration"
+56: }
+
+=== os/lib/nixos-container/stable/impermanence.nix:141-161 ===
+141:   system.build.impermanenceTarball = import "${pkgs.path}/nixos/lib/make-system-tarball.nix" {
+142:     inherit (pkgs) stdenv closureInfo pixz;
+143:     compressCommand = "gzip";
+144:     compressionExtension = ".gz";
+145:     extraInputs = [ pkgs.gzip ];
+146: 
+147:     contents = [ ];
+148:     storeContents = [
+149:       {
+150:         object = config.system.build.toplevel;
+151:         symlink = "/run/current-system";
+152:       }
+153:     ];
+154: 
+155:     extraCommands = pkgs.writeScript "extra-commands.sh" ''
+156:       # Needed for first container start; impermanence support in osctld relies on
+157:       # /nix/var/nix/profiles/system
+158:       mkdir -p nix/var/nix/profiles
+159:       ln -s ${config.system.build.toplevel} nix/var/nix/profiles/system
+160:     '';
+161:   };
+
+=== /nix/store/5asg9p28d93d13jq7ddpqc25djza5wml-source/nixos/lib/make-system-tarball.sh ===
+# Remove the initial slash from a path, since genisofs likes it that way.
+stripSlash() {
+    res="$1"
+    if test "${res:0:1}" = /; then res=${res:1}; fi
+}
+
+# Add the individual files.
+for ((i = 0; i < ${#targets[@]}; i++)); do
+    stripSlash "${targets[$i]}"
+    mkdir -p "$(dirname "$res")"
+    cp -a "${sources[$i]}" "$res"
+done
+
+
+# Add the closures of the top-level store objects.
+chmod +w .
+mkdir -p nix/store
+for i in $(< $closureInfo/store-paths); do
+    cp -a "$i" "${i:1}"
+done
+
+
+# TODO tar ruxo
+# Also include a manifest of the closures in a format suitable for
+# nix-store --load-db.
+cp $closureInfo/registration nix-path-registration
+
+# Add symlinks to the top-level store objects.
+for ((n = 0; n < ${#objects[*]}; n++)); do
+    object=${objects[$n]}
+    symlink=${symlinks[$n]}
+    if test "$symlink" != "none"; then
+        mkdir -p $(dirname ./$symlink)
+        ln -s $object ./$symlink
+    fi
+done
+
+$extraCommands
+
+mkdir -p $out/tarball
+
+rm env-vars
+
+time tar --sort=name --mtime='@1' --owner=0 --group=0 --numeric-owner -c * $extraArgs | $compressCommand > $out/tarball/$fileName.tar${extension}
+
+mkdir -p $out/nix-support
+echo $system > $out/nix-support/system
+echo "file system-tarball $out/tarball/$fileName.tar${extension}" > $out/nix-support/hydra-build-products
+
+=== /nix/store/5asg9p28d93d13jq7ddpqc25djza5wml-source/nixos/lib/make-system-tarball.nix ===
+{
+  stdenv,
+  closureInfo,
+  pixz,
+
+  # The file name of the resulting tarball
+  fileName ? "nixos-system-${stdenv.hostPlatform.system}",
+
+  # The files and directories to be placed in the tarball.
+  # This is a list of attribute sets {source, target} where `source'
+  # is the file system object (regular file or directory) to be
+  # grafted in the file system at path `target'.
+  contents,
+
+  # In addition to `contents', the closure of the store paths listed
+  # in `packages' are also placed in the Nix store of the tarball.  This is
+  # a list of attribute sets {object, symlink} where `object' if a
+  # store path whose closure will be copied, and `symlink' is a
+  # symlink to `object' that will be added to the tarball.
+  storeContents ? [ ],
+
+  # Extra commands to be executed before archiving files
+  extraCommands ? "",
+
+  # Extra tar arguments
+  extraArgs ? "",
+  # Command used for compression
+  compressCommand ? "pixz -t",
+  # Extension for the compressed tarball
+  compressionExtension ? ".xz",
+  # extra inputs, like the compressor to use
+  extraInputs ? [ pixz ],
+}:
+
+let
+  symlinks = map (x: x.symlink) storeContents;
+  objects = map (x: x.object) storeContents;
+in
+
+stdenv.mkDerivation {
+  name = "tarball";
+  __structuredAttrs = true;
+
+  # the tarball will be self-contained so we can drop references
+  # to the closure that was used to build it
+  unsafeDiscardReferences.out = true;
+
+  buildCommandPath = ./make-system-tarball.sh;
+  nativeBuildInputs = extraInputs;
+
+  inherit
+    fileName
+    extraArgs
+    extraCommands
+    compressCommand
+    ;
+
+  sources = map (x: x.source) contents;
+  targets = map (x: x.target) contents;
+
+  inherit symlinks objects;
+
+  closureInfo = closureInfo {
+    rootPaths = objects;
+  };
+
+  extension = compressionExtension;
+}

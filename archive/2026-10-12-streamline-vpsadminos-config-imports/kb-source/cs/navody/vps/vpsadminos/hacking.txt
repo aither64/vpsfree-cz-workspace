@@ -1,0 +1,38 @@
+<page>manuals:vps:vpsadminos:hacking</page>
+====== Kernel hacking ======
+  * [[https://nixos.wiki/wiki/Nixpkgs/Create_and_debug_packages#Using_nix-shell_for_package_development|Using nix-shell for package development]]
+  * [[https://nixos.wiki/wiki/Linux_Kernel|Linux kernel development on NixOS]]
+
+Fire up your NixOS workhose and let's get to work:
+
+<code>
+# Fetch all the goodies
+git clone -b devel https://github.com/vpsfreecz/vpsadminos
+cd vpsadminos && git clone -b vpsadminos_dev https://github.com/vpsfreecz/nixpkgs
+
+# set $NIX_PATH so that we have <nixpkgs/..> and <vpsadminos/...> both working:
+export NIX_PATH="nixpkgs=`pwd`/nixpkgs:vpsadminos=`pwd`"
+
+# Create temporary unpack path and jump to it
+mkdir -p ~/tmp/kernel-dev; cd ~/tmp/kernel-dev
+
+# Enter nix-shell with the package environment
+nix-shell -E "with import <nixpkgs> {}; (callPackage <vpsadminos/os/packages/linux/default.nix> {}).overrideAttrs(old:  {nativeBuildInputs=old.nativeBuildInputs ++ [ pkgconfig ncurses ];})"
+
+# unpack the sources
+unpackPhase
+
+# go to the unpacked dir
+cd linux-*
+
+# to apply currently defined patches
+patchPhase
+
+# now you can generate new .config with
+make menuconfig
+
+# and run build
+buildPhase
+</code>
+
+To be able to generate patches easily cloning the Linux kernel repository and checking out the correct tag might work better for you - you can still use ''nix-shell'' command from the previous section to create build environment.

@@ -1,0 +1,112 @@
+<page>manuals:vps:management</page>
+====== Vytvoření a správa VPS ======
+
+===== Vytvoření VPS =====
+
+Členům je dovoleno vytvářet VPS v [[navody:vps:playgroundvps|playground]] i produkci a to za
+předpokladu, že má k dispozici **dostatek prostředků** a umožňuje to jeho
+[[navody:vps:prostredi|nastavení prostředí]]. **Prostředky je možné získat snížením parametrů existujících VPS nebo připlacením za více prostředků**.
+
+Vytvoření nové VPS se skládá ze tří kroků:
+
+  - výběr prostředí
+  - výběr lokace
+  - volba hostname, distribuce a parametrů
+
+{{ :cs:screenshots:vpsadmin:vps-management:create-vps-form.png?300 |}}
+
+
+===== IP adresy =====
+
+Člen má přidělenu jednu IPv4 adresu a 32 /64 IPv6 adres v každém prostředí. Tyto
+adresy může libovolně rozdělit mezi VPS. Více IPv4 je k dispozici za [[informace:platby|poplatek]], další IPv6 přidělujeme na dotaz.
+
+Více informací na stránce o správě a různých typech IP adres [[navody:vps:ip_adresy|zde]].
+===== Heslo roota =====
+
+Při nastavování hesla roota lze vybrat ze dvou typů generovaných hesel.
+Jednoduché heslo se snadněji opisuje, ale není dobré ho nechat nastavené
+dlouhodobě.
+
+{{ :cs:screenshots:vpsadmin:vps-management:set-root-password.png?300 |}}
+
+===== Automatické vložení klíčů =====
+
+vpsAdmin umí do nově vytvořeného VPS vložit klíče automaticky. Nejprve mu jej musíme předat. To uděláme po přihlášení v <vpsadmin-nav id="member.public-keys.add">Upravit profil → Veřejné klíče → vpravo v panelu Přidat veřejný klíč</vpsadmin-nav>.
+
+{{ :cs:screenshots:vpsadmin:ssh-keys:add-public-key.png?300 |}}
+
+U každého klíče si můžeme vybrat, jestli se má do nových/reinstalovaných VPS nahrávat automaticky. Klíče můžeme kdykoliv do běžícího VPS také nahrát pomocí formuláře v detailech VPS, hned pod formulářem na nastavení hesla.
+
+{{ :cs:screenshots:vpsadmin:ssh-keys:deploy-public-key.png?300 |}}
+
+===== Prvotní konfigurace =====
+
+Při prvním startu VPS je možné spustit skript, popř. dodat konfiguraci pro
+cloud-init, viz [[navody:vps:userdata]].
+
+===== Volba distribuce =====
+
+Formulář pro reinstalaci distribuce nyní umožňuje pouhou aktualizaci
+informace o distribuci, která je ve VPS. Toho můžete využít, když např.
+systém aktualizujete na novou verzi a distribuce zobrazená ve vpsAdminu
+pak neodpovídá realitě.
+
+{{ :cs:screenshots:vpsadmin:vps-management:reinstall-form.png?300 |}}
+
+Reinstalace systému **maže všechny data v kořenovém adresáři** VPS.
+
+===== Parametry VPS =====
+
+V detailu VPS je možné měnit parametry VPS. Minimální konfigurace VPS je
+1 CPU, 256 MB RAM a 512 MB disku. Maximální konfigurace je 8 CPU, 16 GB
+RAM, diskový prostor není omezen.
+
+{{ :cs:screenshots:vpsadmin:vps-management:resource-settings.png?300 |}}
+
+Pokud chcete vytvořit novou VPS, je nutné pro ni udělat místo - snížit
+parametry jiné VPS, případně kontaktovat podporu a domluvit se na navýšení prostředků.
+
+===== Hostname =====
+
+Hostname VPS je možné změnit přímo ve vpsAdmin a při každém startu VPS dojde automaticky k přepsání volby v ''/etc/hosts''. Hostname je ale možné spravovat i manuálně, mimo vpsAdmin. V detailu VPS je možné zvolit, kterou variantu preferujete.
+
+{{ :cs:screenshots:vpsadmin:vps-management:hostname-form.png?300 |}}
+
+===== Funkce =====
+
+Funkce lze zapínat/vypínat jednotlivě. Při jakékoliv změně dojde k
+restartu VPS.
+
+{{ :cs:screenshots:vpsadmin:vps-management:feature-settings.png |}}
+
+  * TUN/TAP - "TUN routing/TAP bridging" Povolí vytváření virtuálních interface, např. pro VPN.
+  * FUSE - "Filesystem in Userspace" Povolí modul jádra, umožňující neprivilegovaným uživatelům vytvářet si vlastní souborové systémy.
+  * PPP - "Point-to-Point Protocol" Povolí protokol používaný pro propojeni dvou síti po telefonní, případně ISDN lince.
+  * KVM - "Kernel-based Virtual Machine" Povolí použití KVM, pro HW podporu virtualizace.
+  * LXC nesting - Umožní uvnitř VPS používat LXC/LXD kontejnery
+
+===== Klonování VPS =====
+
+Klonovat lze buď do nové nebo do existující VPS. V případě klonování do
+existující VPS je původní VPS se všemi subdatasety **smazán**!
+
+{{ :cs:screenshots:vpsadmin:playground:clone-vps-form.png?300 |}}
+
+Ve formuláři vyberete buď prostředí, lokaci nebo VPS, do které chcete aktuálně otevřený VPS naklonovat.
+
+===== Nastavení času pro odstávky VPS =====
+Vhodný čas pro vykonání odstávek VPS lze nastavit pro každý den v týdnu
+jinak.
+
+{{ :cs:screenshots:vpsadmin:vps-management:outage-windows.png?300 |}}
+
+Během této doby může dojít ke krátkým odstávkám VPS, je-li to nezbytně
+nutné. Nejvíce se toho využívá při migracích VPS mezi nody. O odstávkách 
+a migracích vždy informujeme na e-mail uvedený ve vpsAdminu.
+
+<maintainers hidden>
+aither
+kerrycze
+krcmar
+</maintainers>

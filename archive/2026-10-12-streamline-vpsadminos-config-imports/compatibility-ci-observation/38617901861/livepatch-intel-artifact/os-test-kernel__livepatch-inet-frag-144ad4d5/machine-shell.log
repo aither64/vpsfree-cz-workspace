@@ -1,0 +1,2027 @@
+SHELL: 0
+
+START: 2026-10-14 21:02:09 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-14 21:02:09 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:09 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-14 21:02:09 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:09 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-14 21:02:09 +0200
+ELAPSED: 0.07s
+STATUS: 6
+OUTPUT:
+curl: (6) Could not resolve host: check-online.vpsadminos.org
+---
+
+START: 2026-10-14 21:02:10 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-14 21:02:11 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 14 Oct 2026 19:02:11 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-14 21:02:11 +0200
+COMMAND: test "$(sha256sum /etc/livepatch-inet-frag/module.ko | cut -d' ' -f1)" = 57213079758efd2a808875611491174f9f9b37d55c384196603286542c3a0a16
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: test "$(uname -r)" = 6.12.95
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: test -d /sys/kernel/livepatch
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: test -z "$(find /sys/kernel/livepatch -mindepth 1 -maxdepth 1 -print -quit)"
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: test -z "$(find /sys/module -maxdepth 1 -name "livepatch_[0-9]*" -print -quit)"
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: uname -a; ls -la /sys/kernel/livepatch; cat /proc/modules
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+Linux vpsadminos 6.12.95 #1-vpsAdminOS SMP PREEMPT_DYNAMIC Sun Jul  5 16:42:06 UTC 2026 x86_64 GNU/Linux
+total 0
+drwxr-xr-x  2 root root 0 Oct 14 21:02 .
+drwxr-xr-x 16 root root 0 Oct 14 21:02 ..
+skx_edac_common 24576 0 - Live 0xffffffffc1af4000
+nfit 77824 1 skx_edac_common, Live 0xffffffffc1adb000
+edac_core 86016 1 skx_edac_common, Live 0xffffffffc1ac4000
+libnvdimm 217088 1 nfit, Live 0xffffffffc1a8d000
+encrypted_keys 24576 1 libnvdimm, Live 0xffffffffc1a84000
+trusted 40960 1 encrypted_keys, Live 0xffffffffc1a6c000
+tee 49152 1 trusted, Live 0xffffffffc1a5a000
+tpm 110592 1 trusted, Live 0xffffffffc1a20000
+intel_rapl_msr 20480 0 - Live 0xffffffffc1a45000
+intel_rapl_common 53248 1 intel_rapl_msr, Live 0xffffffffc1a2b000
+intel_uncore_frequency_common 16384 0 - Live 0xffffffffc184d000
+kvm_intel 417792 0 - Live 0xffffffffc199f000
+mousedev 24576 0 - Live 0xffffffffc184a000
+kvm 1351680 1 kvm_intel, Live 0xffffffffc1851000
+ppdev 24576 0 - Live 0xffffffffc1844000
+irqbypass 12288 1 kvm, Live 0xffffffffc183a000
+crct10dif_pclmul 12288 1 - Live 0xffffffffc1832000
+crc32_pclmul 12288 0 - Live 0xffffffffc182c000
+polyval_clmulni 12288 0 - Live 0xffffffffc180d000
+ghash_clmulni_intel 16384 0 - Live 0xffffffffc1823000
+sha512_ssse3 53248 0 - Live 0xffffffffc1811000
+sha256_ssse3 36864 1 - Live 0xffffffffc17fc000
+sha1_ssse3 32768 0 - Live 0xffffffffc17ee000
+aesni_intel 122880 0 - Live 0xffffffffc17cd000
+rapl 24576 0 - Live 0xffffffffc17bd000
+evdev 24576 0 - Live 0xffffffffc17b4000
+input_leds 12288 0 - Live 0xffffffffc177e000
+psmouse 188416 0 - Live 0xffffffffc1782000
+mac_hid 12288 0 - Live 0xffffffffc1773000
+serio_raw 16384 0 - Live 0xffffffffc172b000
+parport_pc 40960 0 - Live 0xffffffffc1767000
+floppy 94208 0 - Live 0xffffffffc174d000
+parport 53248 2 ppdev,parport_pc, Live 0xffffffffc1732000
+rtc_cmos 32768 1 - Live 0xffffffffc171f000
+ata_generic 12288 0 - Live 0xffffffffc16f5000
+tiny_power_button 12288 0 - Live 0xffffffffc1719000
+i2c_piix4 28672 0 - Live 0xffffffffc16f7000
+button 28672 0 - Live 0xffffffffc1704000
+i2c_smbus 20480 1 i2c_piix4, Live 0xffffffffc16e1000
+pata_acpi 12288 0 - Live 0xffffffffc16fa000
+qemu_fw_cfg 20480 0 - Live 0xffffffffc16ec000
+xt_u32 12288 0 - Live 0xffffffffc16db000
+xt_time 12288 0 - Live 0xffffffffc16cf000
+xt_tcpudp 16384 3 - Live 0xffffffffc16d3000
+xt_tcpmss 12288 0 - Live 0xffffffffc16c7000
+xt_statistic 12288 0 - Live 0xffffffffc16c0000
+xt_state 12288 0 - Live 0xffffffffc16b9000
+xt_set 20480 0 - Live 0xffffffffc16b0000
+xt_sctp 16384 0 - Live 0xffffffffc16a5000
+xt_recent 24576 0 - Live 0xffffffffc169b000
+xt_realm 12288 0 - Live 0xffffffffc169f000
+xt_policy 12288 0 - Live 0xffffffffc1681000
+xt_pkttype 12288 2 - Live 0xffffffffc1685000
+xt_physdev 12288 0 - Live 0xffffffffc1695000
+xt_owner 12288 0 - Live 0xffffffffc1673000
+xt_nfacct 12288 0 - Live 0xffffffffc1689000
+xt_nat 12288 0 - Live 0xffffffffc166d000
+xt_multiport 16384 0 - Live 0xffffffffc1677000
+xt_mark 12288 0 - Live 0xffffffffc1667000
+xt_limit 12288 0 - Live 0xffffffffc165f000
+xt_length 12288 0 - Live 0xffffffffc1657000
+xt_ipvs 16384 0 - Live 0xffffffffc1653000
+xt_iprange 16384 0 - Live 0xffffffffc1642000
+xt_hl 12288 0 - Live 0xffffffffc1633000
+xt_helper 12288 0 - Live 0xffffffffc1647000
+xt_hashlimit 24576 0 - Live 0xffffffffc1637000
+xt_dscp 12288 0 - Live 0xffffffffc1627000
+xt_conntrack 12288 2 - Live 0xffffffffc1619000
+xt_connmark 12288 0 - Live 0xffffffffc162b000
+xt_connlimit 12288 0 - Live 0xffffffffc161f000
+xt_comment 12288 0 - Live 0xffffffffc160b000
+xt_cgroup 12288 0 - Live 0xffffffffc1605000
+xt_bpf 16384 0 - Live 0xffffffffc160f000
+xt_addrtype 12288 0 - Live 0xffffffffc15ff000
+xt_TRACE 12288 0 - Live 0xffffffffc15f7000
+xt_TPROXY 12288 0 - Live 0xffffffffc15f1000
+xt_TCPMSS 12288 0 - Live 0xffffffffc15e3000
+xt_REDIRECT 16384 0 - Live 0xffffffffc15e7000
+xt_NFQUEUE 12288 0 - Live 0xffffffffc15d5000
+xt_NFLOG 12288 0 - Live 0xffffffffc15cd000
+xt_MASQUERADE 16384 1 - Live 0xffffffffc15d9000
+xt_LOG 16384 0 - Live 0xffffffffc15c3000
+xt_DSCP 12288 0 - Live 0xffffffffc15c7000
+xt_CT 12288 0 - Live 0xffffffffc15b7000
+xt_CLASSIFY 12288 0 - Live 0xffffffffc15bb000
+xt_CHECKSUM 12288 0 - Live 0xffffffffc15b1000
+xt_AUDIT 12288 0 - Live 0xffffffffc15a9000
+xcbc 12288 0 - Live 0xffffffffc15a3000
+wireguard 114688 0 - Live 0xffffffffc158d000
+curve25519_x86_64 36864 1 wireguard, Live 0xffffffffc1580000
+vxlan 147456 0 - Live 0xffffffffc1552000
+vsock_loopback 12288 0 - Live 0xffffffffc154c000
+vmw_vsock_virtio_transport_common 61440 1 vsock_loopback, Live 0xffffffffc1529000
+vsock_diag 12288 0 - Live 0xffffffffc1531000
+vsock 65536 3 vsock_loopback,vmw_vsock_virtio_transport_common,vsock_diag, Live 0xffffffffc151a000
+vrf 36864 0 [permanent], Live 0xffffffffc1502000
+virtiofs 36864 1 - Live 0xffffffffc14f3000
+veth 40960 0 - Live 0xffffffffc14e5000
+unix_diag 12288 0 - Live 0xffffffffc14db000
+udp_diag 12288 0 - Live 0xffffffffc14cd000
+twofish_generic 16384 0 - Live 0xffffffffc14d4000
+twofish_common 20480 1 twofish_generic, Live 0xffffffffc14c1000
+tcp_diag 12288 0 - Live 0xffffffffc14c5000
+tcp_bbr 20480 11 - Live 0xffffffffc14bb000
+sm4_generic 12288 0 - Live 0xffffffffc14af000
+sm4 12288 1 sm4_generic, Live 0xffffffffc14ab000
+sm3_generic 12288 0 - Live 0xffffffffc149a000
+sm3 20480 1 sm3_generic, Live 0xffffffffc1490000
+sha1_generic 12288 1 sha1_ssse3, Live 0xffffffffc1494000
+serpent_generic 24576 0 - Live 0xffffffffc1487000
+sctp_diag 12288 0 - Live 0xffffffffc14a3000
+sctp 512000 3 sctp_diag, Live 0xffffffffc1406000
+sch_ingress 20480 0 - Live 0xffffffffc13fe000
+sch_htb 36864 0 - Live 0xffffffffc13f5000
+sch_fq 20480 2 - Live 0xffffffffc13e3000
+sch_cake 45056 0 - Live 0xffffffffc13db000
+rpcsec_gss_krb5 40960 0 - Live 0xffffffffc13ca000
+rmd160 16384 0 - Live 0xffffffffc13c3000
+raw_diag 12288 0 - Live 0xffffffffc13b0000
+ppp_deflate 12288 0 - Live 0xffffffffc13b7000
+ppp_async 16384 0 - Live 0xffffffffc13a9000
+polyval_generic 12288 1 polyval_clmulni, Live 0xffffffffc13a3000
+nls_utf8 12288 0 - Live 0xffffffffc139b000
+nft_reject_netdev 12288 0 - Live 0xffffffffc1395000
+nft_reject_ipv6 12288 0 - Live 0xffffffffc138b000
+nft_reject_ipv4 12288 0 - Live 0xffffffffc1387000
+nft_reject_inet 12288 0 - Live 0xffffffffc1381000
+nft_reject 12288 4 nft_reject_netdev,nft_reject_ipv6,nft_reject_ipv4,nft_reject_inet, Live 0xffffffffc137b000
+nft_redir 12288 0 - Live 0xffffffffc1375000
+nft_nat 12288 0 - Live 0xffffffffc136b000
+nft_masq 12288 0 - Live 0xffffffffc136f000
+nft_log 12288 0 - Live 0xffffffffc1365000
+nft_limit 16384 0 - Live 0xffffffffc135c000
+nft_fib_inet 12288 0 - Live 0xffffffffc1352000
+nft_fib_ipv4 12288 1 nft_fib_inet, Live 0xffffffffc1356000
+nft_fib_ipv6 12288 1 nft_fib_inet, Live 0xffffffffc134c000
+nft_fib 12288 3 nft_fib_inet,nft_fib_ipv4,nft_fib_ipv6, Live 0xffffffffc134a000
+nft_ct 28672 0 - Live 0xffffffffc1211000
+nft_connlimit 12288 0 - Live 0xffffffffc1208000
+nft_compat 20480 10 - Live 0xffffffffc1200000
+nft_chain_nat 12288 1 - Live 0xffffffffc11f5000
+nfsv4 1196032 0 - Live 0xffffffffc1221000
+nfsv3 65536 0 - Live 0xffffffffc11e1000
+nfsd 942080 0 - Live 0xffffffffc10f9000
+nfnetlink_queue 36864 0 - Live 0xffffffffc10e3000
+nfnetlink_log 24576 0 - Live 0xffffffffc10cf000
+nfnetlink_acct 16384 1 xt_nfacct, Live 0xffffffffc10c8000
+nf_tproxy_ipv6 16384 1 xt_TPROXY, Live 0xffffffffc1061000
+nf_tproxy_ipv4 16384 1 xt_TPROXY, Live 0xffffffffc10d6000
+nf_tables 372736 169 nft_reject_netdev,nft_reject_ipv6,nft_reject_ipv4,nft_reject_inet,nft_reject,nft_redir,nft_nat,nft_masq,nft_log,nft_limit,nft_fib_inet,nft_fib_ipv4,nft_fib_ipv6,nft_fib,nft_ct,nft_connlimit,nft_compat,nft_chain_nat, Live 0xffffffffc1065000
+nf_nat_tftp 12288 0 - Live 0xffffffffc1053000
+nf_nat_snmp_basic 16384 0 - Live 0xffffffffc1057000
+nf_nat_sip 16384 0 - Live 0xffffffffc104c000
+nf_nat_pptp 16384 0 - Live 0xffffffffc1044000
+nf_nat_irc 16384 0 - Live 0xffffffffc103c000
+nf_nat_h323 24576 0 - Live 0xffffffffc1032000
+nf_nat_ftp 16384 0 - Live 0xffffffffc102e000
+nf_nat_amanda 12288 0 - Live 0xffffffffc1024000
+nf_log_syslog 20480 0 - Live 0xffffffffc101c000
+nf_conntrack_tftp 20480 1 nf_nat_tftp, Live 0xffffffffc1011000
+nf_conntrack_snmp 12288 1 nf_nat_snmp_basic, Live 0xffffffffc0fff000
+nf_conntrack_sane 20480 0 - Live 0xffffffffc1006000
+nf_conntrack_pptp 24576 1 nf_nat_pptp, Live 0xffffffffc0ff2000
+nf_conntrack_netlink 61440 0 - Live 0xffffffffc0fdf000
+nf_conntrack_netbios_ns 12288 0 - Live 0xffffffffc0fd9000
+nf_conntrack_irc 20480 1 nf_nat_irc, Live 0xffffffffc0fcd000
+nf_conntrack_h323 81920 1 nf_nat_h323, Live 0xffffffffc0fb5000
+nf_conntrack_ftp 20480 1 nf_nat_ftp, Live 0xffffffffc0fac000
+nf_conntrack_broadcast 12288 2 nf_conntrack_snmp,nf_conntrack_netbios_ns, Live 0xffffffffc0fa4000
+nf_conntrack_amanda 12288 1 nf_nat_amanda, Live 0xffffffffc0f9c000
+ts_kmp 12288 6 - Live 0xffffffffc0f96000
+nf_conncount 24576 2 xt_connlimit,nft_connlimit, Live 0xffffffffc0f8c000
+netlink_diag 12288 0 - Live 0xffffffffc0f86000
+md4 12288 0 - Live 0xffffffffc0f80000
+libcurve25519_generic 45056 2 wireguard,curve25519_x86_64, Live 0xffffffffc0f76000
+libchacha20poly1305 20480 1 wireguard, Live 0xffffffffc0f5e000
+chacha_x86_64 28672 1 libchacha20poly1305, Live 0xffffffffc0f63000
+poly1305_x86_64 28672 1 libchacha20poly1305, Live 0xffffffffc0f53000
+libchacha 12288 1 chacha_x86_64, Live 0xffffffffc0f3e000
+l2tp_ppp 28672 0 - Live 0xffffffffc0f47000
+pppox 12288 1 l2tp_ppp, Live 0xffffffffc0f32000
+l2tp_ip6 24576 0 - Live 0xffffffffc0f28000
+l2tp_ip 20480 1 l2tp_ip6, Live 0xffffffffc0f1d000
+l2tp_eth 12288 0 - Live 0xffffffffc0f22000
+l2tp_netlink 24576 2 l2tp_ppp,l2tp_eth, Live 0xffffffffc0f10000
+l2tp_core 73728 5 l2tp_ppp,l2tp_ip6,l2tp_ip,l2tp_eth,l2tp_netlink, Live 0xffffffffc0f00000
+udp_tunnel 32768 4 wireguard,vxlan,sctp,l2tp_core, Live 0xffffffffc0ee6000
+iptable_security 12288 0 - Live 0xffffffffc0eea000
+iptable_raw 12288 0 - Live 0xffffffffc0ede000
+iptable_nat 12288 0 - Live 0xffffffffc0ed8000
+iptable_mangle 12288 0 - Live 0xffffffffc0ed2000
+iptable_filter 12288 0 - Live 0xffffffffc0eca000
+ipt_rpfilter 12288 1 - Live 0xffffffffc0ec0000
+ipt_REJECT 12288 0 - Live 0xffffffffc0ec4000
+nf_reject_ipv4 16384 4 nft_reject_netdev,nft_reject_ipv4,nft_reject_inet,ipt_REJECT, Live 0xffffffffc0eb9000
+ipip 16384 0 - Live 0xffffffffc0eac000
+ip_vs_wrr 12288 0 - Live 0xffffffffc0eb0000
+ip_vs_wlc 12288 0 - Live 0xffffffffc0ea6000
+ip_vs_sh 12288 0 - Live 0xffffffffc0ea0000
+ip_vs_sed 12288 0 - Live 0xffffffffc0e9a000
+ip_vs_rr 12288 0 - Live 0xffffffffc0e90000
+ip_vs_pe_sip 12288 0 - Live 0xffffffffc0e80000
+nf_conntrack_sip 45056 2 nf_nat_sip,ip_vs_pe_sip, Live 0xffffffffc0e84000
+ip_vs_ovf 12288 0 - Live 0xffffffffc0e70000
+ip_vs_nq 12288 0 - Live 0xffffffffc0e74000
+ip_vs_lc 12288 0 - Live 0xffffffffc0e64000
+ip_vs_lblcr 12288 0 - Live 0xffffffffc0e68000
+ip_vs_lblc 12288 0 - Live 0xffffffffc0e4f000
+ip_vs_ftp 12288 0 - Live 0xffffffffc0e53000
+ip_vs_fo 12288 0 - Live 0xffffffffc0e0f000
+ip_vs_dh 12288 0 - Live 0xffffffffc0e58000
+ip_vs 217088 29 xt_ipvs,ip_vs_wrr,ip_vs_wlc,ip_vs_sh,ip_vs_sed,ip_vs_rr,ip_vs_pe_sip,ip_vs_ovf,ip_vs_nq,ip_vs_lc,ip_vs_lblcr,ip_vs_lblc,ip_vs_ftp,ip_vs_fo,ip_vs_dh, Live 0xffffffffc0e14000
+ip_tables 28672 5 iptable_security,iptable_raw,iptable_nat,iptable_mangle,iptable_filter, Live 0xffffffffc0e00000
+ip_set_hash_net 53248 0 - Live 0xffffffffc0df8000
+ip_set_hash_ip 53248 0 - Live 0xffffffffc0dcf000
+ip_set_bitmap_port 20480 0 - Live 0xffffffffc0dd9000
+ip_set 65536 4 xt_set,ip_set_hash_net,ip_set_hash_ip,ip_set_bitmap_port, Live 0xffffffffc0dc6000
+nfnetlink 20480 7 nft_compat,nfnetlink_queue,nfnetlink_log,nfnetlink_acct,nf_tables,nf_conntrack_netlink,ip_set, Live 0xffffffffc0da6000
+ip_gre 32768 0 - Live 0xffffffffc0dac000
+ip_tunnel 40960 2 ipip,ip_gre, Live 0xffffffffc0d9d000
+ip6table_security 12288 0 - Live 0xffffffffc0d87000
+ip6table_raw 12288 0 - Live 0xffffffffc0d8d000
+ip6table_nat 12288 0 - Live 0xffffffffc0d7b000
+nf_nat 65536 17 xt_nat,xt_REDIRECT,xt_MASQUERADE,nft_redir,nft_nat,nft_masq,nft_chain_nat,nf_nat_tftp,nf_nat_sip,nf_nat_pptp,nf_nat_irc,nf_nat_h323,nf_nat_ftp,nf_nat_amanda,iptable_nat,ip_vs_ftp,ip6table_nat, Live 0xffffffffc0d6d000
+nf_conntrack 200704 37 xt_state,xt_nat,xt_helper,xt_conntrack,xt_connmark,xt_connlimit,xt_REDIRECT,xt_MASQUERADE,xt_CT,nft_redir,nft_nat,nft_masq,nft_ct,nft_connlimit,nf_nat_tftp,nf_nat_snmp_basic,nf_nat_sip,nf_nat_pptp,nf_nat_irc,nf_nat_h323,nf_nat_ftp,nf_nat_amanda,nf_conntrack_tftp,nf_conntrack_snmp,nf_conntrack_sane,nf_conntrack_pptp,nf_conntrack_netlink,nf_conntrack_netbios_ns,nf_conntrack_irc,nf_conntrack_h323,nf_conntrack_ftp,nf_conntrack_broadcast,nf_conntrack_amanda,nf_conncount,nf_conntrack_sip,ip_vs,nf_nat, Live 0xffffffffc0d3a000
+nf_defrag_ipv6 24576 3 xt_TPROXY,ip_vs,nf_conntrack, Live 0xffffffffc0d30000
+nf_defrag_ipv4 12288 2 xt_TPROXY,nf_conntrack, Live 0xffffffffc0d24000
+ip6table_mangle 12288 0 - Live 0xffffffffc0d1e000
+ip6table_filter 12288 0 - Live 0xffffffffc0d16000
+ip6t_rt 16384 0 - Live 0xffffffffc0d10000
+ip6t_rpfilter 12288 1 - Live 0xffffffffc0d04000
+ip6t_ah 16384 0 - Live 0xffffffffc0d08000
+ip6t_REJECT 12288 0 - Live 0xffffffffc0cfb000
+nf_reject_ipv6 24576 4 nft_reject_netdev,nft_reject_ipv6,nft_reject_inet,ip6t_REJECT, Live 0xffffffffc0cf3000
+ip6_udp_tunnel 16384 4 wireguard,vxlan,sctp,l2tp_core, Live 0xffffffffc0ce4000
+ip6_tables 28672 5 ip6table_security,ip6table_raw,ip6table_nat,ip6table_mangle,ip6table_filter, Live 0xffffffffc0cd6000
+x_tables 53248 65 xt_u32,xt_time,xt_tcpudp,xt_tcpmss,xt_statistic,xt_state,xt_set,xt_sctp,xt_recent,xt_realm,xt_policy,xt_pkttype,xt_physdev,xt_owner,xt_nfacct,xt_nat,xt_multiport,xt_mark,xt_limit,xt_length,xt_ipvs,xt_iprange,xt_hl,xt_helper,xt_hashlimit,xt_dscp,xt_conntrack,xt_connmark,xt_connlimit,xt_comment,xt_cgroup,xt_bpf,xt_addrtype,xt_TRACE,xt_TPROXY,xt_TCPMSS,xt_REDIRECT,xt_NFQUEUE,xt_NFLOG,xt_MASQUERADE,xt_LOG,xt_DSCP,xt_CT,xt_CLASSIFY,xt_CHECKSUM,xt_AUDIT,nft_compat,iptable_security,iptable_raw,iptable_nat,iptable_mangle,iptable_filter,ipt_rpfilter,ipt_REJECT,ip_tables,ip6table_security,ip6table_raw,ip6table_nat,ip6table_mangle,ip6table_filter,ip6t_rt,ip6t_rpfilter,ip6t_ah,ip6t_REJECT,ip6_tables, Live 0xffffffffc0cc3000
+inet_diag 24576 4 udp_diag,tcp_diag,sctp_diag,raw_diag, Live 0xffffffffc0cb7000
+ifb 12288 0 - Live 0xffffffffc0cb1000
+gre 12288 1 ip_gre, Live 0xffffffffc0c71000
+fuse 212992 1 virtiofs, Live 0xffffffffc0c77000
+dummy 12288 0 - Live 0xffffffffc0c6b000
+des_generic 12288 0 - Live 0xffffffffc0c5f000
+libdes 20480 1 des_generic, Live 0xffffffffc0c5a000
+crypto_user 20480 0 - Live 0xffffffffc0c4b000
+crypto_simd 16384 1 aesni_intel, Live 0xffffffffc0c53000
+cryptd 28672 2 ghash_clmulni_intel,crypto_simd, Live 0xffffffffc0c41000
+crc16 12288 0 - Live 0xffffffffc0c3b000
+cmac 12288 0 - Live 0xffffffffc0c32000
+cls_u32 32768 0 - Live 0xffffffffc0c25000
+cls_matchall 16384 0 - Live 0xffffffffc0c20000
+cifs 1470464 0 - Live 0xffffffffc0ab5000
+cifs_arc4 12288 1 cifs, Live 0xffffffffc0a0b000
+nls_ucs2_utils 8192 1 cifs, Live 0x0000000000000000
+cifs_md4 12288 1 cifs, Live 0xffffffffc0a05000
+dns_resolver 12288 2 nfsv4,cifs, Live 0xffffffffc0968000
+ceph 643072 0 - Live 0xffffffffc0a18000
+libceph 536576 1 ceph, Live 0xffffffffc096f000
+cast5_generic 20480 0 - Live 0xffffffffc095f000
+cast_common 12288 1 cast5_generic, Live 0x0000000000000000
+camellia_generic 28672 0 - Live 0xffffffffc0950000
+bsd_comp 16384 0 - Live 0xffffffffc0957000
+ppp_generic 53248 5 ppp_deflate,ppp_async,l2tp_ppp,pppox,bsd_comp, Live 0xffffffffc092d000
+slhc 16384 1 ppp_generic, Live 0xffffffffc08b8000
+br_netfilter 32768 0 - Live 0xffffffffc093d000
+bridge 385024 1 br_netfilter, Live 0xffffffffc08c7000
+stp 12288 1 bridge, Live 0xffffffffc08bd000
+llc 16384 2 bridge,stp, Live 0xffffffffc08a9000
+blowfish_generic 12288 0 - Live 0xffffffffc08ab000
+blowfish_common 16384 1 blowfish_generic, Live 0xffffffffc08a0000
+autofs4 61440 0 - Live 0xffffffffc088b000
+auth_rpcgss 192512 2 rpcsec_gss_krb5,nfsd, Live 0xffffffffc0858000
+asn1_encoder 12288 1 trusted, Live 0xffffffffc084e000
+algif_skcipher 12288 0 - Live 0xffffffffc0843000
+algif_rng 12288 0 - Live 0xffffffffc0848000
+algif_hash 12288 0 - Live 0xffffffffc083d000
+af_packet_diag 12288 0 - Live 0xffffffffc0834000
+af_packet 69632 1 af_packet_diag, Live 0xffffffffc0825000
+af_alg 32768 3 algif_skcipher,algif_rng,algif_hash, Live 0xffffffffc0811000
+act_mirred 20480 0 - Live 0xffffffffc0809000
+act_csum 16384 0 - Live 0xffffffffc07fb000
+libcrc32c 12288 6 sctp,nf_tables,nf_nat,nf_conntrack,libceph,act_csum, Live 0xffffffffc07ff000
+crc32c_generic 12288 0 - Live 0xffffffffc07f3000
+crc32c_intel 16384 1 - Live 0xffffffffc07e9000
+ata_piix 45056 0 - Live 0xffffffffc07d8000
+xhci_pci 24576 0 - Live 0xffffffffc07d0000
+xhci_hcd 360448 1 xhci_pci, Live 0xffffffffc0776000
+virtio_rng 12288 0 - Live 0xffffffffc075d000
+virtio_pci 40960 0 - Live 0xffffffffc0760000
+virtio_pci_legacy_dev 16384 1 virtio_pci, Live 0xffffffffc0756000
+virtio_pci_modern_dev 24576 1 virtio_pci, Live 0xffffffffc0729000
+virtio_net 114688 0 - Live 0xffffffffc072e000
+net_failover 24576 1 virtio_net, Live 0xffffffffc0716000
+failover 12288 1 net_failover, Live 0xffffffffc0705000
+virtio_console 40960 1 - Live 0xffffffffc06f3000
+virtio_blk 28672 1 - Live 0xffffffffc06fb000
+virtio_ring 65536 6 virtiofs,virtio_rng,virtio_pci,virtio_net,virtio_console,virtio_blk, Live 0xffffffffc06e1000
+virtio 20480 6 virtiofs,virtio_rng,virtio_pci,virtio_net,virtio_console,virtio_blk, Live 0xffffffffc06d2000
+uhci_hcd 57344 0 - Live 0xffffffffc06be000
+tun 65536 0 - Live 0xffffffffc06b2000
+sr_mod 28672 0 - Live 0xffffffffc06a8000
+cdrom 77824 1 sr_mod, Live 0xffffffffc068e000
+squashfs 81920 1 - Live 0xffffffffc0670000
+sd_mod 69632 0 - Live 0xffffffffc065c000
+sata_via 24576 0 - Live 0xffffffffc064c000
+sata_uli 12288 0 - Live 0xffffffffc0648000
+sata_sis 12288 0 - Live 0xffffffffc0637000
+pata_sis 24576 1 sata_sis, Live 0xffffffffc063f000
+sata_nv 45056 0 - Live 0xffffffffc0625000
+pcips2 12288 0 - Live 0xffffffffc061f000
+overlay 212992 1 - Live 0xffffffffc05e7000
+ohci_pci 20480 0 - Live 0xffffffffc05de000
+ohci_hcd 61440 1 ohci_pci, Live 0xffffffffc05cb000
+nvme 65536 0 - Live 0xffffffffc05b9000
+nvme_core 192512 1 nvme, Live 0xffffffffc0588000
+loop 40960 0 - Live 0xffffffffc0571000
+isci 196608 0 - Live 0xffffffffc053f000
+libsas 131072 1 isci, Live 0xffffffffc0526000
+scsi_transport_sas 57344 2 isci,libsas, Live 0xffffffffc050a000
+firmware_class 49152 2 isci,libsas, Live 0xffffffffc04ef000
+i8042 49152 0 - Live 0xffffffffc04dd000
+hid_roccat 12288 0 - Live 0xffffffffc04d7000
+hid_logitech_hidpp 65536 0 - Live 0xffffffffc04b4000
+hid_logitech_dj 36864 0 - Live 0xffffffffc04be000
+usbhid 73728 2 hid_logitech_hidpp,hid_logitech_dj, Live 0xffffffffc049e000
+hid_lenovo 36864 0 - Live 0xffffffffc0491000
+hid_generic 12288 0 - Live 0xffffffffc0489000
+hid_apple 28672 0 - Live 0xffffffffc0472000
+led_class 24576 3 input_leds,hid_lenovo,hid_apple, Live 0xffffffffc047f000
+hid 258048 7 hid_roccat,hid_logitech_hidpp,hid_logitech_dj,usbhid,hid_lenovo,hid_generic,hid_apple, Live 0xffffffffc042f000
+ehci_pci 16384 0 - Live 0xffffffffc03a3000
+ehci_hcd 106496 1 ehci_pci, Live 0xffffffffc0414000
+usbcore 401408 9 xhci_pci,xhci_hcd,uhci_hcd,ohci_pci,ohci_hcd,hid_logitech_hidpp,usbhid,ehci_pci,ehci_hcd, Live 0xffffffffc03b0000
+usb_common 16384 5 xhci_hcd,uhci_hcd,ohci_hcd,ehci_hcd,usbcore, Live 0xffffffffc03a9000
+dm_mod 180224 0 - Live 0xffffffffc036a000
+dax 57344 1 dm_mod, Live 0xffffffffc0358000
+atkbd 36864 0 - Live 0xffffffffc034d000
+libps2 24576 2 psmouse,atkbd, Live 0xffffffffc033e000
+serio 28672 7 psmouse,serio_raw,pcips2,i8042,atkbd, Live 0xffffffffc0322000
+vivaldi_fmap 12288 1 atkbd, Live 0xffffffffc032d000
+ahci 49152 0 - Live 0xffffffffc0312000
+libahci 57344 1 ahci, Live 0xffffffffc028e000
+libata 454656 12 ata_generic,pata_acpi,ata_piix,sata_via,sata_uli,sata_sis,pata_sis,sata_nv,isci,libsas,ahci,libahci, Live 0xffffffffc02a1000
+scsi_mod 323584 6 sr_mod,sd_mod,isci,libsas,scsi_transport_sas,libata, Live 0xffffffffc0233000
+scsi_common 16384 5 sr_mod,sd_mod,libsas,libata,scsi_mod, Live 0xffffffffc022c000
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: dmesg | wc -l
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+522
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: modprobe veth
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: mountpoint -q /sys/kernel/tracing || mount -t tracefs tracefs /sys/kernel/tracing
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: mkdir /sys/kernel/tracing/instances/lp_inet_frag
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: ip netns add klpf_ns
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: ip link add klpf_tx type veth peer name klpf_rx
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: ip link set klpf_rx netns klpf_ns
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: ip link set klpf_tx address 02:00:00:00:08:01 up
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: ip -n klpf_ns link set lo up
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: ip -n klpf_ns link set klpf_rx address 02:00:00:00:08:02 up
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: ip -6 addr add 2001:db8:8::1/64 dev klpf_tx nodad
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: ip -n klpf_ns -6 addr add 2001:db8:8::2/64 dev klpf_rx nodad
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: awk '$3 == "inet_frag_find" && NF == 3 { print $1; exit }' /proc/kallsyms
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.15s
+STATUS: 0
+OUTPUT:
+ffffffffb237fd20
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: echo 'p:lp_inet_frag/native_timer 0xffffffffb237ff4f timer=%di:x64 next=-56(%di):x64 lock=+40(%di):u32' >> /sys/kernel/tracing/kprobe_events
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: echo > /sys/kernel/tracing/instances/lp_inet_frag/trace
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: echo 1 > /sys/kernel/tracing/instances/lp_inet_frag/events/lp_inet_frag/native_timer/enable
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: echo 1 > /sys/kernel/tracing/instances/lp_inet_frag/tracing_on
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: /etc/livepatch-inet-frag/fragment klpf_tx 02:00:00:00:08:01 02:00:00:00:08:02 2001:db8:8::1 2001:db8:8::2 49152
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: grep -q 'native_timer:' /sys/kernel/tracing/instances/lp_inet_frag/trace
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: echo 0 > /sys/kernel/tracing/instances/lp_inet_frag/tracing_on
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: echo 0 > /sys/kernel/tracing/instances/lp_inet_frag/events/lp_inet_frag/native_timer/enable
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: cat /sys/kernel/tracing/instances/lp_inet_frag/trace
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 1/1   #P:2
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+        fragment-1948    [000] d.Z..    14.142351: native_timer: (inet_frag_find+0x22f/0x730) timer=0xffff9be14477d6b0 next=0x0 lock=0
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: awk '$1 ~ /native_timer$/ { print $2, $3 }' /sys/kernel/tracing/kprobe_profile
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+1 0
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: echo '-:lp_inet_frag/native_timer' >> /sys/kernel/tracing/kprobe_events
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: test "$(uname -r)" = 6.12.95
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: test -d /sys/kernel/livepatch
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: test -z "$(find /sys/kernel/livepatch -mindepth 1 -maxdepth 1 -print -quit)"
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: test -z "$(find /sys/module -maxdepth 1 -name "livepatch_[0-9]*" -print -quit)"
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: uname -a; ls -la /sys/kernel/livepatch; cat /proc/modules
+END: 2026-10-14 21:02:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+Linux vpsadminos 6.12.95 #1-vpsAdminOS SMP PREEMPT_DYNAMIC Sun Jul  5 16:42:06 UTC 2026 x86_64 GNU/Linux
+total 0
+drwxr-xr-x  2 root root 0 Oct 14 21:02 .
+drwxr-xr-x 16 root root 0 Oct 14 21:02 ..
+skx_edac_common 24576 0 - Live 0xffffffffc1af4000
+nfit 77824 1 skx_edac_common, Live 0xffffffffc1adb000
+edac_core 86016 1 skx_edac_common, Live 0xffffffffc1ac4000
+libnvdimm 217088 1 nfit, Live 0xffffffffc1a8d000
+encrypted_keys 24576 1 libnvdimm, Live 0xffffffffc1a84000
+trusted 40960 1 encrypted_keys, Live 0xffffffffc1a6c000
+tee 49152 1 trusted, Live 0xffffffffc1a5a000
+tpm 110592 1 trusted, Live 0xffffffffc1a20000
+intel_rapl_msr 20480 0 - Live 0xffffffffc1a45000
+intel_rapl_common 53248 1 intel_rapl_msr, Live 0xffffffffc1a2b000
+intel_uncore_frequency_common 16384 0 - Live 0xffffffffc184d000
+kvm_intel 417792 0 - Live 0xffffffffc199f000
+mousedev 24576 0 - Live 0xffffffffc184a000
+kvm 1351680 1 kvm_intel, Live 0xffffffffc1851000
+ppdev 24576 0 - Live 0xffffffffc1844000
+irqbypass 12288 1 kvm, Live 0xffffffffc183a000
+crct10dif_pclmul 12288 1 - Live 0xffffffffc1832000
+crc32_pclmul 12288 0 - Live 0xffffffffc182c000
+polyval_clmulni 12288 0 - Live 0xffffffffc180d000
+ghash_clmulni_intel 16384 0 - Live 0xffffffffc1823000
+sha512_ssse3 53248 0 - Live 0xffffffffc1811000
+sha256_ssse3 36864 1 - Live 0xffffffffc17fc000
+sha1_ssse3 32768 0 - Live 0xffffffffc17ee000
+aesni_intel 122880 0 - Live 0xffffffffc17cd000
+rapl 24576 0 - Live 0xffffffffc17bd000
+evdev 24576 0 - Live 0xffffffffc17b4000
+input_leds 12288 0 - Live 0xffffffffc177e000
+psmouse 188416 0 - Live 0xffffffffc1782000
+mac_hid 12288 0 - Live 0xffffffffc1773000
+serio_raw 16384 0 - Live 0xffffffffc172b000
+parport_pc 40960 0 - Live 0xffffffffc1767000
+floppy 94208 0 - Live 0xffffffffc174d000
+parport 53248 2 ppdev,parport_pc, Live 0xffffffffc1732000
+rtc_cmos 32768 1 - Live 0xffffffffc171f000
+ata_generic 12288 0 - Live 0xffffffffc16f5000
+tiny_power_button 12288 0 - Live 0xffffffffc1719000
+i2c_piix4 28672 0 - Live 0xffffffffc16f7000
+button 28672 0 - Live 0xffffffffc1704000
+i2c_smbus 20480 1 i2c_piix4, Live 0xffffffffc16e1000
+pata_acpi 12288 0 - Live 0xffffffffc16fa000
+qemu_fw_cfg 20480 0 - Live 0xffffffffc16ec000
+xt_u32 12288 0 - Live 0xffffffffc16db000
+xt_time 12288 0 - Live 0xffffffffc16cf000
+xt_tcpudp 16384 3 - Live 0xffffffffc16d3000
+xt_tcpmss 12288 0 - Live 0xffffffffc16c7000
+xt_statistic 12288 0 - Live 0xffffffffc16c0000
+xt_state 12288 0 - Live 0xffffffffc16b9000
+xt_set 20480 0 - Live 0xffffffffc16b0000
+xt_sctp 16384 0 - Live 0xffffffffc16a5000
+xt_recent 24576 0 - Live 0xffffffffc169b000
+xt_realm 12288 0 - Live 0xffffffffc169f000
+xt_policy 12288 0 - Live 0xffffffffc1681000
+xt_pkttype 12288 2 - Live 0xffffffffc1685000
+xt_physdev 12288 0 - Live 0xffffffffc1695000
+xt_owner 12288 0 - Live 0xffffffffc1673000
+xt_nfacct 12288 0 - Live 0xffffffffc1689000
+xt_nat 12288 0 - Live 0xffffffffc166d000
+xt_multiport 16384 0 - Live 0xffffffffc1677000
+xt_mark 12288 0 - Live 0xffffffffc1667000
+xt_limit 12288 0 - Live 0xffffffffc165f000
+xt_length 12288 0 - Live 0xffffffffc1657000
+xt_ipvs 16384 0 - Live 0xffffffffc1653000
+xt_iprange 16384 0 - Live 0xffffffffc1642000
+xt_hl 12288 0 - Live 0xffffffffc1633000
+xt_helper 12288 0 - Live 0xffffffffc1647000
+xt_hashlimit 24576 0 - Live 0xffffffffc1637000
+xt_dscp 12288 0 - Live 0xffffffffc1627000
+xt_conntrack 12288 2 - Live 0xffffffffc1619000
+xt_connmark 12288 0 - Live 0xffffffffc162b000
+xt_connlimit 12288 0 - Live 0xffffffffc161f000
+xt_comment 12288 0 - Live 0xffffffffc160b000
+xt_cgroup 12288 0 - Live 0xffffffffc1605000
+xt_bpf 16384 0 - Live 0xffffffffc160f000
+xt_addrtype 12288 0 - Live 0xffffffffc15ff000
+xt_TRACE 12288 0 - Live 0xffffffffc15f7000
+xt_TPROXY 12288 0 - Live 0xffffffffc15f1000
+xt_TCPMSS 12288 0 - Live 0xffffffffc15e3000
+xt_REDIRECT 16384 0 - Live 0xffffffffc15e7000
+xt_NFQUEUE 12288 0 - Live 0xffffffffc15d5000
+xt_NFLOG 12288 0 - Live 0xffffffffc15cd000
+xt_MASQUERADE 16384 1 - Live 0xffffffffc15d9000
+xt_LOG 16384 0 - Live 0xffffffffc15c3000
+xt_DSCP 12288 0 - Live 0xffffffffc15c7000
+xt_CT 12288 0 - Live 0xffffffffc15b7000
+xt_CLASSIFY 12288 0 - Live 0xffffffffc15bb000
+xt_CHECKSUM 12288 0 - Live 0xffffffffc15b1000
+xt_AUDIT 12288 0 - Live 0xffffffffc15a9000
+xcbc 12288 0 - Live 0xffffffffc15a3000
+wireguard 114688 0 - Live 0xffffffffc158d000
+curve25519_x86_64 36864 1 wireguard, Live 0xffffffffc1580000
+vxlan 147456 0 - Live 0xffffffffc1552000
+vsock_loopback 12288 0 - Live 0xffffffffc154c000
+vmw_vsock_virtio_transport_common 61440 1 vsock_loopback, Live 0xffffffffc1529000
+vsock_diag 12288 0 - Live 0xffffffffc1531000
+vsock 65536 3 vsock_loopback,vmw_vsock_virtio_transport_common,vsock_diag, Live 0xffffffffc151a000
+vrf 36864 0 [permanent], Live 0xffffffffc1502000
+virtiofs 36864 1 - Live 0xffffffffc14f3000
+veth 40960 0 - Live 0xffffffffc14e5000
+unix_diag 12288 0 - Live 0xffffffffc14db000
+udp_diag 12288 0 - Live 0xffffffffc14cd000
+twofish_generic 16384 0 - Live 0xffffffffc14d4000
+twofish_common 20480 1 twofish_generic, Live 0xffffffffc14c1000
+tcp_diag 12288 0 - Live 0xffffffffc14c5000
+tcp_bbr 20480 13 - Live 0xffffffffc14bb000
+sm4_generic 12288 0 - Live 0xffffffffc14af000
+sm4 12288 1 sm4_generic, Live 0xffffffffc14ab000
+sm3_generic 12288 0 - Live 0xffffffffc149a000
+sm3 20480 1 sm3_generic, Live 0xffffffffc1490000
+sha1_generic 12288 1 sha1_ssse3, Live 0xffffffffc1494000
+serpent_generic 24576 0 - Live 0xffffffffc1487000
+sctp_diag 12288 0 - Live 0xffffffffc14a3000
+sctp 512000 5 sctp_diag, Live 0xffffffffc1406000
+sch_ingress 20480 0 - Live 0xffffffffc13fe000
+sch_htb 36864 0 - Live 0xffffffffc13f5000
+sch_fq 20480 2 - Live 0xffffffffc13e3000
+sch_cake 45056 0 - Live 0xffffffffc13db000
+rpcsec_gss_krb5 40960 0 - Live 0xffffffffc13ca000
+rmd160 16384 0 - Live 0xffffffffc13c3000
+raw_diag 12288 0 - Live 0xffffffffc13b0000
+ppp_deflate 12288 0 - Live 0xffffffffc13b7000
+ppp_async 16384 0 - Live 0xffffffffc13a9000
+polyval_generic 12288 1 polyval_clmulni, Live 0xffffffffc13a3000
+nls_utf8 12288 0 - Live 0xffffffffc139b000
+nft_reject_netdev 12288 0 - Live 0xffffffffc1395000
+nft_reject_ipv6 12288 0 - Live 0xffffffffc138b000
+nft_reject_ipv4 12288 0 - Live 0xffffffffc1387000
+nft_reject_inet 12288 0 - Live 0xffffffffc1381000
+nft_reject 12288 4 nft_reject_netdev,nft_reject_ipv6,nft_reject_ipv4,nft_reject_inet, Live 0xffffffffc137b000
+nft_redir 12288 0 - Live 0xffffffffc1375000
+nft_nat 12288 0 - Live 0xffffffffc136b000
+nft_masq 12288 0 - Live 0xffffffffc136f000
+nft_log 12288 0 - Live 0xffffffffc1365000
+nft_limit 16384 0 - Live 0xffffffffc135c000
+nft_fib_inet 12288 0 - Live 0xffffffffc1352000
+nft_fib_ipv4 12288 1 nft_fib_inet, Live 0xffffffffc1356000
+nft_fib_ipv6 12288 1 nft_fib_inet, Live 0xffffffffc134c000
+nft_fib 12288 3 nft_fib_inet,nft_fib_ipv4,nft_fib_ipv6, Live 0xffffffffc134a000
+nft_ct 28672 0 - Live 0xffffffffc1211000
+nft_connlimit 12288 0 - Live 0xffffffffc1208000
+nft_compat 20480 10 - Live 0xffffffffc1200000
+nft_chain_nat 12288 1 - Live 0xffffffffc11f5000
+nfsv4 1196032 0 - Live 0xffffffffc1221000
+nfsv3 65536 0 - Live 0xffffffffc11e1000
+nfsd 942080 0 - Live 0xffffffffc10f9000
+nfnetlink_queue 36864 0 - Live 0xffffffffc10e3000
+nfnetlink_log 24576 0 - Live 0xffffffffc10cf000
+nfnetlink_acct 16384 1 xt_nfacct, Live 0xffffffffc10c8000
+nf_tproxy_ipv6 16384 1 xt_TPROXY, Live 0xffffffffc1061000
+nf_tproxy_ipv4 16384 1 xt_TPROXY, Live 0xffffffffc10d6000
+nf_tables 372736 169 nft_reject_netdev,nft_reject_ipv6,nft_reject_ipv4,nft_reject_inet,nft_reject,nft_redir,nft_nat,nft_masq,nft_log,nft_limit,nft_fib_inet,nft_fib_ipv4,nft_fib_ipv6,nft_fib,nft_ct,nft_connlimit,nft_compat,nft_chain_nat, Live 0xffffffffc1065000
+nf_nat_tftp 12288 0 - Live 0xffffffffc1053000
+nf_nat_snmp_basic 16384 0 - Live 0xffffffffc1057000
+nf_nat_sip 16384 0 - Live 0xffffffffc104c000
+nf_nat_pptp 16384 0 - Live 0xffffffffc1044000
+nf_nat_irc 16384 0 - Live 0xffffffffc103c000
+nf_nat_h323 24576 0 - Live 0xffffffffc1032000
+nf_nat_ftp 16384 0 - Live 0xffffffffc102e000
+nf_nat_amanda 12288 0 - Live 0xffffffffc1024000
+nf_log_syslog 20480 0 - Live 0xffffffffc101c000
+nf_conntrack_tftp 20480 1 nf_nat_tftp, Live 0xffffffffc1011000
+nf_conntrack_snmp 12288 1 nf_nat_snmp_basic, Live 0xffffffffc0fff000
+nf_conntrack_sane 20480 0 - Live 0xffffffffc1006000
+nf_conntrack_pptp 24576 1 nf_nat_pptp, Live 0xffffffffc0ff2000
+nf_conntrack_netlink 61440 0 - Live 0xffffffffc0fdf000
+nf_conntrack_netbios_ns 12288 0 - Live 0xffffffffc0fd9000
+nf_conntrack_irc 20480 1 nf_nat_irc, Live 0xffffffffc0fcd000
+nf_conntrack_h323 81920 1 nf_nat_h323, Live 0xffffffffc0fb5000
+nf_conntrack_ftp 20480 1 nf_nat_ftp, Live 0xffffffffc0fac000
+nf_conntrack_broadcast 12288 2 nf_conntrack_snmp,nf_conntrack_netbios_ns, Live 0xffffffffc0fa4000
+nf_conntrack_amanda 12288 1 nf_nat_amanda, Live 0xffffffffc0f9c000
+ts_kmp 12288 6 - Live 0xffffffffc0f96000
+nf_conncount 24576 2 xt_connlimit,nft_connlimit, Live 0xffffffffc0f8c000
+netlink_diag 12288 0 - Live 0xffffffffc0f86000
+md4 12288 0 - Live 0xffffffffc0f80000
+libcurve25519_generic 45056 2 wireguard,curve25519_x86_64, Live 0xffffffffc0f76000
+libchacha20poly1305 20480 1 wireguard, Live 0xffffffffc0f5e000
+chacha_x86_64 28672 1 libchacha20poly1305, Live 0xffffffffc0f63000
+poly1305_x86_64 28672 1 libchacha20poly1305, Live 0xffffffffc0f53000
+libchacha 12288 1 chacha_x86_64, Live 0xffffffffc0f3e000
+l2tp_ppp 28672 0 - Live 0xffffffffc0f47000
+pppox 12288 1 l2tp_ppp, Live 0xffffffffc0f32000
+l2tp_ip6 24576 0 - Live 0xffffffffc0f28000
+l2tp_ip 20480 1 l2tp_ip6, Live 0xffffffffc0f1d000
+l2tp_eth 12288 0 - Live 0xffffffffc0f22000
+l2tp_netlink 24576 2 l2tp_ppp,l2tp_eth, Live 0xffffffffc0f10000
+l2tp_core 73728 5 l2tp_ppp,l2tp_ip6,l2tp_ip,l2tp_eth,l2tp_netlink, Live 0xffffffffc0f00000
+udp_tunnel 32768 4 wireguard,vxlan,sctp,l2tp_core, Live 0xffffffffc0ee6000
+iptable_security 12288 0 - Live 0xffffffffc0eea000
+iptable_raw 12288 0 - Live 0xffffffffc0ede000
+iptable_nat 12288 0 - Live 0xffffffffc0ed8000
+iptable_mangle 12288 0 - Live 0xffffffffc0ed2000
+iptable_filter 12288 0 - Live 0xffffffffc0eca000
+ipt_rpfilter 12288 1 - Live 0xffffffffc0ec0000
+ipt_REJECT 12288 0 - Live 0xffffffffc0ec4000
+nf_reject_ipv4 16384 4 nft_reject_netdev,nft_reject_ipv4,nft_reject_inet,ipt_REJECT, Live 0xffffffffc0eb9000
+ipip 16384 0 - Live 0xffffffffc0eac000
+ip_vs_wrr 12288 0 - Live 0xffffffffc0eb0000
+ip_vs_wlc 12288 0 - Live 0xffffffffc0ea6000
+ip_vs_sh 12288 0 - Live 0xffffffffc0ea0000
+ip_vs_sed 12288 0 - Live 0xffffffffc0e9a000
+ip_vs_rr 12288 0 - Live 0xffffffffc0e90000
+ip_vs_pe_sip 12288 0 - Live 0xffffffffc0e80000
+nf_conntrack_sip 45056 2 nf_nat_sip,ip_vs_pe_sip, Live 0xffffffffc0e84000
+ip_vs_ovf 12288 0 - Live 0xffffffffc0e70000
+ip_vs_nq 12288 0 - Live 0xffffffffc0e74000
+ip_vs_lc 12288 0 - Live 0xffffffffc0e64000
+ip_vs_lblcr 12288 0 - Live 0xffffffffc0e68000
+ip_vs_lblc 12288 0 - Live 0xffffffffc0e4f000
+ip_vs_ftp 12288 0 - Live 0xffffffffc0e53000
+ip_vs_fo 12288 0 - Live 0xffffffffc0e0f000
+ip_vs_dh 12288 0 - Live 0xffffffffc0e58000
+ip_vs 217088 30 xt_ipvs,ip_vs_wrr,ip_vs_wlc,ip_vs_sh,ip_vs_sed,ip_vs_rr,ip_vs_pe_sip,ip_vs_ovf,ip_vs_nq,ip_vs_lc,ip_vs_lblcr,ip_vs_lblc,ip_vs_ftp,ip_vs_fo,ip_vs_dh, Live 0xffffffffc0e14000
+ip_tables 28672 5 iptable_security,iptable_raw,iptable_nat,iptable_mangle,iptable_filter, Live 0xffffffffc0e00000
+ip_set_hash_net 53248 0 - Live 0xffffffffc0df8000
+ip_set_hash_ip 53248 0 - Live 0xffffffffc0dcf000
+ip_set_bitmap_port 20480 0 - Live 0xffffffffc0dd9000
+ip_set 65536 4 xt_set,ip_set_hash_net,ip_set_hash_ip,ip_set_bitmap_port, Live 0xffffffffc0dc6000
+nfnetlink 20480 7 nft_compat,nfnetlink_queue,nfnetlink_log,nfnetlink_acct,nf_tables,nf_conntrack_netlink,ip_set, Live 0xffffffffc0da6000
+ip_gre 32768 0 - Live 0xffffffffc0dac000
+ip_tunnel 40960 2 ipip,ip_gre, Live 0xffffffffc0d9d000
+ip6table_security 12288 0 - Live 0xffffffffc0d87000
+ip6table_raw 12288 0 - Live 0xffffffffc0d8d000
+ip6table_nat 12288 0 - Live 0xffffffffc0d7b000
+nf_nat 65536 17 xt_nat,xt_REDIRECT,xt_MASQUERADE,nft_redir,nft_nat,nft_masq,nft_chain_nat,nf_nat_tftp,nf_nat_sip,nf_nat_pptp,nf_nat_irc,nf_nat_h323,nf_nat_ftp,nf_nat_amanda,iptable_nat,ip_vs_ftp,ip6table_nat, Live 0xffffffffc0d6d000
+nf_conntrack 200704 37 xt_state,xt_nat,xt_helper,xt_conntrack,xt_connmark,xt_connlimit,xt_REDIRECT,xt_MASQUERADE,xt_CT,nft_redir,nft_nat,nft_masq,nft_ct,nft_connlimit,nf_nat_tftp,nf_nat_snmp_basic,nf_nat_sip,nf_nat_pptp,nf_nat_irc,nf_nat_h323,nf_nat_ftp,nf_nat_amanda,nf_conntrack_tftp,nf_conntrack_snmp,nf_conntrack_sane,nf_conntrack_pptp,nf_conntrack_netlink,nf_conntrack_netbios_ns,nf_conntrack_irc,nf_conntrack_h323,nf_conntrack_ftp,nf_conntrack_broadcast,nf_conntrack_amanda,nf_conncount,nf_conntrack_sip,ip_vs,nf_nat, Live 0xffffffffc0d3a000
+nf_defrag_ipv6 24576 3 xt_TPROXY,ip_vs,nf_conntrack, Live 0xffffffffc0d30000
+nf_defrag_ipv4 12288 2 xt_TPROXY,nf_conntrack, Live 0xffffffffc0d24000
+ip6table_mangle 12288 0 - Live 0xffffffffc0d1e000
+ip6table_filter 12288 0 - Live 0xffffffffc0d16000
+ip6t_rt 16384 0 - Live 0xffffffffc0d10000
+ip6t_rpfilter 12288 1 - Live 0xffffffffc0d04000
+ip6t_ah 16384 0 - Live 0xffffffffc0d08000
+ip6t_REJECT 12288 0 - Live 0xffffffffc0cfb000
+nf_reject_ipv6 24576 4 nft_reject_netdev,nft_reject_ipv6,nft_reject_inet,ip6t_REJECT, Live 0xffffffffc0cf3000
+ip6_udp_tunnel 16384 4 wireguard,vxlan,sctp,l2tp_core, Live 0xffffffffc0ce4000
+ip6_tables 28672 5 ip6table_security,ip6table_raw,ip6table_nat,ip6table_mangle,ip6table_filter, Live 0xffffffffc0cd6000
+x_tables 53248 65 xt_u32,xt_time,xt_tcpudp,xt_tcpmss,xt_statistic,xt_state,xt_set,xt_sctp,xt_recent,xt_realm,xt_policy,xt_pkttype,xt_physdev,xt_owner,xt_nfacct,xt_nat,xt_multiport,xt_mark,xt_limit,xt_length,xt_ipvs,xt_iprange,xt_hl,xt_helper,xt_hashlimit,xt_dscp,xt_conntrack,xt_connmark,xt_connlimit,xt_comment,xt_cgroup,xt_bpf,xt_addrtype,xt_TRACE,xt_TPROXY,xt_TCPMSS,xt_REDIRECT,xt_NFQUEUE,xt_NFLOG,xt_MASQUERADE,xt_LOG,xt_DSCP,xt_CT,xt_CLASSIFY,xt_CHECKSUM,xt_AUDIT,nft_compat,iptable_security,iptable_raw,iptable_nat,iptable_mangle,iptable_filter,ipt_rpfilter,ipt_REJECT,ip_tables,ip6table_security,ip6table_raw,ip6table_nat,ip6table_mangle,ip6table_filter,ip6t_rt,ip6t_rpfilter,ip6t_ah,ip6t_REJECT,ip6_tables, Live 0xffffffffc0cc3000
+inet_diag 24576 4 udp_diag,tcp_diag,sctp_diag,raw_diag, Live 0xffffffffc0cb7000
+ifb 12288 0 - Live 0xffffffffc0cb1000
+gre 12288 1 ip_gre, Live 0xffffffffc0c71000
+fuse 212992 1 virtiofs, Live 0xffffffffc0c77000
+dummy 12288 0 - Live 0xffffffffc0c6b000
+des_generic 12288 0 - Live 0xffffffffc0c5f000
+libdes 20480 1 des_generic, Live 0xffffffffc0c5a000
+crypto_user 20480 0 - Live 0xffffffffc0c4b000
+crypto_simd 16384 1 aesni_intel, Live 0xffffffffc0c53000
+cryptd 28672 2 ghash_clmulni_intel,crypto_simd, Live 0xffffffffc0c41000
+crc16 12288 0 - Live 0xffffffffc0c3b000
+cmac 12288 0 - Live 0xffffffffc0c32000
+cls_u32 32768 0 - Live 0xffffffffc0c25000
+cls_matchall 16384 0 - Live 0xffffffffc0c20000
+cifs 1470464 0 - Live 0xffffffffc0ab5000
+cifs_arc4 12288 1 cifs, Live 0xffffffffc0a0b000
+nls_ucs2_utils 8192 1 cifs, Live 0x0000000000000000
+cifs_md4 12288 1 cifs, Live 0xffffffffc0a05000
+dns_resolver 12288 2 nfsv4,cifs, Live 0xffffffffc0968000
+ceph 643072 0 - Live 0xffffffffc0a18000
+libceph 536576 1 ceph, Live 0xffffffffc096f000
+cast5_generic 20480 0 - Live 0xffffffffc095f000
+cast_common 12288 1 cast5_generic, Live 0x0000000000000000
+camellia_generic 28672 0 - Live 0xffffffffc0950000
+bsd_comp 16384 0 - Live 0xffffffffc0957000
+ppp_generic 53248 5 ppp_deflate,ppp_async,l2tp_ppp,pppox,bsd_comp, Live 0xffffffffc092d000
+slhc 16384 1 ppp_generic, Live 0xffffffffc08b8000
+br_netfilter 32768 0 - Live 0xffffffffc093d000
+bridge 385024 1 br_netfilter, Live 0xffffffffc08c7000
+stp 12288 1 bridge, Live 0xffffffffc08bd000
+llc 16384 2 bridge,stp, Live 0xffffffffc08a9000
+blowfish_generic 12288 0 - Live 0xffffffffc08ab000
+blowfish_common 16384 1 blowfish_generic, Live 0xffffffffc08a0000
+autofs4 61440 0 - Live 0xffffffffc088b000
+auth_rpcgss 192512 2 rpcsec_gss_krb5,nfsd, Live 0xffffffffc0858000
+asn1_encoder 12288 1 trusted, Live 0xffffffffc084e000
+algif_skcipher 12288 0 - Live 0xffffffffc0843000
+algif_rng 12288 0 - Live 0xffffffffc0848000
+algif_hash 12288 0 - Live 0xffffffffc083d000
+af_packet_diag 12288 0 - Live 0xffffffffc0834000
+af_packet 69632 1 af_packet_diag, Live 0xffffffffc0825000
+af_alg 32768 3 algif_skcipher,algif_rng,algif_hash, Live 0xffffffffc0811000
+act_mirred 20480 0 - Live 0xffffffffc0809000
+act_csum 16384 0 - Live 0xffffffffc07fb000
+libcrc32c 12288 6 sctp,nf_tables,nf_nat,nf_conntrack,libceph,act_csum, Live 0xffffffffc07ff000
+crc32c_generic 12288 0 - Live 0xffffffffc07f3000
+crc32c_intel 16384 1 - Live 0xffffffffc07e9000
+ata_piix 45056 0 - Live 0xffffffffc07d8000
+xhci_pci 24576 0 - Live 0xffffffffc07d0000
+xhci_hcd 360448 1 xhci_pci, Live 0xffffffffc0776000
+virtio_rng 12288 0 - Live 0xffffffffc075d000
+virtio_pci 40960 0 - Live 0xffffffffc0760000
+virtio_pci_legacy_dev 16384 1 virtio_pci, Live 0xffffffffc0756000
+virtio_pci_modern_dev 24576 1 virtio_pci, Live 0xffffffffc0729000
+virtio_net 114688 0 - Live 0xffffffffc072e000
+net_failover 24576 1 virtio_net, Live 0xffffffffc0716000
+failover 12288 1 net_failover, Live 0xffffffffc0705000
+virtio_console 40960 1 - Live 0xffffffffc06f3000
+virtio_blk 28672 1 - Live 0xffffffffc06fb000
+virtio_ring 65536 6 virtiofs,virtio_rng,virtio_pci,virtio_net,virtio_console,virtio_blk, Live 0xffffffffc06e1000
+virtio 20480 6 virtiofs,virtio_rng,virtio_pci,virtio_net,virtio_console,virtio_blk, Live 0xffffffffc06d2000
+uhci_hcd 57344 0 - Live 0xffffffffc06be000
+tun 65536 0 - Live 0xffffffffc06b2000
+sr_mod 28672 0 - Live 0xffffffffc06a8000
+cdrom 77824 1 sr_mod, Live 0xffffffffc068e000
+squashfs 81920 1 - Live 0xffffffffc0670000
+sd_mod 69632 0 - Live 0xffffffffc065c000
+sata_via 24576 0 - Live 0xffffffffc064c000
+sata_uli 12288 0 - Live 0xffffffffc0648000
+sata_sis 12288 0 - Live 0xffffffffc0637000
+pata_sis 24576 1 sata_sis, Live 0xffffffffc063f000
+sata_nv 45056 0 - Live 0xffffffffc0625000
+pcips2 12288 0 - Live 0xffffffffc061f000
+overlay 212992 1 - Live 0xffffffffc05e7000
+ohci_pci 20480 0 - Live 0xffffffffc05de000
+ohci_hcd 61440 1 ohci_pci, Live 0xffffffffc05cb000
+nvme 65536 0 - Live 0xffffffffc05b9000
+nvme_core 192512 1 nvme, Live 0xffffffffc0588000
+loop 40960 0 - Live 0xffffffffc0571000
+isci 196608 0 - Live 0xffffffffc053f000
+libsas 131072 1 isci, Live 0xffffffffc0526000
+scsi_transport_sas 57344 2 isci,libsas, Live 0xffffffffc050a000
+firmware_class 49152 2 isci,libsas, Live 0xffffffffc04ef000
+i8042 49152 0 - Live 0xffffffffc04dd000
+hid_roccat 12288 0 - Live 0xffffffffc04d7000
+hid_logitech_hidpp 65536 0 - Live 0xffffffffc04b4000
+hid_logitech_dj 36864 0 - Live 0xffffffffc04be000
+usbhid 73728 2 hid_logitech_hidpp,hid_logitech_dj, Live 0xffffffffc049e000
+hid_lenovo 36864 0 - Live 0xffffffffc0491000
+hid_generic 12288 0 - Live 0xffffffffc0489000
+hid_apple 28672 0 - Live 0xffffffffc0472000
+led_class 24576 3 input_leds,hid_lenovo,hid_apple, Live 0xffffffffc047f000
+hid 258048 7 hid_roccat,hid_logitech_hidpp,hid_logitech_dj,usbhid,hid_lenovo,hid_generic,hid_apple, Live 0xffffffffc042f000
+ehci_pci 16384 0 - Live 0xffffffffc03a3000
+ehci_hcd 106496 1 ehci_pci, Live 0xffffffffc0414000
+usbcore 401408 9 xhci_pci,xhci_hcd,uhci_hcd,ohci_pci,ohci_hcd,hid_logitech_hidpp,usbhid,ehci_pci,ehci_hcd, Live 0xffffffffc03b0000
+usb_common 16384 5 xhci_hcd,uhci_hcd,ohci_hcd,ehci_hcd,usbcore, Live 0xffffffffc03a9000
+dm_mod 180224 0 - Live 0xffffffffc036a000
+dax 57344 1 dm_mod, Live 0xffffffffc0358000
+atkbd 36864 0 - Live 0xffffffffc034d000
+libps2 24576 2 psmouse,atkbd, Live 0xffffffffc033e000
+serio 28672 7 psmouse,serio_raw,pcips2,i8042,atkbd, Live 0xffffffffc0322000
+vivaldi_fmap 12288 1 atkbd, Live 0xffffffffc032d000
+ahci 49152 0 - Live 0xffffffffc0312000
+libahci 57344 1 ahci, Live 0xffffffffc028e000
+libata 454656 12 ata_generic,pata_acpi,ata_piix,sata_via,sata_uli,sata_sis,pata_sis,sata_nv,isci,libsas,ahci,libahci, Live 0xffffffffc02a1000
+scsi_mod 323584 6 sr_mod,sd_mod,isci,libsas,scsi_transport_sas,libata, Live 0xffffffffc0233000
+scsi_common 16384 5 sr_mod,sd_mod,libsas,libata,scsi_mod, Live 0xffffffffc022c000
+---
+
+START: 2026-10-14 21:02:12 +0200
+COMMAND: insmod /etc/livepatch-inet-frag/module.ko
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: test "$(cat /sys/kernel/livepatch/livepatch_7/enabled)" = 1 && test "$(cat /sys/kernel/livepatch/livepatch_7/transition)" = 0
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: awk '$3 == "inet_frag_find" && $4 == "[livepatch_7]" { print $1; exit }' /proc/kallsyms
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 0.25s
+STATUS: 0
+OUTPUT:
+ffffffffc1b4a750
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: echo 'p:lp_inet_frag/target_timer 0xffffffffc1b4ab06 timer=%di:x64 next=-56(%di):x64 lock=+40(%di):u32' >> /sys/kernel/tracing/kprobe_events
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: echo > /sys/kernel/tracing/instances/lp_inet_frag/trace
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: echo 1 > /sys/kernel/tracing/instances/lp_inet_frag/events/lp_inet_frag/target_timer/enable
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: echo 1 > /sys/kernel/tracing/instances/lp_inet_frag/tracing_on
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: /etc/livepatch-inet-frag/fragment klpf_tx 02:00:00:00:08:01 02:00:00:00:08:02 2001:db8:8::1 2001:db8:8::2 49153
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: grep -q 'target_timer:' /sys/kernel/tracing/instances/lp_inet_frag/trace
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: echo 0 > /sys/kernel/tracing/instances/lp_inet_frag/tracing_on
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: echo 0 > /sys/kernel/tracing/instances/lp_inet_frag/events/lp_inet_frag/target_timer/enable
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: cat /sys/kernel/tracing/instances/lp_inet_frag/trace
+END: 2026-10-14 21:02:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+# tracer: nop
+#
+# entries-in-buffer/entries-written: 1/1   #P:2
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+        fragment-2042    [001] D.Z1.    16.402461: target_timer: (inet_frag_find+0x3b6/0x790 [livepatch_7]) timer=0xffff9be158b985f8 next=0xffff9be153ba5c41 lock=1
+---
+
+START: 2026-10-14 21:02:14 +0200
+COMMAND: awk '$1 ~ /target_timer$/ { print $2, $3 }' /sys/kernel/tracing/kprobe_profile
+END: 2026-10-14 21:02:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1 0
+---
+
+START: 2026-10-14 21:02:15 +0200
+COMMAND: echo '-:lp_inet_frag/target_timer' >> /sys/kernel/tracing/kprobe_events
+END: 2026-10-14 21:02:15 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:15 +0200
+COMMAND: echo 0 > /sys/kernel/livepatch/livepatch_7/enabled
+END: 2026-10-14 21:02:15 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:15 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:15 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:16 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:16 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:17 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:17 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:18 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:18 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:19 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:19 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:20 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:20 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:21 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:21 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:22 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:22 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:23 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:23 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:24 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:24 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:25 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:25 +0200
+ELAPSED: 0.04s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:26 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:26 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:27 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:27 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:28 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:28 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:29 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:29 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:30 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:30 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:31 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:31 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:32 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:32 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:33 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:33 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:34 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:34 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:35 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:35 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:36 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:36 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:37 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:37 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:38 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:38 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:39 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:39 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:40 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:40 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:41 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:41 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:42 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:42 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:43 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:43 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:44 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:44 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:45 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:45 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:46 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:46 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:47 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:47 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:48 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:48 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:49 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:49 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:50 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:50 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:51 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:51 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:52 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:52 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:53 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:53 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:54 +0200
+COMMAND: test ! -e /sys/kernel/livepatch/livepatch_7
+END: 2026-10-14 21:02:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:54 +0200
+COMMAND: rmmod livepatch_7
+END: 2026-10-14 21:02:54 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:54 +0200
+COMMAND: ip netns del klpf_ns
+END: 2026-10-14 21:02:54 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:54 +0200
+COMMAND: rmdir /sys/kernel/tracing/instances/lp_inet_frag
+END: 2026-10-14 21:02:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:54 +0200
+COMMAND: test "$(uname -r)" = 6.12.95
+END: 2026-10-14 21:02:54 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:54 +0200
+COMMAND: test -d /sys/kernel/livepatch
+END: 2026-10-14 21:02:55 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:55 +0200
+COMMAND: test -z "$(find /sys/kernel/livepatch -mindepth 1 -maxdepth 1 -print -quit)"
+END: 2026-10-14 21:02:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:55 +0200
+COMMAND: test -z "$(find /sys/module -maxdepth 1 -name "livepatch_[0-9]*" -print -quit)"
+END: 2026-10-14 21:02:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 21:02:55 +0200
+COMMAND: uname -a; ls -la /sys/kernel/livepatch; cat /proc/modules
+END: 2026-10-14 21:02:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+Linux vpsadminos 6.12.95 #1-vpsAdminOS SMP PREEMPT_DYNAMIC Sun Jul  5 16:42:06 UTC 2026 x86_64 GNU/Linux
+total 0
+drwxr-xr-x  2 root root 0 Oct 14 21:02 .
+drwxr-xr-x 16 root root 0 Oct 14 21:02 ..
+skx_edac_common 24576 0 - Live 0xffffffffc1af4000
+nfit 77824 1 skx_edac_common, Live 0xffffffffc1adb000
+edac_core 86016 1 skx_edac_common, Live 0xffffffffc1ac4000
+libnvdimm 217088 1 nfit, Live 0xffffffffc1a8d000
+encrypted_keys 24576 1 libnvdimm, Live 0xffffffffc1a84000
+trusted 40960 1 encrypted_keys, Live 0xffffffffc1a6c000
+tee 49152 1 trusted, Live 0xffffffffc1a5a000
+tpm 110592 1 trusted, Live 0xffffffffc1a20000
+intel_rapl_msr 20480 0 - Live 0xffffffffc1a45000
+intel_rapl_common 53248 1 intel_rapl_msr, Live 0xffffffffc1a2b000
+intel_uncore_frequency_common 16384 0 - Live 0xffffffffc184d000
+kvm_intel 417792 0 - Live 0xffffffffc199f000
+mousedev 24576 0 - Live 0xffffffffc184a000
+kvm 1351680 1 kvm_intel, Live 0xffffffffc1851000
+ppdev 24576 0 - Live 0xffffffffc1844000
+irqbypass 12288 1 kvm, Live 0xffffffffc183a000
+crct10dif_pclmul 12288 1 - Live 0xffffffffc1832000
+crc32_pclmul 12288 0 - Live 0xffffffffc182c000
+polyval_clmulni 12288 0 - Live 0xffffffffc180d000
+ghash_clmulni_intel 16384 0 - Live 0xffffffffc1823000
+sha512_ssse3 53248 0 - Live 0xffffffffc1811000
+sha256_ssse3 36864 1 - Live 0xffffffffc17fc000
+sha1_ssse3 32768 0 - Live 0xffffffffc17ee000
+aesni_intel 122880 0 - Live 0xffffffffc17cd000
+rapl 24576 0 - Live 0xffffffffc17bd000
+evdev 24576 0 - Live 0xffffffffc17b4000
+input_leds 12288 0 - Live 0xffffffffc177e000
+psmouse 188416 0 - Live 0xffffffffc1782000
+mac_hid 12288 0 - Live 0xffffffffc1773000
+serio_raw 16384 0 - Live 0xffffffffc172b000
+parport_pc 40960 0 - Live 0xffffffffc1767000
+floppy 94208 0 - Live 0xffffffffc174d000
+parport 53248 2 ppdev,parport_pc, Live 0xffffffffc1732000
+rtc_cmos 32768 1 - Live 0xffffffffc171f000
+ata_generic 12288 0 - Live 0xffffffffc16f5000
+tiny_power_button 12288 0 - Live 0xffffffffc1719000
+i2c_piix4 28672 0 - Live 0xffffffffc16f7000
+button 28672 0 - Live 0xffffffffc1704000
+i2c_smbus 20480 1 i2c_piix4, Live 0xffffffffc16e1000
+pata_acpi 12288 0 - Live 0xffffffffc16fa000
+qemu_fw_cfg 20480 0 - Live 0xffffffffc16ec000
+xt_u32 12288 0 - Live 0xffffffffc16db000
+xt_time 12288 0 - Live 0xffffffffc16cf000
+xt_tcpudp 16384 3 - Live 0xffffffffc16d3000
+xt_tcpmss 12288 0 - Live 0xffffffffc16c7000
+xt_statistic 12288 0 - Live 0xffffffffc16c0000
+xt_state 12288 0 - Live 0xffffffffc16b9000
+xt_set 20480 0 - Live 0xffffffffc16b0000
+xt_sctp 16384 0 - Live 0xffffffffc16a5000
+xt_recent 24576 0 - Live 0xffffffffc169b000
+xt_realm 12288 0 - Live 0xffffffffc169f000
+xt_policy 12288 0 - Live 0xffffffffc1681000
+xt_pkttype 12288 2 - Live 0xffffffffc1685000
+xt_physdev 12288 0 - Live 0xffffffffc1695000
+xt_owner 12288 0 - Live 0xffffffffc1673000
+xt_nfacct 12288 0 - Live 0xffffffffc1689000
+xt_nat 12288 0 - Live 0xffffffffc166d000
+xt_multiport 16384 0 - Live 0xffffffffc1677000
+xt_mark 12288 0 - Live 0xffffffffc1667000
+xt_limit 12288 0 - Live 0xffffffffc165f000
+xt_length 12288 0 - Live 0xffffffffc1657000
+xt_ipvs 16384 0 - Live 0xffffffffc1653000
+xt_iprange 16384 0 - Live 0xffffffffc1642000
+xt_hl 12288 0 - Live 0xffffffffc1633000
+xt_helper 12288 0 - Live 0xffffffffc1647000
+xt_hashlimit 24576 0 - Live 0xffffffffc1637000
+xt_dscp 12288 0 - Live 0xffffffffc1627000
+xt_conntrack 12288 2 - Live 0xffffffffc1619000
+xt_connmark 12288 0 - Live 0xffffffffc162b000
+xt_connlimit 12288 0 - Live 0xffffffffc161f000
+xt_comment 12288 0 - Live 0xffffffffc160b000
+xt_cgroup 12288 0 - Live 0xffffffffc1605000
+xt_bpf 16384 0 - Live 0xffffffffc160f000
+xt_addrtype 12288 0 - Live 0xffffffffc15ff000
+xt_TRACE 12288 0 - Live 0xffffffffc15f7000
+xt_TPROXY 12288 0 - Live 0xffffffffc15f1000
+xt_TCPMSS 12288 0 - Live 0xffffffffc15e3000
+xt_REDIRECT 16384 0 - Live 0xffffffffc15e7000
+xt_NFQUEUE 12288 0 - Live 0xffffffffc15d5000
+xt_NFLOG 12288 0 - Live 0xffffffffc15cd000
+xt_MASQUERADE 16384 1 - Live 0xffffffffc15d9000
+xt_LOG 16384 0 - Live 0xffffffffc15c3000
+xt_DSCP 12288 0 - Live 0xffffffffc15c7000
+xt_CT 12288 0 - Live 0xffffffffc15b7000
+xt_CLASSIFY 12288 0 - Live 0xffffffffc15bb000
+xt_CHECKSUM 12288 0 - Live 0xffffffffc15b1000
+xt_AUDIT 12288 0 - Live 0xffffffffc15a9000
+xcbc 12288 0 - Live 0xffffffffc15a3000
+wireguard 114688 0 - Live 0xffffffffc158d000
+curve25519_x86_64 36864 1 wireguard, Live 0xffffffffc1580000
+vxlan 147456 0 - Live 0xffffffffc1552000
+vsock_loopback 12288 0 - Live 0xffffffffc154c000
+vmw_vsock_virtio_transport_common 61440 1 vsock_loopback, Live 0xffffffffc1529000
+vsock_diag 12288 0 - Live 0xffffffffc1531000
+vsock 65536 3 vsock_loopback,vmw_vsock_virtio_transport_common,vsock_diag, Live 0xffffffffc151a000
+vrf 36864 0 [permanent], Live 0xffffffffc1502000
+virtiofs 36864 1 - Live 0xffffffffc14f3000
+veth 40960 0 - Live 0xffffffffc14e5000
+unix_diag 12288 0 - Live 0xffffffffc14db000
+udp_diag 12288 0 - Live 0xffffffffc14cd000
+twofish_generic 16384 0 - Live 0xffffffffc14d4000
+twofish_common 20480 1 twofish_generic, Live 0xffffffffc14c1000
+tcp_diag 12288 0 - Live 0xffffffffc14c5000
+tcp_bbr 20480 12 - Live 0xffffffffc14bb000
+sm4_generic 12288 0 - Live 0xffffffffc14af000
+sm4 12288 1 sm4_generic, Live 0xffffffffc14ab000
+sm3_generic 12288 0 - Live 0xffffffffc149a000
+sm3 20480 1 sm3_generic, Live 0xffffffffc1490000
+sha1_generic 12288 1 sha1_ssse3, Live 0xffffffffc1494000
+serpent_generic 24576 0 - Live 0xffffffffc1487000
+sctp_diag 12288 0 - Live 0xffffffffc14a3000
+sctp 512000 3 sctp_diag, Live 0xffffffffc1406000
+sch_ingress 20480 0 - Live 0xffffffffc13fe000
+sch_htb 36864 0 - Live 0xffffffffc13f5000
+sch_fq 20480 2 - Live 0xffffffffc13e3000
+sch_cake 45056 0 - Live 0xffffffffc13db000
+rpcsec_gss_krb5 40960 0 - Live 0xffffffffc13ca000
+rmd160 16384 0 - Live 0xffffffffc13c3000
+raw_diag 12288 0 - Live 0xffffffffc13b0000
+ppp_deflate 12288 0 - Live 0xffffffffc13b7000
+ppp_async 16384 0 - Live 0xffffffffc13a9000
+polyval_generic 12288 1 polyval_clmulni, Live 0xffffffffc13a3000
+nls_utf8 12288 0 - Live 0xffffffffc139b000
+nft_reject_netdev 12288 0 - Live 0xffffffffc1395000
+nft_reject_ipv6 12288 0 - Live 0xffffffffc138b000
+nft_reject_ipv4 12288 0 - Live 0xffffffffc1387000
+nft_reject_inet 12288 0 - Live 0xffffffffc1381000
+nft_reject 12288 4 nft_reject_netdev,nft_reject_ipv6,nft_reject_ipv4,nft_reject_inet, Live 0xffffffffc137b000
+nft_redir 12288 0 - Live 0xffffffffc1375000
+nft_nat 12288 0 - Live 0xffffffffc136b000
+nft_masq 12288 0 - Live 0xffffffffc136f000
+nft_log 12288 0 - Live 0xffffffffc1365000
+nft_limit 16384 0 - Live 0xffffffffc135c000
+nft_fib_inet 12288 0 - Live 0xffffffffc1352000
+nft_fib_ipv4 12288 1 nft_fib_inet, Live 0xffffffffc1356000
+nft_fib_ipv6 12288 1 nft_fib_inet, Live 0xffffffffc134c000
+nft_fib 12288 3 nft_fib_inet,nft_fib_ipv4,nft_fib_ipv6, Live 0xffffffffc134a000
+nft_ct 28672 0 - Live 0xffffffffc1211000
+nft_connlimit 12288 0 - Live 0xffffffffc1208000
+nft_compat 20480 10 - Live 0xffffffffc1200000
+nft_chain_nat 12288 1 - Live 0xffffffffc11f5000
+nfsv4 1196032 0 - Live 0xffffffffc1221000
+nfsv3 65536 0 - Live 0xffffffffc11e1000
+nfsd 942080 0 - Live 0xffffffffc10f9000
+nfnetlink_queue 36864 0 - Live 0xffffffffc10e3000
+nfnetlink_log 24576 0 - Live 0xffffffffc10cf000
+nfnetlink_acct 16384 1 xt_nfacct, Live 0xffffffffc10c8000
+nf_tproxy_ipv6 16384 1 xt_TPROXY, Live 0xffffffffc1061000
+nf_tproxy_ipv4 16384 1 xt_TPROXY, Live 0xffffffffc10d6000
+nf_tables 372736 169 nft_reject_netdev,nft_reject_ipv6,nft_reject_ipv4,nft_reject_inet,nft_reject,nft_redir,nft_nat,nft_masq,nft_log,nft_limit,nft_fib_inet,nft_fib_ipv4,nft_fib_ipv6,nft_fib,nft_ct,nft_connlimit,nft_compat,nft_chain_nat, Live 0xffffffffc1065000
+nf_nat_tftp 12288 0 - Live 0xffffffffc1053000
+nf_nat_snmp_basic 16384 0 - Live 0xffffffffc1057000
+nf_nat_sip 16384 0 - Live 0xffffffffc104c000
+nf_nat_pptp 16384 0 - Live 0xffffffffc1044000
+nf_nat_irc 16384 0 - Live 0xffffffffc103c000
+nf_nat_h323 24576 0 - Live 0xffffffffc1032000
+nf_nat_ftp 16384 0 - Live 0xffffffffc102e000
+nf_nat_amanda 12288 0 - Live 0xffffffffc1024000
+nf_log_syslog 20480 0 - Live 0xffffffffc101c000
+nf_conntrack_tftp 20480 1 nf_nat_tftp, Live 0xffffffffc1011000
+nf_conntrack_snmp 12288 1 nf_nat_snmp_basic, Live 0xffffffffc0fff000
+nf_conntrack_sane 20480 0 - Live 0xffffffffc1006000
+nf_conntrack_pptp 24576 1 nf_nat_pptp, Live 0xffffffffc0ff2000
+nf_conntrack_netlink 61440 0 - Live 0xffffffffc0fdf000
+nf_conntrack_netbios_ns 12288 0 - Live 0xffffffffc0fd9000
+nf_conntrack_irc 20480 1 nf_nat_irc, Live 0xffffffffc0fcd000
+nf_conntrack_h323 81920 1 nf_nat_h323, Live 0xffffffffc0fb5000
+nf_conntrack_ftp 20480 1 nf_nat_ftp, Live 0xffffffffc0fac000
+nf_conntrack_broadcast 12288 2 nf_conntrack_snmp,nf_conntrack_netbios_ns, Live 0xffffffffc0fa4000
+nf_conntrack_amanda 12288 1 nf_nat_amanda, Live 0xffffffffc0f9c000
+ts_kmp 12288 6 - Live 0xffffffffc0f96000
+nf_conncount 24576 2 xt_connlimit,nft_connlimit, Live 0xffffffffc0f8c000
+netlink_diag 12288 0 - Live 0xffffffffc0f86000
+md4 12288 0 - Live 0xffffffffc0f80000
+libcurve25519_generic 45056 2 wireguard,curve25519_x86_64, Live 0xffffffffc0f76000
+libchacha20poly1305 20480 1 wireguard, Live 0xffffffffc0f5e000
+chacha_x86_64 28672 1 libchacha20poly1305, Live 0xffffffffc0f63000
+poly1305_x86_64 28672 1 libchacha20poly1305, Live 0xffffffffc0f53000
+libchacha 12288 1 chacha_x86_64, Live 0xffffffffc0f3e000
+l2tp_ppp 28672 0 - Live 0xffffffffc0f47000
+pppox 12288 1 l2tp_ppp, Live 0xffffffffc0f32000
+l2tp_ip6 24576 0 - Live 0xffffffffc0f28000
+l2tp_ip 20480 1 l2tp_ip6, Live 0xffffffffc0f1d000
+l2tp_eth 12288 0 - Live 0xffffffffc0f22000
+l2tp_netlink 24576 2 l2tp_ppp,l2tp_eth, Live 0xffffffffc0f10000
+l2tp_core 73728 5 l2tp_ppp,l2tp_ip6,l2tp_ip,l2tp_eth,l2tp_netlink, Live 0xffffffffc0f00000
+udp_tunnel 32768 4 wireguard,vxlan,sctp,l2tp_core, Live 0xffffffffc0ee6000
+iptable_security 12288 0 - Live 0xffffffffc0eea000
+iptable_raw 12288 0 - Live 0xffffffffc0ede000
+iptable_nat 12288 0 - Live 0xffffffffc0ed8000
+iptable_mangle 12288 0 - Live 0xffffffffc0ed2000
+iptable_filter 12288 0 - Live 0xffffffffc0eca000
+ipt_rpfilter 12288 1 - Live 0xffffffffc0ec0000
+ipt_REJECT 12288 0 - Live 0xffffffffc0ec4000
+nf_reject_ipv4 16384 4 nft_reject_netdev,nft_reject_ipv4,nft_reject_inet,ipt_REJECT, Live 0xffffffffc0eb9000
+ipip 16384 0 - Live 0xffffffffc0eac000
+ip_vs_wrr 12288 0 - Live 0xffffffffc0eb0000
+ip_vs_wlc 12288 0 - Live 0xffffffffc0ea6000
+ip_vs_sh 12288 0 - Live 0xffffffffc0ea0000
+ip_vs_sed 12288 0 - Live 0xffffffffc0e9a000
+ip_vs_rr 12288 0 - Live 0xffffffffc0e90000
+ip_vs_pe_sip 12288 0 - Live 0xffffffffc0e80000
+nf_conntrack_sip 45056 2 nf_nat_sip,ip_vs_pe_sip, Live 0xffffffffc0e84000
+ip_vs_ovf 12288 0 - Live 0xffffffffc0e70000
+ip_vs_nq 12288 0 - Live 0xffffffffc0e74000
+ip_vs_lc 12288 0 - Live 0xffffffffc0e64000
+ip_vs_lblcr 12288 0 - Live 0xffffffffc0e68000
+ip_vs_lblc 12288 0 - Live 0xffffffffc0e4f000
+ip_vs_ftp 12288 0 - Live 0xffffffffc0e53000
+ip_vs_fo 12288 0 - Live 0xffffffffc0e0f000
+ip_vs_dh 12288 0 - Live 0xffffffffc0e58000
+ip_vs 217088 29 xt_ipvs,ip_vs_wrr,ip_vs_wlc,ip_vs_sh,ip_vs_sed,ip_vs_rr,ip_vs_pe_sip,ip_vs_ovf,ip_vs_nq,ip_vs_lc,ip_vs_lblcr,ip_vs_lblc,ip_vs_ftp,ip_vs_fo,ip_vs_dh, Live 0xffffffffc0e14000
+ip_tables 28672 5 iptable_security,iptable_raw,iptable_nat,iptable_mangle,iptable_filter, Live 0xffffffffc0e00000
+ip_set_hash_net 53248 0 - Live 0xffffffffc0df8000
+ip_set_hash_ip 53248 0 - Live 0xffffffffc0dcf000
+ip_set_bitmap_port 20480 0 - Live 0xffffffffc0dd9000
+ip_set 65536 4 xt_set,ip_set_hash_net,ip_set_hash_ip,ip_set_bitmap_port, Live 0xffffffffc0dc6000
+nfnetlink 20480 7 nft_compat,nfnetlink_queue,nfnetlink_log,nfnetlink_acct,nf_tables,nf_conntrack_netlink,ip_set, Live 0xffffffffc0da6000
+ip_gre 32768 0 - Live 0xffffffffc0dac000
+ip_tunnel 40960 2 ipip,ip_gre, Live 0xffffffffc0d9d000
+ip6table_security 12288 0 - Live 0xffffffffc0d87000
+ip6table_raw 12288 0 - Live 0xffffffffc0d8d000
+ip6table_nat 12288 0 - Live 0xffffffffc0d7b000
+nf_nat 65536 17 xt_nat,xt_REDIRECT,xt_MASQUERADE,nft_redir,nft_nat,nft_masq,nft_chain_nat,nf_nat_tftp,nf_nat_sip,nf_nat_pptp,nf_nat_irc,nf_nat_h323,nf_nat_ftp,nf_nat_amanda,iptable_nat,ip_vs_ftp,ip6table_nat, Live 0xffffffffc0d6d000
+nf_conntrack 200704 37 xt_state,xt_nat,xt_helper,xt_conntrack,xt_connmark,xt_connlimit,xt_REDIRECT,xt_MASQUERADE,xt_CT,nft_redir,nft_nat,nft_masq,nft_ct,nft_connlimit,nf_nat_tftp,nf_nat_snmp_basic,nf_nat_sip,nf_nat_pptp,nf_nat_irc,nf_nat_h323,nf_nat_ftp,nf_nat_amanda,nf_conntrack_tftp,nf_conntrack_snmp,nf_conntrack_sane,nf_conntrack_pptp,nf_conntrack_netlink,nf_conntrack_netbios_ns,nf_conntrack_irc,nf_conntrack_h323,nf_conntrack_ftp,nf_conntrack_broadcast,nf_conntrack_amanda,nf_conncount,nf_conntrack_sip,ip_vs,nf_nat, Live 0xffffffffc0d3a000
+nf_defrag_ipv6 24576 3 xt_TPROXY,ip_vs,nf_conntrack, Live 0xffffffffc0d30000
+nf_defrag_ipv4 12288 2 xt_TPROXY,nf_conntrack, Live 0xffffffffc0d24000
+ip6table_mangle 12288 0 - Live 0xffffffffc0d1e000
+ip6table_filter 12288 0 - Live 0xffffffffc0d16000
+ip6t_rt 16384 0 - Live 0xffffffffc0d10000
+ip6t_rpfilter 12288 1 - Live 0xffffffffc0d04000
+ip6t_ah 16384 0 - Live 0xffffffffc0d08000
+ip6t_REJECT 12288 0 - Live 0xffffffffc0cfb000
+nf_reject_ipv6 24576 4 nft_reject_netdev,nft_reject_ipv6,nft_reject_inet,ip6t_REJECT, Live 0xffffffffc0cf3000
+ip6_udp_tunnel 16384 4 wireguard,vxlan,sctp,l2tp_core, Live 0xffffffffc0ce4000
+ip6_tables 28672 5 ip6table_security,ip6table_raw,ip6table_nat,ip6table_mangle,ip6table_filter, Live 0xffffffffc0cd6000
+x_tables 53248 65 xt_u32,xt_time,xt_tcpudp,xt_tcpmss,xt_statistic,xt_state,xt_set,xt_sctp,xt_recent,xt_realm,xt_policy,xt_pkttype,xt_physdev,xt_owner,xt_nfacct,xt_nat,xt_multiport,xt_mark,xt_limit,xt_length,xt_ipvs,xt_iprange,xt_hl,xt_helper,xt_hashlimit,xt_dscp,xt_conntrack,xt_connmark,xt_connlimit,xt_comment,xt_cgroup,xt_bpf,xt_addrtype,xt_TRACE,xt_TPROXY,xt_TCPMSS,xt_REDIRECT,xt_NFQUEUE,xt_NFLOG,xt_MASQUERADE,xt_LOG,xt_DSCP,xt_CT,xt_CLASSIFY,xt_CHECKSUM,xt_AUDIT,nft_compat,iptable_security,iptable_raw,iptable_nat,iptable_mangle,iptable_filter,ipt_rpfilter,ipt_REJECT,ip_tables,ip6table_security,ip6table_raw,ip6table_nat,ip6table_mangle,ip6table_filter,ip6t_rt,ip6t_rpfilter,ip6t_ah,ip6t_REJECT,ip6_tables, Live 0xffffffffc0cc3000
+inet_diag 24576 4 udp_diag,tcp_diag,sctp_diag,raw_diag, Live 0xffffffffc0cb7000
+ifb 12288 0 - Live 0xffffffffc0cb1000
+gre 12288 1 ip_gre, Live 0xffffffffc0c71000
+fuse 212992 1 virtiofs, Live 0xffffffffc0c77000
+dummy 12288 0 - Live 0xffffffffc0c6b000
+des_generic 12288 0 - Live 0xffffffffc0c5f000
+libdes 20480 1 des_generic, Live 0xffffffffc0c5a000
+crypto_user 20480 0 - Live 0xffffffffc0c4b000
+crypto_simd 16384 1 aesni_intel, Live 0xffffffffc0c53000
+cryptd 28672 2 ghash_clmulni_intel,crypto_simd, Live 0xffffffffc0c41000
+crc16 12288 0 - Live 0xffffffffc0c3b000
+cmac 12288 0 - Live 0xffffffffc0c32000
+cls_u32 32768 0 - Live 0xffffffffc0c25000
+cls_matchall 16384 0 - Live 0xffffffffc0c20000
+cifs 1470464 0 - Live 0xffffffffc0ab5000
+cifs_arc4 12288 1 cifs, Live 0xffffffffc0a0b000
+nls_ucs2_utils 8192 1 cifs, Live 0x0000000000000000
+cifs_md4 12288 1 cifs, Live 0xffffffffc0a05000
+dns_resolver 12288 2 nfsv4,cifs, Live 0xffffffffc0968000
+ceph 643072 0 - Live 0xffffffffc0a18000
+libceph 536576 1 ceph, Live 0xffffffffc096f000
+cast5_generic 20480 0 - Live 0xffffffffc095f000
+cast_common 12288 1 cast5_generic, Live 0x0000000000000000
+camellia_generic 28672 0 - Live 0xffffffffc0950000
+bsd_comp 16384 0 - Live 0xffffffffc0957000
+ppp_generic 53248 5 ppp_deflate,ppp_async,l2tp_ppp,pppox,bsd_comp, Live 0xffffffffc092d000
+slhc 16384 1 ppp_generic, Live 0xffffffffc08b8000
+br_netfilter 32768 0 - Live 0xffffffffc093d000
+bridge 385024 1 br_netfilter, Live 0xffffffffc08c7000
+stp 12288 1 bridge, Live 0xffffffffc08bd000
+llc 16384 2 bridge,stp, Live 0xffffffffc08a9000
+blowfish_generic 12288 0 - Live 0xffffffffc08ab000
+blowfish_common 16384 1 blowfish_generic, Live 0xffffffffc08a0000
+autofs4 61440 0 - Live 0xffffffffc088b000
+auth_rpcgss 192512 2 rpcsec_gss_krb5,nfsd, Live 0xffffffffc0858000
+asn1_encoder 12288 1 trusted, Live 0xffffffffc084e000
+algif_skcipher 12288 0 - Live 0xffffffffc0843000
+algif_rng 12288 0 - Live 0xffffffffc0848000
+algif_hash 12288 0 - Live 0xffffffffc083d000
+af_packet_diag 12288 0 - Live 0xffffffffc0834000
+af_packet 69632 1 af_packet_diag, Live 0xffffffffc0825000
+af_alg 32768 3 algif_skcipher,algif_rng,algif_hash, Live 0xffffffffc0811000
+act_mirred 20480 0 - Live 0xffffffffc0809000
+act_csum 16384 0 - Live 0xffffffffc07fb000
+libcrc32c 12288 6 sctp,nf_tables,nf_nat,nf_conntrack,libceph,act_csum, Live 0xffffffffc07ff000
+crc32c_generic 12288 0 - Live 0xffffffffc07f3000
+crc32c_intel 16384 1 - Live 0xffffffffc07e9000
+ata_piix 45056 0 - Live 0xffffffffc07d8000
+xhci_pci 24576 0 - Live 0xffffffffc07d0000
+xhci_hcd 360448 1 xhci_pci, Live 0xffffffffc0776000
+virtio_rng 12288 0 - Live 0xffffffffc075d000
+virtio_pci 40960 0 - Live 0xffffffffc0760000
+virtio_pci_legacy_dev 16384 1 virtio_pci, Live 0xffffffffc0756000
+virtio_pci_modern_dev 24576 1 virtio_pci, Live 0xffffffffc0729000
+virtio_net 114688 0 - Live 0xffffffffc072e000
+net_failover 24576 1 virtio_net, Live 0xffffffffc0716000
+failover 12288 1 net_failover, Live 0xffffffffc0705000
+virtio_console 40960 1 - Live 0xffffffffc06f3000
+virtio_blk 28672 1 - Live 0xffffffffc06fb000
+virtio_ring 65536 6 virtiofs,virtio_rng,virtio_pci,virtio_net,virtio_console,virtio_blk, Live 0xffffffffc06e1000
+virtio 20480 6 virtiofs,virtio_rng,virtio_pci,virtio_net,virtio_console,virtio_blk, Live 0xffffffffc06d2000
+uhci_hcd 57344 0 - Live 0xffffffffc06be000
+tun 65536 0 - Live 0xffffffffc06b2000
+sr_mod 28672 0 - Live 0xffffffffc06a8000
+cdrom 77824 1 sr_mod, Live 0xffffffffc068e000
+squashfs 81920 1 - Live 0xffffffffc0670000
+sd_mod 69632 0 - Live 0xffffffffc065c000
+sata_via 24576 0 - Live 0xffffffffc064c000
+sata_uli 12288 0 - Live 0xffffffffc0648000
+sata_sis 12288 0 - Live 0xffffffffc0637000
+pata_sis 24576 1 sata_sis, Live 0xffffffffc063f000
+sata_nv 45056 0 - Live 0xffffffffc0625000
+pcips2 12288 0 - Live 0xffffffffc061f000
+overlay 212992 1 - Live 0xffffffffc05e7000
+ohci_pci 20480 0 - Live 0xffffffffc05de000
+ohci_hcd 61440 1 ohci_pci, Live 0xffffffffc05cb000
+nvme 65536 0 - Live 0xffffffffc05b9000
+nvme_core 192512 1 nvme, Live 0xffffffffc0588000
+loop 40960 0 - Live 0xffffffffc0571000
+isci 196608 0 - Live 0xffffffffc053f000
+libsas 131072 1 isci, Live 0xffffffffc0526000
+scsi_transport_sas 57344 2 isci,libsas, Live 0xffffffffc050a000
+firmware_class 49152 2 isci,libsas, Live 0xffffffffc04ef000
+i8042 49152 0 - Live 0xffffffffc04dd000
+hid_roccat 12288 0 - Live 0xffffffffc04d7000
+hid_logitech_hidpp 65536 0 - Live 0xffffffffc04b4000
+hid_logitech_dj 36864 0 - Live 0xffffffffc04be000
+usbhid 73728 2 hid_logitech_hidpp,hid_logitech_dj, Live 0xffffffffc049e000
+hid_lenovo 36864 0 - Live 0xffffffffc0491000
+hid_generic 12288 0 - Live 0xffffffffc0489000
+hid_apple 28672 0 - Live 0xffffffffc0472000
+led_class 24576 3 input_leds,hid_lenovo,hid_apple, Live 0xffffffffc047f000
+hid 258048 7 hid_roccat,hid_logitech_hidpp,hid_logitech_dj,usbhid,hid_lenovo,hid_generic,hid_apple, Live 0xffffffffc042f000
+ehci_pci 16384 0 - Live 0xffffffffc03a3000
+ehci_hcd 106496 1 ehci_pci, Live 0xffffffffc0414000
+usbcore 401408 9 xhci_pci,xhci_hcd,uhci_hcd,ohci_pci,ohci_hcd,hid_logitech_hidpp,usbhid,ehci_pci,ehci_hcd, Live 0xffffffffc03b0000
+usb_common 16384 5 xhci_hcd,uhci_hcd,ohci_hcd,ehci_hcd,usbcore, Live 0xffffffffc03a9000
+dm_mod 180224 0 - Live 0xffffffffc036a000
+dax 57344 1 dm_mod, Live 0xffffffffc0358000
+atkbd 36864 0 - Live 0xffffffffc034d000
+libps2 24576 2 psmouse,atkbd, Live 0xffffffffc033e000
+serio 28672 7 psmouse,serio_raw,pcips2,i8042,atkbd, Live 0xffffffffc0322000
+vivaldi_fmap 12288 1 atkbd, Live 0xffffffffc032d000
+ahci 49152 0 - Live 0xffffffffc0312000
+libahci 57344 1 ahci, Live 0xffffffffc028e000
+libata 454656 12 ata_generic,pata_acpi,ata_piix,sata_via,sata_uli,sata_sis,pata_sis,sata_nv,isci,libsas,ahci,libahci, Live 0xffffffffc02a1000
+scsi_mod 323584 6 sr_mod,sd_mod,isci,libsas,scsi_transport_sas,libata, Live 0xffffffffc0233000
+scsi_common 16384 5 sr_mod,sd_mod,libsas,libata,scsi_mod, Live 0xffffffffc022c000
+---
+
+START: 2026-10-14 21:02:55 +0200
+COMMAND: dmesg | tail -n +523
+END: 2026-10-14 21:02:55 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+[   14.315244] livepatch_7: loading out-of-tree module taints kernel.
+[   14.315256] livepatch_7: tainting kernel with TAINT_LIVEPATCH
+[   14.315258] livepatch_7: module verification failed: signature and/or required key missing - tainting kernel
+[   14.436497] livepatch: enabling patch 'livepatch_7'
+[   15.613806] livepatch: 'livepatch_7': starting patching transition
+[   15.801660] livepatch: 'livepatch_7': patching complete
+[   16.437682] livepatch: 'livepatch_7': starting unpatching transition
+[   55.907673] livepatch: 'livepatch_7': unpatching complete
+---
+
+START: 2026-10-14 21:02:55 +0200
+COMMAND: poweroff -f
+END: 2026-10-14 21:02:56 +0200
+ELAPSED: 1.36s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Grabbing all containers
+---
+

@@ -1,0 +1,173 @@
+====== Tunelování IPv6 ======
+
+vpsFree.cz provozuje vlastní tunelovací server, prostřednictvím kterého je možné získat IPv6 tunel do míst, kam dosud IPv6 zavedeno není.
+
+===== Motivace =====
+
+Šestého června 2017 byla [[https://www.root.cz/clanky/sixxs-vypne-ipv6-tunely-sluzby-ukonci-6-cervna/|ukončena činnost tunelovací platformy SixXS]]. Ta jako jediná poskytovala tunelovací server v Praze, který bylo možné použít i bez veřejné IPv4 adresy. Ačkoli je argumentace SixXS pochopitelná, jsou situace, kdy jednoduše není možné požádat poskytovatele o IPv6 konektivitu a často ani nelze změnit poskytovatele za jiného.
+
+Pokud je k dispozici veřejná IPv4 adresa, je možné zařídit tunel od [[https://tunnelbroker.net/|HE.net]], který funguje rychle a spolehlivě. Naše služba se tedy zaměřuje hlavně na situace, kdy v místě není ani veřejná IPv4 adresa. Bohužel, software ''sixxsd'', který tvořil serverovou část tunelovací platformy SixXS a dokázal efektivně obsluhovat stovky tunelů, <del>nebyl nikdy uvolněn jako Open Source</del> [[https://github.com/massar/sixxsd|dlouho nebyl zveřejněn]]. Bylo tedy třeba hledat jiné řešení.
+
+
+===== Řešení pomocí Wireguardu =====
+
+Je možné použití moderního tunelovacího protokolu [[navody:server:wireguard|WireGuard]]. Ten nabízí šifrování a autentizaci, zároveň ale také velký výkon v porovnání s OpenVPN.
+Používá se UDP provoz na portu 51820. Každý klient se autentizuje párem veřejného a soukromého klíče. Každému klientovi je **staticky** přidělena jedna spojovací IPv6 adresa a podsíť o délce prefixu /48.
+
+Každý tunel <del>má</del> bude mít nastavené datum expirace na jeden rok po zřízení, po jeho uplynutí je odkonfigurován. Pro nepřerušovaný provoz je tedy třeba požádat o prodloužení. Záměrem tohoto nepohodlného opatření je, aby každý uživatel **nejméně jednou ročně napsal svému poskytovateli připojení dotaz na stav podpory IPv6**. Poznámka: tato funkce //zatím// není implementovaná. Případnému odkonfigurování v budoucnu bude předcházet několik e-mailových varování.
+
+==== Jak zprovoznit tunel ====
+
+   - Napište svému ISP dotaz ohledně podpory IPv6.
+   - Vygenerujte dvojici soukromého a veřejného klíče: ''$ wg genkey | tee privatekey | wg pubkey'' - soukromý klíč vznikne v souboru ''privatekey'', veřejný se zobrazí na terminálu. Chcete-li veřejný klíč zobrazit znovu, zavolejte ''$ wg pubkey < privatekey''.
+   - Požádejte o tunel prostřednictvím e-mailu na **ipv6tun@vpsfree.cz**. Nezapomeňte připojit veřejný klíč. Prosím **neposílejte klíč v příloze, vložte ho přímo do textu zprávy**. Pokud se konec tunelu má nacházet **na Slovensku**, prosím uveďte to v žádosti.
+   - Obdržíte e-mail s příkladem konfigurace pro wg-quick a OpenWRT. **V konfiguračním souboru se také dozvíte přidělený adresní blok.**
+   - Doplňte do konfiguračního souboru svůj privátní klíč a nakonfigurujte svého klienta.
+   - Nakonfigurujte svůj router tak, aby do domácí sítě přiděloval nějaké adresy z přidělené podsítě.
+
+==== Příklad konfiguračního souboru pro wg-quick ====
+
+<file | /etc/wireguard/wgipv6tun.conf>
+[Interface]
+# FIXME: Insert your private key
+PrivateKey = 
+Address = 2a03:3b40:200::XXX
+# Případně lze nastavit hodnotu ListenPort na libovolnou hodnotu. Ve výchozím stavu by měla být zvolena náhodná hodnota automaticky.
+#ListenPort = 51820
+
+[Peer]
+Endpoint = ipv6tun01.vpsfree.cz:51820
+PublicKey = r7vzF6irpXSmkTibIHztIcfc/YzPmpyMX9LYa9z5Yw0=
+AllowedIPs =  ::/0
+#PersistentKeepalive = 120  # Optional: use if there is a NAT/firewall blocking incoming traffic
+</file>
+
+==== Příklad konfigurace Wireguardu na OpenWRT ====
+
+<file | /etc/config/network>
+
+config interface 'wgipv6tun'
+        option proto 'wireguard'
+        option private_key 'FIXME'
+        option ip6prefix '2a03:3b40:XXX::/48'
+        list addresses '2a03:3b40:200::XXX'
+
+config wireguard_wgipv6tun
+        option endpoint_host 'ipv6tun01.vpsfree.cz'
+        option endpoint_port '51820'
+        option route_allowed_ips '0'
+        option public_key 'r7vzF6irpXSmkTibIHztIcfc/YzPmpyMX9LYa9z5Yw0='
+        list allowed_ips '::/0'
+        #option persistent_keepalive '120'  # Optional: use if there is a NAT/firewall
+        
+
+config route6 'default_v6_gw_a'
+        option interface 'wgipv6tun'
+        option target '::/0'
+        option source '2a03:3b40:200::XXX'
+
+config route6 'default_v6_gw_b'
+        option interface 'wgipv6tun'
+        option target '::/0'
+        option source '2a03:3b40:XXX::/48'
+</file>
+
+==== Příklad konfigurace Wireguradu pro MikroTik (verze 7) ====
+
+<file>
+/interface/wireguard/add name="wgipv6tun" mtu=1420 private-key="FIXME"
+/interface/wireguard/peers/add interface=wgipv6tun public-key="r7vzF6irpXSmkTibIHztIcfc/YzPmpyMX9LYa9z5Yw0=" endpoint-address=ipv6tun01.vpsfree.cz endpoint-port=51820 allowed-address=::/0
+/ipv6/address/add address=2a03:3b40:200::XXX/128 interface=wgipv6tun
+/ipv6/route/add dst-address=::/0 gateway=wgipv6tun
+/ipv6/route/add dst-address=2a03:3b40:XXX::/48 blackhole
+</file>
+
+Poznámka: kromě uvedené konfigurace bude také nejspíš vhodné nastavit IPv6 adresy na LAN straně routeru. Také může být potřeba povolit provoz Wireguardového tunelu ve firewallu. Ve [[https://help.mikrotik.com/docs/display/ROS/WireGuard|výchozí konfiguraci]] používá Wireguardový tunel lokální port číslo 13231.
+
+===== Nastavte přidělený blok jako Unreachable =====
+
+Je velmi pravděpodobné, že nevyužijete celý přidělený blok délky /48. Protože výchozí brána vede směrem do tunelu, bude každý paket, který přijde do nevyužité části bloku, vrácen zpět do tunelu a dále zpět k vám. Abyste tento problém eliminovali, je dobré instalovat do směrovací tabulky záznam pro celý blok, takto:
+
+<file>
+ip -6 route add unreachable 2a03:3b40:XXX::/48
+</file>
+
+Tento příkaz je třeba spustit po každém startu. Pokud používáte OpenWRT, není třeba nic řešit, toto chování je výchozí.
+
+===== Povolení příchozího provozu na OpenWRT =====
+
+Lze předpokládat, že pokud máte zájem o IPv6, je to proto, že se chcete vzdáleně připojovat na svá zařízení za tunelem. OpenWRT bohužel ve výchozím stavu taková spojení blokuje. Lze je ale snadno odblokovat ve firewallu. Je potřeba zvlášť povolit přístup do lokální sítě/sítí a na router samotný.
+
+<file | /etc/config/firewall>
+config rule
+        option name 'IPv6 forwarding'
+        option family 'ipv6'
+        option src 'wan'
+        option dest 'lan' # Eventuálně * pro všechny sítě
+        ## Pokud chcete povolit pouze dynamické porty (pro P2P služby),
+        ## odkomentujte následující řádky.
+        #option proto 'tcpudp'
+        #option dest_port '49152-65535'
+        option target 'ACCEPT'
+
+config rule
+        option name 'SSH to router over IPv6'
+        option family 'ipv6'
+        option src 'wan'
+        option proto 'tcp'
+        option dest_port '22'
+        option target 'ACCEPT'
+</file>
+
+===== Reverzní DNS =====
+
+Pro IP adresy tunelu je možné nastavit reverzní DNS. Preferovaná varianta spočívá v nakonfigurování reverzní zóny ve tvaru ''p.q.r.s.0.0.4.b.3.3.0.a.2.ip6.arpa'' na vašem vlastním serveru, případně službě jako [[https://dns.he.net/|HE DNS]].
+
+Následně požádejte o zřízení delegace dané reverzní zóny. Uveďte jméno zóny a jména DNS serverů, na kterých je zprovozněna.
+
+===== Řešení pomocí OpenVPN =====
+
+**Použití OpenVPN pro nové instalace nedoporučujeme. Wireguard se ukazuje jako jednodušší a spolehlivnější.**
+
+K tunelování IPv6 provozu je možné také použít OpenVPN verze 2.4 s vypnutým šifrováním a autentizací provozu – to z důvodu nedostatku výkonu na straně klienta. Používá se UDP provoz na standardním portu 1194. Každý klient se autentizuje certifikátem. Každému klientovi je **staticky** přidělena jedna spojovací IPv6 adresa a  podsíť o délce prefixu /48.
+
+Klientský certifikát je platný jeden rok. Před uplynutím jeho platnosti je třeba požádat o vydání nového. Záměrem tohoto nepohodlného opatření je, aby každý uživatel **nejméně jednou ročně napsal svému poskytovateli připojení dotaz na stav podpory IPv6**.
+ 
+==== Jak zprovoznit tunel ====
+
+   - Napište svému ISP dotaz ohledně podpory IPv6.
+   - Požádejte o tunel prostřednictvím e-mailu na **ipv6tun@vpsfree.cz**.
+   - Obdržíte konfigurační soubor pro OpenVPN klienta.
+   - Upravte soubor podle své potřeby.
+   - Nakonfigurujte svůj router tak, aby do domácí sítě přiděloval nějaké adresy z přidělené podsítě. (Konfigurační soubor obsahuje ukázku konfigurace pro OpenWRT)
+
+==== Příklad konfigurace OpenVPN pro OpenWRT ====
+
+V tomto případě je ukázka přímo v dodaném konfiguračním souboru. Konfigurační soubor stačí uložit tak, jak je (s příponou ''.conf'') do ''/etc/openvpn/'' (je třeba mít nainstalovaný balík ''openvpn-openssl''). A nadefinovat službu:
+
+<file | /etc/config/openvpn>
+config openvpn custom_config
+        option enabled 1
+        option config /etc/openvpn/ipv6tun-XXX.conf
+</file>
+
+Dále je potřeba vytvořit nové logické rozhraní:
+
+<file | /etc/config/network>
+config interface 'ipv6tun'
+        option ifname 'tunipv6'
+        option proto 'static'
+        option ip6addr '<adresa konce tunelu>/64'
+        option ip6gw '<adresa brány>'
+        option ip6prefix '<přidělený prefix>/48'
+</file>
+
+a přidat logické rozhraní `ipv6tun` do firewallové zóny `wan`:
+
+<file | /etc/config/firewall>
+config zone
+        option name 'wan'
+        option network 'wan wan6 ipv6tun'
+        option ...
+</file>
+

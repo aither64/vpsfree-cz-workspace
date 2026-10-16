@@ -1,0 +1,13 @@
+diff --git a/tests/suite/dist-config/nixos-persistence-upgrade.nix b/tests/suite/dist-config/nixos-persistence-upgrade.nix
+index c8bdc335f..1acd89098 100644
+--- a/tests/suite/dist-config/nixos-persistence-upgrade.nix
++++ b/tests/suite/dist-config/nixos-persistence-upgrade.nix
+@@ -134,6 +134,8 @@ import ../../make-test.nix (
+             # Native mapping exposes these root-owned copies as guest root.
+             machine.succeeds(<<~SHELL)
+               set -e
++              # The fresh dataset root is 0750; /nix needs non-root traversal.
++              chmod 0755 "#{nix_root}"
+               mkdir -p "#{nix_root}/store"
+               while IFS= read -r store_path; do
+                 cp -a "$store_path" "#{nix_root}/store/"

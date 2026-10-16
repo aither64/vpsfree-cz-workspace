@@ -1,0 +1,160 @@
+SHELL: 0
+
+START: 2026-10-14 22:39:20 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-14 22:39:20 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 22:39:20 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-14 22:39:20 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 22:39:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:22 +0200
+ELAPSED: 1.72s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:39:23 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:24 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:39:25 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:25 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:39:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:27 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:39:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:28 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:39:29 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:30 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:39:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:32 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:39:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:33 +0200
+ELAPSED: 0.69s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:39:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:35 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-14 22:39:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:37 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-14 22:39:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:38 +0200
+ELAPSED: 0.74s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-14 22:39:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-14 22:39:40 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-14 22:39:40 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-14 22:39:40 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Wed, 14 Oct 2026 20:39:40 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-14 22:39:40 +0200
+COMMAND: mkdir -p /mnt/vpsadminos && mount -t virtiofs hostOs /mnt/vpsadminos
+END: 2026-10-14 22:39:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-14 22:39:40 +0200
+COMMAND: OSCTL_IMAGE_VPSADMINOS_REV=799c0fc9decd87b4f690c69b7e47e776a48e44f5 osctl-image --vpsadminos-dir /mnt/vpsadminos test --build-dataset tank/image-scripts/build --output-dir /tank/image-scripts/output nixos-26.05

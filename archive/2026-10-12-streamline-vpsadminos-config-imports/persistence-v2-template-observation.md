@@ -1,0 +1,1 @@
+Parent launched verify-persistence-v2-template.sh before the new watcher was attached. Handle 64602 remains parent-owned; a fresh watcher observes complete log/status without relaunch. This is a monitoring handoff, not duplicate evaluation.

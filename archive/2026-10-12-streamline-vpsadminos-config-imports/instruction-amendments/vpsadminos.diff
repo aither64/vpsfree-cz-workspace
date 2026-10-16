@@ -1,0 +1,115 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index df24ef408..ad23314ec 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -35,7 +35,12 @@
+ - Tests/scripts: snake_case filenames; gem/module names match their directories (`osctl-oomd`, `libosctl`, etc.).
+ 
+ ## Testing Guidelines
+-- Add tests in `tests/suite/*.nix` and register them in `tests/all-tests.nix`; reuse machines from `tests/machines/*.nix` and configs from `tests/configs/`.
++- Register runtime cases in `tests/suite/*.nix` through `tests/all-tests.nix`,
++  using the existing RSpec test-runner, machines from `tests/machines/*.nix` and
++  configs from `tests/configs/`.
++- Expose pure evaluation and shell checks through flake checks. Keep test naming
++  and placement consistent with the repository, and ensure normal entrypoints
++  and CI discover them; do not add a duplicate runner.
+ - Use `my-test#script` for multi-script cases; set `expectFailure = true` when capturing known failures.
+ - Tests that transfer, copy, move, send, receive, back up, or restore
+   containers or datasets must verify data integrity when the operation is
+@@ -53,12 +58,16 @@
+ 
+ ## Commit & Pull Request Guidelines
+ - Follow existing history: `<area>: <change>` (e.g., `os: ...`, `tests/distributions: ...`); present tense, scoped subjects.
+-- Each commit message must explain what the change does and why the change is necessary.
++- Describe the finished change, concrete problem and rationale, and consequential
++  compatibility behavior. Keep agent or development `vN` labels, chronological
++  development history, temporary verification/runtime-pending notes and review
++  narration in session records. Preserve actual release/dependency versions,
++  upstream-authored messages and provenance, credits and sign-offs.
+ - Follow the permanent
+   [downstream patch-series policy](docs/os/patch-series-policy.md) for OS
+   integration history and the Linux, OpenZFS, and LXC downstream stacks. In
+-  particular, fold caused fixes into their logical owner, advance the owner's
+-  patch version, and never ship fixup/WIP residue as final history.
++  particular, fold caused fixes into their logical owner, retain independent
++  baseline fixes separately, and never ship fixup/WIP residue as final history.
+ - `make gems` refreshes packaged Ruby gem metadata from local sources and flake
+   inputs. It does not create build IDs or upload gems to a remote repository.
+ - Gem metadata commits created with `make commit-gems` or `make amend-gems`
+diff --git a/docs/os/patch-series-policy.md b/docs/os/patch-series-policy.md
+index ec98ebfbb..a3f9e2821 100644
+--- a/docs/os/patch-series-policy.md
++++ b/docs/os/patch-series-policy.md
+@@ -17,8 +17,8 @@ records are historical input only and cannot select work or add acceptance
+ gates.
+ 
+ Review Git history and source directly, then record ownership decisions, exact
+-refs, validation results, and remaining work in the existing Markdown release
+-tracker.
++refs, development progress, validation results, and remaining work in session
++records or the existing Markdown release tracker.
+ 
+ Release-specific exclusions, bases, and validation requirements belong in the
+ existing Markdown release plan or tracker. Do not turn a temporary release
+@@ -66,40 +66,29 @@ subsystem identity and provenance. Support changes folded into a product patch
+ share the owner's identity.
+ 
+ OS commits do not use the marker because this repository is already the
+-vpsAdminOS product boundary. They remain subject to every other ownership,
+-message, version, review, and validation rule.
+-
+-## Versions and development history
+-
+-Version the logical patch, not a Git object or publication event. An
+-unversioned initial published patch is its first version. Advance `vN` for a
+-real later source, semantic, compatibility-port, folded-content, or substantive
+-message revision. A pure transplant with no such change remains the same
+-version.
+-
+-Never reuse or lower a version. Recover the highest real version from the
+-maintained lineage and prefer the next whole `vN`. The shipping stack contains
+-the current version, not successive old versions followed by a repair.
+-
+-Every revised downstream-maintained patch must include a chronological
+-development history. Each entry explains what changed in that version; a list
+-of hashes, `Fixes` trailers, or "port to this release" is not sufficient.
++vpsAdminOS product boundary. They remain subject to the ownership, message,
++review, and validation rules.
+ 
+ ## Commit descriptions and provenance
+ 
+-Every meaningful retained commit must explain:
++Hand-written shipping descriptions state the finished change and explain:
+ 
+ - the problem and operational motivation;
+ - behavior before and after the patch;
+ - why vpsAdminOS needs the behavior, or why an independent patch is carried;
+ - the design, important invariants, constraints, and non-goals;
+-- accurate authorship, contributor credit, sign-offs, and provenance;
+-- validation performed; and
+-- substantive chronological development history when the patch is revised.
++- consequential compatibility or deployment behavior; and
++- accurate authorship, contributor credit, sign-offs, and provenance.
++
++Keep agent or development `vN` labels, chronological development history,
++temporary checks, runtime-pending notes and review narration in session records,
++not shipping descriptions. Actual release and dependency version names remain
++part of the technical description when relevant.
+ 
+ Preserve complete upstream messages and authorship for pristine backports.
+ Identify an adapted upstream source with its exact upstream commit and truthful
+-porting notes. Never invent provenance.
++porting notes. Never invent provenance, remove upstream-authored content to fit
++the hand-written description rules, or apply them by rewriting merged history.
+ 
+ Reject truncated subjects, empty or sign-off-only bodies, vague repair
+ messages, temporary audit narration, and descriptions that no longer match the
+@@ -114,7 +103,7 @@ reconstruction against the old range before mixing in intentional source
+ changes.
+ 
+ Review every resulting commit and the complete tree for semantic ownership,
+-dependency order, bisectability, identity markers, version history, authorship,
++dependency order, bisectability, identity markers, authorship,
+ provenance, tests, and release-specific exclusions. Use repository-native
+ format, lint, build, and runtime tests in proportion to the change.
+ 

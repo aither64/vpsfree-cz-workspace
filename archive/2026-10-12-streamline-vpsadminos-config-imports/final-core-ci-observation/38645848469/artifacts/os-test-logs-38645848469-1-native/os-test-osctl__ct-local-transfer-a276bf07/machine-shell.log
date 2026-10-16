@@ -1,0 +1,4747 @@
+SHELL: 0
+
+START: 2026-10-15 04:01:27 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 04:01:27 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:01:27 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 04:01:27 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:01:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:01:30 +0200
+ELAPSED: 2.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:01:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:01:31 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:01:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:01:33 +0200
+ELAPSED: 0.82s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:01:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:01:37 +0200
+ELAPSED: 2.54s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:01:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:01:39 +0200
+ELAPSED: 1.15s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:01:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:01:41 +0200
+ELAPSED: 1.19s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:01:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:01:43 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 04:01:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:01:45 +0200
+ELAPSED: 0.77s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 04:01:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:01:47 +0200
+ELAPSED: 1.2s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:01:47 +0200
+COMMAND: osctl pool show -H -o state dozer
+END: 2026-10-15 04:01:49 +0200
+ELAPSED: 1.73s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:01:49 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-15 04:01:49 +0200
+ELAPSED: 0.2s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Thu, 15 Oct 2026 02:01:49 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-15 04:01:49 +0200
+COMMAND: osctl ct del -f --prune testct-e268-copy-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:01:50 +0200
+ELAPSED: 1.24s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:01:50 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-e268-copy-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:01:51 +0200
+ELAPSED: 0.76s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:01:51 +0200
+COMMAND: osctl ct del -f --prune testct-e268-copy-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:01:52 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:01:52 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-e268-copy-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:01:53 +0200
+ELAPSED: 1.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:01:53 +0200
+COMMAND: osctl --pool tank ct new --distribution alpine testct-e268-copy-src
+END: 2026-10-15 04:01:56 +0200
+ELAPSED: 3.3s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:01:56 +0200
+COMMAND: osctl --pool tank ct unset start-menu testct-e268-copy-src
+END: 2026-10-15 04:01:57 +0200
+ELAPSED: 0.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:01:57 +0200
+COMMAND: osctl ct show -H -o rootfs testct-e268-copy-src
+END: 2026-10-15 04:01:58 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-e268-copy-src/private
+
+---
+
+START: 2026-10-15 04:01:58 +0200
+COMMAND: install -d /tank/ct/testct-e268-copy-src/private/tmp/local-transfer
+END: 2026-10-15 04:01:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:01:58 +0200
+COMMAND: printf '%s
+' base > /tank/ct/testct-e268-copy-src/private/tmp/local-transfer/base
+END: 2026-10-15 04:01:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:01:58 +0200
+COMMAND: osctl --pool tank ct cp config testct-e268-copy-src testct-e268-copy-src-dst
+END: 2026-10-15 04:01:59 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+> Configuring LXC home
+> Generating LXC configuration
+> Preparing log file
+> Preparing user script hook dir
+---
+
+START: 2026-10-15 04:01:59 +0200
+COMMAND: osctl --pool tank ct cp rootfs testct-e268-copy-src
+END: 2026-10-15 04:02:01 +0200
+ELAPSED: 1.38s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:02:01 +0200
+COMMAND: osctl ct show -H -o rootfs testct-e268-copy-src
+END: 2026-10-15 04:02:02 +0200
+ELAPSED: 1.1s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-e268-copy-src/private
+
+---
+
+START: 2026-10-15 04:02:02 +0200
+COMMAND: install -d /tank/ct/testct-e268-copy-src/private/tmp/local-transfer
+END: 2026-10-15 04:02:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:02 +0200
+COMMAND: printf '%s
+' sync > /tank/ct/testct-e268-copy-src/private/tmp/local-transfer/sync
+END: 2026-10-15 04:02:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:02 +0200
+COMMAND: osctl --pool tank ct cp sync testct-e268-copy-src
+END: 2026-10-15 04:02:03 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:02:03 +0200
+COMMAND: osctl ct show -H -o rootfs testct-e268-copy-src
+END: 2026-10-15 04:02:04 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-e268-copy-src/private
+
+---
+
+START: 2026-10-15 04:02:04 +0200
+COMMAND: install -d /tank/ct/testct-e268-copy-src/private/tmp/local-transfer
+END: 2026-10-15 04:02:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:04 +0200
+COMMAND: printf '%s
+' state > /tank/ct/testct-e268-copy-src/private/tmp/local-transfer/state
+END: 2026-10-15 04:02:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:04 +0200
+COMMAND: osctl --pool tank ct cp state testct-e268-copy-src
+END: 2026-10-15 04:02:05 +0200
+ELAPSED: 1.1s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:02:05 +0200
+COMMAND: osctl --pool tank ct cp cleanup testct-e268-copy-src
+END: 2026-10-15 04:02:06 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:06 +0200
+COMMAND: osctl -j ct show testct-e268-copy-src
+END: 2026-10-15 04:02:07 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-e268-copy-src","user":"testct-e268-copy-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-e268-copy-src","rootfs":"/tank/ct/testct-e268-copy-src/private","boot_dataset":"tank/ct/testct-e268-copy-src","boot_rootfs":"/tank/ct/testct-e268-copy-src/private","lxc_path":"/run/osctl/pools/tank/users/testct-e268-copy-src/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-e268-copy-src/group.default/cts/testct-e268-copy-src","group_path":"osctl/pool.tank/group.default/user.testct-e268-copy-src/ct.testct-e268-copy-src/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-e268-copy-src.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:02:07 +0200
+COMMAND: osctl -j ct show testct-e268-copy-src-dst
+END: 2026-10-15 04:02:08 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-e268-copy-src-dst","user":"testct-e268-copy-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-e268-copy-src-dst","rootfs":"/tank/ct/testct-e268-copy-src-dst/private","boot_dataset":"tank/ct/testct-e268-copy-src-dst","boot_rootfs":"/tank/ct/testct-e268-copy-src-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-e268-copy-src/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-e268-copy-src/group.default/cts/testct-e268-copy-src-dst","group_path":"osctl/pool.tank/group.default/user.testct-e268-copy-src/ct.testct-e268-copy-src-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-e268-copy-src-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:02:08 +0200
+COMMAND: osctl ct show -H -o rootfs testct-e268-copy-src-dst
+END: 2026-10-15 04:02:09 +0200
+ELAPSED: 1.01s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-e268-copy-src-dst/private
+
+---
+
+START: 2026-10-15 04:02:09 +0200
+COMMAND: cat /tank/ct/testct-e268-copy-src-dst/private/tmp/local-transfer/base
+END: 2026-10-15 04:02:09 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+base
+---
+
+START: 2026-10-15 04:02:09 +0200
+COMMAND: osctl ct show -H -o rootfs testct-e268-copy-src-dst
+END: 2026-10-15 04:02:10 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-e268-copy-src-dst/private
+
+---
+
+START: 2026-10-15 04:02:10 +0200
+COMMAND: cat /tank/ct/testct-e268-copy-src-dst/private/tmp/local-transfer/sync
+END: 2026-10-15 04:02:10 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+sync
+---
+
+START: 2026-10-15 04:02:10 +0200
+COMMAND: osctl ct show -H -o rootfs testct-e268-copy-src-dst
+END: 2026-10-15 04:02:11 +0200
+ELAPSED: 1.12s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-e268-copy-src-dst/private
+
+---
+
+START: 2026-10-15 04:02:11 +0200
+COMMAND: cat /tank/ct/testct-e268-copy-src-dst/private/tmp/local-transfer/state
+END: 2026-10-15 04:02:11 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+state
+---
+
+START: 2026-10-15 04:02:11 +0200
+COMMAND: osctl --pool tank ct start testct-e268-copy-src-dst
+END: 2026-10-15 04:02:14 +0200
+ELAPSED: 2.91s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:02:14 +0200
+COMMAND: osctl -j ct show testct-e268-copy-src-dst
+END: 2026-10-15 04:02:15 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-e268-copy-src-dst","user":"testct-e268-copy-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-e268-copy-src-dst","rootfs":"/tank/ct/testct-e268-copy-src-dst/private","boot_dataset":"tank/ct/testct-e268-copy-src-dst","boot_rootfs":"/tank/ct/testct-e268-copy-src-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-e268-copy-src/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-e268-copy-src/group.default/cts/testct-e268-copy-src-dst","group_path":"osctl/pool.tank/group.default/user.testct-e268-copy-src/ct.testct-e268-copy-src-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":3432,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-e268-copy-src-dst.log","memory":6975488,"cpu_us":2227950,"cpu_user_us":1522968,"cpu_system_us":704981,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-15 04:02:15 +0200
+COMMAND: osctl ct exec testct-e268-copy-src-dst true
+END: 2026-10-15 04:02:18 +0200
+ELAPSED: 2.47s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:18 +0200
+COMMAND: osctl ct exec testct-e268-copy-src-dst /bin/sh -c "cat /tmp/local-transfer/base"
+END: 2026-10-15 04:02:20 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+base
+---
+
+START: 2026-10-15 04:02:20 +0200
+COMMAND: osctl ct exec testct-e268-copy-src-dst /bin/sh -c "cat /tmp/local-transfer/sync"
+END: 2026-10-15 04:02:22 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+sync
+---
+
+START: 2026-10-15 04:02:22 +0200
+COMMAND: osctl ct exec testct-e268-copy-src-dst /bin/sh -c "cat /tmp/local-transfer/state"
+END: 2026-10-15 04:02:25 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+state
+---
+
+START: 2026-10-15 04:02:25 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-e268-copy-src.yml
+END: 2026-10-15 04:02:25 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:25 +0200
+COMMAND: osctl ct show -H -o dataset testct-e268-copy-src
+END: 2026-10-15 04:02:26 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-e268-copy-src
+
+---
+
+START: 2026-10-15 04:02:26 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-e268-copy-src | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:02:26 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:26 +0200
+COMMAND: osctl ct show -H -o dataset testct-e268-copy-src-dst
+END: 2026-10-15 04:02:27 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-e268-copy-src-dst
+
+---
+
+START: 2026-10-15 04:02:27 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-e268-copy-src-dst | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:02:27 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:27 +0200
+COMMAND: osctl ct del -f --prune testct-e268-copy-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:02:28 +0200
+ELAPSED: 1.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:28 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-e268-copy-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:02:29 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:29 +0200
+COMMAND: osctl ct del -f --prune testct-e268-copy-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:02:31 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:31 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-e268-copy-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:02:32 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:32 +0200
+COMMAND: osctl ct del -f --prune testct-4ab2-copy-once-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:02:33 +0200
+ELAPSED: 1.24s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:33 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-4ab2-copy-once-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:02:34 +0200
+ELAPSED: 1.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:34 +0200
+COMMAND: osctl ct del -f --prune testct-4ab2-copy-once-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:02:35 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:35 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-4ab2-copy-once-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:02:36 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:36 +0200
+COMMAND: osctl --pool tank ct new --distribution alpine testct-4ab2-copy-once-src
+END: 2026-10-15 04:02:39 +0200
+ELAPSED: 2.48s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:02:39 +0200
+COMMAND: osctl --pool tank ct unset start-menu testct-4ab2-copy-once-src
+END: 2026-10-15 04:02:40 +0200
+ELAPSED: 1.21s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:40 +0200
+COMMAND: osctl ct show -H -o rootfs testct-4ab2-copy-once-src
+END: 2026-10-15 04:02:41 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-4ab2-copy-once-src/private
+
+---
+
+START: 2026-10-15 04:02:41 +0200
+COMMAND: install -d /tank/ct/testct-4ab2-copy-once-src/private/tmp/local-transfer
+END: 2026-10-15 04:02:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:41 +0200
+COMMAND: printf '%s
+' copied > /tank/ct/testct-4ab2-copy-once-src/private/tmp/local-transfer/all-in-one-copy
+END: 2026-10-15 04:02:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:41 +0200
+COMMAND: osctl --pool tank ct cp testct-4ab2-copy-once-src testct-4ab2-copy-once-src-dst
+END: 2026-10-15 04:02:43 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+* Preparing copy
+> Configuring LXC home
+> Generating LXC configuration
+> Preparing log file
+> Preparing user script hook dir
+* Copying rootfs
+> Copying dataset /
+* Copying state
+> Copying dataset /
+* Cleaning up
+---
+
+START: 2026-10-15 04:02:43 +0200
+COMMAND: osctl -j ct show testct-4ab2-copy-once-src
+END: 2026-10-15 04:02:44 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4ab2-copy-once-src","user":"testct-4ab2-copy-once-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4ab2-copy-once-src","rootfs":"/tank/ct/testct-4ab2-copy-once-src/private","boot_dataset":"tank/ct/testct-4ab2-copy-once-src","boot_rootfs":"/tank/ct/testct-4ab2-copy-once-src/private","lxc_path":"/run/osctl/pools/tank/users/testct-4ab2-copy-once-src/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4ab2-copy-once-src/group.default/cts/testct-4ab2-copy-once-src","group_path":"osctl/pool.tank/group.default/user.testct-4ab2-copy-once-src/ct.testct-4ab2-copy-once-src/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4ab2-copy-once-src.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:02:44 +0200
+COMMAND: osctl -j ct show testct-4ab2-copy-once-src-dst
+END: 2026-10-15 04:02:45 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4ab2-copy-once-src-dst","user":"testct-4ab2-copy-once-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4ab2-copy-once-src-dst","rootfs":"/tank/ct/testct-4ab2-copy-once-src-dst/private","boot_dataset":"tank/ct/testct-4ab2-copy-once-src-dst","boot_rootfs":"/tank/ct/testct-4ab2-copy-once-src-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-4ab2-copy-once-src/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4ab2-copy-once-src/group.default/cts/testct-4ab2-copy-once-src-dst","group_path":"osctl/pool.tank/group.default/user.testct-4ab2-copy-once-src/ct.testct-4ab2-copy-once-src-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4ab2-copy-once-src-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:02:45 +0200
+COMMAND: osctl ct show -H -o rootfs testct-4ab2-copy-once-src-dst
+END: 2026-10-15 04:02:46 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-4ab2-copy-once-src-dst/private
+
+---
+
+START: 2026-10-15 04:02:46 +0200
+COMMAND: cat /tank/ct/testct-4ab2-copy-once-src-dst/private/tmp/local-transfer/all-in-one-copy
+END: 2026-10-15 04:02:46 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+copied
+---
+
+START: 2026-10-15 04:02:46 +0200
+COMMAND: osctl --pool tank ct start testct-4ab2-copy-once-src-dst
+END: 2026-10-15 04:02:49 +0200
+ELAPSED: 2.77s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:02:49 +0200
+COMMAND: osctl -j ct show testct-4ab2-copy-once-src-dst
+END: 2026-10-15 04:02:50 +0200
+ELAPSED: 1.11s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4ab2-copy-once-src-dst","user":"testct-4ab2-copy-once-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4ab2-copy-once-src-dst","rootfs":"/tank/ct/testct-4ab2-copy-once-src-dst/private","boot_dataset":"tank/ct/testct-4ab2-copy-once-src-dst","boot_rootfs":"/tank/ct/testct-4ab2-copy-once-src-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-4ab2-copy-once-src/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4ab2-copy-once-src/group.default/cts/testct-4ab2-copy-once-src-dst","group_path":"osctl/pool.tank/group.default/user.testct-4ab2-copy-once-src/ct.testct-4ab2-copy-once-src-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":4326,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4ab2-copy-once-src-dst.log","memory":6238208,"cpu_us":1914846,"cpu_user_us":1245010,"cpu_system_us":669835,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-15 04:02:50 +0200
+COMMAND: osctl ct exec testct-4ab2-copy-once-src-dst true
+END: 2026-10-15 04:02:52 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:52 +0200
+COMMAND: osctl ct exec testct-4ab2-copy-once-src-dst /bin/sh -c "cat /tmp/local-transfer/all-in-one-copy"
+END: 2026-10-15 04:02:55 +0200
+ELAPSED: 2.85s
+STATUS: 0
+OUTPUT:
+copied
+---
+
+START: 2026-10-15 04:02:55 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-4ab2-copy-once-src.yml
+END: 2026-10-15 04:02:55 +0200
+ELAPSED: 0.05s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:55 +0200
+COMMAND: osctl ct show -H -o dataset testct-4ab2-copy-once-src
+END: 2026-10-15 04:02:56 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-4ab2-copy-once-src
+
+---
+
+START: 2026-10-15 04:02:56 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-4ab2-copy-once-src | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:02:56 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:56 +0200
+COMMAND: osctl ct show -H -o dataset testct-4ab2-copy-once-src-dst
+END: 2026-10-15 04:02:57 +0200
+ELAPSED: 0.9s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-4ab2-copy-once-src-dst
+
+---
+
+START: 2026-10-15 04:02:57 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-4ab2-copy-once-src-dst | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:02:57 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:57 +0200
+COMMAND: osctl ct del -f --prune testct-4ab2-copy-once-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:02:58 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:02:58 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-4ab2-copy-once-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:03:00 +0200
+ELAPSED: 1.3s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:00 +0200
+COMMAND: osctl ct del -f --prune testct-4ab2-copy-once-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:03:02 +0200
+ELAPSED: 2.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:02 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-4ab2-copy-once-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:03:03 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:03 +0200
+COMMAND: osctl ct del -f --prune testct-1ed5-run-copy >/dev/null 2>&1 || true
+END: 2026-10-15 04:03:03 +0200
+ELAPSED: 0.81s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:03 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1ed5-run-copy >/dev/null 2>&1 || true
+END: 2026-10-15 04:03:04 +0200
+ELAPSED: 0.78s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:04 +0200
+COMMAND: osctl ct del -f --prune testct-1ed5-run-copy-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:03:05 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:05 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1ed5-run-copy-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:03:06 +0200
+ELAPSED: 1.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:06 +0200
+COMMAND: osctl --pool tank ct new --distribution alpine testct-1ed5-run-copy
+END: 2026-10-15 04:03:09 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:03:09 +0200
+COMMAND: osctl --pool tank ct unset start-menu testct-1ed5-run-copy
+END: 2026-10-15 04:03:10 +0200
+ELAPSED: 1.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:10 +0200
+COMMAND: osctl --pool tank ct start testct-1ed5-run-copy
+END: 2026-10-15 04:03:12 +0200
+ELAPSED: 2.63s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:03:12 +0200
+COMMAND: osctl -j ct show testct-1ed5-run-copy
+END: 2026-10-15 04:03:14 +0200
+ELAPSED: 1.09s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1ed5-run-copy","user":"testct-1ed5-run-copy","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1ed5-run-copy","rootfs":"/tank/ct/testct-1ed5-run-copy/private","boot_dataset":"tank/ct/testct-1ed5-run-copy","boot_rootfs":"/tank/ct/testct-1ed5-run-copy/private","lxc_path":"/run/osctl/pools/tank/users/testct-1ed5-run-copy/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1ed5-run-copy/group.default/cts/testct-1ed5-run-copy","group_path":"osctl/pool.tank/group.default/user.testct-1ed5-run-copy/ct.testct-1ed5-run-copy/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":5033,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1ed5-run-copy.log","memory":6340608,"cpu_us":1747188,"cpu_user_us":1160918,"cpu_system_us":586269,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:03:14 +0200
+COMMAND: osctl ct exec testct-1ed5-run-copy true
+END: 2026-10-15 04:03:16 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:16 +0200
+COMMAND: osctl ct show -H -o rootfs testct-1ed5-run-copy
+END: 2026-10-15 04:03:17 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-1ed5-run-copy/private
+
+---
+
+START: 2026-10-15 04:03:17 +0200
+COMMAND: cat > /tank/ct/testct-1ed5-run-copy/private/etc/init.d/transfer-service <<'EOF'
+#!/sbin/openrc-run
+command="/bin/sleep"
+command_args="2147483647"
+command_background="yes"
+pidfile="/run/transfer-service.pid"
+
+start_pre() {
+  printf '%s\n' "copy-service" > /run/transfer-service.value
+}
+EOF
+chmod +x /tank/ct/testct-1ed5-run-copy/private/etc/init.d/transfer-service
+END: 2026-10-15 04:03:17 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:17 +0200
+COMMAND: osctl ct exec testct-1ed5-run-copy /bin/sh -c "rc-update add transfer-service default"
+END: 2026-10-15 04:03:19 +0200
+ELAPSED: 1.84s
+STATUS: 0
+OUTPUT:
+ * service transfer-service added to runlevel default
+---
+
+START: 2026-10-15 04:03:19 +0200
+COMMAND: osctl ct exec testct-1ed5-run-copy /bin/sh -c "rc-service transfer-service start"
+END: 2026-10-15 04:03:22 +0200
+ELAPSED: 3.11s
+STATUS: 0
+OUTPUT:
+ * Caching service dependencies ... [ ok ]
+ * Starting transfer-service ... [ ok ]
+---
+
+START: 2026-10-15 04:03:22 +0200
+COMMAND: osctl ct exec testct-1ed5-run-copy /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:03:25 +0200
+ELAPSED: 2.86s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:03:25 +0200
+COMMAND: osctl ct exec testct-1ed5-run-copy /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:03:27 +0200
+ELAPSED: 2.76s
+STATUS: 0
+OUTPUT:
+copy-service
+---
+
+START: 2026-10-15 04:03:27 +0200
+COMMAND: osctl --pool tank ct cp config testct-1ed5-run-copy testct-1ed5-run-copy-dst
+END: 2026-10-15 04:03:29 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+> Configuring LXC home
+> Generating LXC configuration
+> Preparing log file
+> Preparing user script hook dir
+---
+
+START: 2026-10-15 04:03:29 +0200
+COMMAND: osctl --pool tank ct cp rootfs testct-1ed5-run-copy
+END: 2026-10-15 04:03:31 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:03:31 +0200
+COMMAND: osctl --pool tank ct cp sync testct-1ed5-run-copy
+END: 2026-10-15 04:03:32 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:03:32 +0200
+COMMAND: osctl -j ct show testct-1ed5-run-copy
+END: 2026-10-15 04:03:33 +0200
+ELAPSED: 1.18s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1ed5-run-copy","user":"testct-1ed5-run-copy","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1ed5-run-copy","rootfs":"/tank/ct/testct-1ed5-run-copy/private","boot_dataset":"tank/ct/testct-1ed5-run-copy","boot_rootfs":"/tank/ct/testct-1ed5-run-copy/private","lxc_path":"/run/osctl/pools/tank/users/testct-1ed5-run-copy/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1ed5-run-copy/group.default/cts/testct-1ed5-run-copy","group_path":"osctl/pool.tank/group.default/user.testct-1ed5-run-copy/ct.testct-1ed5-run-copy/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":5033,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1ed5-run-copy.log","memory":6422528,"cpu_us":9340157,"cpu_user_us":7138373,"cpu_system_us":2201783,"loadavg":[0.14,0.03,0.01]}
+---
+
+START: 2026-10-15 04:03:33 +0200
+COMMAND: osctl --pool tank ct cp state testct-1ed5-run-copy
+END: 2026-10-15 04:03:41 +0200
+ELAPSED: 7.65s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Starting container
+> Connecting console
+> Waiting for the container to start
+> Copying dataset /
+---
+
+START: 2026-10-15 04:03:41 +0200
+COMMAND: osctl -j ct show testct-1ed5-run-copy
+END: 2026-10-15 04:03:42 +0200
+ELAPSED: 0.89s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1ed5-run-copy","user":"testct-1ed5-run-copy","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1ed5-run-copy","rootfs":"/tank/ct/testct-1ed5-run-copy/private","boot_dataset":"tank/ct/testct-1ed5-run-copy","boot_rootfs":"/tank/ct/testct-1ed5-run-copy/private","lxc_path":"/run/osctl/pools/tank/users/testct-1ed5-run-copy/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1ed5-run-copy/group.default/cts/testct-1ed5-run-copy","group_path":"osctl/pool.tank/group.default/user.testct-1ed5-run-copy/ct.testct-1ed5-run-copy/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":6015,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1ed5-run-copy.log","memory":5902336,"cpu_us":1835396,"cpu_user_us":1117746,"cpu_system_us":717650,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-15 04:03:42 +0200
+COMMAND: osctl ct exec testct-1ed5-run-copy true
+END: 2026-10-15 04:03:44 +0200
+ELAPSED: 2.08s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:44 +0200
+COMMAND: osctl --pool tank ct cp cleanup testct-1ed5-run-copy
+END: 2026-10-15 04:03:45 +0200
+ELAPSED: 1.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:45 +0200
+COMMAND: osctl -j ct show testct-1ed5-run-copy
+END: 2026-10-15 04:03:47 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1ed5-run-copy","user":"testct-1ed5-run-copy","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1ed5-run-copy","rootfs":"/tank/ct/testct-1ed5-run-copy/private","boot_dataset":"tank/ct/testct-1ed5-run-copy","boot_rootfs":"/tank/ct/testct-1ed5-run-copy/private","lxc_path":"/run/osctl/pools/tank/users/testct-1ed5-run-copy/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1ed5-run-copy/group.default/cts/testct-1ed5-run-copy","group_path":"osctl/pool.tank/group.default/user.testct-1ed5-run-copy/ct.testct-1ed5-run-copy/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":6015,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1ed5-run-copy.log","memory":5902336,"cpu_us":2997427,"cpu_user_us":2045425,"cpu_system_us":952001,"loadavg":[0.07,0.02,0.0]}
+---
+
+START: 2026-10-15 04:03:47 +0200
+COMMAND: osctl ct exec testct-1ed5-run-copy /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:03:49 +0200
+ELAPSED: 2.38s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:03:49 +0200
+COMMAND: osctl ct exec testct-1ed5-run-copy /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:03:52 +0200
+ELAPSED: 2.7s
+STATUS: 0
+OUTPUT:
+copy-service
+---
+
+START: 2026-10-15 04:03:52 +0200
+COMMAND: osctl --pool tank ct start testct-1ed5-run-copy-dst
+END: 2026-10-15 04:03:54 +0200
+ELAPSED: 2.58s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:03:54 +0200
+COMMAND: osctl -j ct show testct-1ed5-run-copy-dst
+END: 2026-10-15 04:03:55 +0200
+ELAPSED: 1.17s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1ed5-run-copy-dst","user":"testct-1ed5-run-copy","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1ed5-run-copy-dst","rootfs":"/tank/ct/testct-1ed5-run-copy-dst/private","boot_dataset":"tank/ct/testct-1ed5-run-copy-dst","boot_rootfs":"/tank/ct/testct-1ed5-run-copy-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-1ed5-run-copy/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1ed5-run-copy/group.default/cts/testct-1ed5-run-copy-dst","group_path":"osctl/pool.tank/group.default/user.testct-1ed5-run-copy/ct.testct-1ed5-run-copy-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":6552,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1ed5-run-copy-dst.log","memory":5906432,"cpu_us":1754907,"cpu_user_us":1065597,"cpu_system_us":689309,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:03:55 +0200
+COMMAND: osctl ct exec testct-1ed5-run-copy-dst true
+END: 2026-10-15 04:03:58 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:03:58 +0200
+COMMAND: osctl ct exec testct-1ed5-run-copy-dst /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:04:01 +0200
+ELAPSED: 3.03s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:04:01 +0200
+COMMAND: osctl ct exec testct-1ed5-run-copy-dst /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:04:04 +0200
+ELAPSED: 2.77s
+STATUS: 0
+OUTPUT:
+copy-service
+---
+
+START: 2026-10-15 04:04:04 +0200
+COMMAND: osctl ct del -f --prune testct-1ed5-run-copy >/dev/null 2>&1 || true
+END: 2026-10-15 04:04:05 +0200
+ELAPSED: 1.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:05 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1ed5-run-copy >/dev/null 2>&1 || true
+END: 2026-10-15 04:04:07 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:07 +0200
+COMMAND: osctl ct del -f --prune testct-1ed5-run-copy-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:04:09 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:09 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1ed5-run-copy-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:04:10 +0200
+ELAPSED: 0.81s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:10 +0200
+COMMAND: osctl ct del -f --prune testct-427e-copy-restart >/dev/null 2>&1 || true
+END: 2026-10-15 04:04:11 +0200
+ELAPSED: 1.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:11 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-427e-copy-restart >/dev/null 2>&1 || true
+END: 2026-10-15 04:04:12 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:12 +0200
+COMMAND: osctl ct del -f --prune testct-427e-copy-restart-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:04:13 +0200
+ELAPSED: 0.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:13 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-427e-copy-restart-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:04:14 +0200
+ELAPSED: 0.86s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:14 +0200
+COMMAND: osctl --pool tank ct new --distribution alpine testct-427e-copy-restart
+END: 2026-10-15 04:04:16 +0200
+ELAPSED: 2.52s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:04:16 +0200
+COMMAND: osctl --pool tank ct unset start-menu testct-427e-copy-restart
+END: 2026-10-15 04:04:17 +0200
+ELAPSED: 0.78s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:17 +0200
+COMMAND: osctl --pool tank ct start testct-427e-copy-restart
+END: 2026-10-15 04:04:19 +0200
+ELAPSED: 2.52s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:04:19 +0200
+COMMAND: osctl -j ct show testct-427e-copy-restart
+END: 2026-10-15 04:04:20 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-427e-copy-restart","user":"testct-427e-copy-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-427e-copy-restart","rootfs":"/tank/ct/testct-427e-copy-restart/private","boot_dataset":"tank/ct/testct-427e-copy-restart","boot_rootfs":"/tank/ct/testct-427e-copy-restart/private","lxc_path":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts/testct-427e-copy-restart","group_path":"osctl/pool.tank/group.default/user.testct-427e-copy-restart/ct.testct-427e-copy-restart/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":7335,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-427e-copy-restart.log","memory":5992448,"cpu_us":1761881,"cpu_user_us":1158795,"cpu_system_us":603086,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:04:20 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart true
+END: 2026-10-15 04:04:23 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:23 +0200
+COMMAND: osctl ct show -H -o rootfs testct-427e-copy-restart
+END: 2026-10-15 04:04:24 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-427e-copy-restart/private
+
+---
+
+START: 2026-10-15 04:04:24 +0200
+COMMAND: cat > /tank/ct/testct-427e-copy-restart/private/etc/init.d/transfer-service <<'EOF'
+#!/sbin/openrc-run
+command="/bin/sleep"
+command_args="2147483647"
+command_background="yes"
+pidfile="/run/transfer-service.pid"
+
+start_pre() {
+  printf '%s\n' "copy-restart-service" > /run/transfer-service.value
+}
+EOF
+chmod +x /tank/ct/testct-427e-copy-restart/private/etc/init.d/transfer-service
+END: 2026-10-15 04:04:24 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:24 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart /bin/sh -c "rc-update add transfer-service default"
+END: 2026-10-15 04:04:26 +0200
+ELAPSED: 2.11s
+STATUS: 0
+OUTPUT:
+ * service transfer-service added to runlevel default
+---
+
+START: 2026-10-15 04:04:26 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart /bin/sh -c "rc-service transfer-service start"
+END: 2026-10-15 04:04:29 +0200
+ELAPSED: 2.9s
+STATUS: 0
+OUTPUT:
+ * Caching service dependencies ... [ ok ]
+ * Starting transfer-service ... [ ok ]
+---
+
+START: 2026-10-15 04:04:29 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:04:31 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:04:31 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:04:33 +0200
+ELAPSED: 2.29s
+STATUS: 0
+OUTPUT:
+copy-restart-service
+---
+
+START: 2026-10-15 04:04:33 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart /bin/sh -c "mkdir -p /tmp/local-transfer && printf '%s\\n' \"copy-restart-base\" > /tmp/local-transfer/copy-restart-base"
+END: 2026-10-15 04:04:35 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:35 +0200
+COMMAND: osctl --pool tank ct cp config testct-427e-copy-restart testct-427e-copy-restart-dst
+END: 2026-10-15 04:04:37 +0200
+ELAPSED: 1.39s
+STATUS: 0
+OUTPUT:
+> Configuring LXC home
+> Generating LXC configuration
+> Preparing log file
+> Preparing user script hook dir
+---
+
+START: 2026-10-15 04:04:37 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 04:04:37 +0200
+ELAPSED: 0.45s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 7993) 0s
+---
+
+START: 2026-10-15 04:04:37 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 04:04:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 7993) 0s
+---
+
+START: 2026-10-15 04:04:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:04:38 +0200
+ELAPSED: 1.1s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:04:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:04:41 +0200
+ELAPSED: 1.31s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 04:04:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:04:43 +0200
+ELAPSED: 1.08s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:04:43 +0200
+COMMAND: osctl pool show -H -o state dozer
+END: 2026-10-15 04:04:44 +0200
+ELAPSED: 0.74s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:04:44 +0200
+COMMAND: osctl -j ct show testct-427e-copy-restart
+END: 2026-10-15 04:04:45 +0200
+ELAPSED: 1.25s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-427e-copy-restart","user":"testct-427e-copy-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-427e-copy-restart","rootfs":"/tank/ct/testct-427e-copy-restart/private","boot_dataset":"tank/ct/testct-427e-copy-restart","boot_rootfs":"/tank/ct/testct-427e-copy-restart/private","lxc_path":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts/testct-427e-copy-restart","group_path":"osctl/pool.tank/group.default/user.testct-427e-copy-restart/ct.testct-427e-copy-restart/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":7335,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-427e-copy-restart.log","memory":6434816,"cpu_us":10780782,"cpu_user_us":8430385,"cpu_system_us":2350396,"loadavg":[0.06,0.01,0.0]}
+---
+
+START: 2026-10-15 04:04:45 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart true
+END: 2026-10-15 04:04:48 +0200
+ELAPSED: 2.76s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:48 +0200
+COMMAND: osctl -j ct show testct-427e-copy-restart-dst
+END: 2026-10-15 04:04:49 +0200
+ELAPSED: 1.33s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-427e-copy-restart-dst","user":"testct-427e-copy-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-427e-copy-restart-dst","rootfs":"/tank/ct/testct-427e-copy-restart-dst/private","boot_dataset":"tank/ct/testct-427e-copy-restart-dst","boot_rootfs":"/tank/ct/testct-427e-copy-restart-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts/testct-427e-copy-restart-dst","group_path":"osctl/pool.tank/group.default/user.testct-427e-copy-restart/ct.testct-427e-copy-restart-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-427e-copy-restart-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:04:49 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-427e-copy-restart.yml
+END: 2026-10-15 04:04:49 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:04:49 +0200
+COMMAND: osctl --pool tank ct cp rootfs testct-427e-copy-restart
+END: 2026-10-15 04:04:51 +0200
+ELAPSED: 1.84s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:04:51 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 04:04:51 +0200
+ELAPSED: 0.44s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 8188) 0s
+---
+
+START: 2026-10-15 04:04:51 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 04:04:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 8188) 0s
+---
+
+START: 2026-10-15 04:04:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:04:52 +0200
+ELAPSED: 1.15s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:04:53 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:04:54 +0200
+ELAPSED: 0.97s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 04:04:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:04:56 +0200
+ELAPSED: 0.9s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:04:56 +0200
+COMMAND: osctl pool show -H -o state dozer
+END: 2026-10-15 04:04:58 +0200
+ELAPSED: 1.31s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:04:58 +0200
+COMMAND: osctl -j ct show testct-427e-copy-restart
+END: 2026-10-15 04:04:59 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-427e-copy-restart","user":"testct-427e-copy-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-427e-copy-restart","rootfs":"/tank/ct/testct-427e-copy-restart/private","boot_dataset":"tank/ct/testct-427e-copy-restart","boot_rootfs":"/tank/ct/testct-427e-copy-restart/private","lxc_path":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts/testct-427e-copy-restart","group_path":"osctl/pool.tank/group.default/user.testct-427e-copy-restart/ct.testct-427e-copy-restart/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":7335,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-427e-copy-restart.log","memory":6434816,"cpu_us":12292471,"cpu_user_us":9670744,"cpu_system_us":2621726,"loadavg":[0.11,0.03,0.01]}
+---
+
+START: 2026-10-15 04:04:59 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart true
+END: 2026-10-15 04:05:01 +0200
+ELAPSED: 2.17s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:05:01 +0200
+COMMAND: osctl -j ct show testct-427e-copy-restart-dst
+END: 2026-10-15 04:05:02 +0200
+ELAPSED: 1.32s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-427e-copy-restart-dst","user":"testct-427e-copy-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-427e-copy-restart-dst","rootfs":"/tank/ct/testct-427e-copy-restart-dst/private","boot_dataset":"tank/ct/testct-427e-copy-restart-dst","boot_rootfs":"/tank/ct/testct-427e-copy-restart-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts/testct-427e-copy-restart-dst","group_path":"osctl/pool.tank/group.default/user.testct-427e-copy-restart/ct.testct-427e-copy-restart-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-427e-copy-restart-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:05:02 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-427e-copy-restart.yml
+END: 2026-10-15 04:05:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:05:02 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart /bin/sh -c "mkdir -p /tmp/local-transfer && printf '%s\\n' \"copy-restart-sync\" > /tmp/local-transfer/copy-restart-sync"
+END: 2026-10-15 04:05:05 +0200
+ELAPSED: 2.43s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:05:05 +0200
+COMMAND: osctl --pool tank ct cp sync testct-427e-copy-restart
+END: 2026-10-15 04:05:05 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:05:05 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 04:05:06 +0200
+ELAPSED: 0.44s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 8395) 0s
+---
+
+START: 2026-10-15 04:05:06 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 04:05:06 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 8395) 0s
+---
+
+START: 2026-10-15 04:05:06 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:05:07 +0200
+ELAPSED: 0.77s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:05:08 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:05:09 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 04:05:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:05:12 +0200
+ELAPSED: 1.35s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:05:12 +0200
+COMMAND: osctl pool show -H -o state dozer
+END: 2026-10-15 04:05:13 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:05:13 +0200
+COMMAND: osctl -j ct show testct-427e-copy-restart
+END: 2026-10-15 04:05:14 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-427e-copy-restart","user":"testct-427e-copy-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-427e-copy-restart","rootfs":"/tank/ct/testct-427e-copy-restart/private","boot_dataset":"tank/ct/testct-427e-copy-restart","boot_rootfs":"/tank/ct/testct-427e-copy-restart/private","lxc_path":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts/testct-427e-copy-restart","group_path":"osctl/pool.tank/group.default/user.testct-427e-copy-restart/ct.testct-427e-copy-restart/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":7335,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-427e-copy-restart.log","memory":6434816,"cpu_us":14640685,"cpu_user_us":11573660,"cpu_system_us":3067025,"loadavg":[0.09,0.03,0.01]}
+---
+
+START: 2026-10-15 04:05:14 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart true
+END: 2026-10-15 04:05:21 +0200
+ELAPSED: 6.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:05:21 +0200
+COMMAND: osctl -j ct show testct-427e-copy-restart-dst
+END: 2026-10-15 04:05:23 +0200
+ELAPSED: 2.42s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-427e-copy-restart-dst","user":"testct-427e-copy-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-427e-copy-restart-dst","rootfs":"/tank/ct/testct-427e-copy-restart-dst/private","boot_dataset":"tank/ct/testct-427e-copy-restart-dst","boot_rootfs":"/tank/ct/testct-427e-copy-restart-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts/testct-427e-copy-restart-dst","group_path":"osctl/pool.tank/group.default/user.testct-427e-copy-restart/ct.testct-427e-copy-restart-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-427e-copy-restart-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:05:23 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-427e-copy-restart.yml
+END: 2026-10-15 04:05:23 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:05:23 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart /bin/sh -c "mkdir -p /tmp/local-transfer && printf '%s\\n' \"copy-restart-state\" > /tmp/local-transfer/copy-restart-state"
+END: 2026-10-15 04:05:29 +0200
+ELAPSED: 5.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:05:29 +0200
+COMMAND: osctl --pool tank ct cp state testct-427e-copy-restart
+END: 2026-10-15 04:05:42 +0200
+ELAPSED: 12.89s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Starting container
+> Connecting console
+> Waiting for the container to start
+> Copying dataset /
+---
+
+START: 2026-10-15 04:05:42 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 04:05:42 +0200
+ELAPSED: 0.47s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 9063) 0s
+---
+
+START: 2026-10-15 04:05:42 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 04:05:42 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 9063) 0s
+---
+
+START: 2026-10-15 04:05:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:05:44 +0200
+ELAPSED: 1.68s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:05:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:05:48 +0200
+ELAPSED: 2.46s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:05:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:05:51 +0200
+ELAPSED: 1.99s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 04:05:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:05:54 +0200
+ELAPSED: 2.2s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:05:54 +0200
+COMMAND: osctl pool show -H -o state dozer
+END: 2026-10-15 04:05:56 +0200
+ELAPSED: 1.77s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:05:56 +0200
+COMMAND: osctl -j ct show testct-427e-copy-restart-dst
+END: 2026-10-15 04:05:58 +0200
+ELAPSED: 2.48s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-427e-copy-restart-dst","user":"testct-427e-copy-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-427e-copy-restart-dst","rootfs":"/tank/ct/testct-427e-copy-restart-dst/private","boot_dataset":"tank/ct/testct-427e-copy-restart-dst","boot_rootfs":"/tank/ct/testct-427e-copy-restart-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts/testct-427e-copy-restart-dst","group_path":"osctl/pool.tank/group.default/user.testct-427e-copy-restart/ct.testct-427e-copy-restart-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-427e-copy-restart-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:05:58 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-427e-copy-restart.yml
+END: 2026-10-15 04:05:58 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:05:58 +0200
+COMMAND: osctl --pool tank ct cp cleanup testct-427e-copy-restart
+END: 2026-10-15 04:06:01 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:06:01 +0200
+COMMAND: osctl -j ct show testct-427e-copy-restart
+END: 2026-10-15 04:06:02 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-427e-copy-restart","user":"testct-427e-copy-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-427e-copy-restart","rootfs":"/tank/ct/testct-427e-copy-restart/private","boot_dataset":"tank/ct/testct-427e-copy-restart","boot_rootfs":"/tank/ct/testct-427e-copy-restart/private","lxc_path":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts/testct-427e-copy-restart","group_path":"osctl/pool.tank/group.default/user.testct-427e-copy-restart/ct.testct-427e-copy-restart/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":8826,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-427e-copy-restart.log","memory":5902336,"cpu_us":3952174,"cpu_user_us":2617722,"cpu_system_us":1334451,"loadavg":[0.06,0.02,0.0]}
+---
+
+START: 2026-10-15 04:06:02 +0200
+COMMAND: osctl -j ct show testct-427e-copy-restart
+END: 2026-10-15 04:06:04 +0200
+ELAPSED: 2.05s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-427e-copy-restart","user":"testct-427e-copy-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-427e-copy-restart","rootfs":"/tank/ct/testct-427e-copy-restart/private","boot_dataset":"tank/ct/testct-427e-copy-restart","boot_rootfs":"/tank/ct/testct-427e-copy-restart/private","lxc_path":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts/testct-427e-copy-restart","group_path":"osctl/pool.tank/group.default/user.testct-427e-copy-restart/ct.testct-427e-copy-restart/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":8826,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-427e-copy-restart.log","memory":5902336,"cpu_us":3952174,"cpu_user_us":2617722,"cpu_system_us":1334451,"loadavg":[0.06,0.01,0.0]}
+---
+
+START: 2026-10-15 04:06:04 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart true
+END: 2026-10-15 04:06:11 +0200
+ELAPSED: 6.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:06:11 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:06:18 +0200
+ELAPSED: 7.14s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:06:18 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:06:23 +0200
+ELAPSED: 5.25s
+STATUS: 0
+OUTPUT:
+copy-restart-service
+---
+
+START: 2026-10-15 04:06:23 +0200
+COMMAND: osctl --pool tank ct start testct-427e-copy-restart-dst
+END: 2026-10-15 04:06:28 +0200
+ELAPSED: 4.92s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:06:28 +0200
+COMMAND: osctl -j ct show testct-427e-copy-restart-dst
+END: 2026-10-15 04:06:31 +0200
+ELAPSED: 3.11s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-427e-copy-restart-dst","user":"testct-427e-copy-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-427e-copy-restart-dst","rootfs":"/tank/ct/testct-427e-copy-restart-dst/private","boot_dataset":"tank/ct/testct-427e-copy-restart-dst","boot_rootfs":"/tank/ct/testct-427e-copy-restart-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-427e-copy-restart/group.default/cts/testct-427e-copy-restart-dst","group_path":"osctl/pool.tank/group.default/user.testct-427e-copy-restart/ct.testct-427e-copy-restart-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":9520,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-427e-copy-restart-dst.log","memory":6008832,"cpu_us":4051143,"cpu_user_us":2394854,"cpu_system_us":1656288,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-15 04:06:31 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart-dst true
+END: 2026-10-15 04:06:37 +0200
+ELAPSED: 6.33s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:06:37 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart-dst /bin/sh -c "cat /tmp/local-transfer/copy-restart-base"
+END: 2026-10-15 04:06:44 +0200
+ELAPSED: 6.36s
+STATUS: 0
+OUTPUT:
+copy-restart-base
+---
+
+START: 2026-10-15 04:06:44 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart-dst /bin/sh -c "cat /tmp/local-transfer/copy-restart-sync"
+END: 2026-10-15 04:06:49 +0200
+ELAPSED: 5.07s
+STATUS: 0
+OUTPUT:
+copy-restart-sync
+---
+
+START: 2026-10-15 04:06:49 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart-dst /bin/sh -c "cat /tmp/local-transfer/copy-restart-state"
+END: 2026-10-15 04:06:54 +0200
+ELAPSED: 5.49s
+STATUS: 0
+OUTPUT:
+copy-restart-state
+---
+
+START: 2026-10-15 04:06:54 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart-dst /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:06:59 +0200
+ELAPSED: 4.9s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:06:59 +0200
+COMMAND: osctl ct exec testct-427e-copy-restart-dst /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:07:05 +0200
+ELAPSED: 6.1s
+STATUS: 0
+OUTPUT:
+copy-restart-service
+---
+
+START: 2026-10-15 04:07:05 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-427e-copy-restart.yml
+END: 2026-10-15 04:07:05 +0200
+ELAPSED: 0.06s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:05 +0200
+COMMAND: osctl ct show -H -o dataset testct-427e-copy-restart
+END: 2026-10-15 04:07:08 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-427e-copy-restart
+
+---
+
+START: 2026-10-15 04:07:08 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-427e-copy-restart | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:07:08 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:08 +0200
+COMMAND: osctl ct show -H -o dataset testct-427e-copy-restart-dst
+END: 2026-10-15 04:07:10 +0200
+ELAPSED: 2.54s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-427e-copy-restart-dst
+
+---
+
+START: 2026-10-15 04:07:10 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-427e-copy-restart-dst | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:07:10 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:10 +0200
+COMMAND: osctl ct del -f --prune testct-427e-copy-restart >/dev/null 2>&1 || true
+END: 2026-10-15 04:07:14 +0200
+ELAPSED: 3.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:14 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-427e-copy-restart >/dev/null 2>&1 || true
+END: 2026-10-15 04:07:16 +0200
+ELAPSED: 2.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:16 +0200
+COMMAND: osctl ct del -f --prune testct-427e-copy-restart-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:07:22 +0200
+ELAPSED: 5.28s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:22 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-427e-copy-restart-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:07:24 +0200
+ELAPSED: 2.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:24 +0200
+COMMAND: osctl ct del -f --prune testct-9a82-copy-retry >/dev/null 2>&1 || true
+END: 2026-10-15 04:07:26 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:26 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-9a82-copy-retry >/dev/null 2>&1 || true
+END: 2026-10-15 04:07:28 +0200
+ELAPSED: 2.14s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:28 +0200
+COMMAND: osctl ct del -f --prune testct-9a82-copy-retry-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:07:31 +0200
+ELAPSED: 2.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:31 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-9a82-copy-retry-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:07:33 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:33 +0200
+COMMAND: osctl --pool tank ct new --distribution alpine testct-9a82-copy-retry
+END: 2026-10-15 04:07:39 +0200
+ELAPSED: 5.98s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:07:39 +0200
+COMMAND: osctl --pool tank ct unset start-menu testct-9a82-copy-retry
+END: 2026-10-15 04:07:41 +0200
+ELAPSED: 2.15s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:41 +0200
+COMMAND: osctl --pool tank ct start testct-9a82-copy-retry
+END: 2026-10-15 04:07:47 +0200
+ELAPSED: 6.07s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:07:47 +0200
+COMMAND: osctl -j ct show testct-9a82-copy-retry
+END: 2026-10-15 04:07:48 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9a82-copy-retry","user":"testct-9a82-copy-retry","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9a82-copy-retry","rootfs":"/tank/ct/testct-9a82-copy-retry/private","boot_dataset":"tank/ct/testct-9a82-copy-retry","boot_rootfs":"/tank/ct/testct-9a82-copy-retry/private","lxc_path":"/run/osctl/pools/tank/users/testct-9a82-copy-retry/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9a82-copy-retry/group.default/cts/testct-9a82-copy-retry","group_path":"osctl/pool.tank/group.default/user.testct-9a82-copy-retry/ct.testct-9a82-copy-retry/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":10409,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9a82-copy-retry.log","memory":6463488,"cpu_us":3707555,"cpu_user_us":2408341,"cpu_system_us":1299213,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-15 04:07:48 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry true
+END: 2026-10-15 04:07:52 +0200
+ELAPSED: 3.47s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:52 +0200
+COMMAND: osctl ct show -H -o rootfs testct-9a82-copy-retry
+END: 2026-10-15 04:07:53 +0200
+ELAPSED: 1.3s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-9a82-copy-retry/private
+
+---
+
+START: 2026-10-15 04:07:53 +0200
+COMMAND: cat > /tank/ct/testct-9a82-copy-retry/private/etc/init.d/transfer-service <<'EOF'
+#!/sbin/openrc-run
+command="/bin/sleep"
+command_args="2147483647"
+command_background="yes"
+pidfile="/run/transfer-service.pid"
+
+start_pre() {
+  printf '%s\n' "copy-retry-service" > /run/transfer-service.value
+}
+EOF
+chmod +x /tank/ct/testct-9a82-copy-retry/private/etc/init.d/transfer-service
+END: 2026-10-15 04:07:53 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:07:53 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry /bin/sh -c "rc-update add transfer-service default"
+END: 2026-10-15 04:07:56 +0200
+ELAPSED: 2.88s
+STATUS: 0
+OUTPUT:
+ * service transfer-service added to runlevel default
+---
+
+START: 2026-10-15 04:07:56 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry /bin/sh -c "rc-service transfer-service start"
+END: 2026-10-15 04:08:01 +0200
+ELAPSED: 4.57s
+STATUS: 0
+OUTPUT:
+ * Caching service dependencies ... [ ok ]
+ * Starting transfer-service ... [ ok ]
+---
+
+START: 2026-10-15 04:08:01 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:08:05 +0200
+ELAPSED: 4.45s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:08:05 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:08:09 +0200
+ELAPSED: 3.51s
+STATUS: 0
+OUTPUT:
+copy-retry-service
+---
+
+START: 2026-10-15 04:08:09 +0200
+COMMAND: osctl --pool tank ct cp config testct-9a82-copy-retry testct-9a82-copy-retry-dst
+END: 2026-10-15 04:08:10 +0200
+ELAPSED: 1.32s
+STATUS: 0
+OUTPUT:
+> Configuring LXC home
+> Generating LXC configuration
+> Preparing log file
+> Preparing user script hook dir
+---
+
+START: 2026-10-15 04:08:10 +0200
+COMMAND: osctl --pool tank ct cp rootfs testct-9a82-copy-retry
+END: 2026-10-15 04:08:12 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:08:12 +0200
+COMMAND: osctl --pool tank ct cp sync testct-9a82-copy-retry
+END: 2026-10-15 04:08:13 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:08:13 +0200
+COMMAND: install -d -m 700 /tank/hook/ct/testct-9a82-copy-retry
+cat > /tank/hook/ct/testct-9a82-copy-retry/pre-stop <<'EOF'
+#!/bin/sh
+exit 1
+
+EOF
+chmod 700 /tank/hook/ct/testct-9a82-copy-retry/pre-stop
+END: 2026-10-15 04:08:13 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:13 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry /bin/sh -c "mkdir -p /tmp/local-transfer && echo before-retry > /tmp/local-transfer/before-retry"
+END: 2026-10-15 04:08:15 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:15 +0200
+COMMAND: osctl --pool tank ct cp state testct-9a82-copy-retry
+END: 2026-10-15 04:08:15 +0200
+ELAPSED: 0.88s
+STATUS: 1
+OUTPUT:
+error: hook pre_stop at /tank/hook/ct/testct-9a82-copy-retry/pre-stop exited with 1
+> Stopping container
+---
+
+START: 2026-10-15 04:08:15 +0200
+COMMAND: osctl -j ct show testct-9a82-copy-retry
+END: 2026-10-15 04:08:17 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9a82-copy-retry","user":"testct-9a82-copy-retry","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9a82-copy-retry","rootfs":"/tank/ct/testct-9a82-copy-retry/private","boot_dataset":"tank/ct/testct-9a82-copy-retry","boot_rootfs":"/tank/ct/testct-9a82-copy-retry/private","lxc_path":"/run/osctl/pools/tank/users/testct-9a82-copy-retry/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9a82-copy-retry/group.default/cts/testct-9a82-copy-retry","group_path":"osctl/pool.tank/group.default/user.testct-9a82-copy-retry/ct.testct-9a82-copy-retry/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":10409,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9a82-copy-retry.log","memory":6434816,"cpu_us":15789300,"cpu_user_us":12100403,"cpu_system_us":3688896,"loadavg":[0.16,0.05,0.01]}
+---
+
+START: 2026-10-15 04:08:17 +0200
+COMMAND: osctl -j ct show testct-9a82-copy-retry-dst
+END: 2026-10-15 04:08:18 +0200
+ELAPSED: 1.08s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9a82-copy-retry-dst","user":"testct-9a82-copy-retry","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9a82-copy-retry-dst","rootfs":"/tank/ct/testct-9a82-copy-retry-dst/private","boot_dataset":"tank/ct/testct-9a82-copy-retry-dst","boot_rootfs":"/tank/ct/testct-9a82-copy-retry-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-9a82-copy-retry/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9a82-copy-retry/group.default/cts/testct-9a82-copy-retry-dst","group_path":"osctl/pool.tank/group.default/user.testct-9a82-copy-retry/ct.testct-9a82-copy-retry-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9a82-copy-retry-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:08:18 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-9a82-copy-retry.yml
+END: 2026-10-15 04:08:18 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:18 +0200
+COMMAND: rm -f /tank/hook/ct/testct-9a82-copy-retry/pre-stop
+END: 2026-10-15 04:08:18 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:18 +0200
+COMMAND: osctl --pool tank ct cp state testct-9a82-copy-retry
+END: 2026-10-15 04:08:25 +0200
+ELAPSED: 7.66s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Starting container
+> Connecting console
+> Waiting for the container to start
+> Copying dataset /
+---
+
+START: 2026-10-15 04:08:25 +0200
+COMMAND: osctl -j ct show testct-9a82-copy-retry
+END: 2026-10-15 04:08:26 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9a82-copy-retry","user":"testct-9a82-copy-retry","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9a82-copy-retry","rootfs":"/tank/ct/testct-9a82-copy-retry/private","boot_dataset":"tank/ct/testct-9a82-copy-retry","boot_rootfs":"/tank/ct/testct-9a82-copy-retry/private","lxc_path":"/run/osctl/pools/tank/users/testct-9a82-copy-retry/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9a82-copy-retry/group.default/cts/testct-9a82-copy-retry","group_path":"osctl/pool.tank/group.default/user.testct-9a82-copy-retry/ct.testct-9a82-copy-retry/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":11447,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9a82-copy-retry.log","memory":5902336,"cpu_us":1623980,"cpu_user_us":1017035,"cpu_system_us":606944,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:08:26 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry true
+END: 2026-10-15 04:08:29 +0200
+ELAPSED: 2.4s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:29 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:08:32 +0200
+ELAPSED: 2.88s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:08:32 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:08:34 +0200
+ELAPSED: 2.31s
+STATUS: 0
+OUTPUT:
+copy-retry-service
+---
+
+START: 2026-10-15 04:08:34 +0200
+COMMAND: osctl --pool tank ct cp cleanup testct-9a82-copy-retry
+END: 2026-10-15 04:08:35 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:35 +0200
+COMMAND: osctl --pool tank ct start testct-9a82-copy-retry-dst
+END: 2026-10-15 04:08:38 +0200
+ELAPSED: 2.74s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:08:38 +0200
+COMMAND: osctl -j ct show testct-9a82-copy-retry-dst
+END: 2026-10-15 04:08:39 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9a82-copy-retry-dst","user":"testct-9a82-copy-retry","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9a82-copy-retry-dst","rootfs":"/tank/ct/testct-9a82-copy-retry-dst/private","boot_dataset":"tank/ct/testct-9a82-copy-retry-dst","boot_rootfs":"/tank/ct/testct-9a82-copy-retry-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-9a82-copy-retry/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9a82-copy-retry/group.default/cts/testct-9a82-copy-retry-dst","group_path":"osctl/pool.tank/group.default/user.testct-9a82-copy-retry/ct.testct-9a82-copy-retry-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":11982,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9a82-copy-retry-dst.log","memory":5992448,"cpu_us":1669130,"cpu_user_us":992109,"cpu_system_us":677021,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:08:39 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry-dst true
+END: 2026-10-15 04:08:41 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:41 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry-dst /bin/sh -c "cat /tmp/local-transfer/before-retry"
+END: 2026-10-15 04:08:44 +0200
+ELAPSED: 2.2s
+STATUS: 0
+OUTPUT:
+before-retry
+---
+
+START: 2026-10-15 04:08:44 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry-dst /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:08:46 +0200
+ELAPSED: 2.9s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:08:46 +0200
+COMMAND: osctl ct exec testct-9a82-copy-retry-dst /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:08:48 +0200
+ELAPSED: 1.91s
+STATUS: 0
+OUTPUT:
+copy-retry-service
+---
+
+START: 2026-10-15 04:08:48 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-9a82-copy-retry.yml
+END: 2026-10-15 04:08:48 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:48 +0200
+COMMAND: osctl ct show -H -o dataset testct-9a82-copy-retry
+END: 2026-10-15 04:08:49 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-9a82-copy-retry
+
+---
+
+START: 2026-10-15 04:08:49 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-9a82-copy-retry | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:08:49 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:49 +0200
+COMMAND: osctl ct show -H -o dataset testct-9a82-copy-retry-dst
+END: 2026-10-15 04:08:50 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-9a82-copy-retry-dst
+
+---
+
+START: 2026-10-15 04:08:50 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-9a82-copy-retry-dst | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:08:50 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:50 +0200
+COMMAND: rm -f /tank/hook/ct/testct-9a82-copy-retry/pre-stop
+END: 2026-10-15 04:08:50 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:50 +0200
+COMMAND: osctl ct del -f --prune testct-9a82-copy-retry >/dev/null 2>&1 || true
+END: 2026-10-15 04:08:52 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:52 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-9a82-copy-retry >/dev/null 2>&1 || true
+END: 2026-10-15 04:08:53 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:53 +0200
+COMMAND: osctl ct del -f --prune testct-9a82-copy-retry-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:08:55 +0200
+ELAPSED: 1.96s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:55 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-9a82-copy-retry-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:08:56 +0200
+ELAPSED: 0.84s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:56 +0200
+COMMAND: osctl ct del -f --prune testct-1983-move-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:08:57 +0200
+ELAPSED: 0.78s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:57 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1983-move-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:08:58 +0200
+ELAPSED: 1.38s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:08:58 +0200
+COMMAND: osctl ct del -f --prune testct-1983-move-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:09:00 +0200
+ELAPSED: 1.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:09:00 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1983-move-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:09:01 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:09:01 +0200
+COMMAND: osctl --pool tank ct new --distribution alpine testct-1983-move-src
+END: 2026-10-15 04:09:03 +0200
+ELAPSED: 2.54s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:09:03 +0200
+COMMAND: osctl --pool tank ct unset start-menu testct-1983-move-src
+END: 2026-10-15 04:09:04 +0200
+ELAPSED: 1.27s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:09:04 +0200
+COMMAND: osctl --pool tank ct start testct-1983-move-src
+END: 2026-10-15 04:09:07 +0200
+ELAPSED: 2.64s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:09:07 +0200
+COMMAND: osctl -j ct show testct-1983-move-src
+END: 2026-10-15 04:09:08 +0200
+ELAPSED: 1.19s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1983-move-src","user":"testct-1983-move-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1983-move-src","rootfs":"/tank/ct/testct-1983-move-src/private","boot_dataset":"tank/ct/testct-1983-move-src","boot_rootfs":"/tank/ct/testct-1983-move-src/private","lxc_path":"/run/osctl/pools/tank/users/testct-1983-move-src/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1983-move-src/group.default/cts/testct-1983-move-src","group_path":"osctl/pool.tank/group.default/user.testct-1983-move-src/ct.testct-1983-move-src/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":12811,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1983-move-src.log","memory":6242304,"cpu_us":1728631,"cpu_user_us":1166686,"cpu_system_us":561945,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-15 04:09:08 +0200
+COMMAND: osctl ct exec testct-1983-move-src true
+END: 2026-10-15 04:09:11 +0200
+ELAPSED: 2.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:09:11 +0200
+COMMAND: osctl ct show -H -o rootfs testct-1983-move-src
+END: 2026-10-15 04:09:12 +0200
+ELAPSED: 1.18s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-1983-move-src/private
+
+---
+
+START: 2026-10-15 04:09:12 +0200
+COMMAND: cat > /tank/ct/testct-1983-move-src/private/etc/init.d/transfer-service <<'EOF'
+#!/sbin/openrc-run
+command="/bin/sleep"
+command_args="2147483647"
+command_background="yes"
+pidfile="/run/transfer-service.pid"
+
+start_pre() {
+  printf '%s\n' "move-service" > /run/transfer-service.value
+}
+EOF
+chmod +x /tank/ct/testct-1983-move-src/private/etc/init.d/transfer-service
+END: 2026-10-15 04:09:12 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:09:12 +0200
+COMMAND: osctl ct exec testct-1983-move-src /bin/sh -c "rc-update add transfer-service default"
+END: 2026-10-15 04:09:14 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+ * service transfer-service added to runlevel default
+---
+
+START: 2026-10-15 04:09:14 +0200
+COMMAND: osctl ct exec testct-1983-move-src /bin/sh -c "rc-service transfer-service start"
+END: 2026-10-15 04:09:17 +0200
+ELAPSED: 2.79s
+STATUS: 0
+OUTPUT:
+ * Caching service dependencies ... [ ok ]
+ * Starting transfer-service ... [ ok ]
+---
+
+START: 2026-10-15 04:09:17 +0200
+COMMAND: osctl ct exec testct-1983-move-src /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:09:19 +0200
+ELAPSED: 2.32s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:09:19 +0200
+COMMAND: osctl ct exec testct-1983-move-src /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:09:22 +0200
+ELAPSED: 2.48s
+STATUS: 0
+OUTPUT:
+move-service
+---
+
+START: 2026-10-15 04:09:22 +0200
+COMMAND: osctl --pool tank ct exec testct-1983-move-src /bin/sh -c 'mkdir -p /tmp/local-transfer && echo before > /tmp/local-transfer/before'
+END: 2026-10-15 04:09:24 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:09:24 +0200
+COMMAND: osctl ct exec testct-1983-move-src /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:09:27 +0200
+ELAPSED: 2.64s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:09:27 +0200
+COMMAND: osctl ct exec testct-1983-move-src /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:09:31 +0200
+ELAPSED: 3.82s
+STATUS: 0
+OUTPUT:
+move-service
+---
+
+START: 2026-10-15 04:09:31 +0200
+COMMAND: osctl --pool tank ct mv config testct-1983-move-src testct-1983-move-src-dst
+END: 2026-10-15 04:09:32 +0200
+ELAPSED: 1.26s
+STATUS: 0
+OUTPUT:
+> Configuring LXC home
+> Generating LXC configuration
+> Preparing log file
+> Preparing user script hook dir
+---
+
+START: 2026-10-15 04:09:32 +0200
+COMMAND: osctl --pool tank ct mv rootfs testct-1983-move-src
+END: 2026-10-15 04:09:33 +0200
+ELAPSED: 1.2s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:09:33 +0200
+COMMAND: osctl ct exec testct-1983-move-src /bin/sh -c "echo after-rootfs > /tmp/local-transfer/after-rootfs"
+END: 2026-10-15 04:09:36 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:09:36 +0200
+COMMAND: osctl --pool tank ct mv sync testct-1983-move-src
+END: 2026-10-15 04:09:36 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:09:36 +0200
+COMMAND: osctl ct exec testct-1983-move-src /bin/sh -c "echo after-sync > /tmp/local-transfer/after-sync"
+END: 2026-10-15 04:09:39 +0200
+ELAPSED: 2.37s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:09:39 +0200
+COMMAND: osctl --pool tank ct mv state testct-1983-move-src
+END: 2026-10-15 04:09:46 +0200
+ELAPSED: 7.01s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Copying dataset /
+> Starting container
+> Connecting console
+> Waiting for the container to start
+---
+
+START: 2026-10-15 04:09:46 +0200
+COMMAND: osctl -j ct show testct-1983-move-src-dst
+END: 2026-10-15 04:09:47 +0200
+ELAPSED: 1.22s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1983-move-src-dst","user":"testct-1983-move-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1983-move-src-dst","rootfs":"/tank/ct/testct-1983-move-src-dst/private","boot_dataset":"tank/ct/testct-1983-move-src-dst","boot_rootfs":"/tank/ct/testct-1983-move-src-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-1983-move-src/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1983-move-src/group.default/cts/testct-1983-move-src-dst","group_path":"osctl/pool.tank/group.default/user.testct-1983-move-src/ct.testct-1983-move-src-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":13908,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1983-move-src-dst.log","memory":5902336,"cpu_us":1759000,"cpu_user_us":1037129,"cpu_system_us":721871,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:09:47 +0200
+COMMAND: osctl ct exec testct-1983-move-src-dst true
+END: 2026-10-15 04:09:49 +0200
+ELAPSED: 2.0s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:09:49 +0200
+COMMAND: osctl --pool tank ct mv cleanup testct-1983-move-src
+END: 2026-10-15 04:09:51 +0200
+ELAPSED: 1.69s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Stopping container
+> Verifying recovery cleanup
+> Disconnecting console
+> Removing shared mount directory
+> Moving dataset to trash
+> Removing LXC configuration and script hooks
+> Unregistering container
+> Removing cgroups
+> Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 04:09:51 +0200
+COMMAND: osctl ct show testct-1983-move-src
+END: 2026-10-15 04:09:52 +0200
+ELAPSED: 1.02s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 04:09:52 +0200
+COMMAND: osctl -j ct show testct-1983-move-src-dst
+END: 2026-10-15 04:09:53 +0200
+ELAPSED: 0.91s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1983-move-src-dst","user":"testct-1983-move-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1983-move-src-dst","rootfs":"/tank/ct/testct-1983-move-src-dst/private","boot_dataset":"tank/ct/testct-1983-move-src-dst","boot_rootfs":"/tank/ct/testct-1983-move-src-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-1983-move-src/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1983-move-src/group.default/cts/testct-1983-move-src-dst","group_path":"osctl/pool.tank/group.default/user.testct-1983-move-src/ct.testct-1983-move-src-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":13908,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1983-move-src-dst.log","memory":5902336,"cpu_us":2853927,"cpu_user_us":1881620,"cpu_system_us":972306,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-15 04:09:53 +0200
+COMMAND: osctl ct exec testct-1983-move-src-dst /bin/sh -c "cat /tmp/local-transfer/before"
+END: 2026-10-15 04:09:55 +0200
+ELAPSED: 2.7s
+STATUS: 0
+OUTPUT:
+before
+---
+
+START: 2026-10-15 04:09:55 +0200
+COMMAND: osctl ct exec testct-1983-move-src-dst /bin/sh -c "cat /tmp/local-transfer/after-rootfs"
+END: 2026-10-15 04:09:58 +0200
+ELAPSED: 2.54s
+STATUS: 0
+OUTPUT:
+after-rootfs
+---
+
+START: 2026-10-15 04:09:58 +0200
+COMMAND: osctl ct exec testct-1983-move-src-dst /bin/sh -c "cat /tmp/local-transfer/after-sync"
+END: 2026-10-15 04:10:01 +0200
+ELAPSED: 3.43s
+STATUS: 0
+OUTPUT:
+after-sync
+---
+
+START: 2026-10-15 04:10:01 +0200
+COMMAND: osctl ct exec testct-1983-move-src-dst /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:10:04 +0200
+ELAPSED: 2.61s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:10:04 +0200
+COMMAND: osctl ct exec testct-1983-move-src-dst /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:10:06 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+move-service
+---
+
+START: 2026-10-15 04:10:06 +0200
+COMMAND: osctl ct show -H -o dataset testct-1983-move-src-dst
+END: 2026-10-15 04:10:07 +0200
+ELAPSED: 0.75s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-1983-move-src-dst
+
+---
+
+START: 2026-10-15 04:10:07 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-1983-move-src-dst | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:10:07 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:07 +0200
+COMMAND: osctl ct del -f --prune testct-1983-move-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:10:08 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:08 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1983-move-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:10:09 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:09 +0200
+COMMAND: osctl ct del -f --prune testct-1983-move-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:10:11 +0200
+ELAPSED: 2.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:11 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1983-move-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:10:12 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:12 +0200
+COMMAND: osctl ct del -f --prune testct-1f39-move-restart >/dev/null 2>&1 || true
+END: 2026-10-15 04:10:13 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:13 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1f39-move-restart >/dev/null 2>&1 || true
+END: 2026-10-15 04:10:14 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:14 +0200
+COMMAND: osctl ct del -f --prune testct-1f39-move-restart-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:10:15 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:15 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1f39-move-restart-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:10:16 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:16 +0200
+COMMAND: osctl --pool tank ct new --distribution alpine testct-1f39-move-restart
+END: 2026-10-15 04:10:19 +0200
+ELAPSED: 2.45s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:10:19 +0200
+COMMAND: osctl --pool tank ct unset start-menu testct-1f39-move-restart
+END: 2026-10-15 04:10:19 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:19 +0200
+COMMAND: osctl --pool tank ct start testct-1f39-move-restart
+END: 2026-10-15 04:10:22 +0200
+ELAPSED: 2.47s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:10:22 +0200
+COMMAND: osctl -j ct show testct-1f39-move-restart
+END: 2026-10-15 04:10:23 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1f39-move-restart","user":"testct-1f39-move-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1f39-move-restart","rootfs":"/tank/ct/testct-1f39-move-restart/private","boot_dataset":"tank/ct/testct-1f39-move-restart","boot_rootfs":"/tank/ct/testct-1f39-move-restart/private","lxc_path":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts/testct-1f39-move-restart","group_path":"osctl/pool.tank/group.default/user.testct-1f39-move-restart/ct.testct-1f39-move-restart/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":14753,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1f39-move-restart.log","memory":6467584,"cpu_us":1832166,"cpu_user_us":1232478,"cpu_system_us":599688,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:10:23 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart true
+END: 2026-10-15 04:10:25 +0200
+ELAPSED: 2.18s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:25 +0200
+COMMAND: osctl ct show -H -o rootfs testct-1f39-move-restart
+END: 2026-10-15 04:10:26 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-1f39-move-restart/private
+
+---
+
+START: 2026-10-15 04:10:26 +0200
+COMMAND: cat > /tank/ct/testct-1f39-move-restart/private/etc/init.d/transfer-service <<'EOF'
+#!/sbin/openrc-run
+command="/bin/sleep"
+command_args="2147483647"
+command_background="yes"
+pidfile="/run/transfer-service.pid"
+
+start_pre() {
+  printf '%s\n' "move-restart-service" > /run/transfer-service.value
+}
+EOF
+chmod +x /tank/ct/testct-1f39-move-restart/private/etc/init.d/transfer-service
+END: 2026-10-15 04:10:26 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:26 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart /bin/sh -c "rc-update add transfer-service default"
+END: 2026-10-15 04:10:28 +0200
+ELAPSED: 2.05s
+STATUS: 0
+OUTPUT:
+ * service transfer-service added to runlevel default
+---
+
+START: 2026-10-15 04:10:28 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart /bin/sh -c "rc-service transfer-service start"
+END: 2026-10-15 04:10:31 +0200
+ELAPSED: 2.72s
+STATUS: 0
+OUTPUT:
+ * Caching service dependencies ... [ ok ]
+ * Starting transfer-service ... [ ok ]
+---
+
+START: 2026-10-15 04:10:31 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:10:33 +0200
+ELAPSED: 2.51s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:10:33 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:10:36 +0200
+ELAPSED: 2.5s
+STATUS: 0
+OUTPUT:
+move-restart-service
+---
+
+START: 2026-10-15 04:10:36 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart /bin/sh -c "mkdir -p /tmp/local-transfer && printf '%s\\n' \"move-restart-base\" > /tmp/local-transfer/move-restart-base"
+END: 2026-10-15 04:10:38 +0200
+ELAPSED: 2.27s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:38 +0200
+COMMAND: osctl --pool tank ct mv config testct-1f39-move-restart testct-1f39-move-restart-dst
+END: 2026-10-15 04:10:39 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+> Configuring LXC home
+> Generating LXC configuration
+> Preparing log file
+> Preparing user script hook dir
+---
+
+START: 2026-10-15 04:10:39 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 04:10:42 +0200
+ELAPSED: 2.55s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 15410) 0s
+---
+
+START: 2026-10-15 04:10:42 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 04:10:42 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 15410) 0s
+---
+
+START: 2026-10-15 04:10:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:10:43 +0200
+ELAPSED: 1.3s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:10:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:10:45 +0200
+ELAPSED: 0.95s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 04:10:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:10:47 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:10:47 +0200
+COMMAND: osctl pool show -H -o state dozer
+END: 2026-10-15 04:10:48 +0200
+ELAPSED: 0.87s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:10:48 +0200
+COMMAND: osctl -j ct show testct-1f39-move-restart
+END: 2026-10-15 04:10:49 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1f39-move-restart","user":"testct-1f39-move-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1f39-move-restart","rootfs":"/tank/ct/testct-1f39-move-restart/private","boot_dataset":"tank/ct/testct-1f39-move-restart","boot_rootfs":"/tank/ct/testct-1f39-move-restart/private","lxc_path":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts/testct-1f39-move-restart","group_path":"osctl/pool.tank/group.default/user.testct-1f39-move-restart/ct.testct-1f39-move-restart/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":14753,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1f39-move-restart.log","memory":6438912,"cpu_us":9813882,"cpu_user_us":7582639,"cpu_system_us":2231242,"loadavg":[0.19,0.05,0.02]}
+---
+
+START: 2026-10-15 04:10:49 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart true
+END: 2026-10-15 04:10:51 +0200
+ELAPSED: 2.43s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:51 +0200
+COMMAND: osctl -j ct show testct-1f39-move-restart-dst
+END: 2026-10-15 04:10:52 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1f39-move-restart-dst","user":"testct-1f39-move-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1f39-move-restart-dst","rootfs":"/tank/ct/testct-1f39-move-restart-dst/private","boot_dataset":"tank/ct/testct-1f39-move-restart-dst","boot_rootfs":"/tank/ct/testct-1f39-move-restart-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts/testct-1f39-move-restart-dst","group_path":"osctl/pool.tank/group.default/user.testct-1f39-move-restart/ct.testct-1f39-move-restart-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1f39-move-restart-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:10:52 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-1f39-move-restart.yml
+END: 2026-10-15 04:10:52 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:10:52 +0200
+COMMAND: osctl --pool tank ct mv rootfs testct-1f39-move-restart
+END: 2026-10-15 04:10:54 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:10:54 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 04:10:54 +0200
+ELAPSED: 0.44s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 15605) 0s
+---
+
+START: 2026-10-15 04:10:54 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 04:10:54 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 15605) 0s
+---
+
+START: 2026-10-15 04:10:54 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:10:55 +0200
+ELAPSED: 0.88s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:10:56 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:10:57 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 04:10:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:10:59 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:10:59 +0200
+COMMAND: osctl pool show -H -o state dozer
+END: 2026-10-15 04:11:00 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:11:00 +0200
+COMMAND: osctl -j ct show testct-1f39-move-restart
+END: 2026-10-15 04:11:01 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1f39-move-restart","user":"testct-1f39-move-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1f39-move-restart","rootfs":"/tank/ct/testct-1f39-move-restart/private","boot_dataset":"tank/ct/testct-1f39-move-restart","boot_rootfs":"/tank/ct/testct-1f39-move-restart/private","lxc_path":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts/testct-1f39-move-restart","group_path":"osctl/pool.tank/group.default/user.testct-1f39-move-restart/ct.testct-1f39-move-restart/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":14753,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1f39-move-restart.log","memory":6438912,"cpu_us":11145089,"cpu_user_us":8657915,"cpu_system_us":2487174,"loadavg":[0.14,0.04,0.01]}
+---
+
+START: 2026-10-15 04:11:01 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart true
+END: 2026-10-15 04:11:04 +0200
+ELAPSED: 2.53s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:11:04 +0200
+COMMAND: osctl -j ct show testct-1f39-move-restart-dst
+END: 2026-10-15 04:11:05 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1f39-move-restart-dst","user":"testct-1f39-move-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1f39-move-restart-dst","rootfs":"/tank/ct/testct-1f39-move-restart-dst/private","boot_dataset":"tank/ct/testct-1f39-move-restart-dst","boot_rootfs":"/tank/ct/testct-1f39-move-restart-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts/testct-1f39-move-restart-dst","group_path":"osctl/pool.tank/group.default/user.testct-1f39-move-restart/ct.testct-1f39-move-restart-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1f39-move-restart-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:11:05 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-1f39-move-restart.yml
+END: 2026-10-15 04:11:05 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:11:05 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart /bin/sh -c "mkdir -p /tmp/local-transfer && printf '%s\\n' \"move-restart-sync\" > /tmp/local-transfer/move-restart-sync"
+END: 2026-10-15 04:11:07 +0200
+ELAPSED: 2.47s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:11:07 +0200
+COMMAND: osctl --pool tank ct mv sync testct-1f39-move-restart
+END: 2026-10-15 04:11:09 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:11:09 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 04:11:09 +0200
+ELAPSED: 0.44s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 15812) 0s
+---
+
+START: 2026-10-15 04:11:09 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 04:11:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 15812) 0s
+---
+
+START: 2026-10-15 04:11:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:11:10 +0200
+ELAPSED: 0.84s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:11:11 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:11:12 +0200
+ELAPSED: 0.97s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-15 04:11:13 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:11:14 +0200
+ELAPSED: 1.01s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:11:14 +0200
+COMMAND: osctl pool show -H -o state dozer
+END: 2026-10-15 04:11:15 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:11:15 +0200
+COMMAND: osctl -j ct show testct-1f39-move-restart
+END: 2026-10-15 04:11:16 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1f39-move-restart","user":"testct-1f39-move-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1f39-move-restart","rootfs":"/tank/ct/testct-1f39-move-restart/private","boot_dataset":"tank/ct/testct-1f39-move-restart","boot_rootfs":"/tank/ct/testct-1f39-move-restart/private","lxc_path":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts/testct-1f39-move-restart","group_path":"osctl/pool.tank/group.default/user.testct-1f39-move-restart/ct.testct-1f39-move-restart/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":14753,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1f39-move-restart.log","memory":6438912,"cpu_us":13855357,"cpu_user_us":10860674,"cpu_system_us":2994682,"loadavg":[0.11,0.04,0.01]}
+---
+
+START: 2026-10-15 04:11:16 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart true
+END: 2026-10-15 04:11:18 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:11:18 +0200
+COMMAND: osctl -j ct show testct-1f39-move-restart-dst
+END: 2026-10-15 04:11:19 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1f39-move-restart-dst","user":"testct-1f39-move-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1f39-move-restart-dst","rootfs":"/tank/ct/testct-1f39-move-restart-dst/private","boot_dataset":"tank/ct/testct-1f39-move-restart-dst","boot_rootfs":"/tank/ct/testct-1f39-move-restart-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts/testct-1f39-move-restart-dst","group_path":"osctl/pool.tank/group.default/user.testct-1f39-move-restart/ct.testct-1f39-move-restart-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"staged","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1f39-move-restart-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:11:19 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-1f39-move-restart.yml
+END: 2026-10-15 04:11:19 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:11:19 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart /bin/sh -c "mkdir -p /tmp/local-transfer && printf '%s\\n' \"move-restart-state\" > /tmp/local-transfer/move-restart-state"
+END: 2026-10-15 04:11:22 +0200
+ELAPSED: 2.38s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:11:22 +0200
+COMMAND: osctl --pool tank ct mv state testct-1f39-move-restart
+END: 2026-10-15 04:11:29 +0200
+ELAPSED: 7.41s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Copying dataset /
+> Starting container
+> Connecting console
+> Waiting for the container to start
+---
+
+START: 2026-10-15 04:11:29 +0200
+COMMAND: sv -w 60 restart osctld
+END: 2026-10-15 04:11:30 +0200
+ELAPSED: 0.44s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 16395) 1s
+---
+
+START: 2026-10-15 04:11:30 +0200
+COMMAND: sv check osctld
+END: 2026-10-15 04:11:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: osctld: (pid 16395) 1s
+---
+
+START: 2026-10-15 04:11:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:11:31 +0200
+ELAPSED: 1.03s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 04:11:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:11:33 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 04:11:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 04:11:35 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:11:35 +0200
+COMMAND: osctl pool show -H -o state dozer
+END: 2026-10-15 04:11:35 +0200
+ELAPSED: 0.79s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 04:11:35 +0200
+COMMAND: osctl -j ct show testct-1f39-move-restart-dst
+END: 2026-10-15 04:11:36 +0200
+ELAPSED: 1.08s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1f39-move-restart-dst","user":"testct-1f39-move-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1f39-move-restart-dst","rootfs":"/tank/ct/testct-1f39-move-restart-dst/private","boot_dataset":"tank/ct/testct-1f39-move-restart-dst","boot_rootfs":"/tank/ct/testct-1f39-move-restart-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts/testct-1f39-move-restart-dst","group_path":"osctl/pool.tank/group.default/user.testct-1f39-move-restart/ct.testct-1f39-move-restart-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":16258,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1f39-move-restart-dst.log","memory":5910528,"cpu_us":1426544,"cpu_user_us":853701,"cpu_system_us":572843,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:11:36 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart-dst true
+END: 2026-10-15 04:11:39 +0200
+ELAPSED: 2.51s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:11:39 +0200
+COMMAND: osctl -j ct show testct-1f39-move-restart
+END: 2026-10-15 04:11:40 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1f39-move-restart","user":"testct-1f39-move-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1f39-move-restart","rootfs":"/tank/ct/testct-1f39-move-restart/private","boot_dataset":"tank/ct/testct-1f39-move-restart","boot_rootfs":"/tank/ct/testct-1f39-move-restart/private","lxc_path":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts/testct-1f39-move-restart","group_path":"osctl/pool.tank/group.default/user.testct-1f39-move-restart/ct.testct-1f39-move-restart/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1f39-move-restart.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:11:40 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-1f39-move-restart.yml
+END: 2026-10-15 04:11:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:11:40 +0200
+COMMAND: osctl --pool tank ct mv cleanup testct-1f39-move-restart
+END: 2026-10-15 04:11:42 +0200
+ELAPSED: 1.96s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Stopping container
+> Verifying recovery cleanup
+> Disconnecting console
+> Removing shared mount directory
+> Moving dataset to trash
+> Removing LXC configuration and script hooks
+> Unregistering container
+> Removing cgroups
+> Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 04:11:42 +0200
+COMMAND: osctl ct show testct-1f39-move-restart
+END: 2026-10-15 04:11:43 +0200
+ELAPSED: 1.36s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 04:11:43 +0200
+COMMAND: osctl -j ct show testct-1f39-move-restart-dst
+END: 2026-10-15 04:11:45 +0200
+ELAPSED: 1.35s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-1f39-move-restart-dst","user":"testct-1f39-move-restart","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-1f39-move-restart-dst","rootfs":"/tank/ct/testct-1f39-move-restart-dst/private","boot_dataset":"tank/ct/testct-1f39-move-restart-dst","boot_rootfs":"/tank/ct/testct-1f39-move-restart-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-1f39-move-restart/group.default/cts/testct-1f39-move-restart-dst","group_path":"osctl/pool.tank/group.default/user.testct-1f39-move-restart/ct.testct-1f39-move-restart-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":16258,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-1f39-move-restart-dst.log","memory":5910528,"cpu_us":2845209,"cpu_user_us":1993790,"cpu_system_us":851419,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:11:45 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart-dst /bin/sh -c "cat /tmp/local-transfer/move-restart-base"
+END: 2026-10-15 04:11:47 +0200
+ELAPSED: 2.8s
+STATUS: 0
+OUTPUT:
+move-restart-base
+---
+
+START: 2026-10-15 04:11:47 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart-dst /bin/sh -c "cat /tmp/local-transfer/move-restart-sync"
+END: 2026-10-15 04:11:50 +0200
+ELAPSED: 2.82s
+STATUS: 0
+OUTPUT:
+move-restart-sync
+---
+
+START: 2026-10-15 04:11:50 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart-dst /bin/sh -c "cat /tmp/local-transfer/move-restart-state"
+END: 2026-10-15 04:11:53 +0200
+ELAPSED: 2.29s
+STATUS: 0
+OUTPUT:
+move-restart-state
+---
+
+START: 2026-10-15 04:11:53 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart-dst /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:11:55 +0200
+ELAPSED: 2.82s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:11:55 +0200
+COMMAND: osctl ct exec testct-1f39-move-restart-dst /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:11:58 +0200
+ELAPSED: 2.17s
+STATUS: 0
+OUTPUT:
+move-restart-service
+---
+
+START: 2026-10-15 04:11:58 +0200
+COMMAND: osctl ct show -H -o dataset testct-1f39-move-restart-dst
+END: 2026-10-15 04:11:59 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-1f39-move-restart-dst
+
+---
+
+START: 2026-10-15 04:11:59 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-1f39-move-restart-dst | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:11:59 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:11:59 +0200
+COMMAND: osctl ct del -f --prune testct-1f39-move-restart >/dev/null 2>&1 || true
+END: 2026-10-15 04:12:00 +0200
+ELAPSED: 1.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:00 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1f39-move-restart >/dev/null 2>&1 || true
+END: 2026-10-15 04:12:01 +0200
+ELAPSED: 1.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:01 +0200
+COMMAND: osctl ct del -f --prune testct-1f39-move-restart-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:12:03 +0200
+ELAPSED: 1.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:03 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-1f39-move-restart-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:12:04 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:04 +0200
+COMMAND: osctl ct del -f --prune testct-51fb-move-retry >/dev/null 2>&1 || true
+END: 2026-10-15 04:12:05 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:05 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-51fb-move-retry >/dev/null 2>&1 || true
+END: 2026-10-15 04:12:06 +0200
+ELAPSED: 0.79s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:06 +0200
+COMMAND: osctl ct del -f --prune testct-51fb-move-retry-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:12:07 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:07 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-51fb-move-retry-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:12:08 +0200
+ELAPSED: 0.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:08 +0200
+COMMAND: osctl --pool tank ct new --distribution alpine testct-51fb-move-retry
+END: 2026-10-15 04:12:10 +0200
+ELAPSED: 2.58s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:12:10 +0200
+COMMAND: osctl --pool tank ct unset start-menu testct-51fb-move-retry
+END: 2026-10-15 04:12:11 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:11 +0200
+COMMAND: osctl --pool tank ct start testct-51fb-move-retry
+END: 2026-10-15 04:12:14 +0200
+ELAPSED: 2.53s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:12:14 +0200
+COMMAND: osctl -j ct show testct-51fb-move-retry
+END: 2026-10-15 04:12:15 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-51fb-move-retry","user":"testct-51fb-move-retry","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-51fb-move-retry","rootfs":"/tank/ct/testct-51fb-move-retry/private","boot_dataset":"tank/ct/testct-51fb-move-retry","boot_rootfs":"/tank/ct/testct-51fb-move-retry/private","lxc_path":"/run/osctl/pools/tank/users/testct-51fb-move-retry/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-51fb-move-retry/group.default/cts/testct-51fb-move-retry","group_path":"osctl/pool.tank/group.default/user.testct-51fb-move-retry/ct.testct-51fb-move-retry/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":17228,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-51fb-move-retry.log","memory":6279168,"cpu_us":1791172,"cpu_user_us":1206919,"cpu_system_us":584252,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:12:15 +0200
+COMMAND: osctl ct exec testct-51fb-move-retry true
+END: 2026-10-15 04:12:17 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:17 +0200
+COMMAND: osctl ct show -H -o rootfs testct-51fb-move-retry
+END: 2026-10-15 04:12:18 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-51fb-move-retry/private
+
+---
+
+START: 2026-10-15 04:12:18 +0200
+COMMAND: cat > /tank/ct/testct-51fb-move-retry/private/etc/init.d/transfer-service <<'EOF'
+#!/sbin/openrc-run
+command="/bin/sleep"
+command_args="2147483647"
+command_background="yes"
+pidfile="/run/transfer-service.pid"
+
+start_pre() {
+  printf '%s\n' "move-retry-service" > /run/transfer-service.value
+}
+EOF
+chmod +x /tank/ct/testct-51fb-move-retry/private/etc/init.d/transfer-service
+END: 2026-10-15 04:12:18 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:18 +0200
+COMMAND: osctl ct exec testct-51fb-move-retry /bin/sh -c "rc-update add transfer-service default"
+END: 2026-10-15 04:12:20 +0200
+ELAPSED: 2.31s
+STATUS: 0
+OUTPUT:
+ * service transfer-service added to runlevel default
+---
+
+START: 2026-10-15 04:12:20 +0200
+COMMAND: osctl ct exec testct-51fb-move-retry /bin/sh -c "rc-service transfer-service start"
+END: 2026-10-15 04:12:23 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+ * Caching service dependencies ... [ ok ]
+ * Starting transfer-service ... [ ok ]
+---
+
+START: 2026-10-15 04:12:23 +0200
+COMMAND: osctl ct exec testct-51fb-move-retry /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:12:25 +0200
+ELAPSED: 2.56s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:12:25 +0200
+COMMAND: osctl ct exec testct-51fb-move-retry /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:12:28 +0200
+ELAPSED: 2.25s
+STATUS: 0
+OUTPUT:
+move-retry-service
+---
+
+START: 2026-10-15 04:12:28 +0200
+COMMAND: osctl --pool tank ct mv config testct-51fb-move-retry testct-51fb-move-retry-dst
+END: 2026-10-15 04:12:29 +0200
+ELAPSED: 1.08s
+STATUS: 0
+OUTPUT:
+> Configuring LXC home
+> Generating LXC configuration
+> Preparing log file
+> Preparing user script hook dir
+---
+
+START: 2026-10-15 04:12:29 +0200
+COMMAND: osctl --pool tank ct mv rootfs testct-51fb-move-retry
+END: 2026-10-15 04:12:30 +0200
+ELAPSED: 1.2s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:12:30 +0200
+COMMAND: osctl --pool tank ct mv sync testct-51fb-move-retry
+END: 2026-10-15 04:12:31 +0200
+ELAPSED: 1.3s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:12:31 +0200
+COMMAND: install -d -m 700 /tank/hook/ct/testct-51fb-move-retry-dst
+cat > /tank/hook/ct/testct-51fb-move-retry-dst/pre-start <<'EOF'
+#!/bin/sh
+exit 1
+
+EOF
+chmod 700 /tank/hook/ct/testct-51fb-move-retry-dst/pre-start
+END: 2026-10-15 04:12:31 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:31 +0200
+COMMAND: osctl ct exec testct-51fb-move-retry /bin/sh -c "mkdir -p /tmp/local-transfer && echo before-retry > /tmp/local-transfer/before-retry"
+END: 2026-10-15 04:12:33 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:33 +0200
+COMMAND: osctl --pool tank ct mv state testct-51fb-move-retry
+END: 2026-10-15 04:12:39 +0200
+ELAPSED: 5.82s
+STATUS: 1
+OUTPUT:
+error: container failed to start
+> Stopping container
+> Copying dataset /
+> Starting container
+> Connecting console
+> Waiting for the container to start
+---
+
+START: 2026-10-15 04:12:39 +0200
+COMMAND: osctl -j ct show testct-51fb-move-retry
+END: 2026-10-15 04:12:40 +0200
+ELAPSED: 1.18s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-51fb-move-retry","user":"testct-51fb-move-retry","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-51fb-move-retry","rootfs":"/tank/ct/testct-51fb-move-retry/private","boot_dataset":"tank/ct/testct-51fb-move-retry","boot_rootfs":"/tank/ct/testct-51fb-move-retry/private","lxc_path":"/run/osctl/pools/tank/users/testct-51fb-move-retry/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-51fb-move-retry/group.default/cts/testct-51fb-move-retry","group_path":"osctl/pool.tank/group.default/user.testct-51fb-move-retry/ct.testct-51fb-move-retry/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-51fb-move-retry.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:12:40 +0200
+COMMAND: osctl -j ct show testct-51fb-move-retry-dst
+END: 2026-10-15 04:12:42 +0200
+ELAPSED: 1.3s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-51fb-move-retry-dst","user":"testct-51fb-move-retry","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-51fb-move-retry-dst","rootfs":"/tank/ct/testct-51fb-move-retry-dst/private","boot_dataset":"tank/ct/testct-51fb-move-retry-dst","boot_rootfs":"/tank/ct/testct-51fb-move-retry-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-51fb-move-retry/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-51fb-move-retry/group.default/cts/testct-51fb-move-retry-dst","group_path":"osctl/pool.tank/group.default/user.testct-51fb-move-retry/ct.testct-51fb-move-retry-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-51fb-move-retry-dst.log","memory":0,"cpu_us":475903,"cpu_user_us":390598,"cpu_system_us":85305,"loadavg":null}
+---
+
+START: 2026-10-15 04:12:42 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-51fb-move-retry.yml
+END: 2026-10-15 04:12:42 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:42 +0200
+COMMAND: rm -f /tank/hook/ct/testct-51fb-move-retry-dst/pre-start
+END: 2026-10-15 04:12:42 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:42 +0200
+COMMAND: osctl --pool tank ct mv state testct-51fb-move-retry
+END: 2026-10-15 04:12:45 +0200
+ELAPSED: 3.13s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Removing failed cutover snapshot osctl-move-state-1792030359-0272f586
+> Copying dataset /
+> Starting container
+> Connecting console
+> Waiting for the container to start
+---
+
+START: 2026-10-15 04:12:45 +0200
+COMMAND: osctl -j ct show testct-51fb-move-retry-dst
+END: 2026-10-15 04:12:46 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-51fb-move-retry-dst","user":"testct-51fb-move-retry","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-51fb-move-retry-dst","rootfs":"/tank/ct/testct-51fb-move-retry-dst/private","boot_dataset":"tank/ct/testct-51fb-move-retry-dst","boot_rootfs":"/tank/ct/testct-51fb-move-retry-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-51fb-move-retry/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-51fb-move-retry/group.default/cts/testct-51fb-move-retry-dst","group_path":"osctl/pool.tank/group.default/user.testct-51fb-move-retry/ct.testct-51fb-move-retry-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":18357,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-51fb-move-retry-dst.log","memory":5906432,"cpu_us":1957756,"cpu_user_us":1275336,"cpu_system_us":682420,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:12:46 +0200
+COMMAND: osctl ct exec testct-51fb-move-retry-dst true
+END: 2026-10-15 04:12:48 +0200
+ELAPSED: 2.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:12:48 +0200
+COMMAND: osctl --pool tank ct mv cleanup testct-51fb-move-retry
+END: 2026-10-15 04:12:50 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Stopping container
+> Verifying recovery cleanup
+> Disconnecting console
+> Removing shared mount directory
+> Moving dataset to trash
+> Removing LXC configuration and script hooks
+> Unregistering container
+> Removing cgroups
+> Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 04:12:50 +0200
+COMMAND: osctl ct show testct-51fb-move-retry
+END: 2026-10-15 04:12:51 +0200
+ELAPSED: 1.22s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 04:12:51 +0200
+COMMAND: osctl -j ct show testct-51fb-move-retry-dst
+END: 2026-10-15 04:12:53 +0200
+ELAPSED: 1.18s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-51fb-move-retry-dst","user":"testct-51fb-move-retry","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-51fb-move-retry-dst","rootfs":"/tank/ct/testct-51fb-move-retry-dst/private","boot_dataset":"tank/ct/testct-51fb-move-retry-dst","boot_rootfs":"/tank/ct/testct-51fb-move-retry-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-51fb-move-retry/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-51fb-move-retry/group.default/cts/testct-51fb-move-retry-dst","group_path":"osctl/pool.tank/group.default/user.testct-51fb-move-retry/ct.testct-51fb-move-retry-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":18357,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-51fb-move-retry-dst.log","memory":5906432,"cpu_us":3561450,"cpu_user_us":2596337,"cpu_system_us":965113,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-15 04:12:53 +0200
+COMMAND: osctl ct exec testct-51fb-move-retry-dst /bin/sh -c "cat /tmp/local-transfer/before-retry"
+END: 2026-10-15 04:12:55 +0200
+ELAPSED: 2.38s
+STATUS: 0
+OUTPUT:
+before-retry
+---
+
+START: 2026-10-15 04:12:55 +0200
+COMMAND: osctl ct exec testct-51fb-move-retry-dst /bin/sh -c "rc-service transfer-service status"
+END: 2026-10-15 04:12:58 +0200
+ELAPSED: 2.7s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-15 04:12:58 +0200
+COMMAND: osctl ct exec testct-51fb-move-retry-dst /bin/sh -c "cat /run/transfer-service.value"
+END: 2026-10-15 04:13:01 +0200
+ELAPSED: 2.78s
+STATUS: 0
+OUTPUT:
+move-retry-service
+---
+
+START: 2026-10-15 04:13:01 +0200
+COMMAND: osctl ct show -H -o dataset testct-51fb-move-retry-dst
+END: 2026-10-15 04:13:01 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-51fb-move-retry-dst
+
+---
+
+START: 2026-10-15 04:13:01 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-51fb-move-retry-dst | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:13:01 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:01 +0200
+COMMAND: rm -f /tank/hook/ct/testct-51fb-move-retry-dst/pre-start
+END: 2026-10-15 04:13:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:01 +0200
+COMMAND: osctl ct del -f --prune testct-51fb-move-retry >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:02 +0200
+ELAPSED: 0.89s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:02 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-51fb-move-retry >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:03 +0200
+ELAPSED: 0.8s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:03 +0200
+COMMAND: osctl ct del -f --prune testct-51fb-move-retry-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:05 +0200
+ELAPSED: 2.14s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:05 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-51fb-move-retry-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:06 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:06 +0200
+COMMAND: osctl ct del -f --prune testct-f122-move-once-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:07 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:07 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-f122-move-once-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:08 +0200
+ELAPSED: 0.76s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:08 +0200
+COMMAND: osctl ct del -f --prune testct-f122-move-once-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:09 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:09 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-f122-move-once-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:10 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:10 +0200
+COMMAND: osctl --pool tank ct new --distribution alpine testct-f122-move-once-src
+END: 2026-10-15 04:13:13 +0200
+ELAPSED: 2.92s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:13:13 +0200
+COMMAND: osctl --pool tank ct unset start-menu testct-f122-move-once-src
+END: 2026-10-15 04:13:14 +0200
+ELAPSED: 0.91s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:14 +0200
+COMMAND: osctl ct show -H -o rootfs testct-f122-move-once-src
+END: 2026-10-15 04:13:15 +0200
+ELAPSED: 1.41s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-f122-move-once-src/private
+
+---
+
+START: 2026-10-15 04:13:15 +0200
+COMMAND: install -d /tank/ct/testct-f122-move-once-src/private/tmp/local-transfer
+END: 2026-10-15 04:13:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:15 +0200
+COMMAND: printf '%s
+' moved > /tank/ct/testct-f122-move-once-src/private/tmp/local-transfer/all-in-one-move
+END: 2026-10-15 04:13:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:15 +0200
+COMMAND: osctl --pool tank ct mv testct-f122-move-once-src testct-f122-move-once-src-dst
+END: 2026-10-15 04:13:18 +0200
+ELAPSED: 2.48s
+STATUS: 0
+OUTPUT:
+* Preparing move
+> Configuring LXC home
+> Generating LXC configuration
+> Preparing log file
+> Preparing user script hook dir
+* Copying rootfs
+> Copying dataset /
+* Moving state
+> Copying dataset /
+* Cleaning up
+> Stopping container
+> Stopping container
+> Verifying recovery cleanup
+> Disconnecting console
+> Removing shared mount directory
+> Moving dataset to trash
+> Removing LXC configuration and script hooks
+> Unregistering container
+> Removing cgroups
+> Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 04:13:18 +0200
+COMMAND: osctl ct show testct-f122-move-once-src
+END: 2026-10-15 04:13:19 +0200
+ELAPSED: 0.93s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 04:13:19 +0200
+COMMAND: osctl -j ct show testct-f122-move-once-src-dst
+END: 2026-10-15 04:13:20 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-f122-move-once-src-dst","user":"testct-f122-move-once-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-f122-move-once-src-dst","rootfs":"/tank/ct/testct-f122-move-once-src-dst/private","boot_dataset":"tank/ct/testct-f122-move-once-src-dst","boot_rootfs":"/tank/ct/testct-f122-move-once-src-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-f122-move-once-src/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-f122-move-once-src/group.default/cts/testct-f122-move-once-src-dst","group_path":"osctl/pool.tank/group.default/user.testct-f122-move-once-src/ct.testct-f122-move-once-src-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-f122-move-once-src-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:13:20 +0200
+COMMAND: osctl ct show -H -o rootfs testct-f122-move-once-src-dst
+END: 2026-10-15 04:13:21 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-f122-move-once-src-dst/private
+
+---
+
+START: 2026-10-15 04:13:21 +0200
+COMMAND: cat /tank/ct/testct-f122-move-once-src-dst/private/tmp/local-transfer/all-in-one-move
+END: 2026-10-15 04:13:21 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+moved
+---
+
+START: 2026-10-15 04:13:21 +0200
+COMMAND: osctl --pool tank ct start testct-f122-move-once-src-dst
+END: 2026-10-15 04:13:24 +0200
+ELAPSED: 2.95s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:13:24 +0200
+COMMAND: osctl -j ct show testct-f122-move-once-src-dst
+END: 2026-10-15 04:13:25 +0200
+ELAPSED: 1.01s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-f122-move-once-src-dst","user":"testct-f122-move-once-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-f122-move-once-src-dst","rootfs":"/tank/ct/testct-f122-move-once-src-dst/private","boot_dataset":"tank/ct/testct-f122-move-once-src-dst","boot_rootfs":"/tank/ct/testct-f122-move-once-src-dst/private","lxc_path":"/run/osctl/pools/tank/users/testct-f122-move-once-src/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-f122-move-once-src/group.default/cts/testct-f122-move-once-src-dst","group_path":"osctl/pool.tank/group.default/user.testct-f122-move-once-src/ct.testct-f122-move-once-src-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":19454,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-f122-move-once-src-dst.log","memory":6336512,"cpu_us":1594403,"cpu_user_us":1047672,"cpu_system_us":546731,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-15 04:13:25 +0200
+COMMAND: osctl ct exec testct-f122-move-once-src-dst true
+END: 2026-10-15 04:13:27 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:27 +0200
+COMMAND: osctl ct exec testct-f122-move-once-src-dst /bin/sh -c "cat /tmp/local-transfer/all-in-one-move"
+END: 2026-10-15 04:13:29 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+moved
+---
+
+START: 2026-10-15 04:13:29 +0200
+COMMAND: osctl ct show -H -o dataset testct-f122-move-once-src-dst
+END: 2026-10-15 04:13:30 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-f122-move-once-src-dst
+
+---
+
+START: 2026-10-15 04:13:30 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-f122-move-once-src-dst | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:13:30 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:30 +0200
+COMMAND: osctl ct del -f --prune testct-f122-move-once-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:31 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:31 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-f122-move-once-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:32 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:32 +0200
+COMMAND: osctl ct del -f --prune testct-f122-move-once-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:34 +0200
+ELAPSED: 1.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:34 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-f122-move-once-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:35 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:35 +0200
+COMMAND: osctl ct del -f --prune testct-628d-pool-move-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:36 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:36 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-628d-pool-move-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:38 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:38 +0200
+COMMAND: osctl ct del -f --prune testct-628d-pool-move-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:40 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:40 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-628d-pool-move-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:41 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:41 +0200
+COMMAND: osctl --pool dozer user del testct-628d-pool-move-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:13:43 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:43 +0200
+COMMAND: osctl --pool tank ct new --distribution alpine testct-628d-pool-move-src
+END: 2026-10-15 04:13:47 +0200
+ELAPSED: 4.31s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:13:47 +0200
+COMMAND: osctl --pool tank ct unset start-menu testct-628d-pool-move-src
+END: 2026-10-15 04:13:49 +0200
+ELAPSED: 1.31s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:49 +0200
+COMMAND: osctl --pool dozer user new testct-628d-pool-move-src
+END: 2026-10-15 04:13:50 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+Allocated block #0 from ID range default
+Registering user dozer:testct-628d-pool-move-src
+---
+
+START: 2026-10-15 04:13:50 +0200
+COMMAND: osctl ct show -H -o rootfs testct-628d-pool-move-src
+END: 2026-10-15 04:13:51 +0200
+ELAPSED: 1.47s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-628d-pool-move-src/private
+
+---
+
+START: 2026-10-15 04:13:51 +0200
+COMMAND: install -d /tank/ct/testct-628d-pool-move-src/private/tmp/local-transfer
+END: 2026-10-15 04:13:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:51 +0200
+COMMAND: printf '%s
+' dozer > /tank/ct/testct-628d-pool-move-src/private/tmp/local-transfer/cross-pool
+END: 2026-10-15 04:13:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:13:51 +0200
+COMMAND: osctl --pool tank ct mv config --pool dozer testct-628d-pool-move-src testct-628d-pool-move-src-dst
+END: 2026-10-15 04:13:53 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+> Configuring LXC home
+> Generating LXC configuration
+> Preparing log file
+> Preparing user script hook dir
+---
+
+START: 2026-10-15 04:13:53 +0200
+COMMAND: osctl --pool tank ct mv rootfs testct-628d-pool-move-src
+END: 2026-10-15 04:13:55 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:13:55 +0200
+COMMAND: osctl --pool tank ct mv state --no-start testct-628d-pool-move-src
+END: 2026-10-15 04:13:56 +0200
+ELAPSED: 1.36s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:13:56 +0200
+COMMAND: osctl --pool tank ct mv cleanup testct-628d-pool-move-src
+END: 2026-10-15 04:13:59 +0200
+ELAPSED: 2.39s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Stopping container
+> Verifying recovery cleanup
+> Disconnecting console
+> Removing shared mount directory
+> Moving dataset to trash
+> Removing LXC configuration and script hooks
+> Unregistering container
+> Removing cgroups
+> Unregistering user tank:testct-628d-pool-move-src
+> Reconfiguring LXC usernet
+---
+
+START: 2026-10-15 04:13:59 +0200
+COMMAND: osctl ct show testct-628d-pool-move-src
+END: 2026-10-15 04:14:00 +0200
+ELAPSED: 1.34s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 04:14:00 +0200
+COMMAND: osctl -j --pool dozer ct show testct-628d-pool-move-src-dst
+END: 2026-10-15 04:14:02 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+{"pool":"dozer","id":"testct-628d-pool-move-src-dst","user":"testct-628d-pool-move-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"dozer/ct/testct-628d-pool-move-src-dst","rootfs":"/dozer/ct/testct-628d-pool-move-src-dst/private","boot_dataset":"dozer/ct/testct-628d-pool-move-src-dst","boot_rootfs":"/dozer/ct/testct-628d-pool-move-src-dst/private","lxc_path":"/run/osctl/pools/dozer/users/testct-628d-pool-move-src/group.default/cts","lxc_dir":"/run/osctl/pools/dozer/users/testct-628d-pool-move-src/group.default/cts/testct-628d-pool-move-src-dst","group_path":"osctl/pool.dozer/group.default/user.testct-628d-pool-move-src/ct.testct-628d-pool-move-src-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/dozer/log/ct/testct-628d-pool-move-src-dst.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:14:02 +0200
+COMMAND: osctl --pool dozer ct show -H -o dataset testct-628d-pool-move-src-dst
+END: 2026-10-15 04:14:03 +0200
+ELAPSED: 1.43s
+STATUS: 0
+OUTPUT:
+dozer/ct/testct-628d-pool-move-src-dst
+
+---
+
+START: 2026-10-15 04:14:03 +0200
+COMMAND: osctl --pool dozer ct show -H -o rootfs testct-628d-pool-move-src-dst
+END: 2026-10-15 04:14:04 +0200
+ELAPSED: 1.32s
+STATUS: 0
+OUTPUT:
+/dozer/ct/testct-628d-pool-move-src-dst/private
+
+---
+
+START: 2026-10-15 04:14:04 +0200
+COMMAND: cat /dozer/ct/testct-628d-pool-move-src-dst/private/tmp/local-transfer/cross-pool
+END: 2026-10-15 04:14:05 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+dozer
+---
+
+START: 2026-10-15 04:14:05 +0200
+COMMAND: osctl --pool dozer ct start testct-628d-pool-move-src-dst
+END: 2026-10-15 04:14:08 +0200
+ELAPSED: 3.58s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-15 04:14:08 +0200
+COMMAND: osctl -j --pool dozer ct show testct-628d-pool-move-src-dst
+END: 2026-10-15 04:14:09 +0200
+ELAPSED: 1.27s
+STATUS: 0
+OUTPUT:
+{"pool":"dozer","id":"testct-628d-pool-move-src-dst","user":"testct-628d-pool-move-src","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"dozer/ct/testct-628d-pool-move-src-dst","rootfs":"/dozer/ct/testct-628d-pool-move-src-dst/private","boot_dataset":"dozer/ct/testct-628d-pool-move-src-dst","boot_rootfs":"/dozer/ct/testct-628d-pool-move-src-dst/private","lxc_path":"/run/osctl/pools/dozer/users/testct-628d-pool-move-src/group.default/cts","lxc_dir":"/run/osctl/pools/dozer/users/testct-628d-pool-move-src/group.default/cts/testct-628d-pool-move-src-dst","group_path":"osctl/pool.dozer/group.default/user.testct-628d-pool-move-src/ct.testct-628d-pool-move-src-dst/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":20369,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/dozer/log/ct/testct-628d-pool-move-src-dst.log","memory":6176768,"cpu_us":2577949,"cpu_user_us":1784302,"cpu_system_us":793646,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-15 04:14:09 +0200
+COMMAND: osctl --pool dozer ct exec testct-628d-pool-move-src-dst true
+END: 2026-10-15 04:14:13 +0200
+ELAPSED: 3.36s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:13 +0200
+COMMAND: osctl --pool dozer ct exec testct-628d-pool-move-src-dst /bin/sh -c "cat /tmp/local-transfer/cross-pool"
+END: 2026-10-15 04:14:16 +0200
+ELAPSED: 3.31s
+STATUS: 0
+OUTPUT:
+dozer
+---
+
+START: 2026-10-15 04:14:16 +0200
+COMMAND: osctl --pool dozer ct show -H -o dataset testct-628d-pool-move-src-dst
+END: 2026-10-15 04:14:17 +0200
+ELAPSED: 1.37s
+STATUS: 0
+OUTPUT:
+dozer/ct/testct-628d-pool-move-src-dst
+
+---
+
+START: 2026-10-15 04:14:17 +0200
+COMMAND: zfs list -H -t snapshot -o name -r dozer/ct/testct-628d-pool-move-src-dst | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:14:17 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:17 +0200
+COMMAND: osctl ct del -f --prune testct-628d-pool-move-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:19 +0200
+ELAPSED: 1.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:19 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-628d-pool-move-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:20 +0200
+ELAPSED: 1.31s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:20 +0200
+COMMAND: osctl ct del -f --prune testct-628d-pool-move-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:23 +0200
+ELAPSED: 2.92s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:23 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-628d-pool-move-src-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:25 +0200
+ELAPSED: 1.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:25 +0200
+COMMAND: osctl --pool dozer user del testct-628d-pool-move-src >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:26 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:26 +0200
+COMMAND: osctl ct del -f --prune testct-a356-cancel >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:27 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:27 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-a356-cancel >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:29 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:29 +0200
+COMMAND: osctl ct del -f --prune testct-a356-cancel-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:30 +0200
+ELAPSED: 1.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:30 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-a356-cancel-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:31 +0200
+ELAPSED: 1.24s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:31 +0200
+COMMAND: osctl --pool tank ct new --distribution alpine testct-a356-cancel
+END: 2026-10-15 04:14:35 +0200
+ELAPSED: 4.0s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-15 04:14:35 +0200
+COMMAND: osctl --pool tank ct unset start-menu testct-a356-cancel
+END: 2026-10-15 04:14:37 +0200
+ELAPSED: 1.36s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:37 +0200
+COMMAND: osctl ct show -H -o rootfs testct-a356-cancel
+END: 2026-10-15 04:14:38 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+/tank/ct/testct-a356-cancel/private
+
+---
+
+START: 2026-10-15 04:14:38 +0200
+COMMAND: install -d /tank/ct/testct-a356-cancel/private/tmp/local-transfer
+END: 2026-10-15 04:14:38 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:38 +0200
+COMMAND: printf '%s
+' base > /tank/ct/testct-a356-cancel/private/tmp/local-transfer/base
+END: 2026-10-15 04:14:38 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:38 +0200
+COMMAND: osctl --pool tank ct cp config testct-a356-cancel testct-a356-cancel-dst
+END: 2026-10-15 04:14:40 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+> Configuring LXC home
+> Generating LXC configuration
+> Preparing log file
+> Preparing user script hook dir
+---
+
+START: 2026-10-15 04:14:40 +0200
+COMMAND: osctl --pool tank ct cp rootfs testct-a356-cancel
+END: 2026-10-15 04:14:42 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+> Copying dataset /
+---
+
+START: 2026-10-15 04:14:42 +0200
+COMMAND: osctl --pool tank ct cp cancel testct-a356-cancel
+END: 2026-10-15 04:14:44 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:44 +0200
+COMMAND: osctl -j ct show testct-a356-cancel
+END: 2026-10-15 04:14:46 +0200
+ELAPSED: 1.78s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-a356-cancel","user":"testct-a356-cancel","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-a356-cancel","rootfs":"/tank/ct/testct-a356-cancel/private","boot_dataset":"tank/ct/testct-a356-cancel","boot_rootfs":"/tank/ct/testct-a356-cancel/private","lxc_path":"/run/osctl/pools/tank/users/testct-a356-cancel/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-a356-cancel/group.default/cts/testct-a356-cancel","group_path":"osctl/pool.tank/group.default/user.testct-a356-cancel/ct.testct-a356-cancel/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-a356-cancel.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-15 04:14:46 +0200
+COMMAND: osctl ct show testct-a356-cancel-dst
+END: 2026-10-15 04:14:47 +0200
+ELAPSED: 1.51s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-15 04:14:47 +0200
+COMMAND: grep -q '^local_transfer_log:' /tank/conf/ct/testct-a356-cancel.yml
+END: 2026-10-15 04:14:47 +0200
+ELAPSED: 0.05s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:47 +0200
+COMMAND: osctl ct show -H -o dataset testct-a356-cancel
+END: 2026-10-15 04:14:49 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-a356-cancel
+
+---
+
+START: 2026-10-15 04:14:49 +0200
+COMMAND: zfs list -H -t snapshot -o name -r tank/ct/testct-a356-cancel | grep -E 'osctl-(copy|move)' || true
+END: 2026-10-15 04:14:49 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:49 +0200
+COMMAND: osctl ct del -f --prune testct-a356-cancel >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:51 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:51 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-a356-cancel >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:53 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:53 +0200
+COMMAND: osctl ct del -f --prune testct-a356-cancel-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:54 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:54 +0200
+COMMAND: osctl --pool dozer ct del -f --prune testct-a356-cancel-dst >/dev/null 2>&1 || true
+END: 2026-10-15 04:14:55 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 04:14:55 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 04:15:06 +0200
+ELAPSED: 11.0s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool dozer
+Disabling pool tank
+Grabbing all containers
+Stopping all containers
+Exporting pool dozer
+Stopping all containers
+Unregistering users, groups and containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

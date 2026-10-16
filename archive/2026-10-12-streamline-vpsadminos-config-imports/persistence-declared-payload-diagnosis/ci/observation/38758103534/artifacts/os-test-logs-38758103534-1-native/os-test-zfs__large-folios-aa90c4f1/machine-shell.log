@@ -1,0 +1,182 @@
+SHELL: 0
+
+START: 2026-10-15 20:14:28 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-15 20:14:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:14:28 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-15 20:14:28 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:14:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:14:31 +0200
+ELAPSED: 2.86s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:14:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:14:33 +0200
+ELAPSED: 1.25s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:14:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:14:35 +0200
+ELAPSED: 0.92s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:14:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:14:37 +0200
+ELAPSED: 1.01s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:14:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:14:39 +0200
+ELAPSED: 1.2s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:14:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:14:42 +0200
+ELAPSED: 1.23s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:14:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:14:43 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-15 20:14:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:14:46 +0200
+ELAPSED: 1.47s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-15 20:14:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-15 20:14:48 +0200
+ELAPSED: 0.86s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-15 20:14:48 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/08f8c2e2-nix--store--6blynis12q3c3p8nv2f4vvi72j70aj9s-zfs-large-folio-check-1--bin--zfs-large-folio-check" "/tmp/zfs-large-folio-check"
+END: 2026-10-15 20:14:48 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:14:48 +0200
+COMMAND: chmod +x /tmp/zfs-large-folio-check
+END: 2026-10-15 20:14:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:14:48 +0200
+COMMAND: zfs destroy -r tank/large-folio-test >/dev/null 2>&1 || true
+END: 2026-10-15 20:14:48 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:14:48 +0200
+COMMAND: zfs create -o mountpoint=/large-folio-test tank/large-folio-test
+END: 2026-10-15 20:14:48 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:14:48 +0200
+COMMAND: /tmp/zfs-large-folio-check /large-folio-test/check.bin
+END: 2026-10-15 20:14:48 +0200
+ELAPSED: 0.47s
+STATUS: 0
+OUTPUT:
+LARGE_FOLIO_PRESENT_PAGES=16384
+LARGE_FOLIO_PFN_VISIBLE_PAGES=16384
+LARGE_FOLIO_COMPOUND_HEAD_PAGES=32
+LARGE_FOLIO_COMPOUND_TAIL_PAGES=16352
+LARGE_FOLIO_THP_PAGES=16384
+LARGE_FOLIO_CHECKSUM=e90be2329c222325
+LARGE_FOLIO_EXPECTED_CHECKSUM=e90be2329c222325
+LARGE_FOLIO_CHECKSUM_MATCH=1
+LARGE_FOLIO_RESULT=ok
+---
+
+START: 2026-10-15 20:14:48 +0200
+COMMAND: zfs destroy -r tank/large-folio-test >/dev/null 2>&1
+END: 2026-10-15 20:14:48 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-15 20:14:48 +0200
+COMMAND: poweroff -f
+END: 2026-10-15 20:14:50 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

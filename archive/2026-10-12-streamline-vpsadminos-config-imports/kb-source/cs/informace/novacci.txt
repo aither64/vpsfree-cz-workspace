@@ -1,0 +1,122 @@
+<page>information:new_members</page>
+
+====== Informace pro nové členy ======
+
+Vítej ve vpsFree.cz. Tento průvodce ti ukáže, jak se poprvé přihlásit do
+vpsAdminu, zkontrolovat členství a připojit se k VPS.
+
+===== 1. Přihlas se do vpsAdminu =====
+
+<vpsadmin-nav id="session.login.open">
+Na [[https://vpsadmin.vpsfree.cz/|vpsadmin.vpsfree.cz]] se přihlas uživatelským
+jménem a dočasným heslem z uvítacího e-mailu. U obou údajů záleží na velikosti
+písmen. Při prvním přihlášení si musíš heslo změnit.
+</vpsadmin-nav>
+
+Pokud e-mail nemůžeš najít, zkontroluj spam. Jestli ti přišla jen připomínka
+platby bez přihlašovacích údajů, [[informace:kam_psat|kontaktuj podporu]] a uveď
+číslo přihlášky.
+
+===== 2. Zkontroluj členství a platbu =====
+
+<vpsadmin-nav id="member.list.open">
+V horním menu vpsAdminu otevři **Členové**.
+</vpsadmin-nav>
+
+V přehledu uvidíš své členské ID a datum, do kterého máš zaplaceno:
+
+{{:cs:screenshots:vpsadmin:getting-started:members-list.png?direct|Přehled členství ve vpsAdminu}}
+
+Členský příspěvek nemusíš platit hned. První týden můžeš VPS vyzkoušet a
+rozhodnout se, jestli ji chceš používat dál.
+
+Aktuální částku, účty, variabilní symbol i způsob ověření platby najdeš na
+stránce [[informace:platby|Členské příspěvky a platby]]. Jako variabilní symbol
+použij členské ID, ne ID VPS. Pokud potřebuješ na platbu více času, dej nám
+vědět dřív, než členství vyprší.
+
+===== 3. Najdi svou VPS =====
+
+<vpsadmin-nav id="vps.details.open">
+V horním menu otevři **VPS** a kliknutím na ID otevři detail své VPS.
+</vpsadmin-nav>
+
+{{:cs:screenshots:vpsadmin:getting-started:vps-list.png?direct|Seznam VPS}}
+
+V detailu najdeš stav VPS, její umístění, prostředky a formuláře pro běžnou
+správu:
+
+{{:cs:screenshots:vpsadmin:getting-started:vps-details.png?direct|Detail VPS}}
+
+===== 4. Přihlas se přes SSH =====
+
+Detail VPS obsahuje adresy a základní příkaz pro připojení:
+
+{{:cs:screenshots:vpsadmin:getting-started:ssh-connection.png?direct|Adresy VPS a připojení přes SSH}}
+
+Pro první přihlášení použij heslo nebo SSH klíč.
+
+==== Přihlášení heslem ====
+
+<vpsadmin-nav id="vps.details.open">
+Ve formuláři pro heslo uživatele ''root'' v detailu VPS nastav nové, jedinečné
+heslo.
+</vpsadmin-nav>
+
+{{:cs:screenshots:vpsadmin:vps-management:set-root-password.png?direct|Nastavení hesla uživatele root}}
+
+Výchozí šablony umožňují přihlášení uživatele ''root'' heslem. Potom použij
+příkaz pro připojení z detailu VPS.
+
+==== Přihlášení SSH klíčem ====
+
+<vpsadmin-nav id="member.public-keys.add">
+V **Upravit profil → Veřejné klíče → Přidat veřejný klíč** ulož svůj veřejný
+klíč.
+</vpsadmin-nav>
+
+<vpsadmin-nav id="vps.details.open">
+Potom jej ve formuláři v detailu VPS nahraj do běžícího systému.
+</vpsadmin-nav>
+
+{{:cs:screenshots:vpsadmin:getting-started:deploy-public-key.png?direct|Nahrání veřejného klíče do VPS}}
+
+Podrobný postup včetně ověření hostitelského klíče najdeš v návodu
+[[navody:server:ssh|SSH]].
+
+===== 5. Když se přihlášení nepovede =====
+
+Přístup přes SSH můžeš obnovit i při rozbité síti, firewallu nebo SSH službě.
+Postup najdeš v [[navody:vps:konzole|návodu ke vzdálené konzoli]]. Návod
+vysvětluje běžnou konzoli i prostředí **Run** ze start menu, ve kterém můžeš
+opravit konfiguraci VPS. Pokud si nevíš rady,
+[[informace:kam_psat|ozvi se komunitě nebo podpoře]].
+
+===== 6. Základy správy VPS =====
+
+  * V návodu [[navody:vps:sprava|Vytvoření a správa VPS]] najdeš start, zastavení, reinstalaci a další běžné změny.
+  * Návody [[navody:vps:datasety|Datasety]] a [[navody:vps:zalohy|zálohy]] popisují disky VPS, snapshoty, obnovu a stažení dat.
+  * [[navody:vps:prenosy|Datové přenosy]] obsahují měsíční přehledy i údaje o živém provozu.
+  * Návody k [[navody:vps:ip_adresy|IP adresám]] a [[navody:vps:rdns|reverznímu DNS]] popisují přidělené a routované adresy i nastavení PTR záznamů.
+
+===== Co si přečíst dál =====
+
+==== Pokud se správou serveru začínáš ====
+
+  * [[informace:zacatek|Co je VPS a jak vybrat distribuci]]
+  * [[navody:distribuce:distribuce|Linuxové distribuce ve vpsFree]]
+  * [[navody:server:ssh|Bezpečné připojení přes SSH]]
+  * [[navody:server:firewall|Základy firewallu]]
+  * [[informace:co_nedelat|Co na VPS nedělat]]
+
+==== Pokročilejší možnosti ====
+
+  * [[navody:vps:docker|Docker]] a [[navody:vps:snap|Snap]]
+  * [[navody:server:wireguard|WireGuard]] a [[navody:server:gre|GRE tunely]]
+  * [[navody:vps:kvm|Virtuální stroje s KVM]]
+  * [[navody:vps:userdata|User data, cloud-init a NixOS]]
+  * [[navody:vps:api|API]] a [[https://registry.terraform.io/providers/vpsfreecz/vpsadmin/latest/docs|Terraform/OpenTofu provider]]
+
+Další odpovědi najdeš v [[informace:faq|FAQ]]. Sleduj také
+[[informace:komunikace|komunikační kanály]], kde se dozvíš o novinkách a můžeš
+se poradit s ostatními členy.

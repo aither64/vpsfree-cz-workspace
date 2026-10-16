@@ -1,0 +1,194 @@
+c[?7l[2J[0mSeaBIOS (version rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org)
+
+
+iPXE (http://ipxe.org) 00:03.0 C000 PCI2.10 PnP PMM+BEFD1B70+BEF31B70 C000
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from ROM...
+c[?7l[2J
+[1;32m<<< vpsAdminOS Stage 1 >>>[0m
+
+running udev...
+kbd_mode: KDSKBMODE: Inappropriate ioctl for device
+%Gcreated directory: '/mnt/nix/.overlay-store/work'
+created directory: '/mnt/nix/.overlay-store/rw'
+
+[1;32m<<< vpsAdminOS Stage 2 >>>[0m
+
+setting up /etc...
+- runit: $Id: c66c1e3b98d1b630bd51b1d56aaed5c2994e8c9d $: booting.
+- runit: enter stage: /etc/runit/1
+* Applying /etc/sysctl.d/55-nixos-aslr-entropy.conf ...
+* Applying /etc/sysctl.d/60-nixos.conf ...
+vm.mmap_rnd_bits = 32
+vm.mmap_rnd_compat_bits = 16
+fs.aio-max-nr = 3221225471
+fs.inotify.max_queued_events = 2147483647
+fs.inotify.max_user_instances = 2147483647
+fs.inotify.max_user_watches = 2147483647
+fs.nr_open = 4194304
+fs.protected_hardlinks = 1
+fs.protected_symlinks = 1
+kernel.dmesg_restrict = 1
+kernel.keys.maxbytes = 2500000
+kernel.keys.maxkeys = 100000
+kernel.kptr_restrict = 1
+kernel.modprobe = /nix/store/bcx5jqj8lrm9bvjgw3x3a5ih5fa2vw63-kernel-modprobe-wrapper
+kernel.pid_max = 4194304
+kernel.printk = 4
+kernel.pty.max = 16384
+kernel.pty.reserve = 1024
+kernel.sysctl_unprivileged_bpf_time_adjust_nsec = 5000000
+kernel.threads-max = 4194304
+kernel.unprivileged_bpf_disabled = 0
+net.core.default_qdisc = fq
+net.ipv4.neigh.default.gc_thresh1 = 2048
+net.ipv4.neigh.default.gc_thresh2 = 4096
+net.ipv4.neigh.default.gc_thresh3 = 8192
+net.ipv4.route.max_size = 2147483647
+net.ipv4.tcp_congestion_control = bbr
+net.ipv6.neigh.default.gc_thresh1 = 2048
+net.ipv6.neigh.default.gc_thresh2 = 4096
+net.ipv6.neigh.default.gc_thresh3 = 8192
+net.ipv6.route.max_size = 2147483647
+net.netfilter.nf_log_all_netns = 1
+vm.max_map_count = 1048576
+vm.min_free_kbytes = 1048576
+vm.min_slab_ratio = 12
+vm.overcommit_ratio = 3200
+vm.swappiness = 0
+- runit: leave stage: /etc/runit/1
+- runit: enter stage: /etc/runit/2
+Waiting for /dev/virtio-ports/org.osvm.shell1
+./run: line 12: /sys/module/spl/parameters/spl_taskq_thread_dynamic: Permission denied
+lxcbr-dnsmasq waiting for interface lxcbr0
+Waiting for /dev/virtio-ports/org.osvm.shell0
+ok: run: eudev: (pid 788) 0s
+/var/cron: No such file or directory
+/var/cron: created
+tabs: No such file or directory
+tabs: created
+
+vpsadminos login: root (automatic login)
+
+Generating public/private rsa key pair.
+Waiting for rpcbind to start
+Waiting for rpcbind to start
+rsyslogd: getaddrinfo failed obtaining local hostname - using 'vpsadminos' instead; error: System error [v8.2608.0]
+[?2004h
+[1;31m[]0;root@vpsadminos: ~root@vpsadminos:~]#[0m Waiting for /dev/virtio-ports/org.osvm.shell1
+Your identification has been saved in /etc/ssh/ssh_host_rsa_key
+Your public key has been saved in /etc/ssh/ssh_host_rsa_key.pub
+The key fingerprint is:
+SHA256:uJ7PA/DrReZfI750V35a9P2ckarQgR1/JrmEou2onWQ root@vpsadminos
+The key's randomart image is:
++---[RSA 4096]----+
+|                 |
+|                 |
+|           .     |
+|    .  .  o + .  |
+|     o. So + = oo|
+|      o=o o o =++|
+|      .Eooo.+..o*|
+|     .=+=+.+ o.+=|
+|     o==oo+o....o|
++----[SHA256]-----+
+Generating public/private ed25519 key pair.
+Your identification has been saved in /etc/ssh/ssh_host_ed25519_key
+Your public key has been saved in /etc/ssh/ssh_host_ed25519_key.pub
+The key fingerprint is:
+SHA256:Qkg4EdTsan6jZ3qh9kz1VyfXljEugAIBu5BttqTzleE root@vpsadminos
+The key's randomart image is:
++--[ED25519 256]--+
+| .+Boo.          |
+|  =.+..   .      |
+| o O.... . .   o |
+|  * =.o .   . ..+|
+| o + Eo S   o.ooo|
+|  = o. o   . +.. |
+| o o..  . .      |
+|  +o*    .       |
+| .oOo.           |
++----[SHA256]-----+
+lxcbr-dnsmasq waiting for interface lxcbr0
+Waiting for /dev/virtio-ports/org.osvm.shell0
+sm-notify: Version 2.9.1 starting
+sm-notify: No hosts to notify; exiting
+Service eudev-trigger successfully finished
+Service cpufreq successfully finished
+Service networking successfully finished
+[   17.360195] livepatch_6: tainting kernel with TAINT_LIVEPATCH
+[   17.429382] livepatch: enabling patch 'livepatch_6'
+[   18.545651] livepatch: 'livepatch_6': starting patching transition
+[   18.783350] livepatch: 'livepatch_6': patching complete
+Waiting for service restrict-proc-sysfs to start
+Waiting for service set-clock to start
+15 Oct 19:46:58 ntpdate[2016]: adjust time server 37.221.242.99 offset +0.110459 sec
+System clock set
+Service set-clock successfully finished
+[  194.356086] process 43944 (task-population) no longer affine to cpu3
+[  194.377219] smpboot: CPU 3 is now offline
+[  194.458667] smpboot: Booting Node 0 Processor 3 APIC 0x3
+[  195.855328] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  195.948829] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  195.994956] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.049086] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.107377] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.153676] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.203761] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.245423] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.305448] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.357457] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.413531] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.462659] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.521166] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.572202] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.626749] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.673992] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.726696] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  196.778116] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  197.323484] trace_kprobe: This probe might be able to register after target module is loaded. Continue.
+[  198.152610] livepatch: enabling patch 'livepatch_7'
+[  199.376572] livepatch: 'livepatch_7': starting patching transition
+[  200.256580] livepatch: 'livepatch_7': patching complete
+[  200.500550] process 43944 (task-population) no longer affine to cpu3
+[  200.515423] smpboot: CPU 3 is now offline
+[  200.602574] smpboot: Booting Node 0 Processor 3 APIC 0x3
+[  219.731352] livepatch: 'livepatch_7': starting unpatching transition
+[  224.881555] livepatch: batched rollback teardown retired 333 of 333 ftrace operations
+[  225.307571] livepatch: 'livepatch_7': unpatching complete
+- runit: leave stage: /etc/runit/2
+- runit: enter stage: /etc/runit/3
+Grabbing pools
+Grabbing all containers
+and down we go
+- runit: leave stage: /etc/runit/3
+- runit: sending KILL signal to all processes...
+- runit: power off...
+[  247.284280] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="agetty" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.285939] ACPI: PM: Preparing to enter system sleep state S5
+[  247.288122] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="runit" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.289788] kvm: exiting hardware virtualization
+[  247.293058] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="rpc.statd" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.293092] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="thread_reaper.*" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.301300] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="smtpd" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.301322] reboot: Power down
+[  247.305754] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="rpc.mountd" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.305780] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="agetty" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.313362] mm_drop: (do_exit+0x2d7/0xa80 <- __mmdrop) state=5 comm="sshd" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.313375] mm_drop: (do_exit+0x2d7/0xa80 <- __mmdrop) state=5 comm="bash" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.313385] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="run" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.313599] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="run" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.314153] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="bash" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.314348] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="sleep" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.314591] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="udevd" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.315127] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="run" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.315423] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="rs:main Q:Reg" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.316905] mm_drop: (do_exit+0x2d7/0xa80 <- __mmdrop) state=5 comm="bash" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.348923] mm_drop: (do_exit+0x2d7/0xa80 <- __mmdrop) state=5 comm="thread_reaper.*" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.348935] mm_drop: (do_exit+0x2d7/0xa80 <- __mmdrop) state=5 comm="in:imklog" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.348946] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="cron" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.349089] mm_drop: (finish_task_switch.isra.0+0x1a7/0x2c0 <- __mmdrop) state=5 comm="osctld" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.349230] mm_drop: (do_exit+0x2d7/0xa80 <- __mmdrop) state=5 comm="bash" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0
+[  247.368373] mm_drop: (do_exit+0x2d7/0xa80 <- __mmdrop) state=5 comm="rpcbind" online_lo=0xf online_hi=0x0 dying_lo=0x0 dying_hi=0x0

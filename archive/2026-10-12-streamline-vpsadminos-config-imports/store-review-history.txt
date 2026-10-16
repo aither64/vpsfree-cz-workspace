@@ -1,0 +1,61 @@
+commit 6b187003124ed5cb8040edc0acbdf4155ecc90d1
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 14 12:07:29 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 14 22:13:28 2026 +0200
+
+    os: select NixOS guest compatibility by release
+    
+    Generic stable imports select the compatibility module for the guest's
+    nixpkgs release. Generated stable flakes use containerStable so supported
+    release upgrades do not require changing the import.
+    
+    Expose a literal-key release map and derive the retained underscore aliases
+    from it. Keep legacy nixosConfigurations aliases on the latest stable file
+    and unstable selection explicit. Unknown stable releases fail with guidance
+    for updating the input or choosing the appropriate module.
+    
+    Add release, template and standalone checks, and verify allocated identities
+    and persistent data across image rebuilds and restart. Guests adopt the
+    interface independently without changing their nixpkgs pin or stateVersion.
+
+commit 822645a9725dd3653c5eedc1d25ebcdbf28d23b7
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 14 16:13:20 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 14 23:19:28 2026 +0200
+
+    os: expose persisted allocation maps before legacy users
+    
+    Container activation can allocate users before specialfs exposes saved UID/GID
+    maps when LXC has already mounted proc. Accounts then receive new IDs after
+    restart while persistent maps and numeric file ownership retain the old IDs.
+    
+    Prepare and verify the selected state binds within the upstream ordered early
+    mount callback, and make legacy users depend on specialfs. Preserve configured
+    sources, units and mount options, existing source metadata, root-backed layouts
+    and global mount dependencies. Abort activation before allocation when required
+    declared backing, preparation or selected bind checks fail. Ordinary guests and
+    alternative account backends retain their behavior; explicit guest specialfs
+    overrides remain authoritative.
+    
+    Add a pure flake check and registered old-to-new upgrade tests. The correction
+    changes no map format or stateVersion and needs no coordinated host update.
+    It prevents new drift; recovery of already-changed identities remains separate,
+    and restarting an older generation can reintroduce the ordering defect.
+
+commit 6abc650f378a8cd4cc8ef4ecc25d74929ab6e1ed
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 14 18:57:33 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 14 23:19:29 2026 +0200
+
+    docs: describe finished commits and normal test entrypoints
+    
+    Keep development versions, chronological history and temporary verification
+    status in session records. Shipping descriptions explain the final behavior,
+    rationale and compatibility while preserving upstream messages and provenance.
+    
+    Retain logical patch ownership and independent baseline fixes. Distinguish
+    flake evaluation checks from registered RSpec runtime cases so tests remain
+    discoverable through the repository's normal entrypoints.
