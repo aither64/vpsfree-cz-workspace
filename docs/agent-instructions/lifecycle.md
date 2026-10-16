@@ -41,9 +41,16 @@ unmerged, unpublished, detached or dirty work. It stops owned active agents,
 pauses active goals, keeps conversations and queued prompt records, releases
 clusters, captures local checkout files and index state in private recovery,
 forcefully removes owned worktrees, retains branches, moves tracking atomically
-to `archive/`, commits only that transition and retires runtime state. It does
+to `archive/`, saves the local transition and retires runtime state. The installed
+workspace retries its tracking Git commit independently; network, hook or remote
+master failures leave tracking sync pending without reopening the session. It does
 not fetch or require merged feature heads. Preserve unrelated shared index and
 working-tree changes. CLI and portal each ask for one yes/no confirmation.
+Browser archival runs in a separate systemd user service and survives portal
+restart. Local file work has no total wall-clock deadline. Inspect pending Git
+bookkeeping with `dev-session tracking-sync --status --slug <slug> --json`; the
+managed retry timer preserves hooks and the shared tracking lock. Do not edit
+receipts or recovery snapshots to clear a pending status.
 
 Automatic archival retains its merge, publication, cleanliness and idle policy.
 `--require-merged` requests that completion policy manually; `--abandoned` retains
@@ -54,11 +61,13 @@ The runtime's `docs/session-archive-recovery.md` owns formats, private snapshots
 retained prompts, target-specific merge proofs and interruption recovery.
 
 Run `dev-session revive <slug> --as-is` to reopen an archived initiative. Revival
-commits tracking back under `work/`, restores active lifecycle and preserves the
+restores tracking under `work/`, restores active lifecycle and preserves the
 retained repository and conversation identities. Explicit archives recreate their
 saved worktrees with staged, unstaged, untracked and ignored files before starting
-the conversation. Queued prompts stay held. Older complete/abandoned archives do
-not gain snapshots. The stronger abandoned warning and all accepted confirmations
+the conversation. Queued prompts stay held. Revival can proceed before tracking
+sync succeeds and coalesces pending bookkeeping to its latest state. Older
+journals retain their saved synchronous commit policy. Older complete/abandoned
+archives do not gain snapshots. The stronger abandoned warning and accepted confirmations
 remain journaled so retries do not ask again. New manifestless revival refuses;
 repair historical scope under the separately assigned dated repair procedure.
 Unfinished lifecycle journals reserve their slug and must be resumed before
