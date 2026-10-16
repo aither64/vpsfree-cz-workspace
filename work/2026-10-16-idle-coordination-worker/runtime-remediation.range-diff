@@ -1,0 +1,380 @@
+1:  4fd9128 ! 1:  ced8e76 coordination: continue approved integrations in the background
+    @@ docs/integration.md: to advance once and return status. Interrupting the command
+      
+      A schema-1 request has a lowercase UUID `requestId`, `mode`, `repositories`,
+     
+    + ## libexec/workspace-coordination-admission.rb ##
+    +@@
+    + # frozen_string_literal: true
+    + 
+    + module WorkspaceCoordination
+    ++  class AdmissionBusy < Error
+    ++    def initialize(message)
+    ++      super(message, 75)
+    ++    end
+    ++  end
+    ++
+    +   # Retry acquisition only. Callers must never replay a mutation after its
+    +   # callback has started. The ledger mutex owns logical write serialization.
+    +   module Admission
+    +@@ libexec/workspace-coordination-admission.rb: module WorkspaceCoordination
+    +       until file.flock(mode | File::LOCK_NB)
+    +         elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+    +         if elapsed >= timeout
+    +-          raise Error.new(format('session lifecycle admission is busy after %.2fs; retry the same request', elapsed), 75)
+    ++          raise AdmissionBusy, format('session lifecycle admission is busy after %.2fs; retry the same request', elapsed)
+    +         end
+    +         unless reported
+    +           diagnostics&.puts 'waiting for session lifecycle admission; an exclusive lifecycle writer holds the guard'
+    +
+    + ## libexec/workspace-coordination-gc.rb ##
+    +@@ libexec/workspace-coordination-gc.rb: module WorkspaceCoordination
+    +         closed = owner && owner['fence'] && owner['fence']['completed']
+    +         mark(value) if !closed && @retention.live?(id, @ledger, @book)
+    +       end
+    +-      Dir[File.join(@store.root, 'integrations', '*.json')].each do |path|
+    +-        value = WorkspaceCoordination.private_read(path)
+    +-        raise Error, 'unknown integration journal; collection refused' unless value['schema'] == 1 && value['phase'].is_a?(String)
+    ++      @store.integration_journals.each do |value|
+    +         next if value['phase'] == 'complete'
+    +         mark(value)
+    +         # Existing journals bind source heads, but do not record hook artifact
+    +
+      ## libexec/workspace-coordination-host.rb ##
+     @@ libexec/workspace-coordination-host.rb: module DevWorkspaceHost
+            action = argv.shift
+    @@ libexec/workspace-coordination-host.rb: module DevWorkspaceHost
+              end
+              @out.puts JSON.generate(result)
+              return
+    +@@ libexec/workspace-coordination-host.rb: module DevWorkspaceHost
+    +         else raise WorkspaceCoordination::Error, 'unsupported preparation kind'
+    +         end
+    +       end
+    ++    rescue DevWorkspaceHost::Error => error
+    ++      raise WorkspaceCoordination::Error, WorkspaceCoordination.diagnostic(error.message)
+    +     end
+    + 
+    +     def with_coordination_session_admission(entry, slug, timeout: @coordination_admission_timeout || 30)
+     @@ libexec/workspace-coordination-host.rb: module DevWorkspaceHost
+            WorkspaceCoordination::Worker.new(argv[1]).reconcile
+          end
+    @@ libexec/workspace-coordination.rb: module WorkspaceCoordination
+     +    def integration_journals
+     +      Dir[File.join(root, 'integrations', '*.json')].map do |path|
+     +        value = WorkspaceCoordination.private_read(path)
+    -+        unless [1, 2].include?(value['schema']) && value['id'].is_a?(String) && value['id'].match?(UUID) &&
+    ++        unless [1, 2].include?(value['schema']) && value['phase'].is_a?(String) && value['id'].is_a?(String) && value['id'].match?(UUID) &&
+     +               File.basename(path) == "#{value['id']}.json"
+     +          raise Error.new('unsupported integration journal requires forward recovery', 5)
+     +        end
+    @@ libexec/workspace-coordination.rb: module WorkspaceCoordination
+            end
+            catalog = Catalog.new(package)
+     @@ libexec/workspace-coordination.rb: module WorkspaceCoordination
+    +       @diagnostics = value
+    +     end
+    + 
+    ++    def current_generation?
+    ++      @fixtures || (File.symlink?(profile) && File.realpath(profile) == package && DevWorkspaceProfileIdentity.token(profile) == @profile_token) ||
+    ++        (@bootstrap_token && DevWorkspaceProfileIdentity.token(profile) == @bootstrap_token)
+    ++    end
+    ++
+    +     def current_generation!
+    +-      unless @fixtures || (File.symlink?(profile) && File.realpath(profile) == package && DevWorkspaceProfileIdentity.token(profile) == @profile_token) ||
+    +-             (@bootstrap_token && DevWorkspaceProfileIdentity.token(profile) == @bootstrap_token)
+    ++      unless current_generation?
+    +         raise Error.new('coordinator belongs to a superseded package generation; rerun the stable command', 3)
+    +       end
+    +     end
+    +@@ libexec/workspace-coordination.rb: module WorkspaceCoordination
+      
+          def event(data, owner, item, state, reason = nil)
+            return unless owner['thread']
+    @@ libexec/workspace-integration-background.rb (new)
+     +      @admission.call do
+     +        engine.current_generation!
+     +        verify_tracking_binding
+    -+        WorkspaceCoordination.atomic(pause_path(id), owner.slice('id', 'identity'))
+    ++        engine.store.transaction do |_data|
+    ++          WorkspaceCoordination.atomic(pause_path(id), owner.slice('id', 'identity'))
+    ++        end
+     +      end
+     +      engine.store.wake
+     +      status(id)
+    @@ libexec/workspace-integration-background.rb (new)
+     +      rescue Error => error
+     +        value = read(id)
+     +        ledger = engine.store.read
+    -+        if File.realpath(engine.profile) != engine.package
+    ++        if !engine.current_generation?
+     +          value['continuation']['state'] = 'runnable'
+     +          observed = nil
+     +        elsif ledger['owners'].fetch(owner['id'])['fence']
+     +          value['continuation']['state'] = 'held'
+     +        elsif paused?(id)
+     +          value['continuation']['state'] = 'paused'
+    -+        elsif error.code == 75 || ledger['suspended']
+    ++        elsif error.is_a?(AdmissionBusy) || ledger['suspended']
+     +          value['continuation']['state'] = 'waiting'
+     +          observed = nil # Contention can end without changing the ledger.
+     +        else
+    @@ portal/internal/web/coordination_browser_test.cjs: test('a delayed old reservati
+     +  const p = payload([]);
+     +  p.workspaces[0].owners = [{id: 'owner', slug: 'holder', observationIdentity: 'incarnation-a', portalUrl: 'https://workspace.test/holder/'}];
+     +  p.workspaces[0].integrations = [{id: 'run-1', ownerId: 'owner', phase: 'merging', continuation: {state: 'waiting'}},
+    -+    {id: 'run-2', ownerId: 'owner', phase: 'deploying', continuation: {state: 'needs_attention'}, reason: {message: 'Prepare an updated artifact.'}}];
+    ++    {id: 'run-2', ownerId: 'owner', phase: 'deploying', continuation: {state: 'needs_attention'}, reason: {message: 'Prepare an updated artifact.'}},
+    ++    {id: 'run-3', ownerId: 'owner', phase: 'prepare', continuation: {state: 'paused'}}];
+     +  await h.respond(p);
+     +  assert.match(h.panel.textContent, /Background integrations/);
+     +  assert.match(h.panel.textContent, /Waiting automatically/);
+     +  assert.match(h.panel.textContent, /Agent action required/);
+     +  assert.match(h.panel.textContent, /Prepare an updated artifact/);
+    ++  assert.match(h.panel.textContent, /Continuation is paused/);
+     +  assert.equal(h.badge.hidden, true);
+     +});
+     
+    @@ portal/internal/web/static/coordination.js
+     +        if (run.reason?.message) row.append(node("p", run.reason.message));
+     +        else row.append(node("p", run.continuation?.state === "complete"
+     +          ? "The requested operations have finished."
+    -+          : "The worker continues approved operations while the session is idle."));
+    ++          : ["paused", "held"].includes(run.continuation?.state)
+    ++            ? "Continuation is paused. Operations already running may finish."
+    ++            : "The worker continues approved operations while the session is idle."));
+     +        row.append(details(`integration:${run.id}`, run)); runs.append(row);
+     +      }
+     +    }
+    @@ test/background_integration_systemd_test.rb (new)
+     +    WorkspaceCoordination.atomic(attempt_path, @engine.worker_request(job, first))
+     +    WorkspaceCoordination::Worker.new(attempt_path, fixtures: true).run
+     +    @engine.reconcile_attempts
+    -+    wait_for_background { fixture_systemctl('show', unit, '--property=ActiveState', '--value').strip != 'active' }
+    ++    wait_for_background { !%w[active activating deactivating].include?(fixture_systemctl('show', unit, '--property=ActiveState', '--value').strip) }
+     +    @engine.dispatch_integrations(first)
+    -+    wait_for_background { integration.read(payload['requestId'])['phase'] == 'finalizing' }
+    ++    wait_for_background do
+    ++      integration.read(payload['requestId'])['phase'] == 'finalizing' && @engine.store.read['outbox'].length == 1
+    ++    end
+     +    assert_equal 1, @engine.store.read['outbox'].length
+     +    deliver_background_notifications(first)
+    -+    wait_for_background { fixture_systemctl('show', unit, '--property=ActiveState', '--value').strip != 'active' }
+    ++    wait_for_background { !%w[active activating deactivating].include?(fixture_systemctl('show', unit, '--property=ActiveState', '--value').strip) }
+     +    @engine.dispatch_integrations(first)
+     +    wait_for_background { integration.read(payload['requestId'])['phase'] == 'complete' }
+     +    assert_equal 1, @engine.store.read['jobs'].length
+    @@ test/background_integration_systemd_test.rb (new)
+     +  end
+     +end
+     
+    + ## test/coordination_admission_test.rb ##
+    +@@ test/coordination_admission_test.rb: class CoordinationAdmissionTest < Minitest::Test
+    +     with_lock do |path, writer|
+    +       writer.flock(File::LOCK_EX)
+    +       File.open(path, 'r+') do |reader|
+    +-        error = assert_raises(WorkspaceCoordination::Error) do
+    ++        error = assert_raises(WorkspaceCoordination::AdmissionBusy) do
+    +           WorkspaceCoordination::Admission.acquire(reader, timeout: 0)
+    +           flunk 'admission callback must not start'
+    +         end
+    +
+    + ## test/coordination_gc_test.rb ##
+    +@@ test/coordination_gc_test.rb: class CoordinationGcTest < Minitest::Test
+    +     cancel(person, job)
+    +     directory = File.join(@engine.store.root, 'integrations')
+    +     FileUtils.mkdir_p(directory)
+    +-    path = File.join(directory, "#{SecureRandom.uuid}.json")
+    +-    WorkspaceCoordination.atomic(path, {'schema' => 1, 'phase' => 'deploy', 'operation' => snapshot})
+    ++    id = SecureRandom.uuid
+    ++    path = File.join(directory, "#{id}.json")
+    ++    WorkspaceCoordination.atomic(path, {'schema' => 1, 'id' => id, 'phase' => 'deploy', 'operation' => snapshot})
+    +     assert_empty collect(apply: true)['removed']
+    +-    WorkspaceCoordination.atomic(path, {'schema' => 1, 'phase' => 'complete', 'operation' => snapshot})
+    ++    WorkspaceCoordination.atomic(path, {'schema' => 1, 'id' => id, 'phase' => 'complete', 'operation' => snapshot})
+    +     assert_equal 2, collect(apply: true)['removed'].length
+    +   end
+    + 
+    +@@ test/coordination_gc_test.rb: class CoordinationGcTest < Minitest::Test
+    +     cancel(person, submit(person, snapshot))
+    +     id = SecureRandom.uuid
+    +     journal = File.join(@engine.store.root, 'integrations', "#{id}.json")
+    +-    WorkspaceCoordination.atomic(journal, {'schema' => 1, 'phase' => 'prepare',
+    ++    WorkspaceCoordination.atomic(journal, {'schema' => 1, 'id' => id, 'phase' => 'prepare',
+    +       'head' => snapshot.dig('operation', 'featureHead')})
+    +     hook = @engine.save_artifact('kind' => 'merge_hooks', 'repository' => 'code',
+    +       'featureHead' => snapshot.dig('operation', 'featureHead'), 'environment' => {})
+    +@@ test/coordination_gc_test.rb: class CoordinationGcTest < Minitest::Test
+    +     collect(apply: true)
+    +     assert File.directory?(source(snapshot))
+    +     assert File.symlink?(root)
+    +-    WorkspaceCoordination.atomic(journal, {'schema' => 1, 'phase' => 'complete'})
+    ++    WorkspaceCoordination.atomic(journal, {'schema' => 1, 'id' => id, 'phase' => 'complete'})
+    +     collect(apply: true)
+    +     refute File.exist?(source(snapshot))
+    +     refute File.symlink?(root)
+    +@@ test/coordination_gc_test.rb: class CoordinationGcTest < Minitest::Test
+    +     refute File.symlink?(File.join(@engine.store.root, 'roots', "#{attempt}-worker"))
+    +   end
+    + 
+    ++  def test_background_journal_retains_live_payloads_and_allows_collection_after_completion
+    ++    person, snapshot = prepare('background-retention')
+    ++    cancel(person, submit(person, snapshot))
+    ++    id = SecureRandom.uuid
+    ++    path = File.join(@engine.store.root, 'integrations', "#{id}.json")
+    ++    value = {'schema' => 2, 'id' => id, 'ownerId' => person['id'], 'identity' => person['identity'],
+    ++      'phase' => 'deploy', 'steps' => {}, 'jobs' => {}, 'operation' => snapshot,
+    ++      'continuation' => {'state' => 'waiting', 'generation' => 0, 'observedRevision' => nil}}
+    ++    WorkspaceCoordination.atomic(path, value)
+    ++    assert_empty collect(apply: true)['removed']
+    ++    assert File.directory?(source(snapshot))
+    ++    value['phase'] = 'complete'
+    ++    value['continuation']['state'] = 'complete'
+    ++    WorkspaceCoordination.atomic(path, value)
+    ++    assert_equal 2, collect(apply: true)['removed'].length
+    ++    refute File.exist?(source(snapshot))
+    ++  end
+    ++
+    + end
+    +
+      ## test/integration_test.rb ##
+     @@ test/integration_test.rb: class IntegrationTest < Minitest::Test
+          assert_equal 5, error.code
+    @@ test/integration_test.rb: class IntegrationTest < Minitest::Test
+     +    assert_empty @engine.store.read['outbox']
+     +  end
+     +
+    ++  def test_background_failed_command_is_actionable_even_with_exit_code_75
+    ++    first = owner('background-command-error')
+    ++    integration = driver(first)
+    ++    payload = integration_request(first)
+    ++    integration.start(payload, background: true)
+    ++    attempts = 0
+    ++    integration.define_singleton_method(:advance) do |_value|
+    ++      attempts += 1
+    ++      engine.capture('sh', '-c', 'echo failed-check >&2; exit 1')
+    ++    end
+    ++    result = integration.run_background(payload['requestId'])
+    ++    assert_equal 'needs_attention', result.dig('continuation', 'state')
+    ++    assert_equal 75, result.dig('reason', 'code')
+    ++    assert_includes result.dig('reason', 'message'), 'failed-check'
+    ++    integration.run_background(payload['requestId'])
+    ++    assert_equal 1, attempts
+    ++    assert_equal 1, @engine.store.read['outbox'].length
+    ++  end
+    ++
+    ++  def test_background_host_preparation_failure_is_actionable_once
+    ++    first = owner('background-host-error')
+    ++    integration = driver(first)
+    ++    payload = integration_request(first)
+    ++    integration.start(payload, background: true)
+    ++    seed = File.join(@tmp, 'seed')
+    ++    @engine.define_singleton_method(:repository) { |_owner, _name| [seed, nil, nil, {'branch' => 'master'}] }
+    ++    @engine.define_singleton_method(:retain_commit) { |_path, _head| seed }
+    ++    host = Object.new.extend(DevWorkspaceHost::WorkspaceCoordinationHost)
+    ++    host.define_singleton_method(:with_current_generation_lock) { |**_options, &block| block.call }
+    ++    attempts = 0
+    ++    host.define_singleton_method(:prepare_profile) do |_argv|
+    ++      attempts += 1
+    ++      raise DevWorkspaceHost::Error, 'candidate profile validation failed'
+    ++    end
+    ++    engine = @engine
+    ++    integration.define_singleton_method(:advance) do |_value|
+    ++      host.coordination_prepare(engine, first, {'kind' => 'profile_activate'})
+    ++    end
+    ++    result = integration.run_background(payload['requestId'])
+    ++    assert_equal 'needs_attention', result.dig('continuation', 'state')
+    ++    assert_equal 'candidate profile validation failed', result.dig('reason', 'message')
+    ++    integration.run_background(payload['requestId'])
+    ++    assert_equal 1, attempts
+    ++    assert_equal 1, @engine.store.read['outbox'].length
+    ++  end
+    ++
+    ++  def test_background_lifecycle_admission_contention_waits_without_notifying
+    ++    first = owner('background-admission-busy')
+    ++    integration = driver(first)
+    ++    payload = integration_request(first)
+    ++    integration.start(payload, background: true)
+    ++    lock_path = File.join(@tmp, 'lifecycle.lock')
+    ++    File.open(lock_path, 'w+', 0o600) do |writer|
+    ++      writer.flock(File::LOCK_EX)
+    ++      integration.define_singleton_method(:advance) do |_value|
+    ++        File.open(lock_path, 'r+') { |reader| WorkspaceCoordination::Admission.acquire(reader, timeout: 0) }
+    ++      end
+    ++      result = integration.run_background(payload['requestId'])
+    ++      assert_equal 'waiting', result.dig('continuation', 'state')
+    ++      assert_nil result.dig('continuation', 'observedRevision')
+    ++      assert_empty @engine.store.read['outbox']
+    ++    end
+    ++  end
+    ++
+     +  def test_background_waiting_is_not_redispatched_without_a_ledger_change
+     +    first = owner('background-dispatch')
+     +    integration = driver(first)
+    @@ test/integration_test.rb: class IntegrationTest < Minitest::Test
+     +    FileUtils.mkdir_p(successor)
+     +    File.unlink(@profile)
+     +    File.symlink(successor, @profile)
+    -+    @engine.define_singleton_method(:current_generation!) do
+    -+      raise WorkspaceCoordination::Error.new('superseded package generation', 3)
+    -+    end
+    ++    @engine.instance_variable_set(:@fixtures, false)
+     +    assert_equal 'runnable', integration.run_background(payload['requestId']).dig('continuation', 'state')
+     +    assert_empty @engine.store.read['outbox']
+     +    assert_empty @engine.store.read['jobs']
+     +  end
+    ++
+    ++  def test_background_handover_checks_profile_token_when_package_is_unchanged
+    ++    first = owner('background-token-generation')
+    ++    integration = driver(first)
+    ++    payload = integration_request(first)
+    ++    integration.start(payload, background: true)
+    ++    @engine.instance_variable_set(:@fixtures, false)
+    ++    assert @engine.current_generation?
+    ++    replacement = File.join(@tmp, 'replacement-profile')
+    ++    File.symlink(@package, replacement)
+    ++    File.rename(replacement, @profile)
+    ++    assert_equal @engine.package, File.realpath(@profile)
+    ++    refute @engine.current_generation?
+    ++    assert_equal 'runnable', integration.run_background(payload['requestId']).dig('continuation', 'state')
+    ++    assert_empty @engine.store.read['outbox']
+    ++    assert_empty @engine.store.read['jobs']
+    ++  end
+    ++
+    ++  def test_background_pause_acknowledgment_serializes_with_claim_admission
+    ++    first = owner('background-pause-race')
+    ++    integration = driver(first)
+    ++    payload = integration_request(first)
+    ++    integration.start(payload, background: true)
+    ++    integration.run_background(payload['requestId'])
+    ++    checked, proceed, pause_started = Queue.new, Queue.new, Queue.new
+    ++    original = @engine.store.method(:background_stopped?)
+    ++    armed = true
+    ++    @engine.store.define_singleton_method(:background_stopped?) do |run|
+    ++      result = original.call(run)
+    ++      if run && armed
+    ++        armed = false
+    ++        checked << true
+    ++        proceed.pop
+    ++      end
+    ++      result
+    ++    end
+    ++    claimer = Thread.new { @engine.claim(owner_id: first['id']) }
+    ++    checked.pop
+    ++    pause_driver = WorkspaceCoordination::Integration.new(@engine, first,
+    ++      admission: ->(&block) { pause_started << true; block.call }, prepare: ->(_fields) { raise 'pause cannot prepare' })
+    ++    pauser = Thread.new { pause_driver.pause(payload['requestId']) }
+    ++    pause_started.pop
+    ++    # An admission already in progress must settle before pause is accepted.
+    ++    assert_nil pauser.join(0.05)
+    ++    proceed << true
+    ++    assert_equal 1, claimer.value.length
+    ++    assert_equal 'paused', pauser.value.dig('continuation', 'state')
+    ++  ensure
+    ++    proceed << true if proceed
+    ++    claimer&.join
+    ++    pauser&.join
+    ++  end
+     +
+      end
+     
