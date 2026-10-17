@@ -117,14 +117,14 @@ the parent's responsibility for choosing scope or accepting results.
   reviewer leads investigate, design and edit application code without automatic
   specialists; the latter use a retained independent reviewer. Lead-designed
   leads own design and delegate application edits; Full-team leads delegate
-  nontrivial design and application edits. Adding, replacing or reconfiguring
+  investigation, design and execution packages under the mode table. Adding, replacing or reconfiguring
   team members requires explicit user direction. Check the live same-session
   roster with `dev-session team list <verified-slug> --as-is` before each new
   substantive team work item. Use saved member addresses, purposes and access;
   check workspace-write access before assigning edits. If access or session
   identity fails, resolve that failure rather than taking over delegated
-  application work. Briefly tell the user who owns what and integrate member
-  reports. Keep coordination records and short dependent steps yourself.
+  application work. Tell the user who owns what and assess reports. Keep tracking and short
+  coordination steps yourself.
   Never invent members or address another session's roster.
   [Site team roles](docs/agent-teams.md) owns the mode table.
 - The selected design owner records the design and verification brief in
