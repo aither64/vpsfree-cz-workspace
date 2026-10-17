@@ -1,65 +1,96 @@
 ---
-lifecycle: complete
+lifecycle: active
 ---
 
 # 2026-10-16-portal-session-request-fix
 
 ## Status
 
-Phase: all four repositories merged; converged deployment and final live acceptance
-passed. Normal completion/release is blocked on one uncertain native notification.
+Phase: all three repository merges succeeded; final deployment convergence and normal reservation release in progress.
 
-- [x] Portal field validation and shared copy icon/spacing deployed and merged.
-- [x] Metadata-only initialization follow-up reviewed, tested and deployed.
-- [x] Both selected original session requests recovered exactly once.
-- [x] User-approved one-field integration cache correction applied with backup.
-- [x] Same run certified workspace refresh92551af2; both exact Nix checks passed.
-- [x] All four merges succeeded; fresh SSH exact-head proof saved.
-- [x] Merged-source system/profile convergence succeeded; final HTTPS live checks passed.
-- [ ] Resolve notificationea254902 without blind replay; normal finish/release.
+- [x] Original portal/session recovery/copy icon fixes deployed and merged.
+- [x] Duplicate-tolerant, nonblocking internal notifications deployed and verified.
+- [x] Background recipient/pickup/preflight/supervision fix implemented and published.
+- [x] Independent four-lane whole-branch review; narrow requested corrections verified.
+- [x] Final package, host, contract and CI39050152440 passed at27ffc685.
+- [x] New system/profile rollout succeeded under retained0057b2f2.
+- [x] Live portal checks and actual recipient-mismatch refusal passed.
+- [x] Old rund4e6e0ad canceled through new API with zero jobs; receipts retained.
+- [x] Latest user “merge it” approves expanded fix into master in dev-workspace, vpsfree-cz-configuration and workspace.
+- [x] Certified workspace refresh fe800b84 over tracking7c6a0378, exact comparison captured.
+- [x] Runtime27ffc685, configuration3ae43f56 and workspacefe800b84 merged into master.
+- [ ] Final merged-source deployment and live acceptance.
+- [ ] Reviewed cumulative replacement lineage, normal reservation release and completion.
 
 ## Next actions
 
-SAME integration08da9e42-69ad-4657-b80a-5b5fbeeb64fc is in complete-records.
-All six jobs succeeded. Final live packageb3qx1n2 and systemaqp3rz8 paths match
-successful convergence; post-integration-live.json records authenticated field
-validation and shared icon/styles. final-merge-proofs.json proves all exact heads.
+Latest user instruction “merge it” explicitly approves the expanded handoff fix
+into master in dev-workspace, vpsfree-cz-configuration and workspace. Recorded
+before integration; no additional approval required. Final complete histories
+and diffs match accepted review (handoff-merge-preflight.json), with no migrations
+and single final consumer pin streams. Use a new supervised ordinary integration
+run and retained reservation0057b2f2. Never resume canceled rund4e6e0ad.
 
-The sole blocker is native notificationea254902-a37a-6d05-3ce0-12d77016e794,
-message4fcbbea7-974d-4d73-b025-9fcbfd746dd0, to this session's retained
-coordination anchor01a1451e-cea2-7052-a69e-0368e4305946. It announces runtime
-merge24487533 succeeded. Original submission is submitting/steered; complete
-retained rollout has no matching success message. Later notifications delivered.
-Ordinary same-ID reconciliation retries and refuses unknown outcome. The original
-native error was overwritten by later reconciliation errors; journal inspection
-has no no-submit proof. Do not clear attempt markers or manufacture delivery.
+Final candidates (clean/published): runtime27ffc685e2c8de02ebb689f6cecc2e7137f28e49,
+configuration3ae43f560ec7c0e6400322a5777118232dcdb26b,
+workspacef96c499441fc2d1ef77fe4d4496220c2b8af4568. Complete inventory/diffs:
+handoff-final-heads.json and handoff-final-REPO.diff. Library5daae414 remains
+unchanged/already integrated. Consumer streams each retain one final runtime pin.
 
-notification-recovery-proposal.json describes a concrete one-time explicit resend
-of this informational notification with its original identity/settings and an
-isolated attempt ledger. It accepts possible duplicate notification, keeps all
-original records, then relies on ordinary reconciliation and SAME-run finish.
-This separate native resend needs user approval; the cache-only yes did not grant it.
+Independent reviewer01a14580 at saved Astra/xhigh/read-only completed all4 lanes:
+handoff-review.md. Important delayed-worker supervision race corrected exactly
+under the run lock; focused4tests/41assertions pass. Advisory rollback supervision
+loss documented. Lead acceptance under mandatory-review step9 is frozen in
+handoff-release-review.md. Earlier wrong-settings native resume was detected,
+terminated without source changes and excluded; corrected native context verified.
+No migrations; optional bounded metadata retains schema2 readers and existing
+archive contracts. Pre-background packages are not rollback candidates. Pausing
+or settling supervised runs is required before predecessor rollback if preserving
+attached supervision. Full independent history/consolidation conclusion accepted.
 
-Parent intentionally ended only its idle finalization polling process56959
-with actual exit143 under the original integration lock, after confirming all
-six jobs succeeded and phase complete-records. Fresh Luna/low watcher72837
-finishes from that exact status; finalization-wait-stop.json records the reason.
-No coordinator job, native turn, service or lifecycle action was canceled.
-After explicit notification replay approval, resume SAME-run finalization from
-the stable current package with new independent log/status names.
-Reservationb47dc9ad remains deployed_review. Do not submit another integration.
+Fresh Luna/low full verification passed package294.3s/host147.5s and exact
+CI39050152440 (406.6s observation), all0. Frozen evidence
+handoff-release-verification.md and handoff-built-artifacts.json; native utility
+handoff-consumers logs/events/report. Superseded missing-helper packaged fixture
+failures were diagnosed from both logs, fixed, and final complete packaged suite
+passes. No blind rerun or superseded active CI remains.
 
-Prior source-only cache helper changed only operations.workspace.expectedHead
-through the installed atomic writer under exact generation/session/run guards.
-Backup and result are integration-cache-recovery-before.json and
-integration-cache-recovery-result.json. No other private state has been changed.
-Initial driver75 was temporary integration lock contention; the stable loop then
-completed all merges and convergence. Its exit1 after profile selection was the
-expected package-generation guard; new selected runtime resumed complete-records.
+New ordinary deployment system6069704e-3ed1-40b3-aae5-d08c8fbd9e56 and
+profile40e59439-9683-41aa-b1c5-fced55aca7b7 both succeeded/applied under existing
+reservation0057b2f2-0af4-4d71-b095-5f592aafe828. Parent controller and fresh Luna/low
+observer completed0. Live system/profileyazsvqs and applicationxrl2zll match exact
+verified artifacts. handoff-live-acceptance.json verifies authenticated portal
+request field handling, copy icon/style and coordination assetv6 pickup/canceled UI.
+No session created and neither original saved request replayed.
 
-Preserve original/recovery receipts and all frozen acceptance/review files.
-Do not replay either saved request recovery or completed original48f5faf2.
-Retain session, worktrees and all refs; no archive/delete is authorized.
+Actual installed CLI recipient smoke returned4 and the explicit wrong-conversation
+error before changing the old run. handoff-live-coordination-check.json records
+that refusal and original status. New ordinary integration-cancel then marked
+oldd4e6e0ad complete/outcomecanceled/continuationcomplete with no jobs and retained
+all request/preparation evidence: handoff-old-run-cancel.json. This did not merge
+anything, release reservation, replay operations or forge delivery.
+
+After approval, use a new ordinary FOREGROUND integration batch (external caller)
+with an attached fresh verification observer. Old rund4 is terminal and must not
+resume. Installed workspace-pins recipe/certification refreshes workspace over
+shared master7c6a0378; original frozen reviews and exact derivation receipts enable
+applicable reuse. Prepare final exact artifacts after refreshed workspace coverage.
+Integration driver may return generation guard after profile selection; resume
+SAME run through selected command, never replay jobs. Final finish must include
+all4 registered heads (unchanged library included) and exact reviewed replacement
+lineage for previously deployed consolidated consumer heads. Current prior
+configad1e0c67/workspace9679bbc6 and latestf96c4994 are retained in refs/receipts.
+Review accepted source/compatibility; deployed range evidence
+handoff-deployed-range-REPO.txt is prepared for final mappings. Exact new approval
+and later deployment of each material replacement are required by normal finish.
+
+Shared tracking blocker7c6a0378 was a pre-existing planning-only commit; published
+normally over SSH under dev-session-tracking.lock without editing foreign records
+or shared files/index. Receipt handoff-tracking-publication.json. Workspace final
+comparison initially hit ordinary session lock; retry succeeded. Do not reset,
+stash, clean or switch shared master. Keep all feature refs, original frozen
+reviews/live records, and retained schema2/archive contracts. No archive/delete
+is authorized. Stable session URL remains unchanged.
 
 ## Documentation
 
@@ -782,3 +813,33 @@ Original completed48f5faf2 and every older frozen record remain untouched.
 
 Requested exact feature heads are integrated. See integration/08da9e42-69ad-4657-b80a-5b5fbeeb64fc/summary.md
 and integration/08da9e42-69ad-4657-b80a-5b5fbeeb64fc/result.json for operation receipts. Feature refs and session retained.
+
+## Supervised integration preparation recovery
+
+Run390307a8-fade-4f14-b604-eecaedd9e386 stopped75 in prepare with no jobs.
+Installed workspace-pins refresh generated only the pin from target and correctly
+refused dropping reviewed docs. Recovered retained scratch by rebasing complete
+reviewed series over tracking-only7c6a0378; all3 ordered patches unchanged,
+range-diff equality and installed read-only pin verifier accepted. Published
+workspacefe800b84a313abe731cbbdb1ae0560d9672ca801 with exact lease, retained
+old feature ref and original scratch candidate. Seeded same-run recovery scratch
+with that certified source; no journal or receipts edited. Exact registered
+comparison captured before resuming. Same merge approval preserved. Evidence:
+handoff-workspace-recovery{,-certificate,-publication}.json and -range.diff.
+Reservation remains held and no operation replay occurred.
+
+## Approved merges completed
+
+Run390307a8 now reports all3 merge jobs succeeded: runtime8af8da43,
+configuration02b294eb and workspace96c6aec6. Final heads are runtime27ffc685,
+configuration3ae43f56 and certified workspacefe800b84. Final source verification
+required a new exact application derivation and passed in285.1s. Initial driver
+returned75 only for transient run-lock contention after submission; a new attached
+continuation of the SAME journal retries only that exact lock error. Fresh
+Luna/low observer handoff-merge-convergence observes final system/profile rollout.
+Original operations are not replayed; no archive/delete or ref cleanup authorized.
+
+## Integration 390307a8-fade-4f14-b604-eecaedd9e386
+
+Requested exact feature heads are integrated. See integration/390307a8-fade-4f14-b604-eecaedd9e386/summary.md
+and integration/390307a8-fade-4f14-b604-eecaedd9e386/result.json for operation receipts. Feature refs and session retained.
