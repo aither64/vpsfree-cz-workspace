@@ -40,8 +40,16 @@ the matching host module separately from the application profile.
 4. Submit the returned snapshot, approval, reservation and explicit dependencies.
    Merge-only work needs no machine reservation. Read status and keep doing useful
    independent work while claims or reservations are busy.
-5. Prefer `coordination integrate --background` for approved operation batches.
-   Record its run ID. If only waiting remains, end the turn; the worker continues
+5. Prefer `coordination integrate --background` for approved operation batches
+   when this conversation matches the retained managed lead. Background admission
+   verifies the recipient and checks every local/remote default branch before
+   accepting a run. For an external conversation, supervise foreground integration
+   under an attached observer, or deliberately select `--to-session-lead` to hand
+   responsibility to the managed lead. A delivered notice alone does not prove
+   pickup: acknowledge its event/generation from the matching conversation and
+   renew the acknowledgement while handling it. Follow the installed integration
+   guide for exact commands and preparation-only cancellation.
+   Record its run ID. After verified background handoff, if only waiting remains, end the turn; the worker continues
    and the coordinator wakes the retained session when agent action or review is
    needed. Reread authoritative status on that message. Individual submitted jobs
    also run independently and retain their native notifications. Do not poll
