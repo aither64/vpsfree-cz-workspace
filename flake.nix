@@ -98,7 +98,7 @@
               metadata=${package}/share/dev-workspace/package.json
               test -f "$catalog"
               ${pkgs.jq}/bin/jq -e '
-                .schema_version == 4 and
+                .schema_version == 5 and
                 .default_team == "lead_reviewed" and
                 .default_development_team == "lead_reviewed" and
                 .capacity.required_native_child_threads == 4 and
@@ -122,7 +122,8 @@
                 .teams.solo.roles.team_lead.purpose == "lead" and
                 (.teams.solo.roles.team_lead.instructions | contains("Investigate, design and edit application code yourself without automatic specialists")) and
                 (.teams.solo.roles.team_lead.instructions | contains("At the end of every turn")) and
-                .teams.delegated.max_open_agents == 3 and
+                .teams.delegated.max_open_agents == 4 and
+                .teams.delegated.initial_member_counts.implementer == 2 and
                 .teams.delegated.design_owner == "designer" and
                 (.teams.delegated.roles | keys | sort) == (["designer", "implementer", "reviewer", "team_lead"] | sort) and
                 .teams.delegated.roles.team_lead.access == "workspace_write" and
@@ -206,7 +207,7 @@
               ' "$catalog" >/dev/null
               ${pkgs.jq}/bin/jq -e '
                 .agent_teams.managed == true and
-                .agent_teams.catalog.schema_version == 4 and
+                .agent_teams.catalog.schema_version == 5 and
                 .agent_teams.native_capacity.config_key == "agents.max_concurrent_threads_per_session" and
                 .agent_teams.native_capacity.required_value == 4
               ' "$metadata" >/dev/null
