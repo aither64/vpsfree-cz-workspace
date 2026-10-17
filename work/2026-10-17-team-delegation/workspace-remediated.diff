@@ -1,0 +1,333 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 7975fad9..a133cbde 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -117,14 +117,14 @@ the parent's responsibility for choosing scope or accepting results.
+   reviewer leads investigate, design and edit application code without automatic
+   specialists; the latter use a retained independent reviewer. Lead-designed
+   leads own design and delegate application edits; Full-team leads delegate
+-  nontrivial design and application edits. Adding, replacing or reconfiguring
++  investigation, design and execution packages under the mode table. Adding, replacing or reconfiguring
+   team members requires explicit user direction. Check the live same-session
+   roster with `dev-session team list <verified-slug> --as-is` before each new
+   substantive team work item. Use saved member addresses, purposes and access;
+   check workspace-write access before assigning edits. If access or session
+   identity fails, resolve that failure rather than taking over delegated
+-  application work. Briefly tell the user who owns what and integrate member
+-  reports. Keep coordination records and short dependent steps yourself.
++  application work. Tell the user who owns what and assess reports. Keep tracking and short
++  coordination steps yourself.
+   Never invent members or address another session's roster.
+   [Site team roles](docs/agent-teams.md) owns the mode table.
+ - The selected design owner records the design and verification brief in
+diff --git a/config/agent-teams.nix b/config/agent-teams.nix
+index ab7490f5..11814cce 100644
+--- a/config/agent-teams.nix
++++ b/config/agent-teams.nix
+@@ -14,19 +14,23 @@ let
+   '';
+   defaultInstructions = {
+     team_lead = ''
+-      Lead this Full-team development session. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Assign nontrivial design to a ready design-purpose member and application edits to a ready implementation-purpose member using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin, with a concrete deliverable. Check saved access before assigning edits: source work needs a workspace-write member. If a member cannot write or cannot resolve this session, investigate and resolve the access or session identity failure; tell the user and do not take over delegated application edits. The architect writes work/<slug>/design.md with the design and verification brief before substantive implementation; a bounded small edit may go directly to an implementer. Briefly tell the user who owns what and integrate member reports. Keep short dependent coordination steps yourself.
+-    '' + leadRequirements;
++      Lead this Full-team development session as coordinator and user contact. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Delegate substantive investigation and design to a ready design-purpose member; the architect writes work/<slug>/design.md and identifies implementation boundaries and dependencies before substantive implementation. Assign complete execution packages to ready implementation-purpose members using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin. Use both implementers for independent work when available. A bounded small edit may go directly to an implementer. Keep a compact backlog with owners, expected results, acceptance criteria, dependencies and checks. Implementers own diagnosis, source, tests, technical documentation, quick checks, commits and follow-up fixes, including review findings. Delegate dependent implementation and integration fixes too; waiting for specialists is not a reason to duplicate their investigation or take over their work. Serialize overlapping edits and Git operations in each repository. Briefly tell the user who owns what, assess reports and acceptance evidence, resolve dependencies and keep the user informed. Keep brief scoping, acceptance inspection, session tracking, approval-bound coordination and required context-dependent user-facing writing yourself. Keep only short coordination steps yourself. Check saved workspace-write access before assigning edits. If a member cannot write or resolve this session, investigate and resolve the access or session identity failure; tell the user and do not take over delegated application edits. If no implementation-purpose member exists in the live roster, do the implementation yourself; a busy, unready or inaccessible member still exists. If no design-purpose member exists, own the design. Preserve retained member settings and use interruptible waits for reports.
++    ''
++    + leadRequirements;
+     lead_designed_lead = ''
+-      Lead this Lead-designed development session. Own substantive technical design and write work/<slug>/design.md before assigning application implementation. Include scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery, acceptance criteria, and quick and longer checks. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Assign application edits to a ready implementation-purpose member using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin, with a concrete deliverable and the lead-owned brief; a bounded small edit may use a direct brief. Check saved workspace-write access before assigning source work. Resolve access or session identity failures; tell the user and do not take over delegated application edits. Briefly tell the user who owns what and integrate member reports. Keep short dependent coordination steps yourself. Do not acquire a designer automatically.
+-    '' + leadRequirements;
++      Lead this Lead-designed development session. Own substantive technical design and write work/<slug>/design.md before assigning application implementation. Include scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery, acceptance criteria, and quick and longer checks. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Assign complete execution packages to a ready implementation-purpose member using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin, with a concrete deliverable and the lead-owned brief; a bounded small edit may use a direct brief. Implementers own diagnosis, source, tests, technical documentation, quick checks, commits and follow-up fixes, including review findings and dependent implementation. Keep a compact backlog with owners, acceptance criteria, dependencies and checks; serialize overlapping edits and Git operations. Check saved workspace-write access before assigning source work. Resolve access or session identity failures; tell the user and do not take over delegated application edits. Briefly tell the user who owns what, assess reports and acceptance evidence, resolve dependencies and communicate progress. Keep brief scoping, acceptance inspection, session tracking, approval-bound coordination, required context-dependent user-facing writing and short coordination steps yourself. Do not duplicate specialist work while waiting. If no implementation-purpose member exists, implement yourself; busy, unready or inaccessible members do not qualify for this fallback. Do not acquire a designer automatically.
++    ''
++    + leadRequirements;
+     solo_lead = ''
+       Lead this Solo development session. Investigate, design and edit application code yourself without automatic specialists. Before substantive implementation, write work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery, acceptance criteria, and quick and longer checks; a bounded small edit does not need a separate design document. Use the mandatory review workflow's temporary independent final reviewer and the separate utility watcher for long verification; neither is a persistent team member. Do not acquire specialists automatically.
+-    '' + leadRequirements;
++    ''
++    + leadRequirements;
+     lead_reviewed_lead = ''
+       Lead this Lead and reviewer development session. Investigate, design and edit application code yourself. Before substantive implementation, write work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery, acceptance criteria, and quick and longer checks; a bounded small edit does not need a separate design document. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Use a ready retained review-purpose member for independent final review under the mandatory review workflow, keeping its saved model, effort, access and instructions. The reviewer remains read-only. Use the separate utility watcher for long verification. Do not acquire design or implementation specialists automatically.
+-    '' + leadRequirements;
+-    designer = "Own technical design and verification planning. Before substantive implementation, write or update work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery implications, acceptance criteria, and quick and longer checks. You may edit assigned design documents and prototypes. Refer consequential design revisions through the lead; application implementation belongs to implementers.";
+-    implementer = "Follow the assigned architect-owned or lead-owned design and verification brief for substantive work; a bounded small edit may use the lead's direct brief. Edit assigned application files while preserving unrelated work. Run assigned quick checks and report changes, evidence, gaps, and deviations. Refer consequential design deviations through the lead before changing the design.";
++    ''
++    + leadRequirements;
++    designer = "Own substantive investigation, technical design and verification planning. Identify implementation packages with independent file boundaries, dependencies, acceptance criteria and checks so the lead can keep multiple implementers productive. Resolve assigned technical questions and route consequential decisions through the lead. Before substantive implementation, write or update work/<slug>/design.md with scope, interfaces and files, invariants, implementation boundaries, compatibility, deployment and recovery implications, acceptance criteria, and quick and longer checks. You may edit assigned design documents and prototypes. Refer consequential design revisions through the lead; application implementation belongs to implementers.";
++    implementer = "Follow the assigned architect-owned or lead-owned design and verification brief for substantive work; a bounded small edit may use the lead's direct brief. Edit assigned application files while preserving unrelated work. Own the assigned execution package through diagnosis, source, tests, technical documentation, quick checks, commits and follow-up fixes, including review findings. Respect other package owners and coordinate overlapping edits and Git operations through the lead. Run assigned quick checks and report changes, evidence, gaps, and deviations; report blockers promptly without waiting for a final result. Refer consequential design deviations through the lead before changing the design.";
+     reviewer = "Independently inspect completed substantive deliverables under the mandatory review workflow for correctness, security, and verification gaps. Default to final review after all intended changes are committed and quick checks pass, before long integration tests. Earlier review is allowed only on an explicit user request, is advisory, may inspect uncommitted work, and never replaces final review. Routine planning, investigation, findings, session tracking and evidence alone never trigger automatic review. For final branch readiness, assess the complete base-to-head history, final diff, and migration provenance; explicitly conclude whether obsolete history or transitional migrations remain, including when there are no migrations. Remain read-only.";
+     general = "Complete only the assigned work and report the result to the lead.";
+   };
+@@ -114,7 +118,7 @@ let
+   };
+ in
+ {
+-  schema_version = 4;
++  schema_version = 5;
+   default_team = "lead_reviewed";
+   default_development_team = "lead_reviewed";
+ 
+@@ -181,7 +185,9 @@ in
+     };
+ 
+     delegated = commonDevelopment // {
+-      description = "Sol leads; Astra designs; Sol implements and reviews";
++      description = "Sol coordinates; Astra designs; two Sol implementers execute; Sol reviews";
++      initial_member_counts.implementer = 2;
++      max_open_agents = 4;
+       design_owner = "designer";
+       routing = {
+         design_simple_effort = "high";
+diff --git a/docs/agent-teams.md b/docs/agent-teams.md
+index 3aa97e49..32a712af 100644
+--- a/docs/agent-teams.md
++++ b/docs/agent-teams.md
+@@ -38,7 +38,7 @@ utility watches long checks.
+ | `solo` | lead (1 total) | lead | lead | 0 |
+ | `lead_reviewed` (Lead and reviewer, default) | lead, reviewer (2 total) | lead | lead | 1 |
+ | `lead_designed` | lead, implementer, reviewer (3 total) | lead | implementer | 2 |
+-| `delegated` (Full team) | lead, architect, implementer, reviewer (4 total) | architect | implementer | 3 |
++| `delegated` (Full team) | lead, architect, two implementers, reviewer (5 total) | architect | implementers | 4 |
+ 
+ Solo leads investigate, design and implement without automatic specialists.
+ In Lead and reviewer sessions, the lead does the same and uses the retained
+@@ -49,6 +49,23 @@ write that brief. The brief lives in
+ small edit may use a direct lead brief. Leads report a compact progress
+ checklist at the end of every turn and integrate member reports.
+ 
++Full-team leads coordinate and communicate with the user. The architect owns
++substantive investigation and design and identifies independent implementation
++packages. Implementers own their packages through diagnosis, source, tests,
++technical documentation, quick checks, commits and follow-up fixes, including
++review findings. The lead keeps a compact backlog with owners, acceptance
++criteria, dependencies and checks, assigns independent work to both implementers,
++and serializes overlapping edits and Git operations within each repository.
++Dependent implementation stays with an implementer. Leads assess reports and
++acceptance evidence without duplicating specialist investigation while waiting.
++
++Lead-designed sessions use the same execution ownership with lead-owned design.
++The lead keeps brief scoping, acceptance inspection, session tracking,
++approval-bound coordination and user communication, including required
++context-dependent writing. A live roster without implementation members leaves
++implementation with the lead. Busy, unready or inaccessible members require
++resolving that condition rather than taking their assignments.
++
+ Solo and Full-team leads default to high effort and allow high/xhigh;
+ the lead in Lead-designed and Lead and reviewer sessions defaults to xhigh
+ and allows high/xhigh. Substantive design and implementation use xhigh, with high
+diff --git a/flake.lock b/flake.lock
+index 5c95747f..4017af08 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -66,17 +66,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1792226746,
+-        "narHash": "sha256-RuVqkvXwBa6E/ZNQ1VQ9Tx1qLBtA6mCgcRyxZoa5BWw=",
++        "lastModified": 1792250341,
++        "narHash": "sha256-GalD4svgraSEF2tqv87lSfe+GyYtX1AX74ED11/jp8M=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "9b50f357b40aeb4b3bd9715609815ebcdca57043",
++        "rev": "439a424aaec9391136288e316ed06f2509eadb10",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "9b50f357b40aeb4b3bd9715609815ebcdca57043",
++        "rev": "439a424aaec9391136288e316ed06f2509eadb10",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index a1c6be7b..89a22055 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
+     vpsfree-dev-workspace = {
+       url = "github:vpsfreecz/dev-workspace/767dfd587e346168e1443e65ccdb67ce748f3fe3";
+-      inputs.dev-workspace.url = "github:aither64/dev-workspace/9b50f357b40aeb4b3bd9715609815ebcdca57043";
++      inputs.dev-workspace.url = "github:aither64/dev-workspace/439a424aaec9391136288e316ed06f2509eadb10";
+     };
+   };
+ 
+@@ -98,7 +98,7 @@
+               metadata=${package}/share/dev-workspace/package.json
+               test -f "$catalog"
+               ${pkgs.jq}/bin/jq -e '
+-                .schema_version == 4 and
++                .schema_version == 5 and
+                 .default_team == "lead_reviewed" and
+                 .default_development_team == "lead_reviewed" and
+                 .capacity.required_native_child_threads == 4 and
+@@ -122,7 +122,8 @@
+                 .teams.solo.roles.team_lead.purpose == "lead" and
+                 (.teams.solo.roles.team_lead.instructions | contains("Investigate, design and edit application code yourself without automatic specialists")) and
+                 (.teams.solo.roles.team_lead.instructions | contains("At the end of every turn")) and
+-                .teams.delegated.max_open_agents == 3 and
++                .teams.delegated.max_open_agents == 4 and
++                .teams.delegated.initial_member_counts.implementer == 2 and
+                 .teams.delegated.design_owner == "designer" and
+                 (.teams.delegated.roles | keys | sort) == (["designer", "implementer", "reviewer", "team_lead"] | sort) and
+                 .teams.delegated.roles.team_lead.access == "workspace_write" and
+@@ -206,7 +207,7 @@
+               ' "$catalog" >/dev/null
+               ${pkgs.jq}/bin/jq -e '
+                 .agent_teams.managed == true and
+-                .agent_teams.catalog.schema_version == 4 and
++                .agent_teams.catalog.schema_version == 5 and
+                 .agent_teams.native_capacity.config_key == "agents.max_concurrent_threads_per_session" and
+                 .agent_teams.native_capacity.required_value == 4
+               ' "$metadata" >/dev/null
+diff --git a/test/agent_instructions_test.rb b/test/agent_instructions_test.rb
+index 460c00bf..47b1d245 100644
+--- a/test/agent_instructions_test.rb
++++ b/test/agent_instructions_test.rb
+@@ -90,6 +90,14 @@ class AgentInstructionsTest < Minitest::Test
+     assert_match(/creation retries and forks keep retained snapshots/, teams)
+   end
+ 
++  def test_implementer_packages_and_small_team_fallback_are_documented
++    teams = File.read(File.join(ROOT, 'docs/agent-teams.md')).gsub(/\s+/, ' ')
++    assert_includes(teams, 'two implementers, reviewer (5 total)')
++    assert_includes(teams, 'Dependent implementation stays with an implementer')
++    assert_includes(teams, 'live roster without implementation members')
++    assert_includes(teams, 'Busy, unready or inaccessible members')
++  end
++
+   def test_final_readiness_requires_complete_history_and_migration_lineage
+     core = File.read(File.join(ROOT, 'AGENTS.md'))
+     git = File.read(File.join(ROOT, 'docs/agent-instructions/git.md'))
+diff --git a/work/2026-10-17-team-delegation/plan.md b/work/2026-10-17-team-delegation/plan.md
+new file mode 100644
+index 00000000..48d45e81
+--- /dev/null
++++ b/work/2026-10-17-team-delegation/plan.md
+@@ -0,0 +1,67 @@
++# 2026-10-17-team-delegation
++
++## Goal
++
++Make leads coordinate and communicate when implementation specialists exist,
++and give new Full-team sessions two implementers. Preserve hands-on lead work
++in smaller teams without implementers. User accepted the proposed plan and
++requested implementation on 2026-10-17.
++
++## Affected repositories
++
++- dev-workspace: repeated-role catalog counts, creation/recovery validation,
++  fallback prompts and presets, tests and owning documentation.
++- workspace: installed role prompts and roster, workspace instructions and
++  policy tests, nested runtime selection.
++- vpsfree-cz-configuration: matching dev-workspace channel selection and
++  aitherdev deployment.
++
++## Approach
++
++Use end-to-end work packages with owners, acceptance criteria, dependencies,
++and checks. Architect owns Full-team investigation/design and implementation
++boundaries. Implementers own execution, tests, technical docs, quick checks,
++commits and follow-up fixes. Lead retains acceptance, coordination, tracking,
++approval-bound actions and user communication. Serialize overlapping edits and
++Git operations. Lead-designed retains lead-owned design; Solo and Lead and
++reviewer retain hands-on leads. No automatic scheduler is introduced.
++
++Add catalog schema 5 with optional initial_member_counts (default one per
++non-lead role), retain schema-4 reads, and create stable numbered members.
++Full team has lead, architect0, implementer0, implementer1 and reviewer0.
++
++## Decisions
++
++- Coordinator policy with narrow coordination exceptions when implementers exist.
++- New teams only: no saved prompt refresh or existing roster changes. Forks and
++  retries retain their exact selections. Shared guidance remains globally visible.
++- Existing models, effort, access and default preset remain unchanged.
++- Missing specialists allow lead execution; busy or inaccessible retained
++  specialists require resolving the condition instead of taking their work.
++- Deployment is in scope; default-branch integration has not been authorized.
++
++## Compatibility and deployment
++
++Existing roster and receipt field layouts remain unchanged. New runtime must
++read preceding catalog schema 4 and old single-member receipts. Old packages
++cannot consume new repeated-role creation snapshots; recover forward using a
++compatible package. No database, external service protocol or managed-node
++coordination change is intended. Direct threads do not require more native
++child capacity. Pair workspace's nested runtime pin with configuration's
++dev-workspace channel; preserve extension and unrelated inputs. Build and deploy
++feature refs under the aitherdev machine reservation; application selection is
++through the user profile. Preserve deployed generations and recovery evidence.
++
++## Documentation
++
++Readers: leads, architects, implementers, package maintainers and operators.
++Keep durable behavior in runtime session/portal docs and site team guidance.
++Keep exact rollout revisions, commands and evidence in this initiative.
++
++## Testing plan
++
++Focused catalog, runtime, web/CLI creation, receipt/recovery and prompt tests;
++validate count failures and digest compatibility. Check interrupted creation,
++forks, retained prompts and adding the next numbered member. Commit intended
++changes and run mandatory independent review before longer packaged/integration
++checks. Run final deployment-pin consistency check and smoke-test both members.
+diff --git a/work/2026-10-17-team-delegation/portal.yml b/work/2026-10-17-team-delegation/portal.yml
+new file mode 100644
+index 00000000..56eecabc
+--- /dev/null
++++ b/work/2026-10-17-team-delegation/portal.yml
+@@ -0,0 +1,5 @@
++---
++schema: 1
++slug: 2026-10-17-team-delegation
++repositories: []
++artifacts: []
+diff --git a/work/2026-10-17-team-delegation/state.md b/work/2026-10-17-team-delegation/state.md
+new file mode 100644
+index 00000000..9a1803f8
+--- /dev/null
++++ b/work/2026-10-17-team-delegation/state.md
+@@ -0,0 +1,42 @@
++---
++lifecycle: active
++---
++
++# 2026-10-17-team-delegation
++
++## Status
++
++Implementation phase. Planning complete; no project changes made yet.
++
++- [x] Discover sources and agree ownership and new-team-only defaults.
++- [ ] Implement runtime/catalog and site policy changes.
++- [ ] Quick checks and committed-deliverable independent review.
++- [ ] Packaged checks and aitherdev deployment.
++- [ ] Publish final heads and hand off; integration awaits explicit direction.
++
++## Next actions
++
++Create dedicated worktrees, record the design brief, implement and verify.
++
++## Documentation
++
++See plan.md; design and rollout evidence will be linked here.
++
++## Repositories
++
++Intended: dev-workspace, workspace, vpsfree-cz-configuration. Branch/worktree
++group: 2026-10-17-team-delegation.
++
++## Commands run
++
++Read workspace procedures and runtime/site sources. dev-session current found
++no bound initiative. Created this initiative with --no-codex --no-attach;
++no retained team exists, so lead implementation follows ordinary solo routing.
++
++## Results
++
++## Open questions
++
++None. No default-branch merge authorization.
++
++## Cleanup

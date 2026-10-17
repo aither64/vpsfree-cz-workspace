@@ -28,7 +28,10 @@ reviewer retain hands-on leads. No automatic scheduler is introduced.
 
 Add catalog schema 5 with optional initial_member_counts (default one per
 non-lead role), retain schema-4 reads, and create stable numbered members.
-Full team has lead, architect0, implementer0, implementer1 and reviewer0.
+The site's Full team has lead, architect0, implementer0, implementer1 and
+reviewer0. Keep the unmanaged compatibility recipe unchanged to retain retries
+of its preceding three-specialist reservation. Reject oversized fresh selection
+snapshots and guard exact journal publication under the existing 64 KiB bound.
 
 ## Decisions
 

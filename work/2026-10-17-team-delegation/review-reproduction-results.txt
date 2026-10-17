@@ -1,0 +1,23 @@
+R1: Nix catalog evaluation with 16 implementers, 4096-byte implementer instructions,
+capacity 32 and max_open_agents 32: {"count":16,"valid":true}
+Ruby actual preset validator / journal writer / bounded reader:
+valid_direct_team_preset=true
+preset_bytes=69295
+journal_write_bytes=69570
+journal_read=creation journal is not a private bounded regular file: <temporary>
+
+R2 final runtime 732f3f382c6918319c211cc84e6ab434dff4a8b5:
+=== RUN   TestReviewPreviousFullPresetRetry
+    review_previous_full_test.go:30: retry of preceding full preset failed: a preset can only create an empty team
+--- FAIL: TestReviewPreviousFullPresetRetry (0.01s)
+FAIL github.com/aither64/dev-workspace/portal/internal/teamruntime 0.022s
+
+R2 preceding runtime 9b50f357b40aeb4b3bd9715609815ebcdca57043 (runtime.go overlay):
+=== RUN   TestReviewPreviousFullPresetRetry
+--- PASS: TestReviewPreviousFullPresetRetry (0.06s)
+PASS github.com/aither64/dev-workspace/portal/internal/teamruntime 0.071s
+
+Final regression invocation, from the runtime worktree:
+nix develop --command go -C portal test -mod=readonly -overlay /home/aither/workspace/ai/vpsfree.cz/work/2026-10-17-team-delegation/review-overlay.json ./internal/teamruntime -run '^TestReviewPreviousFullPresetRetry$' -count=1 -v
+The baseline was checked with an additional overlay mapping runtime.go to git show 9b50f357b40aeb4b3bd9715609815ebcdca57043:portal/internal/teamruntime/runtime.go.
+Only temporary files and session evidence were written. Project worktrees stayed clean.

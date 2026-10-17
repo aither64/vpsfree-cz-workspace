@@ -1,0 +1,1262 @@
+diff --git a/docs/dev-sessions.md b/docs/dev-sessions.md
+index 2eac059..99691ed 100644
+--- a/docs/dev-sessions.md
++++ b/docs/dev-sessions.md
+@@ -394,14 +394,23 @@ automatic specialists. A Lead and reviewer lead also owns design and application
+ edits and uses its retained reviewer for independent final review.
+ A Lead-designed lead owns the design brief and assigns
+ application work to an implementer; a Full-team lead assigns nontrivial design
+-to its design-purpose member and application work to its implementation-purpose
+-member. The design owner writes the design and verification brief before
++to its design-purpose member and complete execution packages to its implementation-purpose
++members. The design owner writes the design and verification brief before
+ substantive implementation. Implementers accept either an architect-owned or
+ lead-owned brief; bounded small edits can use a direct lead brief.
+ 
+ For each new substantive team work item, the lead checks the current roster,
+ uses ready members with saved settings and suitable access, then integrates
+-their reports. It handles short or dependent coordination steps itself. Adding,
++their reports. The lead keeps brief scoping, acceptance inspection, session tracking,
++approval-bound coordination and user communication, including required
++context-dependent writing. Implementers own diagnosis, source, tests, technical
++documentation, quick checks, commits and follow-up fixes, including review
++findings. Dependent implementation stays delegated. The lead tracks owners,
++acceptance criteria, dependencies and checks, assigns independent packages to
++available implementers, and serializes overlapping edits and Git operations.
++It waits for reports without duplicating specialist investigation. If the live
++roster has no implementer, the lead implements; busy or inaccessible members
++require resolving the condition rather than taking their work. Adding,
+ replacing or reconfiguring members requires explicit user direction. Manual
+ team controls remain available, and user-directed team changes apply without
+ restarting the lead. Selecting a team creates no automatic work assignments.
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index a995eff..59e94fd 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -771,7 +771,7 @@ reviewer (`lead_reviewed`). Their role
+ lists and exact lead model and reasoning effort appear on the new-session
+ screen. Solo has only the lead, which investigates, designs and edits
+ application code without automatic specialists. Full team has `lead`,
+-`architect0`, `implementer0`, and `reviewer0`, with architect-owned design and
++`architect0`, `implementer0`, `implementer1`, and `reviewer0`, with architect-owned design and
+ delegated application implementation. Lead-designed has `lead`, `implementer0`
+ and `reviewer0`; the lead writes the substantive design brief and delegates
+ application implementation. Catalog prompts own these mode-specific policies.
+@@ -840,7 +840,7 @@ unavailable` instead of asserting ongoing work. Returning to the page requests
+ a fresh observation. This read does not activate held or stopped threads.
+ 
+ The new-session form labels presets by size and role counts, such as
+-`Full team (4): 1 lead, 1 architect, 1 implementer, 1 reviewer`. It also shows
++`Full team (5): 1 lead, 1 architect, 2 implementers, 1 reviewer`. It also shows
+ a copyable `dev-session start` command that tracks the selected name, team,
+ model, and reasoning effort. From an interactive terminal, that command asks
+ for the initial request; portal uploads are not transferred to the CLI.
+@@ -891,7 +891,27 @@ development team needs a design owner and an independent reviewer. It can use
+ an implementation-purpose member, or a lead that owns design and satisfies
+ the implementation policy when no implementer is present. An existing
+ implementer must satisfy its policy; the lead cannot substitute for an invalid
+-implementer. Role names can differ from the built-in names. The package records
++implementer. Role names can differ from the built-in names. Catalog schema 5 supports an optional team-level
++`initial_member_counts` object, for example `{ implementer = 2; }` in Nix.
++Omitted non-lead roles have one initial member. Counts must be positive integers
++for existing non-lead roles; the expanded team has at most 63 specialists and
++count-bearing teams must fit `max_open_agents`. Members receive consecutive
++addresses within their role, such as `implementer0` and `implementer1`. Schema-4
++catalogs remain readable and keep their original interpretation and digests.
++The new runtime accepts preceding creation snapshots. Older packages reject
++repeated-role creation snapshots; recovery requires a compatible newer package.
++Existing roster and receipt field layouts remain unchanged. Fresh selections
++must fit the existing 64 KiB creating-journal contract, including JSON escaping,
++the journal envelope and newline. Acceptance reserves the maximum filesystem
++component length for the destination slug and checks lead overrides too. The CLI
++writer rejects an oversized complete record before publishing it. Retained
++snapshots keep their original validation.
++
++The unmanaged compatibility preset `full` retains one implementer so interrupted
++reservations from older packages can retry their exact lineup. Installed catalogs
++own the configurable Full-team composition.
++
++The package records
+ its catalog digest, and the host launch marker records the launch catalog through
+ the registration-plan digest. Catalog identity alone does not require a restart.
+ No native child-agent capacity or per-role startup
+diff --git a/libexec/dev-session b/libexec/dev-session
+index d5b5e02..b9caa28 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -3575,12 +3575,13 @@ module DevSession
+                           preset['roles'].uniq.length == preset['roles'].length
+ 
+       addresses = {}
++      indices = Hash.new(0)
+       preset['members'].all? do |member|
+         member_keys = %w[access address behavior model reasoningEffort role]
+         member_keys += %w[purpose instructions] if with_instructions
+         next false unless member.is_a?(Hash) && member.keys.sort == member_keys.sort &&
+                           member['role'].is_a?(String) && member['role'].match?(/\A[a-z][a-z0-9]{0,31}\z/) && member['role'] != 'lead' &&
+-                          member['address'] == "#{member['role']}0" &&
++                          member['address'] == "#{member['role']}#{indices[member['role']]}" &&
+                           valid_agent_team_persisted_scalar?(member['model']) &&
+                           valid_agent_team_persisted_scalar?(member['reasoningEffort'])
+         if with_instructions
+@@ -3599,6 +3600,7 @@ module DevSession
+                               'reviewer' => ['reviewer', 'read_only'] }[member['role']] ==
+                             [member['behavior'], member['access']]
+         end
++        indices[member['role']] += 1
+         addresses[member['address']] = true
+       end && addresses.length == preset['members'].length &&
+         preset['roles'] == ['lead'] + preset['members'].map { |member| member['address'] }
+@@ -3797,11 +3799,14 @@ module DevSession
+     end
+ 
+     def write_creation_journal(path, journal, create:)
++      encoded = JSON.generate(journal) + "\n"
++      if encoded.bytesize > 64 * 1024
++        raise Error, 'creation journal exceeds 64 KiB'
++      end
+       temporary = "#{path}.#{$$}.tmp"
+       begin
+         File.open(temporary, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
+-          file.write(JSON.generate(journal))
+-          file.write("\n")
++          file.write(encoded)
+           file.flush
+           file.fsync
+         end
+diff --git a/libexec/workspace-host b/libexec/workspace-host
+index 572efc9..786cef4 100755
+--- a/libexec/workspace-host
++++ b/libexec/workspace-host
+@@ -2389,13 +2389,14 @@ module DevWorkspaceHost
+ 		preset['roles'].is_a?(Array) && preset['members'].is_a?(Array) &&
+ 		preset['roles'].length <= 64 && preset['members'].length <= 64
+ 	  addresses = []
++	  indices = Hash.new(0)
+ 	  return false unless preset['members'].all? do |member|
+ 		next false unless member.is_a?(Hash)
+ 		member_keys = %w[access address behavior model reasoningEffort role]
+ 		member_keys += %w[purpose instructions] if with_instructions
+ 		next false unless member.keys.sort == member_keys.sort &&
+ 		  member['role'].is_a?(String) && member['role'].match?(/\A[a-z][a-z0-9]{0,31}\z/) && member['role'] != 'lead' &&
+-		  member['address'] == "#{member['role']}0" &&
++		  member['address'] == "#{member['role']}#{indices[member['role']]}" &&
+ 		  bounded_portal_setting?(member['model']) && bounded_portal_setting?(member['reasoningEffort'])
+ 		if with_instructions
+ 		  purpose = { 'designer' => 'design', 'implementer' => 'implementation',
+@@ -2413,6 +2414,7 @@ module DevWorkspaceHost
+ 		                      'reviewer' => ['reviewer', 'read_only'] }[member['role']] ==
+ 		                    [member['behavior'], member['access']]
+ 		end
++		indices[member['role']] += 1
+ 		addresses << member['address']
+ 	  end
+ 	  addresses.uniq.length == addresses.length && preset['roles'] == ['lead'] + addresses
+diff --git a/nix/agent-teams.nix b/nix/agent-teams.nix
+index 1b3fca1..839545c 100644
+--- a/nix/agent-teams.nix
++++ b/nix/agent-teams.nix
+@@ -192,18 +192,45 @@ let
+         && (builtins.getAttr team.routing.low_risk_review_role team.roles).fresh_context
+       )
+     );
++  validInitialMemberCounts =
++    team:
++    let
++      counts = team.initial_member_counts or { };
++      memberRoles = builtins.filter (name: name != "team_lead") (builtins.attrNames team.roles);
++      total = builtins.foldl' (sum: name: sum + (counts.${name} or 1)) 0 memberRoles;
++      addresses = lib.concatMap (
++        name:
++        map (index: "${if name == "designer" then "architect" else name}${toString index}") (
++          lib.range 0 ((counts.${name} or 1) - 1)
++        )
++      ) memberRoles;
++    in
++    builtins.isAttrs counts
++    && builtins.all (
++      name:
++      name != "team_lead"
++      && builtins.hasAttr name team.roles
++      && isPositiveInt counts.${name}
++      && counts.${name} <= 63
++    ) (builtins.attrNames counts)
++    && total <= 63
++    && isUnique addresses
++    && (counts == { } || total <= team.max_open_agents);
+   validTeam =
+     team: capacity: workPolicy:
+-    hasExactFields [
+-      "description"
+-      "design_owner"
+-      "lifecycle"
+-      "max_open_agents"
+-      "mode"
+-      "roles"
+-      "routing"
+-      "service_policy"
+-    ] team
++    hasExactFields (lib.sort builtins.lessThan (
++      [
++        "description"
++        "design_owner"
++        "lifecycle"
++        "max_open_agents"
++        "mode"
++        "roles"
++        "routing"
++        "service_policy"
++      ]
++      ++ lib.optional (team ? initial_member_counts) "initial_member_counts"
++    )) team
+     && isNonemptyString team.description
+     && builtins.elem team.mode [
+       "solo"
+@@ -219,6 +246,7 @@ let
+     && !(team.roles ? designer && team.roles ? architect)
+     && builtins.all isRoleName (builtins.attrNames team.roles)
+     && builtins.all validRole (builtins.attrValues team.roles)
++    && validInitialMemberCounts team
+     && builtins.all (
+       name:
+       let
+@@ -280,7 +308,10 @@ let
+       "utilities"
+       "work_policy"
+     ] teamConfig
+-    && teamConfig.schema_version == 4
++    && builtins.elem teamConfig.schema_version [
++      4
++      5
++    ]
+     && hasExactFields [ "required_native_child_threads" ] teamConfig.capacity
+     && isPositiveInt teamConfig.capacity.required_native_child_threads
+     && hasExactFields [ "design" "implementation" ] teamConfig.work_policy
+@@ -289,9 +320,11 @@ let
+     && builtins.isAttrs teamConfig.teams
+     && teamConfig.teams != { }
+     && builtins.all isIdentifier (builtins.attrNames teamConfig.teams)
+-    && builtins.all (team: validTeam team teamConfig.capacity teamConfig.work_policy) (
+-      builtins.attrValues teamConfig.teams
+-    )
++    && builtins.all (
++      team:
++      validTeam team teamConfig.capacity teamConfig.work_policy
++      && (teamConfig.schema_version != 4 || !(team ? initial_member_counts))
++    ) (builtins.attrValues teamConfig.teams)
+     && isIdentifier teamConfig.default_team
+     && builtins.hasAttr teamConfig.default_team teamConfig.teams
+     && (
+diff --git a/nix/tests/agent-team-catalog.nix b/nix/tests/agent-team-catalog.nix
+index c284eef..c67b7eb 100644
+--- a/nix/tests/agent-team-catalog.nix
++++ b/nix/tests/agent-team-catalog.nix
+@@ -174,6 +174,28 @@ let
+       development_clone = validTeamConfig.teams.development;
+     };
+   };
++  repeatedTeamConfig = validTeamConfig // {
++    schema_version = 5;
++    teams = validTeamConfig.teams // {
++      development = validTeamConfig.teams.development // {
++        initial_member_counts.implementer = 2;
++      };
++    };
++  };
++  withCounts =
++    counts:
++    repeatedTeamConfig
++    // {
++      teams = repeatedTeamConfig.teams // {
++        development = repeatedTeamConfig.teams.development // {
++          initial_member_counts = counts;
++        };
++      };
++    };
++  repeatedPackage = mkPackage {
++    inherit pkgs;
++    teamConfig = repeatedTeamConfig;
++  };
+   configuredPackage = mkPackage {
+     inherit pkgs;
+     teamConfig = validTeamConfig;
+@@ -231,6 +253,49 @@ let
+   unmanagedPackage = mkPackage { inherit pkgs; };
+ in
+ assert (evaluate leadReviewedConfig).success;
++assert (evaluate repeatedTeamConfig).success;
++assert
++  !((evaluate (withCounts {
++    implementer = 0;
++  })).success
++  );
++assert
++  !((evaluate (withCounts {
++    implementer = -1;
++  })).success
++  );
++assert
++  !((evaluate (withCounts {
++    implementer = 1.5;
++  })).success
++  );
++assert
++  !((evaluate (withCounts {
++    implementer = "2";
++  })).success
++  );
++assert
++  !((evaluate (withCounts {
++    implementer = 64;
++  })).success
++  );
++assert
++  !((evaluate (withCounts {
++    implementer = 3;
++  })).success
++  );
++assert
++  !((evaluate (withCounts {
++    team_lead = 2;
++  })).success
++  );
++assert
++  !((evaluate (withCounts {
++    unknown = 2;
++  })).success
++  );
++assert !((evaluate (withCounts null)).success);
++assert !((evaluate (repeatedTeamConfig // { schema_version = 4; })).success);
+ assert !((evaluate invalidLeadReviewedReviewer).success);
+ assert !((evaluate invalidLeadReviewedImplementer).success);
+ assert !((evaluate invalidLeadReviewedLead).success);
+@@ -245,7 +310,9 @@ pkgs.runCommand "dev-workspace-agent-team-catalog" {
+     pkgs.jq
+   ];
+ } ''
+-  catalog=${configuredPackage}/share/dev-workspace/agent-teams.json
++  jq -e '.schema_version == 5 and .teams.development.initial_member_counts.implementer == 2' \
++      ${repeatedPackage}/share/dev-workspace/agent-teams.json >/dev/null
++    catalog=${configuredPackage}/share/dev-workspace/agent-teams.json
+   metadata=${configuredPackage}/share/dev-workspace/package.json
+   renamed_catalog=${renamedPackage}/share/dev-workspace/agent-teams.json
+   jq -e '.teams.development.roles | keys == ["reviewer", "team_lead"]' \
+diff --git a/portal/cmd/workspace-portal/main.go b/portal/cmd/workspace-portal/main.go
+index 173d097..60c03dc 100644
+--- a/portal/cmd/workspace-portal/main.go
++++ b/portal/cmd/workspace-portal/main.go
+@@ -211,6 +211,9 @@ func teamPresetCommand(args []string) error {
+ 		}
+ 		preset.LeadModel, preset.LeadEffort = settings.Model, settings.ReasoningEffort
+ 	}
++	if err := preset.ValidateCreationSize(); err != nil {
++		return err
++	}
+ 	return json.NewEncoder(os.Stdout).Encode(preset)
+ }
+ 
+diff --git a/portal/internal/agentteams/catalog.go b/portal/internal/agentteams/catalog.go
+index 9338557..8dadf01 100644
+--- a/portal/internal/agentteams/catalog.go
++++ b/portal/internal/agentteams/catalog.go
+@@ -23,7 +23,7 @@ import (
+ )
+ 
+ const (
+-	CatalogSchemaVersion        = 4
++	CatalogSchemaVersion        = 5
+ 	PackageMetadataSchema       = 1
+ 	maxCatalogBytes             = 4 * 1024 * 1024
+ 	maxPackageMetadataBytes     = 1024 * 1024
+@@ -98,16 +98,29 @@ type Routing struct {
+ 	LowRiskReviewRole       *string `json:"low_risk_review_role,omitempty"`
+ }
+ 
++// InitialMemberCount defaults each non-lead role to one member.
++func (team Team) InitialMemberCount(role string) int {
++	if count, ok := team.InitialMemberCounts[role]; ok {
++		return count
++	}
++	return 1
++}
++
++func supportedCatalogSchema(version int) bool {
++	return version == 4 || version == CatalogSchemaVersion
++}
++
+ type Team struct {
+-	Description   string          `json:"description"`
+-	DesignOwner   string          `json:"design_owner"`
+-	Lifecycle     Lifecycle       `json:"lifecycle"`
+-	MaxOpenAgents int             `json:"max_open_agents"`
+-	Mode          string          `json:"mode"`
+-	Roles         map[string]Role `json:"roles"`
+-	Routing       Routing         `json:"routing"`
+-	ServicePolicy string          `json:"service_policy"`
+-	TeamDigest    string          `json:"team_digest"`
++	InitialMemberCounts map[string]int  `json:"initial_member_counts,omitempty"`
++	Description         string          `json:"description"`
++	DesignOwner         string          `json:"design_owner"`
++	Lifecycle           Lifecycle       `json:"lifecycle"`
++	MaxOpenAgents       int             `json:"max_open_agents"`
++	Mode                string          `json:"mode"`
++	Roles               map[string]Role `json:"roles"`
++	Routing             Routing         `json:"routing"`
++	ServicePolicy       string          `json:"service_policy"`
++	TeamDigest          string          `json:"team_digest"`
+ }
+ 
+ type VerificationWatcher struct {
+@@ -296,7 +309,7 @@ func LoadPinned(packageRoot string, pin CatalogPin) (Catalog, error) {
+ 
+ func (pin CatalogPin) Validate() error {
+ 	if !nixStoreRoot(pin.PackagePath) || pin.CatalogPath != defaultCatalogRelativePath || !isDigest(pin.CatalogDigest) ||
+-		pin.SchemaVersion != CatalogSchemaVersion || pin.MetadataSchema != PackageMetadataSchema ||
++		!supportedCatalogSchema(pin.SchemaVersion) || pin.MetadataSchema != PackageMetadataSchema ||
+ 		pin.Capacity.RequiredNativeChildThreads < 1 || pin.Capacity.RequiredNativeChildThreads > 64 || !validGenerator(pin.Generator) || !validAdapter(pin.NativeAdapter) {
+ 		return errors.New("invalid catalog pin")
+ 	}
+@@ -369,7 +382,7 @@ func (metadata AgentTeamsMetadata) Validate() error {
+ 		return nil
+ 	}
+ 	if metadata.MetadataSchema != 1 || metadata.Catalog.Path != defaultCatalogRelativePath ||
+-		metadata.Catalog.SchemaVersion != CatalogSchemaVersion || !isDigest(metadata.Catalog.Digest) ||
++		!supportedCatalogSchema(metadata.Catalog.SchemaVersion) || !isDigest(metadata.Catalog.Digest) ||
+ 		metadata.Capacity.RequiredNativeChildThreads < 1 || metadata.Capacity.RequiredNativeChildThreads > 64 || metadata.NativeCapacity.ConfigKey != "agents.max_concurrent_threads_per_session" ||
+ 		metadata.NativeCapacity.RequiredValue != metadata.Capacity.RequiredNativeChildThreads ||
+ 		!validGenerator(metadata.Generator) || !validAdapter(metadata.NativeAdapter) {
+@@ -379,7 +392,7 @@ func (metadata AgentTeamsMetadata) Validate() error {
+ }
+ 
+ func (catalog Catalog) Validate() error {
+-	if catalog.SchemaVersion != CatalogSchemaVersion || !identifier(catalog.DefaultTeam) ||
++	if !supportedCatalogSchema(catalog.SchemaVersion) || !identifier(catalog.DefaultTeam) ||
+ 		catalog.Capacity.RequiredNativeChildThreads < 1 || catalog.Capacity.RequiredNativeChildThreads > 64 || !isDigest(catalog.CatalogDigest) ||
+ 		len(catalog.Teams) == 0 || !validWorkPolicy(catalog.WorkPolicy.Design) ||
+ 		!validWorkPolicy(catalog.WorkPolicy.Implementation) || !validAdapter(catalog.NativeAgentConfigs.Adapter) {
+@@ -395,7 +408,7 @@ func (catalog Catalog) Validate() error {
+ 		}
+ 	}
+ 	for name, team := range catalog.Teams {
+-		if !identifier(name) || !validTeam(name, team, catalog.Capacity, catalog.WorkPolicy) {
++		if !identifier(name) || (catalog.SchemaVersion == 4 && team.InitialMemberCounts != nil) || !validTeam(name, team, catalog.Capacity, catalog.WorkPolicy) {
+ 			return fmt.Errorf("invalid catalog team %q", name)
+ 		}
+ 	}
+@@ -493,6 +506,38 @@ func validTeam(name string, team Team, capacity Capacity, policies WorkPolicies)
+ 			return false
+ 		}
+ 	}
++	for role, count := range team.InitialMemberCounts {
++		if _, ok := team.Roles[role]; !ok || role == "team_lead" || count < 1 || count > 63 {
++			return false
++		}
++	}
++	members := 0
++	for role := range team.Roles {
++		if role != "team_lead" {
++			members += team.InitialMemberCount(role)
++		}
++	}
++	if members > 63 || (len(team.InitialMemberCounts) > 0 && members > team.MaxOpenAgents) {
++		return false
++	}
++	addresses := make(map[string]bool, members)
++	for role := range team.Roles {
++		if role == "team_lead" {
++			continue
++		}
++		addressRole := role
++		if role == "designer" {
++			addressRole = "architect"
++		}
++		for index := 0; index < team.InitialMemberCount(role); index++ {
++			address := fmt.Sprintf("%s%d", addressRole, index)
++			if addresses[address] {
++				return false
++			}
++			addresses[address] = true
++		}
++	}
++
+ 	owner, ok := team.Roles[team.DesignOwner]
+ 	if !ok || (team.DesignOwner == "team_lead" && owner.Purpose != "lead") ||
+ 		(team.DesignOwner != "team_lead" && owner.Purpose != "design") {
+@@ -848,8 +893,24 @@ func validateCatalogShape(data []byte) error {
+ 	if err := json.Unmarshal(root["teams"], &teams); err != nil || len(teams) == 0 {
+ 		return errors.New("catalog teams must be a nonempty object")
+ 	}
++	var schema int
++	if err := json.Unmarshal(root["schema_version"], &schema); err != nil {
++		return err
++	}
+ 	for _, rawTeam := range teams {
+-		team, err := strictObject(rawTeam, "description", "design_owner", "lifecycle", "max_open_agents", "mode", "roles", "routing", "service_policy", "team_digest")
++		fields := []string{"description", "design_owner", "lifecycle", "max_open_agents", "mode", "roles", "routing", "service_policy", "team_digest"}
++		var object map[string]json.RawMessage
++		if err := json.Unmarshal(rawTeam, &object); err != nil {
++			return err
++		}
++		if counts, present := object["initial_member_counts"]; present && schema == CatalogSchemaVersion {
++			fields = append(fields, "initial_member_counts")
++			var values map[string]int
++			if err := json.Unmarshal(counts, &values); err != nil || values == nil {
++				return errors.New("initial member counts must be an object of integers")
++			}
++		}
++		team, err := strictObject(rawTeam, fields...)
+ 		if err != nil {
+ 			return err
+ 		}
+diff --git a/portal/internal/agentteams/catalog_test.go b/portal/internal/agentteams/catalog_test.go
+index 065280c..688bd65 100644
+--- a/portal/internal/agentteams/catalog_test.go
++++ b/portal/internal/agentteams/catalog_test.go
+@@ -467,3 +467,85 @@ func TestManagedCapacityIsBoundedInEveryPersistedContract(t *testing.T) {
+ 		t.Fatal("managed package metadata accepted native child capacity above 64")
+ 	}
+ }
++
++func TestInitialMemberCountsValidation(t *testing.T) {
++	fixture := catalogFixture(t)
++	base := fixture.Teams["solo"]
++	base.Mode, base.MaxOpenAgents = "development", 4
++	base.Routing = Routing{DesignSimpleEffort: ptrString("high"), ImplementerSimpleEffort: ptrString("high")}
++	base.Roles["reviewer"] = Role{Model: "review-model", Effort: "high", Behavior: "reviewer", Purpose: "review", Instructions: "Review.", Lifetime: "session", AllowedEfforts: []string{"high"}, Access: "read_only", FreshContext: true}
++	for _, test := range []struct {
++		name   string
++		counts map[string]int
++		valid  bool
++	}{
++		{"default", nil, true}, {"two", map[string]int{"reviewer": 2}, true},
++		{"zero", map[string]int{"reviewer": 0}, false}, {"negative", map[string]int{"reviewer": -1}, false},
++		{"unknown", map[string]int{"missing": 2}, false}, {"lead", map[string]int{"team_lead": 2}, false},
++		{"over slots", map[string]int{"reviewer": 5}, false}, {"too large", map[string]int{"reviewer": 64}, false},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			team := base
++			team.InitialMemberCounts = test.counts
++			if got := validTeam("development", team, Capacity{RequiredNativeChildThreads: 4}, fixture.WorkPolicy); got != test.valid {
++				t.Fatalf("valid = %t", got)
++			}
++		})
++	}
++}
++
++func TestInitialCountsRejectOverlappingNumberedRoleNames(t *testing.T) {
++	fixture := catalogFixture(t)
++	team := fixture.Teams["solo"]
++	team.Mode, team.MaxOpenAgents = "development", 12
++	team.Routing = Routing{DesignSimpleEffort: ptrString("high"), ImplementerSimpleEffort: ptrString("high")}
++	reviewer := Role{Model: "review-model", Effort: "high", Behavior: "reviewer", Purpose: "review", Instructions: "Review.", Lifetime: "session", AllowedEfforts: []string{"high"}, Access: "read_only", FreshContext: true}
++	team.Roles["reviewer"], team.Roles["reviewer1"] = reviewer, reviewer
++	team.InitialMemberCounts = map[string]int{"reviewer": 11}
++	if validTeam("development", team, Capacity{RequiredNativeChildThreads: 12}, fixture.WorkPolicy) {
++		t.Fatal("reviewer10 collides with reviewer1 index zero")
++	}
++}
++
++func TestCatalogCountsShapeAndPreviousSchema(t *testing.T) {
++	for _, schema := range []int{4, 5} {
++		for _, value := range []string{"absent", "{}", "null", "[]", `{"reviewer":1.5}`, `{"reviewer":"2"}`} {
++			t.Run(fmt.Sprintf("%d/%s", schema, value), func(t *testing.T) {
++				var raw map[string]any
++				data := marshalFixture(t, catalogFixture(t))
++				if err := json.Unmarshal(data, &raw); err != nil {
++					t.Fatal(err)
++				}
++				raw["schema_version"] = schema
++				team := raw["teams"].(map[string]any)["solo"].(map[string]any)
++				if value != "absent" {
++					team["initial_member_counts"] = json.RawMessage(value)
++				}
++				valid := value == "absent" || (schema == 5 && value == "{}")
++				if err := validateCatalogShape(marshalFixture(t, raw)); (err == nil) != valid {
++					t.Fatalf("shape: %v", err)
++				}
++			})
++		}
++	}
++	// Reconstruct preceding schema-4 identities without adding defaults to its JSON.
++	catalog := catalogFixture(t)
++	catalog.SchemaVersion = 4
++	catalog.Teams["solo"] = withFixtureTeamDigest(t, catalog.Teams["solo"], marshalFixture(t, catalog), "solo")
++	digest, err := catalogDigest(marshalFixture(t, catalog))
++	if err != nil {
++		t.Fatal(err)
++	}
++	catalog.CatalogDigest = digest
++	for i := range catalog.NativeAgentConfigs.Roles {
++		role := &catalog.NativeAgentConfigs.Roles[i]
++		role.Name = expectedRoleName(digest, *role)
++	}
++	for i := range catalog.NativeAgentConfigs.Utilities {
++		utility := &catalog.NativeAgentConfigs.Utilities[i]
++		utility.Name = expectedUtilityName(digest, *utility)
++	}
++	if _, err := decodeCatalog(marshalFixture(t, catalog)); err != nil {
++		t.Fatalf("schema 4: %v", err)
++	}
++}
+diff --git a/portal/internal/agentteams/provenance.go b/portal/internal/agentteams/provenance.go
+index ea27730..afccc8e 100644
+--- a/portal/internal/agentteams/provenance.go
++++ b/portal/internal/agentteams/provenance.go
+@@ -14,7 +14,8 @@ import (
+ 	"github.com/aither64/dev-workspace/portal/internal/session"
+ )
+ 
+-const maxCreationJournalBytes = 64 * 1024
++// MaxCreationJournalBytes is the existing shared CLI and recovery file bound.
++const MaxCreationJournalBytes = 64 * 1024
+ 
+ func ownedByCurrentUser(info os.FileInfo) bool {
+ 	stat, ok := info.Sys().(*syscall.Stat_t)
+@@ -49,7 +50,7 @@ func ReadCreationJournal(workspace, slug string) (CreationJournal, bool, error)
+ 	if err != nil {
+ 		return CreationJournal{}, false, fmt.Errorf("inspect creation journal: %w", err)
+ 	}
+-	if !info.Mode().IsRegular() || !ownedByCurrentUser(info) || info.Mode().Perm() != 0o600 || info.Size() < 1 || info.Size() > maxCreationJournalBytes {
++	if !info.Mode().IsRegular() || !ownedByCurrentUser(info) || info.Mode().Perm() != 0o600 || info.Size() < 1 || info.Size() > MaxCreationJournalBytes {
+ 		return CreationJournal{}, false, errors.New("creation journal is not a private bounded regular file")
+ 	}
+ 	data, err := os.ReadFile(path)
+@@ -67,7 +68,7 @@ func ReadCreationJournal(workspace, slug string) (CreationJournal, bool, error)
+ // cross-state fields. It is shared by lifecycle classification and portal
+ // receipt recovery so a managed journal cannot gain two interpretations.
+ func DecodeCreationJournal(data []byte, slug string) (CreationJournal, error) {
+-	if len(data) == 0 || len(data) > maxCreationJournalBytes {
++	if len(data) == 0 || len(data) > MaxCreationJournalBytes {
+ 		return CreationJournal{}, errors.New("creation journal exceeds bounds")
+ 	}
+ 	if err := rejectDuplicateJSONKeys(data); err != nil {
+@@ -201,6 +202,7 @@ func validateDirectCreationTeam(data json.RawMessage, model, effort string) erro
+ 	if withInstructions != (len(raw) == 10) {
+ 		return errors.New("invalid direct team instruction fields")
+ 	}
++	indices := make(map[string]int)
+ 	for _, key := range []string{"id", "name", "description", "roles", "catalogDigest", "teamDigest", "leadModel", "leadEffort", "members"} {
+ 		if _, ok := raw[key]; !ok {
+ 			return errors.New("incomplete direct team object")
+@@ -264,13 +266,14 @@ func validateDirectCreationTeam(data json.RawMessage, model, effort string) erro
+ 				return errors.New("incomplete direct team member object")
+ 			}
+ 		}
+-		if !directCreationRole(member.Role) || member.Role == "lead" || member.Address != member.Role+"0" ||
++		if !directCreationRole(member.Role) || member.Role == "lead" || member.Address != fmt.Sprintf("%s%d", member.Role, indices[member.Role]) ||
+ 			!directCreationScalar(member.Model, session.MaxAgentTeamPersistedScalarBytes) ||
+ 			!directCreationScalar(member.ReasoningEffort, session.MaxAgentTeamPersistedScalarBytes) ||
+ 			!validDirectCreationPolicy(member.Role, member.Behavior, member.Access, member.Purpose, member.Instructions, withInstructions) ||
+ 			team.Roles[index+1] != member.Address || seen[member.Address] {
+ 			return errors.New("invalid direct team member")
+ 		}
++		indices[member.Role]++
+ 		seen[member.Address] = true
+ 	}
+ 	return nil
+diff --git a/portal/internal/agentteams/provenance_test.go b/portal/internal/agentteams/provenance_test.go
+index d2f1862..e9fc432 100644
+--- a/portal/internal/agentteams/provenance_test.go
++++ b/portal/internal/agentteams/provenance_test.go
+@@ -71,3 +71,24 @@ func TestDirectCreationSnapshotRejectsMixedAndInvalidPromptFields(t *testing.T)
+ 		})
+ 	}
+ }
++
++func TestDirectCreationRepeatedRolesRequireContiguousAddresses(t *testing.T) {
++	for _, address := range []string{"scribe1", "scribe0", "scribe2", "scribe01", "scribe-1"} {
++		team := directCreationSnapshot(true)
++		original := team["members"].([]any)[0].(map[string]any)
++		second := make(map[string]any)
++		for k, v := range original {
++			second[k] = v
++		}
++		second["address"] = address
++		team["members"] = []any{original, second}
++		team["roles"] = []string{"lead", "scribe0", address}
++		data, err := json.Marshal(team)
++		if err != nil {
++			t.Fatal(err)
++		}
++		if err := validateDirectCreationTeam(data, "model-1", "high"); (err == nil) != (address == "scribe1") {
++			t.Fatalf("%s: %v", address, err)
++		}
++	}
++}
+diff --git a/portal/internal/teamruntime/runtime.go b/portal/internal/teamruntime/runtime.go
+index 8a91638..5b90a53 100644
+--- a/portal/internal/teamruntime/runtime.go
++++ b/portal/internal/teamruntime/runtime.go
+@@ -162,6 +162,27 @@ func (preset Preset) RoleSummary() string {
+ 	return strings.Join(parts, ", ")
+ }
+ 
++// ValidateCreationSize checks a fresh selection before any receipt or root is
++// created. Reserve the largest filesystem component for the eventual CLI slug
++// and include the creating journal envelope, JSON escaping and trailing newline.
++// Retained selections keep their original validation and byte limits.
++func (preset Preset) ValidateCreationSize() error {
++	journal := map[string]any{
++		"schema": 3, "slug": strings.Repeat("s", 255),
++		"goal_sha256": strings.Repeat("0", 64), "run_codex": true,
++		"state": "creating", "model": preset.LeadModel, "effort": preset.LeadEffort,
++		"direct_team": preset, "tmux_identity": strings.Repeat("0", 64), "sensitive": true,
++	}
++	data, err := json.Marshal(journal)
++	if err != nil {
++		return err
++	}
++	if len(data)+1 > agentteams.MaxCreationJournalBytes {
++		return errors.New("starting team exceeds the 64 KiB creation journal limit")
++	}
++	return nil
++}
++
+ type MemberSpec struct {
+ 	Role         string `json:"role"`
+ 	Address      string `json:"address"`
+@@ -404,6 +425,7 @@ func PresetsFromCatalog(catalog agentteams.Catalog) ([]Preset, error) {
+ 		}
+ 		sort.Strings(roleNames)
+ 		addresses := make(map[string]bool, len(roleNames))
++		memberAddresses := make(map[string]bool)
+ 		for _, roleName := range roleNames {
+ 			role := team.Roles[roleName]
+ 			addressRole := roleName
+@@ -421,10 +443,21 @@ func PresetsFromCatalog(catalog agentteams.Catalog) ([]Preset, error) {
+ 			if err := validateCatalogInstructions(&catalog, id, roleName, role); err != nil {
+ 				return nil, err
+ 			}
+-			preset.Members = append(preset.Members, MemberSpec{Role: addressRole,
+-				Address: addressRole + "0", Model: role.Model, Effort: role.Effort,
+-				Behavior: role.Behavior, Purpose: role.Purpose, Instructions: role.Instructions, Access: role.Access})
+-			preset.Roles = append(preset.Roles, addressRole+"0")
++			count := team.InitialMemberCount(roleName)
++			if count < 1 || count > 63 || len(preset.Members)+count > 63 {
++				return nil, fmt.Errorf("team %s has invalid initial member count", id)
++			}
++			for index := 0; index < count; index++ {
++				address := fmt.Sprintf("%s%d", addressRole, index)
++				if memberAddresses[address] {
++					return nil, fmt.Errorf("team %s has duplicate member address %s", id, address)
++				}
++				memberAddresses[address] = true
++				preset.Members = append(preset.Members, MemberSpec{Role: addressRole,
++					Address: address, Model: role.Model, Effort: role.Effort,
++					Behavior: role.Behavior, Purpose: role.Purpose, Instructions: role.Instructions, Access: role.Access})
++				preset.Roles = append(preset.Roles, address)
++			}
+ 		}
+ 		presets = append(presets, preset)
+ 	}
+@@ -438,6 +471,9 @@ func FindCatalogPreset(catalog agentteams.Catalog, id string) (Preset, error) {
+ 	}
+ 	for _, preset := range presets {
+ 		if preset.ID == id {
++			if err := preset.ValidateCreationSize(); err != nil {
++				return Preset{}, err
++			}
+ 			return preset, nil
+ 		}
+ 	}
+@@ -1013,14 +1049,16 @@ func (service Service) ApplyPreset(ctx context.Context, slug, rootThreadID, cwd
+ // silently appends a changed preset to a team that the user has edited.
+ func (service Service) ApplyPresetSpec(ctx context.Context, slug, rootThreadID, cwd string, environment map[string]string, preset Preset) (*Roster, error) {
+ 	if service.Store == nil || service.Client == nil || preset.ID == "" || preset.CatalogDigest == "" ||
+-		preset.TeamDigest == "" || preset.LeadModel == "" || preset.LeadEffort == "" {
++		preset.TeamDigest == "" || preset.LeadModel == "" || preset.LeadEffort == "" || len(preset.Members) > 63 {
+ 		return nil, errors.New("team preset is incomplete")
+ 	}
++	indices := make(map[string]uint64)
+ 	for _, member := range preset.Members {
+ 		if !rolePattern.MatchString(member.Role) || member.Role == "lead" ||
+-			member.Address != member.Role+"0" || member.Model == "" || member.Effort == "" {
++			member.Address != fmt.Sprintf("%s%d", member.Role, indices[member.Role]) || member.Model == "" || member.Effort == "" {
+ 			return nil, errors.New("team preset contains an invalid member")
+ 		}
++		indices[member.Role]++
+ 		if err := validateMemberPolicy(member.Role, member.Behavior, member.Purpose, member.Instructions, member.Access); err != nil {
+ 			return nil, fmt.Errorf("team preset member %s: %w", member.Address, err)
+ 		}
+@@ -1035,12 +1073,14 @@ func (service Service) ApplyPresetSpec(ctx context.Context, slug, rootThreadID,
+ 				roster.LeadModel, roster.LeadEffort = preset.LeadModel, preset.LeadEffort
+ 				roster.LeadInstructions = preset.LeadInstructions
+ 				now := time.Now().UTC()
++				indices := make(map[string]uint64)
+ 				for _, member := range preset.Members {
+ 					roster.Members = append(roster.Members, Member{Address: member.Address, Role: member.Role,
+-						Index: 0, Model: member.Model, Effort: member.Effort,
++						Index: indices[member.Role], Model: member.Model, Effort: member.Effort,
+ 						Behavior: member.Behavior, Purpose: member.Purpose, Instructions: member.Instructions,
+ 						Access: member.Access, PolicyCatalogDigest: preset.CatalogDigest,
+ 						State: "creating", AddedAt: now})
++					indices[member.Role]++
+ 				}
+ 				return nil
+ 			}
+@@ -1052,7 +1092,7 @@ func (service Service) ApplyPresetSpec(ctx context.Context, slug, rootThreadID,
+ 			}
+ 			for index, spec := range preset.Members {
+ 				member := roster.Members[index]
+-				if member.Address != spec.Address || member.Role != spec.Role || member.Model != spec.Model ||
++				if member.Address != spec.Address || member.Role != spec.Role || fmt.Sprintf("%s%d", member.Role, member.Index) != spec.Address || member.Model != spec.Model ||
+ 					member.Effort != spec.Effort || member.Behavior != spec.Behavior ||
+ 					member.Purpose != spec.Purpose || member.Instructions != spec.Instructions || member.Access != spec.Access ||
+ 					(member.State != "creating" && member.State != "ready") {
+diff --git a/portal/internal/teamruntime/runtime_test.go b/portal/internal/teamruntime/runtime_test.go
+index e816879..0435156 100644
+--- a/portal/internal/teamruntime/runtime_test.go
++++ b/portal/internal/teamruntime/runtime_test.go
+@@ -3037,3 +3037,160 @@ func TestArchiveExplicitAllPreservesPromptsAndRetainedMemberWithoutRecreation(t
+ 		t.Fatal("retry recreated archived member")
+ 	}
+ }
++
++func TestRepeatedImplementerPresetRetryForkAndAdd(t *testing.T) {
++	workspace := filepath.Join(t.TempDir(), "workspace")
++	store, err := NewStore(t.TempDir(), workspace)
++	if err != nil {
++		t.Fatal(err)
++	}
++	client := &testClient{nameFailure: true}
++	service := Service{Store: store, Client: client, Workspace: workspace}
++	catalog := agentteams.Catalog{CatalogDigest: fmt.Sprintf("%064x", 1), Teams: map[string]agentteams.Team{
++		"delegated": {Description: "Two implementers", InitialMemberCounts: map[string]int{"implementer": 2},
++			TeamDigest: fmt.Sprintf("%064x", 2), Roles: map[string]agentteams.Role{
++				"team_lead":   {Model: "lead-model", Effort: "high", Purpose: "lead", Instructions: "Coordinate."},
++				"implementer": {Model: "implementation-model", Effort: "xhigh", Behavior: "implementer", Purpose: "implementation", Instructions: "Own the package.", Access: "workspace_write"},
++			}},
++	}}
++	preset, err := FindCatalogPreset(catalog, "delegated")
++	if err != nil {
++		t.Fatal(err)
++	}
++	if preset.MemberCount() != 3 || preset.RoleSummary() != "1 lead, 2 implementers" || preset.Members[1].Address != "implementer1" {
++		t.Fatalf("projection: %#v", preset)
++	}
++	cwd := filepath.Join(workspace, "work", "source")
++	if _, err := service.ApplyPresetSpec(context.Background(), "source", "root-source", cwd, nil, preset); err == nil {
++		t.Fatal("expected interrupted creation")
++	}
++	partial, err := store.Load("source", "root-source")
++	if err != nil || len(partial.Members) != 2 || partial.Members[1].Index != 1 {
++		t.Fatalf("partial: %#v, %v", partial, err)
++	}
++	ready, err := service.ApplyPresetSpec(context.Background(), "source", "root-source", cwd, nil, preset)
++	if err != nil || client.next != 2 {
++		t.Fatalf("retry: %#v, starts %d, %v", ready, client.next, err)
++	}
++	if ready, err = service.ApplyPresetSpec(context.Background(), "source", "root-source", cwd, nil, preset); err != nil || client.next != 2 {
++		t.Fatalf("idempotent retry: %v", err)
++	}
++	fork, err := service.Fork(context.Background(), ready, "target", "root-target", filepath.Join(workspace, "work", "target"), nil)
++	if err != nil || len(fork.Members) != 2 || fork.Members[1].Address != "implementer1" || fork.Members[1].Index != 1 || fork.Members[1].Instructions != preset.Members[1].Instructions {
++		t.Fatalf("fork: %#v, %v", fork, err)
++	}
++	service.Catalog = &catalog
++	member, err := service.Add(context.Background(), "source", "root-source", cwd, nil, "implementer", "model-1", "xhigh")
++	if err != nil || member.Address != "implementer2" || member.Index != 2 {
++		t.Fatalf("add: %#v, %v", member, err)
++	}
++}
++
++func TestPreviousUnmanagedFullPresetRetryKeepsAcceptedMembers(t *testing.T) {
++	workspace := filepath.Join(t.TempDir(), "workspace")
++	store, err := NewStore(t.TempDir(), workspace)
++	if err != nil {
++		t.Fatal(err)
++	}
++	client := &testClient{}
++	service := Service{Store: store, Client: client, Workspace: workspace}
++	// The complete reservation made by schema-4-era ApplyPreset("full").
++	_, err = store.Update(context.Background(), "source", "root-source", true, func(roster *Roster) error {
++		for _, role := range []string{"architect", "implementer", "reviewer"} {
++			policy, err := catalogRole(nil, "", role, false)
++			if err != nil {
++				return err
++			}
++			roster.Members = append(roster.Members, Member{Address: role + "0", Role: role, Index: 0,
++				Model: "model-1", Effort: "high", Behavior: policy.Behavior, Purpose: policy.Purpose,
++				Instructions: policy.Instructions, Access: policy.Access, State: "creating", AddedAt: time.Now().UTC()})
++		}
++		return nil
++	})
++	if err != nil {
++		t.Fatal(err)
++	}
++	members, err := service.ApplyPreset(context.Background(), "source", "root-source",
++		filepath.Join(workspace, "work", "source"), nil, "full", "model-1", "high")
++	if err != nil {
++		t.Fatalf("retry of preceding full preset failed: %v", err)
++	}
++	if len(members) != 3 {
++		t.Fatalf("retry changed saved member count: %d", len(members))
++	}
++}
++
++func TestFreshPresetSizeIncludesEscapingAndJournalEnvelope(t *testing.T) {
++	preset := Preset{ID: "delegated", Name: "Full team", Description: "Expanded team", CatalogDigest: strings.Repeat("a", 64), TeamDigest: strings.Repeat("b", 64), LeadModel: "model-1", LeadEffort: "high", LeadInstructions: "Coordinate.", Roles: []string{"lead"}}
++	for i := 0; i < 16; i++ {
++		address := fmt.Sprintf("implementer%d", i)
++		preset.Roles = append(preset.Roles, address)
++		preset.Members = append(preset.Members, MemberSpec{Role: "implementer", Address: address, Model: "model-1", Effort: "high", Behavior: "implementer", Purpose: "implementation", Instructions: strings.Repeat("x", 4096), Access: "workspace_write"})
++	}
++	if err := preset.ValidateCreationSize(); err == nil {
++		t.Fatal("accepted oversized expanded journal")
++	}
++	preset.Members = preset.Members[:14]
++	preset.Roles = preset.Roles[:15]
++	if err := preset.ValidateCreationSize(); err != nil {
++		t.Fatalf("fitting team: %v", err)
++	}
++	for i := range preset.Members {
++		preset.Members[i].Instructions = strings.Repeat("\"", 4096)
++	}
++	if err := preset.ValidateCreationSize(); err == nil {
++		t.Fatal("ignored JSON escaping expansion")
++	}
++	// Use a short actual slug to prove a permitted selection remains readable.
++	for i := range preset.Members {
++		preset.Members[i].Instructions = strings.Repeat("x", 4096)
++	}
++	journal := map[string]any{"schema": 3, "slug": "example", "goal_sha256": strings.Repeat("c", 64), "run_codex": true, "state": "creating", "tmux_identity": strings.Repeat("d", 64), "model": preset.LeadModel, "effort": preset.LeadEffort, "direct_team": preset}
++	data, err := json.Marshal(journal)
++	if err != nil {
++		t.Fatal(err)
++	}
++	if _, err := agentteams.DecodeCreationJournal(append(data, '\n'), "example"); err != nil {
++		t.Fatalf("permitted journal unreadable: %v", err)
++	}
++}
++
++func TestPersistedExpandedJournalAtExactBoundRemainsReadable(t *testing.T) {
++	preset := Preset{ID: "delegated", Name: "Full team", Description: "Expanded", CatalogDigest: strings.Repeat("a", 64), TeamDigest: strings.Repeat("b", 64), LeadModel: "model-1", LeadEffort: "high", LeadInstructions: "Coordinate.", Roles: []string{"lead"}}
++	for i := 0; i < 16; i++ {
++		address := fmt.Sprintf("implementer%d", i)
++		preset.Roles = append(preset.Roles, address)
++		preset.Members = append(preset.Members, MemberSpec{Role: "implementer", Address: address, Model: "model-1", Effort: "high", Behavior: "implementer", Purpose: "implementation", Instructions: strings.Repeat("x", 4096), Access: "workspace_write"})
++	}
++	journal := map[string]any{"schema": 3, "slug": "example", "goal_sha256": strings.Repeat("c", 64), "run_codex": true, "state": "creating", "tmux_identity": strings.Repeat("d", 64), "model": preset.LeadModel, "effort": preset.LeadEffort, "direct_team": preset}
++	data, err := json.Marshal(journal)
++	if err != nil {
++		t.Fatal(err)
++	}
++	excess := len(data) + 1 - agentteams.MaxCreationJournalBytes
++	if excess <= 0 {
++		t.Fatal("fixture no longer exceeds the persisted bound")
++	}
++	for i := range preset.Members {
++		amount := min(excess, len(preset.Members[i].Instructions)-1)
++		preset.Members[i].Instructions = preset.Members[i].Instructions[:len(preset.Members[i].Instructions)-amount]
++		excess -= amount
++		if excess == 0 {
++			break
++		}
++	}
++	data, err = json.Marshal(journal)
++	if err != nil {
++		t.Fatal(err)
++	}
++	data = append(data, '\n')
++	if len(data) != agentteams.MaxCreationJournalBytes {
++		t.Fatalf("boundary fixture size %d", len(data))
++	}
++	if _, err := agentteams.DecodeCreationJournal(data, "example"); err != nil {
++		t.Fatal(err)
++	}
++	if _, err := agentteams.DecodeCreationJournal(append(data, ' '), "example"); err == nil {
++		t.Fatal("accepted an oversized persisted file")
++	}
++}
+diff --git a/portal/internal/web/creation.go b/portal/internal/web/creation.go
+index bd63247..15227bb 100644
+--- a/portal/internal/web/creation.go
++++ b/portal/internal/web/creation.go
+@@ -136,6 +136,9 @@ func (s *Server) resolveManagedCreation(_ context.Context, request creationReque
+ 	if err := validDirectTeamPreset(preset); err != nil {
+ 		return creationRequest{}, fmt.Errorf("resolve direct team preset: %w", err)
+ 	}
++	if err := preset.ValidateCreationSize(); err != nil {
++		return creationRequest{}, err
++	}
+ 	request.Team, request.CatalogDigest = preset.ID, preset.CatalogDigest
+ 	request.directTeam = &preset
+ 	return request, nil
+@@ -159,13 +162,15 @@ func validDirectTeamPreset(preset teamruntime.Preset) error {
+ 	addresses := make(map[string]struct{}, len(preset.Members))
+ 	expectedRoles := make([]string, 0, len(preset.Members)+1)
+ 	expectedRoles = append(expectedRoles, "lead")
++	indices := make(map[string]int)
+ 	for _, member := range preset.Members {
+ 		if !validDirectMemberRole(member.Role) || member.Role == "lead" ||
+-			member.Address != member.Role+"0" || member.Model == "" || member.Effort == "" ||
++			member.Address != fmt.Sprintf("%s%d", member.Role, indices[member.Role]) || member.Model == "" || member.Effort == "" ||
+ 			!validDirectMemberPolicy(member.Role, member.Behavior, member.Access, member.Purpose, member.Instructions, withInstructions) ||
+ 			validateCreationSettingValue(member.Model) != nil || validateCreationSettingValue(member.Effort) != nil {
+ 			return errors.New("direct team preset has an invalid member")
+ 		}
++		indices[member.Role]++
+ 		if _, duplicate := addresses[member.Address]; duplicate {
+ 			return errors.New("direct team preset has duplicate member addresses")
+ 		}
+diff --git a/portal/internal/web/creation_test.go b/portal/internal/web/creation_test.go
+index 78a4bb6..060b81f 100644
+--- a/portal/internal/web/creation_test.go
++++ b/portal/internal/web/creation_test.go
+@@ -136,6 +136,20 @@ func TestDirectTeamPresetAcceptsFrozenCustomRoleInstructions(t *testing.T) {
+ 	if err := validDirectTeamPreset(preset); err != nil {
+ 		t.Fatal(err)
+ 	}
++	member := preset.Members[0]
++	member.Address = "scribe1"
++	preset.Members = append(preset.Members, member)
++	preset.Roles = append(preset.Roles, "scribe1")
++	if err := validDirectTeamPreset(preset); err != nil {
++		t.Fatal(err)
++	}
++	for _, bad := range []string{"scribe0", "scribe2", "scribe01"} {
++		preset.Members[1].Address, preset.Roles[2] = bad, bad
++		if err := validDirectTeamPreset(preset); err == nil {
++			t.Fatalf("accepted %s", bad)
++		}
++	}
++	preset.Members[1].Address, preset.Roles[2] = "scribe1", "scribe1"
+ 	data, err := json.Marshal(preset)
+ 	if err != nil {
+ 		t.Fatal(err)
+@@ -1944,3 +1958,33 @@ func TestCreationJSONAcceptanceIncludesDurableRequest(t *testing.T) {
+ 		t.Fatalf("not durably accepted: %v", err)
+ 	}
+ }
++
++func TestOversizedStartingTeamRejectedBeforeCreation(t *testing.T) {
++	server := newTestServer(t)
++	catalog := agentteams.Catalog{CatalogDigest: strings.Repeat("a", 64), Teams: map[string]agentteams.Team{
++		"delegated": {Description: "Expanded", TeamDigest: strings.Repeat("b", 64), InitialMemberCounts: map[string]int{"implementer": 16}, Roles: map[string]agentteams.Role{
++			"team_lead":   {Model: "model-1", Effort: "high", Purpose: "lead", Instructions: "Coordinate."},
++			"implementer": {Model: "model-1", Effort: "high", Behavior: "implementer", Purpose: "implementation", Instructions: strings.Repeat("x", 4096), Access: "workspace_write"},
++		}},
++	}}
++	server.installedTeams = &agentteams.Installed{Managed: true, Catalog: &catalog}
++	_, err := server.resolveManagedCreation(context.Background(), creationRequest{Kind: "new", Slug: "example", Goal: "Work"}, agentteams.CreationSelectionInput{
++		Team: agentteams.StringPresence{Present: true, Value: "delegated"}, CatalogDigest: agentteams.StringPresence{Present: true, Value: catalog.CatalogDigest},
++	})
++	if err == nil {
++		t.Fatal("accepted an unreadable expanded snapshot")
++	}
++	if len(server.creations) != 0 {
++		t.Fatal("published a partial creation")
++	}
++	if _, err := os.Stat(filepath.Join(server.config.Workspace, "work", "example")); !os.IsNotExist(err) {
++		t.Fatalf("created session tracking: %v", err)
++	}
++	entries, err := os.ReadDir(server.creationDirectory())
++	if err != nil && !os.IsNotExist(err) {
++		t.Fatal(err)
++	}
++	if len(entries) != 0 {
++		t.Fatalf("persisted creation artifacts: %v", entries)
++	}
++}
+diff --git a/portal/internal/web/preparation.go b/portal/internal/web/preparation.go
+index ecd64e5..6378bab 100644
+--- a/portal/internal/web/preparation.go
++++ b/portal/internal/web/preparation.go
+@@ -283,6 +283,9 @@ func (s *Server) freezePreparationPreset(input preparationInput) (*teamruntime.P
+ 	if err := validDirectTeamPreset(preset); err != nil {
+ 		return nil, err
+ 	}
++	if err := preset.ValidateCreationSize(); err != nil {
++		return nil, err
++	}
+ 	encoded, err := json.Marshal(preset)
+ 	if err != nil {
+ 		return nil, err
+diff --git a/portal/internal/workspacecodex/lead_policy.go b/portal/internal/workspacecodex/lead_policy.go
+index e75b2f8..4251efe 100644
+--- a/portal/internal/workspacecodex/lead_policy.go
++++ b/portal/internal/workspacecodex/lead_policy.go
+@@ -8,23 +8,25 @@ import (
+ 	"github.com/aither64/codex-web/codex"
+ )
+ 
+-const leadDeveloperInstructions = "You are the lead of this development session. " +
++const leadDeveloperInstructions = "You are the lead and user contact of this development session. " +
+ 	"At the start of each new substantive work item, inspect the live same-session roster with " +
+-	"dev-session team list \"$DEV_SESSION_SLUG\" --as-is. " +
+-	"If there is no roster or no ready member for the task, work as a solo lead. " +
+-	"Use only ready members and their saved model and reasoning settings. " +
+-	"Delegate nontrivial design to an available architect and separable implementation " +
+-	"to an available implementer using dev-session team assign " +
+-	"\"$DEV_SESSION_SLUG\" --as-is --to ADDRESS --message-stdin, with a concrete task " +
+-	"and expected result. If assignment is refused while session creation is " +
+-	"finishing, retry after it becomes ready. Briefly tell the user who owns " +
+-	"what, then integrate their " +
+-	"reports. Follow the workspace's mandatory review workflow for an eligible " +
+-	"retained reviewer; long verification uses its separate utility watcher. " +
+-	"Keep short or dependent steps yourself. Respect the user's directions and " +
+-	"current collaboration mode. Do not replace ready retained members with " +
+-	"fresh agents for their roles. Never invent members or address another " +
+-	"session's team."
++	"dev-session team list \"$DEV_SESSION_SLUG\" --as-is. Use retained purposes, access and settings. " +
++	"When implementation members exist, coordinate complete execution packages rather than doing their work. " +
++	"Delegate substantive investigation and design to a design-purpose member when present; otherwise own design. " +
++	"Assign diagnosis, source, tests, technical documentation, quick checks, commits and follow-up fixes, " +
++	"including review findings and dependent implementation, to implementation-purpose members using " +
++	"dev-session team assign \"$DEV_SESSION_SLUG\" --as-is --to ADDRESS --message-stdin. " +
++	"Give each package an owner, expected result, acceptance criteria, dependencies and checks. " +
++	"Keep multiple implementers productive with independent work; serialize overlapping edits and Git operations. " +
++	"Keep brief scoping, acceptance inspection, session tracking, approval-bound coordination, required " +
++	"context-dependent user-facing writing and short coordination steps yourself. Assess reports, resolve " +
++	"dependencies and communicate progress to the user. Do not duplicate specialist investigation while waiting. " +
++	"If there is no roster or no implementation member, implement yourself. A busy, unready or inaccessible " +
++	"member does not qualify for this fallback: resolve the condition and do not take over its work. " +
++	"If assignment is refused during creation, retry after the session becomes ready. Follow the workspace's " +
++	"mandatory review workflow for retained reviewers; long verification uses its separate utility watcher. " +
++	"Respect user directions and the current collaboration mode. Do not replace retained members with fresh " +
++	"agents for their roles, invent members or address another session's team."
+ 
+ // LeadThreadPolicy applies only to the normal root conversation. A catalog
+ // instruction is frozen when the session is created; legacy sessions retain
+diff --git a/portal/internal/workspacecodex/lead_policy_test.go b/portal/internal/workspacecodex/lead_policy_test.go
+index f1c73ef..2bcddfd 100644
+--- a/portal/internal/workspacecodex/lead_policy_test.go
++++ b/portal/internal/workspacecodex/lead_policy_test.go
+@@ -27,3 +27,15 @@ func TestLeadPolicyBindsSessionWithoutReplacingFrozenRoleInstructions(t *testing
+ 		t.Fatal("legacy policy unexpectedly has a session binding")
+ 	}
+ }
++
++func TestFallbackLeadDelegatesExecutionAndDistinguishesMissingMembers(t *testing.T) {
++	text := LeadThreadPolicy("", "", "").DeveloperInstructions
++	for _, expected := range []string{"complete execution packages", "dependent implementation", "acceptance criteria", "short coordination steps", "no implementation member, implement yourself", "busy, unready or inaccessible"} {
++		if !strings.Contains(text, expected) {
++			t.Errorf("missing %q", expected)
++		}
++	}
++	if strings.Contains(text, "Keep short or dependent steps yourself") {
++		t.Fatal("broad execution exception remains")
++	}
++}
+diff --git a/test/dev_session/agent_team_creation_test.rb b/test/dev_session/agent_team_creation_test.rb
+index 8223f83..698f37f 100644
+--- a/test/dev_session/agent_team_creation_test.rb
++++ b/test/dev_session/agent_team_creation_test.rb
+@@ -3,6 +3,59 @@
+ require_relative '../support/dev_session_test_case'
+ 
+ class DevSessionTest < Minitest::Test
++  def test_creation_journal_writer_rejects_oversize_before_publication
++    with_workspace do |workspace|
++      runner = DevSession::Runner.new(workspace:, out: StringIO.new, err: StringIO.new)
++      preset = direct_team_preset
++      preset['leadInstructions'] = 'Coordinate.'
++      preset['members'] = 16.times.map do |index|
++        {'role' => 'implementer', 'address' => "implementer#{index}",
++         'model' => 'model-1', 'reasoningEffort' => 'high',
++         'behavior' => 'implementer', 'purpose' => 'implementation',
++         'access' => 'workspace_write', 'instructions' => 'x' * 4096}
++      end
++      preset['roles'] = ['lead'] + preset['members'].map { |m| m['address'] }
++      journal = {'schema' => 3, 'slug' => 'example', 'goal_sha256' => 'c' * 64,
++                 'run_codex' => true, 'state' => 'creating', 'tmux_identity' => 'd' * 64,
++                 'model' => preset['leadModel'], 'effort' => preset['leadEffort'], 'direct_team' => preset}
++      path = File.join(workspace, 'example.creation.json')
++      assert(runner.send(:valid_direct_team_preset?, preset))
++      assert_raises(DevSession::Error) { runner.send(:write_creation_journal, path, journal, create: true) }
++      refute(File.exist?(path))
++      assert_empty(Dir.glob("#{path}.*.tmp"))
++      # Trim only instruction bytes to hit the inclusive persisted-file boundary.
++      excess = JSON.generate(journal).bytesize + 1 - 64 * 1024
++      preset['members'].each do |member|
++        amount = [excess, member['instructions'].bytesize - 1].min
++        member['instructions'] = member['instructions'][0, member['instructions'].bytesize - amount]
++        excess -= amount
++        break if excess.zero?
++      end
++      runner.send(:write_creation_journal, path, journal, create: true)
++      assert_equal(64 * 1024, File.size(path))
++      assert_equal(journal, runner.send(:read_private_json_object, path, 'creation journal', max_size: 64 * 1024, mode: 0o600))
++      # A newline that takes the record over the limit must preserve the old file.
++      preset['members'][0]['instructions'] += 'x'
++      assert_raises(DevSession::Error) { runner.send(:write_creation_journal, path, journal, create: false) }
++      assert_equal(64 * 1024, File.size(path))
++    end
++  end
++
++  def test_repeated_direct_member_addresses_are_contiguous
++    with_workspace do |workspace|
++      runner = DevSession::Runner.new(workspace:, out: StringIO.new, err: StringIO.new)
++      preset = direct_team_preset
++      second = preset['members'].last.merge('address' => 'implementer1')
++      preset['members'] << second
++      preset['roles'] << 'implementer1'
++      assert(runner.send(:valid_direct_team_preset?, preset))
++      %w[implementer0 implementer2 implementer01].each do |address|
++        second['address'] = preset['roles'][-1] = address
++        refute(runner.send(:valid_direct_team_preset?, preset), address)
++      end
++    end
++  end
++
+   def test_direct_creation_browser_notification_preference_is_optional_boolean
+     with_workspace do |workspace|
+       runner = DevSession::Runner.new(workspace:, out: StringIO.new, err: StringIO.new)
+diff --git a/test/workspace_host/agent_team_registration_test.rb b/test/workspace_host/agent_team_registration_test.rb
+index af497b0..094396c 100644
+--- a/test/workspace_host/agent_team_registration_test.rb
++++ b/test/workspace_host/agent_team_registration_test.rb
+@@ -171,6 +171,37 @@ class WorkspaceHostTest < Minitest::Test
+     end
+   end
+ 
++  def test_direct_creation_journal_at_existing_size_limit_remains_readable
++    Dir.mktmpdir do |directory|
++      _root, _entry, environment = registration_workspace(directory)
++      host = DevWorkspaceHost::Host.new(env: environment, out: StringIO.new, err: StringIO.new)
++      preset = {'id' => 'delegated', 'name' => 'Full team', 'description' => 'Expanded',
++                'catalogDigest' => 'a' * 64, 'teamDigest' => 'b' * 64,
++                'leadModel' => 'model-1', 'leadEffort' => 'high', 'leadInstructions' => 'Coordinate.'}
++      preset['members'] = 16.times.map do |index|
++        {'role' => 'implementer', 'address' => "implementer#{index}",
++         'model' => 'model-1', 'reasoningEffort' => 'high', 'behavior' => 'implementer',
++         'purpose' => 'implementation', 'access' => 'workspace_write', 'instructions' => 'x' * 4096}
++      end
++      preset['roles'] = ['lead'] + preset['members'].map { |m| m['address'] }
++      journal = {'schema' => 3, 'slug' => 'example', 'goal_sha256' => 'c' * 64,
++                 'run_codex' => true, 'state' => 'creating', 'tmux_identity' => 'd' * 64,
++                 'model' => 'model-1', 'effort' => 'high', 'direct_team' => preset}
++      excess = JSON.generate(journal).bytesize + 1 - 64 * 1024
++      preset['members'].each do |member|
++        amount = [excess, member['instructions'].bytesize - 1].min
++        member['instructions'] = member['instructions'][0, member['instructions'].bytesize - amount]
++        excess -= amount
++        break if excess.zero?
++      end
++      path = File.join(directory, 'example.creation.json')
++      File.write(path, JSON.generate(journal) + "\n")
++      File.chmod(0o600, path)
++      assert_equal(64 * 1024, File.size(path))
++      assert_equal(journal, host.send(:read_private_creation_journal!, path, 'example'))
++    end
++  end
++
+   def test_direct_team_receipt_keeps_member_behavior_and_access
+     Dir.mktmpdir('workspace-direct-team-receipt-test') do |directory|
+       _root, _entry, environment = registration_workspace(directory)
+@@ -202,6 +233,15 @@ class WorkspaceHostTest < Minitest::Test
+       preset['members'].first['purpose'] = 'implementation'
+       refute(host.send(:valid_direct_portal_preset?, preset))
+       preset['members'].first['purpose'] = 'design'
++      second = preset['members'].first.merge('address' => 'architect1')
++      preset['members'] << second
++      preset['roles'] << 'architect1'
++      assert(host.send(:valid_direct_portal_preset?, preset))
++      %w[architect0 architect2 architect01].each do |address|
++        second['address'] = preset['roles'][-1] = address
++        refute(host.send(:valid_direct_portal_preset?, preset), address)
++      end
++      second['address'] = preset['roles'][-1] = 'architect1'
+ 
+       path = File.join(directory, 'example.creation.json')
+       File.write(path, JSON.generate(
