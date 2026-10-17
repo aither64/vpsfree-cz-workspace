@@ -90,6 +90,14 @@ class AgentInstructionsTest < Minitest::Test
     assert_match(/creation retries and forks keep retained snapshots/, teams)
   end
 
+  def test_implementer_packages_and_small_team_fallback_are_documented
+    teams = File.read(File.join(ROOT, 'docs/agent-teams.md')).gsub(/\s+/, ' ')
+    assert_includes(teams, 'two implementers, reviewer (5 total)')
+    assert_includes(teams, 'Dependent implementation stays with an implementer')
+    assert_includes(teams, 'live roster without implementation members')
+    assert_includes(teams, 'Busy, unready or inaccessible members')
+  end
+
   def test_final_readiness_requires_complete_history_and_migration_lineage
     core = File.read(File.join(ROOT, 'AGENTS.md'))
     git = File.read(File.join(ROOT, 'docs/agent-instructions/git.md'))

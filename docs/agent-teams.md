@@ -38,7 +38,7 @@ utility watches long checks.
 | `solo` | lead (1 total) | lead | lead | 0 |
 | `lead_reviewed` (Lead and reviewer, default) | lead, reviewer (2 total) | lead | lead | 1 |
 | `lead_designed` | lead, implementer, reviewer (3 total) | lead | implementer | 2 |
-| `delegated` (Full team) | lead, architect, implementer, reviewer (4 total) | architect | implementer | 3 |
+| `delegated` (Full team) | lead, architect, two implementers, reviewer (5 total) | architect | implementers | 4 |
 
 Solo leads investigate, design and implement without automatic specialists.
 In Lead and reviewer sessions, the lead does the same and uses the retained
@@ -48,6 +48,23 @@ write that brief. The brief lives in
 `work/<slug>/design.md`; implementers accept either owner's brief. A bounded
 small edit may use a direct lead brief. Leads report a compact progress
 checklist at the end of every turn and integrate member reports.
+
+Full-team leads coordinate and communicate with the user. The architect owns
+substantive investigation and design and identifies independent implementation
+packages. Implementers own their packages through diagnosis, source, tests,
+technical documentation, quick checks, commits and follow-up fixes, including
+review findings. The lead keeps a compact backlog with owners, acceptance
+criteria, dependencies and checks, assigns independent work to both implementers,
+and serializes overlapping edits and Git operations within each repository.
+Dependent implementation stays with an implementer. Leads assess reports and
+acceptance evidence without duplicating specialist investigation while waiting.
+
+Lead-designed sessions use the same execution ownership with lead-owned design.
+The lead keeps brief scoping, acceptance inspection, session tracking,
+approval-bound coordination and user communication, including required
+context-dependent writing. A live roster without implementation members leaves
+implementation with the lead. Busy, unready or inaccessible members require
+resolving that condition rather than taking their assignments.
 
 Solo and Full-team leads default to high effort and allow high/xhigh;
 the lead in Lead-designed and Lead and reviewer sessions defaults to xhigh
