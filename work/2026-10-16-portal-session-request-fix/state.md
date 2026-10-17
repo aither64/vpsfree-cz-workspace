@@ -1,36 +1,65 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-10-16-portal-session-request-fix
 
 ## Status
 
-Phase: final live acceptance passed; normal coordinator completion pending.
-Runtime2483b4eb, configuration29a9589f and certified workspace90f87861 are merged
-into their remote master targets. Initial deployment preceded all merges, as the
-user requested. Final merged-source system/profile jobs both succeeded, and live
-identities and portal behavior match receipts. No live test session was created.
+Phase: all four repositories merged; converged deployment and final live acceptance
+passed. Normal completion/release is blocked on one uncertain native notification.
 
-- [x] Investigation, implementation and quick checks.
-- [x] Independent final review and complete branch/migration inventory.
-- [x] Longer checks, CI, focused desktop/narrow clipboard checks.
-- [x] Initial coordinated deployment and live acceptance before merge.
-- [x] Three authorized master integrations and final deployment convergence.
-- [x] Final authenticated live acceptance and receipt comparison.
-- [ ] Normal integration finalization and reservation release.
+- [x] Portal field validation and shared copy icon/spacing deployed and merged.
+- [x] Metadata-only initialization follow-up reviewed, tested and deployed.
+- [x] Both selected original session requests recovered exactly once.
+- [x] User-approved one-field integration cache correction applied with backup.
+- [x] Same run certified workspace refresh92551af2; both exact Nix checks passed.
+- [x] All four merges succeeded; fresh SSH exact-head proof saved.
+- [x] Merged-source system/profile convergence succeeded; final HTTPS live checks passed.
+- [ ] Resolve notificationea254902 without blind replay; normal finish/release.
 
 ## Next actions
 
-Resume integration48f5faf2-5964-4043-9815-3f675b94221e through the newly selected
-stable command. Preserve its request, exact jobs and certified replacement3755->90f8.
-Completion evidence already contains boolean true and the original STRING path.
-Verify phase complete and own reservation08c4f290 released. Retain session,
-worktrees, branches, deployment roots and receipts; no archival/deletion requested.
+SAME integration08da9e42-69ad-4657-b80a-5b5fbeeb64fc is in complete-records.
+All six jobs succeeded. Final live packageb3qx1n2 and systemaqp3rz8 paths match
+successful convergence; post-integration-live.json records authenticated field
+validation and shared icon/styles. final-merge-proofs.json proves all exact heads.
 
-Final evidence: [live acceptance](final-live-acceptance.md), live-final-after.json,
-post-integration-status.json and integration-convergence-observer-result.md.
-Frozen original acceptance/review/check artifacts remain unchanged.
+The sole blocker is native notificationea254902-a37a-6d05-3ce0-12d77016e794,
+message4fcbbea7-974d-4d73-b025-9fcbfd746dd0, to this session's retained
+coordination anchor01a1451e-cea2-7052-a69e-0368e4305946. It announces runtime
+merge24487533 succeeded. Original submission is submitting/steered; complete
+retained rollout has no matching success message. Later notifications delivered.
+Ordinary same-ID reconciliation retries and refuses unknown outcome. The original
+native error was overwritten by later reconciliation errors; journal inspection
+has no no-submit proof. Do not clear attempt markers or manufacture delivery.
+
+notification-recovery-proposal.json describes a concrete one-time explicit resend
+of this informational notification with its original identity/settings and an
+isolated attempt ledger. It accepts possible duplicate notification, keeps all
+original records, then relies on ordinary reconciliation and SAME-run finish.
+This separate native resend needs user approval; the cache-only yes did not grant it.
+
+Parent intentionally ended only its idle finalization polling process56959
+with actual exit143 under the original integration lock, after confirming all
+six jobs succeeded and phase complete-records. Fresh Luna/low watcher72837
+finishes from that exact status; finalization-wait-stop.json records the reason.
+No coordinator job, native turn, service or lifecycle action was canceled.
+After explicit notification replay approval, resume SAME-run finalization from
+the stable current package with new independent log/status names.
+Reservationb47dc9ad remains deployed_review. Do not submit another integration.
+
+Prior source-only cache helper changed only operations.workspace.expectedHead
+through the installed atomic writer under exact generation/session/run guards.
+Backup and result are integration-cache-recovery-before.json and
+integration-cache-recovery-result.json. No other private state has been changed.
+Initial driver75 was temporary integration lock contention; the stable loop then
+completed all merges and convergence. Its exit1 after profile selection was the
+expected package-generation guard; new selected runtime resumed complete-records.
+
+Preserve original/recovery receipts and all frozen acceptance/review files.
+Do not replay either saved request recovery or completed original48f5faf2.
+Retain session, worktrees and all refs; no archive/delete is authorized.
 
 ## Documentation
 
@@ -570,3 +599,186 @@ journal edits, merge bypass or branch deletion occurred.
 
 Requested exact feature heads are integrated. See integration/48f5faf2-5964-4043-9815-3f675b94221e/summary.md
 and integration/48f5faf2-5964-4043-9815-3f675b94221e/result.json for operation receipts. Feature refs and session retained.
+
+Follow-up library review completed at377796eb by retained reviewer01a14580
+(Astra/xhigh/read-only; native turn_context verified). All four lanes: one
+Important corpus-count finding, fixed narrowly by adding the exact thread/read
+specimen and amending the unmerged library to5daae414ed9c1a1919242cf87d5b4af681284d0d. Corpus coverage quick check
+passed. No other findings, clean one-commit history, no migrations. Broader
+HistoryMaterialized and uncertain retry contracts remain unchanged. Native and
+packaged library checks are delegated next. Original frozen evidence unchanged.
+Consumers currently select the preceding library candidate and will be amended
+once exact native verification passes; those intermediate pins are unmerged.
+
+Library5daae414 passed packaged checks and native Codex0.163 metadata-before-
+turn regression (native test1.112s, exactly one initial message). Fresh Luna/low
+verification utility completed; per-phase logs/status and Nix root retained.
+LibraryCI38956713625 succeeded. Superseded runtimeCI38956329648 failed solely at
+the reviewed missing thread/read corpus specimen; failed logs inspected and
+retained. The specimen correction is included in5daa and its library checks.
+Current runtime2a4e48ef selects that library with regenerated vendor hash; final
+consumer pin consolidation/review is pending. No rerun of the failed revision.
+
+Final composition review passed all required affected lanes, no Blocking or
+Important findings. Retained reviewer01a14580 (Astra/xhigh/read-only) accepted
+final library5daa, runtime2a4e, workspaceb6a6 and configuration4618. Its sole
+Advisory was a stale predecessor in the consolidated generated changelog. Parent
+corrected only the message to2483->2a4e, reran hooks, and proved exact Git tree
+equality for final configurationd81f5774; no rereview needed for that narrow fix.
+initial-metadata-heads.json records final committed ranges and lock-node scope.
+All branches published; one final logical commit per repository, no migrations.
+Long final consumer package/host and currentCI checks are delegated next.
+
+Handoff checkpoint: original fix is deployed/merged; follow-up code is fully
+reviewed/verified but profile preparation is blocked by the two named unfinished
+creations. All own builds, reviewer/utility operations, preparation processes and
+source publications are settled. Removed only the disposable vendor scratch
+directory after successful checks; retained package/check roots, host artifacts,
+source refs, snapshots, logs and receipts. Session remains active; no archive,
+delete, branch removal or foreign-record mutation. Pending scope selections are
+recorded above; they are required, not inferred from elapsed time.
+
+Authorization received: user replied "yes" to the final explicit request to
+recover both named sessions with their saved requests/settings, then deploy and
+merge the follow-up including codex-web->master. This selects both recovery
+targets and all four master targets. No archive/delete authorized. All frozen
+recovery hashes and selected package52w0 were rechecked unchanged. Retained
+independent reviewer is checking the exact public-helper recovery operation
+and original no-submit evidence before execution.
+
+Recovery operation review completed by retained Astra/xhigh/read-only reviewer,
+no Blocking/Important findings. Two Advisories accepted/corrected: idle's actual
+failure poll is call_dde24736f8394c4fb69aa80dab1642ce, process45007, source rollout
+result line256 (frozen evidence's earlier source-search citation preserved).
+Bind corrected citation in one-time receipt. Normal completion retains ready
+creation journals; never delete them. All exact tmux preflights passed.
+
+Both authorized recoveries completed through ordinary portal/CLI recovery.
+Authorities, manifests and retained creation journals are ready at original
+roots; native response_item history contains exactly one matching original goal
+per root. Ubuntu's saved team settings/member thread and project identities are
+unchanged. Idle CLI exited0; its stderr is only a terminal-client restart notice
+after App Server disconnect. recovery-acceptance.json is the lead's completion
+proof; watcher recovery-observation.json observed ready states independently.
+No attempt-marker/journal edits or package selection occurred. Both one-time
+submission receipts/result records are retained. No recovery operation remains.
+
+Affected general/risk consumer review completed by retained Astra/xhigh/read-only
+reviewer, no findings. Full one-commit histories and no-migration/consolidation
+conclusions bind exact0448a988/bbd3abe4 heads; see recovery-composition-review.md.
+New upstream WebUI input is outside aitherdev selected channels. Fresh Luna/low
+utility will build exact refreshed package/contract and configuration host;
+unchanged library/native/CI results are reused by exact revision.
+
+Post-recovery native context inspection found Ubuntu's first turn omitted an
+explicit effort; terminal reconnect then selected host defaultxhigh, while the
+saved team lead setting remains high. This is an existing settings/default
+interaction, outside the initial-message patch. Restored the saved lead model/
+high setting through normal authenticated conversation settings API, no prompt
+or member change. API response confirms exact saved pair; see ubuntu-recovery-
+settings-result.json. Idle's original and recoveredxhigh setting agrees. Initial
+turn settings cannot be retroactively changed; original requests remain single.
+
+Refreshed consumer verification passed, exact host117.7s and package/contract309.0s.
+Fresh Luna/low utility is complete; no build remains. Final artifacts/derivations
+and verification report recorded. Frozen new release review/verification files
+will bind fresh snapshots; original evidence is unchanged. Preparing fresh system
+then profile snapshots and new reservation with four integration obligations.
+
+Fresh deployment snapshots prepared and approved from exact reviewed sources;
+controller82235 exited0. New machine43207b3a and dependent profilef8b9ad9e are
+submitted under reservationb47dc9ad, with all four master integration obligations.
+recovery-snapshot-inspection.json verifies coverage, exact built application
+ap414wsz, exact configuration0448a988 and unchanged evidence digests. Native fresh
+Luna/low observer75287 watches only these jobs; parent owns activation acceptance
+and integration. Freeze recovery-release-{review,verification}.md and all prior
+evidence now that snapshots reference their hashes. No original job was replayed.
+
+Deployment queue diagnosis at20:45 UTC: archiving initiative2026-10-16-session-
+archive-local-first owns aitherdev reservation5f379baf (held). Our new machine
+job43207b3a is waiting_resource/machine_owned with no attempt; profilef8b9ad9e
+waits on its dependency. Own reservationb47dc9ad is requested. No follow-up
+activation occurred. Parent notified user with blocking owner's stable URL;
+no other owner's records/reservation are changed. Keep queued jobs and turn open
+for native release/notification. Snapshot may require refresh after that owner
+finishes; diagnose normally, never bypass or resubmit duplicate activation.
+
+User asked whether the archiving initiative actually holds aitherdev; current
+coordinator query confirmed held5f379baf by owner99e4bed1 and its system job
+fc35728c needs_refresh/catalog changed; dependent profile457cea56 waits. No
+foreign mutation made. An asynchronous scope question now offers waiting for its
+lead (default) or explicitly taking over its deployment recovery. No selection
+has been received; elapsed time grants no takeover authority. Continue own queued
+operation observation via native Luna/low handle75287. Own deployment controller
+82235 is complete exit0. No new integration request has been submitted; prepared
+helper prepare-recovery-integration.py must be run only after live acceptance.
+
+Later read-only status: archiving system/profile jobs both succeeded, but its
+reservation remains held while final integration/review finishes. Its retained
+reservation history had been empty before activation; original refusal acquired
+ownership before catalog validation. Fresh fetch of all4 confirms library/runtime
+masters unchanged at a056/2483; configuration master advancedd3e822db (generated
+WebUI pin) and workspace mastereebd4a63 (tracking). Wait for archiving final
+integration before another own refresh. Never deploy own older branch over its
+finished features. Own watcher75287 remains active, queued jobs unchanged.
+
+Final resume composition review passed at library5daa/runtime1f3cf7ae/configaffc668f/
+workspace84f4fb3d. Retained Astra/xhigh independently proves current live archive
+contract equality, exact input selection, one-commit histories and no migrations.
+Original library/native conclusions reused by exact revision. Fresh Luna/low
+utility now owns verify-resume-consumers.py (package+contract, exact host, current
+CI39013704838); no deployment mutation launched before those pass.
+
+Verification utility completed an environment failure BEFORE builds/tests: Nix
+socket EPERM, readonly ~/.cache/nix database, GitHub connection denied. Parent
+inspected all phase logs, no product failure or CI result was established. Native
+utility sandbox was missing required writable cache roots/network. A FRESH Luna/
+low workspace_write utility retries the exact same source/checks with network
+and /home/aither/.cache/nix plus /home/aither/.local/state/nix writable. Original
+failed logs/status retained; retry evidence uses resume-retry-*. This does not
+change its role/access/model/effort or product source. No failed test rerun.
+
+Retry with proper Nix cache/network passed exact package+contract (337.8s) and
+runtimeCI39013704838. Exact host produced all12 expected system derivations, then
+failed registering its normal config-specific GC root because that directory was
+read-only. Parent inspected full bounded tail: rb_file_s_symlink under
+/nix/var/nix/gcroots/per-user/aither/confctl-70e0d4b4. No product/kernel failure.
+Fresh Luna/low workspace_write utility now repeats ONLY host command with that
+one artifact directory writable. Passed package/CI are retained without rerun.
+Failed attempts remain in resume-* and resume-retry-* evidence, final host uses
+resume-retry-host-final.*. No source changed or rereview required.
+
+All refreshed verification passed after environment corrections. Package/contract
+337.8s and exact host completion85.0s; runtimeCI39013704838 succeeded at1f3cf7ae.
+No check remains running. Source heads unchanged and independent review remains
+valid. resume-built-artifacts.json retains exact outputs/derivations. Preparing
+fresh snapshots, approving and refreshing same profile then system jobs under
+b47dc9ad; freeze resume-release-{review,verification}.md once snapshots reference
+those hashes. Parent owns controller; fresh utility observes only.
+
+Parent deployment controller85458 completed0: fresh snapshot preparation and same-
+job refresh both passed. Program verified exact coverage/evidence, built candidate
+si8fk... and configurationaffc before recording approvals. Profile was refreshed
+first, then machine; same b47dc9ad reservation and dependency retained. See
+resume-snapshot-inspection.json. Fresh native Luna/low observer39508 owns status
+monitoring of these exact jobs; no stale job/snapshot replay or new IDs created.
+Freeze resume-release review/verification referenced hashes. Next live acceptance,
+then a NEW approved all-four integration run and merged-source convergence.
+
+Initial refreshed deployment/live acceptance PASSED. Same system43207b3a attempt
+ af9cd274 and profilef8b9ad9e attempt0352678e applied; systemaqp3rz... and appsi8fk...
+match exact worker receipts. Both notification preferences pass strict-field
+acceptance and copy icon/CSS18 verified over authenticated HTTPS without creating
+extra sessions. See resume-live-after.json (freeze after integration hash).
+Final premerge inventory proves all4 exact reviewed one-commit ranges, clean,
+published, no obsolete pin streams or migrations. Fresh fetch shows same bases.
+NEW integration run08da9e42-69ad-4657-b80a-5b5fbeeb64fc now launches AFTER live
+acceptance, under original explicit all4/master approval and existingb47dc9ad.
+Parent owns mutation driver; fresh utility will observe only. Checks reuse exact
+successful Nix derivations; completion true uses STRING acceptance evidence path.
+Original completed48f5faf2 and every older frozen record remain untouched.
+
+## Integration 08da9e42-69ad-4657-b80a-5b5fbeeb64fc
+
+Requested exact feature heads are integrated. See integration/08da9e42-69ad-4657-b80a-5b5fbeeb64fc/summary.md
+and integration/08da9e42-69ad-4657-b80a-5b5fbeeb64fc/result.json for operation receipts. Feature refs and session retained.
