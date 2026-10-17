@@ -27,6 +27,24 @@ I'd like you to go over the project and create a plan to reimplement confctl and
 
 ## Approach
 
+The completed [design](design.md) is the implementation plan. Its recommended
+sequence is:
+
+1. Capture executable Ruby compatibility fixtures for all 29 core command
+   actions, site commands/hooks and four helpers (M0).
+2. Establish Rust command/domain types, supervised processes, events, timing and
+   the versioned extension contract (M1).
+3. Port Nix/input/state adapters, live presentation and the site extension using
+   independent file packages (M2).
+4. Complete operations, remote helpers and vpsAdmin data generation (M3).
+5. Switch packaging, documentation and GitHub format/lint/test workflows (M4).
+6. Complete differential, PTY, mixed-version, VM and operator acceptance before
+   preparing cutover with a retained rollback environment (M5).
+
+The design defines dependencies, file boundaries and acceptance checks per
+package. It recommends Tokio, Ratatui/Crossterm, clap, Serde and thiserror, with
+toolchain/MSRV/license and inline-terminal validation before locking versions.
+
 Architect-owned Rust design informed by two independent source inventories.
 Use exact source revisions and distinguish observed behavior from proposals.
 Deliver an implementation sequence with ownership boundaries, dependencies,
@@ -39,6 +57,10 @@ acceptance criteria, compatibility gates, and verification requirements.
 | architect0 | `design.md` | Idiomatic Rust architecture, maintained crate candidates, extension protocol, migration, CI and milestones | Both inventories; source reconciliation |
 | lead | Plan/state, acceptance inspection, portal handoff | All user requirements traceable to concrete design and next actions | Architect report and evidence |
 
+All three assigned source/design packages are complete and accepted by the lead
+as a planning deliverable. Verification is source/artifact validation, not proof
+that a Rust implementation passes the proposed checks.
+
 ## Decisions
 
 - Rust replaces Ruby as the intended implementation language.
@@ -47,6 +69,13 @@ acceptance criteria, compatibility gates, and verification requirements.
 - Adopt the useful Go elapsed-time behavior after documenting its exact contract.
 - This request authorizes planning, not implementation or modification of the
   earlier Go initiative. Leave that initiative and all project refs unchanged.
+- Proposed extension direction: a versioned subprocess protocol, with core
+  selection, prompts, process execution and terminal ownership retained by confctl.
+- Site migration covers `scripts/discover_netbootable.rb` and
+  `scripts/runtime_kernels.rb`. Preserve generated `cluster/netbootable.nix`,
+  mutable `configs/node/kernels.json` and the latter's pre-build update ordering.
+  Independent Ruby service/tooling in the configuration repository is outside
+  the confctl runtime removal scope.
 
 ## Compatibility and deployment
 
@@ -57,6 +86,12 @@ inapplicable database/API/Terraform concerns explicitly. Avoid a fleet-wide
 coordinated update unless evidence requires it. No deployment in this session.
 
 ## Documentation
+
+- [Rust architecture and migration design](design.md): main implementation brief.
+- [Core and Go behavior inventory](inventory-confctl.md): complete built-in route
+  and option matrix, source anchors, timing and runtime verification gaps.
+- [Site extension inventory](inventory-extensions.md): two-script migration map,
+  ordering and state contracts, packaging and differential acceptance cases.
 
 Readers are confctl developers and site operators preparing the rewrite.
 The session design is the proposed implementation brief; evidence inventories
