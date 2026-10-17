@@ -21,9 +21,7 @@ VM concurrency and build CPU parallelism across differently sized runners.
 - Retained architect0 traces test purpose, implementation and failure boundaries.
 - Separate observed failures from inferred causes. Seek runner evidence for any
   process termination before proposing changes. Do not rerun CI as a substitute.
-- Follow-up: user confirmed OOM and requested resource-allocation suggestions.
-  Inspect actual CLI/scheduler/compressor defaults and prepare provisional
-  per-runner tuning with the architect; no implementation or tests requested.
+- Investigation follow-up: user confirmed OOM and requested resource-allocation suggestions. Actual CLI/scheduler/compressor defaults were compared before implementation was authorized.
 - User clarified throughput goal: retain automatic test admission and maximize
   concurrent fitting work; preserve CPU parallelism, especially kernel builds.
   Compare every recommendation with current values. Withdraw fixed test-count
@@ -45,7 +43,7 @@ VM concurrency and build CPU parallelism across differently sized runners.
   no memory overcommit, explicit insufficient-capacity errors and remote-only
   max-jobs=0 handling.
 - `system.squashfsMemoryMiB` defaults null in production, 2048 in test config;
-  both SquashFS branches pass the cache setting, retaining all CPUs and zstd10.
+  both SquashFS branches pass the cache setting, retaining all CPUs and configured compression (zstd10 by default).
 - Reject oversized memory requests; preserve CPU-only run-alone exceptions when
   memory fits. Cache policy and memory-limit fix are separate from staging flag.
 - No merge or deployment authorization. Publish and verify the feature branch.
@@ -79,3 +77,9 @@ for long checks. Then validate cold/warm impermanence and representative tests
 at two memory sizes where practical, preserving CPUs and stopping unexpected
 kernel builds. Record actual coverage and limitations; do not infer a cold build
 from a warm pass or promise arbitrary-build OOM prevention.
+
+## Verification refinements during implementation
+
+Independent review found incomplete preparation-side machine validation. The accepted narrow repair uses canonical OSVM parsing and existing network renderers with MAC/port allocation disabled; no duplicate schema or runtime default change. See design.md R1 refinement and review.md disposition.
+
+Actual original fixture evaluation is expensive (~20GiB client high-water mark on this96GiB builder) and scripts are sequential. The long32GiB configured-ceiling run builds both original fixture and defaults images, then executes all13selected scripts. The planned smaller16GiB warm check selects exact cached defaults, avoiding another full giant fixture evaluation. Both are admission ceilings on one builder, not hard cgroup limits or evidence from two physical hosts. The first interrupted attempt was a monitoring false-positive on a systemd unit name; preserve it as invalid verification, not a product failure/cold success.

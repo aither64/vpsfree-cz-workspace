@@ -299,3 +299,75 @@ unavailable, report the gap instead of claiming measured safety. Revisit the
 Readiness requires passing applicable quick checks, completed final review,
 reported integration results and limitations, and accurate user documentation.
 Successful tests do not authorize merge or deployment. The session remains open.
+
+## R1 refinement: canonical validation before runtime
+
+Final review of implementation head `fac4fe226` found that the preparation
+validator copied only part of `OsVm::MachineConfig`'s contract. For example,
+`testShells = 0` or a bridge network with empty `opts` could pass preparation.
+The evaluator constructs machines in order and performs `--fresh` disk reset
+inside that loop, so a valid earlier machine could lose its disks before a
+later invalid machine was rejected. This repair completes the existing
+pre-runtime validation boundary; it does not introduce another subsystem.
+
+Add a narrow `OsVm::MachineConfig.validate_config!(raw)` entry point. It uses
+the existing `from_config` spin dispatch and the same machine, disk, CPU, and
+network constructors, with an internal `allocate_resources: false` mode.
+Propagate that keyword through the existing constructors/factory methods;
+ordinary `from_config`/`load_file` retain allocation by default and unchanged
+runtime behavior. Do not copy field lists, constraints, or per-spin schemas into
+another validator.
+
+The validation mode suppresses only actual global allocation operations:
+`MacAddressGenerator.next_mac`, `MacAddressGenerator.register_mac`, and
+`PortReservation.get_port`. It still resolves and normalizes supplied MAC
+values, selects network subclasses, checks socket port value types, and executes
+the existing constructor checks for shells, roots, disks, and bridge options.
+Keep unallocated network values local to the disposable validation object.
+No random MAC generation, registry mutation, port reservation, lock-file work,
+or VM construction is allowed during this pass. Do not achieve this with global
+mocking, temporary monkey-patching, allocate-and-undo, or a new worker process.
+
+After construction, the canonical validation entry point must invoke each
+network's existing `qemu_options` renderer and discard its result. At this head,
+`UserNetwork#qemu_options` performs the required option fetches, so running only
+the constructors is insufficient. These renderers build strings and do not
+execute QEMU or allocate resources when their validation-only inputs have already
+been parsed. Do not add a second list of user-network option names. This scope
+does not attempt to validate arbitrary extra QEMU arguments or resource
+availability on the host.
+
+`TestConfig.validate!` retains test-envelope/selected-script checks and its
+distinct admission sanity checks for positive guest memory/CPU counts. Replace
+its duplicated machine-specific validation list with the canonical entry point.
+Do not extend the normal MachineConfig contract with unrelated new restrictions
+to preserve a duplicated preparation-only field list. Validate every machine
+of every prepared configuration before `Prebuild.load_manifest` yields to the
+executor. The evaluator may repeat the same pure validation defensively, but
+must never be the first place a selected configuration is validated.
+
+Do not save validation-only MachineConfig instances as runtime machine configs.
+Keep the original prepared JSON; runtime construction follows the normal parser
+and performs real allocation once. Availability and global MAC/port conflicts
+remain runtime resource checks. This refinement guarantees earlier rejection of
+malformed configurations under the existing parser/rendering rules, not future
+availability of external resources.
+
+The bounded implementation touches `osvm/lib/osvm/machine_config.rb`,
+`test-runner/lib/test-runner/test_config.rb`, and their relevant specs, plus a
+preparation/CLI regression demonstrating the barrier. No public option, JSON
+format, guest state, scheduler algorithm, or daemon change is needed.
+
+Required regressions: a valid first machine followed by an invalid second
+machine (empty bridge options, zero/invalid shell count or conflicting named
+shells, and simultaneous NixOS rootDisk/diskImage), with `--fresh` and an
+expected-failure script, must fail preparation before Executor construction.
+Assert no machine construction, disk reset, or global MAC/port calls. Also
+exercise incomplete user-network options through the renderer, invalid socket
+port types, and successful user/socket/bridge validation without allocation.
+Existing normal-parsing tests must continue proving runtime MAC registration,
+generation, and port allocation. Tests may spy on or forbid allocator calls;
+production validation must not replace those global methods. Run affected
+OSVM/test-runner specs and hooks, commit the repair, and return it through the
+lead for the required review follow-up. Long integration verification remains
+held until the finding is resolved.
