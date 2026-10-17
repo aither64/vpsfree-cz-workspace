@@ -6,9 +6,13 @@ investigate nixos impermanence test failures seen in https://github.com/vpsfreec
 
 find the root cause. what are these tests for anyways?
 
+Follow-up authorized: implement the agreed opt-in prebuild plan. Prevent selected
+test image preparation from overlapping selected test VMs, preserving automatic
+VM concurrency and build CPU parallelism across differently sized runners.
+
 ## Affected repositories
 
-- vpsadminos, read-only investigation at failed CI revision
+- vpsadminos, investigation and implementation based on failed staging revision
   `0081fc01f13236a098380094ddbd00539a9c8dae` (staging).
 
 ## Approach
@@ -17,24 +21,61 @@ find the root cause. what are these tests for anyways?
 - Retained architect0 traces test purpose, implementation and failure boundaries.
 - Separate observed failures from inferred causes. Seek runner evidence for any
   process termination before proposing changes. Do not rerun CI as a substitute.
+- Follow-up: user confirmed OOM and requested resource-allocation suggestions.
+  Inspect actual CLI/scheduler/compressor defaults and prepare provisional
+  per-runner tuning with the architect; no implementation or tests requested.
+- User clarified throughput goal: retain automatic test admission and maximize
+  concurrent fitting work; preserve CPU parallelism, especially kernel builds.
+  Compare every recommendation with current values. Withdraw fixed test-count
+  and global CPU/Nix parallelism reductions; focus memory-accounting and bounded
+  compression allocations.
 
 ## Decisions
 
-- Investigation only; no application edits, feature branches or deployment.
+- User authorized implementation after accepting the final staged plan.
+- `test --prebuild` / `--no-prebuild` defaults off. CI opts in and provides a
+  manual boolean override. No broker, new daemon, profiles or VM-overhead schema.
+- Build exact selected JSON/image closures in one rooted aggregate; then load
+  those immutable configs without Nix calls during runtime. Preserve filters,
+  template/single-test arguments, configuration overrides and source snapshot.
+- Capture the nominal ResourcePool before preparation and inject the same pool
+  after preparation; do not mistake preparation file cache for unavailable RAM.
+- Preparation jobs = min(inherited local Nix max-jobs, usable memory / 8192 MiB),
+  with positive `--prebuild-memory-per-job-mib` override; cores unchanged,
+  no memory overcommit, explicit insufficient-capacity errors and remote-only
+  max-jobs=0 handling.
+- `system.squashfsMemoryMiB` defaults null in production, 2048 in test config;
+  both SquashFS branches pass the cache setting, retaining all CPUs and zstd10.
+- Reject oversized memory requests; preserve CPU-only run-alone exceptions when
+  memory fits. Cache policy and memory-limit fix are separate from staging flag.
+- No merge or deployment authorization. Publish and verify the feature branch.
 
 ## Compatibility and deployment
 
-No state, schemas, protocols or deployed configuration are changed. Explain the
-compatibility behavior covered by the tests and any implications for persisted
-container identity. No coordinated host updates are involved in this task.
+No guest persisted-state, schema or protocol change. Existing CLI interleaving
+remains available with prebuild disabled; existing metadata and external flake
+contracts remain supported. Test cache sizes may change derivation identities;
+production defaults remain unchanged. No coordinated host update or new daemon
+configuration is required. Initial 8 GiB/build and 2 GiB/cache values are sizing
+policies, not guaranteed RSS bounds. One heavy Actions job per runner and local
+builds are the supported sizing domain; independent clients/remote builders are
+outside the local estimate. Revert the feature or disable prebuild to recover
+orchestration; cache/strict-memory changes are independently described.
 
 ## Documentation
 
-Readers: requester and future investigators. Keep the incident evidence and
-findings in this session state; trace behavior to source at the failed revision.
+Readers: requester, runner operators and future investigators. Keep incident
+evidence in this session. Owning product explanation belongs in docs/os/testing.md,
+test-runner CLI/man help, and Nix option descriptions. Architect owns design.md.
+Lead applies the user-facing writing skill after technical facts settle.
 
 ## Testing plan
 
-Inspect original evidence and source. Do not launch expensive builds or tests
-unless needed to distinguish remaining hypotheses. Findings and tracking alone
-do not trigger mandatory final change review.
+Meaningful Ruby specs and small Nix evaluations cover batch selection, GC roots,
+prepared config loading, no VM-before-build, failure/cancel/retries, CPU settings,
+memory sizing and oversized memory. Run hooks and commit intended deliverable;
+independent final review precedes long tests. Use fresh Luna verification watcher
+for long checks. Then validate cold/warm impermanence and representative tests
+at two memory sizes where practical, preserving CPUs and stopping unexpected
+kernel builds. Record actual coverage and limitations; do not infer a cold build
+from a warm pass or promise arbitrary-build OOM prevention.
