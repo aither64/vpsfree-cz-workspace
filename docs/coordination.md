@@ -105,6 +105,7 @@ limited to that installation and keeps the machine reservation held for review.
 Keep failed or interrupted attempts, deployed artifacts and GC roots. Archive,
 delete, suspend and auto-archive do not free deployed ownership. A profile failure
 after selection recovers forward under its original attempt. Ambiguous remote
-activation and native delivery remain visible blockers. There is no forced
+activation remains a visible blocker. Informational Codex status messages retry
+independently and do not hold machine ownership. There is no forced
 release or blind replay. An exceptional ownership transfer/removal requires a
 separate explicitly authorized reviewed recovery operation.
