@@ -1,0 +1,318 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index d5308e71..58df1881 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -17,6 +17,10 @@
+   `confctl inputs channel set --commit <channels> <role> <rev>`.
+ 
+ ## Development Deployments
++- For aitherdev Codex updates, read
++  [the update skill](skills/update-aitherdev-codex/SKILL.md), which links the
++  runtime and protocol-library procedures.
++
+ - Building or deploying a feature branch does not authorize integrating it
+   into `master`. Keep development changes on the feature branch until
+   integration is explicitly requested.
+diff --git a/cluster/cz.vpsfree/machines/aitherdev/config.nix b/cluster/cz.vpsfree/machines/aitherdev/config.nix
+index 335c2a6b..fded7539 100644
+--- a/cluster/cz.vpsfree/machines/aitherdev/config.nix
++++ b/cluster/cz.vpsfree/machines/aitherdev/config.nix
+@@ -85,10 +85,8 @@ let
+   codexDsConfig = pkgs.writeText "codex-ds.config.toml" ''
+     model_provider = "deepseek"
+     model = "deepseek-v4-pro"
+-    preferred_auth_method = "apikey"
+     forced_login_method = "api"
+     model_reasoning_effort = "high"
+-    model_supports_reasoning_summaries = true
+     web_search = "disabled"
+     model_catalog_json = "/etc/codex/deepseek-models.json"
+ 
+diff --git a/docs/operations/codex-deepseek-aitherdev.md b/docs/operations/codex-deepseek-aitherdev.md
+index b2167646..94bc784f 100644
+--- a/docs/operations/codex-deepseek-aitherdev.md
++++ b/docs/operations/codex-deepseek-aitherdev.md
+@@ -1,5 +1,9 @@
+ # DeepSeek Codex on aitherdev
+ 
++Use the [aitherdev update skill](../../skills/update-aitherdev-codex/SKILL.md)
++for Codex upgrades. It links the runtime and protocol-library update processes;
++the coordination workspace owns the combined system/application rollout.
++
+ The `codex-ds` command uses DeepSeek's native Responses API through the `ds`
+ Codex profile. The wrapper reads the API key from:
+ 
+@@ -15,14 +19,20 @@ The profile and model catalog are installed by the `aitherdev` configuration.
+ The former localhost Responses proxy and its state directory are removed during
+ activation.
+ 
+-To validate a deployed configuration without spending a model request:
++After deployment, run one small request from a private temporary directory to
++validate profile loading and the provider end to end:
+ 
+ ```bash
+-codex-ds --strict-config --help
++codex-ds --strict-config --ask-for-approval never exec --ephemeral \
++  --sandbox read-only --skip-git-repo-check \
++  "Reply only CODEX_UPDATE_OK. Do not call tools."
+ ```
+ 
+-Use one small `codex-ds exec --ephemeral` request for an end-to-end check after
+-deployment.
++`--help` exits before configuration loading and cannot establish profile
++compatibility. The request above consumes provider usage.
++Authentication uses `forced_login_method = "api"`; reasoning capabilities come
++from the model catalog. The removed `preferred_auth_method` and
++`model_supports_reasoning_summaries` settings are invalid in Codex 0.163.0.
+ 
+ ## Runtime package and retention
+ 
+@@ -32,11 +42,13 @@ assembled package. The wrapper uses the DeepSeek key and profile described
+ above. The workspace application has a separate user-profile installation.
+ 
+ The [generic Codex package contract](https://github.com/aither64/dev-workspace/blob/master/docs/codex-package.md)
+-owns the runtime layout and dependency rules. Native daemon copies under
+-`CODEX_HOME` keep Nix store dependencies and are not GC roots. Retained system
++owns the runtime layout and dependency rules. The selected llm-agents package
++patches fresh daemon installation to execute its immutable Nix-store runtime and
++attempts a native GC root. Retained older daemon copies under `CODEX_HOME` still
++depend on Nix-store closures and are not themselves GC roots. Retained system
+ generations protect the system package closure; retained workspace Codex roots
+-protect the workspace package closure. Keep both while their daemon copies may
+-still be in use. Equal version strings do not establish equal closures.
++protect the workspace package closure. Keep both while a daemon may need them.
++Equal version strings do not establish equal closures.
+ 
+ Before pruning a system generation or workspace Codex root, establish that no
+ remaining daemon copy needs its dependencies, or retain the exact assembled
+@@ -48,12 +60,14 @@ After an update, check the system command and workspace runtime:
+ ```bash
+ /run/current-system/sw/bin/codex --version
+ workspace-host status
+-codex-ds --strict-config --help
+ ```
+ 
+-Also check the native daemon's selected release separately. Its updater can
+-select a release independently of the Nix package pin; the public command's
+-version alone does not identify a daemon already installed in `CODEX_HOME`.
++Then run the single provider check above.
++
++Also check the native daemon's selected executable separately. Retained native
++state and running daemons can still use a previous selection; the public
++command's version alone does not identify what is running. The current patched
++store selection does not use upstream release updates.
+ Use a private disposable `CODEX_HOME` for package-copy and startup probes,
+ without production authentication or model requests.
+ 
+diff --git a/flake.lock b/flake.lock
+index 245e7fd8..946e4e7a 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -75,17 +75,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792100512,
+-        "narHash": "sha256-kJxBCR7EUM3R0ftXy9tUYtliDhsY3hepvDQw2bSz6w4=",
++        "lastModified": 1792162282,
++        "narHash": "sha256-2xni8DqqN9BeAqJyErRUt0bmYDppBi6DriSEeyFrOZ4=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "523865195522ad6f4804613e6f54823ddf447924",
++        "rev": "a0561fad8decb794117f8959fa2dd629547c5ba7",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "523865195522ad6f4804613e6f54823ddf447924",
++        "rev": "a0561fad8decb794117f8959fa2dd629547c5ba7",
+         "type": "github"
+       }
+     },
+@@ -119,11 +119,11 @@
+         "nixpkgs": "nixpkgs_4"
+       },
+       "locked": {
+-        "lastModified": 1792101613,
+-        "narHash": "sha256-kjTQ90DHeQIAWUL1HlV2gej1Nz8R5A81XUB8tP/ighA=",
++        "lastModified": 1792169143,
++        "narHash": "sha256-MWvYk2Ru4xDMCVWXFqHvX9OeGPB+vEeU6m2f9Nd0+co=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "2b22de8d273a3b75e6cdd62c398fdb2630871d5a",
++        "rev": "73bc5c6e9a74f7bc667ea8f6f19ec3ad6d4b73ea",
+         "type": "github"
+       },
+       "original": {
+@@ -141,11 +141,11 @@
+         ]
+       },
+       "locked": {
+-        "lastModified": 1788450739,
+-        "narHash": "sha256-glZLQlzIn1fXH6PazR2iUmTo7kzzyYSshrWhLS9TqCU=",
++        "lastModified": 1790898470,
++        "narHash": "sha256-zTwuwezD0w3hpga6a6P8emidzAZFyWqlNeRBlpWOOl8=",
+         "owner": "hercules-ci",
+         "repo": "flake-parts",
+-        "rev": "31729ca8cbdb4fa927b34e5f4353e6a83f39e993",
++        "rev": "024633cd702b10285db5cb19b40ad48d2399ba60",
+         "type": "github"
+       },
+       "original": {
+@@ -413,11 +413,11 @@
+         "treefmt-nix": "treefmt-nix"
+       },
+       "locked": {
+-        "lastModified": 1790893833,
+-        "narHash": "sha256-w2jmp0z4qTRKC4nlMG0okmRZgDZ2No0IlDL6Aef/tzI=",
++        "lastModified": 1792149628,
++        "narHash": "sha256-z6OJhOCXlLXdP1GdqS+6wLe/blU6KGZFrib+b/nxYE8=",
+         "owner": "numtide",
+         "repo": "llm-agents.nix",
+-        "rev": "6334544a4bfd921086a252caccc6c1c6eb1d18c7",
++        "rev": "e85b99217baf13a38fc887b31338b1833f1159c0",
+         "type": "github"
+       },
+       "original": {
+@@ -435,11 +435,11 @@
+         "treefmt-nix": "treefmt-nix_2"
+       },
+       "locked": {
+-        "lastModified": 1792141775,
+-        "narHash": "sha256-/SmqcW1W+yvtF6HpMoT8hmSdnboHme3nKc1lonxsTQM=",
++        "lastModified": 1792149628,
++        "narHash": "sha256-z6OJhOCXlLXdP1GdqS+6wLe/blU6KGZFrib+b/nxYE8=",
+         "owner": "numtide",
+         "repo": "llm-agents.nix",
+-        "rev": "cf50fcd764672e2a5afcc2b734ee0e2bb557b2b0",
++        "rev": "e85b99217baf13a38fc887b31338b1833f1159c0",
+         "type": "github"
+       },
+       "original": {
+@@ -674,11 +674,11 @@
+     },
+     "nixpkgs_3": {
+       "locked": {
+-        "lastModified": 1790600678,
+-        "narHash": "sha256-6k3n7X2UsZ6tAlWTz99RimiZab+17tMUrw9sRUcELiA=",
++        "lastModified": 1791966044,
++        "narHash": "sha256-t1hT8UW97rFCWCJO7/pClvu0AhLN5V3uir2M0ic4w/Q=",
+         "owner": "NixOS",
+         "repo": "nixpkgs",
+-        "rev": "f45c6f04c2f013f004bf94e284e95d72898d9393",
++        "rev": "319e4cebef10cbb636c6ea392137b52ad105336a",
+         "type": "github"
+       },
+       "original": {
+@@ -896,11 +896,11 @@
+     },
+     "systems": {
+       "locked": {
+-        "lastModified": 1681028828,
+-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
++        "lastModified": 1791244623,
++        "narHash": "sha256-uuanbkFk8a313Zfrxdcz8Us/yQtaxNnKJtX8v0ZPpd8=",
+         "owner": "nix-systems",
+         "repo": "default",
+-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
++        "rev": "d36eeed142f88b5a636f2e3856a53c61654cf29b",
+         "type": "github"
+       },
+       "original": {
+@@ -933,11 +933,11 @@
+         ]
+       },
+       "locked": {
+-        "lastModified": 1786901030,
+-        "narHash": "sha256-WSFCsDSE5ffgD2MqzkM2CYjeFiKhRF/dJUN8uedb6YE=",
++        "lastModified": 1791885023,
++        "narHash": "sha256-C3alQ2MEt0zVrUSho5NUDo3jmhbff72++bfwoqT9Omo=",
+         "owner": "numtide",
+         "repo": "treefmt-nix",
+-        "rev": "27b3b12a8e6375f28ebe122f07d230ca5459bbfa",
++        "rev": "0d6d739a833ba9a9c93034862e4a7b061a062a1c",
+         "type": "github"
+       },
+       "original": {
+diff --git a/skills/update-aitherdev-codex/SKILL.md b/skills/update-aitherdev-codex/SKILL.md
+new file mode 100644
+index 00000000..3071f249
+--- /dev/null
++++ b/skills/update-aitherdev-codex/SKILL.md
+@@ -0,0 +1,66 @@
++---
++name: update-aitherdev-codex
++description: Update aitherdev's Codex and matching dev-workspace host module through confctl channels, coordinating with the runtime update skill and the workspace-owned application rollout.
++---
++
++# Update aitherdev Codex
++
++Read AGENTS.md, docs/operations/codex-deepseek-aitherdev.md and
++docs/operations/workspace-coordination-aitherdev.md. The consuming coordination
++workspace owns session identity, cross-project orchestration and application
++profile selection. Building or deploying never supplies master merge approval.
++
++Read skills/update-dev-workspace-codex/SKILL.md from the explicit runtime
++checkout or selected devWorkspace source. Its canonical repository is
++git@github.com:aither64/dev-workspace.git. Follow that process, including its
++codex-web dependency skill, or reuse its exact completed evidence supplied by
++the caller. Obtain the published runtime commit and frozen llm-agents revision
++before updating this configuration. Do not repeat completed lower-level work.
++
++## Update through channels
++
++Enter nix develop and inspect the current channel-to-input mapping. The
++dev-workspace channel's devWorkspace role owns the runtime input; the llm-agents
++channel's llm-agents role owns the system Codex input. For a normal published
++upstream update use confctl inputs channel update --commit. For exact feature or
++frozen revisions use:
++
++```sh
++confctl inputs channel set --commit --no-changelog llm-agents llm-agents LLM_REV
++confctl inputs channel set --commit dev-workspace devWorkspace RUNTIME_REV
++```
++
++Keep generated messages. Inspect effective versions and semantic lock identities,
++including expected transitive changes. Preserve unrelated channels. Do not edit
++flake.lock manually. System Codex and codex-ds use the same assembled package;
++the workspace application remains a separate user-profile installation.
++
++Return the final configuration commit and input identities so the workspace can
++select the same runtime and run its composed deployment-contract check. Keep
++repeated pin updates consolidated before final review.
++
++## Prepare and deploy only within authorization
++
++Complete quick checks, commits and independent final review before long builds
++and integration tests. The parent may coordinate these gates once across the
++whole update. Build the exact committed cz.vpsfree/machines/aitherdev source,
++retain its artifact identity and inspect the deployment plan. Stop unexpected
++local kernel builds under the workspace verification procedure.
++
++Deployment requires existing user direction and the shared vpsfree:aitherdev
++coordinator reservation. Prepare/copy outside claims; use approved machine
++activation, with dry activation handled by its adapter. Return to the workspace
++for the dependent application profile switch. Never activate directly around
++another owner's reservation, reboot implicitly or integrate master to deploy.
++
++After activation verify /run/current-system, the system profile, the system Codex
++version, actual native daemon selection and codex-ds strict-config startup.
++Validate the complete managed DeepSeek profile against the selected config schema
++before building. After activation use the operations guide's one small ephemeral
++provider request with --strict-config; --help exits before loading configuration.
++Resolve the Home Manager-installed codex-ds wrapper
++and verify that it selects the intended assembled package.
++Follow the operations guides for provider and application acceptance. Preserve
++system generations and native roots. Reconcile uncertain effects on the original
++job; establish old/new state compatibility before relying on system downgrade.
++Return check/deployment receipts and remaining work to the workspace parent.
+diff --git a/skills/update-aitherdev-codex/agents/openai.yaml b/skills/update-aitherdev-codex/agents/openai.yaml
+new file mode 100644
+index 00000000..7b4f54b6
+--- /dev/null
++++ b/skills/update-aitherdev-codex/agents/openai.yaml
+@@ -0,0 +1,3 @@
++interface:
++  display_name: "Update aitherdev Codex"
++  short_description: "Update aitherdev Codex through its confctl channels"

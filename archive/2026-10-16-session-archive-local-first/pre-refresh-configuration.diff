@@ -1,0 +1,64 @@
+diff --git a/cluster/cz.vpsfree/machines/aitherdev/config.nix b/cluster/cz.vpsfree/machines/aitherdev/config.nix
+index a2453fe7..fded7539 100644
+--- a/cluster/cz.vpsfree/machines/aitherdev/config.nix
++++ b/cluster/cz.vpsfree/machines/aitherdev/config.nix
+@@ -85,6 +85,7 @@ let
+   codexDsConfig = pkgs.writeText "codex-ds.config.toml" ''
+     model_provider = "deepseek"
+     model = "deepseek-v4-pro"
++    forced_login_method = "api"
+     model_reasoning_effort = "high"
+     web_search = "disabled"
+     model_catalog_json = "/etc/codex/deepseek-models.json"
+diff --git a/docs/operations/codex-deepseek-aitherdev.md b/docs/operations/codex-deepseek-aitherdev.md
+index dffb5b20..94bc784f 100644
+--- a/docs/operations/codex-deepseek-aitherdev.md
++++ b/docs/operations/codex-deepseek-aitherdev.md
+@@ -30,11 +30,8 @@ codex-ds --strict-config --ask-for-approval never exec --ephemeral \
+ 
+ `--help` exits before configuration loading and cannot establish profile
+ compatibility. The request above consumes provider usage.
+-Authentication uses the provider's `DEEPSEEK_API_KEY` environment variable.
+-Do not set `forced_login_method` in this profile: it restricts the shared OpenAI
+-login and can remove an existing ChatGPT credential before provider startup.
+-Reasoning capabilities use Codex's model information. The removed
+-`preferred_auth_method` and
++Authentication uses `forced_login_method = "api"`; reasoning capabilities come
++from the model catalog. The removed `preferred_auth_method` and
+ `model_supports_reasoning_summaries` settings are invalid in Codex 0.163.0.
+ 
+ ## Runtime package and retention
+diff --git a/flake.lock b/flake.lock
+index e1fbeb90..132264c6 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -119,11 +119,11 @@
+         "nixpkgs": "nixpkgs_4"
+       },
+       "locked": {
+-        "lastModified": 1792163056,
+-        "narHash": "sha256-VGsUPEh6mnAKrl8o9qxVqkGuhwhGdkP3lP0hBODBS+k=",
++        "lastModified": 1792169643,
++        "narHash": "sha256-unRRjgA2me8t+5lnZ3sr+lKdPKzToT/Ifh2Q2Myv1kg=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "3c57e2eab56c94fec5f456d8067def8717a0d418",
++        "rev": "b8fc991417720b9f354140c25d038df12912e2fd",
+         "type": "github"
+       },
+       "original": {
+diff --git a/skills/update-aitherdev-codex/SKILL.md b/skills/update-aitherdev-codex/SKILL.md
+index 8d77e5f2..3071f249 100644
+--- a/skills/update-aitherdev-codex/SKILL.md
++++ b/skills/update-aitherdev-codex/SKILL.md
+@@ -58,10 +58,6 @@ version, actual native daemon selection and codex-ds strict-config startup.
+ Validate the complete managed DeepSeek profile against the selected config schema
+ before building. After activation use the operations guide's one small ephemeral
+ provider request with --strict-config; --help exits before loading configuration.
+-Keep custom-provider authentication in its provider env_key. Do not force the
+-shared OpenAI login method for DeepSeek; Codex may log out a conflicting ChatGPT
+-credential before it selects provider authentication. For source/provider probes,
+-use an isolated Codex home without copying production login credentials.
+ Resolve the Home Manager-installed codex-ds wrapper
+ and verify that it selects the intended assembled package.
+ Follow the operations guides for provider and application acceptance. Preserve

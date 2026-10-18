@@ -1,0 +1,2426 @@
+diff --git a/docs/dev-sessions.md b/docs/dev-sessions.md
+index 7cdb667..2eac059 100644
+--- a/docs/dev-sessions.md
++++ b/docs/dev-sessions.md
+@@ -701,10 +701,32 @@ Git branches. Unmerged, unpublished, detached and dirty work do not prevent
+ explicit closure. Snapshot capture and verified ownership protect local recovery.
+ 
+ Plan and state need an earlier tracking commit. Stop external editors and builds
+-that can still write into a worktree. The command commits only the tracking
+-transition and preserves unrelated workspace changes. Missing registered refs
++that can still write into a worktree. In an installed workspace, archival finishes
++locally and queues its tracking commit. The retry service preserves unrelated
++workspace changes and runs ordinary Git hooks. Missing registered refs
+ stay recorded without a fabricated final head.
+ 
++The portal shows **Tracking sync pending** when Git bookkeeping needs another
++attempt. A network failure, a failing hook or an advanced workspace master does
++not reopen the session. Inspect the saved result without changing it:
++
++```sh
++dev-session tracking-sync --status --slug FULL-SLUG --json
++```
++
++The workspace retries pending commits every minute, with backoff after errors.
++To retry immediately, use `dev-session tracking-sync --slug FULL-SLUG --force`.
++If you revive before the archive commit succeeds, the pending job saves the
++latest tracking state. Revival can proceed while the remote is unavailable.
++
++Browser archival runs in a separate systemd user service and continues when the
++portal restarts or the browser disconnects. Its progress identifies the checkout
++being captured, verified or removed. Local file work has no total wall-clock
++deadline; external calls keep their own timeouts.
++
++Source-only executors without an installed tracking worker keep synchronous Git
++bookkeeping. Existing operation journals retain their saved policy on retry.
++
+ Automatic archival keeps its merge, publication, cleanliness and idle checks.
+ `dev-session archive api-token-rotation --require-merged` explicitly requests the
+ same completion policy. `--abandoned` retains the older discard policy. Pending
+diff --git a/docs/session-archive-recovery.md b/docs/session-archive-recovery.md
+index 2aaf343..f00b133 100644
+--- a/docs/session-archive-recovery.md
++++ b/docs/session-archive-recovery.md
+@@ -23,7 +23,7 @@ catch children spawned during shutdown, then retires children before parents.
+ Threadless sessions still require proof that no conversations or retained team
+ contradict their recorded ownership.
+ 
+-A threadless session can retain its verified shell until tracking is committed.
++A threadless session can retain its verified shell until tracking is saved.
+ The capture journal exists before the full conversation absence check, so fresh
+ CLI attempts and browser attempts use the same accepted operation proof. A failed
+ check leaves the journal retryable and worktrees intact. Archive can finish its
+@@ -35,9 +35,15 @@ repositories or the shared workspace repository. This includes nested containers
+ and detached or locked checkouts. Explicit archival does not fetch, compare published heads,
+ require merged work or require clean checkouts. It pins checkout heads and index
+ objects under `refs/dev-session-archives/`, then saves working files and index and
+-operation state in private `archived-worktrees/` storage. Staged, unstaged,
++operation state in private `archived-worktrees/` storage. A clean checkout with
++no untracked or ignored entries uses retained Git objects instead of a file copy;
++its saved permissions also preserve empty directories. Other checkouts use a full
++file snapshot. Git reconstruction requires raw file bytes to match retained blobs;
++file types must also match the Git tree. Filtered or converted content and regular
++files representing Git symlinks keep a full snapshot. Staged, unstaged,
+ untracked, ignored and binary contents survive. Captures are synced and checked
+-against the source before forced Git removal. Branches are retained.
++against the source before forced Git removal. Git recovery checks every retained
++tree and file object, including its raw object hash, before removal. Branches are retained.
+ 
+ Wrong repository ownership, symlinked checkout paths, conflicting operation
+ identities and changed recovery contents still refuse destructive cleanup.
+@@ -45,13 +51,18 @@ Stop external editors and builds before archival: session locks cannot stop an
+ unmanaged writer. A failed filesystem copy or removal leaves the operation
+ retryable with its recovery contents retained.
+ 
+-Explicit archival uses a schema-3 archive journal, schema-2 cleanup sidecar and
+-schema-3 finalized manifest. The manifest's `archive_operation_id` selects private
++Installed workspaces write schema-4 archive journals and schema-3 cleanup
++sidecars. Their `tracking_saved` phase proves a durable local tracking transition;
++Git synchronization runs separately. Schema-2/3 archive journals keep their
++commit prerequisite. Recovery inventories accept full-copy schema 1 and schema 2,
++whose records distinguish Git reconstruction from full copies. Finalized
++manifests remain schema 3. The manifest's `archive_operation_id` selects private
+ recovery without exposing local storage paths. A registration with no available
+ local head stays recorded without an invented final SHA. Existing schema-2
+ complete/abandoned journals keep their saved policy on retry.
+ 
+-Revival uses a schema-4 journal for these archives. Before starting the retained
++Installed workspaces write schema-5 revival journals with the same local tracking
++milestone. Older schema-3/4 journals retain synchronous bookkeeping. Before starting the retained
+ conversation, it recreates each saved checkout and restores its files and Git
+ index. An unchanged retained branch is attached again; an advanced or missing
+ branch produces a detached checkout at the saved head without resetting a shared
+@@ -62,6 +73,9 @@ revival behavior and do not gain worktree snapshots.
+ Once a restoration completion receipt exists, retry cannot replace the checkout
+ again. It removes a leftover intent when the contents still match, and refuses
+ if the operator has since changed them.
++An incomplete Git restore reconstructs raw file bytes on retry before applying
++saved permissions and index state. Checkout filters and line-ending settings do
++not change those saved bytes.
+ 
+ ## Completion and abandoned cleanup
+ 
+@@ -106,8 +120,32 @@ Git commands, editors or native clients.
+ 
+ Ordinary archive, delete, revive and hold commands retain a shared package
+ transition lock and their existing session locks. Different sessions can proceed
+-while package switches and recovery retain the exclusive transition lock. The
+-operation deadline includes waiting for generation and session locks.
++while package switches and recovery retain the exclusive transition lock.
++For operations with a deadline, lock waits count toward that deadline.
++Managed browser archives run in independent `workspace-archive-RECEIPT-ATTEMPT`
++user services. The unit identity must match the retained portal authorization.
++Portal restart reconciles the unit instead of starting another worker. Private
++progress records are presentation only; the lifecycle journal remains authority.
++Portal receipt schema 2 stores finish time separately from journal progress and
++continues to read schema 1.
++
++Local tracking receipts live under private `tracking-sync/` state. An archive
++receipt binds its operation and exact tracking digest before runtime retirement.
++The per-workspace retry timer commits only owned paths under the existing shared
++tracking lock. Each attempt has a 60-second deadline covering lock waits, fetches
++and hooks; fetches also retain their 30-second limit. Timed-out commands receive
++a five-second termination grace. Owned-index cleanup has a separate ten-second
++command timeout. Hooks are not bypassed. Failed attempts retain their error and
++backoff and release lifecycle locks. Revival coalesces the receipt under the
++session lock; deletion removes it after its own transition finishes. Sensitive
++sessions do not enqueue Git tracking.
++
++New capture and receipt formats require the matching `archiveRecoveryPolicy`,
++`trackingSyncPolicy` and `archiveExecutionPolicy` runtime capabilities. Package
++selection and activation refuse a target that cannot read retained state. Keep
++recovery and receipts when recovering forward; do not remove them to select an
++older package.
++
+ Tracking commits cooperate through `dev-session-tracking.lock` in the shared
+ Git common directory. Fetches occur before that short lock; each waiter then
+ rechecks master, cached origin ancestry, current HEAD and owned staged paths.
+diff --git a/libexec/dev-session b/libexec/dev-session
+index 7fbf92a..d5b5e02 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -20,6 +20,7 @@ require_relative 'workspace-provider-admission'
+ require_relative 'workspace-auto-archive'
+ require_relative 'workspace-archive-cleanup'
+ require_relative 'workspace-archive-recovery'
++require_relative 'workspace-tracking-sync'
+ 
+ module DevSession
+   SAFE_PART = /\A[A-Za-z0-9][A-Za-z0-9_-]*\z/
+@@ -209,6 +210,7 @@ module DevSession
+       dev-session recover-stale <name-or-slug> [--as-is]
+       dev-session archive <name-or-slug> [--as-is] [--abandoned]
+       dev-session auto-archive scan [--dry-run] [--json]
++      dev-session tracking-sync [--status] [--slug SLUG] [--force] [--json]
+       dev-session auto-archive enable|disable [--json]
+       dev-session auto-archive hold|release|status <name-or-slug> [--as-is] [--json]
+       dev-session delete <name-or-slug> [--as-is] [--force]
+@@ -366,14 +368,29 @@ module DevSession
+       @timeout = previous
+     end
+ 
++    def with_deadline(deadline)
++      previous = @deadline
++      @deadline = deadline
++      yield
++    ensure
++      @deadline = previous
++    end
++
++    def timed_command(argv)
++      command = argv.map(&:to_s)
++      seconds = [@timeout, @deadline && @deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)].compact.min
++      raise Error, 'command deadline exceeded' if seconds && seconds <= 0
++
++      seconds ? ['timeout', '--signal=TERM', '--kill-after=5s', "#{seconds}s", *command] : command
++    end
++
+     def initialize(out:, err:)
+       @out = out
+       @err = err
+     end
+ 
+     def capture(argv, allow_failure: false, env: nil, pass_fds: [], input: nil)
+-      command = argv.map(&:to_s)
+-      command = ['timeout', '--signal=TERM', '--kill-after=5s', "#{@timeout}s", *command] if @timeout
++      command = timed_command(argv)
+       descriptor_options = pass_fds.to_h do |file|
+         descriptor = file.fileno
+         [descriptor, descriptor]
+@@ -395,6 +412,50 @@ module DevSession
+       [stdout, stderr, status]
+     end
+ 
++    # Stream large Git objects without retaining their contents in memory.
++    def stream(argv, input:)
++      Open3.popen3(*timed_command(argv)) do |stdin, stdout, stderr, process|
++        writer = Thread.new do
++          begin
++            stdin.write(input)
++          rescue Errno::EPIPE, IOError
++            # Git may reject an object before consuming the remaining requests.
++          ensure
++            stdin.close unless stdin.closed?
++          end
++        end
++        errors = Thread.new do
++          tail = ''.b
++          begin
++            loop do
++              tail << stderr.readpartial(16 * 1024)
++              tail = tail.byteslice(-16 * 1024, 16 * 1024) if tail.bytesize > 16 * 1024
++            end
++          rescue EOFError, IOError
++            tail
++          end
++        end
++        [writer, errors].each { |thread| thread.report_on_exception = false }
++        begin
++          value = yield stdout
++          status = process.value
++          writer.value
++          raise CommandError.new(argv, status, '', errors.value) unless status.success?
++
++          value
++        ensure
++          if process.alive?
++            Process.kill('TERM', process.pid) rescue Errno::ESRCH
++            unless process.join(5)
++              Process.kill('KILL', process.pid) rescue Errno::ESRCH
++            end
++          end
++          [writer, errors].each(&:join)
++          [stdin, stdout, stderr].each { |pipe| pipe.close unless pipe.closed? }
++        end
++      end
++    end
++
+     def capture_progress(arguments, input)
+       Open3.popen3(*arguments) do |stdin, stdout, stderr, process|
+         readers = []
+@@ -695,6 +756,7 @@ module DevSession
+   end
+ 
+   class Runner
++    include TrackingSync
+     include SensitiveSessions
+     include WorkspaceAutoArchive::Runner
+     include ArchiveCleanup::RunnerContext
+@@ -1884,6 +1946,7 @@ module DevSession
+           if sidecar && sidecar.fetch('mode') != mode
+             raise Error, "resuming archival of #{slug} requires mode #{sidecar.fetch('mode')}"
+           end
++          @archive_progress_operation_id = operation_id || journal&.fetch('operation_id')
+           if sidecar && !journal && sidecar.fetch('completed')
+             cleanup.discard_completed!(sidecar)
+             @out.puts "archived session: #{slug}"
+@@ -1929,7 +1992,7 @@ module DevSession
+             unless File.stat(source).dev == archive_device
+               raise Error, 'work and archive directories must be on the same filesystem'
+             end
+-            validate_tracking_transition_commit!(slug)
++            validate_tracking_transition_commit!(slug, local_only: defer_tracking?)
+             sync_team_lifecycle!(slug, 'require-idle') if automatic
+             automatic&.call(prepared)
+             if prepared
+@@ -2009,7 +2072,11 @@ module DevSession
+             cleanup.revalidate!(sidecar, journal:) if sidecar
+             verify_archived_tracking_tree!(slug, journal)
+             verify_archived_proven_heads!(slug, journal) if mode == 'complete'
+-            commit_tracking_transition!(slug, direction: 'archive', mode:)
++            if local_tracking_journal?(journal)
++              save_tracking_transition!(slug, journal, direction: 'archive')
++            else
++              commit_tracking_transition!(slug, direction: 'archive', mode:)
++            end
+             advance_archive!(slug, journal, 'tracking_committed')
+           end
+           verify_committed_archive_tracking!(slug, journal)
+@@ -2047,6 +2114,7 @@ module DevSession
+       end
+     ensure
+       @explicit_archive_operation_id = nil
++      @archive_progress_operation_id = nil
+     end
+ 
+     def with_verified_committed_archive(slug, expected_journal)
+@@ -2108,14 +2176,18 @@ module DevSession
+           with_slug_lock(slug) do
+             current = load_revive_journal(slug, operation_id:)
+             verify_revived_tracking_tree!(slug, current)
+-            commit_tracking_transition!(slug, direction: 'revive', mode: current.fetch('lifecycle'))
++            if local_tracking_journal?(current)
++              save_tracking_transition!(slug, current, direction: 'revive')
++            else
++              commit_tracking_transition!(slug, direction: 'revive', mode: current.fetch('lifecycle'))
++            end
+             verify_revived_tracking_tree!(slug, current)
+             advance_revive!(slug, current, 'tracking_committed')
+             current
+           end
+         end
+       end
+-      if journal['schema'] == 4 && revive_phase_before?(journal, 'runtime_started')
++      if journal['archive_operation_id'] && revive_phase_before?(journal, 'runtime_started')
+         with_creation_lock(slug) do
+           with_slug_lock(slug) do
+             recovery = archive_cleanup_recovery(slug, journal.fetch('archive_operation_id'))
+@@ -2147,7 +2219,7 @@ module DevSession
+         journal = with_creation_lock(slug) do
+           with_slug_lock(slug) do
+             current = load_revive_journal(slug, operation_id:)
+-            if current.fetch('phase') == 'tracking_committed'
++            if %w[tracking_committed tracking_saved].include?(current.fetch('phase'))
+               current = prepare_revive_runtime_start!(slug, operation_id:)
+             end
+             advance_revive!(slug, current, 'runtime_started')
+@@ -5332,7 +5404,11 @@ module DevSession
+     end
+ 
+     def verify_committed_archive_tracking!(slug, journal)
+-      require_clean_committed_tracking_transition!(slug, direction: 'archive')
++      if local_tracking_journal?(journal)
++        verify_saved_tracking_transition!(slug, journal, direction: 'archive')
++      else
++        require_clean_committed_tracking_transition!(slug, direction: 'archive')
++      end
+       verify_archived_tracking_tree!(slug, journal)
+       verify_archived_proven_heads!(slug, journal) if journal.fetch('mode') == 'complete'
+     end
+@@ -6298,7 +6374,11 @@ module DevSession
+       unless branch == 'master'
+         raise Error, 'workspace checkout must be on master while changing session tracking'
+       end
+-      @command_runner.run(['git', '-C', workspace, 'fetch', 'origin', 'master']) if refresh
++      if refresh
++        @command_runner.with_timeout(30) do
++          @command_runner.run(['git', '-C', workspace, 'fetch', 'origin', 'master'])
++        end
++      end
+       _stdout, _stderr, status = @command_runner.capture(
+         ['git', '-C', workspace, 'merge-base', '--is-ancestor', 'origin/master', 'HEAD'],
+         allow_failure: true
+@@ -6328,6 +6408,7 @@ module DevSession
+       removal['state'] = 'removed'
+       removal['removed_at'] = Time.now.utc.iso8601(6)
+       write_removal_metadata!(removal.fetch('recovery'), removal)
++      discard_tracking_sync!(slug)
+       coordination_store.lifecycle_completed(workspace, slug, 'delete', operation_id: removal.fetch('operation_id'))
+       path = lifecycle_journal_file(slug, 'delete')
+       File.unlink(path) if path_exists?(path)
+@@ -6883,7 +6964,7 @@ module DevSession
+       ]
+       unless journal.keys.sort == keys.sort &&
+              ((journal['schema'] == 2 && %w[complete abandoned].include?(journal['mode'])) ||
+-               (journal['schema'] == 3 && journal['mode'] == 'archived')) && ARCHIVE_PHASES.include?(journal['phase']) &&
++               (journal['schema'] == 3 && journal['mode'] == 'archived') || journal['schema'] == 4) && archive_phases(journal).include?(journal['phase']) &&
+              journal['operation_id'].is_a?(String) &&
+              journal['operation_id'].match?(/\A[0-9a-f]{64}\z/) &&
+              %w[complete abandoned archived].include?(journal['mode']) &&
+@@ -6915,7 +6996,7 @@ module DevSession
+         slug, plan, mode, inventory ? inventory.fetch('registered_heads') : proven_heads, finalized_at
+       )
+       journal = {
+-        'schema' => mode == 'archived' ? 3 : 2,
++        'schema' => defer_tracking? ? 4 : (mode == 'archived' ? 3 : 2),
+         'slug' => slug,
+         'workspace' => workspace,
+         'operation_id' => operation_id || SecureRandom.hex(32),
+@@ -6937,12 +7018,20 @@ module DevSession
+     end
+ 
+     def archive_phase_before?(journal, phase)
+-      ARCHIVE_PHASES.index(journal.fetch('phase')) < ARCHIVE_PHASES.index(phase)
++      phases = archive_phases(journal)
++      phase = 'tracking_saved' if local_tracking_journal?(journal) && phase == 'tracking_committed'
++      phases.index(journal.fetch('phase')) < phases.index(phase)
++    end
++
++    def archive_phases(journal)
++      local_tracking_journal?(journal) ? ARCHIVE_PHASES.map { |phase| phase == 'tracking_committed' ? 'tracking_saved' : phase } : ARCHIVE_PHASES
+     end
+ 
+     def advance_archive!(slug, journal, phase)
+-      current = ARCHIVE_PHASES.index(journal.fetch('phase'))
+-      target = ARCHIVE_PHASES.index(phase)
++      phases = archive_phases(journal)
++      phase = 'tracking_saved' if local_tracking_journal?(journal) && phase == 'tracking_committed'
++      current = phases.index(journal.fetch('phase'))
++      target = phases.index(phase)
+       raise Error, "invalid archive phase transition to #{phase}" unless target == current + 1
+ 
+       journal['phase'] = phase
+@@ -6961,7 +7050,7 @@ module DevSession
+           lifecycle_journal_file(slug, 'archive'), journal, command: 'archive', create: false
+         )
+       end
+-      if committed_path?('HEAD', File.join('archive', slug)) &&
++      if !local_tracking_journal?(journal) && committed_path?('HEAD', File.join('archive', slug)) &&
+          !committed_path?('HEAD', File.join('work', slug)) &&
+          archive_phase_before?(journal, 'tracking_committed')
+         require_clean_committed_tracking_transition!(slug, direction: 'archive')
+@@ -7050,7 +7139,7 @@ module DevSession
+         plan_sha256 state_sha256 target_state_sha256 portal_sha256
+         target_portal_sha256
+       ]
+-      keys << 'archive_operation_id' if journal['schema'] == 4
++      keys << 'archive_operation_id' if journal['lifecycle'] == 'archived'
+       digests = %w[
+         target_tracking_sha256 plan_sha256 state_sha256 target_state_sha256
+         target_portal_sha256
+@@ -7058,7 +7147,8 @@ module DevSession
+       unless journal.keys.sort == keys.sort &&
+              ((journal['schema'] == 3 && %w[complete abandoned].include?(journal['lifecycle'])) ||
+                (journal['schema'] == 4 && journal['lifecycle'] == 'archived' &&
+-                journal['archive_operation_id']&.match?(/\A[0-9a-f]{64}\z/))) && REVIVE_PHASES.include?(journal['phase']) &&
++                journal['archive_operation_id']&.match?(/\A[0-9a-f]{64}\z/)) ||
++               (journal['schema'] == 5 && (journal['lifecycle'] != 'archived' || journal['archive_operation_id']&.match?(/\A[0-9a-f]{64}\z/)))) && revive_phases(journal).include?(journal['phase']) &&
+              journal['operation_id'].is_a?(String) &&
+              journal['operation_id'].match?(/\A[0-9a-f]{64}\z/) &&
+              %w[complete abandoned archived].include?(journal['lifecycle']) &&
+@@ -7099,7 +7189,7 @@ module DevSession
+       end
+       raise Error, "live tmux session already exists: #{slug}" if @tmux.session(slug)
+       raise Error, "session authority still exists: #{slug}" if @selected_authority
+-      validate_tracking_transition_commit!(slug)
++      validate_tracking_transition_commit!(slug, local_only: defer_tracking?)
+       source = archive_dir(slug)
+       state = read_bounded_file(File.join(source, 'state.md'), 'state.md')
+       target_state = revived_state_content(state)
+@@ -7129,7 +7219,7 @@ module DevSession
+                       end
+       archived_manifest = portal && YAML.safe_load(portal)
+       journal = {
+-        'schema' => lifecycle == 'archived' ? 4 : 3,
++        'schema' => defer_tracking? ? 5 : (lifecycle == 'archived' ? 4 : 3),
+         'slug' => slug,
+         'workspace' => workspace,
+         'operation_id' => operation_id || SecureRandom.hex(32),
+@@ -7162,12 +7252,19 @@ module DevSession
+     end
+ 
+     def revive_phase_before?(journal, phase)
+-      REVIVE_PHASES.index(journal.fetch('phase')) < REVIVE_PHASES.index(phase)
++      phase = 'tracking_saved' if local_tracking_journal?(journal) && phase == 'tracking_committed'
++      revive_phases(journal).index(journal.fetch('phase')) < revive_phases(journal).index(phase)
++    end
++
++    def revive_phases(journal)
++      local_tracking_journal?(journal) ? REVIVE_PHASES.map { |phase| phase == 'tracking_committed' ? 'tracking_saved' : phase } : REVIVE_PHASES
+     end
+ 
+     def advance_revive!(slug, journal, phase)
+-      current = REVIVE_PHASES.index(journal.fetch('phase'))
+-      target = REVIVE_PHASES.index(phase)
++      phases = revive_phases(journal)
++      phase = 'tracking_saved' if local_tracking_journal?(journal) && phase == 'tracking_committed'
++      current = phases.index(journal.fetch('phase'))
++      target = phases.index(phase)
+       raise Error, "invalid revive phase transition to #{phase}" unless target == current + 1
+ 
+       journal['phase'] = phase
+@@ -7184,7 +7281,7 @@ module DevSession
+     end
+ 
+     def recover_revive_phase!(slug, journal)
+-      if journal.fetch('phase') == 'tracking_restored' &&
++      if !local_tracking_journal?(journal) && journal.fetch('phase') == 'tracking_restored' &&
+          committed_path?('HEAD', File.join('work', slug)) &&
+          !committed_path?('HEAD', File.join('archive', slug)) &&
+          revive_phase_before?(journal, 'tracking_committed')
+@@ -7195,13 +7292,17 @@ module DevSession
+           lifecycle_journal_file(slug, 'revive'), journal, command: 'revive', create: false
+         )
+       end
+-      if journal.fetch('phase') == 'tracking_committed'
++      if %w[tracking_committed tracking_saved].include?(journal.fetch('phase'))
+         verify_committed_revive_tracking!(slug, journal)
+       end
+     end
+ 
+     def verify_committed_revive_tracking!(slug, journal)
+-      require_clean_committed_tracking_transition!(slug, direction: 'revive')
++      if local_tracking_journal?(journal)
++        verify_saved_tracking_transition!(slug, journal, direction: 'revive')
++      else
++        require_clean_committed_tracking_transition!(slug, direction: 'revive')
++      end
+       verify_revived_tracking_tree!(slug, journal)
+       return if journal.fetch('legacy_without_portal')
+ 
+@@ -7216,7 +7317,7 @@ module DevSession
+       raise Error, "revive journal is missing for #{slug}" unless journal
+ 
+       case journal.fetch('phase')
+-      when 'tracking_committed'
++      when 'tracking_committed', 'tracking_saved'
+         verify_committed_revive_tracking!(slug, journal)
+         advance_revive!(slug, journal, 'runtime_starting')
+       when 'runtime_starting'
+@@ -7241,6 +7342,15 @@ module DevSession
+     end
+ 
+     def tracking_tree_sha256(root, overrides: {}, legacy_permissions: false)
++      # Reuse content only within this executor, after freshly inventorying the
++      # whole tree. Ordinary writes/renames/chmods invalidate the stamp. Recovery
++      # retries in another process always obtain fresh content proof.
++      stamp = tracking_tree_stamp(root)
++      @tracking_digest_cache ||= {}
++      key = [root, overrides, legacy_permissions]
++      cached = @tracking_digest_cache[key]
++      return cached.fetch(1) if cached && cached.fetch(0) == stamp
++
+       digest = Digest::SHA256.new
+       seen_overrides = {}
+       visit = lambda do |directory, relative_root|
+@@ -7284,7 +7394,12 @@ module DevSession
+               seen_overrides[relative] = true
+               tracking_digest_field(digest, overrides.fetch(relative))
+             else
+-              tracking_digest_field(digest, File.binread(path))
++              digest << [stat.size].pack('Q>')
++              File.open(path, 'rb') do |file|
++                while (chunk = file.read(1024 * 1024))
++                  digest << chunk
++                end
++              end
+             end
+           end
+         end
+@@ -7293,7 +7408,28 @@ module DevSession
+       missing = overrides.keys - seen_overrides.keys
+       raise Error, "tracking digest overrides were not applied: #{missing.join(', ')}" unless missing.empty?
+ 
+-      digest.hexdigest
++      result = digest.hexdigest
++      raise Error, 'tracking changed while computing its recovery digest' unless tracking_tree_stamp(root) == stamp
++
++      @tracking_digest_cache[key] = [stamp, result]
++      result
++    end
++
++    def tracking_tree_stamp(root)
++      stamp = Digest::SHA256.new
++      walk = lambda do |directory, prefix|
++        Dir.children(directory).sort.each do |name|
++          path = File.join(directory, name)
++          relative = prefix.empty? ? name : File.join(prefix, name)
++          stat = File.lstat(path)
++          stamp << JSON.generate([relative, stat.ftype, stat.dev, stat.ino, stat.mode,
++                                  stat.size, stat.mtime.to_r.to_s, stat.ctime.to_r.to_s]) << "\n"
++          stamp << File.readlink(path) if stat.symlink?
++          walk.call(path, relative) if stat.directory? && !stat.symlink?
++        end
++      end
++      walk.call(root, '')
++      stamp.hexdigest
+     end
+ 
+     def tracking_digest_field(digest, value)
+@@ -7349,7 +7485,7 @@ module DevSession
+                 else
+                   raise Error, "unsupported lifecycle journal writer: #{command}"
+                 end
+-      allowed << 'archive_operation_id' if command == 'revive' && journal['schema'] == 4
++      allowed << 'archive_operation_id' if command == 'revive' && journal['lifecycle'] == 'archived'
+       unless journal.keys.sort == allowed.sort
+         raise Error, "invalid lifecycle journal fields: #{path}"
+       end
+@@ -7399,9 +7535,15 @@ module DevSession
+       atomic_replace(path, replacement)
+     end
+ 
+-    def validate_tracking_transition_commit!(slug, refresh: true)
++    def validate_tracking_transition_commit!(slug, refresh: true, local_only: false)
+       return ensure_sensitive_exclusions!(slug) if sensitive_session?(slug)
+-      require_linear_workspace_master_for_tracking!(refresh:)
++      if local_only
++        unless git_capture(['git', '-C', workspace, 'symbolic-ref', '--short', 'HEAD']).strip == 'master'
++          raise Error, 'workspace checkout must be on master while changing session tracking'
++        end
++      else
++        require_linear_workspace_master_for_tracking!(refresh:)
++      end
+       paths = [File.join('work', slug), File.join('archive', slug)]
+       _stdout, _stderr, status = @command_runner.capture(
+         ['git', '-C', workspace, 'diff', '--cached', '--quiet', '--', *paths],
+@@ -7422,6 +7564,9 @@ module DevSession
+                               end
+         absolute_destination = File.join(workspace, destination)
+         raise Error, "tracking transition destination is missing: #{destination}" unless File.directory?(absolute_destination)
++        paths = [source, destination].select do |path|
++          path_exists?(File.join(workspace, path)) || committed_path?('HEAD', path)
++        end
+ 
+         status = git_capture([
+           'git', '-C', workspace, 'status', '--porcelain=v1', '--', source, destination
+@@ -7453,14 +7598,19 @@ module DevSession
+           intent_added = true
+           @command_runner.run([
+             'git', '-C', workspace, 'commit', '--only', '-F', message.path,
+-            '--', source, destination
++            '--', *paths
+           ])
+         rescue StandardError
+           if intent_added
+-            @command_runner.capture(
+-              ['git', '-C', workspace, 'reset', '--quiet', 'HEAD', '--', source, destination],
+-              allow_failure: true
+-            )
++            # A retry deadline must not prevent ordinary owned-index cleanup.
++            @command_runner.with_deadline(nil) do
++              @command_runner.with_timeout(10) do
++                @command_runner.capture(
++                  ['git', '-C', workspace, 'reset', '--quiet', 'HEAD', '--', *paths],
++                  allow_failure: true
++                )
++              end
++            end
+           end
+           raise
+         ensure
+@@ -7514,7 +7664,19 @@ module DevSession
+           raise Error, "#{description} must be a uid #{Process.euid} mode-0600 file: #{path}"
+         end
+         locked = file.flock(mode | File::LOCK_NB)
+-        locked = file.flock(mode) if !locked && wait
++        if !locked && wait
++          if @tracking_sync_deadline
++            until locked
++              remaining = @tracking_sync_deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
++              raise Error, 'tracking synchronization lock deadline exceeded' if remaining <= 0
++
++              sleep([remaining, 0.05].min)
++              locked = file.flock(mode | File::LOCK_NB)
++            end
++          else
++            locked = file.flock(mode)
++          end
++        end
+         unless locked
+           raise Error, busy_message || "cannot lock #{description}: #{path}"
+         end
+@@ -8371,6 +8533,7 @@ module DevSession
+ 
+     def validate_tracking_committed!(slug)
+       return ensure_sensitive_exclusions!(slug) if sensitive_session?(slug)
++      return if tracking_sync_receipt(slug)&.fetch('direction') == 'revive'
+       plan_path = File.join('work', slug, 'plan.md')
+       state_path = File.join('work', slug, 'state.md')
+       missing = [plan_path, state_path].reject { |path| committed_path?('HEAD', path) }
+@@ -8789,6 +8952,7 @@ module DevSession
+       end
+       validate_terminal_lifecycle_file!(state)
+       return validate_sensitive_transition!(slug, direction: 'archive') if sensitive_session?(slug)
++      return if locally_archived_tracking?(slug)
+ 
+       relative_paths = [File.join('work', slug), File.join('archive', slug)]
+       status = git_capture([
+@@ -8915,10 +9079,12 @@ module DevSession
+       raise Error, USAGE unless command
+ 
+       @provider_read_only = %w[current list url validate quiesce].include?(command) ||
++                            (command == 'tracking-sync' && @argv.include?('--status')) ||
+                             (command == 'team' && @argv.first == 'list')
+ 
+       if @transition_lock && !%w[archive delete revive auto-archive].include?(command)
+         read_only = %w[current list url validate].include?(command) ||
++                    (command == 'tracking-sync' && @argv.include?('--status')) ||
+                     (command == 'team' && @argv.first == 'list')
+         with_transition_lock(File::LOCK_SH, read_only:) do
+           validate_host_generation!
+@@ -8970,6 +9136,16 @@ module DevSession
+         run_archive
+       when 'auto-archive'
+         run_auto_archive
++      when 'tracking-sync'
++        options = { force: false, slug: nil, status: false }
++        OptionParser.new do |parser|
++          parser.on('--force') { options[:force] = true }
++          parser.on('--status') { options[:status] = true }
++          parser.on('--slug SLUG') { |value| options[:slug] = value }
++          parser.on('--json') { }
++        end.parse!(@argv)
++        value = options[:status] ? runner.tracking_sync_status(options[:slug]) : runner.tracking_sync(options[:slug], force: options[:force])
++        @out.puts JSON.generate(value)
+       when 'delete'
+         run_delete
+       when 'revive'
+@@ -9354,11 +9530,11 @@ module DevSession
+ 
+       slug = runner.resolve_slug(@argv.fetch(0), as_is: opts.fetch(:as_is))
+       if opts.fetch(:portal_authorized)
+-        validate_portal_authorization!
+         operation_id = opts.fetch(:portal_operation_id)
+         unless operation_id&.match?(/\A[0-9a-f]{64}\z/)
+           raise Error, '--portal-operation-id must be a lowercase 64-character hexadecimal value'
+         end
++        validate_portal_authorization!(archive_slug: slug, archive_operation_id: operation_id)
+       else
+         if opts.fetch(:portal_operation_id)
+           raise Error, '--portal-operation-id requires --portal-authorized'
+@@ -9556,7 +9732,7 @@ module DevSession
+       slug
+     end
+ 
+-    def validate_portal_authorization!
++    def validate_portal_authorization!(archive_slug: nil, archive_operation_id: nil)
+       unless @require_runtime && @authority_dir && @portal_command
+         raise Error, 'portal lifecycle authorization requires the deployed workspace runtime'
+       end
+@@ -9568,7 +9744,10 @@ module DevSession
+       service = "workspace-portal@#{workspace_name}.service"
+       authorized = cgroups.lines.any? do |line|
+         path = line.split(':', 3).last.to_s.strip
+-        path.split('/').include?(service)
++        path.split('/').any? do |unit|
++          unit == service || (archive_slug && unit.match?(/\Aworkspace-archive-[0-9a-f]{64}-[0-9]+\.service\z/) &&
++            runner.authorized_archive_worker?(archive_slug, archive_operation_id, unit))
++        end
+       end
+       return if authorized
+ 
+diff --git a/libexec/workspace-archive-cleanup.rb b/libexec/workspace-archive-cleanup.rb
+index 90e1705..0f41030 100644
+--- a/libexec/workspace-archive-cleanup.rb
++++ b/libexec/workspace-archive-cleanup.rb
+@@ -22,7 +22,11 @@ module DevSession
+       def archive_cleanup_recovery(slug, operation_id)
+         workspace_id = "#{File.basename(workspace)}-#{Digest::SHA256.hexdigest(workspace)[0, 16]}"
+         root = File.join(@workspace_state_root, 'archived-worktrees', workspace_id, slug, operation_id)
+-        ArchiveRecovery.new(root, worktrees_dir(slug), @command_runner)
++        @archive_recovery_instances ||= {}
++        @archive_recovery_instances[root] ||= ArchiveRecovery.new(
++          root, worktrees_dir(slug), @command_runner,
++          progress: ->(stage, path) { archive_progress!(slug, stage, path) }
++        )
+       end
+ 
+       def archive_cleanup_repository(project)
+@@ -259,12 +263,13 @@ module DevSession
+     def create(journal, inventory)
+       if journal.fetch('mode') == 'archived'
+         @runner.archive_cleanup_recovery(@slug, journal.fetch('operation_id')).capture!(inventory.fetch('worktrees'))
++        @recovery_audited = true
+       end
+       source = source_path
+       inventory = inventory.merge('tracking_identity' => directory_identity(source),
+                                   'source_sha256' => @runner.archive_cleanup_source_digest(@slug))
+       sidecar = journal.slice(*BINDING_KEYS).merge(
+-        'schema' => journal.fetch('mode') == 'archived' ? 2 : 1, 'sealed' => true, 'inventory' => inventory,
++        'schema' => journal.fetch('schema') >= 4 ? 3 : (journal.fetch('mode') == 'archived' ? 2 : 1), 'sealed' => true, 'inventory' => inventory,
+         'inventory_sha256' => inventory_digest(inventory), 'completed' => false
+       )
+       @runner.archive_cleanup_prepare_storage!
+@@ -296,7 +301,7 @@ module DevSession
+         raise Error, "prepared archive cleanup inventory changed: #{@slug}"
+       end
+       sidecar.slice(*BINDING_KEYS).merge(
+-        'schema' => sidecar.fetch('mode') == 'archived' ? 3 : 2, 'phase' => 'prepared',
++        'schema' => sidecar.fetch('schema') == 3 ? 4 : (sidecar.fetch('mode') == 'archived' ? 3 : 2), 'phase' => 'prepared',
+         'proven_heads' => sidecar.fetch('mode') == 'complete' ? inventory.fetch('registered_heads') : {}
+       )
+     end
+@@ -328,9 +333,16 @@ module DevSession
+         end
+       end
+       inventory.fetch('proofs').each { |proof| reprove!(proof, sidecar.fetch('mode')) }
+-      if sidecar.fetch('mode') == 'archived'
++      if sidecar.fetch('mode') == 'archived' && !@recovery_audited
+         recovery = @runner.archive_cleanup_recovery(@slug, sidecar.fetch('operation_id'))
+-        inventory.fetch('worktrees').each { |record| recovery.verify_checkout!(record) unless record.fetch('removed') }
++        inventory.fetch('worktrees').each do |record|
++          if record.fetch('removed')
++            recovery.verify_saved!(record)
++          else
++            recovery.verify_checkout!(record)
++          end
++        end
++        @recovery_audited = true
+       end
+       tracking = exists?(source_path) ? source_path : archive_path
+       unless directory_identity(tracking) == inventory.fetch('tracking_identity')
+@@ -349,6 +361,8 @@ module DevSession
+         revalidate!(sidecar, journal:)
+         next if record.fetch('removed')
+         if sidecar.fetch('mode') == 'archived'
++          @runner.archive_cleanup_recovery(@slug, sidecar.fetch('operation_id')).verify_checkout!(record)
++          @runner.archive_progress!(@slug, 'removing checkout', record.fetch('path'))
+           @runner.archive_cleanup_remove!(record.fetch('common_dir'), absolute(record.fetch('path')), force: true)
+         else
+           @runner.archive_cleanup_remove!(record.fetch('common_dir'), absolute(record.fetch('path')))
+@@ -385,7 +399,7 @@ module DevSession
+       raise Error, "archive cleanup is not completed: #{@slug}" unless sidecar.fetch('completed')
+ 
+       journal = sidecar.slice(*BINDING_KEYS).merge(
+-        'schema' => sidecar.fetch('mode') == 'archived' ? 3 : 2, 'phase' => 'archived',
++        'schema' => sidecar.fetch('schema') == 3 ? 4 : (sidecar.fetch('mode') == 'archived' ? 3 : 2), 'phase' => 'archived',
+         'proven_heads' => sidecar.fetch('mode') == 'complete' ? sidecar.fetch('inventory').fetch('registered_heads') : {}
+       )
+       revalidate!(sidecar, journal:)
+@@ -789,10 +803,10 @@ module DevSession
+ 
+     def validate!(sidecar)
+       inventory = sidecar['inventory'] if sidecar.is_a?(Hash)
+-      valid = keys?(sidecar, KEYS) && [1, 2].include?(sidecar['schema']) && sidecar['sealed'] == true &&
++      valid = keys?(sidecar, KEYS) && [1, 2, 3].include?(sidecar['schema']) && sidecar['sealed'] == true &&
+         sidecar['workspace'] == @workspace && sidecar['slug'] == @slug &&
+         sidecar['operation_id'].is_a?(String) && sidecar['operation_id'].match?(DIGEST) &&
+-        (sidecar['schema'] == 2 ? sidecar['mode'] == 'archived' : %w[complete abandoned].include?(sidecar['mode'])) &&
++        (sidecar['schema'] == 3 ? %w[complete abandoned archived].include?(sidecar['mode']) : (sidecar['schema'] == 2 ? sidecar['mode'] == 'archived' : %w[complete abandoned].include?(sidecar['mode']))) &&
+         timestamp?(sidecar['finalized_at']) &&
+         sidecar['target_tracking_sha256'].is_a?(String) && sidecar['target_tracking_sha256'].match?(DIGEST) &&
+         (sidecar['retained_thread_id'].nil? || sidecar['retained_thread_id'].is_a?(String) && sidecar['retained_thread_id'].match?(/\A[0-9A-Za-z-]+\z/)) &&
+diff --git a/libexec/workspace-archive-recovery.rb b/libexec/workspace-archive-recovery.rb
+index d217e4f..12c9261 100644
+--- a/libexec/workspace-archive-recovery.rb
++++ b/libexec/workspace-archive-recovery.rb
+@@ -6,16 +6,18 @@ module DevSession
+   class ArchiveRecovery
+     ADMIN_EXCLUDES = %w[gitdir commondir HEAD logs].freeze
+ 
+-    def initialize(root, group, command_runner)
++    def initialize(root, group, command_runner, progress: nil)
+       @root = root
+       @group = group
+       @commands = command_runner
++      @progress = progress
+     end
+ 
+     def capture!(records)
+       FileUtils.mkdir_p(@root, mode: 0o700)
+       File.chmod(0o700, @root)
+       records.each do |record|
++        @progress&.call('capturing checkout', record.fetch('path'))
+         key = Digest::SHA256.hexdigest(record.fetch('path'))
+         destination = File.join(@root, key)
+         if File.file?(File.join(destination, 'record.json'))
+@@ -26,42 +28,65 @@ module DevSession
+         FileUtils.mkdir_p(File.join(destination, 'files'), mode: 0o700)
+         FileUtils.mkdir_p(File.join(destination, 'admin'), mode: 0o700)
+         source = File.join(@group, record.fetch('path'))
+-        copy_contents(source, File.join(destination, 'files'), excludes: ['.git'])
++        git_capture = git(record, 'status', '--porcelain', '--untracked-files=all',
++                          '--ignored=matching', checkout: source).empty?
++        # Git status compares filtered content. Only raw blob equality makes
++        # reconstruction independent of filters, LFS and line-ending settings.
++        git_capture &&= raw_git_contents?(record, source)
++        copy_contents(source, File.join(destination, 'files'), excludes: ['.git']) unless git_capture
+         copy_contents(record.fetch('admin_dir'), File.join(destination, 'admin'), excludes: ADMIN_EXCLUDES)
+         ref_prefix = "refs/dev-session-archives/#{File.basename(@root)}/#{key}"
+-        git(record, 'update-ref', "#{ref_prefix}/head", record.fetch('head'))
++        retained = git(record, '--no-replace-objects', 'ls-tree', '-r', '--format=%(objectname)', record.fetch('head')).lines.to_h do |line|
++          [line.strip, true]
++        end
+         index_objects = git(record, 'ls-files', '--stage', '-z', checkout: source).split("\0").filter_map do |entry|
+           next if entry.start_with?('160000 ')
+           match = entry.match(/\A[0-9]+ ([0-9a-f]{40}|[0-9a-f]{64}) [0-3]\t/)
+           match && match[1] unless match && match[1].match?(/\A0+\z/)
+         end.uniq
+-        index_objects.each { |object| git(record, 'update-ref', "#{ref_prefix}/index/#{object}", object) }
++        updates = { "#{ref_prefix}/head" => record.fetch('head') }
++        index_objects.reject { |object| retained[object] }.each do |object|
++          updates["#{ref_prefix}/index/#{object}"] = object
++        end
++        operation_objects = []
+         Dir.glob(File.join(destination, 'admin', '**', '*')).each do |path|
+           next unless File.file?(path) && !File.symlink?(path) && File.size(path) <= 1024 * 1024
+           next if File.basename(path).start_with?('index', 'sharedindex')
+ 
+-          File.binread(path).scan(/\b(?:[0-9a-f]{64}|[0-9a-f]{40})\b/).uniq.each do |object|
+-            _out, _err, status = @commands.capture(
+-              ['git', "--git-dir=#{record.fetch('common_dir')}", 'cat-file', '-e', object], allow_failure: true
+-            )
+-            git(record, 'update-ref', "#{ref_prefix}/operation/#{object}", object) if status.success?
++          operation_objects.concat(File.binread(path).scan(/\b(?:[0-9a-f]{64}|[0-9a-f]{40})\b/))
++        end
++        unless operation_objects.empty?
++          output, = @commands.capture(
++            ['git', "--git-dir=#{record.fetch('common_dir')}", 'cat-file', '--batch-check'],
++            input: operation_objects.uniq.join("\n") + "\n"
++          )
++          output.each_line do |line|
++            object, kind, = line.split
++            updates["#{ref_prefix}/operation/#{object}"] = object unless kind == 'missing'
+           end
+         end
++        @commands.capture(
++          ['git', "--git-dir=#{record.fetch('common_dir')}", 'update-ref', '--stdin'],
++          input: updates.map { |ref, object| "update #{ref} #{object}\n" }.join
++        )
+         saved = record.reject { |name, _| name == 'removed' }.merge(
+-          'files_sha256' => tree_digest(File.join(destination, 'files')),
++          'format' => 2,
++          'kind' => git_capture ? 'git' : 'files',
++          'files_sha256' => tree_digest(git_capture ? source : File.join(destination, 'files'), excludes: git_capture ? ['.git'] : []),
+           'admin_sha256' => tree_digest(File.join(destination, 'admin')),
+           'head_ref' => "#{ref_prefix}/head"
+         )
++        saved['permissions'] = permissions(source) if git_capture
+         sync_tree(destination)
+         write_json(File.join(destination, 'record.json'), saved)
+         verify_checkout!(record)
+       end
+-      write_json(File.join(@root, 'inventory.json'), { 'schema' => 1, 'worktrees' => records })
++      write_json(File.join(@root, 'inventory.json'), { 'schema' => 2, 'worktrees' => records })
+     end
+ 
+     def records
+       inventory = JSON.parse(File.binread(File.join(@root, 'inventory.json')))
+-      unless inventory['schema'] == 1 && inventory['worktrees'].is_a?(Array)
++      unless [1, 2].include?(inventory['schema']) && inventory['worktrees'].is_a?(Array)
+         raise Error, 'invalid archive recovery inventory'
+       end
+       inventory.fetch('worktrees').each do |record|
+@@ -77,6 +102,7 @@ module DevSession
+     end
+ 
+     def verify_checkout!(record)
++      @progress&.call('verifying checkout', record.fetch('path'))
+       saved, destination = read_record(record)
+       source = File.join(@group, record.fetch('path'))
+       unless tree_digest(source, excludes: ['.git']) == saved.fetch('files_sha256') &&
+@@ -86,8 +112,19 @@ module DevSession
+       verify_snapshot!(saved, destination)
+     end
+ 
++    def verify_saved!(record)
++      saved, destination = read_record(record)
++      verify_snapshot!(saved, destination)
++    end
++
+     def verify_snapshot!(saved, destination)
+-      unless tree_digest(File.join(destination, 'files')) == saved.fetch('files_sha256') &&
++      files_match = if saved['kind'] == 'git'
++                      git(saved, '--no-replace-objects', 'rev-parse', '--verify', saved.fetch('head_ref')).strip == saved.fetch('head') &&
++                        verify_git_objects!(saved)
++                    else
++                      tree_digest(File.join(destination, 'files')) == saved.fetch('files_sha256')
++                    end
++      unless files_match &&
+              tree_digest(File.join(destination, 'admin')) == saved.fetch('admin_sha256')
+         raise Error, "archive recovery contents changed: #{destination}"
+       end
+@@ -124,9 +161,9 @@ module DevSession
+           ['git', "--git-dir=#{record.fetch('common_dir')}", 'rev-parse', '--verify', "refs/heads/#{branch}"], allow_failure: true
+         ) if branch
+         arguments = if branch && status.success? && branch_head.strip == record.fetch('head')
+-                      ['worktree', 'add', target, branch]
++                      ['worktree', 'add', '--no-checkout', target, branch]
+                     else
+-                      ['worktree', 'add', '--detach', target, saved.fetch('head_ref')]
++                      ['worktree', 'add', '--no-checkout', '--detach', target, saved.fetch('head_ref')]
+                     end
+         git(record, *arguments)
+       end
+@@ -139,8 +176,16 @@ module DevSession
+       admin = File.realpath(File.expand_path(capture(['git', '-C', target, 'rev-parse', '--git-dir']).strip, target))
+       # Restoration owns this newly created checkout. Replacing its files never
+       # resets another user's checkout or a shared repository index.
+-      Dir.children(target).each { |name| FileUtils.rm_rf(File.join(target, name)) unless name == '.git' }
+-      copy_contents(File.join(destination, 'files'), target)
++      if saved['kind'] == 'git'
++        # The private intent owns this incomplete checkout until restored.json.
++        # Rebuild raw bytes on every retry, independent of checkout filters.
++        Dir.children(target).each { |name| FileUtils.rm_rf(File.join(target, name)) unless name == '.git' }
++        restore_git_contents!(saved, target)
++        restore_permissions(target, saved.fetch('permissions'))
++      else
++        Dir.children(target).each { |name| FileUtils.rm_rf(File.join(target, name)) unless name == '.git' }
++        copy_contents(File.join(destination, 'files'), target)
++      end
+       copy_contents(File.join(destination, 'admin'), admin)
+       unless restored?(record, saved)
+         raise Error, "archive recovery restore verification failed: #{target}"
+@@ -154,6 +199,142 @@ module DevSession
+ 
+     private
+ 
++    def verify_git_objects!(saved)
++      # Restrict traversal to the saved tree, not the repository's full history.
++      objects = git(saved, '--no-replace-objects', 'rev-list', '--objects', '--no-object-names', "#{saved.fetch('head')}^{tree}").lines.map(&:strip)
++      objects.unshift(saved.fetch('head'))
++      stream_git_objects(saved, objects) { |_object, _kind, _size, _stream| }
++      true
++    end
++
++    def restore_git_contents!(saved, target)
++      entries = git(saved, '--no-replace-objects', 'ls-tree', '-r', '-z', saved.fetch('head')).split("\0").map do |entry|
++        metadata, relative = entry.split("\t", 2)
++        mode, kind, object = metadata.split
++        unless kind == 'blob' && relative && !Pathname.new(relative).absolute? &&
++               relative.split('/').none? { |part| part.empty? || %w[. .. .git].include?(part) }
++          raise Error, 'invalid Git recovery tree entry'
++        end
++        [mode, relative, object]
++      end
++      index = 0
++      stream_git_objects(saved, entries.map(&:last)) do |_object, kind, size, read|
++        mode, relative, = entries.fetch(index)
++        index += 1
++        raise Error, 'invalid Git recovery blob' unless kind == 'blob'
++
++        path = File.join(target, relative)
++        FileUtils.mkdir_p(File.dirname(path))
++        if mode == '120000'
++          raise Error, 'oversized Git recovery symlink' if size > 1024 * 1024
++
++          File.symlink(read.call(size), path)
++        else
++          File.open(path, 'wb', 0o600) do |file|
++            while (chunk = read.call(1024 * 1024))
++              file.write(chunk)
++            end
++          end
++        end
++      end
++    end
++
++    # Git owns object decoding. Check the raw object identity while consuming
++    # one bounded stream; a missing or corrupt blob must never permit removal.
++    def stream_git_objects(saved, objects)
++      return if objects.empty?
++
++      @commands.stream(['git', '--no-replace-objects', "--git-dir=#{saved.fetch('common_dir')}", 'cat-file', '--batch'], input: objects.join("\n") + "\n") do |stream|
++        objects.each do |object|
++          header = stream.gets&.split
++          unless header && header.length == 3 && header[0] == object && %w[blob tree commit].include?(header[1]) && header[2].match?(/\A[0-9]+\z/)
++            raise Error, "archive recovery Git object is missing or unreadable: #{object}"
++          end
++          size = Integer(header[2])
++          digest = object.length == 40 ? Digest::SHA1.new : Digest::SHA256.new
++          digest << "#{header[1]} #{size}\0".b
++          remaining = size
++          read = lambda do |length|
++            next nil if remaining.zero?
++
++            chunk = stream.read([length, remaining].min)
++            raise Error, 'truncated archive recovery Git object' if chunk.nil? || chunk.empty?
++
++            digest << chunk
++            remaining -= chunk.bytesize
++            chunk
++          end
++          yield object, header[1], size, read
++          nil while read.call(1024 * 1024)
++          unless stream.read(1) == "\n" && digest.hexdigest == object
++            raise Error, "archive recovery Git object is corrupt: #{object}"
++          end
++        end
++      end
++    end
++
++    def raw_git_contents?(record, source)
++      digest_class = record.fetch('head').size == 40 ? Digest::SHA1 : Digest::SHA256
++      git(record, '--no-replace-objects', 'ls-tree', '-r', '-z', record.fetch('head')).split("\0").all? do |entry|
++        metadata, relative = entry.split("\t", 2)
++        mode, kind, object = metadata.split
++        next false unless kind == 'blob'
++
++        path = File.join(source, relative)
++        if File.symlink?(path)
++          next false unless mode == '120000'
++
++          value = File.readlink(path).b
++          digest_class.hexdigest("blob #{value.bytesize}\0".b + value) == object
++        elsif File.file?(path)
++          next false unless %w[100644 100755].include?(mode)
++
++          digest = digest_class.new
++          digest << "blob #{File.size(path)}\0"
++          File.open(path, 'rb') do |file|
++            while (chunk = file.read(1024 * 1024))
++              digest << chunk
++            end
++          end
++          digest.hexdigest == object
++        else
++          false
++        end
++      end
++    end
++
++    def permissions(root)
++      result = {}
++      walk = lambda do |directory, prefix|
++        Dir.children(directory).sort.each do |name|
++          next if prefix.empty? && name == '.git'
++
++          relative = prefix.empty? ? name : File.join(prefix, name)
++          path = File.join(root, relative)
++          stat = File.lstat(path)
++          result[relative] = [stat.ftype, stat.mode & 0o777]
++          walk.call(path, relative) if stat.directory? && !stat.symlink?
++        end
++      end
++      walk.call(root, '')
++      result
++    end
++
++    def restore_permissions(root, entries)
++      entries.each do |relative, (kind, mode)|
++        unless relative.is_a?(String) && !Pathname.new(relative).absolute? &&
++               relative.split('/').none? { |part| part.empty? || %w[. .. .git].include?(part) } &&
++               %w[file directory link].include?(kind) && mode.is_a?(Integer) && mode.between?(0, 0o777)
++          raise Error, 'invalid Git recovery permission entry'
++        end
++        path = File.join(root, relative)
++        FileUtils.mkdir_p(path) if kind == 'directory'
++        next if kind == 'link'
++
++        File.chmod(mode, path)
++      end
++    end
++
+     def restored?(record, saved)
+       target = File.join(@group, record.fetch('path'))
+       return false unless File.directory?(target) && !File.symlink?(target)
+@@ -167,6 +348,12 @@ module DevSession
+     def read_record(record)
+       destination = File.join(@root, Digest::SHA256.hexdigest(record.fetch('path')))
+       saved = JSON.parse(File.binread(File.join(destination, 'record.json')))
++      if saved.key?('format') && (saved['format'] != 2 || !%w[git files].include?(saved['kind']))
++        raise Error, 'unsupported archive recovery record format'
++      end
++      if saved['kind'] == 'git' && !saved['permissions'].is_a?(Hash)
++        raise Error, 'Git recovery permissions are missing'
++      end
+       %w[path common_dir head branch].each do |key|
+         raise Error, "archive recovery identity changed: #{record.fetch('path')}" unless saved[key] == record[key]
+       end
+diff --git a/libexec/workspace-host b/libexec/workspace-host
+index 6a81451..94b29f9 100755
+--- a/libexec/workspace-host
++++ b/libexec/workspace-host
+@@ -447,6 +447,9 @@ module DevWorkspaceHost
+       when 'run-auto-archive'
+         entry = instance_argument(argv, 'run-auto-archive')
+         dispatch(['--workspace', entry.fetch('name'), 'auto-archive', 'scan', '--json'], 'dev-session')
++      when 'run-tracking-sync'
++        entry = instance_argument(argv, 'run-tracking-sync')
++        dispatch(['--workspace', entry.fetch('name'), 'tracking-sync', '--json'], 'dev-session')
+       when '-h', '--help', nil
+         extension_catalog
+         @out.puts usage
+@@ -1146,6 +1149,11 @@ module DevWorkspaceHost
+ 
+       timers = entries.map { |entry| "workspace-auto-archive@#{entry.fetch('name')}.timer" }
+       workers = entries.map { |entry| "workspace-auto-archive@#{entry.fetch('name')}.service" }
++      tracking_template = File.join(@home, '.config/systemd/user/workspace-tracking-sync@.timer')
++      if File.exist?(tracking_template) || File.symlink?(tracking_template)
++        timers.concat(entries.map { |entry| "workspace-tracking-sync@#{entry.fetch('name')}.timer" })
++        workers.concat(entries.map { |entry| "workspace-tracking-sync@#{entry.fetch('name')}.service" })
++      end
+       system! 'systemctl', '--user', 'disable', '--now', *timers
+       system! 'systemctl', '--user', 'stop', *workers
+       @auto_archive_stopped = true
+@@ -1163,14 +1171,20 @@ module DevWorkspaceHost
+       @auto_archive_stopped = false
+       system! 'systemctl', '--user', 'enable', '--now',
+               *entries.map { |entry| "workspace-auto-archive@#{entry.fetch('name')}.timer" }
++      if File.file?(File.join(package, 'share/systemd/user/workspace-tracking-sync@.timer'))
++        system! 'systemctl', '--user', 'enable', '--now',
++                *entries.map { |entry| "workspace-tracking-sync@#{entry.fetch('name')}.timer" }
++      end
+     end
+ 
+     def remove_auto_archive_links
+-      %w[timer service].each do |suffix|
+-        remove_exact_link(
+-          File.join(@home, ".config/systemd/user/workspace-auto-archive@.#{suffix}"),
+-          File.join(@profile, "share/systemd/user/workspace-auto-archive@.#{suffix}")
+-        )
++      %w[auto-archive tracking-sync].each do |family|
++        %w[timer service].each do |suffix|
++          remove_exact_link(
++            File.join(@home, ".config/systemd/user/workspace-#{family}@.#{suffix}"),
++            File.join(@profile, "share/systemd/user/workspace-#{family}@.#{suffix}")
++          )
++        end
+       end
+     end
+ 
+@@ -1299,6 +1313,7 @@ module DevWorkspaceHost
+       environment = @env.to_h.merge(
+         'DEV_WORKSPACE_NAME' => entry.fetch('name'),
+         'DEV_WORKSPACE_CODEX_HOME' => codex_home,
++        'DEV_WORKSPACE_DEFER_TRACKING' => '1',
+         'DEV_WORKSPACES_STATE' => @state
+       )
+       [environment, private_command, arguments]
+@@ -2571,6 +2586,7 @@ module DevWorkspaceHost
+     # Once durable execution holds and submission receipts exist, a predecessor
+     # that ignores them cannot safely restore sessions or reconcile retries.
+     def require_compatible_session_recovery!(package)
++      require_compatible_archive_recovery!(package)
+       state = %w[session-recovery submissions].flat_map do |name|
+         Dir.glob(File.join(@state, name, '**', '*.json'))
+       end
+@@ -2585,6 +2601,27 @@ module DevWorkspaceHost
+       raise Error, 'target workspace package has no readable session recovery contract'
+     end
+ 
++    def require_compatible_archive_recovery!(package)
++      tracking = Dir.glob(File.join(@state, 'tracking-sync', '*', '*.json'))
++      inventories = Dir.glob(File.join(@state, 'archived-worktrees', '*', '*', '*', 'inventory.json'))
++      git_recovery = inventories.any? do |path|
++        value = parse_strict_json_object(File.binread(path), 'archive recovery inventory', 8 * 1024 * 1024)
++        value['schema'] == 2
++      end
++      execution = Dir.glob(File.join(@state, 'portal', '*', 'lifecycle-operations.json')).any? do |path|
++        parse_strict_json_object(File.binread(path), 'portal lifecycle receipts', 256 * 1024)['schema'] == 2
++      end
++      return if tracking.empty? && !git_recovery && !execution
++
++      path = File.join(package, 'share/workspace-portal/runtime-contract.json')
++      contract = parse_strict_json_object(File.binread(path), 'archive recovery contract', 64 * 1024)
++      unless (!git_recovery || contract['archiveRecoveryPolicy'] == 2) &&
++             (tracking.empty? || contract['trackingSyncPolicy'] == 1) &&
++             (!execution || contract['archiveExecutionPolicy'] == 1)
++        raise Error, 'target workspace package cannot preserve local archive recovery and pending tracking'
++      end
++    end
++
+     def identity_bound_runtime_authorities(entries = registry.entries)
+       entries.flat_map do |entry|
+         directory = instance_runtime(entry).fetch(:authority)
+diff --git a/libexec/workspace-tracking-sync.rb b/libexec/workspace-tracking-sync.rb
+new file mode 100644
+index 0000000..dec4e11
+--- /dev/null
++++ b/libexec/workspace-tracking-sync.rb
+@@ -0,0 +1,193 @@
++# frozen_string_literal: true
++
++module DevSession
++  # Local closure is independent of Git publication. A receipt survives a
++  # successful sync so archive/revive can prove their local transition offline.
++  module TrackingSync
++    def defer_tracking?
++      @env['DEV_WORKSPACE_DEFER_TRACKING'] == '1'
++    end
++
++    def authorized_archive_worker?(slug, operation_id, unit)
++      workspace_id = "#{File.basename(workspace)}-#{Digest::SHA256.hexdigest(workspace)[0, 16]}"
++      path = File.join(@workspace_state_root, 'portal', workspace_id, 'lifecycle-operations.json')
++      receipts = read_private_json_object(path, 'portal archive authorization', max_size: 256 * 1024, mode: 0o600)
++      return false unless [1, 2].include?(receipts['schema']) && receipts['workspace'] == workspace
++
++      Array(receipts['operations']).any? do |receipt|
++        receipt['slug'] == slug && receipt['kind'] == 'archive' &&
++          %w[running paused failed].include?(receipt['state']) &&
++          receipt.dig('options', 'journalId') == operation_id &&
++          unit == "workspace-archive-#{receipt['receiptId']}-#{receipt['attempt']}.service"
++      end
++    end
++
++    def tracking_sync_root
++      workspace_id = Digest::SHA256.hexdigest(workspace)
++      File.join(@workspace_state_root, 'tracking-sync', workspace_id)
++    end
++
++    def archive_progress!(slug, stage, path = nil)
++      @out.puts "archive: #{stage}#{path ? " #{path}" : ''}"
++      return unless @archive_progress_operation_id
++
++      directory = File.join(@workspace_state_root, 'archive-progress', Digest::SHA256.hexdigest(workspace))
++      write_transition_json!(File.join(directory, "#{slug}.json"), {
++        'schema' => 1, 'workspace' => workspace, 'slug' => slug,
++        'operation_id' => @archive_progress_operation_id, 'stage' => stage,
++        'path' => path, 'updated_at' => Time.now.utc.iso8601
++      })
++    rescue Errno::EIO, Errno::EPIPE
++      raise unless @archive_retiring_own_terminal
++    end
++
++    def tracking_sync_receipt(slug)
++      path = File.join(tracking_sync_root, "#{slug}.json")
++      return nil unless path_exists?(path)
++
++      value = read_private_json_object(path, 'tracking sync receipt', max_size: 64 * 1024, mode: 0o600)
++      unless value['schema'] == 1 && value['workspace'] == workspace && value['slug'] == slug &&
++             %w[archive revive].include?(value['direction']) && %w[pending synced].include?(value['state']) &&
++             %w[complete abandoned archived].include?(value['mode']) &&
++             value['attempts'].is_a?(Integer) && value['attempts'] >= 0 &&
++             value['error'].is_a?(String) && value['error'].bytesize <= 16 * 1024 &&
++             valid_rfc3339_timestamp?(value['updated_at']) && valid_rfc3339_timestamp?(value['next_attempt_at']) &&
++             value['operation_id'].is_a?(String) && value['operation_id'].match?(/\A[0-9a-f]{64}\z/) &&
++             value['target_sha256'].is_a?(String) && value['target_sha256'].match?(/\A[0-9a-f]{64}\z/)
++        raise Error, 'invalid tracking sync receipt'
++      end
++      value.to_h
++    end
++
++    def local_tracking_journal?(journal)
++      journal.fetch('schema') >= (journal.key?('lifecycle') ? 5 : 4)
++    end
++
++    def save_tracking_transition!(slug, journal, direction:)
++      return validate_sensitive_transition!(slug, direction:) if sensitive_session?(slug)
++
++      previous = tracking_sync_receipt(slug)
++      return verify_saved_tracking_transition!(slug, journal, direction:) if previous &&
++        previous['operation_id'] == journal.fetch('operation_id')
++
++      write_tracking_sync!(slug, {
++        'schema' => 1, 'workspace' => workspace, 'slug' => slug,
++        'operation_id' => journal.fetch('operation_id'), 'direction' => direction,
++        'mode' => journal['mode'] || journal.fetch('lifecycle'),
++        'target_sha256' => journal.fetch('target_tracking_sha256'),
++        'state' => 'pending', 'error' => '', 'attempts' => 0,
++        'updated_at' => Time.now.utc.iso8601, 'next_attempt_at' => Time.now.utc.iso8601
++      })
++      verify_saved_tracking_transition!(slug, journal, direction:)
++      @out.puts 'tracking sync pending'
++    end
++
++    def verify_saved_tracking_transition!(slug, journal, direction:)
++      return validate_sensitive_transition!(slug, direction:) if sensitive_session?(slug)
++
++      receipt = tracking_sync_receipt(slug)
++      destination = direction == 'archive' ? archive_dir(slug) : work_dir(slug)
++      unless receipt && receipt['operation_id'] == journal.fetch('operation_id') &&
++             receipt['direction'] == direction && receipt['target_sha256'] == journal.fetch('target_tracking_sha256') &&
++             tracking_tree_matches?(destination, receipt.fetch('target_sha256'))
++        raise Error, "saved local tracking transition changed: #{slug}"
++      end
++    end
++
++    def locally_archived_tracking?(slug)
++      receipt = tracking_sync_receipt(slug)
++      return false unless receipt && receipt['direction'] == 'archive'
++
++      manifest = load_portal_manifest(File.join(archive_dir(slug), PORTAL_MANIFEST), required: true, expected_slug: slug)
++      return false if manifest['archive_operation_id'] && manifest['archive_operation_id'] != receipt['operation_id']
++
++      unless tracking_tree_matches?(archive_dir(slug), receipt.fetch('target_sha256'))
++        raise Error, "locally archived tracking changed: #{slug}"
++      end
++      true
++    end
++
++    def discard_tracking_sync!(slug)
++      path = File.join(tracking_sync_root, "#{slug}.json")
++      File.unlink(path) if path_exists?(path)
++      fsync_directory(tracking_sync_root) if File.directory?(tracking_sync_root)
++    end
++
++    def tracking_sync(slug = nil, force: false)
++      slugs = slug ? [slug] : Dir.glob(File.join(tracking_sync_root, '*.json')).map { |path| File.basename(path, '.json') }
++      slugs.sort.map do |candidate|
++        validate_part!(candidate, 'tracking sync slug')
++        begin
++          with_tracking_sync_deadline do
++            with_creation_lock(candidate) do
++              with_slug_lock(candidate) do
++                receipt = tracking_sync_receipt(candidate)
++                next receipt unless receipt && receipt['state'] == 'pending'
++                next receipt if !force && Time.iso8601(receipt.fetch('next_attempt_at')) > Time.now.utc
++
++                reject_conflicting_lifecycle_journal!(candidate)
++                begin
++                  commit_tracking_transition!(candidate, direction: receipt.fetch('direction'), mode: receipt.fetch('mode'))
++                  receipt['state'] = 'synced'
++                  receipt['error'] = ''
++                rescue Error, CommandError => e
++                  receipt['attempts'] += 1
++                  receipt['error'] = e.message.encode('UTF-8', invalid: :replace, undef: :replace).each_char.take(4096).join
++                  receipt['next_attempt_at'] = (Time.now.utc + [30 * (2**[receipt['attempts'], 6].min), 1800].min).iso8601
++                end
++                receipt['updated_at'] = Time.now.utc.iso8601
++                write_tracking_sync!(candidate, receipt)
++                receipt
++              end
++            end
++          end
++        rescue Error => e
++          { 'slug' => candidate, 'state' => 'pending', 'error' => e.message }
++        end
++      end
++    end
++
++    def tracking_sync_status(slug = nil)
++      slugs = slug ? [slug] : Dir.glob(File.join(tracking_sync_root, '*.json')).map { |path| File.basename(path, '.json') }
++      slugs.sort.filter_map do |candidate|
++        validate_part!(candidate, 'tracking sync slug')
++        tracking_sync_receipt(candidate)
++      end
++    end
++
++    private
++
++    def tracking_sync_attempt_seconds
++      60
++    end
++
++    def with_tracking_sync_deadline
++      previous = @tracking_sync_deadline
++      @tracking_sync_deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + tracking_sync_attempt_seconds
++      @command_runner.with_deadline(@tracking_sync_deadline) { yield }
++    ensure
++      @tracking_sync_deadline = previous
++    end
++
++    def write_tracking_sync!(slug, receipt)
++      write_transition_json!(File.join(tracking_sync_root, "#{slug}.json"), receipt)
++    end
++
++    def write_transition_json!(path, value)
++      directory = File.dirname(path)
++      FileUtils.mkdir_p(directory, mode: 0o700)
++      temporary = "#{path}.#{$$}.tmp"
++      begin
++        File.open(temporary, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
++          file.write(JSON.generate(value) + "\n")
++          file.flush
++          file.fsync
++        end
++        File.rename(temporary, path)
++        fsync_directory(directory)
++      ensure
++        File.unlink(temporary) if File.exist?(temporary)
++      end
++    end
++  end
++end
+diff --git a/nix/systemd/workspace-auto-archive@.service b/nix/systemd/workspace-auto-archive@.service
+index 8ab1c8d..6fa71a3 100644
+--- a/nix/systemd/workspace-auto-archive@.service
++++ b/nix/systemd/workspace-auto-archive@.service
+@@ -5,6 +5,6 @@ After=workspace-codex@%i.service
+ [Service]
+ Type=oneshot
+ ExecStart=%h/.local/state/dev-workspaces/profile/bin/workspace-host run-auto-archive %i
+-TimeoutStartSec=45min
++TimeoutStartSec=infinity
+ TimeoutStopSec=10s
+ KillMode=control-group
+diff --git a/nix/systemd/workspace-tracking-sync@.service b/nix/systemd/workspace-tracking-sync@.service
+new file mode 100644
+index 0000000..c75efbd
+--- /dev/null
++++ b/nix/systemd/workspace-tracking-sync@.service
+@@ -0,0 +1,9 @@
++[Unit]
++Description=Save pending session tracking in workspace %i
++
++[Service]
++Type=oneshot
++ExecStart=%h/.local/state/dev-workspaces/profile/bin/workspace-host run-tracking-sync %i
++TimeoutStartSec=infinity
++TimeoutStopSec=10s
++KillMode=control-group
+diff --git a/nix/systemd/workspace-tracking-sync@.timer b/nix/systemd/workspace-tracking-sync@.timer
+new file mode 100644
+index 0000000..4243e5d
+--- /dev/null
++++ b/nix/systemd/workspace-tracking-sync@.timer
+@@ -0,0 +1,9 @@
++[Unit]
++Description=Retry pending session tracking in workspace %i
++
++[Timer]
++OnBootSec=1min
++OnUnitInactiveSec=1min
++
++[Install]
++WantedBy=timers.target
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index 2ed2b0a..f1d59c2 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -373,6 +373,10 @@ buildGoModule {
+       "$out/libexec/workspace-archive-recovery.rb"
+     ln -s ../workspace-archive-recovery.rb \
+       "$out/libexec/workspace-portal/workspace-archive-recovery.rb"
++    install -Dm644 ${src}/libexec/workspace-tracking-sync.rb \
++      "$out/libexec/workspace-tracking-sync.rb"
++    ln -s ../workspace-tracking-sync.rb \
++      "$out/libexec/workspace-portal/workspace-tracking-sync.rb"
+     install -Dm644 ${codexWebSrc}/test/codex_protocol_contract.py \
+       "$out/share/workspace-portal/codex_web_protocol_contract.py"
+     install -Dm644 ${src}/test/selected_protocol_contract.py \
+diff --git a/portal/internal/session/lifecycle.go b/portal/internal/session/lifecycle.go
+index e3ce0aa..b5b4dc0 100644
+--- a/portal/internal/session/lifecycle.go
++++ b/portal/internal/session/lifecycle.go
+@@ -75,7 +75,7 @@ func PendingLifecycles(workspace string) (map[string]LifecycleProgress, error) {
+ var lifecyclePhases = map[string]map[string]struct{}{
+ 	"archive": phaseSet(
+ 		"prepared", "quiesced", "clusters_released", "tracking_archived",
+-		"tracking_committed", "thread_retired", "runtime_retired", "archived",
++		"tracking_committed", "tracking_saved", "thread_retired", "runtime_retired", "archived",
+ 	),
+ 	"delete": phaseSet(
+ 		"prepared", "validated", "thread_retiring", "thread_retired",
+@@ -83,7 +83,7 @@ var lifecyclePhases = map[string]map[string]struct{}{
+ 		"tracking_preserved", "tracking_committed", "removed",
+ 	),
+ 	"revive": phaseSet(
+-		"prepared", "tracking_restored", "tracking_committed", "runtime_starting",
++		"prepared", "tracking_restored", "tracking_committed", "tracking_saved", "runtime_starting",
+ 		"runtime_started", "revived",
+ 	),
+ }
+diff --git a/portal/internal/session/runtime-contract.json b/portal/internal/session/runtime-contract.json
+index 12e59fd..47dfb84 100644
+--- a/portal/internal/session/runtime-contract.json
++++ b/portal/internal/session/runtime-contract.json
+@@ -5,6 +5,9 @@
+   "runtimeAuthorityIdentityPolicy": 1,
+   "livePackageSwitchPolicy": 1,
+   "sessionRecoveryPolicy": 1,
++  "archiveRecoveryPolicy": 2,
++  "trackingSyncPolicy": 1,
++  "archiveExecutionPolicy": 1,
+   "codexProviderStateSchema": 1,
+   "codexProviderTransitionPolicy": 1,
+   "agentTeamRegistration": {
+diff --git a/portal/internal/session/tracking_sync.go b/portal/internal/session/tracking_sync.go
+new file mode 100644
+index 0000000..37a5eae
+--- /dev/null
++++ b/portal/internal/session/tracking_sync.go
+@@ -0,0 +1,79 @@
++package session
++
++import (
++	"crypto/sha256"
++	"encoding/hex"
++	"encoding/json"
++	"errors"
++	"os"
++	"path/filepath"
++)
++
++type TrackingSyncStatus struct {
++	State     string `json:"state"`
++	Error     string `json:"error,omitempty"`
++	UpdatedAt string `json:"updatedAt,omitempty"`
++}
++
++type ArchiveProgress struct {
++	Schema      int    `json:"schema"`
++	Workspace   string `json:"workspace"`
++	Slug        string `json:"slug"`
++	OperationID string `json:"operation_id"`
++	Stage       string `json:"stage"`
++	Path        string `json:"path,omitempty"`
++	UpdatedAt   string `json:"updated_at"`
++}
++
++func ReadArchiveProgress(workspace, stateRoot, slug, operationID string) *ArchiveProgress {
++	if stateRoot == "" || !slugPattern.MatchString(slug) || operationID == "" {
++		return nil
++	}
++	identity := sha256.Sum256([]byte(workspace))
++	data, err := os.ReadFile(filepath.Join(stateRoot, "archive-progress", hex.EncodeToString(identity[:]), slug+".json"))
++	var progress ArchiveProgress
++	if err != nil || len(data) > 64*1024 || json.Unmarshal(data, &progress) != nil || progress.Schema != 1 ||
++		progress.Workspace != workspace || progress.Slug != slug || progress.OperationID != operationID {
++		return nil
++	}
++	return &progress
++}
++
++func ReadTrackingSync(workspace, stateRoot, slug string) (*TrackingSyncStatus, error) {
++	if !slugPattern.MatchString(slug) {
++		return nil, errors.New("invalid tracking sync session")
++	}
++	if stateRoot == "" {
++		home, err := os.UserHomeDir()
++		if err != nil {
++			return nil, err
++		}
++		stateHome := os.Getenv("XDG_STATE_HOME")
++		if stateHome == "" {
++			stateHome = filepath.Join(home, ".local", "state")
++		}
++		stateRoot = filepath.Join(stateHome, "dev-workspaces")
++	}
++	identity := sha256.Sum256([]byte(workspace))
++	path := filepath.Join(stateRoot, "tracking-sync", hex.EncodeToString(identity[:]), slug+".json")
++	data, err := os.ReadFile(path)
++	if errors.Is(err, os.ErrNotExist) {
++		return nil, nil
++	}
++	if err != nil {
++		return nil, err
++	}
++	var receipt struct {
++		Schema    int    `json:"schema"`
++		Workspace string `json:"workspace"`
++		Slug      string `json:"slug"`
++		State     string `json:"state"`
++		Error     string `json:"error"`
++		UpdatedAt string `json:"updated_at"`
++	}
++	if len(data) > 64*1024 || json.Unmarshal(data, &receipt) != nil || receipt.Schema != 1 ||
++		receipt.Workspace != workspace || receipt.Slug != slug || (receipt.State != "pending" && receipt.State != "synced") {
++		return nil, errors.New("invalid tracking sync receipt")
++	}
++	return &TrackingSyncStatus{receipt.State, receipt.Error, receipt.UpdatedAt}, nil
++}
+diff --git a/portal/internal/web/archive_worker.go b/portal/internal/web/archive_worker.go
+new file mode 100644
+index 0000000..d9527da
+--- /dev/null
++++ b/portal/internal/web/archive_worker.go
+@@ -0,0 +1,112 @@
++package web
++
++import (
++	"context"
++	"errors"
++	"fmt"
++	"os/exec"
++	"path/filepath"
++	"strconv"
++	"strings"
++	"time"
++
++	"github.com/aither64/dev-workspace/portal/internal/processgroup"
++)
++
++// The user manager owns the archive process independently of portal lifetime.
++// Retain the exited unit until the portal has a durable terminal receipt.
++func (s *Server) supervisedArchives() bool {
++	return s.config.HostProfile != "" && s.config.PackageRoot != "" && s.config.WorkspaceName != ""
++}
++
++func archiveUnit(operation lifecycleOperation) string {
++	return "workspace-archive-" + operation.ReceiptID + "-" + strconv.Itoa(operation.Attempt) + ".service"
++}
++
++type archiveWorkerStatus struct {
++	State, Error, FinishedAt string
++}
++
++func (s *Server) archiveWorker(ctx context.Context, operation lifecycleOperation) (*archiveWorkerStatus, error) {
++	if !s.supervisedArchives() || operation.Kind != "archive" || operation.ReceiptID == "" {
++		return nil, nil
++	}
++	readCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
++	defer cancel()
++	output, err := processgroup.CombinedOutput(readCtx, exec.Command("systemctl", "--user", "--timestamp=unix", "show", archiveUnit(operation),
++		"--property=LoadState,ActiveState,SubState,ExecMainCode,ExecMainStatus,ExecMainExitTimestamp"))
++	if err != nil {
++		return nil, fmt.Errorf("read archive worker: %w", err)
++	}
++	values := map[string]string{}
++	for _, line := range strings.Split(string(output), "\n") {
++		key, value, ok := strings.Cut(line, "=")
++		if ok {
++			values[key] = value
++		}
++	}
++	if values["LoadState"] == "not-found" || values["LoadState"] == "" {
++		return nil, nil
++	}
++	if values["ActiveState"] == "activating" || values["SubState"] == "running" || values["SubState"] == "start" {
++		return &archiveWorkerStatus{State: "running"}, nil
++	}
++	if values["SubState"] == "exited" && values["ExecMainStatus"] == "0" {
++		return &archiveWorkerStatus{State: "complete", FinishedAt: archiveFinishTime(values["ExecMainExitTimestamp"])}, nil
++	}
++	logs, _ := processgroup.CombinedOutput(readCtx, exec.Command("journalctl", "--user", "--unit="+archiveUnit(operation), "--no-pager", "--output=cat", "--lines=24"))
++	cause := fmt.Sprintf("archive worker ended (code %s, status %s)", values["ExecMainCode"], values["ExecMainStatus"])
++	return &archiveWorkerStatus{State: "failed", Error: boundedLifecycleError(cause + "\n" + string(logs)), FinishedAt: archiveFinishTime(values["ExecMainExitTimestamp"])}, nil
++}
++
++func archiveFinishTime(value string) string {
++	seconds, err := strconv.ParseFloat(strings.TrimPrefix(strings.TrimSpace(value), "@"), 64)
++	if err != nil || seconds <= 0 {
++		return ""
++	}
++	return time.Unix(int64(seconds), int64((seconds-float64(int64(seconds)))*1e9)).UTC().Format(time.RFC3339Nano)
++}
++
++func (s *Server) runSupervisedArchive(ctx context.Context, slug string, args []string) error {
++	s.operationMu.Lock()
++	operation, ok := s.operations[slug]
++	s.operationMu.Unlock()
++	if !ok || operation.Kind != "archive" || operation.ReceiptID == "" {
++		return errors.New("archive has no durable operation receipt")
++	}
++	commandArgs := []string{"--user", "--quiet", "--unit=" + archiveUnit(operation),
++		"--property=Type=exec", "--property=RemainAfterExit=yes", "--property=TimeoutStartSec=infinity",
++		"--property=KillMode=control-group", "--property=WorkingDirectory=" + s.config.Workspace,
++		"--setenv=DEV_WORKSPACE_NAME=" + s.config.WorkspaceName,
++		"--setenv=DEV_WORKSPACES_PROFILE=" + s.config.HostProfile}
++	if s.config.UserStateRoot != "" {
++		commandArgs = append(commandArgs, "--setenv=DEV_WORKSPACES_STATE="+s.config.UserStateRoot)
++	}
++	commandArgs = append(commandArgs, "--", filepath.Join(s.config.PackageRoot, "bin", "dev-session"))
++	commandArgs = append(commandArgs, args...)
++	startCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
++	output, err := processgroup.CombinedOutput(startCtx, exec.Command("systemd-run", commandArgs...))
++	cancel()
++	if err != nil {
++		return commandFailure("start archive worker", "", string(output), err)
++	}
++	ticker := time.NewTicker(time.Second)
++	defer ticker.Stop()
++	for {
++		status, err := s.archiveWorker(ctx, operation)
++		if err != nil {
++			return err // The independent unit retains execution ownership.
++		}
++		if status != nil && status.State == "complete" {
++			return nil
++		}
++		if status != nil && status.State == "failed" {
++			return errors.New(status.Error)
++		}
++		select {
++		case <-ctx.Done():
++			return ctx.Err() // Never cancel the worker on portal shutdown.
++		case <-ticker.C:
++		}
++	}
++}
+diff --git a/portal/internal/web/archive_worker_test.go b/portal/internal/web/archive_worker_test.go
+new file mode 100644
+index 0000000..1e52256
+--- /dev/null
++++ b/portal/internal/web/archive_worker_test.go
+@@ -0,0 +1,103 @@
++package web
++
++import (
++	"context"
++	"errors"
++	"os"
++	"path/filepath"
++	"strings"
++	"testing"
++	"time"
++)
++
++func TestArchiveWorkerContinuesAcrossPortalCancellation(t *testing.T) {
++	directory := t.TempDir()
++	statusPath := filepath.Join(directory, "status")
++	launchPath := filepath.Join(directory, "launch")
++	for name, script := range map[string]string{
++		"systemd-run": "#!/bin/sh\nprintf '%s\\n' \"$@\" >\"$ARCHIVE_TEST_LAUNCH.tmp\"\nmv \"$ARCHIVE_TEST_LAUNCH.tmp\" \"$ARCHIVE_TEST_LAUNCH\"\n",
++		"systemctl":   "#!/bin/sh\ncat \"$ARCHIVE_TEST_STATUS\"\n",
++	} {
++		if err := os.WriteFile(filepath.Join(directory, name), []byte(script), 0o700); err != nil {
++			t.Fatal(err)
++		}
++	}
++	t.Setenv("PATH", directory+string(os.PathListSeparator)+os.Getenv("PATH"))
++	t.Setenv("ARCHIVE_TEST_STATUS", statusPath)
++	t.Setenv("ARCHIVE_TEST_LAUNCH", launchPath)
++	if err := os.WriteFile(statusPath, []byte("LoadState=loaded\nActiveState=active\nSubState=running\n"), 0o600); err != nil {
++		t.Fatal(err)
++	}
++	operation := lifecycleOperation{Slug: "example", Kind: "archive", State: "running", ReceiptID: strings.Repeat("a", 64), Attempt: 1}
++	server := &Server{config: Config{Workspace: directory, WorkspaceName: "example", HostProfile: directory, PackageRoot: directory}, operations: map[string]lifecycleOperation{"example": operation}}
++	ctx, cancel := context.WithCancel(context.Background())
++	done := make(chan error, 1)
++	go func() { done <- server.runSupervisedArchive(ctx, "example", []string{"archive", "example", "--as-is"}) }()
++	deadline := time.Now().Add(5 * time.Second)
++	for {
++		if _, err := os.Stat(launchPath); err == nil {
++			break
++		}
++		if time.Now().After(deadline) {
++			t.Fatal("archive worker was not launched")
++		}
++		time.Sleep(time.Millisecond)
++	}
++	cancel()
++	if err := <-done; !errors.Is(err, context.Canceled) {
++		t.Fatalf("cancel portal wait: %v", err)
++	}
++	launch, _ := os.ReadFile(launchPath)
++	if !strings.Contains(string(launch), "TimeoutStartSec=infinity") || strings.Contains(string(launch), "--wait") {
++		t.Fatalf("worker lifetime is coupled to portal: %s", launch)
++	}
++	store, err := newLifecycleOperationStore(directory, t.TempDir())
++	if err != nil {
++		t.Fatal(err)
++	}
++	operation.State = "failed"
++	operation.Phase = "starting"
++	operation.StartedAt = time.Now().Add(-time.Minute).UTC().Format(time.RFC3339Nano)
++	operation.UpdatedAt = operation.StartedAt
++	operation.FinishedAt = operation.StartedAt
++	operation.Options.Mode = "archived"
++	operation.Redirect = "/"
++	if err := store.save(map[string]lifecycleOperation{"example": operation}); err != nil {
++		t.Fatal(err)
++	}
++	retained, err := store.load()
++	if err != nil {
++		t.Fatal(err)
++	}
++	server.operationContext = context.Background()
++	reconciled, _, err := server.proposeLifecycleOperation("example", retained["example"], true, nil, nil, time.Now())
++	if err != nil || reconciled.State != "running" || reconciled.FinishedAt != "" {
++		t.Fatalf("stored receipt after observer restart: %#v, %v", reconciled, err)
++	}
++	if err := os.WriteFile(statusPath, []byte("LoadState=loaded\nActiveState=active\nSubState=exited\nExecMainStatus=0\nExecMainExitTimestamp=@1792174000.5\n"), 0o600); err != nil {
++		t.Fatal(err)
++	}
++	status, err := server.archiveWorker(context.Background(), operation)
++	if err != nil || status == nil || status.State != "complete" {
++		t.Fatalf("recover worker result after portal cancellation: %#v, %v", status, err)
++	}
++	reconciled, _, err = server.proposeLifecycleOperation("example", reconciled, true, nil, nil, time.Now())
++	wantFinish := time.Unix(1792174000, 500000000).UTC().Format(time.RFC3339Nano)
++	if err != nil || reconciled.State != "complete" || reconciled.FinishedAt != wantFinish {
++		t.Fatalf("worker final receipt timestamp: %#v, %v", reconciled, err)
++	}
++	if err := store.save(map[string]lifecycleOperation{"example": reconciled}); err != nil {
++		t.Fatal(err)
++	}
++	retained, err = store.load()
++	if err != nil || retained["example"].FinishedAt != wantFinish {
++		t.Fatalf("retained worker finish time: %#v, %v", retained, err)
++	}
++}
++
++func TestCommandFailurePreservesDeadlineOverSuccessfulFetchOutput(t *testing.T) {
++	err := commandFailure("archive session", "", "From github.com:example/workspace\n * branch master -> FETCH_HEAD", context.DeadlineExceeded)
++	if !errors.Is(err, context.DeadlineExceeded) || strings.Contains(err.Error(), "FETCH_HEAD") {
++		t.Fatalf("deadline hidden by fetch output: %v", err)
++	}
++}
+diff --git a/portal/internal/web/operation_state.go b/portal/internal/web/operation_state.go
+index 4e9b90d..7a5b89e 100644
+--- a/portal/internal/web/operation_state.go
++++ b/portal/internal/web/operation_state.go
+@@ -228,6 +228,11 @@ func validateLifecycleOperation(operation lifecycleOperation) error {
+ 			return fmt.Errorf("invalid operation %s", label)
+ 		}
+ 	}
++	if operation.FinishedAt != "" {
++		if _, err := time.Parse(time.RFC3339Nano, operation.FinishedAt); err != nil {
++			return errors.New("invalid operation finishedAt")
++		}
++	}
+ 	if len(operation.Error) > maxLifecycleOperationErrorBytes || !utf8.ValidString(operation.Error) {
+ 		return errors.New("invalid operation error")
+ 	}
+@@ -383,6 +388,24 @@ func (s *Server) captureLifecycleOperation(slug string) (lifecycleOperation, boo
+ func (s *Server) proposeLifecycleOperation(slug string, operation lifecycleOperation, exists bool,
+ 	progress *session.LifecycleProgress, progressErr error, now time.Time,
+ ) (lifecycleOperation, bool, error) {
++	if exists && operation.Kind == "archive" && operation.State != "complete" && s.supervisedArchives() {
++		worker, err := s.archiveWorker(s.operationContext, operation)
++		if err != nil {
++			return operation, true, err
++		}
++		if worker != nil {
++			operation.State = worker.State
++			operation.Error = worker.Error
++			if worker.State == "running" {
++				operation.FinishedAt = ""
++			} else {
++				operation.FinishedAt = worker.FinishedAt
++				if operation.FinishedAt == "" {
++					operation.FinishedAt = now.Format(time.RFC3339Nano)
++				}
++			}
++		}
++	}
+ 	if progressErr != nil {
+ 		if !exists {
+ 			return lifecycleOperation{}, false, progressErr
+diff --git a/portal/internal/web/operation_store.go b/portal/internal/web/operation_store.go
+index dde1a94..11d29c2 100644
+--- a/portal/internal/web/operation_store.go
++++ b/portal/internal/web/operation_store.go
+@@ -11,10 +11,11 @@ import (
+ 	"sort"
+ 	"strings"
+ 	"syscall"
++	"time"
+ )
+ 
+ const (
+-	lifecycleOperationStoreSchema   = 1
++	lifecycleOperationStoreSchema   = 2
+ 	maxLifecycleOperationStoreBytes = 256 * 1024
+ 	maxLifecycleOperationRecords    = 512
+ )
+@@ -114,7 +115,7 @@ func (store *lifecycleOperationStore) loadWithDirectoryRepair(repair bool) (map[
+ 	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+ 		return nil, errors.New("lifecycle operation state contains trailing data")
+ 	}
+-	if payload.Schema != lifecycleOperationStoreSchema || payload.Workspace != store.workspace {
++	if (payload.Schema != 1 && payload.Schema != lifecycleOperationStoreSchema) || payload.Workspace != store.workspace {
+ 		return nil, errors.New("lifecycle operation state has the wrong workspace identity")
+ 	}
+ 	// Absence retains predecessor receipts. Explicit null/zero is not a
+@@ -250,6 +251,7 @@ func (store *lifecycleOperationStore) canPersistTerminalOutcomes(
+ 		candidates[key] = operation
+ 	}
+ 	started.State = "failed"
++	started.FinishedAt = time.Now().UTC().Format(time.RFC3339Nano)
+ 	started.Error = strings.Repeat("x", maxLifecycleOperationErrorBytes)
+ 	candidates[slug] = started
+ 	_, err := store.encode(candidates)
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index 49537f1..c4cabc4 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -127,20 +127,23 @@ type cachedIndexStatus struct {
+ }
+ 
+ type lifecycleOperation struct {
+-	Slug                  string                    `json:"slug,omitempty"`
+-	Kind                  string                    `json:"kind,omitempty"`
+-	State                 string                    `json:"state"`
+-	Phase                 string                    `json:"phase,omitempty"`
+-	StartedAt             string                    `json:"startedAt,omitempty"`
+-	UpdatedAt             string                    `json:"updatedAt,omitempty"`
+-	Error                 string                    `json:"error,omitempty"`
+-	Redirect              string                    `json:"redirect,omitempty"`
+-	ReceiptID             string                    `json:"receiptId,omitempty"`
+-	TargetIdentityVersion int                       `json:"targetIdentityVersion,omitempty"`
+-	Attempt               int                       `json:"attempt,omitempty"`
+-	CurrentTarget         *lifecycleTargetSnapshot  `json:"currentTarget,omitempty"`
+-	ErrorCode             string                    `json:"code,omitempty"`
+-	Options               lifecycleOperationOptions `json:"options,omitempty"`
++	Slug                  string                      `json:"slug,omitempty"`
++	Kind                  string                      `json:"kind,omitempty"`
++	State                 string                      `json:"state"`
++	Phase                 string                      `json:"phase,omitempty"`
++	StartedAt             string                      `json:"startedAt,omitempty"`
++	UpdatedAt             string                      `json:"updatedAt,omitempty"`
++	FinishedAt            string                      `json:"finishedAt,omitempty"`
++	TrackingSync          *session.TrackingSyncStatus `json:"trackingSync,omitempty"`
++	Progress              *session.ArchiveProgress    `json:"progress,omitempty"`
++	Error                 string                      `json:"error,omitempty"`
++	Redirect              string                      `json:"redirect,omitempty"`
++	ReceiptID             string                      `json:"receiptId,omitempty"`
++	TargetIdentityVersion int                         `json:"targetIdentityVersion,omitempty"`
++	Attempt               int                         `json:"attempt,omitempty"`
++	CurrentTarget         *lifecycleTargetSnapshot    `json:"currentTarget,omitempty"`
++	ErrorCode             string                      `json:"code,omitempty"`
++	Options               lifecycleOperationOptions   `json:"options,omitempty"`
+ }
+ 
+ type lifecycleOperationOptions struct {
+@@ -2938,6 +2941,7 @@ func (s *Server) startLifecycleOperation(
+ 		finished := time.Now().UTC().Format(time.RFC3339Nano)
+ 		completed := started
+ 		completed.UpdatedAt = finished
++		completed.FinishedAt = finished
+ 		if err == nil {
+ 			completed.State = "complete"
+ 			completed.Phase = "complete"
+@@ -2996,6 +3000,9 @@ func (s *Server) startLifecycleOperation(
+ func (s *Server) runLifecycleOperation(
+ 	parent context.Context, slug, kind string, args []string, options lifecycleOperationOptions,
+ ) error {
++	if kind == "archive" && s.supervisedArchives() {
++		return s.executeLifecycleOperation(parent, 0, slug, kind, args, options)
++	}
+ 	return s.executeLifecycleOperation(parent, 12*time.Minute, slug, kind, args, options)
+ }
+ 
+@@ -3003,7 +3010,11 @@ func (s *Server) executeLifecycleOperation(
+ 	parent context.Context, timeout time.Duration, slug, kind string, args []string,
+ 	options lifecycleOperationOptions,
+ ) error {
+-	ctx, cancel := context.WithTimeout(parent, timeout)
++	ctx, cancel := context.WithCancel(parent)
++	if timeout > 0 {
++		cancel()
++		ctx, cancel = context.WithTimeout(parent, timeout)
++	}
+ 	defer cancel()
+ 	transition, unlockTransition, err := s.acquireTransitionContext(ctx, unix.LOCK_SH)
+ 	if err != nil {
+@@ -3042,6 +3053,9 @@ func (s *Server) executeLifecycleOperation(
+ 			return targetErr
+ 		}
+ 	}
++	if kind == "archive" && s.supervisedArchives() {
++		return s.runSupervisedArchive(ctx, slug, args)
++	}
+ 	stdout, stderr, err := s.runDevSessionWithTransition(ctx, timeout, transition, args...)
+ 	if err != nil {
+ 		return commandFailure(kind+" session", stdout, stderr, err)
+@@ -3063,6 +3077,10 @@ func (s *Server) lifecycleStatus(w http.ResponseWriter, slug string) {
+ 	if !exists {
+ 		snapshot.operation = lifecycleOperation{State: "idle"}
+ 	}
++	if status, err := session.ReadTrackingSync(s.config.Workspace, s.config.UserStateRoot, slug); err == nil {
++		snapshot.operation.TrackingSync = status
++	}
++	snapshot.operation.Progress = session.ReadArchiveProgress(s.config.Workspace, s.config.UserStateRoot, slug, snapshot.operation.Options.JournalID)
+ 	s.writeJSON(w, http.StatusOK, struct {
+ 		lifecycleOperation
+ 		StatusCheckedAt time.Time `json:"statusCheckedAt"`
+@@ -3235,6 +3253,9 @@ func (s *Server) dismissLifecycleOperation(w http.ResponseWriter, r *http.Reques
+ }
+ 
+ func commandFailure(action, stdout, stderr string, err error) error {
++	if errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled) {
++		return fmt.Errorf("%s: %w", action, err)
++	}
+ 	message := strings.TrimSpace(stderr)
+ 	if message == "" {
+ 		message = strings.TrimSpace(stdout)
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 7449b48..7ab2948 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -527,11 +527,15 @@
+   const lifecyclePresentation = (operation = {}, pendingKind = "", elapsedMilliseconds = 0) => {
+     const kind = operation.kind || pendingKind;
+     const label = lifecycleKindLabel(kind);
++    if (operation.trackingSync?.state === "pending" && ["complete", "idle"].includes(operation.state)) {
++      return {detail: operation.trackingSync.error || "Tracking changes will be saved automatically.",
++        retry: false, title: "Tracking sync pending", tone: "pending"};
++    }
+     if (operation.state === "running") {
+       return {
+-        detail: `Running · ${formatElapsed(elapsedMilliseconds)} elapsed`,
++        detail: `${operation.progress?.path ? operation.progress.path + " · " : ""}Running · ${formatElapsed(elapsedMilliseconds)} elapsed`,
+         retry: false,
+-        title: `${label}: ${lifecyclePhaseLabel(operation.phase)}`,
++        title: `${label}: ${operation.progress?.stage || lifecyclePhaseLabel(operation.phase)}`,
+         tone: "running",
+       };
+     }
+@@ -553,7 +557,7 @@
+     }
+     if (operation.state === "complete") {
+       return {
+-        detail: operation.updatedAt ? `Finished ${activityAge(operation.updatedAt)}` : "Finished",
++        detail: (operation.finishedAt || operation.updatedAt) ? `Finished ${activityAge(operation.finishedAt || operation.updatedAt)}` : "Finished",
+         retry: false,
+         title: `${label} complete`,
+         tone: "complete",
+@@ -911,7 +915,7 @@
+           .find(line => line && !line.startsWith("command failed with exit")) || state.last_attempt_error;
+         const step = {prepared: "Stopping session activity", quiesced: "Releasing development clusters",
+           clusters_released: "Archiving session records", tracking_archived: "Committing archive records",
+-          tracking_committed: "Closing conversations", thread_retired: "Stopping session runtime",
++          tracking_committed: "Closing conversations", tracking_saved: "Closing conversations", thread_retired: "Stopping session runtime",
+           runtime_retired: "Finishing archive", archived: "Finishing archive"}[state.journal?.phase];
+         blockers.push(step ? `${step}: ${reason.slice(0, 400)}` : reason.slice(0, 400));
+       }
+diff --git a/test/dev_session/archive_cleanup_test.rb b/test/dev_session/archive_cleanup_test.rb
+index dff89d9..3bc5463 100644
+--- a/test/dev_session/archive_cleanup_test.rb
++++ b/test/dev_session/archive_cleanup_test.rb
+@@ -3,6 +3,237 @@
+ require_relative '../support/dev_session_test_case'
+ 
+ class DevSessionTest < Minitest::Test
++  def test_git_archive_retains_checkout_when_saved_blobs_are_missing_or_corrupt
++    require 'zlib'
++    %w[missing corrupt].product(%w[before_capture before_removal]).each do |damage, timing|
++      with_archive_cleanup_fixture do |runner, _workspace, slug, common, checkout|
++        object = git_capture_success('git', '-C', checkout, 'rev-parse', 'HEAD:README.md').strip
++        path = File.join(common, 'objects', object[0, 2], object[2..])
++        damage_blob = lambda do
++          if damage == 'missing'
++            File.unlink(path)
++          else
++            File.chmod(0o600, path)
++            File.binwrite(path, Zlib::Deflate.deflate("blob 6\0wrong\n"))
++          end
++        end
++        assert_empty(git_capture_success('git', '-C', checkout, 'status', '--porcelain').strip)
++        if timing == 'before_capture'
++          damage_blob.call
++        else
++          runner.define_singleton_method(:archive_cleanup_recovery) do |*arguments|
++            recovery = super(*arguments)
++            unless recovery.instance_variable_defined?(:@fault_fixture_installed)
++              recovery.instance_variable_set(:@fault_fixture_installed, true)
++              calls = 0
++              recovery.define_singleton_method(:verify_checkout!) do |record|
++                calls += 1
++                damage_blob.call if calls == 2
++                super(record)
++              end
++            end
++            recovery
++          end
++        end
++        assert_raises(DevSession::Error, DevSession::CommandError) { runner.archive(slug, as_is: true, explicit: true) }
++        assert_equal("# Test\n", File.read(File.join(checkout, 'README.md')), "#{damage} #{timing} removed original bytes")
++      end
++    end
++  end
++
++  def test_git_archive_restore_repopulates_interrupted_checkout_without_filters
++    with_archive_cleanup_fixture do |runner, workspace, slug, common, checkout|
++      File.write(File.join(checkout, '.gitattributes'), "README.md filter=changed\n")
++      assert_git_success('git', '-C', checkout, 'add', '.gitattributes')
++      assert_git_success('git', '-C', checkout, 'commit', '-m', 'raw clean fixture')
++      before = git_capture_success('git', '-C', checkout, 'ls-files', '--stage')
++      runner.archive(slug, as_is: true, explicit: true)
++      manifest = YAML.safe_load(File.read(File.join(workspace, 'archive', slug, 'portal.yml')))
++      recovery = runner.archive_cleanup_recovery(slug, manifest.fetch('archive_operation_id'))
++      record = recovery.records.first
++      saved, destination = recovery.send(:read_record, record)
++      assert_equal('git', saved.fetch('kind'))
++      recovery.send(:write_json, File.join(destination, 'restoring.json'), record.slice('path', 'common_dir', 'head', 'branch'))
++      assert_git_success('git', "--git-dir=#{common}", 'worktree', 'add', '--no-checkout', checkout, record.fetch('branch'))
++      File.write(File.join(checkout, 'README.md'), 'partial wrong bytes')
++      assert_git_success('git', "--git-dir=#{common}", 'config', 'filter.changed.smudge', 'false')
++      recovery.restore!(record)
++      assert_equal("# Test\n", File.read(File.join(checkout, 'README.md')))
++      assert_equal("README.md filter=changed\n", File.read(File.join(checkout, '.gitattributes')))
++      assert_equal(before, git_capture_success('git', '-C', checkout, 'ls-files', '--stage'))
++    end
++  end
++
++  def test_tracking_sync_hanging_hook_releases_lifecycle_locks_and_preserves_shared_index
++    with_archive_cleanup_fixture do |runner, workspace, slug, _common, _checkout|
++      runner.instance_variable_get(:@env)['DEV_WORKSPACE_DEFER_TRACKING'] = '1'
++      runner.archive(slug, as_is: true, explicit: true)
++      File.write(File.join(workspace, 'unrelated'), 'staged outside session')
++      assert_git_success('git', '-C', workspace, 'add', 'unrelated')
++      staged = git_capture_success('git', '-C', workspace, 'diff', '--cached', '--binary', '--', 'unrelated')
++      started = File.join(workspace, '.git', 'hook-started')
++      hook = File.join(workspace, '.git', 'hooks', 'pre-commit')
++      File.write(hook, "#!/bin/sh\n: > #{started.shellescape}\nwhile :; do sleep 1; done\n")
++      File.chmod(0o700, hook)
++      runner.define_singleton_method(:tracking_sync_attempt_seconds) { 5 }
++      sync = Thread.new { runner.tracking_sync(slug, force: true) }
++      deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10
++      until File.file?(started)
++        if !sync.alive? || Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
++          flunk "tracking hook did not start: #{runner.tracking_sync_receipt(slug).inspect}; alive=#{sync.alive?}"
++        end
++        sleep 0.02
++      end
++      reviver = archive_runner_for(workspace, env: {'DEV_WORKSPACE_DEFER_TRACKING' => '1'})
++      assert_raises(DevSession::Error) { reviver.revive(slug, as_is: true) }
++      assert(sync.join(10), 'tracking hook retained lifecycle locks')
++      assert_equal('pending', runner.tracking_sync_receipt(slug).fetch('state'))
++      File.unlink(hook)
++      reviver.revive(slug, as_is: true)
++      assert_equal('revive', reviver.tracking_sync_receipt(slug).fetch('direction'))
++      reviver.tracking_sync(slug, force: true)
++      assert_equal('synced', reviver.tracking_sync_receipt(slug).fetch('state'))
++      assert_equal(staged, git_capture_success('git', '-C', workspace, 'diff', '--cached', '--binary', '--', 'unrelated'))
++    ensure
++      File.unlink(hook) if hook && File.file?(hook)
++      sync&.join(10)
++    end
++  end
++
++  def test_supervised_archive_authorization_requires_the_exact_portal_receipt
++    with_workspace do |workspace|
++      runner = runner_for(workspace)
++      slug = '2026-06-06-worker'
++      operation = 'a' * 64
++      receipt_id = 'b' * 64
++      unit = "workspace-archive-#{receipt_id}-1.service"
++      identity = "#{File.basename(workspace)}-#{Digest::SHA256.hexdigest(workspace)[0, 16]}"
++      path = File.join(runner.instance_variable_get(:@workspace_state_root), 'portal', identity, 'lifecycle-operations.json')
++      FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
++      File.write(path, JSON.generate('schema' => 2, 'workspace' => workspace, 'operations' => [{
++        'slug' => slug, 'kind' => 'archive', 'state' => 'running', 'receiptId' => receipt_id,
++        'attempt' => 1, 'options' => { 'journalId' => operation }
++      }]))
++      File.chmod(0o600, path)
++      assert(runner.authorized_archive_worker?(slug, operation, unit))
++      refute(runner.authorized_archive_worker?(slug, 'c' * 64, unit))
++      refute(runner.authorized_archive_worker?(slug, operation, unit.sub('-1.service', '-2.service')))
++      refute(runner.authorized_archive_worker?('other-session', operation, unit))
++    end
++  end
++
++  def test_local_archive_and_revive_coalesce_pending_tracking_without_fetching
++    with_archive_cleanup_fixture do |runner, workspace, slug, _common, _feature|
++      runner.instance_variable_get(:@env)['DEV_WORKSPACE_DEFER_TRACKING'] = '1'
++      head = git_capture_success('git', '-C', workspace, 'rev-parse', 'HEAD').strip
++      runner.define_singleton_method(:require_linear_workspace_master_for_tracking!) do |**|
++        raise DevSession::Error, 'remote unavailable'
++      end
++
++      runner.archive(slug, as_is: true, explicit: true)
++      receipt = runner.tracking_sync_receipt(slug)
++      assert_equal('pending', receipt.fetch('state'))
++      assert_equal('archive', receipt.fetch('direction'))
++      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
++      assert_equal(head, git_capture_success('git', '-C', workspace, 'rev-parse', 'HEAD').strip)
++      runner.tracking_sync(slug, force: true)
++      assert_includes(runner.tracking_sync_receipt(slug).fetch('error'), 'remote unavailable')
++
++      runner.revive(slug, as_is: true)
++      receipt = runner.tracking_sync_receipt(slug)
++      assert_equal('pending', receipt.fetch('state'))
++      assert_equal('revive', receipt.fetch('direction'))
++      assert_equal(head, git_capture_success('git', '-C', workspace, 'rev-parse', 'HEAD').strip)
++      refute(File.exist?(File.join(workspace, 'archive', slug)))
++
++      runner.singleton_class.remove_method(:require_linear_workspace_master_for_tracking!)
++      runner.tracking_sync(slug, force: true)
++      assert_equal('synced', runner.tracking_sync_receipt(slug).fetch('state'))
++      assert(File.directory?(File.join(workspace, 'work', slug)))
++      assert_git_success('git', '-C', workspace, 'diff', '--quiet', 'HEAD', '--', File.join('work', slug))
++    end
++  end
++
++  def test_clean_archive_uses_git_recovery_and_preserves_permissions_and_empty_directories
++    with_archive_cleanup_fixture do |runner, workspace, slug, common, _feature|
++      checkout = File.join(workspace, 'worktrees', slug, 'sample')
++      file = Dir.glob(File.join(checkout, '*')).find { |path| File.file?(path) }
++      File.chmod(0o640, file)
++      FileUtils.mkdir_p(File.join(checkout, 'empty'))
++      File.chmod(0o750, File.join(checkout, 'empty'))
++      runner.archive(slug, as_is: true, explicit: true)
++      manifest = YAML.safe_load(File.read(File.join(workspace, 'archive', slug, 'portal.yml')))
++      recovery = runner.send(:archive_cleanup_recovery, slug, manifest.fetch('archive_operation_id'))
++      record = recovery.records.find { |entry| entry.fetch('path') == 'sample' }
++      saved, destination = recovery.send(:read_record, record)
++      assert_equal('git', saved.fetch('kind'))
++      assert_empty(Dir.children(File.join(destination, 'files')))
++      assert_empty(git_capture_success('git', "--git-dir=#{common}", 'for-each-ref', '--format=%(refname)',
++                                      "refs/dev-session-archives/#{manifest.fetch('archive_operation_id')}/#{Digest::SHA256.hexdigest('sample')}/index").strip)
++      runner.revive(slug, as_is: true)
++      assert_equal(0o640, File.stat(file).mode & 0o777)
++      assert_equal(0o750, File.stat(File.join(checkout, 'empty')).mode & 0o777)
++    end
++  end
++
++  def test_tracking_digest_cache_detects_same_size_rewrite_with_restored_mtime
++    with_workspace do |workspace|
++      runner = runner_for(workspace)
++      root = File.join(workspace, 'records')
++      FileUtils.mkdir_p(root)
++      path = File.join(root, 'record')
++      File.write(path, 'first')
++      before = File.stat(path)
++      digest = runner.send(:tracking_tree_sha256, root)
++      File.write(path, 'other')
++      File.utime(before.atime, before.mtime, path)
++      refute_equal(digest, runner.send(:tracking_tree_sha256, root))
++    end
++  end
++
++  def test_explicit_archive_retains_conflicted_index_and_working_contents
++    with_archive_cleanup_fixture do |runner, _workspace, slug, _common, checkout|
++      objects = %w[base ours theirs].map do |content|
++        stdout, stderr, status = Open3.capture3('git', '-C', checkout, 'hash-object', '-w', '--stdin', stdin_data: content)
++        assert(status.success?, stderr)
++        stdout.strip
++      end
++      entries = "0 #{'0' * 40}\tconflict\n" + objects.each_with_index.map do |object, index|
++        "100644 #{object} #{index + 1}\tconflict\n"
++      end.join
++      _out, err, status = Open3.capture3('git', '-C', checkout, 'update-index', '--index-info', stdin_data: entries)
++      assert(status.success?, err)
++      File.binwrite(File.join(checkout, 'conflict'), "working\x00resolution".b)
++      before = git_capture_success('git', '-C', checkout, 'ls-files', '--stage')
++      runner.archive(slug, as_is: true, explicit: true)
++      runner.revive(slug, as_is: true)
++      assert_equal(before, git_capture_success('git', '-C', checkout, 'ls-files', '--stage'))
++      assert_equal("working\x00resolution".b, File.binread(File.join(checkout, 'conflict')))
++    end
++  end
++
++  def test_git_clean_filtered_content_keeps_a_full_recovery_snapshot
++    with_archive_cleanup_fixture do |runner, workspace, slug, common, checkout|
++      clean = [RbConfig.ruby, '-e', "STDOUT.write(STDIN.read.gsub('working', 'stored'))"].shelljoin
++      smudge = [RbConfig.ruby, '-e', "STDOUT.write(STDIN.read.gsub('stored', 'working'))"].shelljoin
++      assert_git_success('git', '-C', checkout, 'config', 'filter.example.clean', clean)
++      assert_git_success('git', '-C', checkout, 'config', 'filter.example.smudge', smudge)
++      File.write(File.join(checkout, '.gitattributes'), "filtered filter=example\n")
++      File.write(File.join(checkout, 'filtered'), 'working contents')
++      assert_git_success('git', '-C', checkout, 'add', '.gitattributes', 'filtered')
++      assert_git_success('git', '-C', checkout, 'commit', '-m', 'filtered fixture')
++      assert_empty(git_capture_success('git', '-C', checkout, 'status', '--porcelain').strip)
++      runner.archive(slug, as_is: true, explicit: true)
++      manifest = YAML.safe_load(File.read(File.join(workspace, 'archive', slug, 'portal.yml')))
++      recovery = runner.archive_cleanup_recovery(slug, manifest.fetch('archive_operation_id'))
++      saved, = recovery.send(:read_record, recovery.records.first)
++      assert_equal('files', saved.fetch('kind'))
++      assert_git_success('git', "--git-dir=#{common}", 'config', '--remove-section', 'filter.example')
++      runner.revive(slug, as_is: true)
++      assert_equal('working contents', File.read(File.join(checkout, 'filtered')))
++    end
++  end
++
+   def test_archive_private_records_under_restrictive_umask
+     %w[active complete].each do |lifecycle|
+       with_archive_cleanup_fixture do |runner, workspace, slug, _common, _feature|
+@@ -797,6 +1028,35 @@ class DevSessionTest < Minitest::Test
+     end
+   end
+ 
++  def test_git_symlink_placeholders_use_full_copy_without_changing_external_permissions
++    with_archive_cleanup_fixture do |runner, workspace, slug, _common, checkout|
++      sentinel = File.join(workspace, 'outside-sentinel')
++      File.write(sentinel, 'external contents')
++      File.chmod(0o640, sentinel)
++      placeholder = File.join(checkout, 'link-placeholder')
++      File.symlink(sentinel, placeholder)
++      assert_git_success('git', '-C', checkout, 'add', 'link-placeholder')
++      assert_git_success('git', '-C', checkout, 'commit', '-m', 'tracked symlink fixture')
++      File.unlink(placeholder)
++      File.write(placeholder, sentinel)
++      assert_git_success('git', '-C', checkout, 'config', 'core.symlinks', 'false')
++      assert_empty(git_capture_success('git', '-C', checkout, 'status', '--porcelain').strip)
++      before = git_capture_success('git', '-C', checkout, 'ls-files', '--stage')
++      runner.archive(slug, as_is: true, explicit: true)
++      manifest = YAML.safe_load(File.read(File.join(workspace, 'archive', slug, 'portal.yml')))
++      recovery = runner.archive_cleanup_recovery(slug, manifest.fetch('archive_operation_id'))
++      saved, = recovery.send(:read_record, recovery.records.first)
++      assert_equal('files', saved.fetch('kind'))
++      runner.revive(slug, as_is: true)
++      refute(File.symlink?(placeholder))
++      assert(File.file?(placeholder))
++      assert_equal(sentinel, File.read(placeholder))
++      assert_equal(before, git_capture_success('git', '-C', checkout, 'ls-files', '--stage'))
++      assert_equal(0o640, File.stat(sentinel).mode & 0o777)
++      assert_equal('external contents', File.read(sentinel))
++    end
++  end
++
+   private
+ 
+   def with_archive_cleanup_instance(cleanup)
+@@ -816,6 +1076,8 @@ class DevSessionTest < Minitest::Test
+       commit_archive_fixture(workspace, slug, lifecycle:)
+       configure_workspace_origin(workspace)
+       common = File.join(workspace, 'repos', 'sample.git')
++      assert_git_success('git', "--git-dir=#{common}", 'config', 'user.name', 'Test User')
++      assert_git_success('git', "--git-dir=#{common}", 'config', 'user.email', 'test@example.invalid')
+       feature = File.join(workspace, 'worktrees', slug, 'sample')
+       yield runner, workspace, slug, common, feature
+     end
+diff --git a/test/dev_session/lifecycle_commands_test.rb b/test/dev_session/lifecycle_commands_test.rb
+index 4281de3..bd5a337 100644
+--- a/test/dev_session/lifecycle_commands_test.rb
++++ b/test/dev_session/lifecycle_commands_test.rb
+@@ -67,7 +67,8 @@ class DevSessionTest < Minitest::Test
+         path = runner.send(:lifecycle_journal_file, slug, command)
+         FileUtils.mkdir_p(File.dirname(path))
+         File.write(path, 'retained recovery journal')
+-        journal = {'operation_id' => command[0] * 64, 'phase' => {'archive' => 'archived', 'delete' => 'removed', 'revive' => 'revived'}[command], 'recovery' => workspace}
++        journal = {'schema' => {'archive' => 3, 'delete' => 1, 'revive' => 4}.fetch(command),
++          'operation_id' => command[0] * 64, 'phase' => {'archive' => 'archived', 'delete' => 'removed', 'revive' => 'revived'}[command], 'recovery' => workspace}
+         calls = []
+         failing = Object.new
+         failing.define_singleton_method(:lifecycle_completed) { |*args, **kwargs| calls << [args, kwargs]; raise WorkspaceCoordination::Error, 'injected coordination write failure' }
+@@ -958,6 +959,15 @@ class DevSessionTest < Minitest::Test
+       @delegate.with_timeout(seconds, &block)
+     end
+ 
++    def with_deadline(deadline, &block)
++      @delegate.with_deadline(deadline, &block)
++    end
++
++    def stream(argv, **options, &block)
++      @callback.call(argv)
++      @delegate.stream(argv, **options, &block)
++    end
++
+     def capture(argv, allow_failure: false, **options)
+       @callback.call(argv)
+       @delegate.capture(argv, allow_failure:, **options)
+diff --git a/test/workspace_host/archive_recovery_test.rb b/test/workspace_host/archive_recovery_test.rb
+index baf2c77..f24ef61 100644
+--- a/test/workspace_host/archive_recovery_test.rb
++++ b/test/workspace_host/archive_recovery_test.rb
+@@ -19,14 +19,14 @@ class WorkspaceHostTest < Minitest::Test
+       packaged_session = File.join(packaged_libexec, 'workspace-portal')
+       package_contract = File.join(root, 'share', 'workspace-portal')
+       FileUtils.mkdir_p([packaged_session, package_contract])
+-      %w[workspace-host workspace-coordination.rb workspace-coordination-command.rb workspace-coordination-timing.rb workspace-coordination-host.rb workspace-coordination-execution.rb workspace-coordination-gc.rb workspace-coordination-admission.rb workspace-integration.rb workspace-integration-certification.rb workspace-codex-providers.rb workspace-provider-admission.rb workspace-profile-identity.rb workspace-sensitive-sessions.rb workspace-auto-archive.rb workspace-archive-cleanup.rb workspace-archive-recovery.rb].each do |name|
++      %w[workspace-host workspace-coordination.rb workspace-coordination-command.rb workspace-coordination-timing.rb workspace-coordination-host.rb workspace-coordination-execution.rb workspace-coordination-gc.rb workspace-coordination-admission.rb workspace-integration.rb workspace-integration-certification.rb workspace-codex-providers.rb workspace-provider-admission.rb workspace-profile-identity.rb workspace-sensitive-sessions.rb workspace-auto-archive.rb workspace-archive-cleanup.rb workspace-archive-recovery.rb workspace-tracking-sync.rb].each do |name|
+         FileUtils.cp(File.join(source, name), File.join(packaged_libexec, name))
+       end
+       public_wrapper = File.join(packaged_session, 'dev-session')
+       File.write(public_wrapper, "#!/bin/sh\nexit 0\n")
+       wrapped_source = File.join(packaged_session, '.dev-session-wrapped')
+       FileUtils.cp(File.join(source, 'dev-session'), wrapped_source)
+-      %w[workspace-coordination.rb workspace-coordination-command.rb workspace-coordination-timing.rb workspace-provider-admission.rb workspace-profile-identity.rb workspace-sensitive-sessions.rb workspace-auto-archive.rb workspace-archive-cleanup.rb workspace-archive-recovery.rb].each do |name|
++      %w[workspace-coordination.rb workspace-coordination-command.rb workspace-coordination-timing.rb workspace-provider-admission.rb workspace-profile-identity.rb workspace-sensitive-sessions.rb workspace-auto-archive.rb workspace-archive-cleanup.rb workspace-archive-recovery.rb workspace-tracking-sync.rb].each do |name|
+         File.symlink(File.join('..', name), File.join(packaged_session, name))
+       end
+       FileUtils.cp(File.expand_path('../../portal/internal/session/runtime-contract.json', __dir__),
+diff --git a/test/workspace_host/profile_transition_test.rb b/test/workspace_host/profile_transition_test.rb
+index 2e173e2..ded1fc1 100644
+--- a/test/workspace_host/profile_transition_test.rb
++++ b/test/workspace_host/profile_transition_test.rb
+@@ -3,6 +3,34 @@
+ require_relative '../support/workspace_host_test_case'
+ 
+ class WorkspaceHostTest < Minitest::Test
++  def test_archive_recovery_and_tracking_receipts_require_capable_packages
++    with_transition_host do |host, paths|
++      package = make_package(paths.fetch(:root), 'archive-contract')
++      path = File.join(package, 'share/workspace-portal/runtime-contract.json')
++      contract = JSON.parse(File.read(path))
++      %w[archiveRecoveryPolicy trackingSyncPolicy archiveExecutionPolicy].each { |key| contract.delete(key) }
++      File.write(path, JSON.generate(contract))
++      host.send(:require_compatible_archive_recovery!, package)
++      state = host.instance_variable_get(:@state)
++      {
++        ['archived-worktrees', 'workspace', 'session', 'operation', 'inventory.json'] => { 'schema' => 2 },
++        ['tracking-sync', 'workspace', 'session.json'] => {},
++        ['portal', 'workspace', 'lifecycle-operations.json'] => { 'schema' => 2 }
++      }.each do |parts, value|
++        record = File.join(state, *parts)
++        FileUtils.mkdir_p(File.dirname(record))
++        File.write(record, JSON.generate(value))
++        assert_raises(DevWorkspaceHost::Error) { host.send(:require_compatible_archive_recovery!, package) }
++        File.unlink(record)
++      end
++      contract.merge!('archiveRecoveryPolicy' => 2, 'trackingSyncPolicy' => 1, 'archiveExecutionPolicy' => 1)
++      File.write(path, JSON.generate(contract))
++      record = File.join(state, 'tracking-sync', 'workspace', 'session.json')
++      File.write(record, '{}')
++      host.send(:require_compatible_archive_recovery!, package)
++    end
++  end
++
+   def test_sensitive_sessions_require_a_capable_candidate
+     with_transition_host do |host, paths|
+       old = make_package(paths.fetch(:root), 'without-sensitive-support')

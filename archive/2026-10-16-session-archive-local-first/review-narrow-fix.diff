@@ -1,0 +1,110 @@
+diff --git a/docs/session-archive-recovery.md b/docs/session-archive-recovery.md
+index a1918e0..f00b133 100644
+--- a/docs/session-archive-recovery.md
++++ b/docs/session-archive-recovery.md
+@@ -39,7 +39,8 @@ operation state in private `archived-worktrees/` storage. A clean checkout with
+ no untracked or ignored entries uses retained Git objects instead of a file copy;
+ its saved permissions also preserve empty directories. Other checkouts use a full
+ file snapshot. Git reconstruction requires raw file bytes to match retained blobs;
+-filtered or converted content keeps a full snapshot. Staged, unstaged,
++file types must also match the Git tree. Filtered or converted content and regular
++files representing Git symlinks keep a full snapshot. Staged, unstaged,
+ untracked, ignored and binary contents survive. Captures are synced and checked
+ against the source before forced Git removal. Git recovery checks every retained
+ tree and file object, including its raw object hash, before removal. Branches are retained.
+@@ -133,9 +134,9 @@ receipt binds its operation and exact tracking digest before runtime retirement.
+ The per-workspace retry timer commits only owned paths under the existing shared
+ tracking lock. Each attempt has a 60-second deadline covering lock waits, fetches
+ and hooks; fetches also retain their 30-second limit. Timed-out commands receive
+-a five-second termination grace, followed by up to ten seconds for owned-index
+-cleanup. Hooks are not bypassed. Failed attempts retain their error and backoff
+-and release lifecycle locks. Revival coalesces the receipt under the
++a five-second termination grace. Owned-index cleanup has a separate ten-second
++command timeout. Hooks are not bypassed. Failed attempts retain their error and
++backoff and release lifecycle locks. Revival coalesces the receipt under the
+ session lock; deletion removes it after its own transition finishes. Sensitive
+ sessions do not enqueue Git tracking.
+ 
+diff --git a/libexec/workspace-archive-recovery.rb b/libexec/workspace-archive-recovery.rb
+index c3f7a43..12c9261 100644
+--- a/libexec/workspace-archive-recovery.rb
++++ b/libexec/workspace-archive-recovery.rb
+@@ -277,14 +277,18 @@ module DevSession
+       digest_class = record.fetch('head').size == 40 ? Digest::SHA1 : Digest::SHA256
+       git(record, '--no-replace-objects', 'ls-tree', '-r', '-z', record.fetch('head')).split("\0").all? do |entry|
+         metadata, relative = entry.split("\t", 2)
+-        _mode, kind, object = metadata.split
++        mode, kind, object = metadata.split
+         next false unless kind == 'blob'
+ 
+         path = File.join(source, relative)
+         if File.symlink?(path)
++          next false unless mode == '120000'
++
+           value = File.readlink(path).b
+           digest_class.hexdigest("blob #{value.bytesize}\0".b + value) == object
+         elsif File.file?(path)
++          next false unless %w[100644 100755].include?(mode)
++
+           digest = digest_class.new
+           digest << "blob #{File.size(path)}\0"
+           File.open(path, 'rb') do |file|
+diff --git a/test/dev_session/archive_cleanup_test.rb b/test/dev_session/archive_cleanup_test.rb
+index f1d0f2a..3bc5463 100644
+--- a/test/dev_session/archive_cleanup_test.rb
++++ b/test/dev_session/archive_cleanup_test.rb
+@@ -73,13 +73,15 @@ class DevSessionTest < Minitest::Test
+       staged = git_capture_success('git', '-C', workspace, 'diff', '--cached', '--binary', '--', 'unrelated')
+       started = File.join(workspace, '.git', 'hook-started')
+       hook = File.join(workspace, '.git', 'hooks', 'pre-commit')
+-      File.write(hook, "#!/usr/bin/env bash\n: > #{started.shellescape}\nwhile :; do sleep 1; done\n")
++      File.write(hook, "#!/bin/sh\n: > #{started.shellescape}\nwhile :; do sleep 1; done\n")
+       File.chmod(0o700, hook)
+-      runner.define_singleton_method(:tracking_sync_attempt_seconds) { 2 }
++      runner.define_singleton_method(:tracking_sync_attempt_seconds) { 5 }
+       sync = Thread.new { runner.tracking_sync(slug, force: true) }
+       deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 10
+       until File.file?(started)
+-        flunk 'tracking hook did not start' if !sync.alive? || Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
++        if !sync.alive? || Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
++          flunk "tracking hook did not start: #{runner.tracking_sync_receipt(slug).inspect}; alive=#{sync.alive?}"
++        end
+         sleep 0.02
+       end
+       reviver = archive_runner_for(workspace, env: {'DEV_WORKSPACE_DEFER_TRACKING' => '1'})
+@@ -1026,6 +1028,35 @@ class DevSessionTest < Minitest::Test
+     end
+   end
+ 
++  def test_git_symlink_placeholders_use_full_copy_without_changing_external_permissions
++    with_archive_cleanup_fixture do |runner, workspace, slug, _common, checkout|
++      sentinel = File.join(workspace, 'outside-sentinel')
++      File.write(sentinel, 'external contents')
++      File.chmod(0o640, sentinel)
++      placeholder = File.join(checkout, 'link-placeholder')
++      File.symlink(sentinel, placeholder)
++      assert_git_success('git', '-C', checkout, 'add', 'link-placeholder')
++      assert_git_success('git', '-C', checkout, 'commit', '-m', 'tracked symlink fixture')
++      File.unlink(placeholder)
++      File.write(placeholder, sentinel)
++      assert_git_success('git', '-C', checkout, 'config', 'core.symlinks', 'false')
++      assert_empty(git_capture_success('git', '-C', checkout, 'status', '--porcelain').strip)
++      before = git_capture_success('git', '-C', checkout, 'ls-files', '--stage')
++      runner.archive(slug, as_is: true, explicit: true)
++      manifest = YAML.safe_load(File.read(File.join(workspace, 'archive', slug, 'portal.yml')))
++      recovery = runner.archive_cleanup_recovery(slug, manifest.fetch('archive_operation_id'))
++      saved, = recovery.send(:read_record, recovery.records.first)
++      assert_equal('files', saved.fetch('kind'))
++      runner.revive(slug, as_is: true)
++      refute(File.symlink?(placeholder))
++      assert(File.file?(placeholder))
++      assert_equal(sentinel, File.read(placeholder))
++      assert_equal(before, git_capture_success('git', '-C', checkout, 'ls-files', '--stage'))
++      assert_equal(0o640, File.stat(sentinel).mode & 0o777)
++      assert_equal('external contents', File.read(sentinel))
++    end
++  end
++
+   private
+ 
+   def with_archive_cleanup_instance(cleanup)

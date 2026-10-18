@@ -1,0 +1,301 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index d3dcabf6..7975fad9 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -18,6 +18,7 @@ file cannot be read, stop the affected action and report the missing guidance.
+ 
+ | Before this activity | Read |
+ | --- | --- |
++| Updating Codex | [Update skill](skills/update-codex/SKILL.md) |
+ | Selecting affected projects or changing cross-project scope | [Project map](docs/agent-instructions/projects.md) |
+ | Starting/resuming an initiative; writing plans, state, notes or handoffs | [Session setup and tracking](docs/agent-instructions/sessions.md) |
+ | Cloning repositories; updating downstream configuration pins; creating/reusing worktrees or branches; fetching, pushing, rebasing, merging or cleaning them; committing coordination records; declaring an unmerged branch ready | [Git and worktrees](docs/agent-instructions/git.md) |
+diff --git a/docs/agent-instructions/lifecycle.md b/docs/agent-instructions/lifecycle.md
+index 1a332bd0..59e2a3d9 100644
+--- a/docs/agent-instructions/lifecycle.md
++++ b/docs/agent-instructions/lifecycle.md
+@@ -41,9 +41,16 @@ unmerged, unpublished, detached or dirty work. It stops owned active agents,
+ pauses active goals, keeps conversations and queued prompt records, releases
+ clusters, captures local checkout files and index state in private recovery,
+ forcefully removes owned worktrees, retains branches, moves tracking atomically
+-to `archive/`, commits only that transition and retires runtime state. It does
++to `archive/`, saves the local transition and retires runtime state. The installed
++workspace retries its tracking Git commit independently; network, hook or remote
++master failures leave tracking sync pending without reopening the session. It does
+ not fetch or require merged feature heads. Preserve unrelated shared index and
+ working-tree changes. CLI and portal each ask for one yes/no confirmation.
++Browser archival runs in a separate systemd user service and survives portal
++restart. Local file work has no total wall-clock deadline. Inspect pending Git
++bookkeeping with `dev-session tracking-sync --status --slug <slug> --json`; the
++managed retry timer preserves hooks and the shared tracking lock. Do not edit
++receipts or recovery snapshots to clear a pending status.
+ 
+ Automatic archival retains its merge, publication, cleanliness and idle policy.
+ `--require-merged` requests that completion policy manually; `--abandoned` retains
+@@ -54,11 +61,13 @@ The runtime's `docs/session-archive-recovery.md` owns formats, private snapshots
+ retained prompts, target-specific merge proofs and interruption recovery.
+ 
+ Run `dev-session revive <slug> --as-is` to reopen an archived initiative. Revival
+-commits tracking back under `work/`, restores active lifecycle and preserves the
++restores tracking under `work/`, restores active lifecycle and preserves the
+ retained repository and conversation identities. Explicit archives recreate their
+ saved worktrees with staged, unstaged, untracked and ignored files before starting
+-the conversation. Queued prompts stay held. Older complete/abandoned archives do
+-not gain snapshots. The stronger abandoned warning and all accepted confirmations
++the conversation. Queued prompts stay held. Revival can proceed before tracking
++sync succeeds and coalesces pending bookkeeping to its latest state. Older
++journals retain their saved synchronous commit policy. Older complete/abandoned
++archives do not gain snapshots. The stronger abandoned warning and accepted confirmations
+ remain journaled so retries do not ask again. New manifestless revival refuses;
+ repair historical scope under the separately assigned dated repair procedure.
+ Unfinished lifecycle journals reserve their slug and must be resumed before
+diff --git a/flake.lock b/flake.lock
+index 7730639d..b625fa89 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -45,17 +45,17 @@
+     "codex-web": {
+       "flake": false,
+       "locked": {
+-        "lastModified": 1792100512,
+-        "narHash": "sha256-kJxBCR7EUM3R0ftXy9tUYtliDhsY3hepvDQw2bSz6w4=",
++        "lastModified": 1792162282,
++        "narHash": "sha256-2xni8DqqN9BeAqJyErRUt0bmYDppBi6DriSEeyFrOZ4=",
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "523865195522ad6f4804613e6f54823ddf447924",
++        "rev": "a0561fad8decb794117f8959fa2dd629547c5ba7",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "codex-web",
+-        "rev": "523865195522ad6f4804613e6f54823ddf447924",
++        "rev": "a0561fad8decb794117f8959fa2dd629547c5ba7",
+         "type": "github"
+       }
+     },
+@@ -66,17 +66,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1792101613,
+-        "narHash": "sha256-kjTQ90DHeQIAWUL1HlV2gej1Nz8R5A81XUB8tP/ighA=",
++        "lastModified": 1792169143,
++        "narHash": "sha256-MWvYk2Ru4xDMCVWXFqHvX9OeGPB+vEeU6m2f9Nd0+co=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "2b22de8d273a3b75e6cdd62c398fdb2630871d5a",
++        "rev": "73bc5c6e9a74f7bc667ea8f6f19ec3ad6d4b73ea",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "2b22de8d273a3b75e6cdd62c398fdb2630871d5a",
++        "rev": "73bc5c6e9a74f7bc667ea8f6f19ec3ad6d4b73ea",
+         "type": "github"
+       }
+     },
+@@ -199,11 +199,11 @@
+         ]
+       },
+       "locked": {
+-        "lastModified": 1788450739,
+-        "narHash": "sha256-glZLQlzIn1fXH6PazR2iUmTo7kzzyYSshrWhLS9TqCU=",
++        "lastModified": 1790898470,
++        "narHash": "sha256-zTwuwezD0w3hpga6a6P8emidzAZFyWqlNeRBlpWOOl8=",
+         "owner": "hercules-ci",
+         "repo": "flake-parts",
+-        "rev": "31729ca8cbdb4fa927b34e5f4353e6a83f39e993",
++        "rev": "024633cd702b10285db5cb19b40ad48d2399ba60",
+         "type": "github"
+       },
+       "original": {
+@@ -340,11 +340,11 @@
+         "treefmt-nix": "treefmt-nix"
+       },
+       "locked": {
+-        "lastModified": 1790893833,
+-        "narHash": "sha256-w2jmp0z4qTRKC4nlMG0okmRZgDZ2No0IlDL6Aef/tzI=",
++        "lastModified": 1792149628,
++        "narHash": "sha256-z6OJhOCXlLXdP1GdqS+6wLe/blU6KGZFrib+b/nxYE8=",
+         "owner": "numtide",
+         "repo": "llm-agents.nix",
+-        "rev": "6334544a4bfd921086a252caccc6c1c6eb1d18c7",
++        "rev": "e85b99217baf13a38fc887b31338b1833f1159c0",
+         "type": "github"
+       },
+       "original": {
+@@ -387,11 +387,11 @@
+     },
+     "nixpkgs": {
+       "locked": {
+-        "lastModified": 1790600678,
+-        "narHash": "sha256-6k3n7X2UsZ6tAlWTz99RimiZab+17tMUrw9sRUcELiA=",
++        "lastModified": 1791966044,
++        "narHash": "sha256-t1hT8UW97rFCWCJO7/pClvu0AhLN5V3uir2M0ic4w/Q=",
+         "owner": "NixOS",
+         "repo": "nixpkgs",
+-        "rev": "f45c6f04c2f013f004bf94e284e95d72898d9393",
++        "rev": "319e4cebef10cbb636c6ea392137b52ad105336a",
+         "type": "github"
+       },
+       "original": {
+@@ -574,11 +574,11 @@
+     },
+     "systems": {
+       "locked": {
+-        "lastModified": 1681028828,
+-        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
++        "lastModified": 1791244623,
++        "narHash": "sha256-uuanbkFk8a313Zfrxdcz8Us/yQtaxNnKJtX8v0ZPpd8=",
+         "owner": "nix-systems",
+         "repo": "default",
+-        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
++        "rev": "d36eeed142f88b5a636f2e3856a53c61654cf29b",
+         "type": "github"
+       },
+       "original": {
+@@ -613,11 +613,11 @@
+         ]
+       },
+       "locked": {
+-        "lastModified": 1786901030,
+-        "narHash": "sha256-WSFCsDSE5ffgD2MqzkM2CYjeFiKhRF/dJUN8uedb6YE=",
++        "lastModified": 1791885023,
++        "narHash": "sha256-C3alQ2MEt0zVrUSho5NUDo3jmhbff72++bfwoqT9Omo=",
+         "owner": "numtide",
+         "repo": "treefmt-nix",
+-        "rev": "27b3b12a8e6375f28ebe122f07d230ca5459bbfa",
++        "rev": "0d6d739a833ba9a9c93034862e4a7b061a062a1c",
+         "type": "github"
+       },
+       "original": {
+diff --git a/flake.nix b/flake.nix
+index e15d992b..7e73685f 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
+     vpsfree-dev-workspace = {
+       url = "github:vpsfreecz/dev-workspace/767dfd587e346168e1443e65ccdb67ce748f3fe3";
+-      inputs.dev-workspace.url = "github:aither64/dev-workspace/2b22de8d273a3b75e6cdd62c398fdb2630871d5a";
++      inputs.dev-workspace.url = "github:aither64/dev-workspace/73bc5c6e9a74f7bc667ea8f6f19ec3ad6d4b73ea";
+     };
+   };
+ 
+@@ -42,11 +42,19 @@
+           vpsadminos = ./config/vpsadminos-devcluster.json;
+         };
+       };
+-      package = vpsfree-dev-workspace.lib.mkPackage {
+-        inherit pkgs siteConfig teamConfig;
+-        coordinationConfig = import ./config/coordination.nix;
+-        integrationConfig = import ./config/integration.nix;
+-      };
++      package =
++        (vpsfree-dev-workspace.lib.mkPackage {
++          inherit pkgs siteConfig teamConfig;
++          coordinationConfig = import ./config/coordination.nix;
++          integrationConfig = import ./config/integration.nix;
++        }).override
++          (previous: {
++            extensions = previous.extensions // {
++              skills = previous.extensions.skills // {
++                update-codex = "${self}/skills/update-codex";
++              };
++            };
++          });
+     in
+     {
+       packages.${system} = {
+diff --git a/skills/update-codex/SKILL.md b/skills/update-codex/SKILL.md
+new file mode 100644
+index 00000000..e952b246
+--- /dev/null
++++ b/skills/update-codex/SKILL.md
+@@ -0,0 +1,74 @@
++---
++name: update-codex
++description: Update Codex across this development workspace, its dev-workspace/codex-web dependencies and aitherdev, using repository-owned update skills and coordinated system/application deployment.
++---
++
++# Update workspace Codex
++
++Read AGENTS.md and its applicable procedure routes. Verify or create the owning
++session before mutation, use isolated worktrees, record the plan/design and keep
++the shared checkout on master. Resolve the live roster before substantive work.
++This skill does not grant deployment, merge or lifecycle permissions.
++
++## Run the repository-owned processes
++
++Resolve the latest stable OpenAI Codex release unless the caller selected an
++exact version. Freeze the version and an exact llm-agents revision containing it.
++Record current and selected versions plus the exact native/source identities.
++
++Read skills/update-aitherdev-codex/SKILL.md from this initiative's
++vpsfree-cz-configuration checkout. Its canonical repository is
++git@github.com:vpsfreecz/vpsfree-cz-configuration.git. That skill points to the
++runtime's update-dev-workspace-codex skill, which points to codex-web's
++update-codex-web skill. Read each repository's instructions before edits.
++
++Pass the same selected version and explicit dependency roots through the chain.
++Run dependency changes before consumer pins, publish exact feature revisions,
++and retain returned check evidence. Each layer owns its repository changes;
++the workspace owns combined review and deployment ordering. Do not duplicate
++lower-level procedures here or repeatedly rerun already-proven checks.
++
++## Compose the workspace package
++
++Use a workspace feature worktree for the direct nested runtime URL
++inputs.vpsfree-dev-workspace.inputs.dev-workspace.url. Preserve the extension
++revision and sibling inputs. After selecting the published runtime, generate
++the lock with the scoped update:
++
++```sh
++nix flake update vpsfree-dev-workspace/dev-workspace
++bin/check-dev-workspace-deployment --workspace-root WORKSPACE_ROOT \
++  --configuration-root CONFIGURATION_ROOT
++```
++
++Inspect semantic input paths: configuration's devWorkspace and the workspace's
++nested runtime must match. Also verify the system and packaged llm-agents Codex
++versions and the runtime's codex-web source/Go pin agree. Do not add the
++application to system configuration or incidentally deduplicate the lock graph.
++
++## Review, verify and roll out
++
++Complete all intended changes, quick checks and commits before mandatory final
++review. Include all branches' complete histories, final diffs, pin consolidation
++and migration provenance, including an explicit no-migrations conclusion when
++applicable. Then run applicable longer exact-binary/native, naming, packaged
++and state-compatibility checks through fresh verification watchers. Validate each
++new skill and check that its dependency references resolve from selected sources.
++
++Build the exact final system and application outputs. When deployment is
++authorized, reserve aitherdev through the selected coordinator and submit system
++activation before dependent user-profile activation. Read the installed
++coordination guides and preserve the reservation through acceptance/review.
++Changed native invocation needs idle sessions: wait without interrupting other
++sessions or bypassing transition refusals.
++
++Verify system/profile/native daemon identities, naming, providers, terminal and
++browser operation, saved-thread continuity and service health. Record actual
++rollout results separately from reusable project guides. Preserve journals,
++retained generations, roots and conversations. Recover application selection
++forward through the original attempt; reconcile uncertain system effects.
++
++Publish branches and update session state/artifacts and its stable portal URL.
++Without explicit integration direction keep the initiative active, awaiting
++merge approval; deployment does not release its integration obligations. Do not
++archive, delete, stop sessions or prune retained packages as a finishing step.
+diff --git a/skills/update-codex/agents/openai.yaml b/skills/update-codex/agents/openai.yaml
+new file mode 100644
+index 00000000..ee5e1577
+--- /dev/null
++++ b/skills/update-codex/agents/openai.yaml
+@@ -0,0 +1,3 @@
++interface:
++  display_name: "Update workspace Codex"
++  short_description: "Coordinate Codex updates across the workspace and host"
