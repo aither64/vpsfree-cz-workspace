@@ -96,12 +96,12 @@ docs/workspace-portal.md                           | 37 +++++---
 ## workspace
 
 Worktree: /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-18-portal-untracked-files/workspace
-Base: 07b9d0a6a883a9af5d5ea7541d22f77c1fac9468
-Head: 23e59bac42b68c3e3a2908f89be002a0439eef29
+Base: c01902a5390da05be4e193176d7a8205bc0c5eb7
+Head: 7a29fb0beb1d588fa950a51b78f5e262831c22fc
 Complete series:
 
 ```
-23e59bac42b68c3e3a2908f89be002a0439eef29 inputs: select portal untracked-file support
+7a29fb0beb1d588fa950a51b78f5e262831c22fc inputs: select portal untracked-file support
 ```
 
 Final stat:
@@ -129,3 +129,7 @@ Final stat:
 flake.lock | 6 +++---
  1 file changed, 3 insertions(+), 3 deletions(-)
 ```
+
+Workspace-only refresh: rebased the single pin commit over current shared master
+c01902a5390da05be4e193176d7a8205bc0c5eb7 (tracking handoff only). git range-diff reports exact equality:
+23e59bac = 7a29fb0b. Runtime and configuration heads are unchanged.
