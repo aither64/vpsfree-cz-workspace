@@ -188,3 +188,8 @@ future checks. Retain operation evidence, snapshots, branches and GC roots.
 Initial tracking commit f7ac8b95 and genuine native coordination handoff c01902a5
 are preserved. Current consolidated recording is a genuine remaining-operations
 ownership handoff, not a per-poll/check checkpoint. The initiative stays open.
+
+## Integration 9ea67c12-d03d-4769-b734-ef315020acd3
+
+Requested exact feature heads are integrated. See integration/9ea67c12-d03d-4769-b734-ef315020acd3/summary.md
+and integration/9ea67c12-d03d-4769-b734-ef315020acd3/result.json for operation receipts. Feature refs and session retained.
