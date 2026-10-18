@@ -26,12 +26,23 @@ review workflow can select it independently of its role name. Existing session
 members keep their saved instructions and settings; a member added later uses
 the currently installed catalog.
 
-The site catalog gives leads, architects (`designer` in the catalog) and
-implementers workspace-write access. New teams use GPT-6.1 Sol (`gpt-6.1-sol`)
-for leads and implementers. The default Lead and reviewer team uses a Sol/xhigh
-lead and an Astra/xhigh reviewer; the other presets use Sol reviewers. Architects
-use GPT-6 Astra/xhigh. Reviewers stay read-only, and a separate GPT-6 Luna/low
-utility watches long checks.
+The site catalog sets `execution_access = "full_access"` for every member and
+verification utility, including retained members. Shells have the lead's
+filesystem, network and Nix daemon access, with approvals set to `never`.
+Saved role access remains part of retained settings; it does not restrict
+execution under this package policy. Reviewers follow read-only review
+instructions despite having full execution access.
+
+New teams use GPT-6.1 Sol (`gpt-6.1-sol`) for leads and implementers. The default
+Lead and reviewer team uses a Sol/xhigh lead and an Astra/xhigh reviewer; the
+other presets use Sol reviewers. Architects use GPT-6 Astra/xhigh. A separate
+GPT-6 Luna/low utility watches long checks.
+
+Members can message ready peers in the same session with `dev-session team
+assign <slug> --as-is --from <own-address> --to <peer-address> --message TEXT
+--message-id UUID`. Use a stable message ID and the same exact text when retrying
+uncertain delivery. `report_to_lead` remains dedicated to lead reports.
+
 
 | Preset | Persistent members | Design owner | Application edits | Specialist slots |
 | --- | --- | --- | --- | --- |
@@ -85,8 +96,9 @@ roster. Preserve whole-branch history and migration review and the skill's
 narrow-fix policy.
 
 Adding, replacing or reconfiguring members requires explicit user direction;
-manual team controls remain available. The portal shows each member's saved
-access, which may differ from the current catalog. Existing members retain
+manual team controls remain available. The portal shows effective execution
+access and each member's saved role access, which may differ from the current
+catalog. Existing members retain
 their saved model, effort, access, and instructions. Newly added members use
 the installed catalog; creation retries and forks keep retained snapshots,
 including an older Lead-designed lineup containing an architect. Do not

@@ -5,7 +5,7 @@
     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
     vpsfree-dev-workspace = {
       url = "github:vpsfreecz/dev-workspace/767dfd587e346168e1443e65ccdb67ce748f3fe3";
-      inputs.dev-workspace.url = "github:aither64/dev-workspace/c8f9a2bb0ef72a1c0ff0061bd9898df5df7dd5cb";
+      inputs.dev-workspace.url = "github:aither64/dev-workspace/705301228f726bcc9c5e0b516abc03f6f6c995cf";
     };
   };
 
@@ -98,7 +98,8 @@
               metadata=${package}/share/dev-workspace/package.json
               test -f "$catalog"
               ${pkgs.jq}/bin/jq -e '
-                .schema_version == 5 and
+                .schema_version == 6 and
+                .execution_access == "full_access" and
                 .default_team == "lead_reviewed" and
                 .default_development_team == "lead_reviewed" and
                 .capacity.required_native_child_threads == 4 and
@@ -207,7 +208,7 @@
               ' "$catalog" >/dev/null
               ${pkgs.jq}/bin/jq -e '
                 .agent_teams.managed == true and
-                .agent_teams.catalog.schema_version == 5 and
+                .agent_teams.catalog.schema_version == 6 and
                 .agent_teams.native_capacity.config_key == "agents.max_concurrent_threads_per_session" and
                 .agent_teams.native_capacity.required_value == 4
               ' "$metadata" >/dev/null
@@ -215,7 +216,9 @@
                 while IFS= read -r path; do
                   config=${package}/$path
                   test -f "$config"
-                  if grep -Eq "^(model|model_reasoning_effort|sandbox_mode) =" "$config"; then
+                  grep -Fx 'sandbox_mode = "danger-full-access"' "$config"
+                  grep -Fx 'approval_policy = "never"' "$config"
+                  if grep -Eq "^(model|model_reasoning_effort) =" "$config"; then
                     echo "native role configuration overrides runtime settings" >&2
                     exit 1
                   fi

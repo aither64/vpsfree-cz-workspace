@@ -1,7 +1,7 @@
 # vpsFree.cz Development Workspace
 
-This directory is the coordination workspace for vpsFree.cz development across
-multiple independent git repositories. It is not a monorepo. Use it to track
+This directory coordinates vpsFree.cz development across independent git
+repositories. It is not a monorepo. Use it to track
 what is being developed, which repositories are affected, where the worktrees
 are, and what compatibility and deployment constraints are known.
 
@@ -100,6 +100,7 @@ the parent's responsibility for choosing scope or accepting results.
   `lead_reviewed` uses Sol/xhigh and Astra/xhigh; other reviewers use their
   catalog settings. Verification watchers use GPT-6 Luna/low.
   Existing members retain their saved model, effort, access, and instructions.
+  Execution uses installed policy.
   Substantive design uses xhigh. High is allowed for a bounded simple design or
   implementation unit only with a recorded reason. Independent review uses an
   eligible retained review-purpose member's saved model and effort, or a

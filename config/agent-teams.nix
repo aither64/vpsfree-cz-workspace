@@ -118,7 +118,8 @@ let
   };
 in
 {
-  schema_version = 5;
+  schema_version = 6;
+  execution_access = "full_access";
   default_team = "lead_reviewed";
   default_development_team = "lead_reviewed";
 

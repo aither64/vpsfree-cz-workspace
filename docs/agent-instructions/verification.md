@@ -19,6 +19,12 @@ must not launch or resume that mutation driver itself.
 
 ## Development Environment
 
+The installed full-access execution policy applies to members and utilities.
+Launch standalone CLI watchers with `--sandbox danger-full-access
+--ask-for-approval never` explicitly. Do not add the root-owned Nix daemon socket
+directory as a sandbox writable root. Resolve member failures to use Nix,
+network or direct peer messaging instead of treating lead-only checks as normal.
+
 Use the generic `dev-session-monitor` skill for authorized tests, CI checks and
 builds expected to exceed one minute, and delegate uncertain-duration integration
 tests and builds before launching them. Resolve the fresh verification watcher
