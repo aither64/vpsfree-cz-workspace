@@ -4,61 +4,134 @@ lifecycle: active
 
 # Provider switch redesign
 
-Current phase: all checks PASSED; corrected system/profile activation submitted.
-The reported unknown-field failure was provider missing from the strict server
-allowlist. Prior browser POST interception left real admission untested. Runtime
-5c799c1 fixes the allowlist and adds an ordinary always-run shipped-JS -> real
-HTTP acceptance/replay regression for six provider/team modes. It reproduced
-exact failure before the fix and passes with broader focused checks5.046s.
-Independent four-lane review has no findings. Real Playwright now submits actual
-forms through the real handler, verifies202/navigation/durable snapshots and
-passes16s. No native/state/schema change or Codex patch/rebuild.
+Current phase: application correction is deployed/verified, original four feature
+heads merged, and aitherdev normally released. The additional test correction is
+now `8385699aabcc2cfc74b585ca653a4658ff3eef75`, published and independently reviewed.
+Its exact rooted VM check and feature CI39175452062 PASSED. Authorized
+runtime-only merge c294 and resulting master CI remain. No production
+code, deployed pins, native binary or live provider selection changed.
 
-- [x] Correction, ordinary HTTP contract, documentation committed/published.
-- [x] Independent application review and unmocked real-browser proof.
-- [ ] Final mechanical/deployed-lineage review, exact preparations and CI39165419057.
-- [ ] Coordinated corrected deployment and live parser/continuity verification.
-- [ ] Authorized exact final-head default-branch integrations and aitherdev release.
+The host VM originally expected the old restart engine for new scoped requests.
+The final one-commit correction explicitly seeds legacy inputs, preserves original
+recovery/reboot assertions and adds real scoped daemon/process survival proof.
+The scoped measurement now joins ordinary boot reconciliation successfully before
+recording PID/adding activity; ready sockets alone do not prove released package
+admission. Existing 60s exact-refusal/same-UUID retry and all outcomes remain.
+The added fixture prerequisite is bounded300s, with reconciliation/GC diagnostics
+on failure. Same Astra/xhigh reviewer accepted all affected deltas/history with no
+findings. No migrations or dependency streams. Final review:
+`http-host-vm-stable-review-result.md`; receipt `http-host-vm-reviewed-runtime.json`.
 
-User authorizes all four default branch merges and reservation release AFTER
-corrected deployment/verification. Keep initiative active/reservation held until
-then. No archive/delete/reboot or live provider retry authorization. Current
-production stillf500440 until successor activation. Lead owns work; roster null.
-Final sources ready for checks: runtime5c799c1783db2904300d2596de23deda96e5d7ef,
-sharedc064ce09cfcea8d8af6bf676635a53cd823f772c, workspace
-905c2fcca7d539074d576b4c00ff6df1e682c0b2, configuration
-95a8b88d383c177fc65bf67d51c901a69c0b2847. Published one consolidated pin each;
-composition passed, deployed refs retained. Full inventory/replacement ranges
-in http-final-inventory.json. Existing current deployment details below remain
-historical until successor activation.
+Active exact check: fresh Luna/low/full-access/never utility
+`01a1514d-2035-7471-96f8-1fe8474508d4`, parent tool33714.
+The earlier utility did not launch; the corrected current launcher is confirmed
+running and its exact log exists. Execute/observe only
+`run-http-host-vm-stable.py`, which checks838/clean HEAD, retains the driver closure,
+then runs the standard full session-recovery-boot check. All paths are enforced
+by the launcher. Artifacts `http-host-vm-stable-exact.log`, `.exit`,
+`http-host-vm-stable-exact-command-result.json`, `http-host-vm-stable-exact-result.md`;
+watcher `http-host-vm-stable-monitor-2.log`. Driver root must remain until cleanup.
+No earlier check is reused as final VM proof. Exact feature CI39175452062 must
+also pass; fetch its final JSON into `http-host-vm-stable-feature-ci-final.json`.
 
-## Current deployed sources and identities
+Source origin/master was freshly fetched5c799c1; final comparison captured after
+lease-safe publication. Guarded `http-host-vm-submit-integration.py` binds exact838
+and refuses before final VM/featureCI pass. Planned runtime-only merge run
+`c294c3fe-cd90-4b37-8494-9ea802fc4fa6` is NOT submitted. Do not resume/relaunch the
+original completed four-repository rund3da. After tests, ordinary coordinator
+merge-only integration is authorized by the user's same repository/master direction.
+No new deployment or machine reservation is needed for this test correction.
+Handle resulting master CI, then mark complete only when exact head is merged
+and all remaining work settles. Keep session open; no archive/delete.
 
-- dev-workspace:f500440a4ad79dc360ddc4f5840908ce3cf9bb18.
-- codex-web:c064ce09cfcea8d8af6bf676635a53cd823f772c.
-- workspace:eb32c04604f95b25ad60928b0461e236f56464c7.
-- configuration:02c0ae0fcdbc053cd5e119ff531716280854af8a (base30a20d0e).
-- Application profile:/nix/store/3sqlyjzfxjam3rxbnppy5rw38iwqlq4v-dev-workspace-0.2.0.
-- Running/system profile:/nix/store/4zw00cf4ikin1wyrlzkm7ahm583d86sz-nixos-system-aitherdev-26.05.20261015.26f4107.
+Earlier failed VM evidence and raw probes are retained below. The a549 VM passed
+legacy cases but scoped case exhausted60s package admission; it is not a pass.
+Rooted probe178.945s observed registration/activation holding the lock through
+pending portal shutdown despite ready socket. Its observation window ended before
+registration completion; it does not directly identify earlier post-reboot holder
+or prove public switching. This supports a stable-package test precondition,
+not a claim of a production defect. Initial direct probe was cancelled by parent
+because unrooted dependencies disappeared duringGC; incomplete evidence. Both
+probe VMs stopped, exact parent-created temporary dirs cleaned. Retained probe
+GC root/logs/source remain until final cleanup. No diagnostic process remains.
 
-All four feature worktrees are clean/published. Stock Codex0.163.0 hash and daemon
-PID3387667 are unchanged. Systemc917b030 and profilea021ff17 both succeeded.
-Profile's exited verified worker required exact original-job reconciliation;
-no activation replay. Existing confctl session overridecodex-lb and successful
-operation21ea4ecf finished18:41:11Z were preserved; they predate this correction.
+The `unknown session request field` error came from `provider` missing from the
+strict preparation-form allowlist. Earlier browser tests intercepted POSTs before
+the real parser. Runtime `5c799c1` corrects admission and adds an ordinary shipped
+JavaScript -> real HTTP regression for six provider/team combinations. It
+reproduces the original error before the fix. Unmocked Playwright also verifies
+202, navigation and durable snapshots. No native Codex patch/rebuild or database
+migration.
 
-Evidence: draft-provider-review-result.md; draft-predecessor-compat.log;
-draft-browser-result.md; draft-build-ci-result.md (original system baseline
-refusal, exact profile+CI success); draft-system-2-result.md; clean final
-mechanical reports draft-pin-review-result.md/draft-pin-review-2-result.md;
-draft-profile-reconcile.json; draft-deployment-final-status.json;
-draft-deployment-smoke-result.json (44/44 in1.553s). Initial smoke's obsolete
-failed-switch expectation is preserved in draft-deployment-smoke-initial.json
-and diagnosed below. Exact CI39162505259 succeeded, browser test13s.
+- [x] Correction and real-HTTP regression committed and published.
+- [x] Independent final application/history/compatibility review accepted.
+- [x] Real browser, exact feature CI and package verification passed.
+- [x] Coordinated corrected deployment; live parser and 44/44 continuity checks.
+- [x] Exact refreshed workspace candidate prepared and checked separately.
+- [x] Authorized default-branch integrations for all four repositories.
+- [x] Ordinary coordinator finish validated lineage/live state and released aitherdev.
+- [x] Post-merge CI feedback collected and failed VM logs inspected.
+- [x] Final VM fixture correctiona54992e committed; quick checks and affected independent reviews accepted without findings.
+- [x] Exact corrected VM838 and feature CI39175452062 passed.
+- [ ] Normal runtime-only merge c294 and resulting exact master CI.
+  Fresh Luna/low/full-access utility owns http-host-vm-monitor.log and exact
+  session-recovery-boot check; report http-host-vm-exact-result.md. Feature
+  branch published; no application/pin changes or further activation required.
 
-Project contract/recovery: dev-workspace/docs/codex-providers.md. Design rationale
-is in design.md; individual rollout provenance in rollout.md. No native patch or
-native rebuild. Prior phase records below are historical; this summary is current.
+User's direction “when this is fixed, deployed and verified, you can merge it
+into default branches and release aitherdev” authorized these four repositories
+and normal reservation release after acceptance. All conditions were fulfilled.
+No archive/delete/reboot or live provider-switch retry was performed. Lead owns
+work; retained roster remains null. Session stays open.
+
+## Original application merges and verified live deployment
+
+| Repository | Exact final head merged into remote master |
+| --- | --- |
+| dev-workspace | `5c799c1783db2904300d2596de23deda96e5d7ef` |
+| codex-web | `c064ce09cfcea8d8af6bf676635a53cd823f772c` |
+| workspace | `bfdb72d78e188a8659bee7fd4f55b5256d2243a2` |
+| vpsfree-cz-configuration | `95a8b88d383c177fc65bf67d51c901a69c0b2847` |
+
+Integration run `d3da9ea5-cf87-49f3-82cc-a3d69d60c867` is complete, all four merge
+jobs succeeded. The original attached invocation returned a temporary driver
+conflict; its admitted workers continued. Supported same-run resume finalized
+tracking publication without replay. Exact remote ancestry and unchanged live
+identities were independently rechecked by normal coordinator finish. Reservation
+`8e7c4402-5981-476d-a587-f122faff3e1b` is **released**, revision 13.
+
+- Live runtime: `5c799c1783db2904300d2596de23deda96e5d7ef`.
+- Live workspace source: `905c2fcca7d539074d576b4c00ff6df1e682c0b2`.
+- Live configuration: `95a8b88d383c177fc65bf67d51c901a69c0b2847`.
+- Application: `/nix/store/a5dcgj4hxcf6q87agjnpp20ls9jn004d-dev-workspace-0.2.0`.
+- Running/system profile: `/nix/store/lg6pjp0kp9lj1l2pg33zw73rmrdnkw9d-nixos-system-aitherdev-26.05.20261015.26f4107`.
+- Stock Codex 0.163.0 daemon PID `3387667`, unchanged binary.
+- Workspace default is `openai` / Codex subscription, with Daybreak available.
+- Confctl session's pre-existing explicit `codex-lb` override is preserved.
+
+The final workspace rebase changes only coordination ancestry. Installed
+certification reconstructed the exact reviewed pin patch; original review and
+all deployed refs remain. Exact candidate preparation independently passed for
+`/nix/store/kq91slynglsq95c0ca5rg0pmbahfr4py-dev-workspace-0.2.0`
+(derivation `injavbimcbp03d3rvh10vcnm5sl9wb69`). No extra activation was needed.
+Five certified workspace mappings and four independently accepted configuration
+mappings passed the normal release validator.
+
+Evidence: [final acceptance](http-final-equivalence-verification.md),
+[release receipt](http-finish-result.json),
+[full coordinator status](http-final-coordination-status.json),
+[integration summary](integration/d3da9ea5-cf87-49f3-82cc-a3d69d60c867/summary.md),
+[HTTP/browser review](http-admission-review-result.md),
+[complete final review](http-final-review-result.md),
+[live checks](http-deployment-smoke-result.json),
+[live admission probe](http-live-admission-probe.json).
+Project behavior/recovery is documented in `dev-workspace/docs/codex-providers.md`
+and the README / session-preparation guide. Rollout provenance is in `rollout.md`.
+
+## Earlier implementation and rollout checkpoints
+
+The sections below retain previous phase decisions and evidence. The final
+summary above supersedes their historical deployment/approval status.
 
 ## Follow-up phase: deployed and verified
 
@@ -83,7 +156,7 @@ remains stopped; default remains the subscription. Lead owns edits, roster null.
 - [x] Final feature publication and exact-head package/VM CI.
 - [x] Deploy exact reviewed runtime to aitherdev (authorized).
 - [x] Verify live system/profile, portal, subscription/Daybreak catalogs and Codex continuity.
-- [ ] Explicit repository/target integration direction (not authorized).
+- [x] Repository/target integration directed after corrected deployment; see final summary.
 
 ## Initial deployment boundary and ownership
 
@@ -589,3 +662,122 @@ driver will integrate all four exact heads, then lineage/verification/finish.
 
 Requested exact feature heads are integrated. See integration/d3da9ea5-cf87-49f3-82cc-a3d69d60c867/summary.md
 and integration/d3da9ea5-cf87-49f3-82cc-a3d69d60c867/result.json for operation receipts. Feature refs and session retained.
+
+
+Exact VM attempt8fbd018 failed in46s before VM boot: its Ruby prerequisite's
+fixture guard hard-coded five subtests. No system/native behavior was exercised.
+The same Ruby check now accepts six cases and explicitly tests unexpected applied
+as a failed wait('waiting') with one successful shell return and bounded diagnostic
+collection. Focused check passes0.144s. Amended the unmerged test-owner commit;
+original master5c799 history remains protected. Same reviewer receives the final
+affected Ruby-test delta; fresh watcher will run the final exact VM, no blind
+rerun. First failed evidence retained; no production change or activation.
+
+Final test-only head f2a26ea79c128ed0786f909c1facd39231ebb8b4 is published,
+comparison captured over5c799c1. Same reviewer accepted final general-lane delta
+without findings, retaining original four-lane Nix/compatibility assessment.
+Nix patch equals accepted8fbd; one focused two-file commit, no migrations or pins.
+Fresh final VM watcher runs exactf2a26ea. Superseded feature CI39170476772 was
+already terminal; downloaded logs confirm the same obsolete five-subtest count
+in both fast/archive prerequisites. No workflow cancellation or rerun needed.
+
+
+Exactf2a26ea VM reached/passed retained cgroup blocking, startup compensation,
+interrupted-journal recovery and lingering reboot. At final new public scoped
+case it correctly refused nonblocking package admission while boot reconciliation
+still held it. Full logs inspected; actual provider request returned the exact
+known temporary error, not a routing failure. No product change. Fixture now
+retries only that exact error with same UUID, 60s admission deadline and30s per
+command; any other error fails immediately. Remaining daemon/foreign-process
+assertions unchanged. This diagnosed test setup correction is consolidated into
+the same unmerged commit and receives affected review before a fresh VM run.
+
+
+Consolidated final test-only heada54992e295301096987a9f3cfd50421f78170362,
+base5c799c1, one two-file commit. Same reviewer accepted bounded-admission delta
+(general/architecture/scope) without findings, retaining earlier risk conclusion.
+Prior exact feature CI39170668059 passedfast/archive onf2a; finala549 gets its own
+CI and exact VM, no derivation/check reuse claimed. Fresh Luna/low utility owns
+http-host-vm-admission-monitor.log and reporthttp-host-vm-admission-exact-result.md.
+No production change/pin/activation/reservation. Final comparison captured after
+lease-safe publication; previous CI was terminal success and needed no cancellation.
+
+
+Latest utility01a1511c actual command placed its log at work/http-host-vm-admission-exact.log,
+one level above the instructed initiative directory; likely exit/report there too.
+Do not restart the owned build. Once terminal, collect only these exact owned
+artifacts into this initiative, preserve the original command/result and record
+placement. Then normal evidence paths/guarded request builder can use the collected
+receipt. Ruby prerequisites passed; utility continues actual VM derivations.
+
+
+Finala549 exact VM failed813s: new scoped case exhausted60s admission retry.
+All retained legacy/compensation/reboot cases passed. This is not accepted as
+transient-success evidence. Current investigation isolates actual boot generation
+lock holder before further fixture changes; no blind retry or product mutation.
+Utility-owned misplaced logs/exit/report were moved into this initiative after
+terminal cleanup; raw original report and sha256 placement map retained. No live
+build/VM remains. Merge requestc294 remains unsubmitted, blocked by honest checks.
+
+
+Old focused probe was cancelled only by parent SIGINT to its exact driver PID239126,
+record boot-lock-probe-cancellation.json. Native utility confirmed exit130/QEMU
+cleanup/no running processes. It never reached observations: guest reported missing
+base64/timeout and permission failures after unrooted store dependencies were GC'd.
+This is incomplete diagnostic evidence, not a product failure or successful proof.
+
+Replacement routine investigation uses parent-written run-boot-lock-observe.py,
+which builds/retains an ordinary driver out-link, reads its immutable configuration,
+sets exact owned temporary cwd and captures complete output before execution.
+It registers asynchronously and prints lock/service/process metadata while setup
+runs; no blocked setup is a prerequisite for observing its owner. Exact sourcea549,
+no source edits/new test deliverable. Fresh Luna/low owns boot-lock-observe-watcher.log;
+report boot-lock-observe-result.md, resultjson boot-lock-observe-command-result.json.
+VM diagnostic limit600s is explicit; timeout would be incomplete observation, not
+product failure. Root and temporary path in boot-lock-observe-runtime.json must
+remain until child shutdown and parent acceptance/cleanup. Do not launch duplicate.
+
+
+Rooted raw probe completed178.945s with its diagnostic window incomplete for
+registration (not a product pass). Observed registerPID986 holding generationEX;
+activation childPID1027 waited on systemctl1495 while portal shutdown was pending.
+The native socket was already ready. GCworker1228 waited for the same lock.
+Source confirms activation/reconciliation holds exclusion through service restart;
+portal stop grace150s. Therefore the scoped VM assertion needs a completed boot
+reconciliation precondition before measuring PID/injecting activity. New Nix test
+joins that ordinary oneshot (300s bound), rechecks services, retains exact-refusal
+retry/all outcomes, and captures reconciliation/GC diagnostics on errors. No
+production change. a549 feature CI passed fast/archive. Fresh final head/review
+and exact rooted VM remain before merge. Probe cleanup/root paths are retained
+in boot-lock-observe-runtime.json; no probe process/VM remains running.
+
+
+Final consolidated8385699aabcc2cfc74b585ca653a4658ff3eef75, base5c799, one
+focused two-file commit (77ins13del). Same Astra/xhigh reviewer accepted stable
+startup prerequisite/diagnostics with no findings; exactreporthttp-host-vm-stable-review-result.md.
+Original risk/compatibility and Ruby waiter reviews retained; sourceclean and
+originmaster5c799 freshlyfetched. Rooted fullVM launcher run-http-host-vm-stable.py
+now owns driver-build then exactsession-recovery-boot check; tool44908, new native
+utilityidentity inhttp-host-vm-stable-monitor.log. Source838 not yet accepted as
+VMpass. Final feature CI will be captured separately; no older sourcecheck reuse.
+Guarded mergehelper nowbinds838/stable evidence; runIDc294still notsubmitted.
+
+
+Stable utility01a15148 ended INCOMPLETE without launching any command/VM; it
+misread the prewritten conditional review premise and searched incorrect repo
+locations. No exact838 VM proof exists yet. Parent had accepted review before
+launch; corrected brief now states acceptance, all absolute guidance paths and
+verified complete environment identity. Fresh utility receives same one guarded
+runner; no duplicate operation is running. Previous no-launch evidence retained.
+
+Finalacceptance http-host-vm-acceptance.md records source838/CI39175452062 success
+and exact VMexit0 (926.054s). Expected retry AssertionError lines were inspected;
+all subtests completed and actual scoped selection/PID/process assertions passed.
+Freshoriginmaster5c799 unchanged, clean reviewed finaldiff/history rechecked.
+Parent is now launching guarded normal merge-only integrationc294. Freeze state/
+portal edits until its tracking finalization ends. No activation/reservation.
+
+## Integration c294c3fe-cd90-4b37-8494-9ea802fc4fa6
+
+Requested exact feature heads are integrated. See integration/c294c3fe-cd90-4b37-8494-9ea802fc4fa6/summary.md
+and integration/c294c3fe-cd90-4b37-8494-9ea802fc4fa6/result.json for operation receipts. Feature refs and session retained.
