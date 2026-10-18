@@ -1,14 +1,14 @@
 ---
-lifecycle: complete
+lifecycle: archived
 ---
 
 # Ubuntu 26.10 container image
 
 ## Current phase
 
-Image build and tests passed at exact final head. Coordinated integration
-into staging is being submitted under the user's conditional approval.
-General CI remains running; its watcher retains ownership.
+Merged into remote staging at exact tested head 0081fc01f. Dedicated image
+build and tests passed. Integration driver finalized successfully. The original
+watcher continues the already-running broader general CI; no source work remains.
 
 ## Phase checklist
 
@@ -19,8 +19,9 @@ General CI remains running; its watcher retains ownership.
 - [x] Publish feature branch 0081fc01f over SSH.
 - [x] Image build/tests passed (981.97 seconds, one test, no failures).
 - [ ] General CI complete (broader suites still running).
-- [ ] Coordinated fast-forward integration into remote staging.
-- [ ] Verify exact final head integration, finalize state and clean owned temp files.
+- [x] Coordinated fast-forward integration into remote staging.
+- [x] Verify exact final head integration and remove owned temporary files.
+- [ ] Finalize lifecycle after the existing general CI watch completes.
 
 ## Repository and exact revisions
 
@@ -144,3 +145,21 @@ evidence after submission. Driver will preserve refs and own its tracking writes
 
 Requested exact feature heads are integrated. See integration/51def684-e3f2-4624-aecc-3b2a272af1da/summary.md
 and integration/51def684-e3f2-4624-aecc-3b2a272af1da/result.json for operation receipts. Feature refs and session retained.
+
+## Integrated and local cleanup complete
+
+Merge job 05675b31-65cf-4f06-9c1b-1dc5847ddb9a succeeded, remote observed head
+0081fc01f13236a098380094ddbd00539a9c8dae. Driver
+51def684-e3f2-4624-aecc-3b2a272af1da is complete; final report
+integration-finalize.json and integration/51def684-e3f2-4624-aecc-3b2a272af1da/.
+Lead freshly fetched and proved exact final head in origin/staging; remote
+feature ref also remains at same head, worktree clean. No rebase/source change
+occurred; driver certified original review tree against message amendment.
+Driver published owned coordination completion commit eebd4a63 on workspace
+master. No machine reservation, deployment or production image publication.
+
+Removed the owned /tmp dev profile, its sole generation link and commit-message
+file after integration. Retain source worktree/branches and compact evidence.
+Dedicated CI VM cleanup passed; no local VM/test datasets were created.
+General CI run 38964791583 still has its original fresh Luna/low watcher;
+initiative remains active until that already-running watch is reconciled.

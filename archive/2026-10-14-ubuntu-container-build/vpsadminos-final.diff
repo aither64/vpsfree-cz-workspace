@@ -1,0 +1,51 @@
+diff --git a/image-scripts/images/ubuntu-26.10/build.sh b/image-scripts/images/ubuntu-26.10/build.sh
+new file mode 100644
+index 000000000..54b67d50c
+--- /dev/null
++++ b/image-scripts/images/ubuntu-26.10/build.sh
+@@ -0,0 +1,26 @@
++. "$IMAGEDIR/config.sh"
++RELNAME=stonking
++BASEURL=http://cz.archive.ubuntu.com/ubuntu/
++
++. $INCLUDE/debian.sh
++. $INCLUDE/systemd.sh
++
++bootstrap
++configure-common
++
++cat > $INSTALL/etc/apt/sources.list <<SOURCES
++deb $BASEURL $RELNAME main restricted universe multiverse
++deb $BASEURL $RELNAME-security main restricted universe multiverse
++deb $BASEURL $RELNAME-updates main restricted universe multiverse
++SOURCES
++
++configure-debian-append <<EOF
++sed -i -e 's/^#PermitRootLogin\ prohibit-password/PermitRootLogin yes/g' /etc/ssh/sshd_config
++rm -f /etc/resolv.conf
++EOF
++
++configure-debian
++
++configure-systemd-console-getty
++
++run-configure
+diff --git a/image-scripts/images/ubuntu-26.10/config.sh b/image-scripts/images/ubuntu-26.10/config.sh
+new file mode 100644
+index 000000000..bcc6c47ca
+--- /dev/null
++++ b/image-scripts/images/ubuntu-26.10/config.sh
+@@ -0,0 +1 @@
++BUILDER=ubuntu
+diff --git a/os/configs/image-repository.nix b/os/configs/image-repository.nix
+index 3cf6a2140..668e0d526 100644
+--- a/os/configs/image-repository.nix
++++ b/os/configs/image-repository.nix
+@@ -226,6 +226,7 @@
+             "lts"
+           ];
+         };
++        "26.10" = { };
+       };
+ 
+       void = {

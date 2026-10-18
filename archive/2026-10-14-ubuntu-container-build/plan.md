@@ -23,7 +23,7 @@ register the dedicated vpsadminos worktree after this initial planning commit.
 Have the implementer add the minimum release-specific definitions, run quick
 checks and commit with mandatory hooks. Inventory and independently review the
 whole branch before the targeted long image build test. Publish the feature
-branch over SSH and inspect its CI. Integration into master requires separate
+branch over SSH and inspect its CI. Integration into the remote default branch staging requires separate
 explicit user direction.
 
 ## Compatibility and deployment
@@ -49,6 +49,14 @@ The new image must resolve as Ubuntu 26.10 with the correct upstream codename
 and sources, use existing builder/variant conventions, and have the requested
 repository entry. Check shell syntax, Nix syntax/evaluation and project hooks.
 Independent review covers final diff, entire commit history, no-migration
-provenance and compatibility. After review, run the exact targeted image test
-with a fresh catalog-policy Luna/low watcher; stop and investigate unexpected
+provenance and compatibility. After review, run or observe the existing targeted image CI (which invokes
+./test-runner.sh test for ubuntu-26.10) with a fresh catalog-policy Luna/low
+watcher; avoid duplicating a successful full image build locally; stop and investigate unexpected
 local kernel builds. Inspect branch CI and record any limitations honestly.
+
+## Integration authorization update
+
+On 2026-10-16 the user explicitly authorized merging vpsadminos into staging
+after successful image build and tests. Use the coordinated merge-only driver
+with exact review, CI evidence and user quote. No production deployment or
+container image repository publication was requested.
