@@ -1,0 +1,117 @@
+1:  79da0bb ! 1:  543136a coordination: continue approved integrations in the background
+    @@ libexec/workspace-integration-background.rb (new)
+     +      end
+     +      return status(id) unless %w[runnable waiting].include?(value.dig('continuation', 'state'))
+     +      observed = engine.store.read['revision']
+    ++      phase = value['phase']
+    ++      refreshing = value.key?('pendingRefresh')
+     +      begin
+     +        background_guard!
+     +        resume_locked(id)
+     +        value = read(id)
+    -+        value['continuation']['state'] = value['phase'] == 'complete' ? 'complete' : 'waiting'
+    ++        # Replaying a committed receipt can advance the journal without a new
+    ++        # ledger revision. Observe the resulting phase before parking the run.
+    ++        value['continuation']['state'] = if value['phase'] == 'complete'
+    ++          'complete'
+    ++        elsif value['phase'] != phase || (refreshing && !value.key?('pendingRefresh'))
+    ++          'runnable'
+    ++        else
+    ++          'waiting'
+    ++        end
+     +      rescue Error => error
+     +        value = read(id)
+     +        ledger = engine.store.read
+    @@ test/integration_test.rb: class IntegrationTest < Minitest::Test
+     +    assert_equal payload['requestId'], @engine.store.background_integration(@engine.store.read, first['id'], @engine.store.read['jobs'].keys.first)['id']
+     +  end
+     +
+    ++  def test_background_replayed_submission_observes_completed_jobs_without_another_ledger_change
+    ++    first = owner('background-submission-replay')
+    ++    integration = driver(first)
+    ++    payload = integration_request(first)
+    ++    integration.start(payload, background: true)
+    ++    integration.run_background(payload['requestId'])
+    ++    claimed = @engine.claim(owner_id: first['id']).first
+    ++    request_path = @engine.attempt_path(claimed['attempt'], 'request.json')
+    ++    WorkspaceCoordination.atomic(request_path, @engine.worker_request(claimed, first))
+    ++    WorkspaceCoordination::Worker.new(request_path, fixtures: true).run
+    ++    @engine.reconcile_attempts
+    ++
+    ++    # The worker died after batch admission but before saving its reply/phase.
+    ++    value = integration.read(payload['requestId'])
+    ++    value['phase'] = 'submit'
+    ++    value['jobs'] = {}
+    ++    value['steps']['submit-batch'].delete('result')
+    ++    value['continuation']['state'] = 'runnable'
+    ++    integration.save(value)
+    ++    revision = @engine.store.read['revision']
+    ++    result = driver(first).run_background(payload['requestId'])
+    ++    assert_equal revision, @engine.store.read['revision']
+    ++    assert_equal 'merging', result['phase']
+    ++    assert_equal 'runnable', result.dig('continuation', 'state')
+    ++
+    ++    calls = []
+    ++    original_capture = @engine.method(:capture)
+    ++    @engine.define_singleton_method(:capture) do |*argv, **options|
+    ++      if argv.first == 'systemctl'
+    ++        "inactive\n"
+    ++      elsif argv.first == 'systemd-run'
+    ++        calls << argv
+    ++        ''
+    ++      else
+    ++        original_capture.call(*argv, **options)
+    ++      end
+    ++    end
+    ++    @engine.dispatch_integrations(first)
+    ++    assert_equal 1, calls.length
+    ++    assert_equal 'finalizing', driver(first).run_background(payload['requestId'])['phase']
+    ++    assert_equal [claimed['id']], @engine.store.read['jobs'].keys
+    ++    assert_equal 1, @engine.store.read['outbox'].length
+    ++    deliver_background_notifications(first)
+    ++    assert_equal 'complete', driver(first).run_background(payload['requestId'])['phase']
+    ++    assert_equal 1, @engine.store.read['outbox'].length
+    ++  end
+    ++
+    ++  def test_background_replayed_refresh_observes_completed_jobs_without_another_ledger_change
+    ++    first = owner('background-refresh-replay')
+    ++    integration = driver(first)
+    ++    payload = integration_request(first)
+    ++    integration.start(payload, background: true)
+    ++    integration.run_background(payload['requestId'])
+    ++    id = integration.read(payload['requestId'])['jobs']['merge:code']
+    ++    @engine.store.transaction { |data| @engine.transition(data, data['jobs'].fetch(id), 'needs_refresh') }
+    ++    original = @engine.method(:mutate)
+    ++    lost = false
+    ++    @engine.define_singleton_method(:mutate) do |*args, **keywords|
+    ++      result = original.call(*args, **keywords)
+    ++      if args[1] == 'refresh' && !lost
+    ++        lost = true
+    ++        raise 'fixture crash after committed refresh'
+    ++      end
+    ++      result
+    ++    end
+    ++    assert_raises(RuntimeError) { integration.run_background(payload['requestId']) }
+    ++    assert integration.read(payload['requestId']).key?('pendingRefresh')
+    ++    claimed = @engine.claim(owner_id: first['id']).first
+    ++    request_path = @engine.attempt_path(claimed['attempt'], 'request.json')
+    ++    WorkspaceCoordination.atomic(request_path, @engine.worker_request(claimed, first))
+    ++    WorkspaceCoordination::Worker.new(request_path, fixtures: true).run
+    ++    @engine.reconcile_attempts
+    ++    revision = @engine.store.read['revision']
+    ++    result = driver(first).run_background(payload['requestId'])
+    ++    assert_equal revision, @engine.store.read['revision']
+    ++    assert_equal 'merging', result['phase']
+    ++    assert_equal 'runnable', result.dig('continuation', 'state')
+    ++    refute integration.read(payload['requestId']).key?('pendingRefresh')
+    ++    assert_equal 'finalizing', driver(first).run_background(payload['requestId'])['phase']
+    ++    deliver_background_notifications(first)
+    ++    assert_equal 'complete', driver(first).run_background(payload['requestId'])['phase']
+    ++    assert_equal [id], @engine.store.read['jobs'].keys
+    ++    assert_equal 1, @engine.store.read['jobs'][id]['history'].length
+    ++    assert_equal 1, @engine.store.read['outbox'].length
+    ++  end
+    ++
+     +  def test_background_pause_prevents_admission_and_explicit_resume_reuses_the_run
+     +    first = owner('background-pause')
+     +    integration = driver(first)

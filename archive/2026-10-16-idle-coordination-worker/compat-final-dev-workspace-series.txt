@@ -1,0 +1,15 @@
+commit 543136a0e3be561e010d8b2ccd309f2ad37311a0
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Fri Oct 16 21:52:52 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 17 09:45:44 2026 +0200
+
+    coordination: continue approved integrations in the background
+    
+    Let sessions end their turns while durable workers advance authorized
+    merge and deployment runs. Retain step identities across worker restarts
+    and notify the lead only for completed operations or required action.
+    
+    Add pause and lifecycle fencing, generation handover and versioned
+    background journals. Preserve manual execution and schema-1 operation
+    contracts; retained schema-2 journals require a compatible runtime.

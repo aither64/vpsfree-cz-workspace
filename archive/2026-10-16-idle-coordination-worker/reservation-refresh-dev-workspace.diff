@@ -1,0 +1,1691 @@
+diff --git a/docs/coordination-operations.md b/docs/coordination-operations.md
+index 04d321c..58757ca 100644
+--- a/docs/coordination-operations.md
++++ b/docs/coordination-operations.md
+@@ -10,10 +10,16 @@ for exact owned operations; keep all recovery evidence and roots.
+ 
+ Prepare and verify work independently. Request a machine only near the first
+ prepared deployment. Submit approved work, then continue other useful work.
+-When a resource is busy and nothing else remains, keep the turn waiting using an
+-interruptible tool wait of at most 60 seconds. Reread status when the coordinator
+-steers the conversation. Do not end a turn solely because another session owns a
+-resource, ask the user to resume it, or redeploy around the reservation.
++Use the integration driver's `--background` mode when combining approved merges
++and deployments. Record the returned run ID and end the turn when no independent
++work remains. The worker continues and sends a native message for action or
++review. Read status when that message arrives. Individual submitted jobs also
++run independently and retain their existing state notifications.
++
++Do not keep a turn open to poll reservations or ask the user to restart it when
++another session owns a resource. Pause/resume and generation recovery are described
++in [background continuation](integration.md#background-continuation). A busy
++resource never authorizes a deployment around its reservation.
+ 
+ On `needs_refresh`, refresh the branch or input baseline, resolve conflicts,
+ repeat the required verification and review, record any preserved approval proof,
+diff --git a/docs/coordination.md b/docs/coordination.md
+index ec49429..251f261 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -156,7 +156,8 @@ The separate extension catalog and session manifest formats remain unchanged.
+ The pure Ruby `lib.coordinationCommandLibrary` is also used by packaged adapters
+ for bounded protocol capture and diagnostics; it does not import the ledger.
+ 
+-The Operations page is an authenticated, bounded, read-only view. It shows
++The Operations page is an authenticated, bounded, read-only view. It also shows
++background integration progress and intervention reasons. It shows
+ machine ownership, blocked jobs and notification delivery separately. An idle
+ owner still reserves its machine. The workspace menu links to `/operations`
+ above Automatic archival. Reserved machines appear as cards with their owning
+@@ -213,7 +214,8 @@ ownership, completion proofs or scheduler wake-up.
+ 
+ Notifications use the existing Codex submission ledger, exact retained thread,
+ model, effort and lead policy. Busy threads receive steering; idle threads receive
+-a new turn. The coordinator preserves message IDs and reconciles lost replies.
++a new turn. Background integration runs report completion or agent action; their
++intermediate events remain in status without starting model turns. The coordinator preserves message IDs and reconciles lost replies.
+ Each snapshot has one retained notification per reported state; repeated resource
+ waits or reconciliation reuse that event. Native options and receipts live in
+ immutable checksummed artifacts, so large retained instructions do not fill the
+diff --git a/docs/integration.md b/docs/integration.md
+index 08de233..61360da 100644
+--- a/docs/integration.md
++++ b/docs/integration.md
+@@ -1,7 +1,8 @@
+ # Coordinated integration
+ 
+ The integration driver prepares approved operations, admits their dependency
+-graph together, monitors results and records completion. It uses the coordinator's
++graph together, monitors results and records completion. Background mode lets the owning
++session remain idle while approved operations continue. It uses the coordinator's
+ ordinary merge and deployment workers. Physical resources remain free during
+ preparation, review, builds and input regeneration.
+ 
+@@ -16,6 +17,72 @@ to advance once and return status. Interrupting the command leaves admitted jobs
+ running and retains the journal; resume the same run. Status does not reconcile,
+ create a session owner or change the ledger.
+ 
++## Background continuation
++
++For agent-driven work, submit the integration with `--background`:
++
++```sh
++dev-session coordination integrate SESSION --as-is --request integration.json --background --json
++dev-session coordination integration-status SESSION RUN_UUID --as-is --json
++dev-session coordination integration-pause SESSION RUN_UUID --as-is --json
++dev-session coordination integration-resume SESSION RUN_UUID --as-is --background --json
++```
++
++Acceptance returns the run ID before preparation begins. Record it in session
++state, continue any independent work, then end the turn. A systemd worker prepares
++and advances the approved operations without an attached CLI, browser or agent.
++The coordinator wakes on state changes; its five-second tick recovers missed
++signals and exited workers. Waiting runs do not consume model turns.
++
++The Operations page shows background runs, automatic waiting and reasons for
++intervention. Reservation grants and intermediate successes stay in that view.
++The retained session receives one native message when its operations finish or
++need agent action. Read authoritative status when it arrives. A message supplies
++no merge or deployment approval and preserves the retained model and policy.
++The lead reviews the result and updates initiative completion; background run
++completion alone does not close the initiative or release a review reservation.
++
++Pause takes effect before the next step or queued operation is admitted. Already
++claimed operations settle through their existing workers and recovery rules.
++A pause does not cancel effects, release a reservation or stop an in-flight
++build. Resume explicitly after reviewing the reason and fixing the relevant
++inputs. Conflicts, stale deployment artifacts, failed checks and uncertain effects
++stop automatic advancement. Only existing certified mechanical refreshes continue
++automatically; resumption cannot expand approval or replace reviewed evidence.
++
++Each background run has a schema-2 journal; manual runs retain schema 1. Step
++request IDs and coordinator receipts bind events to their run even if a submission
++reply is lost. Per-run locking prevents overlapping continuation. A preparing
++worker checks pause, suspension, lifecycle ownership and package generation before
++its next admitted mutation. Archive and deletion hold continuation; revival keeps
++that hold until explicit resumption. A profile switch transfers the exact run to
++the selected compatible generation. Operation ledgers, snapshots, adapter protocols
++and attempt envelopes retain schema 1.
++
++Run completion waits for prior delivery receipts, writes its result and emits its
++completion notice before final tracking publication. A delivery acknowledgment
++wakes finalization, so a pending notification cannot strand the run. Unknown native
++send outcomes retain the same message identity and require existing reconciliation.
++
++`--background` and `--no-wait` are mutually exclusive. Existing synchronous calls
++and manual `--no-wait` runs keep their behavior; `--no-wait` alone does not arrange
++background continuation. A manual run cannot change execution mode under the same
++request ID. Use `integration-resume --background` for a retained background run.
++
++### Upgrading from journal schema 1
++
++Packages read both journal formats. A profile upgrade can preserve pending manual
++runs: `package.json` keeps the exact schema-1 integration descriptor accepted by
++predecessor releases. The separate `share/dev-workspace/integration-contract.json`
++advertises `schema: 1`, `journalSchemas: [1, 2]` and `certificationSchema: 1`.
++Older package metadata readers ignore this file; current transition guards require
++it when schema-2 journals are retained. Missing or unsupported contracts refuse
++that selection. Upgrading preserves the pending manual run for its owner to resume.
++
++Retained schema-2 journals intentionally prevent selection of a package that only
++understands schema 1, including after run completion. Recover with a compatible
++generation; do not delete journals to enable a downgrade.
++
+ ## Request and approval
+ 
+ A schema-1 request has a lowercase UUID `requestId`, `mode`, `repositories`,
+diff --git a/libexec/workspace-coordination-admission.rb b/libexec/workspace-coordination-admission.rb
+index 83dd1d6..b78042b 100644
+--- a/libexec/workspace-coordination-admission.rb
++++ b/libexec/workspace-coordination-admission.rb
+@@ -1,6 +1,12 @@
+ # frozen_string_literal: true
+ 
+ module WorkspaceCoordination
++  class AdmissionBusy < Error
++    def initialize(message)
++      super(message, 75)
++    end
++  end
++
+   # Retry acquisition only. Callers must never replay a mutation after its
+   # callback has started. The ledger mutex owns logical write serialization.
+   module Admission
+@@ -14,7 +20,7 @@ module WorkspaceCoordination
+       until file.flock(mode | File::LOCK_NB)
+         elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+         if elapsed >= timeout
+-          raise Error.new(format('session lifecycle admission is busy after %.2fs; retry the same request', elapsed), 75)
++          raise AdmissionBusy, format('session lifecycle admission is busy after %.2fs; retry the same request', elapsed)
+         end
+         unless reported
+           diagnostics&.puts 'waiting for session lifecycle admission; an exclusive lifecycle writer holds the guard'
+diff --git a/libexec/workspace-coordination-gc.rb b/libexec/workspace-coordination-gc.rb
+index 60a4824..f3611f0 100644
+--- a/libexec/workspace-coordination-gc.rb
++++ b/libexec/workspace-coordination-gc.rb
+@@ -287,9 +287,7 @@ module WorkspaceCoordination
+         closed = owner && owner['fence'] && owner['fence']['completed']
+         mark(value) if !closed && @retention.live?(id, @ledger, @book)
+       end
+-      Dir[File.join(@store.root, 'integrations', '*.json')].each do |path|
+-        value = WorkspaceCoordination.private_read(path)
+-        raise Error, 'unknown integration journal; collection refused' unless value['schema'] == 1 && value['phase'].is_a?(String)
++      @store.integration_journals.each do |value|
+         next if value['phase'] == 'complete'
+         mark(value)
+         # Existing journals bind source heads, but do not record hook artifact
+diff --git a/libexec/workspace-coordination-host.rb b/libexec/workspace-coordination-host.rb
+index e9d0c66..70837c7 100644
+--- a/libexec/workspace-coordination-host.rb
++++ b/libexec/workspace-coordination-host.rb
+@@ -73,7 +73,7 @@ module DevWorkspaceHost
+       action = argv.shift
+       slug = argv.shift
+       raise WorkspaceCoordination::Error, 'coordination requires an exact session slug and --as-is' unless slug && slug.match?(WorkspaceCoordination::PART)
+-      id = argv.shift if %w[refresh cancel finish reconcile integration-status integration-resume].include?(action)
++      id = argv.shift if %w[refresh cancel finish reconcile integration-status integration-resume integration-pause].include?(action)
+       options = {}
+       OptionParser.new do |opts|
+         opts.on('--as-is') { options[:as_is] = true }
+@@ -83,8 +83,10 @@ module DevWorkspaceHost
+         opts.on('--bootstrap-owner ID') { |value| options[:bootstrap_owner] = value }
+         opts.on('--admission-timeout SECONDS', Float) { |value| options[:admission_timeout] = value }
+         opts.on('--no-wait') { options[:no_wait] = true }
++        opts.on('--background') { options[:background] = true }
+       end.parse!(argv)
+       raise WorkspaceCoordination::Error, 'use coordination ACTION SLUG [ID] --as-is --request FILE' unless argv.empty? && options[:as_is]
++      raise WorkspaceCoordination::Error, '--background and --no-wait are mutually exclusive' if options[:background] && options[:no_wait]
+       engine = coordination_engine(entry)
+       @coordination_admission_timeout = options.fetch(:admission_timeout, 30)
+       if options[:bootstrap_owner] && !%w[status reconcile cancel finish].include?(action)
+@@ -96,7 +98,7 @@ module DevWorkspaceHost
+         return
+       end
+       request = options[:request] && coordination_input(options[:request])
+-      if %w[integrate integration-status integration-resume].include?(action)
++      if %w[integrate integration-status integration-resume integration-pause].include?(action)
+         owner = nil
+         resumable_finalization = action == 'integration-resume' && id && id.match?(WorkspaceCoordination::UUID) &&
+           File.file?(File.join(engine.store.root, 'integrations', "#{id}.json")) &&
+@@ -113,9 +115,16 @@ module DevWorkspaceHost
+         driver = WorkspaceCoordination::Integration.new(engine, owner, admission:,
+           prepare: ->(fields) { coordination_prepare(engine, owner, fields) }, diagnostics: @err)
+         result = case action
+-        when 'integrate' then driver.start(request || raise(WorkspaceCoordination::Error, 'integration requires a request'), wait: !options[:no_wait])
++        when 'integrate' then driver.start(request || raise(WorkspaceCoordination::Error, 'integration requires a request'), wait: !options[:no_wait], background: options[:background])
+         when 'integration-status' then driver.status(id)
+-        when 'integration-resume' then driver.drive(id, wait: !options[:no_wait])
++        when 'integration-pause' then driver.pause(id)
++        when 'integration-resume'
++          if options[:background]
++            driver.arm_background(id)
++          else
++            raise WorkspaceCoordination::Error, 'use --background to resume a background run' if driver.read(id)['schema'] == 2
++            driver.drive(id, wait: !options[:no_wait])
++          end
+         end
+         @out.puts JSON.generate(result)
+         return
+@@ -171,6 +180,8 @@ module DevWorkspaceHost
+         else raise WorkspaceCoordination::Error, 'unsupported preparation kind'
+         end
+       end
++    rescue DevWorkspaceHost::Error => error
++      raise WorkspaceCoordination::Error, WorkspaceCoordination.diagnostic(error.message)
+     end
+ 
+     def with_coordination_session_admission(entry, slug, timeout: @coordination_admission_timeout || 30)
+@@ -375,6 +386,29 @@ module DevWorkspaceHost
+       WorkspaceCoordination::Worker.new(argv[1]).reconcile
+     end
+ 
++    def coordination_integration_command(argv)
++      raise WorkspaceCoordination::Error, 'coordination-integration requires --request PATH' unless argv.length == 2 && argv[0] == '--request'
++      request = WorkspaceCoordination.private_read(argv[1], limit: WorkspaceCoordination::MAX_REQUEST)
++      WorkspaceCoordination.keys!(request, %w[schema runId ownerId identity workspace entry package profile])
++      unless request['schema'] == 1 && request['package'] == File.realpath(package_root) && request['profile'] == @profile
++        raise WorkspaceCoordination::Error.new('integration worker generation differs', 3)
++      end
++      entry = registry.entries.find { |value| value['root'] == request['workspace'] && value['name'] == request.dig('entry', 'name') }
++      raise WorkspaceCoordination::Error.new('integration workspace changed', 4) unless entry
++      engine = coordination_engine(entry)
++      owner = nil
++      with_coordination_session_admission(entry, engine.store.read['owners'].fetch(request['ownerId'])['slug']) do
++        owner = engine.owner(engine.store.read['owners'].fetch(request['ownerId'])['slug'])
++        unless owner['id'] == request['ownerId'] && owner['identity'] == request['identity']
++          raise WorkspaceCoordination::Error.new('integration owner changed', 4)
++        end
++      end
++      driver = WorkspaceCoordination::Integration.new(engine, owner,
++        admission: ->(&block) { with_coordination_session_admission(entry, owner['slug'], &block) },
++        prepare: ->(fields) { coordination_prepare(engine, owner, fields) }, diagnostics: @err)
++      driver.run_background(request['runId'])
++    end
++
+     def coordination_notifications_command(argv)
+       raise WorkspaceCoordination::Error, 'coordination-notifications requires --request PATH' unless argv.length == 2 && argv[0] == '--request'
+       request = WorkspaceCoordination.private_read(argv[1], limit: WorkspaceCoordination::MAX_REQUEST)
+@@ -433,6 +467,7 @@ module DevWorkspaceHost
+                 claimed = engine.claim(owner_id: owner['id'])
+               end
+               claimed.each { |job| engine.dispatch(job) }
++              engine.dispatch_integrations(owner)
+               engine.dispatch_notifications(owner)
+             rescue WorkspaceCoordination::Error => e
+               @err.puts "coordinator owner #{owner['slug']}: #{e.message}"
+diff --git a/libexec/workspace-coordination.rb b/libexec/workspace-coordination.rb
+index 03f78bd..c8f4995 100644
+--- a/libexec/workspace-coordination.rb
++++ b/libexec/workspace-coordination.rb
+@@ -28,6 +28,9 @@ module WorkspaceCoordination
+     'attemptSchema' => 1, 'adapterProtocols' => [1],
+     'notificationSchema' => 1, 'transitionPolicy' => 1
+   }.freeze
++  INTEGRATION_CONTRACT = {
++    'schema' => 1, 'journalSchemas' => [1, 2], 'certificationSchema' => 1
++  }.freeze
+   MAX_REQUEST = 256 * 1024
+   MAX_LEDGER = 16 * 1024 * 1024
+   MAX_RESULT = 16 * 1024
+@@ -310,6 +313,60 @@ module WorkspaceCoordination
+       raise Error.new("malformed coordination record: #{e.message}", 5)
+     end
+ 
++    def integration_journals
++      Dir[File.join(root, 'integrations', '*.json')].map do |path|
++        value = WorkspaceCoordination.private_read(path)
++        unless [1, 2].include?(value['schema']) && value['phase'].is_a?(String) && value['id'].is_a?(String) && value['id'].match?(UUID) &&
++               File.basename(path) == "#{value['id']}.json"
++          raise Error.new('unsupported integration journal requires forward recovery', 5)
++        end
++        if value['schema'] == 2
++          continuation = value['continuation']
++          unless value['ownerId'].is_a?(String) && value['ownerId'].match?(UUID) && value['identity'].is_a?(String) &&
++                 value['steps'].is_a?(Hash) && value['jobs'].is_a?(Hash) &&
++                 continuation.is_a?(Hash) && %w[runnable waiting paused held needs_attention complete].include?(continuation['state']) &&
++                 continuation['generation'].is_a?(Integer) && continuation['generation'].between?(0, MAX_COUNTER) &&
++                 (continuation['observedRevision'].nil? || (continuation['observedRevision'].is_a?(Integer) && continuation['observedRevision'].between?(0, MAX_COUNTER)))
++            raise Error.new('invalid background integration continuation', 5)
++          end
++        end
++        value
++      end
++    end
++
++    # Step identities precede admission. Receipts therefore route events even
++    # if submission succeeded before its reply/journal update was lost.
++    def background_integration(data, owner_id, item_id)
++      integration_journals.find do |run|
++        next false unless run['schema'] == 2 && run['ownerId'] == owner_id
++        next true if run['reservationId'] == item_id
++        run.fetch('steps').values.any? do |step|
++          result = data.dig('receipts', step['requestId'], 'result')
++          result && (result['id'] == item_id || Array(result['jobs']).any? { |job| job['id'] == item_id })
++        end
++      end
++    end
++
++    def background_stopped?(run)
++      return false unless run
++      marker = File.join(root, 'integrations', "#{run['id']}.pause")
++      if File.exist?(marker)
++        unless WorkspaceCoordination.private_read(marker) == {'id' => run['ownerId'], 'identity' => run['identity']}
++          raise Error.new('background pause belongs to another owner', 4)
++        end
++        return true
++      end
++      %w[paused held needs_attention complete].include?(run.dig('continuation', 'state'))
++    end
++
++    def integration_summary(run)
++      result = run.slice('id', 'ownerId', 'phase', 'reason', 'continuation')
++      if run.dig('continuation', 'state') != 'held' && File.exist?(File.join(root, 'integrations', "#{run['id']}.pause")) && background_stopped?(run)
++        result['continuation'] = result['continuation'].merge('state' => 'paused')
++      end
++      result
++    end
++
+     def request(data, owner_id, action, payload)
+       WorkspaceCoordination.keys!(payload, %w[schema requestId], payload.keys - %w[schema requestId])
+       raise Error, 'request needs schema 1 and a lowercase UUID requestId' unless payload['schema'] == 1 && payload['requestId'].is_a?(String) && payload['requestId'].match?(UUID)
+@@ -367,7 +424,8 @@ module WorkspaceCoordination
+         proofs = 2 * MAX_RESULT + bytes.call(unowned)
+         growth += MAX_RESULT + 3 * proofs + MAX_RESULT + 256 + 1024
+       end
+-      growth + envelopes + (future_events.uniq - data['outbox'].keys).length * (MAX_RESULT + 64)
++      background = integration_journals.count { |run| run['schema'] == 2 && run.dig('continuation', 'state') != 'complete' }
++      growth + envelopes + background * (2 * MAX_RESULT + 128) + (future_events.uniq - data['outbox'].keys).length * (MAX_RESULT + 64)
+     end
+ 
+     def admission_capacity!(data, extra: 0)
+@@ -393,6 +451,7 @@ module WorkspaceCoordination
+       jobs.map { |item| "operation #{item['id']} (#{item['state']})" } +
+         reservations.map { |item| "machine #{item['machine']} (#{item['state']})" } +
+         deliveries.map { |item| "notification #{item['id']} (#{item['state']})" } +
++        integration_journals.filter_map { |run| "background integration #{run['id']} (#{run.dig('continuation', 'state')})" if ids.include?(run['ownerId']) && run['schema'] == 2 && run.dig('continuation', 'state') != 'complete' } +
+         owners.filter_map { |owner| "coordination #{owner['fence']['command']} intent" if owner['fence'] && !owner['fence']['completed'] }
+     end
+ 
+@@ -411,6 +470,12 @@ module WorkspaceCoordination
+         jobs = data['jobs'].values.select { |job| job['ownerId'] == owner['id'] }
+         active = jobs.find { |job| CLAIMED.include?(job['state']) }
+         raise Error.new("lifecycle waits for coordinated operation #{active['id']}", 5) if active
++        integration_journals.each do |run|
++          next unless run['schema'] == 2 && run['ownerId'] == owner['id'] && run['phase'] != 'complete'
++          # A separate marker survives a preparing worker's journal publication.
++          # Revival preserves the hold until explicit background resumption.
++          WorkspaceCoordination.atomic(File.join(root, 'integrations', "#{run['id']}.pause"), owner.slice('id', 'identity'))
++        end
+         owner['fence'] = {'id' => SecureRandom.uuid, 'command' => command, 'completed' => false, 'operationId' => nil} unless owner['fence'] && owner['fence']['command'] == command
+         jobs.each do |job|
+           next if TERMINAL.include?(job['state'])
+@@ -575,16 +640,27 @@ module WorkspaceCoordination
+       unless File.file?(path) && WorkspaceCoordination.parse(File.binread(path)) == CONTRACT
+         raise Error.new('target package cannot preserve coordination state; recover forward with a compatible package', 5)
+       end
+-      pending_runs = Dir[File.join(root, 'integrations', '*.json')].any? do |run|
+-        value = WorkspaceCoordination.private_read(run)
+-        raise Error.new('unsupported integration journal requires forward recovery', 5) unless value['schema'] == 1 && value['id'].is_a?(String) && value['id'].match?(UUID)
+-        value['phase'] != 'complete'
+-      end
+-      if pending_runs
++      runs = integration_journals
++      needed = runs.select { |run| run['schema'] == 2 || run['phase'] != 'complete' }.map { |run| run['schema'] }.max
++      if needed
+         metadata_path = File.join(package, 'share/dev-workspace/package.json')
+         metadata = File.file?(metadata_path) && WorkspaceCoordination.parse(File.binread(metadata_path))
+-        unless metadata && metadata['integration'] == {'journalSchema' => 1, 'certificationSchema' => 1}
+-          raise Error.new('candidate cannot resume pending integration journals', 5)
++        capability = metadata && metadata['integration']
++        # Keep the legacy descriptor exact for predecessors with pending manual
++        # runs. Additional readers are advertised outside strict package.json.
++        schemas = [1]
++        contract_path = File.join(package, 'share/dev-workspace/integration-contract.json')
++        if File.file?(contract_path)
++          contract = WorkspaceCoordination.parse(File.binread(contract_path))
++          versions = contract.is_a?(Hash) && contract['journalSchemas']
++          valid = contract.is_a?(Hash) && contract.keys.sort == INTEGRATION_CONTRACT.keys.sort &&
++            contract['schema'] == 1 && contract['certificationSchema'] == 1 &&
++            versions.is_a?(Array) && versions.include?(1) && versions.uniq == versions &&
++            versions.all? { |version| version.is_a?(Integer) && version.positive? }
++          schemas = valid ? versions : []
++        end
++        unless capability == {'journalSchema' => 1, 'certificationSchema' => 1} && schemas.include?(needed)
++          raise Error.new('candidate cannot resume retained integration journals', 5)
+         end
+       end
+       catalog = Catalog.new(package)
+@@ -815,9 +891,13 @@ module WorkspaceCoordination
+       @diagnostics = value
+     end
+ 
++    def current_generation?
++      @fixtures || (File.symlink?(profile) && File.realpath(profile) == package && DevWorkspaceProfileIdentity.token(profile) == @profile_token) ||
++        (@bootstrap_token && DevWorkspaceProfileIdentity.token(profile) == @bootstrap_token)
++    end
++
+     def current_generation!
+-      unless @fixtures || (File.symlink?(profile) && File.realpath(profile) == package && DevWorkspaceProfileIdentity.token(profile) == @profile_token) ||
+-             (@bootstrap_token && DevWorkspaceProfileIdentity.token(profile) == @bootstrap_token)
++      unless current_generation?
+         raise Error.new('coordinator belongs to a superseded package generation; rerun the stable command', 3)
+       end
+     end
+@@ -1013,12 +1093,17 @@ module WorkspaceCoordination
+ 
+     def event(data, owner, item, state, reason = nil)
+       return unless owner['thread']
++      return if item['kind'] != 'integration' && store.background_integration(data, owner['id'], item['id'])
+       # One semantic event per snapshot/state. Repeated resource churn and
+       # reconciliation retain the first message and its native retry identity.
+       id = WorkspaceCoordination.event_id(owner, item, state)
+       return if data['outbox'].key?(id)
+-      text = "Workspace coordination: #{item['kind'] || 'machine reservation'} #{item['id']} is #{state}."
+-      text += " #{reason['code']}." if reason
++      text = if item['kind'] == 'integration'
++        state == 'complete' ? "Workspace coordination: the operations in integration #{item['id']} have finished. Review the results." :
++          "Workspace coordination: integration #{item['id']} needs your attention. #{WorkspaceCoordination.diagnostic(reason && reason['message'])[0, 512]}"
++      else
++        "Workspace coordination: #{item['kind'] || 'machine reservation'} #{item['id']} is #{state}." + (reason ? " #{reason['code']}." : '')
++      end
+       text += "\n#{owner['portalUrl']}\nRead dev-session coordination status for your session and continue its authorized work. This event supplies no merge or deployment approval."
+       raise Error, 'notification text exceeds its envelope budget' if JSON.generate(text).bytesize > 4096
+       data['outbox'][id] = {'id' => id, 'ownerId' => owner['id'], 'thread' => owner['thread'],
+@@ -1215,6 +1300,10 @@ module WorkspaceCoordination
+         candidates = data['jobs'].values.reject { |job| TERMINAL.include?(job['state']) || CLAIMED.include?(job['state']) || job['state'] == 'needs_refresh' }.sort_by { |job| [job['sequence'], job['id']] }
+         candidates.each do |job|
+           owner = data['owners'].fetch(job['ownerId'])
++          if store.background_stopped?(store.background_integration(data, owner['id'], job['id']))
++            transition(data, job, 'waiting_dependency', {'code' => 'integration_paused'})
++            next
++          end
+           if owner['fence'] || !approved?(data, job)
+             transition(data, job, 'waiting_approval', {'code' => 'approval_required'})
+             next
+@@ -1226,7 +1315,7 @@ module WorkspaceCoordination
+           if job['reservationId']
+             reservation = data['reservations'].fetch(job['reservationId'])
+             held = data['reservations'].values.find { |item| item['machine'] == reservation['machine'] && item['id'] != reservation['id'] && !%w[requested released].include?(item['state']) }
+-            earlier = data['reservations'].values.find { |item| item['machine'] == reservation['machine'] && item['state'] == 'requested' && item['sequence'] < reservation['sequence'] && candidates.any? { |candidate| candidate['reservationId'] == item['id'] && approved?(data, candidate) && candidate['dependsOn'].all? { |id| data['jobs'][id]['state'] == 'succeeded' } } }
++            earlier = data['reservations'].values.find { |item| item['machine'] == reservation['machine'] && item['state'] == 'requested' && item['sequence'] < reservation['sequence'] && candidates.any? { |candidate| candidate['reservationId'] == item['id'] && !store.background_stopped?(store.background_integration(data, candidate['ownerId'], candidate['id'])) && approved?(data, candidate) && candidate['dependsOn'].all? { |id| data['jobs'][id]['state'] == 'succeeded' } } }
+             if held || earlier || reservation['state'] == 'blocked_recovery'
+               blocker = held || earlier || reservation
+               transition(data, job, 'waiting_resource', {'code' => 'machine_owned', 'ownerId' => blocker['ownerId'], 'portalUrl' => data['owners'][blocker['ownerId']]['portalUrl'], 'resource' => "machine:#{reservation['machine']}"})
+@@ -1280,6 +1369,7 @@ module WorkspaceCoordination
+       ids = owners.map { |owner| owner['id'] }
+       result = {'schema' => 1, 'revision' => data['revision'], 'suspended' => data['suspended'],
+        'owners' => owners.map { |owner| owner.slice('id', 'slug', 'portalUrl', 'bootstrap', 'fence') },
++       'integrations' => store.integration_journals.select { |run| ids.include?(run['ownerId']) && run['schema'] == 2 }.map { |run| store.integration_summary(run) },
+        'jobs' => data['jobs'].values.select { |job| ids.include?(job['ownerId']) },
+        'reservations' => data['reservations'].values.select { |item| ids.include?(item['ownerId']) },
+        'notifications' => data['outbox'].values.select { |event| ids.include?(event['ownerId']) }.map { |event| event.reject { |key, _| %w[text options].include?(key) } },
+@@ -1294,7 +1384,7 @@ module WorkspaceCoordination
+         # A session pane must not attribute retained jobs to a recreated slug.
+         if slug
+           ids.select! { |id| observations.key?(id) }
+-          %w[owners jobs reservations notifications].each { |kind| result[kind].select! { |item| ids.include?(kind == 'owners' ? item['id'] : item['ownerId']) } }
++          %w[owners jobs reservations notifications integrations].each { |kind| result[kind].select! { |item| ids.include?(kind == 'owners' ? item['id'] : item['ownerId']) } }
+         end
+         result['owners'].each { |owner| owner['observationIdentity'] = observations[owner['id']] }
+         machine_details = lambda do |item|
+@@ -1314,7 +1404,7 @@ module WorkspaceCoordination
+               'machines' => held.fetch(owner['id']).sort_by { |item| item['machine'] }.map { |item| machine_details.call(item) })
+           end
+         end
+-        result['counts'] = result.slice('owners', 'jobs', 'reservations', 'notifications', 'foreignReservations').transform_values(&:length)
++        result['counts'] = result.slice('owners', 'jobs', 'reservations', 'notifications', 'integrations', 'foreignReservations').transform_values(&:length)
+         result['owners'] = result['owners'].first(128)
+         result['jobs'] = result['jobs'].sort_by { |job| [TERMINAL.include?(job['state']) ? 1 : 0, -job['sequence']] }.first(128).map do |job|
+           job.slice('id', 'ownerId', 'kind', 'state', 'reason', 'revision', 'sequence', 'readySequence', 'dependsOn', 'reservationId').merge(
+@@ -1324,6 +1414,7 @@ module WorkspaceCoordination
+         end
+         result['reservations'] = result['reservations'].sort_by { |item| [item['state'] == 'released' ? 1 : 0, -item['sequence']] }.first(128).map { |item| machine_details.call(item) }
+         result['notifications'] = result['notifications'].last(128)
++        result['integrations'] = result['integrations'].sort_by { |run| run.dig('continuation', 'state') == 'complete' ? 1 : 0 }.first(128)
+         result['foreignReservations'] = result['foreignReservations'].first(128)
+       end
+       result
+diff --git a/libexec/workspace-host b/libexec/workspace-host
+index 94b29f9..572efc9 100755
+--- a/libexec/workspace-host
++++ b/libexec/workspace-host
+@@ -425,6 +425,7 @@ module DevWorkspaceHost
+       when 'coordination' then coordination_host_command(argv)
+       when 'coordination-worker' then coordination_worker_command(argv)
+       when 'coordination-reconcile' then coordination_reconcile_command(argv)
++      when 'coordination-integration' then coordination_integration_command(argv)
+       when 'coordination-notifications' then coordination_notifications_command(argv)
+       when 'run-coordinator' then run_coordinator(argv)
+       when 'coordination-bootstrap' then coordination_bootstrap(argv)
+diff --git a/libexec/workspace-integration-background.rb b/libexec/workspace-integration-background.rb
+new file mode 100644
+index 0000000..3e9f710
+--- /dev/null
++++ b/libexec/workspace-integration-background.rb
+@@ -0,0 +1,174 @@
++# frozen_string_literal: true
++
++module WorkspaceCoordination
++  # Owns continuation only; operation workers retain approval, claims and effects.
++  module BackgroundIntegration
++    def admit(&block)
++      @admission.call do
++        background_guard! if @background_id
++        block.call
++      end
++    end
++
++    def pause_path(id)
++      path(id).sub(/\.json\z/, '.pause')
++    end
++
++    def paused?(id)
++      file = pause_path(id)
++      return false unless File.exist?(file)
++      marker = WorkspaceCoordination.private_read(file)
++      unless marker == owner.slice('id', 'identity')
++        raise Error.new('background pause belongs to another owner', 4)
++      end
++      true
++    end
++
++    def background_guard!
++      engine.current_generation!
++      current = engine.store.read
++      retained = current['owners'].fetch(owner['id'])
++      raise Error.new('background owner is fenced by lifecycle recovery', 75) if retained['fence']
++      raise Error.new('background scheduling is suspended', 75) if current['suspended']
++      raise Error.new('background integration is paused', 75) if paused?(@background_id)
++      verify_tracking_binding
++    end
++
++    def pause(id)
++      value = read(id)
++      raise Error, 'only background integration runs can be paused' unless value['schema'] == 2
++      return status(id) if value['phase'] == 'complete'
++      @admission.call do
++        engine.current_generation!
++        verify_tracking_binding
++        engine.store.transaction do |_data|
++          WorkspaceCoordination.atomic(pause_path(id), owner.slice('id', 'identity'))
++        end
++      end
++      engine.store.wake
++      status(id)
++    end
++
++    def arm_background(id)
++      acquired = engine.store.lock("integration-#{id}", nonblock: true) do
++        value = read(id)
++        raise Error, 'resume a manual integration without --background' unless value['schema'] == 2
++        return status(id) if value['phase'] == 'complete'
++        @admission.call do
++          engine.current_generation!
++          verify_tracking_binding
++          if paused?(id)
++            File.unlink(pause_path(id))
++          end
++          generation = value['continuation']['generation']
++          raise Error.new('background continuation counter exhausted', 5) if generation >= MAX_COUNTER
++          value['continuation'] = {'state' => 'runnable', 'generation' => generation + 1, 'observedRevision' => nil}
++          value.delete('reason')
++          save(value)
++        end
++        status(id)
++      end
++      acquired || raise(Error.new('integration driver is already running; pause remains in effect', 75))
++    end
++
++    def background_notice(value, state)
++      @admission.call do
++        background_guard!
++        engine.store.transaction do |data|
++          item = {'id' => value['id'], 'kind' => 'integration', 'snapshot' => {'id' => value['continuation']['generation'].to_s}}
++          engine.event(data, owner, item, state, value['reason'])
++        end
++      end
++    end
++
++    def run_background(id)
++      result = engine.store.lock("integration-#{id}", nonblock: true) { run_background_locked(id) }
++      result || raise(Error.new('integration driver is already running', 75))
++    end
++
++    def run_background_locked(id)
++      @background_id = id
++      value = read(id)
++      return status(id) unless value['schema'] == 2
++      if value.dig('continuation', 'state') == 'needs_attention'
++        background_notice(value, 'needs_attention')
++        return status(id)
++      end
++      return status(id) unless %w[runnable waiting].include?(value.dig('continuation', 'state'))
++      observed = engine.store.read['revision']
++      phase = value['phase']
++      refreshing = value.key?('pendingRefresh')
++      begin
++        background_guard!
++        resume_locked(id)
++        value = read(id)
++        # Replaying a committed receipt can advance the journal without a new
++        # ledger revision. Observe the resulting phase before parking the run.
++        value['continuation']['state'] = if value['phase'] == 'complete'
++          'complete'
++        elsif value['phase'] != phase || (refreshing && !value.key?('pendingRefresh'))
++          'runnable'
++        else
++          'waiting'
++        end
++      rescue Error => error
++        value = read(id)
++        ledger = engine.store.read
++        if !engine.current_generation?
++          value['continuation']['state'] = 'runnable'
++          observed = nil
++        elsif ledger['owners'].fetch(owner['id'])['fence']
++          value['continuation']['state'] = 'held'
++        elsif paused?(id)
++          value['continuation']['state'] = 'paused'
++        elsif error.is_a?(AdmissionBusy) || ledger['suspended']
++          value['continuation']['state'] = 'waiting'
++          observed = nil # Contention can end without changing the ledger.
++        else
++          value['reason'] = {'code' => error.code, 'message' => WorkspaceCoordination.diagnostic(error.message)}
++          value['continuation']['state'] = 'needs_attention'
++          # Publish the actionable reason before its event. A crash here is
++          # rediscovered below until the deterministic notice exists.
++          save(value)
++          background_notice(value, 'needs_attention')
++        end
++      end
++      value['continuation']['observedRevision'] = observed
++      save(value)
++      status(id)
++    ensure
++      @background_id = nil
++    end
++  end
++
++  class Engine
++    def dispatch_integrations(owner)
++      ledger = store.read
++      return if ledger['suspended'] || ledger['owners'].fetch(owner['id'])['fence']
++      store.integration_journals.each do |run|
++        next unless run['schema'] == 2 && run['ownerId'] == owner['id'] && run['identity'] == owner['identity']
++        next if File.exist?(File.join(store.root, 'integrations', "#{run['id']}.pause")) && store.background_stopped?(run)
++        state = run.dig('continuation', 'state')
++        next if %w[paused held complete].include?(state)
++        if state == 'needs_attention'
++          item = {'id' => run['id'], 'snapshot' => {'id' => run['continuation']['generation'].to_s}}
++          next if ledger['outbox'].key?(WorkspaceCoordination.event_id(owner, item, 'needs_attention'))
++          # The worker republishes only this event after an interrupted send;
++          # it must not restart the failed operation.
++        elsif state == 'waiting' && run.dig('continuation', 'observedRevision') == ledger['revision']
++          next
++        end
++        unit = "workspace-integration-#{run['id']}"
++        next if %w[active activating deactivating].include?(capture('systemctl', '--user', 'show', "#{unit}.service", '--property=ActiveState', '--value').strip)
++        request = {'schema' => 1, 'runId' => run['id'], 'ownerId' => owner['id'], 'identity' => owner['identity'],
++          'workspace' => workspace, 'entry' => entry, 'package' => package, 'profile' => profile}
++        request_path = File.join(store.root, 'integration-workers', "#{run['id']}.json")
++        WorkspaceCoordination.atomic(request_path, request, limit: MAX_REQUEST)
++        retain_root("#{run['id']}-#{Digest::SHA256.hexdigest(package)[0, 12]}", 'integration', package)
++        capture('systemd-run', '--user', '--quiet', '--collect', "--unit=#{unit}",
++          '--property=Type=exec', '--property=UMask=0077', '--property=Restart=no',
++          File.join(package, 'bin/workspace-host'), 'coordination-integration', '--request', request_path)
++      end
++    end
++  end
++end
+diff --git a/libexec/workspace-integration.rb b/libexec/workspace-integration.rb
+index 835c8d1..30c8648 100644
+--- a/libexec/workspace-integration.rb
++++ b/libexec/workspace-integration.rb
+@@ -1,6 +1,7 @@
+ # frozen_string_literal: true
+ 
+ require_relative 'workspace-integration-certification'
++require_relative 'workspace-integration-background'
+ require 'tempfile'
+ 
+ module WorkspaceCoordination
+@@ -27,6 +28,7 @@ module WorkspaceCoordination
+   # A resumable composition of existing operations. It owns no Git integration,
+   # reservation, activation or uncertain-effect recovery implementation.
+   class Integration
++    include BackgroundIntegration
+     TERMINAL_PHASES = %w[complete].freeze
+     attr_reader :engine, :owner
+ 
+@@ -42,7 +44,7 @@ module WorkspaceCoordination
+ 
+     def read(id)
+       value = WorkspaceCoordination.private_read(path(id))
+-      unless value['schema'] == 1 && value['ownerId'] == owner['id'] && value['identity'] == owner['identity']
++      unless [1, 2].include?(value['schema']) && value['ownerId'] == owner['id'] && value['identity'] == owner['identity']
+         raise Error.new('integration run belongs to another session incarnation', 4)
+       end
+       value
+@@ -50,9 +52,10 @@ module WorkspaceCoordination
+ 
+     def save(value)
+       WorkspaceCoordination.atomic(path(value['id']), value)
++      engine.store.wake if value['schema'] == 2
+     end
+ 
+-    def start(request, wait: true)
++    def start(request, wait: true, background: false)
+       request = WorkspaceCoordination.canonical(request)
+       Array(request['repositories']).each do |item|
+         item['recipe'] ||= data_refresh(item['repository'])
+@@ -65,23 +68,33 @@ module WorkspaceCoordination
+       engine.store.lock("integration-#{id}", nonblock: true) do
+         if File.exist?(path(id))
+           value = read(id)
++          raise Error.new('integration execution mode differs from the retained run', 3) unless (value['schema'] == 2) == background
+           raise Error.new('integration requestId reused with changed input', 3) unless value['request'] == WorkspaceCoordination.canonical(request)
+         else
+           validate(request)
+-          value = {'schema' => 1, 'id' => id, 'ownerId' => owner['id'], 'identity' => owner['identity'],
++          value = {'schema' => background ? 2 : 1, 'id' => id, 'ownerId' => owner['id'], 'identity' => owner['identity'],
+             'phase' => 'prepare', 'request' => WorkspaceCoordination.canonical(request), 'steps' => {},
+             'operations' => {}, 'jobs' => {}, 'replacements' => [], 'startedAt' => Time.now.utc.iso8601,
+             'phaseSeconds' => {}, 'verificationSeconds' => 0, 'preparationSeconds' => 0,
+             'queueSeconds' => 0, 'lastObservedAt' => Time.now.to_f}
+-          @admission.call do
++          value['continuation'] = {'state' => 'runnable', 'generation' => 0, 'observedRevision' => nil} if background
++          admit do
+             engine.current_generation!
+             verify_tracking_binding
+-            save(value)
++            engine.store.transaction do |data|
++              save(value)
++              begin
++                engine.store.admission_capacity!(data)
++              rescue Error
++                File.unlink(path(id))
++                raise
++              end
++            end
+           end
+         end
+         true
+       end || raise(Error.new('integration driver is already running', 75))
+-      drive(id, wait:)
++      background ? status(id) : drive(id, wait:)
+     end
+ 
+     def data_refresh(repository)
+@@ -120,8 +133,9 @@ module WorkspaceCoordination
+ 
+     def status(id)
+       value = read(id)
++      value['continuation'] = value['continuation'].merge('state' => 'paused') if value['schema'] == 2 && value.dig('continuation', 'state') != 'held' && paused?(id)
+       current_jobs = engine.store.read['jobs']
+-      value.slice('schema', 'id', 'phase', 'startedAt', 'finishedAt', 'phaseSeconds', 'queueSeconds', 'verificationSeconds', 'preparationSeconds', 'reason').merge(
++      value.slice('schema', 'id', 'phase', 'startedAt', 'finishedAt', 'phaseSeconds', 'queueSeconds', 'verificationSeconds', 'preparationSeconds', 'reason', 'continuation').merge(
+         'administrationSeconds' => [value['phaseSeconds'].values.sum - value.fetch('verificationSeconds', 0) - value.fetch('preparationSeconds', 0), 0].max,
+         'heads' => value['operations'].transform_values { |operation| operation.dig('snapshot', 'operation', 'featureHead') },
+         'jobs' => value['jobs'].transform_values { |job_id| current_jobs[job_id]&.slice('id', 'kind', 'state', 'reason', 'revision') })
+@@ -136,30 +150,31 @@ module WorkspaceCoordination
+     end
+ 
+     def resume(id)
+-      path(id)
+-      acquired = engine.store.lock("integration-#{id}", nonblock: true) do
+-        value = read(id)
+-        return status(id) if TERMINAL_PHASES.include?(value['phase'])
+-        engine.current_generation!
+-        phase = value['phase']
+-        started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+-        begin
+-          value.delete('reason')
+-          advance(value)
+-        rescue Error => error
+-          value['reason'] = {'code' => error.code, 'message' => error.message}
+-          raise
+-        ensure
+-          value['phaseSeconds'][phase] = value['phaseSeconds'].fetch(phase, 0) + Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+-          save(value)
+-        end
+-        status(id)
++      acquired = engine.store.lock("integration-#{id}", nonblock: true) { resume_locked(id) }
++      acquired || raise(Error.new('integration driver is already running', 75))
++    end
++
++    def resume_locked(id)
++      value = read(id)
++      return status(id) if TERMINAL_PHASES.include?(value['phase'])
++      engine.current_generation!
++      phase = value['phase']
++      started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
++      begin
++        value.delete('reason')
++        advance(value)
++      rescue Error => error
++        value['reason'] = {'code' => error.code, 'message' => error.message}
++        raise
++      ensure
++        value['phaseSeconds'][phase] = value['phaseSeconds'].fetch(phase, 0) + Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
++        save(value)
+       end
+-      raise Error.new('integration driver is already running', 75) unless acquired
+-      acquired
++      status(id)
+     end
+ 
+     def step(value, name)
++      background_guard! if @background_id
+       entry = value['steps'][name] ||= {'requestId' => SecureRandom.uuid}
+       save(value) # Persist identity before the caller can mutate anything.
+       unless entry.key?('result')
+@@ -176,7 +191,7 @@ module WorkspaceCoordination
+         entry['payload'] ||= fields.merge('schema' => 1, 'requestId' => request_id)
+         entry['jobId'] ||= job_id
+         save(value)
+-        @admission.call do
++        admit do
+           engine.mutate(owner, action, entry['payload'], job_id: entry['jobId'])
+         end
+       end
+@@ -214,7 +229,7 @@ module WorkspaceCoordination
+             'approvalId' => operation['approvalId'], 'reservationId' => nil, 'snapshot' => operation['snapshot']}
+         end
+         submitted = step(value, 'submit-batch') do |request_id|
+-          @admission.call { engine.submit_batch(owner, 'schema' => 1, 'requestId' => request_id, 'jobs' => jobs) }
++          admit { engine.submit_batch(owner, 'schema' => 1, 'requestId' => request_id, 'jobs' => jobs) }
+         end
+         submitted['jobs'].each { |job| value['jobs']["merge:#{job['key']}"] = job['id'] }
+         value['phase'] = 'merging'
+@@ -356,7 +371,7 @@ module WorkspaceCoordination
+     def publish_refresh(value, item, path, registration, old_head, head, proof)
+       retained = engine.retain_commit(path, old_head) { |source| engine.prepare_merge_hooks(source, item['repository'], old_head) }
+       hooks = engine.prepare_merge_hooks(retained, item['repository'], old_head)
+-      @admission.call do
++      admit do
+         current = engine.owner(owner['slug'])
+         raise Error.new('refresh owner changed', 4) unless current['id'] == owner['id'] && current['identity'] == owner['identity']
+         engine.with_merge_hooks('hookArtifact' => hooks && hooks['id']) do
+@@ -548,7 +563,7 @@ module WorkspaceCoordination
+               'finalHeads' => final, 'replacements' => replacements(value, reservation, final) + completion.fetch('replacements', [])}
+             save(value)
+           end
+-          @admission.call do
++          admit do
+             engine.finish(owner, entry['reservationId'], entry['payload'])
+           end
+         end
+@@ -556,6 +571,10 @@ module WorkspaceCoordination
+       value['phase'] = 'finalizing'
+       save(value)
+       export(value)
++      if value['schema'] == 2
++        background_notice(value, 'complete')
++        return if engine.store.read['outbox'].values.any? { |event| event['ownerId'] == owner['id'] && event['state'] != 'delivered' }
++      end
+       record_completion(value)
+       value['phase'] = 'complete'
+       value['finishedAt'] = Time.now.utc.iso8601
+@@ -604,7 +623,7 @@ module WorkspaceCoordination
+             end
+           end
+           receipt_path = File.join(record_directory(value), "equivalence-#{item['repository']}-#{coverage['revision'][0, 12]}.json")
+-          @admission.call do
++          admit do
+             verify_tracking_binding
+             WorkspaceCoordination.atomic(receipt_path, receipt, limit: MAX_REQUEST)
+           end
+@@ -614,7 +633,7 @@ module WorkspaceCoordination
+     end
+ 
+     def export(value)
+-      @admission.call do
++      admit do
+         verify_tracking_binding
+         directory = record_directory(value)
+         FileUtils.mkdir_p(directory)
+@@ -631,7 +650,7 @@ module WorkspaceCoordination
+ 
+     def record_completion(value)
+       return if value['steps'].dig('tracking-commit', 'result')
+-      @admission.call do
++      admit do
+         verify_tracking_binding
+         root = File.join(engine.workspace, 'work', owner['slug'])
+         state = File.read(File.join(root, 'state.md'))
+@@ -645,7 +664,7 @@ module WorkspaceCoordination
+           File.join('integration', value['id'], file), '--label', "Integration #{value['id']} #{file}",
+           '--expected-owner', owner['id'], '--as-is')
+       end
+-      local_completion = @admission.call do
++      local_completion = admit do
+         verify_tracking_binding
+         manifest = YAML.safe_load(File.binread(File.join(engine.workspace, 'work', owner['slug'], 'portal.yml')), permitted_classes: [], aliases: false)
+         if manifest['sensitive'] == true
+@@ -662,7 +681,7 @@ module WorkspaceCoordination
+         source = engine.retain_commit(engine.workspace, source_head)
+         hooks = engine.prepare_merge_hooks(source, 'workspace', source_head)
+         common = engine.capture('git', '-C', engine.workspace, 'rev-parse', '--path-format=absolute', '--git-common-dir').strip
+-        @admission.call do
++        admit do
+           verify_tracking_binding
+           File.open(File.join(common, 'dev-session-tracking.lock'), File::RDWR | File::CREAT, 0o600) do |lock|
+             lock.flock(File::LOCK_EX)
+@@ -691,7 +710,7 @@ module WorkspaceCoordination
+       end
+     rescue StandardError
+       begin
+-        @admission.call do
++        admit do
+           verify_tracking_binding
+           state_path = File.join(engine.workspace, 'work', owner['slug'], 'state.md')
+           if File.file?(state_path)
+@@ -715,7 +734,7 @@ module WorkspaceCoordination
+       state_path = File.join(engine.workspace, 'work', owner['slug'], 'state.md')
+       state = File.read(state_path)
+       ledger = engine.store.read
+-      settled = ledger['jobs'].values.none? { |job| job['ownerId'] == owner['id'] && !TERMINAL.include?(job['state']) } &&
++      settled = value['schema'] != 2 && ledger['jobs'].values.none? { |job| job['ownerId'] == owner['id'] && !TERMINAL.include?(job['state']) } &&
+         ledger['reservations'].values.none? { |reservation| reservation['ownerId'] == owner['id'] && reservation['state'] != 'released' } &&
+         ledger['outbox'].values.none? { |event| event['ownerId'] == owner['id'] && event['state'] != 'delivered' }
+       File.write(state_path, state.sub(/\A---\nlifecycle: active\n---/, "---\nlifecycle: complete\n---")) if exact && settled
+diff --git a/nix/integration-contract.json b/nix/integration-contract.json
+new file mode 100644
+index 0000000..c386396
+--- /dev/null
++++ b/nix/integration-contract.json
+@@ -0,0 +1 @@
++{"schema":1,"journalSchemas":[1,2],"certificationSchema":1}
+diff --git a/nix/tests/host-package-contract.nix b/nix/tests/host-package-contract.nix
+index da86285..d511ae9 100644
+--- a/nix/tests/host-package-contract.nix
++++ b/nix/tests/host-package-contract.nix
+@@ -6,5 +6,8 @@
+ pkgs.runCommand "dev-workspace-host-package-contract" { nativeBuildInputs = [ pkgs.jq ]; } ''
+   metadata=${devWorkspace}/share/dev-workspace/package.json
+   test "$(jq -r .routerSocket "$metadata")" = ${pkgs.lib.escapeShellArg hostPaths.routerSocket}
++  jq -e '.integration == {journalSchema: 1, certificationSchema: 1}' "$metadata" >/dev/null
++  jq -e '. == {schema: 1, journalSchemas: [1, 2], certificationSchema: 1}' \
++    ${devWorkspace}/share/dev-workspace/integration-contract.json >/dev/null
+   touch "$out"
+ ''
+diff --git a/nix/workspace-portal.nix b/nix/workspace-portal.nix
+index 4fcf442..2bc59d3 100644
+--- a/nix/workspace-portal.nix
++++ b/nix/workspace-portal.nix
+@@ -345,7 +345,7 @@ buildGoModule {
+       "$out/libexec/workspace-host"
+     install -Dm644 ${src}/libexec/workspace-profile-identity.rb \
+       "$out/libexec/workspace-profile-identity.rb"
+-    for name in workspace-coordination workspace-coordination-gc workspace-coordination-execution workspace-coordination-host workspace-coordination-command workspace-coordination-timing workspace-coordination-admission workspace-integration-certification workspace-integration; do
++    for name in workspace-coordination workspace-coordination-gc workspace-coordination-execution workspace-coordination-host workspace-coordination-command workspace-coordination-timing workspace-coordination-admission workspace-integration-certification workspace-integration-background workspace-integration; do
+       install -Dm644 "${src}/libexec/$name.rb" "$out/libexec/$name.rb"
+     done
+     ln -s ../workspace-coordination.rb "$out/libexec/workspace-portal/workspace-coordination.rb"
+@@ -396,6 +396,7 @@ buildGoModule {
+       "$out/share/workspace-portal/runtime-contract.json"
+     install -Dm644 ${extensionCatalog} "$out/share/dev-workspace/extensions.json"
+     install -Dm644 ${integrationCatalog} "$out/share/dev-workspace/integration.json"
++    install -Dm644 ${src}/nix/integration-contract.json "$out/share/dev-workspace/integration-contract.json"
+     install -Dm644 ${coordinationCatalog} "$out/share/dev-workspace/coordination.json"
+     install -Dm644 ${src}/nix/coordination-contract.json "$out/share/dev-workspace/coordination-contract.json"
+     install -Dm644 ${src}/docs/coordination.md "$out/share/dev-workspace/coordination.md"
+diff --git a/portal/internal/agentteams/catalog_test.go b/portal/internal/agentteams/catalog_test.go
+index 1b8e43d..065280c 100644
+--- a/portal/internal/agentteams/catalog_test.go
++++ b/portal/internal/agentteams/catalog_test.go
+@@ -249,6 +249,7 @@ func TestPackageMetadataSupportsOptionalIntegrationCapability(t *testing.T) {
+ 		}
+ 		for _, invalid := range []any{nil, map[string]int{"journalSchema": 1},
+ 			map[string]int{"journalSchema": 2, "certificationSchema": 1},
++			map[string]int{"journalSchema": 3, "certificationSchema": 1},
+ 			map[string]int{"journalSchema": 1, "certificationSchema": 1, "unexpected": 1}} {
+ 			metadata["integration"] = invalid
+ 			if err := os.WriteFile(path, marshalFixture(t, metadata), 0o644); err != nil {
+diff --git a/portal/internal/web/coordination_browser_test.cjs b/portal/internal/web/coordination_browser_test.cjs
+index 12acfb6..3ce3c7b 100644
+--- a/portal/internal/web/coordination_browser_test.cjs
++++ b/portal/internal/web/coordination_browser_test.cjs
+@@ -266,3 +266,20 @@ test('a delayed old reservation response cannot badge a replacement incarnation'
+   await h.tick(); await h.respond(current);
+   assert.equal(h.badge.hidden, false);
+ });
++
++
++test('background runs show automatic waiting and action reasons without changing reservation counts', async () => {
++  const h = harness(true);
++  const p = payload([]);
++  p.workspaces[0].owners = [{id: 'owner', slug: 'holder', observationIdentity: 'incarnation-a', portalUrl: 'https://workspace.test/holder/'}];
++  p.workspaces[0].integrations = [{id: 'run-1', ownerId: 'owner', phase: 'merging', continuation: {state: 'waiting'}},
++    {id: 'run-2', ownerId: 'owner', phase: 'deploying', continuation: {state: 'needs_attention'}, reason: {message: 'Prepare an updated artifact.'}},
++    {id: 'run-3', ownerId: 'owner', phase: 'prepare', continuation: {state: 'paused'}}];
++  await h.respond(p);
++  assert.match(h.panel.textContent, /Background integrations/);
++  assert.match(h.panel.textContent, /Waiting automatically/);
++  assert.match(h.panel.textContent, /Agent action required/);
++  assert.match(h.panel.textContent, /Prepare an updated artifact/);
++  assert.match(h.panel.textContent, /Continuation is paused/);
++  assert.equal(h.badge.hidden, true);
++});
+diff --git a/portal/internal/web/static/coordination.js b/portal/internal/web/static/coordination.js
+index 79933c1..51dcf69 100644
+--- a/portal/internal/web/static/coordination.js
++++ b/portal/internal/web/static/coordination.js
+@@ -14,7 +14,9 @@
+     needs_refresh: "Needs preparation", reconciling: "Recovery required", succeeded: "Completed",
+     failed: "Failed", canceled: "Canceled", requested: "Waiting for reservation", held: "Reserved for deployment",
+     deployed_review: "Held for review", blocked_recovery: "Held for recovery",
+-    closing: "Checking completion", released: "Released"};
++    closing: "Checking completion", released: "Released", runnable: "Continuing automatically",
++    waiting: "Waiting automatically", paused: "Paused",
++    needs_attention: "Agent action required", complete: "Completed"};
+   const kinds = {merge: "Merge feature branch", machine_activate: "Deploy system configuration", profile_activate: "Update workspace application"};
+   const node = (tag, text = "", className = "") => {
+     const element = document.createElement(tag); element.textContent = text;
+@@ -86,7 +88,7 @@
+     const expanded = new Set([...panel.querySelectorAll("details[data-coordination-key][open]")].map(detail => detail.dataset.coordinationKey));
+     const focused = document.activeElement?.closest?.("details[data-coordination-key]")?.dataset.coordinationKey;
+     const content = document.createDocumentFragment();
+-    const owners = new Map(), reservations = new Map(), held = new Map(), jobs = [], requests = [], alerts = [];
++    const owners = new Map(), reservations = new Map(), held = new Map(), jobs = [], integrations = [], requests = [], alerts = [];
+     let limited = false;
+     for (const workspace of payload.workspaces) {
+       for (const owner of workspace.owners) {
+@@ -111,6 +113,7 @@
+         if (!["requested", "released"].includes(item.state) && !held.has(item.machine)) held.set(item.machine, {...item, id: item.machine, foreign: true});
+       }
+       jobs.push(...workspace.jobs.filter(own));
++      integrations.push(...(workspace.integrations || []).filter(own));
+       const notices = workspace.notifications.filter(own).filter(event => event.state !== "delivered");
+       if (notices.length) alerts.push(`${notices.length} agent ${notices.length === 1 ? "notification is" : "notifications are"} awaiting delivery or confirmation.`);
+       if (workspace.counts && Object.entries(workspace.counts).some(([key, total]) => total > (workspace[key]?.length || 0))) limited = true;
+@@ -133,6 +136,21 @@
+       element.append(heading); content.append(element); return element;
+     };
+     for (const text of alerts) content.append(node("p", text, "notice warning"));
++    if (integrations.length) {
++      const runs = section("Background integrations", integrations.length);
++      for (const run of integrations) {
++        const row = node("article", "", "coordination-machine");
++        const heading = node("p"); heading.append(ownerLink(run), node("span", ": "), badge(run.continuation?.state === "held" ? "paused" : run.continuation?.state));
++        row.append(heading);
++        if (run.reason?.message) row.append(node("p", run.reason.message));
++        else row.append(node("p", run.continuation?.state === "complete"
++          ? "The requested operations have finished."
++          : ["paused", "held"].includes(run.continuation?.state)
++            ? "Continuation is paused. Operations already running may finish."
++            : "The worker continues approved operations while the session is idle."));
++        row.append(details(`integration:${run.id}`, run)); runs.append(row);
++      }
++    }
+     const machineSection = section("Reserved machines", held.size);
+     const grid = node("div", "", "coordination-machines"); machineSection.append(grid);
+     for (const item of [...held.values()].sort((a, b) => shortName(a).localeCompare(shortName(b)))) {
+@@ -170,7 +188,7 @@
+         const row = node("tr"), operation = node("td");
+         operation.append(node("strong", kinds[job.kind] || "Coordinated operation"), details(`job:${job.id}`, job));
+         const owner = node("td"); owner.append(ownerLink(job));
+-        const status = node("td"); status.append(badge(job.state));
++        const status = node("td"); status.append(badge(job.reason?.code === "integration_paused" ? "paused" : job.state));
+         if (job.state === "needs_refresh") status.append(node("p", "The owning session needs to prepare an updated operation.", "muted"));
+         if (job.reason?.portalUrl) {
+           const blocker = node("p", "Waiting for "); blocker.append(link(job.reason.portalUrl + "#reservations", "another session")); status.append(blocker);
+diff --git a/test/background_integration_systemd_test.rb b/test/background_integration_systemd_test.rb
+new file mode 100644
+index 0000000..80b72cb
+--- /dev/null
++++ b/test/background_integration_systemd_test.rb
+@@ -0,0 +1,81 @@
++# frozen_string_literal: true
++
++# User-manager acceptance after independent review:
++# ruby test/background_integration_systemd_test.rb -n /systemd/
++require_relative 'integration_test'
++
++class BackgroundIntegrationSystemdTest < IntegrationTest
++  def wait_for_background
++    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 30
++    until yield
++      raise 'background worker did not reach the expected state' if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
++      sleep 0.05
++    end
++  end
++
++  def test_systemd_background_continuation_survives_its_submitter_and_worker_restart
++    first = owner('systemd-background')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    hold = File.join(@tmp, 'hold-preparation')
++    started = File.join(@tmp, 'preparation-started')
++    File.write(hold, 'hold before preparation')
++    wrapper = File.join(@package, 'bin/workspace-host')
++    FileUtils.mkdir_p(File.dirname(wrapper))
++    File.write(wrapper, <<~SCRIPT)
++      #!#{RbConfig.ruby}
++      require #{File.expand_path('../libexec/workspace-coordination-execution', __dir__).inspect}
++      require #{File.expand_path('../libexec/workspace-integration', __dir__).inspect}
++      request = WorkspaceCoordination.private_read(ARGV.last)
++      engine = WorkspaceCoordination::Engine.new(state: #{@state.inspect}, package: request['package'], profile: request['profile'],
++        workspace: request['workspace'], entry: request['entry'], fixtures: true)
++      owner = engine.store.read['owners'].fetch(request['ownerId'])
++      driver = WorkspaceCoordination::Integration.new(engine, owner, admission: ->(&block) { block.call }, prepare: ->(fields) {
++        File.write(#{started.inspect}, Process.pid.to_s)
++        sleep 0.05 while File.exist?(#{hold.inspect})
++        engine.prepare_merge(owner, fields.fetch('repository'), fields.fetch('evidence'))
++      })
++      driver.define_singleton_method(:record_completion) { |_value| }
++      driver.run_background(request.fetch('runId'))
++    SCRIPT
++    File.chmod(0o700, wrapper)
++    submitter = fork { @engine.dispatch_integrations(first); exit! 0 }
++    Process.wait(submitter)
++    assert $?.success?
++    unit = "workspace-integration-#{payload['requestId']}.service"
++    wait_for_background { File.exist?(started) }
++    before = fixture_systemctl('show', unit, '--property=MainPID', '--value')
++    @engine.dispatch_integrations(first)
++    assert_equal before, fixture_systemctl('show', unit, '--property=MainPID', '--value')
++    fixture_systemctl('stop', unit)
++    File.unlink(hold)
++    @engine.dispatch_integrations(first)
++    wait_for_background { integration.read(payload['requestId'])['phase'] == 'merging' }
++    job = @engine.claim(owner_id: first['id']).first
++    attempt_path = @engine.attempt_path(job['attempt'], 'request.json')
++    WorkspaceCoordination.atomic(attempt_path, @engine.worker_request(job, first))
++    WorkspaceCoordination::Worker.new(attempt_path, fixtures: true).run
++    @engine.reconcile_attempts
++    wait_for_background { !%w[active activating deactivating].include?(fixture_systemctl('show', unit, '--property=ActiveState', '--value').strip) }
++    @engine.dispatch_integrations(first)
++    wait_for_background do
++      integration.read(payload['requestId'])['phase'] == 'finalizing' && @engine.store.read['outbox'].length == 1
++    end
++    assert_equal 1, @engine.store.read['outbox'].length
++    deliver_background_notifications(first)
++    wait_for_background { !%w[active activating deactivating].include?(fixture_systemctl('show', unit, '--property=ActiveState', '--value').strip) }
++    @engine.dispatch_integrations(first)
++    wait_for_background { integration.read(payload['requestId'])['phase'] == 'complete' }
++    assert_equal 1, @engine.store.read['jobs'].length
++    assert_equal 1, @engine.store.read['outbox'].length
++  ensure
++    Open3.capture3('systemctl', '--user', 'stop', unit) if unit
++  end
++
++  def fixture_systemctl(*args)
++    output, error, status = Open3.capture3('systemctl', '--user', *args)
++    raise error unless status.success?
++    output
++  end
++end
+diff --git a/test/coordination_admission_test.rb b/test/coordination_admission_test.rb
+index a44714a..bcf3967 100644
+--- a/test/coordination_admission_test.rb
++++ b/test/coordination_admission_test.rb
+@@ -28,7 +28,7 @@ class CoordinationAdmissionTest < Minitest::Test
+     with_lock do |path, writer|
+       writer.flock(File::LOCK_EX)
+       File.open(path, 'r+') do |reader|
+-        error = assert_raises(WorkspaceCoordination::Error) do
++        error = assert_raises(WorkspaceCoordination::AdmissionBusy) do
+           WorkspaceCoordination::Admission.acquire(reader, timeout: 0)
+           flunk 'admission callback must not start'
+         end
+diff --git a/test/coordination_gc_test.rb b/test/coordination_gc_test.rb
+index 3b24068..4ca4663 100644
+--- a/test/coordination_gc_test.rb
++++ b/test/coordination_gc_test.rb
+@@ -159,10 +159,11 @@ class CoordinationGcTest < Minitest::Test
+     cancel(person, job)
+     directory = File.join(@engine.store.root, 'integrations')
+     FileUtils.mkdir_p(directory)
+-    path = File.join(directory, "#{SecureRandom.uuid}.json")
+-    WorkspaceCoordination.atomic(path, {'schema' => 1, 'phase' => 'deploy', 'operation' => snapshot})
++    id = SecureRandom.uuid
++    path = File.join(directory, "#{id}.json")
++    WorkspaceCoordination.atomic(path, {'schema' => 1, 'id' => id, 'phase' => 'deploy', 'operation' => snapshot})
+     assert_empty collect(apply: true)['removed']
+-    WorkspaceCoordination.atomic(path, {'schema' => 1, 'phase' => 'complete', 'operation' => snapshot})
++    WorkspaceCoordination.atomic(path, {'schema' => 1, 'id' => id, 'phase' => 'complete', 'operation' => snapshot})
+     assert_equal 2, collect(apply: true)['removed'].length
+   end
+ 
+@@ -186,7 +187,7 @@ class CoordinationGcTest < Minitest::Test
+     cancel(person, submit(person, snapshot))
+     id = SecureRandom.uuid
+     journal = File.join(@engine.store.root, 'integrations', "#{id}.json")
+-    WorkspaceCoordination.atomic(journal, {'schema' => 1, 'phase' => 'prepare',
++    WorkspaceCoordination.atomic(journal, {'schema' => 1, 'id' => id, 'phase' => 'prepare',
+       'head' => snapshot.dig('operation', 'featureHead')})
+     hook = @engine.save_artifact('kind' => 'merge_hooks', 'repository' => 'code',
+       'featureHead' => snapshot.dig('operation', 'featureHead'), 'environment' => {})
+@@ -203,7 +204,7 @@ class CoordinationGcTest < Minitest::Test
+     collect(apply: true)
+     assert File.directory?(source(snapshot))
+     assert File.symlink?(root)
+-    WorkspaceCoordination.atomic(journal, {'schema' => 1, 'phase' => 'complete'})
++    WorkspaceCoordination.atomic(journal, {'schema' => 1, 'id' => id, 'phase' => 'complete'})
+     collect(apply: true)
+     refute File.exist?(source(snapshot))
+     refute File.symlink?(root)
+@@ -272,4 +273,22 @@ class CoordinationGcTest < Minitest::Test
+     refute File.symlink?(File.join(@engine.store.root, 'roots', "#{attempt}-worker"))
+   end
+ 
++  def test_background_journal_retains_live_payloads_and_allows_collection_after_completion
++    person, snapshot = prepare('background-retention')
++    cancel(person, submit(person, snapshot))
++    id = SecureRandom.uuid
++    path = File.join(@engine.store.root, 'integrations', "#{id}.json")
++    value = {'schema' => 2, 'id' => id, 'ownerId' => person['id'], 'identity' => person['identity'],
++      'phase' => 'deploy', 'steps' => {}, 'jobs' => {}, 'operation' => snapshot,
++      'continuation' => {'state' => 'waiting', 'generation' => 0, 'observedRevision' => nil}}
++    WorkspaceCoordination.atomic(path, value)
++    assert_empty collect(apply: true)['removed']
++    assert File.directory?(source(snapshot))
++    value['phase'] = 'complete'
++    value['continuation']['state'] = 'complete'
++    WorkspaceCoordination.atomic(path, value)
++    assert_equal 2, collect(apply: true)['removed'].length
++    refute File.exist?(source(snapshot))
++  end
++
+ end
+diff --git a/test/integration_test.rb b/test/integration_test.rb
+index 733c089..ec19000 100644
+--- a/test/integration_test.rb
++++ b/test/integration_test.rb
+@@ -359,4 +359,420 @@ class IntegrationTest < Minitest::Test
+     assert_equal 5, error.code
+     assert_includes error.message, 'integration journals'
+   end
++
++  def test_pending_manual_run_accepts_legacy_and_dual_journal_packages
++    first = owner('manual-upgrade')
++    payload = integration_request(first)
++    driver(first).start(payload, wait: false)
++    shared = File.join(@package, 'share/dev-workspace')
++    WorkspaceCoordination.atomic(File.join(shared, 'coordination-contract.json'), WorkspaceCoordination::CONTRACT)
++    File.write(File.join(shared, 'coordination.json'), JSON.generate('schema' => 1, 'adapters' => {}, 'machines' => {}, 'repositories' => {}, 'profileMachine' => nil))
++    File.write(File.join(shared, 'package.json'), JSON.generate('integration' => {'journalSchema' => 1, 'certificationSchema' => 1}))
++    integration_path = File.join(@engine.store.root, 'integrations', "#{payload['requestId']}.json")
++    before = File.binread(integration_path)
++    @engine.store.require_compatible!(@package)
++    FileUtils.cp(File.expand_path('../nix/integration-contract.json', __dir__), File.join(shared, 'integration-contract.json'))
++    @engine.store.require_compatible!(@package)
++    assert_equal before, File.binread(integration_path)
++    assert_equal 1, JSON.parse(before).fetch('schema')
++    refute_equal 'complete', JSON.parse(before).fetch('phase')
++  end
++  def deliver_background_notifications(owner)
++    @engine.define_singleton_method(:notification_call) do |recipient, _event, action|
++      action == 'prepare' ? {'options' => {'model' => 'retained'}} : {'receipt' => {'threadId' => recipient['thread']}}
++    end
++    @engine.deliver_notifications(owner_id: owner['id'])
++  end
++
++  def test_background_admission_returns_before_preparation_and_reserves_lifecycle
++    first = owner('background-admission')
++    integration = driver(first)
++    payload = integration_request(first)
++    result = integration.start(payload, background: true)
++    assert_equal 2, result['schema']
++    assert_equal 'prepare', result['phase']
++    assert_equal 'runnable', result.dig('continuation', 'state')
++    assert_empty @engine.store.read['jobs']
++    assert @engine.store.session_blockers(@workspace, first['slug']).any? { |text| text.include?('background integration') }
++    assert_equal result, integration.start(payload, background: true)
++    assert_raises(WorkspaceCoordination::Error) { integration.start(payload, wait: false) }
++  end
++
++  def test_background_run_continues_without_an_agent_and_finalizes_after_delivery
++    first = owner('background-completion')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    integration.run_background(payload['requestId'])
++    # Claimed/running/completed intermediate steps do not wake the model.
++    claimed = @engine.claim(owner_id: first['id']).first
++    assert_empty @engine.store.read['outbox']
++    request_path = @engine.attempt_path(claimed['attempt'], 'request.json')
++    WorkspaceCoordination.atomic(request_path, @engine.worker_request(claimed, first))
++    WorkspaceCoordination::Worker.new(request_path, fixtures: true).run
++    @engine.reconcile_attempts
++    assert_empty @engine.store.read['outbox']
++    # A new process/driver resumes the original run and original job identities.
++    fresh = driver(first)
++    result = fresh.run_background(payload['requestId'])
++    assert_equal 'finalizing', result['phase']
++    assert_equal 1, @engine.store.read['outbox'].length
++    fresh.run_background(payload['requestId'])
++    assert_equal 1, @engine.store.read['outbox'].length
++    deliver_background_notifications(first)
++    assert_equal 'complete', driver(first).run_background(payload['requestId'])['phase']
++    assert_equal 1, @engine.store.read['jobs'].length
++    assert_equal 'complete', integration.read(payload['requestId']).dig('continuation', 'state')
++  end
++
++  def test_background_event_routing_survives_lost_submission_reply
++    first = owner('background-routing')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    integration.run_background(payload['requestId'])
++    value = integration.read(payload['requestId'])
++    value['jobs'] = {}
++    value['steps']['submit-batch'].delete('result')
++    integration.save(value)
++    @engine.claim(owner_id: first['id'])
++    assert_empty @engine.store.read['outbox']
++    assert_equal payload['requestId'], @engine.store.background_integration(@engine.store.read, first['id'], @engine.store.read['jobs'].keys.first)['id']
++  end
++
++  def test_background_replayed_submission_observes_completed_jobs_without_another_ledger_change
++    first = owner('background-submission-replay')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    integration.run_background(payload['requestId'])
++    claimed = @engine.claim(owner_id: first['id']).first
++    request_path = @engine.attempt_path(claimed['attempt'], 'request.json')
++    WorkspaceCoordination.atomic(request_path, @engine.worker_request(claimed, first))
++    WorkspaceCoordination::Worker.new(request_path, fixtures: true).run
++    @engine.reconcile_attempts
++
++    # The worker died after batch admission but before saving its reply/phase.
++    value = integration.read(payload['requestId'])
++    value['phase'] = 'submit'
++    value['jobs'] = {}
++    value['steps']['submit-batch'].delete('result')
++    value['continuation']['state'] = 'runnable'
++    integration.save(value)
++    revision = @engine.store.read['revision']
++    result = driver(first).run_background(payload['requestId'])
++    assert_equal revision, @engine.store.read['revision']
++    assert_equal 'merging', result['phase']
++    assert_equal 'runnable', result.dig('continuation', 'state')
++
++    calls = []
++    original_capture = @engine.method(:capture)
++    @engine.define_singleton_method(:capture) do |*argv, **options|
++      if argv.first == 'systemctl'
++        "inactive\n"
++      elsif argv.first == 'systemd-run'
++        calls << argv
++        ''
++      else
++        original_capture.call(*argv, **options)
++      end
++    end
++    @engine.dispatch_integrations(first)
++    assert_equal 1, calls.length
++    assert_equal 'finalizing', driver(first).run_background(payload['requestId'])['phase']
++    assert_equal [claimed['id']], @engine.store.read['jobs'].keys
++    assert_equal 1, @engine.store.read['outbox'].length
++    deliver_background_notifications(first)
++    assert_equal 'complete', driver(first).run_background(payload['requestId'])['phase']
++    assert_equal 1, @engine.store.read['outbox'].length
++  end
++
++  def test_background_replayed_refresh_observes_completed_jobs_without_another_ledger_change
++    first = owner('background-refresh-replay')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    integration.run_background(payload['requestId'])
++    id = integration.read(payload['requestId'])['jobs']['merge:code']
++    @engine.store.transaction { |data| @engine.transition(data, data['jobs'].fetch(id), 'needs_refresh') }
++    original = @engine.method(:mutate)
++    lost = false
++    @engine.define_singleton_method(:mutate) do |*args, **keywords|
++      result = original.call(*args, **keywords)
++      if args[1] == 'refresh' && !lost
++        lost = true
++        raise 'fixture crash after committed refresh'
++      end
++      result
++    end
++    assert_raises(RuntimeError) { integration.run_background(payload['requestId']) }
++    assert integration.read(payload['requestId']).key?('pendingRefresh')
++    claimed = @engine.claim(owner_id: first['id']).first
++    request_path = @engine.attempt_path(claimed['attempt'], 'request.json')
++    WorkspaceCoordination.atomic(request_path, @engine.worker_request(claimed, first))
++    WorkspaceCoordination::Worker.new(request_path, fixtures: true).run
++    @engine.reconcile_attempts
++    revision = @engine.store.read['revision']
++    result = driver(first).run_background(payload['requestId'])
++    assert_equal revision, @engine.store.read['revision']
++    assert_equal 'merging', result['phase']
++    assert_equal 'runnable', result.dig('continuation', 'state')
++    refute integration.read(payload['requestId']).key?('pendingRefresh')
++    assert_equal 'finalizing', driver(first).run_background(payload['requestId'])['phase']
++    deliver_background_notifications(first)
++    assert_equal 'complete', driver(first).run_background(payload['requestId'])['phase']
++    assert_equal [id], @engine.store.read['jobs'].keys
++    assert_equal 1, @engine.store.read['jobs'][id]['history'].length
++    assert_equal 1, @engine.store.read['outbox'].length
++  end
++
++  def test_background_pause_prevents_admission_and_explicit_resume_reuses_the_run
++    first = owner('background-pause')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    assert_equal 'paused', integration.pause(payload['requestId']).dig('continuation', 'state')
++    assert_equal 'paused', integration.run_background(payload['requestId']).dig('continuation', 'state')
++    assert_empty @engine.store.read['jobs']
++    integration.arm_background(payload['requestId'])
++    integration.run_background(payload['requestId'])
++    assert_equal 1, @engine.store.read['jobs'].length
++    assert_equal 1, integration.read(payload['requestId']).dig('continuation', 'generation')
++  end
++
++  def test_background_error_is_actionable_once_and_crash_retry_does_not_repeat_work
++    first = owner('background-error')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    attempts = 0
++    integration.define_singleton_method(:advance) do |_value|
++      attempts += 1
++      raise WorkspaceCoordination::Error.new('changed deployment artifact needs preparation', 3)
++    end
++    result = integration.run_background(payload['requestId'])
++    assert_equal 'needs_attention', result.dig('continuation', 'state')
++    assert_equal 1, @engine.store.read['outbox'].length
++    integration.run_background(payload['requestId'])
++    assert_equal 1, attempts
++    assert_equal 1, @engine.store.read['outbox'].length
++    # The error-state publication can precede a lost notification transaction.
++    @engine.store.transaction { |data| data['outbox'].clear }
++    integration.run_background(payload['requestId'])
++    assert_equal 1, attempts
++    assert_equal 1, @engine.store.read['outbox'].length
++  end
++
++  def test_background_fencing_before_first_job_prevents_preparation
++    first = owner('background-fence')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    @engine.store.fence(@workspace, first['slug'], 'archive')
++    assert_equal 'held', integration.run_background(payload['requestId']).dig('continuation', 'state')
++    assert_empty @engine.store.read['jobs']
++    assert_empty @engine.store.read['outbox']
++  end
++
++  def test_background_failed_command_is_actionable_even_with_exit_code_75
++    first = owner('background-command-error')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    attempts = 0
++    integration.define_singleton_method(:advance) do |_value|
++      attempts += 1
++      engine.capture('sh', '-c', 'echo failed-check >&2; exit 1')
++    end
++    result = integration.run_background(payload['requestId'])
++    assert_equal 'needs_attention', result.dig('continuation', 'state')
++    assert_equal 75, result.dig('reason', 'code')
++    assert_includes result.dig('reason', 'message'), 'failed-check'
++    integration.run_background(payload['requestId'])
++    assert_equal 1, attempts
++    assert_equal 1, @engine.store.read['outbox'].length
++  end
++
++  def test_background_host_preparation_failure_is_actionable_once
++    first = owner('background-host-error')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    seed = File.join(@tmp, 'seed')
++    @engine.define_singleton_method(:repository) { |_owner, _name| [seed, nil, nil, {'branch' => 'master'}] }
++    @engine.define_singleton_method(:retain_commit) { |_path, _head| seed }
++    host = Object.new.extend(DevWorkspaceHost::WorkspaceCoordinationHost)
++    host.define_singleton_method(:with_current_generation_lock) { |**_options, &block| block.call }
++    attempts = 0
++    host.define_singleton_method(:prepare_profile) do |_argv|
++      attempts += 1
++      raise DevWorkspaceHost::Error, 'candidate profile validation failed'
++    end
++    engine = @engine
++    integration.define_singleton_method(:advance) do |_value|
++      host.coordination_prepare(engine, first, {'kind' => 'profile_activate'})
++    end
++    result = integration.run_background(payload['requestId'])
++    assert_equal 'needs_attention', result.dig('continuation', 'state')
++    assert_equal 'candidate profile validation failed', result.dig('reason', 'message')
++    integration.run_background(payload['requestId'])
++    assert_equal 1, attempts
++    assert_equal 1, @engine.store.read['outbox'].length
++  end
++
++  def test_background_lifecycle_admission_contention_waits_without_notifying
++    first = owner('background-admission-busy')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    lock_path = File.join(@tmp, 'lifecycle.lock')
++    File.open(lock_path, 'w+', 0o600) do |writer|
++      writer.flock(File::LOCK_EX)
++      integration.define_singleton_method(:advance) do |_value|
++        File.open(lock_path, 'r+') { |reader| WorkspaceCoordination::Admission.acquire(reader, timeout: 0) }
++      end
++      result = integration.run_background(payload['requestId'])
++      assert_equal 'waiting', result.dig('continuation', 'state')
++      assert_nil result.dig('continuation', 'observedRevision')
++      assert_empty @engine.store.read['outbox']
++    end
++  end
++
++  def test_background_waiting_is_not_redispatched_without_a_ledger_change
++    first = owner('background-dispatch')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    integration.run_background(payload['requestId'])
++    calls = []
++    @engine.define_singleton_method(:capture) { |*argv, **_options| calls << argv; argv.first == 'systemctl' ? "inactive\n" : '' }
++    @engine.dispatch_integrations(first)
++    # Submission changed the ledger after the worker's initial observation.
++    assert calls.any? { |call| call.first == 'systemd-run' && call.include?('coordination-integration') }
++    integration.run_background(payload['requestId'])
++    calls.clear
++    @engine.dispatch_integrations(first)
++    assert_empty calls
++    @engine.claim(owner_id: first['id'])
++    @engine.dispatch_integrations(first)
++    assert calls.any? { |call| call.first == 'systemd-run' }
++  end
++
++  def test_background_state_refuses_predecessor_even_after_completion
++    first = owner('background-capability')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    WorkspaceCoordination.atomic(File.join(@package, 'share/dev-workspace/coordination-contract.json'), WorkspaceCoordination::CONTRACT)
++    File.write(File.join(@package, 'share/dev-workspace/coordination.json'), JSON.generate('schema' => 1, 'adapters' => {}, 'machines' => {}, 'repositories' => {}, 'profileMachine' => nil))
++    metadata = File.join(@package, 'share/dev-workspace/package.json')
++    File.write(metadata, JSON.generate('integration' => {'journalSchema' => 1, 'certificationSchema' => 1}))
++    assert_raises(WorkspaceCoordination::Error) { @engine.store.require_compatible!(@package) }
++    contract = File.join(@package, 'share/dev-workspace/integration-contract.json')
++    FileUtils.cp(File.expand_path('../nix/integration-contract.json', __dir__), contract)
++    @engine.store.require_compatible!(@package)
++    File.write(contract, JSON.generate(WorkspaceCoordination::INTEGRATION_CONTRACT.merge('journalSchemas' => [1, 2, 3])))
++    @engine.store.require_compatible!(@package)
++    FileUtils.cp(File.expand_path('../nix/integration-contract.json', __dir__), contract)
++    value = integration.read(payload['requestId'])
++    value['phase'] = 'complete'
++    value['continuation']['state'] = 'complete'
++    integration.save(value)
++    @engine.store.require_compatible!(@package)
++    File.unlink(contract)
++    assert_raises(WorkspaceCoordination::Error) { @engine.store.require_compatible!(@package) }
++    [nil, {'schema' => 1, 'journalSchemas' => [1, 3], 'certificationSchema' => 1},
++      WorkspaceCoordination::INTEGRATION_CONTRACT.merge('journalSchemas' => [1, 2, 2]),
++      WorkspaceCoordination::INTEGRATION_CONTRACT.merge('journalSchemas' => [1, '2']),
++      WorkspaceCoordination::INTEGRATION_CONTRACT.merge('journalSchemas' => [2]),
++      WorkspaceCoordination::INTEGRATION_CONTRACT.merge('schema' => 2),
++      WorkspaceCoordination::INTEGRATION_CONTRACT.merge('certificationSchema' => 2),
++      WorkspaceCoordination::INTEGRATION_CONTRACT.merge('unexpected' => true)].each do |invalid|
++      File.write(contract, JSON.generate(invalid))
++      error = assert_raises(WorkspaceCoordination::Error) { @engine.store.require_compatible!(@package) }
++      assert_includes error.message, 'integration journals'
++    end
++  end
++
++  def test_background_pause_also_prevents_claiming_already_submitted_jobs
++    first = owner('background-queued-pause')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    integration.run_background(payload['requestId'])
++    integration.pause(payload['requestId'])
++    assert_empty @engine.claim(owner_id: first['id'])
++    assert_equal 'paused', @engine.status(first['slug'])['integrations'].first.dig('continuation', 'state')
++    assert_equal 'integration_paused', @engine.store.read['jobs'].values.first.dig('reason', 'code')
++    integration.arm_background(payload['requestId'])
++    assert_equal 1, @engine.claim(owner_id: first['id']).length
++  end
++
++  def test_background_handover_does_not_turn_generation_change_into_agent_work
++    first = owner('background-generation')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    successor = File.join(@tmp, 'successor')
++    FileUtils.mkdir_p(successor)
++    File.unlink(@profile)
++    File.symlink(successor, @profile)
++    @engine.instance_variable_set(:@fixtures, false)
++    assert_equal 'runnable', integration.run_background(payload['requestId']).dig('continuation', 'state')
++    assert_empty @engine.store.read['outbox']
++    assert_empty @engine.store.read['jobs']
++  end
++
++  def test_background_handover_checks_profile_token_when_package_is_unchanged
++    first = owner('background-token-generation')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    @engine.instance_variable_set(:@fixtures, false)
++    assert @engine.current_generation?
++    replacement = File.join(@tmp, 'replacement-profile')
++    File.symlink(@package, replacement)
++    File.rename(replacement, @profile)
++    assert_equal @engine.package, File.realpath(@profile)
++    refute @engine.current_generation?
++    assert_equal 'runnable', integration.run_background(payload['requestId']).dig('continuation', 'state')
++    assert_empty @engine.store.read['outbox']
++    assert_empty @engine.store.read['jobs']
++  end
++
++  def test_background_pause_acknowledgment_serializes_with_claim_admission
++    first = owner('background-pause-race')
++    integration = driver(first)
++    payload = integration_request(first)
++    integration.start(payload, background: true)
++    integration.run_background(payload['requestId'])
++    checked, proceed, pause_started = Queue.new, Queue.new, Queue.new
++    original = @engine.store.method(:background_stopped?)
++    armed = true
++    @engine.store.define_singleton_method(:background_stopped?) do |run|
++      result = original.call(run)
++      if run && armed
++        armed = false
++        checked << true
++        proceed.pop
++      end
++      result
++    end
++    claimer = Thread.new { @engine.claim(owner_id: first['id']) }
++    checked.pop
++    pause_driver = WorkspaceCoordination::Integration.new(@engine, first,
++      admission: ->(&block) { pause_started << true; block.call }, prepare: ->(_fields) { raise 'pause cannot prepare' })
++    pauser = Thread.new { pause_driver.pause(payload['requestId']) }
++    pause_started.pop
++    # An admission already in progress must settle before pause is accepted.
++    assert_nil pauser.join(0.05)
++    proceed << true
++    assert_equal 1, claimer.value.length
++    assert_equal 'paused', pauser.value.dig('continuation', 'state')
++  ensure
++    proceed << true if proceed
++    claimer&.join
++    pauser&.join
++  end
++
+ end
+diff --git a/test/workspace_host/archive_recovery_test.rb b/test/workspace_host/archive_recovery_test.rb
+index f24ef61..1992d34 100644
+--- a/test/workspace_host/archive_recovery_test.rb
++++ b/test/workspace_host/archive_recovery_test.rb
+@@ -19,7 +19,7 @@ class WorkspaceHostTest < Minitest::Test
+       packaged_session = File.join(packaged_libexec, 'workspace-portal')
+       package_contract = File.join(root, 'share', 'workspace-portal')
+       FileUtils.mkdir_p([packaged_session, package_contract])
+-      %w[workspace-host workspace-coordination.rb workspace-coordination-command.rb workspace-coordination-timing.rb workspace-coordination-host.rb workspace-coordination-execution.rb workspace-coordination-gc.rb workspace-coordination-admission.rb workspace-integration.rb workspace-integration-certification.rb workspace-codex-providers.rb workspace-provider-admission.rb workspace-profile-identity.rb workspace-sensitive-sessions.rb workspace-auto-archive.rb workspace-archive-cleanup.rb workspace-archive-recovery.rb workspace-tracking-sync.rb].each do |name|
++      %w[workspace-host workspace-coordination.rb workspace-coordination-command.rb workspace-coordination-timing.rb workspace-coordination-host.rb workspace-coordination-execution.rb workspace-coordination-gc.rb workspace-coordination-admission.rb workspace-integration.rb workspace-integration-background.rb workspace-integration-certification.rb workspace-codex-providers.rb workspace-provider-admission.rb workspace-profile-identity.rb workspace-sensitive-sessions.rb workspace-auto-archive.rb workspace-archive-cleanup.rb workspace-archive-recovery.rb workspace-tracking-sync.rb].each do |name|
+         FileUtils.cp(File.join(source, name), File.join(packaged_libexec, name))
+       end
+       public_wrapper = File.join(packaged_session, 'dev-session')

@@ -1,0 +1,115 @@
+{
+  "compat-systemd": {
+    "revision": "543136a0e3be561e010d8b2ccd309f2ad37311a0",
+    "exitStatus": 0,
+    "seconds": 10.0,
+    "command": [
+      "nix",
+      "develop",
+      "--command",
+      "ruby",
+      "test/background_integration_systemd_test.rb",
+      "-n",
+      "/systemd/"
+    ]
+  },
+  "compat-system-build": {
+    "revision": "f60ebcddd9df7b224f5cff48b95c7706d25b6e7a",
+    "exitStatus": 0,
+    "seconds": 133.19,
+    "command": [
+      "nix",
+      "develop",
+      "--command",
+      "confctl",
+      "build",
+      "--yes",
+      "cz.vpsfree/machines/aitherdev"
+    ]
+  },
+  "compat-ci": {
+    "revision": "543136a0e3be561e010d8b2ccd309f2ad37311a0",
+    "exitStatus": 0,
+    "seconds": 162.29,
+    "command": [
+      "nix",
+      "shell",
+      "--inputs-from",
+      ".",
+      "nixpkgs#gh",
+      "-c",
+      "gh",
+      "run",
+      "watch",
+      "39014845298",
+      "--repo",
+      "aither64/dev-workspace",
+      "--exit-status"
+    ]
+  },
+  "compat-runtime-package": {
+    "revision": "543136a0e3be561e010d8b2ccd309f2ad37311a0",
+    "exitStatus": 0,
+    "seconds": 331.29,
+    "command": [
+      "nix",
+      "build",
+      "--print-build-logs",
+      "--out-link",
+      "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-16-idle-coordination-worker/compat-runtime-result",
+      ".#checks.x86_64-linux.package",
+      ".#checks.x86_64-linux.host-package-contract"
+    ]
+  },
+  "compat-workspace-build": {
+    "revision": "a90022d897bf539f3d5dca39a02d0f0140c6b457",
+    "exitStatus": 0,
+    "seconds": 346.86,
+    "command": [
+      "nix",
+      "build",
+      "--print-build-logs",
+      "--out-link",
+      "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-16-idle-coordination-worker/compat-workspace-result",
+      ".#packages.x86_64-linux.default",
+      ".#checks.x86_64-linux.deployment-contract",
+      ".#checks.x86_64-linux.agent-instructions"
+    ]
+  },
+  "compat-native": {
+    "revision": "543136a0e3be561e010d8b2ccd309f2ad37311a0",
+    "exitStatus": 0,
+    "seconds": 7.73,
+    "command": [
+      "nix",
+      "develop",
+      "--command",
+      "go",
+      "-C",
+      "portal",
+      "run",
+      "-mod=readonly",
+      "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-16-idle-coordination-worker/native-notification-check.go",
+      "/nix/store/3d3g0njmwcwrxfrqdn4vi0i7cn4y6ls7-dev-workspace-0.2.0"
+    ]
+  },
+  "compat-notification-protocol": {
+    "revision": "543136a0e3be561e010d8b2ccd309f2ad37311a0",
+    "exitStatus": 0,
+    "seconds": 7.31,
+    "command": [
+      "nix",
+      "develop",
+      "--command",
+      "go",
+      "-C",
+      "portal",
+      "test",
+      "-mod=readonly",
+      "./cmd/workspace-portal",
+      "-run",
+      "^TestCoordinationNotificationRetainsSettingsAndDeduplicatesNativeDelivery$",
+      "-count=1"
+    ]
+  }
+}

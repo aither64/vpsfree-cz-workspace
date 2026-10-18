@@ -1,0 +1,115 @@
+{
+  "reservation-refresh-ci": {
+    "revision": "9b50f357b40aeb4b3bd9715609815ebcdca57043",
+    "exitStatus": 0,
+    "seconds": 1.24,
+    "command": [
+      "nix",
+      "shell",
+      "--inputs-from",
+      ".",
+      "nixpkgs#gh",
+      "-c",
+      "gh",
+      "run",
+      "watch",
+      "39018599934",
+      "--repo",
+      "aither64/dev-workspace",
+      "--exit-status"
+    ]
+  },
+  "reservation-refresh-systemd": {
+    "revision": "9b50f357b40aeb4b3bd9715609815ebcdca57043",
+    "exitStatus": 0,
+    "seconds": 4.76,
+    "command": [
+      "nix",
+      "develop",
+      "--command",
+      "ruby",
+      "test/background_integration_systemd_test.rb",
+      "-n",
+      "/systemd/"
+    ]
+  },
+  "reservation-refresh-system-build": {
+    "revision": "ae3f30520a759d50dfa39314984b3d4c7487ed32",
+    "exitStatus": 0,
+    "seconds": 178.67,
+    "command": [
+      "nix",
+      "develop",
+      "--command",
+      "confctl",
+      "build",
+      "--yes",
+      "cz.vpsfree/machines/aitherdev"
+    ]
+  },
+  "reservation-refresh-runtime-package": {
+    "revision": "9b50f357b40aeb4b3bd9715609815ebcdca57043",
+    "exitStatus": 0,
+    "seconds": 329.52,
+    "command": [
+      "nix",
+      "build",
+      "--print-build-logs",
+      "--out-link",
+      "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-16-idle-coordination-worker/reservation-refresh-runtime-result",
+      ".#checks.x86_64-linux.package",
+      ".#checks.x86_64-linux.host-package-contract"
+    ]
+  },
+  "reservation-refresh-workspace-build": {
+    "revision": "399202fa7f8e0b0b2faa83712b8133c5c83f8288",
+    "exitStatus": 0,
+    "seconds": 349.63,
+    "command": [
+      "nix",
+      "build",
+      "--print-build-logs",
+      "--out-link",
+      "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-16-idle-coordination-worker/reservation-refresh-workspace-result",
+      ".#packages.x86_64-linux.default",
+      ".#checks.x86_64-linux.deployment-contract",
+      ".#checks.x86_64-linux.agent-instructions"
+    ]
+  },
+  "reservation-refresh-native": {
+    "revision": "9b50f357b40aeb4b3bd9715609815ebcdca57043",
+    "exitStatus": 0,
+    "seconds": 11.05,
+    "command": [
+      "nix",
+      "develop",
+      "--command",
+      "go",
+      "-C",
+      "portal",
+      "run",
+      "-mod=readonly",
+      "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-16-idle-coordination-worker/native-notification-check.go",
+      "/nix/store/yjfz0nb9vsj1jhrrz2yh32jgd1fw9gv4-dev-workspace-0.2.0"
+    ]
+  },
+  "reservation-refresh-notification-protocol": {
+    "revision": "9b50f357b40aeb4b3bd9715609815ebcdca57043",
+    "exitStatus": 0,
+    "seconds": 6.96,
+    "command": [
+      "nix",
+      "develop",
+      "--command",
+      "go",
+      "-C",
+      "portal",
+      "test",
+      "-mod=readonly",
+      "./cmd/workspace-portal",
+      "-run",
+      "^TestCoordinationNotificationRetainsSettingsAndDeduplicatesNativeDelivery$",
+      "-count=1"
+    ]
+  }
+}

@@ -1,0 +1,3 @@
+package main
+import ("context";"fmt";"time";"github.com/aither64/codex-web/codex";"github.com/aither64/dev-workspace/portal/internal/workspacecodex")
+func main(){ ctx,cancel:=context.WithTimeout(context.Background(),30*time.Second);defer cancel();c:=workspacecodex.NewWithOptions("/run/user/1000/dev-workspaces/vpsfree-cz/app-server.sock","/home/aither/workspace/ai/vpsfree.cz",codex.ClientOptions{});defer c.Close();c.CodexHome="/home/aither/.codex";fmt.Printf("saved absence: %v\n",c.RequireSavedConversationAbsence(ctx,"/home/aither/workspace/ai/vpsfree.cz/work/2026-10-16-idle-coordination-worker"));fmt.Printf("complete absence: %v\n",workspacecodex.RequireThreadlessConversations(ctx,c,"/home/aither/workspace/ai/vpsfree.cz/work/2026-10-16-idle-coordination-worker"))}

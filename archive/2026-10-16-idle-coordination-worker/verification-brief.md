@@ -1,0 +1,12 @@
+# Verification after independent review
+
+Use the repository Nix environment. Fresh utility watcher policy: gpt-6-luna / low, workspace_write, installed native utility configuration share/dev-workspace/agent-teams/utilities/verification_watcher-low.toml, catalog digest 437585347ac8b2cdbf498a169d8871e684f3f61ccf1dd48e8589d79ef9629abd. Read /home/aither/.codex/skills/dev-session-monitor/SKILL.md. Watchers do not edit source, retry, diagnose, deploy, approve or launch nested agents. Preserve exact exit status and logs. No timeout merely for silence. Stop and escalate an unexpected local kernel build; cancellation is authorized for that owned verification process only. No watcher may launch a mutation driver.
+
+Run after reviewer findings are reconciled:
+
+1. Runtime package and package-contract build: nix build --no-link --print-build-logs .#checks.x86_64-linux.package .#checks.x86_64-linux.host-package-contract. Full build logs and exit status under this initiative. This includes the declared Ruby and Go checks.
+2. Real user-manager fixture: nix develop --command ruby test/background_integration_systemd_test.rb -n /systemd/. This test owns only its temporary fixture and workspace-integration-<fixture UUID> user unit. No live reservation, profile or shared conversation is mutated. Read-only fake native receipts isolate deterministic continuation. Retain and report any leftover owned unit on failure.
+3. Existing selected native-notification protocol test: nix develop --command go -C portal test -mod=readonly ./cmd/workspace-portal -run ^TestCoordinationNotificationRetainsSettingsAndDeduplicatesNativeDelivery$ -count=1. Live App Server wakeup acceptance remains a separate supervised fixture; do not claim the mock protocol test as native acceptance.
+4. Configuration: nix develop --command confctl build --yes cz.vpsfree/machines/aitherdev, on its committed exact final configuration. Log preparation only; no activation or master merge. Check pinned confctl help if --yes placement differs.
+
+The lead owns diagnosis, retries, input updates and acceptance. Launch a fresh watcher for each later long operation. A batch of independent checks may share one watcher for one assigned operation. Before builds requiring Nix/systemd, keep required environment and owned paths explicit. Runtime package source includes committed helper files; do not stage or edit anything during checks.

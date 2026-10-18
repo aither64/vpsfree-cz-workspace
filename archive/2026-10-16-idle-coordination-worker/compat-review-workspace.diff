@@ -1,0 +1,91 @@
+diff --git a/docs/agent-instructions/git.md b/docs/agent-instructions/git.md
+index d7ef380f..da3db6ea 100644
+--- a/docs/agent-instructions/git.md
++++ b/docs/agent-instructions/git.md
+@@ -6,8 +6,8 @@ to the coordination workspace unless the text specifies another repository.
+ 
+ Before feature integration, read [coordination](../coordination.md) in full.
+ Prepare/rebase/review outside claims, then submit authorized merge jobs through
+-the selected runtime. It executes the fast-forward/SSH procedure below. Waiting
+-agents keep their turns open; a busy resource never authorizes a direct bypass.
++the selected runtime. It executes the fast-forward/SSH procedure below. Use background integration so waiting agents can end their turns and resume
++on native action or review messages. A busy resource never authorizes a direct bypass.
+ 
+ ## Published branches and pull requests
+ 
+diff --git a/docs/agent-instructions/verification.md b/docs/agent-instructions/verification.md
+index a8823536..bcd3b7ae 100644
+--- a/docs/agent-instructions/verification.md
++++ b/docs/agent-instructions/verification.md
+@@ -6,7 +6,7 @@ to the coordination workspace unless the text specifies another repository.
+ 
+ For queued merges/deployments, complete builds, tests and review before submitting
+ the prepared snapshot. Resource contention is a wait, not a failed check. Follow
+-[coordination](../coordination.md) for interruptible waiting and stale-snapshot
++[coordination](../coordination.md) for background continuation and stale-snapshot
+ refresh; repeat only the checks/review required by the changed patch or baseline.
+ 
+ Use separately exported Ruby checks and retained derivation/input receipts to
+diff --git a/docs/coordination.md b/docs/coordination.md
+index 31e2f45a..f333f025 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -40,11 +40,14 @@ the matching host module separately from the application profile.
+ 4. Submit the returned snapshot, approval, reservation and explicit dependencies.
+    Merge-only work needs no machine reservation. Read status and keep doing useful
+    independent work while claims or reservations are busy.
+-5. If only waiting remains, keep the turn open with an interruptible tool wait
+-   of at most 60 seconds. Resume on the coordinator's native notification and
+-   reread status. Do not ask the user to restart the agent merely because another
+-   session is deploying. A stale snapshot requires fresh preparation and the
+-   applicable verification/review; an uncertain effect requires reconciliation.
++5. Prefer `coordination integrate --background` for approved operation batches.
++   Record its run ID. If only waiting remains, end the turn; the worker continues
++   and the coordinator wakes the retained session when agent action or review is
++   needed. Reread authoritative status on that message. Individual submitted jobs
++   also run independently and retain their native notifications. Do not poll
++   reservations, ask the user to restart the agent, or bypass a busy resource.
++   A stale snapshot requires fresh preparation and applicable verification/review;
++   an uncertain effect requires reconciliation.
+ 6. Keep the machine reservation during UI review, feedback and redeployment,
+    including periods when the session's agent is idle. Release only after exact
+    final integration proofs and explicit deployment/review completion. Keep the
+diff --git a/flake.lock b/flake.lock
+index c5e5e6c7..6a15905f 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -66,17 +66,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1792178311,
+-        "narHash": "sha256-4EZkGRSfX+RG2B9QHP2pCAzIUtG4RTwpdz2YWY1JRFA=",
++        "lastModified": 1792222682,
++        "narHash": "sha256-l2sHflxBbXXKloQRaCO2FOKvhsL9ldjIqGyHrF2vHzc=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "598336522fbb490e7606670d5fdb504e66c607ec",
++        "rev": "79da0bb5eafd5b8e7cd4e32a02dc5a16da6116f6",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "598336522fbb490e7606670d5fdb504e66c607ec",
++        "rev": "79da0bb5eafd5b8e7cd4e32a02dc5a16da6116f6",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 0c940f78..a5858058 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
+     vpsfree-dev-workspace = {
+       url = "github:vpsfreecz/dev-workspace/767dfd587e346168e1443e65ccdb67ce748f3fe3";
+-      inputs.dev-workspace.url = "github:aither64/dev-workspace/598336522fbb490e7606670d5fdb504e66c607ec";
++      inputs.dev-workspace.url = "github:aither64/dev-workspace/79da0bb5eafd5b8e7cd4e32a02dc5a16da6116f6";
+     };
+   };
+ 

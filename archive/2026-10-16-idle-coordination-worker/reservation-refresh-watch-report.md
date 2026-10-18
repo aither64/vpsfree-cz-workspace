@@ -1,0 +1,1 @@
+I couldn’t read the brief: the command was blocked by the sandbox (`bwrap: Can't create file /nix/var/nix/daemon-socket/.git: Permission denied`). I did not execute any verification command.
