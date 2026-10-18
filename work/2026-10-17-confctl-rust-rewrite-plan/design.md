@@ -1,35 +1,58 @@
 # Rust confctl replacement design
 
-Status: **DESIGN COMPLETE — reconciled with both completed inventories.**
+Status: **DESIGN COMPLETE — 2026-10-18 revision: built-in features, no user extension API.**
 Planning only: this is an implementation proposal, not permission to implement,
 merge or deploy.
 
 ## Recommendation and implementation order
 
-Build an idiomatic Rust orchestrator around the existing Nix/SSH contracts, with
-Tokio for owned asynchronous processes and Ratatui/Crossterm for one inline live
-view. Replace the two site Ruby scripts with one separately packaged Rust
-executable using a small versioned JSON protocol. Preserve current generation
-files, GC roots, profiles and netboot data; adopt the Go invocation timing report.
+**Recommend removing user extension support.** The two existing scripts perform
+confctl domain work: collecting running kernel versions before deployment and
+maintaining a netboot machine list. Implement them as ordinary core Rust services
+with opt-in typed Nix settings. This removes the registry, wire protocol, SDK,
+capability dispatch, extension subprocess lifecycle and separately packaged site
+binary. It retains the useful features, their tests and a small configuration
+contract; it does not introduce a generic task or hook DSL.
 
-Start by freezing an executable Ruby CLI/effects fixture contract, including
-every option default, stdout/stderr route and exit code. Then implement shared
-types/process/UI interfaces, Nix and state adapters, remote operations, and the
-site extension in parallel file packages. Port all remote Ruby helpers and the
-data-generation client before switching packaging. Finish with differential,
-real PTY, mixed-version and disposable VM acceptance; replace the default only
-after those gates. Full package dependencies and checks appear below.
+Preserve `runtime-kernels update`, the existing kernel JSON and generated netboot
+Nix list. Keep deployment refresh after confirmation and before generation
+lookup/build, with cache invalidation; keep netboot refresh after the core machine
+list is written by add/rename/rediscover. Default both features off. The site
+explicitly opts into its current paths and automatic stages. Other deployments
+acquire no new SSH probes or file writes.
 
-These architectural directions have been accepted by the lead as planning
-recommendations, subject to source reconciliation. They do not authorize the
-future implementation or cutover. The current phase is lead acceptance and planning handoff.
+The 2026-10-18 revision supersedes this plan's original executable-extension
+recommendation. Both inventories remain immutable historical evidence: their
+source observations and parity scenarios still apply, but their proposed
+protocol/handler/package mappings are superseded by the built-in feature section.
+The lead requested and favors this direction; no implementation is authorized.
+
+Retain the Rust/Nix/SSH architecture, Tokio process ownership, Ratatui/Crossterm
+inline view and Go invocation timing model. First freeze executable Ruby CLI and
+effect fixtures. Then implement process/UI and typed domain interfaces, Nix/state
+adapters, core runtime-kernel/netboot services and remote operations in separate
+file packages. Port all remote Ruby helpers and the data client before packaging
+cutover. Differential, PTY, mixed-version and disposable VM gates remain required.
+
+## Revision completion
+
+Identity verified from this session directory against the trusted thread binding;
+both environment markers are absent. Both inventories and relevant guidance were
+rechecked. No source or tool blocker. Proposed settings are
+`confctl.runtimeKernels.{enable,stateFile,refreshBeforeDeploy}` and
+`confctl.netbootInventory.{enable,outputFile}`. Existing site paths remain
+`configs/node/kernels.json` and `cluster/netbootable.nix`; no new site executable.
+The lead accepted this core-feature direction. Architecture, package boundaries,
+dependencies, CI, milestones and migration guidance are reconciled below. Both
+inventory files remain unchanged; no implementation or new source research was
+needed for this revision.
 
 ## Scope and evidence
 
 Replace confctl's Ruby implementation with Rust while retaining command meaning,
 results, live logs, progress, colors and readable formatting. Replace the
-configuration repository's Ruby confctl extensions through an explicit executable
-protocol and adopt the useful invocation timing behavior from the Go experiment.
+configuration repository's two Ruby confctl scripts with built-in domain features
+and typed opt-in Nix settings; adopt the useful Go invocation timing behavior.
 The lead owns plan/state and commits; architect0 owns this design. No application
 edits, builds, deployment or modification of the historical Go session occur here.
 
@@ -48,7 +71,7 @@ baselines and exhaustive command/script evidence, linked below.
 | B: execution and presentation | `src/process/`, `src/events.rs`, `src/timing.rs`, `src/terminal/` | Frozen A interfaces | Joined child ownership; bounded live view; cancellation and timing tests |
 | C: Nix, inputs and local state | `src/nix/`, `src/inputs/`, `src/generation/` | A and process interface | Existing Nix and on-disk contracts preserved; bidirectional Ruby fixtures |
 | D: remote operations | `src/operations/`, `src/remote/`, `src/bin/` helper binaries | B/C interfaces | Deploy, rollback, health, carrier and GC effects match baseline |
-| E: extension protocol and site port | `crates/confctl-extension-protocol/`, `src/extensions/`; site `extensions/confctl-site/` | A/B and inventoried hooks | All site scripts map to concrete requests/actions; no Ruby runtime |
+| E: runtime kernels and netboot inventory | `src/runtime_kernels.rs`, `src/netboot_inventory.rs`, two typed Nix option modules; site settings only | A/B and inventoried behavior | Both script behaviors covered by direct core calls; disabled defaults have no feature effects |
 | F: packaging, documentation and CI | `Cargo.toml`, lock/toolchain files, `nix/`, `.github/`, `docs/`, `man/` | Staged A–E outputs | Reproducible packages; format/lint/test and VM gates; closure audit |
 
 Freeze shared interfaces first. Assign different file sets to implementers;
@@ -57,10 +80,10 @@ milestone table below splits these coarse boundaries into accepted slices.
 
 ## Consequential proposed decisions
 
-- One Rust application with private modules, several small remote helper binaries,
-  and only a small public extension protocol crate if shared by the site port.
-- Subprocess extensions instead of Rust dynamic linking or embedded Ruby. Confctl
-  owns prompts, terminal rendering, machine selection and privileged operations.
+- One Rust application with private modules and several remote helper binaries.
+- No user extension API. Core runtime-kernel and netboot services use ordinary
+  typed interfaces; site settings opt in. Confctl owns prompts, terminal rendering,
+  machine selection and privileged operations.
 - Preserve flake generation JSON, directory names, GC root names, Nix outputs,
   remote profiles and auto-rollback handshake; no schema migration by default.
 - One process supervisor and one terminal owner. Domain code emits typed events,
@@ -80,24 +103,23 @@ boundaries and decisions for lead inspection; no permissions were bypassed.
 ## Evidence reconciliation
 
 Both completed inventories have been incorporated. Their exhaustive command and
-script matrices are part of this brief; the final sections record concrete wire
-examples, compatibility exceptions, implementation packages and acceptance gates.
+behavioral matrices are part of this brief; the final sections record concrete
+Nix settings, compatibility exceptions, implementation packages and acceptance
+gates. Their original extension-mechanism recommendations are superseded.
 
 ## Architecture and Rust interfaces
 
-Use a Cargo workspace with the application at its root (`src/lib.rs`, a thin
-`src/main.rs`, and private implementation modules). The library exists for
-integration testing, not as a promised public Rust API. Put the shared wire types
-in `crates/confctl-extension-protocol`; publish/version that crate only if an
-external consumer needs it. Site code stays in the configuration repository and
-depends on an exact released protocol crate or a pinned source revision. Do not
-turn every module into a crate or port the Ruby class hierarchy.
+Use one Cargo package (`src/lib.rs`, a thin `src/main.rs`, helper binaries and
+private implementation modules). The library exists for integration testing, not
+as a promised public Rust API. Core owns the two domain services and typed feature
+settings; the site owns only its configuration and data. Do not turn every module
+into a crate or port the Ruby class hierarchy.
 
 The main data flow is:
 
 ```text
-argv + static extension manifests
-  -> clap command tree -> typed request + selection
+argv -> static clap command tree -> typed request
+  -> typed Nix settings + selection (only when the command needs them)
   -> operation service -> Nix / Git / state / SSH / HTTP adapters
   -> typed events -> presentation model -> terminal or plain renderer
                          |                     |
@@ -121,8 +143,8 @@ Core type proposals:
 
 Use `Result<T, ConfctlError>` with a `thiserror` enum for parse/selection,
 configuration, unsupported state, IO (path and operation), child failure (status
-and log reference), decode, health failure, extension failure, cancellation and
-uncertain remote outcome. Attach context at adapter boundaries. Preserve the
+and log reference), decode, health failure, feature configuration/state failure,
+cancellation and uncertain remote outcome. Attach context at adapter boundaries. Preserve the
 first meaningful operation failure; append drain/log/terminal cleanup failures
 as secondary diagnostics. Never replace a child error with an EOF or renderer
 error, or report success after a required log write failed. Translate to the
@@ -134,7 +156,7 @@ formatting and state transitions pure. Use owned data and small borrowed views;
 `Arc` is for immutable machine data and shared handles, not every object.
 Boundaries requiring fakes are process execution, HTTP/transport, filesystem
 publication and clock; do not add traits for every internal helper. Avoid
-`unwrap`/`expect` on configuration, protocol or process inputs. Treat programmer
+`unwrap`/`expect` on configuration, state or process inputs. Treat programmer
 assertions separately. Avoid `unsafe` in application code; use maintained OS
 wrappers and review any unavoidable platform-specific exception in one module.
 
@@ -270,11 +292,12 @@ Use the existing `nix` and `git` executables instead of reimplementing Nix APIs
 or embedding libgit2. Preserve installables rooted at `.#confctl`, including
 `settings`, `moduleOptions`, `machineNames`, `machineKeys`,
 `machinesJson`, `buildPlan`, `inputs`, `inputsInfo`, and
-`build.<machineKey>.{toplevel,autoRollback}`. The exact output shapes and
-`lib.mkConfctlOutputs`, module names and extra module arguments remain stable.
+`build.<machineKey>.{toplevel,autoRollback}`. Existing output fields and
+`lib.mkConfctlOutputs`, module names and extra module arguments remain stable;
+the two new opt-in settings groups are additive and absent groups mean disabled.
 Do not regenerate flake keys with a subtly different Rust escaping algorithm;
 consume the authoritative mapping. Preserve custom metadata for `ls`, filters,
-site extensions and health command interpolation.
+the two core domain services and health command interpolation.
 
 Port existing pure evaluation, explicit impure override and legacy NIX_PATH
 behavior. Normal eval/build passes no-write/no-update-lock-file protections;
@@ -316,12 +339,13 @@ mutations likewise serialize per machine; do not claim a distributed transaction
 Ship a selectable Rust candidate alongside a separately retained Ruby release
 during acceptance, with distinct executable names in test shells. The final
 default `confctl` becomes Rust only after parity gates. Keep the configuration
-pin and site extension package on one tested compatible pair. Retain a separate
-old configuration checkout/environment for rollback; do not leave two active
-extension mechanisms in the production default shell.
+pin and explicit site settings on one tested compatible pair. Retain the old
+configuration revision/scripts/environment for paired rollback; the migrated
+configuration contains no user scripts. Preserve ignored state and config-root
+identity when choosing a rollback checkout, as detailed below.
 
-Order: prove local state round trips and isolated CLI/extension fixtures;
-package core/helpers and site extension; test a disposable carrier/NixOS/
+Order: prove local state round trips and isolated CLI/domain-feature fixtures;
+package core/helpers and migrate site settings; test a disposable carrier/NixOS/
 vpsAdminOS fleet; stage the configuration shell and metadata-only commands;
 then a representative small build and explicitly authorized canary deploy.
 Update carrier and kexec helpers opportunistically with their host generations;
@@ -343,9 +367,9 @@ need a separate proven support claim.
 No database schema, seed, service daemon protocol or Terraform provider change
 is required. The vpsAdmin HTTP API is a client-side dependency for data/secret
 commands; its authentication and response contract needs fixtures, not a server
-migration. The new extension protocol is intentionally a new public boundary;
-old in-process Ruby plugins require a port. The Go experiment's extension SDK is
-not selected as a supported Rust wire contract merely because it exists.
+migration. User extension support is intentionally removed. The two inventoried
+behaviors become built-in opt-in services; arbitrary other Ruby plugins have no
+automatic migration. The Go experiment's extension SDK is outside this design.
 
 ## Reconciled sources and CLI parity gate
 
@@ -369,23 +393,24 @@ that its used extension surfaces agree between P and R.
 **M0 must freeze executable fixtures before substantive replacement work.** Run
 the retained Ruby package only in disposable fixtures with fake Nix/SSH/Git/API
 services. Record argv, environment, independent stdout/stderr, exit status,
-selected machines, prompts, file mutations and hook ordering. Cover every row of
-the 29-leaf matrix, the site leaf and four helpers. Make `tests/compat/cases.json`
+selected machines, prompts, file mutations and automatic refresh ordering. Cover every row of
+the 29-leaf Ruby matrix, the site leaf promoted to core (30 actions in the Rust
+plan) and four helpers. Make `tests/compat/cases.json`
 (or equivalent checked-in manifest) require an owning case for every route and
 option, with baseline revision and any narrowly approved variation. Completion
 means all intended rows covered, not just successful `--help` snapshots.
 
 | Families (all leaves listed in inventory) | Result/effect oracle and required edge cases |
 | --- | --- |
-| init/add/rename/rediscover | Exact allowed initial files, generated names/content/modes, rename behavior, sorted discovery, hook after core write |
+| init/add/rename/rediscover | Exact allowed initial files, generated names/content/modes, rename behavior, sorted discovery, enabled netboot refresh after core write |
 | inputs root/channel/machine | Selected root inputs, shared-input refusal, lock/original-reference preservation, commit/editor/changelog behavior, no cached fallback accepted as success |
 | ls/build | Selection and columns; build grouping, matching generation reuse, current/roots; empty and excluded-state cases |
-| deploy/health/status | Every action and copy-only/one-by-one/interactive/reboot/rollback branch; hook before lookup/build; skip-current and missing-generation prompts; failed-host versus invocation outcome |
+| deploy/health/status | Every action and copy-only/one-by-one/interactive/reboot/rollback branch; enabled kernel refresh before lookup/build; skip-current and missing-generation prompts; failed-host versus invocation outcome |
 | changelog/diff | Role union/order, downgrade direction, missing metadata/offline behavior, pager, retrieval failure results |
 | test-connection/ssh/cssh | Root/port/config/quoting/input; zero-argument SSH edge; interactive versus command mode; parallel completion-order output and aggregation; remote failure may still exit 0 |
 | generation ls/rm/rotate/collect-garbage | Local/remote defaults, distinct unified versus per-host selector semantics, retention/current preservation, affected carrier GC and errors |
 | gen-data vpsadmin all/containers/network | Authentication challenges, protected prompts, pagination, container/node and network output, atomic `.new` replacement and all-operation ordering |
-| site runtime-kernels update + hooks | Explicit and deploy scopes differ; nonfatal probe errors remove selected stale keys; full site scenario table applies |
+| runtime-kernels update + automatic domain stages | Explicit and deploy scopes differ; nonfatal probe errors remove selected stale keys; full site scenario table applies |
 | four remote helpers | CLI, filesystem effects, rollback handshake, carrier callback and old/new netboot consumers |
 
 Clap is a parser implementation, not permission to change behavior. Preserve
@@ -404,8 +429,9 @@ selector algorithms where their ordering differs. Parallel SSH result order is
 completion order, whereas kernel tables use selection order. This refines the
 architecture's general ordering rule: order is a per-command contract.
 
-Allowed rewrite differences are implementation language, new extension source
-API, requested timing appendix and similar terminal appearance. Atomic publication,
+Allowed rewrite differences are implementation language, removal of user extension
+support with built-in replacements and explicit opt-in settings, the requested
+timing appendix and similar terminal appearance. Atomic publication,
 joined cancellation and bounded memory are implementation improvements; preserve
 successful results and separately test failure behavior. Do not normalize entire
 stderr, reorder result sets or suppress error codes in parity tests. The static
@@ -421,161 +447,196 @@ an otherwise successful invocation fail with 1, preserves a prior nonzero status
 and is neither retried nor recursively reported. No Rust prototype entrypoint or
 130/143 policy is implied by the Go prototype.
 
-## Extension protocol and site replacement
+## Built-in runtime kernels and netboot inventory
 
-Use one configuration-owned package at `extensions/confctl-site/`, with
-`src/{main,runtime_kernels,netboot}.rs`, `Cargo.toml`, committed `Cargo.lock`, and
-`package.nix`. Core owns `crates/confctl-extension-protocol/`, `src/extensions/`
-and the authoritative `docs/extensions.md`. Site docs link that contract and
-explain its concrete handlers. Rust's native ABI is not a plugin boundary;
-subprocesses also permit future extensions written in another language without
-exposing private core modules.
+The replacement is two domain services, not an extensibility framework. Core owns
+`src/runtime_kernels.rs`, `src/netboot_inventory.rs`, the static CLI declaration,
+settings decoding and ordinary operation call sites. They use the existing typed
+inventory, process, file-publication and presentation services directly. No user
+program can register commands or callbacks; no registry, protocol crate, SDK,
+dynamic command tree or separately compiled site binary is planned.
 
-Add an optional `extensions = [ siteExtension ];` argument to
-`lib.mkConfigDevShell`. Nix builds the extension and a static JSON registry with
-absolute store executable paths, schema version, command declarations, hooks,
-order and requested capabilities. The shell's confctl launcher supplies the
-registry path. Help/command discovery reads data only: no extension execution,
-Nix inventory evaluation, PATH scanning, Cargo download or runtime compilation.
-Core and site package pins are tested together. Development registry overrides
-must be explicit operator input, never an implicit search of arbitrary `scripts/`.
+The reusable mechanisms are running `uname -r` against machine identities,
+merging kernel state and generating a Nix list from netboot metadata. Site policy
+is limited to enabling those features, choosing output paths and enabling the
+pre-deploy refresh. Keep the observed selection and normalization semantics as
+fixed feature behavior for the initial port; do not generalize them into arbitrary
+commands, predicates, serializers or event subscriptions.
 
-Illustrative registry entry (proposal; field names frozen in M1):
+### Typed configuration and defaults
 
-```json
+Add `nix/modules/confctl/runtime-kernels.nix` and
+`nix/modules/confctl/netboot-inventory.nix`, register them in the settings/module
+option exports and document them in the generated option reference. The existing
+`.#confctl.settings` output gains two additive groups; no new evaluation endpoint
+or plugin discovery is needed. Rust readers of older settings default both groups
+to disabled. These settings only describe operations; Nix evaluation itself must
+never probe SSH, refresh files or run an operator command.
+
+Proposed site `configs/confctl.nix` additions:
+
+```nix
 {
-  "schema": 1,
-  "id": "vpsfree-site",
-  "protocol": {"major": 1, "minor": 0},
-  "executable": "/nix/store/<site-package>/bin/confctl-site",
-  "commands": [{"path": ["runtime-kernels", "update"],
-    "handler": "runtime.update", "arguments": [{"name": "machine-pattern", "required": false}],
-    "option_set": ["show-trace", "attribute-filters", "tag-filters", "yes"]}],
-  "hooks": [{"event": "deploy.prepare", "handler": "runtime.prepare", "order": 100},
-    {"event": "rediscover.after-write", "handler": "netboot.rediscover", "order": 100}],
-  "capabilities": ["inventory", "select", "machine-exec", "prompt", "render", "workspace-files"]
+  confctl.runtimeKernels = {
+    enable = true;
+    stateFile = "configs/node/kernels.json";
+    refreshBeforeDeploy = true;
+  };
+
+  confctl.netbootInventory = {
+    enable = true;
+    outputFile = "cluster/netbootable.nix";
+  };
 }
 ```
 
-The executable is trusted code running as the operator, **not a sandbox**. Its
-capability list narrows host services and catches mistakes; it does not prevent
-arbitrary OS calls. Registry validation rejects duplicate IDs, core/extension
-route collisions, unknown option sets/hooks, incompatible major versions and
-missing required capabilities before mutations. No dynamic library loading,
-in-process Ruby, autoloaded old scripts or arbitrary object callbacks remain.
-Detect legacy regular files in the old scripts directory and stop operational
-commands with migration guidance instead of silently skipping their hooks. Help
-can explain the problem without executing them. Keep old scripts only in the
-retained old revision/environment.
-
-Proposed transport is JSON-RPC 2.0 messages, one compact UTF-8 JSON object per
-line, over child stdin/stdout. stderr is diagnostic output captured by the host,
-never a terminal handle. `initialize` negotiates protocol major/minor and the
-capabilities; reject major mismatch before invoking a command or hook. Additive
-minor fields may be ignored only when specified as optional; unknown methods,
-enum values and required capabilities fail. IDs distinguish host invocation and
-extension service calls. One invocation owns one extension child and its service
-requests; no persistent daemon or cross-invocation state is required.
-
-Set explicit bounded defaults at M1: 1 MiB per frame, 16 MiB total in-flight
-payload, bounded concurrent service requests, and paginated/projected inventory
-responses. Large process captures use host-owned handles/chunks; never put an
-unbounded log in a JSON response. `uname -r` results fit the ordinary bounded
-capture. A frame-limit violation is an extension error, not truncated success.
-Startup negotiation has a bounded timeout (proposed 5 seconds); commands/hooks
-have no new arbitrary overall or kernel-probe timeout. Preserve existing SSH
-options and allow cancellation of a stalled probe. Extension output may not
-write raw stdout beside protocol frames.
-
-Minimal services needed by these two scripts:
-
-| Service | Contract |
-| --- | --- |
-| `machines.select` / `machines.inventory` | Ordered typed machine records, metadata projections, exact host selection rules; inventory can explicitly refresh after rediscovery; no hidden managed/runnable filter |
-| `machines.exec` | Machine identity + argv + inherited execution policy; host resolves local/root SSH target; return native success/nonzero separately from spawn/transport infrastructure failure and bounded byte captures |
-| `ui.confirm` | Host displays normal configured-column machine preview and existing prompt; honors yes/always policy, suspends live painting and owns input |
-| `ui.message` / `ui.table` | Semantic styles and ordered rows, baseline stdout placement; no plugin-supplied terminal escape sequences |
-| `workspace.read` / `workspace.replace` | Relative approved paths, original content and checked atomic replacement under the invocation's root/lock; report changed paths and invalidate evaluation caches |
-| `format.nix` | Literal value serialization for generated lists; strings escaped as data, never inserted as Nix expressions |
-
-Bind the invocation to a canonical live config root and identity, not the
-extension's `/nix/store` source directory. Host-service file paths reject absolute
-paths, `..` and symlink escapes. Execute children and Nix with matching cwd/PWD;
-no stale registry/root binding can select a different checkout. Full metadata is
-available on demand rather than serializing the entire fleet into every frame.
-
-Typed hook contracts:
-
-| Hook | Input | Result and failure |
+| Option | Type/default | Contract |
 | --- | --- | --- |
-| `deploy.prepare` | Confirmed ordered machine scope, requested generation, **effective** switch action, parsed deployment options, root/invocation identity; runs after consent/validation but before lookup/build/status filtering for every action including copy-only | `Continue` or structured `Abort`; no scope/option mutation. Completed file writes invalidate build-plan/evaluation caches without expanding confirmed scope. Host waits before proceeding. Nonfatal per-host query results remain Continue |
-| `rediscover.after-write` | Root/invocation identity and already-written core-list path; fresh inventory service required | Continue after generated file replacement, or Abort with earlier core writes retained; used by add/rename/rediscover |
+| `runtimeKernels.enable` | bool / false | Enables the built-in update operation for this configuration |
+| `runtimeKernels.stateFile` | null or relative-path string / null | Required when enabled; no implicit output path or state migration |
+| `runtimeKernels.refreshBeforeDeploy` | bool / false | Requires enable; refreshes once at the existing pre-build deployment stage |
+| `netbootInventory.enable` | bool / false | Enables regeneration after add/rename/rediscover writes the core list |
+| `netbootInventory.outputFile` | null or relative-path string / null | Required when enabled; contains the generated literal Nix list |
 
-The Ruby action keyword happens to read `opts[:action]` rather than the parsed
-positional action. The new protocol exposes the effective action deliberately;
-these site scripts ignore that old keyword. This is a new typed API, not a change
-to operator deploy semantics. The old unused `return_value` object chain is not
-emulated. Future hooks may add typed results through a protocol revision.
+Use strings rather than Nix path values so ignored mutable files are not copied
+into the store. Decode to `RuntimeKernelSettings`, `NetbootInventorySettings` and
+validated `ConfigRelativePath` Rust types. Reject absolute paths, traversal,
+symlink escapes, identical destinations and reserved core files such as
+`flake.nix`, `flake.lock` and `cluster/cluster.nix` before feature effects. Require
+an existing parent directory; do not create a new site tree implicitly. Resolve
+against the canonical live configuration root. These are domain-specific options,
+not a generic file-generation DSL or code-execution capability list.
 
-A concrete abbreviated wire exchange for the prebuild kernel hook:
+`runtime-kernels update [machine-pattern]` becomes a statically registered core
+command with the existing show-trace/attribute/tag/yes options. Help requires no
+configuration or execution. Invoking the operation when disabled fails with a
+clear enablement message before probes/state access. This adds a visible core
+help entry outside this site, but default deploy, build, inventory and rediscover
+perform no new kernel probes or netboot writes. Enabling runtime kernels alone
+does not enable automatic deploy refresh. Both features stay independent.
 
-```json
-{"jsonrpc":"2.0","id":"host:1","method":"invoke","params":{"handler":"runtime.prepare","invocation":"run-1","root":"/srv/configuration","machines":["cz.vpsfree/nodes/stg/node1"],"generation":null,"effective_action":"switch"}}
-{"jsonrpc":"2.0","id":"ext:1","method":"machines.exec","params":{"machine":"cz.vpsfree/nodes/stg/node1","argv":["uname","-r"]}}
-{"jsonrpc":"2.0","id":"ext:1","result":{"status":{"exit_code":0},"stdout_base64":"Ni4xMi4zCg==","stderr_base64":""}}
-{"jsonrpc":"2.0","id":"host:1","result":{"outcome":"continue"}}
-```
+### Exact operation ordering and outcomes
 
-Initialization, scoped file read/replace, rendered table and cancellation frames
-are omitted here, not optional in the handler. One final invocation response and
-successful child exit are both required. Malformed output, crash, unknown service,
-failed handshake or Abort fails the parent operation before its next stage. Do
-not retry hooks automatically: files may already have changed. On cancellation
-stop granting new services, cancel owned process groups, join handlers/readers,
-restore terminal ownership, then report effects already completed.
+**Explicit kernel update:** validate command and enabled settings; evaluate and
+select by the existing exact-name/key/glob and attr/tag rules; keep only
+vpsAdminOS entries, including unmanaged and carried entries; run the unchanged
+confirmation/preview policy; acquire the mutation lock and load the state; run
+concurrent `uname -r` requests; join every request; render the ordered table and
+error diagnostics; merge and atomically replace the file; invalidate dependent
+Nix caches. No hidden runnable filter or carrier-target substitution is allowed.
+Zero selected machines still follows the existing prompt/header/save path.
 
-Operator commands retain their current shape:
+**Deploy:** validate action/options and obtain the usual managed-machine
+selection; confirm using the existing preview/yes rules; if enabled, take the
+non-carried vpsAdminOS subset of that confirmed scope; if empty, do not read the
+state, query hosts or print a kernel banner. Otherwise print the existing bright
+banner, run the shared update routine without another prompt and print its final
+blank line. Wait for publication and invalidate inventory/build-plan/input
+memoization dependent on the changed checkout. Only then look up a requested
+generation or evaluate build inputs/build systems, query current targets and
+continue copy/activation/reboot/health. Keep the confirmed scope fixed across
+cache refresh; do not add newly discovered targets.
 
-```text
-confctl runtime-kernels update -y -t node 'cz.vpsfree/nodes/*'
-confctl deploy -y 'cz.vpsfree/nodes/stg/*'
-confctl rediscover
-```
+This refresh runs for switch, boot, test, dry-activate, copy-only, selected
+existing generations and hosts later skipped as already current. It does not run
+for standalone build/status/health/SSH, or an invalid/declined/empty deploy.
+Inventory/settings evaluation needed for selection may precede refresh; actual
+build-input evaluation must observe the published file. Do not move refresh
+inside per-host one-by-one execution or repeat it on health retries. That would
+change scope/timing and writes relative to the original pre-deploy hook.
 
-These are examples of the proposed installed package, not commands executed in
-this session. Option spelling and placement remain governed by the fixture gate.
+**Netboot list:** add/rename/rediscover performs its existing core writes,
+including the new `cluster/cluster.nix`; invalidate inventory and evaluate a
+fresh full machine list; when enabled, select `netboot.enable == true` and
+non-carried entries, without spin/managed/runnable restrictions; retain evaluated
+order; print the replacement notice and atomically replace the configured file.
+No SSH or extra confirmation is introduced. Evaluation/write failure fails the
+parent operation and leaves earlier core writes intact, as today. No automatic
+retry or invented multi-file transaction. A rename still does not rewrite stale
+kernel JSON keys.
 
-Per-script migration decisions (full source/effect map is in the site inventory):
+Preserve the kernel policy exactly: successful stdout is stripped, split on dots
+with Ruby's trailing-empty behavior, truncated to three parts and rejoined;
+suffixes and empty successful values remain. Successful literal `error` leaves an
+old value unchanged. Ordinary nonzero command/SSH status prints an error and
+deletes only that selected host's prior key; all such failures still allow normal
+successful completion after saving. Spawn/infrastructure, malformed JSON and
+read/write failures remain invocation failures. No new probe deadline or default
+connection-test timeout is introduced. Table order is selection order; error
+paragraph order may follow completion. Preserve permissive legacy JSON behavior
+and unselected values, including the zero-machine reserialization cases; do not
+quietly normalize bad state or add a schema wrapper.
 
-- `scripts/discover_netbootable.rb` becomes `netboot.rediscover`: evaluate the
-  freshly written inventory; keep enabled non-carried machines of any spin or
-  managed state; retain order/header/final newline in `cluster/netbootable.nix`.
-  No commit, SSH or added prompt. Preserve partial earlier effects on failure.
-- `scripts/runtime_kernels.rb` becomes `runtime.update` and `runtime.prepare`
-  sharing one kernel-update function. Explicit command selects all matching
-  vpsAdminOS entries, including unmanaged/carried; hook takes only non-carried
-  vpsAdminOS from confirmed managed scope. Empty hook does nothing; empty explicit
-  command still follows its prompt/header/save behavior.
-- Keep ignored `configs/node/kernels.json`, full machine-name keys and unselected
-  entries. Strip stdout, split on dots using Ruby's trailing-empty behavior, keep
-  first three parts and rejoin. Preserve suffixes, empty successful strings and
-  literal `error` sentinel behavior. Captured command failures print errors,
-  delete only the failed selected keys and do not fail the command; other errors
-  do. No hidden runnable filter, carrier rerouting or new probe timeout.
-- Preserve existing permissive JSON behavior, including unselected non-string
-  values and zero-machine reserialization; do not silently impose strict
-  object-of-strings validation or discard unknown data. Strong typed merge
-  validation occurs where actual selected-host updates require it. Record
-  malformed-shape fixtures rather than adding an undocumented cleanup migration.
-- Atomic replacement and an invocation-owned lock improve partial-write failure
-  safety without changing successful bytes/schema. Preserve pretty JSON/no final
-  newline. Mixed Ruby/Rust writers still require operator exclusion. Bounded
-  scheduling may cap active probes while retaining selected set, result/exit and
-  table order; default first implementation can retain one worker per selected
-  host, then tune only with evidence. No generic deadline is introduced.
-- Keep `configs/node/kernels.nix` live PWD read, manual override precedence and
-  `configs/node/base.nix`/PXE consumers. Hook file writes must affect the next
-  impure evaluation; cache invalidation and scope retention are release gates.
+Core still owns terminal/input/log/process cancellation. There is no second
+extension child to supervise. Cancel/join probes before return and never publish
+an incomplete merge as success. Atomic replacement plus the configuration
+mutation lock protects completed publication; old Ruby writers do not honor the
+lock, so concurrent old/new writers remain unsupported. Preserve original
+successful file bytes/formatting and test interrupted-write failure behavior
+separately. Bounded scheduling may change active worker count, not the selected
+set or result/exit contract. Reuse existing timing admission; the standalone
+kernel command does not gain a new timing appendix by this planning change.
+
+### Concrete source migration and compatibility
+
+| Current source/data at V | Replacement and ownership |
+| --- | --- |
+| `scripts/runtime_kernels.rb` | Core runtime-kernel service, static CLI action and direct pre-deploy call; remove the script after acceptance |
+| `scripts/discover_netbootable.rb` | Core netboot inventory service called by the rediscover owner after its write; remove the script after acceptance |
+| `configs/node/kernels.json` | Same ignored JSON file, same full machine-name keys and merge/deletion semantics; explicitly selected by the site setting |
+| `configs/node/kernels.nix`, `configs/node/base.nix` | Retain live PWD-based read, manual runtime override then JSON then default, and existing kernel consumer; no forced generic core kernel policy |
+| `cluster/netbootable.nix`, `lib/netboot-machines.nix` | Retain tracked generated list and carrier aliases/tags/attributes/PXE consumers |
+| `configs/confctl.nix` | Site enables the two typed features and selects its current paths |
+| Site `flake.nix`/lock and tools shell | Select compatible Rust confctl/Nix option definitions; no extra package/registry/runtime compilation |
+
+Keep `cluster/netbootable.nix` in the initial migration. A purely Nix-derived list
+might remove one generated file, but current carrier declarations consume that
+list while contributing to the evaluated inventory; deriving it naively from
+expanded inventory risks recursion and changes rediscover/file-diff behavior.
+That is a separate possible improvement requiring a deliberate pre-carrier
+metadata design and consumer migration, not a simplification needed for this port.
+
+Prepare the new core package and options first. In one reviewed site transition,
+update its confctl pin, add explicit settings, remove the two script files and
+update documentation. Verify fixtures and live-root file compatibility before
+using the migrated shell. Retain data unchanged; do not regenerate or delete the
+ignored JSON as an installation step. No feature source, Cargo package, protocol
+crate or callback remains in the site repository. Its other 31 Ruby files and
+Gemfile/test/tooling remain unrelated and supported.
+
+| Tool/configuration combination | Supported meaning |
+| --- | --- |
+| New Rust + old config without scripts/settings | Existing core behavior; both new features disabled |
+| New Rust + old config with regular legacy script files | Fail operational preflight with migration guidance before mutation; never silently omit their behavior or execute them; help remains available |
+| New Rust + migrated site pin/settings/no scripts | Both opt-in services preserve current site operation and files |
+| Old Ruby + migrated site | Unsupported: old option definitions can reject new settings, or old CLI can miss refreshes after scripts are removed; no claim of tool-only rollback |
+| Retained old Ruby + matching old site revision/scripts | Rollback pair reads retained files written by Rust; preserve local root/path and closures |
+| Old/new running nodes and carrier helpers | Existing remote/profile/netboot contracts remain; no fleet-wide coordinated update required |
+
+Rollback restores the matching previous configuration revision, option modules,
+confctl pin and Ruby scripts together, then reenters that environment. Preserve
+ignored kernel JSON in the same live root (or explicitly transfer it when using a
+separate retained checkout); a Git checkout alone does not copy ignored state or
+GC-root identity. Restore tracked netboot data consistently and retain closures.
+Rollback does not undo successful file updates, failed-host key deletion or
+already-deployed systems. No database/API schema migration is introduced.
+
+### Simplification and remaining tradeoffs
+
+The plan removes extension registration/discovery, JSON framing/versioning,
+capability services, cross-process rendering/prompts, dynamic help, protocol
+conformance tests, SDK publishing and a second Cargo/Nix package/pin. Core
+already has the selection/SSH/UI/file services these two features need. Reuse
+those directly and keep the new modules small.
+
+The functionality itself still needs code, tests, settings documentation and
+compatibility maintenance. Core now owns these features for all users, so false
+defaults and negative-effect tests are mandatory. New customization requires an
+ordinary core feature change or separate external tooling, rather than arbitrary
+user commands/hooks. Accept that limitation deliberately; do not retain an unused
+plugin framework or reintroduce it as configurable shell commands. Keeping the
+netboot file and existing kernel edge semantics trades some elegance for a
+smaller, safer compatibility change.
 
 ## Maintained dependency candidates and limits
 
@@ -587,12 +648,12 @@ Do not infer a latest compatible version from this planning snapshot.
 
 | Candidate | Use and evidence | Constraint |
 | --- | --- | --- |
-| [clap](https://github.com/clap-rs/clap/releases) | Active release list (observed v4.6.5); built-in derive plus builder API for static extension declarations | Explicit Ruby parser adapter/fixtures; default clap policy is not the contract |
+| [clap](https://github.com/clap-rs/clap/releases) | Active release list (observed v4.6.5); static built-in command definitions | Explicit Ruby parser adapter/fixtures; default clap policy is not the contract |
 | [Tokio](https://github.com/tokio-rs/tokio), tokio-util | Process/IO/signal scheduling and cancellation; current process docs inspected | Select features; explicit joins/process groups remain application responsibility |
 | [Ratatui](https://github.com/ratatui/ratatui), [Crossterm](https://github.com/crossterm-rs/crossterm/releases) | Widgets/inline terminal and backend; inline docs observed at 0.30.2, Crossterm release list includes 0.29 | Real PTY spike required; no fullscreen/raw-mode default |
 | [Indicatif](https://github.com/console-rs/indicatif/releases) | Maintained progress alternative with current release history | Not selected alongside Ratatui; avoid two render owners |
-| [Serde](https://github.com/serde-rs/serde) + serde_json | Typed JSON state and protocol with bounded decode | Preserve unknown metadata and old field aliases explicitly |
-| [thiserror](https://github.com/dtolnay/thiserror) | Domain error enums | `anyhow` only optional top-level context, not core or wire contracts |
+| [Serde](https://github.com/serde-rs/serde) + serde_json | Typed JSON state, settings and Nix/HTTP data with bounded decode | Preserve unknown metadata and old field aliases explicitly |
+| [thiserror](https://github.com/dtolnay/thiserror) | Domain error enums | `anyhow` only optional top-level context, not domain error contracts |
 | [rustix](https://github.com/bytecodealliance/rustix) | Safe Unix bindings for process/input/locking helpers | Confirm needed API/version; platform code stays isolated |
 | [unicode-width](https://github.com/unicode-rs/unicode-width), unicode-segmentation | Display width and grapheme-safe clipping | Segmentation version/MSRV review remains M1 work |
 | [chrono](https://github.com/chronotope/chrono) | Local timezone/RFC3339 and retained generation dates | `std::time::Instant` owns durations; no wall-clock duration subtraction |
@@ -640,9 +701,9 @@ test/dev shells: confctl CLI and new helper outputs must not require Ruby,
 Bundler, Gem paths or a hidden Ruby fallback. Old retained generations may still
 reference their old Ruby helpers, intentionally for rollback.
 
-In the site repository delete only the two migrated confctl scripts after their
-handlers are packaged. Keep its other 31 Ruby files, Gemfile/test hooks and tools
-mode: they belong to vpsAdmin, services, specs and development tooling. No claim
+In the site repository delete only the two migrated confctl scripts after the
+built-in replacements and explicit settings pass acceptance. Keep its other 31
+Ruby files, Gemfile/test hooks and tools mode: they belong to vpsAdmin, services, specs and development tooling. No claim
 of a Ruby-free site or fleet follows from a Ruby-free confctl runtime.
 
 `gen-data` needs a small Rust vpsAdmin/HaveAPI client adapter, not a skipped or
@@ -652,7 +713,7 @@ error behavior using a mock HTTP server. Generate identical Nix values for
 container/node metadata and IPv4/IPv6 network lists. TLS/proxy/default endpoint
 behavior and source client revision are M0 acceptance inputs; do not invent
 endpoint paths or add a server migration. Keep credentials out of command logs,
-protocol traces and fixtures.
+HTTP traces and fixtures.
 
 ## Verification and GitHub workflows
 
@@ -681,10 +742,12 @@ Independent acceptance layers:
    descendants and no remaining processes; prompt/EOF/echo restoration, resize,
    80x24/tiny/Unicode/forced-color and either stream piped. Compare bytes and
    screen state plus ordering; final-frame snapshots alone are insufficient.
-4. Extension conformance: static help, version/route rejection before effects,
-   malformed/oversized frames, service errors, stdout contamination, child exit,
-   cancellation, root/path binding, hook order/cache refresh and nonfatal host
-   failures. Both Ruby-to-Rust and Rust-to-Ruby site file round trips.
+4. Built-in feature contract: disabled defaults cause no probes or generated-file
+   writes; explicit enablement/path validation, static help, correct scopes and
+   operation order, live-root/cache refresh, nonfatal host errors, joined
+   cancellation and atomic publication. Both Ruby-to-Rust and Rust-to-Ruby file
+   round trips; paired old/new settings migration and legacy-script refusal. Use
+   the site inventory's behavioral cases; its protocol/registry cases are superseded.
 5. Nix/package/native VM: x86_64-linux and aarch64-linux packages; isolated
    NixOS/vpsAdminOS deploy, auto rollback, carrier/deploy and carrier/netboot
    suites; old/new CLI-helper and netboot reader/writer combinations. Verify
@@ -697,9 +760,9 @@ Proposed workflows:
 
 | File/job | Trigger and execution | Required evidence |
 | --- | --- | --- |
-| `.github/workflows/rust.yml` format/lint/unit | Push and pull_request; pinned toolchain; fmt, clippy, locked unit/CLI/protocol tests on Linux | Separate streams and failure logs; no production credentials |
+| `.github/workflows/rust.yml` format/lint/unit | Push and pull_request; pinned toolchain; fmt, clippy, locked unit/CLI/domain-feature tests on Linux | Separate streams and failure logs; no production credentials |
 | Same workflow package/platform jobs | x86_64 native and aarch64 native or supported builder; locked Nix package checks | Real architecture execution where claimed; cross compilation alone is not a run |
-| `.github/workflows/tests.yml` | Keep self-hosted authorized VM suite path/dispatch model; add Rust/protocol/helper inputs to path filters | Actual suite result evaluation, logs/artifacts on failure/cancel, isolated owned test state |
+| `.github/workflows/tests.yml` | Keep self-hosted authorized VM suite path/dispatch model; add Rust/feature-option/helper inputs to path filters | Actual suite result evaluation, logs/artifacts on failure/cancel, isolated owned test state |
 | Dependency/license job | Scheduled and relevant PR changes; selected advisory/license tool | Reviewed lock/advisory update, documented exceptions rather than blanket ignores |
 
 Retire Ruby rspec/rubocop workflows only when replacement coverage and remaining
@@ -723,19 +786,19 @@ revisions and resolves deviations through the lead.
 | M0: compatibility contract | `tests/compat/`, fixtures and `docs/compatibility.md`; one owner captures Ruby, another site/helper fixture data | Read-only R/P/V/G baselines | Complete route/option manifest and executable exit/stream/side-effect oracle; discrepancies adjudicated before port |
 | M1a: domain/parser foundation | `src/cli/`, `src/domain/`, `src/error.rs`, configuration/selection tests | M0 | Typed requests preserve parser/selection quirks; no CLI policy guessed from clap |
 | M1b: process/events/timing | `src/process/`, `events.rs`, `timing.rs`, owning tests | Frozen M1 interfaces (can use fixture types) | Concurrent drains, cancellation and join proofs; exact timing ledger/footer tests |
-| M1c: extension contract | `crates/confctl-extension-protocol/`, `docs/extensions.md`, protocol fixtures | M0 site contract | Versioned request/result/schema and frame/capability/error rules; host/site owners can work independently |
+| M1c: typed feature configuration | `nix/modules/confctl/{runtime-kernels,netboot-inventory}.nix`, settings types, option fixtures and `docs/runtime-kernels.md`/`docs/netboot-inventory.md` | M0 site behavior contract | Disabled defaults, validated paths and explicit enablement; stable internal service inputs/results, no public SDK |
 | M2a: Nix/inputs/configuration | `src/nix/`, `src/inputs/`, `src/configuration/`, owning tests | M1a/b | Inventory/init/inputs/lock/Git effects pass; no accidental input update on build |
 | M2b: generations/status | `src/generation/`, status domain/adapter and tests | M1a/b; Nix interface | Round trips, roots/current crash points, family-specific selectors and unknown metadata |
 | M2c: presentation | `src/terminal/`, `src/presentation/`, PTY tests | M1a/b | One owner; prompt/pipe/color/scrollback/cancel/live timing acceptance |
-| M2d: host extension runtime + site | Core `src/extensions/`; independent site `extensions/confctl-site/` and tests | M1c, M1b, selection/renderer interfaces | Core conformance and site two-script scenarios; prepare writes visible to next eval |
+| M2d: core domain features | `src/runtime_kernels.rs`, `src/netboot_inventory.rs`, focused tests; owner-assigned deploy/rediscover call sites | M1c, M1b, selection/renderer interfaces | Both script scenarios preserved; explicit/deploy scopes, write ordering and cache invalidation; no default side effects |
 | M3a: operations | `src/operations/{build,deploy,health,ssh,connection,gc,compare}.rs` and owning tests | M2 adapters/UI | All built-in operation fixtures including partial failure/result/exit and scheduling order |
 | M3b: remote helpers | `src/bin/` helpers, `src/remote/`, netboot templates/helper tests | Process/state contracts; separate Nix integration owner | Four Ruby helpers replaced, mixed-version protocol/index tests, watchdog disconnect behavior |
 | M3c: vpsAdmin/data generation | `src/vpsadmin/`, `src/operations/gen_data.rs`, HTTP fixtures | M0 API fixtures, process/UI | All three gen-data leaves including challenge auth and error/file semantics |
-| M4: packaging/docs/CI | Cargo roots/locks, `nix/`, `flake.nix`, workflows, man generation, README/upgrade docs; site flake pin/registry separately | Accepted M2/M3 packages | Locked runtime closure audit, shell modes, helper architectures, docs/workflow drift, no embedded Ruby |
+| M4: packaging/docs/CI | Cargo roots/locks, `nix/`, `flake.nix`, workflows, man generation, README/upgrade docs; site flake pin/settings, script removal and upgrade notes separately | Accepted M2/M3 packages | Locked runtime closure audit, shell modes, helper architectures, docs/workflow drift, no embedded Ruby |
 | M5: acceptance and cutover preparation | Integration/PTY/mixed-version tests and dated rollout record | Quick checks + committed independent review | Native VM and operator visual acceptance, exact final compatible pair and retained rollback path; merge/deploy remain separately authorized |
 
 With two implementers, start M1a/M1b after the shared brief freezes; then pair
-M2a with M2b, and M2c/core-extension runtime with the site package. M3 remote
+M2a with M2b, then M2c presentation with M2d core domain features. M3 remote
 helpers can proceed beside operation assembly after stable process/state APIs;
 move vpsAdmin and packaging into freed slots. Do not let both owners edit
 `main.rs`, Cargo manifests, root Nix exports or shared terminal/event types
@@ -758,13 +821,13 @@ not an all-or-nothing rewrite branch with deferred tests.
 - Old rollback-helper survival after transport loss is not proven by static
   source. Preserve wire compatibility and test both directions; a discovered
   incompatibility must change the rollout contract before cutover.
-- Atomic writes improve interrupted-write safety but do not undo earlier hooks,
-  remote effects or failed-host kernel deletion. Old Ruby does not honor new
+- Atomic writes improve interrupted-write safety but do not undo earlier feature
+  writes, remote effects or failed-host kernel deletion. Old Ruby does not honor new
   locks. Exclude concurrent writers and retain closures, not just JSON backups.
 - `bundled-confctl` and arbitrary Ruby imports cannot remain source-compatible.
-  This intentional extension/package boundary needs clear upgrade guidance and
-  consumer inventory; minimal/tools and the actual site's unrelated Ruby tools
-  remain supported.
+  This intentional removal of extension support needs clear upgrade guidance and
+  paired tool/settings rollback; minimal/tools and the actual site's unrelated
+  Ruby tools remain supported.
 - Source timing behavior is accepted for adoption; exact human visual preference
   still requires a walkthrough of the future Rust implementation. Historical Go
   passes are not Rust test evidence.
@@ -774,9 +837,13 @@ for future implementation, not permission to run builds, deploy or merge now.
 
 ## Final architect report
 
-**DESIGN COMPLETE — ready for lead acceptance and tracking handoff.** Both
-completed inventories are reconciled; all requested CLI, presentation, timing,
-Rust architecture, dependency, extension, site migration, Ruby removal,
+**DESIGN COMPLETE — built-in-feature revision ready for lead handoff.**
+Recommend removing extension support and implementing runtime-kernel collection
+and netboot inventory as opt-in core services. Registry/protocol/SDK/site-package
+work is removed; preserved files, operation ordering, defaults and paired rollback
+are explicit. Feature logic, Nix contracts and tests remain maintenance duties.
+Both completed inventories are reconciled; all requested CLI, presentation, timing,
+Rust architecture, dependencies, built-in feature migration, Ruby removal,
 compatibility, recovery, CI and implementation-package topics are covered.
 
 Only `design.md` was written by architect0. Investigation used immutable source

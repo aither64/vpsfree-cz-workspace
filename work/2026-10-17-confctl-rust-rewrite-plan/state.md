@@ -6,15 +6,27 @@ lifecycle: active
 
 ## Status
 
-- Phase: planning delivered. Both inventories and the Rust implementation design
-  are complete and accepted. Session remains open for follow-up.
+- Phase: 2026-10-18 plan revision complete. User's simplification evaluated;
+  architect0 replaced extension support with built-in runtime-kernel and netboot
+  services and typed Nix settings. Lead accepted coherent revised design.
+  Planning only; no project edits, tests, review or deployment.
+- Identity reverified from the tracking directory; both environment markers are
+  absent and the trusted thread-bound slug/workspace matches `dev-session current`.
+
+- Original 2026-10-17 planning checkpoint delivered both source inventories and
+  the Rust design. The built-in-feature revision supersedes its extension mechanism.
 - No application implementation, application tests, independent review,
   deployment or integration occurred. No feature branches were created.
-- Identity verified by `dev-session current` and both environment markers.
+- Original turn had matching environment markers; current verification uses the
+  trusted thread binding as recorded above.
 - Retained Full-team roster verified; architect and implementers have saved
   workspace-write access. Reviewer remains unassigned for this planning task.
 
 ## Phase checklist
+
+- [x] Evaluate and document built-in runtime-kernel and netboot features without
+  a user-extension framework; reconcile implementation/migration/verification plan.
+- [x] Lead acceptance and handoff of revised plan.
 
 - [x] Scope and ownership established.
 - [x] Ruby/Go behavior and site extension inventories completed.
@@ -58,13 +70,27 @@ lifecycle: active
 
 ## Results
 
+- 2026-10-18: design now uses `RuntimeKernelService`/netboot inventory core
+  modules and opt-in `runtimeKernels`/`netbootInventory` Nix settings. Preserves
+  command, generated files, selection/failure semantics, direct operation-stage
+  ordering and cache invalidation; disabled features have no new side effects.
+- Removed registry, SDK, JSON-RPC, dynamic command registration, extension
+  subprocess and separately packaged site binary from architecture/milestones/CI.
+  Inventories remain unchanged historical evidence; design supersedes mechanism
+  recommendations. Future Rust CLI has 30 actions including the promoted site leaf.
+- Kept generated netboot Nix file for compatibility; pure Nix derivation is a
+  separate possible improvement because carrier/inventory recursion needs design.
+- Paired site/tool migration and rollback documented; existing data remains
+  compatible. Feature code/tests/settings remain maintenance duties. No planning
+  blocker, no mandatory review trigger, no implementation or runtime claims.
+
 - Investigation packages assigned to both retained implementers; architect
   owns design. No implementation, builds, independent review or deployment.
 - Initial scope checkpoint committed as `1cdb0062`; shared workspace declares
   no hook framework and has no active hooks. Unrelated changes preserved.
-- Architect proposed executable extensions, typed events, one process/terminal
-  owner and preservation of existing on-disk and remote contracts; accepted as
-  directions for the plan, subject to inventory reconciliation.
+- Original architect proposal used executable extensions. The 2026-10-18
+  built-in-feature direction supersedes that mechanism. Typed events, one
+  process/terminal owner and existing on-disk/remote contracts still apply.
 - Team report tool is absent. Architect's CLI reporting fallback was denied on
   the out-of-workspace transition lock under saved workspace-write access.
   Resolved for this task through assigned in-workspace artifacts read and relayed
@@ -83,7 +109,7 @@ lifecycle: active
   Go reference `009ca80cfca39634fc72e38b4002108a94194796` is published,
   unmerged and not deployed per its historical state; no verification reused
   as current-session runtime proof.
-- Architect completed protocol/dependency/CI/milestone sections and reconciled
+- At the original checkpoint, architect completed protocol/dependency/CI/milestone sections and reconciled
   both inventories. Lead accepted all requested areas: full CLI results,
   similar live TUI/progress/colors, maintained dependencies, site extensions,
   idiomatic Rust, GitHub checks, Go timing, full Ruby runtime/helper removal and

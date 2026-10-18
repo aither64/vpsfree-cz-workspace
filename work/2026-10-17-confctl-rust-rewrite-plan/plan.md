@@ -27,14 +27,20 @@ I'd like you to go over the project and create a plan to reimplement confctl and
 
 ## Approach
 
+2026-10-18 revision: use built-in runtime-kernel collection and netboot
+inventory generation with opt-in typed Nix settings. Remove the proposed generic
+extension framework, wire protocol, SDK and separate site executable. Architect0
+completed and lead accepted the revised design; source inventories retain
+historical observations and explicitly superseded mechanism recommendations.
+
 The completed [design](design.md) is the implementation plan. Its recommended
 sequence is:
 
 1. Capture executable Ruby compatibility fixtures for all 29 core command
    actions, site commands/hooks and four helpers (M0).
 2. Establish Rust command/domain types, supervised processes, events, timing and
-   the versioned extension contract (M1).
-3. Port Nix/input/state adapters, live presentation and the site extension using
+   typed settings for built-in kernel/netboot features (M1).
+3. Port Nix/input/state adapters, live presentation and the built-in features using
    independent file packages (M2).
 4. Complete operations, remote helpers and vpsAdmin data generation (M3).
 5. Switch packaging, documentation and GitHub format/lint/test workflows (M4).
@@ -53,8 +59,8 @@ acceptance criteria, compatibility gates, and verification requirements.
 | Owner | Result | Acceptance | Dependencies/checks |
 | --- | --- | --- | --- |
 | implementer0 | `inventory-confctl.md` | Commands, observable results, TUI, Go elapsed-time semantics, tests and packaging anchored to sources | Read-only source inspection |
-| implementer1 | `inventory-extensions.md` | Every site Ruby extension/hook mapped to behavior and migration requirements | Read-only configuration and confctl inspection |
-| architect0 | `design.md` | Idiomatic Rust architecture, maintained crate candidates, extension protocol, migration, CI and milestones | Both inventories; source reconciliation |
+| implementer1 | `inventory-extensions.md` | Every site Ruby script mapped to behavior and migration requirements; historical mechanism proposals superseded | Read-only configuration and confctl inspection |
+| architect0 | `design.md` | Idiomatic Rust architecture, maintained crate candidates, built-in kernel/netboot features, migration, CI and milestones | Both inventories; source reconciliation |
 | lead | Plan/state, acceptance inspection, portal handoff | All user requirements traceable to concrete design and next actions | Architect report and evidence |
 
 All three assigned source/design packages are complete and accepted by the lead
@@ -69,8 +75,16 @@ that a Rust implementation passes the proposed checks.
 - Adopt the useful Go elapsed-time behavior after documenting its exact contract.
 - This request authorizes planning, not implementation or modification of the
   earlier Go initiative. Leave that initiative and all project refs unchanged.
-- Proposed extension direction: a versioned subprocess protocol, with core
-  selection, prompts, process execution and terminal ownership retained by confctl.
+- Revised direction: no user extension support. Core owns kernel collection and
+  netboot inventory generation as ordinary domain services, with typed settings
+  for opt-in automatic stages and output paths. No generic task/hook DSL.
+- Proposed settings: `confctl.runtimeKernels.{enable,stateFile,refreshBeforeDeploy}`
+  and `confctl.netbootInventory.{enable,outputFile}`. Both features default off;
+  enabled paths are explicit relative strings. Keep the existing files and
+  `runtime-kernels update` command; other sites gain no default probes/writes.
+- This removes extension infrastructure, not feature maintenance. New custom
+  behavior requires an ordinary confctl feature or separate tooling. Site
+  migration/rollback pairs the tool pin, settings and script removal/restoration.
 - Site migration covers `scripts/discover_netbootable.rb` and
   `scripts/runtime_kernels.rb`. Preserve generated `cluster/netbootable.nix`,
   mutable `configs/node/kernels.json` and the latter's pre-build update ordering.
@@ -102,6 +116,6 @@ in the owning repositories when implemented, not solely in these session notes.
 
 Planning validation checks source anchors, extension coverage, requirement
 traceability, and phase acceptance criteria. Specify future unit, differential,
-PTY, process-cancellation, extension-contract, Nix and VM checks plus GitHub
+PTY, process-cancellation, built-in feature/configuration, Nix and VM checks plus GitHub
 format/lint/test workflows. Do not run builds or integration tests for a plan.
 Routine planning and investigation do not trigger mandatory final review.
