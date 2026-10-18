@@ -172,6 +172,7 @@ Current review, native proof, verification and CI artifacts are registered in
 portal.yml through the supported writer. The rollout record now captures the explicit deployment authorization and
 coordinator preparation. No reusable procedure change is needed.
 
-Next action: initialize the retained coordinator conversation, prepare exact
+Next action: finish ordinary retained-conversation initialization (threadless
+runtime absence now verified), prepare exact
 workspace/configuration pins and activate approved system/profile jobs. Deployment
 approval does not grant integration. Keep lifecycle active and all refs intact.
