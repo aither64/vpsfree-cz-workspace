@@ -4,13 +4,73 @@ lifecycle: active
 
 # Provider switch redesign
 
-Ready, awaiting merge approval. Implementation, quick checks, independent review,
-exact stock-native integration and final package/VM CI passed. Both feature
-branches are published. The user rejected a downstream Codex patch and accepted
-stopping temporary subagents. No native patch or build override remains.
-The user authorized deployment: "deploy it to aitherdev". Rollout preparation
-is in progress; activation and default-branch integration have not occurred.
-Keep the initiative open and its feature refs intact. See rollout.md.
+Current phase: all checks PASSED; corrected system/profile activation submitted.
+The reported unknown-field failure was provider missing from the strict server
+allowlist. Prior browser POST interception left real admission untested. Runtime
+5c799c1 fixes the allowlist and adds an ordinary always-run shipped-JS -> real
+HTTP acceptance/replay regression for six provider/team modes. It reproduced
+exact failure before the fix and passes with broader focused checks5.046s.
+Independent four-lane review has no findings. Real Playwright now submits actual
+forms through the real handler, verifies202/navigation/durable snapshots and
+passes16s. No native/state/schema change or Codex patch/rebuild.
+
+- [x] Correction, ordinary HTTP contract, documentation committed/published.
+- [x] Independent application review and unmocked real-browser proof.
+- [ ] Final mechanical/deployed-lineage review, exact preparations and CI39165419057.
+- [ ] Coordinated corrected deployment and live parser/continuity verification.
+- [ ] Authorized exact final-head default-branch integrations and aitherdev release.
+
+User authorizes all four default branch merges and reservation release AFTER
+corrected deployment/verification. Keep initiative active/reservation held until
+then. No archive/delete/reboot or live provider retry authorization. Current
+production stillf500440 until successor activation. Lead owns work; roster null.
+Final sources ready for checks: runtime5c799c1783db2904300d2596de23deda96e5d7ef,
+sharedc064ce09cfcea8d8af6bf676635a53cd823f772c, workspace
+905c2fcca7d539074d576b4c00ff6df1e682c0b2, configuration
+95a8b88d383c177fc65bf67d51c901a69c0b2847. Published one consolidated pin each;
+composition passed, deployed refs retained. Full inventory/replacement ranges
+in http-final-inventory.json. Existing current deployment details below remain
+historical until successor activation.
+
+## Current deployed sources and identities
+
+- dev-workspace:f500440a4ad79dc360ddc4f5840908ce3cf9bb18.
+- codex-web:c064ce09cfcea8d8af6bf676635a53cd823f772c.
+- workspace:eb32c04604f95b25ad60928b0461e236f56464c7.
+- configuration:02c0ae0fcdbc053cd5e119ff531716280854af8a (base30a20d0e).
+- Application profile:/nix/store/3sqlyjzfxjam3rxbnppy5rw38iwqlq4v-dev-workspace-0.2.0.
+- Running/system profile:/nix/store/4zw00cf4ikin1wyrlzkm7ahm583d86sz-nixos-system-aitherdev-26.05.20261015.26f4107.
+
+All four feature worktrees are clean/published. Stock Codex0.163.0 hash and daemon
+PID3387667 are unchanged. Systemc917b030 and profilea021ff17 both succeeded.
+Profile's exited verified worker required exact original-job reconciliation;
+no activation replay. Existing confctl session overridecodex-lb and successful
+operation21ea4ecf finished18:41:11Z were preserved; they predate this correction.
+
+Evidence: draft-provider-review-result.md; draft-predecessor-compat.log;
+draft-browser-result.md; draft-build-ci-result.md (original system baseline
+refusal, exact profile+CI success); draft-system-2-result.md; clean final
+mechanical reports draft-pin-review-result.md/draft-pin-review-2-result.md;
+draft-profile-reconcile.json; draft-deployment-final-status.json;
+draft-deployment-smoke-result.json (44/44 in1.553s). Initial smoke's obsolete
+failed-switch expectation is preserved in draft-deployment-smoke-initial.json
+and diagnosed below. Exact CI39162505259 succeeded, browser test13s.
+
+Project contract/recovery: dev-workspace/docs/codex-providers.md. Design rationale
+is in design.md; individual rollout provenance in rollout.md. No native patch or
+native rebuild. Prior phase records below are historical; this summary is current.
+
+## Follow-up phase: deployed and verified
+
+User approved the permissions/cancellation/creation-UI follow-up plan. Design
+and verification brief is appended to design.md. Existing failed live attempt
+remains stopped; default remains the subscription. Lead owns edits, roster null.
+
+- [x] Latest compiled cold-permission compatibility; native regression compiled.
+- [x] Cooperative pre-close cancellation, race/recovery proof and Dismiss.
+- [x] Visible concrete default selector, checkbox order and structured status.
+- [x] Quick checks, committed final changes and independent review.
+- [x] Stock-native reproduction, package verification and coordinated redeploy.
 
 ## Phase checklist
 
@@ -21,19 +81,20 @@ Keep the initiative open and its feature refs intact. See rollout.md.
 - [x] Independent final review; all required findings resolved, Advisory fixed.
 - [x] Exact stock-native roster/child/goal/queue/per-thread endpoint proof.
 - [x] Final feature publication and exact-head package/VM CI.
-- [ ] Deploy exact reviewed runtime to aitherdev (authorized).
-- [ ] Verify live system/profile, portal and Codex continuity.
+- [x] Deploy exact reviewed runtime to aitherdev (authorized).
+- [x] Verify live system/profile, portal, subscription/Daybreak catalogs and Codex continuity.
 - [ ] Explicit repository/target integration direction (not authorized).
 
-## Ownership and final branches
+## Initial deployment boundary and ownership
 
 Initiative created by this conversation: 2026-10-18-provider-switch-redesign,
 workspace /home/aither/workspace/ai/vpsfree.cz. No native lead or retained roster
-was created during implementation. The coordinator requires an ordinary retained
-lead; initialize it through supported start for this same initiative, without
-creating a team or adopting another session. This checkpoint hands coordinator
-ownership to that managed session while the external conversation supervises
-foreground rollout. Lead owns application/design;
+was created during implementation. Deployment now has an ordinary retained lead
+01a14fec-f1b0-77e2-b75d-186441945824, initialized through supported start for this
+same initiative. The roster remains null; no team was added. The external
+conversation supervises foreground deployment; the retained lead only receives
+status. The deployment handoff checkpoints preserved the required exact tracking
+baseline before conversation creation. Lead owns application/design;
 only independent review and policy verification utilities were delegated.
 
 Both worktrees and branches use the initiative slug:
@@ -46,11 +107,18 @@ Both worktrees and branches use the initiative slug:
 - codex-web: worktrees/2026-10-18-provider-switch-redesign/codex-web.
   Base 56ec377d81e86951865068e1905b7726cff33ddd; clean published final head
   c064ce09cfcea8d8af6bf676635a53cd823f772c, one additive interface commit.
+- Deployment workspace: worktrees/2026-10-18-provider-switch-redesign/workspace,
+  branch 2026-10-18-provider-switch-redesign, published head
+  0d16eba3513bb84b35b3dfb1cc5172da4b00b9a0. Single mechanical nested runtime pin.
+- Deployment configuration: worktrees/2026-10-18-provider-switch-redesign/vpsfree-cz-configuration,
+  same branch, published head 7f8d4ec297606b408ad5e1ad51aeff79109ac67a.
+  Single generated confctl channel pin. Normal hooks passed.
 - SSH remotes git@github.com:aither64/{dev-workspace,codex-web}.git. Exact remote
   feature refs verified after final publication. Both default branches untouched.
 - Shared coordination checkout remains master with unrelated work preserved.
-  Initial tracking commit 03778c16; current tracking/evidence remains uncommitted
-  under the normal daily/handoff cadence.
+  Initial tracking commit 03778c16; deployment-ownership handoff checkpoints
+  aeb3c2a1 and 2e37f003 preserve the required pre-creation baseline. Subsequent
+  tracking/evidence remains uncommitted under the normal cadence.
 - Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-18-provider-switch-redesign/
 
 No migrations. Final schema 2 is introduced directly while deployed schema-1
@@ -60,7 +128,9 @@ One consolidated codex-web stream selects c064ce0 across URL/lock/Go checksums
 and vendor hash sha256-xPhBkdvGlncxAlQPJqBmetL9AEU6A2SMjmrErV4114M=.
 No obsolete implementation or redundant pin history remains. Native assembly,
 selected release, package tests and package guide match the upstream base.
-No PR, merge, archive, deletion, session stop or live rollout.
+No PR, merge, archive or deletion. The authorized rollout is now deployed;
+its initially empty threadless shell was stopped only to initialize the retained
+coordinator conversation. No existing native conversation was stopped.
 
 ## Accepted behavior and limits
 
@@ -107,8 +177,9 @@ is part of a scoped transition. Unsupported cold permissions refuse visibly.
 
 Native tests use disposable homes, fake loopback providers and synthetic keys;
 no real model inference/subscription. Timing excludes authentication/health and
-terminal quiescing. Actual live-account switching, rollout, both live directions
-and host activation/boot are not proved by this branch run. Earlier stock
+terminal quiescing. Actual live-account switching and both live switch directions are not proved
+by this branch run. The later rollout proved system/profile activation and
+continuity (no reboot); it did not change the selected provider. Earlier stock
 prototype/browser/VM evidence is in verification-result.md and implementation-
 history.md; it does not replace the final roster/child proof.
 
@@ -172,7 +243,349 @@ Current review, native proof, verification and CI artifacts are registered in
 portal.yml through the supported writer. The rollout record now captures the explicit deployment authorization and
 coordinator preparation. No reusable procedure change is needed.
 
-Next action: finish ordinary retained-conversation initialization (threadless
-runtime absence now verified), prepare exact
-workspace/configuration pins and activate approved system/profile jobs. Deployment
-approval does not grant integration. Keep lifecycle active and all refs intact.
+Next action: user review of the deployed interface. Any integration requires
+explicit direction naming the affected repository targets; deployment approval
+does not grant it. Keep the reservation, lifecycle active and all refs intact.
+
+## Deployment acceptance
+
+The parent submitted system job 3a998a08-d7ae-493b-9bdf-2cda800ee90c and dependent
+profile job 0ddec470-0b26-4954-aa3f-714c0455a8aa. Both succeeded; machine owner
+is ee115a32-5d25-45aa-8c4d-2067cdddd223. The system attempt was already applied
+and verified while automatic bookkeeping lagged; normal reconciliation of that
+exact attempt recorded success without replay. Profile activation then succeeded.
+
+- Live system and system profile: /nix/store/5fq5d7dh7w5mwww33s82lqk55mrdjmi1-nixos-system-aitherdev-26.05.20261015.26f4107.
+- Selected application: /nix/store/v5id87al1za94l8snd5zvs5ix05944ai-dev-workspace-0.2.0.
+- Independent read-only activation observer: 01a14ff4-a102-7dd3-883d-8ec26978fd6e,
+  OpenAI/Luna/low/full access/approval never; finished, no operation remains.
+- Application build passed in 392s. The watcher's duplicate confctl build stopped
+  at an interactive prompt; the coordinator independently built/copied the exact
+  final configuration successfully. Hook setup/environment failures are resolved
+  and preserved in rollout.md. No new substantive code/configuration was needed.
+- All final smoke checks pass. Both model catalogs expose Daybreak Blue. No
+  actual inference, model change or provider transition was used for acceptance.
+- The default system CA bundle does not include this private workspace CA. The
+  explicit configured public CA verifies HTTPS (expected auth challenge 401),
+  and the host router forwards /healthz with 200. This required no trust bypass
+  or credential output. Direct portal index/session/provider/models/static reads
+  all return 200. The stock-native hash, daemon PID and retained tmux/root ID match.
+
+The reservation remains held for UI review and four unmerged branch obligations.
+No release, merge, reboot, archive, deletion or other-session mutation occurred.
+
+Follow-up heads: permissions 1402ca3, cancellation 986ddf8, browser/docs 7988487.
+Quick focused Go, 15 browser tests and Ruby 11/66 pass; native-tag compile passes.
+Control intent moved to exact-ID sidecars to preserve prior strict schema-2
+readers. Main lead applied user-facing writing guidance directly. Reviewer is
+same independent Astra/xhigh 01a14fa1-fc33-7fb2-97bd-93f01a2946bc; all four lanes,
+high risk due to permission and persistent-operation behavior. No team member
+was added. Full native reproduction and package/deploy checks follow review.
+
+Review launch correction: the first CLI resume resolved ambient Sol/codex-lb
+instead of the retained reviewer model. It was interrupted before completion and
+provides no accepted review. Explicit retained Astra/xhigh + openai then resumed
+the same native reviewer ID; header confirms the required model and effort.
+Execution is installed full_access with read-only review instructions.
+
+Parent found and corrected explicit native runtime-root preservation and fixture
+validity during review. Follow-up series consolidated to 1d94209, b21db50, a7f883e3a2a490c491683a54aeaa058fddfa07f6.
+Quick focused permission/cancellation and tagged compilation pass. Same reviewer
+resumes accumulated all-lane review on the new committed head.
+
+Independent all-lane review complete at a7f883e (followup-review-result.md): no
+Blocking findings; two Important and one Advisory fixed directly. Creation
+default refresh now follows workspace changes/reopening and inherited catalog
+reads use canonical intent. Native proof waits for an exact-thread pool-b
+persisted snapshot, preserving the seed owner. Structured progress includes
+concrete blockers. Browser 17 tests, shipped/new-session harness and tagged
+compile pass. Narrow requested remediations folded into owning commits; final
+head a48c275ed1c1439353d0bc215f286f1d015bfb96. No new design/contract, no affected-lane rerun required under step 9.
+Native integration now authorized to run; no live failed switch retry.
+
+First native regression at a48c275 failed only in the hand-appended fixture's
+missing pagination ordinal. Full evidence retained in followup-native.log and
+followup-native-result.md. Parent replaced synthetic writing entirely with
+stock-native resume/settings/unload operations, retaining writer metadata.
+No production change. Narrow fixture correction folded into its owner;
+new head 5ad31fb187891130d31dea77ae5b481b757af263, tagged fixture compiles. Fresh utility reruns exact native check.
+
+Final stock-native regression passes on 5ad31fb187891130d31dea77ae5b481b757af263:
+actual switch 2.856s; full test 4.55s. Exact owned target-provider compiled
+snapshot and runtime roots match; idle/unrelated work, retained roster, native
+goals, queue identity and child behavior pass. No shared daemon restart or live
+retry. Fresh utility 01a15033-fc94-7761-9e9d-c3a42e3df849 completed; see
+followup-native-2-result.md. Runtime final branch published with exact lease.
+Superseded CI cancellation attempted for 39152672093 but GitHub token lacks
+Actions cancellation permission (403); final-head CI is independent. Exact
+initial deployment workspace/config revisions preserved as published
+*-deployed-initial branches before final pin-stream consolidation.
+
+Final deployment pins: workspace d8ca2ecf, configuration 88140974, each one
+consolidated stream. Semantic proof and composition checker pass. Both exact
+coordinator preparations and CI 39152850104 run under utility
+01a15037-28b2-7222-b969-7352ba567b1b. Build acceptance, final mechanical history
+assessment and ordered activation remain. No current deployment or provider
+selection has been changed by the follow-up yet.
+
+Package/CI failure diagnosed before retry: exact CI 39152850104 failed only
+WorkspaceHostTest#test_provider_cancel_loses_after_applying_is_durable. The old
+fixture requested a new scoped operation but asserted the legacy cutoff. The
+correction explicitly requests schema-1 and names the legacy boundary; scoped
+cancellation/fence assertions remain separate. No production code change.
+Existing provider file passes 21/194, scoped provider file passes 11/66. Fix
+folded into cancellation owner; final runtime 169a649 published. CI cancellation
+of superseded 39152672093 had failed token authorization; 39152850104 was already
+terminal failure and not rerun. Both failed attempts/logs retained. Initial
+system preparation succeeded but is superseded and will not be activated.
+New exact-source preparation and CI will validate the corrected package.
+Final pin-history report at d8ca2ecf/88140974 had no findings; mechanical refresh
+keeps one update per stream and will receive exact final inventory assessment.
+
+Corrected exact-source deployment pins are published: workspace
+93bf6ddfdc0970e2426db34da2ff13d2ccd57675, configuration
+8bfd809a745b2bbddf80e1645a9e0c37aa5e616d, selecting runtime
+169a64987c73f63f0087f6b7b02699e8c9755d07. Final composition passes. New system/profile
+preparations and CI 39153456720 run under a fresh utility; no activation yet.
+All snapshots/evidence from prior failed/superseded preparations remain retained.
+The exact native-input receipt binds the unchanged Go/assets/dependencies,
+immutable binary and Nix environment despite the Ruby-test-only final correction.
+New final mechanical history assessment is assigned to the same reviewer.
+
+Final mechanical history refresh reviewed independently at exact workspace
+93bf6ddf/configuration 8bfd809a with no findings. See followup-pin-review-2-result.md.
+One consolidated update per stream, no migrations/obsolete history, native and
+extension dependency graphs unchanged. The prior native-input reuse receipt was
+confirmed by source inspection. Package/CI remains the only activation gate.
+
+Corrected final checks PASSED: exact CI 39153456720 (fast + archive VM, host
+correctly skipped); exact system/profile preparations exit 0. Profile build
+reported compatible App Server 0.163.0 and semantic observation protocol. Fresh
+verification utility completed; followup-build-ci-2-result.md is authoritative.
+
+Parent approved exact snapshots under the retained user deployment instruction
+and submitted system d13a0dfa-5591-4041-94d0-aa8834fae808 followed by dependent profile
+59fb085c-0a8c-463d-8cbc-b5001f004be5, same held reservation. No reboot/integration/release
+or live failed-provider retry. Candidate profile
+/nix/store/jnaffjn619a9y0v4d9q8j2vp0y1r3xx0-dev-workspace-0.2.0; system
+/nix/store/aghsnpafnnfy5i2x9v6p1nl0d0ly2yma-nixos-system-aitherdev-26.05.20261015.26f4107.
+Fresh utility observes exact jobs; parent retains recovery and acceptance.
+
+System activation applied/verified. Exact old-attempt reconciliation settled
+d13a0dfa as succeeded after retained exited-unit bookkeeping lag. Both live system
+links match aghsnp; no replay. Dependent profile activation remains observed by
+the existing utility, with live acceptance next.
+
+Final activation: system d13a0dfa/attempt 5b05f863 and profile 59fb085c/attempt
+81271c34 both succeeded, applied/verified. The profile worker also exited with
+verified receipt and exact selected package; normal exact-job reconciliation
+settled it without replay. All receipts preserved. Application profile is
+/nix/store/jnaffjn619a9y0v4d9q8j2vp0y1r3xx0-dev-workspace-0.2.0; system is
+/nix/store/aghsnpafnnfy5i2x9v6p1nl0d0ly2yma-nixos-system-aitherdev-26.05.20261015.26f4107.
+Live smoke passed 31 assertions in 2.224s: system/profile identities, three
+services, native hash/PID, health/index/session/provider/model APIs, Daybreak,
+concrete provider above Options, no virtual creation default, notification order,
+Dismiss and fresh asset, unchanged failed attempt and fixed end time, HTTPS CA,
+retained lead/tmux. No live inference or failed switch retry. No source mutation
+or additional checks remain for the requested deployment. Review/pin findings
+are resolved; cooperative cancellation can still wait for native server startup's
+existing bounded loop, as recorded in the independent report.
+
+Creation/fork implementation heads: 7cc3a74 selector; 39a25cd96f3c57aae3f974ecdd966258cab2ca02 fork. Focused checks pass; independent all-lane review assigned to retained standalone Astra/xhigh. Native/package/CI and pin redeployment remain. Corrected test entrypoints use aggregate Ruby and Go browser harness.
+
+Independent review fork-review-result.md: no Blocking, three Important findings.
+Fixes folded into fork owner: retained explicit fork receipt capability gate
+(including completed/pre-journal receipts); default/model refresh on fork reopen;
+native explicit C differs from both daemon A and source/default B. Browser
+18/18 and receipt admission 4/32 pass; full provider host checks pending. The
+new package capability guard gets a bounded same-reviewer risk reassessment;
+default refresh and fixture corrections get direct step-9 verification.
+
+First native fork check a5482d9 failed in60s: the existing loopback backend deliberately holds all B requests for switch continuation assertions. The new standalone fork source uses B, so its initial turn never became idle. Fix only that fixture marker to allow its normal completion; retain all continuation holds. No production bug indicated. Preserve fork-native-result.md/log. Native fixture correction is direct step9 verification.
+
+Second native fixture check98bd602 failed4.9s with provider-session-identity refusal. Disposable destination had portal.yml but omitted plan.md/state.md, so normal session.Find could not discover it. Add the normal fixture tracking pair, preserving production identity validation. No application code change. Preserve fork-native-2-result.md.
+
+Final runtime8054ac2 changes only native test fixtures after independent reviewa5482d9; direct step9 verification completed. Stock native fork/switch test passes5.28s, actual switched period3.48s. Exact-thread C proof differs from daemonA/source-defaultB. All three Important findings resolved. Runtime final published; pins being consolidated over workspace4dd9bb9d/confige6685e60. Superseded CI cancellation permission was previously403; retain its evidence and do not repeat known forbidden cancellations. Exact-final CI will be monitored separately.
+
+Final pins committed/published: workspace1d63ff5d (baseline4dd9bb9d), config8f19162f (baselinee6685e60), runtime8054ac2, sharedc064ce0. One final pin commit each. Final config regenerated directly over baseline so the unedited generated message includes the complete70530122..8054ac27 history; temporary owned worktree removed cleanly. First worktree post-checkout missed Bundler shell; reran original hook in prepared config environment before committing, all normal hooks passed. Composition check passes; fork-pin-proof.json retained. Native fixture direct remediations are the only delta from independently revieweda5482d9.
+
+Exact system/profile coordinator preparation commands launched by parent; fresh Luna/low utility monitors their exit/log files and CI39160521103, runtime8054ac2. No activation submitted yet. Same Astra reviewer assesses final mechanical history. Current phase package/CI verification and deployment preparation.
+
+Final mechanical pin review fork-pin-review-result.md is clean: exact single-commit streams, complete generated message, unchanged graph edges/extension, preserved upstream locks and deployed refs, no new migrations. Reviewer extends prior application conclusions to production-equivalent final8054ac2. All review gates satisfied; package/system prep and exact-head CI39160521103 remain before activation.
+
+Final package/system preparations passed; exact CI39160521103 passed fast/archive, host appropriately skipped. fork-build-ci-result.md retained. Parent now submits ordered system/profile activation with exact snapshots under existing reservation.
+
+Activation observer1 escalated from wrong system-level unit namespace. Parent verified the actual systemd USER worker is active/running PID1737950; old live system still selected, so no reconciliation/replay occurred. Corrected fresh observer2 watches original jobs with --user, preserving activation ownership. Original report retained as incomplete; its missing-unit inference does not apply.
+
+New user-reported actual creation-picker reset found in preparation.js fieldNames/update/body, NOT the catalog selector. New committed correctioncac455d retains provider in durable editable/frozen drafts and POST, defaults legacy omission to inheritance, updates both cache versions, adds replay and actual Playwright regression. Quick contracts28/18 and focused Go4.96s pass. Same reviewer assesses bounded persisted-request delta before real browser proof. Existing provider guide contract unchanged; defect violated it. Original8054profile already claimed, so it must finish before corrected successor, no cancellation/replay attempted.
+
+Draft review completed atcac455d (draft-provider-review-result.md), all four lanes,
+Astra/xhigh01a14fa1. One Important rollback finding: old schema2 editable drafts
+were accepted and displayed explicit provider while old serializer dropped it.
+Direct step9 remediation changes new/normalized browser envelope to schema3,
+reads old2 without changing body bytes, and documents preserving storage/using a
+compatible portal after rollback. Preparation29 and actual predecessor9 cases
+pass, including editable/frozen/equal-default/catalog rejection and old2 reuse.
+No new design beyond requested safe-rejection boundary; no reviewer rerun needed.
+Actual browser integration next. Original rollout jobs both succeeded without
+replay; deployed source refs preserved as *-deployed-fork before pin consolidation.
+
+Real Playwright browser regression PASSED13s onf500440; fresh Luna/low utility
+01a150a7-f56a-7661-a1c4-77ba825b1432, full_access/never. See draft-browser-result.md.
+Provider selection, model-specific refresh, workspace-change event, reload,
+explicit-equals-default/inheritance and catalog-retry POST are proven.
+Final-head CI39162505259; superseded cancellation still known403, no repeat.
+
+Final pins eb32c046/58465d2e committed/published, one stream each; original8054
+deployed pins preserved as *-deployed-fork. Composition passes on final inputs.
+An initial composition read ran before the owned config rebase finished and saw
+the prior pin; reran after completion, no source change needed. Same reviewer
+assesses final mechanical inventory. Parent launched exact system/profile
+preparations; fresh utility observes exit files/logs plus CI39162505259. System
+launch sourced config shell from shared root and reported Gemfile shellHook
+message; preparation itself remains owned/in flight, no speculative retry.
+
+Final mechanical review draft-pin-review-result.md has no findings. Reviewer
+confirms exact single-commit streams, full generated history, unchanged graph
+edges/extension/siblings/shared sources, retained deployed refs, no obsolete
+intermediates and sound migration lineage. All review gates satisfied; exact
+package preparations and CI39162505259 remain activation gates.
+
+System preparation exit3: configuration source lacks current remote baseline.
+Fetched upstream30a20d0e (two commits: vpsadminWebui pin and reviewed WebUI
+release documentation). Own runtime pin still mechanical and unaffected, but
+source must rebase before new exact preparation. Original profile preparation
+and exact runtime CI continue independently. Existing utility did not escalate
+promptly and continues to observe original runs; parent discovered failure in
+its own output. Native message to busy standalone writer refused; no retry of
+message or operation. Parent owns diagnosis/refreshed source and preserves
+original failure artifacts; corrected preparation gets a new identity/prefix.
+
+Application preparation exit0 and exact CI39162505259 succeeded (fast/archive
+passed, host appropriately skipped), draft-build-ci-result.md. Original system
+exit3 diagnosed as baseline advance. Config clean equivalent rebase02c0ae0f over
+30a20d0e published, final composition passes. Bounded independent rebase/history
+review draft-pin-review-2-result.md has no findings; upstream WebUI node/docs
+preserved, no repeated streams or migration changes. Parent launched exact
+system-2 preparation from config worktree environment, currently in flight.
+Initial watcher slot was occupied so parent visibly monitored successor; original
+batch is now terminal and fresh watcher can observe successor independently.
+
+Refreshed system2 preparation passed exact config02c0ae0f; profile/CI already
+passed exactf500440. Parent approved/submitted systemc917b030-c5d6-4e6f-95a9-f4b573f8da0d
+and dependent profilea021ff17-1dee-425f-a745-da7a3cbe8041 under retained user
+deployment direction/reservation. Expected system4zw00cf4, profile3sqlyjzf saved
+in draft-activation-expected.json. Fresh utility observes originals; no replay.
+
+Corrected activation observer01a150b4-4588-7a40-9a2d-5577ad2b19aa verified
+Luna/low/full_access/never. System original attempt5714916a-a5fe-4add-9ced-e63042fe1e9d
+is active in systemd USER namespace; profile waits on that exact job. No replay.
+
+Systemc917b030 has succeeded and observer confirms exact4zw00cf4 running/system
+profile identities. Dependent application update remains under original observer.
+
+Corrected profile worker exited with verified/applied receipt at20:34:52Z, exact
+package3sqlyjzf selected. Parent verified USER worker MainPID0/exited/exit0 and
+original receipt, then reconciled original joba021ff17 (no replay). It settled
+succeeded revision6. Both corrected deployment jobs succeeded.
+
+First live smoke passed42/43 assertions; the only failure was an outdated
+expectation that confctl's old failed switch1725 remained latest. Read-only API
+and persisted state instead prove a later session-scoped switch21ea4ecf completed
+at18:41:11Z, before this correction/activation. That session is explicitly pinned
+tocodex-lb; workspace default and this session remainopenai. Do not change that
+existing override or retry either operation. Initial smoke evidence preserved in
+draft-deployment-smoke-initial.json; updated acceptance checks exact pre-existing
+operation/timestamps/override, not obsolete state. No application edit or check
+rerun beyond this necessary smoke correction.
+
+User reported unknown session request field. Root cause: preparationForm allowlist
+omits provider although browser/body and decoder support it. Prior Playwright
+mocked /sessions and smoke only read assets, leaving actual admission untested.
+Lead owns bounded server fix plus always-run JS-to-real-HTTP contract and real
+Playwright form submission. Latest roster remains null. Design brief appended.
+
+Conditional integration approval source: user message "when this is fixed,
+deployed and verified, you can merge it into default branches and release
+aitherdev". Scope: dev-workspace, codex-web, workspace, vpsfree-cz-configuration
+feature branches into configured remote defaults (master); then normal finish
+of reservation8e7c4402-5981-476d-a587-f122faff3e1b after exact final-head/lineage
+proof and deployment verification. Approval does not authorize release before
+these conditions or archive/delete/reboot.
+
+The new ordinary Go/Node HTTP regression first exposed fixture-origin and
+unmanaged-metadata setup mistakes; corrected those to match real requests.
+Then it reproduced the exact unknown-session-field failure for both managed
+and unmanaged creation (http-admission-before.log). After the one-line server
+allowlist fix, HTTP admission/replay and broader provider/preparation tests pass
+5.046s (http-admission-after.log). Durable snapshots retain all three provider
+intents. Added real Playwright form POSTs for inheritance/default-explicit/other
+provider; its naming adapter is held only after durable acceptance, no native
+sessions. Optional browser execution remains pending committed review.
+
+Before new pins/integration, fetch proves runtime70530122, shared56ec377d,
+config30a20d0e unchanged. Workspace remote4dd9bb9d but shared localmaster55775b10
+has two unpublished coordination-only commits (Rust generator initial records
+and portal recovery plans), no feature changes. Normal coordinator preflight
+requires publishing this existing tracking-only history before integration; no
+other-session files/index edits or new tracking commits are needed. Retain
+shared master and use its tracking lock for the bounded normal SSH push.
+
+Committed/published runtime5c799c1. Same independent Astra/xhigh review completed
+all four lanes, http-admission-review-result.md, no findings. Exact demonstrated
+HTTP regression5.046s retained; real Playwright is now assigned to fresh utility.
+Final runtime CI39165419057 in progress. New workspace pin905c2fcc is rebased over
+published coordination-only master55775b10 and selects exact5c799c1. Preserved
+last deployed workspaceeb32c046/config02c0ae0f as *-deployed-draft refs before
+consolidating pins. Config final pin generation remains in progress over30a20d0e.
+
+Final report http-final-review-result.md has no findings. It independently accepts
+all four final histories/composition and all eight reviewed_change deployed pin
+replacement tuples with supported state/migration lineage. No migrations/native
+rebuild; old sources retained. Exact CI39165419057 succeeded10m47s; both exact
+preparations exit0, http-build-ci-result.md. Parent submits original ordered
+activation with expected systemlg6pjp0k and profilea5dcgj4h, then real live parser
+probe and smoke. Merges/release remain conditional on that verification.
+
+Activation observer1 returned early while original system worker remained active,
+without a result artifact or actionable failure. Parent verified original system
+attempteb3b932b MainPID2664999 active/running, phase admitted, result absent, old
+system still selected. Automatic reconcile75 was temporary lock contention, not
+evidence of no effect/failure. No manual reconcile/replay attempted. Fresh observer2
+uses a bounded read-only30sec status script and must retain ownership until an
+actual terminal/escalation result; original jobs/attempts unchanged.
+
+Original system50494179/attempteb3b932b succeeded with expectedlg6pjp0k
+running/system profile. Dependent profileaf8f7f7d now runs original attempt
+8a493dbc-5bde-4c08-b615-a0461d3e4efc under corrected observer2. No activation
+replay/retry. Parent's diagnostic process-tree read raced original worker exit
+and incorrectly treated PID0 as a root; output only comm/state (no arguments),
+no process or filesystem mutation. Observer2's authoritative transition confirms
+normal success and dependent application launch.
+
+Independent existing shared-client CI evidence checked before authorized merges:
+codex-web39142745669 is success on exactc064ce09cfcea8d8af6bf676635a53cd823f772c.
+No repeat shared-client tests selected; its unchanged commit/native consumers
+also retain earlier accepted evidence.
+
+Workspace remote advanced to19eeeb92 with one unrelated coordination-only commit.
+Preserved exact deployed905c2fcc/95a8b88d as published *-deployed-http refs.
+Cleanly rebased own workspace pin tobfdb72d7; installed Certification.prove
+reconstructed exact reviewed tree over tracking changes, migrations[]. Original
+review/certificate refs are retained. Composition passes and all four exact
+comparisons captured; the first runtime capture encountered temporary same-session
+command contention and was successfully repeated before any merge.
+
+Current inventory http-current-inventory.json; original independent inventory
+http-final-inventory.json retained. New workspace package derivation differs due
+to source context, so no check reuse is claimed by patch equivalence alone; parent
+launched exact candidate preparation as verification (no activation). Formal
+merge requestd3da9ea5-cf87-49f3-82cc-a3d69d60c867 preserves original review via
+certificate. Actual production code fix remains5c799c1, live parser probes and
+44/44 smoke pass; user conditions for merging are met. Coordinator merge-only
+driver will integrate all four exact heads, then lineage/verification/finish.
+
+## Integration d3da9ea5-cf87-49f3-82cc-a3d69d60c867
+
+Requested exact feature heads are integrated. See integration/d3da9ea5-cf87-49f3-82cc-a3d69d60c867/summary.md
+and integration/d3da9ea5-cf87-49f3-82cc-a3d69d60c867/result.json for operation receipts. Feature refs and session retained.
