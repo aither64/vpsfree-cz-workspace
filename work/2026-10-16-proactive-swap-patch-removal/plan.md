@@ -30,3 +30,7 @@ Quick gates: complete patch/tree/ownership inventory, absence of removed custom 
 Future user staging checks: exact kernel and matching modules/ZFS build, boot, DAMON disabled/enabled smoke, existing memory-view cgroup-v1/v2 cases. Identify changed kernel by store path/build identity, not uname alone. Report as merged with compilation/runtime pending, never as tested ready for use.
 
 Readers are user, implementers and future kernel maintainers. Architect owns design.md; implementers own relevant kernel/OS technical documentation and patch provenance; lead owns session tracking/review/integration records. No configuration pin or deployment repository changes. Keep session open.
+
+## Final implementation outcome
+
+Implemented and integrated into vpsAdminOS staging atca3ff61a3931f0eb524543151d5d78a70f87bfc7, source1dfea587406b7dd79973831d1677fb2418e5e9aa. Exact50-commit consumed prefix remained unchanged; only affected suffix rebuilt. Mixed experiment owners also contained ordinary reporting guards, so the final coherent ordinary-viewv3 owner preserves those without experimental state. All four review findings directly reconciled and affected final checks passed; see handoff.md/state.md for heads, proof and remaining user staging validation. No kernel build/boot/runtime/fullCIwait or deployment performed.

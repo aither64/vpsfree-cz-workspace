@@ -1,0 +1,19 @@
+$ bash /tmp/2026-10-16-proactive-swap-patch-removal-os-checks/run-evaluation.sh
+error:
+       … while evaluating attribute 'configurations'
+         at /tmp/2026-10-16-proactive-swap-patch-removal-os-checks/evaluate.nix:28:3:
+           27| in {
+           28|   configurations = [
+             |   ^
+           29|     (evaluate false false)
+
+       … while evaluating list element at index 0
+       … while evaluating the option `system.activationScripts.etc.text':
+       … while evaluating definitions from `/nix/store/c7w4dnzdyg31wrnx56y17wihi5zaibsl-source/nixos/modules/system/etc/etc-activation.nix':
+       … while evaluating definitions from `/nix/store/c7w4dnzdyg31wrnx56y17wihi5zaibsl-source/nixos/modules/system/etc/etc.nix':
+       … while evaluating the option `environment.etc.\"runit/services/channel-registration/run\".source':
+       … while evaluating the option `runit.services.channel-registration.run':
+       … while evaluating definitions from `/nix/store/gllk1ihk46g6019rhzqji66k6z3f6wfj-source/os/modules/installer/cd-dvd/channel.nix':
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: cannot coerce null to a string: null
