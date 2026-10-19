@@ -172,3 +172,62 @@ Runtime6ab3b48/config0067299a still descend from current remote targets. Workspa
 master5db0097a advanced solely in work/archive/notes records since review base
 dc97c0f0. Rebase own workspace branch over current tracking, preserve reviewed
 policy and pin commits, then record equivalence and integrate through coordinator.
+
+Workspace mechanically rebased dc97c0f0..4b22d04f onto tracking-only master4bc49561,
+final headfae19f1a. Both ordered patches equal in range-diff; git merge-tree
+independently reconstructs exact final tree. Schema1 equivalence receipt binds
+original independent review and deployed old range; no migrations. No behavior,
+inputs or package selection changed; exact prior deployment remains attributed
+to workspace4b22d04f. No retest/redeploy of unchanged runtime is needed.
+Composition and final diffs pass. Saved all three final comparisons.
+
+Complete final series checked against review: runtime two commits10eccec/6ab3b48;
+config pin18e0b9dc plus docs0067299a; workspace docs8029b350 plus pinfae19f1a.
+No obsolete approaches or repeated pin streams, no migrations. Merge integration
+request7fd58710-fda2-4d01-a969-28772bde24ae selects three master targets, runtime
+before both consumers. User approval recorded above. Release follows fresh
+integration and live identity proofs after all merge jobs settle.
+
+Merge driver submitted all three jobs, then its foreground observer exited75 on
+integration driver mutex contention. Existing journal remains phase merging;
+no operation failed or was resubmitted. Fresh merge_watch retains observation of
+exact workers. Runtime392a7bd6 claimed; consumersb8436a8a/216d8db6 depend on it.
+After those workers settle, resume same run for final records; no new request
+or duplicate merge. Reservation remains deployed_review until finish proof.
+
+Runtime master advanced to independentdce4784 hook-Ruby fix during merge prep.
+Original runtime merge attempt8a10a0cc stopped baseline_changed before effect.
+Clean rebase finalea3f9d3 preserves two ordered archive patches exactly, no conflicts.
+Published deployed-ref branch retains old6ab3b48 needed by unchanged consumer pins.
+Consumers remain original tested/deployed6ab3b48 selection; no redeploy requested.
+Fresh same-reviewer follow-up covers upstream compatibility and finish lineage;
+no broader implementation change. Authoritative job snapshots will bind refreshed
+runtime head; integration request remains original immutable historical request.
+
+Runtime follow-up accepted both exact ranges and patch_equivalent mappings.
+Important operational helper finding fixed directly: final heads/approvals now
+come from succeeded authoritative job snapshots/results, both runtime/workspace
+mappings restricted to applied owned coverage, deduplicated, remote ancestry and
+current heads verified. No production edit; focused inspection/py_compile pass.
+Original integration journal remains historical request and is not hand-edited.
+
+Operational scheduling diagnosis: coordinator was blocked in synchronous
+systemd-run Type=oneshot cleanup startup; cleanup PID2188674 waited for exclusive
+transition lock while active automatic archive scanPID1829767 held shared lock
+and was progressing through remote proofs. Merge approval exact/snapshot valid.
+Restarted only workspace-coordinator.service (scheduler) to detach that waiting
+startup client; no collector, archive scan or independent worker was stopped.
+No persisted state edits or mutation replay. This restores scheduling while
+existing cleanup waits independently. Separate performance issue retained here.
+
+Runtime and config merge jobs succeeded after scheduler recovery. Workspace job
+stopped baseline_changed at new tracking-only master7892b47e (other sessions'
+records). Clean rebase final0d3548a5; independently reconstructed from original
+accepted dc97..4b22 series again, exact finaltree match; no new behavior/migration.
+Refresh same workspace job through ordinary approval/snapshot flow; keep all
+original requests and authoritative receipts. No new pin update or deployment.
+
+## Integration 7fd58710-fda2-4d01-a969-28772bde24ae
+
+Requested exact feature heads are integrated. See integration/7fd58710-fda2-4d01-a969-28772bde24ae/summary.md
+and integration/7fd58710-fda2-4d01-a969-28772bde24ae/result.json for operation receipts. Feature refs and session retained.
