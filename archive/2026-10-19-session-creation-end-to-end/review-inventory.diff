@@ -1,0 +1,33 @@
+diff --git a/nix/tests/session-creation.nix b/nix/tests/session-creation.nix
+index a5aadd4..1094c39 100644
+--- a/nix/tests/session-creation.nix
++++ b/nix/tests/session-creation.nix
+@@ -198,11 +198,26 @@ pkgs.testers.runNixOSTest {
+             assert member["model"] == "gpt-5.5" and member["reasoningEffort"] == "high", member
+             assert member["instructions"] == "CREATION_MEMBER_INSTRUCTIONS: inspect only when assigned.", member
+             identities.append(member["threadId"])
+-            assert native(member["threadId"])["thread"]["modelProvider"] == provider
++            member_native = native(member["threadId"])["thread"]
++            assert member_native["modelProvider"] == provider, member_native
++            assert member_native["cwd"] == directory, member_native
++            assert member_native["projectId"] == member["projectId"], member_native
+         assert len(set(identities)) == len(identities), identities
+         inventory = native("inventory")
+         assert not inventory.get("nextCursor"), inventory
+-        assert set(item["id"] for item in inventory["data"] if item["cwd"] == directory) == set(identities), inventory
++        listed = {item["id"] for item in inventory["data"] if item["cwd"] == directory}
++        assert record["threadId"] in listed and listed <= set(identities), inventory
++        # Native thread/list omits empty previews, including unassigned members
++        # with only the durable developer bootstrap. Read the pinned native
++        # database without writes to inventory those identities and orphan starts.
++        persisted = json.loads(user("${python}/bin/python -c " + shlex.quote(
++            "import json,pathlib,sqlite3; "
++            "files=list((pathlib.Path.home()/'.codex').glob('state_*.sqlite')); "
++            "assert len(files)==1,files; "
++            "db=sqlite3.connect(files[0].as_uri()+'?mode=ro',uri=True); "
++            "print(json.dumps(db.execute('SELECT id FROM threads WHERE cwd=? AND archived=0',"
++            + repr((directory,)) + ").fetchall()))")))
++        assert {row[0] for row in persisted} == set(identities), persisted
+         if sensitive:
+             user("git -C " + root + " check-ignore work/" + slug + "/state.md")
+         # The real Go ready proof has already passed; retain independent native

@@ -1,0 +1,332 @@
+diff --git a/README.md b/README.md
+index 7d573ad..b8b4612 100644
+--- a/README.md
++++ b/README.md
+@@ -432,6 +432,8 @@ checks error selection/copy and stale retry after ordinary fixture deletion.
+ Native reads and durable records check the final identities and initial turn.
+ Root reasoning effort differs from the host default so terminal startup cannot
+ silently reset the submitted setting.
++The suite also changes a loaded fork's effort through the browser and verifies
++restoration through the host helper while the terminal remains subscribed.
+ The VM retains fixture evidence with its test output. After deployment, create
+ dedicated live sessions and complete follow-up exchanges too; package acceptance
+ does not establish that the deployed configuration works.
+diff --git a/docs/session-preparations.md b/docs/session-preparations.md
+index 4a6527f..9cc1b3a 100644
+--- a/docs/session-preparations.md
++++ b/docs/session-preparations.md
+@@ -17,6 +17,9 @@ availability. It never replaces unavailable captured settings with defaults.
+ Fork creation also passes its frozen model and effort to the remote terminal
+ client. A fork has no initial destination message to restore these settings,
+ so its terminal resume must preserve them rather than use host defaults.
++An interrupted fork keeps its journal until recovery confirms the effective
++settings on its idle root. Active work, an unexpected terminal process or a
++settings-update failure leaves that journal available for retry.
+ 
+ A versioned input digest binds the request ID. Repeating the same ID and input
+ returns the original operation before consulting current catalog or upload
+diff --git a/libexec/dev-session b/libexec/dev-session
+index be4b077..2c0c39a 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -1596,9 +1596,7 @@ module DevSession
+           if selected
+             terminal_started = creation_progress_begin('terminal')
+             selected = ensure_managed_session!(destination_slug, session: selected)
+-            selected = reconcile_native_client!(destination_slug, selected,
+-                                                model: fork_journal.fetch('model'),
+-                                                effort: fork_journal.fetch('effort'))
++            selected = reconcile_fork_terminal!(destination_slug, selected, fork_journal)
+             write_session_authority(destination_slug, selected, state: 'ready')
+             creation_progress_finish('terminal', terminal_started)
+ 			fork_team_members!(source_slug, destination_slug)
+@@ -1727,11 +1725,14 @@ module DevSession
+               destination_slug,
+               run_codex: true,
+               thread_id:,
+-              identity_token: journal.fetch('tmux_identity')
++              launch_codex: false,
++              identity_token: journal.fetch('tmux_identity'),
++              model: journal.fetch('model'),
++              effort: journal.fetch('effort')
+             )
+           end
+           selected = ensure_managed_session!(destination_slug, session: selected)
+-          selected = reconcile_native_client!(destination_slug, selected)
++          selected = reconcile_fork_terminal!(destination_slug, selected, journal)
+           selected = sync_slug(destination_slug, require_session: true, session: selected)
+           write_session_authority(destination_slug, selected, state: 'ready')
+ 		  fork_team_members!(source_slug, destination_slug)
+@@ -9010,6 +9011,34 @@ module DevSession
+       arguments
+     end
+ 
++    def reconcile_fork_terminal!(slug, session, journal)
++      model, effort = journal.fetch('model'), journal.fetch('effort')
++      if @portal_command && codex_provenance_configured?
++        quiesced = quiesce_native_client!(slug, session)
++        begin
++          ensure_portal_thread_idle!(slug, @selected_authority)
++        rescue StandardError
++          restore_native_client!(slug, quiesced) if quiesced
++          raise
++        end
++        command = [*@portal_command, 'thread', 'ensure-settings',
++                   '--thread-id', session.codex_thread_id, '--user-state-root', @workspace_state_root]
++        environment = session_environment(slug)
++        THREAD_ENV_ARGUMENTS.each do |name, argument|
++          command += [argument, environment.fetch(name)] if environment.key?(name)
++        end
++        command += ['--require-runtime', '--model', model, '--effort', effort]
++        stdout, = @command_runner.capture(command)
++        actual = JSON.parse(stdout)
++        unless actual == { 'model' => model, 'reasoningEffort' => effort }
++          raise Error, "fork settings were not restored for #{slug}"
++        end
++      end
++      reconcile_native_client!(slug, session, model:, effort:)
++    rescue JSON::ParserError => e
++      raise Error, "workspace-portal returned invalid fork settings: #{e.message}"
++    end
++
+     def native_provider_arguments(slug = nil)
+       name = @env['DEV_WORKSPACE_NAME']
+       return [] unless name
+diff --git a/nix/tests/session-creation.nix b/nix/tests/session-creation.nix
+index 9ca4858..4003269 100644
+--- a/nix/tests/session-creation.nix
++++ b/nix/tests/session-creation.nix
+@@ -281,6 +281,28 @@ pkgs.testers.runNixOSTest {
+                 record = checkpoint("explicit-" + kind)
+                 assert native(record["threadId"])["thread"]["modelProvider"] == "alternate", record
+ 
++        with subtest("frozen fork settings can be restored while its terminal is subscribed"):
++            browser("change-effort", "explicit-fork")
++            record = checkpoint("explicit-fork")
++            assert native(record["threadId"])["thread"]["reasoningEffort"] == "xhigh"
++            slug = record["slug"]
++            args = [package + "/bin/workspace-portal", "thread", "ensure-settings", "--require-runtime",
++                "--thread-id", record["threadId"], "--socket", runtime + "/app-server.sock",
++                "--user-state-root", state, "--workspace", root, "--session-slug", slug,
++                "--cwd", root + "/work/" + slug, "--worktrees-dir", root + "/worktrees/" + slug,
++                "--portal-base-url", "https://fixture.workspace.example.test",
++                "--portal-url", "https://fixture.workspace.example.test/" + slug + "/",
++                "--authority-dir", runtime + "/authority", "--tmux-socket", runtime + "/tmux.sock",
++                "--codex-command", state + "/codex/current/bin/codex", "--codex-version", "0.163.0",
++                "--portal-command", package + "/bin/workspace-portal", "--model", "gpt-5.5", "--effort", "high"]
++            wrong = args.copy()
++            wrong[wrong.index("--cwd") + 1] += "-foreign"
++            machine.fail(user_prefix + "sh -c " + shlex.quote(shlex.join(wrong)))
++            assert native(record["threadId"])["thread"]["reasoningEffort"] == "xhigh"
++            restored = json.loads(user(shlex.join(args)))
++            assert restored == {"model": "gpt-5.5", "reasoningEffort": "high"}, restored
++            proof("explicit-fork", "alternate")
++
+         with subtest("failed naming renders a selectable, copyable error and retries the same request"):
+             user("touch /tmp/creation-model/bad-name")
+             browser("admit", "naming-error", auto=True, provider="alternate")
+diff --git a/portal/cmd/workspace-portal/main.go b/portal/cmd/workspace-portal/main.go
+index 01f569e..93fa251 100644
+--- a/portal/cmd/workspace-portal/main.go
++++ b/portal/cmd/workspace-portal/main.go
+@@ -726,6 +726,13 @@ func threadCommand(args []string) error {
+ 	}
+ 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+ 	defer cancel()
++	runtime := threadRuntime{
++		Slug: *sessionSlug, Workspace: *workspace, WorkDir: *cwd,
++		WorktreesDir: *worktreesDir, PortalBaseURL: *portalBaseURL, PortalURL: *portalURL,
++		AuthorityDir: *authorityDir, TmuxSocket: *tmuxSocket,
++		CodexCommand: *codexCommand, CodexSocket: *socket, CodexVersion: *codexVersion,
++		PortalCommand: *portalCommand,
++	}
+ 	switch command {
+ 	case "observe":
+ 		if *threadID == "" || *cwd == "" {
+@@ -770,13 +777,6 @@ func threadCommand(args []string) error {
+ 			"model": settings.Model, "reasoningEffort": settings.ReasoningEffort,
+ 		})
+ 	case "create":
+-		runtime := threadRuntime{
+-			Slug: *sessionSlug, Workspace: *workspace, WorkDir: *cwd,
+-			WorktreesDir: *worktreesDir, PortalBaseURL: *portalBaseURL, PortalURL: *portalURL,
+-			AuthorityDir: *authorityDir, TmuxSocket: *tmuxSocket,
+-			CodexCommand: *codexCommand, CodexSocket: *socket, CodexVersion: *codexVersion,
+-			PortalCommand: *portalCommand,
+-		}
+ 		if !*requireRuntime || !runtime.complete() {
+ 			return errors.New("thread create requires complete workspace, lifecycle, tmux and Codex provenance")
+ 		}
+@@ -823,13 +823,6 @@ func threadCommand(args []string) error {
+ 		}
+ 		return json.NewEncoder(os.Stdout).Encode(map[string]string{"threadId": id})
+ 	case "fork":
+-		runtime := threadRuntime{
+-			Slug: *sessionSlug, Workspace: *workspace, WorkDir: *cwd,
+-			WorktreesDir: *worktreesDir, PortalBaseURL: *portalBaseURL, PortalURL: *portalURL,
+-			AuthorityDir: *authorityDir, TmuxSocket: *tmuxSocket,
+-			CodexCommand: *codexCommand, CodexSocket: *socket, CodexVersion: *codexVersion,
+-			PortalCommand: *portalCommand,
+-		}
+ 		if !*requireRuntime || !runtime.complete() || *threadID == "" {
+ 			return errors.New("thread fork requires a source thread and complete runtime provenance")
+ 		}
+@@ -904,6 +897,25 @@ func threadCommand(args []string) error {
+ 			return errors.New("thread input must not be blank")
+ 		}
+ 		return client.EnsureInitialMessage(ctx, *threadID, *cwd, string(message), *startUnmaterialized)
++	case "ensure-settings":
++		if !*requireRuntime || !runtime.complete() || *threadID == "" || *model == "" || *effort == "" {
++			return errors.New("thread ensure-settings requires frozen settings and complete runtime provenance")
++		}
++		if err := client.RequireThreadIdle(ctx, *threadID, *cwd); err != nil {
++			return err
++		}
++		actual, err := client.UpdateThreadSettings(ctx, *threadID, codex.ThreadSettingsUpdate{
++			Model: model, ReasoningEffort: effort,
++		})
++		if err != nil {
++			return err
++		}
++		if actual.Model != *model || actual.ReasoningEffort != *effort {
++			return errors.New("Codex did not restore the frozen fork settings")
++		}
++		return json.NewEncoder(os.Stdout).Encode(map[string]string{
++			"model": actual.Model, "reasoningEffort": actual.ReasoningEffort,
++		})
+ 	case "require-idle":
+ 		if *threadID == "" || *cwd == "" {
+ 			return errors.New("thread require-idle requires --thread-id and --cwd")
+diff --git a/test/creation_acceptance_browser.cjs b/test/creation_acceptance_browser.cjs
+index 05b9505..8320807 100644
+--- a/test/creation_acceptance_browser.cjs
++++ b/test/creation_acceptance_browser.cjs
+@@ -163,7 +163,16 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+       if (action === "create") await usable();
+     } else {
+       record = JSON.parse(fs.readFileSync(filename));
+-      if (action === "failed") await terminal("failed");
++      if (action === "change-effort") {
++        await openConversation(record.canonicalUrl || record.url, record.slug);
++        await page.locator("#codex-effort:not([disabled])").waitFor();
++        await page.locator("#codex-effort").selectOption("xhigh");
++        const deadline = Date.now() + 30000;
++        while ((await get(`/api/sessions/${record.slug}/thread`)).reasoningEffort !== "xhigh") {
++          assert(Date.now() < deadline, "reasoning change did not become effective");
++          await pause(100);
++        }
++      } else if (action === "failed") await terminal("failed");
+       else if (action === "finish") await usable();
+       else if (action === "retry") {
+         await terminal(["failed", "paused"]);
+diff --git a/test/dev_session/fork_recovery_test.rb b/test/dev_session/fork_recovery_test.rb
+index d5ed6ed..df2bd31 100644
+--- a/test/dev_session/fork_recovery_test.rb
++++ b/test/dev_session/fork_recovery_test.rb
+@@ -236,8 +236,10 @@ class DevSessionTest < Minitest::Test
+         id: '$fork', name: destination_slug, mark: '1', slug: destination_slug,
+         workspace:, socket_path: '/run/test/tmux.sock', codex_thread_id: 'thread-fork'
+       )
++      terminal_settings = []
+       retry_class = Class.new(DevSession::Runner) do
+         define_method(:create_tmux_session) do |*_args, **kwargs|
++          terminal_settings << [kwargs.fetch(:model), kwargs.fetch(:effort), kwargs.fetch(:launch_codex)]
+           session.identity_token = kwargs.fetch(:identity_token)
+           session
+         end
+@@ -248,10 +250,95 @@ class DevSessionTest < Minitest::Test
+         out: StringIO.new, err: StringIO.new, today: TODAY, env: {}
+       )
+       retry_runner.fork(source_slug, 'retry', as_is: false, json: true)
++      assert_equal([['source-model', 'medium', false]], terminal_settings)
+       assert_equal(["fork\n"], File.readlines(calls))
+     end
+   end
+ 
++  def test_unfinished_fork_restores_frozen_settings_or_retains_recovery_journal
++    %w[codex sh refuse active foreign].each do |mode|
++      with_workspace do |workspace|
++        source, destination = '2026-06-05-source', '2026-06-06-retry'
++        setup = runner_for(workspace)
++        setup.ensure_tracking_files(source)
++        manifest = setup.send(:ensure_portal_manifest, source)
++        manifest['codex'] = { 'thread_id' => 'thread-source', 'socket_path' => '/run/test/codex.sock',
++                              'client_version' => '0.163.0' }
++        setup.send(:write_portal_manifest, source, manifest)
++        calls = File.join(workspace, 'portal-calls.jsonl')
++        settings_file = File.join(workspace, 'native-effort')
++        File.write(settings_file, 'xhigh')
++        portal = File.join(workspace, 'portal.rb')
++        File.write(portal, <<~RUBY)
++          require 'json'
++          File.open(#{calls.dump}, 'a') { |f| f.puts JSON.generate(ARGV) }
++          case ARGV.first(2)
++          when ['thread', 'resolve-fork-settings']
++            puts JSON.generate(model: 'source-model', reasoningEffort: 'high')
++          when ['thread', 'fork']
++            puts JSON.generate(threadId: 'thread-fork')
++          when ['thread', 'require-idle']
++            abort 'synthetic active thread' if #{mode.dump} == 'active'
++          when ['thread', 'ensure-settings']
++            abort 'synthetic settings refusal' if #{mode.dump} == 'refuse'
++            abort 'changed thread' unless ARGV[ARGV.index('--thread-id') + 1] == 'thread-fork'
++            abort 'lost frozen model' unless ARGV[ARGV.index('--model') + 1] == 'source-model'
++            effort = ARGV[ARGV.index('--effort') + 1]
++            abort 'lost frozen effort' unless effort == 'high'
++            File.write(#{settings_file.dump}, effort)
++            puts JSON.generate(model: 'source-model', reasoningEffort: effort)
++          end
++        RUBY
++        codex = File.join(workspace, 'codex')
++        File.write(codex, "#!/bin/sh\necho 'codex-cli 0.163.0'\n")
++        File.chmod(0o755, codex)
++        options = {workspace:, portal_command: [RbConfig.ruby, portal], codex_command: codex,
++                   codex_socket: '/run/test/codex.sock', codex_version: '0.163.0',
++                   out: StringIO.new, err: StringIO.new, today: TODAY, env: {'SHELL' => '/bin/sh'}}
++        failing_class = Class.new(DevSession::Runner) do
++          define_method(:create_tmux_session) { |*_, **_| raise DevSession::Error, 'tmux interrupted' }
++        end
++        assert_raises(DevSession::Error) do
++          failing_class.new(**options, tmux: NullTmux.new).fork(source, destination, as_is: true, json: true)
++        end
++        journal_path = setup.send(:fork_journal_file, destination)
++        journal = JSON.parse(File.read(journal_path))
++        tmux = ManagedTmux.new(destination, workspace:, socket_path: '/run/test/tmux.sock',
++          codex_thread_id: 'thread-fork', codex_socket_path: '/run/test/codex.sock',
++          codex_client_version: '0.163.0', identity_token: journal.fetch('tmux_identity'),
++          pane_current_command: %w[sh foreign].include?(mode) ? mode : 'codex')
++        session = tmux.session(destination)
++        retry_class = Class.new(DevSession::Runner) do
++          define_method(:sync_slug) { |*_, **_| session }
++        end
++        retry_runner = retry_class.new(**options, tmux:)
++        if %w[refuse active foreign].include?(mode)
++          assert_raises(DevSession::Error) { retry_runner.fork(source, destination, as_is: true, json: true) }
++          assert File.exist?(journal_path)
++          assert_equal('xhigh', File.read(settings_file))
++          if mode == 'active'
++            refute_empty tmux.sent_commands # The existing idle-refusal path restores the owned client.
++          else
++            assert_empty tmux.sent_commands
++          end
++        else
++          retry_runner.fork(source, destination, as_is: true, json: true)
++          refute File.exist?(journal_path)
++          assert_equal('high', File.read(settings_file))
++          assert_includes Shellwords.split(tmux.sent_commands.last), 'model_reasoning_effort="high"'
++          assert_includes Shellwords.split(tmux.sent_commands.last), 'source-model'
++        end
++        recorded = File.readlines(calls).map { |line| JSON.parse(line) }
++        assert_equal 1, recorded.count { |args| args.first(2) == ['thread', 'fork'] }
++        assert_equal(%w[active foreign].include?(mode) ? 0 : 1,
++                     recorded.count { |args| args.first(2) == ['thread', 'ensure-settings'] })
++        current = YAML.safe_load(File.read(File.join(workspace, 'work', destination, 'portal.yml')))
++        assert_equal 'thread-fork', current.dig('codex', 'thread_id')
++        assert_equal 'thread-source', YAML.safe_load(File.read(File.join(workspace, 'work', source, 'portal.yml'))).dig('codex', 'thread_id')
++      end
++    end
++  end
++
+   def test_fork_resumes_after_manifest_crash_on_the_next_day_without_source_tracking
+     with_workspace do |workspace|
+       source_slug = '2026-06-05-source'

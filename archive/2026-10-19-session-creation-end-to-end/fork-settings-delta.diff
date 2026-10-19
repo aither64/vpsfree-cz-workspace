@@ -1,0 +1,219 @@
+diff --git a/README.md b/README.md
+index 1efc10b..7d573ad 100644
+--- a/README.md
++++ b/README.md
+@@ -430,6 +430,8 @@ interrupt creation before native root creation and after native initial-send
+ acceptance, restart the portal, and retry the original request. The suite also
+ checks error selection/copy and stale retry after ordinary fixture deletion.
+ Native reads and durable records check the final identities and initial turn.
++Root reasoning effort differs from the host default so terminal startup cannot
++silently reset the submitted setting.
+ The VM retains fixture evidence with its test output. After deployment, create
+ dedicated live sessions and complete follow-up exchanges too; package acceptance
+ does not establish that the deployed configuration works.
+diff --git a/docs/session-preparations.md b/docs/session-preparations.md
+index dbafcf9..4a6527f 100644
+--- a/docs/session-preparations.md
++++ b/docs/session-preparations.md
+@@ -14,6 +14,9 @@ their presence, provider selection, and an exact resolved team preset. Presets i
+ lead settings and instructions. For managed selections, admission validates
+ local structure and policy; the initialization worker checks live model/effort
+ availability. It never replaces unavailable captured settings with defaults.
++Fork creation also passes its frozen model and effort to the remote terminal
++client. A fork has no initial destination message to restore these settings,
++so its terminal resume must preserve them rather than use host defaults.
+ 
+ A versioned input digest binds the request ID. Repeating the same ID and input
+ returns the original operation before consulting current catalog or upload
+diff --git a/libexec/dev-session b/libexec/dev-session
+index e94d273..be4b077 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -1596,7 +1596,9 @@ module DevSession
+           if selected
+             terminal_started = creation_progress_begin('terminal')
+             selected = ensure_managed_session!(destination_slug, session: selected)
+-            selected = reconcile_native_client!(destination_slug, selected)
++            selected = reconcile_native_client!(destination_slug, selected,
++                                                model: fork_journal.fetch('model'),
++                                                effort: fork_journal.fetch('effort'))
+             write_session_authority(destination_slug, selected, state: 'ready')
+             creation_progress_finish('terminal', terminal_started)
+ 			fork_team_members!(source_slug, destination_slug)
+@@ -1630,7 +1632,9 @@ module DevSession
+             destination_slug,
+             run_codex: true,
+             thread_id:,
+-            identity_token: fork_journal.fetch('tmux_identity')
++            identity_token: fork_journal.fetch('tmux_identity'),
++            model: fork_journal.fetch('model'),
++            effort: fork_journal.fetch('effort')
+           )
+           selected = sync_slug(destination_slug, require_session: true, session: selected)
+           unless selected.identity_token == fork_journal.fetch('tmux_identity')
+@@ -7874,7 +7878,9 @@ module DevSession
+       run_codex:,
+       thread_id: nil,
+       launch_codex: run_codex,
+-      identity_token: nil
++      identity_token: nil,
++      model: nil,
++      effort: nil
+     )
+       if launch_codex && !run_codex
+         raise Error, 'cannot launch Codex for a session configured without Codex'
+@@ -7957,7 +7963,7 @@ module DevSession
+ 
+         if launch_codex
+           command = if codex_provenance_configured?
+-                      (@codex_command_argv + native_provider_arguments(slug)).map(&:shellescape).join(' ')
++                      native_client_arguments(slug, model:, effort:).map(&:shellescape).join(' ')
+                     else
+                       @codex_command.dup
+                     end
+@@ -8917,7 +8923,8 @@ module DevSession
+       raise Error, "unable to restore terminal Codex client for #{slug}: #{e.message}"
+     end
+ 
+-    def reconcile_native_client!(slug, session, allow_creating: false, start_journal: nil, revive_journal: nil)
++    def reconcile_native_client!(slug, session, allow_creating: false, start_journal: nil, revive_journal: nil,
++                                 model: nil, effort: nil)
+       return session unless codex_provenance_configured? &&
+                             session.codex_thread_id && !session.codex_thread_id.empty?
+       return session if !allow_creating && recovery_held?(slug, session.codex_thread_id)
+@@ -8936,7 +8943,7 @@ module DevSession
+               "managed Codex pane for #{slug} is running unexpected command #{current.inspect}"
+       end
+       verify_codex_client!
+-      send_native_client_command(session)
++      send_native_client_command(session, model:, effort:)
+       session = update_native_client_version!(slug, session)
+       @err.puts "restarted terminal Codex client for #{slug} after App Server disconnect"
+       session
+@@ -8988,14 +8995,21 @@ module DevSession
+       end
+     end
+ 
+-    def send_native_client_command(session)
+-      command = (@codex_command_argv + native_provider_arguments(session.slug)).map(&:shellescape).join(' ')
++    def send_native_client_command(session, model: nil, effort: nil)
++      command = native_client_arguments(session.slug, model:, effort:).map(&:shellescape).join(' ')
+       remote = "unix://#{session.codex_socket_path}"
+       command = "#{command} --remote #{remote.shellescape} resume #{session.codex_thread_id.shellescape}"
+       @tmux.run('send-keys', '-t', session.codex_pane_id, '-l', command)
+       @tmux.run('send-keys', '-t', session.codex_pane_id, 'Enter')
+     end
+ 
++    def native_client_arguments(slug, model: nil, effort: nil)
++      arguments = @codex_command_argv + native_provider_arguments(slug)
++      arguments += ['--model', model] if model
++      arguments += ['-c', "model_reasoning_effort=#{JSON.generate(effort)}"] if effort
++      arguments
++    end
++
+     def native_provider_arguments(slug = nil)
+       name = @env['DEV_WORKSPACE_NAME']
+       return [] unless name
+diff --git a/nix/tests/session-creation.nix b/nix/tests/session-creation.nix
+index f9833a1..9ca4858 100644
+--- a/nix/tests/session-creation.nix
++++ b/nix/tests/session-creation.nix
+@@ -183,6 +183,7 @@ pkgs.testers.runNixOSTest {
+         metadata = native(record["threadId"])["thread"]
+         assert metadata["modelProvider"] == provider, metadata
+         assert metadata["cwd"] == directory, metadata
++        assert metadata["model"] == "gpt-5.5" and metadata["reasoningEffort"] == "high", metadata
+         assert sum(item.get("type") == "userMessage" and record["marker"] in json.dumps(item)
+             for turn in metadata["turns"] for item in turn["items"]) == 1, metadata
+         assert len({turn["id"] for turn in metadata["turns"]}) == len(metadata["turns"]), metadata
+@@ -191,7 +192,7 @@ pkgs.testers.runNixOSTest {
+         retained = saved["members"] or []
+         assert len(retained) == members, saved
+         assert saved["rootThreadId"] == record["threadId"] and saved["slug"] == slug, saved
+-        assert saved["leadModel"] == "gpt-5.5" and saved["leadEffort"] == "xhigh", saved
++        assert saved["leadModel"] == "gpt-5.5" and saved["leadEffort"] == "high", saved
+         assert saved["leadInstructions"] == "CREATION_LEAD_INSTRUCTIONS: return the fixture reply; do not run tools.", saved
+         identities = [record["threadId"]]
+         for member in retained:
+diff --git a/test/creation_acceptance_browser.cjs b/test/creation_acceptance_browser.cjs
+index 727780b..05b9505 100644
+--- a/test/creation_acceptance_browser.cjs
++++ b/test/creation_acceptance_browser.cjs
+@@ -61,7 +61,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+     }
+     await form.locator("[name=model]:not([disabled])").waitFor();
+     await form.locator("[name=model]").selectOption("gpt-5.5");
+-    await form.locator("[name=effort]").selectOption("xhigh");
++    await form.locator("[name=effort]").selectOption("high");
+     if (options.sensitive) await form.locator("[name=sensitive]").check();
+     await form.locator("[name=browserNotificationsEnabled]").setChecked(options.notifications !== false);
+   }
+@@ -111,7 +111,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+       entry.text?.includes(record.marker));
+     if (record.kind !== "fork") assert.equal(initial.length, 1, JSON.stringify(thread));
+     assert.equal(thread.model, "gpt-5.5");
+-    assert.equal(thread.reasoningEffort, "xhigh");
++    assert.equal(thread.reasoningEffort, "high");
+     const attention = await get(`/api/sessions/${record.slug}/attention`);
+     assert.equal(attention.enabled, record.options.notifications !== false);
+     record.transcript = thread; save();
+diff --git a/test/dev_session/codex_runtime_test.rb b/test/dev_session/codex_runtime_test.rb
+index b46e237..663cbfe 100644
+--- a/test/dev_session/codex_runtime_test.rb
++++ b/test/dev_session/codex_runtime_test.rb
+@@ -626,6 +626,10 @@ class DevSessionTest < Minitest::Test
+       commands = File.readlines(calls).map { |line| JSON.parse(line).first(2) }
+       assert_equal(1, commands.count(['thread', 'create']))
+       assert_equal(1, commands.count(['thread', 'ensure-initial']))
++      runner.send(:send_native_client_command, session, model: 'gpt-captured', effort: 'high')
++      assert_equal([codex, *native, '--model', 'gpt-captured', '-c', 'model_reasoning_effort="high"',
++                    '--remote', 'unix:///run/test/codex.sock', 'resume', 'thread-provider'],
++                   Shellwords.split(tmux.sent_commands.last))
+     end
+   end
+ 
+diff --git a/test/dev_session/fork_recovery_test.rb b/test/dev_session/fork_recovery_test.rb
+index d358090..d5ed6ed 100644
+--- a/test/dev_session/fork_recovery_test.rb
++++ b/test/dev_session/fork_recovery_test.rb
+@@ -91,7 +91,7 @@ class DevSessionTest < Minitest::Test
+           File.open(#{log.dump}, 'a') { |file| file.puts ARGV.join(' ') }
+           case ARGV[0, 2]
+           when ['thread', 'resolve-fork-settings']
+-            puts JSON.generate(model: 'gpt-test', reasoningEffort: 'xhigh')
++            puts JSON.generate(model: 'gpt-test', reasoningEffort: 'high')
+           when ['thread', 'fork']
+             puts JSON.generate(threadId: 'thread-fork')
+           end
+@@ -100,8 +100,10 @@ class DevSessionTest < Minitest::Test
+           id: '$fork', name: destination_slug, mark: '1', slug: destination_slug,
+           workspace:, socket_path: '/run/test/tmux.sock', codex_thread_id: 'thread-fork'
+         )
++        terminal_settings = []
+         runner_class = Class.new(DevSession::Runner) do
+           define_method(:create_tmux_session) do |*_args, **kwargs|
++            terminal_settings << [kwargs.fetch(:model), kwargs.fetch(:effort)]
+             session.identity_token = kwargs.fetch(:identity_token)
+             session
+           end
+@@ -115,9 +117,10 @@ class DevSessionTest < Minitest::Test
+ 
+         runner.fork(
+           source_slug, 'alternative', as_is: false, json: true,
+-          model: 'gpt-test', effort: 'xhigh'
++          model: 'gpt-test', effort: 'high'
+         )
+ 
++        assert_equal([['gpt-test', 'high']], terminal_settings)
+         result = JSON.parse(out.string)
+         assert_equal(destination_slug, result.fetch('slug'))
+         assert_equal(source_slug, result.fetch('forkedFrom'))
+@@ -137,7 +140,7 @@ class DevSessionTest < Minitest::Test
+         assert_includes(command, '--fresh')
+         assert_includes(command, '--thread-id thread-source')
+         assert_includes(command, '--model gpt-test')
+-        assert_includes(command, '--effort xhigh')
++        assert_includes(command, '--effort high')
+       end
+     end
+   end

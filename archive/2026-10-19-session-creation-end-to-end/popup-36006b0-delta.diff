@@ -1,0 +1,21 @@
+diff --git a/test/creation_acceptance_browser.cjs b/test/creation_acceptance_browser.cjs
+index 8320807..6ef2e1b 100644
+--- a/test/creation_acceptance_browser.cjs
++++ b/test/creation_acceptance_browser.cjs
+@@ -165,8 +165,16 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+       record = JSON.parse(fs.readFileSync(filename));
+       if (action === "change-effort") {
+         await openConversation(record.canonicalUrl || record.url, record.slug);
++        await page.locator("#codex-settings-open:not([disabled])").click();
+         await page.locator("#codex-effort:not([disabled])").waitFor();
+         await page.locator("#codex-effort").selectOption("xhigh");
++        const [saved] = await Promise.all([
++          page.waitForResponse(response => response.request().method() === "POST" &&
++            new URL(response.url()).pathname === `/codex/conversations/${record.slug}/settings`),
++          page.locator("#codex-settings-save:not([disabled])").click(),
++        ]);
++        assert(saved.ok(), `save effort: ${saved.status()} ${await saved.text()}`);
++        await page.locator("#codex-settings-dialog").waitFor({state: "hidden"});
+         const deadline = Date.now() + 30000;
+         while ((await get(`/api/sessions/${record.slug}/thread`)).reasoningEffort !== "xhigh") {
+           assert(Date.now() < deadline, "reasoning change did not become effective");

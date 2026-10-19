@@ -1,0 +1,266 @@
+diff --git a/nix/tests/session-creation.nix b/nix/tests/session-creation.nix
+index feea4f5..3cf9c33 100644
+--- a/nix/tests/session-creation.nix
++++ b/nix/tests/session-creation.nix
+@@ -48,7 +48,8 @@ let
+           mode = "development";
+           design_owner = "team_lead";
+           service_policy = "non_priority";
+-          max_open_agents = 1;
++          max_open_agents = 2;
++          initial_member_counts.reviewer = 2;
+           inherit lifecycle;
+           routing = {
+             design_simple_effort = "high";
+@@ -111,6 +112,7 @@ pkgs.testers.runNixOSTest {
+     system.stateVersion = "26.05";
+   };
+   testScript = ''
++    import hashlib
+     import json
+     import shlex
+ 
+@@ -120,6 +122,7 @@ pkgs.testers.runNixOSTest {
+     root = "/home/developer/workspace"
+     state = "/home/developer/.local/state/dev-workspaces"
+     runtime = "/run/user/1000/dev-workspaces/fixture"
++    portal_state = state + "/portal/workspace-" + hashlib.sha256(root.encode()).hexdigest()[:16]
+     user_prefix = "runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 "
+ 
+     def user(command):
+@@ -134,6 +137,11 @@ pkgs.testers.runNixOSTest {
+     def checkpoint(name):
+         return json.loads(user("cat /tmp/creation-" + name + ".json"))
+ 
++    def status(name):
++        request = checkpoint(name)["requestId"]
++        return json.loads(user("curl -fsS --unix-socket " + runtime + "/portal.sock "
++            + "http://localhost/api/session-creations/" + request))
++
+     def restart():
+         user("systemctl --user kill --signal=SIGKILL --kill-whom=all workspace-portal@fixture.service")
+         user("systemctl --user restart workspace-portal@fixture.service")
+@@ -153,11 +161,21 @@ pkgs.testers.runNixOSTest {
+         assert manifest["creation"]["state"] == "ready", manifest
+         if record["kind"] != "fork":
+             assert manifest["creation"]["initial_goal_sent"] is True, manifest
+-        journal_path = root + "/worktrees/.locks/" + slug + (".fork.json" if record["kind"] == "fork" else ".creation.json")
+-        journal = json.loads(user("cat " + journal_path))
+-        assert journal["state"] == "ready", journal
+-        if record["options"].get("provider"):
+-            assert journal["provider"] == record["options"]["provider"], journal
++        journal_path = root + "/worktrees/.locks/" + slug + ".creation.json"
++        if record["kind"] == "fork":
++            user("test ! -e " + root + "/worktrees/.locks/" + slug + ".fork.json")
++        else:
++            journal = json.loads(user("cat " + journal_path))
++            assert journal["state"] == "ready", journal
++            if record["options"].get("provider"):
++                assert journal["provider"] == record["options"]["provider"], journal
++        receipt_path = portal_state + "/creations/" + slug + ".json"
++        receipt = json.loads(user("cat " + receipt_path))
++        assert receipt["receiptId"] == record["receiptId"] and receipt["state"] == "ready", receipt
++        evidence_path = portal_state + "/creations/" + slug + "." + record["receiptId"] + ".complete.json"
++        evidence = json.loads(user("cat " + evidence_path))
++        assert evidence["slug"] == slug and evidence["receiptId"] == record["receiptId"], evidence
++        assert evidence["threadId"] == record["threadId"], evidence
+         metadata = native(record["threadId"])["thread"]
+         assert metadata["modelProvider"] == provider, metadata
+         assert metadata["cwd"] == directory, metadata
+@@ -166,11 +184,13 @@ pkgs.testers.runNixOSTest {
+         assert len({turn["id"] for turn in metadata["turns"]}) == len(metadata["turns"]), metadata
+         roster = json.loads(user("cd " + root + " && " + package + "/bin/dev-session team list " + slug + " --as-is"))
+         saved = roster["roster"]
+-        assert len(saved["members"]) == members, saved
++        retained = saved["members"] or []
++        assert len(retained) == members, saved
++        assert saved["rootThreadId"] == record["threadId"] and saved["slug"] == slug, saved
+         assert saved["leadModel"] == "gpt-5.5" and saved["leadEffort"] == "xhigh", saved
+         assert saved["leadInstructions"] == "CREATION_LEAD_INSTRUCTIONS: return the fixture reply; do not run tools.", saved
+         identities = [record["threadId"]]
+-        for member in saved["members"]:
++        for member in retained:
+             assert member["state"] == "ready", member
+             assert member["model"] == "gpt-5.5" and member["reasoningEffort"] == "high", member
+             assert member["instructions"] == "CREATION_MEMBER_INSTRUCTIONS: inspect only when assigned.", member
+@@ -184,8 +204,10 @@ pkgs.testers.runNixOSTest {
+             user("git -C " + root + " check-ignore work/" + slug + "/state.md")
+         # The real Go ready proof has already passed; retain independent native
+         # identities and durable files so a green browser cannot mask duplicates.
+-        user("mkdir -p /tmp/creation-evidence/" + name + " && cp " + journal_path + " "
++        user("mkdir -p /tmp/creation-evidence/" + name + " && cp " + receipt_path + " " + evidence_path + " "
+             + directory + "/portal.yml /tmp/creation-evidence/" + name)
++        if record["kind"] != "fork":
++            user("cp " + journal_path + " /tmp/creation-evidence/" + name)
+         user("printf %s " + shlex.quote(json.dumps(metadata)) + " > /tmp/creation-evidence/" + name + "/native.json")
+ 
+     with subtest("install shipped portal, stock Codex and private external providers"):
+@@ -213,11 +235,18 @@ pkgs.testers.runNixOSTest {
+             record = checkpoint("explicit")
+             initial = [entry for entry in record["transcript"]["entries"] if record["marker"] in entry.get("text", "")]
+             assert any("creation-evidence.txt" in json.dumps(entry) for entry in initial), initial
+-            user("find " + state + "/portal -path '*/uploads/files/*/*' -type f -exec grep -l CREATION_ATTACHMENT_CONTENT {} + | grep .")
++            initial_native = [item for turn in native(record["threadId"])["thread"]["turns"] for item in turn["items"]
++                if item.get("type") == "userMessage" and record["marker"] in json.dumps(item)]
++            assert len(initial_native) == 1, initial_native
++            text = "\n".join(part["text"] for part in initial_native[0]["content"] if part["type"] == "text")
++            attachments = json.loads(text.split("Attached local files (inputs; keep these files outside version control):\n", 1)[1])
++            assert len(attachments) == 1 and attachments[0]["name"] == "creation-evidence.txt", attachments
++            assert attachments[0]["path"].startswith(portal_state + "/uploads/files/"), attachments
++            assert user("cat " + shlex.quote(attachments[0]["path"])) == "CREATION_ATTACHMENT_CONTENT"
+ 
+         with subtest("automatic naming, inherited default provider, sensitive retained team and notifications off"):
+             browser("create", "automatic", auto=True, team="development", sensitive=True, notifications=False)
+-            proof("automatic", "primary", members=1, sensitive=True)
++            proof("automatic", "primary", members=2, sensitive=True)
+             assert checkpoint("automatic")["slug"].endswith("accepted-session")
+ 
+         with subtest("alternate provider, fork and approved-plan destinations preserve source"):
+@@ -227,7 +256,7 @@ pkgs.testers.runNixOSTest {
+             browser("plan", "explicit", provider="alternate", team="development")
+             proof("explicit", "primary")
+             proof("explicit-fork", "alternate")
+-            proof("explicit-plan", "alternate", members=1)
++            proof("explicit-plan", "alternate", members=2)
+             for kind in ["fork", "plan"]:
+                 record = checkpoint("explicit-" + kind)
+                 assert native(record["threadId"])["thread"]["modelProvider"] == "alternate", record
+@@ -255,16 +284,23 @@ pkgs.testers.runNixOSTest {
+             restart()
+             user("rm /tmp/creation-model/hold-root-request")
+             browser("retry", "before")
+-            proof("before", "alternate", members=1)
++            proof("before", "alternate", members=2)
+ 
+         with subtest("lost accepted initial-send reply and portal restart do not repeat the user turn"):
++            user("rm -f /tmp/creation-model/send-accepted")
+             user("touch /tmp/creation-model/hold-send-reply /tmp/creation-model/hold-turn")
+             browser("admit", "after", provider="alternate", team="development")
+             machine.wait_until_succeeds("test -e /tmp/creation-model/send-accepted")
++            accepted = json.loads(user("cat /tmp/creation-model/send-accepted"))
++            accepted_native = native(accepted["threadId"])["thread"]
++            assert accepted_native["cwd"] == root + "/work/" + status("after")["slug"], accepted_native
++            assert any(turn["id"] == accepted["turnId"] and any(item.get("type") == "userMessage" and
++                "CREATION_INITIAL_after" in json.dumps(item) for item in turn["items"])
++                for turn in accepted_native["turns"]), accepted_native
+             restart()
+             user("rm /tmp/creation-model/hold-send-reply /tmp/creation-model/hold-turn")
+             browser("retry", "after")
+-            proof("after", "alternate", members=1)
++            proof("after", "alternate", members=2)
+             user("systemctl --user stop creation-transport && rm -f " + socket + " && mv " + socket + ".native " + socket)
+ 
+         with subtest("ordinary deletion fences the stale creation request"):
+diff --git a/test/creation_acceptance_browser.cjs b/test/creation_acceptance_browser.cjs
+index c28b8dd..4ba5680 100644
+--- a/test/creation_acceptance_browser.cjs
++++ b/test/creation_acceptance_browser.cjs
+@@ -64,8 +64,11 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+     while (Date.now() < deadline) {
+       const thread = await get(`/api/sessions/${record.slug}/thread`);
+       const entries = thread.entries || [];
+-      if (entries.some(entry => entry.text === marker) &&
+-          entries.filter(entry => entry.text?.includes("CREATION_REPLY_")).length >= 2) return thread;
++      const users = entries.filter(entry => entry.kind === "userMessage" && entry.text === marker);
++      assert(users.length <= 1, "follow-up user turn was duplicated");
++      if (users.length === 1 && entries.some(entry => entry.kind === "agentMessage" &&
++          entry.turnId === users[0].turnId && entry.turnStatus === "completed" &&
++          entry.text === "CREATION_REPLY_" + (record.options.provider || "primary"))) return thread;
+       await pause(200);
+     }
+     throw Error("follow-up exchange did not finish");
+@@ -73,8 +76,11 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+   async function usable() {
+     await terminal();
+     phase = "canonical redirect and transcript";
+-    await page.goto(origin + (record.url || record.canonicalUrl));
+-    await page.waitForURL(origin + record.canonicalUrl, {timeout: 30000});
++    const destination = record.requestId ? record.canonicalUrl : record.url;
++    assert.equal(destination, `/${record.slug}/`);
++    record.destination = destination;
++    await page.goto(origin + record.url);
++    await page.waitForURL(origin + destination, {timeout: 30000});
+     record.threadId = await page.locator("body").getAttribute("data-thread-id");
+     assert(record.threadId);
+     await page.locator("#transcript").getByText("CREATION_REPLY_", {exact: false}).first().waitFor();
+@@ -155,7 +161,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+         assert(record.attempt > previous.attempt);
+       } else if (["fork", "plan"].includes(action)) {
+         const source = {...record};
+-        await page.goto(origin + source.canonicalUrl);
++        await page.goto(origin + source.destination);
+         if (action === "plan") {
+           await page.locator("#codex-mode").getByRole("button", {name: "Plan", exact: true}).click();
+           await page.locator("#message-form textarea").fill("CREATION_PLAN_REQUEST");
+@@ -176,13 +182,13 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+           kind: action, options, source: {slug: source.slug, threadId: source.threadId}};
+         await usable();
+         assert.notEqual(record.threadId, source.threadId);
+-        const response = await context.request.get(origin + source.canonicalUrl);
++        const response = await context.request.get(origin + source.destination);
+         assert(response.ok());
+         fs.writeFileSync(`/tmp/creation-${name}-${action}.json`, JSON.stringify(record, null, 2));
+         // Keep the source checkpoint for independent fork and plan runs.
+         fs.writeFileSync(filename, JSON.stringify(source, null, 2));
+       } else if (action === "delete-stale") {
+-        await page.goto(origin + record.canonicalUrl);
++        await page.goto(origin + record.destination);
+         await page.locator("#delete-session-open").click();
+         await page.locator("#delete-session-form button[type=submit]").click();
+         const deadline = Date.now() + 60000;
+@@ -195,7 +201,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
+         const stale = await context.request.post(origin + statusPath() + "/retry", {
+           headers: {Origin: origin}, data: {receiptId: record.receiptId, attempt: record.attempt}});
+         assert.equal(stale.status(), 409, await stale.text());
+-        assert.equal((await context.request.get(origin + record.canonicalUrl)).status(), 404);
++        assert.equal((await context.request.get(origin + record.destination)).status(), 404);
+       } else throw Error("unknown action " + action);
+     }
+     assert.deepEqual(errors, []);
+diff --git a/test/creation_transport.py b/test/creation_transport.py
+index 5ed0980..ce99041 100644
+--- a/test/creation_transport.py
++++ b/test/creation_transport.py
+@@ -14,26 +14,29 @@ import websockets
+ async def proxy(listen, target):
+     async def connection(client):
+         async with websockets.unix_connect(target, max_size=16 * 1024 * 1024) as native:
+-            starts = set()
++            starts = {}
+ 
+             async def upstream():
+                 async for data in client:
+                     message = json.loads(data)
+-                    if message.get("method") == "thread/start":
++                    if (message.get("method") == "thread/start" and
++                            message["params"].get("cwd", "").endswith("-before")):
+                         while pathlib.Path("/tmp/creation-model/hold-root-request").exists():
+                             pathlib.Path("/tmp/creation-model/root-entered").touch()
+                             await asyncio.sleep(0.025)
+                         if client.state.name != "OPEN":
+                             return
+-                    if message.get("method") == "turn/start":
+-                        starts.add(message["id"])
++                    if (message.get("method") == "turn/start" and
++                            "CREATION_INITIAL_after" in json.dumps(message["params"].get("input"))):
++                        starts[message["id"]] = message["params"]["threadId"]
+                     await native.send(data)
+ 
+             async def downstream():
+                 async for data in native:
+                     message = json.loads(data)
+                     if message.get("id") in starts and "result" in message:
+-                        pathlib.Path("/tmp/creation-model/send-accepted").touch()
++                        pathlib.Path("/tmp/creation-model/send-accepted").write_text(json.dumps({
++                            "threadId": starts[message["id"]], "turnId": message["result"]["turn"]["id"]}))
+                         while pathlib.Path("/tmp/creation-model/hold-send-reply").exists():
+                             await asyncio.sleep(0.025)
+                     await client.send(data)
+@@ -48,6 +51,7 @@ async def proxy(listen, target):
+                     task.cancel()
+ 
+     async with websockets.unix_serve(connection, listen, max_size=16 * 1024 * 1024):
++        pathlib.Path(listen).chmod(0o600)
+         await asyncio.Future()
+ 
+ 

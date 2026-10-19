@@ -1,0 +1,89 @@
+diff --git a/docs/session-preparations.md b/docs/session-preparations.md
+index ab3f392..dbafcf9 100644
+--- a/docs/session-preparations.md
++++ b/docs/session-preparations.md
+@@ -33,10 +33,12 @@ exact receipt installation, a server-generated `canonicalUrl` and final slug.
+ `POST /api/session-creations/<request-id>/retry` requires the current
+ `receiptId` and `attempt`; stale offers conflict. Before handoff a retry starts
+ a new preparation attempt, or resumes an attempt already published but not
+-launched. After handoff the ordinary creation receipt owns
+-attempts and progress. `preparationAttempt` retains the preparation generation
+-through initialization and terminal compaction. `attempt` identifies the current
+-retry owner: preparation before handoff, initialization afterward. Name-selection
++launched. Retrying a ready session returns 202 without restarting work.
++Deleted, cancelled or conflicting destinations return 409. After handoff the
++ordinary creation receipt owns attempts and progress. `preparationAttempt`
++retains the preparation generation through initialization and terminal compaction.
++During unfinished work, `attempt` identifies the current retry owner: preparation
++before handoff, initialization afterward. Name-selection
+ confirmation uses `preparationAttempt`; initialization retry uses `attempt`.
+ These endpoints require canonical unescaped UUID paths;
+ mutations retain the portal's exact-origin and package-generation checks.
+diff --git a/nix/tests/session-creation.nix b/nix/tests/session-creation.nix
+index 1094c39..f9833a1 100644
+--- a/nix/tests/session-creation.nix
++++ b/nix/tests/session-creation.nix
+@@ -148,7 +148,8 @@ pkgs.testers.runNixOSTest {
+     def restart():
+         user("systemctl --user kill --signal=SIGKILL --kill-whom=all workspace-portal@fixture.service")
+         user("systemctl --user restart workspace-portal@fixture.service")
+-        machine.wait_until_succeeds(user_prefix + "test -S " + runtime + "/portal.sock")
++        machine.wait_until_succeeds(user_prefix + "curl -fsS --unix-socket " + runtime
++            + "/portal.sock http://localhost/ >/dev/null")
+ 
+     def native(identity):
+         return json.loads(user("${python}/bin/python ${../../test/creation_transport.py} read "
+diff --git a/portal/internal/web/preparation.go b/portal/internal/web/preparation.go
+index 93ad742..51a57eb 100644
+--- a/portal/internal/web/preparation.go
++++ b/portal/internal/web/preparation.go
+@@ -718,7 +718,17 @@ func (s *Server) retryPreparation(w http.ResponseWriter, r *http.Request, id str
+ 		s.writeError(w, r, http.StatusServiceUnavailable, "Portal is stopping.")
+ 		return
+ 	}
+-	if record.State == "terminal" || record.State == "running" && !(work.attempt == record.Attempt && work.stopped) {
++	if record.State == "terminal" {
++		s.operationMu.Unlock()
++		status, _ := s.preparationStatus(id)
++		code := http.StatusAccepted
++		if status.State != "ready" {
++			code = http.StatusConflict
++		}
++		s.writeJSON(w, code, status)
++		return
++	}
++	if record.State == "running" && !(work.attempt == record.Attempt && work.stopped) {
+ 		if !s.closing {
+ 			s.launchPreparationLocked(record)
+ 		}
+diff --git a/portal/internal/web/preparation_test.go b/portal/internal/web/preparation_test.go
+index a23c5ac..62af4fb 100644
+--- a/portal/internal/web/preparation_test.go
++++ b/portal/internal/web/preparation_test.go
+@@ -954,6 +954,26 @@ func TestSessionPreparationCompactionSurvivesReceiptRetirement(t *testing.T) {
+ 	if _, err := os.Stat(filepath.Join(server.config.Workspace, "work", record.Slug)); err != nil {
+ 		t.Fatal(err)
+ 	}
++	retry := func() *httptest.ResponseRecorder {
++		return postCreation(t, server, "/api/session-creations/"+record.RequestID+"/retry",
++			fmt.Sprintf(`{"receiptId":%q,"attempt":%d}`, record.ReceiptID, compact.Attempt), "application/json")
++	}
++	var status preparationStatus
++	response = retry()
++	if json.Unmarshal(response.Body.Bytes(), &status) != nil || response.Code != 202 || status.State != "ready" || len(server.creations) != 0 {
++		t.Fatalf("ready compacted retry=%d %s", response.Code, response.Body.String())
++	}
++	directory := filepath.Join(server.config.Workspace, "work", record.Slug)
++	if err := os.RemoveAll(directory); err != nil {
++		t.Fatal(err)
++	}
++	response = retry()
++	if json.Unmarshal(response.Body.Bytes(), &status) != nil || response.Code != 409 || status.State != "gone" || status.ReceiptID != record.ReceiptID || len(server.creations) != 0 {
++		t.Fatalf("removed compacted retry=%d %s", response.Code, response.Body.String())
++	}
++	if _, err := os.Stat(directory); !errors.Is(err, os.ErrNotExist) {
++		t.Fatal("removed destination recreated", err)
++	}
+ }
+ 
+ func TestSessionPreparationPathsRejectAmbiguousIdentifiers(t *testing.T) {

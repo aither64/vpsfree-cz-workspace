@@ -1,0 +1,1716 @@
+diff --git a/.github/workflows/check.yml b/.github/workflows/check.yml
+index 8c9b479..2808b8b 100644
+--- a/.github/workflows/check.yml
++++ b/.github/workflows/check.yml
+@@ -13,7 +13,7 @@ jobs:
+     runs-on: ubuntu-latest
+     steps:
+       - uses: actions/checkout@v7.0.1
+-      - uses: cachix/install-nix-action@v31.11.1
++      - uses: cachix/install-nix-action@v31.11.2
+         with:
+           extra_nix_config: |
+             extra-substituters = https://cache.numtide.com
+@@ -24,7 +24,7 @@ jobs:
+         run: |
+           check_names=$(nix eval --json .#checks.x86_64-linux --apply builtins.attrNames)
+           mapfile -t checks < <(
+-            jq -r '.[] | select(. != "host-module-idempotency" and . != "session-recovery-boot" and . != "session-archive-lifecycle") | ".#checks.x86_64-linux." + .' <<< "$check_names"
++            jq -r '.[] | select(. != "host-module-idempotency" and . != "session-recovery-boot" and . != "session-archive-lifecycle" and . != "session-creation") | ".#checks.x86_64-linux." + .' <<< "$check_names"
+           )
+           nix build --no-link --print-build-logs "${checks[@]}"
+   archive:
+@@ -42,6 +42,21 @@ jobs:
+             extra-trusted-public-keys = niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=
+       - name: Packaged browser archive, recovery and revival
+         run: nix build --no-link --print-build-logs .#checks.x86_64-linux.session-archive-lifecycle
++  creation:
++    runs-on: ubuntu-latest
++    steps:
++      - uses: actions/checkout@v7.0.1
++      - name: Enable VM acceleration
++        run: |
++          test -c /dev/kvm
++          sudo chmod a+rw /dev/kvm
++      - uses: cachix/install-nix-action@v31.11.2
++        with:
++          extra_nix_config: |
++            extra-substituters = https://cache.numtide.com
++            extra-trusted-public-keys = niks3.numtide.com-1:DTx8wZduET09hRmMtKdQDxNNthLQETkc/yaX7M4qK0g=
++      - name: Packaged browser and native session creation
++        run: nix build --no-link --print-build-logs .#checks.x86_64-linux.session-creation
+   host:
+     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+     runs-on: ubuntu-latest
+@@ -51,7 +66,7 @@ jobs:
+         run: |
+           test -c /dev/kvm
+           sudo chmod a+rw /dev/kvm
+-      - uses: cachix/install-nix-action@v31.11.1
++      - uses: cachix/install-nix-action@v31.11.2
+         with:
+           extra_nix_config: |
+             extra-substituters = https://cache.numtide.com
+diff --git a/README.md b/README.md
+index bd65a7b..b8b4612 100644
+--- a/README.md
++++ b/README.md
+@@ -413,6 +413,31 @@ including durable acceptance and replay. The optional Playwright creation test
+ also submits real forms to that handler. Mocked POST responses test browser
+ error handling; they do not establish that the server accepts a request.
+ 
++The mandatory `session-creation` NixOS VM check exercises the installed portal,
++authenticated Chromium, Ruby initializer and stock native App Server through a
++usable conversation and a follow-up exchange. It runs on every push and pull
++request in a separate KVM job. Run it after independent review with:
++
++```sh
++nix build --no-link --print-build-logs .#checks.x86_64-linux.session-creation
++```
++
++Only the external Responses service is synthetic. The scenarios cover automatic
++and custom names, inherited and explicit default/alternate providers, solo and
++retained teams, captured settings/instructions, sensitive records, notification
++preferences, attachments, forks and approved-plan destinations. Recovery checks
++interrupt creation before native root creation and after native initial-send
++acceptance, restart the portal, and retry the original request. The suite also
++checks error selection/copy and stale retry after ordinary fixture deletion.
++Native reads and durable records check the final identities and initial turn.
++Root reasoning effort differs from the host default so terminal startup cannot
++silently reset the submitted setting.
++The suite also changes a loaded fork's effort through the browser and verifies
++restoration through the host helper while the terminal remains subscribed.
++The VM retains fixture evidence with its test output. After deployment, create
++dedicated live sessions and complete follow-up exchanges too; package acceptance
++does not establish that the deployed configuration works.
++
+ CI runs package and focused checks on every push and pull request. On `master`
+ and manual dispatch, it also runs a small NixOS VM test for activation,
+ idempotency, nginx authentication, renewal, recovery and rollback. Dispatch
+diff --git a/docs/codex-providers.md b/docs/codex-providers.md
+index 72403d5..a472d34 100644
+--- a/docs/codex-providers.md
++++ b/docs/codex-providers.md
+@@ -123,6 +123,11 @@ Cold resumes explicitly retain provider, model, effort, sandbox, approval
+ policy, runtime roots and saved team instructions. Member environments retain
+ their member address. Effective native responses prove routing.
+ 
++Deleting a session supports its selected provider even when the workspace
++default differs. Retirement checks all providers for conversations using the
++same session directory and refuses ambiguous ownership. It still verifies the
++recorded root and waits for idle state before native archival.
++
+ The worker restores only work interrupted by the close. Continuation messages
+ have durable client identities and ask Codex to inspect tool results before
+ retrying actions. It never answers an approval or question; an interrupted
+diff --git a/docs/session-preparations.md b/docs/session-preparations.md
+index fcd89f6..9cc1b3a 100644
+--- a/docs/session-preparations.md
++++ b/docs/session-preparations.md
+@@ -14,6 +14,12 @@ their presence, provider selection, and an exact resolved team preset. Presets i
+ lead settings and instructions. For managed selections, admission validates
+ local structure and policy; the initialization worker checks live model/effort
+ availability. It never replaces unavailable captured settings with defaults.
++Fork creation also passes its frozen model and effort to the remote terminal
++client. A fork has no initial destination message to restore these settings,
++so its terminal resume must preserve them rather than use host defaults.
++An interrupted fork keeps its journal until recovery confirms the effective
++settings on its idle root. Active work, an unexpected terminal process or a
++settings-update failure leaves that journal available for retry.
+ 
+ A versioned input digest binds the request ID. Repeating the same ID and input
+ returns the original operation before consulting current catalog or upload
+@@ -33,10 +39,12 @@ exact receipt installation, a server-generated `canonicalUrl` and final slug.
+ `POST /api/session-creations/<request-id>/retry` requires the current
+ `receiptId` and `attempt`; stale offers conflict. Before handoff a retry starts
+ a new preparation attempt, or resumes an attempt already published but not
+-launched. After handoff the ordinary creation receipt owns
+-attempts and progress. `preparationAttempt` retains the preparation generation
+-through initialization and terminal compaction. `attempt` identifies the current
+-retry owner: preparation before handoff, initialization afterward. Name-selection
++launched. Retrying a ready session returns 202 without restarting work.
++Deleted, cancelled or conflicting destinations return 409. After handoff the
++ordinary creation receipt owns attempts and progress. `preparationAttempt`
++retains the preparation generation through initialization and terminal compaction.
++During unfinished work, `attempt` identifies the current retry owner: preparation
++before handoff, initialization afterward. Name-selection
+ confirmation uses `preparationAttempt`; initialization retry uses `attempt`.
+ These endpoints require canonical unescaped UUID paths;
+ mutations retain the portal's exact-origin and package-generation checks.
+@@ -122,6 +130,16 @@ publishing its creation journal; omitted providers continue to inherit the
+ workspace default. Direct-team plan requests retain their destination-settings
+ flag as an optional boolean.
+ 
++The shared Ruby producer and Go consumer accept the optional `provider` field
++in schema-1, schema-2 and schema-3 creation journals, in both creating and ready
++states. Its value follows the provider ID syntax without requiring the current
++catalog to contain that provider. Unknown fields, duplicates and invalid values
++remain errors. A package whose Go reader predates this field cannot read an
++explicit-provider journal, even when the Ruby initializer supports the option.
++Recovery must retain a corrected compatible reader. The Ruby-to-Go contract
++test covers this boundary; the packaged `session-creation` check covers the
++complete creation workflow described in the README.
++
+ ## Naming and reservation
+ 
+ The portal owns one naming-only Codex App Server for its service lifetime.
+diff --git a/flake.nix b/flake.nix
+index bd057fe..656894d 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -115,6 +115,9 @@
+         session-archive-lifecycle = import ./nix/tests/session-archive-lifecycle.nix {
+           inherit pkgs self devWorkspace;
+         };
++        session-creation = import ./nix/tests/session-creation.nix {
++          inherit pkgs self mkPackage;
++        };
+         host-package-contract = import ./nix/tests/host-package-contract.nix {
+           inherit devWorkspace hostPaths pkgs;
+         };
+diff --git a/libexec/dev-session b/libexec/dev-session
+index e94d273..2c0c39a 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -1596,7 +1596,7 @@ module DevSession
+           if selected
+             terminal_started = creation_progress_begin('terminal')
+             selected = ensure_managed_session!(destination_slug, session: selected)
+-            selected = reconcile_native_client!(destination_slug, selected)
++            selected = reconcile_fork_terminal!(destination_slug, selected, fork_journal)
+             write_session_authority(destination_slug, selected, state: 'ready')
+             creation_progress_finish('terminal', terminal_started)
+ 			fork_team_members!(source_slug, destination_slug)
+@@ -1630,7 +1630,9 @@ module DevSession
+             destination_slug,
+             run_codex: true,
+             thread_id:,
+-            identity_token: fork_journal.fetch('tmux_identity')
++            identity_token: fork_journal.fetch('tmux_identity'),
++            model: fork_journal.fetch('model'),
++            effort: fork_journal.fetch('effort')
+           )
+           selected = sync_slug(destination_slug, require_session: true, session: selected)
+           unless selected.identity_token == fork_journal.fetch('tmux_identity')
+@@ -1723,11 +1725,14 @@ module DevSession
+               destination_slug,
+               run_codex: true,
+               thread_id:,
+-              identity_token: journal.fetch('tmux_identity')
++              launch_codex: false,
++              identity_token: journal.fetch('tmux_identity'),
++              model: journal.fetch('model'),
++              effort: journal.fetch('effort')
+             )
+           end
+           selected = ensure_managed_session!(destination_slug, session: selected)
+-          selected = reconcile_native_client!(destination_slug, selected)
++          selected = reconcile_fork_terminal!(destination_slug, selected, journal)
+           selected = sync_slug(destination_slug, require_session: true, session: selected)
+           write_session_authority(destination_slug, selected, state: 'ready')
+ 		  fork_team_members!(source_slug, destination_slug)
+@@ -7874,7 +7879,9 @@ module DevSession
+       run_codex:,
+       thread_id: nil,
+       launch_codex: run_codex,
+-      identity_token: nil
++      identity_token: nil,
++      model: nil,
++      effort: nil
+     )
+       if launch_codex && !run_codex
+         raise Error, 'cannot launch Codex for a session configured without Codex'
+@@ -7957,7 +7964,7 @@ module DevSession
+ 
+         if launch_codex
+           command = if codex_provenance_configured?
+-                      (@codex_command_argv + native_provider_arguments(slug)).map(&:shellescape).join(' ')
++                      native_client_arguments(slug, model:, effort:).map(&:shellescape).join(' ')
+                     else
+                       @codex_command.dup
+                     end
+@@ -8917,7 +8924,8 @@ module DevSession
+       raise Error, "unable to restore terminal Codex client for #{slug}: #{e.message}"
+     end
+ 
+-    def reconcile_native_client!(slug, session, allow_creating: false, start_journal: nil, revive_journal: nil)
++    def reconcile_native_client!(slug, session, allow_creating: false, start_journal: nil, revive_journal: nil,
++                                 model: nil, effort: nil)
+       return session unless codex_provenance_configured? &&
+                             session.codex_thread_id && !session.codex_thread_id.empty?
+       return session if !allow_creating && recovery_held?(slug, session.codex_thread_id)
+@@ -8936,7 +8944,7 @@ module DevSession
+               "managed Codex pane for #{slug} is running unexpected command #{current.inspect}"
+       end
+       verify_codex_client!
+-      send_native_client_command(session)
++      send_native_client_command(session, model:, effort:)
+       session = update_native_client_version!(slug, session)
+       @err.puts "restarted terminal Codex client for #{slug} after App Server disconnect"
+       session
+@@ -8988,14 +8996,49 @@ module DevSession
+       end
+     end
+ 
+-    def send_native_client_command(session)
+-      command = (@codex_command_argv + native_provider_arguments(session.slug)).map(&:shellescape).join(' ')
++    def send_native_client_command(session, model: nil, effort: nil)
++      command = native_client_arguments(session.slug, model:, effort:).map(&:shellescape).join(' ')
+       remote = "unix://#{session.codex_socket_path}"
+       command = "#{command} --remote #{remote.shellescape} resume #{session.codex_thread_id.shellescape}"
+       @tmux.run('send-keys', '-t', session.codex_pane_id, '-l', command)
+       @tmux.run('send-keys', '-t', session.codex_pane_id, 'Enter')
+     end
+ 
++    def native_client_arguments(slug, model: nil, effort: nil)
++      arguments = @codex_command_argv + native_provider_arguments(slug)
++      arguments += ['--model', model] if model
++      arguments += ['-c', "model_reasoning_effort=#{JSON.generate(effort)}"] if effort
++      arguments
++    end
++
++    def reconcile_fork_terminal!(slug, session, journal)
++      model, effort = journal.fetch('model'), journal.fetch('effort')
++      if @portal_command && codex_provenance_configured?
++        quiesced = quiesce_native_client!(slug, session)
++        begin
++          ensure_portal_thread_idle!(slug, @selected_authority)
++        rescue StandardError
++          restore_native_client!(slug, quiesced) if quiesced
++          raise
++        end
++        command = [*@portal_command, 'thread', 'ensure-settings',
++                   '--thread-id', session.codex_thread_id, '--user-state-root', @workspace_state_root]
++        environment = session_environment(slug)
++        THREAD_ENV_ARGUMENTS.each do |name, argument|
++          command += [argument, environment.fetch(name)] if environment.key?(name)
++        end
++        command += ['--require-runtime', '--model', model, '--effort', effort]
++        stdout, = @command_runner.capture(command)
++        actual = JSON.parse(stdout)
++        unless actual == { 'model' => model, 'reasoningEffort' => effort }
++          raise Error, "fork settings were not restored for #{slug}"
++        end
++      end
++      reconcile_native_client!(slug, session, model:, effort:)
++    rescue JSON::ParserError => e
++      raise Error, "workspace-portal returned invalid fork settings: #{e.message}"
++    end
++
+     def native_provider_arguments(slug = nil)
+       name = @env['DEV_WORKSPACE_NAME']
+       return [] unless name
+diff --git a/nix/tests/session-creation.nix b/nix/tests/session-creation.nix
+new file mode 100644
+index 0000000..4003269
+--- /dev/null
++++ b/nix/tests/session-creation.nix
+@@ -0,0 +1,360 @@
++{ pkgs, self, mkPackage }:
++let
++  policy = {
++    default = "xhigh";
++    simple = "high";
++    allowed = [ "high" "xhigh" ];
++    simple_requires_reason = true;
++    followup = "retain";
++  };
++  lifecycle = {
++    startup = "on_demand";
++    communication = "lead_mediated";
++    reviewer_reuse = "same_change";
++  };
++  lead = {
++    model = "gpt-5.5";
++    effort = "xhigh";
++    behavior = "team_lead";
++    purpose = "lead";
++    instructions = "CREATION_LEAD_INSTRUCTIONS: return the fixture reply; do not run tools.";
++    lifetime = "session";
++    allowed_efforts = [ "high" "xhigh" ];
++    access = "workspace_write";
++    fresh_context = false;
++  };
++  package = mkPackage {
++    inherit pkgs;
++    teamConfig = {
++      schema_version = 6;
++      execution_access = "full_access";
++      default_team = "solo";
++      default_development_team = "development";
++      capacity.required_native_child_threads = 4;
++      work_policy = { design = policy; implementation = policy; };
++      teams = {
++        solo = {
++          description = "Creation acceptance solo";
++          mode = "solo";
++          design_owner = "team_lead";
++          service_policy = "unmanaged";
++          max_open_agents = 0;
++          inherit lifecycle;
++          routing = { };
++          roles.team_lead = lead;
++        };
++        development = {
++          description = "Creation acceptance retained team";
++          mode = "development";
++          design_owner = "team_lead";
++          service_policy = "non_priority";
++          max_open_agents = 2;
++          initial_member_counts.reviewer = 2;
++          inherit lifecycle;
++          routing = {
++            design_simple_effort = "high";
++            implementer_simple_effort = "high";
++            low_risk_review_role = "reviewer";
++          };
++          roles = {
++            team_lead = lead;
++            reviewer = lead // {
++              effort = "high";
++              behavior = "reviewer";
++              purpose = "review";
++              instructions = "CREATION_MEMBER_INSTRUCTIONS: inspect only when assigned.";
++              lifetime = "review_cycle";
++              access = "read_only";
++              fresh_context = true;
++            };
++          };
++        };
++      };
++      utilities.verification_watcher = {
++        model = "gpt-5.5";
++        effort = "low";
++        behavior = "verification_watcher";
++        lifetime = "operation";
++        access = "workspace_write";
++        startup = "on_demand";
++        max_concurrent = 1;
++        required_for = [ "long_check" "ci_wait" ];
++      };
++    };
++  };
++  python = pkgs.python3.withPackages (p: [ p.websockets p.pyyaml ]);
++in
++pkgs.testers.runNixOSTest {
++  name = "dev-workspace-session-creation";
++  nodes.machine = {
++    imports = [ self.nixosModules.host ];
++    users.users.developer = { isNormalUser = true; uid = 1000; linger = true; };
++    services.dev-workspaces = {
++      enable = true;
++      owner = "developer";
++      hostName = "workspace.example.test";
++      wildcardHost = "*.workspace.example.test";
++      codexInitialProvider = "primary";
++      codexProviders = map (id: {
++        inherit id;
++        label = "Creation fixture " + id;
++        baseURL = "http://127.0.0.1:2455/" + id + "/v1";
++        tokenFile = "/home/developer/.codex/fixture.token";
++      }) [ "primary" "alternate" ];
++    };
++    networking.extraHosts = "127.0.0.1 fixture.workspace.example.test";
++    environment.systemPackages = [ pkgs.git pkgs.curl pkgs.nodejs pkgs.chromium python ];
++    virtualisation = {
++      memorySize = 6144;
++      diskSize = 4096;
++      cores = 4;
++      additionalPaths = [ package pkgs.playwright-driver ];
++    };
++    system.stateVersion = "26.05";
++  };
++  testScript = ''
++    import hashlib
++    import json
++    import shlex
++
++    machine.start()
++    machine.wait_for_unit("user@1000.service")
++    package = "${package}"
++    root = "/home/developer/workspace"
++    state = "/home/developer/.local/state/dev-workspaces"
++    runtime = "/run/user/1000/dev-workspaces/fixture"
++    portal_state = state + "/portal/workspace-" + hashlib.sha256(root.encode()).hexdigest()[:16]
++    user_prefix = "runuser -u developer -- env XDG_RUNTIME_DIR=/run/user/1000 "
++
++    def user(command):
++        return machine.succeed(user_prefix + "sh -c " + shlex.quote(command))
++
++    def browser(action, name, **options):
++        result = json.loads(user("PLAYWRIGHT_MODULE=${pkgs.playwright-driver} "
++            "CHROMIUM_EXECUTABLE=${pkgs.chromium}/bin/chromium "
++            "${pkgs.nodejs}/bin/node ${../../test/creation_acceptance_browser.cjs} "
++            + action + " " + name + " " + shlex.quote(json.dumps(options))))
++        print(json.dumps(result))
++        return result
++
++    def checkpoint(name):
++        return json.loads(user("cat /tmp/creation-" + name + ".json"))
++
++    def status(name):
++        request = checkpoint(name)["requestId"]
++        return json.loads(user("curl -fsS --unix-socket " + runtime + "/portal.sock "
++            + "http://localhost/api/session-creations/" + request))
++
++    def restart():
++        user("systemctl --user kill --signal=SIGKILL --kill-whom=all workspace-portal@fixture.service")
++        user("systemctl --user restart workspace-portal@fixture.service")
++        machine.wait_until_succeeds(user_prefix + "curl -fsS --unix-socket " + runtime
++            + "/portal.sock http://localhost/ >/dev/null")
++
++    def native(identity):
++        return json.loads(user("${python}/bin/python ${../../test/creation_transport.py} read "
++            + runtime + "/app-server.sock " + shlex.quote(identity)))
++
++    def proof(name, provider, members=0, sensitive=False):
++        record = checkpoint(name)
++        slug = record["slug"]
++        directory = root + "/work/" + slug
++        manifest = json.loads(user("${python}/bin/python -c " + shlex.quote(
++            "import yaml,json;print(json.dumps(yaml.safe_load(open(" + repr(directory + "/portal.yml") + "))))")))
++        assert manifest["codex"]["thread_id"] == record["threadId"], manifest
++        assert manifest["creation"]["state"] == "ready", manifest
++        if record["kind"] != "fork":
++            assert manifest["creation"]["initial_goal_sent"] is True, manifest
++        journal_path = root + "/worktrees/.locks/" + slug + ".creation.json"
++        if record["kind"] == "fork":
++            user("test ! -e " + root + "/worktrees/.locks/" + slug + ".fork.json")
++        else:
++            journal = json.loads(user("cat " + journal_path))
++            assert journal["state"] == "ready", journal
++            if record["options"].get("provider"):
++                assert journal["provider"] == record["options"]["provider"], journal
++        receipt_path = portal_state + "/creations/" + slug + ".json"
++        receipt = json.loads(user("cat " + receipt_path))
++        assert receipt["receiptId"] == record["receiptId"] and receipt["state"] == "ready", receipt
++        evidence_path = portal_state + "/creations/" + slug + "." + record["receiptId"] + ".complete.json"
++        evidence = json.loads(user("cat " + evidence_path))
++        assert evidence["slug"] == slug and evidence["receiptId"] == record["receiptId"], evidence
++        assert evidence["threadId"] == record["threadId"], evidence
++        metadata = native(record["threadId"])["thread"]
++        assert metadata["modelProvider"] == provider, metadata
++        assert metadata["cwd"] == directory, metadata
++        assert metadata["model"] == "gpt-5.5" and metadata["reasoningEffort"] == "high", metadata
++        assert sum(item.get("type") == "userMessage" and record["marker"] in json.dumps(item)
++            for turn in metadata["turns"] for item in turn["items"]) == 1, metadata
++        assert len({turn["id"] for turn in metadata["turns"]}) == len(metadata["turns"]), metadata
++        roster = json.loads(user("cd " + root + " && " + package + "/bin/dev-session team list " + slug + " --as-is"))
++        saved = roster["roster"]
++        retained = saved["members"] or []
++        assert len(retained) == members, saved
++        assert saved["rootThreadId"] == record["threadId"] and saved["slug"] == slug, saved
++        assert saved["leadModel"] == "gpt-5.5" and saved["leadEffort"] == "high", saved
++        assert saved["leadInstructions"] == "CREATION_LEAD_INSTRUCTIONS: return the fixture reply; do not run tools.", saved
++        identities = [record["threadId"]]
++        for member in retained:
++            assert member["state"] == "ready", member
++            assert member["model"] == "gpt-5.5" and member["reasoningEffort"] == "high", member
++            assert member["instructions"] == "CREATION_MEMBER_INSTRUCTIONS: inspect only when assigned.", member
++            identities.append(member["threadId"])
++            member_native = native(member["threadId"])["thread"]
++            assert member_native["modelProvider"] == provider, member_native
++            assert member_native["cwd"] == directory, member_native
++            assert member_native["projectId"] == member["projectId"], member_native
++        assert len(set(identities)) == len(identities), identities
++        inventory = native("inventory")
++        assert not inventory.get("nextCursor"), inventory
++        listed = {item["id"] for item in inventory["data"] if item["cwd"] == directory}
++        assert record["threadId"] in listed and listed <= set(identities), inventory
++        # Native thread/list omits empty previews, including unassigned members
++        # with only the durable developer bootstrap. Read the pinned native
++        # database without writes to inventory those identities and orphan starts.
++        persisted = json.loads(user("${python}/bin/python -c " + shlex.quote(
++            "import json,pathlib,sqlite3; "
++            "files=list((pathlib.Path.home()/'.codex').glob('state_*.sqlite')); "
++            "assert len(files)==1,files; "
++            "db=sqlite3.connect(files[0].as_uri()+'?mode=ro',uri=True); "
++            "print(json.dumps(db.execute('SELECT id FROM threads WHERE cwd=? AND archived=0',"
++            + repr((directory,)) + ").fetchall()))")))
++        assert {row[0] for row in persisted} == set(identities), persisted
++        if sensitive:
++            user("git -C " + root + " check-ignore work/" + slug + "/state.md")
++        # The real Go ready proof has already passed; retain independent native
++        # identities and durable files so a green browser cannot mask duplicates.
++        user("mkdir -p /tmp/creation-evidence/" + name + " && cp " + receipt_path + " " + evidence_path + " "
++            + directory + "/portal.yml /tmp/creation-evidence/" + name)
++        if record["kind"] != "fork":
++            user("cp " + journal_path + " /tmp/creation-evidence/" + name)
++        user("printf %s " + shlex.quote(json.dumps(metadata)) + " > /tmp/creation-evidence/" + name + "/native.json")
++
++    with subtest("install shipped portal, stock Codex and private external providers"):
++        user("mkdir -p ~/.codex " + state + " " + root + "/repos " + root + "/work " + root + "/worktrees ~/origins /tmp/creation-evidence")
++        user("printf fixture-private-token > ~/.codex/fixture.token && chmod 0600 ~/.codex/fixture.token")
++        config = 'model_provider="primary"\nmodel="gpt-5.5"\nmodel_reasoning_effort="xhigh"\napproval_policy="never"\n[model_providers.primary]\nname="Primary fixture"\nbase_url="http://127.0.0.1:2455/primary/v1"\nwire_api="responses"\nrequires_openai_auth=false\nsupports_websockets=false\n'
++        user("printf %s " + shlex.quote(config) + " > ~/.codex/config.toml")
++        user("systemd-run --user --unit=creation-model ${python}/bin/python ${../../test/creation_model.py}")
++        machine.wait_until_succeeds("curl -fsS http://127.0.0.1:2455/primary/v1/models")
++        user("git config --global user.name 'Creation fixture' && git config --global user.email fixture@example.invalid")
++        user("git config --global url.file:///home/developer/origins/.insteadOf git@github.com:fixture/")
++        user("git init --bare --initial-branch=master ~/origins/workspace.git")
++        user("git init --initial-branch=master " + root + " && cd " + root
++            + " && printf '/worktrees/\\n' > .gitignore && git add .gitignore && git commit -m 'fixture: workspace' "
++            + "&& git remote add origin git@github.com:fixture/workspace.git && git push origin master")
++        user("nix-env --profile " + state + "/profile --set " + package)
++        user(package + "/bin/workspace-host register fixture " + root + " --hostname fixture.workspace.example.test")
++        for service in ["workspace-codex@fixture", "workspace-portal@fixture", "workspace-tmux@fixture", "workspace-router"]:
++            machine.wait_until_succeeds(user_prefix + "systemctl --user is-active " + service)
++
++    try:
++        with subtest("custom explicit default provider, solo, notifications, attachment and follow-up"):
++            browser("create", "explicit", provider="primary", attachment=True)
++            proof("explicit", "primary")
++            record = checkpoint("explicit")
++            initial = [entry for entry in record["transcript"]["entries"] if record["marker"] in entry.get("text", "")]
++            assert any("creation-evidence.txt" in json.dumps(entry) for entry in initial), initial
++            initial_native = [item for turn in native(record["threadId"])["thread"]["turns"] for item in turn["items"]
++                if item.get("type") == "userMessage" and record["marker"] in json.dumps(item)]
++            assert len(initial_native) == 1, initial_native
++            text = "\n".join(part["text"] for part in initial_native[0]["content"] if part["type"] == "text")
++            attachments = json.loads(text.split("Attached local files (inputs; keep these files outside version control):\n", 1)[1])
++            assert len(attachments) == 1 and attachments[0]["name"] == "creation-evidence.txt", attachments
++            assert attachments[0]["path"].startswith(portal_state + "/uploads/files/"), attachments
++            assert user("cat " + shlex.quote(attachments[0]["path"])) == "CREATION_ATTACHMENT_CONTENT"
++
++        with subtest("automatic naming, inherited default provider, sensitive retained team and notifications off"):
++            browser("create", "automatic", auto=True, team="development", sensitive=True, notifications=False)
++            proof("automatic", "primary", members=2, sensitive=True)
++            assert checkpoint("automatic")["slug"].endswith("accepted-session")
++
++        with subtest("alternate provider, fork and approved-plan destinations preserve source"):
++            browser("create", "alternate", provider="alternate")
++            proof("alternate", "alternate")
++            browser("fork", "explicit", provider="alternate")
++            browser("plan", "explicit", provider="alternate", team="development")
++            proof("explicit", "primary")
++            proof("explicit-fork", "alternate")
++            proof("explicit-plan", "alternate", members=2)
++            for kind in ["fork", "plan"]:
++                record = checkpoint("explicit-" + kind)
++                assert native(record["threadId"])["thread"]["modelProvider"] == "alternate", record
++
++        with subtest("frozen fork settings can be restored while its terminal is subscribed"):
++            browser("change-effort", "explicit-fork")
++            record = checkpoint("explicit-fork")
++            assert native(record["threadId"])["thread"]["reasoningEffort"] == "xhigh"
++            slug = record["slug"]
++            args = [package + "/bin/workspace-portal", "thread", "ensure-settings", "--require-runtime",
++                "--thread-id", record["threadId"], "--socket", runtime + "/app-server.sock",
++                "--user-state-root", state, "--workspace", root, "--session-slug", slug,
++                "--cwd", root + "/work/" + slug, "--worktrees-dir", root + "/worktrees/" + slug,
++                "--portal-base-url", "https://fixture.workspace.example.test",
++                "--portal-url", "https://fixture.workspace.example.test/" + slug + "/",
++                "--authority-dir", runtime + "/authority", "--tmux-socket", runtime + "/tmux.sock",
++                "--codex-command", state + "/codex/current/bin/codex", "--codex-version", "0.163.0",
++                "--portal-command", package + "/bin/workspace-portal", "--model", "gpt-5.5", "--effort", "high"]
++            wrong = args.copy()
++            wrong[wrong.index("--cwd") + 1] += "-foreign"
++            machine.fail(user_prefix + "sh -c " + shlex.quote(shlex.join(wrong)))
++            assert native(record["threadId"])["thread"]["reasoningEffort"] == "xhigh"
++            restored = json.loads(user(shlex.join(args)))
++            assert restored == {"model": "gpt-5.5", "reasoningEffort": "high"}, restored
++            proof("explicit-fork", "alternate")
++
++        with subtest("failed naming renders a selectable, copyable error and retries the same request"):
++            user("touch /tmp/creation-model/bad-name")
++            browser("admit", "naming-error", auto=True, provider="alternate")
++            browser("failed", "naming-error")
++            user("rm /tmp/creation-model/bad-name")
++            browser("retry", "naming-error", error=True)
++            proof("naming-error", "alternate")
++
++        # Transport faults forward only real native responses. The application
++        # binaries, protocol and ordinary service endpoints remain unchanged.
++        socket = runtime + "/app-server.sock"
++        user("mv " + socket + " " + socket + ".native")
++        user("systemd-run --user --unit=creation-transport ${python}/bin/python ${../../test/creation_transport.py} proxy "
++            + socket + " " + socket + ".native")
++        machine.wait_until_succeeds(user_prefix + "test -S " + socket)
++
++        with subtest("reload, interruption and retry before native creation preserve admitted settings"):
++            user("touch /tmp/creation-model/hold-root-request")
++            browser("admit", "before", provider="alternate", team="development")
++            machine.wait_until_succeeds("test -e /tmp/creation-model/root-entered")
++            restart()
++            user("rm /tmp/creation-model/hold-root-request")
++            browser("retry", "before")
++            proof("before", "alternate", members=2)
++
++        with subtest("lost accepted initial-send reply and portal restart do not repeat the user turn"):
++            user("rm -f /tmp/creation-model/send-accepted")
++            user("touch /tmp/creation-model/hold-send-reply /tmp/creation-model/hold-turn")
++            browser("admit", "after", provider="alternate", team="development")
++            machine.wait_until_succeeds("test -e /tmp/creation-model/send-accepted")
++            accepted = json.loads(user("cat /tmp/creation-model/send-accepted"))
++            accepted_native = native(accepted["threadId"])["thread"]
++            assert accepted_native["cwd"] == root + "/work/" + status("after")["slug"], accepted_native
++            assert any(turn["id"] == accepted["turnId"] and any(item.get("type") == "userMessage" and
++                "CREATION_INITIAL_after" in json.dumps(item) for item in turn["items"])
++                for turn in accepted_native["turns"]), accepted_native
++            restart()
++            user("rm /tmp/creation-model/hold-send-reply /tmp/creation-model/hold-turn")
++            browser("retry", "after")
++            proof("after", "alternate", members=2)
++            user("systemctl --user stop creation-transport && rm -f " + socket + " && mv " + socket + ".native " + socket)
++
++        with subtest("ordinary deletion fences the stale creation request"):
++            record = checkpoint("alternate")
++            browser("delete-stale", "alternate")
++            user("test ! -e " + root + "/work/" + record["slug"])
++    except Exception:
++        print(user("journalctl --user --no-pager -n 180 -u workspace-portal@fixture -u workspace-codex@fixture -u creation-transport"))
++        print(user("find /tmp -maxdepth 1 -name 'creation-*.json' -exec cat {} \\;"))
++        raise
++    finally:
++        machine.copy_from_vm("/tmp/creation-evidence", "creation-evidence")
++        machine.copy_from_vm("/tmp/creation-model", "creation-model")
++  '';
++}
+diff --git a/portal/cmd/workspace-portal/main.go b/portal/cmd/workspace-portal/main.go
+index 01f569e..93fa251 100644
+--- a/portal/cmd/workspace-portal/main.go
++++ b/portal/cmd/workspace-portal/main.go
+@@ -726,6 +726,13 @@ func threadCommand(args []string) error {
+ 	}
+ 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+ 	defer cancel()
++	runtime := threadRuntime{
++		Slug: *sessionSlug, Workspace: *workspace, WorkDir: *cwd,
++		WorktreesDir: *worktreesDir, PortalBaseURL: *portalBaseURL, PortalURL: *portalURL,
++		AuthorityDir: *authorityDir, TmuxSocket: *tmuxSocket,
++		CodexCommand: *codexCommand, CodexSocket: *socket, CodexVersion: *codexVersion,
++		PortalCommand: *portalCommand,
++	}
+ 	switch command {
+ 	case "observe":
+ 		if *threadID == "" || *cwd == "" {
+@@ -770,13 +777,6 @@ func threadCommand(args []string) error {
+ 			"model": settings.Model, "reasoningEffort": settings.ReasoningEffort,
+ 		})
+ 	case "create":
+-		runtime := threadRuntime{
+-			Slug: *sessionSlug, Workspace: *workspace, WorkDir: *cwd,
+-			WorktreesDir: *worktreesDir, PortalBaseURL: *portalBaseURL, PortalURL: *portalURL,
+-			AuthorityDir: *authorityDir, TmuxSocket: *tmuxSocket,
+-			CodexCommand: *codexCommand, CodexSocket: *socket, CodexVersion: *codexVersion,
+-			PortalCommand: *portalCommand,
+-		}
+ 		if !*requireRuntime || !runtime.complete() {
+ 			return errors.New("thread create requires complete workspace, lifecycle, tmux and Codex provenance")
+ 		}
+@@ -823,13 +823,6 @@ func threadCommand(args []string) error {
+ 		}
+ 		return json.NewEncoder(os.Stdout).Encode(map[string]string{"threadId": id})
+ 	case "fork":
+-		runtime := threadRuntime{
+-			Slug: *sessionSlug, Workspace: *workspace, WorkDir: *cwd,
+-			WorktreesDir: *worktreesDir, PortalBaseURL: *portalBaseURL, PortalURL: *portalURL,
+-			AuthorityDir: *authorityDir, TmuxSocket: *tmuxSocket,
+-			CodexCommand: *codexCommand, CodexSocket: *socket, CodexVersion: *codexVersion,
+-			PortalCommand: *portalCommand,
+-		}
+ 		if !*requireRuntime || !runtime.complete() || *threadID == "" {
+ 			return errors.New("thread fork requires a source thread and complete runtime provenance")
+ 		}
+@@ -904,6 +897,25 @@ func threadCommand(args []string) error {
+ 			return errors.New("thread input must not be blank")
+ 		}
+ 		return client.EnsureInitialMessage(ctx, *threadID, *cwd, string(message), *startUnmaterialized)
++	case "ensure-settings":
++		if !*requireRuntime || !runtime.complete() || *threadID == "" || *model == "" || *effort == "" {
++			return errors.New("thread ensure-settings requires frozen settings and complete runtime provenance")
++		}
++		if err := client.RequireThreadIdle(ctx, *threadID, *cwd); err != nil {
++			return err
++		}
++		actual, err := client.UpdateThreadSettings(ctx, *threadID, codex.ThreadSettingsUpdate{
++			Model: model, ReasoningEffort: effort,
++		})
++		if err != nil {
++			return err
++		}
++		if actual.Model != *model || actual.ReasoningEffort != *effort {
++			return errors.New("Codex did not restore the frozen fork settings")
++		}
++		return json.NewEncoder(os.Stdout).Encode(map[string]string{
++			"model": actual.Model, "reasoningEffort": actual.ReasoningEffort,
++		})
+ 	case "require-idle":
+ 		if *threadID == "" || *cwd == "" {
+ 			return errors.New("thread require-idle requires --thread-id and --cwd")
+diff --git a/portal/internal/agentteams/creation_journal_contract_test.go b/portal/internal/agentteams/creation_journal_contract_test.go
+new file mode 100644
+index 0000000..efc9d06
+--- /dev/null
++++ b/portal/internal/agentteams/creation_journal_contract_test.go
+@@ -0,0 +1,92 @@
++package agentteams
++
++import (
++	"encoding/json"
++	"fmt"
++	"os"
++	"os/exec"
++	"path/filepath"
++	"strings"
++	"testing"
++)
++
++// Exercise the real Ruby producer and Go consumer together. Separate fixtures
++// for these two sides allowed valid CLI journals to become unreadable by Go.
++func TestRubyCreationJournalContract(t *testing.T) {
++	for _, schema := range []int{1, 2, 3} {
++		for _, state := range []string{"creating", "ready"} {
++			for _, provider := range []string{"", "openai", "pool", "a" + strings.Repeat("_", 62)} {
++				t.Run(fmt.Sprintf("schema=%d/%s/provider=%s", schema, state, provider), func(t *testing.T) {
++					root := t.TempDir()
++					goal := filepath.Join(root, "goal")
++					if err := os.WriteFile(goal, []byte("Creation contract"), 0600); err != nil {
++						t.Fatal(err)
++					}
++					team, err := json.Marshal(directCreationSnapshot(true))
++					if err != nil {
++						t.Fatal(err)
++					}
++					script := `load ARGV.shift
++require 'json'
++root, schema, state, provider, team = ARGV
++runner = DevSession::Runner.new(workspace: root, tmux_socket: File.join(root, 'tmux.sock'),
++  env: ENV.to_h.merge('DEV_WORKSPACES_STATE' => File.join(root, 'state')))
++schema = Integer(schema)
++journal = runner.send(:prepare_creation_journal, 'contract', File.join(root, 'goal'),
++  exclusive: true, run_codex: true, model: 'model-1', effort: 'high',
++  provider: provider.empty? ? nil : provider,
++  team_binding: schema == 2 ? 'v1.e30.' + 'b' * 64 : nil,
++  direct_team: schema == 3 ? JSON.parse(team) : nil)
++if state == 'ready'
++  journal = runner.send(:ready_creation_journal, journal)
++  runner.send(:write_creation_journal, runner.send(:creation_journal_file, 'contract'), journal, create: false)
++end
++puts JSON.generate(journal)
++`
++					output, err := exec.Command("ruby", "-e", script, "../../../libexec/dev-session", root,
++						fmt.Sprint(schema), state, provider, string(team)).CombinedOutput()
++					if err != nil {
++						t.Fatalf("Ruby journal production: %v\n%s", err, output)
++					}
++					journal, present, err := ReadCreationJournal(root, "contract")
++					if err != nil || !present || journal.Schema != schema || journal.State != state || !journal.RunCodex {
++						t.Fatalf("real Ruby journal rejected: present=%t journal=%#v error=%v\n%s", present, journal, err, output)
++					}
++					if provider == "" && journal.Provider != nil || provider != "" && (journal.Provider == nil || *journal.Provider != provider) {
++						t.Fatalf("provider selection changed: %#v, wanted %q", journal.Provider, provider)
++					}
++					var raw map[string]json.RawMessage
++					if err := json.Unmarshal(output, &raw); err != nil {
++						t.Fatal(err)
++					}
++					for _, invalid := range []string{`null`, `""`, `false`, `7`, `[]`, `{}`, `"OpenAI"`, `"../pool"`, `"pool\n"`, `"` + strings.Repeat("a", 64) + `"`} {
++						raw["provider"] = json.RawMessage(invalid)
++						data, _ := json.Marshal(raw)
++						if _, err := DecodeCreationJournal(data, "contract"); err == nil {
++							t.Fatalf("accepted invalid provider %s", invalid)
++						}
++					}
++					delete(raw, "provider")
++					for _, change := range []string{"unknown", "missing", "duplicate"} {
++						copy := make(map[string]json.RawMessage, len(raw))
++						for key, value := range raw {
++							copy[key] = value
++						}
++						if change == "unknown" {
++							copy["unexpected"] = json.RawMessage(`true`)
++						} else if change == "missing" {
++							delete(copy, "run_codex")
++						}
++						data, _ := json.Marshal(copy)
++						if change == "duplicate" {
++							data = append([]byte(`{"provider":"openai","provider":"pool",`), data[1:]...)
++						}
++						if _, err := DecodeCreationJournal(data, "contract"); err == nil {
++							t.Fatalf("accepted %s field corruption", change)
++						}
++					}
++				})
++			}
++		}
++	}
++}
+diff --git a/portal/internal/agentteams/provenance.go b/portal/internal/agentteams/provenance.go
+index afccc8e..6efe40f 100644
+--- a/portal/internal/agentteams/provenance.go
++++ b/portal/internal/agentteams/provenance.go
+@@ -11,6 +11,7 @@ import (
+ 	"strings"
+ 	"syscall"
+ 
++	"github.com/aither64/dev-workspace/portal/internal/codexproviders"
+ 	"github.com/aither64/dev-workspace/portal/internal/session"
+ )
+ 
+@@ -33,6 +34,7 @@ type CreationJournal struct {
+ 	GoalSHA256   *string
+ 	Model        *string
+ 	Effort       *string
++	Provider     *string
+ 	TMUXIdentity string
+ }
+ 
+@@ -94,6 +96,13 @@ func DecodeCreationJournal(data []byte, slug string) (CreationJournal, error) {
+ 		}
+ 		allowed = append(allowed, "sensitive")
+ 	}
++	if value, ok := raw["provider"]; ok {
++		var provider string
++		if json.Unmarshal(value, &provider) != nil || !codexproviders.ValidID(provider) {
++			return CreationJournal{}, errors.New("creation journal has an invalid provider")
++		}
++		allowed = append(allowed, "provider")
++	}
+ 	if header.Schema == 2 {
+ 		allowed = append(allowed, "model", "effort", "agent_team_binding", "agent_team_binding_digest")
+ 	} else if header.Schema == 3 {
+@@ -133,6 +142,7 @@ func DecodeCreationJournal(data []byte, slug string) (CreationJournal, error) {
+ 		State          string          `json:"state"`
+ 		Model          *string         `json:"model"`
+ 		Effort         *string         `json:"effort"`
++		Provider       *string         `json:"provider"`
+ 		Binding        string          `json:"agent_team_binding"`
+ 		BindingDigest  string          `json:"agent_team_binding_digest"`
+ 		DirectTeam     json.RawMessage `json:"direct_team"`
+@@ -172,21 +182,21 @@ func DecodeCreationJournal(data []byte, slug string) (CreationJournal, error) {
+ 				(wire.TrackingOrigin != "revived" && wire.TrackingOrigin != "retained") || !isDigest(wire.TrackingPlan) || !isDigest(wire.TrackingState))) {
+ 			return CreationJournal{}, errors.New("creation journal has invalid preserved tracking")
+ 		}
+-		return CreationJournal{Schema: wire.Schema, Slug: wire.Slug, State: wire.State, RunCodex: wire.RunCodex, GoalSHA256: wire.GoalSHA256, Model: wire.Model, Effort: wire.Effort, TMUXIdentity: wire.TMUXIdentity}, nil
++		return CreationJournal{Schema: wire.Schema, Slug: wire.Slug, State: wire.State, RunCodex: wire.RunCodex, GoalSHA256: wire.GoalSHA256, Model: wire.Model, Effort: wire.Effort, Provider: wire.Provider, TMUXIdentity: wire.TMUXIdentity}, nil
+ 	}
+ 	if header.Schema == 3 {
+ 		if !wire.RunCodex || wire.GoalSHA256 == nil || wire.Model == nil || wire.Effort == nil ||
+ 			validateDirectCreationTeam(wire.DirectTeam, *wire.Model, *wire.Effort) != nil {
+ 			return CreationJournal{}, errors.New("direct creation journal has an invalid team snapshot")
+ 		}
+-		return CreationJournal{Schema: wire.Schema, Slug: wire.Slug, State: wire.State, RunCodex: wire.RunCodex, GoalSHA256: wire.GoalSHA256, Model: wire.Model, Effort: wire.Effort, TMUXIdentity: wire.TMUXIdentity}, nil
++		return CreationJournal{Schema: wire.Schema, Slug: wire.Slug, State: wire.State, RunCodex: wire.RunCodex, GoalSHA256: wire.GoalSHA256, Model: wire.Model, Effort: wire.Effort, Provider: wire.Provider, TMUXIdentity: wire.TMUXIdentity}, nil
+ 	}
+ 	if !wire.RunCodex || wire.GoalSHA256 == nil || wire.Model == nil || wire.Effort == nil ||
+ 		len(wire.Binding) < 5 || len(wire.Binding) > 32*1024 || !isDigest(wire.BindingDigest) ||
+ 		!strings.HasPrefix(wire.Binding, "v1.") || !strings.HasSuffix(wire.Binding, "."+wire.BindingDigest) {
+ 		return CreationJournal{}, errors.New("managed creation journal has incomplete values")
+ 	}
+-	return CreationJournal{Schema: wire.Schema, Slug: wire.Slug, State: wire.State, RunCodex: wire.RunCodex, GoalSHA256: wire.GoalSHA256, Model: wire.Model, Effort: wire.Effort, TMUXIdentity: wire.TMUXIdentity}, nil
++	return CreationJournal{Schema: wire.Schema, Slug: wire.Slug, State: wire.State, RunCodex: wire.RunCodex, GoalSHA256: wire.GoalSHA256, Model: wire.Model, Effort: wire.Effort, Provider: wire.Provider, TMUXIdentity: wire.TMUXIdentity}, nil
+ }
+ 
+ // Keep this reader independent of teamruntime: registration and lifecycle
+diff --git a/portal/internal/web/preparation.go b/portal/internal/web/preparation.go
+index 93ad742..51a57eb 100644
+--- a/portal/internal/web/preparation.go
++++ b/portal/internal/web/preparation.go
+@@ -718,7 +718,17 @@ func (s *Server) retryPreparation(w http.ResponseWriter, r *http.Request, id str
+ 		s.writeError(w, r, http.StatusServiceUnavailable, "Portal is stopping.")
+ 		return
+ 	}
+-	if record.State == "terminal" || record.State == "running" && !(work.attempt == record.Attempt && work.stopped) {
++	if record.State == "terminal" {
++		s.operationMu.Unlock()
++		status, _ := s.preparationStatus(id)
++		code := http.StatusAccepted
++		if status.State != "ready" {
++			code = http.StatusConflict
++		}
++		s.writeJSON(w, code, status)
++		return
++	}
++	if record.State == "running" && !(work.attempt == record.Attempt && work.stopped) {
+ 		if !s.closing {
+ 			s.launchPreparationLocked(record)
+ 		}
+diff --git a/portal/internal/web/preparation_test.go b/portal/internal/web/preparation_test.go
+index a23c5ac..62af4fb 100644
+--- a/portal/internal/web/preparation_test.go
++++ b/portal/internal/web/preparation_test.go
+@@ -954,6 +954,26 @@ func TestSessionPreparationCompactionSurvivesReceiptRetirement(t *testing.T) {
+ 	if _, err := os.Stat(filepath.Join(server.config.Workspace, "work", record.Slug)); err != nil {
+ 		t.Fatal(err)
+ 	}
++	retry := func() *httptest.ResponseRecorder {
++		return postCreation(t, server, "/api/session-creations/"+record.RequestID+"/retry",
++			fmt.Sprintf(`{"receiptId":%q,"attempt":%d}`, record.ReceiptID, compact.Attempt), "application/json")
++	}
++	var status preparationStatus
++	response = retry()
++	if json.Unmarshal(response.Body.Bytes(), &status) != nil || response.Code != 202 || status.State != "ready" || len(server.creations) != 0 {
++		t.Fatalf("ready compacted retry=%d %s", response.Code, response.Body.String())
++	}
++	directory := filepath.Join(server.config.Workspace, "work", record.Slug)
++	if err := os.RemoveAll(directory); err != nil {
++		t.Fatal(err)
++	}
++	response = retry()
++	if json.Unmarshal(response.Body.Bytes(), &status) != nil || response.Code != 409 || status.State != "gone" || status.ReceiptID != record.ReceiptID || len(server.creations) != 0 {
++		t.Fatalf("removed compacted retry=%d %s", response.Code, response.Body.String())
++	}
++	if _, err := os.Stat(directory); !errors.Is(err, os.ErrNotExist) {
++		t.Fatal("removed destination recreated", err)
++	}
+ }
+ 
+ func TestSessionPreparationPathsRejectAmbiguousIdentifiers(t *testing.T) {
+diff --git a/portal/internal/workspacecodex/client.go b/portal/internal/workspacecodex/client.go
+index 0f31147..78e4882 100644
+--- a/portal/internal/workspacecodex/client.go
++++ b/portal/internal/workspacecodex/client.go
+@@ -695,10 +695,7 @@ func (c *Client) RequireThreadMaterialized(ctx context.Context, threadID, cwd st
+ func (c *Client) retirementCandidate(
+ 	ctx context.Context, cwd string, archived, indexed bool,
+ ) (codex.ThreadMetadata, bool, error) {
+-	threads, next, err := c.ListThreads(ctx, codex.ThreadListOptions{
+-		Cwd: cwd, SourceKinds: []string{threadSourceKind}, Archived: &archived,
+-		Limit: 2, SortDirection: "asc", UseStateDBOnly: indexed,
+-	})
++	threads, next, err := c.retirementThreads(ctx, cwd, archived, indexed, 2, "")
+ 	if err != nil {
+ 		return codex.ThreadMetadata{}, false, err
+ 	}
+@@ -722,10 +719,7 @@ func (c *Client) retirementThreadByID(
+ 	seenCursors := make(map[string]struct{})
+ 	var cursor string
+ 	for {
+-		threads, next, err := c.ListThreads(ctx, codex.ThreadListOptions{
+-			Cwd: cwd, SourceKinds: []string{threadSourceKind}, Archived: &archived,
+-			Limit: 100, SortDirection: "asc", Cursor: cursor,
+-		})
++		threads, next, err := c.retirementThreads(ctx, cwd, archived, false, 100, cursor)
+ 		if err != nil {
+ 			return codex.ThreadMetadata{}, false, err
+ 		}
+@@ -750,6 +744,36 @@ func (c *Client) retirementThreadByID(
+ 	}
+ }
+ 
++// The pinned shared list options cannot express the native all-provider filter.
++// Retirement must see both the recorded root and conflicting directory users
++// even when their provider differs from the daemon's default. An explicit empty
++// modelProviders array means all providers; omission uses the native default.
++func (c *Client) retirementThreads(
++	ctx context.Context, cwd string, archived, indexed bool, limit int, cursor string,
++) ([]codex.ThreadMetadata, *string, error) {
++	params := map[string]any{
++		"cwd": cwd, "sourceKinds": []string{threadSourceKind}, "archived": archived,
++		"limit": limit, "sortDirection": "asc", "modelProviders": []string{},
++	}
++	if indexed {
++		params["useStateDbOnly"] = true
++	}
++	if cursor != "" {
++		params["cursor"] = cursor
++	}
++	var page struct {
++		Data       *[]codex.ThreadMetadata `json:"data"`
++		NextCursor *string                 `json:"nextCursor"`
++	}
++	if err := c.Request(ctx, "thread/list", params, &page); err != nil {
++		return nil, nil, err
++	}
++	if page.Data == nil {
++		return nil, nil, errors.New("thread/list returned no data")
++	}
++	return *page.Data, page.NextCursor, nil
++}
++
+ func workspaceThread(source any) bool {
+ 	value, ok := source.(string)
+ 	return ok && value == threadSourceKind
+diff --git a/portal/internal/workspacecodex/client_test.go b/portal/internal/workspacecodex/client_test.go
+index 659aa56..557b597 100644
+--- a/portal/internal/workspacecodex/client_test.go
++++ b/portal/internal/workspacecodex/client_test.go
+@@ -9,6 +9,7 @@ import (
+ 	"net/http"
+ 	"os"
+ 	"path/filepath"
++	"reflect"
+ 	"strings"
+ 	"testing"
+ 	"time"
+@@ -743,6 +744,53 @@ func TestRetireThreadRefusesAmbiguousCwdLookup(t *testing.T) {
+ 	}
+ }
+ 
++func TestRetirementDiscoveryFindsRootsOutsideTheDefaultProvider(t *testing.T) {
++	for _, byID := range []bool{false, true} {
++		t.Run(fmt.Sprintf("byID=%t", byID), func(t *testing.T) {
++			socket := serveUnixWebsocket(t, func(connection *websocket.Conn) error {
++				if err := handshake(connection); err != nil {
++					return err
++				}
++				request, err := readObject(connection)
++				if err != nil {
++					return err
++				}
++				params := request["params"].(map[string]any)
++				if request["method"] != "thread/list" || params["cwd"] != "/workspace/work/example" ||
++					params["archived"] != byID || !reflect.DeepEqual(params["sourceKinds"], []any{"vscode"}) {
++					return fmt.Errorf("retirement discovery scope changed: %#v", request)
++				}
++				if !byID && params["useStateDbOnly"] != true {
++					return fmt.Errorf("retirement lost indexed discovery: %#v", request)
++				}
++				// Match native filtering: omitting modelProviders hides this
++				// alternate-provider root. A present empty list includes it.
++				threads := []any{}
++				if providers, ok := params["modelProviders"].([]any); ok && len(providers) == 0 {
++					threads = append(threads, map[string]any{"id": "alternate-root", "cwd": "/workspace/work/example",
++						"source": "vscode", "modelProvider": "alternate"})
++				}
++				return writeObject(connection, map[string]any{"id": request["id"], "result": map[string]any{"data": threads}})
++			})
++			client := NewWithOptions(socket, "/workspace", codex.ClientOptions{})
++			defer client.Close()
++			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
++			defer cancel()
++			var thread codex.ThreadMetadata
++			var found bool
++			var err error
++			if byID {
++				thread, found, err = client.retirementThreadByID(ctx, "alternate-root", "/workspace/work/example", true)
++			} else {
++				thread, found, err = client.retirementCandidate(ctx, "/workspace/work/example", false, true)
++			}
++			if err != nil || !found || thread.ID != "alternate-root" {
++				t.Fatalf("alternate-provider root discovery: thread=%#v found=%t error=%v", thread, found, err)
++			}
++		})
++	}
++}
++
+ func TestRetireThreadRefusesAnotherActiveThreadBesideTheExpectedOne(t *testing.T) {
+ 	socket := serveUnixWebsocket(t, func(connection *websocket.Conn) error {
+ 		if err := handshake(connection); err != nil {
+diff --git a/test/creation_acceptance_browser.cjs b/test/creation_acceptance_browser.cjs
+new file mode 100644
+index 0000000..8320807
+--- /dev/null
++++ b/test/creation_acceptance_browser.cjs
+@@ -0,0 +1,269 @@
++// Real packaged browser/native acceptance. Only the external model is synthetic.
++"use strict";
++const assert = require("node:assert/strict");
++const fs = require("node:fs");
++const {randomUUID} = require("node:crypto");
++const {chromium} = require(process.env.PLAYWRIGHT_MODULE);
++const [action, name, optionsJSON = "{}"] = process.argv.slice(2);
++const options = JSON.parse(optionsJSON);
++const origin = "https://fixture.workspace.example.test";
++const filename = `/tmp/creation-${name}.json`;
++const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
++
++(async () => {
++  const browser = await chromium.launch({executablePath: process.env.CHROMIUM_EXECUTABLE,
++    headless: true, args: ["--no-sandbox", "--disable-dev-shm-usage"]});
++  const context = await browser.newContext({ignoreHTTPSErrors: true,
++    permissions: ["clipboard-read", "clipboard-write"],
++    httpCredentials: {username: "developer", password: fs.readFileSync(
++      "/var/lib/dev-workspaces/password/password", "utf8").trim()}});
++  const page = await context.newPage(), errors = [], requests = [];
++  page.on("pageerror", error => errors.push(error.message));
++  page.on("response", response => requests.push({path: new URL(response.url()).pathname,
++    method: response.request().method(), status: response.status()}));
++  let record, phase = action;
++  const get = async path => {
++    const response = await context.request.get(origin + path);
++    assert(response.ok(), `${path}: ${response.status()} ${await response.text()}`);
++    return response.json();
++  };
++  const statusPath = () => record.requestId ? `/api/session-creations/${record.requestId}` :
++    `/api/sessions/${record.slug}/creation`;
++  const save = () => fs.writeFileSync(filename, JSON.stringify(record, null, 2));
++  async function openConversation(destination, slug) {
++    const [hydrated] = await Promise.all([
++      page.waitForResponse(response => response.request().method() === "GET" &&
++        [`/api/sessions/${slug}/thread`, `/api/sessions/${slug}/thread/page`]
++          .includes(new URL(response.url()).pathname)),
++      page.goto(origin + destination),
++    ]);
++    assert(hydrated.ok());
++  }
++  async function terminal(wanted = "ready") {
++    phase = "wait for " + wanted;
++    const deadline = Date.now() + 180000;
++    while (Date.now() < deadline) {
++      const status = await get(statusPath());
++      assert.equal(status.receiptId, record.receiptId);
++      if (["ready", "failed", "paused", "conflict", "gone", "cancelled"].includes(status.state)) {
++        assert([wanted].flat().includes(status.state), JSON.stringify(status));
++        Object.assign(record, status); save(); return status;
++      }
++      await pause(250);
++    }
++    throw Error("creation did not reach a terminal result: " + JSON.stringify(record));
++  }
++  async function settings(form) {
++    await form.locator("[name=provider]:not([disabled])").waitFor();
++    await form.locator("[name=provider]").selectOption(options.provider || "");
++    if (await form.locator("[name=team]").count()) {
++      await form.locator("[name=team]").selectOption(options.team || "solo");
++    }
++    await form.locator("[name=model]:not([disabled])").waitFor();
++    await form.locator("[name=model]").selectOption("gpt-5.5");
++    await form.locator("[name=effort]").selectOption("high");
++    if (options.sensitive) await form.locator("[name=sensitive]").check();
++    await form.locator("[name=browserNotificationsEnabled]").setChecked(options.notifications !== false);
++  }
++  async function followup(marker) {
++    phase = "follow-up exchange";
++    const before = await get(`/api/sessions/${record.slug}/thread`);
++    assert(!before.entries.some(entry => entry.kind === "userMessage" && entry.text === marker),
++      "follow-up marker already exists before send");
++    await page.locator("#message-form textarea[name=message]").fill(marker);
++    await page.locator("#message-send:not([disabled])").waitFor();
++    await page.locator("#message-send").click();
++    const deadline = Date.now() + 45000;
++    while (Date.now() < deadline) {
++      const thread = await get(`/api/sessions/${record.slug}/thread`);
++      const entries = thread.entries || [];
++      const users = entries.filter(entry => entry.kind === "userMessage" && entry.text === marker);
++      assert(users.length <= 1, "follow-up user turn was duplicated");
++      if (users.length === 1 && entries.some(entry => entry.kind === "agentMessage" &&
++          entry.turnId === users[0].turnId && entry.turnStatus === "completed" &&
++          entry.text === "CREATION_REPLY_" + (record.options.provider || "primary"))) return thread;
++      await pause(200);
++    }
++    throw Error("follow-up exchange did not finish");
++  }
++  async function usable() {
++    await terminal();
++    phase = "canonical redirect and transcript";
++    const destination = record.requestId ? record.canonicalUrl : record.url;
++    assert.equal(destination, `/${record.slug}/`);
++    record.destination = destination;
++    // The shipped status page may already be redirecting after ready. Do not
++    // race that navigation by opening the status page again.
++    if (![origin + record.url, origin + destination].includes(page.url())) {
++      await page.goto(origin + record.url, {waitUntil: "commit"});
++    }
++    await page.waitForURL(origin + destination, {timeout: 30000});
++    // Slug-based fork/plan status pages already have the final URL. Wait for
++    // their shipped ready replacement to render the conversation document.
++    await page.locator("body[data-thread-id]:not([data-thread-id=''])").waitFor();
++    record.threadId = await page.locator("body").getAttribute("data-thread-id");
++    assert(record.threadId);
++    await page.locator("#transcript").getByText("CREATION_REPLY_", {exact: false}).first().waitFor();
++    record.followupMarker = `CREATION_FOLLOWUP_${record.slug}_${randomUUID()}`;
++    save();
++    const thread = await followup(record.followupMarker);
++    const initial = thread.entries.filter(entry => entry.kind === "userMessage" &&
++      entry.text?.includes(record.marker));
++    if (record.kind !== "fork") assert.equal(initial.length, 1, JSON.stringify(thread));
++    assert.equal(thread.model, "gpt-5.5");
++    assert.equal(thread.reasoningEffort, "high");
++    const attention = await get(`/api/sessions/${record.slug}/attention`);
++    assert.equal(attention.enabled, record.options.notifications !== false);
++    record.transcript = thread; save();
++    // Ready proof survives a full portal read and browser reload.
++    await page.reload();
++    assert.equal(await page.locator("body").getAttribute("data-thread-id"), record.threadId);
++    await terminal();
++  }
++  try {
++    if (["create", "admit"].includes(action)) {
++      await page.goto(origin);
++      const form = page.locator("#new-session-form");
++      await form.locator("details summary").click();
++      await settings(form);
++      const marker = "CREATION_INITIAL_" + name;
++      await form.locator("[name=goal]").fill(marker);
++      if (!options.auto) await form.locator("[name=name]").fill(name);
++      if (options.attachment) {
++        const rejectedUpload = page.waitForResponse(r => r.status() >= 400 &&
++          new URL(r.url()).pathname.startsWith("/uploads/")).then(async response => {
++          throw Error(`upload rejected (${response.status()}): ${await response.text()}`);
++        });
++        await form.locator("input[type=file]").setInputFiles({name: "creation-evidence.txt",
++          mimeType: "text/plain", buffer: Buffer.from("CREATION_ATTACHMENT_CONTENT")});
++        await Promise.race([rejectedUpload,
++          form.locator("#creation-uploads").getByText("Ready", {exact: false}).first().waitFor()]);
++      }
++      // Exercise the shipped draft serializer before actual admission.
++      phase = "draft restoration after reload";
++      await page.reload();
++      await form.locator("[name=provider]:not([disabled])").waitFor();
++      assert.equal(await form.locator("[name=goal]").inputValue(), marker);
++      assert.equal(await form.locator("[name=provider]").inputValue(), options.provider || "");
++      assert.equal(await form.locator("[name=sensitive]").isChecked(), Boolean(options.sensitive));
++      assert.equal(await form.locator("[name=browserNotificationsEnabled]").isChecked(), options.notifications !== false);
++      phase = "admit creation";
++      const [accepted] = await Promise.all([
++        page.waitForResponse(r => new URL(r.url()).pathname === "/sessions" && r.request().method() === "POST"),
++        form.locator("button[type=submit]:not([disabled])").click(),
++      ]);
++      assert.equal(accepted.status(), 202);
++      // Chromium can retire the previous document's POST body on navigation.
++      // Read the real durable receipt by the actual serialized request ID.
++      const requestId = new URLSearchParams(accepted.request().postData()).get("clientRequestId");
++      record = {...await get(`/api/session-creations/${requestId}`), marker, options, kind: "new"}; save();
++      assert.equal(record.requestId, requestId);
++      assert(record.requestId && record.receiptId);
++      await page.waitForURL(origin + `/creations/${record.requestId}/`);
++      if (action === "create") await usable();
++    } else {
++      record = JSON.parse(fs.readFileSync(filename));
++      if (action === "change-effort") {
++        await openConversation(record.canonicalUrl || record.url, record.slug);
++        await page.locator("#codex-effort:not([disabled])").waitFor();
++        await page.locator("#codex-effort").selectOption("xhigh");
++        const deadline = Date.now() + 30000;
++        while ((await get(`/api/sessions/${record.slug}/thread`)).reasoningEffort !== "xhigh") {
++          assert(Date.now() < deadline, "reasoning change did not become effective");
++          await pause(100);
++        }
++      } else if (action === "failed") await terminal("failed");
++      else if (action === "finish") await usable();
++      else if (action === "retry") {
++        await terminal(["failed", "paused"]);
++        const previous = {...record};
++        await page.goto(origin + record.url);
++        const error = page.locator("#creation-error");
++        if (options.error) {
++        await error.waitFor({state: "visible"});
++        const displayed = await error.textContent();
++        assert(displayed);
++        await error.evaluate(element => {
++          const range = document.createRange(); range.selectNodeContents(element);
++          const selection = getSelection(); selection.removeAllRanges(); selection.addRange(range);
++        });
++        await pause(1600);
++        assert.equal(await page.evaluate(() => getSelection().toString()), displayed);
++        await page.getByRole("button", {name: "Copy error", exact: true}).click();
++        assert.equal(await page.evaluate(() => navigator.clipboard.readText()), displayed);
++        }
++        const [retried] = await Promise.all([
++          page.waitForResponse(r => r.request().method() === "POST" &&
++            new URL(r.url()).pathname === statusPath() + "/retry"),
++          page.locator("#creation-retry").click(),
++        ]);
++        assert.equal(retried.status(), 202);
++        await usable();
++        assert.equal(record.receiptId, previous.receiptId);
++        if (previous.slug) assert.equal(record.slug, previous.slug);
++        // Completion compacts the preparation mapping back to its own attempt.
++        // Read the initializer's durable receipt for a handed-off retry.
++        const counter = previous.slug ? "attempt" : "preparationAttempt";
++        const completed = previous.slug ? await get(`/api/sessions/${record.slug}/creation`) : record;
++        assert.equal(completed.receiptId, previous.receiptId);
++        assert(completed[counter] > previous[counter]);
++      } else if (["fork", "plan"].includes(action)) {
++        const source = {...record};
++        await openConversation(source.destination, source.slug);
++        if (action === "plan") {
++          await page.locator("#codex-mode").getByRole("button", {name: "Plan", exact: true}).click();
++          await page.locator("#message-form textarea").fill("CREATION_PLAN_REQUEST");
++          await page.locator("#message-send").click();
++          await page.locator("#plan-implement-new").waitFor({state: "visible", timeout: 45000});
++          await page.locator("#plan-implement-new").click();
++        } else await page.locator("#fork-open:not([disabled])").click();
++        const form = page.locator(action === "fork" ? "#fork-form" : "#plan-session-form");
++        await settings(form);
++        await form.locator("[name=name]").fill(name + "-" + action);
++        const [accepted] = await Promise.all([
++          page.waitForResponse(r => r.request().method() === "POST" &&
++            new URL(r.url()).pathname === `/api/sessions/${source.slug}/${action === "fork" ? "fork" : "implement-plan"}`),
++          form.locator("button[type=submit]").click(),
++        ]);
++        assert.equal(accepted.status(), 202);
++        const submitted = JSON.parse(accepted.request().postData());
++        const slug = `${submitted.creationDate}-${submitted.name}`;
++        record = {...await get(`/api/sessions/${slug}/creation`), marker: action === "plan" ? "CREATION_PLAN_DONE" : source.marker,
++          kind: action, options, source: {slug: source.slug, threadId: source.threadId}};
++        await usable();
++        assert.notEqual(record.threadId, source.threadId);
++        const response = await context.request.get(origin + source.destination);
++        assert(response.ok());
++        fs.writeFileSync(`/tmp/creation-${name}-${action}.json`, JSON.stringify(record, null, 2));
++        // Keep the source checkpoint for independent fork and plan runs.
++        fs.writeFileSync(filename, JSON.stringify(source, null, 2));
++      } else if (action === "delete-stale") {
++        await openConversation(record.destination, record.slug);
++        await page.locator("#delete-session-open").click();
++        await page.locator("#delete-session-form button[type=submit]").click();
++        const deadline = Date.now() + 60000;
++        let removed = false;
++        while (Date.now() < deadline) {
++          const response = await context.request.get(origin + statusPath());
++          const status = await response.json();
++          if (["gone", "conflict"].includes(status.state)) { removed = true; break; }
++          const operation = await get(`/api/sessions/${record.slug}/operation`);
++          assert(!["failed", "paused"].includes(operation.state), JSON.stringify(operation));
++          await pause(250);
++        }
++        assert(removed, "fixture deletion did not finish");
++        const stale = await context.request.post(origin + statusPath() + "/retry", {
++          headers: {Origin: origin}, data: {receiptId: record.receiptId, attempt: record.attempt}});
++        assert.equal(stale.status(), 409, await stale.text());
++        assert.equal((await context.request.get(origin + record.destination)).status(), 404);
++      } else throw Error("unknown action " + action);
++    }
++    assert.deepEqual(errors, []);
++    console.log(JSON.stringify({action, name, requestId: record.requestId, receiptId: record.receiptId,
++      slug: record.slug, threadId: record.threadId, state: record.state}));
++  } catch (error) {
++    console.error(JSON.stringify({phase, record, errors, requests: requests.slice(-30),
++      body: await page.locator("body").innerText().catch(() => "unavailable")}));
++    throw error;
++  } finally { await browser.close(); }
++})().catch(error => {console.error(error); process.exitCode = 1;});
+diff --git a/test/creation_model.py b/test/creation_model.py
+new file mode 100644
+index 0000000..55cf255
+--- /dev/null
++++ b/test/creation_model.py
+@@ -0,0 +1,87 @@
++"""External Responses fixture for the packaged creation acceptance only.
++
++No portal, receipt, initializer or native App Server is replaced. Control files
++hold inference at an external boundary; requests remain observable on failure.
++"""
++import http.server
++import itertools
++import json
++import pathlib
++import threading
++import time
++
++ROOT = pathlib.Path("/tmp/creation-model")
++ROOT.mkdir(exist_ok=True)
++sequence = itertools.count(1)
++lock = threading.Lock()
++
++
++class Handler(http.server.BaseHTTPRequestHandler):
++    def log_message(self, *args):
++        pass
++
++    def json(self, value):
++        data = json.dumps(value).encode()
++        self.send_response(200)
++        self.send_header("Content-Type", "application/json")
++        self.send_header("Content-Length", str(len(data)))
++        self.end_headers()
++        self.wfile.write(data)
++
++    def do_GET(self):
++        if self.path.endswith("/models"):
++            while (ROOT / "hold-models").exists():
++                (ROOT / "models-entered").touch()
++                time.sleep(0.05)
++            self.json({"object": "list", "data": [{"id": name, "object": "model"}
++                      for name in ["gpt-5.5", "gpt-6-luna"]]})
++        elif self.path.endswith("/usage"):
++            self.json({})
++        else:
++            self.send_error(404)
++
++    def do_POST(self):
++        if not self.path.endswith("/responses"):
++            self.send_error(404)
++            return
++        request = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
++        index = next(sequence)
++        provider = self.path.split("/")[1]
++        with lock:
++            with (ROOT / "requests.jsonl").open("a") as log:
++                log.write(json.dumps({"index": index, "provider": provider, "body": request}) + "\n")
++        naming = request.get("model") == "gpt-6-luna"
++        inputs = request.get("input", [])
++        last_user = next((item for item in reversed(inputs)
++                          if isinstance(item, dict) and item.get("role") == "user"), {})
++        if naming:
++            text = "invalid naming output" if (ROOT / "bad-name").exists() else json.dumps({"name": "accepted-session"})
++        elif "CREATION_PLAN_REQUEST" in json.dumps(last_user):
++            text = "<proposed_plan>\n# Creation acceptance plan\n\nReturn the CREATION_PLAN_DONE sentinel.\n</proposed_plan>"
++        else:
++            text = "CREATION_REPLY_" + provider
++        if not naming:
++            (ROOT / "turn-entered").touch()
++            while (ROOT / "hold-turn").exists():
++                time.sleep(0.05)
++        self.send_response(200)
++        self.send_header("Content-Type", "text/event-stream")
++        self.end_headers()
++
++        def event(value):
++            self.wfile.write(("data: " + json.dumps(value) + "\n\n").encode())
++            self.wfile.flush()
++
++        try:
++            identity = "response-" + str(index)
++            event({"type": "response.created", "response": {"id": identity}})
++            event({"type": "response.output_item.done", "item": {
++                "type": "message", "role": "assistant", "id": "answer-" + identity,
++                "phase": "final_answer", "content": [{"type": "output_text", "text": text}]}})
++            event({"type": "response.completed", "response": {"id": identity,
++                "usage": {"input_tokens": 1, "output_tokens": 1, "total_tokens": 2}}})
++        except (BrokenPipeError, ConnectionResetError):
++            pass
++
++
++http.server.ThreadingHTTPServer(("127.0.0.1", 2455), Handler).serve_forever()
+diff --git a/test/creation_transport.py b/test/creation_transport.py
+new file mode 100644
+index 0000000..e9bdfa1
+--- /dev/null
++++ b/test/creation_transport.py
+@@ -0,0 +1,85 @@
++"""Transparent native transport fault and read-only proof, never RPC stubs.
++
++The proxy holds the actual successful turn/start response after Codex accepted
++the turn. Killing the portal at this barrier exercises an ambiguous initial send.
++"""
++import asyncio
++import json
++import pathlib
++import sys
++import tempfile
++
++import websockets
++
++
++async def proxy(listen, target):
++    async def connection(client):
++        async with websockets.unix_connect(target, max_size=16 * 1024 * 1024) as native:
++            starts = {}
++
++            async def upstream():
++                async for data in client:
++                    message = json.loads(data)
++                    if (message.get("method") == "thread/start" and
++                            message["params"].get("cwd", "").endswith("-before")):
++                        while pathlib.Path("/tmp/creation-model/hold-root-request").exists():
++                            pathlib.Path("/tmp/creation-model/root-entered").touch()
++                            await asyncio.sleep(0.025)
++                        if client.state.name != "OPEN":
++                            return
++                    if (message.get("method") == "turn/start" and
++                            "CREATION_INITIAL_after" in json.dumps(message["params"].get("input"))):
++                        starts[message["id"]] = message["params"]["threadId"]
++                    await native.send(data)
++
++            async def downstream():
++                async for data in native:
++                    message = json.loads(data)
++                    if message.get("id") in starts and "result" in message:
++                        with tempfile.NamedTemporaryFile(mode="w", dir="/tmp/creation-model", delete=False) as marker:
++                            json.dump({"threadId": starts[message["id"]],
++                                "turnId": message["result"]["turn"]["id"]}, marker)
++                        pathlib.Path(marker.name).replace("/tmp/creation-model/send-accepted")
++                        while pathlib.Path("/tmp/creation-model/hold-send-reply").exists():
++                            await asyncio.sleep(0.025)
++                    await client.send(data)
++
++            tasks = [asyncio.create_task(upstream()), asyncio.create_task(downstream())]
++            try:
++                done, _ = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
++                for task in done:
++                    task.result()
++            finally:
++                for task in tasks:
++                    task.cancel()
++
++    async with websockets.unix_serve(connection, listen, max_size=16 * 1024 * 1024):
++        pathlib.Path(listen).chmod(0o600)
++        await asyncio.Future()
++
++
++async def read(socket, identity):
++    async with websockets.unix_connect(socket, max_size=16 * 1024 * 1024) as native:
++        async def rpc(number, method, params):
++            await native.send(json.dumps({"id": number, "method": method, "params": params}))
++            while True:
++                result = json.loads(await native.recv())
++                if result.get("id") == number:
++                    assert "error" not in result, result
++                    return result["result"]
++
++        await rpc(1, "initialize", {"clientInfo": {"name": "creation-proof", "version": "1"},
++                                    "capabilities": {"experimentalApi": True}})
++        await native.send(json.dumps({"method": "initialized"}))
++        if identity == "inventory":
++            metadata = await rpc(2, "thread/list", {"limit": 100,
++                "modelProviders": ["primary", "alternate"], "sourceKinds": ["vscode"]})
++        else:
++            metadata = await rpc(2, "thread/read", {"threadId": identity, "includeTurns": True})
++        print(json.dumps(metadata))
++
++
++if sys.argv[1] == "proxy":
++    asyncio.run(proxy(*sys.argv[2:]))
++else:
++    asyncio.run(read(*sys.argv[2:]))
+diff --git a/test/dev_session/codex_runtime_test.rb b/test/dev_session/codex_runtime_test.rb
+index b46e237..663cbfe 100644
+--- a/test/dev_session/codex_runtime_test.rb
++++ b/test/dev_session/codex_runtime_test.rb
+@@ -626,6 +626,10 @@ class DevSessionTest < Minitest::Test
+       commands = File.readlines(calls).map { |line| JSON.parse(line).first(2) }
+       assert_equal(1, commands.count(['thread', 'create']))
+       assert_equal(1, commands.count(['thread', 'ensure-initial']))
++      runner.send(:send_native_client_command, session, model: 'gpt-captured', effort: 'high')
++      assert_equal([codex, *native, '--model', 'gpt-captured', '-c', 'model_reasoning_effort="high"',
++                    '--remote', 'unix:///run/test/codex.sock', 'resume', 'thread-provider'],
++                   Shellwords.split(tmux.sent_commands.last))
+     end
+   end
+ 
+diff --git a/test/dev_session/fork_recovery_test.rb b/test/dev_session/fork_recovery_test.rb
+index d358090..df2bd31 100644
+--- a/test/dev_session/fork_recovery_test.rb
++++ b/test/dev_session/fork_recovery_test.rb
+@@ -91,7 +91,7 @@ class DevSessionTest < Minitest::Test
+           File.open(#{log.dump}, 'a') { |file| file.puts ARGV.join(' ') }
+           case ARGV[0, 2]
+           when ['thread', 'resolve-fork-settings']
+-            puts JSON.generate(model: 'gpt-test', reasoningEffort: 'xhigh')
++            puts JSON.generate(model: 'gpt-test', reasoningEffort: 'high')
+           when ['thread', 'fork']
+             puts JSON.generate(threadId: 'thread-fork')
+           end
+@@ -100,8 +100,10 @@ class DevSessionTest < Minitest::Test
+           id: '$fork', name: destination_slug, mark: '1', slug: destination_slug,
+           workspace:, socket_path: '/run/test/tmux.sock', codex_thread_id: 'thread-fork'
+         )
++        terminal_settings = []
+         runner_class = Class.new(DevSession::Runner) do
+           define_method(:create_tmux_session) do |*_args, **kwargs|
++            terminal_settings << [kwargs.fetch(:model), kwargs.fetch(:effort)]
+             session.identity_token = kwargs.fetch(:identity_token)
+             session
+           end
+@@ -115,9 +117,10 @@ class DevSessionTest < Minitest::Test
+ 
+         runner.fork(
+           source_slug, 'alternative', as_is: false, json: true,
+-          model: 'gpt-test', effort: 'xhigh'
++          model: 'gpt-test', effort: 'high'
+         )
+ 
++        assert_equal([['gpt-test', 'high']], terminal_settings)
+         result = JSON.parse(out.string)
+         assert_equal(destination_slug, result.fetch('slug'))
+         assert_equal(source_slug, result.fetch('forkedFrom'))
+@@ -137,7 +140,7 @@ class DevSessionTest < Minitest::Test
+         assert_includes(command, '--fresh')
+         assert_includes(command, '--thread-id thread-source')
+         assert_includes(command, '--model gpt-test')
+-        assert_includes(command, '--effort xhigh')
++        assert_includes(command, '--effort high')
+       end
+     end
+   end
+@@ -233,8 +236,10 @@ class DevSessionTest < Minitest::Test
+         id: '$fork', name: destination_slug, mark: '1', slug: destination_slug,
+         workspace:, socket_path: '/run/test/tmux.sock', codex_thread_id: 'thread-fork'
+       )
++      terminal_settings = []
+       retry_class = Class.new(DevSession::Runner) do
+         define_method(:create_tmux_session) do |*_args, **kwargs|
++          terminal_settings << [kwargs.fetch(:model), kwargs.fetch(:effort), kwargs.fetch(:launch_codex)]
+           session.identity_token = kwargs.fetch(:identity_token)
+           session
+         end
+@@ -245,10 +250,95 @@ class DevSessionTest < Minitest::Test
+         out: StringIO.new, err: StringIO.new, today: TODAY, env: {}
+       )
+       retry_runner.fork(source_slug, 'retry', as_is: false, json: true)
++      assert_equal([['source-model', 'medium', false]], terminal_settings)
+       assert_equal(["fork\n"], File.readlines(calls))
+     end
+   end
+ 
++  def test_unfinished_fork_restores_frozen_settings_or_retains_recovery_journal
++    %w[codex sh refuse active foreign].each do |mode|
++      with_workspace do |workspace|
++        source, destination = '2026-06-05-source', '2026-06-06-retry'
++        setup = runner_for(workspace)
++        setup.ensure_tracking_files(source)
++        manifest = setup.send(:ensure_portal_manifest, source)
++        manifest['codex'] = { 'thread_id' => 'thread-source', 'socket_path' => '/run/test/codex.sock',
++                              'client_version' => '0.163.0' }
++        setup.send(:write_portal_manifest, source, manifest)
++        calls = File.join(workspace, 'portal-calls.jsonl')
++        settings_file = File.join(workspace, 'native-effort')
++        File.write(settings_file, 'xhigh')
++        portal = File.join(workspace, 'portal.rb')
++        File.write(portal, <<~RUBY)
++          require 'json'
++          File.open(#{calls.dump}, 'a') { |f| f.puts JSON.generate(ARGV) }
++          case ARGV.first(2)
++          when ['thread', 'resolve-fork-settings']
++            puts JSON.generate(model: 'source-model', reasoningEffort: 'high')
++          when ['thread', 'fork']
++            puts JSON.generate(threadId: 'thread-fork')
++          when ['thread', 'require-idle']
++            abort 'synthetic active thread' if #{mode.dump} == 'active'
++          when ['thread', 'ensure-settings']
++            abort 'synthetic settings refusal' if #{mode.dump} == 'refuse'
++            abort 'changed thread' unless ARGV[ARGV.index('--thread-id') + 1] == 'thread-fork'
++            abort 'lost frozen model' unless ARGV[ARGV.index('--model') + 1] == 'source-model'
++            effort = ARGV[ARGV.index('--effort') + 1]
++            abort 'lost frozen effort' unless effort == 'high'
++            File.write(#{settings_file.dump}, effort)
++            puts JSON.generate(model: 'source-model', reasoningEffort: effort)
++          end
++        RUBY
++        codex = File.join(workspace, 'codex')
++        File.write(codex, "#!/bin/sh\necho 'codex-cli 0.163.0'\n")
++        File.chmod(0o755, codex)
++        options = {workspace:, portal_command: [RbConfig.ruby, portal], codex_command: codex,
++                   codex_socket: '/run/test/codex.sock', codex_version: '0.163.0',
++                   out: StringIO.new, err: StringIO.new, today: TODAY, env: {'SHELL' => '/bin/sh'}}
++        failing_class = Class.new(DevSession::Runner) do
++          define_method(:create_tmux_session) { |*_, **_| raise DevSession::Error, 'tmux interrupted' }
++        end
++        assert_raises(DevSession::Error) do
++          failing_class.new(**options, tmux: NullTmux.new).fork(source, destination, as_is: true, json: true)
++        end
++        journal_path = setup.send(:fork_journal_file, destination)
++        journal = JSON.parse(File.read(journal_path))
++        tmux = ManagedTmux.new(destination, workspace:, socket_path: '/run/test/tmux.sock',
++          codex_thread_id: 'thread-fork', codex_socket_path: '/run/test/codex.sock',
++          codex_client_version: '0.163.0', identity_token: journal.fetch('tmux_identity'),
++          pane_current_command: %w[sh foreign].include?(mode) ? mode : 'codex')
++        session = tmux.session(destination)
++        retry_class = Class.new(DevSession::Runner) do
++          define_method(:sync_slug) { |*_, **_| session }
++        end
++        retry_runner = retry_class.new(**options, tmux:)
++        if %w[refuse active foreign].include?(mode)
++          assert_raises(DevSession::Error) { retry_runner.fork(source, destination, as_is: true, json: true) }
++          assert File.exist?(journal_path)
++          assert_equal('xhigh', File.read(settings_file))
++          if mode == 'active'
++            refute_empty tmux.sent_commands # The existing idle-refusal path restores the owned client.
++          else
++            assert_empty tmux.sent_commands
++          end
++        else
++          retry_runner.fork(source, destination, as_is: true, json: true)
++          refute File.exist?(journal_path)
++          assert_equal('high', File.read(settings_file))
++          assert_includes Shellwords.split(tmux.sent_commands.last), 'model_reasoning_effort="high"'
++          assert_includes Shellwords.split(tmux.sent_commands.last), 'source-model'
++        end
++        recorded = File.readlines(calls).map { |line| JSON.parse(line) }
++        assert_equal 1, recorded.count { |args| args.first(2) == ['thread', 'fork'] }
++        assert_equal(%w[active foreign].include?(mode) ? 0 : 1,
++                     recorded.count { |args| args.first(2) == ['thread', 'ensure-settings'] })
++        current = YAML.safe_load(File.read(File.join(workspace, 'work', destination, 'portal.yml')))
++        assert_equal 'thread-fork', current.dig('codex', 'thread_id')
++        assert_equal 'thread-source', YAML.safe_load(File.read(File.join(workspace, 'work', source, 'portal.yml'))).dig('codex', 'thread_id')
++      end
++    end
++  end
++
+   def test_fork_resumes_after_manifest_crash_on_the_next_day_without_source_tracking
+     with_workspace do |workspace|
+       source_slug = '2026-06-05-source'
