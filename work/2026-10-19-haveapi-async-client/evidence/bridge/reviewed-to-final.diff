@@ -1,0 +1,460 @@
+diff --git a/clients/js/dist/haveapi-client.js b/clients/js/dist/haveapi-client.js
+index fbb1325..f9a9143 100644
+--- a/clients/js/dist/haveapi-client.js
++++ b/clients/js/dist/haveapi-client.js
+@@ -194,7 +194,18 @@ function addParamsToQuery(url, namespace, params, flat, owns) {
+     return url;
+ }
+ 
+-Authentication = {
++// These four callback-era globals remain observable even when a consumer wraps
++// the UMD in strict code. Read their properties live rather than caching values.
++// Older browser, worker and Node hosts need no globalThis polyfill.
++var legacyGlobals = (typeof globalThis !== 'undefined' ? globalThis :
++    typeof window !== 'undefined' ? window :
++        typeof self !== 'undefined' ? self : global);
++
++/**
++ * @namespace Authentication
++ * @memberof HaveAPI.Client
++ */
++legacyGlobals.Authentication = {
+     /**
+      * @member {Array} providers An array of registered authentication providers.
+      * @memberof HaveAPI.Client.Authentication
+@@ -208,10 +219,10 @@ Authentication = {
+      * @param {Object} provider class
+      */
+     registerProvider: function (name, obj) {
+-        Authentication.providers[name] = obj;
++        legacyGlobals.Authentication.providers[name] = obj;
+     }
+ };
+-var authenticationRegistry = Authentication;
++var authenticationRegistry = legacyGlobals.Authentication;
+ 
+ var I18n = {
+     DEFAULT_LOCALE: 'en',
+@@ -595,20 +606,20 @@ ResourceInstance.prototype.save = function (callback) {
+     }
+ };
+ ResourceInstance.prototype.defaultParams = function (action) {
+-    ret = {};
++    legacyGlobals.ret = {};
+     for (var attr in this._private.attributes) {
+         var desc = action.description.input.parameters[attr];
+         if (desc === undefined)
+             continue;
+         switch (desc.type) {
+             case 'Resource':
+-                ret[attr] = this._private.attributes[attr][desc.value_id];
++                legacyGlobals.ret[attr] = this._private.attributes[attr][desc.value_id];
+                 break;
+             default:
+-                ret[attr] = this._private.attributes[attr];
++                legacyGlobals.ret[attr] = this._private.attributes[attr];
+         }
+     }
+-    return ret;
++    return legacyGlobals.ret;
+ };
+ /**
+  * Resolve an associated resource.
+@@ -1764,9 +1775,9 @@ Client.prototype.fetchDescription = function (callback, path) {
+                 if (response.version == Client.ProtocolVersion) {
+                     return response.response;
+                 }
+-                v1 = response.version.split('.');
+-                v2 = Client.ProtocolVersion.split('.');
+-                if (v1[0] != v2[0]) {
++                legacyGlobals.v1 = response.version.split('.');
++                legacyGlobals.v2 = Client.ProtocolVersion.split('.');
++                if (legacyGlobals.v1[0] != legacyGlobals.v2[0]) {
+                     throw new Client.Exceptions.ProtocolError('Incompatible protocol version: the client uses v' + Client.ProtocolVersion +
+                         ' while the API server uses v' + response.version);
+                 }
+@@ -1824,7 +1835,7 @@ Client.prototype.authenticate = function (method, opts, callback, reset) {
+         });
+         return;
+     }
+-    this.authProvider = new authenticationRegistry.providers[method](this, opts, this._private.description.authentication[method]);
++    this.authProvider = new legacyGlobals.Authentication.providers[method](this, opts, this._private.description.authentication[method]);
+     this.authProvider.setup(function (c, status) {
+         // Fetch new description, which may be different when authenticated
+         if (status && reset) {
+diff --git a/clients/js/dist/types/haveapi/client.d.ts b/clients/js/dist/types/haveapi/client.d.ts
+index 6389e12..fac6f77 100644
+--- a/clients/js/dist/types/haveapi/client.d.ts
++++ b/clients/js/dist/types/haveapi/client.d.ts
+@@ -1,3 +1,4 @@
++import './authentication';
+ import type { Provider, AuthenticationOptions, AuthenticationRegistry } from './authentication';
+ import { Action } from './action';
+ import type { ActionConstructor, ActionCall, ActionReply } from './action';
+diff --git a/clients/js/dist/types/haveapi/legacy_globals.d.ts b/clients/js/dist/types/haveapi/legacy_globals.d.ts
+new file mode 100644
+index 0000000..6da522f
+--- /dev/null
++++ b/clients/js/dist/types/haveapi/legacy_globals.d.ts
+@@ -0,0 +1,10 @@
++import type { AuthenticationRegistry } from './authentication';
++import type { Params } from './types';
++interface LegacyGlobals {
++    Authentication: AuthenticationRegistry;
++    v1: string[];
++    v2: string[];
++    ret: Params;
++}
++export declare const legacyGlobals: LegacyGlobals;
++export {};
+diff --git a/clients/js/src/haveapi/authentication.ts b/clients/js/src/haveapi/authentication.ts
+index 508c6ea..bdd30ec 100644
+--- a/clients/js/src/haveapi/authentication.ts
++++ b/clients/js/src/haveapi/authentication.ts
+@@ -4,6 +4,7 @@ import type { BaseConstructor } from './authentication/base';
+ import type { BasicConstructor } from './authentication/basic';
+ import type { OAuth2Constructor } from './authentication/oauth2';
+ import type { TokenConstructor } from './authentication/token';
++import { legacyGlobals } from './legacy_globals';
+ 
+ export interface AuthenticationOptions extends Values {
+ 	user?: string;
+@@ -39,9 +40,7 @@ export interface AuthenticationRegistry {
+  * @namespace Authentication
+  * @memberof HaveAPI.Client
+  */
+-// Preserve the original bare global assignment in the non-strict UMD.
+-declare var Authentication: AuthenticationRegistry;
+-Authentication = {
++legacyGlobals.Authentication = {
+ 	/**
+ 	 * @member {Array} providers An array of registered authentication providers.
+ 	 * @memberof HaveAPI.Client.Authentication
+@@ -56,9 +55,9 @@ Authentication = {
+ 	 * @param {Object} provider class
+ 	 */
+ 	registerProvider: function(name: string, obj: ProviderConstructor) {
+-		Authentication.providers[name] = obj;
++		legacyGlobals.Authentication.providers[name] = obj;
+ 	}
+ } as AuthenticationRegistry;
+ 
+-const authenticationRegistry = Authentication;
++const authenticationRegistry = legacyGlobals.Authentication;
+ export { authenticationRegistry as Authentication };
+diff --git a/clients/js/src/haveapi/client.ts b/clients/js/src/haveapi/client.ts
+index fa9910e..d2ce765 100644
+--- a/clients/js/src/haveapi/client.ts
++++ b/clients/js/src/haveapi/client.ts
+@@ -1,5 +1,6 @@
+ import { normalizeTrustedOrigins, resolveApiUrl, addParamsToQuery } from './protocol';
+-import { Authentication } from './authentication';
++import './authentication';
++import { legacyGlobals } from './legacy_globals';
+ import { I18n } from './i18n';
+ import type { Provider, AuthenticationOptions, AuthenticationRegistry } from './authentication';
+ import { Action } from './action';
+@@ -91,11 +92,6 @@ export interface ClientConstructor {
+ 	LocalResponse: LocalResponseConstructor;
+ }
+ 
+-// These bare assignments are observable legacy sloppy-mode globals. The UMD
+-// build deliberately remains non-strict; declarations erase without a runtime shim.
+-declare var v1: string[];
+-declare var v2: string[];
+-
+ /**
+  * Create a new client for the API.
+  * @class Client
+@@ -471,10 +467,10 @@ Client.prototype.fetchDescription = function(callback, path) {
+ 					return response.response;
+ 				}
+ 
+-				v1 = (response.version as string).split('.');
+-				v2 = Client.ProtocolVersion.split('.');
++				legacyGlobals.v1 = (response.version as string).split('.');
++				legacyGlobals.v2 = Client.ProtocolVersion.split('.');
+ 
+-				if (v1[0] != v2[0]) {
++				if (legacyGlobals.v1[0] != legacyGlobals.v2[0]) {
+ 					throw new Client.Exceptions.ProtocolError(
+ 						'Incompatible protocol version: the client uses v'+ Client.ProtocolVersion +
+ 						' while the API server uses v'+ response.version
+@@ -556,7 +552,7 @@ Client.prototype.authenticate = function(method, opts, callback, reset) {
+ 		return;
+ 	}
+ 
+-	this.authProvider = new Authentication.providers[method](this, opts, this._private.description!.authentication[method]);
++	this.authProvider = new legacyGlobals.Authentication.providers[method](this, opts, this._private.description!.authentication[method]);
+ 
+ 	this.authProvider.setup(function(c, status) {
+ 		// Fetch new description, which may be different when authenticated
+diff --git a/clients/js/src/haveapi/legacy_globals.ts b/clients/js/src/haveapi/legacy_globals.ts
+new file mode 100644
+index 0000000..2442d70
+--- /dev/null
++++ b/clients/js/src/haveapi/legacy_globals.ts
+@@ -0,0 +1,20 @@
++import type { AuthenticationRegistry } from './authentication';
++import type { Params } from './types';
++
++interface LegacyGlobals {
++	Authentication: AuthenticationRegistry;
++	v1: string[];
++	v2: string[];
++	ret: Params;
++}
++
++declare const global: LegacyGlobals;
++
++// These four callback-era globals remain observable even when a consumer wraps
++// the UMD in strict code. Read their properties live rather than caching values.
++// Older browser, worker and Node hosts need no globalThis polyfill.
++export const legacyGlobals = (
++	typeof globalThis !== 'undefined' ? globalThis :
++	typeof window !== 'undefined' ? window :
++	typeof self !== 'undefined' ? self : global
++) as unknown as LegacyGlobals;
+diff --git a/clients/js/src/haveapi/resource_instance.ts b/clients/js/src/haveapi/resource_instance.ts
+index 0b71365..4ef2b06 100644
+--- a/clients/js/src/haveapi/resource_instance.ts
++++ b/clients/js/src/haveapi/resource_instance.ts
+@@ -1,9 +1,10 @@
+ import { BaseResource } from './base_resource';
+ import { Client } from './client';
++import { legacyGlobals } from './legacy_globals';
+ import type { BaseResourcePrivate } from './base_resource';
+ import type { Action, ReplyCallback } from './action';
+ import type { Response } from './response';
+-import type { IdArgument, Meta, ParameterDescription, Params, Values } from './types';
++import type { IdArgument, Meta, ParameterDescription, Values } from './types';
+ 
+ export interface ResourceInstancePrivate extends BaseResourcePrivate {
+ 	action: Action;
+@@ -30,10 +31,6 @@ export interface ResourceInstanceConstructor {
+ 	pathParams(meta?: Meta): IdArgument[];
+ }
+ 
+-// This bare assignment historically escapes into the sloppy UMD global scope.
+-// The erased declaration preserves that behavior instead of repairing it here.
+-declare var ret: Params;
+-
+ /**
+  * @class ResourceInstance
+  * @classdesc Represents an instance of a resource from the API. Attributes
+@@ -177,7 +174,7 @@ ResourceInstance.prototype.save = function(callback?: ReplyCallback<ResourceInst
+ };
+ 
+ ResourceInstance.prototype.defaultParams = function(action: Action) {
+-	ret = {}
++	legacyGlobals.ret = {}
+ 
+ 	for (var attr in this._private.attributes) {
+ 		var desc = action.description.input!.parameters[ attr ];
+@@ -187,15 +184,15 @@ ResourceInstance.prototype.defaultParams = function(action: Action) {
+ 
+ 		switch (desc.type) {
+ 			case 'Resource':
+-				ret[ attr ] = (this._private.attributes[ attr ] as Values)[ desc.value_id! ];
++				legacyGlobals.ret[ attr ] = (this._private.attributes[ attr ] as Values)[ desc.value_id! ];
+ 				break;
+ 
+ 			default:
+-				ret[ attr ] = this._private.attributes[ attr ];
++				legacyGlobals.ret[ attr ] = this._private.attributes[ attr ];
+ 		}
+ 	}
+ 
+-	return ret;
++	return legacyGlobals.ret;
+ };
+ 
+ /**
+diff --git a/clients/js/test/README.md b/clients/js/test/README.md
+index 051d794..d39e1de 100644
+--- a/clients/js/test/README.md
++++ b/clients/js/test/README.md
+@@ -24,6 +24,20 @@ The initial 12 cases passed before conversion against the bundle at
+ The same cases must pass against the converted bundle. The original bundle is
+ available from Git history; a second tracked copy is unnecessary.
+ 
++The strict-context fixture checks the same distributed artifact inside a strict
++CommonJS wrapper, as used when a browser bundler embeds it in a module:
++
++```sh
++node --test clients/js/test/compatibility/strict_context.spec.cjs
++```
++
++It compares raw and strict callback loading, setup, version checks and
++`defaultParams`, including the existing `Authentication`, `v1`, `v2` and `ret`
++global effects and live reads. The `window`, `self` and `global` host fallbacks
++run with `globalThis`, Promise and AbortController absent. The `self` case uses
++fake CommonJS XHR and checks host lookup; it does not certify worker transport.
++This VM check complements actual minified browser-package import verification.
++
+ The TypeScript fixture compiles against generated package declarations rather
+ than authored source:
+ 
+diff --git a/clients/js/test/compatibility/strict_context.spec.cjs b/clients/js/test/compatibility/strict_context.spec.cjs
+new file mode 100644
+index 0000000..d899098
+--- /dev/null
++++ b/clients/js/test/compatibility/strict_context.spec.cjs
+@@ -0,0 +1,157 @@
++const assert = require('node:assert/strict');
++const fs = require('node:fs');
++const path = require('node:path');
++const vm = require('node:vm');
++const { test } = require('node:test');
++
++const bundlePath = path.resolve(__dirname, '../../dist/haveapi-client.js');
++const bundle = fs.readFileSync(bundlePath, 'utf8');
++
++function loadBundle(host, strict) {
++  const requests = [];
++  const imports = [];
++  class FakeXHR {
++    constructor() { this.headers = {}; requests.push(this); }
++    open(method, url) { this.method = method; this.url = url; }
++    setRequestHeader(name, value) { this.headers[name] = value; }
++    send(body) { this.body = body; }
++    respond(response, status = 200) {
++      this.status = status;
++      this.responseText = JSON.stringify(response);
++      this.readyState = 4;
++      this.onreadystatechange();
++    }
++  }
++  const context = vm.createContext({
++    console: { log() {}, warn() {}, error() {} }, URL, setTimeout, clearTimeout,
++    globalThis: undefined, Promise: undefined, AbortController: undefined,
++    module: { exports: {} },
++    require(name) {
++      imports.push(name);
++      assert.equal(name, 'xmlhttprequest');
++      return { XMLHttpRequest: FakeXHR };
++    }
++  });
++  context.exports = context.module.exports;
++  // Expose each host independently. Worker-like transport uses the existing
++  // CommonJS fake XHR; only the global-object fallback is under test here.
++  const globalObject = vm.runInContext('this', context);
++  context[{ browser: 'window', worker: 'self', node: 'global' }[host]] = globalObject;
++  if (host === 'browser') context.XMLHttpRequest = FakeXHR;
++  const source = strict
++    ? '(function(module, exports) { "use strict";\n' + bundle + '\n})(module, exports);'
++    : bundle;
++  vm.runInContext(source, context, { filename: bundlePath });
++  return { context, requests, imports, HaveAPI: context.module.exports };
++}
++
++function description() {
++  const parameters = { id: { type: 'Integer' }, count: { type: 'Integer' } };
++  const action = (method, input) => ({
++    method, path: '/v1/widgets/{widget_id}', aliases: [], blocking: false,
++    input, output: { layout: 'object', namespace: 'widget', parameters }
++  });
++  return {
++    authentication: {}, meta: { namespace: '_meta' },
++    resources: { widgets: { resources: {}, actions: {
++      show: action('GET', null),
++      update: action('PUT', { layout: 'hash', namespace: 'widget', parameters: { count: parameters.count } })
++    } } }
++  };
++}
++
++function exerciseCallbacks(loaded) {
++  const { HaveAPI, context, requests } = loaded;
++  assert.equal(typeof HaveAPI.Client, 'function');
++  assert.equal(HaveAPI.Client.name, 'Client');
++  assert.equal(HaveAPI.default, undefined);
++  for (const name of ['Action', 'Resource', 'ResourceInstance', 'Response', 'Hooks']) {
++    assert.equal(typeof HaveAPI.Client[name], 'function', name);
++  }
++  assert.equal(context.Authentication, HaveAPI.Client.Authentication);
++  const client = new HaveAPI.Client('https://api.example', { version: 1 });
++  let setup;
++  assert.equal(client.setup((owner, status) => { setup = [owner, status]; }), undefined);
++  assert.equal(setup, undefined);
++  assert.equal(requests[0].method, 'OPTIONS');
++  assert.equal(requests[0].url, 'https://api.example/v1/');
++  // A compatible minor mismatch exercises both legacy version globals.
++  requests[0].respond({ version: '2.1', status: true, response: description() });
++  assert.equal(setup[0], client);
++  assert.equal(setup[1], true);
++  assert.deepEqual(Array.from(context.v1), ['2', '1']);
++  assert.deepEqual(Array.from(context.v2), ['2', '0']);
++  assert.equal(typeof client.widgets, 'function');
++  assert.equal(typeof client.widgets.show, 'function');
++  assert.equal(client.widgets instanceof HaveAPI.Client.Resource, true);
++  assert.equal(client.widgets.show instanceof HaveAPI.Client.Action, true);
++  let instance;
++  assert.equal(client.widgets.show(7, (owner, value) => {
++    assert.equal(owner, client);
++    instance = value;
++  }), undefined);
++  assert.equal(instance, undefined);
++  assert.equal(requests[1].method, 'GET');
++  assert.equal(requests[1].url, 'https://api.example/v1/widgets/7');
++  requests[1].respond({ status: true, response: { widget: { id: 7, count: 4 }, _meta: { path_params: [7] } } });
++  assert.equal(instance instanceof HaveAPI.Client.ResourceInstance, true);
++  assert.equal(instance.count, 4);
++  assert.equal(instance.apiResponse().isOk(), true);
++  context.ret = { previous: true };
++  const params = instance.defaultParams(client.widgets.update);
++  assert.equal(params, context.ret);
++  assert.deepEqual(Object.keys(params), ['count']);
++  assert.equal(params.count, 4);
++  assert.equal(params.previous, undefined);
++  assert.equal(context.globalThis, undefined);
++  assert.equal(context.Promise, undefined);
++  assert.equal(context.AbortController, undefined);
++  return { client, instance };
++}
++
++for (const host of ['browser', 'worker', 'node']) {
++  for (const strict of [false, true]) {
++    test(`${host} ${strict ? 'strict wrapper' : 'raw bundle'} retains callback/global parity without globalThis or async primitives`, () => {
++      const loaded = loadBundle(host, strict);
++      exerciseCallbacks(loaded);
++      assert.deepEqual(loaded.imports, host === 'browser' ? [] : ['xmlhttprequest']);
++    });
++  }
++}
++
++for (const strict of [false, true]) {
++  test(`${strict ? 'strict wrapper' : 'raw bundle'} keeps live Authentication and defaultParams global reads`, () => {
++    const loaded = loadBundle('node', strict);
++    const { context, HaveAPI } = loaded;
++    const { client, instance } = exerciseCallbacks(loaded);
++    const original = context.Authentication;
++    const replacement = { providers: {} };
++    context.Authentication = replacement;
++    let providerArgs;
++    function CustomProvider(owner, options, providerDescription) {
++      providerArgs = [owner, options, providerDescription];
++      this.setup = callback => callback(owner, true);
++    }
++    assert.equal(original.registerProvider('custom', CustomProvider), undefined);
++    assert.equal(replacement.providers.custom, CustomProvider);
++    assert.equal(original.providers.custom, undefined);
++    assert.equal(HaveAPI.Client.Authentication, original);
++    const options = { marker: 'live registry' };
++    let authenticated;
++    assert.equal(client.authenticate('custom', options, (owner, status) => {
++      authenticated = [owner, status];
++    }, false), undefined);
++    assert.deepEqual(providerArgs, [client, options, undefined]);
++    assert.deepEqual(authenticated, [client, true]);
++
++    const replacedParams = { replaced: true };
++    Object.defineProperty(instance._private.attributes, 'count', {
++      configurable: true, enumerable: true,
++      get() { context.ret = replacedParams; return 9; }
++    });
++    // The getter changes the global during the assignment. Returning a cached
++    // local instead of the live global would change this callback-era result.
++    assert.equal(instance.defaultParams(client.widgets.update), replacedParams);
++    assert.deepEqual(replacedParams, { replaced: true });
++  });
++}

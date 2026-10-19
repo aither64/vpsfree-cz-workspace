@@ -1,0 +1,73 @@
+diff --git a/docs/work-log/2026-10-19-haveapi-package-pilot.md b/docs/work-log/2026-10-19-haveapi-package-pilot.md
+index 36cd74fe..316ec137 100644
+--- a/docs/work-log/2026-10-19-haveapi-package-pilot.md
++++ b/docs/work-log/2026-10-19-haveapi-package-pilot.md
+@@ -78,3 +78,17 @@ paths and absent platform-optional packages. Root dependencies and lockfiles
+ remain unchanged. The actual declaration/Vite/browser proof must run again on
+ the new committed runner; the successful full unit/build result is retained for
+ this runner-only correction.
++
++## Follow-up: preview command directory
++
++The next committed proof at WebUI `7c9e2696` retained all 407 locked baseline
++packages and passed the actual tarball declaration compile and Vite 7.3.5 build.
++It stopped before browser assertions because Playwright started the preview
++command from the nested config directory, where the root Vite executable path
++did not exist. The failed snapshot, result, log and exit status are retained.
++
++The dedicated config now explicitly starts preview from the snapshot root.
++A browser-free regression loads the actual config and verifies that its working
++directory resolves both the Vite executable and config paths. The port, browser
++matrix, strict startup and no-server-reuse rules are unchanged. A fresh committed
++package proof is still required; no browser success is claimed by this fix.
+diff --git a/scripts/haveapi-package/playwright.config.ts b/scripts/haveapi-package/playwright.config.ts
+index 0dd99278..d5182f5f 100644
+--- a/scripts/haveapi-package/playwright.config.ts
++++ b/scripts/haveapi-package/playwright.config.ts
+@@ -1,3 +1,4 @@
++import { fileURLToPath } from 'node:url';
+ import { defineConfig } from '@playwright/test';
+ 
+ const chromium = {
+@@ -19,6 +20,7 @@ export default defineConfig({
+     { name: 'umd-webkit', testMatch: 'umd.spec.ts', use: { browserName: 'webkit' } },
+   ],
+   webServer: {
++    cwd: fileURLToPath(new URL('../..', import.meta.url)),
+     command:
+       'node node_modules/vite/bin/vite.js preview --config scripts/haveapi-package/vite.config.ts --host 127.0.0.1 --port 5189 --strictPort',
+     url: 'http://127.0.0.1:5189',
+diff --git a/scripts/test-haveapi-package.test.mjs b/scripts/test-haveapi-package.test.mjs
+index ab8ab391..85774a1d 100644
+--- a/scripts/test-haveapi-package.test.mjs
++++ b/scripts/test-haveapi-package.test.mjs
+@@ -28,12 +28,28 @@ test('source provenance is explicit and conflicting claims fail closed', () => {
+   assert.throws(() => candidateProvenance(undefined, 'bad'));
+ });
+ 
+-import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
++import { mkdtemp, mkdir, writeFile, readFile, rm, stat } from 'node:fs/promises';
+ import { execFileSync } from 'node:child_process';
+ import os from 'node:os';
+ import path from 'node:path';
++import { fileURLToPath } from 'node:url';
+ import { runPilot, run } from './test-haveapi-package.mjs';
+ 
++test('actual browser config starts its preview command from the snapshot root', async () => {
++  const configUrl = new URL('./haveapi-package/playwright.config.ts', import.meta.url);
++  const { default: config } = await import(configUrl.href);
++  const server = config.webServer;
++  const effectiveCwd = server.cwd ?? path.dirname(fileURLToPath(configUrl));
++  const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
++  assert.equal(path.resolve(effectiveCwd), root);
++  const args = server.command.split(/\s+/);
++  assert.equal(args[0], 'node');
++  assert.equal((await stat(path.resolve(effectiveCwd, args[1]))).isFile(), true);
++  const configArgument = args.indexOf('--config');
++  assert.notEqual(configArgument, -1);
++  assert.equal((await stat(path.resolve(effectiveCwd, args[configArgument + 1]))).isFile(), true);
++});
++
+ const baselinePackages = ['typescript', 'vite', '@playwright/test', 'locked-dependency'];
+ const lockedVersion = '1.0.0';
+ async function writePackage(root, name, version = lockedVersion) {

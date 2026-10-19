@@ -1,0 +1,1930 @@
+diff --git a/WORK_LOG.md b/WORK_LOG.md
+index 9ac35acc..9bf7bee2 100644
+--- a/WORK_LOG.md
++++ b/WORK_LOG.md
+@@ -11,6 +11,10 @@ complete reconstruction of the project. Missing evidence is not a passing check.
+ 
+ ## New changes
+ 
++## 2026-10-19 — Injectable HaveAPI package pilot
++
++See the [adapter boundary and isolated package proof](docs/work-log/2026-10-19-haveapi-package-pilot.md). Prepared for review; production transport and dependencies are unchanged.
++
+ ## 2026-10-18 — Combined PR security review
+ 
+ See the [non-draft ETNyx review and combined dev evidence](docs/work-log/2026-10-18-combined-pr-security-review.md). Local integration only; no upstream merge or shared release deployment.
+diff --git a/docs/design/API_CONTRACTS.md b/docs/design/API_CONTRACTS.md
+index 58bda8e0..f1caa6e1 100644
+--- a/docs/design/API_CONTRACTS.md
++++ b/docs/design/API_CONTRACTS.md
+@@ -65,6 +65,13 @@ limit is omitted. See [model cases](../../src/pages/app/admin/nodes/NodeLifecycl
+ Do not infer editability from the create form or silently add unsupported update
+ fields when reorganizing the node page.
+ 
++## Candidate request-client compatibility
++
++The [packed HaveAPI pilot](HAVEAPI_PACKAGE_PILOT.md) preserves the existing WebUI
++result/session boundary through an injectable structural client. Production
++transport and dependencies remain unchanged. Its browser and declaration
++fixtures are synthetic package-fit evidence, not a backend or rollout contract.
++
+ ## Pagination: known blockers
+ 
+ For the locked vpsAdmin source `a65a4dfeb92a59df4a80a737a20bcbf8558793ff`
+diff --git a/docs/design/ARCHITECTURE.md b/docs/design/ARCHITECTURE.md
+index ce849e84..e8a1c664 100644
+--- a/docs/design/ARCHITECTURE.md
++++ b/docs/design/ARCHITECTURE.md
+@@ -35,7 +35,9 @@ flowchart LR
+ - [HaveAPI client](../../src/lib/api/haveapi.ts) and typed domain adapters under
+   `src/lib/api` translate requests/envelopes. React Query drives remote data and
+   invalidation. Page-local models hold draft/review state; pure helpers are unit
+-  tested. The [inventory](IMPLEMENTATION_INVENTORY.md) lists adapters and routes.
++  tested. An [injectable request-client pilot](HAVEAPI_PACKAGE_PILOT.md) shares the
++  existing session/result policy while production keeps its fetch transport.
++  The [inventory](IMPLEMENTATION_INVENTORY.md) lists adapters and routes.
+ 
+ ## Authentication and session lifecycle
+ 
+diff --git a/docs/design/DOMAIN_COVERAGE.md b/docs/design/DOMAIN_COVERAGE.md
+index 09983676..8ebfed38 100644
+--- a/docs/design/DOMAIN_COVERAGE.md
++++ b/docs/design/DOMAIN_COVERAGE.md
+@@ -11,7 +11,7 @@ completeness of every action, permission or backend field. Counts are not test c
+ 
+ | Area / requirements | API modules | Behavioral documentation and scope |
+ | --- | --- | --- |
+-| Shared transport and type definitions; REQ-011/012/013/046 | [ascendingIdCollection](../../src/lib/api/ascendingIdCollection.ts), [haveapi](../../src/lib/api/haveapi.ts), [haveapiEnvelope](../../src/lib/api/haveapiEnvelope.ts), [app](../../src/lib/api/app.ts), [appTypes](../../src/lib/api/appTypes.ts), [userTypes](../../src/lib/api/userTypes.ts) | [Contract](API_CONTRACTS.md). Request envelopes, errors, metadata and shared types. app/appTypes/userTypes are composition/type modules, not extra screens. |
++| Shared transport and type definitions; REQ-011/012/013/046 | [ascendingIdCollection](../../src/lib/api/ascendingIdCollection.ts), [haveapi](../../src/lib/api/haveapi.ts), [haveapiEnvelope](../../src/lib/api/haveapiEnvelope.ts), [haveapiTransport](../../src/lib/api/haveapiTransport.ts), [haveapiRequestClient](../../src/lib/api/haveapiRequestClient.ts), [app](../../src/lib/api/app.ts), [appTypes](../../src/lib/api/appTypes.ts), [userTypes](../../src/lib/api/userTypes.ts) | [Contract](API_CONTRACTS.md). Request envelopes, errors, metadata and shared types. app/appTypes/userTypes are composition/type modules, not extra screens. |
+ | Shell preferences and lookup; REQ-005/009/013 | [webuiUserSettings](../../src/lib/api/webuiUserSettings.ts), [languages](../../src/lib/api/languages.ts), [clusterSearch](../../src/lib/api/clusterSearch.ts), [userLookups](../../src/lib/api/userLookups.ts) | [Contract](CONFIGURATION.md). Keyed preferences, language catalog and scoped object lookup/search; these feed multiple routes. |
+ | VPS lifecycle and configuration; REQ-014/015/017/018/020/021/023/028 | [vps](../../src/lib/api/vps.ts), [vpsAccess](../../src/lib/api/vpsAccess.ts), [vpsFeatures](../../src/lib/api/vpsFeatures.ts), [vpsMaintenance](../../src/lib/api/vpsMaintenance.ts), [vpsMounts](../../src/lib/api/vpsMounts.ts) | [Contract](ACTION_CONTRACTS.md#vps-and-resources). Create/power/delete/console, access, feature settings, maintenance and mounts; migration form has its own contract below. |
+ | User-data; REQ-042/046 | [vpsUserData](../../src/lib/api/vpsUserData.ts) | [Contract](API_CONTRACTS.md). Shared owner/VPS data adapter; pending server filter/cursor dependency is explicit. |
+diff --git a/docs/design/HAVEAPI_PACKAGE_PILOT.md b/docs/design/HAVEAPI_PACKAGE_PILOT.md
+new file mode 100644
+index 00000000..caf4e099
+--- /dev/null
++++ b/docs/design/HAVEAPI_PACKAGE_PILOT.md
+@@ -0,0 +1,103 @@
++# Injectable HaveAPI request client and package pilot
++
++Requirements: REQ-007, REQ-011, REQ-012 and REQ-059. The production application
++continues to use its fetch transport. The injectable adapter runs a candidate
++`haveapi-client` package through the existing WebUI request policy before a
++dependency update or transport rollout.
++
++## Request and session policy
++
++[haveapi.ts](../../src/lib/api/haveapi.ts) owns authentication headers, language,
++BFF session recovery, one read retry, envelope unwrapping and WebUI errors.
++[haveapiTransport.ts](../../src/lib/api/haveapiTransport.ts) prepares the existing
++fetch query/body once so a retry retains the original request.
++[haveapiRequestClient.ts](../../src/lib/api/haveapiRequestClient.ts) accepts a
++structural request client and supplies a transport for that same policy. It has
++no runtime import of the candidate package. Callers must configure the injected
++client with the same versioned API base URL as the WebUI.
++
++The injected client owns serialization, HTTP and protocol validation. The adapter
++maps its validated envelopes and structured failures into WebUI results and errors. The existing scalar-query guard applies to
++both transports. Parameters without an input namespace remain omitted, matching
++the default transport. HTTP 200 API rejection keeps `HaveApiError.httpStatus`
++undefined. Transport loss, timeout, abort and malformed responses retain uncertain
++mutation classification. A qualifying 401 can renew the same BFF session and
++retry one read using the original language. A rejected write is never replayed;
++its caller receives the existing resubmit error after successful renewal.
++
++Local request-client fixtures cover these mappings and the stable-session guard.
++The normal application compilation and tests require no candidate package.
++Candidate protocol validation can be stricter than the default fetch decoder;
++the pilot does not establish parity for every malformed server response or
++approve switching production transport.
++
++## Packed artifact proof
++
++Build and pack the HaveAPI candidate from a known committed source revision.
++After reviewing the committed WebUI and HaveAPI deliverable, run in the locked
++Node development shell:
++
++```sh
++npm run test:haveapi-package -- --package /absolute/candidate.tgz --webui-ref HEAD --haveapi-ref FULL_HAVEAPI_COMMIT_SHA
++```
++
++The script resolves `--webui-ref` to a commit and archives that committed source
++into an owned temporary directory. Dirty source is excluded. It freezes the
++candidate tarball bytes, runs `npm ci` in the snapshot and installs the candidate
++there with `--ignore-scripts --no-save --package-lock=true`. The snapshot lock
++lets npm retain existing dependency versions while adding the candidate.
++The runner records manifest/lock hashes and each installed locked package's
++name/version after `npm ci`. It rejects file changes and any changed or missing
++baseline package before running consumer tools. Platform-optional packages
++absent from that installation stay outside the baseline; new candidate dependency
++paths are allowed. The real checkout's dependencies and lockfile are untouched.
++The candidate is absent from normal application dependencies, lockfiles and
++Nix hashes.
++
++The proof compiles a consumer against the package's actual generated declarations
++and builds a dedicated Vite application with its actual `AsyncClient` import.
++Its Chromium fixtures reuse WebUI bootstrap/HaveAPI HTTP fixtures to check query
++and JSON requests, 401 read renewal, no write replay, changed-session rejection,
++pre-dispatch/in-flight abort, and an action-state receipt without completion
++polling. Separate Chromium, Firefox and WebKit projects load the exact installed
++UMD main artifact with an ordinary script tag and native XHR. Each checks both
++clients' setup and a dynamic GET, callback undefined returns, the global export
++shape and async wrapper/metadata. AMD/CommonJS registration remains covered by
++HaveAPI's VM compatibility fixtures. Missing browser engines are failures to
++complete the proof; no project is silently skipped.
++
++Install the locked browser engines with the existing wrapper when needed:
++
++```sh
++npm run e2e:install -- chromium firefox webkit
++```
++
++The Chromium executable override applies only to Chromium projects. The pilot
++uses its own loopback preview port 5189 and fails if it is already occupied.
++Browser fixtures use synthetic responses and do not certify backend permissions,
++a real OAuth provider, task completion or a deployed application.
++
++`result.json` records the frozen tar SHA-256, committed WebUI ref, HaveAPI source
++claim, effective tool versions and result. The script prints its temporary
++artifact directory, retained outside Nix's transient shell directory by default.
++`HAVEAPI_PACKAGE_TMPDIR` can select an existing temporary parent directory.
++Browser failure traces remain in that snapshot. Retained source/npm trees are
++disposable after their evidence has been collected.
++
++If package metadata has no `gitHead`, `--haveapi-ref` is required as a pack-owner
++assertion. Conflicting supplied and packaged refs fail. Neither ref proves the
++tarball's source equivalence by itself: retain the pack owner's build/source
++receipt alongside the hash. Interruptions propagate to owned subprocess groups;
++failed runs retain their result and artifacts for diagnosis.
++
++Browser-free runner tests use disposable Git fixtures to verify committed-source
++selection, frozen tar bytes, install isolation, locked graph/file drift rejection
++and provenance conflicts. Run:
++
++```sh
++node --test scripts/test-haveapi-package.test.mjs
++```
++
++A passing pilot is package-fit evidence. A published package, dependency update,
++production transport migration, PR approval and deployment each remain separate
++steps.
+diff --git a/docs/design/IMPLEMENTATION_INVENTORY.md b/docs/design/IMPLEMENTATION_INVENTORY.md
+index 370e2550..485aa510 100644
+--- a/docs/design/IMPLEMENTATION_INVENTORY.md
++++ b/docs/design/IMPLEMENTATION_INVENTORY.md
+@@ -268,7 +268,7 @@ wrappers; page-level action guards and API authorization still apply.
+ | `/admin/_design` | page/redirect | `<DesignSandboxPage />` | `<RouteProvidersLayout /> → <CoreRoutes.AppShell mode="admin" />` | [source](../../src/routes/router.tsx) |
+ | `/admin/*` | page/redirect | `<NotFoundPage appBasePath="/admin" />` | `<RouteProvidersLayout /> → <CoreRoutes.AppShell mode="admin" />` | [source](../../src/routes/router.tsx) |
+ 
+-## API adapter modules (64)
++## API adapter modules (66)
+ 
+ Read these for request/response details. File presence does not prove that the deployed
+ API implements every parameter; see [API contracts](API_CONTRACTS.md).
+@@ -292,6 +292,8 @@ API implements every parameter; see [API contracts](API_CONTRACTS.md).
+ - [finance.ts](../../src/lib/api/finance.ts)
+ - [haveapi.ts](../../src/lib/api/haveapi.ts)
+ - [haveapiEnvelope.ts](../../src/lib/api/haveapiEnvelope.ts)
++- [haveapiRequestClient.ts](../../src/lib/api/haveapiRequestClient.ts)
++- [haveapiTransport.ts](../../src/lib/api/haveapiTransport.ts)
+ - [helpBoxes.ts](../../src/lib/api/helpBoxes.ts)
+ - [incidents.ts](../../src/lib/api/incidents.ts)
+ - [infra.ts](../../src/lib/api/infra.ts)
+diff --git a/docs/design/README.md b/docs/design/README.md
+index 69d6241c..448b77cc 100644
+--- a/docs/design/README.md
++++ b/docs/design/README.md
+@@ -76,6 +76,8 @@ intent; decisions explain transitions; test results prove only their stated scop
+ - [Configuration and data](CONFIGURATION.md): precedence, all BFF settings, browser/server state and recovery limits.
+ - [Failure diagnosis](TROUBLESHOOTING.md): symptoms, evidence boundaries and security-review map.
+ 
++- [HaveAPI package pilot](HAVEAPI_PACKAGE_PILOT.md): injectable transport contract and isolated candidate verification.
++
+ ## Detailed review and handover
+ 
+ - [Domain coverage](DOMAIN_COVERAGE.md): every API module mapped back to behavior, including helpers and non-adapter boundaries.
+diff --git a/docs/design/REQUIREMENTS.md b/docs/design/REQUIREMENTS.md
+index c1f743a6..634f25b8 100644
+--- a/docs/design/REQUIREMENTS.md
++++ b/docs/design/REQUIREMENTS.md
+@@ -23,12 +23,12 @@ The Acceptance column describes what must be checked, not a claim it all passed.
+ | REQ-004 | Distinguish menu destinations while preserving normal width and full labels. | Distinct destination icons; expanded sidebar stays 256px with full cs/en names and groups; no icon-only mode or desktop collapse control; ignore legacy collapse preferences; retain the labelled mobile drawer. | U; maintainer clarification 2026-09-30 supersedes optional collapse; [PR522](https://github.com/Kerrycek/clankerdev/pull/522) | Delivered: always-expanded follow-up in PR1; earlier 176px proposal remains withdrawn; [release 718cf759](../work-log/2026-09-30-three-site-release.md) |
+ | REQ-005 | Persist supported theme/language preferences across expiry and login. | Keyed settings PUT succeeds; reload and fresh login restore selection; anonymous pages do not read private settings; retired sidebar collapse values normalize to false without resetting other preferences. | U; [PR519](https://github.com/Kerrycek/clankerdev/pull/519), [fixture](../../e2e/specs/app/ui_preferences_persistence.spec.ts) | Delivered |
+ | REQ-006 | Show a real session inactivity countdown. | Idle time decreases and expires; activity resets appropriately; background polling does not keep it at 40 min; reload/tab behavior tested. | U; [PR514](https://github.com/Kerrycek/clankerdev/pull/514), [idle model](../../src/lib/auth/idleSession.ts) | Delivered |
+-| REQ-007 | Keep sessions usable across OAuth token rotation and make logout authoritative. | Open tabs refresh without adopting stale tokens; concurrent refresh/logout serialized; failed/expired auth clears session state. New code exchanges send validated callback IP and service User-Agent; refresh/revoke omit Client-IP. | U/P; [PR500](https://github.com/Kerrycek/clankerdev/pull/500), [PR501](https://github.com/Kerrycek/clankerdev/pull/501), [BFF](../../bff/README.md) | Metadata follow-up present in deployed source; real OAuth exchange acceptance remains unverified; [release 718cf759](../work-log/2026-09-30-three-site-release.md) |
++| REQ-007 | Keep sessions usable across OAuth token rotation and make logout authoritative. | Open tabs refresh without adopting stale tokens; concurrent refresh/logout serialized; failed/expired auth clears session state. New code exchanges send validated callback IP and service User-Agent; refresh/revoke omit Client-IP. | U/P; [PR500](https://github.com/Kerrycek/clankerdev/pull/500), [PR501](https://github.com/Kerrycek/clankerdev/pull/501), [BFF](../../bff/README.md); [candidate-client compatibility](HAVEAPI_PACKAGE_PILOT.md) | Metadata follow-up present in deployed source; real OAuth exchange acceptance remains unverified; [release 718cf759](../work-log/2026-09-30-three-site-release.md) |
+ | REQ-008 | Remove the page-wide blue outline while preserving keyboard focus. | Navigation/skip focus works; main content has no giant outline; interactive controls retain focus indicators. | U; [PR506](https://github.com/Kerrycek/clankerdev/pull/506) | Delivered |
+ | REQ-009 | Support cs/en and light/dark/system without untranslated operational controls. | Locale, date/number formatting and theme persist; contrast and long-label layout checked. | U/C; [i18n](../../src/app/i18n.tsx), [theme](../../src/app/theme.tsx) | Baseline |
+-| REQ-011 | Keep rejected mutations in context and distinguish uncertain outcomes. | Retain draft/error and announce newly inserted dialog errors, permit safe retry for known rejection, block duplicate uncertain submission until reconciled. | P; [PR436](https://github.com/Kerrycek/clankerdev/pull/436), [mutation locks](../../src/components/layout/useLocalMutationLocks.ts) | Baseline |
++| REQ-011 | Keep rejected mutations in context and distinguish uncertain outcomes. | Retain draft/error and announce newly inserted dialog errors, permit safe retry for known rejection, block duplicate uncertain submission until reconciled. | P; [PR436](https://github.com/Kerrycek/clankerdev/pull/436), [mutation locks](../../src/components/layout/useLocalMutationLocks.ts); [candidate-client compatibility](HAVEAPI_PACKAGE_PILOT.md) | Baseline |
+ | REQ-010 | Make mobile layouts usable and keyboard interactions accessible. | Centered form/filter dialogs with viewport-bounded internal scrolling and explicit Close; retain side panels only for navigation/tasks/read-only history. No viewport overflow; dialogs trap/restore focus without overriding a control already focused inside; labels and errors readable; actions remain reachable; shared buttons offer 44 × 44 CSS px touch targets. | U/C; [Drawer](../../src/components/ui/Drawer.tsx), [Modal](../../src/components/ui/Modal.tsx) | Baseline plus [touch-target/overflow fix and first-tap audit](../work-log/2026-10-06-mobile-touch-audit.md); cold-search loading and lookup scope race fixed; [workflow hardening](../work-log/2026-10-06-mobile-workflows.md) prepared; physical-device verification remains Open; [centered form/filter follow-up](../work-log/2026-10-17-centered-form-dialogs.md) prepared |
+-| REQ-012 | Track asynchronous work through Tasks and receipts. | Acceptance identifies target/action state; completion/failure is separate; missing receipt is not success. | U/C; [action states](../../src/lib/api/actionStates.ts), [PR518](https://github.com/Kerrycek/clankerdev/pull/518) | Baseline |
++| REQ-012 | Track asynchronous work through Tasks and receipts. | Acceptance identifies target/action state; completion/failure is separate; missing receipt is not success. | U/C; [action states](../../src/lib/api/actionStates.ts), [PR518](https://github.com/Kerrycek/clankerdev/pull/518); [candidate-client compatibility](HAVEAPI_PACKAGE_PILOT.md) | Baseline |
+ | REQ-013 | Preserve navigable URLs and object identity. | Refresh/back/forward and direct object routes work; switching IDs clears stale drafts; invalid/missing objects have explicit states. | C; [route providers](../../src/routes/RouteProvidersLayout.tsx), [keyed routes](../../src/routes/ParamKeyedRoute.tsx) | Baseline |
+ | REQ-073 | Keep list filter controls in place when active filters appear. | With active filter chips or a lookup hint, desktop advanced/copy-link/clear controls stay bottom-aligned with the search field, as without filters; chips and hints use a full-width row below the controls on every list with this layout, and long chips truncate within it; mobile keeps all controls reachable without overflow. | Contributor report 2026-10-16 (transaction chains screenshot); [filter bar](../../src/components/layout/FilterBar.tsx), [fixture](../../e2e/specs/app/filter_bar_chip_alignment.spec.ts) | Proposed; [prepared, not merged](../work-log/2026-10-16-filter-bar-chip-alignment.md) |
+ 
+@@ -98,7 +98,7 @@ The Acceptance column describes what must be checked, not a claim it all passed.
+ | REQ-056 | Use independent UI/API pins and a disposable owned cluster for real workflow proof. | Provenance, synthetic identities, receipts and cleanup; shared VMs/data untouched; do not relabel mock tests as live. | U; [verification](VERIFICATION.md) | Required; prior scoped evidence exists |
+ | REQ-057 | Integrate KB navigation, articles, page bindings and cs/en screenshots. | Both pins captured, real login/navigation, semantic IDs/fingerprints, original legacy evidence retained; publication explicitly approved. | U; [KB contract repo](https://github.com/vpsfreecz/vpsfree-kb-contracts) | Open beta minimum |
+ | REQ-058 | Finish mobile error-toast/Cancel interaction. | Error notification does not obscure dialog cancellation on small viewports; keyboard dismissal preserved. | U; [verification](VERIFICATION.md) | [Prepared and fixture-tested](../work-log/2026-10-06-mobile-workflows.md): inline registration rejection, queued background toasts and in-dialog urgent notifications; physical-device check remains Open |
+-| REQ-059 | Audit the current session.json contract with sessionKey. | Same-origin JSON/auth controls preserved; null anonymous fields and session identity validated; audit scripts match deployed BFF. | U; [BFF](../../bff/server.js), [verification](VERIFICATION.md) | Runtime delivered; audit completion to verify |
++| REQ-059 | Audit the current session.json contract with sessionKey. | Same-origin JSON/auth controls preserved; null anonymous fields and session identity validated; audit scripts match deployed BFF. | U; [BFF](../../bff/server.js), [verification](VERIFICATION.md); [candidate-client compatibility](HAVEAPI_PACKAGE_PILOT.md) | Runtime delivered; audit completion to verify |
+ | REQ-060 | Require evidence-based release readiness, not a percentage. | Exact integrated candidate, role/locale/viewport regressions, live critical paths, limitations, KB minimum and rollback reviewed. | U; [release checklist](VERIFICATION.md) | Open final certification |
+ | REQ-061 | Keep tests meaningful and do not bypass CI. | Correct stale assertions against actual contracts; no disabled gates/skipped failures to get green. | U; [PR520](https://github.com/Kerrycek/clankerdev/pull/520) | Ongoing constraint |
+ | REQ-062 | Preserve foreign checkout changes and use reviewable isolated PRs. | Scoped branch, evidence and bilingual PR description; no unrelated backend/production changes. | U; [maintenance rules](../../AGENTS.md) | Ongoing constraint |
+diff --git a/docs/design/VERIFICATION.md b/docs/design/VERIFICATION.md
+index 20221423..64b89920 100644
+--- a/docs/design/VERIFICATION.md
++++ b/docs/design/VERIFICATION.md
+@@ -251,8 +251,8 @@ lead accepted the original 43 exceptions after matching their hashes against the
+ recorded source revision `e7ce3d73e799fc60e5933fe23bdb3a979eb4d6b9`.
+ The header and lifecycle power-control extractions reduced `VpsLayout.tsx` and
+ `VpsLifecyclePage.tsx` below their historical line ceilings, so their two
+-`grown-over-500` exceptions were removed. The remaining ledger has 41 accepted
+-entries; their recorded hashes, metrics, allowances and baseline are unchanged.
++`grown-over-500` exceptions were removed. The HaveAPI transport extraction also
++resolves its `crossed-500` exception. Remaining entries retain their recorded hashes, metrics, allowances and baseline.
+ Raw violations, proposed/accepted exceptions, unaccepted violations and invalid
+ entries are separate report fields. A changed or deleted file, resolved rule, expired
+ removal condition, changed allowance or unlisted new violation fails the audit;
+@@ -268,6 +268,14 @@ The structural audit passes for the accepted source bytes. Record the exact
+ locked-toolchain quick gate and production build results for each candidate
+ separately from this source audit.
+ 
++## Candidate HaveAPI package proof
++
++The [package pilot](HAVEAPI_PACKAGE_PILOT.md) documents the separate committed-ref
++runner, emitted-declaration check, Vite/Chromium adapter fixtures and three-engine
++UMD smoke. These candidate-dependent files are outside ordinary app compilation
++and tests. Run the long proof only after committed-deliverable review. The
++production dependency graph and default fetch transport do not change.
++
+ ## Recorded release evidence (2026-09-27)
+ 
+ The [work log](../../WORK_LOG.md) records release `fd290b5e` (PR517–520), including
+diff --git a/docs/work-log/2026-10-19-haveapi-package-pilot.md b/docs/work-log/2026-10-19-haveapi-package-pilot.md
+new file mode 100644
+index 00000000..36cd74fe
+--- /dev/null
++++ b/docs/work-log/2026-10-19-haveapi-package-pilot.md
+@@ -0,0 +1,80 @@
++# Injectable HaveAPI package pilot — 2026-10-19
++
++## Scope and implementation
++
++REQ-007, REQ-011, REQ-012 and REQ-059. The approved HaveAPI TypeScript/Promise
++client work includes proving package fit in the React WebUI. This change adds an
++injectable structural request client while keeping the production fetch default,
++root dependency/lockfiles and Nix hashes unchanged. It is based on canonical main
++`7860521f30826c3886c89c35e8ab6f4e082e0a4b`, on `dev/haveapi-async-client`.
++No merge, publication or deployment is claimed.
++
++The shared WebUI session/result policy is retained. Fetch query/body preparation
++moves to its own transport, resolving the old file's structural line-budget
++exception. The candidate adapter delegates wire handling to the injected client
++and preserves existing error classification, same-session read renewal, original
++request language, mutation non-replay and action receipts. The
++[design/verification guide](../design/HAVEAPI_PACKAGE_PILOT.md) describes the
++boundary and later command.
++
++The dedicated runner snapshots a committed WebUI ref, freezes candidate bytes,
++installs only into an owned temporary copy and records source claims, tar hash,
++tool versions and results. Candidate-only type/Vite/browser fixtures stay outside
++normal application checks. Adapter Chromium cases cover read/mutation/recovery,
++identity and abort/receipt behavior. Separate Chromium/Firefox/WebKit script-tag
++fixtures exercise both clients through native XHR with synthetic envelopes.
++
++## Local evidence and limits
++
++The locked Nix environment supplied Node 24.21.0 and npm 11.19.0. Dependency setup
++completed. Application/tooling typechecking and 59 focused existing/new adapter tests
++passed. Thirty selected script regressions passed, including three new runner
++isolation/provenance tests. Scoped lint/format, Tailwind/pattern checks, design
++docs/inventory and structural audits passed. The seven browser cases list
++correctly; the candidate fixture compiles against the peer committed generated
++declarations via a temporary source preflight. This is separate from the later
++check against the installed tarball. Two initial fake-refresh cases omitted JSON content type and failed the
++existing guarded BFF response contract; correcting those synthetic responses
++made the focused suite pass. No declared Git hook framework is present.
++Final source and review evidence accompany the commit.
++
++The selected HaveAPI pack-owner receipt identifies committed source
++`ae0fe39738c3eb10019377d0fce95dc249cdfd16` and candidate SHA-256
++`46fd526ac02d04fdbc9526c7b7e67cdde0a5cfe730cf865702a4a2b4167bf991`.
++The local tar has no `gitHead`; the later command must carry the explicit source
++assertion. This records the intended candidate, not a completed package pilot.
++
++The actual packed declaration/browser proof, three-engine provisioning and full
++integration remain deferred until committed-deliverable review. Existing VM
++loader checks are distinct from real-browser evidence. Synthetic fixtures do
++not certify real API permissions, OAuth exchange, task completion or production
++readiness. Next: finish quick gates, review the committed change, then run the
++isolated proof under the verification watcher and retain its receipts.
++
++## Follow-up: preserve the locked graph during candidate installation
++
++The first committed-candidate run used WebUI `e35f2720` and the remedied HaveAPI
++source `dc94157808966c12418b4009085fec237a869789`, tar SHA-256
++`de55212e85ceb2bceac77e249272e20e1062afa8aa733df42e02eae981c094b8`.
++All 301 WebUI unit files passed (1,867 tests), and the production build passed.
++The package proof stopped before browser assertions: `--package-lock=false`
++let the no-save install change 96 packages, including Playwright 1.61.0 to
++1.64.1. The pinned runner correctly refused that version. The declaration and
++Vite steps used the drifted graph and are diagnostic evidence only. The failed
++snapshot and log remain in local session evidence.
++
++One npm-only feasibility probe in a fresh committed snapshot enabled lockfile
++reading with `--package-lock=true`. It preserved all 407 installed baseline
++package names/versions and the manifest/lock byte hashes while adding the
++candidate. Structured before/result records and a separate read-only comparison
++confirmed this result. The watcher failed to save its requested console
++transcript; that evidence gap is recorded, and the probe was not repeated.
++No compiler or browser launched during the probe.
++
++The runner now uses that command and checks the existing installed locked graph
++and manifest/lock files before any consumer tool. Focused regressions cover
++version/name/presence drift and file tampering while allowing added candidate
++paths and absent platform-optional packages. Root dependencies and lockfiles
++remain unchanged. The actual declaration/Vite/browser proof must run again on
++the new committed runner; the successful full unit/build result is retained for
++this runner-only correction.
+diff --git a/package.json b/package.json
+index d38fb6e2..f9b35df0 100644
+--- a/package.json
++++ b/package.json
+@@ -68,7 +68,8 @@
+     "audit:i18n-structure": "node scripts/audit-i18n-structure.mjs",
+     "docs:inventory": "node scripts/design-inventory.mjs --write",
+     "audit:design-docs": "node scripts/audit-design-docs.mjs",
+-    "e2e:touch:webkit": "npm run env:check && E2E_START_SERVER=1 node scripts/playwright.mjs test --project=mobile-webkit"
++    "e2e:touch:webkit": "npm run env:check && E2E_START_SERVER=1 node scripts/playwright.mjs test --project=mobile-webkit",
++    "test:haveapi-package": "node scripts/test-haveapi-package.mjs"
+   },
+   "keywords": [],
+   "author": "",
+diff --git a/scripts/fixtures/structural-debt-ledger.json b/scripts/fixtures/structural-debt-ledger.json
+index b794cf93..775e9390 100644
+--- a/scripts/fixtures/structural-debt-ledger.json
++++ b/scripts/fixtures/structural-debt-ledger.json
+@@ -90,20 +90,6 @@
+         "atMost": 675
+       }
+     },
+-    {
+-      "path": "src/lib/api/haveapi.ts",
+-      "rule": "crossed-500",
+-      "sourceRevision": "e7ce3d73e799fc60e5933fe23bdb3a979eb4d6b9",
+-      "contentHash": "5e3afe7fcea2717150b8a96b8cab0f9c1570fc2a41ac4c55d897f7eb2c55fa31",
+-      "old": 439,
+-      "allowance": 516,
+-      "rationale": "At the recorded source revision, this file already contained HaveAPI request and response adapter cases; extract the coherent section with focused behavior coverage before removing this exception. Reviewed 2026-10-06: two lines add request-language negotiation; OAuth retry preserves the original headers. Focused transport tests cover cs/en and renewal.",
+-      "owner": "WebUI implementation lead",
+-      "removeWhen": {
+-        "metric": "lines",
+-        "atMost": 500
+-      }
+-    },
+     {
+       "path": "src/pages/app/MonitoringEventDetailPage.tsx",
+       "rule": "grown-over-500",
+diff --git a/scripts/haveapi-package/browser.spec.ts b/scripts/haveapi-package/browser.spec.ts
+new file mode 100644
+index 00000000..52dff66f
+--- /dev/null
++++ b/scripts/haveapi-package/browser.spec.ts
+@@ -0,0 +1,179 @@
++import { test, expect } from '@playwright/test';
++import { bootstrapVpsAdminWindow } from '../../e2e/fixtures/bootstrap';
++import { installHaveApiMock, jsonFulfill, failEnvelope } from '../../e2e/fixtures/haveapi';
++import type { pilot } from './browser';
++
++declare global {
++  interface Window {
++    haveapiPilot: typeof pilot;
++  }
++}
++const key = 'a'.repeat(64);
++test.beforeEach(async ({ page }) => {
++  await bootstrapVpsAdminWindow(page, {
++    apiUrl: '/api',
++    webuiNext: { haveApi: { authHeader: 'X-Token', metaNamespace: '_meta' } },
++  });
++  await page.addInitScript(() => {
++    window.vpsAdmin!.accessToken = 'old';
++  });
++});
++async function ready(page: import('@playwright/test').Page) {
++  await page.goto('/');
++  await page.waitForFunction(() => Boolean(window.haveapiPilot));
++  await page.evaluate((key) => window.haveapiPilot.remember(key, 'old'), key);
++}
++
++test('actual package serializes reads and mutations and returns an action receipt before completion', async ({
++  page,
++}) => {
++  const requests: { method: string; query: string; body: unknown }[] = [];
++  await installHaveApiMock(page, {
++    handlers: {
++      'GET things': (ctx) => {
++        requests.push({ method: ctx.method, query: ctx.url.search, body: ctx.reqJson });
++        return { things: [{ id: 7 }], _meta: { total_count: 1 } };
++      },
++      'POST things': (ctx) => {
++        requests.push({ method: ctx.method, query: ctx.url.search, body: ctx.reqJson });
++        return { thing: { id: 8 } };
++      },
++      'POST blocking': () => ({ thing: { id: 8 }, _meta: { action_state_id: 91 } }),
++      'GET action_states/91': () => {
++        throw new Error('Receipt must not wait for task completion');
++      },
++    },
++  });
++  await ready(page);
++  const read = await page.evaluate(() =>
++    window.haveapiPilot.call({
++      path: '/things',
++      namespace: 'thing',
++      params: { owner: 3, enabled: false },
++      meta: { limit: 2 },
++    })
++  );
++  expect(read.data).toEqual([{ id: 7 }]);
++  expect(read.meta).toEqual({ total_count: 1 });
++  expect(new URLSearchParams(requests[0]?.query).get('thing[owner]')).toBe('3');
++  expect(new URLSearchParams(requests[0]?.query).get('thing[enabled]')).toBe('false');
++  expect(new URLSearchParams(requests[0]?.query).get('_meta[limit]')).toBe('2');
++  await page.evaluate(() =>
++    window.haveapiPilot.call({
++      method: 'POST',
++      path: '/things',
++      namespace: 'thing',
++      params: { name: 'x' },
++      meta: { note: 'y' },
++    })
++  );
++  expect(requests[1]?.body).toEqual({ thing: { name: 'x' }, _meta: { note: 'y' } });
++  const receipt = await page.evaluate(() => window.haveapiPilot.receipt());
++  expect(receipt.meta).toEqual({ action_state_id: 91 });
++});
++
++test('qualifying 401 read refreshes once and preserves language; writes never replay', async ({ page }) => {
++  const reads: string[] = [];
++  let writes = 0;
++  let sessions = 0;
++  await installHaveApiMock(page, {
++    handlers: {
++      'GET things': () => ({ things: [7] }),
++      'POST things': () => {
++        writes++;
++        return jsonFulfill(failEnvelope('Unauthorized'), 401);
++      },
++    },
++  });
++  await page.route('**/api/v7.0/things', async (route) => {
++    if (route.request().method() !== 'GET') return route.fallback();
++    reads.push(route.request().headers()['x-token'] ?? '');
++    expect(route.request().headers()['accept-language']).toBe('cs');
++    return route.fulfill(
++      jsonFulfill(
++        reads.length === 1 ? failEnvelope('Unauthorized') : { status: true, response: { things: [7] } },
++        reads.length === 1 ? 401 : 200
++      )
++    );
++  });
++  await page.route('**/session.json', (route) => {
++    sessions++;
++    return route.fulfill(jsonFulfill({ sessionKey: key, accessToken: sessions === 1 ? 'new' : 'newer' }));
++  });
++  await ready(page);
++  await page.evaluate(() => {
++    document.documentElement.lang = 'cs';
++  });
++  expect((await page.evaluate(() => window.haveapiPilot.call({ path: '/things' }))).data).toEqual([7]);
++  expect(reads).toEqual(['old', 'new']);
++  expect(sessions).toBe(1);
++  const write = await page.evaluate(async () => {
++    try {
++      await window.haveapiPilot.call({ method: 'POST', path: '/things' });
++      return 'unexpected';
++    } catch (error) {
++      return error instanceof Error ? error.name : 'unknown';
++    }
++  });
++  expect(write).toBe('Error');
++  expect(writes).toBe(1);
++  expect(sessions).toBe(2);
++});
++
++test('a changed BFF session cannot authorize a read retry', async ({ page }) => {
++  let reads = 0;
++  await installHaveApiMock(page, {
++    handlers: {
++      'GET things': () => {
++        reads++;
++        return jsonFulfill(failEnvelope('Unauthorized'), 401);
++      },
++    },
++  });
++  await page.route('**/session.json', (route) =>
++    route.fulfill(jsonFulfill({ sessionKey: 'b'.repeat(64), accessToken: 'foreign' }))
++  );
++  await ready(page);
++  const status = await page.evaluate(async () => {
++    try {
++      await window.haveapiPilot.call({ path: '/things' });
++      return 0;
++    } catch (error) {
++      return (error as { httpStatus?: number }).httpStatus;
++    }
++  });
++  expect(status).toBe(401);
++  expect(reads).toBe(1);
++});
++
++test('pre-abort sends nothing and in-flight abort rejects with AbortError', async ({ page }) => {
++  let sends = 0;
++  await installHaveApiMock(page, { handlers: {} });
++  await page.route('**/api/v7.0/slow', async (route) => {
++    sends++;
++    await new Promise((resolve) => setTimeout(resolve, 500));
++    await route.fulfill(jsonFulfill({ status: true, response: {} })).catch(() => {});
++  });
++  await ready(page);
++  const pre = await page.evaluate(async () => {
++    try {
++      await window.haveapiPilot.abortable({ path: '/slow' }, true);
++      return '';
++    } catch (error) {
++      return (error as Error).name;
++    }
++  });
++  expect(pre).toBe('AbortError');
++  expect(sends).toBe(0);
++  const pending = page.evaluate(async () => {
++    try {
++      await window.haveapiPilot.abortable({ path: '/slow' });
++      return '';
++    } catch (error) {
++      return (error as Error).name;
++    }
++  });
++  await expect.poll(() => sends).toBe(1);
++  await page.evaluate(() => window.haveapiPilot.abort());
++  expect(await pending).toBe('AbortError');
++});
+diff --git a/scripts/haveapi-package/browser.ts b/scripts/haveapi-package/browser.ts
+new file mode 100644
+index 00000000..38308d68
+--- /dev/null
++++ b/scripts/haveapi-package/browser.ts
+@@ -0,0 +1,27 @@
++import { AsyncClient } from 'haveapi-client';
++import { createRequestClientCall } from '../../src/lib/api/haveapiRequestClient';
++import { rememberBffSession } from '../../src/lib/auth/bffSession';
++import { requireActionStateResult, isAmbiguousMutationError, type CallOpts } from '../../src/lib/api/haveapi';
++
++const client = new AsyncClient(`${location.origin}/api/v7.0`);
++const call = createRequestClientCall(client);
++let controller: AbortController | undefined;
++export const pilot = {
++  call,
++  receipt: async () => requireActionStateResult(await call({ method: 'POST', path: '/blocking' }), 'blocking'),
++  abortable: (opts: CallOpts, alreadyAborted = false) => {
++    controller = new AbortController();
++    if (alreadyAborted) controller.abort();
++    return call({ ...opts, signal: controller.signal });
++  },
++  abort: () => controller?.abort(),
++  remember: (key: string, token: string) =>
++    rememberBffSession(new URL('/session.json', location.href).href, key, token),
++  uncertain: isAmbiguousMutationError,
++};
++declare global {
++  interface Window {
++    haveapiPilot: typeof pilot;
++  }
++}
++window.haveapiPilot = pilot;
+diff --git a/scripts/haveapi-package/consumer.ts b/scripts/haveapi-package/consumer.ts
+new file mode 100644
+index 00000000..8b3dfe3c
+--- /dev/null
++++ b/scripts/haveapi-package/consumer.ts
+@@ -0,0 +1,9 @@
++import { AsyncClient } from 'haveapi-client';
++import { createRequestClientCall, type HaveApiRequestClient } from '../../src/lib/api/haveapiRequestClient';
++
++const actual: HaveApiRequestClient = new AsyncClient('https://api.example.test/v7.0');
++const call = createRequestClientCall(actual);
++const result: Promise<{ data: { id: number } }> = call<{ id: number }>({ path: '/things/7' });
++void result;
++// @ts-expect-error The structural seam must reject unsupported callback-style calls.
++actual.request({ method: 'GET', path: '/things' }, () => {});
+diff --git a/scripts/haveapi-package/index.html b/scripts/haveapi-package/index.html
+new file mode 100644
+index 00000000..95357ab8
+--- /dev/null
++++ b/scripts/haveapi-package/index.html
+@@ -0,0 +1,10 @@
++<!doctype html>
++<html lang="en">
++  <head>
++    <meta charset="utf-8" />
++    <title>HaveAPI package fixture</title>
++  </head>
++  <body>
++    <script type="module" src="./browser.ts"></script>
++  </body>
++</html>
+diff --git a/scripts/haveapi-package/playwright.config.ts b/scripts/haveapi-package/playwright.config.ts
+new file mode 100644
+index 00000000..0dd99278
+--- /dev/null
++++ b/scripts/haveapi-package/playwright.config.ts
+@@ -0,0 +1,27 @@
++import { defineConfig } from '@playwright/test';
++
++const chromium = {
++  browserName: 'chromium' as const,
++  launchOptions: { executablePath: process.env['E2E_CHROMIUM_EXECUTABLE_PATH'] || undefined },
++};
++export default defineConfig({
++  testDir: '.',
++  workers: 1,
++  retries: 0,
++  timeout: 30_000,
++  outputDir: 'test-results',
++  reporter: 'list',
++  use: { baseURL: 'http://127.0.0.1:5189', trace: 'retain-on-failure' },
++  projects: [
++    { name: 'adapter-chromium', testMatch: 'browser.spec.ts', use: chromium },
++    { name: 'umd-chromium', testMatch: 'umd.spec.ts', use: chromium },
++    { name: 'umd-firefox', testMatch: 'umd.spec.ts', use: { browserName: 'firefox' } },
++    { name: 'umd-webkit', testMatch: 'umd.spec.ts', use: { browserName: 'webkit' } },
++  ],
++  webServer: {
++    command:
++      'node node_modules/vite/bin/vite.js preview --config scripts/haveapi-package/vite.config.ts --host 127.0.0.1 --port 5189 --strictPort',
++    url: 'http://127.0.0.1:5189',
++    reuseExistingServer: false,
++  },
++});
+diff --git a/scripts/haveapi-package/tsconfig.json b/scripts/haveapi-package/tsconfig.json
+new file mode 100644
+index 00000000..2d4a78af
+--- /dev/null
++++ b/scripts/haveapi-package/tsconfig.json
+@@ -0,0 +1,12 @@
++{
++  "extends": "../../tsconfig.json",
++  "include": [
++    "consumer.ts",
++    "browser.ts",
++    "browser.spec.ts",
++    "umd.spec.ts",
++    "vite.config.ts",
++    "playwright.config.ts",
++    "../../src/types/vpsadmin.d.ts"
++  ]
++}
+diff --git a/scripts/haveapi-package/umd.spec.ts b/scripts/haveapi-package/umd.spec.ts
+new file mode 100644
+index 00000000..ba5a2135
+--- /dev/null
++++ b/scripts/haveapi-package/umd.spec.ts
+@@ -0,0 +1,134 @@
++import { readFileSync } from 'node:fs';
++import { createRequire } from 'node:module';
++import { test, expect } from '@playwright/test';
++
++// Read the package's unchanged main artifact; this page never imports it through Vite.
++const description = {
++  authentication: {},
++  meta: { namespace: '_meta' },
++  resources: {
++    widgets: {
++      resources: {},
++      actions: {
++        show: {
++          aliases: ['get'],
++          blocking: false,
++          method: 'GET',
++          path: '/v1/widgets/{widget_id}',
++          input: null,
++          output: {
++            layout: 'object',
++            namespace: 'widget',
++            parameters: { id: { type: 'Integer' }, name: { type: 'String' } },
++          },
++        },
++      },
++    },
++  },
++};
++const reply = { widget: { id: 7, name: 'seven' }, _meta: { path_params: [7] } };
++const envelope = (response: unknown) => ({ version: '2.0', status: true, message: null, errors: null, response });
++declare global {
++  interface Window {
++    HaveAPI: typeof import('haveapi-client');
++  }
++}
++
++test('ordinary UMD script supports callback and Promise clients through native XHR', async ({ page }) => {
++  const bundle = readFileSync(createRequire(import.meta.url).resolve('haveapi-client'), 'utf8');
++  const requests: string[] = [];
++  const unexpected: string[] = [];
++  const errors: string[] = [];
++  page.on('pageerror', (error) => errors.push(error.message));
++  await page.route('**/*', async (route) => {
++    const request = route.request();
++    const pathname = new URL(request.url()).pathname;
++    if (pathname === '/umd-fixture') {
++      return route.fulfill({
++        contentType: 'text/html',
++        body: '<!doctype html><link rel="icon" href="data:,"><script src="/umd-client.js"></script>',
++      });
++    }
++    if (pathname === '/umd-client.js') return route.fulfill({ contentType: 'application/javascript', body: bundle });
++    const key = `${request.method()} ${pathname}`;
++    requests.push(key);
++    if (key === 'OPTIONS /umd-api/v1/' || key === 'GET /umd-api/v1/widgets/7') {
++      return route.fulfill({
++        contentType: 'application/json',
++        body: JSON.stringify(envelope(key.startsWith('OPTIONS') ? description : reply)),
++      });
++    }
++    unexpected.push(key);
++    await route.abort();
++  });
++  await page.goto('/umd-fixture');
++  const result = await page.evaluate(async () => {
++    const api = window.HaveAPI;
++    const constructors = {
++      callback: typeof api.Client,
++      async: typeof api.AsyncClient,
++      hasDefault: Object.hasOwn(api, 'default'),
++    };
++    type LegacyClient = InstanceType<typeof api.Client>;
++    // This fixture supplies the schema for the legacy dynamic properties.
++    type Widget = { id: number; name: string; apiResponse(): { isOk(): boolean } };
++    const legacy = new api.Client(`${location.origin}/umd-api`, { version: 1 }) as LegacyClient & {
++      widgets: { show(id: number, opts: { onReply(client: LegacyClient, value: Widget): void }): void };
++    };
++    let setupReturn: unknown;
++    const setup = await new Promise<boolean>((resolve) => {
++      setupReturn = legacy.setup((_client, ok) => resolve(ok));
++    });
++    if (!setup) throw new Error('Callback setup failed');
++    let callReturn: unknown;
++    const callback = await new Promise((resolve) => {
++      callReturn = legacy.widgets.show(7, {
++        onReply: (_client, value) =>
++          resolve({
++            id: value.id,
++            name: value.name,
++            ok: value.apiResponse().isOk(),
++          }),
++      });
++    });
++    const modern = new api.AsyncClient(`${location.origin}/umd-api`, { version: 1 });
++    await modern.setup();
++    const receipt = await modern.resource('widgets').action('show')<import('haveapi-client').AsyncResourceInstance>(7);
++    return {
++      constructors,
++      setup,
++      setupReturnsUndefined: setupReturn === undefined,
++      callbackReturnsUndefined: callReturn === undefined,
++      callback,
++      async: {
++        id: receipt.value.get('id'),
++        name: receipt.value.get('name'),
++        data: receipt.response.data,
++        envelope: receipt.response.envelope,
++        meta: receipt.response.meta,
++        httpStatus: receipt.response.httpStatus,
++      },
++    };
++  });
++  expect(result.constructors).toEqual({ callback: 'function', async: 'function', hasDefault: false });
++  expect(result.setup).toBe(true);
++  expect(result.setupReturnsUndefined).toBe(true);
++  expect(result.callbackReturnsUndefined).toBe(true);
++  expect(result.callback).toEqual({ id: 7, name: 'seven', ok: true });
++  expect(result.async).toEqual({
++    id: 7,
++    name: 'seven',
++    data: reply.widget,
++    envelope: envelope(reply),
++    meta: { path_params: [7] },
++    httpStatus: 200,
++  });
++  expect(requests).toEqual([
++    'OPTIONS /umd-api/v1/',
++    'GET /umd-api/v1/widgets/7',
++    'OPTIONS /umd-api/v1/',
++    'GET /umd-api/v1/widgets/7',
++  ]);
++  expect(unexpected).toEqual([]);
++  expect(errors).toEqual([]);
++});
+diff --git a/scripts/haveapi-package/vite.config.ts b/scripts/haveapi-package/vite.config.ts
+new file mode 100644
+index 00000000..fc3d8ed7
+--- /dev/null
++++ b/scripts/haveapi-package/vite.config.ts
+@@ -0,0 +1,7 @@
++import { fileURLToPath } from 'node:url';
++import { defineConfig } from 'vite';
++
++export default defineConfig({
++  root: fileURLToPath(new URL('.', import.meta.url)),
++  build: { outDir: 'dist', emptyOutDir: true },
++});
+diff --git a/scripts/test-haveapi-package.mjs b/scripts/test-haveapi-package.mjs
+new file mode 100644
+index 00000000..e55a4c4e
+--- /dev/null
++++ b/scripts/test-haveapi-package.mjs
+@@ -0,0 +1,216 @@
++#!/usr/bin/env node
++import { createHash } from 'node:crypto';
++import { spawn, execFileSync } from 'node:child_process';
++import { mkdtemp, mkdir, readFile, writeFile, stat } from 'node:fs/promises';
++import path from 'node:path';
++import { fileURLToPath, pathToFileURL } from 'node:url';
++
++export function parseOptions(args) {
++  const options = { webuiRef: 'HEAD' };
++  const seen = new Set();
++  const keys = new Map([
++    ['--package', 'packagePath'],
++    ['--webui-ref', 'webuiRef'],
++    ['--haveapi-ref', 'haveapiRef'],
++  ]);
++  for (let i = 0; i < args.length; i++) {
++    const key = keys.get(args[i]);
++    if (!key || !args[i + 1] || args[i + 1].startsWith('--') || seen.has(key)) {
++      throw new Error(`Invalid or duplicate argument: ${args[i]}`);
++    }
++    seen.add(key);
++    options[key] = args[++i];
++  }
++  if (!options.packagePath || !path.isAbsolute(options.packagePath) || !options.packagePath.endsWith('.tgz')) {
++    throw new Error('--package must be an absolute .tgz path');
++  }
++  if (options.haveapiRef && !/^[a-f0-9]{40}$/.test(options.haveapiRef))
++    throw new Error('--haveapi-ref must be a full commit SHA');
++  return options;
++}
++
++export function candidateProvenance(supplied, gitHead) {
++  if (gitHead && !/^[a-f0-9]{40}$/.test(gitHead)) throw new Error('Candidate gitHead must be a full commit SHA');
++  if (supplied && gitHead && supplied !== gitHead) throw new Error('--haveapi-ref disagrees with candidate gitHead');
++  if (!supplied && !gitHead) throw new Error('Candidate has no gitHead; provide --haveapi-ref from the pack owner');
++  return {
++    haveapiRef: supplied || gitHead,
++    provenance: supplied ? 'pack-owner assertion' : 'package gitHead metadata',
++  };
++}
++
++const sha256 = (value) => createHash('sha256').update(value).digest('hex');
++const readJson = async (filename) => JSON.parse(await readFile(filename, 'utf8'));
++
++/** Capture only lock-listed packages installed on this platform after npm ci. */
++async function captureInstallBaseline(directory) {
++  const files = {};
++  for (const filename of ['package.json', 'package-lock.json']) {
++    files[filename] = sha256(await readFile(path.join(directory, filename)));
++  }
++  const lock = await readJson(path.join(directory, 'package-lock.json'));
++  const packages = [];
++  for (const [relative, expected] of Object.entries(lock.packages)) {
++    if (!relative.startsWith('node_modules/')) continue;
++    const installedPath = path.join(directory, relative);
++    try {
++      await stat(installedPath);
++    } catch (error) {
++      if (error.code === 'ENOENT') continue; // Platform-optional packages can be absent.
++      throw error;
++    }
++    const installed = await readJson(path.join(installedPath, 'package.json'));
++    if (
++      typeof installed.name !== 'string' ||
++      typeof installed.version !== 'string' ||
++      installed.version !== expected.version
++    ) {
++      throw new Error(`Installed baseline disagrees with lock: ${relative}`);
++    }
++    packages.push({ path: relative, name: installed.name, version: installed.version });
++  }
++  return { files, packages };
++}
++
++/** Candidate dependencies may add paths, while the existing locked graph stays fixed. */
++async function verifyInstallBaseline(directory, baseline) {
++  for (const [filename, expected] of Object.entries(baseline.files)) {
++    if (sha256(await readFile(path.join(directory, filename))) !== expected) {
++      throw new Error(`Candidate install changed ${filename}`);
++    }
++  }
++  for (const expected of baseline.packages) {
++    let installed;
++    try {
++      installed = await readJson(path.join(directory, expected.path, 'package.json'));
++    } catch (error) {
++      if (error.code === 'ENOENT') throw new Error(`Candidate install removed locked package: ${expected.path}`);
++      throw error;
++    }
++    if (installed.name !== expected.name || installed.version !== expected.version) {
++      throw new Error(`Candidate install changed locked package: ${expected.path}`);
++    }
++  }
++}
++
++// Forward cancellation to the whole owned subprocess group, including a Vite child.
++export async function run(command, args, cwd) {
++  await new Promise((resolve, reject) => {
++    const child = spawn(command, args, { cwd, stdio: 'inherit', detached: true });
++    const stop = (signal) => {
++      try {
++        process.kill(-child.pid, signal);
++      } catch {}
++    };
++    const interrupt = () => stop('SIGINT');
++    const terminate = () => stop('SIGTERM');
++    process.on('SIGINT', interrupt);
++    process.on('SIGTERM', terminate);
++    const cleanup = () => {
++      process.off('SIGINT', interrupt);
++      process.off('SIGTERM', terminate);
++    };
++    child.once('error', (error) => {
++      cleanup();
++      reject(error);
++    });
++    child.once('exit', (code, signal) => {
++      cleanup();
++      if (code === 0) resolve();
++      else reject(new Error(`${command} exited ${code ?? signal}`));
++    });
++  });
++}
++
++export async function runPilot(
++  options,
++  { cwd = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..'), runCommand = run } = {}
++) {
++  if (!(await stat(options.packagePath)).isFile()) throw new Error('Candidate must be a regular file');
++  const git = (args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
++  const webuiRef = git(['rev-parse', '--verify', '--end-of-options', `${options.webuiRef}^{commit}`]);
++  const candidateBytes = await readFile(options.packagePath);
++  const tarSha256 = sha256(candidateBytes);
++  // Nix shells remove their TMPDIR on exit; retain pilot evidence outside it.
++  const directory = await mkdtemp(path.join(process.env.HAVEAPI_PACKAGE_TMPDIR || '/tmp', 'webui-haveapi-package-'));
++  const sourceDirectory = path.join(directory, 'source');
++  await mkdir(sourceDirectory);
++  const candidatePath = path.join(directory, 'candidate.tgz');
++  await writeFile(candidatePath, candidateBytes);
++  const report = {
++    directory,
++    sourceDirectory,
++    webuiRef,
++    tarSha256,
++    packagePath: options.packagePath,
++    node: process.version,
++    status: 'incomplete',
++  };
++  const record = () => writeFile(path.join(directory, 'result.json'), JSON.stringify(report, null, 2) + '\n');
++  console.log(`Package pilot artifacts: ${directory}`);
++  try {
++    // Read only committed objects. The caller's worktree, index and lockfile are untouched.
++    await runCommand(
++      'git',
++      ['archive', '--format=tar', `--output=${path.join(directory, 'source.tar')}`, webuiRef],
++      cwd
++    );
++    await runCommand('tar', ['-xf', path.join(directory, 'source.tar')], sourceDirectory);
++    report.npm = execFileSync('npm', ['--version'], { cwd, encoding: 'utf8' }).trim();
++    await runCommand('npm', ['ci'], sourceDirectory);
++    const baseline = await captureInstallBaseline(sourceDirectory);
++    await writeFile(path.join(directory, 'dependency-baseline.json'), JSON.stringify(baseline, null, 2) + '\n');
++    report.lockedGraph = { packageCount: baseline.packages.length, files: baseline.files };
++    await runCommand(
++      'npm',
++      ['install', '--ignore-scripts', '--no-save', '--package-lock=true', candidatePath],
++      sourceDirectory
++    );
++    await verifyInstallBaseline(sourceDirectory, baseline);
++    const pkg = JSON.parse(
++      await readFile(path.join(sourceDirectory, 'node_modules/haveapi-client/package.json'), 'utf8')
++    );
++    if (pkg.name !== 'haveapi-client') throw new Error('Candidate is not haveapi-client');
++    Object.assign(report, candidateProvenance(options.haveapiRef, pkg.gitHead), { packageVersion: pkg.version });
++    for (const name of ['typescript', 'vite', '@playwright/test']) {
++      const metadata = JSON.parse(
++        await readFile(path.join(sourceDirectory, 'node_modules', name, 'package.json'), 'utf8')
++      );
++      (report.tools ??= {})[name] = metadata.version;
++    }
++    await record();
++    await runCommand(
++      'node',
++      ['node_modules/typescript/bin/tsc', '-p', 'scripts/haveapi-package/tsconfig.json'],
++      sourceDirectory
++    );
++    await runCommand(
++      'node',
++      ['node_modules/vite/bin/vite.js', 'build', '--config', 'scripts/haveapi-package/vite.config.ts'],
++      sourceDirectory
++    );
++    await runCommand(
++      'node',
++      ['scripts/playwright.mjs', 'test', '--config', 'scripts/haveapi-package/playwright.config.ts'],
++      sourceDirectory
++    );
++    report.status = 'passed';
++  } catch (error) {
++    report.status = 'failed';
++    report.error = error.message;
++    throw error;
++  } finally {
++    await record();
++    console.log(`Package pilot result: ${path.join(directory, 'result.json')}`);
++  }
++  return report;
++}
++
++if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
++  try {
++    await runPilot(parseOptions(process.argv.slice(2)));
++  } catch (error) {
++    console.error(error.message);
++    process.exitCode = 1;
++  }
++}
+diff --git a/scripts/test-haveapi-package.test.mjs b/scripts/test-haveapi-package.test.mjs
+new file mode 100644
+index 00000000..ab8ab391
+--- /dev/null
++++ b/scripts/test-haveapi-package.test.mjs
+@@ -0,0 +1,190 @@
++import assert from 'node:assert/strict';
++import { test } from 'node:test';
++import { parseOptions, candidateProvenance } from './test-haveapi-package.mjs';
++
++test('package pilot requires an absolute tarball and a full optional source ref', () => {
++  assert.deepEqual(parseOptions(['--package', '/tmp/candidate.tgz']), {
++    packagePath: '/tmp/candidate.tgz',
++    webuiRef: 'HEAD',
++  });
++  for (const args of [
++    [],
++    ['--package', 'relative.tgz'],
++    ['--package', '/tmp/a'],
++    ['--wat'],
++    ['--package', '/tmp/a.tgz', '--haveapi-ref', 'abc'],
++    ['--package', '/tmp/a.tgz', '--package', '/tmp/b.tgz'],
++  ]) {
++    assert.throws(() => parseOptions(args));
++  }
++});
++
++test('source provenance is explicit and conflicting claims fail closed', () => {
++  const ref = 'a'.repeat(40);
++  assert.deepEqual(candidateProvenance(ref), { haveapiRef: ref, provenance: 'pack-owner assertion' });
++  assert.deepEqual(candidateProvenance(undefined, ref), { haveapiRef: ref, provenance: 'package gitHead metadata' });
++  assert.throws(() => candidateProvenance());
++  assert.throws(() => candidateProvenance(ref, 'b'.repeat(40)));
++  assert.throws(() => candidateProvenance(undefined, 'bad'));
++});
++
++import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
++import { execFileSync } from 'node:child_process';
++import os from 'node:os';
++import path from 'node:path';
++import { runPilot, run } from './test-haveapi-package.mjs';
++
++const baselinePackages = ['typescript', 'vite', '@playwright/test', 'locked-dependency'];
++const lockedVersion = '1.0.0';
++async function writePackage(root, name, version = lockedVersion) {
++  const directory = path.join(root, 'node_modules', name);
++  await mkdir(directory, { recursive: true });
++  await writeFile(path.join(directory, 'package.json'), JSON.stringify({ name, version }));
++}
++
++async function withPilotFixture(check, { mutateInstall = async () => {}, mutateBaseline = async () => {} } = {}) {
++  const repository = await mkdtemp(path.join(os.tmpdir(), 'webui-package-script-test-'));
++  let artifact;
++  try {
++    const git = (args) => execFileSync('git', args, { cwd: repository, stdio: 'pipe' });
++    git(['init']);
++    const lock = {
++      lockfileVersion: 3,
++      packages: {
++        '': { name: 'fixture' },
++        ...Object.fromEntries(baselinePackages.map((name) => ['node_modules/' + name, { version: lockedVersion }])),
++        'node_modules/platform-optional': { version: lockedVersion, optional: true },
++      },
++    };
++    const lockBytes = JSON.stringify(lock);
++    const manifestBytes = JSON.stringify({ name: 'fixture' });
++    await writeFile(path.join(repository, 'package.json'), manifestBytes);
++    await writeFile(path.join(repository, 'package-lock.json'), lockBytes);
++    git(['add', 'package.json', 'package-lock.json']);
++    git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-m', 'fixture']);
++    const sha = git(['rev-parse', 'HEAD']).toString().trim();
++    await writeFile(path.join(repository, 'package-lock.json'), 'uncommitted lock\n');
++    const candidate = path.join(repository, 'candidate.tgz');
++    await writeFile(candidate, 'candidate bytes');
++    const calls = [];
++    const execute = () =>
++      runPilot(
++        { packagePath: candidate, webuiRef: 'HEAD', haveapiRef: 'a'.repeat(40) },
++        {
++          cwd: repository,
++          async runCommand(command, args, cwd) {
++            calls.push({ command, args, cwd });
++            if (command === 'git' || command === 'tar') return run(command, args, cwd);
++            assert.notEqual(cwd, repository);
++            artifact = path.dirname(cwd);
++            if (command === 'npm' && args[0] === 'ci') {
++              assert.equal(await readFile(path.join(cwd, 'package-lock.json'), 'utf8'), lockBytes);
++              for (const name of baselinePackages) await writePackage(cwd, name);
++              await mutateBaseline(cwd);
++              await writeFile(candidate, 'later replacement');
++            }
++            if (command === 'npm' && args[0] === 'install') {
++              assert.deepEqual(args, [
++                'install',
++                '--ignore-scripts',
++                '--no-save',
++                '--package-lock=true',
++                path.join(artifact, 'candidate.tgz'),
++              ]);
++              assert.equal(await readFile(args[4], 'utf8'), 'candidate bytes');
++              await writePackage(cwd, 'haveapi-client');
++              await writePackage(cwd, 'candidate-added-dependency');
++              await mutateInstall(cwd);
++            }
++          },
++        }
++      );
++    await check({ execute, calls, sha, directory: () => artifact });
++    assert.equal(await readFile(path.join(repository, 'package-lock.json'), 'utf8'), 'uncommitted lock\n');
++    assert.equal(await readFile(path.join(repository, 'package.json'), 'utf8'), manifestBytes);
++  } finally {
++    await rm(repository, { recursive: true, force: true });
++    if (artifact) await rm(artifact, { recursive: true, force: true });
++  }
++}
++
++test('pilot snapshots committed source, freezes tar bytes and preserves the installed locked graph', async () => {
++  await withPilotFixture(async ({ execute, calls, sha, directory }) => {
++    const result = await execute();
++    assert.equal(result.webuiRef, sha);
++    assert.equal(result.status, 'passed');
++    assert.equal(result.lockedGraph.packageCount, baselinePackages.length);
++    assert.equal(calls.filter((call) => call.command === 'node').length, 3);
++    const baseline = JSON.parse(await readFile(path.join(directory(), 'dependency-baseline.json'), 'utf8'));
++    assert.equal(
++      baseline.packages.some((entry) => entry.path.endsWith('platform-optional')),
++      false
++    );
++    assert.equal(
++      baseline.packages.some((entry) => entry.name === 'candidate-added-dependency'),
++      false
++    );
++    assert.equal(
++      JSON.parse(await readFile(path.join(directory(), 'result.json'), 'utf8')).provenance,
++      'pack-owner assertion'
++    );
++  });
++});
++
++for (const filename of ['package.json', 'package-lock.json']) {
++  test(`candidate mutation of ${filename} fails before any consumer tool`, async () => {
++    await withPilotFixture(
++      async ({ execute, calls, directory }) => {
++        await assert.rejects(execute(), new RegExp('Candidate install changed ' + filename.replaceAll('.', '\\.')));
++        assert.equal(calls.filter((call) => call.command === 'node').length, 0);
++        assert.equal(JSON.parse(await readFile(path.join(directory(), 'result.json'), 'utf8')).status, 'failed');
++      },
++      { mutateInstall: (cwd) => writeFile(path.join(cwd, filename), 'tampered') }
++    );
++  });
++}
++
++for (const mode of ['version', 'name', 'removed']) {
++  test(`candidate locked-package ${mode} drift fails before any consumer tool`, async () => {
++    await withPilotFixture(
++      async ({ execute, calls }) => {
++        await assert.rejects(
++          execute(),
++          /Candidate install (changed|removed) locked package: node_modules\/locked-dependency/
++        );
++        assert.equal(calls.filter((call) => call.command === 'node').length, 0);
++      },
++      {
++        mutateInstall: async (cwd) => {
++          const directory = path.join(cwd, 'node_modules/locked-dependency');
++          if (mode === 'removed') await rm(directory, { recursive: true });
++          else
++            await writeFile(
++              path.join(directory, 'package.json'),
++              JSON.stringify({
++                name: mode === 'name' ? 'replacement' : 'locked-dependency',
++                version: mode === 'version' ? '2.0.0' : lockedVersion,
++              })
++            );
++        },
++      }
++    );
++  });
++}
++
++test('baseline disagreement with the lock fails before candidate install', async () => {
++  await withPilotFixture(
++    async ({ execute, calls }) => {
++      await assert.rejects(execute(), /Installed baseline disagrees with lock/);
++      assert.equal(
++        calls.some((call) => call.command === 'npm' && call.args[0] === 'install'),
++        false
++      );
++      assert.equal(
++        calls.some((call) => call.command === 'node'),
++        false
++      );
++    },
++    { mutateBaseline: (cwd) => writePackage(cwd, 'locked-dependency', '2.0.0') }
++  );
++});
+diff --git a/src/lib/api/haveapi.ts b/src/lib/api/haveapi.ts
+index f627f1c6..e9b2b889 100644
+--- a/src/lib/api/haveapi.ts
++++ b/src/lib/api/haveapi.ts
+@@ -1,7 +1,8 @@
+ import { detectStaticUiLanguage, staticTForDocument } from '../staticI18n';
+ import { recoverBffSession } from '../auth/bffSession';
+ import { getRuntimeConfig } from '../../app/config';
+-import { MALFORMED_HAVEAPI_ENVELOPE_ERROR_CODE, parseHaveApiEnvelope } from './haveapiEnvelope';
++import { MALFORMED_HAVEAPI_ENVELOPE_ERROR_CODE } from './haveapiEnvelope';
++import { fetchHaveApiTransport, type HaveApiTransport } from './haveapiTransport';
+ 
+ export { MALFORMED_HAVEAPI_ENVELOPE_ERROR_CODE } from './haveapiEnvelope';
+ export type JsonValue =
+@@ -172,37 +173,6 @@ function getMetaNamespace(desc: any): string {
+   return (desc && desc.meta && typeof desc.meta.namespace === 'string' && desc.meta.namespace) || '_meta';
+ }
+ 
+-function buildQuery(namespace: string, params: Record<string, unknown>): URLSearchParams {
+-  const qs = new URLSearchParams();
+-
+-  for (const [k, v] of Object.entries(params)) {
+-    if (v === undefined) continue;
+-    if (v === null) {
+-      qs.append(`${namespace}[${k}]`, '');
+-      continue;
+-    }
+-
+-    const t = typeof v;
+-    if (t === 'string' || t === 'number' || t === 'boolean') {
+-      qs.append(`${namespace}[${k}]`, String(v));
+-      continue;
+-    }
+-
+-    // HaveAPI query-string encoding is scalar. If you need structured data,
+-    // send it as JSON body (POST/PUT/PATCH/DELETE) instead.
+-    throw new HaveApiError(
+-      {
+-        status: false,
+-        message: `Invalid query parameter ${namespace}[${k}] (must be string/number/boolean/null)`,
+-        response: { key: k, value: v },
+-      },
+-      'Invalid query parameter'
+-    );
+-  }
+-
+-  return qs;
+-}
+-
+ export function unwrapSingleResponse<T>(
+   envelope: HaveApiEnvelope,
+   metaNamespace: string = '_meta'
+@@ -402,114 +372,80 @@ function authHeaders(desc: any): Record<string, string> {
+   return {};
+ }
+ 
+-export async function haveApiCall<T>(opts: CallOpts): Promise<{ data: T; meta?: Record<string, unknown>; envelope: HaveApiEnvelope }> {
+-  const language = detectStaticUiLanguage(typeof document === 'undefined' ? undefined : document);
+-  const desc = await getHaveApiDescription();
+-  const cfg = getRuntimeConfig();
+-  const metaNs = cfg.haveApi?.metaNamespace ?? getMetaNamespace(desc);
+-
+-  const method = opts.method ?? 'GET';
+-
+-  let url = `${cfg.apiBaseUrl}${opts.path.startsWith('/') ? '' : '/'}${opts.path}`;
+-
+-  const ns = opts.namespace;
+-  const qs = new URLSearchParams();
+-
+-  const paramsInQuery = method === 'GET' || method === 'OPTIONS';
+-
+-  if (paramsInQuery && ns && opts.params) {
+-    for (const [k, v] of buildQuery(ns, opts.params).entries()) qs.append(k, v);
+-  }
+-
+-  if (paramsInQuery && opts.meta) {
+-    for (const [k, v] of buildQuery(metaNs, opts.meta).entries()) {
+-      qs.append(k, v);
+-    }
+-  }
+-
+-  if ([...qs.keys()].length > 0) {
+-    url += (url.includes('?') ? '&' : '?') + qs.toString();
+-  }
+-
+-  const headers: Record<string, string> = {
+-    Accept: 'application/json',
+-    'Accept-Language': language,
+-    ...authHeaders(desc),
+-  };
+-
+-  const init: RequestInit = {
+-    method,
+-    headers,
+-    // Match the legacy XHR client default: do not send cookies cross-origin.
+-    credentials: 'same-origin',
+-    signal: opts.signal,
+-  };
+-
+-  if (!paramsInQuery) {
+-    headers['Content-Type'] = 'application/json';
+-
+-    const body: Record<string, unknown> = {};
+-
+-    if (ns && opts.params) {
+-      body[ns] = opts.params;
++export type HaveApiCall = <T>(opts: CallOpts) => Promise<{
++  data: T;
++  meta?: Record<string, unknown>;
++  envelope: HaveApiEnvelope;
++}>;
++
++/** Share session/result policy while selecting a request transport per consumer. */
++export function createHaveApiCall(transport: HaveApiTransport): HaveApiCall {
++  return async function call<T>(opts: CallOpts) {
++    const language = detectStaticUiLanguage(typeof document === 'undefined' ? undefined : document);
++    const desc = await getHaveApiDescription();
++    const cfg = getRuntimeConfig();
++    const metaNs = cfg.haveApi?.metaNamespace ?? getMetaNamespace(desc);
++    const method = opts.method ?? 'GET';
++    const paramsInQuery = method === 'GET' || method === 'OPTIONS';
++    const headers: Record<string, string> = {
++      Accept: 'application/json',
++      'Accept-Language': language,
++      ...authHeaders(desc),
++    };
++    const prepared = transport.prepare({ opts, baseUrl: cfg.apiBaseUrl, metaNamespace: metaNs });
++    const reqInfo: HaveApiRequestInfo = { method, path: opts.path, url: prepared.url };
++
++    let res = await prepared.send(headers);
++    let envelope = res.status === 401 && !paramsInQuery ? await res.readEnvelope() : undefined;
++    const explicitRejection =
++      !envelope ||
++      (envelope.status === false &&
++        envelope.errors !== 'INVALID_JSON_RESPONSE' &&
++        envelope.errors !== MALFORMED_HAVEAPI_ENVELOPE_ERROR_CODE);
++    // Recover only explicit HTTP authentication rejections. Never replay writes,
++    // network failures, 403s, or ambiguous HaveAPI status:false responses.
++    if (res.status === 401 && explicitRejection && cfg.auth.kind === 'oauth2') {
++      const recovered = await recoverBffSession(cfg.auth.accessToken);
++      opts.signal?.throwIfAborted();
++      if (recovered) {
++        if (!paramsInQuery) {
++          // Keep the editor mounted, but let the user explicitly submit again.
++          // This is no longer an expired session and must not trigger a redirect.
++          throw new Error(
++            staticTForDocument(
++              typeof document === 'undefined' ? undefined : document,
++              'errors.session_renewed_retry_action'
++            )
++          );
++        }
++        await res.cancel();
++        res = await prepared.send({ ...headers, ...authHeaders(desc) });
++      }
+     }
++    envelope ??= await res.readEnvelope();
+ 
+-    if (opts.meta) {
+-      body[metaNs] = opts.meta;
++    if (!res.ok) {
++      // Some failures (e.g. 500) may still return JSON.
++      const err = new HaveApiError(envelope, `HTTP ${res.status}`, res.status, reqInfo);
++      notifySessionExpired(err);
++      throw err;
+     }
+ 
+-    init.body = JSON.stringify(body);
+-  }
+-
+-  const reqInfo: HaveApiRequestInfo = {
+-    method,
+-    path: opts.path,
+-    url,
+-  };
+-
+-
+-  let res = await fetch(url, init);
+-  let envelope = res.status === 401 && !paramsInQuery ? await parseHaveApiEnvelope(res) : undefined;
+-  const explicitRejection = !envelope || (envelope.status === false
+-    && envelope.errors !== 'INVALID_JSON_RESPONSE'
+-    && envelope.errors !== MALFORMED_HAVEAPI_ENVELOPE_ERROR_CODE);
+-  // Recover only explicit HTTP authentication rejections. Never replay writes,
+-  // network failures, 403s, or ambiguous HaveAPI status:false responses.
+-  if (res.status === 401 && explicitRejection && cfg.auth.kind === 'oauth2') {
+-    const recovered = await recoverBffSession(cfg.auth.accessToken);
+-    opts.signal?.throwIfAborted();
+-    if (recovered) {
+-      if (!paramsInQuery) {
+-        // Keep the editor mounted, but let the user explicitly submit again.
+-        // This is no longer an expired session and must not trigger a redirect.
+-        throw new Error(staticTForDocument(typeof document === 'undefined' ? undefined : document, 'errors.session_renewed_retry_action'));
++    let unwrapped: { data: T; meta?: Record<string, unknown> };
++    try {
++      unwrapped = unwrapSingleResponse<T>(envelope, metaNs);
++    } catch (err: any) {
++      if (err instanceof HaveApiError) {
++        // HaveAPI can return {status:false} with HTTP 200.
++        // Attach request info to help support/debug without screenshots.
++        if (!err.request) err.request = reqInfo;
++        notifySessionExpired(err);
+       }
+-      await res.body?.cancel();
+-      init.headers = { ...headers, ...authHeaders(desc) };
+-      res = await fetch(url, init);
++      throw err;
+     }
+-  }
+-  envelope ??= await parseHaveApiEnvelope(res);
+ 
+-  if (!res.ok) {
+-    // Some failures (e.g. 500) may still return JSON.
+-    const err = new HaveApiError(envelope, `HTTP ${res.status}`, res.status, reqInfo);
+-    notifySessionExpired(err);
+-    throw err;
+-  }
+-
+-  let unwrapped: { data: T; meta?: Record<string, unknown> };
+-  try {
+-    unwrapped = unwrapSingleResponse<T>(envelope, metaNs);
+-  } catch (err: any) {
+-    if (err instanceof HaveApiError) {
+-      // HaveAPI can return {status:false} with HTTP 200.
+-      // Attach request info to help support/debug without screenshots.
+-      if (!err.request) err.request = reqInfo;
+-      notifySessionExpired(err);
+-    }
+-    throw err;
+-  }
+-
+-  return { ...unwrapped, envelope };
++    return { ...unwrapped, envelope };
++  };
+ }
++
++export const haveApiCall: HaveApiCall = createHaveApiCall(fetchHaveApiTransport);
+diff --git a/src/lib/api/haveapiRequestClient.test.ts b/src/lib/api/haveapiRequestClient.test.ts
+new file mode 100644
+index 00000000..7fb497d4
+--- /dev/null
++++ b/src/lib/api/haveapiRequestClient.test.ts
+@@ -0,0 +1,210 @@
++import { afterEach, describe, expect, it, vi } from 'vitest';
++import { rememberBffSession } from '../auth/bffSession';
++import { haveApiCall, HaveApiError, isAmbiguousMutationError, requireActionStateResult } from './haveapi';
++import { createRequestClientCall, type HaveApiRequestClient } from './haveapiRequestClient';
++
++const sessionUrl = new URL('/session.json', window.location.href).href;
++const key = 'a'.repeat(64);
++const success = (response: Record<string, unknown>) => ({
++  data: response,
++  meta: {},
++  envelope: { status: true, response },
++  httpStatus: 200,
++});
++const failure = (kind: string, status = 401, envelope = { status: false, message: 'Unauthorized' }) =>
++  Object.assign(new Error('Request failed'), { kind, httpStatus: status, envelope });
++function setup() {
++  window.vpsAdmin = {
++    api: { url: 'https://api.example.test', version: 'v7.0' },
++    accessToken: 'old',
++    description: { authentication: { oauth2: { http_header: 'X-Token' } } },
++    webuiNext: { haveApi: { authHeader: 'X-Token', metaNamespace: '_meta' } },
++  };
++  rememberBffSession(sessionUrl, key, 'old');
++}
++function clientWith(request: (spec: Parameters<HaveApiRequestClient['request']>[0]) => Promise<unknown>) {
++  // Fake transport payload type is chosen by the caller, just as with network JSON.
++  return { request } as HaveApiRequestClient;
++}
++afterEach(() => {
++  rememberBffSession(sessionUrl, null);
++  window.vpsAdmin = undefined;
++  document.documentElement.lang = '';
++  vi.unstubAllGlobals();
++  vi.restoreAllMocks();
++});
++
++describe('injectable HaveAPI request client', () => {
++  it('keeps default fetch query getters to one read during transport extraction', async () => {
++    setup();
++    let reads = 0;
++    let sentUrl = '';
++    const params = Object.defineProperty({}, 'owner', { enumerable: true, get: () => ++reads });
++    vi.stubGlobal('fetch', async (url: string) => {
++      sentUrl = url;
++      return new Response(JSON.stringify({ status: true, response: { things: [] } }));
++    });
++    await haveApiCall({ path: '/things', namespace: 'thing', params });
++    expect(reads).toBe(1);
++    expect(new URL(sentUrl).searchParams.get('thing[owner]')).toBe('1');
++  });
++
++  it('normalizes relative paths and omits parameters without an input namespace', async () => {
++    setup();
++    const request = vi.fn(async () => success({ things: [] }));
++    await createRequestClientCall(clientWith(request))({ path: 'things', params: { ignored: 3 } });
++    expect(request).toHaveBeenCalledWith(expect.objectContaining({ path: '/things', params: undefined }));
++  });
++
++  it('retains the scalar-query boundary before dispatch', async () => {
++    setup();
++    const request = vi.fn(async () => success({}));
++    await expect(
++      createRequestClientCall(clientWith(request))({
++        path: '/things',
++        namespace: 'thing',
++        params: { owner: [3] },
++      })
++    ).rejects.toBeInstanceOf(HaveApiError);
++    expect(request).not.toHaveBeenCalled();
++  });
++
++  it('delegates params/meta/signal and preserves existing namespace and receipt policy', async () => {
++    setup();
++    document.documentElement.lang = 'cs';
++    const signal = new AbortController().signal;
++    const request = vi.fn(async () => success({ thing: { id: 7 }, _meta: { action_state_id: 91 } }));
++    const call = createRequestClientCall(clientWith(request));
++    const result = await call({
++      method: 'POST',
++      path: '/things',
++      namespace: 'thing',
++      params: { name: 'x' },
++      meta: { includes: 'owner' },
++      signal,
++    });
++    expect(result.data).toEqual({ id: 7 });
++    expect(requireActionStateResult(result, 'create').meta).toEqual({ action_state_id: 91 });
++    expect(request).toHaveBeenCalledExactlyOnceWith({
++      method: 'POST',
++      path: '/things',
++      inputNamespace: 'thing',
++      metaNamespace: '_meta',
++      params: { name: 'x' },
++      meta: { includes: 'owner' },
++      signal,
++      headers: { Accept: 'application/json', 'Accept-Language': 'cs', 'X-Token': 'old' },
++    });
++  });
++
++  it('renews one qualifying read with current auth and original language/params', async () => {
++    setup();
++    document.documentElement.lang = 'cs';
++    const params = { owner: 3 };
++    const fetchMock = vi.fn(async () => {
++      document.documentElement.lang = 'en';
++      params.owner = 99;
++      return new Response(JSON.stringify({ sessionKey: key, accessToken: 'new' }), {
++        headers: { 'Content-Type': 'application/json' },
++      });
++    });
++    vi.stubGlobal('fetch', fetchMock);
++    const request = vi.fn(async (spec: Parameters<HaveApiRequestClient['request']>[0]) => {
++      if (spec.headers?.['X-Token'] === 'old') throw failure('api');
++      return success({ things: [7] });
++    });
++    expect(
++      (await createRequestClientCall(clientWith(request))({ path: '/things', params, namespace: 'thing' })).data
++    ).toEqual([7]);
++    expect(fetchMock).toHaveBeenCalledTimes(1);
++    expect(request).toHaveBeenCalledTimes(2);
++    expect(request.mock.calls[1]?.[0]).toMatchObject({
++      params: { owner: 3 },
++      headers: { 'Accept-Language': 'cs', 'X-Token': 'new' },
++    });
++  });
++
++  it('renews an explicitly rejected mutation without replay', async () => {
++    setup();
++    vi.stubGlobal(
++      'fetch',
++      vi.fn(
++        async () =>
++          new Response(JSON.stringify({ sessionKey: key, accessToken: 'new' }), {
++            headers: { 'Content-Type': 'application/json' },
++          })
++      )
++    );
++    const request = vi.fn(async () => {
++      throw failure('api');
++    });
++    const err = await createRequestClientCall(clientWith(request))({ method: 'POST', path: '/things' }).catch(
++      (error) => error
++    );
++    expect(err).toBeInstanceOf(Error);
++    expect(err).not.toBeInstanceOf(HaveApiError);
++    expect(isAmbiguousMutationError(err)).toBe(false);
++    expect(request).toHaveBeenCalledTimes(1);
++  });
++
++  it('rejects a different BFF session without retrying the read', async () => {
++    setup();
++    vi.stubGlobal(
++      'fetch',
++      vi.fn(
++        async () =>
++          new Response(JSON.stringify({ sessionKey: 'b'.repeat(64), accessToken: 'new' }), {
++            headers: { 'Content-Type': 'application/json' },
++          })
++      )
++    );
++    const request = vi.fn(async () => {
++      throw failure('api');
++    });
++    await expect(createRequestClientCall(clientWith(request))({ path: '/things' })).rejects.toMatchObject({
++      httpStatus: 401,
++    });
++    expect(request).toHaveBeenCalledTimes(1);
++  });
++
++  it.each(['Invalid JSON response', 'Invalid API response envelope'])(
++    'does not recover or replay malformed mutation: %s',
++    async (message) => {
++      setup();
++      const fetchMock = vi.fn();
++      vi.stubGlobal('fetch', fetchMock);
++      const request = vi.fn(async () => {
++        throw Object.assign(failure('protocol'), { message });
++      });
++      const err = await createRequestClientCall(clientWith(request))({ method: 'POST', path: '/things' }).catch(
++        (error) => error
++      );
++      expect(isAmbiguousMutationError(err)).toBe(true);
++      expect(fetchMock).not.toHaveBeenCalled();
++      expect(request).toHaveBeenCalledTimes(1);
++    }
++  );
++
++  it.each(['transport', 'timeout', 'aborted'])('preserves uncertain mutation classification: %s', async (kind) => {
++    setup();
++    const request = vi.fn(async () => {
++      throw failure(kind, 0);
++    });
++    const err = await createRequestClientCall(clientWith(request))({ method: 'POST', path: '/things' }).catch(
++      (error) => error
++    );
++    expect(isAmbiguousMutationError(err)).toBe(true);
++    expect(request).toHaveBeenCalledTimes(1);
++  });
++
++  it('keeps HTTP 200 API rejection status absent on HaveApiError', async () => {
++    setup();
++    const request = vi.fn(async () => {
++      throw failure('api', 200);
++    });
++    await expect(createRequestClientCall(clientWith(request))({ path: '/things' })).rejects.toMatchObject({
++      name: 'HaveApiError',
++      httpStatus: undefined,
++    });
++  });
++});
+diff --git a/src/lib/api/haveapiRequestClient.ts b/src/lib/api/haveapiRequestClient.ts
+new file mode 100644
+index 00000000..98481971
+--- /dev/null
++++ b/src/lib/api/haveapiRequestClient.ts
+@@ -0,0 +1,101 @@
++import { createHaveApiCall, type HaveApiEnvelope } from './haveapi';
++import { MALFORMED_HAVEAPI_ENVELOPE_ERROR_CODE } from './haveapiEnvelope';
++import { validateQueryParameters, type HaveApiTransport, type HaveApiTransportResponse } from './haveapiTransport';
++
++/** Structural seam: the app does not import or install a candidate npm package. */
++export interface HaveApiRequestClient {
++  request<T = unknown>(spec: {
++    method: string;
++    path: string;
++    inputNamespace?: string | null;
++    metaNamespace?: string;
++    params?: Record<string, unknown>;
++    meta?: Record<string, unknown>;
++    headers?: Record<string, string>;
++    signal?: AbortSignal;
++  }): Promise<{
++    data: T;
++    meta: Record<string, unknown>;
++    envelope: RequestClientEnvelope;
++    httpStatus: number;
++  }>;
++}
++
++interface RequestClientEnvelope {
++  status: boolean;
++  response?: unknown;
++  message?: string | null;
++  errors?: unknown;
++}
++interface RequestClientFailure extends Error {
++  kind: string;
++  httpStatus?: number;
++  envelope?: RequestClientEnvelope;
++}
++function isRequestClientFailure(error: unknown): error is RequestClientFailure {
++  return error instanceof Error && 'kind' in error && typeof error.kind === 'string';
++}
++
++function response(status: number, envelope: HaveApiEnvelope): HaveApiTransportResponse {
++  return {
++    status,
++    ok: status >= 200 && status < 300,
++    readEnvelope: async () => envelope,
++    cancel: async () => {}, // The request client has already consumed its response.
++  };
++}
++
++/** Map validated library outcomes into the existing WebUI error/result policy. */
++export function requestClientTransport(client: HaveApiRequestClient): HaveApiTransport {
++  return {
++    prepare({ opts, baseUrl, metaNamespace }) {
++      if (!opts.method || opts.method === 'GET' || opts.method === 'OPTIONS') {
++        if (opts.namespace && opts.params) validateQueryParameters(opts.namespace, opts.params);
++        if (opts.meta) validateQueryParameters(metaNamespace, opts.meta);
++      }
++      const spec = {
++        method: opts.method ?? 'GET',
++        path: opts.path.startsWith('/') ? opts.path : `/${opts.path}`,
++        inputNamespace: opts.namespace || undefined,
++        metaNamespace,
++        params: opts.namespace && opts.params ? { ...opts.params } : undefined,
++        meta: opts.meta && { ...opts.meta },
++        signal: opts.signal,
++      };
++      return {
++        url: `${baseUrl}${opts.path.startsWith('/') ? '' : '/'}${opts.path}`,
++        async send(headers) {
++          try {
++            const result = await client.request({ ...spec, headers });
++            // The client owns protocol validation. WebUI owns namespace unwrapping.
++            return response(result.httpStatus, result.envelope as HaveApiEnvelope);
++          } catch (error) {
++            if (!isRequestClientFailure(error)) throw error;
++            if (error.kind === 'aborted') throw new DOMException(error.message, 'AbortError');
++            if (error.kind === 'timeout') throw new DOMException(error.message, 'TimeoutError');
++            if (error.kind === 'transport') throw new TypeError(error.message, { cause: error });
++            if (error.kind === 'api' && error.envelope) {
++              return response(error.httpStatus ?? 200, error.envelope as HaveApiEnvelope);
++            }
++            if (error.kind === 'protocol') {
++              return response(error.httpStatus ?? 200, {
++                status: false,
++                message: error.message,
++                response: null,
++                errors:
++                  error.message === 'Invalid JSON response'
++                    ? 'INVALID_JSON_RESPONSE'
++                    : MALFORMED_HAVEAPI_ENVELOPE_ERROR_CODE,
++              });
++            }
++            throw error;
++          }
++        },
++      };
++    },
++  };
++}
++
++export function createRequestClientCall(client: HaveApiRequestClient) {
++  return createHaveApiCall(requestClientTransport(client));
++}
+diff --git a/src/lib/api/haveapiTransport.ts b/src/lib/api/haveapiTransport.ts
+new file mode 100644
+index 00000000..4a8386c6
+--- /dev/null
++++ b/src/lib/api/haveapiTransport.ts
+@@ -0,0 +1,105 @@
++import { HaveApiError, type CallOpts, type HaveApiEnvelope } from './haveapi';
++import { parseHaveApiEnvelope } from './haveapiEnvelope';
++
++export interface HaveApiTransportResponse {
++  readonly status: number;
++  readonly ok: boolean;
++  readEnvelope(): Promise<HaveApiEnvelope>;
++  cancel(): Promise<void>;
++}
++export interface HaveApiTransport {
++  prepare(request: { opts: CallOpts; baseUrl: string; metaNamespace: string }): {
++    readonly url: string;
++    send(headers: Record<string, string>): Promise<HaveApiTransportResponse>;
++  };
++}
++
++function validateQueryValue(namespace: string, k: string, v: unknown): void {
++  if (v === undefined || v === null || ['string', 'number', 'boolean'].includes(typeof v)) return;
++  throw new HaveApiError(
++    {
++      status: false,
++      message: `Invalid query parameter ${namespace}[${k}] (must be string/number/boolean/null)`,
++      response: { key: k, value: v },
++    },
++    'Invalid query parameter'
++  );
++}
++/** Preserve the app's scalar-query boundary for either selected transport. */
++export function validateQueryParameters(namespace: string, params: Record<string, unknown>): void {
++  for (const [k, v] of Object.entries(params)) validateQueryValue(namespace, k, v);
++}
++function buildQuery(namespace: string, params: Record<string, unknown>): URLSearchParams {
++  const qs = new URLSearchParams();
++  for (const [k, v] of Object.entries(params)) {
++    validateQueryValue(namespace, k, v);
++    if (v !== undefined) qs.append(`${namespace}[${k}]`, v === null ? '' : String(v));
++  }
++  return qs;
++}
++
++/** Default browser transport; serialization is prepared once before any read retry. */
++export const fetchHaveApiTransport: HaveApiTransport = {
++  prepare({ opts, baseUrl, metaNamespace: metaNs }) {
++    const method = opts.method ?? 'GET';
++    let url = `${baseUrl}${opts.path.startsWith('/') ? '' : '/'}${opts.path}`;
++
++    const ns = opts.namespace;
++    const qs = new URLSearchParams();
++
++    const paramsInQuery = method === 'GET' || method === 'OPTIONS';
++
++    if (paramsInQuery && ns && opts.params) {
++      for (const [k, v] of buildQuery(ns, opts.params).entries()) qs.append(k, v);
++    }
++
++    if (paramsInQuery && opts.meta) {
++      for (const [k, v] of buildQuery(metaNs, opts.meta).entries()) {
++        qs.append(k, v);
++      }
++    }
++
++    if ([...qs.keys()].length > 0) {
++      url += (url.includes('?') ? '&' : '?') + qs.toString();
++    }
++
++    const init: RequestInit = {
++      method,
++      // Match the legacy XHR client default: do not send cookies cross-origin.
++      credentials: 'same-origin',
++      signal: opts.signal,
++    };
++
++    if (!paramsInQuery) {
++      const body: Record<string, unknown> = {};
++
++      if (ns && opts.params) {
++        body[ns] = opts.params;
++      }
++
++      if (opts.meta) {
++        body[metaNs] = opts.meta;
++      }
++
++      init.body = JSON.stringify(body);
++    }
++
++    return {
++      url,
++      async send(headers) {
++        const res = await fetch(url, {
++          ...init,
++          headers: paramsInQuery ? headers : { ...headers, 'Content-Type': 'application/json' },
++        });
++        return {
++          status: res.status,
++          ok: res.ok,
++          readEnvelope: () => parseHaveApiEnvelope(res),
++          cancel: async () => {
++            await res.body?.cancel();
++          },
++        };
++      },
++    };
++  },
++};

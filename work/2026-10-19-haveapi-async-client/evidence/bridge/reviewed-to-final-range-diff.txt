@@ -1,0 +1,924 @@
+1:  34f431e = 1:  34f431e clients/js: capture callback bundle compatibility
+2:  90722e0 ! 2:  0e63360 clients/js: author callback client in TypeScript
+    @@ Commit message
+         catalog intact and ship matching declarations alongside the existing
+         bundle path.
+     
+    +    Use explicit host properties for the four observable callback globals so
+    +    strict module consumers preserve their values and live registry reads.
+    +
+      ## Makefile ##
+     @@ Makefile: version:
+      	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/ruby/lib/haveapi/client/version.rb
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     -
+     -		return this.DEFAULT_LOCALE;
+     -	},
+    - 
+    +-
+     -	assertHeaderName: function(name) {
+     -		if (typeof name !== 'string' || !name.match(/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/))
+     -			throw new Error('Invalid language HTTP header name');
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     -
+     -		if (normalized === '')
+     -			return null;
+    -+Authentication = {
+    -+    /**
+    -+     * @member {Array} providers An array of registered authentication providers.
+    -+     * @memberof HaveAPI.Client.Authentication
+    -+     */
+    -+    providers: {},
+    -+    /**
+    -+     * Register authentication providers using this function.
+    -+     * @func registerProvider
+    -+     * @memberof HaveAPI.Client.Authentication
+    -+     * @param {string} name must be the same name as in announced by the API
+    -+     * @param {Object} provider class
+    -+     */
+    -+    registerProvider: function (name, obj) {
+    -+        Authentication.providers[name] = obj;
+    -+    }
+    -+};
+    -+var authenticationRegistry = Authentication;
+    - 
+    +-
+     -		return normalized.split('-', 1)[0];
+     -	}
+    -+var I18n = {
+    -+    DEFAULT_LOCALE: 'en',
+    -+    DEFAULT_LANGUAGE_HEADER: 'Accept-Language',
+    -+    translate: function (language, key, values) {
+    -+        var message = this.lookup(this.localeFor(language), key) ||
+    -+            this.lookup(this.DEFAULT_LOCALE, key) ||
+    -+            key;
+    -+        values = values || {};
+    -+        for (var name in values) {
+    -+            if (!values.hasOwnProperty(name))
+    -+                continue;
+    -+            message = message.replace(new RegExp('%\\{' + name + '\\}', 'g'), String(values[name]));
+    -+        }
+    -+        return message;
+    -+    },
+    -+    requestHeaders: function (language, languageHeader) {
+    -+        var ret = {};
+    -+        if (language === undefined || language === null || String(language) === '')
+    -+            return ret;
+    -+        languageHeader = languageHeader || this.DEFAULT_LANGUAGE_HEADER;
+    -+        this.assertHeaderName(languageHeader);
+    -+        this.assertHeaderValue(language);
+    -+        ret[languageHeader] = String(language);
+    -+        return ret;
+    -+    },
+    -+    localeFor: function (language) {
+    -+        if (language === undefined || language === null || String(language) === '')
+    -+            return this.DEFAULT_LOCALE;
+    -+        var tags = this.parseAcceptLanguage(String(language));
+    -+        for (var i = 0; i < tags.length; i++) {
+    -+            var locale = this.normalizeLocale(tags[i]);
+    -+            if (locale && I18nMessages.hasOwnProperty(locale))
+    -+                return locale;
+    -+        }
+    -+        return this.DEFAULT_LOCALE;
+    -+    },
+    -+    assertHeaderName: function (name) {
+    -+        if (typeof name !== 'string' || !name.match(/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/))
+    -+            throw new Error('Invalid language HTTP header name');
+    -+    },
+    -+    assertHeaderValue: function (value) {
+    -+        if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean')
+    -+            throw new Error('Invalid language HTTP header value');
+    -+        if (String(value).match(/[\x00\r\n]/))
+    -+            throw new Error('Invalid language HTTP header value');
+    -+    },
+    -+    lookup: function (locale, key) {
+    -+        var data = I18nMessages[locale];
+    -+        var parts = String(key).replace(/^haveapi_client\./, '').split('.');
+    -+        for (var i = 0; i < parts.length; i++) {
+    -+            if (!data || typeof data === 'string' || !data.hasOwnProperty(parts[i]))
+    -+                return null;
+    -+            data = data[parts[i]];
+    -+        }
+    -+        return typeof data === 'string' ? data : null;
+    -+    },
+    -+    parseAcceptLanguage: function (header) {
+    -+        var ret = [];
+    -+        var parts = header.split(',');
+    -+        for (var i = 0; i < parts.length; i++) {
+    -+            var tokens = parts[i].split(';');
+    -+            var tag = tokens.shift().trim();
+    -+            var q = 1.0;
+    -+            for (var j = 0; j < tokens.length; j++) {
+    -+                var qTokens = tokens[j].split('=');
+    -+                if (qTokens[0].trim() == 'q')
+    -+                    q = parseFloat(qTokens[1]);
+    -+            }
+    -+            if (tag !== '' && q > 0)
+    -+                ret.push([tag, q]);
+    -+        }
+    -+        ret.sort(function (a, b) {
+    -+            return b[1] - a[1];
+    -+        });
+    -+        return ret.map(function (v) {
+    -+            return v[0];
+    -+        });
+    -+    },
+    -+    normalizeLocale: function (tag) {
+    -+        var normalized = String(tag).trim().replace(/_/g, '-').replace(/\..*$/, '').toLowerCase();
+    -+        if (normalized === '')
+    -+            return null;
+    -+        return normalized.split('-', 1)[0];
+    -+    }
+    - };
+    - 
+    - /**
+    +-};
+    +-
+    +-/**
+     - * Create a new client for the API.
+     - * @class Client
+     - * @memberof HaveAPI
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     -	 * @member {Object} HaveAPI.Client#apiSettings An object containg API settings.
+     -	 */
+     -	this.apiSettings = null;
+    --
+    + 
+     -	/**
+     -	 * @member {Array} HaveAPI.Client#resources A list of top-level resources attached to the client.
+     -	 */
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     -Client.unsafeAttachmentNames['__proto__'] = true;
+     -Client.unsafeAttachmentNames['prototype'] = true;
+     -Client.unsafeAttachmentNames['constructor'] = true;
+    --
+    --/**
+    ++// These four callback-era globals remain observable even when a consumer wraps
+    ++// the UMD in strict code. Read their properties live rather than caching values.
+    ++// Older browser, worker and Node hosts need no globalThis polyfill.
+    ++var legacyGlobals = (typeof globalThis !== 'undefined' ? globalThis :
+    ++    typeof window !== 'undefined' ? window :
+    ++        typeof self !== 'undefined' ? self : global);
+    + 
+    + /**
+     - * @namespace Exceptions
+    -+ * @class ActionState
+    ++ * @namespace Authentication
+       * @memberof HaveAPI.Client
+       */
+     -Client.Exceptions = {};
+    --
+    ++legacyGlobals.Authentication = {
+    ++    /**
+    ++     * @member {Array} providers An array of registered authentication providers.
+    ++     * @memberof HaveAPI.Client.Authentication
+    ++     */
+    ++    providers: {},
+    ++    /**
+    ++     * Register authentication providers using this function.
+    ++     * @func registerProvider
+    ++     * @memberof HaveAPI.Client.Authentication
+    ++     * @param {string} name must be the same name as in announced by the API
+    ++     * @param {Object} provider class
+    ++     */
+    ++    registerProvider: function (name, obj) {
+    ++        legacyGlobals.Authentication.providers[name] = obj;
+    ++    }
+    ++};
+    ++var authenticationRegistry = legacyGlobals.Authentication;
+    + 
+     -Client.hasOwn = function(obj, prop) {
+     -	return Object.prototype.hasOwnProperty.call(obj, prop);
+     -};
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     -
+     -		return parsed.origin;
+     -	});
+    -+var ActionState = function ActionState(state) {
+    -+    /**
+    -+     * @member {Integer} HaveAPI.Client.ActionState#id
+    -+     * @readonly
+    -+     */
+    -+    this.id = state.id;
+    -+    /**
+    -+     * @member {String} HaveAPI.Client.ActionState#label
+    -+     * @readonly
+    -+     */
+    -+    this.label = state.label;
+    -+    /**
+    -+     * @member {Boolean} HaveAPI.Client.ActionState#finished
+    -+     * @readonly
+    -+     */
+    -+    this.finished = state.finished;
+    -+    /**
+    -+     * @member {Boolean} HaveAPI.Client.ActionState#status
+    -+     * @readonly
+    -+     */
+    -+    this.status = state.status;
+    -+    /**
+    -+     * @member {Date} HaveAPI.Client.ActionState#createdAt
+    -+     * @readonly
+    -+     */
+    -+    this.createdAt = state.created_at && new Date(state.created_at);
+    -+    /**
+    -+     * @member {Date} HaveAPI.Client.ActionState#updatedAt
+    -+     * @readonly
+    -+     */
+    -+    this.updatedAt = state.updated_at && new Date(state.updated_at);
+    -+    /**
+    -+     * @member {Boolean} HaveAPI.Client.ActionState#canCancel
+    -+     * @readonly
+    -+     */
+    -+    this.canCancel = state.can_cancel;
+    -+    /**
+    -+     * @member {HaveAPI.Client.ActionState.Progress} HaveAPI.Client.ActionState#progress
+    -+     * @readonly
+    -+     */
+    -+    this.progress = new ActionState.Progress(state);
+    ++var I18n = {
+    ++    DEFAULT_LOCALE: 'en',
+    ++    DEFAULT_LANGUAGE_HEADER: 'Accept-Language',
+    ++    translate: function (language, key, values) {
+    ++        var message = this.lookup(this.localeFor(language), key) ||
+    ++            this.lookup(this.DEFAULT_LOCALE, key) ||
+    ++            key;
+    ++        values = values || {};
+    ++        for (var name in values) {
+    ++            if (!values.hasOwnProperty(name))
+    ++                continue;
+    ++            message = message.replace(new RegExp('%\\{' + name + '\\}', 'g'), String(values[name]));
+    ++        }
+    ++        return message;
+    ++    },
+    ++    requestHeaders: function (language, languageHeader) {
+    ++        var ret = {};
+    ++        if (language === undefined || language === null || String(language) === '')
+    ++            return ret;
+    ++        languageHeader = languageHeader || this.DEFAULT_LANGUAGE_HEADER;
+    ++        this.assertHeaderName(languageHeader);
+    ++        this.assertHeaderValue(language);
+    ++        ret[languageHeader] = String(language);
+    ++        return ret;
+    ++    },
+    ++    localeFor: function (language) {
+    ++        if (language === undefined || language === null || String(language) === '')
+    ++            return this.DEFAULT_LOCALE;
+    ++        var tags = this.parseAcceptLanguage(String(language));
+    ++        for (var i = 0; i < tags.length; i++) {
+    ++            var locale = this.normalizeLocale(tags[i]);
+    ++            if (locale && I18nMessages.hasOwnProperty(locale))
+    ++                return locale;
+    ++        }
+    ++        return this.DEFAULT_LOCALE;
+    ++    },
+    ++    assertHeaderName: function (name) {
+    ++        if (typeof name !== 'string' || !name.match(/^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/))
+    ++            throw new Error('Invalid language HTTP header name');
+    ++    },
+    ++    assertHeaderValue: function (value) {
+    ++        if (typeof value !== 'string' && typeof value !== 'number' && typeof value !== 'boolean')
+    ++            throw new Error('Invalid language HTTP header value');
+    ++        if (String(value).match(/[\x00\r\n]/))
+    ++            throw new Error('Invalid language HTTP header value');
+    ++    },
+    ++    lookup: function (locale, key) {
+    ++        var data = I18nMessages[locale];
+    ++        var parts = String(key).replace(/^haveapi_client\./, '').split('.');
+    ++        for (var i = 0; i < parts.length; i++) {
+    ++            if (!data || typeof data === 'string' || !data.hasOwnProperty(parts[i]))
+    ++                return null;
+    ++            data = data[parts[i]];
+    ++        }
+    ++        return typeof data === 'string' ? data : null;
+    ++    },
+    ++    parseAcceptLanguage: function (header) {
+    ++        var ret = [];
+    ++        var parts = header.split(',');
+    ++        for (var i = 0; i < parts.length; i++) {
+    ++            var tokens = parts[i].split(';');
+    ++            var tag = tokens.shift().trim();
+    ++            var q = 1.0;
+    ++            for (var j = 0; j < tokens.length; j++) {
+    ++                var qTokens = tokens[j].split('=');
+    ++                if (qTokens[0].trim() == 'q')
+    ++                    q = parseFloat(qTokens[1]);
+    ++            }
+    ++            if (tag !== '' && q > 0)
+    ++                ret.push([tag, q]);
+    ++        }
+    ++        ret.sort(function (a, b) {
+    ++            return b[1] - a[1];
+    ++        });
+    ++        return ret.map(function (v) {
+    ++            return v[0];
+    ++        });
+    ++    },
+    ++    normalizeLocale: function (tag) {
+    ++        var normalized = String(tag).trim().replace(/_/g, '-').replace(/\..*$/, '').toLowerCase();
+    ++        if (normalized === '')
+    ++            return null;
+    ++        return normalized.split('-', 1)[0];
+    ++    }
+      };
+    --
+    + 
+      /**
+     - * Resolve a URL from an API description and require it to stay on the
+     - * configured API origin.
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     - * @param {Object} opts
+     - * @return {String} absolute URL
+     - * @private
+    -+ * Stop tracking of this action state
+    -+ * @method HaveAPI.Client.ActionState#stop
+    ++ * @class ActionState
+    ++ * @memberof HaveAPI.Client
+       */
+     -Client.prototype.sameOriginUrl = function(url, opts) {
+     -	opts = opts || {};
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     -	}
+     -
+     -	return resolved.href;
+    --};
+    ++var ActionState = function ActionState(state) {
+    ++    /**
+    ++     * @member {Integer} HaveAPI.Client.ActionState#id
+    ++     * @readonly
+    ++     */
+    ++    this.id = state.id;
+    ++    /**
+    ++     * @member {String} HaveAPI.Client.ActionState#label
+    ++     * @readonly
+    ++     */
+    ++    this.label = state.label;
+    ++    /**
+    ++     * @member {Boolean} HaveAPI.Client.ActionState#finished
+    ++     * @readonly
+    ++     */
+    ++    this.finished = state.finished;
+    ++    /**
+    ++     * @member {Boolean} HaveAPI.Client.ActionState#status
+    ++     * @readonly
+    ++     */
+    ++    this.status = state.status;
+    ++    /**
+    ++     * @member {Date} HaveAPI.Client.ActionState#createdAt
+    ++     * @readonly
+    ++     */
+    ++    this.createdAt = state.created_at && new Date(state.created_at);
+    ++    /**
+    ++     * @member {Date} HaveAPI.Client.ActionState#updatedAt
+    ++     * @readonly
+    ++     */
+    ++    this.updatedAt = state.updated_at && new Date(state.updated_at);
+    ++    /**
+    ++     * @member {Boolean} HaveAPI.Client.ActionState#canCancel
+    ++     * @readonly
+    ++     */
+    ++    this.canCancel = state.can_cancel;
+    ++    /**
+    ++     * @member {HaveAPI.Client.ActionState.Progress} HaveAPI.Client.ActionState#progress
+    ++     * @readonly
+    ++     */
+    ++    this.progress = new ActionState.Progress(state);
+    + };
+     -
+     -Client.prototype.oauth2Url = function(url) {
+     -	return this.sameOriginUrl(url, {
+     -		trustedOrigins: this._private.oauth2TrustedOrigins
+     -	});
+    -+ActionState.prototype.stop = function () {
+    -+    this.doStop = true;
+    - };
+    +-};
+     -
+      /**
+     - * Set the language sent to the API server.
+     - * @method HaveAPI.Client#setLanguage
+     - * @param {String} language value for Accept-Language
+    -+ * @method HaveAPI.Client.ActionState#shouldStop
+    ++ * Stop tracking of this action state
+    ++ * @method HaveAPI.Client.ActionState#stop
+       */
+     -Client.prototype.setLanguage = function(language) {
+     -	I18n.requestHeaders(language, this._private.languageHeader);
+     -	this._private.language = language;
+    -+ActionState.prototype.shouldStop = function () {
+    -+    return this.doStop || false;
+    ++ActionState.prototype.stop = function () {
+    ++    this.doStop = true;
+      };
+     -
+      /**
+     - * Set the language HTTP header name.
+     - * @method HaveAPI.Client#setLanguageHeader
+     - * @param {String} header HTTP header name
+    -+ * Cancel execution of this action. Action can be cancelled only if
+    -+ * {@link HaveAPI.Client.ActionState#canCancel}  is `true`, otherwise exception
+    -+ * {@link HaveAPI.Client.Exceptions.UncancelableAction} is thrown.
+    -+ *
+    -+ * Note that the cancellation can be a blocking action, so you can pass standard callback
+    -+ * functions.
+    -+ *
+    -+ * @method HaveAPI.Client.ActionState#cancel
+    -+ * @param {HaveAPI.Client~ActionCall} opts
+    ++ * @method HaveAPI.Client.ActionState#shouldStop
+       */
+     -Client.prototype.setLanguageHeader = function(header) {
+     -	I18n.assertHeaderName(header);
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     -	}
+     -
+     -	return ret;
+    -+ActionState.prototype.cancel = function (opts) {
+    -+    this.doCancel = true;
+    -+    this.cancelOpts = opts;
+    ++ActionState.prototype.shouldStop = function () {
+    ++    return this.doStop || false;
+      };
+     -
+    --/**
+    + /**
+     - * @callback HaveAPI.Client~doneCallback
+     - * @param {HaveAPI.Client} client
+     - * @param {Boolean} status true if the task was successful
+    -- */
+    ++ * Cancel execution of this action. Action can be cancelled only if
+    ++ * {@link HaveAPI.Client.ActionState#canCancel}  is `true`, otherwise exception
+    ++ * {@link HaveAPI.Client.Exceptions.UncancelableAction} is thrown.
+    ++ *
+    ++ * Note that the cancellation can be a blocking action, so you can pass standard callback
+    ++ * functions.
+    ++ *
+    ++ * @method HaveAPI.Client.ActionState#cancel
+    ++ * @param {HaveAPI.Client~ActionCall} opts
+    +  */
+     -
+    ++ActionState.prototype.cancel = function (opts) {
+    ++    this.doCancel = true;
+    ++    this.cancelOpts = opts;
+    ++};
+      /**
+     - * @callback HaveAPI.Client~replyCallback
+     - * @param {HaveAPI.Client} client
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     +    }
+     +};
+     +ResourceInstance.prototype.defaultParams = function (action) {
+    -+    ret = {};
+    ++    legacyGlobals.ret = {};
+     +    for (var attr in this._private.attributes) {
+     +        var desc = action.description.input.parameters[attr];
+     +        if (desc === undefined)
+     +            continue;
+     +        switch (desc.type) {
+     +            case 'Resource':
+    -+                ret[attr] = this._private.attributes[attr][desc.value_id];
+    ++                legacyGlobals.ret[attr] = this._private.attributes[attr][desc.value_id];
+     +                break;
+     +            default:
+    -+                ret[attr] = this._private.attributes[attr];
+    ++                legacyGlobals.ret[attr] = this._private.attributes[attr];
+     +        }
+     +    }
+    -+    return ret;
+    ++    return legacyGlobals.ret;
+      };
+     -
+      /**
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     +                if (response.version == Client.ProtocolVersion) {
+     +                    return response.response;
+     +                }
+    -+                v1 = response.version.split('.');
+    -+                v2 = Client.ProtocolVersion.split('.');
+    -+                if (v1[0] != v2[0]) {
+    ++                legacyGlobals.v1 = response.version.split('.');
+    ++                legacyGlobals.v2 = Client.ProtocolVersion.split('.');
+    ++                if (legacyGlobals.v1[0] != legacyGlobals.v2[0]) {
+     +                    throw new Client.Exceptions.ProtocolError('Incompatible protocol version: the client uses v' + Client.ProtocolVersion +
+     +                        ' while the API server uses v' + response.version);
+     +                }
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     +        });
+     +        return;
+     +    }
+    -+    this.authProvider = new authenticationRegistry.providers[method](this, opts, this._private.description.authentication[method]);
+    ++    this.authProvider = new legacyGlobals.Authentication.providers[method](this, opts, this._private.description.authentication[method]);
+     +    this.authProvider.setup(function (c, status) {
+     +        // Fetch new description, which may be different when authenticated
+     +        if (status && reset) {
+    @@ clients/js/dist/types/haveapi/base_resource.d.ts (new)
+     
+      ## clients/js/dist/types/haveapi/client.d.ts (new) ##
+     @@
+    ++import './authentication';
+     +import type { Provider, AuthenticationOptions, AuthenticationRegistry } from './authentication';
+     +import { Action } from './action';
+     +import type { ActionConstructor, ActionCall, ActionReply } from './action';
+    @@ clients/js/dist/types/haveapi/i18n.d.ts (new)
+     +    normalizeLocale: (tag: string) => string | null;
+     +};
+     
+    + ## clients/js/dist/types/haveapi/legacy_globals.d.ts (new) ##
+    +@@
+    ++import type { AuthenticationRegistry } from './authentication';
+    ++import type { Params } from './types';
+    ++interface LegacyGlobals {
+    ++    Authentication: AuthenticationRegistry;
+    ++    v1: string[];
+    ++    v2: string[];
+    ++    ret: Params;
+    ++}
+    ++export declare const legacyGlobals: LegacyGlobals;
+    ++export {};
+    +
+      ## clients/js/dist/types/haveapi/local_response.d.ts (new) ##
+     @@
+     +import { Response } from './response';
+    @@ clients/js/src/haveapi/authentication.ts (new)
+     +import type { BasicConstructor } from './authentication/basic';
+     +import type { OAuth2Constructor } from './authentication/oauth2';
+     +import type { TokenConstructor } from './authentication/token';
+    ++import { legacyGlobals } from './legacy_globals';
+     +
+     +export interface AuthenticationOptions extends Values {
+     +	user?: string;
+    @@ clients/js/src/haveapi/authentication.ts (new)
+     + * @namespace Authentication
+     + * @memberof HaveAPI.Client
+     + */
+    -+// Preserve the original bare global assignment in the non-strict UMD.
+    -+declare var Authentication: AuthenticationRegistry;
+    -+Authentication = {
+    ++legacyGlobals.Authentication = {
+     +	/**
+     +	 * @member {Array} providers An array of registered authentication providers.
+     +	 * @memberof HaveAPI.Client.Authentication
+    @@ clients/js/src/haveapi/authentication.ts (new)
+     +	 * @param {Object} provider class
+     +	 */
+     +	registerProvider: function(name: string, obj: ProviderConstructor) {
+    -+		Authentication.providers[name] = obj;
+    ++		legacyGlobals.Authentication.providers[name] = obj;
+     +	}
+     +} as AuthenticationRegistry;
+     +
+    -+const authenticationRegistry = Authentication;
+    ++const authenticationRegistry = legacyGlobals.Authentication;
+     +export { authenticationRegistry as Authentication };
+     
+      ## clients/js/src/haveapi/authentication/base.js => clients/js/src/haveapi/authentication/base.ts ##
+    @@ clients/js/src/haveapi/base_resource.ts: BaseResource.prototype.attachActions =
+     
+      ## clients/js/src/haveapi/client.js => clients/js/src/haveapi/client.ts ##
+     @@
+    -+import { Authentication } from './authentication';
+    ++import './authentication';
+    ++import { legacyGlobals } from './legacy_globals';
+     +import { I18n } from './i18n';
+     +import type { Provider, AuthenticationOptions, AuthenticationRegistry } from './authentication';
+     +import { Action } from './action';
+    @@ clients/js/src/haveapi/client.js => clients/js/src/haveapi/client.ts
+     +	Response: ResponseConstructor;
+     +	LocalResponse: LocalResponseConstructor;
+     +}
+    -+
+    -+// These bare assignments are observable legacy sloppy-mode globals. The UMD
+    -+// build deliberately remains non-strict; declarations erase without a runtime shim.
+    -+declare var v1: string[];
+    -+declare var v2: string[];
+     +
+      /**
+       * Create a new client for the API.
+    @@ clients/js/src/haveapi/client.ts: Client.prototype.fetchDescription = function(c
+      				}
+      
+     -				v1 = response.version.split('.');
+    -+				v1 = (response.version as string).split('.');
+    - 				v2 = Client.ProtocolVersion.split('.');
+    +-				v2 = Client.ProtocolVersion.split('.');
+    ++				legacyGlobals.v1 = (response.version as string).split('.');
+    ++				legacyGlobals.v2 = Client.ProtocolVersion.split('.');
+      
+    - 				if (v1[0] != v2[0]) {
+    +-				if (v1[0] != v2[0]) {
+    ++				if (legacyGlobals.v1[0] != legacyGlobals.v2[0]) {
+    + 					throw new Client.Exceptions.ProtocolError(
+    + 						'Incompatible protocol version: the client uses v'+ Client.ProtocolVersion +
+    + 						' while the API server uses v'+ response.version
+     @@ clients/js/src/haveapi/client.ts: Client.prototype.attachResources = function() {
+      
+      	this._private.attachedResourceNames = Object.create(null);
+    @@ clients/js/src/haveapi/client.ts: Client.prototype.authenticate = function(metho
+      	}
+      
+     -	this.authProvider = new Authentication.providers[method](this, opts, this._private.description.authentication[method]);
+    -+	this.authProvider = new Authentication.providers[method](this, opts, this._private.description!.authentication[method]);
+    ++	this.authProvider = new legacyGlobals.Authentication.providers[method](this, opts, this._private.description!.authentication[method]);
+      
+      	this.authProvider.setup(function(c, status) {
+      		// Fetch new description, which may be different when authenticated
+    @@ clients/js/src/haveapi/i18n.ts: var I18n = {
+      
+      		if (normalized === '')
+     
+    + ## clients/js/src/haveapi/legacy_globals.ts (new) ##
+    +@@
+    ++import type { AuthenticationRegistry } from './authentication';
+    ++import type { Params } from './types';
+    ++
+    ++interface LegacyGlobals {
+    ++	Authentication: AuthenticationRegistry;
+    ++	v1: string[];
+    ++	v2: string[];
+    ++	ret: Params;
+    ++}
+    ++
+    ++declare const global: LegacyGlobals;
+    ++
+    ++// These four callback-era globals remain observable even when a consumer wraps
+    ++// the UMD in strict code. Read their properties live rather than caching values.
+    ++// Older browser, worker and Node hosts need no globalThis polyfill.
+    ++export const legacyGlobals = (
+    ++	typeof globalThis !== 'undefined' ? globalThis :
+    ++	typeof window !== 'undefined' ? window :
+    ++	typeof self !== 'undefined' ? self : global
+    ++) as unknown as LegacyGlobals;
+    +
+      ## clients/js/src/haveapi/local_response.js (deleted) ##
+     @@
+     -/**
+    @@ clients/js/src/haveapi/resource_instance.js => clients/js/src/haveapi/resource_i
+     @@
+     +import { BaseResource } from './base_resource';
+     +import { Client } from './client';
+    ++import { legacyGlobals } from './legacy_globals';
+     +import type { BaseResourcePrivate } from './base_resource';
+     +import type { Action, ReplyCallback } from './action';
+     +import type { Response } from './response';
+    -+import type { IdArgument, Meta, ParameterDescription, Params, Values } from './types';
+    ++import type { IdArgument, Meta, ParameterDescription, Values } from './types';
+     +
+     +export interface ResourceInstancePrivate extends BaseResourcePrivate {
+     +	action: Action;
+    @@ clients/js/src/haveapi/resource_instance.js => clients/js/src/haveapi/resource_i
+     +	prototype: ResourceInstance;
+     +	pathParams(meta?: Meta): IdArgument[];
+     +}
+    -+
+    -+// This bare assignment historically escapes into the sloppy UMD global scope.
+    -+// The erased declaration preserves that behavior instead of repairing it here.
+    -+declare var ret: Params;
+     +
+      /**
+       * @class ResourceInstance
+    @@ clients/js/src/haveapi/resource_instance.ts: ResourceInstance.prototype.save = f
+      };
+      
+     -ResourceInstance.prototype.defaultParams = function(action) {
+    +-	ret = {}
+     +ResourceInstance.prototype.defaultParams = function(action: Action) {
+    - 	ret = {}
+    ++	legacyGlobals.ret = {}
+      
+      	for (var attr in this._private.attributes) {
+     -		var desc = action.description.input.parameters[ attr ];
+    @@ clients/js/src/haveapi/resource_instance.ts: ResourceInstance.prototype.save = f
+      		switch (desc.type) {
+      			case 'Resource':
+     -				ret[ attr ] = this._private.attributes[ attr ][ desc.value_id ];
+    -+				ret[ attr ] = (this._private.attributes[ attr ] as Values)[ desc.value_id! ];
+    ++				legacyGlobals.ret[ attr ] = (this._private.attributes[ attr ] as Values)[ desc.value_id! ];
+      				break;
+      
+      			default:
+    +-				ret[ attr ] = this._private.attributes[ attr ];
+    ++				legacyGlobals.ret[ attr ] = this._private.attributes[ attr ];
+    + 		}
+    + 	}
+    + 
+    +-	return ret;
+    ++	return legacyGlobals.ret;
+    + };
+    + 
+    + /**
+     @@ clients/js/src/haveapi/resource_instance.ts: ResourceInstance.prototype.defaultParams = function(action) {
+       * @private
+       * @return {HaveAPI.Client.ResourceInstance}
+    @@ clients/js/test/README.md (new)
+     +The same cases must pass against the converted bundle. The original bundle is
+     +available from Git history; a second tracked copy is unnecessary.
+     +
+    ++The strict-context fixture checks the same distributed artifact inside a strict
+    ++CommonJS wrapper, as used when a browser bundler embeds it in a module:
+    ++
+    ++```sh
+    ++node --test clients/js/test/compatibility/strict_context.spec.cjs
+    ++```
+    ++
+    ++It compares raw and strict callback loading, setup, version checks and
+    ++`defaultParams`, including the existing `Authentication`, `v1`, `v2` and `ret`
+    ++global effects and live reads. The `window`, `self` and `global` host fallbacks
+    ++run with `globalThis`, Promise and AbortController absent. The `self` case uses
+    ++fake CommonJS XHR and checks host lookup; it does not certify worker transport.
+    ++This VM check complements actual minified browser-package import verification.
+    ++
+     +The TypeScript fixture compiles against generated package declarations rather
+     +than authored source:
+     +
+    @@ clients/js/test/compatibility/core.spec.cjs (new)
+     +  assert.deepEqual(result, [false, undefined]);
+     +});
+     
+    + ## clients/js/test/compatibility/strict_context.spec.cjs (new) ##
+    +@@
+    ++const assert = require('node:assert/strict');
+    ++const fs = require('node:fs');
+    ++const path = require('node:path');
+    ++const vm = require('node:vm');
+    ++const { test } = require('node:test');
+    ++
+    ++const bundlePath = path.resolve(__dirname, '../../dist/haveapi-client.js');
+    ++const bundle = fs.readFileSync(bundlePath, 'utf8');
+    ++
+    ++function loadBundle(host, strict) {
+    ++  const requests = [];
+    ++  const imports = [];
+    ++  class FakeXHR {
+    ++    constructor() { this.headers = {}; requests.push(this); }
+    ++    open(method, url) { this.method = method; this.url = url; }
+    ++    setRequestHeader(name, value) { this.headers[name] = value; }
+    ++    send(body) { this.body = body; }
+    ++    respond(response, status = 200) {
+    ++      this.status = status;
+    ++      this.responseText = JSON.stringify(response);
+    ++      this.readyState = 4;
+    ++      this.onreadystatechange();
+    ++    }
+    ++  }
+    ++  const context = vm.createContext({
+    ++    console: { log() {}, warn() {}, error() {} }, URL, setTimeout, clearTimeout,
+    ++    globalThis: undefined, Promise: undefined, AbortController: undefined,
+    ++    module: { exports: {} },
+    ++    require(name) {
+    ++      imports.push(name);
+    ++      assert.equal(name, 'xmlhttprequest');
+    ++      return { XMLHttpRequest: FakeXHR };
+    ++    }
+    ++  });
+    ++  context.exports = context.module.exports;
+    ++  // Expose each host independently. Worker-like transport uses the existing
+    ++  // CommonJS fake XHR; only the global-object fallback is under test here.
+    ++  const globalObject = vm.runInContext('this', context);
+    ++  context[{ browser: 'window', worker: 'self', node: 'global' }[host]] = globalObject;
+    ++  if (host === 'browser') context.XMLHttpRequest = FakeXHR;
+    ++  const source = strict
+    ++    ? '(function(module, exports) { "use strict";\n' + bundle + '\n})(module, exports);'
+    ++    : bundle;
+    ++  vm.runInContext(source, context, { filename: bundlePath });
+    ++  return { context, requests, imports, HaveAPI: context.module.exports };
+    ++}
+    ++
+    ++function description() {
+    ++  const parameters = { id: { type: 'Integer' }, count: { type: 'Integer' } };
+    ++  const action = (method, input) => ({
+    ++    method, path: '/v1/widgets/{widget_id}', aliases: [], blocking: false,
+    ++    input, output: { layout: 'object', namespace: 'widget', parameters }
+    ++  });
+    ++  return {
+    ++    authentication: {}, meta: { namespace: '_meta' },
+    ++    resources: { widgets: { resources: {}, actions: {
+    ++      show: action('GET', null),
+    ++      update: action('PUT', { layout: 'hash', namespace: 'widget', parameters: { count: parameters.count } })
+    ++    } } }
+    ++  };
+    ++}
+    ++
+    ++function exerciseCallbacks(loaded) {
+    ++  const { HaveAPI, context, requests } = loaded;
+    ++  assert.equal(typeof HaveAPI.Client, 'function');
+    ++  assert.equal(HaveAPI.Client.name, 'Client');
+    ++  assert.equal(HaveAPI.default, undefined);
+    ++  for (const name of ['Action', 'Resource', 'ResourceInstance', 'Response', 'Hooks']) {
+    ++    assert.equal(typeof HaveAPI.Client[name], 'function', name);
+    ++  }
+    ++  assert.equal(context.Authentication, HaveAPI.Client.Authentication);
+    ++  const client = new HaveAPI.Client('https://api.example', { version: 1 });
+    ++  let setup;
+    ++  assert.equal(client.setup((owner, status) => { setup = [owner, status]; }), undefined);
+    ++  assert.equal(setup, undefined);
+    ++  assert.equal(requests[0].method, 'OPTIONS');
+    ++  assert.equal(requests[0].url, 'https://api.example/v1/');
+    ++  // A compatible minor mismatch exercises both legacy version globals.
+    ++  requests[0].respond({ version: '2.1', status: true, response: description() });
+    ++  assert.equal(setup[0], client);
+    ++  assert.equal(setup[1], true);
+    ++  assert.deepEqual(Array.from(context.v1), ['2', '1']);
+    ++  assert.deepEqual(Array.from(context.v2), ['2', '0']);
+    ++  assert.equal(typeof client.widgets, 'function');
+    ++  assert.equal(typeof client.widgets.show, 'function');
+    ++  assert.equal(client.widgets instanceof HaveAPI.Client.Resource, true);
+    ++  assert.equal(client.widgets.show instanceof HaveAPI.Client.Action, true);
+    ++  let instance;
+    ++  assert.equal(client.widgets.show(7, (owner, value) => {
+    ++    assert.equal(owner, client);
+    ++    instance = value;
+    ++  }), undefined);
+    ++  assert.equal(instance, undefined);
+    ++  assert.equal(requests[1].method, 'GET');
+    ++  assert.equal(requests[1].url, 'https://api.example/v1/widgets/7');
+    ++  requests[1].respond({ status: true, response: { widget: { id: 7, count: 4 }, _meta: { path_params: [7] } } });
+    ++  assert.equal(instance instanceof HaveAPI.Client.ResourceInstance, true);
+    ++  assert.equal(instance.count, 4);
+    ++  assert.equal(instance.apiResponse().isOk(), true);
+    ++  context.ret = { previous: true };
+    ++  const params = instance.defaultParams(client.widgets.update);
+    ++  assert.equal(params, context.ret);
+    ++  assert.deepEqual(Object.keys(params), ['count']);
+    ++  assert.equal(params.count, 4);
+    ++  assert.equal(params.previous, undefined);
+    ++  assert.equal(context.globalThis, undefined);
+    ++  assert.equal(context.Promise, undefined);
+    ++  assert.equal(context.AbortController, undefined);
+    ++  return { client, instance };
+    ++}
+    ++
+    ++for (const host of ['browser', 'worker', 'node']) {
+    ++  for (const strict of [false, true]) {
+    ++    test(`${host} ${strict ? 'strict wrapper' : 'raw bundle'} retains callback/global parity without globalThis or async primitives`, () => {
+    ++      const loaded = loadBundle(host, strict);
+    ++      exerciseCallbacks(loaded);
+    ++      assert.deepEqual(loaded.imports, host === 'browser' ? [] : ['xmlhttprequest']);
+    ++    });
+    ++  }
+    ++}
+    ++
+    ++for (const strict of [false, true]) {
+    ++  test(`${strict ? 'strict wrapper' : 'raw bundle'} keeps live Authentication and defaultParams global reads`, () => {
+    ++    const loaded = loadBundle('node', strict);
+    ++    const { context, HaveAPI } = loaded;
+    ++    const { client, instance } = exerciseCallbacks(loaded);
+    ++    const original = context.Authentication;
+    ++    const replacement = { providers: {} };
+    ++    context.Authentication = replacement;
+    ++    let providerArgs;
+    ++    function CustomProvider(owner, options, providerDescription) {
+    ++      providerArgs = [owner, options, providerDescription];
+    ++      this.setup = callback => callback(owner, true);
+    ++    }
+    ++    assert.equal(original.registerProvider('custom', CustomProvider), undefined);
+    ++    assert.equal(replacement.providers.custom, CustomProvider);
+    ++    assert.equal(original.providers.custom, undefined);
+    ++    assert.equal(HaveAPI.Client.Authentication, original);
+    ++    const options = { marker: 'live registry' };
+    ++    let authenticated;
+    ++    assert.equal(client.authenticate('custom', options, (owner, status) => {
+    ++      authenticated = [owner, status];
+    ++    }, false), undefined);
+    ++    assert.deepEqual(providerArgs, [client, options, undefined]);
+    ++    assert.deepEqual(authenticated, [client, true]);
+    ++
+    ++    const replacedParams = { replaced: true };
+    ++    Object.defineProperty(instance._private.attributes, 'count', {
+    ++      configurable: true, enumerable: true,
+    ++      get() { context.ret = replacedParams; return 9; }
+    ++    });
+    ++    // The getter changes the global during the assignment. Returning a cached
+    ++    // local instead of the live global would change this callback-era result.
+    ++    assert.equal(instance.defaultParams(client.widgets.update), replacedParams);
+    ++    assert.deepEqual(replacedParams, { replaced: true });
+    ++  });
+    ++}
+    +
+      ## clients/js/test/types/callback.ts (new) ##
+     @@
+     +// Compile against emitted package declarations, never the authored TS modules.
+3:  8e331fe ! 3:  81994d2 clients/js: add an independent typed Promise client
+    @@ clients/js/dist/haveapi-client.js: var I18nMessages = {
+     +    return url;
+     +}
+     +
+    - Authentication = {
+    -     /**
+    -      * @member {Array} providers An array of registered authentication providers.
+    + // These four callback-era globals remain observable even when a consumer wraps
+    + // the UMD in strict code. Read their properties live rather than caching values.
+    + // Older browser, worker and Node hosts need no globalThis polyfill.
+     @@ clients/js/dist/haveapi-client.js: Validator.prototype.isValid = function () {
+       * @param {Object} input parameters
+       */
+    @@ clients/js/src/haveapi/async/types.ts (new)
+      ## clients/js/src/haveapi/client.ts ##
+     @@
+     +import { normalizeTrustedOrigins, resolveApiUrl, addParamsToQuery } from './protocol';
+    - import { Authentication } from './authentication';
+    + import './authentication';
+    + import { legacyGlobals } from './legacy_globals';
+      import { I18n } from './i18n';
+    - import type { Provider, AuthenticationOptions, AuthenticationRegistry } from './authentication';
+     @@ clients/js/src/haveapi/client.ts: Client.findResource = function(root, resourcePath) {
+      };
+      
+4:  dc94157 = 4:  76f190f clients/js: document TypeScript source workflow

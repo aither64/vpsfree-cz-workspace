@@ -1,0 +1,151 @@
+1:  fbf2a7f7 ! 1:  1ef5b7b0 api: add injectable HaveAPI package pilot
+    @@ docs/work-log/2026-10-19-haveapi-package-pilot.md (new)
+     +directory resolves both the Vite executable and config paths. The port, browser
+     +matrix, strict startup and no-server-reuse rules are unchanged. A fresh committed
+     +package proof is still required; no browser success is claimed by this fix.
+    ++
+    ++## Follow-up: fixture runtime mode
+    ++
+    ++The proof with HaveAPI `76f190f9` passed the installed declarations, minified
+    ++Vite build and ordinary UMD scenarios in Chromium, Firefox and WebKit. All four
+    ++adapter scenarios reached the fixture but failed before API dispatch: the
+    ++dedicated production build omitted `VITE_RUNTIME_MODE`, which the application
+    ++correctly requires. The failed snapshot, result, traces, log and exit status
+    ++are retained.
+    ++
+    ++The dedicated Vite config now explicitly selects `bff`, matching the normal
+    ++production build. A browser-free regression loads that config and checks its
+    ++value with the application's production runtime-mode resolver.
+    ++
+    ++The fixture treats its synthetic session identity as already validated. Its
+    ++helper now binds that key before remembering the same-origin session, using
+    ++the production functions and ordering. Before its first API call, each adapter
+    ++case checks the real runtime OAuth2 token, both session keys and unchanged
+    ++runtime identity. A browser-free gate also checks that the real BFF auth guard
+    ++rejects an unbound token and accepts this fixture binding. Binding happens once;
+    ++refresh and changed-session behavior continue through the existing policy.
+    ++This is not OAuth or BFF bootstrap certification. The application guard and
+    ++authentication policy remain unchanged. Adapter fit and the final engine-version
+    ++receipt still require a successful committed package proof.
+     
+      ## package.json ##
+     @@
+    @@ scripts/haveapi-package/browser.spec.ts (new)
+     +async function ready(page: import('@playwright/test').Page) {
+     +  await page.goto('/');
+     +  await page.waitForFunction(() => Boolean(window.haveapiPilot));
+    -+  await page.evaluate((key) => window.haveapiPilot.remember(key, 'old'), key);
+    ++  const session = await page.evaluate((key) => window.haveapiPilot.bindSyntheticBffSession(key, 'old'), key);
+    ++  expect(session).toEqual({
+    ++    auth: { kind: 'oauth2', accessToken: 'old' },
+    ++    boundKey: key,
+    ++    rememberedKey: key,
+    ++    sameRuntime: true,
+    ++  });
+     +}
+     +
+     +test('actual package serializes reads and mutations and returns an action receipt before completion', async ({
+    @@ scripts/haveapi-package/browser.ts (new)
+     @@
+     +import { AsyncClient } from 'haveapi-client';
+     +import { createRequestClientCall } from '../../src/lib/api/haveapiRequestClient';
+    -+import { rememberBffSession } from '../../src/lib/auth/bffSession';
+     +import { requireActionStateResult, isAmbiguousMutationError, type CallOpts } from '../../src/lib/api/haveapi';
+    ++import { bindSyntheticBffSession } from './syntheticSession';
+     +
+     +const client = new AsyncClient(`${location.origin}/api/v7.0`);
+     +const call = createRequestClientCall(client);
+    @@ scripts/haveapi-package/browser.ts (new)
+     +    return call({ ...opts, signal: controller.signal });
+     +  },
+     +  abort: () => controller?.abort(),
+    -+  remember: (key: string, token: string) =>
+    -+    rememberBffSession(new URL('/session.json', location.href).href, key, token),
+    ++  bindSyntheticBffSession,
+     +  uncertain: isAmbiguousMutationError,
+     +};
+     +declare global {
+    @@ scripts/haveapi-package/playwright.config.ts (new)
+     +  },
+     +});
+     
+    + ## scripts/haveapi-package/syntheticSession.ts (new) ##
+    +@@
+    ++import { getRuntimeConfig } from '../../src/app/config';
+    ++import { getBffSessionKey, rememberBffSession } from '../../src/lib/auth/bffSession';
+    ++import { bindBffImpersonationToSession, getValidatedBffSessionKey } from '../../src/lib/auth/impersonation';
+    ++
+    ++/** The fixture supplies an already validated synthetic identity, without OAuth/bootstrap proof. */
+    ++export function bindSyntheticBffSession(key: string, token: string) {
+    ++  const runtime = window.vpsAdmin;
+    ++  bindBffImpersonationToSession(key, window.sessionStorage);
+    ++  rememberBffSession(new URL('/session.json', window.location.href).href, key, token);
+    ++  return {
+    ++    auth: getRuntimeConfig().auth,
+    ++    boundKey: getValidatedBffSessionKey(),
+    ++    rememberedKey: getBffSessionKey(),
+    ++    sameRuntime: window.vpsAdmin === runtime,
+    ++  };
+    ++}
+    +
+      ## scripts/haveapi-package/tsconfig.json (new) ##
+     @@
+     +{
+    @@ scripts/haveapi-package/vite.config.ts (new)
+     +
+     +export default defineConfig({
+     +  root: fileURLToPath(new URL('.', import.meta.url)),
+    ++  define: { 'import.meta.env.VITE_RUNTIME_MODE': JSON.stringify('bff') },
+     +  build: { outDir: 'dist', emptyOutDir: true },
+     +});
+     
+    @@ scripts/test-haveapi-package.test.mjs (new)
+     +  assert.equal((await stat(path.resolve(effectiveCwd, args[configArgument + 1]))).isFile(), true);
+     +});
+     +
+    ++test('actual package fixture config selects the required production BFF runtime mode', async () => {
+    ++  const { default: config } = await import('./haveapi-package/vite.config.ts');
+    ++  const { resolveRuntimeMode } = await import('../src/app/runtimeMode.ts');
+    ++  const mode = JSON.parse(config.define['import.meta.env.VITE_RUNTIME_MODE']);
+    ++  assert.equal(resolveRuntimeMode(mode, false), 'bff');
+    ++});
+    ++
+    ++test('synthetic fixture binding satisfies the real BFF auth guard without replacing runtime identity', async () => {
+    ++  const { createServer } = await import('vite');
+    ++  const { JSDOM } = await import('jsdom');
+    ++  const root = fileURLToPath(new URL('../', import.meta.url));
+    ++  const dom = new JSDOM('', { url: 'http://fixture.example.test' });
+    ++  const previousWindow = globalThis.window;
+    ++  globalThis.window = dom.window;
+    ++  let server;
+    ++  try {
+    ++    server = await createServer({
+    ++      configFile: path.join(root, 'scripts/haveapi-package/vite.config.ts'),
+    ++      server: { middlewareMode: true, hmr: false },
+    ++      // This gate loads only the session module, without the candidate HTML entry.
+    ++      optimizeDeps: { noDiscovery: true, include: [] },
+    ++    });
+    ++    const { getRuntimeConfig } = await server.ssrLoadModule(path.join(root, 'src/app/config.ts'));
+    ++    const { bindSyntheticBffSession } = await server.ssrLoadModule('/syntheticSession.ts');
+    ++    const runtime = { api: { url: '/api', version: '7.0' }, accessToken: 'old' };
+    ++    window.vpsAdmin = runtime;
+    ++    assert.deepEqual(getRuntimeConfig().auth, { kind: 'none' });
+    ++    const key = 'a'.repeat(64);
+    ++    assert.deepEqual(bindSyntheticBffSession(key, 'old'), {
+    ++      auth: { kind: 'oauth2', accessToken: 'old' },
+    ++      boundKey: key,
+    ++      rememberedKey: key,
+    ++      sameRuntime: true,
+    ++    });
+    ++    assert.equal(window.vpsAdmin, runtime);
+    ++  } finally {
+    ++    await server?.close();
+    ++    dom.window.close();
+    ++    if (previousWindow === undefined) delete globalThis.window;
+    ++    else globalThis.window = previousWindow;
+    ++  }
+    ++});
+    ++
+     +const baselinePackages = ['typescript', 'vite', '@playwright/test', 'locked-dependency'];
+     +const lockedVersion = '1.0.0';
+     +async function writePackage(root, name, version = lockedVersion) {

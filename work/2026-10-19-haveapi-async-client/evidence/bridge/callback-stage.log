@@ -1,0 +1,58 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-haveapi-async-client/haveapi' is dirty
+
+> haveapi-client@0.29.0 build
+> gulp
+
+[19:56:56] Using gulpfile ~/workspace/ai/vpsfree.cz/worktrees/2026-10-19-haveapi-async-client/haveapi/clients/js/gulpfile.js
+[19:56:56] Starting 'default'...
+[19:56:56] Starting 'scripts'...
+[19:56:56] Starting 'compile'...
+[19:57:00] Finished 'compile' after 3.71 s
+[19:57:00] Starting 'bundle'...
+Circular dependency: build/haveapi/client.js -> build/haveapi/action.js -> build/haveapi/client.js
+Circular dependency: build/haveapi/client.js -> build/haveapi/action.js -> build/haveapi/parameters.js -> build/haveapi/resource_instance.js -> build/haveapi/base_resource.js -> build/haveapi/client.js
+Circular dependency: build/haveapi/client.js -> build/haveapi/action.js -> build/haveapi/parameters.js -> build/haveapi/resource_instance.js -> build/haveapi/client.js
+[19:57:00] Finished 'bundle' after 504 ms
+[19:57:00] Finished 'scripts' after 4.22 s
+[19:57:00] Finished 'default' after 4.23 s
+
+> haveapi-client@0.29.0 test:compatibility
+> node --test test/compatibility/*.spec.cjs
+
+✔ commonjs retains Client export/static constructors without async runtime globals (26.471523ms)
+✔ browser retains Client export/static constructors without async runtime globals (4.078291ms)
+✔ amd retains Client export/static constructors without async runtime globals (3.936866ms)
+✔ setup returns undefined before the deferred callback and preserves hook ordering/this (6.414184ms)
+✔ setup failure is a callback result, while unsupported authentication throws synchronously (3.665765ms)
+✔ basic authentication and logout keep callback arguments and undefined returns (3.048864ms)
+✔ callable actions/resources keep aliases, prototypes, descriptors and detached invocation (3.600273ms)
+✔ curried nested IDs and callback-free calls issue independent requests (3.253129ms)
+✔ local validation calls back synchronously without HTTP and preserves LocalResponse (4.307993ms)
+✔ unresolved IDs, transport failures and callback exceptions remain synchronous throws (3.731779ms)
+✔ raw and rich replies retain namespace/meta, list helpers and attribute descriptors (4.344292ms)
+✔ ActionState stop/cancel and progress retain local callback-era behavior (2.577389ms)
+✔ token authentication before setup preserves MFA continuation and description refresh (16.498283ms)
+✔ token authentication failure and missing MFA handler keep legacy outcomes (7.170868ms)
+✔ existing-token reset=false is synchronous after description and logout ignores provider failure (3.813623ms)
+✔ setup and authentication retain different deferred protocol failure behavior (4.57156ms)
+✔ legacy HTTP invalid JSON delivers false/undefined without constructing a Promise (3.56742ms)
+✔ browser raw bundle retains callback/global parity without globalThis or async primitives (15.110884ms)
+✔ browser strict wrapper retains callback/global parity without globalThis or async primitives (13.844703ms)
+✔ worker raw bundle retains callback/global parity without globalThis or async primitives (3.555918ms)
+✔ worker strict wrapper retains callback/global parity without globalThis or async primitives (3.897261ms)
+✔ node raw bundle retains callback/global parity without globalThis or async primitives (5.115112ms)
+✔ node strict wrapper retains callback/global parity without globalThis or async primitives (6.7948ms)
+✔ raw bundle keeps live Authentication and defaultParams global reads (4.778198ms)
+✔ strict wrapper keeps live Authentication and defaultParams global reads (4.767738ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 282.288988
+
+> haveapi-client@0.29.0 test:types
+> tsc -p test/types/callback.tsconfig.json
+

@@ -1,0 +1,70 @@
+1:  ad34c19 = 1:  34f431e clients/js: capture callback bundle compatibility
+2:  bbb923e ! 2:  90722e0 clients/js: author callback client in TypeScript
+    @@ Commit message
+         catalog intact and ship matching declarations alongside the existing
+         bundle path.
+     
+    + ## Makefile ##
+    +@@ Makefile: version:
+    + 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/ruby/lib/haveapi/client/version.rb
+    + 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/go/lib/haveapi/go_client/version.rb
+    + 	@sed -ri "s/\"version\": \"[^\"]+\"/\"version\": \"$(VERSION)\"/" clients/js/package.json
+    +-	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/src/haveapi/client.js
+    ++	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/src/haveapi/client.ts
+    + 	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/dist/haveapi-client.js
+    + 	@sed -ri "s/\"version\": \"[^\"]+\"/\"version\": \"$(VERSION)\"/" clients/php/composer.json
+    + 	@sed -ri "s/const VERSION = '[^']+'/const VERSION = '$(VERSION)'/" clients/php/src/Client.php
+    +
+      ## clients/js/.gitignore (new) ##
+     @@
+     +/build/
+    @@ clients/js/package-lock.json (new)
+     
+      ## clients/js/package.json ##
+     @@
+    - 		"url": "https://github.com/vpsfreecz/haveapi-client-js"
+    + 		"directory": "clients/js"
+      	},
+      	"scripts": {
+     -		"test": "mocha"
+    @@ clients/js/tsconfig.json (new)
+     +		"src/haveapi/i18n_messages.js"
+     +	]
+     +}
+    +
+    + ## utils/release/artifacts.rb ##
+    +@@ utils/release/artifacts.rb: module HaveAPI
+    +           'servers/ruby/lib/haveapi/version.rb' => /\bVERSION = '([^']+)'/,
+    +           'clients/ruby/lib/haveapi/client/version.rb' => /\bVERSION = '([^']+)'/,
+    +           'clients/go/lib/haveapi/go_client/version.rb' => /\bVERSION = '([^']+)'/,
+    +-          'clients/js/src/haveapi/client.js' => /Client\.Version = '([^']+)'/,
+    ++          'clients/js/src/haveapi/client.ts' => /Client\.Version = '([^']+)'/,
+    +           'clients/php/src/Client.php' => /const VERSION = '([^']+)'/
+    +         }
+    +         paths.each do |path, pattern|
+    +
+    + ## utils/release/spec/release_spec.rb ##
+    +@@ utils/release/spec/release_spec.rb: RSpec.describe HaveAPI::Release do
+    +       expect { artifacts.check }.not_to raise_error
+    +     end
+    + 
+    ++    it 'rejects a mismatched authored JavaScript client version' do
+    ++      allow(File).to receive(:read).and_call_original
+    ++      allow(File).to receive(:read).with(File.join(root, 'clients/js/src/haveapi/client.ts')).and_return("Client.Version = '999.0.0';")
+    ++      expect { artifacts.check }.to raise_error(HaveAPI::Release::Error, %r{Version mismatch in clients/js/src/haveapi/client\.ts})
+    ++    end
+    ++
+    +     it 'rejects a version tag that differs from VERSION' do
+    +       expect { artifacts.check_tag('v999.0.0') }.to raise_error(HaveAPI::Release::Error, /Tag must be/)
+    +     end
+3:  a8f6e67 ! 3:  d6059a1 clients/js: add an independent typed Promise client
+    @@ clients/js/package.json
+      	"main": "dist/haveapi-client.js",
+      	"repository": {
+     @@
+    - 		"url": "https://github.com/vpsfreecz/haveapi-client-js"
+    + 		"directory": "clients/js"
+      	},
+      	"scripts": {
+     -		"test": "mocha",
+4:  6302642 = 4:  ae0fe39 clients/js: document TypeScript source workflow

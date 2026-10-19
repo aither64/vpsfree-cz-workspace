@@ -1,0 +1,85 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-haveapi-async-client/haveapi' is dirty
+
+> haveapi-client@0.29.0 build
+> gulp
+
+[19:58:50] Using gulpfile ~/workspace/ai/vpsfree.cz/worktrees/2026-10-19-haveapi-async-client/haveapi/clients/js/gulpfile.js
+[19:58:50] Starting 'default'...
+[19:58:50] Starting 'scripts'...
+[19:58:50] Starting 'compile'...
+[19:58:54] Finished 'compile' after 4.36 s
+[19:58:54] Starting 'bundle'...
+build/haveapi/async/error.js (1:17): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/error.js (1:25): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/client.js (1:16): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/client.js (1:24): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/client.js (12:17): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/client.js (12:25): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/client.js (21:19): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/client.js (21:27): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/resource_instance.js (1:16): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/resource_instance.js (1:24): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/request.js (1:16): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/request.js (1:24): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/resource.js (1:16): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/resource.js (1:24): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/completion.js (1:16): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/completion.js (1:24): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/completion.js (12:17): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/completion.js (12:25): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/completion.js (21:19): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/completion.js (21:27): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/authentication.js (1:17): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/authentication.js (1:25): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/authentication.js (10:19): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+build/haveapi/async/authentication.js (10:27): The 'this' keyword is equivalent to 'undefined' at the top level of an ES module, and has been rewritten
+Circular dependency: build/haveapi/client.js -> build/haveapi/action.js -> build/haveapi/client.js
+Circular dependency: build/haveapi/client.js -> build/haveapi/action.js -> build/haveapi/parameters.js -> build/haveapi/resource_instance.js -> build/haveapi/base_resource.js -> build/haveapi/client.js
+Circular dependency: build/haveapi/client.js -> build/haveapi/action.js -> build/haveapi/parameters.js -> build/haveapi/resource_instance.js -> build/haveapi/client.js
+Circular dependency: build/haveapi/async/resource.js -> build/haveapi/async/resource_instance.js -> build/haveapi/async/resource.js
+Circular dependency: build/haveapi/async/resource.js -> build/haveapi/async/resource_list.js -> build/haveapi/async/resource.js
+[19:58:55] Finished 'bundle' after 814 ms
+[19:58:55] Finished 'scripts' after 5.18 s
+[19:58:55] Finished 'default' after 5.18 s
+
+> haveapi-client@0.29.0 test:compatibility
+> node --test test/compatibility/*.spec.cjs
+
+✔ commonjs retains Client export/static constructors without async runtime globals (21.738159ms)
+✔ browser retains Client export/static constructors without async runtime globals (4.49788ms)
+✔ amd retains Client export/static constructors without async runtime globals (7.661812ms)
+✔ setup returns undefined before the deferred callback and preserves hook ordering/this (5.626754ms)
+✔ setup failure is a callback result, while unsupported authentication throws synchronously (5.129709ms)
+✔ basic authentication and logout keep callback arguments and undefined returns (3.307171ms)
+✔ callable actions/resources keep aliases, prototypes, descriptors and detached invocation (3.166957ms)
+✔ curried nested IDs and callback-free calls issue independent requests (2.783777ms)
+✔ local validation calls back synchronously without HTTP and preserves LocalResponse (3.742589ms)
+✔ unresolved IDs, transport failures and callback exceptions remain synchronous throws (3.511204ms)
+✔ raw and rich replies retain namespace/meta, list helpers and attribute descriptors (3.564075ms)
+✔ ActionState stop/cancel and progress retain local callback-era behavior (2.050958ms)
+✔ token authentication before setup preserves MFA continuation and description refresh (17.792026ms)
+✔ token authentication failure and missing MFA handler keep legacy outcomes (7.952799ms)
+✔ existing-token reset=false is synchronous after description and logout ignores provider failure (3.470587ms)
+✔ setup and authentication retain different deferred protocol failure behavior (3.542755ms)
+✔ legacy HTTP invalid JSON delivers false/undefined without constructing a Promise (6.071551ms)
+✔ callback Parameters keeps constructor arity and receiver-based ownership behavior (4.218705ms)
+✔ browser raw bundle retains callback/global parity without globalThis or async primitives (20.635816ms)
+✔ browser strict wrapper retains callback/global parity without globalThis or async primitives (16.797165ms)
+✔ worker raw bundle retains callback/global parity without globalThis or async primitives (3.62008ms)
+✔ worker strict wrapper retains callback/global parity without globalThis or async primitives (3.738703ms)
+✔ node raw bundle retains callback/global parity without globalThis or async primitives (6.991662ms)
+✔ node strict wrapper retains callback/global parity without globalThis or async primitives (3.62534ms)
+✔ raw bundle keeps live Authentication and defaultParams global reads (4.28522ms)
+✔ strict wrapper keeps live Authentication and defaultParams global reads (3.931215ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 271.970105
+
+> haveapi-client@0.29.0 test:types
+> tsc -p test/types/callback.tsconfig.json && tsc -p test/types/async.tsconfig.json
+

@@ -1,0 +1,43 @@
+diff --git a/Makefile b/Makefile
+index 9a56f55..d277b46 100644
+--- a/Makefile
++++ b/Makefile
+@@ -39,7 +39,7 @@ version:
+ 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/ruby/lib/haveapi/client/version.rb
+ 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/go/lib/haveapi/go_client/version.rb
+ 	@sed -ri "s/\"version\": \"[^\"]+\"/\"version\": \"$(VERSION)\"/" clients/js/package.json
+-	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/src/haveapi/client.js
++	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/src/haveapi/client.ts
+ 	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/dist/haveapi-client.js
+ 	@sed -ri "s/\"version\": \"[^\"]+\"/\"version\": \"$(VERSION)\"/" clients/php/composer.json
+ 	@sed -ri "s/const VERSION = '[^']+'/const VERSION = '$(VERSION)'/" clients/php/src/Client.php
+diff --git a/utils/release/artifacts.rb b/utils/release/artifacts.rb
+index b0ef821..1ab7e12 100644
+--- a/utils/release/artifacts.rb
++++ b/utils/release/artifacts.rb
+@@ -68,7 +68,7 @@ module HaveAPI
+           'servers/ruby/lib/haveapi/version.rb' => /\bVERSION = '([^']+)'/,
+           'clients/ruby/lib/haveapi/client/version.rb' => /\bVERSION = '([^']+)'/,
+           'clients/go/lib/haveapi/go_client/version.rb' => /\bVERSION = '([^']+)'/,
+-          'clients/js/src/haveapi/client.js' => /Client\.Version = '([^']+)'/,
++          'clients/js/src/haveapi/client.ts' => /Client\.Version = '([^']+)'/,
+           'clients/php/src/Client.php' => /const VERSION = '([^']+)'/
+         }
+         paths.each do |path, pattern|
+diff --git a/utils/release/spec/release_spec.rb b/utils/release/spec/release_spec.rb
+index 73e6f22..ccc9241 100644
+--- a/utils/release/spec/release_spec.rb
++++ b/utils/release/spec/release_spec.rb
+@@ -47,6 +47,12 @@ RSpec.describe HaveAPI::Release do
+       expect { artifacts.check }.not_to raise_error
+     end
+ 
++    it 'rejects a mismatched authored JavaScript client version' do
++      allow(File).to receive(:read).and_call_original
++      allow(File).to receive(:read).with(File.join(root, 'clients/js/src/haveapi/client.ts')).and_return("Client.Version = '999.0.0';")
++      expect { artifacts.check }.to raise_error(HaveAPI::Release::Error, %r{Version mismatch in clients/js/src/haveapi/client\.ts})
++    end
++
+     it 'rejects a version tag that differs from VERSION' do
+       expect { artifacts.check_tag('v999.0.0') }.to raise_error(HaveAPI::Release::Error, /Tag must be/)
+     end

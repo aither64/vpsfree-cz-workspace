@@ -1,0 +1,404 @@
+1:  e35f2720 ! 1:  fbf2a7f7 api: add injectable HaveAPI package pilot
+    @@ docs/design/HAVEAPI_PACKAGE_PILOT.md (new)
+     +The script resolves `--webui-ref` to a commit and archives that committed source
+     +into an owned temporary directory. Dirty source is excluded. It freezes the
+     +candidate tarball bytes, runs `npm ci` in the snapshot and installs the candidate
+    -+there with `--ignore-scripts --no-save --package-lock=false`. The real checkout's
+    -+dependencies and lockfile are untouched. The candidate is absent from normal
+    -+application dependencies, lockfiles and Nix hashes.
+    ++there with `--ignore-scripts --no-save --package-lock=true`. The snapshot lock
+    ++lets npm retain existing dependency versions while adding the candidate.
+    ++The runner records manifest/lock hashes and each installed locked package's
+    ++name/version after `npm ci`. It rejects file changes and any changed or missing
+    ++baseline package before running consumer tools. Platform-optional packages
+    ++absent from that installation stay outside the baseline; new candidate dependency
+    ++paths are allowed. The real checkout's dependencies and lockfile are untouched.
+    ++The candidate is absent from normal application dependencies, lockfiles and
+    ++Nix hashes.
+     +
+     +The proof compiles a consumer against the package's actual generated declarations
+     +and builds a dedicated Vite application with its actual `AsyncClient` import.
+    @@ docs/design/HAVEAPI_PACKAGE_PILOT.md (new)
+     +failed runs retain their result and artifacts for diagnosis.
+     +
+     +Browser-free runner tests use disposable Git fixtures to verify committed-source
+    -+selection, frozen tar bytes, install isolation and provenance conflicts. Run:
+    ++selection, frozen tar bytes, install isolation, locked graph/file drift rejection
+    ++and provenance conflicts. Run:
+     +
+     +```sh
+     +node --test scripts/test-haveapi-package.test.mjs
+    @@ docs/work-log/2026-10-19-haveapi-package-pilot.md (new)
+     +not certify real API permissions, OAuth exchange, task completion or production
+     +readiness. Next: finish quick gates, review the committed change, then run the
+     +isolated proof under the verification watcher and retain its receipts.
+    ++
+    ++## Follow-up: preserve the locked graph during candidate installation
+    ++
+    ++The first committed-candidate run used WebUI `e35f2720` and the remedied HaveAPI
+    ++source `dc94157808966c12418b4009085fec237a869789`, tar SHA-256
+    ++`de55212e85ceb2bceac77e249272e20e1062afa8aa733df42e02eae981c094b8`.
+    ++All 301 WebUI unit files passed (1,867 tests), and the production build passed.
+    ++The package proof stopped before browser assertions: `--package-lock=false`
+    ++let the no-save install change 96 packages, including Playwright 1.61.0 to
+    ++1.64.1. The pinned runner correctly refused that version. The declaration and
+    ++Vite steps used the drifted graph and are diagnostic evidence only. The failed
+    ++snapshot and log remain in local session evidence.
+    ++
+    ++One npm-only feasibility probe in a fresh committed snapshot enabled lockfile
+    ++reading with `--package-lock=true`. It preserved all 407 installed baseline
+    ++package names/versions and the manifest/lock byte hashes while adding the
+    ++candidate. Structured before/result records and a separate read-only comparison
+    ++confirmed this result. The watcher failed to save its requested console
+    ++transcript; that evidence gap is recorded, and the probe was not repeated.
+    ++No compiler or browser launched during the probe.
+    ++
+    ++The runner now uses that command and checks the existing installed locked graph
+    ++and manifest/lock files before any consumer tool. Focused regressions cover
+    ++version/name/presence drift and file tampering while allowing added candidate
+    ++paths and absent platform-optional packages. Root dependencies and lockfiles
+    ++remain unchanged. The actual declaration/Vite/browser proof must run again on
+    ++the new committed runner; the successful full unit/build result is retained for
+    ++this runner-only correction.
+    ++
+    ++## Follow-up: preview command directory
+    ++
+    ++The next committed proof at WebUI `7c9e2696` retained all 407 locked baseline
+    ++packages and passed the actual tarball declaration compile and Vite 7.3.5 build.
+    ++It stopped before browser assertions because Playwright started the preview
+    ++command from the nested config directory, where the root Vite executable path
+    ++did not exist. The failed snapshot, result, log and exit status are retained.
+    ++
+    ++The dedicated config now explicitly starts preview from the snapshot root.
+    ++A browser-free regression loads the actual config and verifies that its working
+    ++directory resolves both the Vite executable and config paths. The port, browser
+    ++matrix, strict startup and no-server-reuse rules are unchanged. A fresh committed
+    ++package proof is still required; no browser success is claimed by this fix.
+     
+      ## package.json ##
+     @@
+    @@ scripts/haveapi-package/index.html (new)
+     
+      ## scripts/haveapi-package/playwright.config.ts (new) ##
+     @@
+    ++import { fileURLToPath } from 'node:url';
+     +import { defineConfig } from '@playwright/test';
+     +
+     +const chromium = {
+    @@ scripts/haveapi-package/playwright.config.ts (new)
+     +    { name: 'umd-webkit', testMatch: 'umd.spec.ts', use: { browserName: 'webkit' } },
+     +  ],
+     +  webServer: {
+    ++    cwd: fileURLToPath(new URL('../..', import.meta.url)),
+     +    command:
+     +      'node node_modules/vite/bin/vite.js preview --config scripts/haveapi-package/vite.config.ts --host 127.0.0.1 --port 5189 --strictPort',
+     +    url: 'http://127.0.0.1:5189',
+    @@ scripts/test-haveapi-package.mjs (new)
+     +  };
+     +}
+     +
+    ++const sha256 = (value) => createHash('sha256').update(value).digest('hex');
+    ++const readJson = async (filename) => JSON.parse(await readFile(filename, 'utf8'));
+    ++
+    ++/** Capture only lock-listed packages installed on this platform after npm ci. */
+    ++async function captureInstallBaseline(directory) {
+    ++  const files = {};
+    ++  for (const filename of ['package.json', 'package-lock.json']) {
+    ++    files[filename] = sha256(await readFile(path.join(directory, filename)));
+    ++  }
+    ++  const lock = await readJson(path.join(directory, 'package-lock.json'));
+    ++  const packages = [];
+    ++  for (const [relative, expected] of Object.entries(lock.packages)) {
+    ++    if (!relative.startsWith('node_modules/')) continue;
+    ++    const installedPath = path.join(directory, relative);
+    ++    try {
+    ++      await stat(installedPath);
+    ++    } catch (error) {
+    ++      if (error.code === 'ENOENT') continue; // Platform-optional packages can be absent.
+    ++      throw error;
+    ++    }
+    ++    const installed = await readJson(path.join(installedPath, 'package.json'));
+    ++    if (
+    ++      typeof installed.name !== 'string' ||
+    ++      typeof installed.version !== 'string' ||
+    ++      installed.version !== expected.version
+    ++    ) {
+    ++      throw new Error(`Installed baseline disagrees with lock: ${relative}`);
+    ++    }
+    ++    packages.push({ path: relative, name: installed.name, version: installed.version });
+    ++  }
+    ++  return { files, packages };
+    ++}
+    ++
+    ++/** Candidate dependencies may add paths, while the existing locked graph stays fixed. */
+    ++async function verifyInstallBaseline(directory, baseline) {
+    ++  for (const [filename, expected] of Object.entries(baseline.files)) {
+    ++    if (sha256(await readFile(path.join(directory, filename))) !== expected) {
+    ++      throw new Error(`Candidate install changed ${filename}`);
+    ++    }
+    ++  }
+    ++  for (const expected of baseline.packages) {
+    ++    let installed;
+    ++    try {
+    ++      installed = await readJson(path.join(directory, expected.path, 'package.json'));
+    ++    } catch (error) {
+    ++      if (error.code === 'ENOENT') throw new Error(`Candidate install removed locked package: ${expected.path}`);
+    ++      throw error;
+    ++    }
+    ++    if (installed.name !== expected.name || installed.version !== expected.version) {
+    ++      throw new Error(`Candidate install changed locked package: ${expected.path}`);
+    ++    }
+    ++  }
+    ++}
+    ++
+     +// Forward cancellation to the whole owned subprocess group, including a Vite child.
+     +export async function run(command, args, cwd) {
+     +  await new Promise((resolve, reject) => {
+    @@ scripts/test-haveapi-package.mjs (new)
+     +  const git = (args) => execFileSync('git', args, { cwd, encoding: 'utf8' }).trim();
+     +  const webuiRef = git(['rev-parse', '--verify', '--end-of-options', `${options.webuiRef}^{commit}`]);
+     +  const candidateBytes = await readFile(options.packagePath);
+    -+  const tarSha256 = createHash('sha256').update(candidateBytes).digest('hex');
+    ++  const tarSha256 = sha256(candidateBytes);
+     +  // Nix shells remove their TMPDIR on exit; retain pilot evidence outside it.
+     +  const directory = await mkdtemp(path.join(process.env.HAVEAPI_PACKAGE_TMPDIR || '/tmp', 'webui-haveapi-package-'));
+     +  const sourceDirectory = path.join(directory, 'source');
+    @@ scripts/test-haveapi-package.mjs (new)
+     +    await runCommand('tar', ['-xf', path.join(directory, 'source.tar')], sourceDirectory);
+     +    report.npm = execFileSync('npm', ['--version'], { cwd, encoding: 'utf8' }).trim();
+     +    await runCommand('npm', ['ci'], sourceDirectory);
+    ++    const baseline = await captureInstallBaseline(sourceDirectory);
+    ++    await writeFile(path.join(directory, 'dependency-baseline.json'), JSON.stringify(baseline, null, 2) + '\n');
+    ++    report.lockedGraph = { packageCount: baseline.packages.length, files: baseline.files };
+     +    await runCommand(
+     +      'npm',
+    -+      ['install', '--ignore-scripts', '--no-save', '--package-lock=false', candidatePath],
+    ++      ['install', '--ignore-scripts', '--no-save', '--package-lock=true', candidatePath],
+     +      sourceDirectory
+     +    );
+    ++    await verifyInstallBaseline(sourceDirectory, baseline);
+     +    const pkg = JSON.parse(
+     +      await readFile(path.join(sourceDirectory, 'node_modules/haveapi-client/package.json'), 'utf8')
+     +    );
+    @@ scripts/test-haveapi-package.test.mjs (new)
+     +  assert.throws(() => candidateProvenance(undefined, 'bad'));
+     +});
+     +
+    -+import { mkdtemp, mkdir, writeFile, readFile, rm } from 'node:fs/promises';
+    ++import { mkdtemp, mkdir, writeFile, readFile, rm, stat } from 'node:fs/promises';
+     +import { execFileSync } from 'node:child_process';
+     +import os from 'node:os';
+     +import path from 'node:path';
+    ++import { fileURLToPath } from 'node:url';
+     +import { runPilot, run } from './test-haveapi-package.mjs';
+     +
+    -+test('pilot snapshots committed source, freezes tar bytes and leaves checkout/lock unchanged', async () => {
+    ++test('actual browser config starts its preview command from the snapshot root', async () => {
+    ++  const configUrl = new URL('./haveapi-package/playwright.config.ts', import.meta.url);
+    ++  const { default: config } = await import(configUrl.href);
+    ++  const server = config.webServer;
+    ++  const effectiveCwd = server.cwd ?? path.dirname(fileURLToPath(configUrl));
+    ++  const root = path.resolve(fileURLToPath(new URL('../', import.meta.url)));
+    ++  assert.equal(path.resolve(effectiveCwd), root);
+    ++  const args = server.command.split(/\s+/);
+    ++  assert.equal(args[0], 'node');
+    ++  assert.equal((await stat(path.resolve(effectiveCwd, args[1]))).isFile(), true);
+    ++  const configArgument = args.indexOf('--config');
+    ++  assert.notEqual(configArgument, -1);
+    ++  assert.equal((await stat(path.resolve(effectiveCwd, args[configArgument + 1]))).isFile(), true);
+    ++});
+    ++
+    ++const baselinePackages = ['typescript', 'vite', '@playwright/test', 'locked-dependency'];
+    ++const lockedVersion = '1.0.0';
+    ++async function writePackage(root, name, version = lockedVersion) {
+    ++  const directory = path.join(root, 'node_modules', name);
+    ++  await mkdir(directory, { recursive: true });
+    ++  await writeFile(path.join(directory, 'package.json'), JSON.stringify({ name, version }));
+    ++}
+    ++
+    ++async function withPilotFixture(check, { mutateInstall = async () => {}, mutateBaseline = async () => {} } = {}) {
+     +  const repository = await mkdtemp(path.join(os.tmpdir(), 'webui-package-script-test-'));
+     +  let artifact;
+     +  try {
+     +    const git = (args) => execFileSync('git', args, { cwd: repository, stdio: 'pipe' });
+     +    git(['init']);
+    -+    await writeFile(path.join(repository, 'package-lock.json'), 'committed lock\n');
+    -+    git(['add', 'package-lock.json']);
+    ++    const lock = {
+    ++      lockfileVersion: 3,
+    ++      packages: {
+    ++        '': { name: 'fixture' },
+    ++        ...Object.fromEntries(baselinePackages.map((name) => ['node_modules/' + name, { version: lockedVersion }])),
+    ++        'node_modules/platform-optional': { version: lockedVersion, optional: true },
+    ++      },
+    ++    };
+    ++    const lockBytes = JSON.stringify(lock);
+    ++    const manifestBytes = JSON.stringify({ name: 'fixture' });
+    ++    await writeFile(path.join(repository, 'package.json'), manifestBytes);
+    ++    await writeFile(path.join(repository, 'package-lock.json'), lockBytes);
+    ++    git(['add', 'package.json', 'package-lock.json']);
+     +    git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.test', 'commit', '-m', 'fixture']);
+     +    const sha = git(['rev-parse', 'HEAD']).toString().trim();
+     +    await writeFile(path.join(repository, 'package-lock.json'), 'uncommitted lock\n');
+     +    const candidate = path.join(repository, 'candidate.tgz');
+     +    await writeFile(candidate, 'candidate bytes');
+     +    const calls = [];
+    -+    const result = await runPilot(
+    -+      { packagePath: candidate, webuiRef: 'HEAD', haveapiRef: 'a'.repeat(40) },
+    -+      {
+    -+        cwd: repository,
+    -+        async runCommand(command, args, cwd) {
+    -+          calls.push({ command, args, cwd });
+    -+          if (command === 'git' || command === 'tar') return run(command, args, cwd);
+    -+          assert.notEqual(cwd, repository);
+    -+          artifact = path.dirname(cwd);
+    -+          if (command === 'npm' && args[0] === 'ci') {
+    -+            assert.equal(await readFile(path.join(cwd, 'package-lock.json'), 'utf8'), 'committed lock\n');
+    -+            await writeFile(candidate, 'later replacement');
+    -+          }
+    -+          if (command === 'npm' && args[0] === 'install') {
+    -+            assert.deepEqual(args.slice(0, 5), [
+    -+              'install',
+    -+              '--ignore-scripts',
+    -+              '--no-save',
+    -+              '--package-lock=false',
+    -+              path.join(artifact, 'candidate.tgz'),
+    -+            ]);
+    -+            assert.equal(await readFile(args[4], 'utf8'), 'candidate bytes');
+    -+            for (const name of ['haveapi-client', 'typescript', 'vite', '@playwright/test']) {
+    -+              const directory = path.join(cwd, 'node_modules', name);
+    -+              await mkdir(directory, { recursive: true });
+    -+              await writeFile(path.join(directory, 'package.json'), JSON.stringify({ name, version: 'fixture' }));
+    ++    const execute = () =>
+    ++      runPilot(
+    ++        { packagePath: candidate, webuiRef: 'HEAD', haveapiRef: 'a'.repeat(40) },
+    ++        {
+    ++          cwd: repository,
+    ++          async runCommand(command, args, cwd) {
+    ++            calls.push({ command, args, cwd });
+    ++            if (command === 'git' || command === 'tar') return run(command, args, cwd);
+    ++            assert.notEqual(cwd, repository);
+    ++            artifact = path.dirname(cwd);
+    ++            if (command === 'npm' && args[0] === 'ci') {
+    ++              assert.equal(await readFile(path.join(cwd, 'package-lock.json'), 'utf8'), lockBytes);
+    ++              for (const name of baselinePackages) await writePackage(cwd, name);
+    ++              await mutateBaseline(cwd);
+    ++              await writeFile(candidate, 'later replacement');
+     +            }
+    -+          }
+    -+        },
+    -+      }
+    -+    );
+    ++            if (command === 'npm' && args[0] === 'install') {
+    ++              assert.deepEqual(args, [
+    ++                'install',
+    ++                '--ignore-scripts',
+    ++                '--no-save',
+    ++                '--package-lock=true',
+    ++                path.join(artifact, 'candidate.tgz'),
+    ++              ]);
+    ++              assert.equal(await readFile(args[4], 'utf8'), 'candidate bytes');
+    ++              await writePackage(cwd, 'haveapi-client');
+    ++              await writePackage(cwd, 'candidate-added-dependency');
+    ++              await mutateInstall(cwd);
+    ++            }
+    ++          },
+    ++        }
+    ++      );
+    ++    await check({ execute, calls, sha, directory: () => artifact });
+    ++    assert.equal(await readFile(path.join(repository, 'package-lock.json'), 'utf8'), 'uncommitted lock\n');
+    ++    assert.equal(await readFile(path.join(repository, 'package.json'), 'utf8'), manifestBytes);
+    ++  } finally {
+    ++    await rm(repository, { recursive: true, force: true });
+    ++    if (artifact) await rm(artifact, { recursive: true, force: true });
+    ++  }
+    ++}
+    ++
+    ++test('pilot snapshots committed source, freezes tar bytes and preserves the installed locked graph', async () => {
+    ++  await withPilotFixture(async ({ execute, calls, sha, directory }) => {
+    ++    const result = await execute();
+     +    assert.equal(result.webuiRef, sha);
+     +    assert.equal(result.status, 'passed');
+    -+    assert.equal(await readFile(path.join(repository, 'package-lock.json'), 'utf8'), 'uncommitted lock\n');
+    ++    assert.equal(result.lockedGraph.packageCount, baselinePackages.length);
+     +    assert.equal(calls.filter((call) => call.command === 'node').length, 3);
+    ++    const baseline = JSON.parse(await readFile(path.join(directory(), 'dependency-baseline.json'), 'utf8'));
+    ++    assert.equal(
+    ++      baseline.packages.some((entry) => entry.path.endsWith('platform-optional')),
+    ++      false
+    ++    );
+    ++    assert.equal(
+    ++      baseline.packages.some((entry) => entry.name === 'candidate-added-dependency'),
+    ++      false
+    ++    );
+     +    assert.equal(
+    -+      JSON.parse(await readFile(path.join(artifact, 'result.json'), 'utf8')).provenance,
+    ++      JSON.parse(await readFile(path.join(directory(), 'result.json'), 'utf8')).provenance,
+     +      'pack-owner assertion'
+     +    );
+    -+  } finally {
+    -+    await rm(repository, { recursive: true, force: true });
+    -+    if (artifact) await rm(artifact, { recursive: true, force: true });
+    -+  }
+    ++  });
+    ++});
+    ++
+    ++for (const filename of ['package.json', 'package-lock.json']) {
+    ++  test(`candidate mutation of ${filename} fails before any consumer tool`, async () => {
+    ++    await withPilotFixture(
+    ++      async ({ execute, calls, directory }) => {
+    ++        await assert.rejects(execute(), new RegExp('Candidate install changed ' + filename.replaceAll('.', '\\.')));
+    ++        assert.equal(calls.filter((call) => call.command === 'node').length, 0);
+    ++        assert.equal(JSON.parse(await readFile(path.join(directory(), 'result.json'), 'utf8')).status, 'failed');
+    ++      },
+    ++      { mutateInstall: (cwd) => writeFile(path.join(cwd, filename), 'tampered') }
+    ++    );
+    ++  });
+    ++}
+    ++
+    ++for (const mode of ['version', 'name', 'removed']) {
+    ++  test(`candidate locked-package ${mode} drift fails before any consumer tool`, async () => {
+    ++    await withPilotFixture(
+    ++      async ({ execute, calls }) => {
+    ++        await assert.rejects(
+    ++          execute(),
+    ++          /Candidate install (changed|removed) locked package: node_modules\/locked-dependency/
+    ++        );
+    ++        assert.equal(calls.filter((call) => call.command === 'node').length, 0);
+    ++      },
+    ++      {
+    ++        mutateInstall: async (cwd) => {
+    ++          const directory = path.join(cwd, 'node_modules/locked-dependency');
+    ++          if (mode === 'removed') await rm(directory, { recursive: true });
+    ++          else
+    ++            await writeFile(
+    ++              path.join(directory, 'package.json'),
+    ++              JSON.stringify({
+    ++                name: mode === 'name' ? 'replacement' : 'locked-dependency',
+    ++                version: mode === 'version' ? '2.0.0' : lockedVersion,
+    ++              })
+    ++            );
+    ++        },
+    ++      }
+    ++    );
+    ++  });
+    ++}
+    ++
+    ++test('baseline disagreement with the lock fails before candidate install', async () => {
+    ++  await withPilotFixture(
+    ++    async ({ execute, calls }) => {
+    ++      await assert.rejects(execute(), /Installed baseline disagrees with lock/);
+    ++      assert.equal(
+    ++        calls.some((call) => call.command === 'npm' && call.args[0] === 'install'),
+    ++        false
+    ++      );
+    ++      assert.equal(
+    ++        calls.some((call) => call.command === 'node'),
+    ++        false
+    ++      );
+    ++    },
+    ++    { mutateBaseline: (cwd) => writePackage(cwd, 'locked-dependency', '2.0.0') }
+    ++  );
+     +});
+     
+      ## src/lib/api/haveapi.ts ##
