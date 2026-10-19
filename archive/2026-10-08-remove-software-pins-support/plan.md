@@ -9,8 +9,10 @@ build and status paths; delete the software-pin example and rename
 
 The initial request authorized investigation and planning. The user's subsequent
 "proceed" authorizes implementation of this plan, local verification, independent
-review and publication of the feature branch. Deployment, release and default
-branch integration remain later, separately directed phases. The architect's
+review and publication of the feature branch. After successful local verification,
+the user separately approved confctl/master integration; that fast-forward and
+SSH push are complete. Deployment and release remain separately directed phases.
+The architect's
 [design and verification brief](design.md) governs implementation.
 
 ## Affected repositories

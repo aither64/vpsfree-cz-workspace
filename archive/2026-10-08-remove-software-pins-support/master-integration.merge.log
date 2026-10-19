@@ -1,0 +1,238 @@
+copying path '/nix/store/s0vssj27w7d785cg2qlaylj5xjl8aksi-ncurses-6.6-dev' from 'https://cache.nixos.org'...
+copying path '/nix/store/3baixpm89fakmqprw68yjyg3v9n3pjyr-die-hook' from 'https://cache.nixos.org'...
+copying path '/nix/store/4gsbvjjrzs6dfk2y169kcm7cqiaq4xaq-treefmt.toml' from 'https://cache.nixos.org'...
+copying path '/nix/store/2s2m00j06mm5b9fq31l56y485nn7f2r7-lndir-1.0.5' from 'https://cache.nixos.org'...
+copying path '/nix/store/9ww677199bdxk2zwxhqsm87973873rrm-treefmt-2.5.0' from 'https://cache.nixos.org'...
+copying path '/nix/store/lxkd0yqv023q7iqmjfqib6n2px01r420-make-binary-wrapper-hook' from 'https://cache.nixos.org'...
+building '/nix/store/w2p44bkkf0vv4yq7hah2ijs7lmgk0nb1-nixfmt-tree-2.5.0.drv'...
+building '/nix/store/sc23hinq68ic7lq8b4d77p4rcmk5b6k3-nix-shell-env.drv'...
+
+confctl development shell ready
+Preparing worktree (checking out 'master')
+HEAD is now at 7e8b7c9 Preserve remote command arguments
+Updating 7e8b7c9..1b56616
+Fast-forward
+ .github/workflows/rspec.yml                |   2 +-
+ .github/workflows/rubocop.yml              |   2 +-
+ .github/workflows/tests.yml                |  74 +++++++++----
+ AGENTS.md                                  |   3 +
+ CHANGELOG.md                               |  54 ++++++++++
+ Gemfile.lock                               |  68 ++++++------
+ README.md                                  |   4 +
+ flake.lock                                 |  57 ++++++++--
+ flake.nix                                  |   4 +-
+ gemset.nix                                 | 164 +++++++++++++++--------------
+ lib/confctl/version.rb                     |   2 +-
+ nix/flake/mk-confctl-outputs.nix           |  29 ++++-
+ nix/modules/confctl/configuration-info.nix |  17 +++
+ nix/modules/module-list.nix                |   1 +
+ skills/confctl-release/SKILL.md            | 102 ++++++++++++++++++
+ skills/confctl-release/agents/openai.yaml  |   4 +
+ tests/all-tests.nix                        |   4 +-
+ tests/make-test.nix                        |   6 +-
+ tests/suite/carrier/netboot.nix            |  10 +-
+ tests/suite/deploy/base.nix                |  52 ++++++++-
+ 20 files changed, 495 insertions(+), 164 deletions(-)
+ create mode 100644 nix/modules/confctl/configuration-info.nix
+ create mode 100644 skills/confctl-release/SKILL.md
+ create mode 100644 skills/confctl-release/agents/openai.yaml
+Updating 1b56616..cc40679
+Fast-forward
+ .github/workflows/rspec.yml                        |  18 +-
+ .github/workflows/tests.yml                        |   1 +
+ AGENTS.md                                          |   4 +-
+ CHANGELOG.md                                       |  11 +
+ README.md                                          | 243 ++----
+ Rakefile                                           |   8 +-
+ docs/carrier.md                                    |   8 +
+ docs/flake-inputs.md                               |  36 +-
+ docs/swpins-to-flakes.md                           |  98 ++-
+ example-flake/.gitignore                           |   2 -
+ example-flake/README.md                            |  38 -
+ example-flake/cluster/cluster.nix                  |   5 -
+ example-flake/cluster/module-list.nix              |   4 -
+ example-flake/cluster/nixos-machine/config.nix     |  25 -
+ example-flake/cluster/nixos-machine/hardware.nix   |   9 -
+ example-flake/cluster/nixos-machine/module.nix     |   8 -
+ .../cluster/vpsadminos-container/config.nix        |  28 -
+ .../cluster/vpsadminos-container/module.nix        |   8 -
+ .../cluster/vpsadminos-machine/config.nix          |  27 -
+ .../cluster/vpsadminos-machine/hardware.nix        |   9 -
+ .../cluster/vpsadminos-machine/module.nix          |   8 -
+ example-flake/cluster/vpsfreecz-vps/config.nix     |  31 -
+ example-flake/cluster/vpsfreecz-vps/module.nix     |   8 -
+ example-flake/configs/confctl.nix                  |  10 -
+ example-flake/data/default.nix                     |   5 -
+ example-flake/data/ssh-keys.nix                    |   7 -
+ example-flake/environments/base.nix                |  18 -
+ example-flake/modules/module-list.nix              |  13 -
+ example-flake/shell.nix                            |  11 -
+ example/README.md                                  |  31 +-
+ example/cluster/cluster.nix                        |   4 +-
+ .../cluster/nested/nixos-machine/config.nix        |   0
+ .../cluster/nested/nixos-machine/hardware.nix      |   0
+ .../cluster/nested/nixos-machine/module.nix        |   0
+ example/cluster/nixos-machine/module.nix           |   4 +-
+ example/cluster/vpsadminos-container/config.nix    |   3 +-
+ example/cluster/vpsadminos-container/module.nix    |   5 +-
+ example/cluster/vpsadminos-machine/module.nix      |   5 +-
+ example/cluster/vpsfreecz-vps/config.nix           |   3 +-
+ example/cluster/vpsfreecz-vps/module.nix           |   5 +-
+ example/configs/confctl.nix                        |   4 +-
+ example/configs/swpins.nix                         |  33 -
+ {example-flake => example}/flake.lock              |   0
+ {example-flake => example}/flake.nix               |   0
+ example/swpins/channels/nixos-unstable.json        |  35 -
+ example/swpins/channels/vpsadminos-staging.json    |  35 -
+ example/swpins/core.json                           |  35 -
+ flake.nix                                          |  11 +-
+ lib/confctl/cli/app.rb                             | 188 +----
+ lib/confctl/cli/cluster.rb                         | 426 +---------
+ lib/confctl/cli/configuration.rb                   |  67 +-
+ lib/confctl/cli/generation.rb                      |  40 +-
+ lib/confctl/cli/inputs/channels.rb                 |   6 +-
+ lib/confctl/cli/inputs/machines.rb                 |   6 +-
+ lib/confctl/cli/inputs/root.rb                     |   6 +-
+ lib/confctl/cli/migrate.rb                         |   5 -
+ lib/confctl/cli/migrate/swpins_to_flakes.rb        | 866 ---------------------
+ lib/confctl/cli/swpins.rb                          |   5 -
+ lib/confctl/cli/swpins/base.rb                     |  49 --
+ lib/confctl/cli/swpins/channel.rb                  |  72 --
+ lib/confctl/cli/swpins/cluster.rb                  |  79 --
+ lib/confctl/cli/swpins/core.rb                     |  85 --
+ lib/confctl/cli/swpins/utils.rb                    |  55 --
+ lib/confctl/conf_cache.rb                          | 105 ---
+ lib/confctl/conf_dir.rb                            |  30 +-
+ lib/confctl/config_type.rb                         |   7 -
+ lib/confctl/generation/build.rb                    | 174 +----
+ lib/confctl/generation/build_list.rb               |  69 +-
+ lib/confctl/generation/unified.rb                  |  13 +-
+ lib/confctl/machine.rb                             |   9 -
+ lib/confctl/machine_status.rb                      |  97 +--
+ lib/confctl/module_options.rb                      |  29 +-
+ lib/confctl/nix.rb                                 | 614 ++++++++++++++-
+ lib/confctl/nix_build.rb                           | 108 ---
+ lib/confctl/nix_flake.rb                           | 449 -----------
+ lib/confctl/nix_legacy.rb                          | 467 -----------
+ lib/confctl/settings.rb                            |  12 -
+ lib/confctl/swpins.rb                              |  17 -
+ lib/confctl/swpins/change_set.rb                   | 184 -----
+ lib/confctl/swpins/channel.rb                      |  62 --
+ lib/confctl/swpins/channel_list.rb                 |  47 --
+ lib/confctl/swpins/cluster_name.rb                 |  94 ---
+ lib/confctl/swpins/cluster_name_list.rb            |  15 -
+ lib/confctl/swpins/core.rb                         | 137 ----
+ lib/confctl/swpins/deployed_info.rb                |  23 -
+ lib/confctl/swpins/spec.rb                         |  20 -
+ lib/confctl/swpins/specs/base.rb                   | 184 -----
+ lib/confctl/swpins/specs/directory.rb              |  51 --
+ lib/confctl/swpins/specs/git.rb                    | 142 ----
+ lib/confctl/swpins/specs/git_rev.rb                |  24 -
+ man/man8/confctl-options.nix.8.md                  | 667 +++++-----------
+ man/man8/confctl.8.md                              | 252 ++----
+ nix/evaluator.nix                                  | 221 ------
+ nix/flake/mk-confctl-devshell.nix                  |   1 -
+ nix/flake/mk-confctl-outputs.nix                   |   5 +
+ nix/flake/mk-config-devshell.nix                   |   1 -
+ nix/lib/default.nix                                |  29 -
+ nix/lib/machine/default.nix                        |  97 ---
+ nix/lib/machine/info.nix                           |  16 -
+ nix/lib/swpins/eval.nix                            |  84 --
+ nix/lib/swpins/options.nix                         |  98 ---
+ nix/machines.nix                                   |  39 -
+ nix/module-options.nix                             |  36 +
+ nix/modules/cluster/default.nix                    |  43 +-
+ .../carrier/netboot/build-netboot-server.rb        |   9 +-
+ nix/modules/confctl/nix.nix                        |  16 +-
+ nix/modules/confctl/swpins.nix                     |  62 --
+ nix/modules/module-list.nix                        |   1 -
+ nix/package.nix                                    |   1 -
+ shell.nix                                          |   1 -
+ spec/confctl/cli/cluster_build_inputs_spec.rb      |  30 +
+ ...status_flake_spec.rb => cluster_status_spec.rb} |  20 +-
+ spec/confctl/cli/inputs_set_output_spec.rb         |   2 +-
+ spec/confctl/configuration_spec.rb                 |  45 ++
+ spec/confctl/module_options_spec.rb                |  49 ++
+ spec/confctl/nix_flake_spec.rb                     |  41 -
+ spec/confctl/nix_spec.rb                           |  73 ++
+ spec/confctl/swpins_spec.rb                        | 106 ---
+ spec/generation/build_modes_spec.rb                | 374 ++++++---
+ template/confctl-options.nix/main.erb              |  27 +-
+ tests/all-tests.nix                                |   1 -
+ tests/runner/extensions/confctl_helpers.rb         |   7 +-
+ tests/suite/carrier/netboot.nix                    |  12 +-
+ tests/suite/deploy/base.nix                        | 366 +++------
+ tests/suite/deploy/flakes.nix                      |   2 +-
+ tests/suite/deploy/swpins.nix                      |   1 -
+ 126 files changed, 1896 insertions(+), 6991 deletions(-)
+ delete mode 100644 example-flake/.gitignore
+ delete mode 100644 example-flake/README.md
+ delete mode 100644 example-flake/cluster/cluster.nix
+ delete mode 100644 example-flake/cluster/module-list.nix
+ delete mode 100644 example-flake/cluster/nixos-machine/config.nix
+ delete mode 100644 example-flake/cluster/nixos-machine/hardware.nix
+ delete mode 100644 example-flake/cluster/nixos-machine/module.nix
+ delete mode 100644 example-flake/cluster/vpsadminos-container/config.nix
+ delete mode 100644 example-flake/cluster/vpsadminos-container/module.nix
+ delete mode 100644 example-flake/cluster/vpsadminos-machine/config.nix
+ delete mode 100644 example-flake/cluster/vpsadminos-machine/hardware.nix
+ delete mode 100644 example-flake/cluster/vpsadminos-machine/module.nix
+ delete mode 100644 example-flake/cluster/vpsfreecz-vps/config.nix
+ delete mode 100644 example-flake/cluster/vpsfreecz-vps/module.nix
+ delete mode 100644 example-flake/configs/confctl.nix
+ delete mode 100644 example-flake/data/default.nix
+ delete mode 100644 example-flake/data/ssh-keys.nix
+ delete mode 100644 example-flake/environments/base.nix
+ delete mode 100644 example-flake/modules/module-list.nix
+ delete mode 100644 example-flake/shell.nix
+ rename {example-flake => example}/cluster/nested/nixos-machine/config.nix (100%)
+ rename {example-flake => example}/cluster/nested/nixos-machine/hardware.nix (100%)
+ rename {example-flake => example}/cluster/nested/nixos-machine/module.nix (100%)
+ delete mode 100644 example/configs/swpins.nix
+ rename {example-flake => example}/flake.lock (100%)
+ rename {example-flake => example}/flake.nix (100%)
+ delete mode 100644 example/swpins/channels/nixos-unstable.json
+ delete mode 100644 example/swpins/channels/vpsadminos-staging.json
+ delete mode 100644 example/swpins/core.json
+ delete mode 100644 lib/confctl/cli/migrate.rb
+ delete mode 100644 lib/confctl/cli/migrate/swpins_to_flakes.rb
+ delete mode 100644 lib/confctl/cli/swpins.rb
+ delete mode 100644 lib/confctl/cli/swpins/base.rb
+ delete mode 100644 lib/confctl/cli/swpins/channel.rb
+ delete mode 100644 lib/confctl/cli/swpins/cluster.rb
+ delete mode 100644 lib/confctl/cli/swpins/core.rb
+ delete mode 100644 lib/confctl/cli/swpins/utils.rb
+ delete mode 100644 lib/confctl/conf_cache.rb
+ delete mode 100644 lib/confctl/config_type.rb
+ delete mode 100644 lib/confctl/nix_build.rb
+ delete mode 100644 lib/confctl/nix_flake.rb
+ delete mode 100644 lib/confctl/nix_legacy.rb
+ delete mode 100644 lib/confctl/swpins.rb
+ delete mode 100644 lib/confctl/swpins/change_set.rb
+ delete mode 100644 lib/confctl/swpins/channel.rb
+ delete mode 100644 lib/confctl/swpins/channel_list.rb
+ delete mode 100644 lib/confctl/swpins/cluster_name.rb
+ delete mode 100644 lib/confctl/swpins/cluster_name_list.rb
+ delete mode 100644 lib/confctl/swpins/core.rb
+ delete mode 100644 lib/confctl/swpins/deployed_info.rb
+ delete mode 100644 lib/confctl/swpins/spec.rb
+ delete mode 100644 lib/confctl/swpins/specs/base.rb
+ delete mode 100644 lib/confctl/swpins/specs/directory.rb
+ delete mode 100644 lib/confctl/swpins/specs/git.rb
+ delete mode 100644 lib/confctl/swpins/specs/git_rev.rb
+ delete mode 100644 nix/evaluator.nix
+ delete mode 100644 nix/lib/machine/default.nix
+ delete mode 100644 nix/lib/machine/info.nix
+ delete mode 100644 nix/lib/swpins/eval.nix
+ delete mode 100644 nix/lib/swpins/options.nix
+ delete mode 100644 nix/machines.nix
+ create mode 100644 nix/module-options.nix
+ delete mode 100644 nix/modules/confctl/swpins.nix
+ create mode 100644 spec/confctl/cli/cluster_build_inputs_spec.rb
+ rename spec/confctl/cli/{cluster_status_flake_spec.rb => cluster_status_spec.rb} (76%)
+ create mode 100644 spec/confctl/module_options_spec.rb
+ delete mode 100644 spec/confctl/nix_flake_spec.rb
+ create mode 100644 spec/confctl/nix_spec.rb
+ delete mode 100644 spec/confctl/swpins_spec.rb
+ delete mode 100644 tests/suite/deploy/swpins.nix
+Target fast-forwarded to reviewed head

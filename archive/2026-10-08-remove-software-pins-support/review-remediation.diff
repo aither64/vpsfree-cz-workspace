@@ -1,0 +1,1150 @@
+diff --git a/lib/confctl/cli/configuration.rb b/lib/confctl/cli/configuration.rb
+index 74fae1f..66ed325 100644
+--- a/lib/confctl/cli/configuration.rb
++++ b/lib/confctl/cli/configuration.rb
+@@ -237,7 +237,7 @@ module ConfCtl::Cli
+                   # vpsadminos = {
+                   #   nixpkgs = "nixpkgs";
+                   #   vpsadminos = "vpsadminos";
+-                  # ];
++                  # };
+                 };
+ 
+                 confctlOutputs = confctl.lib.mkConfctlOutputs {
+diff --git a/lib/confctl/generation/build_list.rb b/lib/confctl/generation/build_list.rb
+index 30c3a4e..8c4f990 100644
+--- a/lib/confctl/generation/build_list.rb
++++ b/lib/confctl/generation/build_list.rb
+@@ -44,7 +44,19 @@ module ConfCtl
+       if File.symlink?(current_symlink)
+         name = File.basename(File.readlink(current_symlink))
+         current_gen = index[name]
+-        @current_error = rejected.dig(name, :reason) || "#{current_symlink}: missing generation #{name}" unless current_gen
++        if current_gen
++          begin
++            unless File.realpath(current_symlink) == File.realpath(current_gen.dir)
++              @current_error = "#{current_symlink}: target does not resolve to local generation #{name}"
++              current_gen = nil
++            end
++          rescue SystemCallError => e
++            @current_error = "#{current_symlink}: cannot resolve current target: #{e.message}"
++            current_gen = nil
++          end
++        else
++          @current_error = rejected.dig(name, :reason) || "#{current_symlink}: missing generation #{name}"
++        end
+       elsif File.exist?(current_symlink)
+         @current_error = "#{current_symlink}: expected a symlink"
+       else
+diff --git a/lib/confctl/module_options.rb b/lib/confctl/module_options.rb
+index 596dae8..3654d49 100644
+--- a/lib/confctl/module_options.rb
++++ b/lib/confctl/module_options.rb
+@@ -12,7 +12,8 @@ module ConfCtl
+         @default = extract_expression(nixos_opt['default'])
+         @example = extract_expression(nixos_opt['example'])
+         @declarations = nixos_opt['declarations'].map do |v|
+-          v.sub(%r{\A.*?/nix/}, '<confctl/nix/').then { |path| path.start_with?('<confctl/') ? "#{path}>" : v }
++          match = v.match(%r{\A(?:#{Regexp.escape(ConfCtl.root)}|/nix/store/[^/]+)/(nix/modules/(?:confctl|cluster)(?:/.*)?)\z})
++          match ? "<confctl/#{match[1]}>" : v
+         end
+       end
+ 
+diff --git a/man/man8/confctl-options.nix.8.md b/man/man8/confctl-options.nix.8.md
+index 517ea24..3bfa4e5 100644
+--- a/man/man8/confctl-options.nix.8.md
++++ b/man/man8/confctl-options.nix.8.md
+@@ -18,7 +18,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+ 
+     *Default:* `30`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+ 
+ `confctl.buildGenerations.maxAge`
+   Delete build generations older than
+@@ -32,7 +32,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+ 
+     *Default:* `15552000`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+ 
+ `confctl.buildGenerations.min`
+   The minimum number of build generations to be kept.
+@@ -43,7 +43,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+ 
+     *Default:* `5`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+ 
+ `confctl.hostGenerations.collectGarbage`
+   Run nix-collect-garbage
+@@ -52,7 +52,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+ 
+     *Default:* `true`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+ 
+ `confctl.hostGenerations.max`
+   The maximum number of generations to be kept on machines.
+@@ -63,7 +63,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+ 
+     *Default:* `30`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+ 
+ `confctl.hostGenerations.maxAge`
+   Delete generations older than
+@@ -78,7 +78,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+ 
+     *Default:* `15552000`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+ 
+ `confctl.hostGenerations.min`
+   The minimum number of generations to be kept on machines.
+@@ -89,7 +89,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+ 
+     *Default:* `5`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+ 
+ `confctl.list.columns`
+   Configure which columns should `confctl ls` show.
+@@ -104,7 +104,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+   "host.fqdn"
+ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/cli.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/cli.nix>`
+ 
+ `confctl.nix.impureEval`
+   Enable impure evaluation/builds (allows reading host paths outside the Nix store when they are referenced as Nix paths).
+@@ -113,7 +113,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+ 
+     *Default:* `false`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/nix.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/nix.nix>`
+ 
+ `confctl.nix.legacyNixPath`
+   If true, confctl adds -I mappings for selected inputs during flake
+@@ -123,7 +123,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+ 
+     *Default:* `false`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/nix.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/nix.nix>`
+ 
+ `confctl.nix.legacyNixPathMap`
+   List of input roles that should be mapped to NIX_PATH when
+@@ -137,7 +137,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+   "vpsadmin"
+ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/nix.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/nix.nix>`
+ 
+ `confctl.nix.maxJobs`
+   Maximum number of build jobs, passed to `nix build`
+@@ -147,7 +147,7 @@ Configure these `confctl` settings in `configs/confctl.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/nix.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/nix.nix>`
+ 
+ 
+ 
+@@ -161,7 +161,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `{ }`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.primary`
+   Default address other machines should use to connect to this machine
+@@ -172,7 +172,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.primary.address`
+   IPv4 address
+@@ -181,7 +181,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.primary.prefix`
+   Prefix length
+@@ -190,7 +190,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.primary.string`
+   Address with prefix as string
+@@ -199,7 +199,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.v4`
+   List of IPv4 addresses this machine responds to
+@@ -208,7 +208,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.v4.*.address`
+   IPv4 address
+@@ -217,7 +217,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.v4.*.prefix`
+   Prefix length
+@@ -226,7 +226,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.v4.*.string`
+   Address with prefix as string
+@@ -235,7 +235,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.v6`
+   List of IPv6 addresses this machine responds to
+@@ -244,7 +244,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.v6.*.address`
+   IPv6 address
+@@ -253,7 +253,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.v6.*.prefix`
+   Prefix length
+@@ -262,7 +262,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.addresses.v6.*.string`
+   Address with prefix as string
+@@ -271,7 +271,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.autoRollback.enable`
+   Enable automatic rollback in case the machine is unresponsive after
+@@ -281,7 +281,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `true`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.autoRollback.timeout`
+   Number of seconds after which if the machine is unreachable, auto-rollback
+@@ -291,7 +291,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `60`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.buildAttribute`
+   Path to the attribute in machine system config that should be built
+@@ -307,7 +307,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+   "toplevel"
+ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.buildGenerations.max`
+   The maximum number of build generations to be kept on the build
+@@ -317,7 +317,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.buildGenerations.maxAge`
+   Delete build generations older than
+@@ -330,7 +330,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.buildGenerations.min`
+   The minimum number of build generations to be kept on the build
+@@ -340,7 +340,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.enable`
+   Whether to enable This machine is a carrier for other machines.
+@@ -351,7 +351,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Example:* `true`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines`
+   List of carried machines
+@@ -360,7 +360,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.alias`
+   Alias for carried machine name
+@@ -369,7 +369,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.buildAttribute`
+   Path to the attribute in machine system config that should be built
+@@ -385,7 +385,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+   "toplevel"
+ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.buildGenerations.max`
+   The maximum number of build generations to be kept on the build
+@@ -395,7 +395,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.buildGenerations.maxAge`
+   Delete build generations older than
+@@ -408,7 +408,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.buildGenerations.min`
+   The minimum number of build generations to be kept on the build
+@@ -418,7 +418,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.extraModules`
+   A list of additional NixOS modules to be imported for this machine
+@@ -427,7 +427,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.hostGenerations.max`
+   The maximum number of generations to be kept on the machine.
+@@ -436,7 +436,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.hostGenerations.maxAge`
+   Delete generations older than
+@@ -449,7 +449,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.hostGenerations.min`
+   The minimum number of generations to be kept on the machine.
+@@ -458,7 +458,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.labels`
+   Optional user-defined labels to classify the machine
+@@ -467,7 +467,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `{ }`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.machine`
+   Machine name
+@@ -476,7 +476,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.carrier.machines.*.tags`
+   Optional user-defined tags to classify the machine
+@@ -485,7 +485,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands`
+   Check commands run on the build machine
+@@ -498,7 +498,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+   { description = "ping"; command = [ "ping" "-c1" "{host.fqdn}" ]; }
+ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands.*.command`
+   Command and its arguments
+@@ -511,7 +511,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands.*.cooldown`
+   Number of seconds in between check attempts
+@@ -520,7 +520,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `3`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands.*.description`
+   Command description
+@@ -529,7 +529,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `""`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands.*.exitStatus`
+   Expected exit status
+@@ -538,7 +538,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `0`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands.*.standardError.exclude`
+   String that must not be included in standard error
+@@ -547,7 +547,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands.*.standardError.include`
+   String that must be included in standard error
+@@ -556,7 +556,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands.*.standardError.match`
+   Standard error must match this string
+@@ -565,7 +565,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands.*.standardOutput.exclude`
+   Strings that must not be included in standard output
+@@ -574,7 +574,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands.*.standardOutput.include`
+   Strings that must be included in standard output
+@@ -583,7 +583,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands.*.standardOutput.match`
+   Standard output must match this string
+@@ -592,7 +592,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.builderCommands.*.timeout`
+   Max number of seconds to wait for the check to pass
+@@ -601,7 +601,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `60`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands`
+   Check commands run on the target machine
+@@ -616,7 +616,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+   { description = "curl"; command = [ "curl" "-s" "http://localhost:80" ]; }
+ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands.*.command`
+   Command and its arguments
+@@ -629,7 +629,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands.*.cooldown`
+   Number of seconds in between check attempts
+@@ -638,7 +638,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `3`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands.*.description`
+   Command description
+@@ -647,7 +647,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `""`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands.*.exitStatus`
+   Expected exit status
+@@ -656,7 +656,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `0`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands.*.standardError.exclude`
+   String that must not be included in standard error
+@@ -665,7 +665,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands.*.standardError.include`
+   String that must be included in standard error
+@@ -674,7 +674,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands.*.standardError.match`
+   Standard error must match this string
+@@ -683,7 +683,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands.*.standardOutput.exclude`
+   Strings that must not be included in standard output
+@@ -692,7 +692,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands.*.standardOutput.include`
+   Strings that must be included in standard output
+@@ -701,7 +701,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands.*.standardOutput.match`
+   Standard output must match this string
+@@ -710,7 +710,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.machineCommands.*.timeout`
+   Max number of seconds to wait for the check to pass
+@@ -719,7 +719,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `60`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.systemd.enable`
+   Enable systemd checks, enabled by default
+@@ -728,7 +728,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `true`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.systemd.systemProperties`
+   Check systemd manager properties reported by systemctl show
+@@ -742,7 +742,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+   }
+ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.systemd.systemProperties.*.cooldown`
+   Number of seconds in between check attempts
+@@ -751,7 +751,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `3`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.systemd.systemProperties.*.property`
+   systemd property name
+@@ -760,7 +760,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.systemd.systemProperties.*.timeout`
+   Max number of seconds to wait for the check to pass
+@@ -769,7 +769,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `60`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.systemd.systemProperties.*.value`
+   value to be checked
+@@ -778,7 +778,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.systemd.unitProperties`
+   Check systemd unit properties reported by systemctl show `<unit>`
+@@ -793,7 +793,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+   ];
+ }`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.systemd.unitProperties.<name>.*.cooldown`
+   Number of seconds in between check attempts
+@@ -802,7 +802,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `3`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.systemd.unitProperties.<name>.*.property`
+   systemd property name
+@@ -811,7 +811,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.systemd.unitProperties.<name>.*.timeout`
+   Max number of seconds to wait for the check to pass
+@@ -820,7 +820,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `60`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.healthChecks.systemd.unitProperties.<name>.*.value`
+   value to be checked
+@@ -829,7 +829,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.host`
+   This option has no description.
+@@ -838,7 +838,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.host.domain`
+   Host domain
+@@ -847,7 +847,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.host.fqdn`
+   Host FQDN
+@@ -856,7 +856,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.host.fullDomain`
+   Domain including location, i.e. FQDN without host name
+@@ -865,7 +865,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.host.location`
+   Host location domain
+@@ -874,7 +874,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.host.name`
+   Host name
+@@ -883,7 +883,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.host.port`
+   SSH port used to connect to this machine.
+@@ -892,7 +892,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `22`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.host.target`
+   Address/host to which the configuration is deployed to
+@@ -904,7 +904,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.hostGenerations.collectGarbage`
+   Run nix-collect-garbage
+@@ -913,7 +913,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.hostGenerations.max`
+   The maximum number of generations to be kept on the machine.
+@@ -922,7 +922,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.hostGenerations.maxAge`
+   Delete generations older than
+@@ -935,7 +935,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.hostGenerations.min`
+   The minimum number of generations to be kept on the machine.
+@@ -944,7 +944,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.inputs.channels`
+   List of flake input channels to use on this machine.
+@@ -956,7 +956,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.inputs.overrides`
+   Override role -> flake input mapping for this machine
+@@ -965,7 +965,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `{ }`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.labels`
+   Optional user-defined labels to classify the machine
+@@ -974,7 +974,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `{ }`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.managed`
+   Determines whether the machine is managed using confctl or not
+@@ -985,7 +985,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.netboot.enable`
+   Whether to enable Include this system on pxe servers.
+@@ -996,7 +996,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Example:* `true`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.netboot.macs`
+   List of MAC addresses for iPXE node auto-detection
+@@ -1005,7 +1005,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.spin`
+   OS type
+@@ -1014,7 +1014,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ `cluster.<name>.tags`
+   Optional user-defined tags to classify the machine
+@@ -1023,7 +1023,7 @@ Configure machine metadata in `cluster/<machine-name>/module.nix`:
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
++    *Declared by:* `<confctl/nix/modules/cluster>`
+ 
+ 
+ 
+@@ -1041,7 +1041,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Example:* `"10.0.0.0/24"`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+ 
+ `confctl.carrier.netboot.enable`
+   Whether to enable Enable netboot server generated from confctl carrier
+@@ -1053,7 +1053,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Example:* `true`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+ 
+ `confctl.carrier.netboot.enableACME`
+   Enable ACME and SSL for netboot host
+@@ -1062,7 +1062,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Default:* `false`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+ 
+ `confctl.carrier.netboot.host`
+   Hostname or IP address of the netboot server
+@@ -1071,7 +1071,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+ 
+ `confctl.carrier.netboot.isoImages`
+   A list of ISO images to be included in boot menu
+@@ -1080,7 +1080,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Default:* `[ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+ 
+ `confctl.carrier.netboot.isoImages.*.file`
+   Path to the ISO image file
+@@ -1094,7 +1094,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+ 
+ `confctl.carrier.netboot.isoImages.*.label`
+   Menu label for this image
+@@ -1103,7 +1103,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Default:* `""`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+ 
+ `confctl.carrier.netboot.memtest86.enable`
+   Include memtest in boot menu
+@@ -1112,7 +1112,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Default:* `true`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+ 
+ `confctl.carrier.netboot.memtest86.params`
+   See {option}`boot.loader.grub.memtest86.params`
+@@ -1125,7 +1125,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+   "console=ttyS0,115200"
+ ]`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+ 
+ `confctl.carrier.netboot.tftp.bindAddress`
+   The address for the TFTP server to bind on
+@@ -1134,7 +1134,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+ 
+ `confctl.carrier.onChangeCommands`
+   Extra commands executed on a carrier machine when carried machine
+@@ -1144,7 +1144,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Default:* `""`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/base.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/carrier/base.nix>`
+ 
+ `confctl.configurationInfo`
+   Configuration source metadata written to /etc/confctl/configuration-info.json.
+@@ -1153,7 +1153,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/configuration-info.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/configuration-info.nix>`
+ 
+ `confctl.inputsInfo`
+   Flake input metadata written to /etc/confctl/inputs-info.json (provided via module args).
+@@ -1162,7 +1162,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Default:* `null`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/inputs-info.nix>`
++    *Declared by:* `<confctl/nix/modules/confctl/inputs-info.nix>`
+ 
+ `confctl.programs.kexec-netboot.enable`
+   Whether to enable Enable kexec-netboot utility.
+@@ -1173,7 +1173,7 @@ Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+ 
+     *Example:* `true`
+ 
+-    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/kexec-netboot>`
++    *Declared by:* `<confctl/nix/modules/confctl/kexec-netboot>`
+ 
+ 
+ 
+diff --git a/spec/generation/build_modes_spec.rb b/spec/generation/build_modes_spec.rb
+index 94f448b..6991af5 100644
+--- a/spec/generation/build_modes_spec.rb
++++ b/spec/generation/build_modes_spec.rb
+@@ -130,6 +130,63 @@ RSpec.describe ConfCtl::Generation::Build do
+     expect(File.readlink(link)).to eq('missing')
+   end
+ 
++  %i[broken external].each do |target_type|
++    it "rejects a #{target_type} current target with a supported local basename without changing records or roots" do
++      gen = create_generation
++      link = File.join(File.dirname(gen.dir), 'current')
++      target = target_type == :broken ? File.join('missing-directory', gen.name) : File.join(@tmp, 'external-directory', gen.name)
++      if target_type == :external
++        FileUtils.mkdir_p(File.dirname(target))
++        FileUtils.cp_r(gen.dir, target)
++      end
++      File.symlink(target, link)
++      original = File.binread(File.join(gen.dir, 'generation.json'))
++      external_original = File.binread(File.join(target, 'generation.json')) if target_type == :external
++      roots = Dir.children(ConfCtl::GCRoot.dir).to_h do |name|
++        [name, File.readlink(File.join(ConfCtl::GCRoot.dir, name))]
++      end
++
++      list = inventory
++      expect(list.current).to be_nil
++      expect(list[gen.name].current).to be_falsey
++      expect(list.current_error).to include(link, 'target')
++      expect { list.select_current! }.to raise_error(ConfCtl::Error, /current/)
++      machines = ConfCtl::MachineList.new(machines: { host => double })
++      command = ConfCtl::Cli::Generation.new({}, { local: true }, [])
++      allow(ConfCtl::Settings.instance).to receive(:build_generations).and_return({})
++      expect { command.send(:select_generations, machines, 'current') }.to raise_error(ConfCtl::Error, /current/)
++      expect { command.send(:select_generations, machines, 'old') }.to raise_error(ConfCtl::Error, /current/)
++      expect { command.send(:build_generations_rotate, machines) }.to raise_error(ConfCtl::Error, /current/)
++
++      expect(File.readlink(link)).to eq(target)
++      expect(File.binread(File.join(gen.dir, 'generation.json'))).to eq(original)
++      expect(Dir.children(ConfCtl::GCRoot.dir).sort).to eq(roots.keys.sort)
++      roots.each do |name, root_target|
++        expect(File.readlink(File.join(ConfCtl::GCRoot.dir, name))).to eq(root_target)
++      end
++      if target_type == :external
++        expect(File.binread(File.join(target, 'generation.json'))).to eq(external_original)
++      else
++        expect(File).not_to exist(File.expand_path(target, File.dirname(gen.dir)))
++      end
++    end
++  end
++
++  %i[relative absolute].each do |target_type|
++    it "accepts a valid #{target_type} current target within the local generation directory" do
++      gen = create_generation
++      create_generation(date + 60)
++      link = File.join(File.dirname(gen.dir), 'current')
++      target = target_type == :relative ? gen.name : gen.dir
++      File.symlink(target, link)
++      list = inventory
++      expect(list.current_error).to be_nil
++      expect(list.select_current!.name).to eq(gen.name)
++      expect(list[gen.name].current).to be(true)
++      expect(File.readlink(link)).to eq(target)
++    end
++  end
++
+   it 'reports the absent-current convention when unsupported records are present' do
+     seed_record('legacy', {})
+     gen = create_generation

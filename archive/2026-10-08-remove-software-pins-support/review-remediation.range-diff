@@ -1,0 +1,1487 @@
+1:  f76a8a8 ! 1:  d72ff27 Make confctl runtime exclusively flake-based
+    @@ lib/confctl/cli/configuration.rb: module ConfCtl::Cli
+          def init_flake
+            mkfile('flake.nix') do |f|
+              f.puts(<<~END
+    -@@ lib/confctl/cli/configuration.rb: module ConfCtl::Cli
+    -                   # vpsadminos = {
+    -                   #   nixpkgs = "nixpkgs";
+    -                   #   vpsadminos = "vpsadminos";
+    --                  # };
+    -+                  # ];
+    -                 };
+    - 
+    -                 confctlOutputs = confctl.lib.mkConfctlOutputs {
+     @@ lib/confctl/cli/configuration.rb: module ConfCtl::Cli
+            end
+          end
+    @@ lib/confctl/generation/build_list.rb: module ConfCtl
+     -        if File.exist?(current_symlink)
+     -          name = File.basename(File.readlink(current_symlink))
+     -          index[name] || generations.last
+    --        else
+    --          generations.last
+     +      if File.symlink?(current_symlink)
+     +        name = File.basename(File.readlink(current_symlink))
+     +        current_gen = index[name]
+    -+        @current_error = rejected.dig(name, :reason) || "#{current_symlink}: missing generation #{name}" unless current_gen
+    ++        if current_gen
+    ++          begin
+    ++            unless File.realpath(current_symlink) == File.realpath(current_gen.dir)
+    ++              @current_error = "#{current_symlink}: target does not resolve to local generation #{name}"
+    ++              current_gen = nil
+    ++            end
+    ++          rescue SystemCallError => e
+    ++            @current_error = "#{current_symlink}: cannot resolve current target: #{e.message}"
+    ++            current_gen = nil
+    ++          end
+    +         else
+    +-          generations.last
+    ++          @current_error = rejected.dig(name, :reason) || "#{current_symlink}: missing generation #{name}"
+    +         end
+     +      elsif File.exist?(current_symlink)
+     +        @current_error = "#{current_symlink}: expected a symlink"
+     +      else
+     +        current_gen = generations.last
+     +        if current_gen && rejected.any?
+     +          report("No current link for #{host}; selecting newest supported generation #{current_gen.name}. Excluded records and GC roots were left untouched.")
+    -         end
+    ++        end
+     +      end
+      
+            change_current(current_gen) if current_gen
+    @@ spec/generation/build_modes_spec.rb
+     -
+     -        expect(swpins_list.find(swpins_loaded.toplevel, swpins_loaded.swpin_paths)).to be_truthy
+     -        expect(flakes_list.find(flakes_loaded.toplevel, flakes_loaded.inputs, mode: 'flakes')).to be_truthy
+    --      end
+     +RSpec.describe ConfCtl::Generation::Build do
+     +  let(:host) { 'nested/host' }
+     +  let(:date) { Time.utc(2026, 10, 8, 12) }
+    @@ spec/generation/build_modes_spec.rb
+     +      seed_record('unsupported', payload)
+     +      expect { described_class.new(host).load('unsupported') }
+     +        .to raise_error(described_class::UnsupportedFormat, /unsupported generation mode/)
+    -     end
+    -   end
+    ++    end
+    ++  end
+     +
+     +  ['{', { 'mode' => 'flakes', 'date' => 'bad', 'toplevel' => 123 }].each do |payload|
+     +    it 'distinguishes invalid JSON and flake payloads from unsupported formats' do
+    @@ spec/generation/build_modes_spec.rb
+     +    expect(File.readlink(link)).to eq('missing')
+     +  end
+     +
+    ++  %i[broken external].each do |target_type|
+    ++    it "rejects a #{target_type} current target with a supported local basename without changing records or roots" do
+    ++      gen = create_generation
+    ++      link = File.join(File.dirname(gen.dir), 'current')
+    ++      target = target_type == :broken ? File.join('missing-directory', gen.name) : File.join(@tmp, 'external-directory', gen.name)
+    ++      if target_type == :external
+    ++        FileUtils.mkdir_p(File.dirname(target))
+    ++        FileUtils.cp_r(gen.dir, target)
+    ++      end
+    ++      File.symlink(target, link)
+    ++      original = File.binread(File.join(gen.dir, 'generation.json'))
+    ++      external_original = File.binread(File.join(target, 'generation.json')) if target_type == :external
+    ++      roots = Dir.children(ConfCtl::GCRoot.dir).to_h do |name|
+    ++        [name, File.readlink(File.join(ConfCtl::GCRoot.dir, name))]
+    ++      end
+    ++
+    ++      list = inventory
+    ++      expect(list.current).to be_nil
+    ++      expect(list[gen.name].current).to be_falsey
+    ++      expect(list.current_error).to include(link, 'target')
+    ++      expect { list.select_current! }.to raise_error(ConfCtl::Error, /current/)
+    ++      machines = ConfCtl::MachineList.new(machines: { host => double })
+    ++      command = ConfCtl::Cli::Generation.new({}, { local: true }, [])
+    ++      allow(ConfCtl::Settings.instance).to receive(:build_generations).and_return({})
+    ++      expect { command.send(:select_generations, machines, 'current') }.to raise_error(ConfCtl::Error, /current/)
+    ++      expect { command.send(:select_generations, machines, 'old') }.to raise_error(ConfCtl::Error, /current/)
+    ++      expect { command.send(:build_generations_rotate, machines) }.to raise_error(ConfCtl::Error, /current/)
+    ++
+    ++      expect(File.readlink(link)).to eq(target)
+    ++      expect(File.binread(File.join(gen.dir, 'generation.json'))).to eq(original)
+    ++      expect(Dir.children(ConfCtl::GCRoot.dir).sort).to eq(roots.keys.sort)
+    ++      roots.each do |name, root_target|
+    ++        expect(File.readlink(File.join(ConfCtl::GCRoot.dir, name))).to eq(root_target)
+    ++      end
+    ++      if target_type == :external
+    ++        expect(File.binread(File.join(target, 'generation.json'))).to eq(external_original)
+    ++      else
+    ++        expect(File).not_to exist(File.expand_path(target, File.dirname(gen.dir)))
+    +       end
+    +     end
+    +   end
+    ++
+    ++  %i[relative absolute].each do |target_type|
+    ++    it "accepts a valid #{target_type} current target within the local generation directory" do
+    ++      gen = create_generation
+    ++      create_generation(date + 60)
+    ++      link = File.join(File.dirname(gen.dir), 'current')
+    ++      target = target_type == :relative ? gen.name : gen.dir
+    ++      File.symlink(target, link)
+    ++      list = inventory
+    ++      expect(list.current_error).to be_nil
+    ++      expect(list.select_current!.name).to eq(gen.name)
+    ++      expect(list[gen.name].current).to be(true)
+    ++      expect(File.readlink(link)).to eq(target)
+    ++    end
+    ++  end
+    ++
+     +  it 'reports the absent-current convention when unsupported records are present' do
+     +    seed_record('legacy', {})
+     +    gen = create_generation
+2:  138bbed ! 2:  72eb424 Remove Nix pin evaluation and expose flake module options
+    @@ lib/confctl/module_options.rb: module ConfCtl
+     -          raise "unable to place module '#{v}'" unless %r{/confctl/([^$]+)} =~ v
+     -
+     -          "<confctl/#{::Regexp.last_match(1)}>"
+    -+          v.sub(%r{\A.*?/nix/}, '<confctl/nix/').then { |path| path.start_with?('<confctl/') ? "#{path}>" : v }
+    ++          match = v.match(%r{\A(?:#{Regexp.escape(ConfCtl.root)}|/nix/store/[^/]+)/(nix/modules/(?:confctl|cluster)(?:/.*)?)\z})
+    ++          match ? "<confctl/#{match[1]}>" : v
+              end
+            end
+      
+    @@ nix/modules/module-list.nix: let
+          ./confctl/configuration-info.nix
+        ];
+     
+    + ## spec/confctl/module_options_spec.rb (new) ##
+    +@@
+    ++# frozen_string_literal: true
+    ++
+    ++require 'spec_helper'
+    ++require 'confctl'
+    ++
+    ++RSpec.describe ConfCtl::ModuleOptions::Option do
+    ++  def option_with_declarations(*declarations)
+    ++    described_class.new('name' => 'confctl.nix.legacyNixPath', 'declarations' => declarations)
+    ++  end
+    ++
+    ++  it 'uses identical source-relative labels for owned declarations from distinct store hashes' do
+    ++    declarations = %w[hash-one-source hash-two-source].map do |source|
+    ++      "/nix/store/#{source}/nix/modules/confctl/nix.nix"
+    ++    end
+    ++    expect(option_with_declarations(*declarations).declarations)
+    ++      .to eq(['<confctl/nix/modules/confctl/nix.nix>'] * 2)
+    ++    expect(option_with_declarations('/nix/store/hash-source/nix/modules/cluster/default.nix').declarations)
+    ++      .to eq(['<confctl/nix/modules/cluster/default.nix>'])
+    ++  end
+    ++
+    ++  it 'normalizes owning module directories and descendant directory modules' do
+    ++    expected = [
+    ++      '<confctl/nix/modules/cluster>',
+    ++      '<confctl/nix/modules/confctl>',
+    ++      '<confctl/nix/modules/confctl/kexec-netboot>'
+    ++    ]
+    ++    expect(option_with_declarations(
+    ++      '/nix/store/hash-source/nix/modules/cluster',
+    ++      '/nix/store/hash-source/nix/modules/confctl',
+    ++      '/nix/store/hash-source/nix/modules/confctl/kexec-netboot'
+    ++    ).declarations).to eq(expected)
+    ++  end
+    ++
+    ++  it 'normalizes declarations from the local owning source tree' do
+    ++    expect(option_with_declarations(File.join(ConfCtl.root, 'nix/modules/confctl/nix.nix')).declarations)
+    ++      .to eq(['<confctl/nix/modules/confctl/nix.nix>'])
+    ++  end
+    ++
+    ++  it 'preserves custom cluster modules and foreign declarations' do
+    ++    declarations = [
+    ++      '/nix/store/custom-source/modules/cluster/default.nix',
+    ++      '/nix/store/nixpkgs-source/nixos/modules/services/example.nix',
+    ++      '/tmp/foreign-source/nix/modules/cluster/default.nix',
+    ++      '/nix/store/custom-source/nix/custom/module.nix',
+    ++      '/nix/store/custom-source/nix/modules/cluster-extra/default.nix'
+    ++    ]
+    ++    expect(option_with_declarations(*declarations).declarations).to eq(declarations)
+    ++  end
+    ++end
+    +
+      ## template/confctl-options.nix/main.erb ##
+     @@
+      `confctl-options.nix` - confctl configuration documentation
+3:  aac3b24 = 3:  6acbd28 Make the flake example the sole configuration fixture
+4:  50a3226 = 4:  160ac11 Drop software-pin-only dependencies and CI setup
+5:  18d8b48 ! 5:  3be154b Document flake-only operation and preserved recovery state
+    @@ man/man8/confctl-options.nix.8.md
+        This is the default value, which can be overriden per host.
+      
+          *Type:* signed integer
+    - 
+    -     *Default:* `30`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
+    - 
+    - `confctl.buildGenerations.maxAge`
+    -   Delete build generations older than
+    +@@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory:
+        `confctl.buildGenerations.maxAge` seconds. Old generations
+        are deleted even if `confctl.buildGenerations.max` is
+        not reached.
+    @@ man/man8/confctl-options.nix.8.md
+        This is the default value, which can be overriden per host.
+      
+          *Type:* signed integer
+    - 
+    -     *Default:* `15552000`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
+    +@@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory:
+      
+      `confctl.buildGenerations.min`
+        The minimum number of build generations to be kept.
+    @@ man/man8/confctl-options.nix.8.md
+        This is the default value, which can be overriden per host.
+      
+          *Type:* signed integer
+    - 
+    -     *Default:* `5`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
+    - 
+    - `confctl.hostGenerations.collectGarbage`
+    -   Run nix-collect-garbage
+     @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory:
+      
+    -     *Default:* `true`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
+    - 
+      `confctl.hostGenerations.max`
+        The maximum number of generations to be kept on machines.
+     -  
+    @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory
+        This is the default value, which can be overriden per host.
+      
+          *Type:* signed integer
+    - 
+    -     *Default:* `30`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
+    - 
+    - `confctl.hostGenerations.maxAge`
+    -   Delete generations older than
+     @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory:
+        machines. Old generations
+        are deleted even if `confctl.hostGenerations.max` is
+    @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory
+        This is the default value, which can be overriden per host.
+      
+          *Type:* signed integer
+    - 
+    -     *Default:* `15552000`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
+    +@@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory:
+      
+      `confctl.hostGenerations.min`
+        The minimum number of generations to be kept on machines.
+    @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory
+        This is the default value, which can be overriden per host.
+      
+          *Type:* signed integer
+    - 
+    -     *Default:* `5`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/confctl/generations.nix>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/generations.nix>`
+    - 
+    - `confctl.list.columns`
+    -   Configure which columns should `confctl ls` show.
+     @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory:
+    -   "host.fqdn"
+    - ]`
+      
+    --    *Declared by:* `<confctl/nix/modules/confctl/cli.nix>`
+    --
+    +     *Declared by:* `<confctl/nix/modules/confctl/cli.nix>`
+    + 
+     -`confctl.nix.maxJobs`
+     -  Maximum number of build jobs, passed to `nix-build`
+     -  commands.
+    @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory
+     -    *Default:* `null`
+     -
+     -    *Example:* `"/opt/my-swpin"`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/cli.nix>`
+    - 
+    +-
+     -    *Declared by:* `<confctl/nix/modules/confctl/swpins.nix>`
+     -
+     -`confctl.swpins.channels.<name>.<name>.git`
+    @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory
+     -    *Default:* `null`
+     -
+     -    *Declared by:* `<confctl/nix/modules/confctl/swpins.nix>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/nix.nix>`
+    - 
+    +-
+     -`confctl.swpins.channels.<name>.<name>.git-rev.fetchSubmodules`
+     -  Fetch git submodules
+    +-
+    +-    *Type:* boolean
+    +-
+    +-    *Default:* `false`
+    +-
+    +-    *Declared by:* `<confctl/nix/modules/confctl/swpins.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/nix.nix>`
+    + 
+    +-`confctl.swpins.channels.<name>.<name>.git-rev.update.auto`
+    +-  When enabled, the pin is automatically updated to
+    +-  `ref` before building machines.
+     +`confctl.nix.legacyNixPath`
+     +  If true, confctl adds -I mappings for selected inputs during flake
+     +  builds to support legacy `<nixpkgs>` or `<vpsadminos>` imports.
+    @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory
+      
+          *Default:* `false`
+      
+    --    *Declared by:* `<confctl/nix/modules/confctl/swpins.nix>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/nix.nix>`
+    - 
+    --`confctl.swpins.channels.<name>.<name>.git-rev.update.auto`
+    --  When enabled, the pin is automatically updated to
+    --  `ref` before building machines.
+    --
+    --    *Type:* boolean
+    --
+    --    *Default:* `false`
+    --
+     -    *Declared by:* `<confctl/nix/modules/confctl/swpins.nix>`
+     -
+     -`confctl.swpins.channels.<name>.<name>.git-rev.update.interval`
+    @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory
+     -    *Default:* `"git"`
+     -
+     -    *Declared by:* `<confctl/nix/modules/confctl/swpins.nix>`
+    --
+    ++    *Declared by:* `<confctl/nix/modules/confctl/nix.nix>`
+    + 
+     -`confctl.swpins.core.channels`
+     -  List of channels from `confctl.swpins.channels`
+     -  to use for core swpins
+    @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory
+     +]`
+      
+     -    *Declared by:* `<confctl/nix/modules/confctl/swpins.nix>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/nix.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/nix.nix>`
+      
+     -`confctl.swpins.core.pins.<name>.git-rev.url`
+     -  URL of the git repository
+    @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory
+     -    *Default:* `"git"`
+     -
+     -    *Declared by:* `<confctl/nix/modules/confctl/swpins.nix>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/nix.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/nix.nix>`
+      
+      
+      
+    @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory
+     -    *Default:* `null`
+     +    *Default:* `{ }`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    +     *Declared by:* `<confctl/nix/modules/cluster>`
+      
+      `cluster.<name>.addresses.primary`
+        Default address other machines should use to connect to this machine
+    @@ man/man8/confctl-options.nix.8.md: within the deployment configuration directory
+        Defaults to the first IPv4 address if not set
+      
+          *Type:* null or (submodule)
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.addresses.primary.address`
+    -   IPv4 address
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.addresses.primary.prefix`
+    -   Prefix length
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.addresses.primary.string`
+    -   Address with prefix as string
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.addresses.v4`
+    -   List of IPv4 addresses this machine responds to
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.addresses.v4.*.address`
+    -   IPv4 address
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.addresses.v4.*.prefix`
+    -   Prefix length
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.addresses.v4.*.string`
+    -   Address with prefix as string
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.addresses.v6`
+    -   List of IPv6 addresses this machine responds to
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.addresses.v6.*.address`
+    -   IPv6 address
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.addresses.v6.*.prefix`
+    -   Prefix length
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.addresses.v6.*.string`
+    -   Address with prefix as string
+     @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+      
+    -     *Default:* `null`
+    +     *Declared by:* `<confctl/nix/modules/cluster>`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    -+
+     +`cluster.<name>.autoRollback.enable`
+     +  Enable automatic rollback in case the machine is unresponsive after
+     +  deploy
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     +
+     +    *Default:* `true`
+     +
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    ++    *Declared by:* `<confctl/nix/modules/cluster>`
+     +
+     +`cluster.<name>.autoRollback.timeout`
+     +  Number of seconds after which if the machine is unreachable, auto-rollback
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     +
+     +    *Default:* `60`
+     +
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    ++    *Declared by:* `<confctl/nix/modules/cluster>`
+    ++
+      `cluster.<name>.buildAttribute`
+        Path to the attribute in machine system config that should be built
+     -  
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+        `config.system.build.toplevel`.
+      
+     @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    -   "toplevel"
+    - ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.buildGenerations.max`
+    -   The maximum number of build generations to be kept on the build
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.buildGenerations.maxAge`
+    -   Delete build generations older than
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.buildGenerations.min`
+    -   The minimum number of build generations to be kept on the build
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.carrier.enable`
+    -   Whether to enable This machine is a carrier for other machines.
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Example:* `true`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.carrier.machines`
+    -   List of carried machines
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.carrier.machines.*.alias`
+    -   Alias for carried machine name
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+      
+      `cluster.<name>.carrier.machines.*.buildAttribute`
+        Path to the attribute in machine system config that should be built
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+        `config.system.build.toplevel`.
+      
+     @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    -   "toplevel"
+    - ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.carrier.machines.*.buildGenerations.max`
+    -   The maximum number of build generations to be kept on the build
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.carrier.machines.*.buildGenerations.maxAge`
+    -   Delete build generations older than
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.carrier.machines.*.buildGenerations.min`
+    -   The minimum number of build generations to be kept on the build
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+      `cluster.<name>.carrier.machines.*.extraModules`
+        A list of additional NixOS modules to be imported for this machine
+      
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+      
+          *Default:* `[ ]`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.carrier.machines.*.hostGenerations.max`
+    -   The maximum number of generations to be kept on the machine.
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.carrier.machines.*.hostGenerations.maxAge`
+    -   Delete generations older than
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.carrier.machines.*.hostGenerations.min`
+    -   The minimum number of generations to be kept on the machine.
+     @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+      
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.carrier.machines.*.labels`
+    -   Optional user-defined labels to classify the machine
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `{ }`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    + `cluster.<name>.healthChecks.builderCommands.*.command`
+    +   Command and its arguments
+    +-  
+    ++
+    +   It is possible to access machine attributes as from CLI using curly
+    +   brackets. For example, {host.fqdn} would be replaced by machine FQDN.
+    +   See confctl ls -L for a list of available attributes.
+      
+    - `cluster.<name>.carrier.machines.*.machine`
+    -   Machine name
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    +     *Type:* list of string
+      
+    -     *Default:* `null`
+    +-    *Default:* `null`
+    ++    *Default:* `[ ]`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    +     *Declared by:* `<confctl/nix/modules/cluster>`
+      
+    - `cluster.<name>.carrier.machines.*.tags`
+    -   Optional user-defined tags to classify the machine
+     @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+      
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    + `cluster.<name>.healthChecks.machineCommands`
+    +   Check commands run on the target machine
+    +-  
+    ++
+    +   Note that the commands have to be available on the machine.
+      
+    - `cluster.<name>.healthChecks.builderCommands`
+    -   Check commands run on the build machine
+    +     *Type:* list of (submodule)
+     @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    -   { description = "ping"; command = [ "ping" "-c1" "{host.fqdn}" ]; }
+    - ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+      
+    - `cluster.<name>.healthChecks.builderCommands.*.command`
+    + `cluster.<name>.healthChecks.machineCommands.*.command`
+        Command and its arguments
+     -  
+     +
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     -    *Default:* `null`
+     +    *Default:* `[ ]`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.builderCommands.*.cooldown`
+    -   Number of seconds in between check attempts
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `3`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    +     *Declared by:* `<confctl/nix/modules/cluster>`
+      
+    - `cluster.<name>.healthChecks.builderCommands.*.description`
+    -   Command description
+     @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    +     *Declared by:* `<confctl/nix/modules/cluster>`
+      
+    -     *Default:* `""`
+    + `cluster.<name>.healthChecks.systemd.unitProperties`
+    +-  Check systemd unit properties reported by systemctl show <unit>
+    ++  Check systemd unit properties reported by systemctl show `<unit>`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    +     *Type:* attribute set of list of (submodule)
+      
+    - `cluster.<name>.healthChecks.builderCommands.*.exitStatus`
+    -   Expected exit status
+     @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+      
+    -     *Default:* `0`
+    +     *Declared by:* `<confctl/nix/modules/cluster>`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    ++`cluster.<name>.host.port`
+    ++  SSH port used to connect to this machine.
+    ++
+    ++    *Type:* signed integer
+    ++
+    ++    *Default:* `22`
+    ++
+    ++    *Declared by:* `<confctl/nix/modules/cluster>`
+    ++
+    + `cluster.<name>.host.target`
+    +   Address/host to which the configuration is deployed to
+    +-  
+    ++
+    +   Set to null if the machine is not deployable, e.g. when it is only used
+    +   as a carried machine.
+      
+    - `cluster.<name>.healthChecks.builderCommands.*.standardError.exclude`
+    -   String that must not be included in standard error
+     @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+      
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    +     *Declared by:* `<confctl/nix/modules/cluster>`
+      
+    - `cluster.<name>.healthChecks.builderCommands.*.standardError.include`
+    -   String that must be included in standard error
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.builderCommands.*.standardError.match`
+    -   Standard error must match this string
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.builderCommands.*.standardOutput.exclude`
+    -   Strings that must not be included in standard output
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.builderCommands.*.standardOutput.include`
+    -   Strings that must be included in standard output
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.builderCommands.*.standardOutput.match`
+    -   Standard output must match this string
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.builderCommands.*.timeout`
+    -   Max number of seconds to wait for the check to pass
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `60`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands`
+    -   Check commands run on the target machine
+    --  
+    -+
+    -   Note that the commands have to be available on the machine.
+    - 
+    -     *Type:* list of (submodule)
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    -   { description = "curl"; command = [ "curl" "-s" "http://localhost:80" ]; }
+    - ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands.*.command`
+    -   Command and its arguments
+    --  
+    -+
+    -   It is possible to access machine attributes as from CLI using curly
+    -   brackets. For example, {host.fqdn} would be replaced by machine FQDN.
+    -   See confctl ls -L for a list of available attributes.
+    - 
+    -     *Type:* list of string
+    - 
+    --    *Default:* `null`
+    -+    *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands.*.cooldown`
+    -   Number of seconds in between check attempts
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `3`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands.*.description`
+    -   Command description
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `""`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands.*.exitStatus`
+    -   Expected exit status
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `0`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands.*.standardError.exclude`
+    -   String that must not be included in standard error
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands.*.standardError.include`
+    -   String that must be included in standard error
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands.*.standardError.match`
+    -   Standard error must match this string
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands.*.standardOutput.exclude`
+    -   Strings that must not be included in standard output
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands.*.standardOutput.include`
+    -   Strings that must be included in standard output
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `[ ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands.*.standardOutput.match`
+    -   Standard output must match this string
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.machineCommands.*.timeout`
+    -   Max number of seconds to wait for the check to pass
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `60`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.systemd.enable`
+    -   Enable systemd checks, enabled by default
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `true`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.systemd.systemProperties`
+    -   Check systemd manager properties reported by systemctl show
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    -   }
+    - ]`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.systemd.systemProperties.*.cooldown`
+    -   Number of seconds in between check attempts
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `3`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.systemd.systemProperties.*.property`
+    -   systemd property name
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.systemd.systemProperties.*.timeout`
+    -   Max number of seconds to wait for the check to pass
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `60`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.systemd.systemProperties.*.value`
+    -   value to be checked
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.systemd.unitProperties`
+    --  Check systemd unit properties reported by systemctl show <unit>
+    -+  Check systemd unit properties reported by systemctl show `<unit>`
+    - 
+    -     *Type:* attribute set of list of (submodule)
+    - 
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    -   ];
+    - }`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.systemd.unitProperties.<name>.*.cooldown`
+    -   Number of seconds in between check attempts
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `3`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.systemd.unitProperties.<name>.*.property`
+    -   systemd property name
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.systemd.unitProperties.<name>.*.timeout`
+    -   Max number of seconds to wait for the check to pass
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `60`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.healthChecks.systemd.unitProperties.<name>.*.value`
+    -   value to be checked
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.host`
+    -   This option has no description.
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.host.domain`
+    -   Host domain
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.host.fqdn`
+    -   Host FQDN
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.host.fullDomain`
+    -   Domain including location, i.e. FQDN without host name
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.host.location`
+    -   Host location domain
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.host.name`
+    -   Host name
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    -+
+    -+`cluster.<name>.host.port`
+    -+  SSH port used to connect to this machine.
+    -+
+    -+    *Type:* signed integer
+    -+
+    -+    *Default:* `22`
+    -+
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.host.target`
+    -   Address/host to which the configuration is deployed to
+    --  
+    -+
+    -   Set to null if the machine is not deployable, e.g. when it is only used
+    -   as a carried machine.
+    - 
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.hostGenerations.collectGarbage`
+    -   Run nix-collect-garbage
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.hostGenerations.max`
+    -   The maximum number of generations to be kept on the machine.
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.hostGenerations.maxAge`
+    -   Delete generations older than
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.hostGenerations.min`
+    -   The minimum number of generations to be kept on the machine.
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    -+
+     +`cluster.<name>.inputs.channels`
+     +  List of flake input channels to use on this machine.
+     +
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     +
+     +    *Default:* `[ ]`
+     +
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    ++    *Declared by:* `<confctl/nix/modules/cluster>`
+     +
+     +`cluster.<name>.inputs.overrides`
+     +  Override role -> flake input mapping for this machine
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     +
+     +    *Default:* `{ }`
+     +
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    ++    *Declared by:* `<confctl/nix/modules/cluster>`
+    ++
+      `cluster.<name>.labels`
+        Optional user-defined labels to classify the machine
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Default:* `{ }`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    +@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+      
+      `cluster.<name>.managed`
+        Determines whether the machine is managed using confctl or not
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+        By default, NixOS and vpsAdminOS machines are managed by confctl.
+      
+          *Type:* null or boolean
+    - 
+    -     *Default:* `null`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.netboot.enable`
+    -   Whether to enable Include this system on pxe servers.
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    - 
+    -     *Example:* `true`
+    - 
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    - `cluster.<name>.netboot.macs`
+    -   List of MAC addresses for iPXE node auto-detection
+     @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+      
+    -     *Default:* `[ ]`
+    +     *Declared by:* `<confctl/nix/modules/cluster>`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    --
+     -`cluster.<name>.nix.nixPath`
+     -  List of extra paths added to environment variable
+     -  `NIX_PATH` for `nix-build`
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     -    *Default:* `[ ]`
+     -
+     -    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    +-
+      `cluster.<name>.spin`
+        OS type
+    -@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+      
+    -     *Default:* `null`
+    +@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    +     *Declared by:* `<confctl/nix/modules/cluster>`
+      
+     -`cluster.<name>.swpins.channels`
+     -  List of channels from `confctl.swpins.channels`
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+      
+          *Type:* list of string
+      
+    -     *Default:* `[ ]`
+    +@@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`
+    + 
+    +     *Declared by:* `<confctl/nix/modules/cluster>`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    --
+     -`cluster.<name>.swpins.pins`
+     -  List of swpins for this machine, which can supplement or
+     -  override swpins from configured channels
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/cluster>`
+    - 
+    +-
+     -    *Type:* attribute set of (submodule)
+    - 
+    +-
+     -    *Default:* `{ }`
+     -
+     -    *Declared by:* `<confctl/nix/modules/cluster>`
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     -
+     -`cluster.<name>.swpins.pins.<name>.directory.path`
+     -  Absolute path to the directory
+    - 
+    --    *Type:* string
+     -
+    +-    *Type:* string
+    + 
+     -    *Default:* `null`
+    + 
+    +-    *Example:* `"/opt/my-swpin"`
+     +## MACHINE SYSTEM CONFIGURATION
+     +Configure these options in `cluster/<machine-name>/config.nix` or an imported
+     +Nix module. `confctl` adds them to the options provided by NixOS or vpsAdminOS.
+      
+    --    *Example:* `"/opt/my-swpin"`
+    +-    *Declared by:* `<confctl/nix/modules/cluster>`
+     +`confctl.carrier.netboot.allowedIPv4Ranges`
+     +  Allow HTTP access for these IP ranges, if not specified
+     +  access is not restricted.
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    --
+     -`cluster.<name>.swpins.pins.<name>.git`
+     -  This option has no description.
+     +    *Type:* list of string
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     +    *Example:* `"10.0.0.0/24"`
+      
+     -    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+      
+     -`cluster.<name>.swpins.pins.<name>.git.fetchSubmodules`
+     -  Fetch git submodules
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     -    *Declared by:* `<confctl/nix/modules/cluster>`
+     +    *Example:* `true`
+     +
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+      
+     -`cluster.<name>.swpins.pins.<name>.git.update.auto`
+     -  When enabled, the pin is automatically updated to
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     -`cluster.<name>.swpins.pins.<name>.git.update.interval`
+     -  Number of seconds from the last update to trigger the next
+     -  auto-update, if auto-update is enabled.
+    --
+    --    *Type:* signed integer
+    --
+    --    *Default:* `3600`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    +-    *Type:* signed integer
+     +`confctl.carrier.netboot.host`
+     +  Hostname or IP address of the netboot server
+      
+    +-    *Default:* `3600`
+    +-
+    +-    *Declared by:* `<confctl/nix/modules/cluster>`
+    +-
+     -`cluster.<name>.swpins.pins.<name>.git.update.ref`
+     -  Implicit git reference to use for both manual and automatic updates
+     -
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+          *Default:* `null`
+      
+     -    *Example:* `"refs/heads/master"`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
+    - 
+    +-
+     -    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+`confctl.carrier.netboot.isoImages`
+    -+  A list of ISO images to be included in boot menu
+    ++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+      
+     -`cluster.<name>.swpins.pins.<name>.git.url`
+     -  URL of the git repository
+    --
+    ++`confctl.carrier.netboot.isoImages`
+    ++  A list of ISO images to be included in boot menu
+    + 
+     -    *Type:* string
+     +    *Type:* list of (submodule)
+      
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     +    *Default:* `[ ]`
+      
+     -    *Example:* `"https://github.com/vpsfreecz/vpsadminos"`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+      
+     -    *Declared by:* `<confctl/nix/modules/cluster>`
+     +`confctl.carrier.netboot.isoImages.*.file`
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+          *Default:* `null`
+      
+     -    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+      
+     -`cluster.<name>.swpins.pins.<name>.git-rev.fetchSubmodules`
+     -  Fetch git submodules
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     +    *Default:* `""`
+      
+     -    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+      
+     -`cluster.<name>.swpins.pins.<name>.git-rev.update.auto`
+     -  When enabled, the pin is automatically updated to
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     +    *Default:* `true`
+      
+     -    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+      
+     -`cluster.<name>.swpins.pins.<name>.git-rev.update.interval`
+     -  Number of seconds from the last update to trigger the next
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+      
+     -    *Type:* signed integer
+     +    *Type:* list of string
+    -+
+    -+    *Default:* `[ ]`
+      
+     -    *Default:* `3600`
+    ++    *Default:* `[ ]`
+    + 
+    +-    *Declared by:* `<confctl/nix/modules/cluster>`
+     +    *Example:* `[
+     +  "console=ttyS0,115200"
+     +]`
+      
+    --    *Declared by:* `<confctl/nix/modules/cluster>`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
+    - 
+     -`cluster.<name>.swpins.pins.<name>.git-rev.update.ref`
+     -  Implicit git reference to use for both manual and automatic updates
+    ++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+    ++
+     +`confctl.carrier.netboot.tftp.bindAddress`
+     +  The address for the TFTP server to bind on
+      
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+          *Default:* `null`
+      
+     -    *Example:* `"refs/heads/master"`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/netboot/nixos.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/carrier/netboot/nixos.nix>`
+      
+     -    *Declared by:* `<confctl/nix/modules/cluster>`
+     +`confctl.carrier.onChangeCommands`
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     +    *Default:* `""`
+      
+     -    *Default:* `null`
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/carrier/base.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/carrier/base.nix>`
+      
+     -    *Example:* `"https://github.com/vpsfreecz/vpsadminos"`
+     +`confctl.configurationInfo`
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     +    *Default:* `null`
+      
+     -    *Type:* one of "directory", "git", "git-rev"
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/configuration-info.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/configuration-info.nix>`
+      
+     -    *Default:* `"git"`
+     +`confctl.inputsInfo`
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     +    *Default:* `null`
+      
+     -    *Type:* list of string
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/inputs-info.nix>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/inputs-info.nix>`
+      
+     -    *Default:* `[ ]`
+     +`confctl.programs.kexec-netboot.enable`
+    @@ man/man8/confctl-options.nix.8.md: the deployment configuration directory, i.e.
+     -the deployment configuration directory, i.e. `cluster/<machine-name>/config.nix`,
+     -or any other imported Nix file. These options are added by `confctl` in addition
+     -to options from `NixOS` or `vpsAdminOS`.
+    -+    *Declared by:* `<confctl/nix/store/cv3dy04hxz3lw0gz48kay5b7l05lwpav-source/nix/modules/confctl/kexec-netboot>`
+    ++    *Declared by:* `<confctl/nix/modules/confctl/kexec-netboot>`
+      
+      
+      

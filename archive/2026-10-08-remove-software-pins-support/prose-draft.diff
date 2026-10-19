@@ -1,0 +1,1036 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 438aaf4..f0efec4 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -3,7 +3,7 @@
+ ## Project Structure & Module Organization
+ - `lib/` Ruby sources; CLI commands under `lib/confctl/cli`, Nix build helpers in `lib/confctl/nix*`, health checks in `lib/confctl/health_checks`.
+ - `bin/confctl` entrypoint; `libexec/` helper scripts; `template/` ERB for generated docs; rendered man pages live in `man/man8/`.
+-- `nix/` contains Nix modules and overlays; `example/` provides a sample cluster and swpins setup; `docs/` holds focused guides; release gems are stored in `pkg/`.
++- `nix/` contains Nix modules and overlays; `example/` provides a sample flake cluster; `docs/` holds focused guides; release gems are stored in `pkg/`.
+ 
+ ## Build, Test, and Development Commands
+ - Enter `nix develop` to get Ruby, bundler, nixfmt, and the `confctl` binstub wired to the local sources.
+@@ -20,7 +20,7 @@
+ 
+ ## Testing Guidelines
+ - Run `bundle exec rspec` for automated coverage and `bundle exec rubocop` for linting.
+-- Keep focused manual runs of the commands you touch (build, deploy, swpins, health checks) against a local configuration such as `example/`.
++- Keep focused manual runs of the commands you touch (build, deploy, inputs, generation selection, health checks) against a local configuration such as `example/`.
+ - When fixing a bug, add a minimal regression check in RSpec if practical and document the manual steps you executed.
+ 
+ ## Commit & Pull Request Guidelines
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 9c7c06e..35744c3 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,14 @@
++# Unreleased
++
++- Remove software-pin configuration, commands, migration helper and pin metadata.
++  Cluster configurations now require `flake.nix`. Migrate with confctl v3 before
++  upgrading; keep v3 and required generations/GC roots for rollback.
++- Exclude unsupported local generation records with explicit diagnostics and
++  safeguards for current, numeric selection and retention. Existing flake JSON
++  and GC-root names are unchanged; excluded state is preserved.
++- Generate the option reference and custom metadata listing from flake outputs,
++  including carrier and program options. Use the flake configuration in `example/`.
++
+ # Wed Oct 07 2026 -- version 3.0.0
+ 
+ Software pins (`swpins`) remain supported in v3.0.0 and will be removed in v4.
+diff --git a/README.md b/README.md
+index e7c44d3..ce0b11e 100644
+--- a/README.md
++++ b/README.md
+@@ -21,9 +21,10 @@ machines.
+ * [Nix](https://nixos.org)
+ 
+ ## Quick start
+-### Flake-based configuration (recommended)
++### Flake configuration
+ 
+-confctl works best with a flake-based configuration repository. The repository
++confctl requires a configuration repository with `flake.nix` and the outputs from
++`confctl.lib.mkConfctlOutputs`. The repository
+ defines flake inputs (nixpkgs/vpsadminos/etc.), maps them into **channels**, and
+ machines select channels via `cluster.<name>.inputs.channels`.
+ 
+@@ -133,47 +134,17 @@ confctl inputs update --commit nixpkgs
+ confctl inputs channel update --commit nixos-unstable nixpkgs
+ ```
+ 
+-If you are migrating an existing configuration repository that uses `configs/swpins.nix`
+-and the `swpins/` directory, confctl includes an interactive helper: `confctl migrate swpins-to-flakes`
+-(use `--dry-run` to preview). See [docs/swpins-to-flakes.md](docs/swpins-to-flakes.md).
++For configurations created with software pins, migrate using confctl v3 before
++updating the tool. The [upgrade guide](docs/swpins-to-flakes.md) describes migration,
++retained generations, GC roots and rollback preparation. This version has no
++software-pin or migration commands.
+ 
+-### Legacy configuration (non-flake)
++The [command manual](man/man8/confctl.8.md) and
++[option reference](man/man8/confctl-options.nix.8.md) are also installed as man pages.
+ 
+-The original non-flake workflow is still supported. Use `confctl init --swpins`
+-instead of `confctl init`; the `confctl add`, `confctl build`, and `confctl deploy`
+-workflow is otherwise the same as above.
+-
+-Legacy non-flake configuration repositories can continue importing
+-[`shell.nix`](shell.nix). If you use this workflow, create `shell.nix` in the
+-configuration directory and adjust the import path as needed:
+-
+-```bash
+-cat > shell.nix <<EOF
+-import ../confctl/shell.nix
+-EOF
+-```
+-
+-Enter the `nix-shell`. This uses the legacy bundled-confctl shell and installs
+-confctl's dependencies into `.gems/`:
+-
+-```bash
+-nix-shell
+-```
+-
+-From within the shell, you can access the [manual](./man/man8/confctl.8.md)
+-and a list of [configuration options](./man/man8/confctl-options.nix.8.md):
+-
+-```bash
+-man confctl
+-man confctl-options.nix
+-```
+-
+-Update pre-configured software pins to fetch current nixpkgs. In flake-based
+-configurations, use `confctl inputs ...` instead:
+-
+-```bash
+-confctl swpins update
+-```
++For development of confctl itself, the repository's `shell.nix` remains an
++optional Bundler shell using host `<nixpkgs>`. It does not evaluate a cluster;
++use `nix develop` for the configuration workflow above.
+ 
+ ## Example configuration
+ Example configuration, which can be used as a starting point, can be found in
+@@ -195,113 +166,38 @@ See also existing configurations:
+     │   ├── cluster.nix         # confctl-generated list of machines
+     │   └── module-list.nix     # List of all machine modules (including those in cluster.nix)
+     ├── configs/                # confctl and other user-defined configs
+-    │   ├── confctl.nix         # Configuration for the confctl tool itself
+-    │   └── swpins.nix          # User-defined software pin channels
++    │   └── confctl.nix         # Configuration for the confctl tool itself
+     ├── data/                   # User-defined datasets available in machine configurations as confData
+     ├── environments/           # Environment presets for various types of machines, optional
+-    ├── flake.nix               # Flake entrypoint (recommended)
++    ├── flake.nix               # Flake entrypoint
++    ├── flake.lock              # Locked input sources
+     ├── Gemfile                 # Optional Bundler config for tools/bundled-confctl modes
+     ├── Gemfile.lock            # Recommended for Bundler modes
+     ├── modules/                # User-defined modules
+     │   └── cluster/default.nix # User-defined extensions of `cluster.` options used in `<machine>/module.nix` files
+-    ├── scripts/                # User-defined scripts
+-    ├── shell.nix               # Legacy nix-shell entrypoint
+-    └── swpins/                 # confctl-generated software pins configuration
+-
+-## Software pins
+-Software pins in confctl allow you to use specific revisions of
+-[nixpkgs](https://github.com/NixOS/nixpkgs) or any other software to build
+-and deploy target machines. It doesn't matter what nixpkgs version the build
+-machine uses, because each machine gets its own nixpkgs as configured by the
+-software pin.
++    └── scripts/                # User-defined scripts
+ 
+-Software pins can be grouped in channels, which can then be used by all
+-or selected machines in the configuration. Or, if needed, custom software pins
+-can be configured on selected machines. See below for usage examples.
++## Inputs and channels
+ 
+-## Software pin channels
+-Software pin channels are defined in file `configs/swpins.nix`:
++Dependencies are flake inputs locked in `flake.lock`. A channel maps dependency
++roles, such as `nixpkgs`, to root input names. Machines select channels through
++`cluster.<name>.inputs.channels`; later channels override earlier roles.
++Per-machine `inputs.overrides` takes precedence over all selected channels.
+ 
+ ```nix
+-{ config, ... }:
+-{
+-  confctl.swpins.channels = {
+-    # Channel for NixOS unstable
+-    nixos-unstable = {  # channel name
+-      nixpkgs = {  # swpin name
+-        # git-rev fetches the contents of a git commit and adds information
+-        # about the current git revision
+-        type = "git-rev";
+-
+-        git-rev = {  # swpin type-specific configuration
+-          # Repository URL
+-          url = "https://github.com/NixOS/nixpkgs";
+-
+-          # Fetch git submodules or not
+-          fetchSubmodules = false;
+-
+-          # git reference to use for manual/automated update using
+-          # `confctl swpins channel update`
+-          update.ref = "refs/heads/nixos-unstable";
+-
+-          # Whether to enable automated updates triggered by `confctl build | deploy`
+-          update.auto = true;
+-
+-          # If update.auto is true, this determines how frequently will confctl
+-          # try to update the channel, in seconds
+-          update.interval = 60*60;
+-        };
+-      };
+-    };
+-
+-    # Channel for vpsAdminOS staging
+-    vpsadminos-staging = {
+-      vpsadminos = {
+-        type = "git-rev";
+-
+-        git-rev = {
+-          url = "https://github.com/vpsfreecz/vpsadminos";
+-          update.ref = "refs/heads/staging";
+-          update.auto = true;
+-        };
+-      };
+-    };
+-  };
+-}
++channels = {
++  production = { nixpkgs = "nixpkgsStable"; };
++  staging = { nixpkgs = "nixpkgsUnstable"; };
++};
+ ```
+ 
+-This configuration defines what channels exist, what packages they contain
+-and how to fetch them. Such configured channels can then be manipulated using
+-`confctl`. `confctl` prefetches selected software pins and saves their hashes
+-in JSON files in the `swpins/` directory.
+-
+-In flake-based configurations (using `confctl.lib.mkConfctlOutputs`), channel
+-names are provided by the flake `channels` mapping. Machines should select
+-channels via `cluster.<name>.inputs.channels` (preferred) and can override the
+-role-to-input mapping with `cluster.<name>.inputs.overrides`. Legacy
+-`cluster.<name>.swpins.channels` remains supported for non-flake configs.
+-
+-```
+-# List channels
+-$ confctl swpins channel ls
+-CHANNEL             SW           TYPE      PIN
+-nixos-unstable      nixpkgs      git-rev   1f77a4c8
+-vpsadminos-staging  vpsadminos   git-rev   9c9a7bcb
++Use `confctl inputs channel ls`, `confctl inputs channel update --commit
++production nixpkgs`, or `confctl inputs channel set --commit production nixpkgs
++<revision>` to manage the mapped inputs. Builds and deployments use the existing
++lock without updating inputs automatically. See [Flake inputs](docs/flake-inputs.md)
++for raw-source inputs, `follows`, path inputs and the optional NIX_PATH bridge.
+ 
+-# Update channels with update.auto = true to reference in update.ref
+-$ confctl swpins channel update
+-
+-# You can update only selected channels or swpins
+-$ confctl swpins channel update nixos-unstable
+-$ confctl swpins channel update nixos-unstable nixpkgs
+-
+-# Set swpin to a custom git reference
+-$ confctl swpins channel set nixos-unstable nixpkgs 1f77a4c8
+-```
+-
+-`confctl build` and `confctl deploy` will now use the prefetched software pins.
+-
+-## Machine metadata and software pins
++## Machine metadata and inputs
+ Machine configuration directory usually contains at least two files:
+ `cluster/<machine name>/config.nix` and `cluster/<machine name>/module.nix`.
+ 
+@@ -311,7 +207,7 @@ a standard NixOS configuration module, similar to `/etc/nixos/configuration.nix`
+ `module.nix` is specific to confctl configurations. `module.nix` files from
+ all machines are evaluated during every build, whether that particular machine
+ is being built or not. `module.nix` contains metadata about machines from which
+-confctl knows how to treat them. It is also used to declare which software pins
++confctl knows how to treat them. It is also used to declare which input roles
+ or channels the machine uses. Metadata about any machine can be read from
+ `config.nix` of any other machine.
+ 
+@@ -325,12 +221,9 @@ For example, machine named `my-machine` would be described in
+     # This tells confctl whether it is a NixOS or vpsAdminOS machine
+     spin = "nixos";
+ 
+-    # Flake configs: prefer inputs.channels (channels come from mkConfctlOutputs)
++    # Channels come from mkConfctlOutputs
+     inputs.channels = [ "nixos-unstable" ];
+ 
+-    # Legacy configs: use swpins.channels (configs/swpins.nix)
+-    # swpins.channels = [ "nixos-unstable" ];
+-
+     # If the machine name is not a hostname, configure the address to which
+     # should confctl deploy it
+     host.target = "<ip address>";
+@@ -341,44 +234,19 @@ For example, machine named `my-machine` would be described in
+ See [man/man8/confctl-options.nix.8.md](./man/man8/confctl-options.nix.8.md)
+ for a list of all options.
+ 
+-## Per-machine software pins
+-It is simpler to use software pins from channels, because they are usually
+-used by multiple machines, but it is possible to define per-machine software
+-pins, either to override pins from channels or add custom ones.
++## Per-machine input overrides
+ 
+-Per-machine software pins are configured in the machine's `module.nix` file:
++Define the source as a root flake input, then map the desired role to it:
+ 
+ ```nix
+-{ config, ... }:
+-{
+-  cluster."my-machine" = {
+-    # List of channels
+-    swpins.channels = [ "..." ];
+-
+-    # Per-machine swpins
+-    swpins.pins = {
+-      "pin-name" = {
+-        type = "git-rev";
+-        git-rev = {
+-          # ...pin definition...
+-        };
+-      };
+-    };
+-  };
+-}
+-```
+-
+-The configuration is exactly the same as that of software pins in channels.
+-Instead of `confctl swpins channel` commands, use `confctl swpins cluster`
+-to manage configured pins.
++# In flake.nix:
++inputs.nixpkgsCustom.url = "github:NixOS/nixpkgs/my-branch";
+ 
+-## Nix flakes
+-confctl can be used from a configuration flake via `confctl.lib.mkConfctlOutputs`.
+-In that mode, channel definitions live in the flake `channels` mapping and machines
+-select them via `cluster.<name>.inputs.channels`. Per-machine role-to-input overrides
+-are done via `cluster.<name>.inputs.overrides`.
++# In cluster/my-machine/module.nix:
++cluster."my-machine".inputs.overrides.nixpkgs = "nixpkgsCustom";
++```
+ 
+-`cluster.<name>.swpins.*` and `configs/swpins.nix` are not evaluated in flake mode.
++Overrides can also add roles that are absent from the selected channels.
+ 
+ ## Extra module arguments
+ Machine configs can use the following extra module arguments:
+@@ -389,17 +257,16 @@ Machine configs can use the following extra module arguments:
+   see [example/data/default.nix](example/data/default.nix)
+ - `confMachine` - attrset with information about the machine that is currently
+   being built, contains key `name` and all options from
+-  [machine metadata module](##machine-metadata-and-software-pins)
++  [machine metadata module](#machine-metadata-and-inputs)
+ - `flakeInputs` - flake inputs passed to `mkConfctlOutputs` (excluding `self`)
+ - `configurationInfo` - exact source revision and dirty state of the
+   configuration flake when Git metadata is available, exposed as
+   `confctl.configurationInfo` and written to
+   `/etc/confctl/configuration-info.json`
+-- `inputs` - attrset of flake input store paths selected for the machine build
+-- `swpins` - (legacy configs only) attrset of prefetched software pins of the machine that is currently being built
++- `inputs` - attrset of selected source store paths keyed by dependency role
+ - `inputsInfo` - metadata about flake inputs selected for the machine (keys are
+   roles like `nixpkgs`/`vpsadminos`, values include `input`, `url`, `rev`,
+-  `shortRev`, `lastModified`), exposed as `confctl.inputsInfo` and written to
++  `shortRev`, `lastModified` when available), exposed as `confctl.inputsInfo` and written to
+   `/etc/confctl/inputs-info.json`
+ 
+ For example in `cluster/my-machine/config.nix`:
+@@ -424,11 +291,11 @@ The `confctl` utility itself can be configured using `configs/confctl.nix`:
+   confctl = {
+     # Columns that are shown by `confctl ls`. Any option from machine metadata
+     # can be used.
+-    listColumns = {
++    list.columns = [
+       "name"
+       "spin"
+       "host.fqdn"
+-    };
++    ];
+   };
+ }
+ ```
+@@ -477,6 +344,23 @@ files.
+ }
+ ```
+ 
++## Local generation formats
++
++Local generation records must explicitly contain `mode: "flakes"`. Records in
++other formats, records without a mode and corrupt records are excluded with their
++paths and reasons reported. Listing and retention count supported generations;
++excluded records and their GC roots remain untouched.
++
++If `current` points to an excluded or missing record, selecting `current`, local
++`old` removal and automatic local rotation fail. Numeric local selection also
++fails when any records are excluded; use an explicit supported generation name.
++A successful new build can deliberately update `current`. Remote profile
++operations remain available, including profiles built with older tools.
++
++Retain confctl v3 to use old software-pin generations. See the
++[upgrade and rollback guide](docs/swpins-to-flakes.md) before removing any old
++records or roots.
++
+ ## Rotate build generations
+ confctl can be used to rotate old generations both on the build machine
+ and on the deployed machines.
+diff --git a/docs/carrier.md b/docs/carrier.md
+index 79004db..ef1ec29 100644
+--- a/docs/carrier.md
++++ b/docs/carrier.md
+@@ -148,3 +148,11 @@ the latest generation found on the netboot server at the moment of execution. Us
+ loaded. See `kexec-netboot --help` for all available options.
+ 
+ The loaded kernel can be run either by `kexec-netboot -e` or `kexec -e` directly.
++
++## Input metadata in the netboot index
++
++The netboot server's generation JSON exports `inputs_info` when the carried
++`machine.json` contains `inputs-info`. It uses the same role metadata as
++`/etc/confctl/inputs-info.json`; systems without it report unknown inputs.
++Machine boot paths, versions, revisions, MAC addresses and kernel parameters are
++independent of this metadata.
+diff --git a/docs/flake-inputs.md b/docs/flake-inputs.md
+index f92db1f..68d6863 100644
+--- a/docs/flake-inputs.md
++++ b/docs/flake-inputs.md
+@@ -1,8 +1,8 @@
+ # Flake inputs
+ 
+-confctl supports flake-based configuration repositories via `confctl.lib.mkConfctlOutputs`.
++confctl requires flake configuration repositories exposing `confctl.lib.mkConfctlOutputs`.
+ 
+-In flake configs:
++The configuration contract:
+ 
+ - inputs are normal flake inputs locked in `flake.lock`
+ - machines select “channels” via `inputs.channels`
+@@ -52,6 +52,7 @@ A minimal pattern:
+   inputs = {
+     confctl.url = "github:vpsfreecz/confctl";
+ 
++    nixpkgs.follows = "nixpkgsStable";
+     nixpkgsStable.url = "github:NixOS/nixpkgs/nixos-25.11";
+     vpsadminosStaging.url = "github:vpsfreecz/vpsadminos/staging";
+     vpsadminosProduction.url = "github:vpsfreecz/vpsadminos/staging";
+@@ -122,7 +123,7 @@ To override one role for a single machine:
+ cluster."my-machine".inputs.overrides.nixpkgs = "nixpkgsMunin";
+ ```
+ 
+-Use this sparingly. The default model is: select channels, update channels.
++Per-machine overrides take precedence over every selected channel.
+ 
+ ## Updating inputs
+ 
+@@ -157,3 +158,31 @@ inputs.vpsadminStaging = {
+ ```
+ 
+ Because `follows` is per-input-name, you typically need separate inputs per environment (staging vs production) to pin independently.
++
++## Source inputs and evaluation
++
++Inputs used only as source directories may use `flake = false`:
++
++```nix
++inputs.myToolInput = {
++  url = "github:example/my-tool/main";
++  flake = false;
++};
++```
++
++Path inputs and `follows` links are supported. `inputs` in machine modules maps
++roles to selected source store paths; use it to import raw files.
++`flakeInputs` exposes root inputs, and `inputsInfo.<role>.input` identifies the
++selected root input for accessing flake exports. Raw sources have no flake
++exports, and revision fields may be absent for sources without Git metadata.
++
++Flake builds are pure by default. If existing `<nixpkgs>`-style imports require
++NIX_PATH, set both `confctl.nix.impureEval = true` and
++`confctl.nix.legacyNixPath = true`. `legacyNixPathMap` selects the role names
++exposed with `-I`; machines with conflicting source paths build in separate
++groups. This bridge does not provide a non-flake configuration backend.
++
++The tool and configuration's confctl input must both include `moduleOptions`
++support to use the option reference and `confctl ls -L`. That output evaluates
++public confctl and cluster options, including `modules/cluster/default.nix`,
++without building machine systems.
+diff --git a/docs/swpins-to-flakes.md b/docs/swpins-to-flakes.md
+index f4070e0..78861f8 100644
+--- a/docs/swpins-to-flakes.md
++++ b/docs/swpins-to-flakes.md
+@@ -1,4 +1,4 @@
+-# Migrating from swpins to flakes
++# Upgrading software-pin configurations with confctl v3
+ 
+ This guide explains how to convert an existing **confctl configuration repository** from the legacy *swpins* workflow (pins and channels defined in `configs/swpins.nix`, state in `swpins/*.json`, updates via `confctl swpins ...`) to a **flake-based** workflow (pins are normal flake inputs locked in `flake.lock`, updates via `confctl inputs ...`).
+ 
+@@ -16,22 +16,35 @@ If you are new to the flake model in confctl, read `docs/flake-inputs.md` after
+ 
+ ## Before you start
+ 
+-- Do the migration on a branch.
+-- Make sure your Nix has flakes enabled (`nix-command` + `flakes`).
+-- Your configuration repo layout is assumed to be the usual confctl layout with `cluster/`, `configs/`, etc.
++This guide applies to a software-pin configuration managed with confctl v3,
++upgrading to a confctl version that supports only flakes. Perform migration
++before updating the tool or configuration's confctl input. The new executable
++has no `swpins`, `migrate`, `init --swpins` or `init --legacy` commands.
++
++- Work on a branch and retain the previous configuration revision and pin files.
++- Keep a runnable v3 binary or source and its Nix/Bundler environment. The name
++  `confctl-v3` below refers to that retained executable; it is not a command
++  provided by the new tool. Other `confctl` commands in steps 1–8 also use v3.
++- Enable Nix's `nix-command` and `flakes` features.
++- Preserve local generations and their GC roots, and required remote profiles.
++  JSON backups do not preserve store closures.
++- Review custom Ruby scripts and imported confctl APIs for removed pin constants,
++  the old backend/cache API, `nixosModules.swpins`, and pin options. External
++  netboot-index readers must accept input metadata instead of pin metadata.
++
+ 
+ ---
+ 
+ ## Automated migration (recommended)
+ 
+-confctl includes an interactive migration helper that performs the steps in this guide:
++confctl v3 includes the interactive helper for this migration:
+ 
+ ```bash
+-confctl migrate swpins-to-flakes --dry-run
+-confctl migrate swpins-to-flakes --yes
++confctl-v3 migrate swpins-to-flakes --dry-run
++confctl-v3 migrate swpins-to-flakes --yes
+ ```
+ 
+-You can also run individual steps (`flake`, `machines`, `imports`, `clean`); see `confctl migrate swpins-to-flakes --help`.
++You can also run individual steps (`flake`, `machines`, `imports`, `clean`); see `confctl-v3 migrate swpins-to-flakes --help`.
+ 
+ ## Step 1: Add `flake.nix`
+ 
+@@ -45,7 +58,8 @@ A minimal, practical skeleton looks like this:
+ 
+   inputs = {
+     # confctl itself
+-    confctl.url = "github:vpsfreecz/confctl";
++    # Keep the current v3 input revision during migration.
++    confctl.url = "github:vpsfreecz/confctl/<retained-v3-revision>";
+ 
+     # mkConfctlOutputs needs an input named `nixpkgs` for evaluation.
+     # If you want a specific nixpkgs for that purpose, pin it here.
+@@ -323,3 +337,61 @@ confctl inputs machine update --commit my-machine nixpkgs
+ ```
+ 
+ `flake.lock` is now the source of truth for pinned revisions.
++
++
++## Switch to the flake-only tool
++
++After reviewing the channel and override mappings and completing a representative
++flake build with v3, select the new confctl tool and update the configuration's
++confctl input together. The new input provides `confctl.moduleOptions`, which
++`confctl ls -L` needs for custom metadata listing. Remove obsolete configured
++pin options and update any affected user scripts before using the new tool.
++
++Verify machine listing, input status, explicit generation selection and a
++representative build. Running nodes can continue using their existing system
++profiles while operator tooling changes. Deployment is a separate operation;
++retain required remote profiles throughout the rollback window. Nodes without
++input metadata show unknown inputs until a flake-built system is deployed.
++
++## Saved generations and GC roots
++
++The new tool accepts only records with explicit `mode: "flakes"` in
++`.confctl/generations/<escaped-host>/<generation>/generation.json`. It retains
++the existing flake schema, input links and root names; v3 can read new flake
++generations too. Missing-mode, software-pin, unknown-mode and invalid records
++are reported with path and reason and are excluded from usable local generations.
++
++Excluded records, `*.swpin` links, old `.confctl/build` caches, pin state and
++associated GC roots are left untouched. Roots live beneath
++`/nix/var/nix/gcroots/per-user/<login>/confctl-<configuration-path-hash>`;
++old root names include the host, generation and `swpin.<name>`, toplevel or
++rollback suffixes. These roots may keep disk use above the new retention count.
++Do not move or delete `.confctl` casually: roots point into it and their namespace
++depends on the real configuration path.
++
++If an existing `current` link targets an excluded, invalid or missing record,
++the new tool leaves the link unchanged and refuses `current` selection and local
++`old` removal or rotation. It does not substitute a supported generation.
++Numeric local selectors fail whenever records have been excluded; select a
++supported generation explicitly. A successful new build may update `current`
++through the ordinary build path.
++
++Use retained v3's local generation commands to remove an unwanted old generation
++while v3 can still load it, or keep it until rollback is no longer required.
++Broader cache/root cleanup needs a separate inventory; the new tool cannot remove
++excluded records. Remote profile listing and removal remain available regardless
++of which tool built them. Local roots do not protect remote copies; deleting
++remote profiles or collecting remote garbage can remove needed closures.
++
++## Rollback
++
++Retain the previous configuration Git revision and lock, runnable v3 environment,
++and required local and remote roots. To restore the operator tooling, select v3
++and the previous configuration revision. To restore a pre-flake configuration,
++restore its matching configuration and pin files too; v2 cannot use flake
++configurations. New builds may have changed `current`, so select the required
++old generation explicitly with v3.
++
++Machine rollback uses retained system profiles and closures. Changing the tool
++version cannot recover a closure that has already been removed or collected.
++There is no automatic state conversion to reverse.
+diff --git a/example/README.md b/example/README.md
+index ec71153..7856a2d 100644
+--- a/example/README.md
++++ b/example/README.md
+@@ -1,21 +1,27 @@
+ # confctl example configuration
+-There are four skeleton deployments:
++There are five skeleton deployments:
+ 
+ * `nixos-machine` to deploy a standard NixOS machine
+ * `vpsadminos-machine` to deploy vpsAdminOS machine
+ * `vpsadminos-container` to deploy to a container running on vpsAdminOS
+-* `vpsfreecz-container` to deploy to a VPS at [vpsFree.cz](https://vpsfree.org),
++* `vpsfreecz-vps` to deploy to a VPS at [vpsFree.cz](https://vpsfree.org),
+   which is the same as `vpsadminos-container`
++* `nested/nixos-machine` to demonstrate a machine in a nested directory
++
++The `confctl` input uses `path:..` to select this repository. When copying the
++example elsewhere, change it to `github:vpsfreecz/confctl` or the intended local
++source path before generating a lock. `shell.nix` is an optional wrapper for
++confctl source development; use the flake shell for cluster operations.
+ 
+ ## Usage
+-1. Enter `nix-shell`:
++1. Enter `nix develop`:
+ ```
+-nix-shell
++nix develop
+ ```
+ 
+-2. Update software pins:
++2. Update flake inputs:
+ ```
+-confctl swpins update
++confctl inputs update --all
+ ```
+ 
+ 3. Edit configurations in `cluster/` to your liking.
+@@ -27,7 +33,7 @@ or provision a machine, it has to already be installed and running. confctl will
+ deploy the new system over SSH and activate it.
+ 
+ Target IP addresses to which the systems will be deployed to can be set
+-in `cluster/*/module.nix`, option `target.host`.
++in `cluster/*/module.nix`, option `host.target`.
+ 
+ Configure SSH keys in `data/ssh-keys.nix`.
+ 
+diff --git a/man/man8/confctl.8.md b/man/man8/confctl.8.md
+index 02349ae..4438646 100644
+--- a/man/man8/confctl.8.md
++++ b/man/man8/confctl.8.md
+@@ -10,30 +10,16 @@
+ `confctl` is a Nix deployment configuration management tool. It can be used to
+ build and deploy *NixOS* and *vpsAdminOS* machines.
+ 
+-## SOFTWARE PINS
+-Each machine managed by `confctl` uses predefined software packages
+-like `nixpkgs`, `vpsadminos` and possibly other components. These packages
+-are pinned to particular versions, e.g. specific git commits.
+-
+-Software pins are defined in the Nix configuration and then prefetched using
+-`confctl`. Selected software pins are added to environment variable `NIX_PATH`
+-for `nix-build` and can also be read by `Nix` while building machines.
+-
+-Software pins can be defined using channels or on specific machines.
+-The advantage of using channels is that changing a pin in a channel changes
+-also all machines that use the channel. Channels are defined in file
+-`configs/swpins.nix` using option `confctl.swpins.channels` (legacy, non-flake
+-configurations).
+-
+-In flake-based configurations (using `confctl.lib.mkConfctlOutputs`), channel names
+-are provided by the flake `channels` mapping and machines select them via
+-`cluster.<name>.inputs.channels`. Per-machine role-to-input overrides are configured
+-via `cluster.<name>.inputs.overrides`. `cluster.<name>.swpins.*` is not used in flake
+-mode; manage `flake.lock` using the `confctl inputs` command family.
+-
+-Software pins declared in the Nix configuration have to be prefetched before
+-they can be used to build machines. See the `confctl swpins` command family
+-for more information.
++## FLAKE INPUTS
++Configurations require `flake.nix` exposing `confctl.lib.mkConfctlOutputs` and
++inputs locked in `flake.lock`. Channels map dependency roles to root inputs;
++machines select channels via `cluster.<name>.inputs.channels`. Later channels
++override earlier mappings, and `inputs.overrides` takes precedence over channels.
++Manage locked sources with the `confctl inputs` commands. Build and deploy do
++not update inputs automatically.
++
++Software-pin configurations must be migrated using confctl v3 before upgrading.
++See the repository's `docs/swpins-to-flakes.md` for migration and rollback.
+ 
+ ## PATTERNS
+ `confctl` commands accept patterns instead of names. These patterns work
+@@ -46,6 +32,14 @@ Generations can be selected by *offset*. `0` is the current (last) generation.
+ `1` is the first (oldest) generation, `2` the second generation, etc. `-1` is
+ the generation before last and so on.
+ 
++Local lists and retention count supported flake generations. Unsupported or
++invalid records are reported and left untouched, including their GC roots.
++Numeric local selectors fail if any records are excluded; use an explicit
++supported name. `current` fails if its link points to an excluded or missing
++record, and local `old` removal or rotation is blocked in that case. A successful
++new build may update `current`. Remote-only profile selectors are unaffected.
++Use retained confctl v3 for old software-pin generations.
++
+ ## GLOBAL OPTIONS
+ `-c`, `--color` `always`|`never`|`auto`
+   Set output color mode. Defaults to `auto`, which enables colors when
+@@ -54,10 +48,7 @@ the generation before last and so on.
+ ## COMMANDS
+ `confctl init` [*options*]
+   Create a new configuration in the current directory. The current directory
+-  is set up to be used with `confctl`. Defaults to a flake-based configuration.
+-
+-    `--swpins`, `--legacy`
+-      Create a legacy swpins-based (non-flake) configuration.
++  is set up with a flake configuration for `confctl`.
+ 
+ `confctl add` *name*
+   Add new machine to the configuration.
+@@ -122,10 +113,10 @@ the generation before last and so on.
+       Do not ask for confirmation on standard input, assume the answer is yes.
+ 
+     `-j`, `--max-jobs` *number*
+-      Maximum number of build jobs, passed to `nix-build`. See man nix-build(1).
++      Maximum number of build jobs, passed to `nix build`. See man nix3-build(1).
+ 
+     `--cores` *number*
+-      Number of CPU cores to use, passed to `nix-build`. See man nix-build(1).
++      Number of CPU cores to use, passed to `nix build`. See man nix3-build(1).
+ 
+ `confctl deploy` [*options*] [*machine-pattern* [`boot`|`switch`|`test`|`dry-activate`]]
+   Deploy either a new or an existing build generation to matching machines.
+@@ -159,10 +150,6 @@ the generation before last and so on.
+       first build machines described by *machine-pattern* and then check
+       their status.
+ 
+-    `--outdated-swpins`
+-      Run `confctl status -g none` and deploy only machines that have outdated
+-      software pins.
+-
+     `-i`, `--interactive`
+       Deploy machines one by one while asking for confirmation for activation.
+ 
+@@ -197,10 +184,10 @@ the generation before last and so on.
+       if `--reboot` is used. `confctl` will wait for `600 seconds` by default.
+ 
+     `-j`, `--max-jobs` *number*
+-      Maximum number of build jobs, passed to `nix-build`. See man nix-build(1).
++      Maximum number of build jobs, passed to `nix build`. See man nix3-build(1).
+ 
+     `--cores` *number*
+-      Number of CPU cores to use, passed to `nix-build`. See man nix-build(1).
++      Number of CPU cores to use, passed to `nix build`. See man nix3-build(1).
+ 
+     `--no-health-checks`
+       Do not run configured health checks. Health checks are run by default
+@@ -244,27 +231,26 @@ the generation before last and so on.
+ 
+     `-g`, `--generation` *generation*|*offset*|`current`|`none`
+       Check status against a selected generation instead of a new build. If set
+-      to `none`, only the currently configured software pins are checked and not
++      to `none`, only the currently configured input roles are checked and not
+       the system version itself.
+ 
+     `-j`, `--max-jobs` *number*
+-      Maximum number of build jobs, passed to `nix-build`. See man nix-build(1).
++      Maximum number of build jobs, passed to `nix build`. See man nix3-build(1).
+ 
+     `--cores` *number*
+-      Number of CPU cores to use, passed to `nix-build`. See man nix-build(1).
++      Number of CPU cores to use, passed to `nix build`. See man nix3-build(1).
+ 
+-`confctl changelog` [*options*] [*machine-pattern* [*sw-pattern*]]
+-  Show differences in deployed and configured software pins. For git software
+-  pins, it's a git log.
++`confctl changelog` [*options*] [*machine-pattern* [*role-pattern*]]
++  Show differences in deployed and configured input roles. For Git inputs, it's a git log.
+ 
+   By default, `confctl` assumes that the configuration contains upgraded
+-  software pins, i.e. that the configuration is equal to or ahead of the deployed
+-  machines. `confctl changelog` then prints a lists of changes that are missing
+-  from the deployed machines. Too see a changelog for downgrade, use option
++  input roles, i.e. that the configuration is equal to or ahead of the deployed
++  machines. `confctl changelog` then prints a list of changes that are missing
++  from the deployed machines. To see a changelog for downgrade, use option
+   `-d`, `--downgrade`.
+ 
+   `confctl changelog` will not show changes to the deployment configuration
+-  itself, it works only on software pins.
++  itself, it works only on input roles.
+ 
+     `-a`, `--attr` *attribute*`=`*value* | *attribute*`!=`*value*
+       Filter machines by selected attribute, which is either tested for
+@@ -279,13 +265,13 @@ the generation before last and so on.
+       Do not ask for confirmation on standard input, assume the answer is yes.
+ 
+     `-g`, `--generation` *generation*|*offset*|`current`
+-      Show changelog against software pins from a selected generation instead
++      Show changelog against input roles from a selected generation instead
+       of the current configuration.
+ 
+     `-d`, `--downgrade`
+-      Use when the configuration has older software pins than deployed machines,
++      Use when the configuration has older input roles than deployed machines,
+       e.g. when doing a downgrade. Show a list of changes that are deployed
+-      on the machines and are missing in the configured software pins.
++      on the machines and are missing in the configured input roles.
+ 
+     `-v`, `--verbose`
+       Show full-length changelog descriptions.
+@@ -294,23 +280,22 @@ the generation before last and so on.
+       Show patches.
+ 
+     `-j`, `--max-jobs` *number*
+-      Maximum number of build jobs, passed to `nix-build`. See man nix-build(1).
++      Maximum number of build jobs, passed to `nix build`. See man nix3-build(1).
+ 
+     `--cores` *number*
+-      Number of CPU cores to use, passed to `nix-build`. See man nix-build(1).
++      Number of CPU cores to use, passed to `nix build`. See man nix3-build(1).
+ 
+-`confctl diff` [*options*] [*machine-pattern* [*sw-pattern*]]
+-  Show differences in deployed and configured software pins. For git software
+-  pins, it's a git diff.
++`confctl diff` [*options*] [*machine-pattern* [*role-pattern*]]
++  Show differences in deployed and configured input roles. For Git inputs, it's a git diff.
+ 
+   By default, `confctl` assumes that the configuration contains upgraded
+-  software pins, i.e. that the configuration is equal to or ahead of the deployed
++  input roles, i.e. that the configuration is equal to or ahead of the deployed
+   machines. `confctl diff` then considers changes that are missing from the
+-  deployed machines. Too see a diff for downgrade, use option
++  deployed machines. To see a diff for downgrade, use option
+   `-d`, `--downgrade`.
+ 
+   `confctl diff` will not show changes to the deployment configuration
+-  itself, it works only on software pins.
++  itself, it works only on input roles.
+ 
+     `-a`, `--attr` *attribute*`=`*value* | *attribute*`!=`*value*
+       Filter machines by selected attribute, which is either tested for
+@@ -325,19 +310,19 @@ the generation before last and so on.
+       Do not ask for confirmation on standard input, assume the answer is yes.
+ 
+     `-g`, `--generation` *generation*|*offset*|`current`
+-      Show diff against software pins from a selected generation instead
++      Show diff against input roles from a selected generation instead
+       of the current configuration.
+ 
+     `-d`, `--downgrade`
+-      Use when the configuration has older software pins than deployed machines,
++      Use when the configuration has older input roles than deployed machines,
+       e.g. when doing a downgrade. Show a list of changes that are deployed
+-      on the machines and are missing in the configured software pins.
++      on the machines and are missing in the configured input roles.
+ 
+     `-j`, `--max-jobs` *number*
+-      Maximum number of build jobs, passed to `nix-build`. See man nix-build(1).
++      Maximum number of build jobs, passed to `nix build`. See man nix3-build(1).
+ 
+     `--cores` *number*
+-      Number of CPU cores to use, passed to `nix-build`. See man nix-build(1).
++      Number of CPU cores to use, passed to `nix build`. See man nix3-build(1).
+ 
+ `confctl test-connection` [*options*] [*machine-pattern*]
+   Try to open a SSH connection to the selected machines. This command can be
+@@ -656,149 +641,6 @@ the generation before last and so on.
+       Use when the new version is older than the previously set version. Used for
+       generating the commit changelog direction.
+ 
+-`confctl swpins cluster ls` [*name-pattern* [*sw-pattern*]]
+-  List cluster machines with pinned software packages.
+-
+-`confctl swpins cluster set` *name-pattern* *sw-pattern* *version...*
+-  Set selected software packages to new *version*. The value of *version* depends
+-  on the type of the software pin, for git it is a git reference, e.g. a revision.
+-
+-    `--[no-]commit`
+-      Commit changed swpins files to git. Disabled by default.
+-
+-    `--[no-]changelog`
+-      Include changelog in the commit message when `--commit` is used. Enabled by
+-      default.
+-
+-    `--[no]-editor`
+-      Open `$EDITOR` with the commit message. Enabled by default.
+-
+-    `-d`, `--downgrade`
+-      Use when the new version is older than the previously set version. Used for
+-      generating changelog for the commit message.
+-
+-`confctl swpins cluster update` [*name-pattern* [*sw-pattern*]]
+-  Update selected or all software packages that have been configured to support
+-  this command. The usual case for git is to pin to the current branch head.
+-
+-    `--[no-]commit`
+-      Commit changed swpins files to git. Disabled by default.
+-
+-    `--[no-]changelog`
+-      Include changelog in the commit message when `--commit` is used. Enabled by
+-      default.
+-
+-    `--[no]-editor`
+-      Open `$EDITOR` with the commit message. Enabled by default.
+-
+-    `-d`, `--downgrade`
+-      Use when the new version is older than the previously set version. Used for
+-      generating changelog for the commit message.
+-
+-`confctl swpins channel ls` [*channel-pattern* [*sw-pattern*]]
+-  List existing channels with pinned software packages.
+-
+-`confctl swpins channel set` *channel-pattern* *sw-pattern* *version...*
+-  Set selected software packages in channels to new *version*. The value
+-  of *version* depends on the type of the software pin, for git it is a git
+-  reference, e.g. a revision.
+-
+-    `--[no-]commit`
+-      Commit changed swpins files to git. Disabled by default.
+-
+-    `--[no-]changelog`
+-      Include changelog in the commit message when `--commit` is used. Enabled by
+-      default.
+-
+-    `--[no]-editor`
+-      Open `$EDITOR` with the commit message. Enabled by default.
+-
+-    `-d`, `--downgrade`
+-      Use when the new version is older than the previously set version. Used for
+-      generating changelog for the commit message.
+-
+-`confctl swpins channel update` [*channel-pattern* [*sw-pattern*]]
+-  Update selected or all software packages in channels that have been configured
+-  to support this command. The usual case for git is to pin to the current
+-  branch head.
+-
+-    `--[no-]commit`
+-      Commit changed swpins files to git. Disabled by default.
+-
+-    `--[no-]changelog`
+-      Include changelog in the commit message when `--commit` is used. Enabled by
+-      default.
+-
+-    `--[no]-editor`
+-      Open `$EDITOR` with the commit message. Enabled by default.
+-
+-    `-d`, `--downgrade`
+-      Use when the new version is older than the previously set version. Used for
+-      generating changelog for the commit message.
+-
+-`confctl swpins core ls` [*sw-pattern*]
+-  List core software packages used internally by confctl.
+-
+-`confctl swpins core set` *sw-pattern* *version...*
+-  Set selected core software package to new *version*. The value
+-  of *version* depends on the type of the software pin, for git it is a git
+-  reference, e.g. a revision.
+-
+-    `--[no-]commit`
+-      Commit changed swpins files to git. Disabled by default.
+-
+-    `--[no-]changelog`
+-      Include changelog in the commit message when `--commit` is used. Enabled by
+-      default.
+-
+-    `--[no]-editor`
+-      Open `$EDITOR` with the commit message. Enabled by default.
+-
+-    `-d`, `--downgrade`
+-      Use when the new version is older than the previously set version. Used for
+-      generating changelog for the commit message.
+-
+-`confctl swpins core update` [*sw-pattern*]
+-  Update selected or all core software packages that have been configured
+-  to support this command. The usual case for git is to pin to the current
+-  branch head.
+-
+-    `--[no-]commit`
+-      Commit changed swpins files to git. Disabled by default.
+-
+-    `--[no-]changelog`
+-      Include changelog in the commit message when `--commit` is used. Enabled by
+-      default.
+-
+-    `--[no]-editor`
+-      Open `$EDITOR` with the commit message. Enabled by default.
+-
+-    `-d`, `--downgrade`
+-      Use when the new version is older than the previously set version. Used for
+-      generating changelog for the commit message.
+-
+-`confctl swpins update`
+-  Update software pins that have been configured for updates, including pins
+-  in all channels, all machine-specific pins and the core pins.
+-
+-    `--[no-]commit`
+-      Commit changed swpins files to git. Disabled by default.
+-
+-    `--[no-]changelog`
+-      Include changelog in the commit message when `--commit` is used. Enabled by
+-      default.
+-
+-    `--[no]-editor`
+-      Open `$EDITOR` with the commit message. Enabled by default.
+-
+-    `-d`, `--downgrade`
+-      Use when the new version is older than the previously set version. Used for
+-      generating changelog for the commit message.
+-
+-`confctl swpins reconfigure`
+-  Regenerate all confctl-managed software pin files according to the Nix
+-  configuration.
+-
+ ## USER-DEFINED COMMANDS
+ User-defined Ruby scripts can be placed in directory `scripts`. Each script
+ should create a subclass of `ConfCtl::UserScript` and call class-method `register`.
+diff --git a/template/confctl-options.nix/main.erb b/template/confctl-options.nix/main.erb
+index 921facb..ffe53c7 100644
+--- a/template/confctl-options.nix/main.erb
++++ b/template/confctl-options.nix/main.erb
+@@ -13,25 +13,19 @@ within the deployment configuration directory:
+ 
+ <%= print_options(opts.confctl_settings) %>
+ 
+-## SOFTWARE PIN CHANNELS
+-The following `confctl` settings for software pin channels can be configured
+-in `configs/swpins.nix` within the deployment configuration directory:
+-
+-<%= print_options(opts.swpin_settings) %>
+-
+ ## MACHINE CONFIGURATION
+ The following options can be configured in per-machine `module.nix` files within
+ the deployment configuration directory, i.e. `cluster/<machine-name>/module.nix`:
+ 
+ <%= print_options(opts.machine_settings) %>
+ 
+-## SERVICES
++## MACHINE SYSTEM CONFIGURATION
+ The following options can be configured in per-machine `config.nix` files within
+ the deployment configuration directory, i.e. `cluster/<machine-name>/config.nix`,
+ or any other imported Nix file. These options are added by `confctl` in addition
+ to options from `NixOS` or `vpsAdminOS`.
+ 
+-<%= print_options(opts.service_settings) %>
++<%= print_options(opts.system_settings) %>
+ 
+ ## SEE ALSO
+ confctl(8)

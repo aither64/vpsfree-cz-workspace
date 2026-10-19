@@ -18,7 +18,8 @@ Final-head CI runs are RSpec 37766013749, RuboCop 37766013747 and Tests
 37766013754. Final-head Ruby 3.3/3.4/4.0 matrix passed (66/0 each); lint passed (95 files,
 no offenses). The superseded queued Tests run37757965480 is cancelled; current
 Tests37766013754 remains queued without runner assignment.
-No live deployment or default-branch integration occurred.
+User-approved default-branch integration is complete at this exact head; no
+live deployment occurred.
 
 ## Initial pre-review quick checks
 
@@ -52,7 +53,8 @@ Completed: package/Nix RSpec builds, packaged help, custom/raw/precedence smoke,
 renamed-example/init/add smoke, lock preservation and exact-head publication.
 CI Ruby matrix and lint passed.
 
-Remaining: remote integration CI scheduling/result and explicit merge direction.
+Remaining: informational remote integration CI scheduling/result. Merge is approved
+and complete; no application verification work remains.
 Local four-suite coverage is complete. No additional local checks are indicated.
 
 Unfinished operations remain prospective. Production migration and third-party
@@ -85,7 +87,8 @@ Exact feature head `3be154b5f86125146e444d5fb6aa60916e99b77d` was pushed
 over SSH with the declared shell and active hooks. RuboCop run37757965407
 and the full Ruby3.3/3.4/4.0 RSpec matrix run37757965524 succeeded with all
 jobs/steps green. Integration Tests run37757965480 is queued. These are the exact-head runs to monitor, not a
-moving branch query. No default-branch integration or deployment occurred.
+moving branch query. At that checkpoint no default-branch integration or
+deployment had occurred.
 
 ## Final local smoke result
 
@@ -182,6 +185,29 @@ tree and published ref agree, and base-to-head whitespace remains clean.
 
 Remote Tests37766013754 remains queued at final inspection, no runner assigned.
 This is incomplete automated scheduling evidence, not a test failure or a green
-CI claim. Ruby matrix/lint CI succeeded at the exact final head. The branch is
-locally verified and ready, awaiting explicit confctl/master merge approval.
-No production rollout, integration, release or session lifecycle action occurred.
+CI claim. Ruby matrix/lint CI succeeded at the exact final head. At that pre-integration checkpoint, the branch was locally verified and ready,
+awaiting explicit confctl/master merge approval. No production rollout,
+integration, release or session lifecycle action had occurred.
+
+User follow-up selects local integration verification because GitHub runners
+are busy. Lead rechecked saved status artifacts and suite summaries: all42
+examples across the four suites passed locally, using the recorded unchanged
+predecessor passes and successful corrected-head retries. Current tree delta
+and clean source/index were reverified. Remote scheduling is informational;
+no additional local run is warranted without new changes or failures.
+
+## Approved master integration
+
+Fresh upstream fetch left the pre-integration base unchanged. Captured comparison,
+fast-forwarded in a fresh temporary target checkout, then verified its exact
+head/tree and clean source. Target-checkout fullRSpec66/0 (21.91s),95-file lint,
+changed Nix formatting and whitespace all exited0. Evidence: master-integration.*.
+SSH master push succeeded from1b56616 tocc40679d. Independent remote refs read
+proved master and retained feature both equal the reviewed final head. No new
+source, migration, rebase or merge commit; existing local VM evidence applies.
+Only the temporary target checkout was removed; feature worktree/session retained.
+
+Master RSpec37782468488 and RuboCop37782468480 succeeded; Tests37782468529 is
+queued. The user selected local integration because runners are busy. All four
+local suites passed, so no remote wait or duplicate local batch was launched.
+No release, live deployment or session lifecycle action was performed.

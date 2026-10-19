@@ -1,13 +1,13 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Remove software pins from confctl
 
 ## Status
 
-Current phase: ready, awaiting merge approval. Implementation, independent
-review and local verification are complete. The clean five-commit feature
+Current phase: confctl/master merged and locally verified; session open.
+Implementation, independent review and local verification are complete. The clean five-commit feature
 branch is published at
 `cc40679d267165aecfa569128438bb55fe910268`.
 
@@ -21,10 +21,12 @@ patch-equivalent predecessor `3be154b5`. Deploy/flakes passed 23/23 at the final
 head. Carrier/netboot passed 8/8 at the final head, including both PXE boots and
 kexec generation-selection paths. The retry wrapper and script exited 0 after
 2317s; no owned local verification operation remains. Remote integration CI
-remains queued, without runner availability evidence.
+remains queued. The user requested local integration verification because the
+GitHub runners are busy; that verification is complete.
 
-No review findings remain open. Default-branch integration, release and live
-deployment are unauthorized. The session remains active and open.
+No review findings remain open. Default-branch integration completed with the
+user's approval. Release and live deployment remain unauthorized. The session
+stays active and open while automated VM CI is queued.
 
 ## Phase checklist
 
@@ -44,14 +46,15 @@ deployment are unauthorized. The session remains active and open.
 - [x] Reconcile remote CI: Ruby/lint pass; VM job remains queued.
 - [x] Record locally verified branch readiness.
 - [x] Commit consolidated coordination checkpoint.
-- [ ] Integrate confctl into master only on explicit repository/target direction.
+- [x] Integrate confctl/master with explicit user approval and exact remote proof.
 
 ## Next action
 
-The user may explicitly direct integration of confctl into master. Before that
-action, fetch and preserve the reviewed patch under the Git procedure. Remote
-Tests run 37766013754 is still queued; its eventual result remains to be recorded.
-Keep the feature branch, worktree and session open; no merge or rollout is implied.
+The requested application work and integration are done. The user selected
+completed local integration coverage because GitHub runners are busy. Automated
+VM workflows remain queued; record their eventual result when available.
+Release or live deployment needs separate direction. Keep the feature branch,
+worktree and session open; no lifecycle action is authorized.
 
 Detailed evidence: [verification.md](verification.md),
 [review-report.md](review-report.md), [branch-inventory.md](branch-inventory.md),
@@ -65,7 +68,7 @@ Stable portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-08-
   root environment markers and the trusted thread binding agree on this slug.
 - Worktree: `worktrees/2026-10-08-remove-software-pins-support/confctl`.
 - Branch: `2026-10-08-remove-software-pins-support`; target `origin/master`.
-- Initial/fetched base: `1b56616eff41e760327f3a0dbed8875e4aa9dbec`, tagged v3.0.0.
+- Initial/pre-integration upstream base: `1b56616eff41e760327f3a0dbed8875e4aa9dbec`, tagged v3.0.0.
 - Final head: `cc40679d267165aecfa569128438bb55fe910268`.
 - Final tree: `08f33e1fe5613f7634ba69b38535fb3c35a3c0c9`.
 - Final diff: 126 files, +1896/-6991, net removal 5,095 lines. Five coherent units;
@@ -153,9 +156,56 @@ Operators must migrate legacy configs using retained v3 before upgrading and
 update the tool/configuration confctl input together for moduleOptions. Production
 configuration/API consumers and optional external netboot readers are not fully
 inventoried; that work precedes a later authorized rollout. No all-node update,
-production deployment, release, default merge or lifecycle action occurred.
+production deployment, release or lifecycle action occurred. Default merge
+was approved and completed as recorded below.
 
 Reusable environment and fixture lessons are in
 [the confctl tooling note](../../notes/confctl/2026-10-08-sandboxed-member-checks.md).
 Provisional failures and corrected verification assumptions are retained in the
 verification record rather than relabelled as successful original runs.
+
+## Local verification follow-up
+
+The user requested local integration tests because GitHub runners are busy.
+Lead rechecked the retained statuses and suite summaries: auto_rollback3/3,
+carrier/deploy8/8, deploy/flakes23/23 and carrier/netboot8/8 all passed locally.
+The first two passed before the final two-line fixture correction; only the
+failed, affected suites were rerun afterward at cc40679d. Complete tree delta
+from their predecessor is exactly those two fixture lock commands. Current
+source/index remains clean. No redundant run or CI cancellation was started.
+Local verification is complete; explicit confctl/master integration direction
+remains outstanding. Session stays open; no second daily checkpoint is created.
+
+## Integration authorization
+
+User direction: “you can merge it to the default branch then.” This names the
+only affected application repository, confctl, and its configured default
+branch master. Approval covers confctl/master integration only; no deployment,
+release, archive, session removal or branch deletion is authorized.
+Fresh canonical fetch confirmed origin/master still1b56616, and published/local
+feature head cc40679d agree. No rebase or patch change is needed. The lead will
+capture the exact comparison, fast-forward in a fresh temporary target worktree
+and push master over SSH, preserving feature refs and the open session.
+
+## Integration completed
+
+Approved target confctl/master fast-forwarded from
+`1b56616eff41e760327f3a0dbed8875e4aa9dbec` to exact reviewed
+`cc40679d267165aecfa569128438bb55fe910268` and was pushed over SSH. Local master
+and remote master match the retained local/remote feature head. Remote ref
+proof is in master-integration.remote-refs. Tree remains
+`08f33e1fe5613f7634ba69b38535fb3c35a3c0c9`; no rebase/content change/merge commit.
+
+The comparison was captured before integration. A fresh temporary master
+checkout was used; full target-checkout RSpec66/0 (21.91s),95-file RuboCop,
+changed Nix formatting and whitespace checks all exited0, with clean source.
+The completed temporary target checkout was removed through ordinary Git;
+registered feature worktree, refs, session records and session remain intact.
+No release/deployment or session lifecycle action occurred.
+
+Default-branch CI at the same head: RSpec37782468488 and RuboCop37782468480
+succeeded. Tests37782468529 is queued, consistent with the user's busy-runner
+report and selected local verification route. Earlier feature Tests37766013754
+was also queued; matching-head workflows were not cancelled. No long CI wait
+or repeat VM run is needed for this unchanged tree. Working records are updated
+under the existing daily checkpoint cadence; no second tracking commit is made.

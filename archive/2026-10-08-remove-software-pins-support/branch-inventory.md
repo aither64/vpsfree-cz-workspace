@@ -3,9 +3,10 @@
 Base: `1b56616eff41e760327f3a0dbed8875e4aa9dbec` (merged upstream Version 3.0.0).
 Head: `cc40679d267165aecfa569128438bb55fe910268` (fixture correction folded; prior published head3be154b5).
 Branch: `2026-10-08-remove-software-pins-support`.
-Parent fetch succeeded; `origin/master` remains the exact base. No rebase needed.
+Pre-integration fetch confirmed `origin/master` at the exact base; no rebase
+was needed. Approved integration now puts master at the exact final head.
 Worktree/index clean; base-to-head whitespace check passed. Prior head `3be154b5` was published; the final corrected head is now published
-after scoped independent review. No default integration.
+after scoped independent review. Default integration is now complete.
 
 ## Complete series
 
@@ -73,7 +74,8 @@ records remain untouched and unusable with the new tool. v3 upgrade instructions
 are a supported historical procedure, not a new migration implementation.
 
 The prior five-commit series ending at `3be154b5` was published on the feature
-branch and has not been merged, released or deployed. External consumption is
+branch before integration; that prior head was not merged, released or deployed.
+External consumption is
 not audited. No intermediate schema requires support. Existing v3
 behavior at the base is merged/released; rollback compatibility with its flake
 JSON is intentional. Production configuration migration status and third-party
@@ -99,5 +101,10 @@ Parent final check: local/published head cc40679d and tree08f33e1 agree, clean
 source/index, complete whitespace check passed. Independent review has no open
 findings. Full quick checks, package/smoke, final-head Ruby matrix/lint and all
 four local VM suites passed. Remote VM workflow37766013754 remains queued;
-no successful remote VM result is claimed. Ready, awaiting explicit approval to
-integrate confctl into master. Session and feature refs remain open/retained.
+no successful remote VM result is claimed. User-approved confctl/master integration completed by fast-forward to this exact
+head. Session and feature refs remain open/retained.
+
+Integration proof: remote master and feature ref both equalcc40679d; local
+master/feature and reviewed tree agree. Temporary target quick checks passed;
+comparison captured before merge. No new patch, rebase or merge commit. User
+approval covered confctl/master only; no release/deployment/lifecycle action.

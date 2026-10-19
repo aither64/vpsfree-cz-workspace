@@ -1,0 +1,42 @@
+1:  d72ff27 = 1:  d72ff27 Make confctl runtime exclusively flake-based
+2:  72eb424 = 2:  72eb424 Remove Nix pin evaluation and expose flake module options
+3:  6acbd28 ! 3:  85bb871 Make the flake example the sole configuration fixture
+    @@ Commit message
+         and fixture branches. Keep deploy/flakes and the existing NixOS and
+         vpsAdminOS deployment coverage, with input metadata assertions.
+     
+    +    Lock temporary fixture roots using explicit path URLs so Nix resolves
+    +    the configuration directory before Git initialization.
+    +
+      ## example-flake/.gitignore (deleted) ##
+     @@
+     -.confctl
+    @@ tests/runner/extensions/confctl_helpers.rb: module ConfctlTestHelpers
+          end
+        end
+     
+    + ## tests/suite/carrier/netboot.nix ##
+    +@@ tests/suite/carrier/netboot.nix: import ../../make-test.nix (
+    +         prepare_fixture_dir!(conf_dir)
+    +         write_flake_root!(conf_dir)
+    +         FileUtils.rm_f(File.join(conf_dir, 'flake.lock'))
+    +-        run_local!(%w[nix flake lock], chdir: conf_dir)
+    ++        run_local!(['nix', 'flake', 'lock', "path:#{conf_dir}"], chdir: conf_dir)
+    +         write_machine_modules!(conf_dir, carrier_port:)
+    +         write_carrier_config!(conf_dir)
+    +         write_nixos_config!(conf_dir, marker: 'A')
+    +
+      ## tests/suite/deploy/base.nix ##
+     @@
+     -{ deployMode }:
+    @@ tests/suite/deploy/base.nix: import ../../make-test.nix (
+     +        cluster_modules << 'vpsadminos-machine/module.nix'
+              write_cluster_modules!(conf_dir, cluster_modules)
+     -        run_local!(%w[nix flake lock], chdir: conf_dir) if flake_mode?
+    -+        run_local!(%w[nix flake lock], chdir: conf_dir)
+    ++        run_local!(['nix', 'flake', 'lock', "path:#{conf_dir}"], chdir: conf_dir)
+              init_fixture_repo!(conf_dir)
+            end
+      
+4:  160ac11 = 4:  9d63ab4 Drop software-pin-only dependencies and CI setup
+5:  3be154b = 5:  cc40679 Document flake-only operation and preserved recovery state
