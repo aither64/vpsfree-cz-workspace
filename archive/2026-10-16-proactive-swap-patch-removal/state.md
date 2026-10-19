@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: archived
 ---
 
 # Proactive swap removal from 6.12.113
