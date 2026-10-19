@@ -1,0 +1,36 @@
+[
+  {
+    "name": "go",
+    "head": "421142e3d356a48ac31d9f1686f8b8fc8179c7bf",
+    "command": [
+      "nix",
+      "develop",
+      "--command",
+      "bash",
+      "-c",
+      "export TMPDIR=/tmp; cd portal && go test -mod=readonly ./..."
+    ],
+    "exitStatus": 0,
+    "elapsedSeconds": 73.87,
+    "log": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-18-portal-message-recovery/source-shorttmp-go.log"
+  },
+  {
+    "name": "browser",
+    "head": "421142e3d356a48ac31d9f1686f8b8fc8179c7bf",
+    "command": [
+      "nix",
+      "develop",
+      "--command",
+      "env",
+      "NODE_PATH=/nix/store/fg778x0631ld4xd8fim2kbvxll5715xp-playwright-test-1.59.1/lib/node_modules",
+      "PLAYWRIGHT_BROWSERS_PATH=/nix/store/f0rap655j6wmqbfvqdw445kwcxkxwf7n-playwright-browsers",
+      "PORTAL_BROWSER_TEST=1",
+      "bash",
+      "-c",
+      "export TMPDIR=/tmp; cd portal && go test -mod=readonly ./internal/web -run '^TestQuestionBrowser/(recovery_display_browser_test.cjs|paging_browser_live_test.cjs)$' -count=1 -v"
+    ],
+    "exitStatus": 1,
+    "elapsedSeconds": 28.21,
+    "log": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-18-portal-message-recovery/source-shorttmp-browser.log"
+  }
+]
