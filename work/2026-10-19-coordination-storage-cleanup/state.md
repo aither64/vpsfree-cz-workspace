@@ -4,9 +4,9 @@ lifecycle: active
 
 # Automatic coordination storage cleanup
 
-Phase: ready, awaiting merge approval. All review and verification are complete.
+Phase: all master merges and system deployment succeeded; workspace profile activation in progress.
 User explicitly authorized tracking after initially requesting untracked diagnosis.
-No production cleanup, deployment, master integration or unrelated-session mutation.
+User-approved three-repository master integration and no-reboot deployment are in progress.
 
 ## Phase checklist
 
@@ -15,7 +15,9 @@ No production cleanup, deployment, master integration or unrelated-session mutat
 - [x] Independent whole-branch review; reconcile both Important findings.
 - [x] Publish matching, consolidated consumer pins; validate composition.
 - [x] Complete packaged build, native profile exercise, configuration build and CI.
-- [ ] Obtain explicit integration/rollout direction; activate and measure.
+- [x] Obtain explicit integration/rollout direction and initialize native identity.
+- [ ] Merge through native coordination; activate matching system and profile.
+- [ ] Verify automatic collection, measure reclamation and finish reservation.
 
 ## Exact repositories
 
@@ -24,19 +26,22 @@ worktrees/2026-10-19-coordination-storage-cleanup/.
 
 | Repository | Final review base after rebase | Published final head |
 | --- | --- | --- |
-| dev-workspace | ff36d6153a6908751a18adfdf624c3619c1f397e | 5d59adbcdba420e5f127333097348ba1860c970d |
-| workspace | b604f2c2d00d36e4f484b7b51a502f51b36f395b | 541d7f9ab937579b903e1f4d886ce6bc487f2bf4 |
-| vpsfree-cz-configuration | 060ea03448af6f9083506d770315ad439279e76e | 265ed92ddf52570fa5414c7a4642b22229b3884a |
+| dev-workspace | f27925c43460066424dd8d6c4ab8ad93a267d60b | 7ceb6b943c7fa6e6db2b42b1fc2d9732c6413e03 |
+| workspace | 8d821fff284602af954e2d3d9799641c70f941d7 | de3237e8b93b2d1de8f4ee1bb6835db229be92d0 |
+| vpsfree-cz-configuration | a81c6e047606abb1427f10583810695cf59973f0 | 3195c4451dea8ffaff17d2974a5eca67d5d829a0 |
 
-Runtime has two logical commits: 81e65dd (scratch and worker-root lifetimes),
-5d59adb (profile history). Each consumer has one final pin update. Configuration
+Runtime has two logical commits: f3a3f80 (scratch and worker-root lifetimes),
+7ceb6b9 (profile history). Each consumer has one final pin update. Configuration
 was regenerated from its original base with confctl; hooks pass and generated
 message is preserved. Each lock changes exactly one intended runtime node.
 Extension and other inputs stay selected as before. Composition contract passed
-at final runtime 5d59adb. No migrations or repeated dependency-update streams.
+at final runtime 7ceb6b9. No migrations or repeated dependency-update streams.
 Shared checkout remains on master; preserve its unrelated files and index.
 
 ## Diagnosis and implementation
+
+Earlier checkpoint details below retain their original verification and rollout
+revisions. The current heads and current phase above supersede those checkpoints.
 
 At 09:32 CEST: 95% used / 50 GiB free. Since October 17, workspace Nix source
 snapshots grew 40.7 -> 83.0 GiB, coordination 39.8 -> 80.1 GiB, worktrees
@@ -110,7 +115,8 @@ Both verified literal DEV_SESSION values agree with current. The threadless
 runtime has no valid retained lead conversation; ordinary lead work and installed
 standalone review fallback apply. The earlier untracked checkout was moved into
 this registered scope. A manifestless start correctly refused; no repair bypass.
-Native rollout ownership may require stopping/restarting only this empty runtime;
+At the initial checkpoint, native rollout ownership required stopping/restarting
+only this empty runtime;
 include that lifecycle action in the final approval request. See rollout.md and
 notes/dev-workspace/2026-10-16-threadless-start-and-configuration-hooks.md.
 
@@ -129,9 +135,8 @@ or master changed. Cancellation of superseded CI 39222056098 returned HTTP 403
 
 ## Next action
 
-Request the prepared approval for all three master targets, matching aitherdev
-system/application activation and stopping/restarting only this empty runtime
-for native coordination ownership. All independent work and checks are complete.
+Supervise the approved native integration run, verify live automatic cleanup,
+measure reclaimed space and finish its exact machine reservation.
 Do not archive, delete or stop this session without the applicable direction.
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-19-coordination-storage-cleanup/
 
@@ -184,7 +189,8 @@ Final comparison captures match the bases/heads in the repository table.
 At handoff, filesystem reports 93% used / about 67 GiB free. That increase
 occurred before this feature's activation and is not claimed as cleanup evidence.
 No master integration, deployment, session stop or production collection ran.
-User approval is the only remaining gate; keep lifecycle active.
+This was the pre-approval checkpoint. User approval is now recorded below; keep
+lifecycle active until coordinated integration and live acceptance finish.
 
 Released only this initiative's superseded pre-rebase workspace-package output
 root after the final candidate passed; retained the final candidate root and
@@ -207,3 +213,75 @@ identity is required", matching the documented threadless-start lesson.
 Ordinary start must prove absence and create the managed identity; do not edit
 authority or recovery metadata. This checkpoint hands retained tracking to that
 new native conversation while the external lead retains rollout supervision.
+
+Native initialization completed through ordinary start after the authorized stop:
+retained lead 01a153ed-e471-7010-b678-dae0a7871d90, requested Sol/xhigh, no roster
+created (team list roster null). Its initial goal acknowledges initialization
+and leaves all rollout actions with this external lead. The App Server terminal
+client reconnect was recovered by the native command. Current ownership is valid;
+use foreground integration under a fresh status-only utility observer. Do not
+spoof the external caller as the retained lead or bypass background admission.
+
+Tracking handoff commit 26f791a6 was committed under the shared tracking lock.
+Published the existing linear tracking-only master range through 8d821fff under
+that same lock, after verifying every changed path was coordination tracking.
+Unrelated files/index were preserved. Final consumers include that shared base.
+User approval remains standing for all three master targets, matching no-reboot
+aitherdev system/profile activation and the now-completed empty-runtime setup.
+Do not request that approval again for a patch-equivalent refresh.
+
+Refreshed heads/bases and semantic pin checks are in approved-refreshed-heads.json;
+accepted review receipts preserve original reports and record narrow-fix/rebase
+provenance. Matching contract passes. The fresh approved verification utility is
+01a153f1-59d5-74b0-b95b-864e7b925156, verified Luna/low/full access/never. It owns
+package/system/CI 39244860923 checks. Prepare the final native integrate-first
+request after its result, retain reservation for actual cleanup acceptance and
+finish explicitly afterward. Integration request was submitted as native foreground run fc106326-494a-4395-a530-72c9f547fbc7 after exact verification and shared tracking publication.
+
+
+## Approved rollout execution
+
+Fresh exact-head verification passed: package 335.597 seconds, system build
+164.787 seconds and runtime CI 39244860923. See approved-verification-result.json.
+Exact package receipt and independent review provenance are frozen in
+integration-request.json. Native foreground driver 1 is supervised by a fresh
+Luna/low/full-access/never status-only utility, thread
+01a153fc-0afa-70e2-92e0-bec56b9eb920; actual turn_context proof is in
+integration-observer-1-policy.json. Parent owns deployment and live maintenance;
+the observer only reports authoritative status. Request intentionally omits
+completion so aitherdev remains reserved for live acceptance.
+
+The first observer returned an interim preparing snapshot prematurely; no driver
+failure or timeout was inferred. A fresh replacement, thread
+01a15400-0dbc-7d90-99c3-bff8124ef03d, is verified Luna/low/full-access/never and
+retains observation until authoritative completion/action or actual driver exit.
+Native semantic refresh over concurrent shared tracking produced workspace head
+30c7945873caafb160513f515d28a0c63c230eed on base
+392ae7c5bd5fb3d16ae7041741f5f400466601a0. Its generated-pin proof preserves
+7ceb6b9 and all unmanaged inputs; original independent review remains frozen.
+
+Driver 1 completed preparation and submitted all three merge jobs, then exited
+75 with "integration driver is already running". No integration lock remained
+when inspected; runtime job ca6ac738-a777-484e-b6be-bcf8c209b4ca succeeded and
+the two consumer jobs were claimed. The parent resumed the SAME run through
+the stable command, driver-2 logs/exit, under fresh observer 3. No new run or
+merge job was created and no job was replayed. Observer 2's claimed timestamp
+is inconsistent with the actual clock; use authoritative native receipts and
+the parent command capture for timing.
+
+Observer 3 reports all three exact merge jobs succeeded and the retained run
+is in deploy. Runtime remains 7ceb6b9, workspace mechanically refreshed to
+30c79458 and configuration remains 3195c445. Live activation/cleanup acceptance
+and machine release remain outstanding.
+
+System job 0e2a93ec-96ce-4944-ae43-94702a6bb7a6 succeeded without reboot.
+Profile job 4a97cdc3-240d-4206-a58a-44f99f345ef1 advanced to claimed.
+The parent now automatically retries only the verified exact exit-75 driver-lock
+contention against the same run/stable command; any different error stops for
+inspection. Driver 3 remains accounted for under fresh observer 4
+(01a15404-e420-7230-9895-0dc9e2a5a7cd), native policy verified.
+
+## Integration fc106326-494a-4395-a530-72c9f547fbc7
+
+Requested exact feature heads are integrated. See integration/fc106326-494a-4395-a530-72c9f547fbc7/summary.md
+and integration/fc106326-494a-4395-a530-72c9f547fbc7/result.json for operation receipts. Feature refs and session retained.
