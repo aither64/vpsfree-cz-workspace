@@ -1,0 +1,38 @@
+{
+  "name": "msrv",
+  "status": "passed",
+  "exit_status": 0,
+  "elapsed_seconds": 111.43,
+  "heads": {
+    "haveapi": "e9173e20a38de4e4e71bd5f2d4d79967950ca900",
+    "vpsadmin-rust-client": "1a818c424259713147d9ac6970b7247c744422df",
+    "vpsadmin": "fb2f51222503a45f2e5a42af505f719e44279ed0"
+  },
+  "argv": [
+    "env",
+    "-u",
+    "BUNDLE_GEMFILE",
+    "-u",
+    "RUBYOPT",
+    "-u",
+    "GEM_HOME",
+    "-u",
+    "GEM_PATH",
+    "nix",
+    "develop",
+    "--no-write-lock-file",
+    ".#default",
+    "--command",
+    "nix",
+    "shell",
+    "github:NixOS/nixpkgs/29916453413845e54a65b8a1cf996842300cd299#rustc",
+    "github:NixOS/nixpkgs/29916453413845e54a65b8a1cf996842300cd299#cargo",
+    "--command",
+    "bash",
+    "-euo",
+    "pipefail",
+    "-c",
+    "export RUSTC=/nix/store/wnhmqix7bippbbzasj29qiyb422g9asg-rustc-wrapper-1.95.0/bin/rustc\nexport RUSTDOC=/nix/store/wnhmqix7bippbbzasj29qiyb422g9asg-rustc-wrapper-1.95.0/bin/rustdoc\nexport CARGO_TARGET_DIR=target/msrv-1.95\nunset RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER\nmsrv_cargo=/nix/store/z480b23kymbmrijrl49246mrzyphli15-cargo-1.95.0/bin/cargo\n\"$RUSTC\" --version --verbose\n\"$msrv_cargo\" --version --verbose\n\"$msrv_cargo\" check --locked --all-targets\n\"$msrv_cargo\" check --locked --all-targets --features blocking"
+  ],
+  "log": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-18-rust-client-generator/artifacts/corrected-acceptance/msrv.log"
+}

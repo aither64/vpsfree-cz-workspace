@@ -1,0 +1,90 @@
+1:  0717da0 = 1:  0717da0 clients/rust: add embedded protocol runtime
+2:  e93e51a ! 2:  e21d8a9 clients/rust: generate clients from saved API schemas
+    @@ .gitignore
+      .gems
+      Gemfile.lock
+     +!clients/rust/Gemfile.lock
+    ++/clients/rust/runtime/target/
+      clients/js/package-lock.json
+      clients/php/composer.lock
+      InstalledFiles
+3:  874e8f2 ! 3:  2ac6da8 clients/rust: add protocol acceptance fixtures
+    @@ clients/rust/spec/integration/README.md (new)
+     +```sh
+     +nix develop .#client-rust --command bundle exec rspec \
+     +  clients/rust/spec/integration/bundle_activation_spec.rb \
+    ++  clients/rust/spec/integration/fixture_actions_spec.rb \
+     +  clients/rust/spec/integration/fixture_contract_spec.rb
+     +```
+     +
+    @@ clients/rust/spec/integration/bundle_activation_spec.rb (new)
+     +    expect { |block| described_class.with_server('/', &block) }
+     +      .to yield_with_args('http://127.0.0.1:12345/')
+     +  end
+    ++end
+    +
+    + ## clients/rust/spec/integration/fixture_actions_spec.rb (new) ##
+    +@@
+    ++# frozen_string_literal: true
+    ++
+    ++require 'rspec'
+    ++require_relative 'run'
+    ++
+    ++RSpec.describe RustClientIntegration do
+    ++  it 'registers Custom JSON and both query actions without inherited constant collisions' do
+    ++    fixture = File.expand_path('support/haveapi_fixture.rb', __dir__)
+    ++    probe = <<~RUBY
+    ++      require ARGV.fetch(0)
+    ++      RustClientFixtures::Haveapi.extend_resources!
+    ++      resource = HaveAPI::ClientTestAPI::Resources::RustFixture
+    ++      actions = []
+    ++      resource.actions { |action| actions << action.action_name }
+    ++      puts JSON.generate(actions)
+    ++    RUBY
+    ++    stdout, stderr, status = Bundler.with_unbundled_env do
+    ++      Open3.capture3(
+    ++        { 'BUNDLE_GEMFILE' => RustClientIntegration::SERVER_GEMFILE,
+    ++          'GEM_HOME' => RustClientIntegration::SERVER_GEM_HOME, 'GEM_PATH' => nil },
+    ++        'bundle', 'exec', RbConfig.ruby, '-e', probe, fixture
+    ++      )
+    ++    end
+    ++
+    ++    expect(status.success?).to be(true), stderr
+    ++    expect(JSON.parse(stdout)).to include('EchoCustom', 'CustomQuery', 'Query', 'DeleteQuery')
+    ++  end
+     +end
+     
+      ## clients/rust/spec/integration/fixture_contract_spec.rb (new) ##
+    @@ clients/rust/spec/integration/rust/real_server.rs (new)
+     +
+     +        let body = $send!(api.rust_fixture().echo().number(0).flag(false).text("")).unwrap();
+     +        assert_eq!(body.output.received, Some(json!({"number": 0, "flag": false, "text": ""})));
+    -+        for response in [
+    -+            $send!(api.rust_fixture().query().number_null().flag(false)),
+    -+            $send!(api.rust_fixture().delete_query().number_null().flag(false)),
+    ++        for received in [
+    ++            $send!(api.rust_fixture().query().number_null().flag(false)).unwrap().output.received,
+    ++            $send!(api.rust_fixture().delete_query().number_null().flag(false)).unwrap().output.received,
+     +        ] {
+    -+            assert_eq!(response.unwrap().output.received, Some(json!({"number": null, "flag": false})));
+    ++            assert_eq!(received, Some(json!({"number": null, "flag": false})));
+     +        }
+     +        let flat = $send!(api.rust_fixture().unnamespaced().number(0).flag(false)).unwrap();
+     +        assert_eq!(flat.output.received, Some(json!({"number": 0, "flag": false})));
+     +        let custom = json!({"nested": [0, false, null, {"text": "a&b + c"}]});
+    -+        let result = $send!(api.rust_fixture().custom().value(custom.clone())).unwrap();
+    ++        let result = $send!(api.rust_fixture().echo_custom().value(custom.clone())).unwrap();
+     +        assert_eq!(result.output.value, Some(custom));
+     +        assert!($send!(api.rust_fixture().custom_query().value(json!({"nested": true})))
+     +            .err().unwrap().validation_errors().is_some());
+    @@ clients/rust/spec/integration/support/haveapi_fixture.rb (new)
+     +          end
+     +        end
+     +
+    -+        define_action(:Custom) do
+    ++        # Custom is a top-level HaveAPI type constant. The resource DSL skips
+    ++        # inherited constant names, so give this action a distinct name.
+    ++        define_action(:EchoCustom) do
+     +          http_method :post
+     +          authorize { allow }
+     +          input(:hash) { custom :value, required: true }

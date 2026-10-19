@@ -1,0 +1,170 @@
+1:  0717da0 = 1:  0717da0 clients/rust: add embedded protocol runtime
+2:  615293a ! 2:  e93e51a clients/rust: generate clients from saved API schemas
+    @@ clients/rust/lib/haveapi/rust_client/ir.rb (new)
+     +      @snapshot = Snapshot.validate(snapshot)
+     +      @resources = []
+     +      @actions = []
+    -+      @module_scope = Naming::Scope.new(%w[runtime resources API_SPEC API_VERSION SCHEMA_SHA256])
+    ++      @module_scope = Naming::Scope.new(%w[runtime resources API_SPEC API_VERSION SCHEMA_SHA256 builder config])
+     +      description = snapshot.fetch('description')
+     +      walk(description.fetch('resources'), [])
+     +      description.fetch('authentication').each do |provider, auth|
+    @@ clients/rust/lib/haveapi/rust_client/ir.rb (new)
+     +            end
+     +          end
+     +          action[:placeholders] = action[:route].scan(/\{([^}]+)\}/).flatten.uniq
+    -+          argument_scope = Naming::Scope.new(%w[self])
+    ++          argument_scope = Naming::Scope.new(%w[self path_params])
+     +          action[:arguments] = action[:placeholders].to_h do |placeholder|
+     +            [placeholder, argument_scope.add(Naming.snake(placeholder), action_path.join('/') + "/#{placeholder}")]
+     +          end
+    @@ clients/rust/lib/haveapi/rust_client/ir.rb (new)
+     +      raise Error, "parameters must be an object at #{path.join('/')}" unless parameters.is_a?(Hash)
+     +      raise Error, "custom IO format unsupported at #{path.join('/')}" if desc.has_key?('format')
+     +
+    -+      scope = Naming::Scope.new(direction == :input ? %w[input global_meta object_meta send input_mut] : %w[extra object_meta])
+    ++      scope = Naming::Scope.new(direction == :input ? %w[new input global_meta object_meta send input_mut prepared] : %w[extra object_meta])
+     +      fields = parameters.sort.map do |name, parameter|
+     +        unless parameter.is_a?(Hash) && TYPES.include?(parameter['type'])
+     +          raise Error, "unknown parameter type at #{(path + [name]).join('/')}"
+    @@ clients/rust/spec/unit/ir_spec.rb (new)
+     +    end.to raise_error(HaveAPI::RustClient::Error, /collision/)
+     +  end
+     +
+    ++  it 'rejects input setters that collide with common request methods' do
+    ++    %w[new input global_meta object_meta send input_mut prepared].each do |name|
+    ++      expect do
+    ++        described_class.new(snapshot(actions: { 'update' => action(input: io(name => parameter)) }))
+    ++      end.to raise_error(HaveAPI::RustClient::Error, %r{reserved member #{name} and widget/update/input/#{name}})
+    ++    end
+    ++  end
+    ++
+    ++  it 'rejects resource accessors that collide with common client methods' do
+    ++    %w[builder config].each do |name|
+    ++      schema = snapshot
+    ++      schema.fetch('description').fetch('resources')[name] = { 'actions' => {}, 'resources' => {} }
+    ++      expect do
+    ++        described_class.new(schema)
+    ++      end.to raise_error(HaveAPI::RustClient::Error, /reserved member #{name} and #{name}/)
+    ++    end
+    ++  end
+    ++
+    ++  it 'rejects placeholder arguments that shadow generated request locals' do
+    ++    expect do
+    ++      described_class.new(snapshot(actions: { 'update' => action(path: '/v1.0/widgets/{path_params}') }))
+    ++    end.to raise_error(HaveAPI::RustClient::Error, %r{reserved member path_params and widget/update/path_params})
+    ++  end
+    ++
+     +  it 'preserves nested component boundaries and binds parent placeholders once' do
+     +    schema = snapshot
+     +    root = schema.fetch('description').fetch('resources')
+3:  c50c071 ! 3:  874e8f2 clients/rust: add generated-client protocol acceptance fixtures
+    @@ Metadata
+     Author: Jakub Skokan <jakub.skokan@havefun.cz>
+     
+      ## Commit message ##
+    -    clients/rust: add generated-client protocol acceptance fixtures
+    +    clients/rust: add protocol acceptance fixtures
+     
+         Exercise generated async and blocking clients against the real HaveAPI
+         server and scripted HTTP responses. Keep local fixture extensions apart
+    @@ clients/rust/spec/integration/README.md (new)
+     +`nix develop .#server-ruby --command true` from the HaveAPI root. This only
+     +installs tools and gems. The fixture launcher uses the server's Gemfile and
+     +root `.gems` directory, while generation uses the Rust component's environment.
+    ++The runner activates the component bundle itself and starts the child with a
+    ++separate server bundle that retains Ruby's default gems.
+     +
+     +The launcher contract specs run without servers or Rust compilation:
+     +
+     +```sh
+     +nix develop .#client-rust --command bundle exec rspec \
+    ++  clients/rust/spec/integration/bundle_activation_spec.rb \
+     +  clients/rust/spec/integration/fixture_contract_spec.rb
+     +```
+     +
+    @@ clients/rust/spec/integration/README.md (new)
+     +source launcher stops and prunes only its own MariaDB instance on exit. It
+     +never selects the repository's shared manual test database.
+     
+    + ## clients/rust/spec/integration/bundle_activation_spec.rb (new) ##
+    +@@
+    ++# frozen_string_literal: true
+    ++
+    ++require 'rspec'
+    ++require_relative 'run'
+    ++
+    ++RSpec.describe RustClientIntegration do
+    ++  it 'activates the component path dependency when loaded by plain Ruby' do
+    ++    runner = File.expand_path('run.rb', __dir__)
+    ++    component_gems = File.join(described_class::ROOT, '.gems')
+    ++    env = {
+    ++      'GEM_HOME' => component_gems,
+    ++      'GEM_PATH' => [Gem.default_dir, component_gems].join(File::PATH_SEPARATOR),
+    ++      'BUNDLE_GEMFILE' => nil, 'RUBYOPT' => nil
+    ++    }
+    ++    code = <<~RUBY
+    ++      load ARGV.fetch(0)
+    ++      require 'haveapi/client'
+    ++      puts Gem.loaded_specs.fetch('haveapi-client').full_gem_path
+    ++    RUBY
+    ++    stdout, stderr, status = Bundler.with_unbundled_env do
+    ++      Open3.capture3(env, RbConfig.ruby, '-e', code, runner)
+    ++    end
+    ++
+    ++    expect(status.success?).to be(true), stderr
+    ++    expect(stdout.strip).to eq(File.expand_path('../ruby', described_class::ROOT))
+    ++  end
+    ++
+    ++  it 'loads the separate server bundle and retains Ruby default gems' do
+    ++    # Probe bundle loading only: no socket, HaveAPI instance or Cargo process.
+    ++    probe = <<~RUBY
+    ++      require 'haveapi'
+    ++      require 'webrick'
+    ++      abort 'wrong fixture Gemfile' unless Bundler.default_gemfile.to_s == #{described_class::SERVER_GEMFILE.inspect}
+    ++      abort 'Ruby defaults hidden' unless Gem.path.include?(Gem.default_dir)
+    ++      puts 'HAVEAPI_TEST_SERVER_READY http://127.0.0.1:12345'
+    ++      $stdout.flush
+    ++      sleep 5
+    ++    RUBY
+    ++    allow(Open3).to receive(:popen2).and_wrap_original do |popen, env, *_command, **options|
+    ++      expect(env.fetch('BUNDLE_GEMFILE')).to eq(described_class::SERVER_GEMFILE)
+    ++      expect(env.fetch('GEM_HOME')).to eq(described_class::SERVER_GEM_HOME)
+    ++      expect(env.fetch('GEM_PATH')).to be_nil
+    ++      popen.call(env, 'bundle', 'exec', RbConfig.ruby, '-e', probe, **options)
+    ++    end
+    ++
+    ++    expect { |block| described_class.with_server('/', &block) }
+    ++      .to yield_with_args('http://127.0.0.1:12345/')
+    ++  end
+    ++end
+    +
+      ## clients/rust/spec/integration/fixture_contract_spec.rb (new) ##
+     @@
+     +# frozen_string_literal: true
+    @@ clients/rust/spec/integration/run.rb (new)
+     @@
+     +# frozen_string_literal: true
+     +
+    ++ENV['BUNDLE_GEMFILE'] = File.expand_path('../../Gemfile', __dir__)
+    ++require 'bundler/setup'
+     +require 'fileutils'
+     +require 'json'
+     +require 'io/wait'
+    @@ clients/rust/spec/integration/run.rb (new)
+     +      'bundle', 'exec', RbConfig.ruby,
+     +      File.join(__dir__, 'support/haveapi_server.rb'), '--mount', mount
+     +    ]
+    -+    input, output, waiter = Open3.popen2(
+    -+      { 'BUNDLE_GEMFILE' => SERVER_GEMFILE, 'GEM_HOME' => SERVER_GEM_HOME, 'GEM_PATH' => SERVER_GEM_HOME },
+    -+      *command, err: log.path
+    -+    )
+    ++    input, output, waiter = Bundler.with_unbundled_env do
+    ++      Open3.popen2(
+    ++        { 'BUNDLE_GEMFILE' => SERVER_GEMFILE, 'GEM_HOME' => SERVER_GEM_HOME, 'GEM_PATH' => nil },
+    ++        *command, err: log.path
+    ++      )
+    ++    end
+     +    input.close
+     +    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 30
+     +    url = nil

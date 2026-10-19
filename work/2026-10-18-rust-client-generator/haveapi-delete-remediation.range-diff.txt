@@ -1,0 +1,827 @@
+1:  0717da0 ! 1:  9818ebc clients/rust: add embedded protocol runtime
+    @@ Commit message
+         request validation and envelope decoding for async and optional blocking
+         execution.
+     
+    -    Preserve omitted and explicit null inputs, partial output and metadata,
+    -    and explicit authentication steps. Bound response bodies and deadlines,
+    -    disable redirects and retries, and keep credentials and wire values out
+    -    of diagnostics. Keep the private harness and behavioral fixtures outside
+    -    the copied modules.
+    +    Use query input for GET and JSON bodies for DELETE, POST, PUT and PATCH
+    +    to match server parsing. Preserve omitted and explicit null inputs,
+    +    partial output and metadata, and explicit authentication steps.
+    +
+    +    Bound response bodies and deadlines, disable redirects and retries, and
+    +    keep credentials and wire values out of diagnostics. Keep the private
+    +    harness and behavioral fixtures outside the copied modules.
+     
+      ## clients/rust/runtime/Cargo.lock (new) ##
+     @@
+    @@ clients/rust/runtime/README.md (new)
+     +types, required fields and nullability for input and metadata. Undescribed
+     +parameters are rejected. Omitted values never acquire client-side defaults.
+     +
+    -+POST, PUT and PATCH use JSON objects or named object lists. GET and DELETE use
+    -+bracketed scalar query values, including separate global and object metadata
+    -+namespaces. Query null is encoded as an empty value and can be indistinguishable
+    -+from an empty string at the server. Nested Custom query values, list query
+    -+input, unnamespaced list input and per-item input metadata are unsupported and
+    -+fail locally. Custom JSON remains unrestricted in JSON bodies, subject to the
+    ++POST, PUT, PATCH and DELETE use JSON objects or named object lists, including
+    ++their separate global and object metadata namespaces. DELETE preserves explicit
+    ++JSON null and nested Custom values in the body; its input is never sent in the
+    ++query. GET uses bracketed scalar query values. Query null is encoded as an empty
+    ++value and can be indistinguishable from an empty string at the server. Nested
+    ++Custom query values and list query input are unsupported for GET and fail
+    ++locally. Unnamespaced list input and per-item input metadata are unsupported for
+    ++all methods. Custom JSON remains unrestricted in JSON bodies, subject to the
+     +parameter's nullability.
+     +
+     +Datetime inputs use the documented HaveAPI grammar: calendar-valid dates,
+    @@ clients/rust/runtime/src/runtime/types.rs (new)
+     +    }
+     +
+     +    pub(crate) fn query(self) -> bool {
+    -+        matches!(self, Self::Get | Self::Delete)
+    ++        // The HaveAPI server reads DELETE action input from its JSON body.
+    ++        matches!(self, Self::Get)
+     +    }
+     +}
+     +
+    @@ clients/rust/runtime/tests/http.rs (new)
+     +    auth: RequestAuth::Configured,
+     +};
+     +
+    ++const METHOD_SPEC: ActionSpec = ActionSpec {
+    ++    name: "method_input",
+    ++    method: Method::Delete,
+    ++    path: "v7.0/method_input",
+    ++    input: Some(InputSpec {
+    ++        layout: Layout::Hash,
+    ++        namespace: Some("item"),
+    ++        parameters: &[
+    ++            ParameterSpec {
+    ++                name: "number",
+    ++                kind: ParameterKind::Integer,
+    ++                required: false,
+    ++                nullable: true,
+    ++                protected: false,
+    ++            },
+    ++            ParameterSpec {
+    ++                name: "flag",
+    ++                kind: ParameterKind::Boolean,
+    ++                required: false,
+    ++                nullable: false,
+    ++                protected: false,
+    ++            },
+    ++            ParameterSpec {
+    ++                name: "zero",
+    ++                kind: ParameterKind::Integer,
+    ++                required: false,
+    ++                nullable: false,
+    ++                protected: false,
+    ++            },
+    ++            ParameterSpec {
+    ++                name: "text",
+    ++                kind: ParameterKind::String,
+    ++                required: false,
+    ++                nullable: false,
+    ++                protected: false,
+    ++            },
+    ++            ParameterSpec {
+    ++                name: "custom",
+    ++                kind: ParameterKind::Custom,
+    ++                required: false,
+    ++                nullable: false,
+    ++                protected: false,
+    ++            },
+    ++            ParameterSpec {
+    ++                name: "omitted",
+    ++                kind: ParameterKind::String,
+    ++                required: false,
+    ++                nullable: false,
+    ++                protected: false,
+    ++            },
+    ++        ],
+    ++    }),
+    ++    global_meta: &[ParameterSpec {
+    ++        name: "count",
+    ++        kind: ParameterKind::Boolean,
+    ++        required: false,
+    ++        nullable: false,
+    ++        protected: false,
+    ++    }],
+    ++    object_meta: &[ParameterSpec {
+    ++        name: "includes",
+    ++        kind: ParameterKind::String,
+    ++        required: false,
+    ++        nullable: false,
+    ++        protected: false,
+    ++    }],
+    ++    output: Some(OutputSpec {
+    ++        layout: Layout::Hash,
+    ++        namespace: "item",
+    ++        allow_empty_response: false,
+    ++    }),
+    ++    meta_namespace: Some("_meta"),
+    ++    auth: RequestAuth::Configured,
+    ++};
+    ++static DELETE_SPEC: ActionSpec = METHOD_SPEC;
+    ++static GET_SPEC: ActionSpec = ActionSpec {
+    ++    method: Method::Get,
+    ++    ..METHOD_SPEC
+    ++};
+    ++
+    ++#[derive(Default, Serialize)]
+    ++struct MethodInput {
+    ++    #[serde(skip_serializing_if = "InputValue::is_unset")]
+    ++    number: InputValue<i64>,
+    ++    #[serde(skip_serializing_if = "InputValue::is_unset")]
+    ++    flag: InputValue<bool>,
+    ++    #[serde(skip_serializing_if = "InputValue::is_unset")]
+    ++    zero: InputValue<i64>,
+    ++    #[serde(skip_serializing_if = "InputValue::is_unset")]
+    ++    text: InputValue<String>,
+    ++    #[serde(skip_serializing_if = "InputValue::is_unset")]
+    ++    custom: InputValue<Value>,
+    ++    #[serde(skip_serializing_if = "InputValue::is_unset")]
+    ++    omitted: InputValue<String>,
+    ++}
+    ++
+    ++impl Validate for MethodInput {
+    ++    fn validate(&self) -> Result<(), Error> {
+    ++        self.number.validate()?;
+    ++        self.flag.validate()?;
+    ++        self.zero.validate()?;
+    ++        self.text.validate()?;
+    ++        self.custom.validate()?;
+    ++        self.omitted.validate()
+    ++    }
+    ++}
+    ++
+    ++fn method_request<'a, C: Mode>(
+    ++    client: &'a Client<C>,
+    ++    spec: &'static ActionSpec,
+    ++) -> Request<'a, C, MethodInput, Output, JsonMap> {
+    ++    let input = MethodInput {
+    ++        number: InputValue::Null,
+    ++        flag: InputValue::Value(false),
+    ++        zero: InputValue::Value(0),
+    ++        text: InputValue::Value(String::new()),
+    ++        custom: if spec.method == Method::Delete {
+    ++            InputValue::Value(json!({"nested":[0,false,null]}))
+    ++        } else {
+    ++            InputValue::Unset
+    ++        },
+    ++        ..Default::default()
+    ++    };
+    ++    Request::new(client, spec, BTreeMap::new(), input)
+    ++        .global_meta(json!({"count":true}).as_object().unwrap().clone())
+    ++        .object_meta(
+    ++            json!({"includes":"owner,node"})
+    ++                .as_object()
+    ++                .unwrap()
+    ++                .clone(),
+    ++        )
+    ++}
+    ++
+     +#[derive(Serialize)]
+     +struct Input {
+     +    number: InputValue<f64>,
+    @@ clients/rust/runtime/tests/http.rs (new)
+     +    );
+     +}
+     +
+    ++fn assert_delete_and_get_requests(requests: &[Vec<u8>]) {
+    ++    assert_eq!(requests.len(), 2);
+    ++    let delete = String::from_utf8_lossy(&requests[0]);
+    ++    assert!(delete.starts_with("DELETE /mount/v7.0/method_input HTTP/1.1\r\n"));
+    ++    assert!(
+    ++        delete
+    ++            .to_ascii_lowercase()
+    ++            .contains("content-type: application/json\r\n")
+    ++    );
+    ++    let (_, body) = delete.split_once("\r\n\r\n").unwrap();
+    ++    assert_eq!(
+    ++        serde_json::from_str::<Value>(body).unwrap(),
+    ++        json!({
+    ++            "item":{"number":null,"flag":false,"zero":0,"text":"","custom":{"nested":[0,false,null]},"_meta":{"includes":"owner,node"}},
+    ++            "_meta":{"count":true}
+    ++        })
+    ++    );
+    ++
+    ++    let get = String::from_utf8_lossy(&requests[1]);
+    ++    let target = get
+    ++        .lines()
+    ++        .next()
+    ++        .unwrap()
+    ++        .strip_prefix("GET ")
+    ++        .unwrap()
+    ++        .strip_suffix(" HTTP/1.1")
+    ++        .unwrap();
+    ++    let url = url::Url::parse(&format!("http://fixture.test{target}")).unwrap();
+    ++    assert_eq!(url.path(), "/mount/v7.0/method_input");
+    ++    let query: BTreeMap<_, _> = url.query_pairs().into_owned().collect();
+    ++    assert_eq!(
+    ++        query,
+    ++        BTreeMap::from([
+    ++            ("item[number]".into(), "".into()),
+    ++            ("item[flag]".into(), "false".into()),
+    ++            ("item[zero]".into(), "0".into()),
+    ++            ("item[text]".into(), "".into()),
+    ++            ("item[_meta][includes]".into(), "owner,node".into()),
+    ++            ("_meta[count]".into(), "true".into()),
+    ++        ])
+    ++    );
+    ++    assert_eq!(get.split_once("\r\n\r\n").unwrap().1, "");
+    ++}
+    ++
+    ++#[tokio::test]
+    ++async fn async_delete_uses_json_body_and_get_keeps_query_input() {
+    ++    let server = Server::json(success());
+    ++    let client = ClientBuilder::<AsyncTransport>::new(&server.base, &API)
+    ++        .build()
+    ++        .unwrap();
+    ++    for spec in [&DELETE_SPEC, &GET_SPEC] {
+    ++        assert_eq!(
+    ++            method_request(&client, spec)
+    ++                .send()
+    ++                .await
+    ++                .unwrap()
+    ++                .output
+    ++                .value,
+    ++            Some(42)
+    ++        );
+    ++    }
+    ++    assert_delete_and_get_requests(&server.requests.lock().unwrap());
+    ++}
+    ++
+    ++#[cfg(feature = "blocking")]
+    ++#[test]
+    ++fn blocking_delete_uses_json_body_and_get_keeps_query_input() {
+    ++    let server = Server::json(success());
+    ++    let client = ClientBuilder::<BlockingTransport>::new(&server.base, &API)
+    ++        .build()
+    ++        .unwrap();
+    ++    for spec in [&DELETE_SPEC, &GET_SPEC] {
+    ++        assert_eq!(
+    ++            method_request(&client, spec).send().unwrap().output.value,
+    ++            Some(42)
+    ++        );
+    ++    }
+    ++    drop(client);
+    ++    assert_delete_and_get_requests(&server.requests.lock().unwrap());
+    ++}
+    ++
+     +#[tokio::test]
+     +async fn async_adapter_reuses_client_and_validates_before_serialization() {
+     +    let server = Server::json(success());
+    @@ clients/rust/runtime/tests/protocol.rs (new)
+     +}
+     +
+     +#[test]
+    ++fn body_methods_preserve_input_and_metadata_without_query_parameters() {
+    ++    let client = client();
+    ++    for method in [Method::Delete, Method::Post, Method::Put, Method::Patch] {
+    ++        let spec = ActionSpec {
+    ++            method,
+    ++            global_meta: META,
+    ++            object_meta: OBJECT_META,
+    ++            ..spec()
+    ++        };
+    ++        for custom in [
+    ++            InputValue::Unset,
+    ++            InputValue::Value(json!({"nested":[1,false,null]})),
+    ++            InputValue::Value(json!([1, 2])),
+    ++        ] {
+    ++            let input = TriState {
+    ++                name: InputValue::Value(String::new()),
+    ++                count: InputValue::Value(0),
+    ++                enabled: InputValue::Value(false),
+    ++                clear: InputValue::Null,
+    ++                custom,
+    ++            };
+    ++            let mut expected_input = serde_json::to_value(input).unwrap();
+    ++            let mut parts = parts(expected_input.clone());
+    ++            parts.global_meta = Some(map(json!({"count":true})));
+    ++            parts.object_meta = Some(map(json!({"includes":"owner,node"})));
+    ++            expected_input
+    ++                .as_object_mut()
+    ++                .unwrap()
+    ++                .insert("_meta".into(), json!({"includes":"owner,node"}));
+    ++            let request = prepare(client.config(), &spec, parts).unwrap();
+    ++            assert_eq!(request.method, method);
+    ++            assert!(request.url.query().is_none(), "{method:?}");
+    ++            assert_eq!(request.headers["content-type"], "application/json");
+    ++            assert_eq!(
+    ++                serde_json::from_slice::<Value>(request.body.as_ref().unwrap()).unwrap(),
+    ++                json!({"item":expected_input,"_meta":{"count":true}})
+    ++            );
+    ++        }
+    ++        let empty = ActionSpec { method, ..BASE };
+    ++        let request = prepare(client.config(), &empty, RequestParts::default()).unwrap();
+    ++        assert!(request.url.query().is_none());
+    ++        assert_eq!(request.headers["content-type"], "application/json");
+    ++        assert_eq!(request.body.unwrap(), b"{}");
+    ++    }
+    ++}
+    ++
+    ++#[test]
+    ++fn delete_supports_unnamespaced_objects_and_named_lists_in_json() {
+    ++    let client = client();
+    ++    let mut spec = ActionSpec {
+    ++        method: Method::Delete,
+    ++        global_meta: META,
+    ++        ..spec()
+    ++    };
+    ++    spec.input.as_mut().unwrap().namespace = None;
+    ++    let mut parts = parts(json!({"name":"", "clear":null, "custom":{"nested":[false,0,null]}}));
+    ++    parts.global_meta = Some(map(json!({"count":false})));
+    ++    let request = prepare(client.config(), &spec, parts).unwrap();
+    ++    assert!(request.url.query().is_none());
+    ++    assert_eq!(request.headers["content-type"], "application/json");
+    ++    assert_eq!(
+    ++        serde_json::from_slice::<Value>(request.body.as_ref().unwrap()).unwrap(),
+    ++        json!({"name":"", "clear":null, "custom":{"nested":[false,0,null]}, "_meta":{"count":false}})
+    ++    );
+    ++
+    ++    spec.input.as_mut().unwrap().layout = Layout::HashList;
+    ++    spec.input.as_mut().unwrap().namespace = Some("item");
+    ++    let list = json!([{"name":"one","clear":null,"enabled":false,"custom":[0,null]}, {"name":"two","count":0}]);
+    ++    let mut parts = RequestParts {
+    ++        input: Some(list.clone()),
+    ++        global_meta: Some(map(json!({"count":true}))),
+    ++        ..Default::default()
+    ++    };
+    ++    let request = prepare(client.config(), &spec, parts).unwrap();
+    ++    assert!(request.url.query().is_none());
+    ++    assert_eq!(request.headers["content-type"], "application/json");
+    ++    assert_eq!(
+    ++        serde_json::from_slice::<Value>(request.body.as_ref().unwrap()).unwrap(),
+    ++        json!({"item":list,"_meta":{"count":true}})
+    ++    );
+    ++    spec.input.as_mut().unwrap().namespace = None;
+    ++    parts = RequestParts {
+    ++        input: Some(json!([])),
+    ++        ..Default::default()
+    ++    };
+    ++    assert!(prepare(client.config(), &spec, parts).is_err());
+    ++}
+    ++
+    ++#[test]
+     +fn query_rejects_nested_custom_but_json_lists_are_supported() {
+     +    let client = client();
+     +    for namespace in [None, Some("item")] {
+     +        let mut spec = spec();
+    -+        spec.method = Method::Delete;
+    ++        spec.method = Method::Get;
+     +        spec.input.as_mut().unwrap().namespace = namespace;
+     +        for custom in [json!({"nested":true}), json!([1, 2])] {
+     +            assert!(matches!(
+2:  e21d8a9 ! 2:  573bc23 clients/rust: generate clients from saved API schemas
+    @@ clients/rust/docs/generation.md (new)
+     +Associations retain their partial JSON maps and documented ID/label keys; they
+     +do not imply a complete Show response or trigger a network request.
+     +
+    -+GET/DELETE use bracketed scalar query inputs. Explicit nullable null becomes
+    -+an empty query value, so nullable empty strings cannot always be distinguished
+    -+from null on the wire. Nested Custom query values and query list layouts fail
+    -+locally. JSON body actions support object and named list layouts. Ordinary
+    -+output `namespace=false` and unnamespaced list input are rejected rather than
+    -+guessed. Named empty object/hash output permits the server's `response: {}`
+    -+shortcut; missing namespaces remain errors for nonempty or list outputs.
+    ++GET uses bracketed scalar query inputs. Explicit nullable null becomes an empty
+    ++query value, so nullable empty strings cannot always be distinguished from null
+    ++in GET requests. Nested Custom values and list layouts in GET queries fail
+    ++locally. DELETE, POST, PUT and PATCH send JSON object bodies, preserving input
+    ++and metadata namespaces. Body input supports objects and named lists, including
+    ++nested Custom values and explicit JSON null; an empty assembled body is `{}`.
+    ++Ordinary output `namespace=false` and unnamespaced list input are rejected
+    ++rather than guessed. Named empty object/hash output permits the server's
+    ++`response: {}` shortcut; missing namespaces remain errors for nonempty or list
+    ++outputs.
+     +
+     +## Owned output and recovery
+     +
+3:  2ac6da8 ! 3:  e9173e2 clients/rust: add protocol acceptance fixtures
+    @@ Commit message
+         clients/rust: add protocol acceptance fixtures
+     
+         Exercise generated async and blocking clients against the real HaveAPI
+    -    server and scripted HTTP responses. Keep local fixture extensions apart
+    -    from production schemas, including token challenges and empty revoke
+    -    responses.
+    +    server and scripted HTTP responses. Require DELETE JSON input and
+    +    metadata to reach action code alongside a GET query control. Keep local
+    +    fixture extensions apart from production schemas, including token
+    +    challenges and empty revoke responses.
+     
+         Add a composed launcher for the real vpsAdmin API with its own
+         disposable MariaDB instance and the generated client repository
+    -    acceptance tests. Document standalone commands and retain private
+    -    failure diagnostics.
+    +    acceptance tests. Keep fixture database paths short, handle child EOF,
+    +    and retain private failure diagnostics with standalone commands.
+     
+      ## clients/rust/spec/integration/README.md (new) ##
+     @@
+    @@ clients/rust/spec/integration/README.md (new)
+     +Generation and tests require no production credentials. Ordinary unit specs do
+     +not invoke this runner.
+     +
+    -+Coverage includes omitted/null/value input, zero/false/empty strings, JSON and
+    -+GET/DELETE query namespaces, unnamespaced object input, list input/output,
+    ++Coverage includes omitted/null/value input, zero/false/empty strings, JSON
+    ++bodies, GET query namespaces, unnamespaced object input, list input/output,
+     +Custom JSON, nested paths, object/list metadata, action-state references,
+     +partial associations, Basic and existing OAuth2/HaveAPI tokens, explicit
+     +TOTP/password-reset continuation, unknown steps, renew/revoke and deadlines.
+    @@ clients/rust/spec/integration/README.md (new)
+     +typed decode failures, redaction, redirects and size limits. Blocking bridge
+     +cases keep construction, use and destruction inside `spawn_blocking` under both
+     +Tokio runtime flavors. Server mutations affect only in-memory fixture data.
+    ++The real DELETE case checks explicit null, zero, false, empty string, an omitted
+    ++field, nested Custom JSON and both input metadata channels, paired with a GET
+    ++query control.
+     +
+     +For actual vpsAdmin acceptance, `run_vpsadmin.rb` composes fixture startup and
+     +the generated client's own `real_vpsadmin` test target. It requires a vpsAdmin
+    @@ clients/rust/spec/integration/README.md (new)
+     +schema additions. An API update may enqueue a local transaction; acceptance
+     +does not claim that a node executed it.
+     +
+    ++The database state uses a unique directory with mode 0700 under `/tmp` so its
+    ++Unix socket fits the platform path limit even when artifact paths are long.
+    ++Diagnostic logs remain in the selected private artifact directory.
+    ++
+     +The child emits `VPSADMIN_FIXTURE_READY` followed by a JSON object containing
+     +`base_url`, `api_version`, `vps_id`, `dns_record_id`, `user_id`,
+     +`setting_namespace` and `setting_key`. The parent validates the numeric loopback
+    @@ clients/rust/spec/integration/fixture_actions_spec.rb (new)
+     +require_relative 'run'
+     +
+     +RSpec.describe RustClientIntegration do
+    -+  it 'registers Custom JSON and both query actions without inherited constant collisions' do
+    ++  it 'registers fixture actions and preserves the server string validation contract' do
+     +    fixture = File.expand_path('support/haveapi_fixture.rb', __dir__)
+     +    probe = <<~RUBY
+     +      require ARGV.fetch(0)
+    @@ clients/rust/spec/integration/fixture_actions_spec.rb (new)
+     +      resource = HaveAPI::ClientTestAPI::Resources::RustFixture
+     +      actions = []
+     +      resource.actions { |action| actions << action.action_name }
+    -+      puts JSON.generate(actions)
+    ++      required_input = HaveAPI::ClientTestAPI::Resources::Test::Echo.input
+    ++      required_input.exec
+    ++      values = {i: 0, f: 0.0, b: false, dt: '2020-01-31T10:20Z', s: '', t: 'text'}
+    ++      invalid = []
+    ++      begin
+    ++        required_input.validate({required_input.namespace => values.dup})
+    ++      rescue HaveAPI::ValidationError => e
+    ++        invalid = e.to_hash.keys.map(&:to_s)
+    ++      end
+    ++      optional_input = resource::Echo.input
+    ++      optional_input.exec
+    ++      valid = required_input.validate({required_input.namespace => values.merge(s: 'scalar')})
+    ++      optional = optional_input.validate({optional_input.namespace => {text: ''}})
+    ++      delete_input = resource::DeleteBody.input
+    ++      delete_input.exec
+    ++      delete_values = {number: nil, zero: 0, flag: false, text: '', value: {'nested' => [0, false, nil]}}
+    ++      deleted = delete_input.validate({delete_input.namespace => delete_values})
+    ++      puts JSON.generate(
+    ++        actions: actions,
+    ++        empty_required_errors: invalid,
+    ++        nonempty_required: valid.fetch(required_input.namespace).fetch(:s),
+    ++        empty_optional: optional.fetch(optional_input.namespace).fetch(:text),
+    ++        delete_method: resource::DeleteBody.http_method,
+    ++        delete_input: deleted.fetch(delete_input.namespace)
+    ++      )
+     +    RUBY
+     +    stdout, stderr, status = Bundler.with_unbundled_env do
+     +      Open3.capture3(
+    @@ clients/rust/spec/integration/fixture_actions_spec.rb (new)
+     +    end
+     +
+     +    expect(status.success?).to be(true), stderr
+    -+    expect(JSON.parse(stdout)).to include('EchoCustom', 'CustomQuery', 'Query', 'DeleteQuery')
+    ++    contract = JSON.parse(stdout)
+    ++    expect(contract.fetch('actions')).to include('EchoCustom', 'CustomQuery', 'Query', 'DeleteBody')
+    ++    expect(contract.fetch('empty_required_errors')).to eq(['s'])
+    ++    expect(contract.fetch('nonempty_required')).to eq('scalar')
+    ++    expect(contract.fetch('empty_optional')).to eq('')
+    ++    expect(contract.fetch('delete_method')).to eq('delete')
+    ++    expect(contract.fetch('delete_input')).to eq(
+    ++      'number' => nil, 'zero' => 0, 'flag' => false, 'text' => '',
+    ++      'value' => { 'nested' => [0, false, nil] }
+    ++    )
+     +  end
+     +end
+     
+    @@ clients/rust/spec/integration/fixture_contract_spec.rb (new)
+     +# frozen_string_literal: true
+     +
+     +require 'rspec'
+    ++require 'fileutils'
+     +require_relative 'run_vpsadmin'
+    ++require_relative 'support/vpsadmin_database'
+     +
+     +RSpec.describe RustClientVpsadminIntegration do
+     +  let(:metadata) do
+    @@ clients/rust/spec/integration/fixture_contract_spec.rb (new)
+     +  it 'rejects a readiness record without its URL' do
+     +    expect { described_class.fixture_url!(metadata.except('base_url')) }.to raise_error(RuntimeError)
+     +  end
+    ++
+    ++  it 'reports stdout closing before readiness as an early failure' do
+    ++    output, writer = IO.pipe
+    ++    writer.close
+    ++    waiter = instance_double(Thread, alive?: true)
+    ++
+    ++    expect { described_class.readiness(output, waiter) }
+    ++      .to raise_error(RuntimeError, /closed stdout before readiness/)
+    ++  ensure
+    ++    output&.close
+    ++    writer&.close
+    ++  end
+    ++
+    ++  it 'uses unique private database directories within the Unix socket path limit' do
+    ++    allow(Dir).to receive(:tmpdir).and_return("/artifacts/#{'long-' * 40}")
+    ++    paths = Array.new(2) { RustClientFixtures.database_state_dir }
+    ++
+    ++    expect(paths.uniq.length).to eq(2)
+    ++    paths.each do |path|
+    ++      expect(File.stat(path).mode & 0o777).to eq(0o700)
+    ++      expect(File.join(path, 'mysql.sock').bytesize).to be <= 107
+    ++    end
+    ++  ensure
+    ++    paths&.each { |path| FileUtils.remove_entry(path) }
+    ++  end
+     +end
+     
+      ## clients/rust/spec/integration/run.rb (new) ##
+    @@ clients/rust/spec/integration/run_vpsadmin.rb (new)
+     +      next unless output.wait_readable(0.1)
+     +
+     +      line = output.gets
+    -+      break unless line
+    ++      raise 'vpsAdmin fixture closed stdout before readiness; inspect private fixture.log' unless line
+     +      next unless line.start_with?('VPSADMIN_FIXTURE_READY ')
+     +
+     +      metadata = JSON.parse(line.delete_prefix('VPSADMIN_FIXTURE_READY '))
+    @@ clients/rust/spec/integration/rust/real_server.rs (new)
+     +macro_rules! real_protocol_cases {
+     +    ($client:expr, $send:ident) => {{
+     +        let api = $client;
+    -+        let omitted = $send!(api.test().echo_optional()).unwrap();
+    ++        let omitted = $send!(api.test().echo_optional()).expect("Test::EchoOptional omitted input");
+     +        assert_eq!(omitted.output.dt_provided, Some(false));
+    -+        let null = $send!(api.test().echo_optional().dt_null()).unwrap();
+    ++        let null = $send!(api.test().echo_optional().dt_null()).expect("Test::EchoOptional null input");
+     +        assert_eq!(null.output.dt_provided, Some(true));
+     +        assert_eq!(null.output.dt_nil, Some(true));
+    -+        let query_null = $send!(api.test().echo_optional_get().dt_null()).unwrap();
+    ++        let query_null = $send!(api.test().echo_optional_get().dt_null()).expect("Test::EchoOptionalGet");
+     +        assert_eq!(query_null.output.dt_provided, Some(true));
+     +        assert_eq!(query_null.output.dt_nil, Some(true));
+     +
+     +        let echo = $send!(api.test().echo()
+     +            .i(0).f(0.0).b(false).dt("2020-01-31T10:20Z")
+    -+            .s("").t("line one\nline two")).unwrap();
+    ++            .s("scalar").t("line one\nline two")).expect("Test::Echo");
+     +        assert_eq!(echo.output.i, Some(0));
+     +        assert_eq!(echo.output.b, Some(false));
+    -+        assert_eq!(echo.output.s.as_deref(), Some(""));
+    ++        assert_eq!(echo.output.s.as_deref(), Some("scalar"));
+     +        assert_eq!(echo.output.t.as_deref(), Some("line one\nline two"));
+     +
+    -+        let body = $send!(api.rust_fixture().echo().number(0).flag(false).text("")).unwrap();
+    ++        let body = $send!(api.rust_fixture().echo().number(0).flag(false).text("")).expect("RustFixture::Echo");
+     +        assert_eq!(body.output.received, Some(json!({"number": 0, "flag": false, "text": ""})));
+    -+        for received in [
+    -+            $send!(api.rust_fixture().query().number_null().flag(false)).unwrap().output.received,
+    -+            $send!(api.rust_fixture().delete_query().number_null().flag(false)).unwrap().output.received,
+    -+        ] {
+    -+            assert_eq!(received, Some(json!({"number": null, "flag": false})));
+    -+        }
+    -+        let flat = $send!(api.rust_fixture().unnamespaced().number(0).flag(false)).unwrap();
+    -+        assert_eq!(flat.output.received, Some(json!({"number": 0, "flag": false})));
+    ++        let queried = $send!(api.rust_fixture().query().number_null().flag(false))
+    ++            .expect("RustFixture::Query GET");
+    ++        assert_eq!(queried.output.received, Some(json!({"number": null, "flag": false})), "RustFixture::Query GET");
+    ++
+     +        let custom = json!({"nested": [0, false, null, {"text": "a&b + c"}]});
+    -+        let result = $send!(api.rust_fixture().echo_custom().value(custom.clone())).unwrap();
+    ++        let global_meta = json!({"global_marker": {"confirmed": false}});
+    ++        let object_meta = json!({"object_marker": [0, null]});
+    ++        let deleted = $send!(api.rust_fixture().delete_body()
+    ++            .number_null().zero(0).flag(false).text("").value(custom.clone())
+    ++            .global_meta(global_meta.as_object().unwrap().clone())
+    ++            .object_meta(object_meta.as_object().unwrap().clone()))
+    ++            .expect("RustFixture::DeleteBody DELETE JSON");
+    ++        assert_eq!(deleted.output.received, Some(json!({
+    ++            "number": null, "zero": 0, "flag": false, "text": "", "value": custom.clone()
+    ++        })), "RustFixture::DeleteBody exact JSON input with omitted field absent");
+    ++        assert_eq!(deleted.output.received_meta, Some(json!({
+    ++            "global_marker": {"confirmed": false}, "object_marker": [0, null]
+    ++        })), "RustFixture::DeleteBody global and object metadata");
+    ++        let flat = $send!(api.rust_fixture().unnamespaced().number(0).flag(false)).expect("RustFixture::Unnamespaced");
+    ++        assert_eq!(flat.output.received, Some(json!({"number": 0, "flag": false})));
+    ++        let result = $send!(api.rust_fixture().echo_custom().value(custom.clone())).expect("RustFixture::EchoCustom");
+     +        assert_eq!(result.output.value, Some(custom));
+     +        assert!($send!(api.rust_fixture().custom_query().value(json!({"nested": true})))
+     +            .err().unwrap().validation_errors().is_some());
+     +
+    -+        let project = $send!(api.project().create().name("Rust fixture")).unwrap();
+    ++        let project = $send!(api.project().create().name("Rust fixture")).expect("Project::Create");
+     +        let id = project.output.id.unwrap();
+    -+        let show = $send!(api.project().show(id)).unwrap();
+    ++        let show = $send!(api.project().show(id)).expect("Project::Show");
+     +        assert_eq!(show.output.name.as_deref(), Some("Rust fixture"));
+     +        assert_eq!(show.meta.resolved, Some(true));
+     +        assert!(show.meta.path_params.is_some());
+    -+        let task = $send!(api.project__task(id).create().label("child").done(true)).unwrap();
+    ++        let task = $send!(api.project__task(id).create().label("child").done(true)).expect("Project::Task::Create");
+     +        let task_id = task.output.id.unwrap();
+    -+        let update = $send!(api.project__task(id).update(task_id).done(false)).unwrap();
+    ++        let update = $send!(api.project__task(id).update(task_id).done(false)).expect("Project::Task::Update");
+     +        assert_eq!(update.output.done, Some(false));
+    -+        let child = $send!(api.project__task(id).show(task_id)).unwrap();
+    ++        let child = $send!(api.project__task(id).show(task_id)).expect("Project::Task::Show");
+     +        assert_eq!(child.output.label.as_deref(), Some("child"));
+    -+        let submitted = $send!(api.project__task(id).run(task_id)).unwrap();
+    ++        let submitted = $send!(api.project__task(id).run(task_id)).expect("Project::Task::Run");
+     +        assert!(submitted.meta.action_state_id.is_some());
+     +        let list = $send!(api.project().index().global_meta(
+     +            json!({"count": true}).as_object().unwrap().clone()
+    -+        )).unwrap();
+    ++        )).expect("Project::Index with count metadata");
+     +        assert!(list.output.iter().any(|p| p.id == Some(id)));
+     +        assert_eq!(list.http_status, 200);
+     +        assert!(list.meta.total_count.is_some());
+     +        assert!(list.output.iter().all(|p| p.object_meta.is_some()));
+    -+        let public = $send!(api.project().public_show(id)).unwrap();
+    ++        let public = $send!(api.project().public_show(id)).expect("Project::PublicShow");
+     +        assert!(public.meta.path_params.is_none());
+    -+        let associated = $send!(api.rust_fixture().association()).unwrap();
+    ++        let associated = $send!(api.rust_fixture().association()).expect("RustFixture::Association");
+     +        assert_eq!(associated.output.project.unwrap().as_map().get("id"), Some(&json!(1)));
+     +
+     +        use haveapi_rust_fixture::resources::rust_fixture::batch::Input as BatchInput;
+    @@ clients/rust/spec/integration/rust/real_server.rs (new)
+     +        let batch = $send!(api.rust_fixture().batch().input(vec![
+     +            BatchInput { number: InputValue::Value(0), ..Default::default() },
+     +            BatchInput { number: InputValue::Value(42), ..Default::default() },
+    -+        ])).unwrap();
+    ++        ])).expect("RustFixture::Batch");
+     +        assert_eq!(batch.output[0].number, Some(0));
+     +        assert_eq!(batch.output[1].number, Some(42));
+     +
+    @@ clients/rust/spec/integration/rust/real_server.rs (new)
+     +                .password("totp")
+     +                .lifetime("fixed")
+     +        )
+    -+        .unwrap()
+    ++        .expect("Token::Request challenge")
+     +        .output;
+     +        let TokenStep::Challenge { token, next_action } = pending.token_step().unwrap() else {
+     +            panic!("TOTP must be an explicit challenge");
+    @@ clients/rust/spec/integration/rust/real_server.rs (new)
+     +                .token(token.expose_secret())
+     +                .code("123456")
+     +        )
+    -+        .unwrap()
+    ++        .expect("Token::Totp")
+     +        .output;
+     +        let TokenStep::Challenge { token, next_action } = reset.token_step().unwrap() else {
+     +            panic!("password reset must be an explicit challenge");
+    @@ clients/rust/spec/integration/rust/real_server.rs (new)
+     +                .new_password1("fixture-new-password")
+     +                .new_password2("fixture-new-password")
+     +        )
+    -+        .unwrap()
+    ++        .expect("Token::ResetPassword")
+     +        .output;
+     +        let TokenStep::Complete { token } = done.token_step().unwrap() else {
+     +            panic!("expected a complete token step");
+    @@ clients/rust/spec/integration/rust/real_server.rs (new)
+     +            .token(token.expose_secret())
+     +            .build()
+     +            .unwrap();
+    -+        assert!(!$send!(session.project().index()).unwrap().output.is_empty());
+    -+        $send!(session.authentication__token__token().renew()).unwrap();
+    ++        assert!(
+    ++            !$send!(session.project().index())
+    ++                .expect("Project::Index with existing token")
+    ++                .output
+    ++                .is_empty()
+    ++        );
+    ++        $send!(session.authentication__token__token().renew()).expect("Token::Renew");
+     +        // Real ok! response:{} regression (FROZEN clarification 2).
+    -+        $send!(session.authentication__token__token().revoke()).unwrap();
+    ++        $send!(session.authentication__token__token().revoke()).expect("Token::Revoke");
+     +        assert_eq!(
+     +            $send!(session.project().index())
+     +                .err()
+    @@ clients/rust/spec/integration/rust/real_server.rs (new)
+     +                .password("unknown")
+     +                .lifetime("fixed")
+     +        )
+    -+        .unwrap()
+    ++        .expect("Token::Request unknown challenge")
+     +        .output;
+     +        assert!(matches!(
+     +            unknown.token_step(),
+    @@ clients/rust/spec/integration/support/haveapi_fixture.rb (new)
+     +
+     +        # Query null and body null share the same declared input but use the
+     +        # real server's separate query/JSON parsers and validation pipeline.
+    -+        { Echo: :post, Query: :get, DeleteQuery: :delete, Unnamespaced: :post }.each do |name, method|
+    ++        { Echo: :post, Query: :get, Unnamespaced: :post }.each do |name, method|
+     +          define_action(name) do
+     +            http_method method
+     +            authorize { allow }
+     +            input(:hash, namespace: name == :Unnamespaced ? false : :rust_fixture) do
+     +              integer :number, nullable: true
+     +              bool :flag, nullable: true
+    -+              string :text, nullable: true
+    ++              string :text
+     +            end
+     +            output(:hash) do
+     +              custom :received
+    @@ clients/rust/spec/integration/support/haveapi_fixture.rb (new)
+     +          end
+     +        end
+     +
+    ++        define_action(:DeleteBody) do
+    ++          http_method :delete
+    ++          authorize { allow }
+    ++          input(:hash) do
+    ++            integer :number, nullable: true
+    ++            integer :zero
+    ++            bool :flag
+    ++            string :text
+    ++            string :omitted
+    ++            custom :value
+    ++          end
+    ++          meta(:global) do
+    ++            input { custom :global_marker }
+    ++          end
+    ++          meta(:object) do
+    ++            input { custom :object_marker }
+    ++          end
+    ++          output(:hash) do
+    ++            custom :received
+    ++            custom :received_meta
+    ++          end
+    ++          def exec
+    ++            { received: input, received_meta: meta }
+    ++          end
+    ++        end
+    ++
+     +        # Custom is a top-level HaveAPI type constant. The resource DSL skips
+     +        # inherited constant names, so give this action a distinct name.
+     +        define_action(:EchoCustom) do
+    @@ clients/rust/spec/integration/support/serve.rb (new)
+     +      $stdout.flush
+     +    end
+     +  end
+    ++end
+    +
+    + ## clients/rust/spec/integration/support/vpsadmin_database.rb (new) ##
+    +@@
+    ++# frozen_string_literal: true
+    ++
+    ++require 'tmpdir'
+    ++
+    ++module RustClientFixtures
+    ++  def self.database_state_dir
+    ++    # TestDb places its Unix socket below this directory. Artifact TMPDIRs can
+    ++    # exceed the platform socket-path limit, so use a short private directory.
+    ++    Dir.mktmpdir('rust-vpsadmin-', '/tmp')
+    ++  end
+     +end
+     
+      ## clients/rust/spec/integration/support/vpsadmin_server.rb (new) ##
+    @@ clients/rust/spec/integration/support/vpsadmin_server.rb (new)
+     +require 'optparse'
+     +require 'tmpdir'
+     +require_relative 'serve'
+    ++require_relative 'vpsadmin_database'
+     +
+     +options = {}
+     +OptionParser.new do |opts|
+    @@ clients/rust/spec/integration/support/vpsadmin_server.rb (new)
+     +ENV['VPSADMIN_TEST_DB_AUTO'] = '0'
+     +require File.join(root, 'tools/test_db')
+     +
+    -+state_dir = Dir.mktmpdir('rust-client-vpsadmin-fixture-')
+    ++state_dir = RustClientFixtures.database_state_dir
+     +File.chmod(0o700, state_dir)
+     +db = VpsAdmin::TestDb::Instance.new(
+     +  state_dir: state_dir, port: VpsAdmin::TestDb.free_port,
+4:  b80ed05 < -:  ------- clients/rust: respect fixture string validation
+5:  dbc78c4 < -:  ------- clients/rust: keep fixture database socket paths short
+6:  45f3517 < -:  ------- clients/rust: send DELETE input in a JSON body
+7:  6e70c52 < -:  ------- clients/rust: document JSON input for DELETE
+8:  165000c < -:  ------- clients/rust: assert real DELETE JSON input fidelity

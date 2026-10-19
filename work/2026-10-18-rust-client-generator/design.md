@@ -1,29 +1,504 @@
-# Rust HaveAPI generator and vpsAdmin client: proposed design
+# Rust HaveAPI generator and vpsAdmin client: implementation design
 
-Status: planning complete; implementation has not started. Architect0 owns this
-design. The lead accepted the bounded direction below. Material implementation
-deviations return through the lead. Implementers and reviewer remain unassigned.
+Status: implementation authorized; P0 shared contract FROZEN revision 1,
+with numbered clarifications 2 through 5 below.
+Architect0 owns this design. Ruby/ERB generation, embedded runtime source,
+async default and optional reqwest blocking support are accepted. Material
+contract changes require a numbered clarification through the lead. Four source
+owners may begin against the following contract. The rationale below explains
+the same boundaries; contract revisions remain architect-owned.
 
 The client targets an **explicit API version**. Package SemVer is independent;
 no other vpsAdmin version belongs in generation inputs or the support contract.
 
+## FROZEN revision 1: shared implementation contract
+
+This section is the implementation boundary, effective immediately. Signatures
+below specify types and visibility; omitted method bodies are implementation
+work. Helpers and private storage may vary without changing this contract.
+
+### Owners and source-copy boundary
+
+- Implementer0 exclusively owns `clients/rust/runtime/**`, including its docs
+  and private Cargo test harness.
+- Implementer1 owns Ruby/ERB `clients/rust/{bin,lib,template}/**`, generator
+  unit specs/fixtures and shared spec setup, gem/build files, generator docs,
+  HaveAPI flake/Makefile/CI. It owns the sanitizer and snapshot format.
+- Implementer2 exclusively owns `clients/rust/spec/integration/**`, including
+  protocol fixture launcher and test-only server extensions. Generic HaveAPI
+  fixture profile is explicit API `1.0`; vpsAdmin behavior fixtures use `7.0`.
+  Extensions stay here and do not modify production schema or server behavior.
+- Implementer3 exclusively owns the existing `vpsadmin-rust-client` repository,
+  including its authoritative capture, saved snapshot, provenance, examples,
+  package/CI files and generated tree. Lead serializes Git operations.
+
+Maintain runtime modules under `clients/rust/runtime/src/runtime/**`. The private
+harness `src/lib.rs` contains `pub mod runtime; pub use runtime::*;`. Copy that
+runtime directory byte-for-byte to generated `src/generated/runtime/**`.
+Generated `src/generated/mod.rs` declares `pub mod runtime;` and generated
+resource/client modules. The handwritten client `src/lib.rs` contains
+`mod generated; pub use generated::*;`. Runtime internal paths use
+`crate::runtime`, valid in both harness and generated crate. Do not copy the
+harness manifest/tests or add a published runtime dependency.
+
+### Core types and protocol functions
+
+All these names are exported from `runtime`; `JsonMap` means
+`serde_json::Map<String, serde_json::Value>`. Ordinary generated outputs and
+public error enums are non-exhaustive. Sensitive values never derive Debug.
+
+```rust
+pub type JsonMap = serde_json::Map<String, serde_json::Value>;
+pub type ValidationErrors = std::collections::BTreeMap<String, Vec<String>>;
+pub enum InputValue<T> { Unset, Null, Value(T) }
+pub type Input<T> = InputValue<T>;
+pub trait Validate { fn validate(&self) -> Result<(), Error>; }
+pub enum Method { Get, Delete, Post, Put, Patch }
+pub enum Layout { Object, ObjectList, Hash, HashList }
+pub enum ParameterKind { String, Text, Integer, Float, Boolean, Datetime, Resource, Custom }
+pub enum RequestAuth { Configured, None }
+pub struct ParameterSpec {
+    pub name: &'static str,
+    pub kind: ParameterKind,
+    pub required: bool,
+    pub nullable: bool,
+    pub protected: bool,
+}
+pub struct InputSpec {
+    pub layout: Layout,
+    pub namespace: Option<&'static str>,
+    pub parameters: &'static [ParameterSpec],
+}
+pub struct OutputSpec {
+    pub layout: Layout,
+    pub namespace: &'static str,
+    pub allow_empty_response: bool,
+}
+pub struct ActionSpec {
+    pub name: &'static str,
+    pub method: Method,
+    pub path: &'static str,
+    pub input: Option<InputSpec>,
+    pub output: Option<OutputSpec>,
+    pub meta_namespace: Option<&'static str>,
+    pub global_meta: &'static [ParameterSpec],
+    pub object_meta: &'static [ParameterSpec],
+    pub auth: RequestAuth,
+}
+pub struct ApiSpec {
+    pub api_version: &'static str,
+    pub protocol_major: u16,
+    pub schema_sha256: &'static str,
+    pub basic_auth: bool,
+    pub token_header: Option<&'static str>,
+    pub oauth2_header: Option<&'static str>,
+}
+pub struct RequestParts {
+    pub path_params: std::collections::BTreeMap<String, String>,
+    pub input: Option<serde_json::Value>,
+    pub global_meta: Option<JsonMap>,
+    pub object_meta: Option<JsonMap>,
+}
+pub struct PreparedRequest {
+    pub method: Method,
+    pub url: url::Url,
+    pub headers: reqwest::header::HeaderMap,
+    pub body: Option<Vec<u8>>,
+}
+pub struct RawResponse { pub status: u16, pub body: Vec<u8> }
+pub struct Response<T, M> { pub output: T, pub meta: M, pub http_status: u16 }
+pub fn prepare(config: &ClientConfig, spec: &ActionSpec, parts: RequestParts)
+    -> Result<PreparedRequest, Error>;
+pub fn decode<T: serde::de::DeserializeOwned, M: serde::de::DeserializeOwned>(
+    spec: &ActionSpec, response: RawResponse,
+) -> Result<Response<T, M>, Error>;
+```
+
+`InputValue` defaults to Unset and provides `is_unset(&self) -> bool`; generated
+Serde fields skip Unset, serialize Null as null, and preserve zero/false/empty.
+GET encodes input/metadata in the query; DELETE/POST/PUT/PATCH encode a JSON
+object body through the same preparation path (clarification 5).
+`Validate` runs BEFORE serialization (especially for nonfinite floats); runtime
+`prepare` enforces required/null/type rules again on serialized input/metadata.
+Implement `Validate` for generated unique action input structs, `()` and
+`Vec<T: Validate>`. Input absence uses `ActionSpec.input=None`, not an invented
+namespace. All output fields are `Option<T>`. Generated output item structs
+capture `_meta` as `Option<JsonMap>`; response metadata has an action-specific
+all-optional struct plus flattened extras. Missing response metadata becomes
+an empty object. Associations use a transparent JSON map wrapper named
+`Association` with `as_map(&self) -> &JsonMap`; described ID/label key names
+remain in schema/field documentation, without assuming a complete Show model.
+
+Input `namespace=false` normalizes to None and is supported for object/hash.
+Metadata `namespace=false` also normalizes to None. Unnamespaced list input is
+rejected. Ordinary output namespace=false is a generation error: current server
+wraps it under JSON key `"false"`; do not infer flattened output. True no-output
+uses `output=None`, `T=()`, and requires a valid success envelope with empty
+response object. Named empty schemas follow clarification 2 below.
+No implicit success on empty HTTP204. Single-object metadata is response-level;
+list item metadata remains on each item. Per-item input metadata is deferred.
+
+Paths in ActionSpec are safe mount-relative templates without a leading slash,
+for example `v7.0/vpses/{vps_id}` or `_auth/...`. The snapshot records the capture
+mount; generator strips it once. Client base URL denotes the server mount root,
+not a version root. Preserve its mount when joining paths. Placeholder values
+are strings encoded as single segments; numeric conveniences use ToString.
+Reject traversal, authority/absolute action URLs, escaping the mount, fragments
+and credential-bearing URLs. Never infer numeric IDs from placeholder names.
+
+### Client, execution modes and generated builders
+
+```rust
+pub trait Mode: private::Sealed {}
+pub struct AsyncTransport { /* private */ }
+#[cfg(feature = "blocking")]
+pub struct BlockingTransport { /* private */ }
+pub struct Client<C: Mode> { /* private */ }
+pub struct ClientConfig { /* private; common immutable config */ }
+pub struct ClientBuilder<C: Mode> { /* private */ }
+impl<C: Mode> ClientBuilder<C> {
+    pub fn new(base: impl AsRef<str>, api: &'static ApiSpec) -> Self;
+    pub fn basic_auth(self, username: impl Into<String>, password: impl Into<String>) -> Self;
+    pub fn token(self, token: impl Into<String>) -> Self;
+    pub fn oauth2_token(self, token: impl Into<String>) -> Self;
+    pub fn timeout(self, timeout: std::time::Duration) -> Self;
+    pub fn connect_timeout(self, timeout: std::time::Duration) -> Self;
+    pub fn max_response_bytes(self, bytes: usize) -> Self;
+    pub fn user_agent(self, value: impl Into<String>) -> Self;
+}
+impl ClientBuilder<AsyncTransport> { pub fn build(self) -> Result<Client<AsyncTransport>, Error>; }
+#[cfg(feature = "blocking")]
+impl ClientBuilder<BlockingTransport> { pub fn build(self) -> Result<Client<BlockingTransport>, Error>; }
+impl AsyncTransport {
+    pub fn new(config: &ClientConfig) -> Result<Self, Error>;
+    pub async fn execute(&self, request: PreparedRequest) -> Result<RawResponse, Error>;
+}
+#[cfg(feature = "blocking")]
+impl BlockingTransport {
+    pub fn new(config: &ClientConfig) -> Result<Self, Error>;
+    pub fn execute(&self, request: PreparedRequest) -> Result<RawResponse, Error>;
+}
+pub struct Request<'a, C: Mode, I, O, M> { /* private */ }
+impl<'a, C: Mode, I, O, M> Request<'a, C, I, O, M> {
+    pub fn new(client: &'a Client<C>, spec: &'static ActionSpec,
+        path_params: std::collections::BTreeMap<String, String>, input: I) -> Self;
+    pub fn input(self, input: I) -> Self;
+    pub fn global_meta(self, meta: JsonMap) -> Self;
+    pub fn object_meta(self, meta: JsonMap) -> Self;
+    pub(crate) fn input_mut(&mut self) -> &mut I;
+}
+impl<'a, I: serde::Serialize + Validate, O: serde::de::DeserializeOwned,
+    M: serde::de::DeserializeOwned> Request<'a, AsyncTransport, I, O, M> {
+    pub async fn send(self) -> Result<Response<O, M>, Error>;
+}
+#[cfg(feature = "blocking")]
+impl<'a, I: serde::Serialize + Validate, O: serde::de::DeserializeOwned,
+    M: serde::de::DeserializeOwned> Request<'a, BlockingTransport, I, O, M> {
+    pub fn send(self) -> Result<Response<O, M>, Error>;
+}
+```
+
+Mode is sealed and implemented for the two transports; no public pluggable
+transport API. Both send implementations call the same validate/prepare/decode.
+Runtime does not define `Client::builder`: generated code supplies it for each
+concrete mode using `ClientBuilder::new(base, &API_SPEC)`. Generated root alias
+is `pub type Client = runtime::Client<runtime::AsyncTransport>`; gated
+`blocking::Client` aliases the blocking specialization. Generated resource
+methods are inherent methods on `runtime::Client<C>` and borrow the client.
+Both constructors use the same static API_SPEC. No runtime API-version setter.
+
+Generate modules `resources::<snake_resource_path>::<snake_action>` containing
+`Input`, `Output`, `Meta`, `SPEC`; nested resource paths join with double underscores,
+and any name collision fails generation with both schema paths. Object/hash
+Input is a unique struct even when empty; list input is `Vec<Input>`, list
+output `Vec<Output>`. Each input field uses `InputValue<T>` and is public;
+inputs implement Default. Generated setters are specialized inherent impls on
+the corresponding `Request` instantiation, shared across C. `.hostname(value)`
+sets Value; nullable fields also get `.hostname_null()`. Common `.input(...)`
+supports list/replacement inputs. A resource action's path arguments appear in
+template order, accept `impl ToString`, and populate the BTreeMap. Examples:
+`api.vps().show(123)`, `api.vps().update(123).hostname("example")`.
+Nested resource accessors take accumulated parent placeholders explicitly.
+
+Builder validates URL/auth/header settings at build; only one auth mode may be
+selected (conflicts error). Header names come exclusively from API_SPEC.
+Existing tokens are sent verbatim using their described header, not an invented
+Bearer prefix. Basic uses normal HTTP Basic. Unsupported/missing configured
+provider errors at build. Ordinary actions use Configured even if auth is
+optional; token request/challenge actions use None, renew/revoke Configured.
+Defaults: request timeout 30s, connect timeout 10s, response limit 16MiB. TLS verifies
+platform roots, redirects disabled, no automatic retry, including mutations.
+No arbitrary HTTP client injection, extra auth headers or TLS bypass in v1.
+Client/request/config Debug output must exclude credentials, inputs and bodies.
+
+Blocking construction/use/drop must all occur outside an async runtime; async
+callers use async methods or put the full blocking lifecycle in spawn_blocking.
+No block_on bridge, reentrancy promise, implicit retry or cancellation rollback.
+
+### Errors and explicit token steps
+
+Freeze error variant names `Configuration`, `Validation`, `Encode`, `Transport`,
+`Http`, `Api`, `Protocol`, `Decode`, `ResponseTooLarge`, `UnsupportedAuthStep`.
+Payload structs/private constructors are runtime-owned; expose `http_status()`
+returning Option<u16> and `validation_errors()` returning Option<&ValidationErrors>.
+Distinguish timeout in Transport. API failure messages/details may be available
+through explicit accessors but never printed by Debug/Display. Decode errors
+also suppress original field values/raw bodies. Non2xx is never success; parse
+valid API failure envelopes before falling back to Http. Protocol is malformed
+envelope/namespace, Decode is typed-output mismatch.
+
+```rust
+pub struct SecretString { /* private; redacted Debug/Display */ }
+impl SecretString { pub fn expose_secret(&self) -> &str; }
+pub enum TokenStep {
+    Complete { token: SecretString },
+    Challenge { token: SecretString, next_action: String },
+}
+impl TokenStep {
+    pub fn from_parts(complete: bool, token: Option<String>,
+        next_action: Option<String>, known_steps: &[&str]) -> Result<Self, Error>;
+}
+```
+
+Generated auth output convenience `token_step(&self) -> Result<TokenStep, Error>`
+extracts described wire fields and calls from_parts with generated known steps.
+complete=false requires a nonempty transient token and a known next action;
+complete=true requires a final token. An unknown next action returns
+UnsupportedAuthStep; missing/inconsistent fields return Protocol. Runtime
+does not assume a per-provider response field layout. Callers invoke generated
+token steps explicitly; transient/final tokens are never installed automatically.
+
+### Frozen acquisition/configuration/package contract
+
+Authoritative production snapshot is public unauthenticated OPTIONS
+`https://api.vpsfree.cz/v7.0/`, profile `public-live-api-7.0`. Lead/implementer
+capture reports protocol 2.0, 104 top-level/152 total resources, 519 API actions
+and 5 auth actions. Inventory saved snapshot exactly; these observed counts are
+not a completeness/plugin guarantee. No production auth is needed for this
+profile. Controlled local metadata is only a separate behavior-test input.
+
+Snapshot JSON envelope keys are exactly `schema_format` (1), `api_version`
+(string), `protocol_version` (string), `source_url` (explicit version URL),
+`profile` (string), `mount_path` (string, `/` initially), `description` (sanitized
+HaveAPI response description object, after validating the successful OPTIONS
+envelope). Preserve version/auth structural discovery.
+The schema SHA256 hashes canonical UTF-8 snapshot JSON (sorted object keys,
+two-space indent, LF and terminal newline); arrays retain order. Separate
+`schema/provenance.json` records capture time, source/digest/profile, generator
+revision, runtime digest, toolchain and sanitizer diagnostics. Separate
+`schema/inventory.json` records resources/actions/parameters and known coverage;
+unknown plugin coverage is explicit. Never save credentials/login responses.
+Strip prose/descriptions/examples/validator human messages and protected default
+values; retain validators, wire names, key names, auth schemas and machine paths.
+
+CLI contract: `fetch URL --api-version VERSION --profile PROFILE --output FILE`;
+`generate --schema FILE --api-version VERSION --config FILE --output DIR [--check]`.
+Fetch URL is the explicit version endpoint. Generation is offline. Both require
+version; unknown/absent/mismatched versions fail, never use default_version.
+Config `generator.toml` has root keys `crate_name="vpsadmin-client"`,
+`crate_version="0.1.0"`, `license="MIT"`, `edition="2024"`,
+`rust_version="1.95"`, `rustfmt_version` (exact stdout of pinned rustfmt --version).
+No application release field. Fixture configs can choose another crate name.
+Generator facade is `HaveAPI::RustClient::Generator.new(schema:, config:)` with
+parsed Hash values and `generate(output:, check: false)`; `Snapshot.load(path)`
+returns validated envelope Hash; `Snapshot.fetch(url:, api_version:, profile:)`
+returns sanitized envelope Hash, with no file writes. CLI owns serialization.
+Additional diagnostics/inventory helpers belong to implementer1 without changing
+these entry points. Generation replaces only its owned output tree atomically;
+check never writes. Scaffolding/templates supply initial manifest requirements;
+subsequent regeneration must not overwrite handwritten package files.
+
+Initial Rust crate is `vpsadmin-client` 0.1.0 (import vpsadmin_client), MIT,
+edition 2024, MSRV 1.95. Private runtime harness uses the same dependency contract:
+serde 1 with derive, serde_json 1, url 2.5; reqwest 0.13.5 with default-features=false
+and features `["json", "rustls"]`. Cargo feature `default=[]`,
+`blocking=["reqwest/blocking"]`. Caret dependency ranges are recorded in manifest;
+committed Cargo.lock freezes resolutions for CI/reproduction. Tokio 1 with macros
+and rt-multi-thread is a dev/example dependency, not a second runtime adapter.
+No additional production dependency is required by the contract. Rustls here
+uses reqwest's platform verifier and aws-lc backend; do not promise a C-free build.
+
+Use current HaveAPI Nix pin fe13242281a67641c0102cdb1087f0ebe586c7df:
+rustc 1.98.1, cargo 1.98.0, rustfmt 1.9.0 as verified by runtime owner. Config records
+the complete actual rustfmt --version stdout, not just its package version.
+Use edition 2024 formatting and reject formatter mismatch. MSRV 1.95 is a separate
+later acceptance run; do not downgrade the current Nix input to enforce it.
+
+All lanes may author tests now and run only known quick checks. Generated
+fixture compilation, real HaveAPI/vpsAdmin fixture execution, real generated
+client builds/tests, feature/MSRV matrices and package verification are mandatory
+long/uncertain gates only AFTER committed intended deliverable, passing quick
+checks and independent final review, launched/monitored by a fresh watcher.
+Real new-client acceptance includes async/blocking VPS show/update (disposable
+server only), list pagination, nullable/Custom values and auth flows. No production
+mutations, new external repository creation, publication or default-branch
+integration is implied. Runtime fixes require client regeneration/release.
+
+### Clarification 2: named empty output and ok! (2026-10-19)
+
+Evidence: HaveAPI `c14e7d3158b91c134c2817b489cd29772fc09f82`,
+`servers/ruby/lib/haveapi/action.rb` methods `output`, `safe_output`, `ok!`,
+and `servers/ruby/lib/haveapi/authentication/token/provider.rb` Revoke.
+`output(false)` without a block is a getter, not a no-output DSL declaration.
+The server's `ok!` can produce successful `response: {}` even when description
+contains a named empty output schema; Token Revoke does this. No server/DSL
+change is required.
+
+Add the `OutputSpec.allow_empty_response: bool` field shown above. Generator sets
+it true ONLY for Object/Hash layouts with zero described output parameters;
+otherwise false, including all list layouts. Keep the generated named Output
+struct rather than changing its public type to `()`. Decoder accepts either the
+normal named output object, or an exactly empty response object when this flag
+is true. In the latter case deserialize an empty JSON object into Output.
+Preserve response metadata normally. This is a narrow compatibility rule for
+the captured schema, not a claim of complete metadata or a rule permitting
+missing declared fields generally.
+
+All envelope/status/HTTP checks still apply. Missing namespace for nonempty
+schemas, nonempty response with the wrong namespace, null/scalar/list response
+in place of the envelope object, and missing namespace for list schemas remain
+errors. `output=None` remains the distinct explicit no-output path. Tests must
+cover actual token revoke success, both named/unnamed empty-object successes,
+and each negative case above. Implementer0 owns decode, implementer1 emits the
+flag, implementer2 supplies protocol/revoke fixtures, implementer3 regenerates.
+
+### Clarification 3: nested resource and auth accessor names (2026-10-19)
+
+Clarification 4 supersedes the single-underscore spelling in examples here;
+the flat accessor and placeholder-binding policy remain unchanged.
+
+Use one flat root resource accessor per generated resource path in v1:
+`api.project_task(project_id).show(task_id)`. Its name matches the flattened
+resource module (`resources::project_task::show`). The resource handle binds
+accumulated ancestor placeholders; each action accepts only remaining path
+placeholders in template order. Values still use `impl ToString` and runtime
+segment encoding. Ancestor prefix interpretation must be deterministic and
+validated against each full action template; unresolved/ambiguous placeholder
+ownership fails generation rather than guessing or losing arguments.
+
+Authentication follows the same deterministic names: the described
+authentication/token/token resource becomes
+`api.authentication_token_token().request()` and
+`resources::authentication_token_token::request`. This establishes names from
+schema paths, not a claim that every server has the same auth resource path.
+Do not add a second chained accessor such as `api.project().task(project_id)`
+in v1. That convenience can be additive later. Async and blocking use identical
+accessors. Implementer1 owns generation; implementers2/3 use these names in
+fixtures/examples, with runtime interfaces unchanged.
+
+### Clarification 4: preserve resource component boundaries (2026-10-19)
+
+The actual production description contains both nested `dataset/plan` and
+top-level `dataset_plan`. Single-underscore joining loses those distinct schema
+paths and blocks the required complete snapshot generation. Normalize each
+resource component to snake_case, preserving its ordinary word underscores, and
+join components with `__` for both module and flat root accessor names. Thus
+`dataset/plan` becomes `dataset__plan`, while `dataset_plan` remains
+`dataset_plan`. Examples from clarification 3 become
+`api.project__task(project_id).show(task_id)`,
+`resources::project__task::show`,
+`api.authentication__token__token().request()` and
+`resources::authentication__token__token::request`.
+
+This is a generic naming rule, with no site-specific snapshot edits or config
+overrides. Validate the final normalized identifiers/files and still reject any
+remaining collision with both original schema paths. Do not add traversal-order
+suffixes. Flat accessor shape and parent/action placeholder ownership remain as
+in clarification 3. Existing PascalCase type names local to each action module
+do not need a new global naming scheme. Implementer1 applies this rule;
+implementers2/3 use it in fixtures/examples. Runtime interfaces are unchanged.
+
+### Clarification 5: DELETE uses JSON body input (2026-10-19)
+
+This corrects the original GET/DELETE query rule; it does not add methods,
+execution modes, server behavior or a compatibility switch. Relevant evidence
+read from canonical HaveAPI Git objects at
+`b80ed05b2f8ef6ec68fc182464fe4133b3663da5`:
+
+- `servers/ruby/lib/haveapi/server.rb:721-739` classifies every method except
+  GET/HEAD/OPTIONS as a body method; action input is parsed JSON body or `{}`,
+  never `request.GET`, for DELETE. Nonempty bodies require JSON Content-Type
+  and a top-level object. This is also present at baseline `c14e7d3`.
+- `clients/go/template/action.go.erb:435-475` selects query encoding only for
+  GET and `DoBodyRequest` for all other described methods, including DELETE.
+- `doc/protocol.md:250-263` describes query null encoding with a GET example;
+  it does not establish DELETE as a query method. The reported real-server
+  fixture failure (DELETE receives `{}`, GET succeeds) matches this source.
+
+The supported action Method enum stays Get/Delete/Post/Put/Patch. The common
+method classifier, currently `Method::query`, is true only for Get. All four
+other variants use the existing JSON-body preparation logic, with the actual
+HTTP method preserved. JSON Content-Type is set, action/global/object metadata
+retain their established namespaces, and an empty assembled body is `{}`.
+Named list input stays nested in this object envelope; the existing prohibition
+on unnamespaced list input remains. No HEAD/OPTIONS action support is introduced;
+OPTIONS schema acquisition is separate.
+
+For DELETE, preserve unset omission and actual JSON null/false/zero/empty string,
+nested Custom values and already-supported named list input, exactly as for
+other body methods. Do not duplicate input/metadata into the query or add a
+query fallback/retry. The restrictions on nested Custom/list query values now
+apply only to GET. URL path encoding, authentication, error/status rules,
+redirect rejection, redaction and no-retry invariants are unchanged. A failed
+or timed-out DELETE must never be replayed to probe encoding compatibility.
+
+Implementation boundaries and acceptance:
+
+1. Implementer0 changes only the shared runtime classifier, its focused tests
+   and runtime documentation. Reclassify the existing nested-query rejection
+   case as GET. Preparation tests cover all five methods, including DELETE
+   omission/null/falsy values, metadata, Custom and named list body shapes,
+   JSON Content-Type and absence of input/metadata query keys. Both transports
+   must emit the same DELETE body and retain GET query behavior.
+2. Implementer2 keeps real generic-server fixtures strict: generated async and
+   blocking DELETE calls must deliver the exact expected input/metadata to
+   action code, paired with a passing GET query control. No changing expected
+   DELETE output to `{}` or patching server input parsing. Disposable fixtures
+   only; its separately assigned database/EOF harness fix stays independent.
+3. Implementer1 reconciles any generator-facing prose/test expectation that
+   says DELETE uses query encoding; no ActionSpec/schema format/public setter
+   change is needed. Implementer3 regenerates the actual client with corrected
+   embedded source and runtime/provenance digest, preserving the API7.0 snapshot.
+4. After intended fixes and regenerated client are committed and known quick
+   checks pass, obtain affected-lane independent final review before the next
+   long tests. A fresh watcher then runs the focused runtime async/blocking
+   regressions and real generic-server matrix, and verifies corrected real
+   client default/blocking compilation, MSRV1.95 and package/regeneration checks.
+   No production mutation is part of acceptance. The unchanged public GET
+   smoke need not be repeated solely for this classifier correction.
+
+Compatibility: this repairs initial v1 wire behavior to match the current
+HaveAPI server and Go client; it changes no public Rust signatures or API target.
+Do not claim support for servers requiring DELETE query input. No database,
+server deployment or migration is involved. Existing embedded clients need
+regeneration to receive the fix; pinning an older generated revision restores
+the defective DELETE encoding and is not an acceptable DELETE workaround.
+If delivery must be rolled back, hold DELETE use until a corrected build is
+available rather than replaying mutations. Prior checks at HaveAPI `b80ed05`
+and client `e4f4638f48b99d0944ffaa2e8e6e684831bea0a8` exercised old encoding;
+they remain historical evidence, not verification of the corrected runtime.
+
 ## Recommendation and scope
 
-Add a Ruby generator under `haveapi/clients/rust/`, a shared Rust runtime crate
-in that directory, and a separate `vpsadmin-rust-client` repository containing a
-generated, typed client. Retain Ruby/ERB for generation, as the Go generator
-already does. Rust users consume ordinary crates and need neither Ruby nor a
-running API at build time.
+Add a Ruby generator under `haveapi/clients/rust/` and a separate
+`vpsadmin-rust-client` repository containing a self-contained generated, typed
+client. Maintain common Rust protocol/transport source once in HaveAPI and copy
+it into each generated crate, as the Go generator does. There is no separately
+published HaveAPI runtime dependency. Retain Ruby/ERB for generation. Rust users
+consume an ordinary crate with normal ecosystem dependencies such as reqwest
+and Serde; they need neither Ruby nor a running API at build time.
 
 The first implementation supports HaveAPI protocol major 2, one selected API
-version per generated crate, async calls using Tokio/reqwest, typed action
-builders, JSON bodies, query parameters, response/error envelopes, metadata,
+version per generated crate, async calls using Tokio/reqwest and sync calls
+through an optional `blocking` feature, typed action builders, JSON bodies,
+query parameters, response/error envelopes, metadata,
 partial associations, Basic authentication, existing HaveAPI/OAuth2 tokens, and
 explicit generated token request/challenge/renew/revoke actions. Start the
-vpsAdmin client with API `7.0`, subject to capturing and validating that exact
-description before implementation acceptance.
+vpsAdmin client with API `7.0`, using the reviewed public production snapshot
+from `https://api.vpsfree.cz/v7.0/`. The captured surface and digest, rather than
+an assumed complete admin schema, define its generated interface.
 
-V1 has no blocking facade, automatic retries, background token refresh,
+V1 has no automatic retries, background token refresh,
 interactive login callbacks, browser OAuth2/PKCE/WebAuthn orchestration, automatic
 pagination, or automatic ActionState polling. Generated pagination parameters
 and ActionState actions remain callable. A successful action submission does
@@ -38,7 +513,8 @@ Alternatives considered:
 
 | Alternative | Assessment |
 | --- | --- |
-| Embed the runtime in every generated client, as Go does | Avoids a dependency, but duplicates fixes and requires regenerating every client for transport/security changes. Prefer a shared crate. |
+| Embed maintained runtime source in every generated client, as Go does | Accepted: one source of truth in HaveAPI, one published client crate to consume, and no separate runtime compatibility/release boundary. Runtime fixes require regenerating and releasing each affected client. |
+| Publish a shared runtime crate | A compatible dependency update can deliver runtime fixes without regeneration. It adds a public compatibility contract, package naming and publication coordination. Reconsider if many generated clients make regeneration burdensome. |
 | Write the generator in Rust | Reasonable later; adds schema acquisition and tooling work without improving the generated API. Keep Ruby initially. |
 | Discover the API at runtime | Loses the requested compile-time, version-specific API. Do not mix dynamic discovery into normal client calls. |
 | Generate closed enums and complete associated resource structs everywhere | Metadata and permission filtering do not justify those guarantees. Use conservative representations in v1. |
@@ -47,8 +523,12 @@ Alternatives considered:
 
 Inspected canonical bare repository HEADs with `git show`, `git ls-tree`, and
 `git grep`; no other session's worktrees were used. These revisions identify
-source evidence, not client/server support requirements. No live production
-schema was fetched and no build, test, or deployment was run.
+source evidence, not client/server support requirements. The lead and client
+owner subsequently captured public production OPTIONS without credentials;
+its inventory is recorded in the frozen contract. Architect0 ran no build,
+test or deployment. HaveAPI implementation baseline is now
+`c14e7d3158b91c134c2817b489cd29772fc09f82`; its AGENTS, development guidance,
+Go client sources and current Nix inputs were rechecked for this handoff.
 
 | Repository | Inspected revision | Relevant evidence |
 | --- | --- | --- |
@@ -68,7 +548,7 @@ Concrete implications:
   new work, not an existing workflow claimed to have been verified.
 - vpsAdmin declares `HaveAPI.implicit_version = '7.0'`; the Go client's VPS show
   path is `/v7.0/vpses/{vps_id}`. This supports choosing API 7.0, but does not
-  establish the full schema/profile to publish.
+  establish full visibility. The accepted public capture defines the initial profile.
 - HaveAPI `servers/ruby/lib/haveapi/parameters/typed.rb` describes `required`
   and `nullable` from input validation; output formatting can still return null.
   `params.rb` and `action.rb` filter descriptions and actual outputs by
@@ -96,6 +576,10 @@ Primary Rust references checked during planning:
   documents reusable, cloneable pooled clients;
   [reqwest overview](https://docs.rs/reqwest/latest/reqwest/) documents Tokio
   async operation and redirect defaults. Configure redirects explicitly.
+- [reqwest blocking](https://docs.rs/reqwest/latest/reqwest/blocking/index.html)
+  documents its optional feature and prohibition on direct use inside an async
+  runtime. [Tokio spawn_blocking](https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html)
+  provides the supported bridge; already-started blocking work cannot be aborted.
 - [Serde field attributes](https://serde.rs/field-attrs.html) provide rename,
   defaults, conditional omission, custom deserialization, and flattened extra
   fields. These are mechanisms, not a substitute for protocol null semantics.
@@ -106,68 +590,50 @@ Primary Rust references checked during planning:
 - [Cargo rust-version](https://doc.rust-lang.org/cargo/reference/rust-version.html)
   defines the minimum-supported compiler declaration;
   [rustfmt](https://github.com/rust-lang/rustfmt) documents formatting and checks.
-  Select exact dependency/toolchain versions in P0, not from remembered versions.
+  The frozen contract pins generation tools and declares dependencies; MSRV
+  dependency compatibility still requires the scheduled acceptance check.
 
 ## Repository and interface boundaries
 
-Proposed layout (names are recommendations, availability is not yet checked):
+The frozen contract above owns exact names and signatures. The generator owns
+acquisition/sanitization, schema validation, IR, naming, source rendering, and
+generated-file ownership. The maintained runtime owns credentials, transport,
+URL/query/body encoding, envelopes and common errors, without vpsAdmin-specific
+resource names. Generated actions own static paths/namespaces, typed models,
+validation and mode-independent setters. Runtime source is copied unchanged;
+there is no independently published HaveAPI Rust runtime package.
 
 ```text
 haveapi/clients/rust/
   bin/haveapi-rust-client
   Gemfile, Rakefile, haveapi-rust-client.gemspec
   lib/haveapi/rust_client/{cli,snapshot,ir,naming,generator,...}.rb
-  template/                       # Rust sources, not copied transport code
-  spec/{unit,integration}/
-  spec/fixtures/                  # synthetic protocol/schema cases
-  runtime/                       # crate haveapi-client
-    Cargo.toml, Cargo.lock, src/, tests/
-  README.md, docs/{design,generation,releasing}.md
+  template/
+  spec/{unit,fixtures}/                 # implementer1
+  spec/integration/                     # implementer2, including server harness
+  runtime/                              # implementer0 exclusively
+    src/lib.rs                          # private harness crate root
+    src/runtime/{mod,protocol,types,error,auth,client,...}.rs
+    Cargo.toml, Cargo.lock, tests/, docs/ # publish=false
+  README.md, docs/{generation,releasing}.md
 
-vpsadmin-rust-client/
+vpsadmin-rust-client/                    # implementer3 exclusively
   Cargo.toml, Cargo.lock, flake.nix, flake.lock
-  src/lib.rs                     # small handwritten facade/re-exports
-  src/generated/                 # generator-owned tree
-  schema/api-7.0.json             # reviewed, sanitized version description
-  schema/provenance.json         # schema digest, profile, generator/toolchain
+  src/lib.rs                            # handwritten facade/re-exports
+  src/generated/{mod.rs,runtime/,resources/,...}
+  schema/{api-7.0,provenance,inventory}.json
   generator.toml, tools/regenerate
   tests/, examples/, README.md, CHANGELOG.md
   .github/workflows/ci.yml
 ```
 
-Generator gem name: `haveapi-rust-client`; runtime crate: `haveapi-client`;
-generated crate: `vpsadmin-client`, in repository `vpsadmin-rust-client`.
-Resolve name availability and license/package metadata before creating or
-publishing anything. There is no repository-creation or publication action in
-this planning assignment.
+Generator gem is `haveapi-rust-client`; client crate is `vpsadmin-client` in
+`git@github.com:vpsfreecz/vpsadmin-rust-client.git`. The user has already created
+that repository. Registry publication and package-name availability checks are
+separate from this implementation; no publication is authorized here.
 
-The generator owns schema acquisition/validation, a language-neutral-enough
-internal model, names, source rendering, and generated-file ownership. The
-runtime owns HTTP, credentials, URL/query construction, common wire types, and
-envelope errors. The generated client owns exact paths/methods/namespaces, input
-validation rules, per-action types, auth descriptions, and resource methods.
-The runtime must contain no vpsAdmin resource names.
-
-P0 freezes a small interface before runtime/generator work proceeds in parallel:
-
-```text
-ActionSpec: action name, method, path template, input/output layout and namespace,
-            metadata namespace, no-output distinction
-RequestParts: named path values, serialized input, global/object input metadata
-Client::execute<T, M>(&self, spec, request) -> Result<Response<T, M>, Error>
-Response<T, M>: typed output, typed/global metadata, HTTP status
-Input<T>: Unset | Null | Value(T)       # internal/generated field representation
-Association: map + described ID/label keys + optional object metadata
-```
-
-This is an interface brief, not finished Rust signatures. Generated builders
-validate before execution; runtime encoding must preserve those validated states.
-Expose generated input/output types through stable modules, with Serde renames
-for wire names. Builders avoid exhaustive input struct literals; output structs
-and error enums are non-exhaustive from the outset. Resource handles borrow the
-client; output values own their data and never perform hidden network calls.
-
-Proposed usage, to become a compiling example during implementation:
+The usage contract becomes a compiling example in the real client repository.
+This mutation example requires a disposable fixture endpoint and fixture token:
 
 ```rust
 use std::time::Duration;
@@ -175,23 +641,22 @@ use vpsadmin_client::Client;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let api = Client::builder("https://api.vpsfree.cz")
-        .token(std::env::var("VPSADMIN_TOKEN")?)
+    let api = Client::builder(std::env::var("TEST_API_BASE_URL")?)
+        .token(std::env::var("TEST_API_TOKEN")?)
         .timeout(Duration::from_secs(30))
         .build()?;
-
     let vps = api.vps().show(123).send().await?.output;
     println!("{}", vps.hostname.as_deref().unwrap_or("<not returned>"));
-
-    // Only hostname is sent; other update fields remain omitted.
     api.vps().update(123).hostname("example").send().await?;
     Ok(())
 }
 ```
 
-The generated crate exports `API_VERSION` and `SCHEMA_SHA256`; the client has no
-runtime version selector. Null-capable fields also get explicit setters such as
-`cpu_limit_null()`; setters such as `cpu_limit(value)` send a value.
+With feature `blocking`, ordinary sync code uses `blocking::Client` and
+`.send()?`. Models, setters, metadata, errors and API version are identical.
+Root constants `API_VERSION` and `SCHEMA_SHA256` identify generated support.
+Outputs own data and perform no hidden network calls; resource handles borrow
+the client. Runtime version changes require regeneration, not a setter.
 
 ## Types and protocol invariants
 
@@ -219,8 +684,9 @@ Missing legacy nullable metadata means no explicit clearing guarantee. A direct
 low-level input still receives the same validation, including Custom null.
 Do not rely on nested `Option` serialization to implement three input states.
 
-Use JSON for described POST/PUT/PATCH actions and bracketed query parameters for
-GET/DELETE, matching the existing protocol/server behavior. Preserve input and
+Use JSON object bodies for described DELETE/POST/PUT/PATCH actions and bracketed
+query parameters for GET, matching the server and Go client (clarification 5).
+Preserve input and
 metadata namespaces separately. Query null uses the documented empty-string
 encoding; omitted fields do not appear. This encoding cannot distinguish all
 empty/null values on nullable parameters, so document that limitation. Scalars
@@ -240,24 +706,41 @@ their types cannot be inferred reliably from placeholder names.
 Require a valid envelope status and the declared response namespace/layout on
 success; optional *fields* must not make missing/corrupt envelopes look successful.
 No-output actions have a distinct `()` decoding path. Type mismatches remain
-decode errors. Characterize absent/false namespaces against fixtures in P0:
-the current server's output wrapping has edge cases, so v1 must either support
-the proven shape explicitly or reject that schema, not guess unwrapping rules.
+decode errors. The frozen contract explicitly supports input/metadata
+namespace=false and rejects ordinary output namespace=false. Empty named output
+and true no-output remain different contracts.
 
-Datetime input validation must cover date-only, timezone offsets, shortened
-times, fractional seconds, and calendar validity from HaveAPI's documented
-grammar. A parser that accepts only RFC3339 is insufficient. Strictly typed
-Rust setters need not expose every coercion accepted by Ruby. Non-numeric custom
+Datetime input accepts `YYYY-MM-DD` or
+`YYYY-MM-DDTHH:MM[:SS[.fraction]](Z|±HH:MM|±HHMM)`, validating calendar,
+time and offset ranges. A parser that accepts only RFC3339 is insufficient.
+Strictly typed Rust setters need not expose every coercion accepted by Ruby. Non-numeric custom
 resource primary keys lack enough portable metadata and remain a documented
-limitation; do not promise generic ID typing that the description cannot provide.
+limitation. Resource input IDs use nonnegative i64 (`0..=i64::MAX`); an optional
+string helper may accept trimmed ASCII decimal digits with overflow checks.
+Do not promise generic ID typing that the description cannot provide.
 
 ## Transport, authentication, and errors
 
-Use a reusable reqwest client with Tokio, JSON/Serde, and a selected TLS feature
-set. Builder configuration provides timeout, user agent, TLS roots, and proxy
-options as needed. Do not accept an opaque preconfigured HTTP client in v1 if
+Use a reusable async reqwest client by default; enable a reusable
+`reqwest::blocking::Client` through the optional `blocking` feature in v1.
+Use common request preparation and response decoding with JSON/Serde and
+the pinned rustls feature set. V1 builder configuration provides timeouts,
+user agent and response-size limit; custom roots/proxy controls are deferred.
+Do not accept an opaque preconfigured HTTP client in v1 if
 its redirect policy cannot be enforced. The runtime can remain concrete rather
-than introducing a general pluggable transport trait initially.
+than introducing a public pluggable transport trait initially. Both adapters
+apply the same configuration/security policy and response-size limits.
+
+Sync execution blocks the calling thread and needs no caller-owned Tokio runtime.
+Do not implement it by calling `block_on` on an async client's runtime. The
+blocking client's construction, use, and destruction must stay outside an async
+runtime; direct use there is unsupported and can panic in reqwest. Async callers
+should use the async client, or put the entire blocking-client lifecycle in
+`tokio::task::spawn_blocking` with owned inputs/results. Do not move its final
+drop back into async code or use `block_in_place`, which is unsuitable for a
+current-thread runtime. There is no hidden reentrant sync-to-async bridge.
+Started blocking work cannot be cancelled by aborting its join handle; HTTP
+deadlines still apply, and a timeout does not undo a server mutation.
 
 Runtime invariants:
 
@@ -305,10 +788,11 @@ solely because a body claims `status:true`.
 
 ## Explicit version and reproducible generation
 
-Separate acquisition from offline rendering. Proposed commands:
+Separate acquisition from offline rendering. Frozen commands:
 
 ```text
-haveapi-rust-client fetch URL --api-version 7.0 --output schema/api-7.0.json
+haveapi-rust-client fetch https://api.vpsfree.cz/v7.0/ --api-version 7.0 \
+  --profile public-live-api-7.0 --output schema/api-7.0.json
 haveapi-rust-client generate --schema schema/api-7.0.json --api-version 7.0 \
   --config generator.toml --output src/generated
 haveapi-rust-client generate ... --check
@@ -348,13 +832,16 @@ Snapshots must be reviewed publishable descriptions, not raw HTTP sessions:
 - Record a non-secret capture profile label and explicitly distinguish
   authenticated/unauthenticated acquisition. Permission-filtered descriptions
   cannot prove completeness. Do not union unrelated users' schemas or claim
-  coverage of missing resources/parameters. Prefer an agreed controlled fixture
-  profile; authenticated metadata may still be partial.
+  coverage of missing resources/parameters. The initial production profile
+  is the unauthenticated public capture; local profiles only support behavior
+  tests. Authenticated metadata may still be partial and is not required here.
 
 Generation provenance includes API version, protocol version, canonical schema
 SHA-256, capture/profile and plugin coverage declarations where known, generator
-version/revision, generator options, runtime compatibility requirement, Ruby
-dependency lock, and exact Rust/rustfmt toolchain. Acquisition timestamp belongs
+version/revision, generator options, embedded runtime source digest, generated
+dependency/feature requirements, Ruby dependency lock, and exact Rust/rustfmt
+toolchain. The client lockfile records resolved ecosystem dependencies; there
+is no independent HaveAPI runtime version requirement. Acquisition timestamp belongs
 outside reproducible generated source. vpsAdmin support is defined by the API
 version and described surface, not another version label.
 
@@ -368,16 +855,20 @@ Pin rustfmt and edition through the repository's Nix toolchain and explicit
 configuration; regeneration must reject a mismatching formatter version rather
 than accept arbitrary local output. If a rust-toolchain file is added, it must
 match that pin. Generate into a temporary tree, compare, then replace only the
-owned generated tree; refuse symlinks/out-of-scope destinations. Remove obsolete
+owned generated tree, including copied runtime modules; refuse symlinks/out-of-scope destinations. Remove obsolete
 owned files, preserve handwritten files, and make `--check` read-only. Repeated
 generation and reordered JSON-object input must produce identical files.
+The scaffold declares the optional `blocking` feature and dependencies once;
+regeneration checks those requirements against the maintained crate manifest
+and reports needed changes without silently replacing handwritten packaging.
 
 ## Package versioning, compatibility, and release
 
 The Ruby generator follows HaveAPI's existing shared release/version mechanism.
-The Rust runtime and vpsAdmin generated crate use independent SemVer because
-their public Rust interfaces have separate compatibility boundaries. The
-initial package versions are chosen at implementation/release time; they do not
+The generated vpsAdmin crate uses independent SemVer for its entire public Rust
+interface, including exposed common types and both execution modes. Embedded
+runtime source has no separate package version or public dependency boundary.
+Initial package versions are chosen at implementation/release time; they do not
 encode API 7.0. Record the supported API version prominently in crate docs and
 constants. A change to the generated API target is an explicit compatibility
 decision and, where it breaks consumers, a breaking package release.
@@ -387,19 +878,20 @@ by older clients. Adding required inputs, removing/renaming methods or changing
 public types requires a breaking package version; during 0.x that means a new
 minor. New optional fields can use compatible releases with non-exhaustive
 types/builders. MSRV changes are deliberate and documented, never accidental
-patch updates. P0 selects and verifies `rust-version`; CI checks that minimum
-and the pinned generation toolchain.
+patch updates. `rust-version="1.95"` is fixed; later CI verifies that minimum
+and the pinned generation toolchain independently.
 
-Generated crates declare a compatible runtime version requirement and provenance
-records the exact runtime tested. Local development may use an explicit path
-override. Registry publication requires the runtime dependency to be available
-there first. Do not publish a crate whose manifest relies solely on a local
-path or unpublished Git dependency. Do not hand-edit generated Rust to repair
-an API refresh; change the generator/config/snapshot and regenerate.
+Generated crates depend only on the selected ecosystem libraries, with copied
+runtime source compiled as part of the crate. Do not hand-edit generated actions
+or runtime modules: fix the maintained HaveAPI source/config/snapshot, regenerate,
+check and release each affected client. This is the explicit cost of embedding;
+fixing HaveAPI alone does not update already published clients. Reusing a saved
+API snapshot permits runtime-only regeneration without contacting the API.
 
-Publication order, when separately authorized: runtime crate, generator gem
-with its compatible runtime contract, then the generated vpsAdmin crate. Add
-explicit opt-in release tasks; do not unexpectedly extend a broad existing
+The generator gem and generated vpsAdmin crate can be published when separately
+authorized; no runtime publication or registry-order prerequisite exists. The
+generator revision used must remain reproducible even if its gem is unpublished.
+Add explicit opt-in release tasks; do not unexpectedly extend a broad existing
 publish command to publish new Rust packages. Keep generated refresh commits
 separate from handwritten fixes and record schema/generator changes in release
 notes. Do not assume or create a scheduled live-schema update process.
@@ -413,33 +905,28 @@ recreated from retained inputs, not repaired by modifying generated files.
 
 ## Prioritized implementation packages
 
-These are proposed packages for later assignment, not current delegation.
-The lead owns scheduling, repository setup, plan/state, Git coordination, and
-acceptance. Architect0 retains design ownership. Serialize shared-file changes
-and Git/index operations inside the HaveAPI worktree.
+The lead owns scheduling, worktree setup, plan/state, serialized Git/index
+operations and acceptance. Architect0 retains the design and shared contract.
+The four source lanes below are assigned and may start after this P0 freeze.
+Tests can be authored during implementation. Only measured, known quick checks
+run before final review; uncertain checks count as long.
 
-Packages include authoring their tests and running known quick local checks.
-Long or uncertain acceptance runs are deferred until the completed deliverable
-is committed, quick checks pass, and independent final review is complete.
-This includes generated-fixture compilation and HaveAPI test-server execution;
-their placement in a package below identifies ownership, not earlier execution.
-
-| Priority/package | Proposed execution lane and file boundary | Dependencies | Acceptance and checks |
+| Priority/package | Owner and file boundary | Dependencies | Acceptance and checks |
 | --- | --- | --- | --- |
-| P0: contract and fixtures | Architect resolves questions with lead; future implementers agree `clients/rust/docs/design.md` contract and fixture ownership | Implementation authorization | Freeze ActionSpec/RequestParts/Response/Input/Association interfaces, initial API/profile, names, MSRV/toolchain, namespace/path edge behavior; minimal fixture captures auth/global paths, nulls, partial output and metadata |
-| P1: runtime | Implementer0: `clients/rust/runtime/**`, runtime-specific docs/tests | P0 | HTTP and encoding match fixtures; omission/null/zero/false distinct; typed errors; redirects blocked; credentials redacted; no retries; focused unit/mock-server tests, fmt and clippy |
-| P1: generator | Implementer1: `clients/rust/{bin,lib,template,spec}/**`, gem manifest/Gemfile/Rakefile, generation docs | P0; can proceed alongside runtime using agreed interface | Explicit-version fetch/offline generate/check; stable names/escaping and safe output ownership; all supported fields emitted; unsupported constructs diagnosed; Ruby unit specs/RuboCop and golden generated fixtures |
-| P2: cross-component protocol integration | Implementer1 owns `clients/rust/spec/integration/**`; implementer0 fixes runtime only | Both P1 lanes | Author fixtures for auth challenge chain, all layouts, metadata, failure envelopes and partial associations; quick deterministic regeneration/deletion checks; generated-fixture compilation and HaveAPI test-server execution run after final review |
-| P2: generated vpsAdmin crate | Implementer0: new `vpsadmin-rust-client/**` after lead authorizes setup | P1 contracts; agreed reviewed API 7.0 snapshot | Full selected snapshot generates without dropped fields; author realistic example and VPS show/update, nullable DNS TTL and Custom JSON fixtures; longer compilation/acceptance runs follow final review; ordinary CI needs no live API |
-| P3: tooling/release/docs | Implementer1: HaveAPI `flake.nix`, `Makefile`, root documentation links and `.github/workflows/clients-rust-*.yml`; implementer0 owns corresponding new-client files | P2 | Pinned Rust/Ruby environment; source and generated CI; check/dry-run packaging; documented regeneration and API support; new publication remains explicit |
-| Final gates | Lead selects retained reviewer only when implementation is complete | Committed final deliverable and quick checks | Independent whole-branch/history review, then watcher-run longer integration; lead accepts exact evidence; no merge/publication implied |
+| P0: frozen design | Architect0: this design only | Authorized implementation | Shared signatures, source-copy convention, package/config/snapshot contract, four lanes and acceptance gates frozen; document-only consistency checks |
+| P1: embedded runtime | Implementer0: `clients/rust/runtime/**`, including runtime docs/harness | P0 | Shared prepare/decode/validation and two transports; omission/null, errors, redaction, no retry/redirect; source contains no API-specific names. Author focused tests; formatter/static checks now, compilation-dependent tests after review unless already measured quick |
+| P1: Ruby generator/tooling | Implementer1: `clients/rust/{bin,lib,template}/**`, unit specs/fixtures/shared spec setup, gem/build/docs; HaveAPI flake/Makefile/CI | P0; parallel with runtime | Exact offline facade/CLI/snapshot, safe public capture sanitizer, complete supported inventory, unique models/setters, runtime copy/digest, deterministic names and formatter pin; quick Ruby unit/RuboCop and read-only generation checks |
+| P1/P2: behavior fixtures | Implementer2: `clients/rust/spec/integration/**` exclusively, including launcher/test-only server extensions | P0 to author; generator/runtime for execution | Explicit generic API1.0 fixture plus disposable vpsAdmin API7.0 behavior profile; auth/challenges/nullable/Custom/metadata/base paths/errors and async/blocking parity. No production schema edits. Generated compilation and server execution only after final review |
+| P1/P2: actual client | Implementer3: sole `vpsadmin-rust-client/**` owner | P0 to scaffold/capture; generator/runtime for generation | Save authoritative public API7.0 snapshot/provenance/inventory via agreed sanitizer, generate real crate, author package/CI/examples/tests and offline regeneration. Real crate compilation/package/tests and behavior acceptance are mandatory after final review |
+| Final gates | Lead selects independent reviewer and fresh verification watcher | Intended deliverable committed and known quick checks pass | Independent final whole-branch/history review before long tests; then watcher runs actual crate and generated fixtures, server integration, feature/MSRV/package matrix. Lead accepts exact evidence; no merge/publication implied |
 
 Required implementation test matrix:
 
 1. No parameters; required/optional/nullable input; default omission; empty string,
    zero and false; bad float/datetime; signed integer limits and numeric resource ID.
 2. Named namespaces and supported no-namespace cases; JSON object/list layouts;
-   GET/DELETE query scalars/null; unsupported nested Custom query fails locally.
+   GET query scalars/null; DELETE JSON omission/null/falsy/Custom/metadata;
+   unsupported nested Custom GET query fails locally.
 3. Nested resources, repeated placeholders, encoded path segments, base paths,
    metadata namespaces, global auth paths, reserved names and malicious metadata.
 4. Successful and failed envelopes on both 2xx/non-2xx; empty/non-JSON/malformed
@@ -451,34 +938,51 @@ Required implementation test matrix:
 7. Explicit version absent/unavailable/mismatched; protocol major rejection;
    filtered/incomplete snapshot coverage report; no silent default fallback.
 8. Offline repeated generation, shuffled object keys, pinned formatter, source
-   escaping, stale-file removal confined to owned tree, read-only `--check`.
+   escaping, copied runtime digest, stale-file removal confined to owned tree,
+   read-only `--check`; packaged crate needs no HaveAPI path/Git dependency.
+9. Async/blocking request and response parity using the same fixtures; ordinary
+   sync execution without an application runtime; repeated calls and clean drop;
+   complete blocking-client lifecycle inside `spawn_blocking` on current-thread
+   and multi-thread Tokio runtimes. Cover deadlines and continued execution after
+   aborting an already-started blocking task; do not promise nested runtime use.
 
 Quick commands will be documented in the new `client-rust` Nix shell: generator
-unit specs/RuboCop, `cargo fmt --check`, focused runtime unit tests, and generated
-tree `--check`. Compilation/clippy duration must be measured, not assumed quick.
-Full generated-crate compilation, test-server integration, MSRV matrix, and
+unit specs/RuboCop, `cargo fmt --check`, and generated tree `--check`. Runtime
+unit tests and clippy require compilation: treat them as long/uncertain unless
+already measured quick in the current environment.
+Full generated-crate compilation, async/blocking test-server integration, MSRV
+and blocking-feature matrices, and
 package verification are longer/uncertain checks run through the required fresh
 verification watcher only after all intended changes are committed, quick local
 checks pass, and independent final review is complete. No
 large vpsAdminOS cluster is necessary for the first client. A gated, read-only
 live smoke test is supplemental and never the reproducibility gate.
 
-## Remaining choices and acceptance of this plan
+## Acceptance dependencies and bounded follow-up
 
-Resolve in P0 rather than expanding this investigation:
+No product/default choice remains open for implementation. The frozen contract
+selects API7.0 public-live metadata, crate/license/TLS/edition/MSRV/toolchain,
+namespace/path/no-output handling, numeric resource IDs, datetime grammar,
+descriptive-text sanitization and four owners. Contract ambiguities discovered
+while implementing return through the lead as numbered amendments; they do not
+authorize broadening v1 or changing another lane's files.
 
-- Confirm the intended API 7.0 metadata profile and plugin coverage, and the
-  controlled acquisition source. Missing permissions cannot be reconstructed.
-- Confirm crate names/registry availability, license metadata, exact dependencies,
-  TLS backend, minimum compiler and formatter pin.
-- Characterize output namespace=false/no-output and mounted-base-path behavior;
-  define explicit generation errors for unsupported shapes.
-- Finalize resource-ID limits and datetime parser against canonical fixtures;
-  preserve the conservative public types above.
-- Decide whether public descriptive text is retained after review or excluded
-  from initial snapshots; do not alter structural auth discovery to sanitize it.
+Evidence still needed for acceptance is implementation work: review the saved
+sanitized snapshot/inventory; demonstrate offline deterministic generation;
+compile/package/test the actual existing client repository in async and blocking
+modes; verify dependency resolution on MSRV1.95; exercise disposable VPS
+show/update, pagination, Custom/nullable and auth behavior. Long checks wait for
+committed deliverable plus quick checks and independent final review. A read-only
+live smoke may supplement those fixtures with approved credentials; production
+mutations are excluded. No server changes or production-auth acquisition are
+needed for the initial generated surface.
 
-The planning deliverable is complete when the lead accepts these boundaries,
-the version-only contract, explicit limitations, interface split, and proposed
-verification gates. This document makes no claim that code exists, that a schema
-has been captured, that tests passed, or that packages are ready to use.
+Initial public visibility cannot prove full permission/plugin coverage. Unknown
+future parameter types, unsupported layouts, unnamespaced action output and
+version mismatch fail explicitly instead of silently dropping schema. Registry
+publication, OAuth browser orchestration, automatic retries/pagination/polling,
+per-item input metadata and opaque resource IDs remain outside v1.
+
+This is a design freeze, not a claim that implementation, compilation, review
+or acceptance testing has passed. Recovery remains pinning the previous client
+and reproducible snapshot/generator inputs; runtime fixes regenerate clients.

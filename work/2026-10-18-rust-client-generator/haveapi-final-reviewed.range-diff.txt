@@ -1,0 +1,48 @@
+1:  9818ebc = 1:  930a5f3 clients/rust: add embedded protocol runtime
+2:  573bc23 = 2:  8701baa clients/rust: generate clients from saved API schemas
+3:  e9173e2 ! 3:  9e4c29a clients/rust: add protocol acceptance fixtures
+    @@ clients/rust/spec/integration/rust/scripted_http.rs (new)
+     +        $send!(api.project__task("parent/with space").show("child?&")).unwrap();
+     +        let bytes = server.request();
+     +        let line = String::from_utf8_lossy(&bytes).lines().next().unwrap().to_owned();
+    -+        assert!(line.contains("parent%2Fwith%20space"));
+    -+        assert!(line.contains("child%3F%26"));
+    ++        let target = line.split_whitespace().nth(1).unwrap();
+    ++        // '&' is legal path data; '?' and '/' must remain encoded within IDs.
+    ++        assert_eq!(target, "/v1.0/projects/parent%2Fwith%20space/tasks/child%3F&");
+    ++        let url = url::Url::parse(&format!("{}{}", server.base.trim_end_matches('/'), target)).unwrap();
+    ++        assert_eq!(url.path(), target);
+    ++        assert!(url.query().is_none());
+    ++        assert!(url.fragment().is_none());
+     +
+     +        let sink = TcpListener::bind("127.0.0.1:0").unwrap();
+     +        sink.set_nonblocking(true).unwrap();
+    @@ clients/rust/spec/integration/support/vpsadmin_server.rb (new)
+     +    TransactionKeyHelpers.install_encrypted_transaction_key!
+     +    VpsAdmin::API::TransactionSigner.unlock(TransactionKeyHelpers::TEST_PASSPHRASE)
+     +
+    -+    helper = Object.new.extend(CoreResourceSpecHelpers)
+    ++    helper = Object.new.extend(CoreResourceSpecHelpers, VpsStandaloneChainSpecHelpers)
+     +    vps = helper.create_vps!(user: SpecSeed.user, node: SpecSeed.node, hostname: 'rust-fixture-vps')
+     +    zone = DnsZone.create!(
+     +      name: 'rust-client.example.test.', user: SpecSeed.user,
+    @@ clients/rust/spec/integration/support/vpsadmin_server.rb (new)
+     +    )
+     +    record = DnsRecord.create!(
+     +      dns_zone: zone, name: 'www', record_type: 'A',
+    -+      content: '192.0.2.10', ttl: 120, enabled: true, user: SpecSeed.user
+    ++      content: '192.0.2.10', ttl: 120, enabled: true
+     +    )
+     +
+    ++    # Token login notifications need a recent node status for mail dispatch.
+    ++    helper.ensure_available_node_status!(SpecSeed.node)
+    ++
+     +    RustClientFixtures.serve(app, metadata: {
+     +      api_version: '7.0', vps_id: vps.id, dns_record_id: record.id,
+    -+      user_id: SpecSeed.user.id, setting_namespace: 'rust_client_fixture',
+    -+      setting_key: 'wire_contract'
+    ++      user_id: SpecSeed.user.id, setting_namespace: 'ui',
+    ++      setting_key: 'rust_client_fixture.wire_contract'
+     +    })
+     +  end
+     +ensure

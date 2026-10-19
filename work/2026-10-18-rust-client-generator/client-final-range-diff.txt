@@ -1,0 +1,115 @@
+1:  cee40a4 ! 1:  f88d86a Add the vpsAdmin API 7.0 Rust client package
+    @@ schema/provenance.json (new)
+     +      "rustfmt_version": "rustfmt 1.9.0"
+     +    },
+     +    "repository": "https://github.com/vpsfreecz/haveapi",
+    -+    "revision": "e9173e20a38de4e4e71bd5f2d4d79967950ca900",
+    ++    "revision": "9e4c29a0412a25256ce944641f60ba13e9f03c2b",
+     +    "ruby_dependency_lock_sha256": "7ab15ed0bf0ded01fbb03f2f8e6b4ad73ef2806b1ee9199acea8a5269080b2f1",
+     +    "source_sha256": "b2f1408d9a53eda4bdf33054f4293e5e1ae712d69c66863e6c0ee71902bcfc13",
+     +    "version": "0.29.0"
+    @@ tests/real_vpsadmin.rs (new)
+     +        let (base, f) = fixture()?;
+     +        let api = <$client>::builder(&base)
+     +            .basic_auth("admin", "secret")
+    -+            .build()?;
+    ++            .build().map_err(|_| "build Basic fixture client failed")?;
+     +
+    -+        let shown = api.vps().show(f.vps_id).send()$(.$await)??.output;
+    ++        let shown = api.vps().show(f.vps_id).send()$(.$await)?
+    ++            .map_err(|_| "VPS initial show failed")?.output;
+     +        assert_eq!(shown.id, Some(f.vps_id));
+     +        let hostname = shown.hostname;
+     +        api.vps().update(f.vps_id)
+     +            .info("Rust client disposable fixture")
+    -+            .send()$(.$await)??;
+    -+        let updated = api.vps().show(f.vps_id).send()$(.$await)??.output;
+    ++            .send()$(.$await)?.map_err(|_| "VPS info update failed")?;
+    ++        let updated = api.vps().show(f.vps_id).send()$(.$await)?
+    ++            .map_err(|_| "VPS show after update failed")?.output;
+     +        assert_eq!(updated.info.as_deref(), Some("Rust client disposable fixture"));
+     +        assert_eq!(updated.hostname, hostname);
+     +
+    -+        let first_page = api.vps().index().limit(1).send()$(.$await)??.output;
+    ++        let first_page = api.vps().index().limit(1).send()$(.$await)?
+    ++            .map_err(|_| "VPS first page failed")?.output;
+     +        assert_eq!(first_page.len(), 1);
+     +        let cursor = first_page[0].id.ok_or("fixture list item has no ID")?;
+     +        let next_page = api.vps().index().limit(1).from_id(cursor)
+    -+            .send()$(.$await)??.output;
+    ++            .send()$(.$await)?.map_err(|_| "VPS cursor page failed")?.output;
+     +        assert!(next_page.iter().all(|vps| vps.id.is_some_and(|id| id > cursor)));
+     +
+    -+        api.dns_record().update(f.dns_record_id).ttl(120).send()$(.$await)??;
+    -+        assert_eq!(api.dns_record().show(f.dns_record_id).send()$(.$await)??.output.ttl, Some(120));
+    -+        api.dns_record().update(f.dns_record_id).ttl_null().send()$(.$await)??;
+    -+        assert_eq!(api.dns_record().show(f.dns_record_id).send()$(.$await)??.output.ttl, None);
+    ++        api.dns_record().update(f.dns_record_id).ttl(120).send()$(.$await)?
+    ++            .map_err(|_| "DNS TTL value update failed")?;
+    ++        assert_eq!(api.dns_record().show(f.dns_record_id).send()$(.$await)?
+    ++            .map_err(|_| "DNS show after TTL value failed")?.output.ttl, Some(120));
+    ++        api.dns_record().update(f.dns_record_id).ttl_null().send()$(.$await)?
+    ++            .map_err(|_| "DNS TTL null update failed")?;
+    ++        assert_eq!(api.dns_record().show(f.dns_record_id).send()$(.$await)?
+    ++            .map_err(|_| "DNS show after TTL null failed")?.output.ttl, None);
+     +
+     +        let custom = json!({"nested": [false, 0, "", null, {"key": "value"}]});
+     +        let setting = api.webui_user_setting().set(&f.setting_namespace, &f.setting_key)
+    -+            .value(custom.clone()).send()$(.$await)??.output;
+    ++            .value(custom.clone()).send()$(.$await)?
+    ++            .map_err(|_| "WebUI Custom setting write failed")?.output;
+     +        assert_eq!(setting.value, Some(custom.clone()));
+     +        let saved = api.webui_user_setting().show(&f.setting_namespace, &f.setting_key)
+    -+            .send()$(.$await)??.output;
+    ++            .send()$(.$await)?.map_err(|_| "WebUI Custom setting read failed")?.output;
+     +        assert_eq!(saved.value, Some(custom));
+     +
+    -+        let unauthenticated = <$client>::builder(&base).build()?;
+    ++        let unauthenticated = <$client>::builder(&base).build()
+    ++            .map_err(|_| "build unauthenticated fixture client failed")?;
+     +        let login = unauthenticated.authentication__token__token().request()
+     +            .user("admin").password("secret")
+     +            .lifetime("renewable_manual").interval(120)
+    -+            .send()$(.$await)??.output;
+    -+        let token = match login.token_step()? {
+    ++            .send()$(.$await)?.map_err(|error| match error.http_status() {
+    ++                Some(status) => format!("token request failed (HTTP {status})"),
+    ++                None => "token request failed (no HTTP response)".to_owned(),
+    ++            })?.output;
+    ++        let token = match login.token_step().map_err(|_| "token request step conversion failed")? {
+     +            TokenStep::Complete { token } => token,
+     +            _ => return Err("local admin fixture unexpectedly requires an auth challenge".into()),
+     +        };
+    -+        let token_api = <$client>::builder(&base).token(token.expose_secret()).build()?;
+    -+        assert_eq!(token_api.vps().show(f.vps_id).send()$(.$await)??.output.id, Some(f.vps_id));
+    -+        let renewed = token_api.authentication__token__token().renew().send()$(.$await)??.output;
+    ++        let token_api = <$client>::builder(&base).token(token.expose_secret()).build()
+    ++            .map_err(|_| "build token fixture client failed")?;
+    ++        assert_eq!(token_api.vps().show(f.vps_id).send()$(.$await)?
+    ++            .map_err(|_| "VPS show with issued token failed")?.output.id, Some(f.vps_id));
+    ++        let renewed = token_api.authentication__token__token().renew().send()$(.$await)?
+    ++            .map_err(|_| "token renewal failed")?.output;
+     +        assert!(renewed.valid_to.is_some());
+    -+        token_api.authentication__token__token().revoke().send()$(.$await)??;
+    ++        token_api.authentication__token__token().revoke().send()$(.$await)?
+    ++            .map_err(|_| "token revocation failed")?;
+     +        assert!(token_api.vps().show(f.vps_id).send()$(.$await)?.is_err());
+     +
+    -+        let invalid = <$client>::builder(&base).basic_auth("admin", "invalid-fixture-password").build()?;
+    ++        let invalid = <$client>::builder(&base).basic_auth("admin", "invalid-fixture-password").build()
+    ++            .map_err(|_| "build invalid-credential fixture client failed")?;
+     +        assert!(invalid.vps().show(f.vps_id).send()$(.$await)?.is_err());
+     +        Ok(())
+     +    }};
+2:  1a818c4 ! 2:  62753f0 Generate the captured vpsAdmin API 7.0 client
+    @@ Commit message
+         copy the common HaveAPI runtime into the crate. Async and blocking modes
+         share the generated builders, models, validation and wire descriptions.
+     
+    -    Use HaveAPI source e9173e20a38de4e4e71bd5f2d4d79967950ca900 and the recorded
+    +    Use HaveAPI source 9e4c29a0412a25256ce944641f60ba13e9f03c2b and the recorded
+         formatter. The ownership manifest binds the snapshot, generator source,
+         Ruby lock and runtime digests for reproducible offline refreshes.
+     
+3:  d7f46d0 < -:  ------- fixup! Add the vpsAdmin API 7.0 Rust client package
+4:  7279dd9 < -:  ------- fixup! Add the vpsAdmin API 7.0 Rust client package

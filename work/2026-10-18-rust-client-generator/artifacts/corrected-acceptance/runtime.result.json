@@ -1,0 +1,32 @@
+{
+  "name": "runtime",
+  "status": "passed",
+  "exit_status": 0,
+  "elapsed_seconds": 22.688,
+  "heads": {
+    "haveapi": "e9173e20a38de4e4e71bd5f2d4d79967950ca900",
+    "vpsadmin-rust-client": "1a818c424259713147d9ac6970b7247c744422df",
+    "vpsadmin": "fb2f51222503a45f2e5a42af505f719e44279ed0"
+  },
+  "argv": [
+    "env",
+    "-u",
+    "BUNDLE_GEMFILE",
+    "-u",
+    "RUBYOPT",
+    "-u",
+    "GEM_HOME",
+    "-u",
+    "GEM_PATH",
+    "nix",
+    "develop",
+    ".#client-rust",
+    "--command",
+    "bash",
+    "-euo",
+    "pipefail",
+    "-c",
+    "cargo test --locked --manifest-path clients/rust/runtime/Cargo.toml\ncargo test --locked --manifest-path clients/rust/runtime/Cargo.toml --features blocking\ncargo clippy --locked --manifest-path clients/rust/runtime/Cargo.toml --all-targets --all-features -- -D warnings"
+  ],
+  "log": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-18-rust-client-generator/artifacts/corrected-acceptance/runtime.log"
+}
