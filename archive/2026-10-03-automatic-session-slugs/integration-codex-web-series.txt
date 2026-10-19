@@ -1,0 +1,36 @@
+commit 32775fa7fdd9bc9b41aef74b7f195e5c3bc0f8d5
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 3 19:48:36 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 4 08:07:53 2026 +0200
+
+    codex: run bounded ephemeral utility turns
+    
+    Applications need private utility turns without inherited conversation policy
+    or normal prompt admission. Add RunEphemeralTurn with trusted private paths,
+    explicit instructions, bounded schema/text input and finite whole-call cleanup.
+    
+    Require Codex 0.160.0, gpt-5.5/low and the unchanged full original model catalog
+    loaded through a dedicated daemon's startup CLI override. Check immutable file
+    contents and the effective session-flags origin before creating a thread.
+    Dynamic model metadata cannot establish the supported Direct tool profile.
+    CodeModeOnly models are excluded because their yielded cells can outlive a turn
+    without a supported scoped stop and join.
+    
+    Use a private generation-bound connection with a sink installed before
+    initialization. Apply fixed restrictions, disable each captured literal MCP
+    name and reject conflicting managed requirements. Reject server requests with
+    fixed errors and async questions without UI admission. Require one final answer
+    and exact successful turn completion.
+    
+    Export one fixed nonempty instruction-file value for both native file loaders.
+    Validate its exact bounded bytes before connecting; explicit task instructions
+    remain authoritative. The caller keeps its unique file unchanged through
+    teardown. A validated early identity permits exact interruption after a lost
+    start reply but cannot authorize success. Close without reconnecting, adopting
+    or retiring persisted threads, within the original deadline.
+    
+    The API is additive to ordinary conversations and does not change persistent
+    formats. Native ephemeral mode omits resumable state but does not suppress its
+    separate diagnostic SQLite logger. Exact-binary tool, dispatch, cancellation and
+    persistence evidence remains a release prerequisite.

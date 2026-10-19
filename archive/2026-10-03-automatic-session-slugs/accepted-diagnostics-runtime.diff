@@ -1,0 +1,86 @@
+diff --git a/docs/codex-package.md b/docs/codex-package.md
+index 3219cc5..8032407 100644
+--- a/docs/codex-package.md
++++ b/docs/codex-package.md
+@@ -146,8 +146,10 @@ uses the pinned version's local-only launch marker; credentials are not copied
+ into a new home or passed in argv. The portal owns its process group and join,
+ including early child exit and portal failure. Native ephemeral storage excludes
+ resumable conversations but its separate SQLite diagnostics can retain input
+-and identity. See the [preparation contract](session-preparations.md#naming-and-reservation)
+-for runtime ownership and native logging semantics.
++and identity in plaintext. The existing local logger remains enabled, and its
++startup pruning does not guarantee an erasure deadline. See the
++[preparation contract](session-preparations.md#naming-and-reservation) for runtime
++ownership, naming-input bounds and native logging semantics.
+ 
+ MCP names are captured once per bounded naming call. Pause/stop naming through
+ the existing portal service or supported package transition before changing MCP
+diff --git a/docs/session-preparations.md b/docs/session-preparations.md
+index ae9b1c3..c938a02 100644
+--- a/docs/session-preparations.md
++++ b/docs/session-preparations.md
+@@ -176,8 +176,14 @@ teardown against the exact candidate binary before live enablement. Fake client
+ tests and deterministic fallback do not prove model isolation.
+ 
+ Native ephemeral mode omits resumable conversations but its diagnostic SQLite
+-logger can retain the naming input and thread/turn identity in `logs_2.sqlite`.
+-That native retention is separate from the application's operational logs.
++logger can retain plaintext copies of the naming input and thread/turn identities
++in `logs_2.sqlite` under the configured SQLite home. The portal keeps that existing
++local logger enabled. The naming input is limited to the first 8192 raw UTF-8
++bytes and excludes attachment names, paths and contents. Codex 0.160.0 prunes
++rows older than ten days at startup; this is not a guaranteed erasure deadline.
++Accepted preparation requests and normal session history retain their existing
++persistence contracts. Portal operational logs contain outcome and duration,
++without prompt text or model output.
+ Changing authentication, provider configuration, managed policy or the fixed
+ resource requires restarting the naming child through the portal procedure.
+ 
+diff --git a/portal/cmd/workspace-portal/naming_runtime_test.go b/portal/cmd/workspace-portal/naming_runtime_test.go
+index c641d1e..1913c5e 100644
+--- a/portal/cmd/workspace-portal/naming_runtime_test.go
++++ b/portal/cmd/workspace-portal/naming_runtime_test.go
+@@ -31,7 +31,7 @@ func TestNamingRuntimeChildFixture(t *testing.T) {
+ 	switch mode {
+ 	case "hold":
+ 		data, _ := json.Marshal(map[string]any{"args": os.Args, "cwd": mustNamingCwd(), "home": os.Getenv("CODEX_HOME"), "remote": os.Getenv("CODEX_INTERNAL_APP_SERVER_REMOTE_CONTROL_DISABLED"), "provider": os.Getenv("NAMING_TEST_PROVIDER"), "pid": os.Getpid()})
+-		if os.WriteFile(os.Getenv("NAMING_TEST_RECORD"), data, 0600) != nil {
++		if namingTestPublish(os.Getenv("NAMING_TEST_RECORD"), data) != nil {
+ 			os.Exit(3)
+ 		}
+ 		for {
+@@ -45,7 +45,7 @@ func TestNamingRuntimeChildFixture(t *testing.T) {
+ 		if child.Start() != nil {
+ 			os.Exit(3)
+ 		}
+-		if os.WriteFile(os.Getenv("NAMING_TEST_PID"), []byte(strconv.Itoa(child.Process.Pid)), 0600) != nil {
++		if namingTestPublish(os.Getenv("NAMING_TEST_PID"), []byte(strconv.Itoa(child.Process.Pid))) != nil {
+ 			os.Exit(3)
+ 		}
+ 		// Let the parent test observe the live group before the leader exits.
+@@ -60,6 +60,25 @@ func TestNamingRuntimeChildFixture(t *testing.T) {
+ }
+ func mustNamingCwd() string { cwd, _ := os.Getwd(); return cwd }
+ 
++// Readers must see complete synthetic evidence, never the create/write window.
++// CreateTemp owns a mode-0600 sibling; rename publishes it in the same directory.
++func namingTestPublish(path string, data []byte) error {
++	file, err := os.CreateTemp(filepath.Dir(path), ".naming-evidence-*")
++	if err != nil {
++		return err
++	}
++	temporary := file.Name()
++	defer os.Remove(temporary)
++	if _, err := file.Write(data); err != nil {
++		_ = file.Close()
++		return err
++	}
++	if err := file.Close(); err != nil {
++		return err
++	}
++	return os.Rename(temporary, path)
++}
++
+ func namingTestWait(t *testing.T, path string) []byte {
+ 	t.Helper()
+ 	deadline := time.Now().Add(time.Second)

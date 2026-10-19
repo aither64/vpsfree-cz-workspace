@@ -1,0 +1,118 @@
+commit 5b2e9a4bb95bcf4070d62da33b219ed3c5a33f12
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Fri Oct 2 17:05:42 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 3 11:38:06 2026 +0200
+
+    flake: require the maintenance-aware runtime transition policy
+    
+    Select the reviewed runtime policy that rejects older cluster helpers
+    while retained cluster state exists. The provider and workspace host
+    consume the same canonical contract, so both need policy 3 before a
+    maintenance hold can survive a normal package transition.
+    
+    This input update prepares that package composition. Activation still
+    requires the matching maintenance-aware provider implementation.
+
+commit 101d31264fb54cc39b2d0d9519a202d0705a7078
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Fri Oct 2 17:58:27 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 3 11:38:07 2026 +0200
+
+    vpsadmin: preserve stopped clusters through maintenance copy
+    
+    Ordinary startup can run a seed that rewrites retained assignments, and a
+    new closure missing from the guest store can prevent an in-place update.
+    Add typed maintenance-start, services copy-only and copied-config restart
+    operations to prepare the closure while retaining disks and guest layout.
+    
+    Persist a bounded private hold before boot, bind residency evidence and
+    copy receipts to the selected configuration and runner, and apply fixed
+    writer masks from initial boot. Refuse ordinary writes while held and
+    release only after preserving seed, service readiness and node refresh.
+    Recheck retained disks before construction and each start to prevent a
+    missing disk from becoming a fresh image.
+    
+    Keep ordinary runner behavior unchanged for other providers. Maintenance
+    requires runtime policy 3 and a matching preserving-seed candidate marker;
+    old seeds and unsupported recovery packages fail closed. This hold does
+    not establish storage quietness or authorize repair.
+
+commit f50c92bf146c3f3d93a5293e0c005f5fdb3a26e2
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Fri Oct 2 20:59:06 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 3 11:38:07 2026 +0200
+
+    vpsadmin: preserve assignments in the development storage profile
+    
+    Add an opt-in profile for member NAS, configured backup destinations and
+    short snapshot schedules. Provision through normal API chains after Pool
+    readiness, with shared templates committed before source enrollment.
+    
+    Use the same enabled selection for the API overlay, preserving seed and
+    maintenance marker. Repeated seed runs retain existing namespace and
+    resource assignments. Retirement keeps that selection loaded, disables
+    new enrollment and removes only proved owned policy links and tasks.
+    
+    Provide a fixed payload fixture for normal full and incremental transfers,
+    read-only historical views, fixture rotation and repeat-update preservation.
+    The disabled profile and packaged API/OS revisions remain unchanged.
+    
+    Omit the profile-only scheduler option from disabled configurations so the
+    packaged API remains valid. Cover explicit disabled selection in the
+    existing smoke test.
+
+commit 399c33023a568a8d7a21e4e4df52829628720a28
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Fri Oct 2 20:59:20 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 3 11:38:07 2026 +0200
+
+    vpsadmin: test retained services through interrupted maintenance
+    
+    Exercise the real old and preserving seeds on one disposable services disk.
+    Keep writers masked from initial maintenance boot, copy the real closure,
+    and retry interrupted copy and copied boot without replacing retained data.
+    
+    Use the pinned TestRunner's examples, results and cleanup with a narrow
+    constructor adapter for sealed configurations and one shared guest registry.
+    Check generator masks, writer starts, assignments and payload preservation.
+    
+    Expose this as an explicit post-review app. Services-only coverage retains
+    starting_copied and cannot prove full-cluster Node refresh or hold release.
+    
+    Keep default flake evaluation independent of the enabled candidate. Build
+    the two fixed store configurations only on invocation, preserving selected
+    sources, revision metadata and declared follows before the native runner
+    starts.
+    
+    Keep both runtime-built configuration outputs rooted through native execution
+    and later failure inspection. Private roots stay outside the runner's initially
+    empty artifact directory so concurrent Nix GC cannot remove required closures.
+    
+    Preserve the pinned machine lifecycle's five-second settle gap across
+    replacement instances after successful teardown. Use a monotonic stop
+    timestamp and wait only the remaining gap before start, retaining genuine
+    startup failures and the retained-disk recheck.
+    
+    Flush the first copied boot's fixture counter and marker removal before the
+    deliberate power cut. Keep the new seed blocked and retain the two-start
+    assertion; a failed removal or filesystem sync must prevent the forced cut.
+
+commit 67c9a60b802537bbb7154959405b67f168f85397
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 3 21:05:48 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 4 09:05:30 2026 +0200
+
+    flake: select automatic session naming runtime
+    
+    Pin the runtime that accepts prompt-based session names and preserves
+    request identity through naming, initialization and browser recovery.
+    Retain the deployed maintenance and storage-profile extension lineage and
+    the runtime policy-3 ancestor.
+    
+    Only the runtime and its codex-web dependency change. Site configuration,
+    cluster inputs, the Codex version and all other locked inputs are retained.

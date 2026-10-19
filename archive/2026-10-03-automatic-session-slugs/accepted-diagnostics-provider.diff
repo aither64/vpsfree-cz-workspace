@@ -1,0 +1,505 @@
+diff --git a/codex/ephemeral_integration_test.go b/codex/ephemeral_integration_test.go
+index 8d7fe42..052a887 100644
+--- a/codex/ephemeral_integration_test.go
++++ b/codex/ephemeral_integration_test.go
+@@ -3171,6 +3171,243 @@ type ephemeralIntegrationSQLiteDiagnostic struct {
+ 	Owners                                   []ephemeralIntegrationSQLiteOwner
+ }
+ 
++// The complete current definition in pinned Codex 0.160.0
++// state/logs_migrations/0002_logs_feedback_log_body.sql. This is a fixture
++// acceptance boundary, not a schema compatibility or migration mechanism.
++const integrationLogsDDL = `CREATE TABLE logs (
++    id INTEGER PRIMARY KEY AUTOINCREMENT,
++    ts INTEGER NOT NULL,
++    ts_nanos INTEGER NOT NULL,
++    level TEXT NOT NULL,
++    target TEXT NOT NULL,
++    feedback_log_body TEXT,
++    module_path TEXT,
++    file TEXT,
++    line INTEGER,
++    thread_id TEXT,
++    process_uuid TEXT,
++    estimated_bytes INTEGER NOT NULL DEFAULT 0
++);`
++
++// Scan the entire bounded dump. Quotes/comments keep embedded SQL text from
++// becoming statements; incomplete quotes/comments or an unterminated tail fail.
++// Reporting may cap its summaries, but acceptance never caps this walk.
++func integrationSQLiteStatements(dump []byte, inspect func([]byte) error) error {
++	if len(dump) > 4*1024*1024 {
++		return errors.New("fixture SQLite dump exceeds bound")
++	}
++	start, quote := 0, byte(0)
++	lineComment, blockComment := false, false
++	for i := 0; i < len(dump); i++ {
++		c := dump[i]
++		if lineComment {
++			if c == '\n' {
++				lineComment = false
++			}
++			continue
++		}
++		if blockComment {
++			if c == '*' && i+1 < len(dump) && dump[i+1] == '/' {
++				blockComment = false
++				i++
++			}
++			continue
++		}
++		if quote != 0 {
++			if c == quote {
++				if quote != ']' && i+1 < len(dump) && dump[i+1] == quote {
++					i++
++				} else {
++					quote = 0
++				}
++			}
++			continue
++		}
++		if c == '-' && i+1 < len(dump) && dump[i+1] == '-' {
++			lineComment = true
++			i++
++			continue
++		}
++		if c == '/' && i+1 < len(dump) && dump[i+1] == '*' {
++			blockComment = true
++			i++
++			continue
++		}
++		switch c {
++		case '\'', '"', '`':
++			quote = c
++		case '[':
++			quote = ']'
++		case ';':
++			if err := inspect(dump[start : i+1]); err != nil {
++				return err
++			}
++			start = i + 1
++		}
++	}
++	if quote != 0 || blockComment || lineComment || len(bytes.TrimSpace(dump[start:])) != 0 {
++		return errors.New("fixture SQLite dump is incomplete")
++	}
++	return nil
++}
++
++func integrationSQLiteSpace(c byte) bool {
++	return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f' || c == '\v'
++}
++
++func integrationSQLiteWord(data []byte, word string) ([]byte, bool) {
++	data = bytes.TrimSpace(data)
++	if !bytes.HasPrefix(data, []byte(word)) || len(data) == len(word) || !integrationSQLiteSpace(data[len(word)]) {
++		return nil, false
++	}
++	return bytes.TrimSpace(data[len(word):]), true
++}
++
++// Recognize only a complete dump-style row INSERT, not column lists, prefixes,
++// near-match tables, qualified names, extra clauses or another SQL statement.
++func integrationLogRow(statement []byte) bool {
++	data, ok := integrationSQLiteWord(statement, "INSERT")
++	if !ok {
++		return false
++	}
++	data, ok = integrationSQLiteWord(data, "INTO")
++	if !ok {
++		return false
++	}
++	for _, table := range []string{"logs", `"logs"`} {
++		rest, matches := integrationSQLiteWord(data, table)
++		if !matches {
++			continue
++		}
++		if !bytes.HasPrefix(rest, []byte("VALUES")) {
++			return false
++		}
++		rest = bytes.TrimSpace(rest[len("VALUES"):])
++		if len(rest) < 3 || rest[0] != '(' {
++			return false
++		}
++		depth, quote := 0, byte(0)
++		for i := 0; i < len(rest); i++ {
++			c := rest[i]
++			if quote != 0 {
++				if c == quote {
++					if quote != ']' && i+1 < len(rest) && rest[i+1] == quote {
++						i++
++					} else {
++						quote = 0
++					}
++				}
++				continue
++			}
++			if c == '-' && i+1 < len(rest) && rest[i+1] == '-' || c == '/' && i+1 < len(rest) && rest[i+1] == '*' {
++				return false
++			}
++			switch c {
++			case '\'', '"', '`':
++				quote = c
++			case '[':
++				quote = ']'
++			case '(':
++				depth++
++			case ')':
++				depth--
++				if depth == 0 {
++					return bytes.Equal(bytes.TrimSpace(rest[i+1:]), []byte(";"))
++				}
++			}
++		}
++		return false
++	}
++	return false
++}
++
++func integrationLogPersistenceView(relative string, dump []byte) ([]byte, error) {
++	if len(dump) > 4*1024*1024 {
++		return nil, errors.New("fixture SQLite dump exceeds bound")
++	}
++	if relative != "logs_2.sqlite" {
++		return dump, nil
++	}
++	var view bytes.Buffer
++	started, completed, definitions := false, false, 0
++	expected := strings.Join(strings.Fields(integrationLogsDDL), " ")
++	err := integrationSQLiteStatements(dump, func(statement []byte) error {
++		normalized := strings.Join(strings.Fields(string(statement)), " ")
++		if completed {
++			return errors.New("fixture diagnostic dump extends past COMMIT")
++		}
++		if normalized == "BEGIN TRANSACTION;" {
++			if started {
++				return errors.New("fixture diagnostic dump has repeated BEGIN")
++			}
++			started = true
++		} else if !started {
++			if normalized != "PRAGMA foreign_keys=OFF;" {
++				return errors.New("fixture diagnostic dump lacks transaction")
++			}
++		} else if normalized == "COMMIT;" {
++			completed = true
++		}
++		// Exact table token, including the dump's quoted spelling. An optional
++		// IF NOT EXISTS is detected as an unsupported/ambiguous definition too.
++		definition, create := integrationSQLiteWord(bytes.TrimSpace(statement), "CREATE")
++		if create {
++			definition, create = integrationSQLiteWord(definition, "TABLE")
++		}
++		if create {
++			if optional, ok := integrationSQLiteWord(definition, "IF"); ok {
++				if optional, ok = integrationSQLiteWord(optional, "NOT"); ok {
++					if optional, ok = integrationSQLiteWord(optional, "EXISTS"); ok {
++						definition = optional
++					}
++				}
++			}
++			for _, table := range []string{"logs", `"logs"`} {
++				body := definition
++				if !bytes.HasPrefix(body, []byte(table)) {
++					continue
++				}
++				body = body[len(table):]
++				if len(body) == 0 || !(integrationSQLiteSpace(body[0]) || body[0] == '(') {
++					continue
++				}
++				definitions++
++				canonical := strings.Replace(normalized, `CREATE TABLE "logs"`, "CREATE TABLE logs", 1)
++				if definitions != 1 || canonical != expected {
++					return errors.New("unsupported diagnostic log schema")
++				}
++			}
++		}
++		if integrationLogRow(statement) {
++			if definitions != 1 || !started || completed {
++				return errors.New("diagnostic log row preceded current schema")
++			}
++		} else {
++			view.Write(statement)
++		}
++		return nil
++	})
++	if err != nil {
++		return nil, err
++	}
++	if !started || !completed || definitions != 1 {
++		return nil, errors.New("fixture diagnostic dump lacks complete current schema")
++	}
++	return view.Bytes(), nil
++}
++
++func integrationPersistenceMarker(data []byte, ids []string) string {
++	if bytes.Contains(data, []byte("RAW_UTILITY_PREFIX_SENTINEL")) {
++		return "prompt"
++	}
++	for _, id := range ids {
++		if id != "" && bytes.Contains(data, []byte(id)) {
++			return "owned-id"
++		}
++	}
++	return ""
++}
++
+ func integrationSQLiteDiagnostic(relative string, dump []byte, ids []string) string {
+ 	result := ephemeralIntegrationSQLiteDiagnostic{File: "[invalid]"}
+ 	parts := strings.Split(relative, "/")
+@@ -3247,31 +3484,8 @@ func integrationSQLiteDiagnostic(relative string, dump []byte, ids []string) str
+ 		}
+ 		result.Owners = append(result.Owners, ephemeralIntegrationSQLiteOwner{Table: name, Prompt: prompt, OwnedID: owned, Statements: 1})
+ 	}
+-	start, quote := 0, byte(0)
+-	for i := 0; i < len(dump); i++ {
+-		c := dump[i]
+-		if quote != 0 {
+-			if c == quote {
+-				if quote != ']' && i+1 < len(dump) && dump[i+1] == quote {
+-					i++
+-				} else {
+-					quote = 0
+-				}
+-			}
+-			continue
+-		}
+-		switch c {
+-		case '\'', '"', '`':
+-			quote = c
+-		case '[':
+-			quote = ']'
+-		case ';':
+-			inspect(dump[start : i+1])
+-			start = i + 1
+-		}
+-	}
+-	if start < len(dump) {
+-		inspect(dump[start:])
++	if integrationSQLiteStatements(dump, func(statement []byte) error { inspect(statement); return nil }) != nil {
++		result.Truncated = true
+ 	}
+ 	output, err := json.Marshal(result)
+ 	if err != nil || len(output) > 4096 {
+@@ -3330,6 +3544,128 @@ func TestEphemeralIntegrationSQLiteDiagnostics(t *testing.T) {
+ 	})
+ }
+ 
++func TestEphemeralIntegrationPersistenceAcceptance(t *testing.T) {
++	makeDump := func(ddl, statements string) []byte {
++		return []byte("PRAGMA foreign_keys=OFF;\nBEGIN TRANSACTION;\n" + ddl + "\n" + statements + "\nCOMMIT;\n")
++	}
++	row := func(table, body string) string {
++		body = strings.ReplaceAll(body, "'", "''")
++		return "INSERT INTO " + table + " VALUES(1,1,1,'INFO','synthetic','" + body + "',NULL,NULL,NULL,'owned-id-secret','synthetic-process',1);"
++	}
++	allowed := row("logs", "RAW_UTILITY_PREFIX_SENTINEL: local diagnostic memory goal")
++	quoted := row(`"logs"`, "RAW_UTILITY_PREFIX_SENTINEL: quoted 'value';\nINSERT INTO memories VALUES('owned-id-secret');\nCREATE TABLE logs (fake); -- memory goal")
++	metadata := "INSERT INTO _sqlx_migrations VALUES('ordinary metadata');\nINSERT INTO sqlite_sequence VALUES('logs',2);"
++	for _, test := range []struct {
++		name, relative        string
++		dump                  []byte
++		accept, schemaFailure bool
++	}{
++		{"known unquoted diagnostic row", "logs_2.sqlite", makeDump(integrationLogsDDL, allowed), true, false},
++		{"quoted multiline fake SQL stays in row", "logs_2.sqlite", makeDump(integrationLogsDDL, quoted), true, false},
++		{"quoted DDL and whitespace", "logs_2.sqlite", makeDump(strings.ReplaceAll(strings.Replace(integrationLogsDDL, "TABLE logs", `TABLE "logs"`, 1), "    ", "\t"), quoted), true, false},
++		{"empty logger with current schema", "logs_2.sqlite", makeDump(integrationLogsDDL, ""), true, false},
++		{"prompt in other table", "logs_2.sqlite", makeDump(integrationLogsDDL, allowed+"\nINSERT INTO threads VALUES('RAW_UTILITY_PREFIX_SENTINEL');"), false, false},
++		{"owned ID in other table", "logs_2.sqlite", makeDump(integrationLogsDDL, allowed+"\nINSERT INTO threads VALUES('owned-id-secret');"), false, false},
++		{"another database", "state_5.sqlite", makeDump(integrationLogsDDL, allowed), false, false},
++		{"nested logger basename", "nested/logs_2.sqlite", makeDump(integrationLogsDDL, allowed), false, false},
++		{"prompt in metadata", "logs_2.sqlite", makeDump(integrationLogsDDL, "INSERT INTO _sqlx_migrations VALUES('RAW_UTILITY_PREFIX_SENTINEL');"), false, false},
++		{"owned ID in sequence", "logs_2.sqlite", makeDump(integrationLogsDDL, "INSERT INTO sqlite_sequence VALUES('owned-id-secret',1);"), false, false},
++		{"marker in other DDL", "logs_2.sqlite", makeDump(integrationLogsDDL+"\nCREATE TABLE RAW_UTILITY_PREFIX_SENTINEL (value TEXT);", ""), false, false},
++		{"marker in logger DDL", "logs_2.sqlite", makeDump(strings.Replace(integrationLogsDDL, "target TEXT", "RAW_UTILITY_PREFIX_SENTINEL TEXT", 1), ""), false, true},
++		{"normal file prompt", "ordinary.txt", []byte("RAW_UTILITY_PREFIX_SENTINEL: retained file"), false, false},
++		{"normal file owned ID", "ordinary.txt", []byte("owned-id-secret"), false, false},
++		{"old message schema", "logs_2.sqlite", makeDump(strings.Replace(integrationLogsDDL, "feedback_log_body", "message", 1), allowed), false, true},
++		{"missing schema", "logs_2.sqlite", makeDump("", ""), false, true},
++		{"changed column type", "logs_2.sqlite", makeDump(strings.Replace(integrationLogsDDL, "line INTEGER", "line TEXT", 1), allowed), false, true},
++		{"changed default", "logs_2.sqlite", makeDump(strings.Replace(integrationLogsDDL, "DEFAULT 0", "DEFAULT 1", 1), allowed), false, true},
++		{"ambiguous duplicate schema", "logs_2.sqlite", makeDump(integrationLogsDDL+"\n"+integrationLogsDDL, allowed), false, true},
++		{"ambiguous optional second schema", "logs_2.sqlite", makeDump(integrationLogsDDL+"\n"+strings.Replace(integrationLogsDDL, "CREATE TABLE logs", "CREATE TABLE IF\nNOT EXISTS logs", 1), allowed), false, true},
++		{"near-match logs_extra", "logs_2.sqlite", makeDump(integrationLogsDDL, row("logs_extra", "RAW_UTILITY_PREFIX_SENTINEL")), false, false},
++		{"near-match quoted logs name", "logs_2.sqlite", makeDump(integrationLogsDDL, row(`"logs""extra"`, "RAW_UTILITY_PREFIX_SENTINEL")), false, false},
++		{"qualified table name", "logs_2.sqlite", makeDump(integrationLogsDDL, row("main.logs", "RAW_UTILITY_PREFIX_SENTINEL")), false, false},
++		{"column list is not dump row", "logs_2.sqlite", makeDump(integrationLogsDDL, "INSERT INTO logs(feedback_log_body) VALUES('RAW_UTILITY_PREFIX_SENTINEL');"), false, false},
++		{"extra clause is not dump row", "logs_2.sqlite", makeDump(integrationLogsDDL, strings.TrimSuffix(allowed, ";")+" RETURNING id;"), false, false},
++		{"comment is not row data", "logs_2.sqlite", makeDump(integrationLogsDDL, "INSERT INTO logs VALUES(/* RAW_UTILITY_PREFIX_SENTINEL */1);"), false, false},
++		{"missing COMMIT", "logs_2.sqlite", []byte("BEGIN TRANSACTION;\n" + integrationLogsDDL + "\n" + allowed), false, true},
++		{"unterminated quoted row", "logs_2.sqlite", []byte("BEGIN TRANSACTION;\n" + integrationLogsDDL + "\nINSERT INTO logs VALUES('RAW_UTILITY_PREFIX_SENTINEL;\nCOMMIT;"), false, true},
++		{"unterminated last statement", "logs_2.sqlite", []byte("BEGIN TRANSACTION;\n" + integrationLogsDDL + "\nCOMMIT"), false, true},
++		{"unterminated comment", "logs_2.sqlite", []byte("BEGIN TRANSACTION;\n" + integrationLogsDDL + "\n/* COMMIT;"), false, true},
++	} {
++		t.Run(test.name, func(t *testing.T) {
++			view, err := integrationLogPersistenceView(test.relative, test.dump)
++			if (err != nil) != test.schemaFailure {
++				t.Fatal("wrong schema/completeness result")
++			}
++			accepted := err == nil && integrationPersistenceMarker(view, []string{"owned-id-secret"}) == ""
++			if accepted != test.accept {
++				t.Fatal("incorrect persistence exception")
++			}
++			if test.relative != "logs_2.sqlite" && !bytes.Equal(view, test.dump) {
++				t.Fatal("non-root content was filtered")
++			}
++		})
++	}
++	t.Run("all non-row statements and database inventory survive", func(t *testing.T) {
++		index := "CREATE INDEX idx_logs_ts ON logs(ts DESC, ts_nanos DESC, id DESC);"
++		other := "INSERT INTO unrelated VALUES('ordinary memory/goal metadata');"
++		dump := makeDump(integrationLogsDDL, allowed+"\n"+index+"\n"+metadata+"\n"+other)
++		view, err := integrationLogPersistenceView("logs_2.sqlite", dump)
++		if err != nil || integrationPersistenceMarker(view, []string{"owned-id-secret"}) != "" {
++			t.Fatal("known diagnostic row not accepted")
++		}
++		for _, statement := range []string{integrationLogsDDL, index, metadata, other, "PRAGMA foreign_keys=OFF;", "BEGIN TRANSACTION;", "COMMIT;"} {
++			if !bytes.Contains(view, []byte(statement)) {
++				t.Fatal("non-row statement discarded")
++			}
++		}
++		if bytes.Contains(view, []byte("INSERT INTO logs VALUES")) {
++			t.Fatal("logger row left in view")
++		}
++		// snapshot still inserts this database into its original files map even
++		// when there are no memory/goal lines; the view never deletes its file.
++	})
++	t.Run("late marker after more than64 allowed rows", func(t *testing.T) {
++		statements := strings.Repeat(allowed+"\n", 70) + "INSERT INTO threads VALUES('RAW_UTILITY_PREFIX_SENTINEL');"
++		view, err := integrationLogPersistenceView("logs_2.sqlite", makeDump(integrationLogsDDL, statements))
++		if err != nil || integrationPersistenceMarker(view, nil) != "prompt" {
++			t.Fatal("reporting row cap leaked into acceptance")
++		}
++	})
++	t.Run("all owned IDs exceed diagnostic cap", func(t *testing.T) {
++		ids := make([]string, 70)
++		for i := range ids {
++			ids[i] = fmt.Sprintf("utility-owned-id-%03d", i)
++		}
++		statements := strings.Repeat(allowed+"\n", 70) + "INSERT INTO threads VALUES('" + ids[69] + "');"
++		view, err := integrationLogPersistenceView("logs_2.sqlite", makeDump(integrationLogsDDL, statements))
++		if err != nil || integrationPersistenceMarker(view, ids) != "owned-id" {
++			t.Fatal("reporting ID cap leaked into acceptance")
++		}
++	})
++	for _, seed := range []struct{ name, row string }{
++		{"goals_1.sqlite", "INSERT INTO thread_goals VALUES('control-root','goal-id','GOAL_STATE_SENTINEL','paused',1,1);"},
++		{"memories_1.sqlite", "INSERT INTO stage1_outputs VALUES('memory-root',1,'MEMORY_POLICY_SENTINEL','synthetic retained memory',1);"},
++	} {
++		t.Run("whole seeded dump retained "+seed.name, func(t *testing.T) {
++			dump := makeDump("", seed.row)
++			view, err := integrationLogPersistenceView(seed.name, dump)
++			if err != nil || !bytes.Equal(view, dump) {
++				t.Fatal("seeded sensitive dump normalized")
++			}
++			changed := bytes.Replace(dump, []byte("SENTINEL"), []byte("CHANGED"), 1)
++			after, err := integrationLogPersistenceView(seed.name, changed)
++			if err != nil || bytes.Equal(after, view) {
++				t.Fatal("seeded byte change erased")
++			}
++		})
++	}
++	t.Run("inspection bound is not a summary cap", func(t *testing.T) {
++		if _, err := integrationLogPersistenceView("logs_2.sqlite", make([]byte, 4*1024*1024+1)); err == nil {
++			t.Fatal("oversized dump accepted")
++		}
++	})
++}
++
+ func (h *ephemeralIntegrationHarness) snapshot(t *testing.T) map[string]string {
+ 	t.Helper()
+ 	files := map[string]string{}
+@@ -3351,30 +3687,29 @@ func (h *ephemeralIntegrationHarness) snapshot(t *testing.T) map[string]string {
+ 			if err != nil || len(output) > 4*1024*1024 {
+ 				return errors.New("fixture SQLite inspection failed")
+ 			}
+-			if bytes.Contains(output, []byte("RAW_UTILITY_PREFIX_SENTINEL")) {
+-				h.mu.Lock()
+-				ids := append([]string(nil), h.threadIDs...)
+-				h.mu.Unlock()
+-				t.Logf("native SQLite marker metadata: %s", integrationSQLiteDiagnostic(relative, output, ids))
+-				return errors.New("utility prompt persisted in SQLite")
+-			}
+ 			h.mu.Lock()
+ 			ids := append([]string(nil), h.threadIDs...)
+ 			h.mu.Unlock()
+-			for _, id := range ids {
+-				if id != "" && bytes.Contains(output, []byte(id)) {
+-					t.Logf("native SQLite marker metadata: %s", integrationSQLiteDiagnostic(relative, output, ids))
+-					return errors.New("ephemeral identity persisted in SQLite")
++			view, viewErr := integrationLogPersistenceView(relative, output)
++			if viewErr != nil {
++				t.Logf("native SQLite marker metadata: %s", integrationSQLiteDiagnostic(relative, output, ids))
++				return viewErr
++			}
++			if marker := integrationPersistenceMarker(view, ids); marker != "" {
++				t.Logf("native SQLite marker metadata: %s", integrationSQLiteDiagnostic(relative, view, ids))
++				if marker == "prompt" {
++					return errors.New("utility prompt persisted in SQLite")
+ 				}
++				return errors.New("ephemeral identity persisted in SQLite")
+ 			}
+ 			// Goal/memory tables must remain byte-identical; ordinary metadata may
+ 			// change counters/time without carrying any utility prompt or identity.
+ 			if strings.HasPrefix(filepath.Base(relative), "goals_") || strings.HasPrefix(filepath.Base(relative), "memories_") {
+-				files[relative] = string(output)
++				files[relative] = string(view)
+ 				return nil
+ 			}
+ 			var sensitive []string
+-			for _, line := range strings.Split(string(output), "\n") {
++			for _, line := range strings.Split(string(view), "\n") {
+ 				lower := strings.ToLower(line)
+ 				if strings.Contains(lower, "memory") || strings.Contains(lower, "goal") {
+ 					sensitive = append(sensitive, line)
+@@ -3390,14 +3725,17 @@ func (h *ephemeralIntegrationHarness) snapshot(t *testing.T) map[string]string {
+ 		if err != nil || len(data) > 4*1024*1024 {
+ 			return errors.New("fixture persistent-file inspection failed")
+ 		}
+-		if bytes.Contains(data, []byte("RAW_UTILITY_PREFIX_SENTINEL")) {
+-			return errors.New("utility prompt persisted in a file")
+-		}
+ 		h.mu.Lock()
+ 		ids := append([]string(nil), h.threadIDs...)
+ 		h.mu.Unlock()
++		if marker := integrationPersistenceMarker(data, ids); marker != "" {
++			if marker == "prompt" {
++				return errors.New("utility prompt persisted in a file")
++			}
++			return errors.New("ephemeral thread/rollout persisted")
++		}
+ 		for _, id := range ids {
+-			if id != "" && (strings.Contains(relative, id) || bytes.Contains(data, []byte(id))) {
++			if id != "" && strings.Contains(relative, id) {
+ 				return errors.New("ephemeral thread/rollout persisted")
+ 			}
+ 		}
+diff --git a/docs/reference.md b/docs/reference.md
+index 3a1436e..b0ea076 100644
+--- a/docs/reference.md
++++ b/docs/reference.md
+@@ -628,9 +628,11 @@ excluded because their yielded cells can survive completed turns and the pinned
+ public protocol has no scoped stop/join operation for them.
+ 
+ Native ephemeral mode omits resumable conversation storage. Codex's separate
+-SQLite diagnostic logger can still retain utility input and thread/turn identity
+-in `logs_2.sqlite`; this helper does not suppress that logger. Serving operators
+-must account for this retention separately from application operational logs.
++SQLite diagnostic logger can retain plaintext utility input and thread/turn
++identities in `logs_2.sqlite` under the configured SQLite home. The helper keeps
++that existing local logger enabled. Codex 0.160.0 prunes rows older than ten days
++at startup; this is not a guaranteed erasure deadline. Application operational
++logs and normal conversation history have separate retention contracts.
+ 
+ Fake-transport tests verify client behavior, not model-action isolation.
+ `test/codex_protocol_contract.py` includes every literal utility call site and
+@@ -664,6 +666,9 @@ owners, then reaps adopted descendants until ECHILD proves the domain empty.
+ An ordinary completed turn can leave background writers, so the fixture proves
+ ordinary eligibility before this stop/join boundary, restarts the same profiles
+ and home, reads the persisted control thread, and captures one seeded baseline.
++Persistence inspection permits rows only in the exact native diagnostic table
++after validating its pinned schema. Markers in other tables or files still fail;
++goal and memory records retain their full equality checks.
+ It cannot silently fall back to host networking or deterministic-only completion.
+ 
+ Explicit invocation requires absolute `CODEX_EPHEMERAL_TEST_BINARY`, its reviewed

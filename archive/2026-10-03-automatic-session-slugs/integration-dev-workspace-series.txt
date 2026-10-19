@@ -1,0 +1,170 @@
+commit 4ef298b30f9cdbdcfe02bf6526e0f69ecc9bf7b4
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Fri Oct 2 16:32:56 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sat Oct 3 11:28:23 2026 +0200
+
+    runtime: require maintenance-aware cluster transition policy
+    
+    Advance the canonical cluster transition policy to 3 without changing
+    state schema 1 or other runtime metadata. Retained-disk maintenance holds
+    require candidate providers that understand their state and copy receipts.
+    
+    Keep the existing forward adoption checks and document the conservative
+    refusal of policy-2 packages while any registered cluster state remains.
+    Cover adoption, activation, malformed contracts and no-state behavior.
+
+commit 89fb1b07fe0e787801d4e15964ea190f4ed884e7
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 3 17:54:44 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 4 09:03:58 2026 +0200
+
+    uploads: reserve initial files for accepted session requests
+    
+    Claim draft inputs before a session slug exists using existing schema-1
+    initial submissions in the pending state. Keep the original request text
+    and selected files bound to one preparation identity.
+    
+    Check ownership inside each catalog mutation and transfer it through the
+    existing creation binding without releasing pending retention. Confirm
+    published catalog writes and replayed claims before acceptance advances.
+    Refuse competing submissions left by an older writer while preserving
+    selected files and both ownership records for recovery.
+
+commit ea5b2e98c91f1257c2406559f7c3a3f4ad125552
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 3 17:54:54 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 4 09:03:58 2026 +0200
+
+    portal: prepare sessions before choosing their names
+    
+    Accept request IDs into a separate private preparation store before
+    asynchronous naming and ordinary session initialization. Freeze raw input,
+    exact team settings and digests, then reserve the destination with its
+    predetermined receipt ID and deletion epoch under shared creation locks.
+    
+    Preserve replay identity across retry, shutdown, restart and terminal
+    compaction. Confirm published writes before acknowledgment or dispatch,
+    repair an unlaunched attempt once, and retain explicit retry for a stopped
+    worker. A request-bound persistence error keeps uncertain work recoverable;
+    collection retains its files and receipt retirement waits for durable mapping.
+    
+    Guard reserved destinations in the CLI and use bounded Unicode fallback
+    naming through an injectable text-only adapter. The API and private state
+    are additive. Existing receipt, journal and upload catalog schemas remain
+    unchanged; older CLI reservations require newer recovery to detect conflicts.
+    Browser wiring and the model helper remain separate units.
+
+commit 81e88cb9a7e4f6ad4d2bc5d832efaf297708304f
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 3 19:48:54 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 4 09:03:58 2026 +0200
+
+    portal: name sessions through an owned utility runtime
+    
+    Install a text-only namer on one portal-owned Codex child, separate from the
+    ordinary session socket. Use gpt-5.5/low with the unchanged full original
+    catalog passed at startup, strict configuration and child-only remote control
+    disabled. Package that catalog from the already selected native source and
+    verify its bytes and version. This resource and launcher must agree with the
+    helper's immutable catalog and startup-origin contract.
+    
+    Use the existing host-selected Codex home and trusted account/provider
+    environment without copying credentials. Start once in an empty private cwd,
+    retain one process-group waiter, and stop residual descendants after every
+    leader exit. Shutdown cancels and joins preparation workers before stopping
+    the child; failed startup or loss uses existing fallback and never the
+    ordinary socket. Constructor, listener, HTTP failure and signal paths retain
+    cleanup.
+    
+    Each call receives at most 8192 raw UTF-8 bytes, fixed instructions and a
+    bounded name schema. Provision the provider-owned nonempty instruction file
+    and an empty private cwd outside the workspace, then remove only this call's
+    scratch state. Keep the whole deadline, concurrency limit, fallback and
+    generation checks with the existing worker. Custom and attachment-only
+    requests bypass model naming; cancellation cannot commit fallback.
+    
+    Existing receipts, journals, manifests and upload formats remain unchanged.
+    The managed service cgroup supplies forced-parent cleanup; an uncontained
+    manual launcher does not. Document global policy, MCP restart rules and native
+    diagnostic retention. Exact-binary and managed-child checks precede
+    deployment.
+
+commit 8cb615a8e16bd61da429ef6702b8fd09bc66fff8
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 3 20:01:37 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 4 09:03:58 2026 +0200
+
+    nix: pin the ephemeral session naming client
+    
+    Select the checked codex-web revision that provides private bounded utility
+    turns. Keep the Go pseudo-version and flake source on the same exact revision
+    and refresh the dependency vendor hash for the naming adapter.
+    
+    All other locked inputs, including the serving Codex version, stay on their
+    existing revisions. The runtime retains its deployed policy-3 ancestor.
+
+commit 376748c4f7f771a3cfdf9bfa84b3eb9dee1c6ac0
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sat Oct 3 20:41:47 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 4 09:03:58 2026 +0200
+
+    portal: recover requests while preparing session names
+    
+    Allow New session to generate a dated name from the initial request, with
+    an optional custom name and advanced lead settings under Options. Keep
+    installed team defaults usable when model discovery is unavailable and
+    preserve the exact model and effort of explicit overrides.
+    
+    Verify a tab-owned request ID and frozen submission body before posting.
+    Recover uncertain submissions by looking up that ID and replaying only
+    identical input, including an exact request-bound persistence error. Each
+    draft owns its upload scope and locks inputs and files through uncertainty.
+    Offer a separate request in a new tab while retaining original recovery;
+    text copying, file reattachment and submission remain deliberate actions.
+    Show older cached file selections a reattachment notice without adopting
+    or deleting their ambiguous shared scope.
+    
+    Render the accepted raw prompt before scripts load and track preparation
+    through its receipt identity and acceptance time. Retry the exact current
+    attempt and navigate only to its validated canonical session URL. Preserve
+    custom-name case and underscores, legacy receipts, plan and fork forms,
+    and explicit CLI naming. Browser and progress data are additive; existing
+    receipt, upload catalog and lifecycle journal formats are retained.
+
+commit 59caed4f2796a78ed1cc48cc513cbbcaaa59bd3b
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sun Oct 4 00:05:38 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 4 09:03:58 2026 +0200
+
+    test: serialize member client event recording
+    
+    The production operation lock uses flock, which supplies no Go race-detector
+    happens-before for the test client's shared event slice. Protect its recording
+    mutations with the existing mutex. Keep the blocked send handshake outside
+    that mutex so the test still detects removal before assignment completes.
+
+commit 45d4f13ab14a2dd7d19ea564dc1d364c5ac155c6
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Sun Oct 4 06:03:36 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Sun Oct 4 09:03:58 2026 +0200
+
+    portal: verify naming child in a managed user service
+    
+    The naming child has a process and service lifetime beyond an individual turn.
+    Add a finite, explicitly invoked native fixture for its two slots, startup and
+    child loss, graceful stop, forced-parent cgroup cleanup and HTTP serve failure.
+    Use synthetic private state, the exact assembled package and an ordinary native
+    control outside the portal unit; retain immutable resource and process identity
+    guards without injecting a naming adapter or adding a product test flag.
+    
+    The tagged fixture requires a disposable user-manager VM and a frozen manifest.
+    It does not run during normal tests or change production behavior, persistent
+    formats, provider policy or host activation contracts.
