@@ -11,6 +11,8 @@ Is it something caused by a container configuration in vpsAdminOS? (They're talk
 - Read-only investigation of `vpsadminos` container compatibility modules and
   osctld DNS configuration through its canonical bare repository.
 - Upstream NixOS, glibc, Nix and curl resolver behavior as needed.
+- Read-only follow-up inspection of confctl hostname/domain defaults to
+  distinguish operator deployment configuration from container defaults.
 - No application/configuration implementation or production changes planned.
 
 ## Approach
