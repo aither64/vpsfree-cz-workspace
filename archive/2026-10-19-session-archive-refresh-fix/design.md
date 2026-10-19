@@ -35,3 +35,25 @@ browser verification afterward. Publish runtime and select one final pin stream
 per consumer. Use matching configuration/system then application profile through
 coordinator; preserve reservations and recover forward. Retry only the user's
 failed target via ordinary retained portal operation; verify sync and retirement.
+
+## Deployment continuation baseline refresh
+
+The managed lead owns this bounded refresh; the retained roster is null. The
+original archived target is already finished and must not be mutated again.
+The system job stopped before activation because its installed adapter catalog
+changed. Current defaults also contain integrated session-creation fixes; retain
+them by rebasing the two reviewed runtime commits onto current origin/master.
+Preserve their patch behavior, recording range-diff and migration inventory.
+Replace each superseded consumer pin with one generated pin to that final
+runtime, based on current defaults and preserving extension/sibling inputs.
+
+No new interface, migration, journal format or approval scope is intended.
+Inspect overlapping upstream lifecycle/portal changes, run focused quick checks,
+and independently review the refreshed complete series and deployed-state
+compatibility before longer package, lifecycle and browser verification.
+Fresh exact preparation must bind the selected generation, catalog and current
+live baseline. Refresh the existing system/profile jobs with current revisions,
+preserving their dependency and held reservation. Activate system before profile;
+verify both system identities, selected app/assets, router and conversation
+continuity afterward. Recover uncertain effects through their original attempt.
+No master integration, reboot, reservation release or session closure is allowed.

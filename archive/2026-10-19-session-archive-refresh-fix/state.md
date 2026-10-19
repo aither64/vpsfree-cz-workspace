@@ -1,31 +1,44 @@
 ---
-lifecycle: active
+lifecycle: archived
 ---
 
 # 2026-10-19-session-archive-refresh-fix
 
 ## Status
 
-- Phase: deployment queued; managed continuation handoff. Implementation, independent review, local
+- Phase: merge continuation complete; all three remote master heads verified and post-merge CI passed. Deployment verified; reservation release confirmed. Original implementation, independent review, local
   browser/package/lifecycle verification and CI all passed; all branches published.
-- Managed lead accepted bounded deployment continuation at 15:09 UTC; see
-  deployment-handoff-ack.json. Native thread identity matches the retained root.
-  Coordinator revision 3660 confirms system waiting_resource, profile
-  waiting_dependency and our reservation requested; neither job has an attempt.
-  Another session holds aitherdev in deployed_review. Continue on coordinator
-  notices without polling. No checkpoint commit; the external supervisor consolidates.
-- Ready, awaiting merge approval. Deployment is authorized; master integration is not.
-- This external conversation created this dedicated threadless initiative using
-  dev-session start --as-is --no-attach --no-codex. No prior session binding exists.
-- User authorized implementation, aitherdev deployment and archiving the failed
-  session, including automatic archival fixes. No master merge authorization.
+- Managed lead owns authorized deployment continuation; both system/profile jobs
+  succeeded and live system, selected package, router and portal assets passed
+  acceptance. See deployment-acceptance.json. Reservation is now released.
+- User explicitly directed "merge it" in this managed conversation, covering
+  dev-workspace, workspace and vpsfree-cz-configuration into refs/heads/master.
+  The no-checkpoint instruction remains in force. Reservation was released externally; session lifecycle stays with the supervisor.
+- Runtime merge succeeded as 605769da-20bf-492a-96be-c288554d952f, using recorded
+  approval 15e9f5bc-0db2-4836-bb1d-eda930866379. Remote exact head 09a40795 verified by coordinator.
+  Configuration merge 9270aa80-f798-43f6-b9f1-f9e0bef67cf3 also succeeded at 91639dec.
+- Original archived session receives no further mutation. No reboot, reservation
+  release or session closure is authorized. External supervisor consolidates tracking.
 - [x] Diagnose both failures and agree design.
 - [x] Implement and run quick checks.
 - [x] Commit and complete independent review.
 - [x] Run longer verification and publish.
 - [x] Target session archived and tracking synced; no further target mutation.
-- [ ] Deploy and verify portal and selected runtime.
-- [x] Verified managed-lead handoff; initiative stays active pending integration direction.
+- [x] Refresh runtime baseline and regenerate single consumer pins; publish.
+- [x] Pass focused quick checks and deployment composition contract.
+- [x] Complete refreshed-baseline independent review (all four lanes, no findings).
+- [x] Complete refreshed browser and exact-revision CI verification.
+- [x] Complete exact system/profile snapshot preparation and approval recording.
+- [x] Refresh existing jobs while preserving dependency and reservation.
+- [x] System activation and both live system identities verified.
+- [x] Application activation and portal/router/asset/conversation acceptance.
+- [x] Deploy and verify portal and selected runtime.
+- [x] Verified managed-lead handoff; initiative stays active through integration/review.
+- [x] Record explicit user approval and independently review final rebased histories.
+- [x] Coordinate and verify all three exact remote master merges; retain feature refs.
+- [x] Automatic post-merge CI passed: fast, archive, creation and host.
+- [x] Observe coordinator-confirmed reservation release (revision5, ledger4083).
+- [ ] External supervisor owns checkpoint and lifecycle follow-up.
 
 ## Evidence
 
@@ -37,22 +50,85 @@ lifecycle: active
 - Rejected initial start command combined --as-is and --new; no mutation occurred.
   Full exact slugs require --as-is alone.
 
+## Pre-merge acceptance
+
+User direction "merge it" covers dev-workspace, workspace and
+vpsfree-cz-configuration into refs/heads/master. Runtime final range
+ea650c34c56eeb16ce0cfd330e5e9cb1b25c46be..09a407953026514ae84be81dab9442fd74b6a362
+was checked immediately before submission against baseline-refresh-review.md:
+two coherent commits, exact accepted final diff, no obsolete approaches or
+repeated pins, and no migrations. Exact-revision CI and deployment passed.
+Configuration final range fa182501..91639dec passed same-reviewer general/history
+and risk/compatibility follow-up with no findings (merge-followup-review.md).
+Original deployed configuration remains 6fe8d230, never relabelled as 91639dec.
+Workspace origin/master advanced to 7e7b937d in another session while preparing;
+its one pin was cleanly rebased to c3299586 and independently accepted.
+Complete final range7e7b937d..c3299586 and final diff checked before submission;
+no obsolete history, repeated pins or migrations; composition/diff checks pass.
+
+## Integration result
+
+All three approved refs/heads/master merges succeeded with exact remote heads:
+
+| Repository | Final integrated head | Coordinator job |
+| --- | --- | --- |
+| dev-workspace | 09a407953026514ae84be81dab9442fd74b6a362 | 605769da-20bf-492a-96be-c288554d952f |
+| workspace | c32995867329663badcc40a56473c36f9c338f94 | bfecb171-cb36-4eec-9312-763cde91ebb3 |
+| vpsfree-cz-configuration | 91639dec2c78721b3d8765de10dc65e0c66d59db | 9270aa80-f798-43f6-b9f1-f9e0bef67cf3 |
+
+Shared checkout remains master, its index empty and feature refs retained.
+Another owner subsequently committed its archive on top of workspace c3299586;
+our exact integrated head remains an ancestor and unrelated changes are preserved.
+merge-acceptance.json links checksummed final review/history and job receipts.
+Master CI run39306064979 succeeded on exact09a40795; all four jobs passed.
+Utility merge_final_verification returned with no remaining operation.
+Session lifecycle remains unchanged in this thread. Aitherdev reservation is released.
+No tracking checkpoint committed; supervisor consolidates.
+
+## Reservation release observed
+
+Coordinator notice verified against ledger4083: reservation
+1ce9be0f-bd17-4c85-ab64-1a94fd352c4c is released at revision5. All three merge
+and both activation jobs remain succeeded. External completion retains exact
+integration proofs and accepted replacement lineage for both rebased consumers.
+See reservation-release-observed.json and reservation-release-status.json.
+This turn only read status and updated evidence; it did not submit finish,
+deploy, commit a checkpoint or perform a session lifecycle action.
+
 ## Next actions
 
-- Managed lead continues on coordinator notices for the existing system/profile
-  jobs; use ordinary refresh or reconciliation when required.
-- Verify live system, profile, portal assets and conversation continuity after
-  successful activation. Keep aitherdev reserved through review.
-- Feature branches await explicit master integration direction for all three
-  repositories. Deployment supplies no merge approval.
+All requested merges and post-merge verification are complete. Runtime master
+CI run39306064979 passed at exact09a40795: host (8m12s), archive (9m03s),
+fast/package (9m54s), creation (17m35s). Fresh Luna/low utility
+merge_final_verification exited0 and retains no operation. Final metadata and
+checksummed independent review/job evidence are linked in merge-acceptance.json.
+No new code or project documentation was needed for this integration.
 
-Await coordinator notices for submitted jobs deface17-2075-4075-a527-69f57e202812
-and c40881f1-6771-436a-94a9-597573448c97. Read authoritative status on notice,
-handle any stale preparation or original-attempt recovery, then verify activation
-and conversation continuity. No merge, reboot, release, closure or further
-original archived-session mutation is authorized.
+External supervisor consolidates the checkpoint as instructed. No merge/CI
+blockers remain. Coordinator confirmed external release of the reservation.
+This thread performs no additional operation or session lifecycle action.
+
+The user instruction "merge it" approved all three named refs/heads/master.
+Configuration and workspace rebases preserved reviewed patches; independent
+follow-ups accepted the complete final series and deployed-to-final lineage.
+All three final series/diffs are inventoried in merge-final-inventory.json;
+no migrations, obsolete iterations or repeated pin streams remain.
+Individual coordinator jobs preserve the still-current no-checkpoint instruction;
+the installed batch driver would commit completion tracking. Supervisor owns
+consolidation. No direct Git/default-branch or deployment bypass was used.
+
+Keep deployed artifacts attributed to original sources: config6fe8d230 and
+workspace7c1a4c76. Rebased91639dec/c3299586 are integration lineage, not new builds.
+No further activation or lifecycle action is requested in this thread. Retain feature refs;
+supervisor owns remaining checkpoint and lifecycle follow-up.
 
 ## Documentation
+
+The runtime's docs/session-archive-recovery.md continues to own supported
+behavior and invariants; this clean rebase needs no new project prose. Individual
+rollout evidence stays in rollout.md and linked baseline-refresh artifacts.
+Routine findings were preserved in notes/dev-workspace/2026-10-19-external-review-child-resume.md
+and 2026-10-19-browser-contract-harness.md. No checkpoint commit was made.
 
 Runtime docs/session-archive-recovery.md documents the supported archive behavior;
 review-packet.md and final-review-followup.md record reviewed scope. Rollout and
@@ -67,9 +143,9 @@ worktrees/2026-10-19-session-archive-refresh-fix/:
 
 | Repository | Reviewed published head |
 | --- | --- |
-| dev-workspace | a0d4c202a2e68646aea2d93ce1f0cebaae59175b |
-| workspace | dac911fc1327dfca1b3cbc8bcfa5cad9ac3e2ff7 |
-| vpsfree-cz-configuration | b42482379cd759a508b62423ea121fa7519c87f9 |
+| dev-workspace | 09a407953026514ae84be81dab9442fd74b6a362 |
+| workspace | c32995867329663badcc40a56473c36f9c338f94 |
+| vpsfree-cz-configuration | 91639dec2c78721b3d8765de10dc65e0c66d59db |
 
 ## Commands run
 

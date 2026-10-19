@@ -1,5 +1,48 @@
 # Aitherdev rollout
 
+Deployment verified. Both original jobs succeeded (coordinator revision 3899),
+system attempt 15cdd73f and profile attempt 7cb7d854. Running/system-profile n7fy94yp
+and selected application i144xnc9 match their receipts. Portal/router responses,
+exact served asset and original Codex conversation/settings passed. HTTPS verifies
+against the configured development CA and gives the expected unauthenticated
+challenge; authenticated browser login was not exercised. See deployment-acceptance.json
+for compact checksummed evidence. Reservation 1ce9be0f remains deployed_review;
+initiative active, branches retained, integration and release still require direction.
+No checkpoint commit was made.
+
+Latest observed phase (coordinator revision 3895): system activation succeeded;
+application profile activation running. The successful system receipt and direct
+local aitherdev check agree on running/system-profile n7fy94yp. See
+live-system-verification.json. Profile attempt 7cb7d854 is not yet accepted as
+complete; portal/assets/Codex continuity checks follow its terminal notice.
+The reservation remains deployed_review and held; no release or integration.
+
+Latest authoritative continuation status: coordinator revision 3884. Existing
+jobs refreshed successfully with exact fresh approvals/snapshots, profile first
+then system. System is running under attempt 15cdd73f; dependent profile waits.
+Reservation 1ce9be0f remains held. Review, browser, CI and both preparations passed;
+see baseline-refresh-results.json for compact complete evidence. New system and
+application activation results/live acceptance are not yet confirmed. Continue
+on coordinator notices, preserve all receipts and leave release/integration gated.
+
+Current gate: profile build/preparation. Refreshed independent review, real
+Chromium/Firefox regression and exact CI 39295653767 passed. Checksummed local
+derivation/input receipts prove package and archive VM CI reuse. Machine snapshot
+352c3711 is prepared against catalog 78b17455 and selected package zylvmqsl,
+binding current running/system-profile svxnhf0w. Its new approval is
+b5d14bb8-ade3-4d5f-9d7c-e13ee2163784 under the original user direction and bounded
+handoff. No refreshed job has activated. Refresh dependent profile first, then
+system; retain the same reservation and original job IDs.
+
+Current continuation phase: refreshed-source independent review. This initiative
+now holds aitherdev. Original system attempt stopped before activation because
+the selected catalog changed. Runtime was rebased cleanly onto current defaults;
+both patches are equal under range-diff. Final refreshed heads are runtime
+09a40795, configuration 6fe8d230, workspace 7c1a4c76; each consumer has one final
+pin, with extension/siblings retained. Focused quick checks and deployment
+composition contract pass. Review and longer checks precede fresh preparation
+and refresh of the existing jobs; their dependency/reservation stay unchanged.
+
 Current status at managed pickup (15:09 UTC, coordinator revision 3660): system
 job waiting_resource behind the existing aitherdev review reservation; dependent
 profile job waiting_dependency. Neither has an attempt. Bounded continuation

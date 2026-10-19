@@ -1,0 +1,673 @@
+diff --git a/docs/session-archive-recovery.md b/docs/session-archive-recovery.md
+index 594043a..f761585 100644
+--- a/docs/session-archive-recovery.md
++++ b/docs/session-archive-recovery.md
+@@ -145,6 +145,12 @@ finds no pending journal. Failed or paused receipts still require recovery.
+ 
+ Local tracking receipts live under private `tracking-sync/` state. An archive
+ receipt binds its operation and exact tracking digest before runtime retirement.
++Local-first archival accepts valid tracking files that have never been committed,
++including partially committed tracking. This applies to explicit archival and
++every automatic tier. Automatic archival still requires its normal inactivity,
++hold, ownership, cleanliness, publication and merge proofs. The local receipt makes the transition durable while Git bookkeeping is
++pending. Older synchronous journals retain their saved
++commit requirements.
+ The per-workspace retry timer commits only owned paths under the existing shared
+ tracking lock. Each attempt has a 60-second deadline covering lock waits, fetches
+ and hooks; fetches also retain their 30-second limit. Timed-out commands receive
+diff --git a/libexec/dev-session b/libexec/dev-session
+index 2c0c39a..42e009c 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -2005,7 +2005,9 @@ module DevSession
+               raise Error,
+                     "initiative lifecycle is #{lifecycle}; use the matching archive mode"
+             end
+-            validate_tracking_committed!(slug)
++            # Local tracking receipts prove closure independently of Git history.
++            # A prepared intent still owns its original executor's commit policy.
++            validate_tracking_committed!(slug) unless (prepared ? local_tracking_journal?(prepared) : defer_tracking?)
+             if sidecar
+               cleanup.revalidate!(sidecar, journal: prepared)
+               inventory = sidecar.fetch('inventory')
+@@ -2376,7 +2378,7 @@ module DevSession
+ 
+       lifecycle = validate_tracking_files!(slug)
+       validate_terminal_lifecycle!(slug)
+-      validate_tracking_committed!(slug)
++      validate_tracking_committed!(slug) unless journal && local_tracking_journal?(journal)
+       archive_root = File.join(workspace, 'archive')
+       archive_device = File.directory?(archive_root) ? File.stat(archive_root).dev : File.stat(workspace).dev
+       unless File.stat(source).dev == archive_device
+diff --git a/portal/internal/web/index_refresh_browser_test.cjs b/portal/internal/web/index_refresh_browser_test.cjs
+new file mode 100644
+index 0000000..8ba7f3f
+--- /dev/null
++++ b/portal/internal/web/index_refresh_browser_test.cjs
+@@ -0,0 +1,124 @@
++"use strict";
++const assert = require("node:assert/strict");
++const {chromium, firefox, expect} = require("@playwright/test");
++
++(async () => {
++  for (const engine of [chromium, firefox]) {
++    const browser = await engine.launch({headless: true, ...(engine === chromium ? {channel: "chromium"} : {})});
++    try {
++      const page = await browser.newPage({ignoreHTTPSErrors: true});
++      const errors = [];
++      page.on("pageerror", error => errors.push(error.message));
++      await page.addInitScript(() => {
++        const now = Date.now;
++        window.testTime = 0;
++        Date.now = () => now() + window.testTime;
++      });
++      const failed = {slug: "failed", kind: "archive", state: "failed", phase: "starting",
++        receiptId: "a".repeat(64), startedAt: "2026-10-19T12:00:00Z", updatedAt: "2026-10-19T12:00:01Z",
++        error: "tracking files have no prior commit: plan.md, state.md", options: {journalId: "b".repeat(64)}};
++      const running = {slug: "running", kind: "archive", state: "running", phase: "prepared",
++        receiptId: "c".repeat(64), startedAt: "2026-10-19T12:00:02Z", updatedAt: "2026-10-19T12:00:02Z"};
++      let operations = [failed, running], reads = 0, retries = [], releaseRetry;
++      const sessions = ["first", "second"].map((slug, i) => ({slug, archived: true,
++        updatedAt: `2020-10-19T12:00:0${2 - i}Z`, repositoryCount: 0, runningClusters: 0}));
++      await page.route("**/api/index-status*", route => {
++        reads++;
++        return route.fulfill({json: {generatedAt: new Date(Date.now() + 86400_000).toISOString(),
++          authoritative: true, sessions, operations}});
++      });
++      await page.route("**/api/sessions/failed/operation/retry", async route => {
++        retries.push(route.request().postDataJSON());
++        await new Promise(resolve => { releaseRetry = resolve; });
++        return route.fulfill({json: {}});
++      });
++      await page.route("**/api/sessions/failed/operation", route => {
++        assert.equal(route.request().method(), "DELETE");
++        operations = operations.filter(operation => operation.slug !== "failed");
++        return route.fulfill({json: {}});
++      });
++      await page.goto(process.argv[2] + "/");
++      const detail = page.locator(".operation-error");
++      await expect(detail).toContainText("tracking files have no prior commit");
++      await page.locator(".archive-list summary").click();
++      await expect(page.locator('[data-session-slug="first"]')).toBeVisible();
++      await detail.evaluate(element => {
++        window.savedError = element;
++        window.savedText = element.firstChild;
++        const range = document.createRange(); range.selectNodeContents(element);
++        getSelection().removeAllRanges(); getSelection().addRange(range);
++        window.savedSelection = getSelection().toString();
++        window.savedCard = document.querySelector('[data-session-slug="first"]');
++        window.savedCardText = window.savedCard.querySelector("strong").firstChild;
++        window.cardMutations = [];
++        new MutationObserver(records => window.cardMutations.push(...records.filter(record => record.type === "childList")))
++          .observe(window.savedCard.parentElement, {childList: true, subtree: true});
++      });
++      const refresh = async () => {
++        const before = reads;
++        await page.evaluate(() => {
++          window.dispatchEvent(new Event("pagehide"));
++          window.testTime += 31000;
++          window.dispatchEvent(new Event("pageshow"));
++        });
++        await expect.poll(() => reads).toBeGreaterThan(before);
++        await page.waitForTimeout(100);
++      };
++      // Full refreshes, plus the independent fast progress poll, must leave the
++      // failed row intact while another operation changes.
++      for (let i = 0; i < 3; i++) {
++        running.phase = i % 2 ? "prepared" : "quiesced";
++        await refresh();
++        assert.deepEqual(await page.evaluate(() => ({
++          element: window.savedError === document.querySelector(".operation-error"),
++          text: window.savedText === window.savedError.firstChild,
++          selection: getSelection().toString() === window.savedSelection,
++          card: window.savedCard === document.querySelector('[data-session-slug="first"]'),
++          cardText: window.savedCardText === window.savedCard.querySelector("strong").firstChild,
++          mutations: window.cardMutations.length,
++        })), {element: true, text: true, selection: true, card: true, cardText: true, mutations: 0});
++      }
++      const beforeProgress = reads;
++      await expect.poll(() => reads, {timeout: 10000}).toBeGreaterThan(beforeProgress);
++      assert.equal(await page.evaluate(() => getSelection().toString() === window.savedSelection), true);
++      // Existing controls must use the newest journal data, and stay disabled
++      // across a refresh while the request is in flight.
++      failed.options.journalId = "d".repeat(64);
++      await refresh();
++      const retry = detail.locator("..").getByRole("button", {name: /^Retry/});
++      await retry.click();
++      await expect.poll(() => retries.length).toBe(1);
++      assert.equal(retries[0].journalId, "d".repeat(64));
++      await refresh(); await expect(retry).toBeDisabled();
++      releaseRetry();
++      // The retry may have already failed again before polling sees running.
++      failed.attempt = 2;
++      await expect(retry).toHaveText("Retry archive");
++      await expect(retry).toBeEnabled();
++      failed.error = "Updated diagnostic";
++      await refresh(); await expect(detail).toHaveText("Updated diagnostic");
++      await page.getByRole("button", {name: "Dismiss", exact: true}).click();
++      await expect(detail).toHaveCount(0);
++      failed.kind = "delete";
++      operations.push(failed);
++      await refresh();
++      const force = page.getByRole("button", {name: /^(Force delete|Forcing…)/});
++      page.once("dialog", dialog => dialog.accept());
++      await force.click();
++      await expect.poll(() => retries.length).toBe(2);
++      assert.equal(retries[1].force, true);
++      await refresh(); await expect(force).toBeDisabled();
++      releaseRetry();
++      failed.attempt = 3;
++      await expect(force).toHaveText("Force delete");
++      await expect(force).toBeEnabled();
++      await refresh(); await expect(force).toBeEnabled();
++      await page.getByRole("button", {name: "Dismiss", exact: true}).click();
++      await expect(detail).toHaveCount(0);
++      sessions.reverse(); sessions[0].updatedAt = "2026-10-19T12:10:00Z";
++      await refresh();
++      assert.deepEqual(await page.locator('[data-session-list="archived"] [data-session-slug]').evaluateAll(cards => cards.map(card => card.dataset.sessionSlug)), ["second", "first"]);
++      assert.deepEqual(errors, []);
++    } finally { await browser.close(); }
++  }
++})().catch(error => { console.error(error); process.exit(1); });
+diff --git a/portal/internal/web/index_refresh_browser_test.go b/portal/internal/web/index_refresh_browser_test.go
+new file mode 100644
+index 0000000..be409ed
+--- /dev/null
++++ b/portal/internal/web/index_refresh_browser_test.go
+@@ -0,0 +1,21 @@
++package web
++
++import (
++	"net/http/httptest"
++	"os"
++	"os/exec"
++	"testing"
++)
++
++func TestIndexRefreshPreservesSelection(t *testing.T) {
++	if os.Getenv("PORTAL_BROWSER_TEST") != "1" {
++		t.Skip("requires browser environment")
++	}
++	server := newTestServer(t)
++	httpServer := httptest.NewTLSServer(server.Handler())
++	defer httpServer.Close()
++	command := exec.Command("node", "index_refresh_browser_test.cjs", httpServer.URL)
++	if output, err := command.CombinedOutput(); err != nil {
++		t.Fatalf("browser: %v\n%s", err, output)
++	}
++}
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index ee0d63d..5ce8790 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -1620,6 +1620,17 @@
+   const indexNotice = conversationAssets.createRefreshNotice({render: state => {indexFailure = state; renderIndexWarning();}});
+   const updateIndexSnapshotNotice = createIndexSnapshotNotice(indexNotice);
+   const progressNotice = conversationAssets.createRefreshNotice({render: state => {progressFailure = state; renderIndexWarning();}});
++  const updateText = (element, value) => {
++    if (element.textContent !== value) element.textContent = value;
++  };
++  const reconcileOrder = (parent, elements) => {
++    let next = parent.firstElementChild;
++    for (const element of elements) {
++      if (element === next) next = next.nextElementSibling;
++      else parent.insertBefore(element, next);
++    }
++  };
++  const indexOperationRows = new Map();
+   const renderIndexOperations = (operations) => {
+     const panel = document.getElementById("operations");
+     const list = document.getElementById("operation-list");
+@@ -1629,140 +1640,173 @@
+       (Date.parse(right.updatedAt || right.startedAt || "") || 0) -
+       (Date.parse(left.updatedAt || left.startedAt || "") || 0)
+     ));
+-    list.replaceChildren();
+-    count.textContent = String(records.length);
++    updateText(count, String(records.length));
+     panel.hidden = records.length === 0;
+     let localStorage = null;
+     let sessionStorage = null;
+     try { localStorage = globalThis.localStorage; } catch (_error) {}
+     try { sessionStorage = globalThis.sessionStorage; } catch (_error) {}
+     cleanupCompletedDeleteStorage(records, [localStorage, sessionStorage]);
++    const present = new Set(), ordered = [];
+     for (const operation of records) {
+-      const item = document.createElement("article");
+-      item.className = `operation-item ${operation.state || "paused"}`;
+-
+-      const summary = document.createElement("div");
+-      summary.className = "operation-item-summary";
+-      const identity = document.createElement("div");
+-      const name = operation.state === "complete" && operation.kind === "delete" ?
+-        document.createElement("strong") : document.createElement("a");
+-      name.textContent = operation.slug || "Unknown session";
+-      if (name instanceof HTMLAnchorElement) name.href = `/${encodeURIComponent(operation.slug)}/`;
+-      const phase = document.createElement("span");
+-      phase.className = "muted";
+-      phase.textContent = `${lifecycleKindLabel(operation.kind)} · ${lifecyclePhaseLabel(operation.phase)}`;
+-      identity.append(name, phase);
+-
++      const key = JSON.stringify([operation.slug, operation.kind, operation.receiptId || operation.options?.journalId || ""]);
++      present.add(key);
++      const shape = JSON.stringify([operation.state, Boolean(operation.options?.force)]);
+       const elapsedStart = Date.parse(operation.startedAt || operation.updatedAt || "");
+       const presentation = lifecyclePresentation(
+         operation, "", Number.isFinite(elapsedStart) ? Date.now() - elapsedStart : 0,
+       );
+-      const state = document.createElement("span");
+-      state.className = `operation-state ${presentation.tone}`;
+-      state.textContent = operation.state === "running" ? presentation.detail : presentation.title;
+-      summary.append(identity, state);
+-      item.append(summary);
+-
+-      if (operation.state === "failed" || operation.state === "paused") {
+-        const detail = document.createElement("p");
+-        detail.className = operation.state === "failed" ? "operation-error" : "muted";
+-        detail.textContent = presentation.detail;
+-        item.append(detail);
++      let entry = indexOperationRows.get(key);
++      if (entry && entry.shape !== shape) {
++        entry.item.remove();
++        indexOperationRows.delete(key);
++        entry = null;
+       }
++      if (!entry) {
++        entry = {operation, shape};
++        const item = document.createElement("article");
++        item.className = `operation-item ${operation.state || "paused"}`;
+ 
+-      const actions = document.createElement("div");
+-      actions.className = "operation-item-actions";
+-      if (operation.state === "failed" || operation.state === "paused") {
+-        const retry = document.createElement("button");
+-        retry.type = "button";
+-        retry.textContent = `Retry ${operation.kind}`;
+-        retry.addEventListener("click", async () => {
+-          retry.disabled = true;
+-          retry.textContent = "Retrying…";
+-          try {
+-            await request(`${apiPath(operation.slug, "operation")}/retry`, {
+-              method: "POST", body: JSON.stringify({
+-                receiptId: operation.receiptId || "",
+-                journalId: operation.options?.journalId || "",
+-              }),
+-            });
+-            if (indexRefreshTimer !== null) clearTimeout(indexRefreshTimer);
+-            indexRefreshTimer = setTimeout(refreshIndexStatus, 0);
+-          } catch (error) {
+-            retry.disabled = false;
+-            retry.textContent = `Retry ${operation.kind}`;
+-            const warning = document.getElementById("index-status-warning");
+-            if (warning) {
+-              warning.textContent = `Unable to retry ${operation.kind}: ${error.message}`;
+-              warning.hidden = false;
+-            }
+-          }
+-        });
+-        actions.append(retry);
+-        if (operation.kind === "delete" && !operation.options?.force) {
+-          const forceRetry = document.createElement("button");
+-          forceRetry.type = "button";
+-          forceRetry.className = "danger";
+-          forceRetry.textContent = "Force delete";
+-          forceRetry.addEventListener("click", async () => {
+-            if (!globalThis.confirm(
+-              "Force deletion may discard dirty worktrees or interrupt an active Codex turn. Continue?",
+-            )) return;
+-            forceRetry.disabled = true;
+-            forceRetry.textContent = "Forcing…";
++        const summary = document.createElement("div");
++        summary.className = "operation-item-summary";
++        const identity = document.createElement("div");
++        const name = operation.state === "complete" && operation.kind === "delete" ?
++          document.createElement("strong") : document.createElement("a");
++        name.textContent = operation.slug || "Unknown session";
++        if (name instanceof HTMLAnchorElement) name.href = `/${encodeURIComponent(operation.slug)}/`;
++        const phase = document.createElement("span");
++        phase.className = "muted";
++        phase.textContent = `${lifecycleKindLabel(operation.kind)} · ${lifecyclePhaseLabel(operation.phase)}`;
++        identity.append(name, phase);
++
++        const state = document.createElement("span");
++        state.className = `operation-state ${presentation.tone}`;
++        state.textContent = operation.state === "running" ? presentation.detail : presentation.title;
++        summary.append(identity, state);
++        item.append(summary);
++
++        let detail = null;
++        if (operation.state === "failed" || operation.state === "paused") {
++          detail = document.createElement("p");
++          detail.className = operation.state === "failed" ? "operation-error" : "muted";
++          detail.textContent = presentation.detail;
++          item.append(detail);
++        }
++
++        const actions = document.createElement("div");
++        actions.className = "operation-item-actions";
++        if (operation.state === "failed" || operation.state === "paused") {
++          const retry = document.createElement("button");
++          retry.type = "button";
++          retry.textContent = `Retry ${operation.kind}`;
++          retry.addEventListener("click", async () => {
++            const operation = entry.operation;
++            retry.disabled = true;
++            retry.textContent = "Retrying…";
+             try {
+               await request(`${apiPath(operation.slug, "operation")}/retry`, {
+                 method: "POST", body: JSON.stringify({
+                   receiptId: operation.receiptId || "",
+                   journalId: operation.options?.journalId || "",
+-                  force: true,
+                 }),
+               });
+               if (indexRefreshTimer !== null) clearTimeout(indexRefreshTimer);
+               indexRefreshTimer = setTimeout(refreshIndexStatus, 0);
+             } catch (error) {
+-              forceRetry.disabled = false;
+-              forceRetry.textContent = "Force delete";
+               const warning = document.getElementById("index-status-warning");
+               if (warning) {
+-                warning.textContent = `Unable to force deletion: ${error.message}`;
++                warning.textContent = `Unable to retry ${operation.kind}: ${error.message}`;
+                 warning.hidden = false;
+               }
++            } finally {
++              retry.disabled = false;
++              retry.textContent = `Retry ${operation.kind}`;
+             }
+           });
+-          actions.append(forceRetry);
+-        }
+-      }
+-      if (operation.state === "failed" || operation.state === "complete") {
+-        const dismiss = document.createElement("button");
+-        dismiss.type = "button";
+-        dismiss.className = "quiet";
+-        dismiss.textContent = "Dismiss";
+-        dismiss.addEventListener("click", async () => {
+-          dismiss.disabled = true;
+-          try {
+-            await request(apiPath(operation.slug, "operation"), {
+-              method: "DELETE",
+-              body: JSON.stringify({receiptId: operation.receiptId || ""}),
++          actions.append(retry);
++          if (operation.kind === "delete" && !operation.options?.force) {
++            const forceRetry = document.createElement("button");
++            forceRetry.type = "button";
++            forceRetry.className = "danger";
++            forceRetry.textContent = "Force delete";
++            forceRetry.addEventListener("click", async () => {
++              const operation = entry.operation;
++              if (!globalThis.confirm(
++                "Force deletion may discard dirty worktrees or interrupt an active Codex turn. Continue?",
++              )) return;
++              forceRetry.disabled = true;
++              forceRetry.textContent = "Forcing…";
++              try {
++                await request(`${apiPath(operation.slug, "operation")}/retry`, {
++                  method: "POST", body: JSON.stringify({
++                    receiptId: operation.receiptId || "",
++                    journalId: operation.options?.journalId || "",
++                    force: true,
++                  }),
++                });
++                if (indexRefreshTimer !== null) clearTimeout(indexRefreshTimer);
++                indexRefreshTimer = setTimeout(refreshIndexStatus, 0);
++              } catch (error) {
++                const warning = document.getElementById("index-status-warning");
++                if (warning) {
++                  warning.textContent = `Unable to force deletion: ${error.message}`;
++                  warning.hidden = false;
++                }
++              } finally {
++                forceRetry.disabled = false;
++                forceRetry.textContent = "Force delete";
++              }
+             });
+-            item.remove();
+-            const remaining = list.childElementCount;
+-            count.textContent = String(remaining);
+-            panel.hidden = remaining === 0;
+-          } catch (error) {
+-            dismiss.disabled = false;
+-            const warning = document.getElementById("index-status-warning");
+-            if (warning) {
+-              warning.textContent = `Unable to dismiss operation: ${error.message}`;
+-              warning.hidden = false;
+-            }
++            actions.append(forceRetry);
+           }
+-        });
+-        actions.append(dismiss);
++        }
++        if (operation.state === "failed" || operation.state === "complete") {
++          const dismiss = document.createElement("button");
++          dismiss.type = "button";
++          dismiss.className = "quiet";
++          dismiss.textContent = "Dismiss";
++          dismiss.addEventListener("click", async () => {
++            const operation = entry.operation;
++            dismiss.disabled = true;
++            try {
++              await request(apiPath(operation.slug, "operation"), {
++                method: "DELETE",
++                body: JSON.stringify({receiptId: operation.receiptId || ""}),
++              });
++              item.remove();
++              const remaining = list.childElementCount;
++              count.textContent = String(remaining);
++              panel.hidden = remaining === 0;
++            } catch (error) {
++              dismiss.disabled = false;
++              const warning = document.getElementById("index-status-warning");
++              if (warning) {
++                warning.textContent = `Unable to dismiss operation: ${error.message}`;
++                warning.hidden = false;
++              }
++            }
++          });
++          actions.append(dismiss);
++        }
++        if (actions.childElementCount) item.append(actions);
++
++        entry.item = item;
++        entry.update = (operation, presentation) => {
++          updateText(phase, `${lifecycleKindLabel(operation.kind)} · ${lifecyclePhaseLabel(operation.phase)}`);
++          state.className = `operation-state ${presentation.tone}`;
++          updateText(state, operation.state === "running" ? presentation.detail : presentation.title);
++          if (detail) updateText(detail, presentation.detail);
++        };
++        indexOperationRows.set(key, entry);
+       }
+-      if (actions.childElementCount) item.append(actions);
+-      list.append(item);
++      entry.operation = operation;
++      entry.update(operation, presentation);
++      ordered.push(entry.item);
++    }
++    for (const [key, entry] of indexOperationRows) {
++      if (!present.has(key)) { entry.item.remove(); indexOperationRows.delete(key); }
+     }
++    reconcileOrder(list, ordered);
+     return records.some((operation) => operation.state === "running");
+   };
+   const refreshIndexStatus = async () => {
+@@ -1802,12 +1846,13 @@
+         card.dataset.sessionObservation = item.observationIdentity || "";
+         card.classList.toggle("archived", item.archived);
+         card.querySelector(".status-dot").classList.toggle("active", !item.archived);
+-        document.querySelector(`[data-session-list="${item.archived ? "archived" : "active"}"]`).append(card);
++        const target = document.querySelector(`[data-session-list="${item.archived ? "archived" : "active"}"]`);
++        if (card.parentElement !== target) target.append(card);
+       }
+       for (const [kind, counter] of [["active", "active-count"], ["archived", "archive-count"]]) {
+         const list = document.querySelector(`[data-session-list="${kind}"]`);
+         const count = list.querySelectorAll("[data-session-slug]").length;
+-        document.getElementById(counter).textContent = String(count);
++        updateText(document.getElementById(counter), String(count));
+         list.querySelectorAll(".empty").forEach((element) => element.remove());
+         if (!count) {
+           const empty = document.createElement("p");
+@@ -1824,16 +1869,17 @@
+         const updated = card.querySelector("[data-session-updated]");
+         if (updated) {
+           const prefix = card.classList.contains("archived") ? "Finalized" : "Updated";
+-          updated.textContent = `${prefix} ${activityAge(item.updatedAt)}`;
++          updateText(updated, `${prefix} ${activityAge(item.updatedAt)}`);
+           updated.dataset.updatedAt = item.updatedAt;
+           updated.title = new Date(item.updatedAt).toLocaleString();
+         }
+         const repositories = card.querySelector("[data-session-repositories]");
+-        if (repositories) repositories.textContent = `${item.repositoryCount} ${item.repositoryCount === 1 ? "repository" : "repositories"}`;
++        if (repositories) updateText(repositories, `${item.repositoryCount} ${item.repositoryCount === 1 ? "repository" : "repositories"}`);
+         const clusters = card.querySelector("[data-session-clusters]");
+         if (clusters) {
+-          clusters.textContent = `${item.runningClusters} running ${item.runningClusters === 1 ? "cluster" : "clusters"}`;
+-          if (item.clusterNotice) clusters.textContent = item.runningClusters ? `${clusters.textContent} · Status updating` : "Cluster status updating";
++          let text = `${item.runningClusters} running ${item.runningClusters === 1 ? "cluster" : "clusters"}`;
++          if (item.clusterNotice) text = item.runningClusters ? `${text} · Status updating` : "Cluster status updating";
++          updateText(clusters, text);
+           clusters.title = item.clusterNotice || "";
+           clusters.hidden = item.runningClusters === 0 && !item.clusterNotice;
+         }
+@@ -1841,7 +1887,7 @@
+         if (sensitiveBadge) sensitiveBadge.hidden = !item.sensitive;
+         const lifecycle = card.querySelector("[data-session-lifecycle]");
+         if (lifecycle) {
+-          lifecycle.textContent = item.pendingLifecycle ? `${item.pendingLifecycle} pending` : "";
++          updateText(lifecycle, item.pendingLifecycle ? `${item.pendingLifecycle} pending` : "");
+           lifecycle.hidden = !item.pendingLifecycle;
+         }
+       }
+@@ -1850,7 +1896,7 @@
+         const ordered = indexStatusOrder(gridCards.map((card) => bySlug.get(card.dataset.sessionSlug)).filter(Boolean))
+           .map((item) => gridCards.find((card) => card.dataset.sessionSlug === item.slug))
+           .filter(Boolean);
+-        ordered.forEach((card) => grid.append(card));
++        reconcileOrder(grid, ordered);
+       }
+       document.dispatchEvent(new Event("session-list-updated"));
+       if (sidebar) sidebar.scrollTop = previousSidebarTop;
+diff --git a/test/dev_session/archive_cleanup_test.rb b/test/dev_session/archive_cleanup_test.rb
+index 3bc5463..ea133e4 100644
+--- a/test/dev_session/archive_cleanup_test.rb
++++ b/test/dev_session/archive_cleanup_test.rb
+@@ -3,6 +3,46 @@
+ require_relative '../support/dev_session_test_case'
+ 
+ class DevSessionTest < Minitest::Test
++  def test_explicit_local_archive_without_tracking_history_retries_sync_and_revives
++    [false, true].product([false, true]).each do |partial, sync_before_revive|
++      with_workspace do |workspace|
++        slug = '2026-06-06-no-tracking-history'
++        runner = automatic_fixture(workspace, slug, tracking_commit: false)
++        runner.instance_variable_get(:@env)['DEV_WORKSPACE_DEFER_TRACKING'] = '1'
++        if partial
++          assert_git_success('git', '-C', workspace, 'add', File.join('work', slug, 'plan.md'))
++          assert_git_success('git', '-C', workspace, 'commit', '-m', 'plan only')
++          assert_git_success('git', '-C', workspace, 'push', 'origin', 'master')
++        end
++        plan = File.read(File.join(workspace, 'work', slug, 'plan.md'))
++        File.write(File.join(workspace, 'unrelated'), 'keep this staged')
++        assert_git_success('git', '-C', workspace, 'add', 'unrelated')
++        staged = git_capture_success('git', '-C', workspace, 'diff', '--cached', '--binary')
++        runner.define_singleton_method(:finalize_locked!) { |*, **| raise DevSession::Error, 'interrupted before move' }
++        error = assert_raises(DevSession::Error) { runner.archive(slug, as_is: true, explicit: true) }
++        assert_includes(error.message, 'interrupted before move')
++        runner.singleton_class.remove_method(:finalize_locked!)
++        runner.archive(slug, as_is: true, explicit: true)
++        assert_equal(plan, File.read(File.join(workspace, 'archive', slug, 'plan.md')))
++        assert_equal('pending', runner.tracking_sync_receipt(slug).fetch('state'))
++        runner.define_singleton_method(:require_linear_workspace_master_for_tracking!) { |**| raise DevSession::Error, 'remote unavailable' }
++        runner.tracking_sync(slug, force: true)
++        assert_includes(runner.tracking_sync_receipt(slug).fetch('error'), 'remote unavailable')
++        runner.singleton_class.remove_method(:require_linear_workspace_master_for_tracking!)
++        if sync_before_revive
++          runner.tracking_sync(slug, force: true)
++          assert_equal('synced', runner.tracking_sync_receipt(slug).fetch('state'))
++        end
++        runner.define_singleton_method(:start) { |*, **| nil }
++        runner.revive(slug, as_is: true)
++        assert_equal(plan, File.read(File.join(workspace, 'work', slug, 'plan.md')))
++        runner.tracking_sync(slug, force: true)
++        assert_equal('synced', runner.tracking_sync_receipt(slug).fetch('state'))
++        assert_equal(staged, git_capture_success('git', '-C', workspace, 'diff', '--cached', '--binary'))
++      end
++    end
++  end
++
+   def test_git_archive_retains_checkout_when_saved_blobs_are_missing_or_corrupt
+     require 'zlib'
+     %w[missing corrupt].product(%w[before_capture before_removal]).each do |damage, timing|
+diff --git a/test/dev_session/automatic_archive_test.rb b/test/dev_session/automatic_archive_test.rb
+index 2e3e7bc..d20ce29 100644
+--- a/test/dev_session/automatic_archive_test.rb
++++ b/test/dev_session/automatic_archive_test.rb
+@@ -306,6 +306,37 @@ class DevSessionTest < Minitest::Test
+     end
+   end
+ 
++  def test_local_automatic_archive_accepts_uncommitted_tracking_in_every_tier
++    %w[complete merged empty].product([false, true]).each do |tier, partial|
++      with_workspace do |workspace|
++        slug = '2026-06-06-uncommitted'
++        runner = automatic_fixture(workspace, slug, lifecycle: tier == 'complete' ? 'complete' : 'active', tracking_commit: false)
++        runner.instance_variable_get(:@env)['DEV_WORKSPACE_DEFER_TRACKING'] = '1'
++        if tier == 'merged'
++          create_bare_repo(workspace, 'sample')
++          runner.worktree_add(slug, 'sample', as_is: true, name: nil, branch: nil, base: 'master', fetch: false)
++          merge_registered_branches(workspace, slug)
++        end
++        if partial
++          assert_git_success('git', '-C', workspace, 'add', File.join('work', slug, 'plan.md'))
++          assert_git_success('git', '-C', workspace, 'commit', '-m', 'plan only')
++          assert_git_success('git', '-C', workspace, 'push', 'origin', 'master')
++        end
++        assert_equal(tier, automatic_scan(runner).fetch(0)['tier'])
++        age_automatic_session(runner, slug, WorkspaceAutoArchive::Policy::TIERS.fetch(tier) + 1)
++        result = automatic_scan(runner).fetch(0)
++        assert_equal('archived', result['result'], result.inspect)
++        assert_equal(tier == 'empty' ? 'abandoned' : 'complete', result['archive_mode'])
++        assert_equal('pending', runner.tracking_sync_receipt(slug).fetch('state'))
++        runner.tracking_sync(slug, force: true)
++        assert_equal('synced', runner.tracking_sync_receipt(slug).fetch('state'))
++        runner.define_singleton_method(:start) { |*, **| nil }
++        runner.revive(slug, as_is: true, allow_abandoned: tier == 'empty')
++        assert(File.directory?(File.join(workspace, 'work', slug)))
++      end
++    end
++  end
++
+   def test_automatic_archive_completes_the_merged_branch_tier
+     with_workspace do |workspace|
+       slug = '2026-06-06-merged'
+diff --git a/test/support/dev_session_test_case.rb b/test/support/dev_session_test_case.rb
+index d073112..12af228 100644
+--- a/test/support/dev_session_test_case.rb
++++ b/test/support/dev_session_test_case.rb
+@@ -82,7 +82,7 @@ class DevSessionTest < Minitest::Test
+     File.write(path, YAML.dump(manifest))
+   end
+ 
+-  def automatic_fixture(workspace, slug, lifecycle: 'active', out: nil)
++  def automatic_fixture(workspace, slug, lifecycle: 'active', out: nil, tracking_commit: true)
+     portal = File.join(workspace, 'automatic-portal.rb')
+     stamp = Time.now.to_i
+     File.write(portal, <<~RUBY)
+@@ -134,7 +134,14 @@ class DevSessionTest < Minitest::Test
+       'thread_id' => "thread-#{slug}", 'socket_path' => '/run/test/codex.sock', 'client_version' => '0.152.1'
+     }
+     File.write(path, YAML.dump(manifest))
+-    commit_tracking(workspace, slug, lifecycle:)
++    if tracking_commit
++      commit_tracking(workspace, slug, lifecycle:)
++    else
++      set_lifecycle(workspace, slug, lifecycle)
++      assert_git_success('git', 'init', '-b', 'master', workspace)
++      configure_git_identity(workspace)
++      assert_git_success('git', '-C', workspace, 'commit', '--allow-empty', '-m', 'workspace baseline')
++    end
+     configure_workspace_origin(workspace)
+     runner.auto_archive_configure(true)
+     runner
