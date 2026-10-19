@@ -3,15 +3,23 @@ lifecycle: active
 ---
 # Current status
 
-Phase: packaged verification and deployment preparation. The user approved the shared lifecycle repair and instructed implementation. External supervisor owns the work; managed root 01a1559d-7b7b-7fa3-a584-745dcf9b1282 remains idle.
+Phase: deployed and verified; ready, awaiting merge approval.
 
-- [x] Investigate and reproduce nonblocking archive failure (shared observer causes failure in 1.2ms before a journal).
-- [x] Approve plan and create independent initiative.
-- [x] Implement shared acquisition policy and portal lock ordering with tests.
-- [x] Commit and quick verification.
-- [x] Independent final review (all four lanes; accepted after fixes).
-- [ ] Packaged/VM verification and deployment preparation.
-- [ ] Coordinated aitherdev system/profile deployment and original request recovery.
+- [x] Reproduced archive lock contention and fixed shared lifecycle admission.
+- [x] Implemented successful archive reservation release and recovery behavior.
+- [x] Committed, quick checked and independently reviewed all four lanes.
+- [x] Exact packaged suite/archive VM and CI passed.
+- [x] Coordinated aitherdev system/profile deployment, live identities verified.
+- [x] Original archive completed attempt2, tracking synced, branches/recovery retained.
+- [x] Original reservation released; live shared-lock waiting behavior verified.
+
+No user action is needed for the reported failure. Feature branches remain active
+and unmerged pending explicit integration direction. This initiative holds its
+own deployed-review reservation441300ed for follow-up. Original reservation
+1ce9be0f is released. Final runtime6ab3b48, workspace4b22d04f, config0067299a.
+Acceptance: deployment-acceptance.json, archive-acceptance.json; final-review.md
+and config-refresh-review.md; exact package/VM and CI results linked below.
+
 
 Affected repositories: dev-workspace, workspace, vpsfree-cz-configuration. Feature branch/worktree group: 2026-10-19-lifecycle-lock-reliability. No migrations. No merge approval; remain active after deployment.
 

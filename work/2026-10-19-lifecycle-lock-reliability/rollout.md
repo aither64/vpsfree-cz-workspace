@@ -1,7 +1,7 @@
 # Lifecycle reliability rollout
 
-Status: prepared source is independently reviewed; packaged verification and
-exact deployment builds are running. System/profile activation is not yet run.
+Status: deployed and verified. System/profile activation succeeded; the original
+archive completed and tracking sync succeeded. Original reservation is released.
 
 Sources: branch-inventory.json. Runtime6ab3b48, workspace4b22d04f,
 configuration9e90ff6e. Both consumers select same runtime; extension unchanged.
@@ -54,3 +54,14 @@ running. Existing reservation441300ed and original queued profile job7b4c074b
 remain; refresh machine joba545197e with new approved snapshot after build.
 No failed activation or replay occurred. Original artifact remains attributed to
 9e90ff6e; it will not be relabeled as built from the new source.
+
+
+Final result: refreshed machine attempt092d2cb4 succeeded, system x86fp7sq...;
+profile attemptafb7829e succeeded, application ad0s75ir.... Services and portal
+health verified. Original archive same receipt/journal attempt2 waited under
+shared access on live host, then completed. Tracking sync succeeded, recovery
+inventory retains three checkouts, all feature branches retained, main journal
+and cleanup sidecar absent. Original owner lifecycle receipt complete and old
+reservation released. No master feature integration. New initiative stays active
+with its own deployed-review reservation for user follow-up. Compact acceptance
+records: deployment-acceptance.json and archive-acceptance.json.
