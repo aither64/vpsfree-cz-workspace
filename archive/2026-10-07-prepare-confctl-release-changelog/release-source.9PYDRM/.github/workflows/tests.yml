@@ -1,0 +1,139 @@
+name: Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      stop_on_failure:
+        description: Stop scheduling after the first unexpected result
+        required: true
+        default: false
+        type: boolean
+  push:
+    paths:
+      - .github/workflows/tests.yml
+      - flake.nix
+      - flake.lock
+      - Gemfile
+      - Gemfile.lock
+      - bin/**
+      - lib/**
+      - libexec/**
+      - nix/**
+      - tests/**
+      - test-runner.sh
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Run ci-tagged tests
+    runs-on: self-hosted
+    timeout-minutes: 360
+
+    steps:
+      - name: Checkout confctl
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 1
+
+      - name: Reset per-user Nix gcroots
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          user="$(id -un)"
+          gcroot_dir="/nix/var/nix/gcroots/per-user/${user}"
+
+          if [ ! -d "$gcroot_dir" ]; then
+            echo "Missing gcroots directory: $gcroot_dir" >&2
+            exit 1
+          fi
+
+          if [ ! -w "$gcroot_dir" ]; then
+            echo "Gcroots directory is not writable: $gcroot_dir" >&2
+            ls -ld "$gcroot_dir" >&2
+            exit 1
+          fi
+
+          find "$gcroot_dir" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+
+      - name: Prepare test state
+        id: prepare-tests
+        uses: vpsfreecz/vpsadminos/.github/actions/prepare-test-state@staging
+
+      - name: Run tests
+        id: run-tests
+        timeout-minutes: 320
+        shell: bash
+        env:
+          STOP_ON_FAILURE: ${{ github.event.inputs.stop_on_failure || 'false' }}
+        run: |
+          set -o pipefail
+
+          args=(
+            test
+            -f
+            --jobs auto
+            -t ci
+            --state-dir "$TEST_RUNNER_STATE_DIR"
+          )
+
+          if [[ "$STOP_ON_FAILURE" == "true" ]]; then
+            args+=(--stop-on-failure)
+          fi
+
+          ./test-runner.sh "${args[@]}" | tee test.log
+
+      - name: Upload full test logs
+        id: upload-test-logs
+        if: >-
+          (failure() || cancelled()) &&
+          steps.prepare-tests.outcome == 'success' &&
+          steps.run-tests.outcome != 'skipped'
+        uses: vpsfreecz/vpsadminos/.github/actions/upload-test-logs@staging
+        with:
+          name: confctl-test-logs-${{ github.run_id }}
+          paths: |
+            ${{ steps.prepare-tests.outputs.state-directory }}/**/*.log
+            ${{ steps.prepare-tests.outputs.state-directory }}/**/*.txt
+
+      - name: Evaluate test results
+        if: >-
+          always() &&
+          steps.prepare-tests.outcome == 'success' &&
+          steps.run-tests.outcome != 'skipped'
+        uses: vpsfreecz/vpsadminos/.github/actions/evaluate-test-results@staging
+        with:
+          log-file: test.log
+
+      - name: Summarise test logs
+        if: >-
+          always() &&
+          steps.prepare-tests.outcome == 'success' &&
+          steps.run-tests.outcome != 'skipped'
+        uses: vpsfreecz/vpsadminos/.github/actions/summarise-test-logs@staging
+        with:
+          logs-root: ${{ steps.prepare-tests.outputs.state-directory }}
+
+      - name: Cleanup test state
+        if: always()
+        uses: vpsfreecz/vpsadminos/.github/actions/cleanup-test-state@staging
+        with:
+          state-directory: ${{ steps.prepare-tests.outputs.state-directory }}
+          prepare-outcome: ${{ steps.prepare-tests.outcome }}
+          test-outcome: ${{ steps.run-tests.outcome }}
+          upload-outcome: ${{ steps.upload-test-logs.outcome }}
+
+      - name: Cleanup per-user Nix gcroots
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          user="$(id -un)"
+          gcroot_dir="/nix/var/nix/gcroots/per-user/${user}"
+
+          if [ -d "$gcroot_dir" ] && [ -w "$gcroot_dir" ]; then
+            find "$gcroot_dir" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+          fi

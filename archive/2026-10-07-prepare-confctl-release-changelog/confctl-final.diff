@@ -1,0 +1,799 @@
+diff --git a/AGENTS.md b/AGENTS.md
+index 5626ab3..438aaf4 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -24,6 +24,9 @@
+ - When fixing a bug, add a minimal regression check in RSpec if practical and document the manual steps you executed.
+ 
+ ## Commit & Pull Request Guidelines
++- Before preparing or publishing a confctl version release, read
++  [`skills/confctl-release/SKILL.md`](skills/confctl-release/SKILL.md). It covers
++  Bundix metadata, release commit ordering, package verification and publication.
+ - Commit subjects are short and imperative. Without a prefix, capitalize the first word. With a `topic/component:` prefix, keep the first word after `:` lowercase. Avoid trailing periods and bundle related changes together.
+ - Write commit messages in a temporary file and pass them to `git commit -F`
+   or `git commit --amend -F`. Wrap message lines to 80 columns.
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index f91cf2f..9c7c06e 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,57 @@
++# Wed Oct 07 2026 -- version 3.0.0
++
++Software pins (`swpins`) remain supported in v3.0.0 and will be removed in v4.
++Use [the migration guide](docs/swpins-to-flakes.md) to move existing
++configurations to flake inputs.
++
++## Flake configurations
++
++- Add a flake backend for building and deploying NixOS and vpsAdminOS machines
++- Create flake-based configurations by default with `confctl init`; use
++  `confctl init --swpins` for the legacy software pin workflow
++- Add `confctl inputs` commands to list, update and set input revisions at the
++  root, channel and machine levels, with optional commits and changelogs
++- Map dependency roles to flake inputs through channels and per-machine overrides;
++  see [docs/flake-inputs.md](docs/flake-inputs.md)
++- Add `confctl migrate swpins-to-flakes`, including `--dry-run` and individual
++  migration steps
++- Record flake inputs in build generations and show their revisions in generation
++  listings, status, diffs and changelogs
++- Record the configuration source revision in deployed machine metadata
++- Add flake packages, configuration development shells and an example flake
++  configuration
++- Support optional impure evaluation and legacy `NIX_PATH` mappings for flake
++  builds
++- Evaluate only requested flake build outputs and build machine metadata as JSON
++- Group shared input changelogs and report resolved revisions after setting inputs
++- Fail input updates when Nix falls back to cached GitHub metadata
++
++## Deployment and fixes
++
++- Skip deployment to machines already using the target generation, avoiding
++  unnecessary copying, activation, reboots and health checks
++- Support custom SSH ports through `host.port`, including Nix copies
++- Preserve spaces and shell metacharacters in remote command arguments
++- Fix deployment confirmation on localhost
++- Support CLI output and progress reporting without a terminal
++- Reuse prefetched Git checkouts when updating software pins and fix commits of
++  changed software pin files
++- Fix garbage collection roots for software pin paths
++- Support NixOS in `kexec-netboot`, stream downloads and add `--no-sync`
++- Honor NixOS PXE kernel parameters and preserve the init path for carried images
++- Add RSpec coverage and integration tests for flakes, software pins, automatic
++  rollback, carriers and netboot
++- Refresh Ruby dependencies, including the vpsAdmin and HaveAPI clients
++
++## Upgrade notes
++
++- Require Ruby 3.3 or newer (previously Ruby 3.1)
++- Remove the `confReplaceVarsWith` compatibility wrapper; confctl's Nix modules
++  now require `pkgs.replaceVarsWith`
++- Existing software pin configurations and generations remain supported. Migrating
++  to flakes is optional in v3.0.0. Keep the migration on a configuration branch;
++  confctl v2 cannot use the resulting flake configuration.
++
+ # Fri Jun 06 2025 -- version 2.2.3
+ - Open git commit editor only when running in a terminal
+ 
+diff --git a/Gemfile.lock b/Gemfile.lock
+index 6e2b367..1ee9743 100644
+--- a/Gemfile.lock
++++ b/Gemfile.lock
+@@ -1,7 +1,7 @@
+ PATH
+   remote: .
+   specs:
+-    confctl (2.2.3)
++    confctl (3.0.0)
+       curses
+       gli (~> 2.22.0)
+       json
+@@ -19,7 +19,7 @@ PATH
+ GEM
+   remote: https://rubygems.org/
+   specs:
+-    activesupport (8.1.2)
++    activesupport (8.1.4)
+       base64
+       bigdecimal
+       concurrent-ruby (~> 1.0, >= 1.3.1)
+@@ -32,24 +32,23 @@ GEM
+       securerandom (>= 0.3)
+       tzinfo (~> 2.0, >= 2.0.5)
+       uri (>= 0.13.1)
+-    addressable (2.8.8)
+-      public_suffix (>= 2.0.2, < 8.0)
+     ast (2.4.3)
+     base64 (0.3.0)
+-    bigdecimal (4.0.1)
++    bigdecimal (4.1.3)
+     binman (5.1.0)
+       opener (>= 0.1.0, < 1)
+     childprocess (5.1.0)
+       logger (~> 1.5)
+-    concurrent-ruby (1.3.6)
++    concurrent-ruby (1.3.8)
+     connection_pool (3.0.2)
+-    curses (1.5.3)
++    curses (1.7.0)
+     diff-lcs (1.6.2)
+-    domain_name (0.6.20240107)
++    domain_name (0.6.20260921)
+     drb (2.2.3)
+     gli (2.22.2)
+       ostruct
+-    haveapi-client (0.26.5)
++    hana (1.3.7)
++    haveapi-client (0.29.8)
+       activesupport (>= 7.0)
+       highline (~> 3.1)
+       json
+@@ -59,21 +58,23 @@ GEM
+     highline (3.1.2)
+       reline
+     http-accept (1.7.0)
+-    http-cookie (1.1.0)
++    http-cookie (1.1.6)
+       domain_name (~> 0.5)
+-    i18n (1.14.8)
++    i18n (1.15.2)
+       concurrent-ruby (~> 1.0)
+     iniparse (1.5.0)
+-    io-console (0.8.2)
+-    json (2.18.1)
+-    json-schema (6.1.0)
+-      addressable (~> 2.8)
+-      bigdecimal (>= 3.1, < 5)
+-    language_server-protocol (3.17.0.5)
++    io-console (0.9.4)
++    json (2.21.2)
++    json_schemer (2.5.0)
++      bigdecimal
++      hana (~> 1.3)
++      regexp_parser (~> 2.0)
++      simpleidn (~> 0.2)
++    language_server-protocol (3.17.0.6)
+     lint_roller (1.1.0)
+     logger (1.7.0)
+-    mcp (0.7.1)
+-      json-schema (>= 4.1)
++    mcp (0.25.0)
++      json_schemer (>= 2.4)
+     md2man (5.1.2)
+       binman (~> 5.0)
+       redcarpet (~> 3.0)
+@@ -81,31 +82,30 @@ GEM
+     mime-types (3.7.0)
+       logger
+       mime-types-data (~> 3.2025, >= 3.2025.0507)
+-    mime-types-data (3.2026.0224)
+-    minitest (6.0.2)
++    mime-types-data (3.2026.1006)
++    minitest (6.0.6)
+       drb (~> 2.0)
+       prism (~> 1.5)
+     netrc (0.11.0)
+     opener (0.1.0)
+     ostruct (0.6.3)
+-    overcommit (0.68.0)
++    overcommit (0.73.0)
+       childprocess (>= 0.6.3, < 6)
+       iniparse (~> 1.4)
+-      rexml (>= 3.3.9)
+-    parallel (1.27.0)
+-    parser (3.3.10.2)
++      rexml (>= 3.4.2)
++    parallel (1.28.0)
++    parser (3.3.12.0)
+       ast (~> 2.4.1)
+       racc
+     pastel (0.8.0)
+       tty-color (~> 0.5)
+     prism (1.9.0)
+-    public_suffix (7.0.2)
+     racc (1.8.1)
+     rainbow (3.1.1)
+-    rake (13.3.1)
++    rake (13.4.2)
+     redcarpet (3.6.1)
+-    regexp_parser (2.11.3)
+-    reline (0.6.3)
++    regexp_parser (2.13.1)
++    reline (0.7.0)
+       io-console (~> 0.5)
+     require_all (2.0.0)
+     rest-client (2.1.0)
+@@ -128,7 +128,7 @@ GEM
+       diff-lcs (>= 1.2.0, < 2.0)
+       rspec-support (~> 3.13.0)
+     rspec-support (3.13.7)
+-    rubocop (1.85.0)
++    rubocop (1.85.1)
+       json (~> 2.3)
+       language_server-protocol (~> 3.17.0.2)
+       lint_roller (~> 1.1.0)
+@@ -140,7 +140,7 @@ GEM
+       rubocop-ast (>= 1.49.0, < 2.0)
+       ruby-progressbar (~> 1.7)
+       unicode-display_width (>= 2.4.0, < 4.0)
+-    rubocop-ast (1.49.0)
++    rubocop-ast (1.50.0)
+       parser (>= 3.3.7.2)
+       prism (~> 1.7)
+     rubocop-rake (0.7.1)
+@@ -148,6 +148,7 @@ GEM
+       rubocop (>= 1.72.1)
+     ruby-progressbar (1.13.0)
+     securerandom (0.4.1)
++    simpleidn (0.3.0)
+     strings (0.2.1)
+       strings-ansi (~> 0.2)
+       unicode-display_width (>= 1.5, < 3.0)
+@@ -173,11 +174,12 @@ GEM
+     unicode-display_width (2.6.0)
+     unicode_utils (1.4.0)
+     uri (1.1.1)
+-    vpsadmin-client (4.1.0)
++    vpsadmin-client (4.2.1)
+       base64
+       curses
+-      haveapi-client (~> 0.26.0)
++      haveapi-client (~> 0.29.6)
+       json
++      ruby-progressbar
+     vpsfree-client (0.19.0)
+       vpsadmin-client (~> 4.0)
+ 
+diff --git a/gemset.nix b/gemset.nix
+index 408c809..b79dfde 100644
+--- a/gemset.nix
++++ b/gemset.nix
+@@ -18,25 +18,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1bpxnr83z1x78h3jxvmga7vrmzmc8b4fic49h9jhzm6hriw2b148";
++      sha256 = "1pw09rmd9f9x0i0ai11ajcf6c7xvi48pn8sbjf8q7z648gzd67c9";
+       type = "gem";
+     };
+-    version = "8.1.2";
+-  };
+-  addressable = {
+-    dependencies = [ "public_suffix" ];
+-    groups = [
+-      "default"
+-      "development"
+-      "test"
+-    ];
+-    platforms = [ ];
+-    source = {
+-      remotes = [ "https://rubygems.org" ];
+-      sha256 = "0mxhjgihzsx45l9wh2n0ywl9w0c6k70igm5r0d63dxkcagwvh4vw";
+-      type = "gem";
+-    };
+-    version = "2.8.8";
++    version = "8.1.4";
+   };
+   ast = {
+     groups = [
+@@ -71,10 +56,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "19y406nx17arzsbc515mjmr6k5p59afprspa1k423yd9cp8d61wb";
++      sha256 = "0rng45p4vc3f6nac44cnylwch7rj4zsff3icdz6c7garwpjy3sv1";
+       type = "gem";
+     };
+-    version = "4.0.1";
++    version = "4.1.3";
+   };
+   binman = {
+     dependencies = [ "opener" ];
+@@ -107,10 +92,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1aymcakhzl83k77g2f2krz07bg1cbafbcd2ghvwr4lky3rz86mkb";
++      sha256 = "1qfi2ns3zwkgq616fc127xiqhan7g7m7gqpwriwcr34nds1vxwdj";
+       type = "gem";
+     };
+-    version = "1.3.6";
++    version = "1.3.8";
+   };
+   confctl = {
+     dependencies = [
+@@ -134,7 +119,7 @@
+       path = ./.;
+       type = "path";
+     };
+-    version = "2.2.3";
++    version = "3.0.0";
+   };
+   connection_pool = {
+     groups = [ "default" ];
+@@ -151,10 +136,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "0z5zfxp10p7p2jwxbygkii8bffdl117qirh9qrl8xrvz5r21kll6";
++      sha256 = "0mvh67ijv03cvnwbkjxh6vrg9nhyndii4wyjd1ni7gabf0qgy965";
+       type = "gem";
+     };
+-    version = "1.5.3";
++    version = "1.7.0";
+   };
+   diff-lcs = {
+     groups = [
+@@ -175,10 +160,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "0cyr2xm576gqhqicsyqnhanni47408w2pgvrfi8pd13h2li3nsaz";
++      sha256 = "0vgfimffni6yryk76k7grvixisaikbhc925fs3z07rpsd6gr8ddk";
+       type = "gem";
+     };
+-    version = "0.6.20240107";
++    version = "0.6.20260921";
+   };
+   drb = {
+     groups = [ "default" ];
+@@ -201,6 +186,20 @@
+     };
+     version = "2.22.2";
+   };
++  hana = {
++    groups = [
++      "default"
++      "development"
++      "test"
++    ];
++    platforms = [ ];
++    source = {
++      remotes = [ "https://rubygems.org" ];
++      sha256 = "03cvrv2wl25j9n4n509hjvqnmwa60k92j741b64a1zjisr1dn9al";
++      type = "gem";
++    };
++    version = "1.3.7";
++  };
+   haveapi-client = {
+     dependencies = [
+       "activesupport"
+@@ -214,10 +213,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "0fq4kni8gnp06ixll9jpkwvbz8d77avang78xk4x8a1v6j35li4d";
++      sha256 = "1xngwpff10qs6ylj72lm6xn8p0d1gx7i3v2f1kp7rgqza482dg2p";
+       type = "gem";
+     };
+-    version = "0.26.5";
++    version = "0.29.8";
+   };
+   highline = {
+     dependencies = [ "reline" ];
+@@ -246,10 +245,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "06dvmngd4hwrr6k774i1h6c50h2l8nww9f1id0wvrvi72l6yd99q";
++      sha256 = "1aga7z4p0dka4zcqw9i05wa4ab1q7h7cgnj328ldqqfycjz84jxs";
+       type = "gem";
+     };
+-    version = "1.1.0";
++    version = "1.1.6";
+   };
+   i18n = {
+     dependencies = [ "concurrent-ruby" ];
+@@ -257,10 +256,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1994i044vdmzzkyr76g8rpl1fq1532wf0sb21xg5r1ilj5iphmr8";
++      sha256 = "1dfikmmd9dllirsfq0kjiyxpmlq0afkxm5sslsr97r9g85ifpy80";
+       type = "gem";
+     };
+-    version = "1.14.8";
++    version = "1.15.2";
+   };
+   iniparse = {
+     groups = [
+@@ -281,10 +280,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1k0lk3pwadm2myvpg893n8jshmrf2sigrd4ki15lymy7gixaxqyn";
++      sha256 = "1cgvhm0d4awr8j42b8v1nl1jfgx45ihv8mylargfi3lj697k00x4";
+       type = "gem";
+     };
+-    version = "0.8.2";
++    version = "0.9.4";
+   };
+   json = {
+     groups = [
+@@ -295,15 +294,17 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "11prr7nrxh1y4rfsqa51gy4ixx63r18cz9mdnmk0938va1ajf4gy";
++      sha256 = "0shwgjqbj856mb6m9kgkpy08nhym2gdvc2yaprlimfmky9y3n78z";
+       type = "gem";
+     };
+-    version = "2.18.1";
++    version = "2.21.2";
+   };
+-  json-schema = {
++  json_schemer = {
+     dependencies = [
+-      "addressable"
+       "bigdecimal"
++      "hana"
++      "regexp_parser"
++      "simpleidn"
+     ];
+     groups = [
+       "default"
+@@ -313,10 +314,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "00n73lr2gwlpf3safdmxxa44qchg36l3y298v835mzbdzcn0mxvb";
++      sha256 = "15p31bq932bfpsi1wgrkgwm71l7z1h1w53q6vl44w6kjrr6gn09g";
+       type = "gem";
+     };
+-    version = "6.1.0";
++    version = "2.5.0";
+   };
+   language_server-protocol = {
+     groups = [
+@@ -327,10 +328,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1k0311vah76kg5m6zr7wmkwyk5p2f9d9hyckjpn3xgr83ajkj7px";
++      sha256 = "1w5p8c2145lmqzr25bxh4ikzjm6k8y1k5lriqqdpw9pq730w1wjy";
+       type = "gem";
+     };
+-    version = "3.17.0.5";
++    version = "3.17.0.6";
+   };
+   lint_roller = {
+     groups = [
+@@ -361,7 +362,7 @@
+     version = "1.7.0";
+   };
+   mcp = {
+-    dependencies = [ "json-schema" ];
++    dependencies = [ "json_schemer" ];
+     groups = [
+       "default"
+       "development"
+@@ -370,10 +371,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1izi2hyyifn8m5b9s1yj8v1d4a453mrhga8yk06ssawmssapi5ps";
++      sha256 = "162xg5yzwbrd335dmfkcjxk4fl5chpmwb2lvbmpgvdk07dgkmkwa";
+       type = "gem";
+     };
+-    version = "0.7.1";
++    version = "0.25.0";
+   };
+   md2man = {
+     dependencies = [
+@@ -409,10 +410,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1zg5cyzhkdzkygspl676h8pad83l6gmwykvcd4snjzxkd00jx85y";
++      sha256 = "0bxfwiafwy50qlq5pz9kc61mcx21jg8gj1afb29z8mzqzprp6yb5";
+       type = "gem";
+     };
+-    version = "3.2026.0224";
++    version = "3.2026.1006";
+   };
+   minitest = {
+     dependencies = [
+@@ -423,10 +424,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "0gdwmn2d4sznjdxyl3kz7hr95mvdgm38fk1vd0s63k3fdyamfvnv";
++      sha256 = "1wfnqyfayx9n9j7x871v2ars4hjhfisi1dl24fa64ylq3mns6ghm";
+       type = "gem";
+     };
+-    version = "6.0.2";
++    version = "6.0.6";
+   };
+   netrc = {
+     groups = [ "default" ];
+@@ -471,10 +472,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1l68phk7kixncc13db5yqgkryf69gc3h63vj7l5f2970i1ix5g5z";
++      sha256 = "0d596lg514b19fxdg2q7qq8ni5sd5549s7rqpqwr8jpdlfcx4pki";
+       type = "gem";
+     };
+-    version = "0.68.0";
++    version = "0.73.0";
+   };
+   parallel = {
+     groups = [
+@@ -485,10 +486,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "0c719bfgcszqvk9z47w2p8j2wkz5y35k48ywwas5yxbbh3hm3haa";
++      sha256 = "0w697335hi5dk5ay9kyn53399sy87y8v0y6ij93m5wmshhadxrik";
+       type = "gem";
+     };
+-    version = "1.27.0";
++    version = "1.28.0";
+   };
+   parser = {
+     dependencies = [
+@@ -503,10 +504,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "0mwk9syajzdradzqzp3agf03d0cazqwbfd1439nxpkmxli5chq3g";
++      sha256 = "0a4q5h2hcihk79dbr20scgkm56l79qp7fsvfvkxlv8nmapvxg9i1";
+       type = "gem";
+     };
+-    version = "3.3.10.2";
++    version = "3.3.12.0";
+   };
+   pastel = {
+     dependencies = [ "tty-color" ];
+@@ -533,20 +534,6 @@
+     };
+     version = "1.9.0";
+   };
+-  public_suffix = {
+-    groups = [
+-      "default"
+-      "development"
+-      "test"
+-    ];
+-    platforms = [ ];
+-    source = {
+-      remotes = [ "https://rubygems.org" ];
+-      sha256 = "0mx84s7gn3xabb320hw8060v7amg6gmcyyhfzp0kawafiq60j54i";
+-      type = "gem";
+-    };
+-    version = "7.0.2";
+-  };
+   racc = {
+     groups = [
+       "default"
+@@ -580,10 +567,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "175iisqb211n0qbfyqd8jz2g01q6xj038zjf4q0nm8k6kz88k7lc";
++      sha256 = "009p524zl0p0kfa65nii8wdmaigkmawv9pbvlcffky7islmmp0nb";
+       type = "gem";
+     };
+-    version = "13.3.1";
++    version = "13.4.2";
+   };
+   redcarpet = {
+     groups = [ "default" ];
+@@ -604,10 +591,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "192mzi0wgwl024pwpbfa6c2a2xlvbh3mjd75a0sakdvkl60z64ya";
++      sha256 = "0jxl6c5cagjz5i5n9jplhdy2izad6wapmwgfhqggb22nqfvvdvas";
+       type = "gem";
+     };
+-    version = "2.11.3";
++    version = "2.13.1";
+   };
+   reline = {
+     dependencies = [ "io-console" ];
+@@ -615,10 +602,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "0d8q5c4nh2g9pp758kizh8sfrvngynrjlm0i1zn3cnsnfd4v160i";
++      sha256 = "0gaq2lc463ap1srz7y5kh2p4dxazs7vjrpiby58d9yfvan72s0av";
+       type = "gem";
+     };
+-    version = "0.6.3";
++    version = "0.7.0";
+   };
+   require_all = {
+     groups = [ "default" ];
+@@ -774,10 +761,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "00cclinxd2xdwdcdc775g1vcxwbadcfrwbsdyra7v841nvz0fx1i";
++      sha256 = "0xyc0rs1xaiqln7x611v0f3kjpna7n8h6apbxrvc795sc7lzkg1x";
+       type = "gem";
+     };
+-    version = "1.85.0";
++    version = "1.85.1";
+   };
+   rubocop-ast = {
+     dependencies = [
+@@ -792,10 +779,10 @@
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "1zbikzd6237fvlzjfxdlhwi2vbmavg1cc81y6cyr581365nnghs9";
++      sha256 = "1nw84xk6vc2ls8sxqvyhxs2agh4l0jrws85d4bi3x0501lq8ijmr";
+       type = "gem";
+     };
+-    version = "1.49.0";
++    version = "1.50.0";
+   };
+   rubocop-rake = {
+     dependencies = [
+@@ -838,6 +825,20 @@
+     };
+     version = "0.4.1";
+   };
++  simpleidn = {
++    groups = [
++      "default"
++      "development"
++      "test"
++    ];
++    platforms = [ ];
++    source = {
++      remotes = [ "https://rubygems.org" ];
++      sha256 = "00sdym5q3d9zg7lv47mjamzv67z1lfyd3gz9256v0g9gxl5p7jhj";
++      type = "gem";
++    };
++    version = "0.3.0";
++  };
+   strings = {
+     dependencies = [
+       "strings-ansi"
+@@ -996,15 +997,16 @@
+       "curses"
+       "haveapi-client"
+       "json"
++      "ruby-progressbar"
+     ];
+     groups = [ "default" ];
+     platforms = [ ];
+     source = {
+       remotes = [ "https://rubygems.org" ];
+-      sha256 = "0qs42cmjcwnng6bv0fval4ar7wl4rds60jla1d88sxc9n0cdp5pm";
++      sha256 = "1m57d01k5n89fanzzd511c20v5df8397cxv2nf4whln7ym5z8rj9";
+       type = "gem";
+     };
+-    version = "4.1.0";
++    version = "4.2.1";
+   };
+   vpsfree-client = {
+     dependencies = [ "vpsadmin-client" ];
+diff --git a/lib/confctl/version.rb b/lib/confctl/version.rb
+index 4604ac9..a7d131b 100644
+--- a/lib/confctl/version.rb
++++ b/lib/confctl/version.rb
+@@ -1,3 +1,3 @@
+ module ConfCtl
+-  VERSION = '2.2.3'.freeze
++  VERSION = '3.0.0'.freeze
+ end
+diff --git a/skills/confctl-release/SKILL.md b/skills/confctl-release/SKILL.md
+new file mode 100644
+index 0000000..f31518d
+--- /dev/null
++++ b/skills/confctl-release/SKILL.md
+@@ -0,0 +1,102 @@
++---
++name: confctl-release
++description: Prepare and publish confctl version releases, including changelog, dependency metadata, final release commit and verified RubyGems artifact. Use for confctl releases, not releases of configurations managed by confctl.
++---
++
++# confctl releases
++
++Read the repository's `AGENTS.md` and applicable workspace instructions first.
++Distinguish release preparation from authorized publication. If the user asks
++to prepare a release and wait, stop before default-branch integration, tagging
++and RubyGems upload. Updating a release candidate does not expand that approval.
++
++## Prepare the changes
++
++1. Confirm the target version and inspect the latest release tag, current remote
++   default branch and RubyGems versions. Summarize material operator-visible
++   changes from the previous tag to the selected source, checking current code
++   and project guides. Record runtime requirements, upgrade steps and explicit
++   deprecation decisions. Preserve the dated `CHANGELOG.md` format.
++2. Finish requested dependency updates and release-procedure changes before
++   the release commit. For a full lock refresh, run `bundle update` within the
++   existing Gemfile/gemspec constraints. Resolve using the minimum supported
++   Ruby from `confctl.gemspec`, not just the development shell's newer Ruby.
++   Inspect updates for runtime compatibility; changing declared constraints or
++   Ruby support is a separate compatibility decision.
++3. Regenerate `gemset.nix` with Bundix after lock changes:
++
++   ```sh
++   nix develop -c nix shell --inputs-from . nixpkgs#bundix -c bundix
++   nix develop -c nixfmt gemset.nix
++   ```
++
++   `gemset.nix` is generated dependency metadata. Do not maintain it by hand.
++   `nix/package.nix` and the flake RSpec check pass `gemdir` to `bundlerEnv`,
++   which imports that directory's `gemset.nix`. The development shell instead
++   runs Bundler directly, so passing shell tests does not validate the Nix
++   package's gemset. Keep a dependency refresh in its own commit.
++4. Update `lib/confctl/version.rb`, refresh the confctl path-gem version in
++   `Gemfile.lock` with Bundler, and regenerate `gemset.nix` with Bundix again.
++   Add the changelog entry. Verify all four release identifiers agree:
++   changelog, version constant, lockfile's `confctl` entry and gemset's
++   `confctl.version`. Other gems can legitimately have the old release's
++   version number; do not replace matching numbers globally.
++5. Commit this release unit with subject `Version <version>` and a concise
++   rationale. The release commit must be the final commit, after dependency
++   and procedure changes. If preparation needs a correction, consolidate the
++   unmerged history so this remains true; preserve published default-branch
++   history. Run the declared hooks rather than bypassing them.
++
++## Verify the candidate
++
++Run quick metadata, syntax, whitespace and hook checks, then follow the
++applicable independent final-review procedure for the complete committed
++branch. Provide its full commit series, final diff and migration inventory.
++After review, run the repository's RSpec, RuboCop and Nix formatting checks,
++including the minimum supported Ruby when dependencies changed. Build the
++flake's actual `confctl` package as well as the Ruby gem. Verify Nix's installed
++confctl gem metadata matches the release version.
++
++The gemspec uses a directory glob when `.git` is not a directory. In a Git
++worktree this can include local `.gems`, `.bin`, caches or the `.git` file.
++Build from a clean `git archive` export of the final commit, reusing the
++provisioned Bundler dependency paths, then run `bundle exec rake build` there.
++The rake build task generates the manual and HTML pages. Inspect the archive's
++file list against committed source plus those generated files. Verify version,
++Ruby requirement, executable and changelog, and retain the artifact's checksum.
++Do not run `rake release` to prepare a candidate: it also tags, pushes and uploads.
++
++For a packaged CLI smoke test, extract the gem and load its libraries directly.
++Clear Bundler injection with `Bundler.with_unbundled_env` (or an equivalent
++clean child environment), retain dependency `GEM_HOME`/`GEM_PATH`, and set
++`RUBYLIB` to the extracted `lib`. Assert `ConfCtl.root` and the loaded
++`confctl.rb` come from the extracted tree before running `--help`. In the
++current CLI, GLI's `--version` is unset; inspect `ConfCtl::VERSION` and gemspec
++metadata rather than accepting a version check that only exercises source code.
++
++Publish the development branch according to repository/workspace policy and
++check CI for its exact final head. When replacing a published candidate,
++use the expected old head as the force-with-lease condition and handle
++superseded CI under the applicable workspace rules. Present the final head,
++diff, review/check results and artifact checksum for approval.
++
++## Publish after authorization
++
++Confirm authorization covers the repository's default branch, release tag and
++RubyGems upload. Recheck the remote default branch and existing tag/version.
++Integrate the approved branch under the repository/workspace Git policy. If
++the source changes, rebuild and verify the artifact and reconcile approval
++scope before publication. Keep the final release commit at the tip.
++
++Create an annotated `v<version>` tag at the approved release commit and push
++the authorized branch and tag over SSH. Upload the exact verified gem with
++`gem push <artifact>` using the configured RubyGems authentication; never print
++credentials. Verify that RubyGems reports the expected version, Ruby requirement
++and artifact SHA-256, and that the remote tag resolves to the approved commit.
++
++If any publication step fails, inspect which branch, tag and gem writes
++succeeded before retrying. RubyGems versions cannot be overwritten. Do not
++delete a tag, yank a gem, substitute a rebuilt artifact or bump the version
++as an automatic recovery step. Record the partial result and obtain direction
++for any action outside the approved release. Keep the session available for
++follow-up under its lifecycle policy.
+diff --git a/skills/confctl-release/agents/openai.yaml b/skills/confctl-release/agents/openai.yaml
+new file mode 100644
+index 0000000..5e57c2f
+--- /dev/null
++++ b/skills/confctl-release/agents/openai.yaml
+@@ -0,0 +1,4 @@
++interface:
++  display_name: "confctl version release"
++  short_description: "Prepare and publish verified confctl releases"
++  default_prompt: "Use $confctl-release to prepare a confctl version release."
