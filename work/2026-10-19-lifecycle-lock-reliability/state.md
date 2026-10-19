@@ -3,7 +3,7 @@ lifecycle: active
 ---
 # Current status
 
-Phase: deployed and verified; ready, awaiting merge approval.
+Phase: approved integration and machine release in progress.
 
 - [x] Reproduced archive lock contention and fixed shared lifecycle admission.
 - [x] Implemented successful archive reservation release and recovery behavior.
@@ -162,3 +162,13 @@ released lock, then saw snapshot capture progress. Contention proof saved in
 original-archive-contention-proof.json. Archive is running (last capturing
 configuration checkout); no busy-lock failure. Preserve snapshots/branches and
 await original worker result.
+
+
+User integration/release direction (2026-10-19): “okay, merge it and release
+aitherdev”. Applies to dev-workspace, workspace and vpsfree-cz-configuration,
+target refs/heads/master, plus normal completion/release of this initiative's
+reservation441300ed-f84b-4b68-921d-a0fd2ccf4ad1. This does not request archive.
+Runtime6ab3b48/config0067299a still descend from current remote targets. Workspace
+master5db0097a advanced solely in work/archive/notes records since review base
+dc97c0f0. Rebase own workspace branch over current tracking, preserve reviewed
+policy and pin commits, then record equivalence and integrate through coordinator.
