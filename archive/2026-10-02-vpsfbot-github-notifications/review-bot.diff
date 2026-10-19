@@ -1,0 +1,895 @@
+diff --git a/README.md b/README.md
+index d6bfd89..5c210ab 100644
+--- a/README.md
++++ b/README.md
+@@ -23,6 +23,31 @@ It installs bundled gems into `.gems`. Run checks from the shell with:
+      bundle exec rspec
+      bundle exec rubocop
+ 
++## GitHub notifications
++
++Configure GitHub webhook routing under `github_webhook.channels`. Each channel
++accepts a list of repository full names or an object with `repositories`,
++`event_types`, `default_branch_only`, and `ignored_users`. See the
++[sample configuration](dist/config.yml.sample).
++
++`ignored_users` is optional and defaults to an empty list. For pushes with
++commits, it filters the original commit author. An author's GitHub username
++is used when present; otherwise, a username can be recovered from a GitHub
++noreply email. Commits with unknown authors remain visible. Matching uses exact,
++case-sensitive usernames and does not use display names or committers.
++
++A push with only ignored authors produces no announcement. Mixed pushes show
++only retained commits, in their original order, with at most ten commit lines.
++Summaries and overflow counts refer to retained commits, and summaries state
++how many commits were ignored. The comparison link still shows the whole push.
++Force-push and fast-forward announcements include the retained commit details.
++The account pushing the commits does not override their authorship.
++
++For events without commits, including issues, pull requests, and eligible empty
++pushes, `ignored_users` filters the event sender. Filtering is independent for
++each channel. An absent or empty list preserves the existing announcement
++format and routing behavior.
++
+ ## Bundix
+ Until [bundix#68](https://github.com/nix-community/bundix/pull/68) is resolved, use:
+ 
+diff --git a/dist/config.yml.sample b/dist/config.yml.sample
+index 843111c..0d238f4 100644
+--- a/dist/config.yml.sample
++++ b/dist/config.yml.sample
+@@ -79,3 +79,9 @@ archive_url: http://irc.example.com
+ #                  - issues
+ #                  - pull_request
+ #              default_branch_only: true
++#              ignored_users:
++#                  - 'github-actions[bot]'
++#              # Filter original commit authors on pushes with commits. For
++#              # other events and empty pushes, filter the event sender.
++#              # Unknown authors remain visible. All-ignored pushes produce
++#              # no channel message or log entry.
+diff --git a/lib/vpsfree-irc-bot/github_webhook/announcer.rb b/lib/vpsfree-irc-bot/github_webhook/announcer.rb
+index 6de8826..3792d17 100644
+--- a/lib/vpsfree-irc-bot/github_webhook/announcer.rb
++++ b/lib/vpsfree-irc-bot/github_webhook/announcer.rb
+@@ -7,12 +7,13 @@ module VpsFree::Irc::Bot
+     include Helpers
+ 
+     class ChannelConfig
+-      attr_reader :repositories, :event_types, :default_branch_only
++      attr_reader :repositories, :event_types, :default_branch_only, :ignored_users
+ 
+-      def initialize(repositories:, event_types: nil, default_branch_only: false)
++      def initialize(repositories:, event_types: nil, default_branch_only: false, ignored_users: [])
+         @repositories = Array(repositories).map(&:to_s)
+         @event_types = event_types && Array(event_types).map(&:to_s)
+         @default_branch_only = default_branch_only
++        @ignored_users = Array(ignored_users).map(&:to_s)
+       end
+ 
+       def announce?(event)
+@@ -26,6 +27,20 @@ module VpsFree::Irc::Bot
+ 
+         true
+       end
++
++      def announcement(event)
++        return nil unless announce?(event)
++        return event.to_s if ignored_users.empty?
++
++        if event.type == 'push' && !event.commits.empty?
++          retained = event.commits.reject { |commit| ignored_users.include?(commit.author.login) }
++          return nil if retained.empty?
++
++          return event.filtered_to_s(retained, ignored_count: event.commits.length - retained.length)
++        end
++
++        event.to_s unless ignored_users.include?(event.sender.login)
++      end
+     end
+ 
+     set required_options: %i[channels]
+@@ -56,7 +71,8 @@ module VpsFree::Irc::Bot
+         ChannelConfig.new(
+           repositories: repositories,
+           event_types: event_types,
+-          default_branch_only: !!default_branch_only
++          default_branch_only: !!default_branch_only,
++          ignored_users: config_value(opts, :ignored_users)
+         )
+       end
+ 
+@@ -64,6 +80,10 @@ module VpsFree::Irc::Bot
+         normalize_channel_config(channel_config).announce?(event)
+       end
+ 
++      def announcement_in_channel(channel_config, event)
++        normalize_channel_config(channel_config).announcement(event)
++      end
++
+       # @param event [GitHubWebHook::Event]
+       def announce(event)
+         queue << event
+@@ -94,11 +114,13 @@ module VpsFree::Irc::Bot
+       bot.channels.each do |channel|
+         channel_config = config[:channels][channel.name]
+         next if channel_config.nil?
+-        next unless self.class.announce_in_channel?(channel_config, event)
++
++        announcement = self.class.announcement_in_channel(channel_config, event)
++        next if announcement.nil?
+ 
+         log_mutable_send(
+           channel,
+-          MultiLine.new(event.to_s),
++          MultiLine.new(announcement),
+           :notice
+         )
+ 
+diff --git a/lib/vpsfree-irc-bot/github_webhook/event.rb b/lib/vpsfree-irc-bot/github_webhook/event.rb
+index 84de8f3..d36fa1f 100644
+--- a/lib/vpsfree-irc-bot/github_webhook/event.rb
++++ b/lib/vpsfree-irc-bot/github_webhook/event.rb
+@@ -105,7 +105,15 @@ module VpsFree::Irc::Bot::GitHubWebHook
+   end
+ 
+   class Commit
+-    Author = Struct.new(:name, :email)
++    Author = Struct.new(:name, :email, :username) do
++      def login
++        return username if username.is_a?(String) && !username.empty?
++        return nil unless username.nil? || username == ''
++        return nil unless email.is_a?(String)
++
++        email.match(/\A(?:\d+\+)?([^+@\s]+)@users\.noreply\.github\.com\z/)&.[](1)
++      end
++    end
+ 
+     include Helpers
+ 
+@@ -113,7 +121,9 @@ module VpsFree::Irc::Bot::GitHubWebHook
+ 
+     def initialize(data)
+       extract(data, *%i[id message distinct])
+-      @author = Author.new(data['author']['name'], data['author']['email'])
++      @author = Author.new(
++        data['author']['name'], data['author']['email'], data['author']['username']
++      )
+     end
+   end
+ 
+@@ -209,6 +219,37 @@ module VpsFree::Irc::Bot::GitHubWebHook
+       commits.all? { |c| !c.distinct }
+     end
+ 
++    def filtered_to_s(retained_commits, ignored_count:)
++      ref_update = forced || fast_forward?
++      count = retained_commits.length
++      summary = "#{count} #{noun(count, 'commit', 'commits')}"
++      if ignored_count > 0
++        summary = "#{count} announced #{noun(count, 'commit', 'commits')} (#{ignored_count} ignored)"
++      end
++
++      ret = "[#{repository.name}] #{sender.login} "
++      if ref_update
++        action = forced ? 'force-pushed' : 'fast-forwarded'
++        ret << "#{action} #{branch} #{ref_update_range}\n"
++        ret << "[#{repository.name}] #{summary}\n"
++      else
++        ret << "pushed #{summary} to #{branch}\n"
++      end
++
++      retained_commits.first(COUNT).each do |commit|
++        ret << "#{repository.name}/#{branch} #{commit.id[0..8]} "
++        ret << "#{commit.author.name}: #{commit.message.split("\n").first}\n"
++      end
++
++      if count > COUNT
++        ret << "#{repository.name}/#{branch} ...and #{count - COUNT} more commits\n"
++      end
++
++      url = ref_update ? ref_update_url : compare
++      ret << url if url
++      ret
++    end
++
+     def announce?
+       return false if commits.empty? && created
+       return false if deleted
+diff --git a/spec/vpsfree/irc/bot/github_webhook/announcer_spec.rb b/spec/vpsfree/irc/bot/github_webhook/announcer_spec.rb
+index fb5ae92..088b6fb 100644
+--- a/spec/vpsfree/irc/bot/github_webhook/announcer_spec.rb
++++ b/spec/vpsfree/irc/bot/github_webhook/announcer_spec.rb
+@@ -65,6 +65,175 @@ RSpec.describe VpsFree::Irc::Bot::GitHubWebHook::Announcer do
+     ).to be(false)
+   end
+ 
++  it 'normalizes string and symbol keys and ignored-user values' do
++    configs = [
++      { repositories: ['vpsfreecz/web'], ignored_users: [:automation] },
++      { 'repositories' => ['vpsfreecz/web'], 'ignored_users' => ['automation'] }
++    ].map { |config| described_class.normalize_channel_config(config) }
++
++    expect(configs.map(&:ignored_users)).to eq([['automation'], ['automation']])
++    expect(described_class.normalize_channel_config(configs.first)).to equal(configs.first)
++  end
++
++  it 'preserves exact legacy rendering for absent and empty ignored lists' do
++    event = push_event(commits: Array.new(11) { push_commit('github-actions[bot]') }, sender: 'github-actions[bot]')
++    configs = [
++      ['vpsfreecz/web'],
++      { repositories: ['vpsfreecz/web'] },
++      { repositories: ['vpsfreecz/web'], ignored_users: [] }
++    ]
++
++    configs.each do |config|
++      expect(described_class.announcement_in_channel(config, event)).to eq(event.to_s)
++    end
++  end
++
++  it 'keeps human and unknown authors despite an ignored sender or contradictory email' do
++    event = push_event(
++      sender: 'github-actions[bot]',
++      commits: [
++        push_commit('github-actions[bot]', message: 'Ignored'),
++        push_commit('human', email: 'github-actions[bot]@users.noreply.github.com', message: 'Human'),
++        push_commit(nil, message: 'Unknown')
++      ]
++    )
++    text = announcement(event)
++
++    expect(text).to include('pushed 2 announced commits (1 ignored)')
++    expect(text).to include('Tester: Human', 'Tester: Unknown')
++    expect(text).not_to include('Tester: Ignored')
++    expect(text.index('Tester: Human')).to be < text.index('Tester: Unknown')
++  end
++
++  it 'ignores original authors without consulting sender, pusher or committer' do
++    event = push_event(
++      sender: 'human',
++      commits: [
++        push_commit('github-actions[bot]', email: 'human@example.org'),
++        push_commit(nil, email: '41898282+github-actions[bot]@users.noreply.github.com'),
++        push_commit('', email: 'github-actions[bot]@users.noreply.github.com')
++      ]
++    )
++
++    expect(announcement(event)).to be_nil
++  end
++
++  [false, true].product([false, true], ['human', 'github-actions[bot]']).each do |forced, distinct, sender|
++    it "suppresses all-ignored pushes with forced=#{forced}, distinct=#{distinct}, sender=#{sender}" do
++      event = push_event(
++        forced: forced, sender: sender, commits: [push_commit('github-actions[bot]', distinct: distinct)]
++      )
++
++      expect(announcement(event)).to be_nil
++    end
++  end
++
++  it 'caps active-filter output at ten even when no authors are excluded' do
++    event = push_event(commits: Array.new(11) { |i| push_commit('human', message: "Human #{i}") })
++    text = announcement(event)
++
++    expect(text).to include('pushed 11 commits', '...and 1 more commits')
++    expect(text.lines.grep(/Tester: Human/).length).to eq(10)
++    expect(text).not_to include('announced', 'Human 10')
++  end
++
++  it 'keeps exact and case-sensitive ignored-user matching' do
++    event = push_event(commits: [push_commit('GitHub-actions[bot]'), push_commit(' github-actions[bot]')])
++
++    expect(announcement(event)).to include('pushed 2 commits')
++  end
++
++  it 'filters originally empty eligible pushes by sender and keeps legacy ref updates' do
++    human = push_event(commits: [], sender: 'human')
++    ignored = push_event(commits: [], sender: 'github-actions[bot]')
++
++    expect(announcement(human)).to eq(human.to_s)
++    expect(announcement(ignored)).to be_nil
++  end
++
++  it 'keeps the repository, event-type and branch gates before filtering' do
++    events = [
++      push_event(repository: 'other/web'),
++      push_event(ref: 'refs/heads/topic'),
++      create_event
++    ]
++
++    events.each { |event| expect(announcement(event, config: filtered_channel)).to be_nil }
++  end
++
++  %i[create_event delete_event fork_event issue_event pull_request_event].each do |factory|
++    it "filters #{factory} by sender rather than creator" do
++      ignored = send(factory, sender: 'github-actions[bot]')
++      human = send(factory, sender: 'human')
++      unknown = send(factory, sender: nil)
++
++      expect(announcement(ignored)).to be_nil
++      expect(announcement(human)).to eq(human.to_s)
++      expect(announcement(unknown)).to eq(unknown.to_s)
++    end
++  end
++
++  it 'does not alter a shared event across different channel orders' do
++    event = push_event(commits: [push_commit('github-actions[bot]'), push_commit('human')])
++    original = Marshal.dump(event)
++    configs = [ignored_channel, ['vpsfreecz/web']]
++
++    [configs, configs.reverse].each do |ordered|
++      texts = ordered.map { |config| described_class.announcement_in_channel(config, event) }
++
++      expect(texts).to include(event.to_s)
++      expect(texts).to include(announcement(event))
++      expect(Marshal.dump(event)).to eq(original)
++    end
++  end
++
++  it 'skips both sending and logging for a suppressed announcement' do
++    event = push_event(commits: [push_commit('github-actions[bot]')])
++    announcer, = announcer_for(event)
++
++    allow(announcer).to receive(:log_mutable_send)
++    announcer.check
++    expect(announcer).not_to have_received(:log_mutable_send)
++  end
++
++  it 'passes only numbered filtered text to the send-and-log boundary' do
++    event = push_event(commits: [push_commit('github-actions[bot]', message: 'Ignored'), push_commit('human')])
++    announcer, channel = announcer_for(event)
++    expected = [
++      '[1/3] [web] sender pushed 1 announced commit (1 ignored) to master',
++      '[2/3] web/master 111111111 Tester: Update site',
++      '[3/3] https://github.com/vpsfreecz/web/compare/a...b'
++    ].join("\n")
++
++    allow(announcer).to receive(:log_mutable_send)
++    allow(announcer).to receive(:p)
++    announcer.check
++    expect(announcer).to have_received(:log_mutable_send) do |target, text, type|
++      expect(target).to equal(channel)
++      expect(text.to_s).to eq(expected)
++      expect(type).to eq(:notice)
++    end
++  end
++
++  def ignored_channel
++    { repositories: ['vpsfreecz/web'], ignored_users: ['github-actions[bot]'] }
++  end
++
++  def announcement(event, config: ignored_channel)
++    described_class.announcement_in_channel(config, event)
++  end
++
++  def announcer_for(event)
++    channel = instance_double(Cinch::Channel, name: '#vpsfree')
++    announcer = described_class.allocate
++    allow(announcer).to receive_messages(
++      bot: instance_double(Cinch::Bot, channels: [channel]),
++      config: { channels: { '#vpsfree' => ignored_channel } }
++    )
++    allow(described_class).to receive(:get_event).and_return(event)
++    [announcer, channel]
++  end
++
+   def filtered_channel
+     channels = described_class.normalize_channels(
+       '#vpsfree' => {
+@@ -77,7 +246,8 @@ RSpec.describe VpsFree::Irc::Bot::GitHubWebHook::Announcer do
+     channels['#vpsfree']
+   end
+ 
+-  def push_event(ref:, repository: 'vpsfreecz/web', default_branch: 'master')
++  def push_event(ref: 'refs/heads/master', repository: 'vpsfreecz/web', default_branch: 'master',
++                 sender: 'sender', commits: [push_commit('human')], forced: false)
+     event(
+       'push',
+       repository,
+@@ -87,23 +257,24 @@ RSpec.describe VpsFree::Irc::Bot::GitHubWebHook::Announcer do
+       'after' => '1111111111111111111111111111111111111111',
+       'created' => false,
+       'deleted' => false,
+-      'forced' => false,
++      'forced' => forced,
+       'compare' => 'https://github.com/vpsfreecz/web/compare/a...b',
+-      'commits' => [
+-        {
+-          'id' => '1111111111111111111111111111111111111111',
+-          'message' => 'Update site',
+-          'distinct' => true,
+-          'author' => {
+-            'name' => 'Tester',
+-            'email' => 'tester@example.org'
+-          }
+-        }
+-      ]
++      'commits' => commits,
++      'sender' => user(sender)
+     )
+   end
+ 
+-  def issue_event
++  def push_commit(username, email: 'tester@example.org', distinct: true, message: 'Update site')
++    {
++      'id' => '1111111111111111111111111111111111111111',
++      'message' => message,
++      'distinct' => distinct,
++      'author' => { 'name' => 'Tester', 'email' => email, 'username' => username },
++      'committer' => { 'name' => 'Human', 'username' => 'human' }
++    }
++  end
++
++  def issue_event(sender: 'sender')
+     event(
+       'issues',
+       'vpsfreecz/web',
+@@ -115,12 +286,13 @@ RSpec.describe VpsFree::Irc::Bot::GitHubWebHook::Announcer do
+         'title' => 'Issue',
+         'state' => 'open',
+         'html_url' => 'https://github.com/vpsfreecz/web/issues/42',
+-        'user' => user('reporter')
+-      }
++        'user' => user('github-actions[bot]')
++      },
++      'sender' => user(sender)
+     )
+   end
+ 
+-  def pull_request_event
++  def pull_request_event(sender: 'sender')
+     event(
+       'pull_request',
+       'vpsfreecz/web',
+@@ -133,12 +305,13 @@ RSpec.describe VpsFree::Irc::Bot::GitHubWebHook::Announcer do
+         'title' => 'PR',
+         'state' => 'open',
+         'html_url' => 'https://github.com/vpsfreecz/web/pull/7',
+-        'user' => user('contributor')
+-      }
++        'user' => user('github-actions[bot]')
++      },
++      'sender' => user(sender)
+     )
+   end
+ 
+-  def create_event(repository: 'vpsfreecz/web')
++  def create_event(repository: 'vpsfreecz/web', sender: 'sender')
+     event(
+       'create',
+       repository,
+@@ -146,26 +319,29 @@ RSpec.describe VpsFree::Irc::Bot::GitHubWebHook::Announcer do
+       'ref_type' => 'branch',
+       'ref' => 'topic',
+       'master_branch' => 'master',
+-      'description' => nil
++      'description' => nil,
++      'sender' => user(sender)
+     )
+   end
+ 
+-  def delete_event
++  def delete_event(sender: 'sender')
+     event(
+       'delete',
+       'vpsfreecz/web',
+       'master',
+       'ref_type' => 'branch',
+-      'ref' => 'topic'
++      'ref' => 'topic',
++      'sender' => user(sender)
+     )
+   end
+ 
+-  def fork_event
++  def fork_event(sender: 'sender')
+     event(
+       'fork',
+       'vpsfreecz/web',
+       'master',
+-      'forkee' => repository('forker/web', 'master')
++      'forkee' => repository('forker/web', 'master'),
++      'sender' => user(sender)
+     )
+   end
+ 
+@@ -174,7 +350,9 @@ RSpec.describe VpsFree::Irc::Bot::GitHubWebHook::Announcer do
+       type,
+       {
+         'sender' => user('sender'),
+-        'repository' => repository(repository_name, default_branch)
++        'repository' => repository(repository_name, default_branch),
++        'pusher' => { 'name' => 'human' },
++        'head_commit' => push_commit('human')
+       }.merge(attrs)
+     )
+   end
+diff --git a/spec/vpsfree/irc/bot/github_webhook/event_spec.rb b/spec/vpsfree/irc/bot/github_webhook/event_spec.rb
+index 0081a6a..6f986b8 100644
+--- a/spec/vpsfree/irc/bot/github_webhook/event_spec.rb
++++ b/spec/vpsfree/irc/bot/github_webhook/event_spec.rb
+@@ -69,6 +69,99 @@ RSpec.describe VpsFree::Irc::Bot::GitHubWebHook::PushEvent do
+     expect(event.to_s).to eq(expected)
+   end
+ 
++  it 'keeps the legacy eleven-commit display' do
++    event = push_event('commits' => Array.new(11) { |i| commit(message: "Change #{i}") })
++
++    expect(event.to_s.lines.grep(/Tester: Change/).length).to eq(11)
++    expect(event.to_s).not_to include('more commits')
++  end
++
++  [1, 10, 11, 12].each do |count|
++    it "displays at most ten of #{count} retained commits with accurate counts" do
++      ignored = Array.new(10) { commit(username: 'github-actions[bot]') }
++      retained = Array.new(count) { |i| commit(username: 'human', message: "Human #{i}\nBody") }
++      event = push_event('commits' => ignored + retained)
++      text = event.filtered_to_s(event.commits.drop(10), ignored_count: 10)
++
++      expect(text.lines.first).to eq(
++        "[web] sender pushed #{count} announced #{count == 1 ? 'commit' : 'commits'} (10 ignored) to master\n"
++      )
++      expect(text.lines.grep(/Tester: Human/).length).to eq([count, 10].min)
++      expect(text).to include('Human 0')
++      expect(text).not_to include('Body')
++      expect(text).to end_with(comparison_url)
++      if count > 10
++        expect(text).to include("...and #{count - 10} more commits")
++        expect(text).not_to include('Human 10')
++      else
++        expect(text).not_to include('more commits')
++      end
++    end
++  end
++
++  it 'uses ordinary wording when the active filter excludes nothing' do
++    event = push_event('commits' => [commit, commit(message: 'Second')])
++
++    expect(event.filtered_to_s(event.commits, ignored_count: 0)).to eq(event.to_s)
++  end
++
++  %w[force-pushed fast-forwarded].each do |action|
++    [0, 1].each do |ignored_count|
++      it "renders retained details for #{action} with #{ignored_count} exclusions" do
++        event = push_event(
++          'forced' => action == 'force-pushed',
++          'commits' => [commit(distinct: false), commit(distinct: false, message: 'Ignored')]
++        )
++        retained = event.commits.first(2 - ignored_count)
++        text = event.filtered_to_s(retained, ignored_count: ignored_count)
++
++        expect(text.lines.first).to eq("[web] sender #{action} master from 012345678 to fedcba987\n")
++        expect(text).to include(ignored_count == 0 ? '[web] 2 commits' : '[web] 1 announced commit (1 ignored)')
++        expect(text).to include('web/master fedcba987 Tester: Update site')
++        expect(text.scan(comparison_url).length).to eq(1)
++      end
++    end
++  end
++
++  it 'keeps original push classification when the distinct commit is excluded' do
++    event = push_event('commits' => [commit, commit(distinct: false, message: 'Retained')])
++    text = event.filtered_to_s(event.commits.last(1), ignored_count: 1)
++
++    expect(text).to start_with('[web] sender pushed 1 announced commit (1 ignored) to master')
++    expect(text).not_to include('fast-forwarded')
++  end
++
++  it 'keeps ref-update fallback URLs in filtered rendering' do
++    event = push_event('forced' => true, 'compare' => '', 'before' => zero_sha)
++    text = event.filtered_to_s(event.commits, ignored_count: 0)
++
++    expect(text).to start_with('[web] sender force-pushed master to fedcba987')
++    expect(text).to end_with("#{repository_url}/commit/#{after_sha}")
++  end
++
++  it 'does not mutate the event or nested commits across repeated rendering' do
++    event = push_event('commits' => [commit(username: 'human'), commit(username: 'github-actions[bot]')])
++    original = Marshal.dump(event)
++    event.commits.each do |c|
++      c.author.freeze
++      c.freeze
++    end
++    event.commits.freeze
++    event.freeze
++
++    twice = Array.new(2) { event.filtered_to_s(event.commits.first(1), ignored_count: 1) }
++
++    expect(twice.first).to eq(twice.last)
++    expect(Marshal.dump(event)).to eq(original)
++    expect(event.to_s).to include('pushed 2 commits')
++  end
++
++  it 'preserves deleted-push and empty-creation gates' do
++    expect(push_event('deleted' => true).announce?).to be(false)
++    expect(push_event('created' => true, 'commits' => []).announce?).to be(false)
++    expect(push_event('commits' => []).announce?).to be(true)
++  end
++
+   def push_event(attrs = {})
+     VpsFree::Irc::Bot::GitHubWebHook::Event.parse(
+       'push',
+@@ -87,14 +180,15 @@ RSpec.describe VpsFree::Irc::Bot::GitHubWebHook::PushEvent do
+     )
+   end
+ 
+-  def commit(id: after_sha, distinct: true)
++  def commit(id: after_sha, distinct: true, username: nil, message: 'Update site')
+     {
+       'id' => id,
+-      'message' => 'Update site',
++      'message' => message,
+       'distinct' => distinct,
+       'author' => {
+         'name' => 'Tester',
+-        'email' => 'tester@example.org'
++        'email' => 'tester@example.org',
++        'username' => username
+       }
+     }
+   end
+@@ -128,4 +222,36 @@ RSpec.describe VpsFree::Irc::Bot::GitHubWebHook::PushEvent do
+       'html_url' => "https://github.com/#{login}"
+     }
+   end
++  describe VpsFree::Irc::Bot::GitHubWebHook::Commit::Author do
++    [
++      ['github-actions[bot]', 'human@users.noreply.github.com', 'github-actions[bot]'],
++      ['human', 'github-actions[bot]@users.noreply.github.com', 'human'],
++      ['Human', nil, 'Human'],
++      [nil, 'github-actions[bot]@users.noreply.github.com', 'github-actions[bot]'],
++      ['', '41898282+github-actions[bot]@users.noreply.github.com', 'github-actions[bot]'],
++      [nil, '123+human@users.noreply.github.com', 'human'],
++      [false, 'github-actions[bot]@users.noreply.github.com', nil],
++      [42, 'github-actions[bot]@users.noreply.github.com', nil],
++      [nil, 'human@example.org', nil],
++      [nil, 'x+github-actions[bot]@users.noreply.github.com', nil],
++      [nil, '123+bot+alias@users.noreply.github.com', nil],
++      [nil, '+bot@users.noreply.github.com', nil],
++      [nil, '123+@users.noreply.github.com', nil],
++      [nil, '@users.noreply.github.com', nil],
++      [nil, 'bot@users.noreply.github.com.evil', nil],
++      [nil, 'bot@USERS.NOREPLY.GITHUB.COM', nil],
++      [nil, 'bot@@users.noreply.github.com', nil],
++      [nil, "bot@users.noreply.github.com\n", nil],
++      [nil, ' bot@users.noreply.github.com', nil],
++      [nil, nil, nil],
++      [nil, 42, nil]
++    ].each do |username, email, expected|
++      it "resolves username #{username.inspect} and email #{email.inspect} to #{expected.inspect}" do
++        author = described_class.new('github-actions[bot]', email, username)
++
++        expect(author.login).to eq(expected)
++        expect(author.name).to eq('github-actions[bot]')
++      end
++    end
++  end
+ end
+diff --git a/tests/README.md b/tests/README.md
+index 969aeb0..fb3e1f5 100644
+--- a/tests/README.md
++++ b/tests/README.md
+@@ -7,6 +7,7 @@ Run the suite with:
+ ```sh
+ ./test-runner.sh ls
+ ./test-runner.sh test irc-basic
++./test-runner.sh test irc-github-webhook
+ ./test-runner.sh test vpsadmin-events
+ ```
+ 
+@@ -16,3 +17,9 @@ services.
+ 
+ `vpsadmin-events` additionally boots the vpsAdmin services VM and verifies the
+ bot can poll vpsAdmin and announce news/outage events on IRC.
++
++`irc-github-webhook` boots the same small IRC environment and posts signed GitHub
++webhook fixtures to the bot. It checks per-channel commit filtering, message and
++archive contents, force-push details, sender filtering, and invalid signatures.
++All webhook requests run inside the test VM; IRC clients connect only to its
++forwarded test port.
+diff --git a/tests/all-tests.nix b/tests/all-tests.nix
+index ad4cb41..28dcbea 100644
+--- a/tests/all-tests.nix
++++ b/tests/all-tests.nix
+@@ -32,5 +32,6 @@ let
+ in
+ testLib.makeTests [
+   "irc-basic"
++  "irc-github-webhook"
+   "vpsadmin-events"
+ ]
+diff --git a/tests/suite/irc-github-webhook.nix b/tests/suite/irc-github-webhook.nix
+new file mode 100644
+index 0000000..d02d048
+--- /dev/null
++++ b/tests/suite/irc-github-webhook.nix
+@@ -0,0 +1,190 @@
++import ../make-test.nix (
++  {
++    pkgs,
++    botPackage,
++    ...
++  }:
++  let
++    hostForwardName = "irc-github-webhook";
++  in
++  {
++    name = "irc-github-webhook";
++    description = ''
++      Verify signed GitHub webhooks, channel filtering and channel logs with
++      ngIRCd and the bot in one disposable VM.
++    '';
++    tags = [
++      "ci"
++      "irc"
++      "light"
++    ];
++
++    machines.irc = import ./common.nix {
++      inherit pkgs botPackage hostForwardName;
++      settings = {
++        channels = [
++          "#vpsfree"
++          "#vpsadminos"
++        ];
++        github_webhook = {
++          host = "127.0.0.1";
++          port = 8000;
++          secret = "disposable-webhook-test-secret";
++          channels = {
++            "#vpsfree" = {
++              repositories = [ "test/webhooks" ];
++              ignored_users = [ "github-actions[bot]" ];
++            };
++            "#vpsadminos" = [ "test/webhooks" ];
++          };
++        };
++      };
++    };
++
++    testScript = ''
++      require 'openssl'
++
++      CHANNELS = %w[#vpsfree #vpsadminos].freeze
++      BOT_NICK = 'vpsfbot'
++      SECRET = 'disposable-webhook-test-secret'
++      REPOSITORY_URL = 'https://github.com/test/webhooks'
++      clients = {}
++
++      def user(login)
++        { 'id' => 1, 'login' => login, 'html_url' => "https://github.com/#{login}" }
++      end
++
++      def repository
++        {
++          'id' => 1, 'name' => 'webhooks', 'full_name' => 'test/webhooks',
++          'html_url' => REPOSITORY_URL, 'default_branch' => 'master', 'owner' => user('test')
++        }
++      end
++
++      def commit(login, marker)
++        {
++          'id' => 'b' * 40, 'message' => marker, 'distinct' => true,
++          'author' => { 'name' => login == 'human' ? 'Human' : 'Automation',
++                        'email' => "#{login}@users.noreply.github.com", 'username' => login }
++        }
++      end
++
++      def push_payload(marker, sender:, commits:, forced: false)
++        {
++          'sender' => user(sender), 'repository' => repository, 'ref' => 'refs/heads/master',
++          'before' => 'a' * 40, 'after' => 'b' * 40, 'created' => false, 'deleted' => false,
++          'forced' => forced, 'compare' => "#{REPOSITORY_URL}/compare/#{marker}", 'commits' => commits
++        }
++      end
++
++      def post_webhook(type, payload, valid: true)
++        body = JSON.generate(payload)
++        signature = valid ? OpenSSL::HMAC.hexdigest('sha1', SECRET, body) : '0' * 40
++        irc.succeeds("printf %s #{Shellwords.escape(body)} > /tmp/github-webhook.json")
++        _, status = irc.succeeds(
++          "curl --silent --show-error --output /tmp/github-webhook-response --write-out '%{http_code}' " \
++          "--header #{Shellwords.escape("X-GitHub-Event: #{type}")} " \
++          "--header #{Shellwords.escape("X-Hub-Signature: sha1=#{signature}")} " \
++          "--header 'Content-Type: application/json' --data-binary @/tmp/github-webhook.json " \
++          'http://127.0.0.1:8000/gh-webhook'
++        )
++        expect(status.strip).to eq(valid ? '200' : '400')
++      end
++
++      def channel_log(channel, format)
++        directory = "/var/lib/vpsfree-irc-bot/archive/#{format}/irc.test/#{channel}"
++        _, output = irc.succeeds(
++          "find #{Shellwords.escape(directory)} -type f -name #{Shellwords.escape("*.#{format}")} -exec cat {} +"
++        )
++        output
++      end
++
++      before(:suite) do
++        irc.start
++        irc.wait_for_service('ngircd')
++        irc.wait_for_service('vpsfree-irc-bot')
++        irc.wait_until_succeeds('curl --silent --output /dev/null http://127.0.0.1:8000/')
++        CHANNELS.each_with_index do |channel, index|
++          clients[channel] = IrcBotClient.connect(
++            port: IrcBotHostfwdPorts.port('${hostForwardName}'), nick: "observer#{index}", channel: channel
++          )
++          clients[channel].wait_for_names_include(BOT_NICK)
++          clients[channel].command('!ping')
++          clients[channel].wait_for_privmsg(from: BOT_NICK, target: channel, text: 'pong')
++        end
++      end
++
++      after(:suite) do
++        clients.each_value(&:close)
++      end
++
++      after(:each) do |example|
++        if example.exception
++          clients.each { |channel, client| warn "#{channel}: #{client.lines.last(30).inspect}" }
++          _, output = irc.succeeds('journalctl -u vpsfree-irc-bot -n 80 --no-pager')
++          warn output
++        end
++      end
++
++      describe 'signed GitHub announcements' do
++        it 'filters each channel independently and keeps IRC and archive output consistent' do
++          post_webhook('push', push_payload(
++            'mixed-range', sender: 'github-actions[bot]',
++            commits: [commit('github-actions[bot]', 'mixed-ignored'), commit('human', 'mixed-human')]
++          ))
++          post_webhook('push', push_payload(
++            'all-ignored-range', sender: 'human', commits: [commit('github-actions[bot]', 'all-ignored-subject')]
++          ))
++          post_webhook('push', push_payload(
++            'force-range', sender: 'human', forced: true,
++            commits: [commit('github-actions[bot]', 'force-ignored'), commit('human', 'force-human')]
++          ))
++          post_webhook('issues', {
++            'sender' => user('github-actions[bot]'), 'repository' => repository, 'action' => 'opened',
++            'issue' => { 'id' => 91, 'number' => 91, 'title' => 'Ignored issue', 'state' => 'open',
++                         'html_url' => "#{REPOSITORY_URL}/issues/ignored-issue", 'user' => user('human') }
++          })
++          post_webhook('push', push_payload(
++            'invalid-range', sender: 'human', commits: [commit('human', 'invalid-subject')]
++          ), valid: false)
++
++          # The final line of a later queued event proves preceding events have
++          # finished on both channels before checking silence and flushed logs.
++          post_webhook('push', push_payload(
++            'processing-barrier', sender: 'human', commits: [commit('human', 'barrier-human')]
++          ))
++          clients.each do |channel, client|
++            client.wait_for_privmsg(from: BOT_NICK, target: channel, text: '/compare/processing-barrier', timeout: 60)
++          end
++
++          filtered = clients.fetch('#vpsfree').lines.join("\n")
++          unfiltered = clients.fetch('#vpsadminos').lines.join("\n")
++          expect(filtered).to include(
++            'pushed 1 announced commit (1 ignored)', 'Human: mixed-human', '/compare/mixed-range',
++            'force-pushed master from aaaaaaaaa to bbbbbbbbb', 'Human: force-human', '[webhooks] 1 announced commit'
++          )
++          expect(filtered).not_to include('mixed-ignored', 'all-ignored', 'force-ignored', 'ignored-issue', 'invalid-')
++          expect(unfiltered).to include('mixed-ignored', 'mixed-human', 'all-ignored-subject', 'force-range', 'ignored-issue')
++          expect(unfiltered).not_to include('force-human', 'invalid-')
++
++          CHANNELS.each do |channel|
++            %w[html yml].each do |format|
++              # Logging follows sending; wait for the barrier to be flushed too.
++              directory = "/var/lib/vpsfree-irc-bot/archive/#{format}/irc.test/#{channel}"
++              irc.wait_until_succeeds("grep -R -q processing-barrier #{Shellwords.escape(directory)}", timeout: 30)
++              log = channel_log(channel, format)
++              expect(log).to include('mixed-human', 'mixed-range', 'processing-barrier')
++              expect(log).not_to include('invalid-')
++              if channel == '#vpsfree'
++                expect(log).to include('announced commit (1 ignored)', 'force-human')
++                expect(log).not_to include('mixed-ignored', 'all-ignored', 'force-ignored', 'ignored-issue')
++              else
++                expect(log).to include('mixed-ignored', 'all-ignored-subject', 'ignored-issue')
++              end
++            end
++          end
++        end
++      end
++    '';
++  }
++)

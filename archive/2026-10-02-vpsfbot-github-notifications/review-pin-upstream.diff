@@ -1,0 +1,195 @@
+diff --git a/.github/workflows/integration-tests.yml b/.github/workflows/integration-tests.yml
+index 7581bf6..70dc61f 100644
+--- a/.github/workflows/integration-tests.yml
++++ b/.github/workflows/integration-tests.yml
+@@ -1,6 +1,13 @@
+ name: Integration Tests
+ 
+ on:
++  workflow_dispatch:
++    inputs:
++      stop_on_failure:
++        description: Stop scheduling after the first unexpected result
++        required: true
++        default: false
++        type: boolean
+   push:
+     paths:
+       - .github/workflows/integration-tests.yml
+@@ -26,7 +33,7 @@ jobs:
+ 
+     steps:
+       - name: Checkout bot
+-        uses: actions/checkout@v6
++        uses: actions/checkout@v7
+         with:
+           fetch-depth: 1
+ 
+@@ -51,38 +58,72 @@ jobs:
+ 
+           find "$gcroot_dir" -mindepth 1 -maxdepth 1 -exec rm -rf -- {} +
+ 
++      - name: Prepare test state
++        id: prepare-tests
++        uses: vpsfreecz/vpsadminos/.github/actions/prepare-test-state@staging
++
+       - name: Run tests
+         id: run-tests
+         timeout-minutes: 320
+         shell: bash
++        env:
++          STOP_ON_FAILURE: ${{ github.event.inputs.stop_on_failure || 'false' }}
+         run: |
+           set -o pipefail
+-          rm -rf /tmp/os-test-runner
+-          ./test-runner.sh test -f --jobs auto \
+-            -t ci \
+-            --state-dir /tmp/os-test-runner \
+-            | tee test.log
++
++          args=(
++            test
++            -f
++            --jobs auto
++            -t ci
++            --state-dir "$TEST_RUNNER_STATE_DIR"
++          )
++
++          if [[ "$STOP_ON_FAILURE" == "true" ]]; then
++            args+=(--stop-on-failure)
++          fi
++
++          ./test-runner.sh "${args[@]}" | tee test.log
++
++      - name: Upload full test logs
++        id: upload-test-logs
++        if: >-
++          (failure() || cancelled()) &&
++          steps.prepare-tests.outcome == 'success' &&
++          steps.run-tests.outcome != 'skipped'
++        uses: vpsfreecz/vpsadminos/.github/actions/upload-test-logs@staging
++        with:
++          name: vpsfree-irc-bot-test-logs-${{ github.run_id }}
++          paths: |
++            ${{ steps.prepare-tests.outputs.state-directory }}/**/*.log
++            ${{ steps.prepare-tests.outputs.state-directory }}/**/*.txt
+ 
+       - name: Evaluate test results
+-        if: always()
++        if: >-
++          always() &&
++          steps.prepare-tests.outcome == 'success' &&
++          steps.run-tests.outcome != 'skipped'
+         uses: vpsfreecz/vpsadminos/.github/actions/evaluate-test-results@staging
+         with:
+           log-file: test.log
+ 
+       - name: Summarise test logs
+-        if: always()
++        if: >-
++          always() &&
++          steps.prepare-tests.outcome == 'success' &&
++          steps.run-tests.outcome != 'skipped'
+         uses: vpsfreecz/vpsadminos/.github/actions/summarise-test-logs@staging
+         with:
+-          logs-root: /tmp/os-test-runner
++          logs-root: ${{ steps.prepare-tests.outputs.state-directory }}
+ 
+-      - name: Upload full test logs
+-        if: failure()
+-        uses: vpsfreecz/vpsadminos/.github/actions/upload-test-logs@staging
++      - name: Cleanup test state
++        if: always()
++        uses: vpsfreecz/vpsadminos/.github/actions/cleanup-test-state@staging
+         with:
+-          name: vpsfree-irc-bot-test-logs-${{ github.run_id }}
+-          paths: |
+-            /tmp/os-test-runner/**/*.log
+-            /tmp/os-test-runner/**/*.txt
++          state-directory: ${{ steps.prepare-tests.outputs.state-directory }}
++          prepare-outcome: ${{ steps.prepare-tests.outcome }}
++          test-outcome: ${{ steps.run-tests.outcome }}
++          upload-outcome: ${{ steps.upload-test-logs.outcome }}
+ 
+       - name: Cleanup per-user Nix gcroots
+         if: always()
+diff --git a/flake.lock b/flake.lock
+index 2604329..7bee3db 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -76,11 +76,11 @@
+     },
+     "nixpkgsUnstable": {
+       "locked": {
+-        "lastModified": 1781074563,
+-        "narHash": "sha256-md8WlXOlfnIeHeOScMTTHFyf2d6iaTwPl2apR5EQ3P4=",
++        "lastModified": 1786106723,
++        "narHash": "sha256-zDSUbpoeo/9ZmD2+wXnzxoo1+uhL8vxc0b8yuYMKYq0=",
+         "owner": "NixOS",
+         "repo": "nixpkgs",
+-        "rev": "9ae611a455b90cf061d8f332b977e387bda8e1ca",
++        "rev": "f13ff45afd1bb73e640eaa08a7066dbed07e3238",
+         "type": "github"
+       },
+       "original": {
+@@ -92,11 +92,11 @@
+     },
+     "nixpkgs_2": {
+       "locked": {
+-        "lastModified": 1780902259,
+-        "narHash": "sha256-q8yYEC5f1mFlQO9RGna4LTc9QrcvWunX6FYp83munkQ=",
++        "lastModified": 1786201459,
++        "narHash": "sha256-CiOTEjmwAmG2AWnaIno9YaCJJmpca2FXPhMAsnrolCg=",
+         "owner": "NixOS",
+         "repo": "nixpkgs",
+-        "rev": "bd0ff2d3eac24699c3664d5966b9ef36f388e2ca",
++        "rev": "8b8c811c7c2541c30382c5de7ed26be055569c60",
+         "type": "github"
+       },
+       "original": {
+@@ -146,11 +146,11 @@
+         "vpsadminos": "vpsadminos"
+       },
+       "locked": {
+-        "lastModified": 1781272603,
+-        "narHash": "sha256-IC+xuW1viS/f/70jbPzSQuNjYodnuJsR5Wm34ak9n24=",
++        "lastModified": 1785850721,
++        "narHash": "sha256-5MfntVa4kDeE1MjIAIMDlGk3X7fJ6BzS7GWW0mCEwuk=",
+         "owner": "vpsfreecz",
+         "repo": "vpsadmin",
+-        "rev": "bb38a42cde3a991a6434073403f0953c579a461e",
++        "rev": "3f9b68adb97b7f43df929a85fc172d9d11e15211",
+         "type": "github"
+       },
+       "original": {
+@@ -168,11 +168,11 @@
+         "ruby-lxc": "ruby-lxc"
+       },
+       "locked": {
+-        "lastModified": 1781261055,
+-        "narHash": "sha256-Y7FLO10JwU3bo0j6dRHboubKAP8VRxxnaiD2NshG+Kc=",
++        "lastModified": 1786367885,
++        "narHash": "sha256-HOL3ACMUyRFhA4Cd2zk5qhnUf0zaEifHsQv86hwHgSc=",
+         "owner": "vpsfreecz",
+         "repo": "vpsadminos",
+-        "rev": "6f9b2c755143197bd9c3452e1c0121b22e978c4d",
++        "rev": "67fcc17372d175b036706a1459a8b471bfc225e0",
+         "type": "github"
+       },
+       "original": {
+diff --git a/tests/suite/vpsadmin-events.nix b/tests/suite/vpsadmin-events.nix
+index c801c75..6fcb16a 100644
+--- a/tests/suite/vpsadmin-events.nix
++++ b/tests/suite/vpsadmin-events.nix
+@@ -274,7 +274,10 @@ import ../make-test.nix (
+               mitigated_since: Time.now - 1800
+             )
+           end
+-          advisory.publish!(published_by: admin)
++          advisory.publish!(
++            expected_content_revision: advisory.content_revision,
++            published_by: admin
++          )
+           puts JSON.dump(
+             id: advisory.id,
+             summary: summary,
