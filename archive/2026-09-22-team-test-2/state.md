@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: archived
 ---
 
 # 2026-09-22-team-test-2
