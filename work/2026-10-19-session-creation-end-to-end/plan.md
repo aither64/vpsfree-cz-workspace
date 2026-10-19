@@ -15,17 +15,24 @@ inheritance. Existing schema-1/2/3 journal compatibility and strict rejection of
 malformed state remain. Older broken Go readers remain incompatible with explicit
 provider journals; rollback must retain a corrected compatible reader.
 
-Lead owns design and implementation; retained root is initially idle and receives
-coordinator notices, roster null. Use fresh review/verification utilities under
+The handoff also records ordinary deletion missing an alternate-provider root.
+Correct retirement's provider filter within the generic runtime so the accepted
+fixture deletion/stale-retry gate can complete normally. Preserve exact root,
+directory, source, ambiguity and idle checks; no native, dependency or persistent
+format change. Review this product correction before its packaged acceptance.
+
+The retained managed lead now owns design and implementation after the explicit
+takeover; the external lead observes only, roster null. Use fresh review/verification utilities under
 installed policy, without adding a team. Initial native root creation is session
 setup; this initial plan/state commit precedes project edits and the requested
 external deletion/deployment. Keep source and evidence isolated from other work.
 
-Remove only stuck request 61cdf917-6900-4fa3-89a0-bf8b059db8c3 and its destination
-2026-10-19-haveapi-async-client-plan through ordinary delete, including existing
-root/team. User said: “deal also with the queued creation request, get rid of it”.
-Do not retry it or change its source or older unrelated requests. Prove stale
-retry cannot recreate it. Preserve normal private recovery and feature refs.
+The requested removal of request 61cdf917-6900-4fa3-89a0-bf8b059db8c3 and its
+destination 2026-10-19-haveapi-async-client-plan is complete through normal delete.
+User said: “deal also with the queued creation request, get rid of it”. Preserve
+its private recovery and feature refs. Never retry it, repeat its deletion or
+change its source or older unrelated requests. Prove stale retry refusal only on
+a disposable fixture created by this suite.
 
 Implement tests across form, naming, durable admission, Ruby initializer/journal,
 native root/team, initial turn, completion proof, redirect, transcript and a

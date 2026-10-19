@@ -1,0 +1,189 @@
+commit ea650c34c56eeb16ce0cfd330e5e9cb1b25c46be
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 18:32:35 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 18:32:35 2026 +0200
+
+    host: refresh systemd instance links across package switches
+    
+    Systemd can leave instance aliases and enablement links pointing directly
+    at an older Nix package. Once that package is collected, an instance link
+    shadows the valid current template and prevents the provider worker from
+    starting.
+    
+    Refresh existing packaged-unit links through the stable profile and local
+    templates during activation. Preserve custom units and disabled workers.
+    Exercise collected-package links in the host regression and packaged
+    creation acceptance before checking usable conversations.
+
+diff --git a/docs/workspace-portal.md b/docs/workspace-portal.md
+index 56a145b..a07a11d 100644
+--- a/docs/workspace-portal.md
++++ b/docs/workspace-portal.md
+@@ -446,6 +446,12 @@ an older package; recover by repeating the same switch or selecting a newer
+ package. Commands waiting on a transition lock reject a generation change and
+ must be run again.
+ 
++Profile activation also refreshes existing systemd instance and enablement links
++that point into older dev-workspace packages. They follow the stable profile or
++local unit template, so collecting an older package does not shadow the current
++template with a broken instance. Disabled services remain disabled, and custom
++unit files or links are preserved.
++
+ ### Switching while Codex threads are active
+ 
+ Packages publishing `livePackageSwitchPolicy = 1` can switch while threads are
+diff --git a/libexec/workspace-host b/libexec/workspace-host
+index ee64f0d..be6d9c0 100755
+--- a/libexec/workspace-host
++++ b/libexec/workspace-host
+@@ -1111,9 +1111,11 @@ module DevWorkspaceHost
+       selected_catalog.provider_programs.each_key do |program|
+         atomic_symlink(File.join(@profile, 'bin', program), File.join(bin, program))
+       end
+-      Dir[File.join(@profile, 'share/systemd/user/workspace-*')].each do |source|
++      packaged_units = Dir[File.join(@profile, 'share/systemd/user/workspace-*')]
++      packaged_units.each do |source|
+         atomic_symlink(source, File.join(units, File.basename(source)))
+       end
++      refresh_systemd_instance_links(units, packaged_units)
+       selected_catalog.skills.each do |skill, source|
+         raise Error, "packaged skill is not a directory: #{source}" unless File.directory?(source)
+         atomic_symlink(source, File.join(@skills, skill))
+@@ -1142,6 +1144,32 @@ module DevWorkspaceHost
+       end
+     end
+ 
++    def refresh_systemd_instance_links(units, packaged_units)
++      names = packaged_units.map { |source| File.basename(source) }
++      links = Dir[File.join(units, 'workspace-*')]
++      links.concat(Dir[File.join(units, '*.wants/workspace-*')])
++      links.concat(Dir[File.join(units, '*.requires/workspace-*')])
++      links.each do |link|
++        next unless File.symlink?(link)
++
++        name = File.basename(link)
++        template = name.include?('@') ? "#{name.split('@', 2).first}@#{File.extname(name)}" : name
++        next unless names.include?(template)
++
++        # systemctl can retain a canonical store target for both the instance
++        # alias and its enablement link. It can already be dangling after GC.
++        target = File.expand_path(File.readlink(link), File.dirname(link))
++        next unless target.match?(%r{\A/nix/store/[^/]+-dev-workspace-[^/]+/share/systemd/user/#{Regexp.escape(template)}\z})
++
++        source = if File.dirname(link) == units
++                   File.join(@profile, 'share/systemd/user', template)
++                 else
++                   File.join(units, template)
++                 end
++        atomic_symlink(source, link)
++      end
++    end
++
+     def stop_auto_archive_services(entries = registry.entries)
+       return if @auto_archive_stopped
+       template = File.join(@home, '.config/systemd/user/workspace-auto-archive@.timer')
+diff --git a/nix/tests/session-creation.nix b/nix/tests/session-creation.nix
+index 4003269..26a3634 100644
+--- a/nix/tests/session-creation.nix
++++ b/nix/tests/session-creation.nix
+@@ -244,7 +244,19 @@ pkgs.testers.runNixOSTest {
+             + " && printf '/worktrees/\\n' > .gitignore && git add .gitignore && git commit -m 'fixture: workspace' "
+             + "&& git remote add origin git@github.com:fixture/workspace.git && git push origin master")
+         user("nix-env --profile " + state + "/profile --set " + package)
++        # Reproduce an old systemctl-created instance alias whose package was
++        # collected. Ordinary registration must repair it before creation starts.
++        unit_dir = "/home/developer/.config/systemd/user"
++        provider_unit = "workspace-codex-provider@fixture.service"
++        stale_template = "/nix/store/00000000000000000000000000000000-dev-workspace-0.2.0/share/systemd/user/workspace-codex-provider@.service"
++        user("mkdir -p " + unit_dir + "/default.target.wants && ln -s " + stale_template + " " + unit_dir + "/" + provider_unit
++            + " && ln -s " + stale_template + " " + unit_dir + "/default.target.wants/" + provider_unit)
+         user(package + "/bin/workspace-host register fixture " + root + " --hostname fixture.workspace.example.test")
++        assert user("systemctl --user show " + provider_unit + " -p LoadState --value").strip() == "loaded"
++        user("systemctl --user is-enabled " + provider_unit)
++        user("systemctl --user start " + provider_unit)
++        user("systemctl --user is-active " + provider_unit)
++        assert user("readlink -f " + unit_dir + "/" + provider_unit).strip() == package + "/share/systemd/user/workspace-codex-provider@.service"
+         for service in ["workspace-codex@fixture", "workspace-portal@fixture", "workspace-tmux@fixture", "workspace-router"]:
+             machine.wait_until_succeeds(user_prefix + "systemctl --user is-active " + service)
+ 
+diff --git a/test/workspace_host/registry_extensions_test.rb b/test/workspace_host/registry_extensions_test.rb
+index 3e3b517..ab97789 100644
+--- a/test/workspace_host/registry_extensions_test.rb
++++ b/test/workspace_host/registry_extensions_test.rb
+@@ -3,6 +3,75 @@
+ require_relative '../support/workspace_host_test_case'
+ 
+ class WorkspaceHostTest < Minitest::Test
++  def test_install_links_repairs_collected_package_instances_and_enablement
++    Dir.mktmpdir do |directory|
++      package = make_package(directory, 'current')
++      env = host_environment(directory, config: File.join(directory, 'registry.json'))
++      profile = env.fetch('DEV_WORKSPACES_PROFILE')
++      FileUtils.mkdir_p(File.dirname(profile))
++      File.symlink(package, profile)
++      units = File.join(directory, '.config/systemd/user')
++      packaged = File.join(package, 'share/systemd/user')
++      FileUtils.mkdir_p(packaged)
++      FileUtils.mkdir_p(File.join(units, 'default.target.wants'))
++      FileUtils.mkdir_p(File.join(units, 'custom.target.requires'))
++      old = '/nix/store/00000000000000000000000000000000-dev-workspace-0.2.0/share/systemd/user'
++      cases = {
++        'workspace-codex-provider@example.service' => 'workspace-codex-provider@.service',
++        'workspace-portal@example.service' => 'workspace-portal@.service',
++        'workspace-auto-archive@example.timer' => 'workspace-auto-archive@.timer',
++        'workspace-router.service' => 'workspace-router.service'
++      }
++      cases.each do |name, template|
++        File.write(File.join(packaged, template), "[Unit]\n")
++        paths = [File.join(units, name), File.join(units, 'default.target.wants', name),
++                 File.join(units, 'custom.target.requires', name)]
++        paths.each { |path| File.symlink(File.join(old, template), path) }
++      end
++      host = UnregisterHost.new(env:, out: StringIO.new, err: StringIO.new)
++      2.times do
++        host.send(:install_links, package:)
++        cases.each do |name, template|
++          [units, File.join(units, 'default.target.wants'), File.join(units, 'custom.target.requires')].each do |parent|
++            link = File.join(parent, name)
++            assert_equal(File.join(packaged, template), File.realpath(link))
++            refute(File.readlink(link).start_with?('/nix/store/'), link)
++          end
++        end
++      end
++      assert_empty(host.commands)
++      refute(File.symlink?(File.join(units, 'workspace-codex-provider@disabled.service')))
++    end
++  end
++
++  def test_install_links_preserves_custom_instances_and_unrelated_units
++    Dir.mktmpdir do |directory|
++      package = make_package(directory, 'current')
++      env = host_environment(directory, config: File.join(directory, 'registry.json'))
++      profile = env.fetch('DEV_WORKSPACES_PROFILE')
++      FileUtils.mkdir_p(File.dirname(profile))
++      File.symlink(package, profile)
++      units = File.join(directory, '.config/systemd/user')
++      packaged = File.join(package, 'share/systemd/user')
++      FileUtils.mkdir_p(packaged)
++      FileUtils.mkdir_p(File.join(units, 'default.target.wants'))
++      File.write(File.join(packaged, 'workspace-codex-provider@.service'), "[Unit]\n")
++      regular = File.join(units, 'workspace-codex-provider@custom.service')
++      File.write(regular, "custom unit\n")
++      custom = File.join(units, 'default.target.wants/workspace-codex-provider@custom.service')
++      File.symlink('/custom/provider.service', custom)
++      unrelated = File.join(units, 'workspace-other@example.service')
++      absent = '/nix/store/00000000000000000000000000000000-dev-workspace-0.2.0/share/systemd/user/workspace-other@.service'
++      File.symlink(absent, unrelated)
++      host = UnregisterHost.new(env:, out: StringIO.new, err: StringIO.new)
++      host.send(:install_links, package:)
++      assert_equal("custom unit\n", File.read(regular))
++      assert_equal('/custom/provider.service', File.readlink(custom))
++      assert_equal(absent, File.readlink(unrelated))
++      assert_empty(host.commands)
++    end
++  end
++
+   def test_auto_archive_units_are_enabled_and_removed_on_rollback
+     Dir.mktmpdir do |directory|
+       root = make_workspace(directory, 'workspace')

@@ -1,248 +1,166 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # Session creation end-to-end
 
-Phase: final source is deployed and the complete packaged and actual live
-creation/follow-up matrix passed. Default/alternate/team/fork/approved-plan
-paths have native/durable/identity proofs. Conditional master integration and
-normal reservation release are now authorized; admitted fixture cleanup and
-final integration/CI/frontier checks remain. Current session stays open.
-Keep this initiative open. No team addition or native Codex patch/rebuild.
+Phase: complete. The fixed version is deployed and usable. Independent review,
+full packaged acceptance, actual old-reader browser regression, all four live
+creation/follow-up pairs, all three exact master integrations, final master CI,
+normal fixture cleanup and normal aitherdev reservation release are complete.
+No work or blocker remains. This session stays open for follow-up conversation.
 
-- [x] Correct the journal reader and add producer/consumer regression.
-- [x] Implement mandatory packaged whole-process creation suite and CI.
-- [x] Urgently deploy95; prove actual default and alternate/team creation/follow-up.
-- [x] Correct fork launch/interrupted-recovery settings and review all lanes.
-- [x] Repair live stale provider unit; implement/review permanent package-link fix.
-- [x] Consolidate/publish matching consumers; review history/deployed compatibility.
-- [x] Build/approve exact final system/profile preparations outside claims.
-- [x] Pass exact final packaged creation and required CI.
-- [x] Prove the old-reader control fails during real browser creation.
-- [x] Activate successor and prove live default/alternate/team/fork/plan acceptance.
-- [ ] Clean admitted fixtures and conditionally integrate three master branches.
-- [ ] Accept final CI/ancestry/live identities and normally finish the reservation.
+- [x] Correct the Ruby-producer/Go-reader provider contract and regress it.
+- [x] Add mandatory packaged browser-to-native whole-process acceptance and CI.
+- [x] Correct all-provider retirement, stale deleted retry and frozen fork settings.
+- [x] Repair the live provider unit; deploy permanent managed-link repair.
+- [x] Review complete final histories, compatibility, all lanes and consumer pins.
+- [x] Pass exact full packaged suite and real old-reader negative control.
+- [x] Deploy exact matching system/profile and verify four real live scenario pairs.
+- [x] Integrate all three exact reviewed heads into remote master.
+- [x] Pass final master CI, including host activation/rollback and creation.
+- [x] Normally delete all seven exact admitted fixtures and retain recovery.
+- [x] Normally release reservation931de728-ff39-47c5-bf5b-f54ec2d6a224.
 
-## Identity and authorization
+## Identity and user direction
 
-Verified session2026-10-19-session-creation-end-to-end, workspace
-/home/aither/workspace/ai/vpsfree.cz. Managed lead01a153f2-476c-7710-a39f-75ad837fbe94;
-both environment values agree. Live roster null; lead owns design and code.
-External lead observes. No current-session lifecycle action is authorized.
+Bound session2026-10-19-session-creation-end-to-end in
+/home/aither/workspace/ai/vpsfree.cz. Retained managed lead
+01a153f2-476c-7710-a39f-75ad837fbe94; current and both environment markers
+match. Live roster null; lead owned design and implementation. External lead
+observes. No root team member was added, no native Codex patch/rebuild occurred,
+and no lifecycle action was performed on this current session.
 
-User accepted the whole-process plan and said "Implement the plan." Urgent
+User accepted the whole-process plan and said "Implement the plan." The urgent
 "deploy it asap ... if you later find other bugs to fix, you can always redeploy"
-authorized immediate95 deployment and later fixes. Conditional "when this is
-fixed, deployed and verified, you can merge it into default branches and release
-aitherdev" covers dev-workspace, workspace and vpsfree-cz-configuration, each
-refs/heads/master. Full final acceptance precedes integration/release.
+covered immediate95 restoration. Conditional "when this is fixed, deployed and
+verified, you can merge it into default branches and release aitherdev" covered
+dev-workspace, workspace and vpsfree-cz-configuration, refs/heads/master. All
+final acceptance gates were satisfied before conditional integration/release.
+See [takeover](takeover-acknowledged.md), [plan](plan.md), [design](design.md).
 
 Discarded request61cdf917-6900-4fa3-89a0-bf8b059db8c3 and destination
-2026-10-19-haveapi-async-client-plan were fully removed normally after exact-root
-archival. No journal/process remains. NEVER retry or delete them again. Preserve
-their original source. Test fixture cleanup is limited to exact admitted IDs.
+2026-10-19-haveapi-async-client-plan remain fully removed. No retry or repeated
+deletion was attempted. Their original user source remains untouched. Only the
+seven admitted disposable fixture roots were cleaned; current session preserved.
 
-## Final committed sources
+## Final integrated sources
 
-All own branches/worktrees use the initiative slug.
+Each feature branch/worktree uses the initiative slug under worktrees/SLUG/.
+Feature and source-evidence refs are retained; current session/worktrees stay open.
 
-| Repository | Review base | Published head |
+| Repository | Review base | Integrated exact head |
 | --- | --- | --- |
 | dev-workspace | 7ceb6b943c7fa6e6db2b42b1fc2d9732c6413e03 | ea650c34c56eeb16ce0cfd330e5e9cb1b25c46be |
 | workspace | 051511cad3ea5a41dd13cda415a9ea7a51ffb534 | 45605814f8baa3d92ab3c2a57d87fdec7e2850d4 |
 | vpsfree-cz-configuration | 3195c4451dea8ffaff17d2974a5eca67d5d829a0 | 6fecc88dc38c0826ba668ba83973b8e1fd421388 |
 
 Runtime seven coherent units:98ae6b3 reader;bc29fab suite/CI;95cc08d retirement;
-11620fc stale retry;814568f HTTP restart readiness;c5f86ee complete frozen fork
-launch/recovery;ea650c3 stable instance/enablement links. Deployed95/published814
-remain ancestors. Reviewed901 and tested360 source refs retained separately.
-Each consumer has ONE consolidated final pin. Normal confctl generation preserves
-full7ceb→ea changelog and mandatory hooks. Workspace rebase over051511ca affects
-only4 work/ tracking paths. All graph nodes/edges except selected runtime remain;
-extension767dfd58, codex-webc064ce09 and native0.163 unchanged. Shared root has
-extensive foreign changes; preserve them, never reset/clean/stash/switch it.
+11620fc stale retry;814568f HTTP restart readiness;c5f86ee frozen fork
+launch/recovery;ea650c3 stable instance/enablement links. No migrations. Both
+consumers contain one consolidated runtime pin. Unrelated graph nodes/edges,
+extension767dfd58, codex-webc064ce09 and native0.163.0 remain unchanged.
 
-Same independent /root/creation_final_review, retained cataloggpt-6-astra/xhigh,
-all4 lanes/no findings. Reports final-review-stable-units.md and
-final-review-selection-ea650c3.md explicitly accept complete histories, no
-migrations/repeated pins and deployed-state compatibility. New source-bound
-review-receipt-ea650c3-*.json and all3 exact comparisons retained. Consumers are
-nonancestor replacements of actual deployed95 selections and require normal
-reviewed_change lineage after later successful final deployment. Original ranges:
-workspace87620e39..d27d7615; configuration3195c445..a0970c69. Retain original refs,
-artifacts and range-diffs. No default integration yet.
+Same independent reviewer/root/creation_final_review used installed-catalog
+Astra/xhigh. [Runtime review](final-review-stable-units.md) and
+[final selections/history/compatibility review](final-review-selection-ea650c3.md)
+accept all four lanes, complete history, no migrations, consolidated pins and
+actual deployed-state replacements, with no findings. Source-bound receipts and
+complete comparison artifacts retained. No substantive source changed afterward.
 
-## Checks and active verification
+Integration48b66593-a73f-4634-909f-798d6ab1a348 completed17:15:37Z. All three
+normal merge jobs succeeded at the exact reviewed/deployed heads. Automatic
+tracking publication5cfc24d8 followed. Native event
+659d3790-db6e-1b8d-a1fc-12fb68b2dc0c/generation0 was acknowledged and renewed.
+[Integration summary](integration/48b66593-a73f-4634-909f-798d6ab1a348/summary.md).
 
-Host quick4tests78assertions pass0.123s, new2tests56assertions pass0.072s. A no-op
-refresh counterfactual failsENOENT at the dangling provider alias as expected.
-Ruby/Node syntax, Nix parse and whitespace pass. Optional nixfmt1.4 flags existing
-whole-file style; runtime declares no formatter hook. Consumer composition and
-workspace declared-shell4tests19assertions pass1.363s; config hooks pass with only
-normal generated-message width warnings.
+## Verification accepted
 
-Fresh Luna/low utility /root/creation_verify_ea650c3 owns the RELATED final batch,
-full_access/never, catalog utilitymax1. Exact driver build passed0 in355s; evidence
-creation-verify-ea650c3/driver.log and driver-result.json. Positive CI39286766116
-executes exactea; fast/archive passed, creation VM running. No duplicate local
-positive while its creation job executes. Expected positive derivation:
-/nix/store/x4k6pbiwmhnqa1a066lv0q7q8nbgix9n-vm-test-run-dev-workspace-session-creation.drv.
-Require exact CI derivation equality before reusing its positive run.
+[Final acceptance manifest](final-acceptance-ea650c3.json) binds exact source,
+reviews, deployment, packaged regression, real live matrix and cleanup.
 
-Parent froze /tmp/session-creation-old-reader-4src3o_4 from exactea gitarchive.
-old-reader-source-content-proof.json independently compares498 tracked entries;
-only old provenance.go plus removed new compile-time Provider contract differ.
-Native unchanged. First control stopped before evaluation because an unrelated
-/tmp/.git diverted implicit .# lookup; preserve its setup failure, not regression
-proof. Explicit path: quick evaluation passed; utility now runs ONE corrected
-negative command with separate old-reader-negative-path.log/result.json. Expected
-negative drvqlav0sp2703g0ly3az9mxb2c4mywslai. Accept only actual browser/runtime
-failure containing original journal error, never compilation/setup failure.
-The control may run after driver pass while positive CI runs; both gates required.
+Quick Ruby/Node syntax, Nix parsing, whitespace and consumer composition passed.
+Host tests4/78assertions and new stale-unit tests2/56assertions passed; no-op repair
+counterfactual failedENOENT. Workspace declared-shell deployment contract4/19
+assertions passed. Configuration mandatory hooks passed with only normal generated
+message-width warnings. No hook was bypassed.
 
-Earlier901/360 VMs/CI failed only test interaction assertions after normal creation,
-team/fork/plan passed.360 raw log proves root settings POST/api/sessions/SLUG/settings
-returned200 and renderedxhigh while test waited wrong/codex/... URL. One-line
-assertion corrected/folded into c5f86ee; effective native poll retained. Those
-failed runs do not certify finalea. Both old CI runs are now terminal.
+Exact branch CI39286766116 passed. Final master
+[CI39292418228](https://github.com/aither64/dev-workspace/actions/runs/39292418228)
+passed all fast, archive, host and creation jobs at17:31:46Z. Actual creation drv
+/nix/store/x4k6pbiwmhnqa1a066lv0q7q8nbgix9n-vm-test-run-dev-workspace-session-creation.drv
+matches the local driver and accepted branch run. All nine packaged scenarios
+passed: stale managed units; default/custom/solo/upload/notification/follow-up;
+auto/sensitive/team; alternate/fork/approved plan/source; loaded fork settings;
+errors/naming retry; before-native restart/retry; lost accepted reply idempotency;
+normal deletion and stale retry409. The browser traverses the shipped package,
+actual Ruby journal and stock native AppServer with a deterministic loopback model.
 
-## Actual live deployment and service repair
+The actual browser negative control restored only the old reader and removed its
+compile-only new-field contract; all498 source entries were compared. It reached
+runtime and failed with "creation journal has missing or unknown fields" at
+requestfa4e27f4-de2f-4221-8ac2-90331d53df2a, exit1 after491s. Earlier source-URI
+setup failure and a misleading bounded watcher summary remain retained; parent
+full-log inspection accepted the actual terminal error. No rerun was needed.
+[Source-bound regression proof](creation-ea650c3-regression-proof.json).
 
-Reservation931de728-ff39-47c5-bf5b-f54ec2d6a224, canonicalvpsfree:aitherdev,
-deploy_first, deployed_review revision4. Latest authoritative status3745 retains
-original successful systemjob5cd6bb2b-ddd8-4c10-bcba-5548539bc2e5 and profilejob
-3cffaee7-c421-4c25-ac86-c4d9d71b6928. Selected95 package
-/nix/store/456bih1ijb0q5p40cxn4iry0rm3sv6x8-dev-workspace-0.2.0;
-profiletoken458ace91c467612ba503ea25804f4fe55ddf5b5abf7d539c19c9f2f99a1b0a11.
-Both system identities
-/nix/store/dmhqbsgwfikx8d7mb36c416cgrydkgjb-nixos-system-aitherdev-26.05.20261018.8ce7336.
+Real deployed default-auto, alternate-team, alternate-fork and alternate-plan
+browser/native pairs passed17:05–17:06Z. Completed initial/follow-up turns,
+providers, native/saved model-effort, exact active root/member sets, raw plan/hash
+and source preservation are bound in [live proof](live-final-accepted-summary.json).
+The plan collector initially required a raw trailing newline in the derived CLI
+goal. Read-only correction verified the exact existing canonical goal/journal
+hash while retaining raw plan/hash, against the SAME fixture. No browser/admission
+or follow-up was rerun. Original failed-batch timing/log remains retained.
 
-User reported provider instance alias and default.target.wants into collected
-9krkxik0 package. Both exact links repaired to stable selected profile/local
-template; daemon-reload/reset-failed/start returned0. Unit loaded/active/running,
-PID1915581 at16:23:42Z and remains so. Original scoped provider operation
-791a52fb-55d6-4a25-b375-91e9e14d7ec7 applied16:24:41Z. Public workspace default
-stillopenai; user rust session selectedcodex-lb as originally requested. No
-operation canceled/retried/redirected. live-provider-unit-repair.json and
-live-provider-unit-after-recovery.json retain actual evidence. Sourceea repairs
-managed existing links without enabling disabled workers or changing custom units.
-Packaged VM seeds this exact stale-instance pattern before real registration.
+## Executed rollout and release
 
-Actual95 default-auto and alternate-team creation/follow-up/native proofs passed.
-Old fork became usable but failed high-vs-xhigh settings; plan never ran. Preserve
-all old fixtures/evidence. Final runner run-live-acceptance.py uses freshfinal-*
-labels and actual default/alternate/team/fork/plan browser/native pairs after new
-activation, credential read privately via verified rootSSH before Chromium launch.
-No final fixtures admitted yet. Preserve original user source/current root.
+[Rollout](rollout.md) owns actual ordered actions and recovery. Systemjob
+08a05ac6-ff23-4957-8cf9-b2eb77b20b41 and dependent profilejob
+8d19fd42-f101-4a63-a3b7-220399170df4 succeeded/applied. Selected package:
+/nix/store/zylvmqsls49lbf4937lq434m52sfyhfg-dev-workspace-0.2.0.
+System/running profile:
+/nix/store/svxnhf0ws54wc130bgnn853smdjg1l65-nixos-system-aitherdev-26.05.20261018.8ce7336.
+Native AppServer3387667 and tmux435397 stayed active unchanged. Provider worker
+1915581 stayed active after the immediate repair; original scoped provider
+operation791a52fb-55d6-4a25-b375-91e9e14d7ec7 applied. Workspace defaultopenai
+and alternatecodex-lb preserved. All eight actual instance/enablement links
+resolve through stable profile/templates to the selected package; see
+[deployed unit proof](successor-ea650c3-deployed-unit-proof.json).
 
-## Exact successor artifacts (not submitted)
+All seven exact allowlisted fixture roots completed ordinary confirmed deletion
+by17:21:17Z, no force. Recovered manifests/root IDs match admissions; no active
+tracking or unfinished fixture lifecycle journal remains. Initial non-TTY attempt
+refused before admission; ordinary PTY confirmation then succeeded. Exact recovery
+and operation IDs: [cleanup proof](live-fixture-cleanup-summary.json).
 
-Both preparations succeeded outside claims; parent observed under visible fallback
-while utilitymax1 owned exact verification. Files successor-ea650c3-* preserve raw
-outputs, normalized snapshots, commands/timings, evidence and approvals. System
-171.238s snapshotsha256:19733423e65b5259e0892c2c2dd7b61f2c251762336acceab274e50ce34f53ac,
-artifact3f4b68833cbe7d8d971fbb7905d633992b8316e97d520b5f37d84be5ca0145c6,
-approval8b5143d9-3547-4842-a432-723174721f84. Profile371.455s snapshot
-sha256:02ecae5f87cebd66c1a95f729c83720ca4696c6a7f2379717805fcc54374f96b,
-artifactf93de59b823cad3a8b0697c8b2fbe713d521f41a6fa0084c5923d2bea150e357,
-candidate/nix/store/zylvmqsls49lbf4937lq434m52sfyhfg-dev-workspace-0.2.0,
-approval7bf0ccde-0990-497b-b3a5-a54dcec0f432. Exact source coverage and expected
-live95 identities verified. Selected coordination guide fully reread and compared
-unchanged before preparations. Superseded901 prepared/approved artifacts were
-never activated; keep immutable evidence separate.
+Reservation931de728-ff39-47c5-bf5b-f54ec2d6a224 is released at revision7 through
+normal finish requestb05e25a1-3316-42a5-9756-401f6c2b10af. Coordinator verified
+fresh remote ancestry for all three exact final owned heads, actual unowned
+inputs, settled jobs and unchanged live identities. Both nonancestor consumer
+ranges have exact approved reviewed_change receipts, creation-factor80 range
+diffs, independent compatibility/migration review and later successful deployment.
+Runtime95 remains an ancestor. Original deployed artifacts/evidence refs retained.
+[Release receipt](finish-ea650c3-result.json) and
+[authoritative completion proofs](finish-ea650c3-after-status.json).
 
-Next: accept exact positive/negative results, then submit normal system followed
-by dependent profile under SAME reservation. Prove actual final live matrix,
-clean only admitted fixtures, then authorized merge_only background integration
-all3 runtimefirst. Handle exact native handoff acknowledgement/generation and
-normal final CI/ancestry/live frontier/replacement proofs. Finish reservation only
-with explicit deployment/review acceptance; leave current session OPEN.
+## Documentation and retained history
 
-Detailed prior checkpoints are preserved verbatim in
-[through exactea preparation](checkpoints-through-ea650c3-preparation.md) and
-[through901 preparation](checkpoints-through-901-preparation.md). Design/rollout:
-[design.md](design.md), [rollout.md](rollout.md).
+Supported behavior is documented in runtime README.md,
+docs/session-preparations.md, docs/codex-providers.md and docs/workspace-portal.md.
+Those owning-project changes were included in final review; this last checkpoint
+only reconciles execution evidence and findings. Reusable environment lessons are
+in notes/dev-workspace/2026-10-19-creation-acceptance-observations.md. Raw test logs,
+failed attempts and GC roots stay local; compact evidence is published here.
+Shared master/index and all unrelated files are preserved; only owned records
+are included in final tracking publication.
+
+Historical timelines: [through901](checkpoints-through-901-preparation.md),
+[through final preparation](checkpoints-through-ea650c3-preparation.md),
+[through final acceptance/cleanup](checkpoints-through-final-acceptance.md).
+Original external handoff remains in handoff.md. Final [completion](completion.md).
+
+Next action: normal use. No implementation, review, CI, deployment, integration,
+approval, cleanup or reservation work remains. Leave this session open.
 
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-19-session-creation-end-to-end/
-
-## Final packaged acceptance gate passed
-
-CI39286766116 completed success at16:53:34Z, all fast/archive/creation checks.
-Its actual positive check drv exactly matches localx4k6pbiwmhnqa1a066lv0q7q8nbgix9n;
-all subtests including loaded helper, recovery, deletion and stale refusal passed.
-creation-ea650c3-check-receipt.json preserves reusable exact inputs. Corrected
-old-reader control exited1 after491s and reached real first browser creation.
-Complete-log inspection line1440 finds terminal failed status with exacterror
-"creation journal has missing or unknown fields". Its earlier running snapshot
-misled the watcher's bounded final summary; no rerun is needed. Exact request
-fa4e27f4-de2f-4221-8ac2-90331d53df2a and source-bound positive/negative proof are
-in creation-ea650c3-regression-proof.json. Parent accepts both required gates.
-Proceeding to normal system then dependent profile submission, same reservation.
-
-## Final activation submitted
-
-Normal systemjob08a05ac6-ff23-4957-8cf9-b2eb77b20b41 succeeded/applied,
-attemptab242d8b-649a-45f3-ac80-08e4f4d387f9. Both observed system identities now
-/nix/store/svxnhf0ws54wc130bgnn853smdjg1l65-nixos-system-aitherdev-26.05.20261018.8ce7336.
-Dependent profilejob8d19fd42-f101-4a63-a3b7-220399170df4 is executing under
-attempt1a83cde4-efe9-467a-846a-b684b53625ee. Same reservation retained.
-Fresh Luna/low utility/root/creation_live_ea650c3 owns only these exact jobs'
-observation and ONCE actual final live-browser/native matrix after bothsucceeded
-and exactpackage/nativePID/provider preflight. Native baseline AppServer3387667,
-tmux435397. Do not duplicate its live runner or cancel/retry any fixture.
-
-## Final deployment applied
-
-Profilejob8d19fd42-f101-4a63-a3b7-220399170df4 succeeded/applied17:03Z,
-attempt1a83cde4-efe9-467a-846a-b684b53625ee. Current packagezylvmqsls49lbf4937lq434m52sfyhfg
-selects reviewed/testedea650c34. Actual Codex3387667/tmux435397 stayed active;
-provider defaultopenai and alternatecodex-lb preserved, user scoped operation
-applied and untouched. Full final status and preflight under creation-live-ea650c3/.
-Parent separately proved all provider/codex/portal/tmux instance and enablement
-links resolve to the selected package; provider loaded/active/running. See
-successor-ea650c3-deployed-unit-proof.json. Live final runner now executing once.
-No default merge or reservationfinish yet.
-
-## Final actual live acceptance passed
-
-All4 browser scenarios completed at17:05–17:06Z. First3 native proof pairs passed
-immediately. Plan collector initially required a trailing raw-plan newline in
-the derived goal; production normalizedCreationGoal/read_goal deliberately
-strips ASCII boundary whitespace while retaining raw accepted plan/hash.
-Collector now verifies EXACT full canonical goal and frozen journal hash, keeping
-raw plan/hash assertion. Read-only correction passed0 in1.334s against the SAME
-existing plan fixture, no browser/admission/follow-up retry or product change.
-Original failed batch/log/timing stays retained. live-final-accepted-summary.json
-and all4 live-final-*-proof.json bind actual request/receipt/root/member/turn IDs,
-providers, saved/native model-effort, unique active ID sets, source preservation.
-Parent accepts final live matrix; conditional3master integration/release gate met.
-Cleanup only admitted old95/final fixtures, preserving original source/currentroot.
-
-## Final pre-merge acceptance inspection
-
-Lead freshly fetched all3 and verified clean exact heads/base-to-head diffs equal
-the complete independently reviewed artifacts. Runtime7coherent units; each
-consumer1consolidated pin; no migrations; exactdeployed95/814 lineage retained.
-Remote runtime7ceb, workspace051511ca, config3195 unchanged. Review, quick/full
-CI, old-reader failure, exact deployment and live matrix all accepted. Selected
-new-package guide reread/compared body unchanged; catalog now78b17455cc46db43ba4c164f152e0f03eb0deb7ca739763f2cd0aad9acf005e8.
-No native changes/rebuild or team changes. Launching normal merge_only background
-batch with exact checks/review receipts, runtime first and both matching consumer
-merges dependent. Fixture cleanup deferred until final integrated-source artifact
-identity is checked, so its exact admitted native proofs remain available; all
-cleanup remains required before completion/release. Current root/source retained.
-
-Background integration48b66593-a73f-4634-909f-798d6ab1a348 admitted schema2 at
-17:12:06Z, mode merge_only. Managed recipient is the verified retained root
-01a153f2-476c-7710-a39f-75ad837fbe94 (both native environment IDs match;
-background admission succeeded). Current phaseprepare is distinct from submitted
-merge jobs. Request integration-ea650c3-request.json retains actual conditional
-user direction and exact reviews/checks/live proofs. Native coordinator owns
-continuation; handle exact handoff event/generation on completion/attention.
-No new deployment is requested by this integration batch.
-
-## Integration 48b66593-a73f-4634-909f-798d6ab1a348
-
-Requested exact feature heads are integrated. See integration/48b66593-a73f-4634-909f-798d6ab1a348/summary.md
-and integration/48b66593-a73f-4634-909f-798d6ab1a348/result.json for operation receipts. Feature refs and session retained.
