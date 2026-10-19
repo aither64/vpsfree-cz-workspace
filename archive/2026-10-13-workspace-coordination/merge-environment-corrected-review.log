@@ -1,0 +1,487 @@
+OpenAI Codex v0.162.1
+--------
+workdir: /home/aither/workspace/ai/vpsfree.cz
+model: gpt-6-astra
+provider: codex-lb
+approval: never
+sandbox: read-only
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 01a139a6-7d74-7632-bc60-9b0a9953f213
+--------
+user
+Perform focused follow-up with retained Astra/xhigh/read-only settings. Read work/2026-10-13-workspace-coordination/merge-environment-corrected-review-brief.md and current committed runtime HEAD. Inspect correction against your Important cold-source ordering finding; all intended changes committed, corrected quick4/20 pass. No agents, mutations or long checks. Reuse completed unchanged lanes/history conclusions; return affected-lane findings and acceptance.
+codex
+I’ll read the correction brief and committed diff, then check whether the fix and regression test close the cold-source ordering gap. I’ll reuse the unchanged review conclusions.
+
+exec
+/run/current-system/sw/bin/bash -lc 'cat work/2026-10-13-workspace-coordination/merge-environment-corrected-review-brief.md && git --no-optional-locks -C worktrees/2026-10-13-workspace-coordination/dev-workspace rev-parse HEAD && git --no-optional-locks -C worktrees/2026-10-13-workspace-coordination/dev-workspace status --porcelain=v1 && git --no-optional-locks -C worktrees/2026-10-13-workspace-coordination/dev-workspace log --format=fuller --stat -2' in /home/aither/workspace/ai/vpsfree.cz
+ succeeded in 69ms:
+Review follow-up to your Important fresh-source ordering finding. Read final runtime HEAD and diff froma10af6c4; correction folded into same logical unmerged runtime commit. retain_commit when supplied initialization block uses ordinary worktree add --no-checkout, exact read-tree -mu to materialize committed files, then declared shell prepare and normal checkout --detach with real post-checkout under saved environment. No disabled hooks; target checkout under same env. New test test_fresh_merge_source_initializes_dependencies_before_real_checkout_hooks exercises source and target actual Git post-checkout with shell-initialized dependency and no inherited bundle. Corrected quick4/20 passes, syntax/diff clean; no schema change. Review only affected general/risk and architecture ordering path directly, no nested agents/mutations/longchecks. Recovery already accepted and completed original job, not repeated. Recovery final e188 differs623 only private registry send, directly verified. Keep prior completed review reports immutable. Assess whether cold-source sequence fully resolves finding and proportionality; parent will run real representative config preflight/package checks after acceptance.
+22e221618171e453cc04450e73efba6a477abc3e
+commit 22e221618171e453cc04450e73efba6a477abc3e
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 14 13:17:44 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 14 13:36:00 2026 +0200
+
+    coordination: prepare complete hook environments before merging
+    
+    Enter the declared repository shell so shell initialization installs and
+    exports its hook dependencies before admission. Check Overcommit loading
+    and SSH transport during preparation, and retain the runtime transport
+    path when applying the hook environment. Use the prepared environment for
+    target checkout hooks as well as merge and push hooks.
+    
+    Keep dependency installation outside Git claims and preserve the existing
+    artifact and worker formats for interrupted-operation recovery.
+
+ docs/coordination.md                        |   8 +++
+ libexec/workspace-coordination-execution.rb |  61 ++++++++++++++---
+ test/workspace_coordination_test.rb         | 100 ++++++++++++++++++++++++++++
+ 3 files changed, 160 insertions(+), 9 deletions(-)
+
+commit a10af6c4539c4c7a6a97a883d89825346d5451ad
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Tue Oct 13 23:22:42 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Tue Oct 13 23:22:42 2026 +0200
+
+    sessions: use the command runner for native provider arguments
+    
+    Provider-enabled session creation and terminal recovery called an
+    uninitialized runner when requesting workspace-host native arguments. Use
+    the retained command runner and unpack its stdout before validating the
+    JSON response, so terminal startup can resume the existing shared thread.
+    
+    Cover initial creation with configured provider arguments and reject invalid
+    arguments before terminal dispatch. State formats and recovery ownership
+    remain unchanged.
+
+ libexec/dev-session                    |  2 +-
+ test/dev_session/codex_runtime_test.rb | 99 ++++++++++++++++++++++++++++++++++
+ 2 files changed, 100 insertions(+), 1 deletion(-)
+
+exec
+/run/current-system/sw/bin/bash -lc 'git --no-optional-locks -C worktrees/2026-10-13-workspace-coordination/dev-workspace diff 5dd5f0c9e5c3679de3b5b5899eb7ef76c02db869..22e221618171e453cc04450e73efba6a477abc3e && git --no-optional-locks -C worktrees/2026-10-13-workspace-coordination/dev-workspace diff --check a10af6c4..HEAD' in /home/aither/workspace/ai/vpsfree.cz
+exec
+/run/current-system/sw/bin/bash -lc 'git --no-optional-locks -C worktrees/2026-10-13-workspace-coordination/dev-workspace diff a10af6c4..HEAD -- libexec/workspace-coordination-execution.rb docs/coordination.md' in /home/aither/workspace/ai/vpsfree.cz
+exec
+/run/current-system/sw/bin/bash -lc "rg --files work/2026-10-13-workspace-coordination -g 'merge-environment*' -g '"'!*.log'"'" in /home/aither/workspace/ai/vpsfree.cz
+ succeeded in 34ms:
+diff --git a/libexec/workspace-coordination-execution.rb b/libexec/workspace-coordination-execution.rb
+index e740dfa..e7bad6c 100644
+--- a/libexec/workspace-coordination-execution.rb
++++ b/libexec/workspace-coordination-execution.rb
+@@ -196,12 +196,26 @@ module WorkspaceCoordination
+       destination = File.join(store.root, 'sources', revision)
+       source = File.join(destination, 'checkout')
+       FileUtils.mkdir_p(destination, mode: 0o700)
+-      unless File.directory?(source)
+-        capture('git', '-C', path, 'worktree', 'add', '--detach', source, revision)
++      fresh = !File.directory?(source)
++      if fresh
++        if block_given?
++          # Materialize the exact tree before initializing dependencies, then
++          # run the ordinary checkout hook in its prepared environment below.
++          capture('git', '-C', path, 'worktree', 'add', '--detach', '--no-checkout', source, revision)
++          capture('git', '-C', source, 'read-tree', '-mu', revision)
++        else
++          capture('git', '-C', path, 'worktree', 'add', '--detach', source, revision)
++        end
+       end
+       actual = capture('git', '-C', source, 'rev-parse', 'HEAD').strip
+       dirty = capture('git', '-C', source, 'status', '--porcelain').strip
+       raise Error.new('retained source is dirty or changed', 5) unless actual == revision && dirty.empty?
++      if block_given?
++        hooks = yield source
++        with_merge_hooks('hookArtifact' => hooks && hooks['id']) do
++          capture('git', '-C', source, 'checkout', '--detach', revision) if fresh
++        end
++      end
+       source
+     end
+ 
+@@ -279,8 +293,8 @@ module WorkspaceCoordination
+       raise Error.new('local default branch has unpublished changes; reconcile it before preparation', 3) if local_head && !ancestor?(path, local_head, expected)
+       ref = "refs/dev-workspace-coordination/#{SecureRandom.uuid}"
+       capture('git', '-C', path, 'update-ref', ref, head)
+-      source = retain_commit(path, head)
+-      hooks = prepare_merge_hooks(source, name, head)
++      hooks = nil
++      source = retain_commit(path, head) { |retained| hooks = prepare_merge_hooks(retained, name, head) }
+       checkout = nil
+       unless name == 'workspace'
+         checkout = File.join(store.root, 'sources', SecureRandom.uuid, 'target')
+diff --git a/test/workspace_coordination_test.rb b/test/workspace_coordination_test.rb
+index 7fc53e4..5e7cc1c 100644
+--- a/test/workspace_coordination_test.rb
++++ b/test/workspace_coordination_test.rb
+@@ -147,6 +147,44 @@ class WorkspaceCoordinationTest < Minitest::Test
+     assert_empty @engine.store.read['jobs']
+   end
+ 
++  def test_fresh_merge_source_initializes_dependencies_before_real_checkout_hooks
++    first = owner('fresh-hook-source')
++    checkout = feature(first)
++    FileUtils.mkdir_p(File.join(checkout, '.husky'))
++    File.write(File.join(checkout, '.husky/pre-commit'), 'fixture hook declaration')
++    File.write(File.join(checkout, 'flake.nix'), 'fixture declared shell')
++    git('-C', checkout, 'add', '.husky', 'flake.nix')
++    git('-C', checkout, 'commit', '-m', 'fixture hook declaration')
++    calls = File.join(@tmp, 'checkout-hook-calls')
++    hook = File.join(@bare, 'hooks/post-checkout')
++    File.write(hook, "#!/bin/sh\nprepared-checkout-dependency || exit 43\nprintf '%s\\n' \"$PWD\" >> '#{calls}'\n")
++    File.chmod(0o700, hook)
++    tools = File.join(@tmp, 'fresh-preparation-tools')
++    FileUtils.mkdir_p(tools)
++    script = <<~SH
++      #!/bin/sh
++      test "$1" = develop || exit 41
++      test "$2" = "$PWD" || exit 42
++      shift 3
++      mkdir -p "$PWD/.prepared-tools"
++      printf '#!/bin/sh\\nexit 0\\n' > "$PWD/.prepared-tools/prepared-checkout-dependency"
++      chmod 700 "$PWD/.prepared-tools/prepared-checkout-dependency"
++      export PATH="$PWD/.prepared-tools:$PATH"
++      exec "$@"
++    SH
++    File.write(File.join(tools, 'nix'), script)
++    File.chmod(0o700, File.join(tools, 'nix'))
++    # Ignore the fixture's shell-created tools, as real repository shells do.
++    File.open(File.join(@bare, 'info/exclude'), 'a') { |file| file.puts '.prepared-tools/' }
++    @engine.instance_variable_set(:@env, ENV.to_h.merge('PATH' => [tools, ENV.fetch('PATH')].join(File::PATH_SEPARATOR)))
++    snapshot = @engine.prepare_merge(first, 'code', evidence(first))
++    recorded = File.readlines(calls, chomp: true)
++    assert_equal 2, recorded.length
++    assert_includes recorded, snapshot['operation']['targetCheckout']
++    assert_equal snapshot['operation']['featureHead'], git('-C', recorded.first, 'rev-parse', 'HEAD').strip
++    assert_empty @engine.store.read['jobs']
++  end
++
+   def test_event_dates_track_committed_states_and_idempotent_retries
+     first = owner('dated-events')
+     job = with_time(Time.utc(2026, 1, 1)) { submit_merge(first) }
+
+ succeeded in 36ms:
+diff --git a/docs/coordination.md b/docs/coordination.md
+index 5f72f10..3fcfc69 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -10,6 +10,14 @@ resource claims. An admitted worker holds only the resources its mutation needs.
+ Different repository targets and machines can proceed concurrently. Eligible work
+ uses FIFO order; waiting on approval or dependencies does not block unrelated work.
+ 
++Merge preparation enters the repository's declared Nix shell, including its
++shell initialization, before retaining the hook environment. Bundler-based
++Overcommit dependencies and the runtime SSH transport are checked before a job
++can be admitted. Dependency installation happens in the retained source outside
++claims. Target checkout creation and merge/push hooks use that same prepared
++environment, with the runtime transport path retained. Workers install no
++dependencies while holding Git resources.
++
+ ## Machine ownership during review
+ 
+ A reservation belongs to a session and physical machine. It survives successful
+diff --git a/libexec/workspace-coordination-execution.rb b/libexec/workspace-coordination-execution.rb
+index 795a69c..e7bad6c 100644
+--- a/libexec/workspace-coordination-execution.rb
++++ b/libexec/workspace-coordination-execution.rb
+@@ -196,12 +196,26 @@ module WorkspaceCoordination
+       destination = File.join(store.root, 'sources', revision)
+       source = File.join(destination, 'checkout')
+       FileUtils.mkdir_p(destination, mode: 0o700)
+-      unless File.directory?(source)
+-        capture('git', '-C', path, 'worktree', 'add', '--detach', source, revision)
++      fresh = !File.directory?(source)
++      if fresh
++        if block_given?
++          # Materialize the exact tree before initializing dependencies, then
++          # run the ordinary checkout hook in its prepared environment below.
++          capture('git', '-C', path, 'worktree', 'add', '--detach', '--no-checkout', source, revision)
++          capture('git', '-C', source, 'read-tree', '-mu', revision)
++        else
++          capture('git', '-C', path, 'worktree', 'add', '--detach', source, revision)
++        end
+       end
+       actual = capture('git', '-C', source, 'rev-parse', 'HEAD').strip
+       dirty = capture('git', '-C', source, 'status', '--porcelain').strip
+       raise Error.new('retained source is dirty or changed', 5) unless actual == revision && dirty.empty?
++      if block_given?
++        hooks = yield source
++        with_merge_hooks('hookArtifact' => hooks && hooks['id']) do
++          capture('git', '-C', source, 'checkout', '--detach', revision) if fresh
++        end
++      end
+       source
+     end
+ 
+@@ -267,6 +281,7 @@ module WorkspaceCoordination
+     def prepare_merge(owner, name, evidence)
+       @diagnostics = Command::Log.new
+       preparation_capacity!
++      capture('ssh', '-V')
+       path, _common, _identity, reg = repository(owner, name)
+       head = capture('git', '-C', path, 'rev-parse', "#{reg.fetch('branch')}^{commit}").strip
+       target = "refs/heads/#{reg.fetch('default_branch')}"
+@@ -278,13 +293,15 @@ module WorkspaceCoordination
+       raise Error.new('local default branch has unpublished changes; reconcile it before preparation', 3) if local_head && !ancestor?(path, local_head, expected)
+       ref = "refs/dev-workspace-coordination/#{SecureRandom.uuid}"
+       capture('git', '-C', path, 'update-ref', ref, head)
+-      source = retain_commit(path, head)
+-      hooks = prepare_merge_hooks(source, name, head)
++      hooks = nil
++      source = retain_commit(path, head) { |retained| hooks = prepare_merge_hooks(retained, name, head) }
+       checkout = nil
+       unless name == 'workspace'
+         checkout = File.join(store.root, 'sources', SecureRandom.uuid, 'target')
+         FileUtils.mkdir_p(File.dirname(checkout), mode: 0o700)
+-        capture('git', '-C', path, 'worktree', 'add', '--detach', checkout, expected)
++        with_merge_hooks('hookArtifact' => hooks && hooks['id']) do
++          capture('git', '-C', path, 'worktree', 'add', '--detach', checkout, expected)
++        end
+       end
+       operation = {'repository' => name, 'target' => target, 'featureBranch' => reg.fetch('branch'),
+         'featureHead' => head, 'expectedRemoteHead' => expected, 'comparisonBase' => expected,
+@@ -309,9 +326,32 @@ module WorkspaceCoordination
+       frameworks = %w[.overcommit.yml .pre-commit-config.yaml lefthook.yml .husky]
+       return unless frameworks.any? { |file| File.exist?(File.join(source, file)) }
+       raise Error, 'coordinated hooks require the repository flake development environment' unless File.file?(File.join(source, 'flake.nix'))
+-      result = WorkspaceCoordination.parse(capture('nix', 'print-dev-env', '--json', source, limit: MAX_LEDGER), limit: MAX_LEDGER)
+-      allowed = %w[PATH GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH NIX_SSL_CERT_FILE SSL_CERT_FILE]
+-      environment = result.fetch('variables').select { |key, value| allowed.include?(key) && value['type'] == 'exported' }.transform_values { |value| value.fetch('value') }
++      allowed = %w[PATH GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_APP_CONFIG BUNDLER_VERSION NIX_SSL_CERT_FILE SSL_CERT_FILE]
++      # print-dev-env describes a shell before shellHook initializes local
++      # dependencies. Enter the declared shell in the retained source instead.
++      marker = 'WORKSPACE_MERGE_HOOK_ENV='
++      program = <<~'RUBY'
++        require 'json'
++        if File.file?('.overcommit.yml') && File.file?('Gemfile')
++          require 'bundler'
++          Bundler.setup
++          require 'overcommit'
++        end
++        puts "WORKSPACE_MERGE_HOOK_ENV=#{JSON.generate(ENV.to_h.slice(*ARGV))}"
++      RUBY
++      original = @env
++      begin
++        @env = @env.merge(allowed.reject { |key| %w[PATH NIX_SSL_CERT_FILE SSL_CERT_FILE].include?(key) }.to_h { |key| [key, nil] })
++        output = capture('nix', 'develop', source, '--command', RbConfig.ruby, '-e', program, *allowed, cwd: source, limit: MAX_LEDGER)
++      ensure
++        @env = original
++      end
++      lines = output.lines.select { |value| value.start_with?(marker) }
++      raise Error, 'repository shell did not publish one prepared hook environment' unless lines.length == 1
++      environment = WorkspaceCoordination.parse(lines.first.delete_prefix(marker), limit: MAX_LEDGER)
++      unless environment.is_a?(Hash) && (environment.keys - allowed).empty? && environment.values.all? { |value| value.is_a?(String) }
++        raise Error, 'invalid prepared hook environment'
++      end
+       raise Error, 'prepared hook environment has no executable path' unless environment['PATH'].is_a?(String)
+       artifact = save_artifact('kind' => 'merge_hooks', 'repository' => name, 'featureHead' => head, 'environment' => environment)
+       paths = environment.values.flat_map { |value| value.scan(%r{/nix/store/[^/:\s]+}) }.uniq
+@@ -322,7 +362,10 @@ module WorkspaceCoordination
+     def with_merge_hooks(operation)
+       original = @env
+       artifact = artifact!(operation['hookArtifact']) if operation['hookArtifact']
+-      @env = @env.merge(artifact.fetch('environment')) if artifact
++      if artifact
++        environment = artifact.fetch('environment')
++        @env = @env.merge(environment).merge('PATH' => [environment.fetch('PATH'), @env.fetch('PATH')].join(File::PATH_SEPARATOR))
++      end
+       yield
+     ensure
+       @env = original
+
+ succeeded in 24ms:
+work/2026-10-13-workspace-coordination/merge-environment-local-verification.json
+work/2026-10-13-workspace-coordination/merge-environment-fix-brief.md
+work/2026-10-13-workspace-coordination/merge-environment-runtime-final.patch
+work/2026-10-13-workspace-coordination/merge-environment-review.md
+work/2026-10-13-workspace-coordination/merge-environment-review-packet.md
+work/2026-10-13-workspace-coordination/merge-environment-corrected-review-brief.md
+work/2026-10-13-workspace-coordination/merge-environment-review-reconciliation.md
+work/2026-10-13-workspace-coordination/merge-environment-final-inventory.json
+
+exec
+/run/current-system/sw/bin/bash -lc "cat work/2026-10-13-workspace-coordination/merge-environment-review-reconciliation.md work/2026-10-13-workspace-coordination/merge-environment-final-inventory.json && nl -ba worktrees/2026-10-13-workspace-coordination/dev-workspace/libexec/workspace-coordination-execution.rb | sed -n '190,235p' && nl -ba worktrees/2026-10-13-workspace-coordination/dev-workspace/test/workspace_coordination_test.rb | sed -n '145,198p'" in /home/aither/workspace/ai/vpsfree.cz
+ succeeded in 38ms:
+Independent retained Astra/xhigh reviewer accepted exact original-job push recovery, with no recovery finding. Recovery was executed after correcting the private registry invocation (one directly inspected dispatch fix under step9). Actual hooks and exact non-force push passed; normal reconciliation settled original ec09fd84/attemptbb975e20 succeeded, driver exited0. Canonical config mapping binds actual approval9ae73884 with original preapproval receipt unchanged.
+
+Important general/risk finding: fresh retained source post-checkout ran before shell dependencies. Fixed by normal worktree --no-checkout creation, exact read-tree materialization, declared shell initialization, then ordinary checkout and its real hook under prepared environment. Target checkout also uses same environment. No hook disable/config override or merge replay. Focused cold-source regression exercises real Git post-checkout dependency with no inherited bundle. Corrected quick4/20 pass. Initial fixture omitted a tracked framework file, corrected test setup without production relaxation. Runtime follow-up folded into its owning unmerged commit. No permanent interface/schema expansion. Affected-lane review requested on this ordering correction.
+[
+  {
+    "repository": "dev-workspace",
+    "base": "a10af6c4539c4c7a6a97a883d89825346d5451ad",
+    "head": "5dd5f0c9e5c3679de3b5b5899eb7ef76c02db869",
+    "series": [
+      "5dd5f0c9e5c3679de3b5b5899eb7ef76c02db869 coordination: prepare complete hook environments before merging"
+    ],
+    "migrations": [],
+    "historyDisposition": "Runtime prior history is merged/deployed. Workspace aadaa and b78 consumed live and retained; final recovery is one exact operation. No redundant pin streams in this delta."
+  },
+  {
+    "repository": "workspace",
+    "base": "90005ea3a7a170b23699c38933b111b046ce43f8",
+    "head": "e188ebba3cab68cc7e1c064a10915ffec22f1cd5",
+    "series": [
+      "4ae8cea78f59952cf7e3a3c54109ab2adfa3e7d8 inputs: select coordinated workspace components",
+      "2c21246627a5cd9751d19f0f19c101c859c569c3 coordination: route workspace merges and deployments",
+      "aadaa171b9ca1e46b64675475f310e2e15986f83 coordination: complete the threadless installation through existing workers",
+      "b78dc0a4105c065af3aed75f780cef93f7d0e924 coordination: admit reviewed patch-equivalent installation rebases",
+      "e188ebba3cab68cc7e1c064a10915ffec22f1cd5 maintenance: recover the retained configuration push"
+    ],
+    "migrations": [],
+    "historyDisposition": "Runtime prior history is merged/deployed. Workspace aadaa and b78 consumed live and retained; final recovery is one exact operation. No redundant pin streams in this delta."
+  }
+]
+   190	      status.success?
+   191	    end
+   192	
+   193	    def retain_commit(path, revision)
+   194	      preparation_capacity!
+   195	      raise Error, 'preparation requires an exact committed revision' unless revision.match?(SHA)
+   196	      destination = File.join(store.root, 'sources', revision)
+   197	      source = File.join(destination, 'checkout')
+   198	      FileUtils.mkdir_p(destination, mode: 0o700)
+   199	      fresh = !File.directory?(source)
+   200	      if fresh
+   201	        if block_given?
+   202	          # Materialize the exact tree before initializing dependencies, then
+   203	          # run the ordinary checkout hook in its prepared environment below.
+   204	          capture('git', '-C', path, 'worktree', 'add', '--detach', '--no-checkout', source, revision)
+   205	          capture('git', '-C', source, 'read-tree', '-mu', revision)
+   206	        else
+   207	          capture('git', '-C', path, 'worktree', 'add', '--detach', source, revision)
+   208	        end
+   209	      end
+   210	      actual = capture('git', '-C', source, 'rev-parse', 'HEAD').strip
+   211	      dirty = capture('git', '-C', source, 'status', '--porcelain').strip
+   212	      raise Error.new('retained source is dirty or changed', 5) unless actual == revision && dirty.empty?
+   213	      if block_given?
+   214	        hooks = yield source
+   215	        with_merge_hooks('hookArtifact' => hooks && hooks['id']) do
+   216	          capture('git', '-C', source, 'checkout', '--detach', revision) if fresh
+   217	        end
+   218	      end
+   219	      source
+   220	    end
+   221	
+   222	    def retain_root(id, name, path)
+   223	      raise Error, 'retained closure must be a Nix store path' unless path.start_with?('/nix/store/') || @fixtures
+   224	      directory = File.join(store.root, 'roots')
+   225	      FileUtils.mkdir_p(directory, mode: 0o700)
+   226	      link = File.join(directory, "#{id.delete_prefix('sha256:')}-#{name}")
+   227	      if File.symlink?(link)
+   228	        raise Error.new('prepared GC root points to another closure', 5) unless File.realpath(link) == File.realpath(path)
+   229	      else
+   230	        capture('nix-store', '--add-root', link, '--indirect', '--realise', path) unless @fixtures
+   231	        File.symlink(path, link) if @fixtures
+   232	      end
+   233	    end
+   234	
+   235	    def save_artifact(value)
+   145	    @engine.instance_variable_set(:@env, ENV.to_h.merge('PATH' => tools))
+   146	    assert_raises(WorkspaceCoordination::Error) { @engine.prepare_merge_hooks(source, 'code', @base) }
+   147	    assert_empty @engine.store.read['jobs']
+   148	  end
+   149	
+   150	  def test_fresh_merge_source_initializes_dependencies_before_real_checkout_hooks
+   151	    first = owner('fresh-hook-source')
+   152	    checkout = feature(first)
+   153	    FileUtils.mkdir_p(File.join(checkout, '.husky'))
+   154	    File.write(File.join(checkout, '.husky/pre-commit'), 'fixture hook declaration')
+   155	    File.write(File.join(checkout, 'flake.nix'), 'fixture declared shell')
+   156	    git('-C', checkout, 'add', '.husky', 'flake.nix')
+   157	    git('-C', checkout, 'commit', '-m', 'fixture hook declaration')
+   158	    calls = File.join(@tmp, 'checkout-hook-calls')
+   159	    hook = File.join(@bare, 'hooks/post-checkout')
+   160	    File.write(hook, "#!/bin/sh\nprepared-checkout-dependency || exit 43\nprintf '%s\\n' \"$PWD\" >> '#{calls}'\n")
+   161	    File.chmod(0o700, hook)
+   162	    tools = File.join(@tmp, 'fresh-preparation-tools')
+   163	    FileUtils.mkdir_p(tools)
+   164	    script = <<~SH
+   165	      #!/bin/sh
+   166	      test "$1" = develop || exit 41
+   167	      test "$2" = "$PWD" || exit 42
+   168	      shift 3
+   169	      mkdir -p "$PWD/.prepared-tools"
+   170	      printf '#!/bin/sh\\nexit 0\\n' > "$PWD/.prepared-tools/prepared-checkout-dependency"
+   171	      chmod 700 "$PWD/.prepared-tools/prepared-checkout-dependency"
+   172	      export PATH="$PWD/.prepared-tools:$PATH"
+   173	      exec "$@"
+   174	    SH
+   175	    File.write(File.join(tools, 'nix'), script)
+   176	    File.chmod(0o700, File.join(tools, 'nix'))
+   177	    # Ignore the fixture's shell-created tools, as real repository shells do.
+   178	    File.open(File.join(@bare, 'info/exclude'), 'a') { |file| file.puts '.prepared-tools/' }
+   179	    @engine.instance_variable_set(:@env, ENV.to_h.merge('PATH' => [tools, ENV.fetch('PATH')].join(File::PATH_SEPARATOR)))
+   180	    snapshot = @engine.prepare_merge(first, 'code', evidence(first))
+   181	    recorded = File.readlines(calls, chomp: true)
+   182	    assert_equal 2, recorded.length
+   183	    assert_includes recorded, snapshot['operation']['targetCheckout']
+   184	    assert_equal snapshot['operation']['featureHead'], git('-C', recorded.first, 'rev-parse', 'HEAD').strip
+   185	    assert_empty @engine.store.read['jobs']
+   186	  end
+   187	
+   188	  def test_event_dates_track_committed_states_and_idempotent_retries
+   189	    first = owner('dated-events')
+   190	    job = with_time(Time.utc(2026, 1, 1)) { submit_merge(first) }
+   191	    timing = WorkspaceCoordination::Timing.new(@engine.store.root)
+   192	    assert_equal '2026-01-01T00:00:00Z', timing.read['jobs'][job['id']]['createdAt']
+   193	    payload = request('expectedRevision' => job['revision'], 'reason' => 'finished fixture')
+   194	    with_time(Time.utc(2026, 1, 2)) { @engine.mutate(first, 'cancel', payload, job_id: job['id']) }
+   195	    dates = timing.read['jobs'][job['id']]
+   196	    assert_equal '2026-01-01T00:00:00Z', dates['createdAt']
+   197	    assert_equal '2026-01-02T00:00:00Z', dates['stateChangedAt']
+   198	    assert_equal dates['stateChangedAt'], dates['finishedAt']
+
+codex
+The correction fixes first-attempt ordering, but a retry gap remains: if shell initialization fails after the source is materialized, the next attempt sees an existing directory and skips its checkout hook. The new regression covers successful initialization only. I’m checking the scope of that finding before returning the focused report.
+
+exec
+/run/current-system/sw/bin/bash -lc "rg -n 'corrected.*quick|quick.*corrected|4/20|22e221|merge-environment' work/2026-10-13-workspace-coordination/state.md work/2026-10-13-workspace-coordination/merge-environment-corrected-review-brief.md work/2026-10-13-workspace-coordination/merge-environment-review-reconciliation.md && git --no-optional-locks -C worktrees/2026-10-13-workspace-coordination/dev-workspace log --oneline a10af6c4..HEAD && /nix/store/5shv7ihqxa98r1psfz995q3j2cwk22sa-ruby-3.4.9/bin/ruby -c worktrees/2026-10-13-workspace-coordination/dev-workspace/libexec/workspace-coordination-execution.rb && /nix/store/5shv7ihqxa98r1psfz995q3j2cwk22sa-ruby-3.4.9/bin/ruby -c worktrees/2026-10-13-workspace-coordination/dev-workspace/test/workspace_coordination_test.rb" in /home/aither/workspace/ai/vpsfree.cz
+ succeeded in 154ms:
+work/2026-10-13-workspace-coordination/merge-environment-review-reconciliation.md:3:Important general/risk finding: fresh retained source post-checkout ran before shell dependencies. Fixed by normal worktree --no-checkout creation, exact read-tree materialization, declared shell initialization, then ordinary checkout and its real hook under prepared environment. Target checkout also uses same environment. No hook disable/config override or merge replay. Focused cold-source regression exercises real Git post-checkout dependency with no inherited bundle. Corrected quick4/20 pass. Initial fixture omitted a tracked framework file, corrected test setup without production relaxation. Runtime follow-up folded into its owning unmerged commit. No permanent interface/schema expansion. Affected-lane review requested on this ordering correction.
+work/2026-10-13-workspace-coordination/merge-environment-corrected-review-brief.md:1:Review follow-up to your Important fresh-source ordering finding. Read final runtime HEAD and diff froma10af6c4; correction folded into same logical unmerged runtime commit. retain_commit when supplied initialization block uses ordinary worktree add --no-checkout, exact read-tree -mu to materialize committed files, then declared shell prepare and normal checkout --detach with real post-checkout under saved environment. No disabled hooks; target checkout under same env. New test test_fresh_merge_source_initializes_dependencies_before_real_checkout_hooks exercises source and target actual Git post-checkout with shell-initialized dependency and no inherited bundle. Corrected quick4/20 passes, syntax/diff clean; no schema change. Review only affected general/risk and architecture ordering path directly, no nested agents/mutations/longchecks. Recovery already accepted and completed original job, not repeated. Recovery final e188 differs623 only private registry send, directly verified. Keep prior completed review reports immutable. Assess whether cold-source sequence fully resolves finding and proportionality; parent will run real representative config preflight/package checks after acceptance.
+work/2026-10-13-workspace-coordination/state.md:15:Runtime final22e2216 addresses initialized shell capture, Bundler/Overcommit and
+work/2026-10-13-workspace-coordination/state.md:17:Quick4/20 passes; prior44/282 suite passed before ordering correction. Important
+work/2026-10-13-workspace-coordination/state.md:345:`quick-regression.{log,status}`. The earlier Host fixture failures were corrected;
+22e2216 coordination: prepare complete hook environments before merging
+Syntax OK
+Syntax OK
+
+codex
+**Important — General / risk: the source checkout hook can still be skipped on retry.** In [retain_commit](/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-13-workspace-coordination/dev-workspace/libexec/workspace-coordination-execution.rb:199), `fresh` depends only on directory existence, and the prepared checkout runs only when `fresh` is true.
+
+If shell initialization fails after `read-tree` materializes the source, the directory remains clean. A retry successfully initializes dependencies but skips the source’s `post-checkout` hook. The same happens after that hook itself fails. Creating the separate target checkout does not validate the retained feature source.
+
+Complete the prepared source checkout on retry as well; directory existence cannot prove hook completion. Add a focused regression covering failed initialization followed by a successful retry, with the source hook required to run.
+
+Reviewed runtime head: `22e221618171e453cc04450e73efba6a477abc3e`.
+
+- **General:** First-attempt ordering is corrected, and the new real-Git regression covers it. The Important finding remains open for retries.
+- **Architecture/proportionality:** The bounded initialization block fits existing ownership; no broader recovery mechanism is needed.
+- **Risk/compatibility:** No new schema or worker contract change. Existing generation, transport and environment-restoration conclusions remain valid.
+- **History:** Correction is folded into the single logical commit after `a10af6c4`. Unchanged history and pin-stream conclusions stand. **No migrations.**
+
+The worktree is clean; syntax and diff checks pass. Reported quick checks are **4 tests/20 assertions**, but omit the retry path above.
+
+**Acceptance: partial; not yet accepted as fully resolving the Important finding.** Prior exact push-recovery acceptance remains unchanged; do not repeat the completed recovery. No agents, mutations or long checks were performed.
+tokens used
+1,119,010
+**Important — General / risk: the source checkout hook can still be skipped on retry.** In [retain_commit](/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-13-workspace-coordination/dev-workspace/libexec/workspace-coordination-execution.rb:199), `fresh` depends only on directory existence, and the prepared checkout runs only when `fresh` is true.
+
+If shell initialization fails after `read-tree` materializes the source, the directory remains clean. A retry successfully initializes dependencies but skips the source’s `post-checkout` hook. The same happens after that hook itself fails. Creating the separate target checkout does not validate the retained feature source.
+
+Complete the prepared source checkout on retry as well; directory existence cannot prove hook completion. Add a focused regression covering failed initialization followed by a successful retry, with the source hook required to run.
+
+Reviewed runtime head: `22e221618171e453cc04450e73efba6a477abc3e`.
+
+- **General:** First-attempt ordering is corrected, and the new real-Git regression covers it. The Important finding remains open for retries.
+- **Architecture/proportionality:** The bounded initialization block fits existing ownership; no broader recovery mechanism is needed.
+- **Risk/compatibility:** No new schema or worker contract change. Existing generation, transport and environment-restoration conclusions remain valid.
+- **History:** Correction is folded into the single logical commit after `a10af6c4`. Unchanged history and pin-stream conclusions stand. **No migrations.**
+
+The worktree is clean; syntax and diff checks pass. Reported quick checks are **4 tests/20 assertions**, but omit the retry path above.
+
+**Acceptance: partial; not yet accepted as fully resolving the Important finding.** Prior exact push-recovery acceptance remains unchanged; do not repeat the completed recovery. No agents, mutations or long checks were performed.

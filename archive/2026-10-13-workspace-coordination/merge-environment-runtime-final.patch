@@ -1,0 +1,163 @@
+diff --git a/docs/coordination.md b/docs/coordination.md
+index 5f72f10..3fcfc69 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -10,6 +10,14 @@ resource claims. An admitted worker holds only the resources its mutation needs.
+ Different repository targets and machines can proceed concurrently. Eligible work
+ uses FIFO order; waiting on approval or dependencies does not block unrelated work.
+ 
++Merge preparation enters the repository's declared Nix shell, including its
++shell initialization, before retaining the hook environment. Bundler-based
++Overcommit dependencies and the runtime SSH transport are checked before a job
++can be admitted. Dependency installation happens in the retained source outside
++claims. Target checkout creation and merge/push hooks use that same prepared
++environment, with the runtime transport path retained. Workers install no
++dependencies while holding Git resources.
++
+ ## Machine ownership during review
+ 
+ A reservation belongs to a session and physical machine. It survives successful
+diff --git a/libexec/workspace-coordination-execution.rb b/libexec/workspace-coordination-execution.rb
+index 795a69c..e740dfa 100644
+--- a/libexec/workspace-coordination-execution.rb
++++ b/libexec/workspace-coordination-execution.rb
+@@ -267,6 +267,7 @@ module WorkspaceCoordination
+     def prepare_merge(owner, name, evidence)
+       @diagnostics = Command::Log.new
+       preparation_capacity!
++      capture('ssh', '-V')
+       path, _common, _identity, reg = repository(owner, name)
+       head = capture('git', '-C', path, 'rev-parse', "#{reg.fetch('branch')}^{commit}").strip
+       target = "refs/heads/#{reg.fetch('default_branch')}"
+@@ -284,7 +285,9 @@ module WorkspaceCoordination
+       unless name == 'workspace'
+         checkout = File.join(store.root, 'sources', SecureRandom.uuid, 'target')
+         FileUtils.mkdir_p(File.dirname(checkout), mode: 0o700)
+-        capture('git', '-C', path, 'worktree', 'add', '--detach', checkout, expected)
++        with_merge_hooks('hookArtifact' => hooks && hooks['id']) do
++          capture('git', '-C', path, 'worktree', 'add', '--detach', checkout, expected)
++        end
+       end
+       operation = {'repository' => name, 'target' => target, 'featureBranch' => reg.fetch('branch'),
+         'featureHead' => head, 'expectedRemoteHead' => expected, 'comparisonBase' => expected,
+@@ -309,9 +312,32 @@ module WorkspaceCoordination
+       frameworks = %w[.overcommit.yml .pre-commit-config.yaml lefthook.yml .husky]
+       return unless frameworks.any? { |file| File.exist?(File.join(source, file)) }
+       raise Error, 'coordinated hooks require the repository flake development environment' unless File.file?(File.join(source, 'flake.nix'))
+-      result = WorkspaceCoordination.parse(capture('nix', 'print-dev-env', '--json', source, limit: MAX_LEDGER), limit: MAX_LEDGER)
+-      allowed = %w[PATH GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH NIX_SSL_CERT_FILE SSL_CERT_FILE]
+-      environment = result.fetch('variables').select { |key, value| allowed.include?(key) && value['type'] == 'exported' }.transform_values { |value| value.fetch('value') }
++      allowed = %w[PATH GEM_HOME GEM_PATH BUNDLE_GEMFILE BUNDLE_PATH BUNDLE_APP_CONFIG BUNDLER_VERSION NIX_SSL_CERT_FILE SSL_CERT_FILE]
++      # print-dev-env describes a shell before shellHook initializes local
++      # dependencies. Enter the declared shell in the retained source instead.
++      marker = 'WORKSPACE_MERGE_HOOK_ENV='
++      program = <<~'RUBY'
++        require 'json'
++        if File.file?('.overcommit.yml') && File.file?('Gemfile')
++          require 'bundler'
++          Bundler.setup
++          require 'overcommit'
++        end
++        puts "WORKSPACE_MERGE_HOOK_ENV=#{JSON.generate(ENV.to_h.slice(*ARGV))}"
++      RUBY
++      original = @env
++      begin
++        @env = @env.merge(allowed.reject { |key| %w[PATH NIX_SSL_CERT_FILE SSL_CERT_FILE].include?(key) }.to_h { |key| [key, nil] })
++        output = capture('nix', 'develop', source, '--command', RbConfig.ruby, '-e', program, *allowed, cwd: source, limit: MAX_LEDGER)
++      ensure
++        @env = original
++      end
++      lines = output.lines.select { |value| value.start_with?(marker) }
++      raise Error, 'repository shell did not publish one prepared hook environment' unless lines.length == 1
++      environment = WorkspaceCoordination.parse(lines.first.delete_prefix(marker), limit: MAX_LEDGER)
++      unless environment.is_a?(Hash) && (environment.keys - allowed).empty? && environment.values.all? { |value| value.is_a?(String) }
++        raise Error, 'invalid prepared hook environment'
++      end
+       raise Error, 'prepared hook environment has no executable path' unless environment['PATH'].is_a?(String)
+       artifact = save_artifact('kind' => 'merge_hooks', 'repository' => name, 'featureHead' => head, 'environment' => environment)
+       paths = environment.values.flat_map { |value| value.scan(%r{/nix/store/[^/:\s]+}) }.uniq
+@@ -322,7 +348,10 @@ module WorkspaceCoordination
+     def with_merge_hooks(operation)
+       original = @env
+       artifact = artifact!(operation['hookArtifact']) if operation['hookArtifact']
+-      @env = @env.merge(artifact.fetch('environment')) if artifact
++      if artifact
++        environment = artifact.fetch('environment')
++        @env = @env.merge(environment).merge('PATH' => [environment.fetch('PATH'), @env.fetch('PATH')].join(File::PATH_SEPARATOR))
++      end
+       yield
+     ensure
+       @env = original
+diff --git a/test/workspace_coordination_test.rb b/test/workspace_coordination_test.rb
+index ce03722..7fc53e4 100644
+--- a/test/workspace_coordination_test.rb
++++ b/test/workspace_coordination_test.rb
+@@ -85,6 +85,68 @@ class WorkspaceCoordinationTest < Minitest::Test
+     Time.define_singleton_method(:now, original)
+   end
+ 
++  def test_prepared_hook_path_preserves_transport_and_restores_environment
++    tools = File.join(@tmp, 'hook-tools')
++    FileUtils.mkdir_p(tools)
++    File.write(File.join(tools, 'prepared-hook'), "#!/bin/sh\nprintf 'hook ready'\n")
++    File.chmod(0o700, File.join(tools, 'prepared-hook'))
++    artifact = @engine.save_artifact('kind' => 'merge_hooks', 'repository' => 'code',
++      'featureHead' => @base, 'environment' => {'PATH' => tools, 'BUNDLE_PATH' => tools})
++    original = @engine.instance_variable_get(:@env)
++    @engine.with_merge_hooks('hookArtifact' => artifact['id']) do
++      assert_equal 'hook ready', @engine.capture('prepared-hook')
++      assert_match(/git version/, @engine.capture('git', '--version'))
++      @engine.capture('ssh', '-V')
++    end
++    assert_same original, @engine.instance_variable_get(:@env)
++    assert_raises(RuntimeError) do
++      @engine.with_merge_hooks('hookArtifact' => artifact['id']) { raise 'fixture failure' }
++    end
++    assert_same original, @engine.instance_variable_get(:@env)
++  end
++
++  def test_hook_preparation_enters_initialized_shell_and_captures_only_allowlisted_values
++    source = File.join(@tmp, 'hook-source')
++    tools = File.join(@tmp, 'preparation-tools')
++    FileUtils.mkdir_p([source, tools, File.join(source, '.husky')])
++    File.write(File.join(source, 'flake.nix'), 'fixture declared shell')
++    script = <<~SH
++      #!/bin/sh
++      test "$1" = develop || exit 41
++      test "$2" = "$PWD" || exit 42
++      test "$3" = --command || exit 43
++      shift 3
++      export PATH="$PWD/prepared-tools"
++      export BUNDLE_PATH="$PWD/prepared-gems"
++      export BUNDLE_APP_CONFIG="$PWD/prepared-config"
++      export PRIVATE_FIXTURE_SECRET=do-not-capture
++      printf 'fixture shell initialized\\n'
++      exec "$@"
++    SH
++    File.write(File.join(tools, 'nix'), script)
++    File.chmod(0o700, File.join(tools, 'nix'))
++    @engine.instance_variable_set(:@env, ENV.to_h.merge('PATH' => tools, 'BUNDLE_PATH' => '/wrong/inherited/path'))
++    artifact = @engine.prepare_merge_hooks(source, 'code', @base)
++    assert_equal File.join(source, 'prepared-gems'), artifact['environment']['BUNDLE_PATH']
++    assert_equal File.join(source, 'prepared-config'), artifact['environment']['BUNDLE_APP_CONFIG']
++    refute_includes artifact['environment'].keys, 'PRIVATE_FIXTURE_SECRET'
++    assert_equal '/wrong/inherited/path', @engine.instance_variable_get(:@env)['BUNDLE_PATH']
++  end
++
++  def test_missing_overcommit_dependency_refuses_during_preparation
++    source = File.join(@tmp, 'missing-hook-source')
++    tools = File.join(@tmp, 'missing-preparation-tools')
++    FileUtils.mkdir_p([source, tools])
++    File.write(File.join(source, '.overcommit.yml'), "gemfile: Gemfile\n")
++    File.write(File.join(source, 'Gemfile'), "source 'https://rubygems.org'\ngem 'absent_coordination_fixture', '= 0.0.0'\n")
++    File.write(File.join(source, 'flake.nix'), 'fixture declared shell')
++    File.write(File.join(tools, 'nix'), "#!/bin/sh\nshift 3\nexec \"$@\"\n")
++    File.chmod(0o700, File.join(tools, 'nix'))
++    @engine.instance_variable_set(:@env, ENV.to_h.merge('PATH' => tools))
++    assert_raises(WorkspaceCoordination::Error) { @engine.prepare_merge_hooks(source, 'code', @base) }
++    assert_empty @engine.store.read['jobs']
++  end
++
+   def test_event_dates_track_committed_states_and_idempotent_retries
+     first = owner('dated-events')
+     job = with_time(Time.utc(2026, 1, 1)) { submit_merge(first) }

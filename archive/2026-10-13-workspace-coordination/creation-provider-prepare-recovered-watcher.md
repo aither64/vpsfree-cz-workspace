@@ -1,0 +1,7 @@
+- **Result:** Failed; observer exit status `0`, operation status `75`.
+- **Invocation:** `2dd93193c85f49f69a1e627c28ffe467`; elapsed `30.0s`.
+- **Revisions:** runtime `a10af6c4`, workspace `2c212466`, configuration `fbbda8e9`.
+- **Status file:** `work/2026-10-13-workspace-coordination/creation-provider-bootstrap-prepare.status`
+- **Log:** `work/2026-10-13-workspace-coordination/creation-provider-bootstrap-prepare-recovered.log`
+- **Failure evidence:** The observer reports the protocol checks passed, then Git failed while preparing a detached worktree at `fbbda8e9`. The log says required Ruby gems are missing locally and suggests `bundle install`.
+- **Reservation:** Must remain held.

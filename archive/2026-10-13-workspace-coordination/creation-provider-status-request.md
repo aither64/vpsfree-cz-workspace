@@ -1,0 +1,1 @@
+Parent requests one concise progress update on current verification phase/command, any errors/escalation and whether still making progress. Do not rerun or diagnose; retain ownership. Original run seems still in candidate build after about twelve minutes. Keep native tests progressing and only stop unexpected kernel compilation as already authorized.

@@ -1,0 +1,786 @@
+1:  2727495 = 1:  2727495 coordination: serialize approved merges and deployments
+2:  91be8da ! 2:  e1f70e9 portal: show operations page and reservation badges
+    @@ Metadata
+     Author: Jakub Skokan <jakub.skokan@havefun.cz>
+     
+      ## Commit message ##
+    -    portal: show operations page and reservation badges
+    +    portal: explain operations and session machine reservations
+     
+    -    Expose bounded read-only coordination status through the workspace menu
+    -    so sessions can identify deployment owners and distinguish resource waits
+    -    from uncertain execution or notification delivery. Mark session cards with
+    -    held machine reservations, including idle review and recovery.
+    +    Show reserved machines, active work and recent results separately so users
+    +    can distinguish completed deployment steps from an ongoing review hold.
+    +    Place Operations above Automatic archival in the workspace menu.
+     
+    -    Retain the last successful display on read failures and stop hidden page
+    -    requests. Preserve authenticated routes and safe DOM rendering.
+    +    Name held machines in session badges, list their states in tooltips and
+    +    provide a Reservations tab with incarnation-specific history. Keep the
+    +    existing authenticated status surface and safe text rendering. Preserve
+    +    expanded details and the last successful view across status refreshes.
+     
+      ## README.md ##
+     @@ README.md: nix develop --command go -C portal test -mod=readonly ./internal/teamruntime
+    @@ docs/coordination.md: The separate extension catalog and session manifest format
+      machine ownership, blocked jobs and notification delivery separately. An idle
+     -owner still reserves its machine.
+     +owner still reserves its machine. The workspace menu links to `/operations`
+    -+beside Automatic archival. It shows active and completed jobs, active first.
+    ++above Automatic archival. Reserved machines appear as cards with their owning
+    ++session and the reason for the hold. Running and waiting operations appear
+    ++separately from recent completed results. System configuration deployment and
+    ++workspace application updates have distinct labels. A completed step does not
+    ++mean that review or integration has ended or that the machine has been released.
+    ++IDs, source revisions and diagnostics are available under Technical details.
+     +Session-list badges mark held machine reservations, including review and recovery;
+     +queued requests and brief execution claims do not receive badges. Ownership is
+     +matched to the retained active or archived session incarnation. The portal's
+    @@ docs/coordination.md: The separate extension catalog and session manifest format
+     +session cards, so a replacement session cannot inherit the old badge. Visible
+     +pages refresh every five seconds. Failed reads preserve the last known status
+     +with a warning for the same incarnation; a successful read confirms release.
+    ++
+    ++A single-machine badge uses its configured short name, such as BUILDHOST
+    ++RESERVED. Multiple-machine badges show the distinct count. The tooltip lists
+    ++every held machine and its status. The session's Reservations tab, between
+    ++Clusters and Artifacts, shows its held machines, pending requests and related
+    ++operations. Links to `#reservations` open that tab. Session results are matched
+    ++to the same observation identity as badges; a recreated session cannot inherit
+    ++an earlier incarnation's history. The tab reads only while it and the document
+    ++are visible. Read failures retain the last successful view with a warning.
+      
+      Notifications use the existing Codex submission ledger, exact retained thread,
+      model, effort and lead policy. Busy threads receive steering; idle threads receive
+    @@ docs/workspace-portal.md: this lifecycle conversion. An already open predecessor
+      
+      The ⋮ menu at the top of the workspace and session sidebars contains
+     
+    + ## libexec/workspace-coordination.rb ##
+    +@@ libexec/workspace-coordination.rb: module WorkspaceCoordination
+    +        'notifications' => data['outbox'].values.select { |event| ids.include?(event['ownerId']) }.map { |event| event.reject { |key, _| %w[text options].include?(key) } },
+    +        'foreignReservations' => data['reservations'].values.reject { |item| ids.include?(item['ownerId']) || item['state'] == 'released' }.map { |item| item.slice('machine', 'state').merge('portalUrl' => data['owners'][item['ownerId']]['portalUrl']) }}
+    +       if portal
+    ++        observations = {}
+    ++        owners.map { |owner| owner['slug'] }.uniq.each do |name|
+    ++          store.lifecycle_owners(data, workspace, name) { |owner, observation| observations[owner['id']] = observation }
+    ++        end
+    ++        # A session pane must not attribute retained jobs to a recreated slug.
+    ++        if slug
+    ++          ids.select! { |id| observations.key?(id) }
+    ++          %w[owners jobs reservations notifications].each { |kind| result[kind].select! { |item| ids.include?(kind == 'owners' ? item['id'] : item['ownerId']) } }
+    ++        end
+    ++        result['owners'].each { |owner| owner['observationIdentity'] = observations[owner['id']] }
+    ++        machine_details = lambda do |item|
+    ++          name = catalog.data.fetch('machines').find { |_key, value| value['id'] == item['machine'] }&.first
+    ++          item.slice('id', 'ownerId', 'machine', 'state', 'revision', 'mode').merge(
+    ++            'shortName' => name || item['machine'].split(':').last,
+    ++            'deployments' => item.fetch('history', []).length)
+    ++        end
+    +         held = result['reservations'].reject { |item| %w[requested released].include?(item['state']) }.group_by { |item| item['ownerId'] }
+    +         result['reservationHolders'] = []
+    +         owners.select { |owner| held.key?(owner['id']) }.map { |owner| owner['slug'] }.uniq.each do |name|
+    +@@ libexec/workspace-coordination.rb: module WorkspaceCoordination
+    +             next unless held.key?(owner['id'])
+    +             result['reservationHolders'] << owner.slice('slug', 'portalUrl').merge('ownerId' => owner['id'],
+    +               'observationIdentity' => observation,
+    +-              'machines' => held.fetch(owner['id']).sort_by { |item| item['machine'] }.map { |item| item.slice('machine', 'state') })
+    ++              'machines' => held.fetch(owner['id']).sort_by { |item| item['machine'] }.map { |item| machine_details.call(item) })
+    +           end
+    +         end
+    +         result['counts'] = result.slice('owners', 'jobs', 'reservations', 'notifications', 'foreignReservations').transform_values(&:length)
+    +@@ libexec/workspace-coordination.rb: module WorkspaceCoordination
+    +             'snapshotId' => job.dig('snapshot', 'id'), 'source' => job.dig('snapshot', 'operation').slice('repository', 'target', 'featureHead', 'configurationHead', 'candidatePackage'),
+    +             'result' => job['result'] && job['result'].slice('outcome', 'observed', 'phase', 'error'))
+    +         end
+    +-        result['reservations'] = result['reservations'].sort_by { |item| [item['state'] == 'released' ? 1 : 0, -item['sequence']] }.first(128).map { |item| item.slice('id', 'ownerId', 'machine', 'state', 'revision', 'mode').merge('deployments' => item['history'].length) }
+    ++        result['reservations'] = result['reservations'].sort_by { |item| [item['state'] == 'released' ? 1 : 0, -item['sequence']] }.first(128).map { |item| machine_details.call(item) }
+    +         result['notifications'] = result['notifications'].last(128)
+    +         result['foreignReservations'] = result['foreignReservations'].first(128)
+    +       end
+    +
+      ## nix/workspace-portal.nix ##
+     @@ nix/workspace-portal.nix: buildGoModule {
+            --coverage-only ${codexWebSrc}/codex/client.go
+    @@ portal/internal/session/manifest.go: type Manifest struct {
+      
+      func ValidSlug(slug string) bool {
+     
+    + ## portal/internal/web/auto_archive_test.go ##
+    +@@ portal/internal/web/auto_archive_test.go: func TestAutomaticArchivalPageIsSeparateFromIndex(t *testing.T) {
+    + 			t.Fatalf("index still renders overview %q", removed)
+    + 		}
+    + 	}
+    +-	for _, required := range []string{`class="sidebar-heading sidebar-toolbar"`, `aria-label="Workspace menu"`, `popovertarget="sidebar-menu"`, `popover="auto"`, `href="/automatic-archival" autofocus`} {
+    ++	for _, required := range []string{`class="sidebar-heading sidebar-toolbar"`, `aria-label="Workspace menu"`, `popovertarget="sidebar-menu"`, `popover="auto"`, `href="/operations" autofocus`} {
+    + 		if !strings.Contains(index.Body.String(), required) {
+    + 			t.Fatalf("index sidebar menu lacks %q", required)
+    + 		}
+    +
+      ## portal/internal/web/coordination.go (new) ##
+     @@
+     +package web
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +const settle = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+     +
+     +function harness(operations = false) {
+    ++  const session = operations === 'session';
+     +  class Element {
+    -+    constructor() { this.children = []; this.value = ''; this.hidden = true; this.dataset = {}; }
+    ++    constructor(tag = 'div') { this.tag = tag; this.children = []; this.value = ''; this.hidden = true; this.dataset = {}; this.className = ''; }
+     +    set textContent(value) { this.value = value; this.children = []; }
+     +    get textContent() { return this.value + this.children.map(child => child.textContent).join(''); }
+    -+    append(child) { this.children.push(child); }
+    -+    replaceChildren(...children) { this.value = ''; this.children = children; }
+    ++    append(...children) { for (const child of children) { child.parent = this; this.children.push(child); } }
+    ++    replaceChildren(...children) { this.value = ''; this.children = []; this.append(...children); }
+     +    setAttribute(key, value) { this[key] = value; }
+    ++    get classList() { return {contains: value => this.className.split(' ').includes(value)}; }
+    ++    matches(selector) {
+    ++      return selector.startsWith('details') ? this.tag === 'details' && this.dataset.coordinationKey && (!selector.endsWith('[open]') || this.open)
+    ++        : selector === 'summary' ? this.tag === 'summary'
+    ++        : selector.startsWith('.') ? this.classList.contains(selector.slice(1)) : this.tag === selector;
+    ++    }
+    ++    querySelectorAll(selector) { return this.children.flatMap(child => [...(child.matches(selector) ? [child] : []), ...child.querySelectorAll(selector)]); }
+    ++    querySelector(selector) { return this.querySelectorAll(selector)[0] || null; }
+    ++    closest(selector) { return this.matches(selector) ? this : this.parent?.closest(selector); }
+    ++    focus() { document.activeElement = this; }
+     +  }
+     +  const panel = new Element(), warning = new Element(), cards = [], requests = [], timers = new Map();
+    ++  const tabPanel = new Element(), tab = new Element('a'); tabPanel.className = 'tab-panel active'; tabPanel.append(panel);
+    ++  const tabLabel = new Element('span'); tabLabel.className = 'rail-label'; tab.append(tabLabel);
+    ++  if (session) Object.assign(panel.dataset, {coordinationSession: 'holder', coordinationObservation: 'incarnation-a'});
+     +  const docListeners = new Map(), windowListeners = new Map();
+     +  let nextTimer = 0;
+     +  const document = {
+    -+    hidden: false,
+    ++    hidden: false, activeElement: null,
+     +    querySelector: selector => ({'[data-coordination]': operations ? panel : null,
+    -+      '[data-coordination-warning]': warning, '[data-session-list]': operations ? null : {}})[selector],
+    -+    querySelectorAll: () => cards,
+    -+    createElement: () => new Element(), createDocumentFragment: () => new Element(),
+    ++      '[data-coordination-warning]': warning, '[data-session-list]': operations ? null : {},
+    ++      '[data-session-tab="reservations"]': session ? tab : null})[selector],
+    ++    querySelectorAll: selector => selector === '[data-session-slug]' ? cards : [],
+    ++    createElement: tag => new Element(tag), createDocumentFragment: () => new Element(),
+     +    addEventListener: (name, action) => docListeners.set(name, action),
+     +  };
+     +  function addCard(slug, observationIdentity = "incarnation-a") {
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +    setTimeout: (action, delay) => { const id = ++nextTimer; timers.set(id, {action, delay}); return id; },
+     +    clearTimeout: id => timers.delete(id),
+     +  });
+    -+  return {panel, warning, badge, unrelated, requests, addCard, cards,
+    ++  return {panel, warning, badge, unrelated, requests, addCard, cards, document,
+    ++    selectTab: visible => { tabPanel.className = visible ? 'tab-panel active' : 'tab-panel'; docListeners.get('click')(); },
+     +    respond: async (payload, index = requests.length - 1) => { requests[index].resolve({ok: true, json: async () => payload}); await settle(); },
+     +    fail: async () => { requests.at(-1).resolve({ok: false}); await settle(); },
+     +    tick: async () => { const entry = [...timers].find(([, timer]) => timer.delay === 5000); assert.ok(entry, 'poll is scheduled'); timers.delete(entry[0]); entry[1].action(); await settle(); },
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +  assert.equal(h.requests[0].url, '/api/coordination');
+     +  await h.respond(payload());
+     +  assert.equal(h.badge.hidden, false);
+    -+  assert.equal(h.badge.textContent, 'Machine reserved');
+    ++  assert.equal(h.badge.textContent, 'machine reserved');
+     +  assert.match(h.badge['aria-label'], /fixture:machine.*review/);
+     +  assert.equal(h.unrelated.hidden, true);
+     +  await h.tick(); await h.fail();
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +    {id: 'done-456', kind: 'profile_activate', state: 'succeeded'},
+     +  ];
+     +  await h.respond(data);
+    -+  assert.ok(h.panel.textContent.indexOf('Running') < h.panel.textContent.indexOf('Completed'));
+    ++  assert.ok(h.panel.textContent.indexOf('Running and waiting') < h.panel.textContent.indexOf('Recent results'));
+    ++  assert.match(h.panel.textContent, /Update workspace application/);
+    ++  assert.match(h.panel.textContent, /Time unavailable/);
+     +  const before = h.panel.textContent;
+     +  await h.tick(); await h.fail();
+     +  assert.equal(h.panel.textContent, before);
+     +  assert.equal(h.warning.hidden, false);
+     +});
+     +
+    ++test('named and plural badges list distinct machines and states in their tooltip', async () => {
+    ++  const h = harness();
+    ++  await h.respond(payload([{machine: 'fixture:one', shortName: 'buildhost', state: 'held'}]));
+    ++  assert.equal(h.badge.textContent, 'buildhost reserved');
+    ++  await h.tick(); await h.respond(payload([
+    ++    {machine: 'fixture:one', shortName: 'buildhost', state: 'held'},
+    ++    {machine: 'fixture:two', shortName: 'worker', state: 'deployed_review'},
+    ++    {machine: 'fixture:two', shortName: 'worker', state: 'deployed_review'},
+    ++  ]));
+    ++  assert.equal(h.badge.textContent, '2 machines reserved');
+    ++  assert.match(h.badge.title, /buildhost.*Reserved for deployment\nworker.*Held for review/);
+    ++  assert.equal(h.badge.title, h.badge['aria-label']);
+    ++});
+    ++
+    ++test('multiple workspaces preserve full machine details and match same-slug badges by incarnation', async () => {
+    ++  const h = harness(true), data = payload([{id: 'reservation', machine: 'fixture:one', shortName: 'buildhost', state: 'deployed_review', deployments: 4}]);
+    ++  const other = payload([{machine: 'fixture:two', state: 'held'}]).workspaces[0];
+    ++  other.reservationHolders[0].observationIdentity = 'incarnation-b';
+    ++  other.foreignReservations = [{machine: 'fixture:one', state: 'deployed_review', portalUrl: 'https://workspace.test/holder/'}];
+    ++  data.workspaces.push(other);
+    ++  await h.respond(data);
+    ++  assert.match(h.panel.textContent, /buildhost.*4 recorded deployment steps/);
+    ++  assert.equal(h.badge.textContent, 'buildhost reserved');
+    ++});
+    ++
+    ++test('session pane reads only its visible tab and fences both machines and history by incarnation', async () => {
+    ++  const h = harness('session'), data = payload();
+    ++  data.workspaces[0].owners = [{id: 'owner', slug: 'holder', observationIdentity: 'incarnation-a', portalUrl: 'https://workspace.test/holder/'}];
+    ++  data.workspaces[0].jobs = [{id: 'completed', ownerId: 'owner', kind: 'machine_activate', state: 'succeeded'}];
+    ++  assert.equal(h.requests[0].url, '/api/sessions/holder/coordination');
+    ++  await h.respond(data.workspaces[0]);
+    ++  assert.match(h.panel.textContent, /machine.*Held for review/);
+    ++  assert.match(h.panel.textContent, /Deploy system configuration/);
+    ++  h.selectTab(false); assert.equal(h.pollCount(), 0);
+    ++  h.selectTab(true); assert.equal(h.requests.length, 2);
+    ++  data.workspaces[0].owners[0].observationIdentity = 'incarnation-b';
+    ++  data.workspaces[0].reservationHolders[0].observationIdentity = 'incarnation-b';
+    ++  await h.respond(data.workspaces[0]);
+    ++  assert.match(h.panel.textContent, /This session does not hold any machines/);
+    ++  assert.match(h.panel.textContent, /No completed operations yet/);
+    ++  assert.doesNotMatch(h.panel.textContent, /Deploy system configuration/);
+    ++  h.selectTab(false); h.selectTab(true); const request = h.requests.at(-1);
+    ++  h.selectTab(false); assert.equal(request.signal.aborted, true);
+    ++  await h.respond(data.workspaces[0]); assert.equal(h.pollCount(), 0);
+    ++});
+    ++
+    ++test('dashboard refresh preserves expanded details and focused disclosure', async () => {
+    ++  const h = harness(true), data = payload();
+    ++  data.workspaces[0].jobs = [{id: 'active', kind: 'merge', state: 'running', revision: 1}];
+    ++  await h.respond(data);
+    ++  let detail = h.panel.querySelector('details'); detail.open = true; detail.querySelector('summary').focus();
+    ++  await h.tick(); data.workspaces[0].jobs[0].revision = 2; await h.respond(data);
+    ++  detail = h.panel.querySelector('details');
+    ++  assert.equal(detail.open, true); assert.equal(h.document.activeElement, detail.querySelector('summary'));
+    ++});
+    ++
+     +
+     +test('a same-slug replacement never inherits cached ownership during failed reads', async () => {
+     +  const h = harness();
+    @@ portal/internal/web/coordination_test.go (new)
+     +			if !strings.Contains(body, `href="/operations"`) || !strings.Contains(body, "data-session-reservation") || strings.Contains(body, "data-coordination aria-live") {
+     +				t.Fatalf("index does not link to the separate status page: %s", body)
+     +			}
+    -+		} else if !strings.Contains(body, "data-coordination aria-live") || !strings.Contains(body, `href="/"`) {
+    ++		} else if !strings.Contains(body, "data-coordination class=") || !strings.Contains(body, `href="/"`) {
+     +			t.Fatalf("Operations page lacks status or workspace navigation: %s", body)
+     +		}
+     +	}
+    @@ portal/internal/web/coordination_test.go (new)
+     +	}
+     +	response := httptest.NewRecorder()
+     +	server.Handler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/example/", nil))
+    -+	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "View operations") || strings.Contains(response.Body.String(), "data-coordination aria-live") {
+    -+		t.Fatalf("session handoff still embeds status: %d: %s", response.Code, response.Body.String())
+    ++	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `href="#reservations"`) || !strings.Contains(response.Body.String(), `data-coordination-session="example"`) {
+    ++		t.Fatalf("session lacks reservation navigation: %d: %s", response.Code, response.Body.String())
+    ++	}
+    ++	identity, err := session.ObservationIdentity(server.config.Workspace, "example", directory, "")
+    ++	if err != nil || !strings.Contains(response.Body.String(), `data-coordination-observation="`+identity+`"`) {
+    ++		t.Fatal("session reservation pane lacks its observed incarnation")
+    ++	}
+    ++	if strings.Index(response.Body.String(), `href="/operations"`) > strings.Index(response.Body.String(), `href="/automatic-archival"`) {
+    ++		t.Fatal("Operations must precede Automatic archival")
+     +	}
+     +}
+     +
+    @@ portal/internal/web/server.go: func (s *Server) listSessions() ([]session.Summar
+      	}
+      	for slug, progress := range pending {
+      		if _, ok := seen[slug]; ok || progress.Operation != "delete" {
+    +@@ portal/internal/web/server.go: func (s *Server) sessionPage(w http.ResponseWriter, r *http.Request, slug string
+    + 		s.render(w, "session", data)
+    + 		return
+    + 	}
+    ++	observation, observationErr := session.ObservationIdentity(summary.Workspace, summary.Slug,
+    ++		filepath.Join(summary.Workspace, summary.Root, summary.Slug), summary.Codex.ThreadID)
+    ++	if observationErr != nil {
+    ++		s.writeError(w, r, http.StatusConflict, "Session identity changed. Reload the session.")
+    ++		return
+    ++	}
+    ++	summary.ObservationIdentity = observation
+    + 	lifecycleTargetID, lifecycleIdentityErr := lifecycleTargetIdentity(summary)
+    + 	s.normalizeInteractivity(r.Context(), summary)
+    + 	data := pageData{
+     @@ portal/internal/web/server.go: func (s *Server) sessionAPIResolved(w http.ResponseWriter, r *http.Request, part
+      func (s *Server) sessionAPIForSummary(
+      	w http.ResponseWriter, r *http.Request, parts []string, summary *session.Summary,
+    @@ portal/internal/web/server.go: func (s *Server) sessionAPIResolved(w http.Respon
+      		s.recoveryAPI(w, r, summary, parts[1])
+      		return
+     
+    + ## portal/internal/web/server_test.go ##
+    +@@ portal/internal/web/server_test.go: func TestSessionPageUsesPersistentSidebarAndSectionPanels(t *testing.T) {
+    + 	for _, marker := range []string{
+    + 		`class="workspace-sidebar"`, `aria-orientation="vertical"`, `class="session-tabs"`, `href="#codex"`, `data-session-tab="codex"`,
+    + 		`aria-label="Workspace menu"`, `popovertarget="sidebar-menu"`, `popover="auto"`,
+    +-		`href="/automatic-archival" autofocus`, `class="sidebar-home"`, `<h1>example</h1>`,
+    ++		`href="/operations" autofocus`, `class="sidebar-home"`, `<h1>example</h1>`,
+    + 		`data-lifecycle-target-id="` + strings.Repeat("a", 64) + `"`,
+    + 		`href="#handoff"`, `data-session-tab="handoff"`,
+    + 		`href="#repositories"`, `data-session-tab="repositories"`,
+    +
+      ## portal/internal/web/static/app.js ##
+     @@
+                card.href = `/${encodeURIComponent(item.slug)}/`;
+    @@ portal/internal/web/static/coordination.js (new)
+     +  const panel = document.querySelector("[data-coordination]");
+     +  if (!panel && !document.querySelector("[data-session-list]")) return;
+     +  const warning = document.querySelector("[data-coordination-warning]");
+    ++  const refreshed = document.querySelector("[data-coordination-refreshed]");
+    ++  const sessionSlug = panel?.dataset.coordinationSession;
+    ++  const observation = panel?.dataset.coordinationObservation;
+    ++  const terminal = new Set(["succeeded", "failed", "canceled"]);
+     +  const labels = {waiting_approval: "Waiting for approval", waiting_dependency: "Waiting for an earlier operation",
+     +    waiting_resource: "Queued", ready: "Ready to run", claimed: "Starting", running: "Running",
+    -+    needs_refresh: "Preparation needed", reconciling: "Recovery required", succeeded: "Completed",
+    -+    failed: "Failed", canceled: "Canceled", requested: "Queued", held: "Reserved for deployment",
+    -+    deployed_review: "Reserved through review and iteration", blocked_recovery: "Reserved for recovery",
+    ++    needs_refresh: "Needs preparation", reconciling: "Recovery required", succeeded: "Completed",
+    ++    failed: "Failed", canceled: "Canceled", requested: "Waiting for reservation", held: "Reserved for deployment",
+    ++    deployed_review: "Held for review", blocked_recovery: "Held for recovery",
+     +    closing: "Checking completion", released: "Released"};
+    -+  const node = (tag, text) => { const element = document.createElement(tag); element.textContent = text; return element; };
+    ++  const kinds = {merge: "Merge feature branch", machine_activate: "Deploy system configuration", profile_activate: "Update workspace application"};
+    ++  const node = (tag, text = "", className = "") => {
+    ++    const element = document.createElement(tag); element.textContent = text;
+    ++    if (className) element.className = className;
+    ++    return element;
+    ++  };
+     +  const link = (url, text) => {
+     +    const element = node("a", text);
+     +    try { if (new URL(url).protocol === "https:") element.href = url; } catch (_) { /* malformed status link */ }
+     +    return element;
+     +  };
+    -+  let lastPayload = null, unavailable = false, paused = document.hidden, active = null, timer = null;
+    ++  const shortName = machine => machine.shortName || machine.machine.split(":").at(-1);
+    ++  const stateLabel = state => labels[state] || "Status unavailable";
+    ++  const badge = state => node("span", stateLabel(state), `badge ${["failed", "blocked_recovery"].includes(state) ? "danger" : ["succeeded", "held", "deployed_review"].includes(state) ? "active" : "warning"}`);
+    ++  const date = value => {
+    ++    const parsed = typeof value === "string" && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(value) ? new Date(value) : null;
+    ++    if (!parsed || !Number.isFinite(parsed.getTime())) return node("span", "Time unavailable", "muted");
+    ++    const element = node("time", parsed.toLocaleString()); element.dateTime = value; element.title = value;
+    ++    return element;
+    ++  };
+    ++  let lastPayload = null, lastDisplay = null, unavailable = false, paused = true, active = null, timer = null;
+     +
+     +  function renderBadges() {
+     +    if (!lastPayload) return;
+    -+    const holders = new Map(lastPayload.workspaces.flatMap(workspace => workspace.reservationHolders)
+    -+      .map(holder => [holder.slug, holder]));
+    ++    const holders = lastPayload.workspaces.flatMap(workspace => workspace.reservationHolders);
+     +    for (const card of document.querySelectorAll("[data-session-slug]")) {
+    -+      const badge = card.querySelector("[data-session-reservation]");
+    -+      if (!badge) continue;
+    -+      const holder = holders.get(card.dataset.sessionSlug);
+    -+      const machines = holder && holder.observationIdentity && holder.observationIdentity === card.dataset.sessionObservation ? holder.machines : [];
+    -+      badge.hidden = machines.length === 0;
+    -+      badge.textContent = machines.length === 1 ? "Machine reserved" : `${machines.length} machines reserved`;
+    -+      const description = machines.map(machine => `${machine.machine}: ${labels[machine.state]}`).join("; ");
+    -+      badge.title = description + (unavailable ? ". Reservation status is unavailable." : "");
+    -+      badge.setAttribute("aria-label", badge.title);
+    ++      const element = card.querySelector("[data-session-reservation]");
+    ++      if (!element) continue;
+    ++      const holder = holders.find(holder => holder.slug === card.dataset.sessionSlug
+    ++        && holder.observationIdentity === card.dataset.sessionObservation);
+    ++      const machines = holder && holder.observationIdentity && holder.observationIdentity === card.dataset.sessionObservation
+    ++        ? [...new Map(holder.machines.map(machine => [machine.machine, machine])).values()] : [];
+    ++      element.hidden = machines.length === 0;
+    ++      element.textContent = machines.length === 1 ? `${shortName(machines[0])} reserved` : `${machines.length} machines reserved`;
+    ++      element.title = machines.map(machine => `${shortName(machine)} (${machine.machine}): ${stateLabel(machine.state)}`).join("\n")
+    ++        + (unavailable ? "\nReservation status is unavailable. Last known reservations are shown." : "");
+    ++      element.setAttribute("aria-label", element.title);
+     +    }
+     +  }
+     +
+     +  function renderOperations(payload) {
+     +    if (!panel) return;
+    ++    const display = JSON.stringify(payload);
+    ++    if (display === lastDisplay) return;
+    ++    const expanded = new Set([...panel.querySelectorAll("details[data-coordination-key][open]")].map(detail => detail.dataset.coordinationKey));
+    ++    const focused = document.activeElement?.closest?.("details[data-coordination-key]")?.dataset.coordinationKey;
+     +    const content = document.createDocumentFragment();
+    -+    let count = 0;
+    ++    const owners = new Map(), reservations = new Map(), held = new Map(), jobs = [], requests = [], alerts = [];
+    ++    let limited = false;
+     +    for (const workspace of payload.workspaces) {
+    -+      const owners = new Map(workspace.owners.map(owner => [owner.id, owner]));
+    -+      if (workspace.suspended) content.append(node("p", "Scheduling is suspended."));
+    -+      for (const reservation of workspace.reservations) {
+    -+        if (reservation.state === "released") continue;
+    -+        const row = node("p", `${reservation.machine}: ${labels[reservation.state] || reservation.state}. `);
+    -+        const owner = owners.get(reservation.ownerId);
+    -+        if (owner) row.append(link(owner.portalUrl, owner.slug));
+    -+        content.append(row); count++;
+    ++      for (const owner of workspace.owners) {
+    ++        if (!sessionSlug || observation && owner.observationIdentity === observation) owners.set(owner.id, owner);
+     +      }
+    -+      for (const blocker of workspace.foreignReservations) {
+    -+        const row = node("p", `${blocker.machine}: ${labels[blocker.state] || blocker.state}. `);
+    -+        row.append(link(blocker.portalUrl, "Owning session")); content.append(row); count++;
+    ++      const own = item => !sessionSlug || owners.has(item.ownerId);
+    ++      if (workspace.suspended) alerts.push("Operation scheduling is paused. Existing reservations remain held.");
+    ++      for (const holder of workspace.reservationHolders) {
+    ++        if (sessionSlug && (!observation || holder.observationIdentity !== observation)) continue;
+    ++        owners.set(holder.ownerId, {...holder, id: holder.ownerId});
+    ++        for (const machine of holder.machines) {
+    ++          const item = {...machine, id: machine.id || machine.machine, ownerId: holder.ownerId};
+    ++          held.set(item.machine, item); reservations.set(item.id, item);
+    ++        }
+     +      }
+    -+      for (const job of workspace.jobs) {
+    -+        const row = node("p", `${job.kind.replaceAll("_", " ")}: ${labels[job.state] || job.state} (${job.id.slice(0, 8)}). `);
+    -+        const owner = owners.get(job.ownerId);
+    -+        if (owner) row.append(link(owner.portalUrl, owner.slug));
+    -+        if (job.state === "needs_refresh") row.append(node("span", " The owning agent must prepare and verify a fresh snapshot."));
+    -+        if (job.reason?.portalUrl) row.append(link(job.reason.portalUrl, "Blocking session"));
+    -+        content.append(row); count++;
+    ++      for (const item of workspace.reservations.filter(own)) {
+    ++        reservations.set(item.id, item);
+    ++        if (item.state === "requested") requests.push(item);
+    ++        else if (item.state !== "released") held.set(item.machine, item);
+     +      }
+    -+      for (const event of workspace.notifications) {
+    -+        if (event.state === "delivered") continue;
+    -+        content.append(node("p", `Agent notification: ${event.state === "held" ? "held" : "awaiting delivery or receipt reconciliation"}.`)); count++;
+    ++      if (!sessionSlug) for (const item of workspace.foreignReservations) {
+    ++        if (!["requested", "released"].includes(item.state) && !held.has(item.machine)) held.set(item.machine, {...item, id: item.machine, foreign: true});
+     +      }
+    -+      if (workspace.counts && Object.entries(workspace.counts).some(([key, total]) => total > workspace[key].length)) {
+    -+        content.append(node("p", "This view shows up to 128 records of each kind. The session command provides the full history."));
+    ++      jobs.push(...workspace.jobs.filter(own));
+    ++      const notices = workspace.notifications.filter(own).filter(event => event.state !== "delivered");
+    ++      if (notices.length) alerts.push(`${notices.length} agent ${notices.length === 1 ? "notification is" : "notifications are"} awaiting delivery or confirmation.`);
+    ++      if (workspace.counts && Object.entries(workspace.counts).some(([key, total]) => total > (workspace[key]?.length || 0))) limited = true;
+    ++    }
+    ++    const details = (key, values) => {
+    ++      const element = node("details", "", "coordination-details"); element.dataset.coordinationKey = key;
+    ++      element.append(node("summary", "Technical details"), node("pre", JSON.stringify(values, null, 2)));
+    ++      element.open = expanded.has(key);
+    ++      return element;
+    ++    };
+    ++    const ownerLink = (item, reservation = false) => {
+    ++      const owner = owners.get(item.ownerId);
+    ++      if (owner?.observationIdentity) return link(owner.portalUrl + (reservation ? "#reservations" : ""), owner.slug);
+    ++      if (item.foreign) return link(item.portalUrl + "#reservations", "Owning session");
+    ++      return node("span", owner ? `${owner.slug} (retained record)` : "Session details unavailable", "muted");
+    ++    };
+    ++    const section = (title, count) => {
+    ++      const element = node("section", "", "panel coordination-section");
+    ++      const heading = node("div", "", "section-heading"); heading.append(node("h2", title), node("span", String(count)));
+    ++      element.append(heading); content.append(element); return element;
+    ++    };
+    ++    for (const text of alerts) content.append(node("p", text, "notice warning"));
+    ++    const machineSection = section("Reserved machines", held.size);
+    ++    const grid = node("div", "", "coordination-machines"); machineSection.append(grid);
+    ++    for (const item of [...held.values()].sort((a, b) => shortName(a).localeCompare(shortName(b)))) {
+    ++      const card = node("article", "", "coordination-machine");
+    ++      const title = node("div", "", "coordination-machine-heading"); title.append(node("h3", shortName(item)), badge(item.state));
+    ++      card.append(title);
+    ++      const owner = node("p"); owner.append(node("span", "Held by ", "muted"), ownerLink(item, true)); card.append(owner);
+    ++      card.append(node("p", item.state === "deployed_review"
+    ++        ? "Other sessions cannot redeploy this machine while review, feedback and integration are pending."
+    ++        : item.state === "blocked_recovery" ? "The owning session must resolve deployment recovery before another session can deploy."
+    ++        : "Other sessions wait until the owning session finishes its deployment work."));
+    ++      const since = node("p", "", "muted"); since.append(node("span", "Reserved since: "), date(item.timestamps?.heldAt)); card.append(since);
+    ++      if (typeof item.deployments === "number") card.append(node("p", `${item.deployments} recorded deployment ${item.deployments === 1 ? "step" : "steps"}`, "muted"));
+    ++      card.append(details(`reservation:${item.id}`, item)); grid.append(card);
+    ++    }
+    ++    if (!held.size) machineSection.append(node("p", sessionSlug ? "This session does not hold any machines." : "No machines are reserved.", "empty"));
+    ++    if (requests.length) {
+    ++      const pending = section("Requested reservations", requests.length);
+    ++      for (const item of requests) {
+    ++        const row = node("p", `${shortName(item)}: ${stateLabel(item.state)}. `); row.append(ownerLink(item)); pending.append(row);
+     +      }
+     +    }
+    -+    if (!count) content.append(node("p", "No coordinated operations or machine reservations."));
+    -+    panel.replaceChildren(content);
+    ++    const target = job => job.kind === "merge" ? `${job.source?.repository || "Repository"} → ${(job.source?.target || "default branch").replace(/^refs\/heads\//, "")}`
+    ++      : reservations.has(job.reservationId) ? shortName(reservations.get(job.reservationId)) : job.source?.target || "Workspace";
+    ++    const jobTable = (title, rows, empty) => {
+    ++      const container = section(title, rows.length);
+    ++      if (!rows.length) { container.append(node("p", empty, "empty")); return; }
+    ++      const scroll = node("div", "", "table-scroll"), table = node("table", "", "coordination-table");
+    ++      const head = node("thead"), headings = node("tr"), body = node("tbody");
+    ++      for (const text of ["Operation", "Target", "Session", "Status", "Last change"]) {
+    ++        const cell = node("th", text); cell.scope = "col"; headings.append(cell);
+    ++      }
+    ++      head.append(headings); table.append(head, body); scroll.append(table); container.append(scroll);
+    ++      for (const job of rows) {
+    ++        const row = node("tr"), operation = node("td");
+    ++        operation.append(node("strong", kinds[job.kind] || "Coordinated operation"), details(`job:${job.id}`, job));
+    ++        const owner = node("td"); owner.append(ownerLink(job));
+    ++        const status = node("td"); status.append(badge(job.state));
+    ++        if (job.state === "needs_refresh") status.append(node("p", "The owning session needs to prepare an updated operation.", "muted"));
+    ++        if (job.reason?.portalUrl) {
+    ++          const blocker = node("p", "Waiting for "); blocker.append(link(job.reason.portalUrl + "#reservations", "another session")); status.append(blocker);
+    ++        } else if (job.state === "waiting_dependency") status.append(node("p", "An earlier step must finish first.", "muted"));
+    ++        const changed = node("td"); changed.append(date(job.timestamps?.stateChangedAt));
+    ++        row.append(operation, node("td", target(job)), owner, status, changed); body.append(row);
+    ++      }
+    ++    };
+    ++    const current = jobs.filter(job => !terminal.has(job.state)).sort((a, b) => {
+    ++      const rank = job => ["running", "claimed", "reconciling"].includes(job.state) ? 0 : 1;
+    ++      return rank(a) - rank(b) || (b.sequence || 0) - (a.sequence || 0);
+    ++    });
+    ++    jobTable("Running and waiting", current, "No operations are running or waiting.");
+    ++    jobTable("Recent results", jobs.filter(job => terminal.has(job.state)).sort((a, b) => (b.sequence || 0) - (a.sequence || 0)), "No completed operations yet.");
+    ++    if (limited) content.append(node("p", "This is a limited view of operation history. The session command provides the complete records.", "notice"));
+    ++    panel.replaceChildren(content); lastDisplay = display;
+    ++    if (focused) [...panel.querySelectorAll("details[data-coordination-key]")].find(detail => detail.dataset.coordinationKey === focused)?.querySelector("summary")?.focus({preventScroll: true});
+    ++    const tab = document.querySelector('[data-session-tab="reservations"]');
+    ++    if (tab) {
+    ++      const label = `Reservations (${held.size})`; tab.querySelector(".rail-label").textContent = label;
+    ++      tab.title = label; tab.setAttribute("aria-label", label);
+    ++    }
+     +  }
+     +
+     +  async function refresh() {
+     +    if (paused || active) return;
+    -+    const controller = new AbortController();
+    -+    active = controller;
+    ++    const controller = new AbortController(); active = controller;
+     +    const deadline = setTimeout(() => controller.abort(), 10000);
+     +    try {
+    -+      const response = await fetch("/api/coordination", {cache: "no-store", signal: controller.signal});
+    ++      const endpoint = sessionSlug ? `/api/sessions/${encodeURIComponent(sessionSlug)}/coordination` : "/api/coordination";
+    ++      const response = await fetch(endpoint, {cache: "no-store", signal: controller.signal});
+     +      if (!response.ok) throw new Error("Operations are unavailable.");
+    -+      const payload = await response.json();
+    ++      const raw = await response.json();
+     +      if (active !== controller || controller.signal.aborted) return;
+    -+      if (!Array.isArray(payload.workspaces) || payload.workspaces.some(workspace => !Array.isArray(workspace.reservationHolders))) {
+    ++      const payload = sessionSlug ? {workspaces: [raw]} : raw;
+    ++      if (!Array.isArray(payload.workspaces) || payload.workspaces.some(workspace =>
+    ++        !["owners", "jobs", "reservations", "foreignReservations", "notifications", "reservationHolders"].every(key => Array.isArray(workspace[key])))) {
+     +        throw new Error("Reservation status is unavailable.");
+     +      }
+    -+      renderOperations(payload);
+    -+      lastPayload = payload; unavailable = false;
+    -+      renderBadges();
+    -+      warning.hidden = true; warning.textContent = "";
+    ++      renderOperations(payload); lastPayload = payload; unavailable = false; renderBadges();
+    ++      if (warning) { warning.hidden = true; warning.textContent = ""; }
+    ++      if (refreshed) refreshed.textContent = `Last checked: ${new Date().toLocaleTimeString()}`;
+     +    } catch (_) {
+     +      if (active !== controller || paused) return;
+    -+      unavailable = true;
+    -+      renderBadges();
+    -+      warning.textContent = lastPayload ? "Reservation status is unavailable. Last known status remains shown." : "Reservation status is unavailable.";
+    -+      warning.hidden = false;
+    ++      unavailable = true; renderBadges();
+    ++      if (warning) {
+    ++        warning.textContent = lastPayload ? "Operation status is unavailable. Last known status remains shown." : "Operation status is unavailable.";
+    ++        warning.hidden = false;
+    ++      }
+     +    } finally {
+     +      clearTimeout(deadline);
+    -+      if (active === controller) {
+    -+        active = null;
+    -+        if (!paused) timer = setTimeout(refresh, 5000);
+    -+      }
+    ++      if (active === controller) { active = null; if (!paused) timer = setTimeout(refresh, 5000); }
+     +    }
+     +  }
+     +  function pause() {
+    -+    paused = true; clearTimeout(timer);
+    -+    if (active) active.abort();
+    -+    active = null;
+    ++    paused = true; clearTimeout(timer); if (active) active.abort(); active = null;
+    ++  }
+    ++  function resume() {
+    ++    const visible = !document.hidden && (!sessionSlug || panel.closest(".tab-panel")?.classList.contains("active"));
+    ++    if (!visible) { pause(); return; }
+    ++    if (paused) { paused = false; clearTimeout(timer); refresh(); }
+     +  }
+    -+  function resume() { paused = document.hidden; clearTimeout(timer); if (!paused) refresh(); }
+     +  document.addEventListener("session-list-updated", renderBadges);
+    -+  document.addEventListener("visibilitychange", () => document.hidden ? pause() : resume());
+    -+  window.addEventListener("pagehide", pause);
+    -+  window.addEventListener("pageshow", resume);
+    -+  refresh();
+    ++  document.addEventListener("visibilitychange", resume);
+    ++  if (sessionSlug) { document.addEventListener("click", resume); window.addEventListener("hashchange", resume); }
+    ++  window.addEventListener("pagehide", pause); window.addEventListener("pageshow", resume);
+    ++  resume();
+     +})();
+     
+      ## portal/internal/web/static/style.css ##
+    @@ portal/internal/web/static/style.css: dialog::backdrop { background: rgba(0, 0,
+      .badge { display: inline-flex; align-items: center; border-radius: 999px; padding: .25rem .62rem; border: 1px solid var(--line); color: var(--muted); font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+      .badge.active { color: var(--accent); border-color: #2b6652; }
+     +.badge.reserved { color: var(--accent-2); border-color: var(--accent-2); justify-self: start; }
+    ++.coordination-layout { display: grid; gap: 1.2rem; min-width: 0; }
+    ++.coordination-intro p { margin: .3rem 0; }
+    ++.coordination-section { min-width: 0; }
+    ++.coordination-machines { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 1rem; }
+    ++.coordination-machine { padding: 1rem; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); min-width: 0; }
+    ++.coordination-machine p { margin: .65rem 0; line-height: 1.5; overflow-wrap: anywhere; }
+    ++.coordination-machine-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; }
+    ++.coordination-machine-heading h3 { margin: 0; font-size: 1.15rem; overflow-wrap: anywhere; }
+    ++.coordination-table { width: 100%; border-collapse: collapse; text-align: left; font-size: .9rem; }
+    ++.coordination-table th { color: var(--muted); font-weight: 600; }
+    ++.coordination-table th, .coordination-table td { padding: .9rem .7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+    ++.coordination-table td { overflow-wrap: anywhere; max-width: 28rem; }
+    ++.coordination-table th:first-child, .coordination-table td:first-child { padding-left: 0; }
+    ++.coordination-table tr:last-child td { border-bottom: 0; }
+    ++.coordination-table td > p { margin: .5rem 0 0; }
+    ++.coordination-table td > a { display: block; min-width: 10rem; }
+    ++.coordination-table time { display: block; min-width: 8rem; }
+    ++.coordination-details { margin-top: .65rem; font-size: .85rem; }
+    ++.coordination-details summary { cursor: pointer; color: var(--muted); }
+    ++.coordination-details summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 3px; }
+    ++.coordination-details pre { margin: .7rem 0 0; padding: .8rem; border-radius: 8px; background: var(--bg); max-height: 22rem; max-width: 100%; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; }
+    ++.coordination-table .coordination-details pre { width: min(28rem, 65vw); }
+    ++@media (max-width: 720px) {
+    ++  .coordination-section { padding: .85rem; }
+    ++  .coordination-table th, .coordination-table td { padding: .65rem .5rem; }
+    ++  .coordination-table { min-width: 680px; }
+    ++}
+      .badge.archived { color: var(--muted); }
+      .badge.warning { color: var(--warning); border-color: #66532e; }
+      .badge.danger { color: var(--danger); border-color: #713b46; }
+    @@ portal/internal/web/templates/index.html
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Workspace</title>
+     -  <link rel="stylesheet" href="/static/style.css?v=6">
+    -+  <link rel="stylesheet" href="/static/style.css?v=12">
+    ++  <link rel="stylesheet" href="/static/style.css?v=13">
+        <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+      </head>
+      <body data-index data-index-generated-at="{{.IndexGeneratedAt}}">
+    @@ portal/internal/web/templates/index.html
+        <script src="/static/preparation.js?v=3" defer></script>
+     -  <script src="/static/app.js?v=37" defer></script>
+     +  <script src="/static/app.js?v=38" defer></script>
+    -+  <script src="/static/coordination.js?v=2" defer></script>
+    ++  <script src="/static/coordination.js?v=3" defer></script>
+      </body>
+      </html>
+      {{end}}
+     @@
+    + {{define "sidebar-menu"}}
+      <button class="sidebar-menu-toggle quiet" type="button" popovertarget="sidebar-menu" title="Workspace menu" aria-label="Workspace menu"><span aria-hidden="true">⋮</span></button>
+      <nav id="sidebar-menu" class="sidebar-menu" popover="auto" aria-label="Workspace navigation">
+    -   <a href="/automatic-archival" autofocus>Automatic archival</a>
+    -+  <a href="/operations">Operations</a>
+    +-  <a href="/automatic-archival" autofocus>Automatic archival</a>
+    ++  <a href="/operations" autofocus>Operations</a>
+    ++  <a href="/automatic-archival">Automatic archival</a>
+      </nav>
+      {{end}}
+      
+    @@ portal/internal/web/templates/operations.html (new)
+     +  <meta charset="utf-8">
+     +  <meta name="viewport" content="width=device-width, initial-scale=1">
+     +  <title>Operations · {{.DisplayLabel}}</title>
+    -+  <link rel="stylesheet" href="/static/style.css?v=12">
+    ++  <link rel="stylesheet" href="/static/style.css?v=13">
+     +</head>
+     +<body data-operations>
+     +  <header class="topbar">
+    @@ portal/internal/web/templates/operations.html (new)
+     +  </header>
+     +  <main class="page">
+     +    <p data-coordination-warning class="notice warning" role="status" hidden></p>
+    -+    <section class="panel" aria-label="Coordinated operations">
+    -+      <p>Machine reservations stay with their owning session during review and feedback.</p>
+    -+      <div data-coordination aria-live="polite">Loading operations…</div>
+    -+    </section>
+    ++    <div class="coordination-intro"><p>See which sessions hold machines and which operations are waiting.</p><p class="muted" data-coordination-refreshed role="status"></p></div>
+    ++    <div data-coordination class="coordination-layout">Loading operations…</div>
+     +  </main>
+    -+  <script src="/static/coordination.js?v=2" defer></script>
+    ++  <script src="/static/coordination.js?v=3" defer></script>
+     +</body>
+     +</html>
+     +{{end}}
+     
+      ## portal/internal/web/templates/session.html ##
+    +@@
+    +   <meta name="style-nonce" content="{{.StyleNonce}}">
+    +   <title>{{.Session.Slug}} · Workspace</title>
+    +   <link rel="stylesheet" href="/codex/assets/conversation.css?v=5">
+    +-  <link rel="stylesheet" href="/static/style.css?v=11">
+    ++  <link rel="stylesheet" href="/static/style.css?v=13">
+    +   <link rel="stylesheet" href="/codex/assets/uploads.css?v=3">
+    + </head>
+    + <body class="session-body" data-session="{{.Session.Slug}}" data-thread-id="{{if .SelectedThreadID}}{{.SelectedThreadID}}{{else}}{{.Session.Codex.ThreadID}}{{end}}" data-root-thread-id="{{.Session.Codex.ThreadID}}" data-conversation-id="{{.ConversationID}}" data-selected-member="{{.SelectedMember}}" data-lifecycle-target-id="{{.LifecycleTargetID}}" data-target-identity-version="2" data-archived="{{.Session.Archived}}" data-interactive="{{.Session.Interactive}}" data-execution-held="{{.Session.ExecutionHeld}}" data-lifecycle="{{.Session.Lifecycle}}" data-pending-lifecycle="{{.PendingLifecycle}}">
+    +@@
+    +         {{if .Session.Codex.ThreadID}}<a id="session-tab-team" class="tab" href="#team" role="tab" aria-selected="false" aria-controls="team" data-session-tab="team" title="Team" aria-label="Team"><span class="rail-icon" aria-hidden="true">♙</span><span class="rail-label">Team</span></a>{{end}}
+    +         <a id="session-tab-repositories" class="tab" href="#repositories" role="tab" aria-selected="false" aria-controls="repositories" data-session-tab="repositories" title="Repositories" aria-label="Repositories"><span class="rail-icon" aria-hidden="true">⌘</span><span class="rail-label">Repositories</span></a>
+    +         <a id="session-tab-clusters" class="tab" href="#clusters" role="tab" aria-selected="false" aria-controls="clusters" data-session-tab="clusters" title="Clusters" aria-label="Clusters"><span class="rail-icon" aria-hidden="true">▦</span><span class="rail-label">Clusters{{if .Clusters}} ({{len .Clusters}}){{end}}</span></a>
+    ++        <a id="session-tab-reservations" class="tab" href="#reservations" role="tab" aria-selected="false" aria-controls="reservations" data-session-tab="reservations" title="Reservations" aria-label="Reservations"><span class="rail-icon" aria-hidden="true">▣</span><span class="rail-label">Reservations</span></a>
+    +         <a id="session-tab-artifacts" class="tab" href="#artifacts" role="tab" aria-selected="false" aria-controls="artifacts" data-session-tab="artifacts" title="Artifacts" aria-label="Artifacts"><span class="rail-icon" aria-hidden="true">▤</span><span class="rail-label">Artifacts ({{len .Artifacts}})</span></a>
+    +         <a id="session-tab-settings" class="tab" href="#settings" role="tab" aria-selected="false" aria-controls="settings" data-session-tab="settings" title="Settings" aria-label="Settings"><span class="rail-icon" aria-hidden="true">⚙</span><span class="rail-label">Settings</span></a>
+    +       </nav>
+    +@@
+    +     <section class="panel"><h2>Deletion recovery</h2><p>This session's tracking has already moved to private recovery storage. The deletion status above remains available so you can retry or force the unfinished operation.</p></section>
+    +     {{else}}
+    +     <section class="session-tabs">
+    ++      <section id="reservations" class="tab-panel" role="tabpanel" aria-labelledby="session-tab-reservations">
+    ++        <div class="section-heading"><h2>Reservations</h2><a href="/operations">Workspace operations</a></div>
+    ++        <p>Machines held by this session stay reserved during review and feedback.</p>
+    ++        <p data-coordination-warning class="notice warning" role="status" hidden></p>
+    ++        <p class="muted" data-coordination-refreshed role="status"></p>
+    ++        <div data-coordination data-coordination-session="{{.Session.Slug}}" data-coordination-observation="{{.Session.ObservationIdentity}}" class="coordination-layout">Loading reservations…</div>
+    ++      </section>
+    +       <section id="settings" class="tab-panel" role="tabpanel" aria-labelledby="session-tab-settings">
+    +         <div class="section-heading"><h2>Settings</h2></div>
+    +         <section id="auto-archive-panel" class="panel">
+     @@
+            {{end}}
+      
+    @@ portal/internal/web/templates/session.html
+              <div class="section-heading"><h2>Handoff</h2></div>
+              {{if not .Session.Codex.ThreadID}}<p class="notice warning">This session has no shared Codex conversation. Start new sessions with <code>dev-session start &lt;short-name&gt;</code>.</p>{{end}}
+              {{if .Session.ForkedFrom}}<p>Forked from <a href="/{{.Session.ForkedFrom}}/">{{.Session.ForkedFrom}}</a>.</p>{{end}}
+    +@@
+    +     </form>
+    +   </dialog>
+    +   <script src="/static/app.js?v=37" defer></script>
+    ++  <script src="/static/coordination.js?v=3" defer></script>
+    + </body>
+    + </html>
+    + {{end}}
+    +
+    + ## test/workspace_coordination_test.rb ##
+    +@@ test/workspace_coordination_test.rb: class WorkspaceCoordinationTest < Minitest::Test
+    +     {'schema' => 1, 'requestId' => SecureRandom.uuid}.merge(values)
+    +   end
+    + 
+    ++  def test_session_projection_excludes_a_recreated_slugs_retained_history
+    ++    first = owner('replacement-history')
+    ++    submit_merge(first)
+    ++    assert_equal 1, @engine.status(first['slug'], portal: true)['jobs'].length
+    ++    directory = File.join(@workspace, 'work', first['slug'])
+    ++    File.rename(directory, File.join(@tmp, 'previous-session'))
+    ++    owner(first['slug'])
+    ++    result = @engine.status(first['slug'], portal: true)
+    ++    assert_empty result['jobs']
+    ++    assert_equal 1, result['owners'].length
+    ++    assert result['owners'].first['observationIdentity']
+    ++  end
+    ++
+    +   def approval(owner, snapshot, kind: 'merge', scope: nil)
+    +     @engine.mutate(owner, 'approve', request('kind' => kind, 'scope' => scope || [{'repository' => 'code', 'target' => 'refs/heads/master'}],
+    +       'source' => {'kind' => 'user_instruction', 'reference' => 'fixture approval', 'quote' => 'integrate code into master'}, 'reviewedSnapshot' => snapshot['id']))['id']
+    +@@ test/workspace_coordination_test.rb: class WorkspaceCoordinationTest < Minitest::Test
+    +       if %w[requested released].include?(state)
+    +         assert_empty holders
+    +       else
+    +-        assert_equal [{'ownerId' => first['id'], 'slug' => first['slug'], 'portalUrl' => first['portalUrl'], 'observationIdentity' => observation,
+    +-          'machines' => [{'machine' => 'fixture:machine', 'state' => state}]}], holders
+    ++        assert_equal 1, holders.length
+    ++        assert_equal first.slice('slug', 'portalUrl').merge('ownerId' => first['id'], 'observationIdentity' => observation), holders.first.reject { |key, _| key == 'machines' }
+    ++        machine = holders.first['machines'].first
+    ++        assert_equal({'machine' => 'fixture:machine', 'state' => state}, machine.slice('machine', 'state'))
+    ++        assert_equal 'machine', machine['shortName']
+    ++        assert_equal reservation['id'], machine['id']
+    +       end
+    +       assert_equal before, File.binread(File.join(@engine.store.root, 'ledger.json'))
+    +     end
+-:  ------- > 3:  62a1b4c coordination: record optional display dates after ledger publication

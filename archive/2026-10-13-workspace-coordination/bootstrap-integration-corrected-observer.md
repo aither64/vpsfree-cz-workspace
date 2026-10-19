@@ -1,0 +1,6 @@
+- **Result:** Failed at the first reported failure; the batch stopped before all eight stages completed.
+- **Command:** `python3 work/2026-10-13-workspace-coordination/observe-merge-batch.py`
+- **Handle:** `91326` — completed with exit status **0**.
+- **Reported stages:** `dev-workspace` prepare and execute, and `vpsfree-dev-workspace` prepare and execute all returned status 0.
+- **Failure:** `vpsfree-cz-configuration` prepare returned status 3. Bounded failure tail: `confctl config dev shell ready (tools)` followed by `error: feature must be rebased and verified before preparation`.
+- The observer exited; I did not retry or diagnose.

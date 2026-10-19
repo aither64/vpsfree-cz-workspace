@@ -1,0 +1,1 @@
+Please send a concise parent progress report at phase transitions (candidate package passed, workspace checks passed, recovery VM current, system, CI). Retain original owned batch; do not relaunch. Parent will wait for your final report. Ignore repetitive requests if unchanged. Original verification command began around 21:34 UTC.

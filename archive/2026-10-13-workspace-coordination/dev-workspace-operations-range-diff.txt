@@ -1,0 +1,94 @@
+1:  e769969 ! 1:  ba5d88b coordination: serialize approved merges and deployments
+    @@ libexec/workspace-coordination.rb (new)
+     +       'notifications' => data['outbox'].values.select { |event| ids.include?(event['ownerId']) }.map { |event| event.reject { |key, _| %w[text options].include?(key) } },
+     +       'foreignReservations' => data['reservations'].values.reject { |item| ids.include?(item['ownerId']) || item['state'] == 'released' }.map { |item| item.slice('machine', 'state').merge('portalUrl' => data['owners'][item['ownerId']]['portalUrl']) }}
+     +      if portal
+    ++        held = result['reservations'].reject { |item| %w[requested released].include?(item['state']) }.group_by { |item| item['ownerId'] }
+    ++        current_owners = owners.select { |owner| held.key?(owner['id']) }.group_by { |owner| owner['slug'] }.flat_map do |name, candidates|
+    ++          current_ids = store.lifecycle_owners(data, workspace, name).map { |owner| owner['id'] }
+    ++          candidates.select { |owner| current_ids.include?(owner['id']) }
+    ++        end
+    ++        result['reservationHolders'] = current_owners.map do |owner|
+    ++          owner.slice('slug', 'portalUrl').merge('ownerId' => owner['id'],
+    ++            'machines' => held.fetch(owner['id']).sort_by { |item| item['machine'] }.map { |item| item.slice('machine', 'state') })
+    ++        end
+     +        result['counts'] = result.slice('owners', 'jobs', 'reservations', 'notifications', 'foreignReservations').transform_values(&:length)
+     +        result['owners'] = result['owners'].first(128)
+     +        result['jobs'] = result['jobs'].sort_by { |job| [TERMINAL.include?(job['state']) ? 1 : 0, -job['sequence']] }.first(128).map do |job|
+    @@ test/workspace_coordination_test.rb (new)
+     +    assert_empty @engine.claim
+     +  end
+     +
+    ++  def test_portal_badges_report_held_states_and_archived_owners_without_mutation
+    ++    configure_machine
+    ++    first = owner('holder')
+    ++    reservation, = deployment(first, submit: false)
+    ++    %w[requested held deployed_review closing blocked_recovery released].each do |state|
+    ++      @engine.store.transaction { |data| data['reservations'][reservation['id']]['state'] = state }
+    ++      before = File.binread(File.join(@engine.store.root, 'ledger.json'))
+    ++      holders = @engine.status(portal: true)['reservationHolders']
+    ++      if %w[requested released].include?(state)
+    ++        assert_empty holders
+    ++      else
+    ++        assert_equal [{'ownerId' => first['id'], 'slug' => first['slug'], 'portalUrl' => first['portalUrl'],
+    ++          'machines' => [{'machine' => 'fixture:machine', 'state' => state}]}], holders
+    ++      end
+    ++      assert_equal before, File.binread(File.join(@engine.store.root, 'ledger.json'))
+    ++    end
+    ++    @engine.store.transaction { |data| data['reservations'][reservation['id']]['state'] = 'blocked_recovery' }
+    ++    FileUtils.mkdir_p(File.join(@workspace, 'archive'))
+    ++    File.rename(File.join(@workspace, 'work', first['slug']), File.join(@workspace, 'archive', first['slug']))
+    ++    assert_equal first['id'], @engine.status(portal: true)['reservationHolders'].first['ownerId']
+    ++  end
+    ++
+    ++  def test_portal_badges_are_complete_beyond_history_limit_and_group_machines
+    ++    configure_machine
+    ++    first = owner('holder')
+    ++    reservation, = deployment(first, submit: false)
+    ++    @engine.store.transaction do |data|
+    ++      129.times do |index|
+    ++        historic = first.merge('id' => format('00000000-0000-0000-0000-%012x', index), 'slug' => "historic-#{index}")
+    ++        data['owners'][historic['id']] = historic
+    ++        retained = data['reservations'][reservation['id']].merge('id' => SecureRandom.uuid,
+    ++          'ownerId' => historic['id'], 'machine' => "fixture:historic-#{index}", 'state' => 'held')
+    ++        data['reservations'][retained['id']] = retained
+    ++      end
+    ++      data['owners'].delete(first['id'])
+    ++      data['owners'][first['id']] = first
+    ++      data['reservations'][reservation['id']]['state'] = 'held'
+    ++      second = data['reservations'][reservation['id']].merge('id' => SecureRandom.uuid, 'machine' => 'fixture:another')
+    ++      data['reservations'][second['id']] = second
+    ++    end
+    ++    status = @engine.status(portal: true)
+    ++    assert_equal 128, status['owners'].length
+    ++    refute status['owners'].any? { |item| item['id'] == first['id'] }
+    ++    assert_equal 128, status['reservations'].length
+    ++    assert_equal 1, status['reservationHolders'].length
+    ++    assert_equal %w[fixture:another fixture:machine], status['reservationHolders'].first['machines'].map { |item| item['machine'] }
+    ++  end
+    ++
+    ++  def test_portal_badges_do_not_transfer_to_reused_slugs_or_other_workspaces
+    ++    configure_machine
+    ++    first = owner('holder')
+    ++    reservation, = deployment(first, submit: false)
+    ++    @engine.store.transaction { |data| data['reservations'][reservation['id']]['state'] = 'held' }
+    ++    original_workspace = @workspace
+    ++    @workspace = File.join(@tmp, 'other-workspace')
+    ++    FileUtils.mkdir_p(@workspace)
+    ++    @engine = engine
+    ++    owner('holder')
+    ++    assert_empty @engine.status(portal: true)['reservationHolders']
+    ++    assert_equal 'fixture:machine', @engine.status(portal: true)['foreignReservations'].first['machine']
+    ++    @workspace = original_workspace
+    ++    @engine = engine
+    ++    replacement = owner('holder')
+    ++    refute_equal first['id'], replacement['id']
+    ++    assert_empty @engine.status(portal: true)['reservationHolders']
+    ++    assert_equal first['id'], @engine.store.read['reservations'][reservation['id']]['ownerId']
+    ++  end
+    ++
+     +  def test_lifecycle_cannot_cancel_claimed_attempt
+     +    configure_machine
+     +    first = owner('first')
+2:  0651f64 < -:  ------- portal: show operation queues and review reservations
+-:  ------- > 2:  fbbffee portal: show operations page and reservation badges

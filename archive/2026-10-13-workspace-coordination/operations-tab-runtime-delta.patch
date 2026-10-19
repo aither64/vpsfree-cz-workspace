@@ -1,0 +1,110 @@
+diff --git a/portal/internal/web/coordination_browser_test.cjs b/portal/internal/web/coordination_browser_test.cjs
+index 220439b..ba1005e 100644
+--- a/portal/internal/web/coordination_browser_test.cjs
++++ b/portal/internal/web/coordination_browser_test.cjs
+@@ -6,7 +6,7 @@ const path = require('node:path');
+ const source = fs.readFileSync(path.join(__dirname, 'static/coordination.js'), 'utf8');
+ const settle = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+ 
+-function harness(operations = false) {
++function harness(operations = false, initiallyActive = true) {
+   const session = operations === 'session';
+   class Element {
+     constructor(tag = 'div') { this.tag = tag; this.children = []; this.value = ''; this.hidden = true; this.dataset = {}; this.className = ''; }
+@@ -27,7 +27,7 @@ function harness(operations = false) {
+     focus() { document.activeElement = this; }
+   }
+   const panel = new Element(), warning = new Element(), cards = [], requests = [], timers = new Map();
+-  const tabPanel = new Element(), tab = new Element('a'); tabPanel.className = 'tab-panel active'; tabPanel.append(panel);
++  const tabPanel = new Element(), tab = new Element('a'); tabPanel.className = initiallyActive ? 'tab-panel active' : 'tab-panel'; tabPanel.append(panel);
+   const tabLabel = new Element('span'); tabLabel.className = 'rail-label'; tab.append(tabLabel);
+   if (session) Object.assign(panel.dataset, {coordinationSession: 'holder', coordinationObservation: 'incarnation-a'});
+   const docListeners = new Map(), windowListeners = new Map();
+@@ -54,7 +54,7 @@ function harness(operations = false) {
+     clearTimeout: id => timers.delete(id),
+   });
+   return {panel, warning, badge, unrelated, requests, addCard, cards, document,
+-    selectTab: visible => { tabPanel.className = visible ? 'tab-panel active' : 'tab-panel'; docListeners.get('click')(); },
++    selectTab: (visible, event = 'click') => { tabPanel.className = visible ? 'tab-panel active' : 'tab-panel'; docListeners.get(event)?.(); },
+     respond: async (payload, index = requests.length - 1) => { requests[index].resolve({ok: true, json: async () => payload}); await settle(); },
+     fail: async () => { requests.at(-1).resolve({ok: false}); await settle(); },
+     tick: async () => { const entry = [...timers].find(([, timer]) => timer.delay === 5000); assert.ok(entry, 'poll is scheduled'); timers.delete(entry[0]); entry[1].action(); await settle(); },
+@@ -170,6 +170,22 @@ test('session pane reads only its visible tab and fences both machines and histo
+   await h.respond(data.workspaces[0]); assert.equal(h.pollCount(), 0);
+ });
+ 
++test('asynchronous initial fragment activation starts reservation reads without a click', async () => {
++  const h = harness('session', false);
++  assert.equal(h.requests.length, 0);
++  h.selectTab(true, 'session-section-change');
++  assert.equal(h.requests.length, 1);
++  assert.equal(h.requests[0].url, '/api/sessions/holder/coordination');
++  await h.respond(payload().workspaces[0]);
++  assert.match(h.panel.textContent, /Held for review/);
++  h.selectTab(false, 'session-section-change');
++  assert.equal(h.pollCount(), 0);
++  h.selectTab(true, 'session-section-change');
++  assert.equal(h.requests.length, 2);
++  h.selectTab(false, 'session-section-change');
++  assert.equal(h.requests[1].signal.aborted, true);
++});
++
+ test('dashboard refresh preserves expanded details and focused disclosure', async () => {
+   const h = harness(true), data = payload();
+   data.workspaces[0].jobs = [{id: 'active', kind: 'merge', state: 'running', revision: 1}];
+diff --git a/portal/internal/web/static/coordination.js b/portal/internal/web/static/coordination.js
+index 3d73f6a..408f27d 100644
+--- a/portal/internal/web/static/coordination.js
++++ b/portal/internal/web/static/coordination.js
+@@ -210,7 +210,11 @@
+   }
+   document.addEventListener("session-list-updated", renderBadges);
+   document.addEventListener("visibilitychange", resume);
+-  if (sessionSlug) { document.addEventListener("click", resume); window.addEventListener("hashchange", resume); }
++  if (sessionSlug) {
++    document.addEventListener("session-section-change", resume);
++    document.addEventListener("click", resume);
++    window.addEventListener("hashchange", resume);
++  }
+   window.addEventListener("pagehide", pause); window.addEventListener("pageshow", resume);
+   resume();
+ })();
+diff --git a/portal/internal/web/templates/index.html b/portal/internal/web/templates/index.html
+index 0f370ff..4635f95 100644
+--- a/portal/internal/web/templates/index.html
++++ b/portal/internal/web/templates/index.html
+@@ -93,7 +93,7 @@
+   <template id="session-card-template">{{template "session-card"}}</template>
+   <script src="/static/preparation.js?v=3" defer></script>
+   <script src="/static/app.js?v=38" defer></script>
+-  <script src="/static/coordination.js?v=3" defer></script>
++  <script src="/static/coordination.js?v=4" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/operations.html b/portal/internal/web/templates/operations.html
+index ae9db1a..31f7119 100644
+--- a/portal/internal/web/templates/operations.html
++++ b/portal/internal/web/templates/operations.html
+@@ -17,7 +17,7 @@
+     <div class="coordination-intro"><p>See which sessions hold machines and which operations are waiting.</p><p class="muted" data-coordination-refreshed role="status"></p></div>
+     <div data-coordination class="coordination-layout">Loading operations…</div>
+   </main>
+-  <script src="/static/coordination.js?v=3" defer></script>
++  <script src="/static/coordination.js?v=4" defer></script>
+ </body>
+ </html>
+ {{end}}
+diff --git a/portal/internal/web/templates/session.html b/portal/internal/web/templates/session.html
+index 9fafe17..49ee786 100644
+--- a/portal/internal/web/templates/session.html
++++ b/portal/internal/web/templates/session.html
+@@ -236,7 +236,7 @@
+     </form>
+   </dialog>
+   <script src="/static/app.js?v=37" defer></script>
+-  <script src="/static/coordination.js?v=3" defer></script>
++  <script src="/static/coordination.js?v=4" defer></script>
+ </body>
+ </html>
+ {{end}}

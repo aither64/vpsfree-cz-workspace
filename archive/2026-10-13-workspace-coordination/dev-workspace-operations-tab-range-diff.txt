@@ -1,0 +1,93 @@
+1:  2727495 = 1:  2727495 coordination: serialize approved merges and deployments
+2:  f254e81 ! 2:  0264c6b portal: explain operations and session machine reservations
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +const source = fs.readFileSync(path.join(__dirname, 'static/coordination.js'), 'utf8');
+     +const settle = async () => { for (let i = 0; i < 12; i++) await Promise.resolve(); };
+     +
+    -+function harness(operations = false) {
+    ++function harness(operations = false, initiallyActive = true) {
+     +  const session = operations === 'session';
+     +  class Element {
+     +    constructor(tag = 'div') { this.tag = tag; this.children = []; this.value = ''; this.hidden = true; this.dataset = {}; this.className = ''; }
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +    focus() { document.activeElement = this; }
+     +  }
+     +  const panel = new Element(), warning = new Element(), cards = [], requests = [], timers = new Map();
+    -+  const tabPanel = new Element(), tab = new Element('a'); tabPanel.className = 'tab-panel active'; tabPanel.append(panel);
+    ++  const tabPanel = new Element(), tab = new Element('a'); tabPanel.className = initiallyActive ? 'tab-panel active' : 'tab-panel'; tabPanel.append(panel);
+     +  const tabLabel = new Element('span'); tabLabel.className = 'rail-label'; tab.append(tabLabel);
+     +  if (session) Object.assign(panel.dataset, {coordinationSession: 'holder', coordinationObservation: 'incarnation-a'});
+     +  const docListeners = new Map(), windowListeners = new Map();
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +    clearTimeout: id => timers.delete(id),
+     +  });
+     +  return {panel, warning, badge, unrelated, requests, addCard, cards, document,
+    -+    selectTab: visible => { tabPanel.className = visible ? 'tab-panel active' : 'tab-panel'; docListeners.get('click')(); },
+    ++    selectTab: (visible, event = 'click') => { tabPanel.className = visible ? 'tab-panel active' : 'tab-panel'; docListeners.get(event)?.(); },
+     +    respond: async (payload, index = requests.length - 1) => { requests[index].resolve({ok: true, json: async () => payload}); await settle(); },
+     +    fail: async () => { requests.at(-1).resolve({ok: false}); await settle(); },
+     +    tick: async () => { const entry = [...timers].find(([, timer]) => timer.delay === 5000); assert.ok(entry, 'poll is scheduled'); timers.delete(entry[0]); entry[1].action(); await settle(); },
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +  await h.respond(data.workspaces[0]); assert.equal(h.pollCount(), 0);
+     +});
+     +
+    ++test('asynchronous initial fragment activation starts reservation reads without a click', async () => {
+    ++  const h = harness('session', false);
+    ++  assert.equal(h.requests.length, 0);
+    ++  h.selectTab(true, 'session-section-change');
+    ++  assert.equal(h.requests.length, 1);
+    ++  assert.equal(h.requests[0].url, '/api/sessions/holder/coordination');
+    ++  await h.respond(payload().workspaces[0]);
+    ++  assert.match(h.panel.textContent, /Held for review/);
+    ++  h.selectTab(false, 'session-section-change');
+    ++  assert.equal(h.pollCount(), 0);
+    ++  h.selectTab(true, 'session-section-change');
+    ++  assert.equal(h.requests.length, 2);
+    ++  h.selectTab(false, 'session-section-change');
+    ++  assert.equal(h.requests[1].signal.aborted, true);
+    ++});
+    ++
+     +test('dashboard refresh preserves expanded details and focused disclosure', async () => {
+     +  const h = harness(true), data = payload();
+     +  data.workspaces[0].jobs = [{id: 'active', kind: 'merge', state: 'running', revision: 1}];
+    @@ portal/internal/web/static/coordination.js (new)
+     +  }
+     +  document.addEventListener("session-list-updated", renderBadges);
+     +  document.addEventListener("visibilitychange", resume);
+    -+  if (sessionSlug) { document.addEventListener("click", resume); window.addEventListener("hashchange", resume); }
+    ++  if (sessionSlug) {
+    ++    document.addEventListener("session-section-change", resume);
+    ++    document.addEventListener("click", resume);
+    ++    window.addEventListener("hashchange", resume);
+    ++  }
+     +  window.addEventListener("pagehide", pause); window.addEventListener("pageshow", resume);
+     +  resume();
+     +})();
+    @@ portal/internal/web/templates/index.html
+        <script src="/static/preparation.js?v=3" defer></script>
+     -  <script src="/static/app.js?v=37" defer></script>
+     +  <script src="/static/app.js?v=38" defer></script>
+    -+  <script src="/static/coordination.js?v=3" defer></script>
+    ++  <script src="/static/coordination.js?v=4" defer></script>
+      </body>
+      </html>
+      {{end}}
+    @@ portal/internal/web/templates/operations.html (new)
+     +    <div class="coordination-intro"><p>See which sessions hold machines and which operations are waiting.</p><p class="muted" data-coordination-refreshed role="status"></p></div>
+     +    <div data-coordination class="coordination-layout">Loading operations…</div>
+     +  </main>
+    -+  <script src="/static/coordination.js?v=3" defer></script>
+    ++  <script src="/static/coordination.js?v=4" defer></script>
+     +</body>
+     +</html>
+     +{{end}}
+    @@ portal/internal/web/templates/session.html
+          </form>
+        </dialog>
+        <script src="/static/app.js?v=37" defer></script>
+    -+  <script src="/static/coordination.js?v=3" defer></script>
+    ++  <script src="/static/coordination.js?v=4" defer></script>
+      </body>
+      </html>
+      {{end}}
+3:  84dde22 = 3:  ef4ec58 coordination: record optional display dates after ledger publication

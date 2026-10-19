@@ -1,0 +1,577 @@
+diff --git a/README.md b/README.md
+index f166e25..cad7bee 100644
+--- a/README.md
++++ b/README.md
+@@ -9,6 +9,8 @@ The [vpsAdmin development cluster guide](dev-clusters/vpsadmin/README.md)
+ documents its configuration, runtime credentials, and recovery steps.
+ The [managed KB cluster guide](dev-clusters/kb/README.md) explains the optional
+ provider and its connection to the standalone KB runtime.
++The [workspace confctl adapter](docs/workspace-confctl.md) prepares and activates
++exact generations under the generic runtime's machine reservations.
+ 
+ The generic runtime supplies the `dev-session-documentation` skill. Its
+ [session guide](https://github.com/aither64/dev-workspace/blob/master/docs/dev-sessions.md#documentation-during-development)
+diff --git a/bin/workspace-confctl-adapter b/bin/workspace-confctl-adapter
+new file mode 100755
+index 0000000..af2daf4
+--- /dev/null
++++ b/bin/workspace-confctl-adapter
+@@ -0,0 +1,11 @@
++#!/usr/bin/env ruby
++# frozen_string_literal: true
++
++require_relative '../lib/workspace_confctl_adapter'
++
++begin
++  puts JSON.generate(WorkspaceConfctlAdapter.run($stdin.read(262_145), pinned: ARGV == ['--pinned']))
++rescue StandardError => e
++  warn "workspace-confctl-adapter: #{e.message}"
++  exit 1
++end
+diff --git a/docs/workspace-confctl.md b/docs/workspace-confctl.md
+new file mode 100644
+index 0000000..2d6d10c
+--- /dev/null
++++ b/docs/workspace-confctl.md
+@@ -0,0 +1,40 @@
++# Workspace confctl adapter
++
++`workspace-confctl-adapter` implements the generic runtime's
++[coordination adapter contract](https://github.com/aither64/dev-workspace/blob/master/docs/coordination.md).
++The consuming workspace supplies exact machine selectors and repository mappings.
++This extension stores no concrete deployment hosts or credentials.
++
++The adapter supports one standalone NixOS machine, action `switch`, and no reboot.
++It rejects carried machines and selectors that do not resolve exactly. Requests
++use strict schema-1 JSON on stdin; stdout contains one complete JSON response.
++Diagnostics are private bounded logs.
++
++Preparation builds an immutable confctl environment from the configuration's
++exact committed flake and uses its public Ruby APIs. It evaluates the machine
++once, builds a named generation and copies its exact system/rollback closures.
++The artifact retains generation metadata/digest, effective inputs, evaluated
++machine mapping, and environment package. The runtime keeps their GC roots.
++
++Activation loads those retained values without Nix evaluation, build or copy.
++It uses the public stateless Nix client so a fresh process does not evaluate
++confctl settings through the default constructor.
++Under the runtime's machine claim/reservation it checks both running system and
++system profile, performs dry activation, repeats the baseline check, runs the
++configured switch/auto-rollback, publishes the profile and verifies both links.
++It records separate intent/publication/result receipts. Health checks and human
++UI review continue while the durable reservation remains owned.
++
++`inspect` reads both identities. `reconcile` requires a verified original receipt
++and matching live identities before declaring success. A partial publication,
++lost SSH reply or baseline-looking system after uncertain rollback remains
++`unknown`; neither process exit nor link equality proves the remote attempt
++finished. The first release conservatively requires operator recovery rather
++than blindly replaying it. `transition-check` validates retained protocol and
++generation identity without selecting a system.
++
++`lib.mkPackage` accepts optional `coordinationConfig` and injects this adapter's
++immutable executable. The adapter uses the selected generic runtime's pure Ruby
++command runner for bounded protocol capture and diagnostics. Other extension,
++session, KB and cluster formats remain unchanged. Concrete operations and first
++installation belong in the consuming configuration/workspace documentation.
+diff --git a/flake.lock b/flake.lock
+index 300f921..432fcbc 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -62,17 +62,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1791884582,
+-        "narHash": "sha256-rJavfgS0rwraQuRs1/WvWqlrRakT7Erg2GbJMUucr+w=",
++        "lastModified": 1791898615,
++        "narHash": "sha256-VYm/xfFEJw99vQFDAGT2l9x9/4s03FDHGkHWymxP4/w=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "fea04c6de25448751239099eca7101c43cb495c2",
++        "rev": "ee6cef1a103f6287bca46603bf47fc71fa4b1c21",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "fea04c6de25448751239099eca7101c43cb495c2",
++        "rev": "ee6cef1a103f6287bca46603bf47fc71fa4b1c21",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index b65e8ab..c628b4c 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -3,7 +3,7 @@
+ 
+   inputs = {
+     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+-    dev-workspace.url = "github:aither64/dev-workspace/fea04c6de25448751239099eca7101c43cb495c2";
++    dev-workspace.url = "github:aither64/dev-workspace/ee6cef1a103f6287bca46603bf47fc71fa4b1c21";
+     kb-runtime.url = "github:vpsfreecz/vpsfree-kb-contracts/ce2c8cd9358c3636e5d39343e595df813a0b197f";
+     devcluster-vpsadminos.url = "github:vpsfreecz/vpsadminos/15802517e2d92dda4ddc07ebac3d1d7ea087b430";
+     devcluster-vpsadmin = {
+@@ -60,6 +60,7 @@
+         pkgs.callPackage ./nix/organization-tools.nix {
+           src = self;
+           runtimeContract = dev-workspace.lib.runtimeContract;
++          coordinationCommandLibrary = dev-workspace.lib.coordinationCommandLibrary;
+           kbRuntimePackage =
+             if siteConfig.clusterDefaults ? kb then
+               inputs.kb-runtime.packages.${pkgs.stdenv.hostPlatform.system}.kb-runtime
+@@ -77,6 +78,7 @@
+           routerSocket ? dev-workspace.lib.hostPaths.routerSocket,
+           siteConfig,
+           teamConfig ? null,
++          coordinationConfig ? null,
+           userNamespace ? "dev-workspaces",
+         }:
+         let
+@@ -88,6 +90,17 @@
+         in
+         (dev-workspace.lib.mkPackage (
+           {
++            coordinationConfig =
++              if coordinationConfig == null then
++                null
++              else
++                coordinationConfig
++                // {
++                  adapters.confctl = {
++                    protocol = 1;
++                    command = "${tools}/bin/workspace-confctl-adapter";
++                  };
++                };
+             inherit
+               activationEnvironmentAliases
+               pkgs
+@@ -262,6 +275,7 @@
+         export VPSADMINOS_DEVCLUSTER_DEFAULT_CONFIG=$PWD/test/fixtures/vpsadminos-config.json
+         export DEVCLUSTER_RUNTIME_CONTRACT=${dev-workspace.lib.runtimeContract}
+         export DEV_WORKSPACE_RUNTIME_CONTRACT=${dev-workspace.lib.runtimeContract}
++        export WORKSPACE_COORDINATION_COMMAND=${dev-workspace.lib.coordinationCommandLibrary}
+       '';
+     in
+     assert invalidSiteConfigsRejected;
+@@ -424,6 +438,7 @@
+               ruby test/kb_stage_test.rb
+               ruby test/migration_test.rb
+               ruby test/skill_policy_test.rb
++              ruby test/workspace_confctl_adapter_test.rb
+               touch "$out"
+             '';
+         organization-source = pkgs.runCommand "vpsfree-dev-workspace-source" { } ''
+diff --git a/lib/workspace_confctl_adapter.rb b/lib/workspace_confctl_adapter.rb
+new file mode 100644
+index 0000000..ea4cd58
+--- /dev/null
++++ b/lib/workspace_confctl_adapter.rb
+@@ -0,0 +1,204 @@
++# frozen_string_literal: true
++
++require 'json'
++require 'digest'
++require 'open3'
++require 'fileutils'
++require 'securerandom'
++command_library = File.join(__dir__, 'workspace-coordination-command.rb')
++require(File.file?(command_library) ? command_library : ENV.fetch('WORKSPACE_COORDINATION_COMMAND'))
++
++# Build and copy in preparation. All subsequent operations execute in the
++# configuration's retained immutable confctl gem environment, without Nix eval.
++module WorkspaceConfctlAdapter
++  LIMIT = 262_144
++  class StrictHash < Hash
++    def []=(key, value)
++      raise 'duplicate adapter key' if key?(key)
++      super
++    end
++  end
++
++  def self.parse(bytes)
++    raise 'adapter input is too large' if bytes.bytesize > LIMIT
++    JSON.parse(bytes, object_class: StrictHash, max_nesting: 48)
++  end
++
++  def self.digest(value)
++    canonical = lambda do |v|
++      case v
++      when Hash then v.keys.sort.to_h { |k| [k, canonical.call(v[k])] }
++      when Array then v.map { |item| canonical.call(item) }
++      else v
++      end
++    end
++    "sha256:#{Digest::SHA256.hexdigest(JSON.generate(canonical.call(value)))}"
++  end
++
++  def self.capture(*args, input: '')
++    out, err, status, overflow = WorkspaceCoordination::Command.run(args, input:, limit: LIMIT, log: @diagnostics)
++    raise "#{args.first}: #{err.byteslice(0, 4096)}" unless status.success?
++    raise 'adapter command output exceeds its bound' if overflow
++    out
++  end
++
++  def self.run(bytes, pinned: false)
++    request = parse(bytes)
++    @diagnostics = WorkspaceCoordination::Command::Log.new
++    raise 'unsupported adapter protocol' unless request['schema'] == 1
++    fields = %w[schema operation target machine]
++    case request['operation']
++    when 'prepare' then fields += %w[requestId source stateRoot]
++    when 'activate' then fields += %w[artifact expectedLive attemptId requestDigest attemptDirectory]
++    when 'inspect', 'transition-check' then fields += %w[artifact]
++    when 'reconcile' then fields += %w[artifact attemptId requestDigest attemptDirectory expectedLive]
++    else raise 'unsupported adapter operation'
++    end
++    raise 'invalid adapter fields' unless request.keys.sort == fields.sort
++    raise 'invalid machine mapping' unless request['machine'].is_a?(Hash) && request['machine']['selector'].is_a?(String)
++    unless pinned
++      if request['operation'] == 'prepare'
++        source = request.fetch('source')
++        raise 'invalid source revision' unless source.keys.sort == %w[path revision] && source['revision'].match?(/\A[0-9a-f]{40}\z/)
++        actual = capture('git', '-C', source.fetch('path'), 'rev-parse', 'HEAD').strip
++        raise 'configuration source changed' unless actual == source['revision'] && capture('git', '-C', source['path'], 'status', '--porcelain').empty?
++        helper = File.realpath(File.join(__dir__, '../bin/workspace-confctl-adapter'))
++        # Both paths are immutable/owned, but still encode them as Nix strings.
++        flake = "git+file://#{File.realpath(source['path'])}?rev=#{actual}"
++        expression = <<~NIX
++          let f = builtins.getFlake #{JSON.generate(flake)};
++              p = f.inputs.nixpkgs.legacyPackages.x86_64-linux;
++              c = f.inputs.confctl.packages.x86_64-linux.confctl;
++              h = builtins.storePath #{JSON.generate(helper)};
++          in p.writeShellScriptBin "workspace-confctl-environment" ''
++            export GEM_HOME="${c.deps}/${c.ruby.gemPath}"
++            export GEM_PATH="$GEM_HOME"
++            export RUBYLIB="${c.src}/lib"
++            export PATH="${p.lib.makeBinPath [p.git p.openssh p.nix]}:$PATH"
++            exec ${c.ruby}/bin/ruby ${h} --pinned
++          ''
++        NIX
++        environment = capture('nix', 'build', '--impure', '--no-link', '--print-out-paths', '--expr', expression).strip
++        raise 'unexpected prepared environment' unless environment.match?(%r{\A/nix/store/[^/\s]+\z})
++      else
++        environment = request.fetch('artifact').fetch('environmentPackage')
++        raise 'invalid retained environment' unless environment.match?(%r{\A/nix/store/[^/\s]+\z})
++      end
++      response = parse(capture(File.join(environment, 'bin/workspace-confctl-environment'), input: bytes))
++      response.fetch('artifact')['environmentPackage'] = environment if request['operation'] == 'prepare'
++      return response
++    end
++
++    artifact = request['artifact']
++    source = request['operation'] == 'prepare' ? request.fetch('source').fetch('path') : artifact.fetch('source')
++    Dir.chdir(source) do
++      # confctl loads configuration scripts and diagnostics; preserve protocol
++      # stdout for exactly one JSON response.
++      saved = STDOUT.dup
++      STDOUT.reopen(STDERR)
++      begin
++        require 'confctl'
++        if request['operation'] == 'prepare'
++          selector = request['machine'].fetch('selector')
++          machine = ConfCtl::MachineList.new[selector]
++          raise 'selector must resolve one standalone NixOS machine' unless machine && machine.name == selector && machine.spin == 'nixos' && !machine.carried?
++          generation = ConfCtl::Nix.new.build_attributes(hosts: [selector]).fetch(selector)
++          metadata = parse(File.binread(File.join(generation.dir, 'generation.json')))
++          raise 'copy did not finish' unless ConfCtl::Nix.new.copy(machine, [generation.toplevel, generation.auto_rollback].compact)
++          mapping = {'name' => machine.name, 'metaConfig' => machine.meta, 'carrier' => nil,
++            'clusterName' => machine.cluster_name, 'key' => machine.key}
++          value = {'adapterProtocol' => 1, 'configurationRevision' => request['source']['revision'],
++            'generationName' => generation.name, 'generationDigest' => digest(metadata),
++            'toplevel' => generation.toplevel, 'autoRollback' => generation.auto_rollback,
++            'machineConfig' => mapping, 'inputsInfo' => generation.inputs_info, 'inputs' => generation.inputs}
++          return {'schema' => 1, 'status' => 'prepared', 'artifact' => value, 'observed' => inspect_machine(machine)}
++        end
++        raise 'unsupported retained artifact' unless artifact['adapterProtocol'] == 1
++        mapping = artifact.fetch('machineConfig')
++        machine = ConfCtl::Machine.new(mapping, machine_list: nil)
++        raise 'retained selector differs' unless machine.name == request['machine']['selector'] && machine.spin == 'nixos' && !machine.carried?
++        generation = ConfCtl::Generation::Build.new(machine.name)
++        generation.load(artifact.fetch('generationName'))
++        metadata = parse(File.binread(File.join(generation.dir, 'generation.json')))
++        unless digest(metadata) == artifact['generationDigest'] && generation.toplevel == artifact['toplevel'] && generation.auto_rollback == artifact['autoRollback']
++          raise 'retained generation differs from sealed artifact'
++        end
++        return {'schema' => 1, 'compatible' => true} if request['operation'] == 'transition-check'
++        observed = inspect_machine(machine)
++        return {'schema' => 1, 'observed' => observed} if request['operation'] == 'inspect'
++        if request['operation'] == 'reconcile'
++          # Baseline links or target links alone cannot prove a lost activation
++          # and its rollback helper finished. Only our verified receipt can.
++          receipt = File.join(request.fetch('attemptDirectory'), 'adapter-result.json')
++          if File.file?(receipt)
++            result = parse(File.binread(receipt))
++            return result if result['attemptId'] == request['attemptId'] && result['requestDigest'] == request['requestDigest'] && result['observed'] == observed
++          end
++          return outcome(request, 'unknown', observed, 'remote activation completion requires operator recovery')
++        end
++        return outcome(request, 'baseline_changed', observed) unless observed == request['expectedLive']
++        directory = request.fetch('attemptDirectory')
++        raise 'invalid attempt directory' unless File.basename(directory) == request['attemptId'] && request['attemptId'].match?(/\A[0-9a-f-]{36}\z/)
++        nix = ConfCtl::Nix.stateless
++        return outcome(request, 'not_applied', observed, 'dry activation failed') unless nix.activate(machine, generation, 'dry-activate')
++        observed = inspect_machine(machine)
++        return outcome(request, 'baseline_changed', observed) unless observed == request['expectedLive']
++        phase(request, 'activation_intent')
++        begin
++          ok = machine.auto_rollback? ? nix.activate_with_rollback(machine, generation, 'switch') : nix.activate(machine, generation, 'switch')
++          raise 'activation failed or rolled back' unless ok
++          phase(request, 'activation_finished')
++          phase(request, 'profile_publication_intent')
++          raise 'system profile publication failed' unless nix.set_profile(machine, generation.toplevel)
++          observed = inspect_machine(machine)
++          raise 'both live system and profile must select the prepared generation' unless observed['runningSystem'] == generation.toplevel && observed['systemProfile'] == generation.toplevel
++          phase(request, 'verified')
++          result = outcome(request, 'applied', observed)
++        rescue StandardError => e
++          result = outcome(request, 'unknown', nil, e.message)
++        end
++        atomic(File.join(directory, 'adapter-result.json'), result)
++        result
++      ensure
++        STDOUT.reopen(saved)
++        saved.close
++      end
++    end
++  ensure
++    if @diagnostics && request && !pinned
++      directory = request['operation'] == 'prepare' ? File.join(request.fetch('stateRoot'), 'preparation', request.fetch('requestId')) : request['attemptDirectory']
++      if directory
++        FileUtils.mkdir_p(directory, mode: 0o700)
++        File.open(File.join(directory, 'adapter-log'), File::WRONLY | File::CREAT | File::TRUNC, 0o600) { |file| file.write(@diagnostics.bytes) }
++      end
++    end
++  end
++
++  def self.inspect_machine(machine)
++    control = ConfCtl::MachineControl.new(machine)
++    {'runningSystem' => control.read_realpath('/run/current-system'),
++      'systemProfile' => control.read_realpath(machine.profile),
++      'machineIdentity' => digest([machine.name, machine.target_host, machine.target_port, machine.profile])}
++  end
++
++  def self.outcome(request, state, observed, error = nil)
++    {'schema' => 1, 'attemptId' => request['attemptId'], 'requestDigest' => request['requestDigest'],
++      'outcome' => state, 'observed' => observed, 'error' => error}
++  end
++
++  def self.atomic(path, value)
++    tmp = "#{path}.#{SecureRandom.hex(8)}.tmp"
++    File.open(tmp, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
++      file.write(JSON.generate(value)); file.flush; file.fsync
++    end
++    File.rename(tmp, path)
++    File.open(File.dirname(path)) { |file| file.fsync }
++  ensure
++    File.unlink(tmp) if tmp && File.exist?(tmp)
++  end
++
++  def self.phase(request, name)
++    atomic(File.join(request.fetch('attemptDirectory'), 'adapter-phase.json'),
++      {'schema' => 1, 'attemptId' => request['attemptId'], 'requestDigest' => request['requestDigest'], 'phase' => name})
++  end
++end
+diff --git a/nix/organization-tools.nix b/nix/organization-tools.nix
+index 63f867a..34b4972 100644
+--- a/nix/organization-tools.nix
++++ b/nix/organization-tools.nix
+@@ -1,6 +1,7 @@
+ {
+   bash,
+   coreutils,
++  coordinationCommandLibrary,
+   diffutils,
+   gawk,
+   git,
+@@ -90,6 +91,7 @@ stdenvNoCC.mkDerivation {
+ 
+     mkdir -p "$out/share/vpsfree-dev-workspace"
+     cp -R bin lib dev-clusters "$out/share/vpsfree-dev-workspace/"
++    install -Dm644 ${coordinationCommandLibrary} "$out/share/vpsfree-dev-workspace/lib/workspace-coordination-command.rb"
+     install -Dm644 nix/host-paths.json \
+       "$out/share/vpsfree-dev-workspace/nix/host-paths.json"
+     chmod -R u+w "$out/share/vpsfree-dev-workspace"
+@@ -112,6 +114,16 @@ stdenvNoCC.mkDerivation {
+       runtimePath=${lib.escapeShellArg kbRuntimePath}
+       if [ "$name" = vpsfree-dev-workspace-migrate ]; then
+         runtimePath=${lib.escapeShellArg migrationRuntimePath}
++      elif [ "$name" = workspace-confctl-adapter ]; then
++        runtimePath=${
++          lib.escapeShellArg (
++            lib.makeBinPath [
++              git
++              nix
++              openssh
++            ]
++          )
++        }
+       fi
+       makeWrapper "$source" "$out/bin/$name" \
+         --prefix RUBYLIB : "$out/share/vpsfree-dev-workspace/lib" \
+diff --git a/test/workspace_confctl_adapter_test.rb b/test/workspace_confctl_adapter_test.rb
+new file mode 100644
+index 0000000..a4d7a4a
+--- /dev/null
++++ b/test/workspace_confctl_adapter_test.rb
+@@ -0,0 +1,159 @@
++# frozen_string_literal: true
++
++require 'minitest/autorun'
++require 'tmpdir'
++require_relative '../lib/workspace_confctl_adapter'
++
++# A confctl public-API fixture; no Nix, SSH or machine mutation in these tests.
++module ConfCtl
++  class << self
++    attr_accessor :events, :live, :profile, :fail_publication, :rollback
++  end
++  class Machine
++    attr_reader :meta
++    def initialize(config, machine_list: nil)
++      @meta = config['metaConfig']
++    end
++    def name = 'standalone/testhost'
++    def spin = 'nixos'
++    def carried? = false
++    def cluster_name = 'standalone'
++    def key = 'testhost'
++    def target_host = 'host.example.test'
++    def target_port = 22
++    def profile = '/nix/var/nix/profiles/system'
++    def auto_rollback? = ConfCtl.rollback
++  end
++  class MachineList
++    def [](selector)
++      selector == 'standalone/testhost' ? Machine.new({'metaConfig' => {}}) : nil
++    end
++  end
++  class MachineControl
++    def initialize(machine); end
++    def read_realpath(path)
++      ConfCtl.events << [:inspect, path]
++      path == '/run/current-system' ? ConfCtl.live : ConfCtl.profile
++    end
++  end
++  module Generation
++    class Build
++      def initialize(selector); end
++      def load(name); end
++      def name = 'fixture-generation'
++      def dir = File.join(Dir.pwd, 'generation')
++      def toplevel = '/nix/store/fixture-system'
++      def auto_rollback = '/nix/store/fixture-rollback'
++      def inputs_info = {'runtime' => {'url' => 'github:example/runtime', 'rev' => 'a' * 40}}
++      def inputs = {}
++    end
++  end
++  class Nix
++    def self.stateless(show_trace: false, max_jobs: 'auto')
++      new(show_trace:, max_jobs:)
++    end
++    def initialize(show_trace: false, max_jobs: nil)
++      # The pinned constructor reads Settings (and evaluates Nix) by default.
++      ConfCtl.events << [:settings_evaluation] unless max_jobs
++    end
++    def build_attributes(hosts:)
++      ConfCtl.events << [:build, hosts]
++      {hosts.first => Generation::Build.new(hosts.first)}
++    end
++    def copy(machine, paths)
++      ConfCtl.events << [:copy, paths]
++      true
++    end
++    def activate(machine, generation, action)
++      ConfCtl.events << [:activate, action]
++      ConfCtl.live = generation.toplevel unless action == 'dry-activate'
++      true
++    end
++    def activate_with_rollback(machine, generation, action)
++      ConfCtl.events << [:rollback, action]
++      ConfCtl.live = generation.toplevel
++      true
++    end
++    def set_profile(machine, path)
++      ConfCtl.events << [:publish, path]
++      raise 'fixture publication failure' if ConfCtl.fail_publication
++      ConfCtl.profile = path
++      true
++    end
++  end
++end
++$LOADED_FEATURES << 'confctl.rb'
++
++class WorkspaceConfctlAdapterTest < Minitest::Test
++  def setup
++    @directory = Dir.mktmpdir
++    FileUtils.mkdir_p(File.join(@directory, 'generation'))
++    File.write(File.join(@directory, 'generation/generation.json'), JSON.generate('mode' => 'flakes', 'toplevel' => '/nix/store/fixture-system'))
++    ConfCtl.events, ConfCtl.live, ConfCtl.profile, ConfCtl.rollback, ConfCtl.fail_publication = [], '/nix/store/baseline', '/nix/store/baseline', true, false
++    @mapping = {'id' => 'example:host', 'aliases' => [], 'adapter' => 'confctl', 'configurationRepository' => 'configuration', 'selector' => 'standalone/testhost'}
++    @attempt = SecureRandom.uuid
++    @attempt_directory = File.join(@directory, 'attempts', @attempt)
++    FileUtils.mkdir_p(@attempt_directory, mode: 0o700)
++  end
++
++  def teardown = FileUtils.remove_entry(@directory)
++
++  def call(operation, values)
++    WorkspaceConfctlAdapter.run(JSON.generate({'schema' => 1, 'operation' => operation, 'target' => 'example:host', 'machine' => @mapping}.merge(values)), pinned: true)
++  end
++
++  def prepare
++    response = call('prepare', 'requestId' => SecureRandom.uuid, 'source' => {'path' => @directory, 'revision' => 'a' * 40}, 'stateRoot' => @directory)
++    @artifact = response['artifact'].merge('source' => @directory)
++    @baseline = response['observed']
++  end
++
++  def activation_values
++    {'artifact' => @artifact, 'expectedLive' => @baseline, 'attemptId' => @attempt,
++      'requestDigest' => 'sha256:' + ('b' * 64), 'attemptDirectory' => @attempt_directory}
++  end
++
++  def test_only_preparation_builds_and_copies_and_activation_preserves_rollback
++    prepare
++    assert_equal 1, ConfCtl.events.count { |event| event.first == :build }
++    assert_equal 1, ConfCtl.events.count { |event| event.first == :copy }
++    ConfCtl.events.clear
++    result = call('activate', activation_values)
++    assert_equal 'applied', result['outcome']
++    assert_equal [[:activate, 'dry-activate'], [:rollback, 'switch'], [:publish, '/nix/store/fixture-system']], ConfCtl.events.select { |event| %i[activate rollback publish].include?(event.first) }
++    refute ConfCtl.events.any? { |event| %i[build copy settings_evaluation].include?(event.first) }
++    assert_equal '/nix/store/fixture-system', result['observed']['runningSystem']
++    assert_equal '/nix/store/fixture-system', result['observed']['systemProfile']
++    assert_equal result, call('reconcile', activation_values)
++  end
++
++  def test_changed_baseline_never_activates
++    prepare
++    ConfCtl.profile = '/nix/store/foreign-system'
++    ConfCtl.events.clear
++    result = call('activate', activation_values)
++    assert_equal 'baseline_changed', result['outcome']
++    assert ConfCtl.events.all? { |event| event.first == :inspect }
++  end
++
++  def test_partial_publication_and_baseline_looking_recovery_stay_unknown
++    prepare
++    ConfCtl.fail_publication = true
++    result = call('activate', activation_values)
++    assert_equal 'unknown', result['outcome']
++    assert_equal '/nix/store/fixture-system', ConfCtl.live
++    assert_equal '/nix/store/baseline', ConfCtl.profile
++    ConfCtl.events.clear
++    assert_equal 'unknown', call('reconcile', activation_values)['outcome']
++    ConfCtl.live = '/nix/store/baseline'
++    assert_equal 'unknown', call('reconcile', activation_values)['outcome']
++    refute ConfCtl.events.any? { |event| %i[build copy rollback activate publish].include?(event.first) }
++  end
++
++  def test_wrong_selector_and_unknown_fields_refuse_before_build
++    @mapping['selector'] = '*'
++    assert_raises(RuntimeError) { prepare }
++    assert_empty ConfCtl.events
++    assert_raises(RuntimeError) { call('inspect', 'artifact' => {}, 'command' => 'arbitrary') }
++  end
++end

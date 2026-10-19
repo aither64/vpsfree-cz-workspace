@@ -1,0 +1,449 @@
+1:  983d677 ! 1:  459b534 coordination: serialize approved merges and deployments
+    @@ docs/coordination-operations.md (new)
+     +for actual coverage and contracts, integration proofs and both frontier projections.
+     +Native notification options and receipts use the existing checksummed artifact
+     +store. The ledger retains their identifiers and a bounded event envelope.
+    ++Persisted file limits include the trailing newline. A result, artifact or native
+    ++request must fit its complete file bound before publication.
+     +Those recovery requests may use the reserve after normal admission fills, and
+     +have a 16 KiB request bound. Existing request IDs remain idempotent at capacity. New preparation/admission requires
+     +at least 1 GiB of free space. Capacity refusal preserves existing authority.
+    @@ docs/coordination.md (new)
+     +Managed lead and member technical bindings point to the installed guide without
+     +changing retained role instructions, model, effort or access.
+     +
+    ++Lifecycle preparation runs outside the ledger mutex. Publication of a new
+    ++ordinary journal or archive cleanup sidecar checks capacity and binds its exact
+    ++operation while holding that mutex. Competing admissions cannot consume the
+    ++checked space before publication. Existing bindings remain recoverable at the
+    ++admission ceiling.
+    ++
+     +The guarantees cover cooperating commands in one user runtime. The local operator
+     +is trusted; arbitrary external Git, confctl, SSH and old store binaries can bypass
+     +coordination. Remote clients remain subject to the portal's authentication and
+    @@ libexec/dev-session: module DevSession
+                plan = prepare_cleanup(slug, force:)
+                if removal_phase_before?(removal, 'validated')
+                  validate_removal_tracking!(slug)
+    +@@ libexec/dev-session: module DevSession
+    +         file.flush
+    +         file.fsync
+    +       end
+    +-      File.rename(temporary, path)
+    +-      fsync_directory(File.dirname(path))
+    ++      coordination_store.bind_lifecycle(workspace, slug, 'delete', removal.fetch('operation_id')) do
+    ++        File.rename(temporary, path)
+    ++        fsync_directory(File.dirname(path))
+    ++      end
+    +     ensure
+    +       File.unlink(temporary) if temporary && path_exists?(temporary)
+    +     end
+     @@ libexec/dev-session: module DevSession
+            removal['state'] = 'removed'
+            removal['removed_at'] = Time.now.utc.iso8601(6)
+    @@ libexec/dev-session: module DevSession
+            path = lifecycle_journal_file(slug, 'revive')
+            File.unlink(path)
+            fsync_directory(File.dirname(path))
+    +@@ libexec/dev-session: module DevSession
+    +         file.flush
+    +         file.fsync
+    +       end
+    +-      raise Error, "lifecycle journal already exists: #{path}" if create && path_exists?(path)
+    +-
+    +-      File.rename(temporary, path)
+    +-      fsync_directory(File.dirname(path))
+    ++      publish = lambda do
+    ++        raise Error, "lifecycle journal already exists: #{path}" if create && path_exists?(path)
+    ++        File.rename(temporary, path)
+    ++        fsync_directory(File.dirname(path))
+    ++      end
+    ++      if !create
+    ++        publish.call
+    ++      elsif command == 'revive'
+    ++        coordination_store.bind_revival(workspace, journal.fetch('slug'),
+    ++          operation_id: journal.fetch('operation_id'), archive_operation_id: journal['archive_operation_id'], &publish)
+    ++      else
+    ++        coordination_store.bind_lifecycle(workspace, journal.fetch('slug'), command, journal.fetch('operation_id'), &publish)
+    ++      end
+    +     ensure
+    +       File.unlink(temporary) if temporary && path_exists?(temporary)
+    +     end
+    +
+    + ## libexec/workspace-archive-cleanup.rb ##
+    +@@ libexec/workspace-archive-cleanup.rb: module DevSession
+    +         lifecycle_journal_root
+    +       end
+    + 
+    ++      def archive_cleanup_publish_binding(sidecar, &block)
+    ++        coordination_store.bind_lifecycle(workspace, sidecar.fetch('slug'), 'archive', sidecar.fetch('operation_id'), &block)
+    ++      end
+    ++
+    +       def archive_cleanup_check_tracking!(slug, journal, plan, heads)
+    +         if path_exists?(work_dir(slug))
+    +           verify_pending_archive_tracking!(slug, journal, plan, final_heads: heads)
+    +@@ libexec/workspace-archive-cleanup.rb: module DevSession
+    +         file.flush
+    +         file.fsync
+    +       end
+    +-      File.rename(temporary, path)
+    +-      fsync_directory(File.dirname(path))
+    ++      publish = lambda do
+    ++        File.rename(temporary, path)
+    ++        fsync_directory(File.dirname(path))
+    ++      end
+    ++      if create
+    ++        @runner.archive_cleanup_publish_binding(sidecar, &publish)
+    ++      else
+    ++        publish.call
+    ++      end
+    +     ensure
+    +       File.unlink(temporary) if temporary && exists?(temporary)
+    +     end
+     
+      ## libexec/workspace-auto-archive.rb ##
+     @@ libexec/workspace-auto-archive.rb: module WorkspaceAutoArchive
+    @@ libexec/workspace-coordination-execution.rb (new)
+     +        end
+     +        result = {'schema' => 1, 'attemptId' => job['attempt'], 'requestDigest' => request['digest'],
+     +          'outcome' => outcome, 'phase' => 'reconciled', 'observed' => observed, 'error' => error && WorkspaceCoordination.diagnostic(error)}
+    -+        raise Error.new('reconciliation result exceeds its recovery budget', 5) if JSON.generate(result).bytesize > MAX_RESULT
+    -+        WorkspaceCoordination.atomic(File.join(directory, 'result.json'), result)
+    ++        raise Error.new('reconciliation result exceeds its recovery budget', 5) if JSON.generate(result).bytesize + 1 > MAX_RESULT
+    ++        WorkspaceCoordination.atomic(File.join(directory, 'result.json'), result, limit: MAX_RESULT)
+     +      end
+     +      reconcile_attempts
+     +      reply(store.read['jobs'].fetch(id), owner)
+    @@ libexec/workspace-coordination-execution.rb (new)
+     +    def save_artifact(value)
+     +      id = WorkspaceCoordination.digest(value)
+     +      result = value.merge('id' => id)
+    -+      raise Error, 'prepared artifact exceeds its protocol bound' if JSON.generate(result).bytesize > MAX_REQUEST
+    ++      raise Error, 'prepared artifact exceeds its protocol bound' if JSON.generate(result).bytesize + 1 > MAX_REQUEST
+     +      path = File.join(store.root, 'sources', id.delete_prefix('sha256:'), 'artifact.json')
+     +      if File.exist?(path)
+     +        raise Error.new('prepared artifact collision', 5) unless WorkspaceCoordination.private_read(path, limit: MAX_REQUEST) == result
+     +      else
+    -+        WorkspaceCoordination.atomic(path, result)
+    ++        WorkspaceCoordination.atomic(path, result, limit: MAX_REQUEST)
+     +      end
+     +      result
+     +    end
+    @@ libexec/workspace-coordination-execution.rb (new)
+     +      if File.exist?(path)
+     +        raise Error.new('prepared snapshot identity collision', 5) unless WorkspaceCoordination.private_read(path, limit: MAX_REQUEST) == saved
+     +      else
+    -+        WorkspaceCoordination.atomic(path, saved)
+    ++        WorkspaceCoordination.atomic(path, saved, limit: MAX_REQUEST)
+     +      end
+     +      result
+     +    end
+    @@ libexec/workspace-coordination-execution.rb (new)
+     +        'workspace' => owner.fetch('workspace'), 'catalogDigest' => catalog.digest}
+     +      request['digest'] = WorkspaceCoordination.digest(request)
+     +      path = attempt_path(job.fetch('attempt'), 'request.json')
+    -+      WorkspaceCoordination.atomic(path, request)
+    ++      WorkspaceCoordination.atomic(path, request, limit: MAX_REQUEST)
+     +      retain_root(job.fetch('attempt'), 'worker', package)
+     +      command = File.join(package, 'bin/workspace-host')
+     +      capture('systemd-run', '--user', '--quiet', "--unit=workspace-operation-#{job.fetch('attempt')}",
+    @@ libexec/workspace-coordination-execution.rb (new)
+     +      value = {'schema' => 1,
+     +        'attemptId' => @job.fetch('attempt'), 'requestDigest' => @request.fetch('digest'),
+     +        'outcome' => outcome, 'phase' => @phase, 'observed' => observed, 'error' => error && WorkspaceCoordination.diagnostic(error)}
+    -+      raise Error.new('attempt result exceeds its recovery budget', 5) if JSON.generate(value).bytesize > MAX_RESULT
+    -+      WorkspaceCoordination.atomic(File.join(@path, 'result.json'), value)
+    ++      raise Error.new('attempt result exceeds its recovery budget', 5) if JSON.generate(value).bytesize + 1 > MAX_RESULT
+    ++      WorkspaceCoordination.atomic(File.join(@path, 'result.json'), value, limit: MAX_RESULT)
+     +    end
+     +
+     +    def run
+    @@ libexec/workspace-coordination.rb (new)
+     +    parse(File.binread(path, limit + 1), limit:)
+     +  end
+     +
+    -+  def self.atomic(path, data)
+    ++  def self.atomic(path, data, limit: MAX_LEDGER)
+    ++    encoded = JSON.generate(canonical(data)) + "\n"
+    ++    raise Error.new('coordination file exceeds its persisted size bound', 5) if encoded.bytesize > limit
+     +    FileUtils.mkdir_p(File.dirname(path), mode: 0o700)
+     +    temporary = "#{path}.#{SecureRandom.hex(8)}.tmp"
+     +    begin
+     +      File.open(temporary, File::WRONLY | File::CREAT | File::EXCL, 0o600) do |file|
+    -+        file.write(JSON.generate(canonical(data)) + "\n")
+    ++        file.write(encoded)
+     +        file.flush
+     +        file.fsync
+     +      end
+    @@ libexec/workspace-coordination.rb (new)
+     +      receipt = {'workspace' => workspace, 'slug' => slug, 'command' => command,
+     +        'owners' => owners.map { |owner| owner.slice('id', 'identity') }, 'completed' => false,
+     +        'archiveOperationId' => 'a' * 64}
+    -+      # Checked before publishing a new ordinary journal. The locked bind
+    -+      # repeats admission with its actual fence and receipt before side effects.
+    ++      # Early refusal avoids expensive preparation. Publication itself must
+    ++      # occur inside the locked binding after its actual admission check.
+     +      admission_capacity!(data, extra: JSON.generate(receipt).bytesize + 128 + owners.length * 256)
+     +    end
+     +
+    @@ libexec/workspace-coordination.rb (new)
+     +          unless saved.slice('workspace', 'slug', 'command') == {'workspace' => workspace, 'slug' => slug, 'command' => command}
+     +            raise Error.new('lifecycle receipt identity changed', 5)
+     +          end
+    ++          yield if block_given?
+     +          next
+     +        end
+     +        owners = lifecycle_owners(data, workspace, slug)
+    -+        next if owners.empty?
+    ++        if owners.empty?
+    ++          yield if block_given?
+    ++          next
+    ++        end
+     +        fence_owners!(data, owners, command)
+     +        owners.each do |owner|
+     +          bound = owner.fetch('fence')
+    @@ libexec/workspace-coordination.rb (new)
+     +        data['lifecycles'][operation_id] = {'workspace' => workspace, 'slug' => slug, 'command' => command,
+     +          'owners' => owners.map { |owner| owner.slice('id', 'identity') }, 'completed' => false}
+     +        admission_capacity!(data)
+    ++        yield if block_given?
+     +      end
+     +    end
+     +
+    @@ libexec/workspace-coordination.rb (new)
+     +          unless saved.slice('workspace', 'slug', 'command') == {'workspace' => workspace, 'slug' => slug, 'command' => 'revive'}
+     +            raise Error.new('revival receipt identity changed', 5)
+     +          end
+    ++          yield if block_given?
+     +          next
+     +        end
+     +        unless archive_operation_id
+    @@ libexec/workspace-coordination.rb (new)
+     +          archive_operation_id = candidates.first
+     +        end
+     +        archive = data['lifecycles'][archive_operation_id]
+    -+        next unless archive
+    ++        unless archive
+    ++          yield if block_given?
+    ++          next
+    ++        end
+     +        unless archive['completed'] && archive.slice('workspace', 'slug', 'command') == {'workspace' => workspace, 'slug' => slug, 'command' => 'archive'}
+     +          raise Error.new('revival archive identity changed', 5)
+     +        end
+     +        data['lifecycles'][operation_id] = {'workspace' => workspace, 'slug' => slug, 'command' => 'revive',
+     +          'owners' => archive.fetch('owners'), 'archiveOperationId' => archive_operation_id, 'completed' => false}
+     +        admission_capacity!(data)
+    ++        yield if block_given?
+     +      end
+     +    end
+     +
+    @@ libexec/workspace-coordination.rb (new)
+     +        'socket' => owner.fetch('socket'), 'thread' => owner.fetch('thread'), 'stateRoot' => File.dirname(store.root),
+     +        'text' => event && event['text'], 'messageId' => event && event['messageId'],
+     +        'actionContext' => event && event['actionContext'], 'options' => options && options['options']}
+    -+      raise Error, 'notification request exceeds its protocol bound' if JSON.generate(payload).bytesize > MAX_REQUEST
+    ++      raise Error, 'notification request exceeds its protocol bound' if JSON.generate(payload).bytesize + 1 > MAX_REQUEST
+     +      payload
+     +    end
+     +
+    @@ libexec/workspace-coordination.rb (new)
+     +      payload = notification_payload(owner, event, action)
+     +      directory = File.join(store.root, 'notifications')
+     +      path = File.join(directory, "#{SecureRandom.uuid}.json")
+    -+      WorkspaceCoordination.atomic(path, payload)
+    ++      WorkspaceCoordination.atomic(path, payload, limit: MAX_REQUEST)
+     +      WorkspaceCoordination.parse(capture(File.join(package, 'bin/workspace-portal'), 'coordination-notify', '--request', path))
+     +    ensure
+     +      File.unlink(path) if path && File.file?(path)
+    @@ portal/internal/workspacecodex/lead_policy_test.go: func TestLeadPolicyBindsSess
+     
+      ## test/dev_session/lifecycle_commands_test.rb ##
+     @@
+    + # frozen_string_literal: true
+    + 
+      require_relative '../support/dev_session_test_case'
+    ++require_relative '../support/coordination_capacity_fixture'
+      
+      class DevSessionTest < Minitest::Test
+    ++  include CoordinationCapacityFixture
+    ++  def test_coordination_capacity_refusal_precedes_all_lifecycle_authority_publication
+    ++    with_workspace do |workspace|
+    ++      runner = runner_for(workspace)
+    ++      store = runner.send(:coordination_store)
+    ++      slug = 'capacity-publication'
+    ++      tracking = File.join(workspace, 'work', slug)
+    ++      FileUtils.mkdir_p(tracking)
+    ++      File.write(File.join(tracking, 'portal.yml'), YAML.dump('slug' => slug, 'codex' => {}))
+    ++      stat = File.stat(tracking)
+    ++      id = SecureRandom.uuid
+    ++      identity = WorkspaceCoordination.digest([workspace, 'fixture', slug, stat.dev, stat.ino, nil, nil])
+    ++      store.transaction do |data|
+    ++        data['owners'][id] = {'id' => id, 'identity' => identity, 'workspace' => workspace,
+    ++          'workspaceName' => 'fixture', 'slug' => slug, 'thread' => nil, 'socket' => '/fixture',
+    ++          'portalUrl' => 'https://fixture.test', 'bootstrap' => true, 'fence' => nil}
+    ++      end
+    ++      store.require_lifecycle_capacity!(workspace, slug, 'archive')
+    ++      store.bind_lifecycle(workspace, slug, 'archive', 'a' * 64)
+    ++      store.lifecycle_completed(workspace, slug, 'archive', operation_id: 'a' * 64)
+    ++      fill_coordination_admission_bytes(store)
+    ++      archive = {'schema' => 2, 'slug' => slug, 'workspace' => workspace, 'operation_id' => 'a' * 64,
+    ++        'phase' => 'prepared', 'mode' => 'complete', 'proven_heads' => {}, 'finalized_at' => Time.now.utc.iso8601,
+    ++        'retained_thread_id' => nil, 'target_tracking_sha256' => 'b' * 64}
+    ++      # Exact already-admitted publication remains recoverable at capacity.
+    ++      runner.send(:write_lifecycle_journal, runner.send(:lifecycle_journal_file, slug, 'archive'), archive, command: 'archive', create: true)
+    ++      assert File.file?(runner.send(:lifecycle_journal_file, slug, 'archive'))
+    ++      store.transaction { |data| data['owners'][id]['fence'] = nil }
+    ++      File.unlink(runner.send(:lifecycle_journal_file, slug, 'archive'))
+    ++      archive['operation_id'] = 'c' * 64
+    ++      error = assert_raises(WorkspaceCoordination::Error) do
+    ++        runner.send(:write_lifecycle_journal, runner.send(:lifecycle_journal_file, slug, 'archive'), archive, command: 'archive', create: true)
+    ++      end
+    ++      assert_match(/capacity/, error.message)
+    ++      refute File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive'))
+    ++      assert_raises(WorkspaceCoordination::Error) do
+    ++        runner.archive_cleanup_publish_binding(archive) { flunk 'published sidecar before capacity admission' }
+    ++      end
+    ++      removal = {'operation_id' => 'd' * 64}
+    ++      assert_raises(WorkspaceCoordination::Error) { runner.send(:write_removal_journal!, slug, removal) }
+    ++      refute File.exist?(runner.send(:lifecycle_journal_file, slug, 'delete'))
+    ++      store.transaction { |data| data['owners'][id]['fence'] = {'id' => SecureRandom.uuid, 'command' => 'archive', 'completed' => true, 'operationId' => 'a' * 64} }
+    ++      revive = {'schema' => 3, 'slug' => slug, 'workspace' => workspace, 'operation_id' => 'e' * 64,
+    ++        'phase' => 'prepared', 'lifecycle' => 'complete', 'legacy_without_portal' => false,
+    ++        'abandoned_confirmed' => true, 'retained_thread_id' => nil, 'target_tracking_sha256' => 'b' * 64,
+    ++        'plan_sha256' => 'b' * 64, 'state_sha256' => 'b' * 64, 'target_state_sha256' => 'b' * 64,
+    ++        'portal_sha256' => 'b' * 64, 'target_portal_sha256' => 'b' * 64}
+    ++      assert_raises(WorkspaceCoordination::Error) do
+    ++        runner.send(:write_lifecycle_journal, runner.send(:lifecycle_journal_file, slug, 'revive'), revive, command: 'revive', create: true)
+    ++      end
+    ++      refute File.exist?(runner.send(:lifecycle_journal_file, slug, 'revive'))
+    ++    end
+    ++  end
+    ++
+     +  def test_coordination_failure_retains_lifecycle_journals_for_exact_retry
+     +    with_workspace do |workspace|
+     +      runner = runner_for(workspace)
+    @@ test/dev_session/lifecycle_commands_test.rb
+          Dir.mktmpdir('dev-session-read-only-lock-test') do |directory|
+            path = File.join(directory, 'transition.lock')
+     
+    + ## test/support/coordination_capacity_fixture.rb (new) ##
+    +@@
+    ++# frozen_string_literal: true
+    ++
+    ++module CoordinationCapacityFixture
+    ++  def fill_coordination_admission_bytes(store)
+    ++    store.transaction do |data|
+    ++      remaining = WorkspaceCoordination::MAX_LEDGER - WorkspaceCoordination::RECOVERY_RESERVE -
+    ++        JSON.generate(data.merge('revision' => data['revision'] + 1)).bytesize - 1 - store.recovery_growth(data)
+    ++      loop do
+    ++        key = SecureRandom.uuid
+    ++        receipt = {'digest' => 'sha256:' + '0' * 64, 'result' => {'retained' => ''}}
+    ++        overhead = JSON.generate(key => receipt).bytesize - 2 + (data['receipts'].empty? ? 0 : 1)
+    ++        length = [WorkspaceCoordination::MAX_RESULT - 64, remaining - overhead - 128].min
+    ++        break unless length.positive?
+    ++        receipt['result']['retained'] = 'x' * length
+    ++        data['receipts'][key] = receipt
+    ++        remaining -= overhead + length
+    ++      end
+    ++    end
+    ++  end
+    ++end
+    +
+      ## test/workspace_coordination_systemd_test.rb (new) ##
+     @@
+     +# frozen_string_literal: true
+    @@ test/workspace_coordination_test.rb (new)
+     +
+     +require 'minitest/autorun'
+     +require 'tmpdir'
+    ++require_relative 'support/coordination_capacity_fixture'
+     +require_relative '../libexec/workspace-coordination-execution'
+     +load File.expand_path('../libexec/workspace-host', __dir__)
+     +
+     +class WorkspaceCoordinationTest < Minitest::Test
+    ++  include CoordinationCapacityFixture
+     +  def setup
+     +    @tmp = Dir.mktmpdir
+     +    @state = File.join(@tmp, 'state')
+    @@ test/workspace_coordination_test.rb (new)
+     +    assert_empty @engine.store.read['reservations'][reservation['id']]['history']
+     +  end
+     +
+    ++  def test_lifecycle_publication_excludes_competing_admission_and_retries_at_capacity
+    ++    first, second = owner('publishing'), owner('competing')
+    ++    store = @engine.store
+    ++    op = 'a' * 64
+    ++    journal = File.join(@tmp, 'ordinary-journal')
+    ++    store.require_lifecycle_capacity!(@workspace, first['slug'], 'archive')
+    ++    store.bind_lifecycle(@workspace, first['slug'], 'archive', op) do
+    ++      File.write(journal, op)
+    ++      reader, writer = IO.pipe
+    ++      child = fork do
+    ++        reader.close
+    ++        available = WorkspaceCoordination::Store.new(@state).lock(nonblock: true) { true }
+    ++        writer.write(available ? 'admitted' : 'excluded')
+    ++        writer.close
+    ++        exit! 0
+    ++      end
+    ++      writer.close
+    ++      assert_equal 'excluded', reader.read
+    ++      reader.close
+    ++      Process.wait(child)
+    ++      assert $?.success?
+    ++    end
+    ++    assert_equal op, File.read(journal)
+    ++    fill_coordination_admission_bytes(store)
+    ++    assert_raises(WorkspaceCoordination::Error) { store.require_lifecycle_capacity!(@workspace, second['slug'], 'delete') }
+    ++    store.bind_lifecycle(@workspace, first['slug'], 'archive', op)
+    ++    store.lifecycle_completed(@workspace, first['slug'], 'archive', operation_id: op)
+    ++    assert store.read['lifecycles'][op]['completed']
+    ++    assert_nil store.read['owners'][second['id']]['fence']
+    ++  end
+    ++
+    ++  def test_persisted_artifact_result_and_native_request_boundaries_round_trip
+    ++    artifact = {'kind' => 'boundary', 'payload' => ''}
+    ++    artifact['payload'] = 'x' * (WorkspaceCoordination::MAX_REQUEST - 1 - JSON.generate(artifact.merge('id' => 'sha256:' + '0' * 64)).bytesize)
+    ++    saved = @engine.save_artifact(artifact)
+    ++    path = File.join(@engine.store.root, 'sources', saved['id'].delete_prefix('sha256:'), 'artifact.json')
+    ++    assert_equal WorkspaceCoordination::MAX_REQUEST, File.size(path)
+    ++    assert_equal saved, @engine.artifact!(saved['id'])
+    ++    assert_raises(WorkspaceCoordination::Error) { @engine.save_artifact(artifact.merge('payload' => artifact['payload'] + 'x')) }
+    ++
+    ++    first = owner('result-boundary')
+    ++    job = submit_merge(first)
+    ++    claimed = @engine.claim(owner_id: first['id']).first
+    ++    worker = WorkspaceCoordination::Worker.new(write_attempt(claimed), fixtures: true)
+    ++    worker.result('applied', '')
+    ++    result_path = @engine.attempt_path(claimed['attempt'], 'result.json')
+    ++    observation = 'x' * (WorkspaceCoordination::MAX_RESULT - File.size(result_path))
+    ++    worker.result('applied', observation)
+    ++    assert_equal WorkspaceCoordination::MAX_RESULT, File.size(result_path)
+    ++    assert_equal observation, WorkspaceCoordination.private_read(result_path, limit: WorkspaceCoordination::MAX_RESULT)['observed']
+    ++    assert_raises(WorkspaceCoordination::Error) { worker.result('applied', observation + 'x') }
+    ++    @engine.reconcile_attempts
+    ++    assert_equal 'succeeded', @engine.store.read['jobs'][job['id']]['state']
+    ++
+    ++    event = {'text' => 'boundary', 'messageId' => SecureRandom.uuid, 'actionContext' => 'boundary', 'options' => nil}
+    ++    options = {'baseInstructions' => ''}
+    ++    options_artifact = @engine.save_artifact('kind' => 'notification_options', 'options' => options)
+    ++    event['options'] = options_artifact['id']
+    ++    payload = @engine.notification_payload(first, event, 'send')
+    ++    options['baseInstructions'] = 'x' * (WorkspaceCoordination::MAX_REQUEST - 1 - JSON.generate(payload).bytesize)
+    ++    event['options'] = @engine.save_artifact('kind' => 'notification_options', 'options' => options)['id']
+    ++    @engine.define_singleton_method(:capture) do |*args, **_|
+    ++      file = args[args.index('--request') + 1]
+    ++      value = WorkspaceCoordination.private_read(file, limit: WorkspaceCoordination::MAX_REQUEST)
+    ++      JSON.generate('size' => File.size(file), 'instructions' => value['options']['baseInstructions'].bytesize)
+    ++    end
+    ++    response = @engine.notification_call(first, event, 'send')
+    ++    assert_equal WorkspaceCoordination::MAX_REQUEST, response['size']
+    ++    assert_equal options['baseInstructions'].bytesize, response['instructions']
+    ++    options['baseInstructions'] += 'x'
+    ++    event['options'] = @engine.save_artifact('kind' => 'notification_options', 'options' => options)['id']
+    ++    assert_raises(WorkspaceCoordination::Error) { @engine.notification_call(first, event, 'send') }
+    ++  end
+    ++
+     +  def test_lifecycle_receipts_are_exact_and_idempotent_after_finalization
+     +    first = owner('retained')
+     +    store = @engine.store
+2:  ee6cef1 = 2:  cecf181 portal: show operation queues and review reservations

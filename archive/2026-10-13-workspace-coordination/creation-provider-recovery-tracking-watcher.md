@@ -1,0 +1,1 @@
+The specified observer command was invoked once. It produced no stdout during the 30.2-second wait. I did not capture the command’s exit status, invocation/status contents, elapsed time beyond that wait, or log excerpt, so I can’t report a raw completion result or failure evidence. I did not retry or query systemctl; the reservation remains untouched.

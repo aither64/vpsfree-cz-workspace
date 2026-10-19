@@ -1,0 +1,44 @@
+1:  08115821 ! 1:  aadaa171 coordination: complete the threadless installation through existing workers
+    @@ docs/maintenance/bootstrap-merge-2026-10-13.md (new)
+     +results in the initiating rollout/state. Each repository integrates separately.
+     +
+     +Exact preparation retries return the retained bundle before rebuilding or making
+    -+another target checkout. Execution retries reuse ordinary approval and submission
+    ++another target checkout when no owned work is pending. Once its merge is pending,
+    ++retry the saved execution request E; preparation admission reports busy until
+    ++owned work settles. Execution retries reuse ordinary approval and submission
+     +receipts, even after the target checkout has changed through successful integration.
+     +An altered request with the same UUID refuses. Do not edit bundles or create new
+     +IDs to avoid a pending claim. All new admission and claims recheck the selected
+    @@ lib/bootstrap_merge_2026_10_13.rb (new)
+     +    @entry = registry.find(plan.fetch('workspaceName'))
+     +    raise WorkspaceCoordination::Error, 'registered workspace changed' unless @entry && @entry['root'] == plan['workspace']
+     +    @engine = coordination_engine(@entry)
+    -+    @engine.store.lock(ACTION, nonblock: true) do
+    ++    result = @engine.store.lock(ACTION, nonblock: true) do
+     +      prior = !prepare && @engine.store.read['receipts'][request['requestId']]
+     +      admission(prior && prior.dig('result', 'id')) do
+     +        verify_condition!
+     +      end
+     +      prepare ? prepare_merge_request(request) : execute_merge_request(request)
+     +    end
+    ++    raise WorkspaceCoordination::Error.new('another bootstrap merge driver is running; retry later', 75) if result == false
+    ++    result
+     +  end
+     +
+     +  private
+    @@ test/bootstrap_merge_2026_10_13_test.rb (new)
+     +    assert_empty @engine.store.read['jobs']
+     +  end
+     +
+    ++  def test_dated_driver_contention_returns_retryable_busy_error
+    ++    @engine.store.lock(BootstrapMerge20261013::ACTION) do
+    ++      error = assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, @preparation, prepare: true) }
+    ++      assert_equal 75, error.code
+    ++      assert_empty @engine.store.read['jobs']
+    ++    end
+    ++  end
+    ++
+     +  def test_dated_execution_and_completed_retry_use_one_real_worker
+     +    execution = @driver.operate(@plan, @preparation, prepare: true)
+     +    before = @engine.store.read['reservations']

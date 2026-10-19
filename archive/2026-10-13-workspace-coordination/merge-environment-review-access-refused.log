@@ -1,0 +1,626 @@
+OpenAI Codex v0.162.1
+--------
+workdir: /home/aither/workspace/ai/vpsfree.cz
+model: gpt-6-astra
+provider: codex-lb
+approval: never
+sandbox: danger-full-access
+reasoning effort: xhigh
+reasoning summaries: none
+session id: 01a139a6-7d74-7632-bc60-9b0a9953f213
+--------
+user
+Perform related final review with your retained Astra/xhigh/read-only settings; no effort override. Read work/2026-10-13-workspace-coordination/merge-environment-review-packet.md and the named committed changes and evidence. Cover all four mandatory review lanes directly, no nested agents. Return the independent report and exact recovery acceptance/remaining findings.
+codex
+I’ll read the new packet, committed changes and recovery evidence, then review all four lanes directly and return the independent recovery decision.
+
+exec
+/run/current-system/sw/bin/bash -lc 'cat /home/aither/.codex/skills/mandatory-change-review/SKILL.md' in /home/aither/workspace/ai/vpsfree.cz
+ succeeded in 0ms:
+---
+name: mandatory-change-review
+description: Run independent final review of completed substantive vpsFree.cz deliverables after all intended changes are committed and quick checks pass, before long integration tests. Includes code, schemas, APIs, protocols, configuration, documentation, instructions, tests, deployment and security changes. Routine planning, investigation, findings, session tracking and evidence alone never trigger automatic review. Earlier review requires an explicit user request, is advisory, and does not replace final review; mechanical dependency/generated content remains exempt when it contains no substantive changes, while history consolidation still applies.
+---
+
+# Mandatory Change Review
+
+## Purpose
+
+Use this skill for final review after the intended substantive deliverable is
+complete, all intended changes are committed and quick local verification has
+passed, but before long integration tests are started. Completed substantive
+documentation, instructions and configuration deliverables remain in scope,
+alongside code, schema, API, protocol, test, deployment and security changes.
+The review is advisory, but Blocking and Important findings must be addressed
+as described below before continuing.
+
+Routine planning, investigation, findings, design reconciliation, session
+tracking (plans/state) and evidence alone never trigger automatic review.
+These records provide context for final review. Merely having a reviewer in a
+preset creates no assignment. Earlier review requires an explicit user request:
+inspect the requested scope and report advisory findings as an early review.
+It does not require a completed or committed implementation, does not claim
+final readiness, and does not replace final committed-deliverable review.
+Apply the final workflow below when the substantive deliverable is ready.
+
+The coordinating agent assigns one independent reviewer the adaptive set of
+applicable review lanes. Prefer an eligible retained member whose saved purpose
+is `review` in the current session. Select the lowest numeric member index,
+breaking ties by address. Legacy `reviewerN` members without a saved purpose
+also qualify. Use that member's saved model and reasoning effort exactly; do
+not override either setting for review. If no member is
+eligible (including a solo session), launch one fresh standalone reviewer using
+the lexicographically first review-purpose role in the installed catalog's
+default development team and its model and effort. This
+fallback does not add a member or change the roster. If no valid installed
+catalog policy is available, stop and request direction rather than inventing
+a model or accepting self-review. The reviewer performs the review directly
+without nested reviewers or subagents.
+
+An eligible retained reviewer is present, ready, independent of the work being
+reviewed, and not occupied by an unrelated assignment. A member who authored
+substantive changes is ineligible. Verify the selected member's session-bound
+identity, role, state, and saved settings before assignment; omit model/effort
+overrides when assigning it. A temporarily unavailable or unverified member is
+not a reason to skip review: use the standalone fallback and record why.
+
+Retain the same independent reviewer for findings, requested fixes, and later
+relevant revisions of a coherent change. Replace it only when the change is
+unrelated, independence was lost, the reviewer authored substantive fixes,
+its identity or settings cannot be validated, or its policy became incompatible.
+
+## Invocation Mode
+
+First decide which role you are in:
+
+- If you are coordinating the development session, follow the Main Agent
+  Workflow.
+- If you are a spawned reviewer, read Shared Reviewer Instructions and the
+  reference for your assigned lane. Do not launch another reviewer.
+
+## Reasoning Effort
+
+Before assigning the reviewer, classify the overall change at the highest risk
+present in any affected component. The classification informs the packet and
+lane selection, not an override of the reviewer's configured effort:
+
+- **Low:** a simple, localized, readily reversible change with no security,
+  persisted-state, public-contract, destructive-operation, deployment, or
+  compatibility consequence.
+- **Medium:** a bounded implementation or cross-component change that remains
+  reversible and compatible, with no high-risk characteristic below.
+- **High:** authentication, authorization, tenant isolation, secrets, data
+  loss, schemas or persisted state, incompatible public or cross-project
+  contracts, protocols, host/node behavior, destructive or irreversible
+  operations, deployment ordering, rollback, or mixed-version operation.
+
+Use the selected reviewer's saved or catalog effort for every risk
+classification and related review rerun. When uncertain, choose the higher
+risk classification so the packet and selected lanes cover the concern.
+
+## Review Lanes
+
+The reviewer always covers the general lane. Add each specialist lane to the
+same assignment when its trigger applies:
+
+- **General:** always. Read
+  [references/general-review.md](references/general-review.md).
+- **Architecture and repetition:** hand-written implementation, test, build,
+  workflow, or configuration logic changed; or the change affects an
+  abstraction, extension point, reusable component, or cross-project
+  interface. Read
+  [references/architecture-review.md](references/architecture-review.md).
+- **Scope and proportionality:** the change is medium or high risk, introduces
+  or expands an abstraction, framework, compatibility layer, generalized
+  safety mechanism, or cross-project capability, or grew materially during
+  implementation or review. Read
+  [references/scope-review.md](references/scope-review.md).
+- **Risk and compatibility:** the change affects authentication,
+  authorization, tenant isolation, security boundaries, persisted state,
+  schemas, public or cross-project contracts, protocols, host/node behavior,
+  destructive or irreversible operations, deployment, rollback, or
+  mixed-version operation. Read
+  [references/risk-review.md](references/risk-review.md).
+
+Documentation-only changes normally use only the general lane. Combining lanes
+does not permit omitting their references or collapsing their distinct concerns
+into a superficial general review.
+
+## Main Agent Workflow
+
+1. Confirm that the intended substantive deliverable is complete. Routine
+   planning, investigation, findings, session tracking and evidence alone do
+   not trigger review. Completed substantive documentation and configuration
+   deliverables do require final review. Earlier review requires an explicit
+   user request, is advisory, and does not replace this final workflow. Skip
+   genuinely mechanical dependency-only updates, generated lockfile refreshes
+   or metadata updates when they contain no substantive changes.
+   This skips standalone content review, not history consolidation. Include
+   generated commits in any required whole-branch final review.
+2. Make sure all intended changes are committed in every affected repository.
+   Do not review a half-staged or partly uncommitted implementation.
+   Before claiming an unmerged feature branch ready, arrange a final review of
+   its complete base-to-head commit series and final diff. Identify superseded
+   approaches, follow-up fixes, unused compatibility paths, and migrations.
+   Establish whether each migration version was merged, released, deployed, or
+   externally consumed. Consolidate obsolete, unapplied branch history before
+   review while preserving supported paths. Earlier incremental reviews do not
+   complete this final gate.
+3. Run quick verification first, using the local project guidance. Do not start
+   long integration tests yet.
+4. Classify the overall risk, then determine the
+   applicable lanes using the triggers above. Read every applicable lane
+   reference before preparing the review.
+5. Prepare a review packet containing:
+   - requested outcome and acceptance criteria;
+   - initiative slug, plan/state files, affected repositories and worktrees;
+   - base and head commits for every repository;
+   - for a final readiness review, the complete base-to-head commit list and
+     final diff, disposition of superseded approaches and follow-up fixes,
+     and migration versions with merge, release, deployment, and external-use
+     provenance; explicitly state when there are no migrations;
+   - repeated dependency/channel/input or generated-artifact update streams,
+     their commits, final selected revisions and consolidation dispositions;
+     for retained intermediate updates, the concrete release, supported
+     consumer or state boundary that requires them and its evidence. Keep
+     rollout provenance separate from the rationale for retaining commits;
+   - intended commit split and any deliberately bundled changes, with a
+     concrete rationale for why they are inseparable;
+   - explicit non-goals, rejected alternatives, and user decisions that bound
+     the implementation or accepted residual behavior;
+   - relevant dependency pins or configuration changes;
+   - documentation changed or checked, with paths to project explanations,
+     decision rationale and applicable operations or upgrade guidance; link
+     individual rollout records separately, following the generic
+     dev-session-documentation skill's placement rules; briefly explain when
+     no documentation change was useful;
+   - quick verification commands and results;
+   - overall risk classification, its rationale, reviewer selection, model,
+     and reasoning effort;
+   - known compatibility and deployment assumptions;
+   - for reusable or cross-project components, the owning component, public
+     interface, and consumers discovered from imports, dependency pins,
+     wrappers, manifests, documentation, and current repository state.
+6. Check the current session roster and choose the eligible member with review
+   purpose and the lowest numeric index, breaking ties by address. Send the
+   packet and all selected lanes to that member with
+   `dev-session team assign <slug> --to <member-address> --message-stdin` (or the
+   equivalent session-bound assignment), omitting `--model` and `--effort` so
+   the saved settings govern the turn. Verify the resulting member identity,
+   model, effort, and completed review report. If no member qualifies, select
+   the lexicographically first review-purpose role in the installed catalog's
+   default development team as one fresh standalone agent with
+   `fork_turns: "none"`, passing its exact model and effort explicitly. Verify
+   its native identity and settings against that catalog. Native role TOMLs
+   define behavior, not model, effort, or permission
+   settings. Give either reviewer the review packet, this skill path, and
+   instructions to read every selected lane reference and perform the review
+   itself. Do not pass hidden conclusions or ask for a rubber stamp. For
+   related follow-ups, assign a real new turn to the same verified member or
+   standalone reviewer; a queued status message alone is insufficient.
+7. Collect all findings. Investigate conflicts using the code and repository
+   evidence; do not decide by majority vote. Merge duplicates, retain the
+   highest severity supported by evidence, and identify the originating lane.
+8. Fix Blocking findings before integration tests. Fix Important findings or
+   discuss and record an explicit decision before continuing. Advisory findings
+   may be accepted at the coordinating agent's discretion but must be recorded.
+9. Verify direct review remediations with focused inspection and checks. Do not
+   rerun a reviewer merely to confirm that its requested narrow fix was made,
+   especially when the fix only deletes rejected behavior or reduces scope.
+10. Rerun only the lanes affected when a remediation introduces a new design,
+   expands the accepted boundary, changes a public or cross-project contract,
+   or resolves a finding through behavior the completed review did not assess.
+   Reuse the independent reviewer unless a replacement condition above applies.
+   Do not rerun unaffected lanes.
+   A completed final branch review does not require another full review for a
+   narrow fix that meets step 9; inspect and verify that fix directly.
+11. Record the risk classification and rationale, reviewer lanes, member
+   address or standalone identity, actual model and effort, fallback reason if
+   any, reviewed commits, findings, decisions, fixes, and reruns in the
+   initiative `state.md`.
+
+## Shared Reviewer Instructions
+
+For final review, review committed changes across all affected projects. For
+explicitly requested early review, inspect the requested scope and report
+advisory findings without claiming final readiness. Inspect diffs, commit
+history, local `AGENTS.md` files, relevant tests, documentation, and project
+context before forming conclusions. Review the commit series, not only the
+final tree, and compare it with the user request and initiative plan/state.
+For final readiness, inspect each affected branch from its merge base even if
+earlier individual commits were reviewed. Explicitly conclude whether obsolete
+unmerged approaches remain and whether migration lineage is sound; state "no
+migrations" when the inventory is empty. If the packet lacks the complete
+series or migration inventory and provenance, request them before claiming the
+final branch was reviewed.
+
+Independently assess the packet's repeated-update streams under the general
+lane. Report superseded commits and their consolidation, or the evidenced
+boundary requiring separate updates; include an explicit conclusion when there
+are no repeated streams. Development deployment, branch publication or a prior
+review is not sufficient justification for retaining redundant pin commits.
+A mechanical-content exemption does not remove these history duties.
+
+Stay focused on the assigned lane, but report a concrete serious issue from
+another lane if you encounter one. Do not assume that another reviewer will
+notice it. Architecture findings must describe a plausible maintenance or
+failure scenario instead of relying on pattern names or line counts.
+
+Use these severities:
+
+- `Blocking`: must be fixed before long integration tests.
+- `Important`: may proceed only after a fix or an explicit recorded decision.
+- `Advisory`: a smaller improvement or residual risk that does not block
+  progress.
+
+Start with findings ordered by severity, using file/line and commit references
+where possible. If there are no findings, say so clearly and list residual
+risks or test gaps. Keep summaries brief; the value of the review is in
+concrete findings and compatibility, architecture, and security reasoning.
+
+exec
+/run/current-system/sw/bin/bash -lc 'cat work/2026-10-13-workspace-coordination/merge-environment-review-packet.md' in /home/aither/workspace/ai/vpsfree.cz
+exec
+/run/current-system/sw/bin/bash -lc 'cat /home/aither/.codex/skills/mandatory-change-review/references/general-review.md /home/aither/.codex/skills/mandatory-change-review/references/architecture-review.md /home/aither/.codex/skills/mandatory-change-review/references/scope-review.md /home/aither/.codex/skills/mandatory-change-review/references/risk-review.md' in /home/aither/workspace/ai/vpsfree.cz
+ succeeded in 0ms:
+Final committed deliverable review; high risk, all four lanes. Read mandatory
+review skill and each lane reference, root/repository instructions, coordination
+contract/recovery guides and merge-environment-fix-brief.md. No edits, nested
+agents, deployments or long checks. Verify your actual retained Astra/xhigh
+read-only identity/settings before returning acceptance.
+
+User requested fixing excessive merge duration after the original configuration
+worker exposed missing SSH/hook dependencies. Outcome: actual shellHook init and
+framework preflight before admission; worker PATH retains runtime transport;
+original exact-job operator recovery without job/artifact/claim replacement.
+
+Runtime owned worktree: worktrees/2026-10-13-workspace-coordination/dev-workspace.
+Base a10af6c4539c4c7a6a97a883d89825346d5451ad already merged/deployed. Complete
+new series: 5dd5f0c9e5c3679de3b5b5899eb7ef76c02db869, three files for one hook
+environment correction. No dependencies, pin streams, protocols, migrations,
+ledger/worker schema or browser changes. Old artifacts remain readable.
+Final diff: merge-environment-runtime-final.patch. Quick3/14 pass, syntax/diff
+checks pass. Nix shell initialization banners use one explicit environment
+marker; only declared allowlisted string values are captured, not secrets.
+Review target-worktree preparation hooks too. Existing code uses RbConfig via
+workspace-host/Ruby, verify availability in pure engine loading.
+
+Workspace owned worktree: worktrees/2026-10-13-workspace-coordination/workspace.
+Full base90005ea3 through6239414c series is4ae8cea7,2c212466,aadaa171,b78dc0a4,
+6239414c. Earlier complete histories accepted by retained final reviewer
+01a139a6-7d74-7632-bc60-9b0a9953f213 (integration-rebase-review.md); aadaa171
+and b78 have now been consumed by live ordinary workers, preserving those exact
+predecessors is required. The only delta is exact dated recovery executable
+bin/recover-bootstrap-push-2026-10-14. No migrations/repeated pin updates.
+Assess whole history disposition, prior conclusions and this focused addition.
+
+Recovery job ec09fd84-f48c-4ea6-92fe-a2392f08e7a2, attempt
+bb975e20-0b90-42c3-a09a-a6476353823c, owner55e83d75-cb96-417a-9308-11d3caf22dcd.
+It remains reconciling/push_intent, exact approved local head9a481ba1,
+remote8bf9da9c. Script revalidates immutable original request/snapshot, actual
+merge approval, canonical repository, selected generation, reservation, exact
+retained checkout/hook inputs, worker and tracking locks. Uses declared existing
+Bundler environment plus selected SSH, reruns failed post-merge hook and normal
+non-force exact-SHA push. Ordinary reconciliation then settles the original job.
+No source merge replay or receipt editing. Real retained-target dependency
+preflight passes: configuration-recovery-hooks-preflight.log. Syntax/diff pass.
+The exact approved source build already passed and remains unchanged; no repeat
+system build is relevant to this recovery. User four-master merge authorization
+and deployment authorization persist. Do not release, reboot, archive or close.
+
+Foreign shared-master commits63d9495a remain untouched; exact publication
+question is pending with user. Do not approve taking over foreign tracking.
+Selected package m12 remains installed; no package switch during uncertainty.
+
+Consumers: selected generic runtime executes workspace/configuration/extension
+Git merges under one catalog; config's confctl tools shell exposes the reproduced
+shellHook-only bundle and no SSH. Owning runtime wrapper provides SSH. This fix
+belongs in generic merge preparation rather than consumer-specific exceptions.
+The dated recovery remains source-only, fixed to one already-authorized attempt.
+Trusted local operator; remote portal clients remain untrusted. Assess missing
+dependencies before admission, hooks/transport preservation, exact operation
+authorization, lock lifetime, retry behavior and backward compatibility.
+
+Report findings by severity and lane, explicit whole-history/no-migrations
+conclusion, and whether the exact operator recovery can run. Parent saves your
+report as merge-environment-review.md and owns remediation/acceptance.
+
+ succeeded in 0ms:
+# General Review
+
+Review scope, correctness, commit history, tests, and documentation.
+
+## Commit Series
+
+- Verify that the committed changes match the requested feature, bugfix, or
+  operational goal.
+- Verify that each commit has one logical purpose and is independently
+  reviewable. Separate mechanical moves, refactors, behavior changes,
+  generated updates, dependency bumps, tests, documentation, and deployment
+  changes when they can reasonably be reviewed, reverted, tested, or explained
+  independently.
+- Treat independently reviewable changes bundled without a convincing
+  rationale as `Blocking`, even when the combined final diff is correct.
+- Verify any user- or plan-requested commit split. Subject-only commits are
+  acceptable only when repository rules allow them or the subject fully
+  explains a trivial mechanical change.
+- Check that the branch has clean history. Fixup or tidy commits for behavior
+  introduced earlier on the same unmerged branch should usually be folded into
+  the owning commit unless separation improves reviewability.
+- Require an unmerged feature that evolved through multiple designs to
+  introduce its final protocol, schema, and behavior directly. Flag superseded
+  versions, migrations, dual-read/write paths, or shims kept only for abandoned
+  branch iterations. Preserve compatibility with merged, released, deployed,
+  or externally consumed behavior.
+- For final branch review, compare the complete base-to-head commit list with
+  the final diff. Name commits whose approaches were later removed or replaced,
+  or explicitly conclude that no obsolete branch history remains. Check that
+  follow-up fixes were folded into their owning unmerged commits when
+  appropriate. A review of only the latest commit does not complete this gate.
+- Require repeated updates to the same flake input, gem dependency, dependency
+  group, lockfile, Bundix output, or generated metadata in one update stream to
+  be consolidated into one final dependency-update commit. Identify streams by
+  dependency, channel/role or input and logical purpose, rather than a shared
+  lockfile alone. This applies to generated commits and to feature revisions
+  already published or deployed during development.
+- Preserve supported deployed behavior and migration lineage without treating
+  deployment as an exemption for superseded pin commits. Keep rollout SHAs and
+  execution evidence in rollout records. Retain separate updates only when a
+  concrete release, supported consumer or state boundary requires them; name
+  the boundary and explain why the final update alone is insufficient. Preserve
+  any required exact source ref, and respect protections on merged history.
+- Independently group the repeated updates in the complete series and assess
+  the packet's proposed dispositions. Report superseded commits and their
+  consolidation, or the evidence requiring their retention. State explicitly
+  when no repeated update streams exist. Treat redundant updates retained
+  without that necessity as at least `Important`; an earlier review or the
+  label "deployed" or "consumed" is not a sufficient reason to accept them.
+- A mechanical-content review exemption does not exempt generated updates
+  from consolidation or from an otherwise required whole-branch history review.
+- Check commit messages against applicable `AGENTS.md` rules. Messages must
+  describe the final result and rationale, not the development process. Do not
+  reformat generated messages such as `confctl` commits.
+
+Use these vpsAdmin-specific commit red flags:
+
+- A managed notification-template installer commit must not also add Markdown
+  rendering helpers, change Telegram HTML/link rendering, change synthetic test
+  notifications, or remove a standalone uploader without an indivisibility
+  rationale.
+- A notification-delivery rate-limit commit must not also replace route-match
+  attribution, change event persistence, expand test-notification authorization
+  or scope, or rename generated defaults without an indivisibility rationale.
+- Tests, migrations, documentation, and support edits may stay with the
+  behavior they support. If they primarily validate another behavior, they
+  belong with that behavior.
+
+## Behavior and Coverage
+
+- Check functional correctness, error handling, non-golden paths, and whether
+  the implementation follows existing project conventions.
+- Check unit/spec coverage, integration coverage across components or daemons,
+  and regression coverage for unexpected input, missing or conflicting state,
+  rollback/error paths, authorization failures, mixed-version flows, and
+  repeated or partially completed operations.
+- For tests transferring containers, VPS datasets, backups, or replacement
+  datasets, require a known file and contents or equivalent checksum before and
+  after the transfer. Metadata-only assertions are insufficient.
+- Check that behavior changes update the appropriate documentation, man pages,
+  API docs, migration notes, and operational documentation.
+- Check that consequential rationale and constraints have a durable home in the
+  owning project and are discoverable from its documentation entry point.
+  Assess the explanation needed by the change; a short rationale can be enough.
+  Do not require a fixed document bundle or historical backfill.
+- Apply the generic dev-session-documentation skill's placement rules. Feature
+  explanations must remain useful after rollout; temporary branch state and
+  individual deployment checklists belong in operational/session records, even
+  without dates or revision hashes. Check that reusable procedures and supported
+  upgrade paths have discoverable, appropriately scoped guidance. Moving mixed
+  material must preserve lasting feature constraints and recovery requirements.
+  Distinguish application transaction rollback from reverting deployed software.
+- Reconcile design and operational guidance with the final implementation and
+  evidence. Distinguish supported behavior, proposals, historical decisions,
+  inferred rationale, and prepared versus executed rollouts. Check applicable
+  versions, deployment order, verification, and recovery limits when relevant.
+  Evaluate documentation gaps using the existing finding severities.
+- For KB or DokuWiki changes, manually enumerate instructions that perform a
+  vpsAdmin WebUI action and require each to be wrapped in a semantic
+  `<vpsadmin-nav>` annotation bound to the affected language pages. A green
+  discovery heuristic is not proof of completeness; a missing binding is
+  `Blocking`.
+# Architecture and Repetition Review
+
+Review ownership, component boundaries, abstractions, extensibility, repeated
+logic, and cross-project reuse.
+
+## Component Design
+
+- Check whether the design fits existing architecture across vpsAdmin,
+  vpsAdminOS, HaveAPI, clients, test infrastructure, and configuration
+  repositories.
+- Flag catalogs or registries that mirror classes, resources, actions, plugins,
+  handlers, or protocols already declared elsewhere. Prefer one owning
+  declaration with derived indexes. Allow finite protocol, state, or public
+  contract registries when they are intentionally authoritative.
+- Check whether adding, renaming, or removing one implementation is localized
+  to its owner. Flag extension points requiring coordinated edits across
+  unrelated class-name lists, conditionals, or metadata tables, especially when
+  omissions silently disable or misclassify behavior. Require duplicate and
+  conflict detection plus bidirectional coverage when metadata cannot be
+  derived.
+- Flag callbacks, closures, reflection, `instance_exec`, `send`, or method-name
+  conventions that create a hidden interface on an unrelated receiver. Prefer
+  an explicit class/module interface or a validated DSL with one evaluation
+  context. Allow reflective framework boundaries when their contract and
+  validation are clear.
+- Flag changed modules that combine unrelated orchestration, persistence,
+  policy, validation, configuration, rendering, and transport responsibilities
+  when this causes central conditionals or shotgun surgery. File length alone
+  is not a finding.
+- Flag defensive shape or capability probing such as Ruby `respond_to?`, PHP
+  `method_exists`/`property_exists`, Python `hasattr`, reflection checks,
+  optional chaining that masks uncertain data, or helpers trying several input
+  shapes unless a concrete boundary requires it. Prefer boundary validation and
+  normalization followed by explicit internal contracts.
+
+## Cross-Project Components and Consumers
+
+When a component is reused or exposes a cross-project interface:
+
+1. Identify the owning component and derive actual consumers from imports,
+   dependency pins, wrappers, manifests, generated clients, documentation, and
+   current repository state. Do not rely on a hard-coded consumer catalog.
+2. Inspect the public contract and representative consumers at the revisions
+   they actually pin, plus companion feature branches supplied in the review
+   packet.
+3. Decide whether the capability belongs in the shared provider, in a consumer,
+   or behind an intentional extension point. Check that the design is not
+   overfit to the initiating consumer.
+4. Look for equivalent downstream implementations or needs that a shared
+   abstraction could solve once. Also reject speculative generalization when
+   consumers have genuinely different semantics.
+5. Require current-scope fixes for broken consumers, unsafe compatibility, or
+   incorrect ownership. Record optional adoption by other consumers as a
+   concrete follow-up unless it is necessary for correctness.
+6. Require provider-level tests and representative consumer validation when the
+   shared contract changes. Record any dependency-pin updates and deployment or
+   upgrade ordering.
+
+Treat the vpsAdminOS test framework as a canonical example: changes to its
+flake-exported test interface, Ruby runner CLI, extension hooks, test metadata,
+or machine/test contracts require discovery and inspection of external suites,
+wrappers, and pins such as those used by vpsAdmin and other workspace projects.
+
+## Repeated Code and Rules
+
+- Search changed code, adjacent implementation, and relevant consumers for
+  repeated behavioral rules, policy, validation, normalization, query logic,
+  protocol handling, error translation, orchestration, and test
+  infrastructure.
+- Require one owning abstraction when repeated logic must stay equivalent and
+  has a credible drift, omission, or inconsistent-fix risk. The abstraction
+  must preserve clear ownership and should be tested at the shared boundary.
+- Do not demand extraction for incidental syntax, tiny glue, explicit test
+  examples whose duplication aids readability, or concepts expected to evolve
+  independently. Require concrete rationale when meaningful duplication is
+  intentionally retained.
+- Use `Blocking` when newly introduced or expanded duplication can silently
+  diverge in authorization, persistence, events, protocols, deployment, or
+  public contracts. Use `Important` for duplicated business or test-framework
+  logic that creates credible multi-site maintenance risk. Use `Advisory` for
+  smaller safe extractions.
+
+## vpsAdmin and Data-Layer Conventions
+
+- For new or changed vpsAdmin API relationships to live resources, prefer
+  HaveAPI `resource` parameters and attributes over raw integer IDs. Allow raw
+  IDs for historical or deleted references that a live association cannot
+  safely represent, with a concrete rationale.
+- Require human-friendly labels and useful descriptions for changed vpsAdmin
+  API parameters. Omit a description only when it adds no useful information;
+  identifier-derived labels such as `Expires_at` are not human-friendly.
+- Require each top-level vpsAdmin API resource to have its own source file;
+  nested resources may remain with their parent.
+- Keep plugin-owned vpsAdmin API resources, event/type registrations, mail
+  templates, sysconfig keys, metrics, routes, and transaction behavior in the
+  owning plugin unless a generic core extension point is intentionally changed.
+- For changed ActiveRecord migrations, prefer `change` with `reversible` blocks
+  for direction-dependent data operations. Allow `up`/`down` when required or
+  materially clearer, with justification.
+# Scope and Proportionality Review
+
+Review whether the implementation is the smallest maintainable solution that
+meets the requested outcome and its real safety and compatibility constraints.
+This lane owns proportionality; the architecture lane still owns component
+boundaries, shared abstractions, consumers, and repetition.
+
+## Scope Control
+
+- Compare every substantial mechanism with the user request, acceptance
+  criteria, initiative plan, and explicit non-goals. Flag behavior justified
+  only by possibilities outside the supported contract.
+- Flag code that reimplements operating-system, language, database, Git,
+  framework, deployment-tool, or protocol internals when delegating to the
+  owning tool would satisfy the supported contract.
+- Require a current consumer, demonstrated failure, documented compatibility
+  requirement, or concrete operational need before adding generalized
+  frameworks, registries, fallback paths, compatibility shims, or exhaustive
+  edge-case handling.
+- Check whether reviewer-driven fixes broadened the product contract instead
+  of correcting behavior inside the chosen boundary. Prefer recording a clear
+  non-goal or residual risk when supporting it would be disproportionate.
+- Look for obsolete branch iterations, defensive layers, tests, and
+  documentation that can be removed after the final design is chosen. Count
+  maintenance surface, concepts, and failure modes, not only lines of code.
+- Check that tests are proportional to owned behavior. Do not require the
+  application to duplicate exhaustive conformance testing for an upstream tool
+  whose public operation is deliberately delegated.
+
+Do not use proportionality to excuse a correctness, security, data-loss, or
+compatibility defect inside the explicitly supported boundary. When the
+boundary itself is unclear, report the ambiguity and the smallest credible
+contract rather than silently choosing a broader one.
+
+Use `Blocking` when scope growth contradicts an explicit user decision,
+materially increases delivery or operational risk, or makes the commit series
+incoherent. Use `Important` for disproportionate maintenance surface or
+speculative generalization with a credible long-term cost. Use `Advisory` for a
+smaller simplification whose current cost is limited.
+# Risk and Compatibility Review
+
+Review security boundaries, data safety, public contracts, deployment,
+rollback, and mixed-version operation.
+
+## Security and Data Safety
+
+- Check for vulnerabilities, authorization bypasses, tenant-isolation failures,
+  unsafe host/node interactions, and security regressions in the context of the
+  whole system and its cross-project interactions.
+- Check untrusted-input validation, privilege boundaries, secret handling,
+  failure behavior, repeated or partially completed operations, and whether
+  errors can leave conflicting or unsafe state.
+- For new or changed migrations that have not been merged, released, or
+  deployed, reject schema-existence guards such as `table_exists?`,
+  `column_exists?`, `index_exists?`, `if_exists`, or `if_not_exists` when they
+  merely accommodate a stale disposable database. Require the exact predecessor
+  schema and reset disposable databases instead. Allow guards only for
+  documented supported predecessor schemas with tests for every path; retain
+  real data-integrity and conversion checks.
+- For final review of an unmerged branch, list every new migration in order
+  and verify its merge, release, deployment, and external-use provenance.
+  Compare each step with the final schema and callers. Flag migrations that
+  only upgrade an earlier, unapplied branch iteration; introduce the final
+  schema directly unless a retained database or supported predecessor needs
+  the intermediate step. Check fresh schema load, bootstrap data, and upgrades
+  from deployed schemas separately. State an explicit migration-lineage
+  conclusion, or "no migrations" when the inventory is empty.
+- Require transfer tests for containers, VPS datasets, backups, and replacement
+  datasets to prove data integrity with known contents or checksums, not only
+  metadata.
+
+## Contracts and Deployment
+
+- Identify public and cross-project API, generated-client, CLI, protocol,
+  message, Nix module, configuration, and persisted-state changes. Verify both
+  backward and forward compatibility where old and new components can coexist.
+- Inspect actual consumer pins and deployment topology. Check required update
+  order, rolling upgrades, rollback behavior, and whether an older version can
+  read or safely reject state produced by the new version.
+- Require explicit rationale and operator actions for intentional incompatible
+  changes. For vpsAdminOS, call out and justify any change requiring coordinated
+  updates of all machines or nodes.
+- Check schema/data migrations for safe conversion, constraints, failure and
+  rollback behavior, and compatibility with the immediately preceding deployed
+  schema.
+- Check host, node, daemon, and operational tooling changes for destructive or
+  irreversible actions, exact target resolution, partial-failure recovery, and
+  preservation of unrelated state.
+- Verify that tests cover representative mixed-version, authorization-failure,
+  rollback, retry, partial-completion, and invalid-state scenarios whenever the
+  affected contract can encounter them.
+
+exec
+/run/current-system/sw/bin/bash -lc 'printenv DEV_SESSION_SLUG DEV_SESSION_WORKSPACE; dev-session current' in /home/aither/workspace/ai/vpsfree.cz
+ exited 1 in 548ms:
+error: no current dev session found
+

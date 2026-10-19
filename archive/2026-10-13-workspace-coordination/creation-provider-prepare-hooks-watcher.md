@@ -1,0 +1,5 @@
+- Result: passed; observer exit status 0.
+- Invocation: `6b611122b89743d08640d5825ad3e0b4`; elapsed: 150 seconds.
+- Status: [creation-provider-bootstrap-prepare.status](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-13-workspace-coordination/creation-provider-bootstrap-prepare.status)
+- Log: [creation-provider-bootstrap-prepare-hooks.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-13-workspace-coordination/creation-provider-bootstrap-prepare-hooks.log)
+- Raw result: `{"result": "passed", "status": 0, "invocation": "6b611122b89743d08640d5825ad3e0b4", "elapsedSeconds": 150.0, "statusFile": "work/2026-10-13-workspace-coordination/creation-provider-bootstrap-prepare.status", "logFile": "work/2026-10-13-workspace-coordination/creation-provider-bootstrap-prepare-hooks.log}`

@@ -1,0 +1,393 @@
+1:  ba5d88b ! 1:  2727495 coordination: serialize approved merges and deployments
+    @@ libexec/workspace-coordination.rb (new)
+     +      return [] unless root && File.file?(File.join(root, 'portal.yml'))
+     +      stat = File.lstat(root)
+     +      manifest = YAML.safe_load(File.binread(File.join(root, 'portal.yml')), permitted_classes: [], aliases: false)
+    -+      data['owners'].values.select do |owner|
+    ++      owners = data['owners'].values.select do |owner|
+     +        owner['workspace'] == workspace && owner['slug'] == slug && owner['identity'] ==
+     +          WorkspaceCoordination.digest([workspace, owner['workspaceName'], slug, stat.dev, stat.ino,
+     +            manifest.dig('codex', 'thread_id'), WorkspaceCoordination.creation_identity(manifest)])
+     +      end
+    ++      if block_given?
+    ++        # The established session-observation-v1 contract also binds browser
+    ++        # caches to this exact directory/root. Use the same stat and manifest
+    ++        # that proved ownership, before another incarnation can replace them.
+    ++        observation = Digest::SHA256.hexdigest(JSON.generate(['session-observation-v1', workspace, slug,
+    ++          stat.dev, stat.ino, manifest.dig('codex', 'thread_id')]))
+    ++        owners.each { |owner| yield owner, observation }
+    ++      end
+    ++      owners
+     +    end
+     +
+     +    def require_lifecycle_idle!(workspace, slug)
+    @@ libexec/workspace-coordination.rb (new)
+     +       'foreignReservations' => data['reservations'].values.reject { |item| ids.include?(item['ownerId']) || item['state'] == 'released' }.map { |item| item.slice('machine', 'state').merge('portalUrl' => data['owners'][item['ownerId']]['portalUrl']) }}
+     +      if portal
+     +        held = result['reservations'].reject { |item| %w[requested released].include?(item['state']) }.group_by { |item| item['ownerId'] }
+    -+        current_owners = owners.select { |owner| held.key?(owner['id']) }.group_by { |owner| owner['slug'] }.flat_map do |name, candidates|
+    -+          current_ids = store.lifecycle_owners(data, workspace, name).map { |owner| owner['id'] }
+    -+          candidates.select { |owner| current_ids.include?(owner['id']) }
+    -+        end
+    -+        result['reservationHolders'] = current_owners.map do |owner|
+    -+          owner.slice('slug', 'portalUrl').merge('ownerId' => owner['id'],
+    -+            'machines' => held.fetch(owner['id']).sort_by { |item| item['machine'] }.map { |item| item.slice('machine', 'state') })
+    ++        result['reservationHolders'] = []
+    ++        owners.select { |owner| held.key?(owner['id']) }.map { |owner| owner['slug'] }.uniq.each do |name|
+    ++          store.lifecycle_owners(data, workspace, name) do |owner, observation|
+    ++            next unless held.key?(owner['id'])
+    ++            result['reservationHolders'] << owner.slice('slug', 'portalUrl').merge('ownerId' => owner['id'],
+    ++              'observationIdentity' => observation,
+    ++              'machines' => held.fetch(owner['id']).sort_by { |item| item['machine'] }.map { |item| item.slice('machine', 'state') })
+    ++          end
+     +        end
+     +        result['counts'] = result.slice('owners', 'jobs', 'reservations', 'notifications', 'foreignReservations').transform_values(&:length)
+     +        result['owners'] = result['owners'].first(128)
+    @@ test/workspace_coordination_test.rb (new)
+     +    configure_machine
+     +    first = owner('holder')
+     +    reservation, = deployment(first, submit: false)
+    ++    stat = File.lstat(File.join(@workspace, 'work', first['slug']))
+    ++    observation = Digest::SHA256.hexdigest(JSON.generate(['session-observation-v1', @workspace, first['slug'], stat.dev, stat.ino, first['thread']]))
+     +    %w[requested held deployed_review closing blocked_recovery released].each do |state|
+     +      @engine.store.transaction { |data| data['reservations'][reservation['id']]['state'] = state }
+     +      before = File.binread(File.join(@engine.store.root, 'ledger.json'))
+    @@ test/workspace_coordination_test.rb (new)
+     +      if %w[requested released].include?(state)
+     +        assert_empty holders
+     +      else
+    -+        assert_equal [{'ownerId' => first['id'], 'slug' => first['slug'], 'portalUrl' => first['portalUrl'],
+    ++        assert_equal [{'ownerId' => first['id'], 'slug' => first['slug'], 'portalUrl' => first['portalUrl'], 'observationIdentity' => observation,
+     +          'machines' => [{'machine' => 'fixture:machine', 'state' => state}]}], holders
+     +      end
+     +      assert_equal before, File.binread(File.join(@engine.store.root, 'ledger.json'))
+    @@ test/workspace_coordination_test.rb (new)
+     +    FileUtils.mkdir_p(File.join(@workspace, 'archive'))
+     +    File.rename(File.join(@workspace, 'work', first['slug']), File.join(@workspace, 'archive', first['slug']))
+     +    assert_equal first['id'], @engine.status(portal: true)['reservationHolders'].first['ownerId']
+    ++    assert_equal observation, @engine.status(portal: true)['reservationHolders'].first['observationIdentity']
+     +  end
+     +
+     +  def test_portal_badges_are_complete_beyond_history_limit_and_group_machines
+2:  fbbffee ! 2:  91be8da portal: show operations page and reservation badges
+    @@ docs/coordination.md: The separate extension catalog and session manifest format
+     +queued requests and brief execution claims do not receive badges. Ownership is
+     +matched to the retained active or archived session incarnation. The portal's
+     +`reservationHolders` summary covers all current holders before history truncation.
+    -+Visible pages refresh every five seconds. Failed reads preserve the last known
+    -+status with a warning; a successful read confirms when a badge can disappear.
+    ++The established tracking observation identity also matches cached holders to
+    ++session cards, so a replacement session cannot inherit the old badge. Visible
+    ++pages refresh every five seconds. Failed reads preserve the last known status
+    ++with a warning for the same incarnation; a successful read confirms release.
+      
+      Notifications use the existing Codex submission ledger, exact retained thread,
+      model, effort and lead policy. Busy threads receive steering; idle threads receive
+    @@ nix/workspace-portal.nix: buildGoModule {
+          node --test internal/web/codex_providers_browser_test.cjs
+          node --check internal/web/static/repository-review.js
+     
+    + ## portal/internal/session/manifest.go ##
+    +@@ portal/internal/session/manifest.go: type Manifest struct {
+    + 
+    + type Summary struct {
+    + 	Manifest
+    +-	Tmux              Tmux      `json:"tmux"`
+    +-	Archived          bool      `json:"archived"`
+    +-	Terminal          bool      `json:"terminal"`
+    +-	Interactive       bool      `json:"interactive"`
+    +-	ExecutionHeld     bool      `json:"executionHeld"`
+    +-	RecoveryReady     bool      `json:"-"`
+    +-	PersistedThread   bool      `json:"-"`
+    +-	Lifecycle         string    `json:"lifecycle"`
+    +-	UpdatedAt         time.Time `json:"updatedAt"`
+    +-	ManifestUpdatedAt time.Time `json:"-"`
+    +-	Workspace         string    `json:"-"`
+    +-	Root              string    `json:"-"`
+    ++	ObservationIdentity string    `json:"-"`
+    ++	Tmux                Tmux      `json:"tmux"`
+    ++	Archived            bool      `json:"archived"`
+    ++	Terminal            bool      `json:"terminal"`
+    ++	Interactive         bool      `json:"interactive"`
+    ++	ExecutionHeld       bool      `json:"executionHeld"`
+    ++	RecoveryReady       bool      `json:"-"`
+    ++	PersistedThread     bool      `json:"-"`
+    ++	Lifecycle           string    `json:"lifecycle"`
+    ++	UpdatedAt           time.Time `json:"updatedAt"`
+    ++	ManifestUpdatedAt   time.Time `json:"-"`
+    ++	Workspace           string    `json:"-"`
+    ++	Root                string    `json:"-"`
+    + }
+    + 
+    + func ValidSlug(slug string) bool {
+    +
+      ## portal/internal/web/coordination.go (new) ##
+     @@
+     +package web
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +    createElement: () => new Element(), createDocumentFragment: () => new Element(),
+     +    addEventListener: (name, action) => docListeners.set(name, action),
+     +  };
+    -+  function addCard(slug) {
+    ++  function addCard(slug, observationIdentity = "incarnation-a") {
+     +    const badge = new Element();
+    -+    cards.push({dataset: {sessionSlug: slug}, querySelector: () => badge});
+    ++    cards.push({dataset: {sessionSlug: slug, sessionObservation: observationIdentity}, querySelector: () => badge});
+     +    return badge;
+     +  }
+     +  const badge = addCard('holder'), unrelated = addCard('other');
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +    setTimeout: (action, delay) => { const id = ++nextTimer; timers.set(id, {action, delay}); return id; },
+     +    clearTimeout: id => timers.delete(id),
+     +  });
+    -+  return {panel, warning, badge, unrelated, requests, addCard,
+    ++  return {panel, warning, badge, unrelated, requests, addCard, cards,
+     +    respond: async (payload, index = requests.length - 1) => { requests[index].resolve({ok: true, json: async () => payload}); await settle(); },
+     +    fail: async () => { requests.at(-1).resolve({ok: false}); await settle(); },
+     +    tick: async () => { const entry = [...timers].find(([, timer]) => timer.delay === 5000); assert.ok(entry, 'poll is scheduled'); timers.delete(entry[0]); entry[1].action(); await settle(); },
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +}
+     +function payload(machines = [{machine: 'fixture:machine', state: 'deployed_review'}]) {
+     +  return {schema: 1, workspaces: [{owners: [], jobs: [], reservations: [], foreignReservations: [], notifications: [],
+    -+    reservationHolders: machines.length ? [{ownerId: 'owner', slug: 'holder', portalUrl: 'https://workspace.test/holder/', machines}] : []}]};
+    ++    reservationHolders: machines.length ? [{ownerId: 'owner', slug: 'holder', observationIdentity: 'incarnation-a', portalUrl: 'https://workspace.test/holder/', machines}] : []}]};
+     +}
+     +
+     +test('failed reads retain reservations, refreshed cards inherit badges, and confirmed release removes them', async () => {
+    @@ portal/internal/web/coordination_browser_test.cjs (new)
+     +  await h.tick(); await h.fail();
+     +  assert.equal(h.panel.textContent, before);
+     +  assert.equal(h.warning.hidden, false);
+    ++});
+    ++
+    ++
+    ++test('a same-slug replacement never inherits cached ownership during failed reads', async () => {
+    ++  const h = harness();
+    ++  await h.respond(payload());
+    ++  assert.equal(h.badge.hidden, false);
+    ++  h.cards[0].dataset.sessionObservation = 'incarnation-b';
+    ++  h.dispatch('session-list-updated');
+    ++  assert.equal(h.badge.hidden, true);
+    ++  await h.tick(); await h.fail();
+    ++  assert.equal(h.badge.hidden, true);
+    ++  assert.equal(h.warning.hidden, false);
+    ++});
+    ++
+    ++test('a delayed old reservation response cannot badge a replacement incarnation', async () => {
+    ++  const h = harness();
+    ++  h.cards[0].dataset.sessionObservation = 'incarnation-b';
+    ++  h.dispatch('session-list-updated');
+    ++  await h.respond(payload());
+    ++  assert.equal(h.badge.hidden, true);
+    ++  const current = payload();
+    ++  current.workspaces[0].reservationHolders[0].observationIdentity = 'incarnation-b';
+    ++  await h.tick(); await h.respond(current);
+    ++  assert.equal(h.badge.hidden, false);
+     +});
+     
+      ## portal/internal/web/coordination_test.go (new) ##
+    @@ portal/internal/web/coordination_test.go (new)
+     +package web
+     +
+     +import (
+    ++	"context"
+     +	"net/http"
+     +	"net/http/httptest"
+     +	"os"
+     +	"path/filepath"
+     +	"strings"
+     +	"testing"
+    ++	"time"
+    ++
+    ++	"github.com/aither64/dev-workspace/portal/internal/session"
+     +)
+     +
+     +func TestOperationsNavigationDoesNotReadOrEmbedStatus(t *testing.T) {
+    @@ portal/internal/web/coordination_test.go (new)
+     +	if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "View operations") || strings.Contains(response.Body.String(), "data-coordination aria-live") {
+     +		t.Fatalf("session handoff still embeds status: %d: %s", response.Code, response.Body.String())
+     +	}
+    ++}
+    ++
+    ++func TestReservationCardsCarryObservationThroughInitialAndCachedIndex(t *testing.T) {
+    ++	server := newTestServer(t)
+    ++	defer server.Close()
+    ++	directory := filepath.Join(server.config.Workspace, "work", "example")
+    ++	if err := os.MkdirAll(directory, 0o755); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	for name, content := range map[string]string{"portal.yml": "schema: 1\nslug: example\n", "plan.md": "# Plan\n", "state.md": "---\nlifecycle: active\n---\n"} {
+    ++		if err := os.WriteFile(filepath.Join(directory, name), []byte(content), 0o644); err != nil {
+    ++			t.Fatal(err)
+    ++		}
+    ++	}
+    ++	identity, err := session.ObservationIdentity(server.config.Workspace, "example", directory, "")
+    ++	if err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	check := func() {
+    ++		t.Helper()
+    ++		response := httptest.NewRecorder()
+    ++		server.Handler().ServeHTTP(response, httptest.NewRequest(http.MethodGet, "/", nil))
+    ++		if !strings.Contains(response.Body.String(), `data-session-observation="`+identity+`"`) {
+    ++			t.Fatalf("card lacks incarnation: %s", response.Body.String())
+    ++		}
+    ++	}
+    ++	check()
+    ++	status := server.computeIndexStatus(context.Background())
+    ++	if len(status.statuses) != 1 || status.statuses[0].ObservationIdentity != identity {
+    ++		t.Fatalf("wrong index identity: %+v", status.statuses)
+    ++	}
+    ++	server.indexStatusMu.Lock()
+    ++	status.created = time.Now()
+    ++	server.indexStatusCache = status
+    ++	server.indexStatusMu.Unlock()
+    ++	check()
+    ++	retained := filepath.Join(t.TempDir(), "original")
+    ++	if err := os.Rename(directory, retained); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	if err := os.Mkdir(directory, 0o755); err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	for _, name := range []string{"portal.yml", "plan.md", "state.md"} {
+    ++		content, err := os.ReadFile(filepath.Join(retained, name))
+    ++		if err != nil {
+    ++			t.Fatal(err)
+    ++		}
+    ++		if err := os.WriteFile(filepath.Join(directory, name), content, 0o644); err != nil {
+    ++			t.Fatal(err)
+    ++		}
+    ++	}
+    ++	replacement, err := session.ObservationIdentity(server.config.Workspace, "example", directory, "")
+    ++	if err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	if replacement == identity {
+    ++		t.Fatal("replacement retained the original identity")
+    ++	}
+    ++	summaries, err := server.listSessions()
+    ++	if err != nil {
+    ++		t.Fatal(err)
+    ++	}
+    ++	for _, summary := range summaries {
+    ++		if summary.Slug == "example" && summary.ObservationIdentity != replacement {
+    ++			t.Fatal("replacement card retained the old identity")
+    ++		}
+    ++	}
+     +}
+     
+      ## portal/internal/web/server.go ##
+    +@@ portal/internal/web/server.go: type cachedRepositories struct {
+    + }
+    + 
+    + type indexSessionStatus struct {
+    +-	Slug             string    `json:"slug"`
+    +-	UpdatedAt        time.Time `json:"updatedAt"`
+    +-	Archived         bool      `json:"archived"`
+    +-	RepositoryCount  int       `json:"repositoryCount"`
+    +-	RunningClusters  int       `json:"runningClusters"`
+    +-	ClusterNotice    string    `json:"clusterNotice,omitempty"`
+    +-	PendingLifecycle string    `json:"pendingLifecycle,omitempty"`
+    ++	ObservationIdentity string    `json:"observationIdentity"`
+    ++	Slug                string    `json:"slug"`
+    ++	UpdatedAt           time.Time `json:"updatedAt"`
+    ++	Archived            bool      `json:"archived"`
+    ++	RepositoryCount     int       `json:"repositoryCount"`
+    ++	RunningClusters     int       `json:"runningClusters"`
+    ++	ClusterNotice       string    `json:"clusterNotice,omitempty"`
+    ++	PendingLifecycle    string    `json:"pendingLifecycle,omitempty"`
+    + }
+    + 
+    + type cachedIndexStatus struct {
+     @@ portal/internal/web/server.go: func (s *Server) route(w http.ResponseWriter, r *http.Request) {
+      		s.index(w, r)
+      	case r.Method == http.MethodGet && r.URL.Path == "/automatic-archival":
+    @@ portal/internal/web/server.go: func (s *Server) route(w http.ResponseWriter, r *
+      	case r.Method == http.MethodGet && r.URL.Path == "/api/index-status":
+      		s.indexStatus(w, r)
+      	case r.Method == http.MethodGet && strings.HasPrefix(r.URL.Path, "/artifacts/"):
+    +@@ portal/internal/web/server.go: func (s *Server) index(w http.ResponseWriter, _ *http.Request) {
+    + 	} else {
+    + 		for _, status := range cached.statuses {
+    + 			summaries = append(summaries, session.Summary{Manifest: session.Manifest{Slug: status.Slug,
+    +-				Repositories: make([]session.Repository, status.RepositoryCount)}, Archived: status.Archived, UpdatedAt: status.UpdatedAt})
+    ++				Repositories: make([]session.Repository, status.RepositoryCount)}, Archived: status.Archived, UpdatedAt: status.UpdatedAt, ObservationIdentity: status.ObservationIdentity})
+    + 		}
+    + 	}
+    + 	now := time.Now().UTC()
+    +@@ portal/internal/web/server.go: func (s *Server) computeIndexStatusWithPending(ctx context.Context, pending map[
+    + 			}
+    + 		}
+    + 		result.statuses = append(result.statuses, indexSessionStatus{
+    +-			Slug: summary.Slug, UpdatedAt: updated, Archived: summary.Archived,
+    ++			Slug: summary.Slug, UpdatedAt: updated, Archived: summary.Archived, ObservationIdentity: summary.ObservationIdentity,
+    + 			RepositoryCount: len(summary.Repositories),
+    + 			RunningClusters: clustersBySlug[summary.Slug], ClusterNotice: clusterNotices[summary.Slug], PendingLifecycle: pendingKind,
+    + 		})
+    +@@ portal/internal/web/server.go: func (s *Server) listSessions() ([]session.Summary, error) {
+    + func (s *Server) listSessionsWithPending(pending map[string]session.LifecycleProgress, pendingErr error) ([]session.Summary, error) {
+    + 	summaries, listErr := session.List(s.config.Workspace)
+    + 	seen := make(map[string]struct{}, len(summaries))
+    +-	for _, summary := range summaries {
+    ++	for index := range summaries {
+    ++		summary := &summaries[index]
+    + 		seen[summary.Slug] = struct{}{}
+    ++		identity, err := session.ObservationIdentity(summary.Workspace, summary.Slug,
+    ++			filepath.Join(summary.Workspace, summary.Root, summary.Slug), summary.Codex.ThreadID)
+    ++		if err != nil {
+    ++			s.config.Logger.Printf("observe session card %s: %v", summary.Slug, err)
+    ++			continue
+    ++		}
+    ++		summary.ObservationIdentity = identity
+    + 	}
+    + 	for slug, progress := range pending {
+    + 		if _, ok := seen[slug]; ok || progress.Operation != "delete" {
+     @@ portal/internal/web/server.go: func (s *Server) sessionAPIResolved(w http.ResponseWriter, r *http.Request, part
+      func (s *Server) sessionAPIForSummary(
+      	w http.ResponseWriter, r *http.Request, parts []string, summary *session.Summary,
+    @@ portal/internal/web/server.go: func (s *Server) sessionAPIResolved(w http.Respon
+      		return
+     
+      ## portal/internal/web/static/app.js ##
+    +@@
+    +           card.href = `/${encodeURIComponent(item.slug)}/`;
+    +           card.querySelector("strong").textContent = item.slug;
+    +         }
+    ++        card.dataset.sessionObservation = item.observationIdentity || "";
+    +         card.classList.toggle("archived", item.archived);
+    +         card.querySelector(".status-dot").classList.toggle("active", !item.archived);
+    +         document.querySelector(`[data-session-list="${item.archived ? "archived" : "active"}"]`).append(card);
+     @@
+              ordered.forEach((card) => grid.append(card));
+            }
+    @@ portal/internal/web/static/coordination.js (new)
+     +  function renderBadges() {
+     +    if (!lastPayload) return;
+     +    const holders = new Map(lastPayload.workspaces.flatMap(workspace => workspace.reservationHolders)
+    -+      .map(holder => [holder.slug, holder.machines]));
+    ++      .map(holder => [holder.slug, holder]));
+     +    for (const card of document.querySelectorAll("[data-session-slug]")) {
+     +      const badge = card.querySelector("[data-session-reservation]");
+     +      if (!badge) continue;
+    -+      const machines = holders.get(card.dataset.sessionSlug) || [];
+    ++      const holder = holders.get(card.dataset.sessionSlug);
+    ++      const machines = holder && holder.observationIdentity && holder.observationIdentity === card.dataset.sessionObservation ? holder.machines : [];
+     +      badge.hidden = machines.length === 0;
+     +      badge.textContent = machines.length === 1 ? "Machine reserved" : `${machines.length} machines reserved`;
+     +      const description = machines.map(machine => `${machine.machine}: ${labels[machine.state]}`).join("; ");
+    @@ portal/internal/web/templates/index.html
+      {{end}}
+      
+     @@
+    + {{end}}
+    + 
+    + {{define "session-card"}}
+    +-<a class="session-card{{with .}}{{if .Archived}} archived{{end}}{{end}}" href="{{with .}}/{{.Slug}}/{{end}}" data-session-slug="{{with .}}{{.Slug}}{{end}}">
+    ++<a class="session-card{{with .}}{{if .Archived}} archived{{end}}{{end}}" href="{{with .}}/{{.Slug}}/{{end}}" data-session-slug="{{with .}}{{.Slug}}{{end}}" data-session-observation="{{with .}}{{.ObservationIdentity}}{{end}}">
+    +   <span class="status-dot{{with .}}{{if not .Archived}} active{{end}}{{end}}"></span>
+    +   <strong>{{with .}}{{.Slug}}{{end}}</strong>
+    +   <span class="muted" data-session-updated data-updated-at="{{with .}}{{.UpdatedAt.Format "2006-01-02T15:04:05.999999999Z07:00"}}{{end}}">{{with .}}{{if .Archived}}Finalized{{else}}Updated{{end}} {{timeAgo .UpdatedAt}}{{end}}</span>
+        <span data-session-repositories>{{with .}}{{len .Repositories}} repositories{{end}}</span>
+        <span class="cluster-summary" data-session-clusters hidden></span>
+        <span class="badge warning" data-session-lifecycle hidden></span>

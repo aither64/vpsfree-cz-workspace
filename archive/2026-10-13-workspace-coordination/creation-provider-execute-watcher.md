@@ -1,0 +1,5 @@
+- **Result:** passed; observer exit status 0.
+- **Tested runtime/workspace/configuration:** `a10af6c4` / `2c212466` / `fbbda8e9`.
+- **Invocation:** `d761011e83904e32804736d8f3dbd81f`; elapsed 90 seconds.
+- **Raw result:** `{"result":"passed","status":0,"invocation":"d761011e83904e32804736d8f3dbd81f","elapsedSeconds":90.0,"statusFile":"work/2026-10-13-workspace-coordination/creation-provider-bootstrap-execution.status","logFile":"work/2026-10-13-workspace-coordination/creation-provider-bootstrap-execution.log"}`
+- **Evidence paths:** [status](</home/aither/workspace/ai/vpsfree.cz/work/2026-10-13-workspace-coordination/creation-provider-bootstrap-execution.status>) and [log](</home/aither/workspace/ai/vpsfree.cz/work/2026-10-13-workspace-coordination/creation-provider-bootstrap-execution.log>). No failure evidence was reported. Reservation remains held.

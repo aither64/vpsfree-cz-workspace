@@ -1,0 +1,616 @@
+diff --git a/bin/bootstrap-merge-2026-10-13 b/bin/bootstrap-merge-2026-10-13
+new file mode 100755
+index 00000000..a6b6d0bc
+--- /dev/null
++++ b/bin/bootstrap-merge-2026-10-13
+@@ -0,0 +1,49 @@
++#!/usr/bin/env ruby
++# frozen_string_literal: true
++
++require 'json'
++require 'optparse'
++require 'pathname'
++
++options = {}
++OptionParser.new do |opts|
++  opts.on('--plan FILE') { |value| options[:plan] = value }
++  opts.on('--request FILE') { |value| options[:request] = value }
++  opts.on('--prepare') { options[:prepare] = true }
++end.parse!
++abort 'use --plan FILE --request FILE [--prepare]' unless ARGV.empty? && options[:plan] && options[:request]
++plan = JSON.parse(File.binread(options[:plan], 256 * 1024 + 1))
++expected = {
++  'workspace' => '/home/aither/workspace/ai/vpsfree.cz', 'workspaceName' => 'vpsfree-cz',
++  'slug' => '2026-10-13-workspace-coordination', 'ownerId' => '55e83d75-cb96-417a-9308-11d3caf22dcd',
++  'reservationId' => 'd114323d-806c-479f-b7a4-8c1a08afb45b'
++}
++abort 'plan is outside the dated installation scope' unless expected.all? { |key, value| plan[key] == value }
++repos = %w[dev-workspace vpsfree-dev-workspace workspace vpsfree-cz-configuration]
++abort 'plan repository/target scope changed' unless plan.fetch('repositories').keys.sort == repos.sort &&
++  plan['repositories'].values.all? { |value| value.keys.sort == %w[head target] && value['target'] == 'refs/heads/master' && value['head'].match?(/\A[0-9a-f]{40}\z/) }
++%w[DEV_WORKSPACES_CONFIG DEV_WORKSPACES_STATE DEV_WORKSPACES_RUNTIME_DIR DEV_WORKSPACES_PROFILE DEV_WORKSPACES_NAMESPACE DEV_WORKSPACES_SYSTEM_CODEX DEV_WORKSPACE_HOST_MODE XDG_STATE_HOME].each do |key|
++  abort "environment override is outside the dated route: #{key}" if ENV.key?(key)
++end
++%w[DEV_SESSION_SLUG DEV_SESSION_WORKSPACE DEV_WORKSPACE_NAME].zip([plan['slug'], plan['workspace'], plan['workspaceName']]).each do |key, value|
++  abort "invocation identity changed: #{key}" if ENV.key?(key) && ENV[key] != value
++end
++abort 'wrong operator home' unless ENV['HOME'] == '/home/aither'
++profile = '/home/aither/.local/state/dev-workspaces/profile'
++package = File.realpath(profile)
++abort 'selected package changed' unless package == plan.fetch('selectedPackage') && package.start_with?('/nix/store/')
++load File.join(package, 'libexec', '.workspace-host-wrapped')
++require_relative '../lib/bootstrap_merge_2026_10_13'
++WorkspaceCoordination.keys!(plan, %w[schema workspace workspaceName slug ownerId reservationId selectedPackage profileToken catalogDigest repositories evidence deploymentEvidence source])
++abort 'invalid plan schema' unless plan['schema'] == 1
++request = WorkspaceCoordination.parse(File.binread(options.fetch(:request), WorkspaceCoordination::MAX_REQUEST + 1))
++begin
++  result = BootstrapMerge20261013.new.operate(plan, request, prepare: options[:prepare] == true)
++  puts JSON.generate(result)
++rescue WorkspaceCoordination::Error => e
++  warn "error: #{e.message}"
++  exit e.code
++rescue DevWorkspaceHost::Error => e
++  warn "error: #{e.message}"
++  exit 1
++end
+diff --git a/docs/coordination.md b/docs/coordination.md
+index bd0aea74..b6c56b66 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -78,6 +78,12 @@ uses the reviewed candidate's bounded synchronous bootstrap. It creates no Codex
+ thread. Retained bootstrap-owner maintenance requires its explicit UUID and the
+ same active tracking incarnation; it cannot submit new unattended jobs.
+ 
++The [dated integration procedure](maintenance/bootstrap-merge-2026-10-13.md)
++covers the initiating threadless installation's authorized master merges. Its
++reviewed source-only helper uses the selected runtime's existing workers and
++receipts under a supervised exclusion of other bootstrap operations. It is
++limited to that installation and keeps the machine reservation held for review.
++
+ Keep failed or interrupted attempts, deployed artifacts and GC roots. Archive,
+ delete, suspend and auto-archive do not free deployed ownership. A profile failure
+ after selection recovers forward under its original attempt. Ambiguous remote
+diff --git a/docs/maintenance/bootstrap-merge-2026-10-13.md b/docs/maintenance/bootstrap-merge-2026-10-13.md
+new file mode 100644
+index 00000000..49e16edb
+--- /dev/null
++++ b/docs/maintenance/bootstrap-merge-2026-10-13.md
+@@ -0,0 +1,115 @@
++# Threadless installation integration, 2026-10-13
++
++This dated, source-only route completes the coordination installation owned by
++`2026-10-13-workspace-coordination`. It is not installed, exported through Nix,
++exposed in the portal or used by automatic workers. Ordinary bootstrap selectors
++still cannot prepare, approve or submit new work. Managed sessions use the normal
++[coordinator](../coordination.md).
++
++The initiating user authorized the four repositories' master integrations after
++the session-creation fix was deployed. The helper binds that condition to frozen
++successful deployment evidence. It uses the same retained threadless owner and
++reservation. Each operation integrates one reviewed repository, head and target.
++It creates no conversation, transfers no ownership and never deploys or releases
++a machine. The selected runtime owns snapshots, receipts, claims, workers,
++fast-forward Git integration, hooks and independent reconciliation.
++
++## Prerequisites
++
++Read the selected runtime's complete coordination and recovery guides with
++`workspace-host coordination guide`. Read the Git, lifecycle and verification
++procedures and complete ordinary final history/review/verification gates.
++Capture comparisons before each integration; retain feature refs.
++
++Finish the creation-fix deployment first. Its driver units and all owned jobs
++must have settled successfully. Keep the same reservation in deployed_review.
++Freeze a plan beneath the owned tracking directory containing schema 1, workspace,
++workspaceName, slug, ownerId, reservationId, selectedPackage, profileToken,
++catalogDigest, repositories (names mapped to exact head and full target), evidence,
++deploymentEvidence and source. Source records the exact conditional user direction;
++deploymentEvidence is a checksummed successful live-check result also included in
++evidence. Include independent final review and exact verification evidence.
++Workspace final head may descend from the deployed source when source-only code
++leaves its application derivation identical; retain that equivalence evidence.
++
++The helper accepts only this installation's owner, workspace, four repositories
++and master targets. Run with the selected runtime's Ruby and declared Nix
++environment. It loads the raw installed workspace-host from the selected profile,
++not worktree runtime code. No state/profile/registry override or fixture mode.
++Freeze and review the helper commit and application-derivation identity before
++use. Exact plan and evidence hashes must remain unchanged for retries.
++
++The lead holds a supervised maintenance window: start no other bootstrap deploy
++or merge driver for this owner until serial integration finishes. A process lock
++serializes this helper, and ordinary admission verifies there is no other pending
++owner job. The process lock does not exclude the separate deployment bootstrap.
++This route relies on the trusted lead's exclusion; it does not promise concurrent
++bootstrap submission support. Other sessions keep their normal queue/resources.
++If that exclusion cannot be guaranteed, stop and add a reviewed exact-job claim
++interface to the owning runtime instead.
++
++## Prepare, execute and retry
++
++Use a fresh lowercase UUID P for a preparation request:
++
++```json
++{"schema":1,"requestId":"UUID-P","repository":"dev-workspace"}
++```
++
++Run the reviewed helper by its absolute path in the runtime repository's Nix
++environment, retaining stdout and stderr separately. HELPER below is
++`worktrees/2026-10-13-workspace-coordination/workspace/bin/bootstrap-merge-2026-10-13`
++under the absolute workspace root:
++
++```sh
++ruby HELPER --plan PLAN --request PREPARATION --prepare
++```
++
++Preparation builds hooks and retains the target checkout outside admission locks.
++Its result is the execution request with schema, a fixed UUID E and immutable
++artifact ID. Save it exactly, then run:
++
++```sh
++ruby HELPER --plan PLAN --request EXECUTION
++```
++
++Use a parent-launched retained service for execution and a fresh verification
++watcher to observe the wait. The driver reports the retained job ID before waiting.
++Exit 0 with state succeeded identifies the completed merge and its remote proof.
++Do this serially for runtime, extension, configuration and workspace. Register the
++results in the initiating rollout/state. Each repository integrates separately.
++
++Exact preparation retries return the retained bundle before rebuilding or making
++another target checkout. Execution retries reuse ordinary approval and submission
++receipts, even after the target checkout has changed through successful integration.
++An altered request with the same UUID refuses. Do not edit bundles or create new
++IDs to avoid a pending claim. All new admission and claims recheck the selected
++generation, active incarnation, lifecycle journals, reservation and supervised
++owner exclusion. Hook preparation and worker/recovery waits hold no admission lock.
++
++An interrupted driver does not stop accepted workers. Retry the exact execution
++request: it consumes existing receipts and starts only the original independent
++reconciliation service. Unknown effects retain the claim. A claim without durable
++request.json retains the installed guide's operator-recovery requirement; this
++helper never redispatches it. A package/generation change stops new admission;
++ordinary retained-bootstrap reconciliation remains the recovery interface.
++
++There is no refresh action. For an unclaimed needs_refresh result, preserve its
++old evidence, cancel through the ordinary exact-owner command with current revision
++and a fresh cancellation ID, then rebase/review/verify and prepare a new P.
++Never cancel or replace an ambiguous claimed attempt to escape recovery.
++
++## Compatibility and finish
++
++This route uses the existing runtime schemas and worker envelope without
++changing dependency pins. The
++helper stores ordinary merge approvals/jobs, opaque bounded preparation receipts
++and immutable artifacts through the selected engine. Existing readers can load
++and reconcile them. Existing automatic workers still skip new bootstrap claims.
++The application derivation must be identical before omitting another deployment.
++
++Successful merges do not finish deployed review or release aitherdev. The original
++reservation and deployment history remain held. Normal finish still requires exact
++final/deployed integration proofs, settled operations and explicit user direction
++that deployment/review is finished. Archive, delete, reboot and exceptional release
++are outside this route.
+diff --git a/lib/bootstrap_merge_2026_10_13.rb b/lib/bootstrap_merge_2026_10_13.rb
+new file mode 100644
+index 00000000..3f018b91
+--- /dev/null
++++ b/lib/bootstrap_merge_2026_10_13.rb
+@@ -0,0 +1,158 @@
++# frozen_string_literal: true
++
++# Dated, supervised composition of the selected runtime's existing interfaces.
++# Load its workspace-host first. This file owns no ledger or Git implementation.
++class BootstrapMerge20261013 < DevWorkspaceHost::Host
++  ACTION = 'bootstrap-merge-prepare-2026-10-13'
++  KIND = 'bootstrap_merge_2026_10_13'
++
++  def operate(plan, request, prepare: false)
++    @plan = plan
++    @plan_id = WorkspaceCoordination.digest(plan)
++    @entry = registry.find(plan.fetch('workspaceName'))
++    raise WorkspaceCoordination::Error, 'registered workspace changed' unless @entry && @entry['root'] == plan['workspace']
++    @engine = coordination_engine(@entry)
++    @engine.store.lock(ACTION, nonblock: true) do
++      prior = !prepare && @engine.store.read['receipts'][request['requestId']]
++      admission(prior && prior.dig('result', 'id')) do
++        verify_condition!
++      end
++      prepare ? prepare_merge_request(request) : execute_merge_request(request)
++    end
++  end
++
++  private
++
++  def admission(job_id = nil)
++    with_coordination_session_admission(@entry, @plan.fetch('slug')) do
++      @engine.current_generation!
++      unless File.realpath(package_root) == @plan['selectedPackage'] && profile_link_token == @plan['profileToken'] &&
++             @engine.catalog.digest == @plan['catalogDigest']
++        raise WorkspaceCoordination::Error.new('frozen package/profile/catalog changed', 3)
++      end
++      @owner = @engine.existing_bootstrap_owner(@plan.fetch('slug'), @plan.fetch('ownerId'))
++      data = @engine.store.read
++      reservation = data['reservations'][@plan.fetch('reservationId')]
++      unless reservation && reservation['ownerId'] == @owner['id'] && reservation['state'] == 'deployed_review' &&
++             @plan.fetch('repositories').all? { |name, value| reservation['integrationObligations'].include?({'repository' => name, 'target' => value.fetch('target')}) }
++        raise WorkspaceCoordination::Error.new('held reservation or integration scope changed', 4)
++      end
++      raise WorkspaceCoordination::Error.new('workspace is suspended', 5) if data['suspended']
++      pending = data['jobs'].values.select { |job| job['ownerId'] == @owner['id'] && !WorkspaceCoordination::TERMINAL.include?(job['state']) }
++      unless pending.all? { |job| job['id'] == job_id && job['kind'] == 'merge' }
++        raise WorkspaceCoordination::Error.new('another bootstrap operation is pending; retain the supervised exclusion', 75)
++      end
++      yield
++    end
++  end
++
++  def verify_condition!
++    unless @plan.fetch('source') == {'kind' => 'user_instruction', 'reference' => 'initiating conversation: conditional integration after creation fix',
++                                   'quote' => "ok, after you'll deploy the fix, you can merge the changes"}
++      raise WorkspaceCoordination::Error.new('conditional merge direction changed', 4)
++    end
++    @plan.fetch('evidence').each do |ref|
++      path = File.expand_path(ref.fetch('path'), @plan.fetch('workspace'))
++      root = File.join(@plan.fetch('workspace'), 'work', @plan.fetch('slug')) + '/'
++      unless File.realpath(path).start_with?(root) && Digest::SHA256.file(path).hexdigest == ref.fetch('sha256')
++        raise WorkspaceCoordination::Error.new('frozen review/deployment evidence changed', 3)
++      end
++    end
++    proof = @plan.fetch('deploymentEvidence')
++    raise WorkspaceCoordination::Error, 'deployment evidence is outside the frozen evidence' unless @plan['evidence'].include?(proof)
++    value = WorkspaceCoordination.parse(File.binread(File.expand_path(proof.fetch('path'), @plan['workspace']), WorkspaceCoordination::MAX_REQUEST + 1))
++    unless value['outcome'] == 'passed' && value['candidatePackage'] == @plan['selectedPackage'] &&
++           value.dig('reservation', 'id') == @plan['reservationId'] && value.dig('reservation', 'ownerId') == @plan['ownerId']
++      raise WorkspaceCoordination::Error.new('successful reserved creation-fix deployment is required', 4)
++    end
++    @plan.fetch('repositories').each do |name, selected|
++      path, _common, _remote, registration = @engine.repository(@owner, name)
++      unless "refs/heads/#{registration.fetch('default_branch')}" == selected.fetch('target') &&
++             @engine.capture('git', '-C', path, 'rev-parse', "#{registration.fetch('branch')}^{commit}").strip == selected.fetch('head') &&
++             @engine.ancestor?(path, value.fetch('sourceHeads').fetch(name), selected.fetch('head'))
++        raise WorkspaceCoordination::Error.new('reviewed registered head or deployed ancestry changed', 3)
++      end
++    end
++  end
++
++  def prepare_merge_request(request)
++    WorkspaceCoordination.keys!(request, %w[schema requestId repository])
++    selected = @plan.fetch('repositories').fetch(request.fetch('repository')) { raise WorkspaceCoordination::Error, 'repository is outside the approved installation scope' }
++    receipt = nil
++    admission do
++      if @engine.store.read['receipts'].key?(request.fetch('requestId'))
++        receipt = @engine.store.transaction { |data| @engine.store.request(data, @owner['id'], [ACTION, @plan_id], request) { raise WorkspaceCoordination::Error, 'preparation receipt disappeared' } }
++      end
++    end
++    return receipt if receipt
++    snapshot = @engine.prepare_merge(@owner, request['repository'], @plan.fetch('evidence'))
++    unless snapshot.dig('operation', 'featureHead') == selected.fetch('head') && snapshot.dig('operation', 'target') == selected.fetch('target')
++      raise WorkspaceCoordination::Error.new('prepared head differs from the reviewed inventory', 3)
++    end
++    bundle = @engine.save_artifact('kind' => KIND, 'ownerId' => @owner['id'], 'planId' => @plan_id,
++      'snapshot' => snapshot, 'approvalId' => SecureRandom.uuid, 'executionId' => SecureRandom.uuid)
++    admission do
++      @engine.snapshot(@owner, snapshot, 'merge')
++      @engine.store.transaction do |data|
++        @engine.store.request(data, @owner['id'], [ACTION, @plan_id], request) do
++          {'schema' => 1, 'artifact' => bundle.fetch('id'), 'requestId' => bundle.fetch('executionId')}
++        end
++      end
++    end
++  end
++
++  def execute_merge_request(request)
++    WorkspaceCoordination.keys!(request, %w[schema requestId artifact])
++    bundle = @engine.artifact!(request.fetch('artifact'))
++    unless bundle['kind'] == KIND && bundle['ownerId'] == @owner['id'] && bundle['planId'] == @plan_id && bundle['executionId'] == request['requestId']
++      raise WorkspaceCoordination::Error.new('execution bundle differs from the frozen operation', 4)
++    end
++    snapshot = bundle.fetch('snapshot')
++    operation = snapshot.fetch('operation')
++    selected = @plan.fetch('repositories').fetch(operation.fetch('repository'))
++    unless operation['featureHead'] == selected['head'] && operation['target'] == selected['target']
++      raise WorkspaceCoordination::Error.new('bundle is outside the reviewed integration scope', 4)
++    end
++    submit = {'schema' => 1, 'requestId' => request['requestId'], 'kind' => 'merge', 'dependsOn' => [],
++              'reservationId' => nil, 'snapshot' => snapshot}
++    # Receipt-aware mutations must run before live snapshot validation on retry:
++    # a successful worker has already changed its integration checkout.
++    prior = @engine.store.read['receipts'][request['requestId']]
++    id = prior && prior.dig('result', 'id')
++    job = admission(id) do
++      approval = @engine.mutate(@owner, 'approve', {'schema' => 1, 'requestId' => bundle.fetch('approvalId'), 'kind' => 'merge',
++        'scope' => [{'repository' => operation['repository'], 'target' => operation['target']}],
++        'source' => @plan.fetch('source'), 'reviewedSnapshot' => snapshot.fetch('id')})
++      @engine.mutate(@owner, 'submit', submit.merge('approvalId' => approval.fetch('id')))
++    end
++    @err.puts "Retained merge job #{job.fetch('id')} for #{operation['repository']}"
++    wait_merge(job.fetch('id'))
++  end
++
++  def wait_merge(id)
++    loop do
++      @engine.reconcile_attempts
++      job = @engine.store.read['jobs'].fetch(id)
++      if job['state'] == 'succeeded'
++        return {'schema' => 1, 'jobId' => id, 'attemptId' => job['attempt'], 'state' => job['state'],
++                'operation' => job['snapshot']['operation'].slice('repository', 'target', 'featureHead'), 'result' => job['result']}
++      end
++      if %w[failed canceled needs_refresh].include?(job['state'])
++        raise WorkspaceCoordination::Error.new("merge #{id} is #{job['state']}; retain original evidence and use ordinary recovery", 5)
++      end
++      if WorkspaceCoordination::CLAIMED.include?(job['state'])
++        unless File.file?(@engine.attempt_path(job.fetch('attempt'), 'request.json'))
++          raise WorkspaceCoordination::Error.new("merge #{id} has no durable worker request; retain its claim for operator recovery", 5)
++        end
++        @engine.dispatch_reconciliation(job)
++      else
++        claimed = admission(id) { @engine.claim(owner_id: @owner['id']) }
++        unless claimed.empty? || claimed.map { |value| value['id'] } == [id]
++          raise WorkspaceCoordination::Error.new('unexpected bootstrap claim; do not dispatch it', 5)
++        end
++        claimed.each { |value| @engine.dispatch(value) }
++      end
++      sleep 2
++    end
++  end
++end
+diff --git a/test/bootstrap_merge_2026_10_13_test.rb b/test/bootstrap_merge_2026_10_13_test.rb
+new file mode 100644
+index 00000000..a6c90d68
+--- /dev/null
++++ b/test/bootstrap_merge_2026_10_13_test.rb
+@@ -0,0 +1,253 @@
++# frozen_string_literal: true
++
++# Reuse the owning runtime's private-Git fixture rather than copy its protocol.
++require File.join(ENV.fetch('DEV_WORKSPACE_TEST_SOURCE'), 'test/workspace_coordination_test')
++if ENV['DEV_WORKSPACE_INSTALLED_PACKAGE']
++  load File.join(ENV.fetch('DEV_WORKSPACE_INSTALLED_PACKAGE'), 'libexec/.workspace-host-wrapped')
++end
++require_relative '../lib/bootstrap_merge_2026_10_13'
++require 'stringio'
++
++class BootstrapMerge20261013Test < WorkspaceCoordinationTest
++  def setup
++    super
++    configure_machine
++    owner('installation')
++    manifest_path = File.join(@workspace, 'work/installation/portal.yml')
++    manifest = YAML.safe_load(File.read(manifest_path))
++    manifest['codex'] = {}
++    File.write(manifest_path, YAML.dump(manifest))
++    @owner = @engine.owner('installation', bootstrap: true)
++    feature(@owner)
++    head = git('-C', @bare, 'rev-parse', 'installation').strip
++    @reservation, = deployment(@owner, submit: false)
++    @engine.store.transaction do |data|
++      value = data['reservations'].fetch(@reservation['id'])
++      value['state'] = 'deployed_review'
++      value['revision'] += 1
++    end
++    proof_path = File.join(@workspace, 'work/installation/deployed.json')
++    File.write(proof_path, JSON.generate('outcome' => 'passed', 'candidatePackage' => @package,
++      'reservation' => {'id' => @reservation['id'], 'ownerId' => @owner['id']}, 'sourceHeads' => {'code' => @base}))
++    proof = {'kind' => 'verification', 'path' => proof_path, 'sha256' => Digest::SHA256.file(proof_path).hexdigest}
++    @plan = {'schema' => 1, 'workspace' => @workspace, 'workspaceName' => @entry['name'], 'slug' => @owner['slug'],
++      'ownerId' => @owner['id'], 'reservationId' => @reservation['id'], 'selectedPackage' => @package,
++      'profileToken' => DevWorkspaceProfileIdentity.token(@profile), 'catalogDigest' => @engine.catalog.digest,
++      'repositories' => {'code' => {'head' => head, 'target' => 'refs/heads/master'}},
++      'evidence' => evidence(@owner) + [proof], 'deploymentEvidence' => proof,
++      'source' => {'kind' => 'user_instruction', 'reference' => 'initiating conversation: conditional integration after creation fix',
++                   'quote' => "ok, after you'll deploy the fix, you can merge the changes"}}
++    engine, entry, package = @engine, @entry.merge('root' => @workspace), @package
++    klass = Class.new(BootstrapMerge20261013) do
++      define_method(:package_root) { package }
++      define_method(:codex_for_package) { |_package| '/bin/true' }
++      define_method(:registry) do
++        result = Object.new
++        result.define_singleton_method(:find) { |name| entry if name == entry['name'] }
++        result
++      end
++      define_method(:coordination_engine) { |_entry| engine }
++      define_method(:instance_runtime) { |_entry| {authority: entry['authority'], codex: entry['socket']} }
++      define_method(:sleep) { |_seconds| nil }
++    end
++    @driver = klass.new(env: {'HOME' => @tmp, 'PATH' => ENV.fetch('PATH'), 'DEV_WORKSPACES_STATE' => @state,
++                             'DEV_WORKSPACES_PROFILE' => @profile}, out: StringIO.new, err: StringIO.new)
++    @engine.define_singleton_method(:dispatch) do |job|
++      path = attempt_path(job['attempt'], 'request.json')
++      WorkspaceCoordination.atomic(path, worker_request(job, store.read['owners'].fetch(job['ownerId'])))
++      raise 'private worker failed' unless WorkspaceCoordination::Worker.new(path, fixtures: true).run == 0
++    end
++    @preparation = request('repository' => 'code')
++  end
++
++  def test_dated_preparation_retries_retain_the_exact_bundle
++    first = @driver.operate(@plan, @preparation, prepare: true)
++    assert_equal first, @driver.operate(@plan, @preparation, prepare: true)
++    error = assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, @preparation.merge('repository' => 'unapproved'), prepare: true) }
++    assert_match(/outside the approved/, error.message)
++    assert_empty @engine.store.read['jobs']
++  end
++
++  def test_dated_execution_and_completed_retry_use_one_real_worker
++    execution = @driver.operate(@plan, @preparation, prepare: true)
++    before = @engine.store.read['reservations']
++    result = @driver.operate(@plan, execution)
++    assert_equal 'succeeded', result['state']
++    assert_equal @plan['repositories']['code']['head'], git('ls-remote', @remote, 'refs/heads/master').split.first
++    assert_equal result, @driver.operate(@plan, execution)
++    data = @engine.store.read
++    assert_equal 1, data['jobs'].length
++    assert_equal before, data['reservations']
++    assert_empty data['outbox']
++    assert_equal @plan['repositories']['code']['head'], git('-C', @bare, 'rev-parse', 'installation').strip
++  end
++
++  def test_dated_retry_after_approval_only_reuses_its_identity
++    execution = @driver.operate(@plan, @preparation, prepare: true)
++    original = @engine.method(:mutate)
++    refused = false
++    @engine.define_singleton_method(:mutate) do |owner, action, input, **keywords|
++      if action == 'submit' && !refused
++        refused = true
++        raise WorkspaceCoordination::Error, 'fixture interruption before submit'
++      end
++      original.call(owner, action, input, **keywords)
++    end
++    approvals = @engine.store.read['approvals'].length
++    assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, execution) }
++    assert_equal approvals + 1, @engine.store.read['approvals'].length
++    assert_empty @engine.store.read['jobs']
++    assert_equal 'succeeded', @driver.operate(@plan, execution)['state']
++    assert_equal approvals + 1, @engine.store.read['approvals'].length
++  end
++
++  def test_dated_wrong_condition_changed_evidence_and_generation_refuse
++    bad = Marshal.load(Marshal.dump(@plan))
++    bad['source']['quote'] = 'deployment only'
++    assert_raises(WorkspaceCoordination::Error) { @driver.operate(bad, @preparation, prepare: true) }
++    bad = Marshal.load(Marshal.dump(@plan))
++    bad['profileToken'] = 'changed'
++    assert_raises(WorkspaceCoordination::Error) { @driver.operate(bad, @preparation, prepare: true) }
++    File.write(@plan['deploymentEvidence']['path'], '{}')
++    assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, @preparation, prepare: true) }
++    assert_empty @engine.store.read['jobs']
++  end
++
++  def test_dated_other_owned_pending_job_refuses_before_claim
++    snapshot = @engine.prepare_merge(@owner, 'code', evidence(@owner))
++    job = @engine.mutate(@owner, 'submit', request('kind' => 'merge', 'dependsOn' => [], 'approvalId' => approval(@owner, snapshot), 'reservationId' => nil, 'snapshot' => snapshot))
++    error = assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, @preparation, prepare: true) }
++    assert_equal 75, error.code
++    assert_nil @engine.store.read['jobs'][job['id']]['attempt']
++  end
++
++  def test_dated_shared_master_keeps_unrelated_files_and_index
++    root = @workspace
++    git('init', '--initial-branch=master', root)
++    git('-C', root, 'remote', 'add', 'origin', @remote)
++    git('-C', root, 'fetch', 'origin', 'master')
++    git('-C', root, 'checkout', '-B', 'master', @base) # isolated disposable fixture only
++    git('-C', root, 'fetch', @bare, 'installation')
++    head = git('-C', @bare, 'rev-parse', 'installation').strip
++    git('-C', root, 'branch', 'installation', head)
++    @catalog['repositories'] = {'workspace' => {'remote' => @remote}}
++    @catalog['machines']['machine']['configurationRepository'] = 'workspace'
++    install_catalog
++    @engine = engine
++    manifest_path = File.join(root, 'work/installation/portal.yml')
++    manifest = YAML.safe_load(File.read(manifest_path))
++    manifest['repositories'] = [{'name' => 'workspace', 'project' => 'workspace', 'branch' => 'installation', 'default_branch' => 'master'}]
++    File.write(manifest_path, YAML.dump(manifest))
++    @engine.store.transaction do |data|
++      data['reservations'][@reservation['id']]['integrationObligations'] = [{'repository' => 'workspace', 'target' => 'refs/heads/master'}]
++    end
++    @plan['repositories'] = {'workspace' => {'head' => head, 'target' => 'refs/heads/master'}}
++    proof = @plan['deploymentEvidence']
++    v = JSON.parse(File.read(proof['path']))
++    v['sourceHeads'] = {'workspace' => @base}
++    File.write(proof['path'], JSON.generate(v))
++    proof['sha256'] = Digest::SHA256.file(proof['path']).hexdigest
++    @plan['catalogDigest'] = @engine.catalog.digest
++    new_engine = @engine
++    @driver.define_singleton_method(:coordination_engine) { |_entry| new_engine }
++    @engine.define_singleton_method(:dispatch) do |job|
++      path = attempt_path(job['attempt'], 'request.json')
++      WorkspaceCoordination.atomic(path, worker_request(job, store.read['owners'].fetch(job['ownerId'])))
++      WorkspaceCoordination::Worker.new(path, fixtures: true).run
++    end
++    File.write(File.join(root, 'unrelated'), 'another session')
++    git('-C', root, 'add', 'unrelated')
++    File.write(File.join(root, 'base'), 'dirty tracked data')
++    index = git('-C', root, 'diff', '--cached', '--binary')
++    execution = @driver.operate(@plan, request('repository' => 'workspace'), prepare: true)
++    assert_equal 'succeeded', @driver.operate(@plan, execution)['state']
++    assert_equal 'refs/heads/master', git('-C', root, 'symbolic-ref', 'HEAD').strip
++    assert_equal index, git('-C', root, 'diff', '--cached', '--binary')
++    assert_equal 'dirty tracked data', File.read(File.join(root, 'base'))
++    assert_equal 'another session', File.read(File.join(root, 'unrelated'))
++  end
++
++  def test_dated_systemd_driver_exit_preserves_and_resumes_the_original_job
++    skip 'explicit systemd check only' unless ENV['BOOTSTRAP_MERGE_SYSTEMD_TEST'] == '1'
++    @engine.singleton_class.remove_method(:dispatch)
++    @driver.define_singleton_method(:sleep) { |seconds| Kernel.sleep(seconds) }
++    source = File.join(ENV.fetch('DEV_WORKSPACE_INSTALLED_PACKAGE'), 'libexec/workspace-coordination-execution')
++    started, hold = File.join(@tmp, 'started'), File.join(@tmp, 'hold')
++    File.write(hold, 'wait before mutation')
++    wrapper = File.join(@package, 'bin/workspace-host')
++    FileUtils.mkdir_p(File.dirname(wrapper))
++    File.write(wrapper, <<~SCRIPT)
++      #!#{RbConfig.ruby}
++      require #{source.inspect}
++      if ARGV.first == 'coordination-worker'
++        WorkspaceCoordination::Worker.class_eval do
++          alias_method :original_fixture_merge, :merge
++          define_method(:merge) do
++            File.write(#{started.inspect}, Process.pid.to_s)
++            sleep 0.05 while File.exist?(#{hold.inspect})
++            original_fixture_merge
++          end
++        end
++        exit WorkspaceCoordination::Worker.new(ARGV.last, fixtures: true).run
++      elsif ARGV.first == 'coordination-reconcile'
++        exit WorkspaceCoordination::Worker.new(ARGV.last, fixtures: true).reconcile
++      end
++    SCRIPT
++    File.chmod(0o700, wrapper)
++    execution = @driver.operate(@plan, @preparation, prepare: true)
++    driver = fork { @driver.operate(@plan, execution); exit! 0 }
++    deadline = Process.clock_gettime(Process::CLOCK_MONOTONIC) + 20
++    until File.file?(started)
++      raise 'private systemd worker did not start' if Process.clock_gettime(Process::CLOCK_MONOTONIC) > deadline
++      sleep 0.05
++    end
++    original = @engine.store.read['jobs'].values.first
++    Process.kill('TERM', driver)
++    Process.wait(driver)
++    driver = nil
++    assert Process.kill(0, Integer(File.read(started)))
++    File.unlink(hold)
++    result = @driver.operate(@plan, execution)
++    assert_equal 'succeeded', result['state']
++    assert_equal original['id'], result['jobId']
++    assert_equal original['attempt'], result['attemptId']
++    assert_equal 1, @engine.store.read['jobs'].length
++    assert_equal @plan['repositories']['code']['head'], git('ls-remote', @remote, 'refs/heads/master').split.first
++  ensure
++    if driver
++      Process.kill('TERM', driver) rescue Errno::ESRCH
++      Process.wait(driver) rescue Errno::ECHILD
++    end
++    if original
++      ["workspace-operation-#{original['attempt']}.service", "workspace-reconcile-#{original['attempt']}.service"].each do |unit|
++        Open3.capture3('systemctl', '--user', 'stop', unit)
++        Open3.capture3('systemctl', '--user', 'reset-failed', unit)
++      end
++    end
++  end
++
++  def test_dated_claimed_retry_never_redispatches_the_original_attempt
++    execution = @driver.operate(@plan, @preparation, prepare: true)
++    original = @engine.method(:dispatch)
++    dispatches = 0
++    @engine.define_singleton_method(:dispatch) do |job|
++      dispatches += 1
++      raise WorkspaceCoordination::Error, 'fixture driver stopped after claim' if dispatches == 1
++      original.call(job)
++    end
++    assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, execution) }
++    original_job = @engine.store.read['jobs'].values.first
++    # The ordinary runtime requires operator recovery when no durable request was
++    # published. Ensure this route invokes recovery rather than dispatching again.
++    recovered = nil
++    @engine.define_singleton_method(:dispatch_reconciliation) do |job|
++      recovered = job['attempt']
++      raise WorkspaceCoordination::Error.new('claim without request requires operator recovery', 5)
++    end
++    error = assert_raises(WorkspaceCoordination::Error) { @driver.operate(@plan, execution) }
++    assert_match(/no durable worker request/, error.message)
++    assert_nil recovered
++    assert_equal 1, dispatches
++    assert_equal 1, @engine.store.read['jobs'].length
++  end
++end
