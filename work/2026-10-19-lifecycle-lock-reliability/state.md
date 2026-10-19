@@ -3,7 +3,7 @@ lifecycle: active
 ---
 # Current status
 
-Phase: approved integration and machine release in progress.
+Phase: merged into all three master targets; aitherdev reservation released.
 
 - [x] Reproduced archive lock contention and fixed shared lifecycle admission.
 - [x] Implemented successful archive reservation release and recovery behavior.
@@ -13,12 +13,31 @@ Phase: approved integration and machine release in progress.
 - [x] Original archive completed attempt2, tracking synced, branches/recovery retained.
 - [x] Original reservation released; live shared-lock waiting behavior verified.
 
-No user action is needed for the reported failure. Feature branches remain active
-and unmerged pending explicit integration direction. This initiative holds its
-own deployed-review reservation441300ed for follow-up. Original reservation
-1ce9be0f is released. Final runtime6ab3b48, workspace4b22d04f, config0067299a.
-Acceptance: deployment-acceptance.json, archive-acceptance.json; final-review.md
-and config-refresh-review.md; exact package/VM and CI results linked below.
+All requested merges and machine release are complete. Authoritative final heads:
+- dev-workspace ea3f9d36397e8c2c846bd456e51385d73a3a358a.
+- workspace 77cb45b0b9fb78625c3c8f4412dc81203168632b.
+- vpsfree-cz-configuration 0067299ab9739f522fec0780cda98649ae630406.
+
+All three exact heads are verified in remote master. Reservation441300ed-f84b-
+4b68-921d-a0fd2ccf4ad1 released at revision5 through normal finish, with fresh
+remote/live proofs and reviewed runtime/workspace replacement mappings. The next
+queued session (browser-optional-questions) has acquired aitherdev normally.
+Original failed-session reservation1ce9be0f remains released. Feature refs and
+session retained; the user requested no archive. Additional CI39325776282 for
+rebased runtime has fast/archive success, creation still running at last check;
+keep lifecycle active while that additional verification remains pending.
+
+Prior deployed runtime6ab3b48 / workspace4b22d04f / config0067299a and package
+ad0s75ir remain their exact tested/deployed provenance. No extra activation was
+performed for source integration. Consumers retain the exact tested runtime pin;
+a published deployed-source branch preserves it. Current service selection is
+free for the next owner to change through normal coordination.
+
+Final evidence: merge-authoritative-results.json, release-aitherdev-receipt.json,
+merge-runtime-followup-review.md and merge-workspace-equivalence.json. Original
+integration summary retains immutable initial requested heads; final acceptance
+uses authoritative succeeded job snapshots/results above. All histories have two
+coherent feature commits and one pin stream per consumer; no migrations.
 
 
 Affected repositories: dev-workspace, workspace, vpsfree-cz-configuration. Feature branch/worktree group: 2026-10-19-lifecycle-lock-reliability. No migrations. No merge approval; remain active after deployment.
@@ -231,3 +250,13 @@ original requests and authoritative receipts. No new pin update or deployment.
 
 Requested exact feature heads are integrated. See integration/7fd58710-fda2-4d01-a969-28772bde24ae/summary.md
 and integration/7fd58710-fda2-4d01-a969-28772bde24ae/result.json for operation receipts. Feature refs and session retained.
+
+
+Final integration run7fd58710-fda2-4d01-a969-28772bde24ae resumed through normal
+command and completed. All3 jobs succeeded with exact final authoritative heads.
+Stable finish exit0, reservation released revision5. All final remote ancestry
+proofs repeated independently after release. No feature branch deleted, no
+force-push to master, no direct Git merge/deployment/ledger bypass. Scheduler-only
+restart repeated once to detach cleanup startup wait; no worker or unrelated
+scan was stopped. Separate synchronous cleanup-start scheduling issue remains
+documented operational evidence, outside this source merge request.
