@@ -1,0 +1,28 @@
+diff --git a/cluster/cz.vpsfree/containers/int.vpsfbot/config.nix b/cluster/cz.vpsfree/containers/int.vpsfbot/config.nix
+index e3d82582..f8175fa0 100644
+--- a/cluster/cz.vpsfree/containers/int.vpsfbot/config.nix
++++ b/cluster/cz.vpsfree/containers/int.vpsfbot/config.nix
+@@ -168,6 +168,8 @@ in
+         };
+ 
+         security_advisories = {
++          mode = "summary";
++          summary_interval = 3600;
+           channels = [
+             "#vpsfree"
+           ];
+diff --git a/packages/vpsfree-irc-bot/default.nix b/packages/vpsfree-irc-bot/default.nix
+index 031baed3..8ab84144 100644
+--- a/packages/vpsfree-irc-bot/default.nix
++++ b/packages/vpsfree-irc-bot/default.nix
+@@ -7,8 +7,8 @@ let
+   vpsfbot = fetchFromGitHub {
+     owner = "vpsfreecz";
+     repo = "vpsfree-irc-bot";
+-    rev = "e9c60b0b95d3cc0dad6f012d8127c2bc078cfa7d";
+-    sha256 = "sha256-jONz5RyWIzH2/h9oALb31Ms1pQlbwP3MNRUe1vwzp5A=";
++    rev = "94ac4eb5a7caf0456fff7df86a44cae198463276";
++    sha256 = "sha256-v7m4mhpYs/P23cjiPm6XESAG5jIkoMBq5P1nTs0Lr6g=";
+   };
+ in
+ bundlerEnv {

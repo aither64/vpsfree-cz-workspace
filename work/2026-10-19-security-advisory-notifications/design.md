@@ -1,13 +1,15 @@
-# Security advisory notifications — PROPOSED
+# Security advisory notifications — accepted implementation brief
 
-Revised recommendation, prepared by architect0 on 2026-10-19 following the
-user's correction that gradual arrivals would still make per-poll summaries
-spam. This supersedes the initial per-poll proposal; it is not user-approved
-implementation. Implementation awaits the user's choice through the lead.
-No source changes, fetches, worktrees, commits, tests, review or deployment were
-performed for this investigation or revision.
+Accepted implementation brief, reconciled by architect0 on 2026-10-19 with
+the user's finalized plan and “Implement the plan.” authorization. Scope includes
+the bot changes and its package/settings update in `vpsfree-cz-configuration`.
+Deployment and service restart are excluded. The user subsequently authorized
+both master integrations after passing review and verification; see state.md.
+The hourly design supersedes the initial per-poll proposal because gradually
+added advisories would still produce spam. Current execution status and evidence
+belong in [state.md](state.md); this reconciliation changes only this record.
 
-## Recommended behavior
+## Accepted behavior
 
 Add `security_advisories.mode` with `individual`, `summary` and `off`. Keep
 `individual` as the default when omitted; select `summary` in the site's bot
@@ -18,7 +20,7 @@ configuration is absent: the plugin is not loaded.
 Add `security_advisories.summary_interval`, a positive integer number of seconds,
 defaulting to `3600`. Reject a supplied zero, negative or non-integer value during
 configuration. Only summary mode uses the interval; individual mode retains its
-existing reporting behavior. The proposed site settings are:
+existing reporting behavior. The accepted site settings are:
 
 ```nix
 security_advisories.mode = "summary";
@@ -35,8 +37,8 @@ Omit empty categories and use singular/plural forms. Count distinct advisory
 IDs, not CVEs or update records. Multiple updates to one advisory count as one
 updated advisory. Across the entire summary window, an advisory classified as
 new counts only as new, even if it also has updates in later polls. New means an
-unseen advisory whose current
-state is `published`, matching the existing notification condition; updates
+unseen advisory whose current state is `published`, matching the existing
+notification condition; updates
 include those for visible published/retracted advisories. Do not announce an
 empty window. Keep the individual reporting methods available.
 
@@ -51,12 +53,14 @@ immediately, reset a deadline when events arrive, or flush early because a batch
 is large. Empty boundaries send nothing; they still advance the schedule.
 Pending entries can flush when due even if the latest poll has no new events.
 
-Use elapsed monotonic time for scheduling. Delayed handling must not create
-catch-up bursts or sends less than one interval apart. At the proposed site
-value this permits at most one summary line per channel per hour, including
+Use a fixed interval schedule based on monotonic time. When processing a due
+tick, schedule the next deadline a full interval after that processing time,
+including when the tick was delayed. Do not catch up to missed deadlines or
+send less than one interval apart. At the accepted site value this permits at
+most one summary line per channel per hour, including
 when advisories arrive gradually. Clear the pending sets after the due output
 attempt, retaining the existing best-effort delivery policy. No durable queue,
-severity policy or delivery guarantee is proposed.
+severity policy or delivery guarantee is included.
 
 ## Checkpoints, disabled mode and compatibility
 
@@ -66,8 +70,9 @@ severity policy or delivery guarantee is proposed.
   treats disabling as discarding announcements during that period.
 - Keep the existing silent startup bootstrap: set the watermark to startup time
   and load advisories published or updated within the preceding 30 days into
-  the store without sending messages. Configuration changes use a normal service
-  restart; re-enabling does not replay the disabled interval.
+  the store without sending messages. Configuration takes effect on a subsequent
+  service restart, which is excluded from this task; re-enabling does not replay
+  the disabled interval.
 - Pending summary sets and the flush deadline are memory-only. Restart discards
   unsent summaries and starts a fresh full interval after initialization. It does
   not immediately flush or replay the preceding window. This loss is intentional
@@ -83,14 +88,15 @@ severity policy or delivery guarantee is proposed.
   There are no database migrations, client-generation changes, daemon/protocol
   changes or fleet-wide coordination requirements. No new persisted state is
   needed, and the old bot can read the retained state after rollback.
-- An old bot ignores the proposed mode and keeps individual reporting. Deploy
-  the site mode together with a package that supports it. A software rollback
-  can therefore restore the former notification volume.
+- An old bot ignores the new mode and keeps individual reporting. The site
+  settings and updated package pin must select compatible versions together.
+  A software rollback can therefore restore the former notification volume.
 
 ## Source evidence and API conclusion
 
-All references below are local canonical bare-repository snapshots; no upstream
-refresh or live production-state inspection was performed.
+These references record the original investigation's local canonical
+bare-repository snapshots. That investigation did not refresh upstream or
+inspect live production state; implementation revisions belong in session state.
 
 | Repository / revision | Relevant paths and findings |
 | --- | --- |
@@ -112,18 +118,20 @@ No actual backlog size was measured. The user reports gradual arrivals, which
 requires aggregation across polls. API recovery can also place many events in
 one poll; these join the current window without triggering an early summary.
 
-## Implementation packages, if selected
+## Assigned implementation packages
 
 | Owner | Independent file boundary | Acceptance and dependencies |
 | --- | --- | --- |
-| implementer0 | Bot `lib/vpsfree-irc-bot/security_advisories.rb`, focused new advisory spec, `dist/config.yml.sample`, `README.md`, and `tests/suite/vpsadmin-events.nix` if needed for the targeted integration check. Touch `lib/vpsfree-irc-bot.rb` only if required for configuration validation. | Implement mode/interval validation and defaults, periodic combined summary with memory-only sets, distinct-ID counting across polls, off-mode consumption, unchanged individual behavior and state format. Document delayed delivery and restart/off semantics. No vpsAdmin or HaveAPI edits. Depends on lead accepting this revised brief and final message wording. |
+| implementer0 | Bot `lib/vpsfree-irc-bot/security_advisories.rb`, focused new advisory spec, `dist/config.yml.sample`, `README.md`, and `tests/suite/vpsadmin-events.nix` if needed for the targeted integration check. Touch `lib/vpsfree-irc-bot.rb` only if required for configuration validation. | Implement mode/interval validation and defaults, periodic combined summary with memory-only sets, distinct-ID counting across polls, off-mode consumption, unchanged individual behavior and state format. Document delayed delivery and restart/off semantics. No vpsAdmin or HaveAPI edits. Lead owns final message wording. |
 | implementer1 | Configuration `cluster/cz.vpsfree/containers/int.vpsfbot/config.nix` and `packages/vpsfree-irc-bot/default.nix`. | Set mode to `"summary"` and `summary_interval = 3600`, retain channel routing, then pin the published final bot revision and source hash. Generic Nix module needs no new option. Policy edit can proceed independently; final pin and package verification depend on implementer0's final published head. |
 
 Lead owns worktree creation/registration, tracking, assignments, shared Git
-coordination, review and authorized rollout. Implementers remain idle during
-this recommendation stage.
+coordination, review and acceptance. Both implementers are assigned. Their
+packages include quick checks, commits, feature-branch publication and review
+fixes. No deployment or service restart is assigned. The lead coordinates the
+subsequently authorized master integrations after passing verification.
 
-## Verification and rollout brief
+## Verification brief
 
 Quick checks after implementation, in the bot's documented Nix environment:
 focused RSpec and RuboCop, then the repository's normal quick suite. Cover omitted
@@ -133,8 +141,9 @@ update-only/retraction windows, channel routing and correct base/list URL.
 Use a controlled monotonic clock and a short interval in unit tests: no immediate
 first message, gradual arrivals accumulate, arrivals do not move the deadline,
 large batches do not flush early, an empty poll can precede a due flush, empty
-windows stay silent, and delayed ticks cannot cause catch-up bursts or violate
-the interval between sends. Verify off advances state without accumulating,
+windows stay silent, and a delayed tick sets its next deadline a full interval
+later without catch-up bursts or shortening the interval between sends.
+Verify off advances state without accumulating,
 startup is silent, restart discards pending sets and waits a fresh interval, and
 failed polling does not produce a partial successful batch. Exercise a batch
 larger than a customary API page size and assert no request introduces `limit`;
@@ -149,20 +158,22 @@ and set `summary_interval` to a short positive number of seconds, spanning
 multiple polls, in test settings; tests need not wait an hour. A fresh verification
 watcher owns uncertain-duration checks. Configuration verification evaluates the
 selected instance's mode, interval, package and generated settings, then builds
-only the affected bot container via
-the repository's confctl workflow. Read deployment/coordination instructions
-before executing; none of these checks or operations has been run here.
+only the affected bot container via the repository's confctl workflow without
+activation. Follow applicable verification/coordination guidance; current check
+results belong in session state.
 
-Rollout affects `cz.vpsfree/containers/int.vpsfbot` and
-`vpsfree-irc-bot-libera.service`. Publish/select the compatible bot, then deploy
-the exact package pin, site mode and interval together through the lead's
-authorized workflow. Verify the effective private config does not override them
-without exposing its contents. Observe service health and subsequent natural
-advisory activity, allowing a full summary interval; do not manufacture
-production advisories for testing.
+## Operational compatibility and recovery — reference only
 
-Recovery is either `mode = "off"` on the new package or restoring the prior
-package/configuration generation. The latter restores individual output.
-Retain bot state in both cases. No API rollout, schema rollback or state
-conversion is required. Deployment and default-branch integration remain
-separate authorizations.
+Deployment and service restart are excluded from this task. The following describes compatibility and recovery implications;
+it is not an execution plan or authorization.
+
+The affected deployment would be `cz.vpsfree/containers/int.vpsfbot` and
+`vpsfree-irc-bot-libera.service`. The updated package and summary/3600 settings
+must take effect together. Additional private configuration is loaded afterward
+and can override site settings. A newly started bot waits a full interval before
+any summary, discarding pending in-memory counts from the previous process.
+
+If separately authorized later, recovery options are `mode = "off"` with the
+new package or restoration of the prior package/configuration generation. The
+latter restores individual output. Both retain the existing bot state format;
+neither requires an API rollout, schema rollback or state conversion.

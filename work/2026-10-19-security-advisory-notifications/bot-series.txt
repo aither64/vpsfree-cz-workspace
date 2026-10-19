@@ -1,0 +1,13 @@
+94ac4eb5a7caf0456fff7df86a44cae198463276
+security_advisories: add interval summaries and silent mode
+Gradual advisory arrivals can flood IRC even when each API poll contains
+only a few events. Accumulate distinct new and updated advisory IDs over
+a configurable interval, with newly published IDs counted only as new.
+Use monotonic deadlines and serialize summary output with polling so
+arrivals and delayed processing cannot cause early or catch-up summaries.
+
+Keep individual notices as the default and add off mode that consumes
+updates silently. Summary counts remain memory-only, are discarded after
+an output attempt, and restart with a full interval after silent bootstrap.
+The existing advisory store and API queries remain compatible.
+

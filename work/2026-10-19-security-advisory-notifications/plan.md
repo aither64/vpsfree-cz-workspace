@@ -3,15 +3,15 @@
 ## Goal and authorization
 
 Implement the finalized plan as requested by the user: “Implement the plan.”
-Update both the bot and its package/settings in site configuration. Deployment,
-service restarts, and default-branch integration are out of scope. Keep this
-session open.
+Update both the bot and its package/settings in site configuration. Deployment
+and service restarts are out of scope. The user subsequently authorized merging
+both repositories into master after review and verification. Keep this session
+open; no lifecycle action is authorized.
 
 ## Design and affected repositories
 
-The accepted technical brief is [design.md](design.md), with the finalized chat
-plan authoritative where it narrows scope. Its proposal-only and rollout wording
-is historical; implementation is now authorized, deployment is excluded.
+The accepted technical brief is [design.md](design.md), reconciled with the
+finalized chat plan. Implementation is authorized; deployment is excluded.
 
 - `vpsfree-irc-bot`: individual/summary/off modes and positive integer
   `summary_interval` seconds, default 3600. Omitted mode stays individual.
