@@ -105,3 +105,52 @@ fresh catalog utility gpt-6-luna/low, full access. No activation before exact
 package/VM checks and machine/profile preparation success. Review final report
 and repeatable operations docs are complete; rollout-specific sequence is in
 rollout.md. Actual reservation finish is complete; fixed package not yet selected.
+
+Exact verification batch remains monitored. Original archive before-state confirms failed attempt1 and unchanged receipt/journal. Retry script uses selected exact candidate proof and retained receipt, then authenticated portal retry rather than manufacturing authorization or a new operation.
+
+Machine prepare passed223.64s, snapshot fe9fae2f, artifact e5ed81bd at config9e90ff6e,
+prepared system sxa2v7w5y8bviarjjpp9bl37ylvg1iik. Profile prepare passed473.52s,
+snapshot fe574a97, candidate ad0s75irvrbj6pz6qk1zf7v9sy4l1qyp, exact workspace
+4b22d04f/runtime6ab3b48. Both prepared against unchanged predecessor i144xnc9.
+Snapshots saved separately, final review checksum bound. VM package check still
+running; activation remains gated on its success. No snapshot approval/submit yet.
+
+Final exact CI39315518833 succeeded (fast/archive/creation; host skipped).
+Local VM log emitted AssertionError during wait_until_succeeds polling, not a
+native test failure: parent inspected bounded context and both waits resolved
+successfully at log2310 and2328; archived filesystem check also passed2330.
+No rerun, source edit or cancellation is warranted. Continue original local run
+to native completion; quiet output is not a deadline. Watcher retains ownership.
+
+Exact CI verification accepted after parent downloaded native success logs and
+matched package q3xmw0a4... and archive VM gx4vv3w... drv paths byte-for-byte.
+CI39315518833 head6ab3b48 fast/archive/creation succeeded. Receipt:
+ci-verification-acceptance.json, final-ci.log checksum. Local duplicate remains
+monitored, no failure waiver or rerun. Source and inputs are exact; activation
+driver now accepts this successful exact CI proof instead of waiting for duplicate.
+Lead launched activate.py; ordinary new-owner approval/reserve/submit sequence.
+
+Local packaged verification completed exit0 /1306.78s; archive VM865.50s.
+Machine joba545197e attempt7baddda9 ended baseline_changed at admitted phase;
+no system mutation. Config mastera2ad6da4 advanced only WebUI input. Clean rebase
+preserves two ordered feature patches (range-diff =/=), runtime/workspace exact.
+New config0067299ab9739f522fec0780cda98649ae630406, no migrations. Same reviewer
+assigned real follow-up for general/history and risk/compatibility lanes.
+Existing machine/profile jobs and reservation remain; refresh machine snapshot
+under new applicable approval, retain profile dependency. No deployment replay.
+
+Config refresh independent review accepted with no findings (config-refresh-review.md). New exact configuration preparation running under fresh configuration_refresh_watch Luna/low utility. Prior full package/VM and CI pass unaffected; no repeated runtime checks.
+
+Deployment completed: machine joba545197e succeeded attempt092d2cb4, profile
+job7b4c074b succeeded attemptafb7829e. Live system/profile x86fp7sq... and selected
+application ad0s75ir... match exact prepared artifacts. Portal healthz and
+portal/codex/router/coordinator services active; deployment-acceptance.json.
+Acceptance script initially queried wrong /health route and was corrected to
+actual /healthz; service was healthy. No implementation change or deployment retry.
+
+Original archive retry accepted same receipt/journal, attempt2. Parent held exact
+shared session lock through acceptance, observed Waiting for session access,
+released lock, then saw snapshot capture progress. Contention proof saved in
+original-archive-contention-proof.json. Archive is running (last capturing
+configuration checkout); no busy-lock failure. Preserve snapshots/branches and
+await original worker result.

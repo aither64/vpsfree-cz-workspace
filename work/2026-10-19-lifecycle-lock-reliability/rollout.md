@@ -43,3 +43,14 @@ or archive direction.
 Original archive before rollout: original-archive-before.json, failed attempt1,
 receipt ed5897f17bbb3424f6e6647c0d83dd6c953112280cb0718210e1ee70f46b41ac,
 operation a0feaf8be13b427703b17170a8b80d971fe91f2130aae488652809e598152ac1.
+
+
+Execution update: runtime packaged/VM verification passed locally and exact CI
+39315518833 (matching both drv identities). Original machine attempt7baddda9
+returned baseline_changed before mutation, because config mastera2ad6da4 advanced
+with an unrelated WebUI input. Clean reviewed rebase config0067299a preserves
+feature patches, runtime pin and documentation. New exact config preparation is
+running. Existing reservation441300ed and original queued profile job7b4c074b
+remain; refresh machine joba545197e with new approved snapshot after build.
+No failed activation or replay occurred. Original artifact remains attributed to
+9e90ff6e; it will not be relabeled as built from the new source.

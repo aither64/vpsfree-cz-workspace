@@ -4,8 +4,12 @@ tracking=Path(__file__).resolve().parent
 workspace=tracking.parents[1]
 slug=tracking.name
 env=os.environ | {'DEV_SESSION_SLUG':slug,'DEV_SESSION_WORKSPACE':str(workspace),'TMPDIR':'/tmp'}
-for name in ['packaged','machine-prepare','profile-prepare']:
+ci=json.loads((tracking/'ci-verification-acceptance.json').read_text())
+assert ci['runtime']=='6ab3b48f57981f4358094b47cac1ba724c458396' and ci['conclusion']=='success'
+for name in ['machine-prepare','profile-prepare']:
     assert json.loads((tracking/(name+'-result.json')).read_text())['exitStatus']==0, name
+if (tracking/'packaged-result.json').exists():
+    assert json.loads((tracking/'packaged-result.json').read_text())['exitStatus']==0
 inventory=json.loads((tracking/'branch-inventory.json').read_text())
 for name,item in inventory.items():
     path=Path(item['worktree'])
