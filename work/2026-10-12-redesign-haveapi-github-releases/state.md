@@ -6,63 +6,110 @@ lifecycle: active
 
 ## Status
 
-Current phase: authorized master integration and corrected 0.29.11 tag
-preparation; no packages published.
+Current phase: authorized master integration and 0.29.12 release preparation.
+The user replied "yes, merge and release" to the explicit named-target request.
+Scope: merge c58704a into HaveAPI master, advance haveapi-0.29 to355c299 and push
+annotated v0.29.12. Human GitHub environment approval remains separate. Source
+review, full verification and live diagnostic passed; no new tag/publication yet.
+Lead pre-merge check: both complete series, final diff hashes and clean heads
+still match the independent review; no obsolete history or migrations. Fresh
+SSH fetch confirms target bases5266481/7fb218e. See pending-tag-premerge-inventory.json.
+Master integration admitted as background run44265246-96eb-4791-a5be-bbc594dd8f4d,
+continuation generation1 resumed after hook-cache repair. The preparation failure
+submitted no merge job. Fresh Luna/low setup utility completed once in104seconds,
+status0; Ruby3.3.10 and3.4.9 exact-order probes both pass with JSON2.9.1. Retained
+sourcec58704a remains clean. No hooks bypassed or application edits. A new
+Luna/low utility pending_tag_resumed_integration_observer owns the resumed
+read-only observation.
+No machine reservation is needed for this merge-only run.
+Integration request: pending-tag-integration-request.json. Its reviewed evidence
+is now frozen; put subsequent execution results in separate records.
 
-The user approved v0.29.10 in GitHub as aither64, but attempt 2 failed while
-retaining draft assets, before RubyGems credential setup or registry/PHP writes.
-The published-only release-by-tag endpoint missed the draft it had just created.
-The immutable v0.29.10 source and original tag-run artifacts are preserved.
-See [execution](release-0.29.10.md) and [historical gate](release-tag-approval.md).
+Current candidates in vpsfreecz/haveapi (SSH origin):
 
-The fix now selects the exact tag from the paginated releases listing and keeps
-query errors visible. Five regression examples fail against the old code and
-pass with the correction. All 26 helper examples pass normally and with
-GITHUB_RUN_ID=123 in both final worktrees; whole Ruby lint, metadata, shell,
-whitespace and runtime-preservation checks pass. Commit hooks passed.
+- Master feature `2026-10-12-redesign-haveapi-github-releases`:
+  `526648131af45df68c25ac0042a52f22c7a81df5` ->
+  `c58704a08451a231fdf6c6123437133422af46dc`.
+- Release feature `2026-10-19-haveapi-0.29.10`, target `haveapi-0.29`:
+  `7fb218e28a86ab1d27de74ccb92c2a45063a4f78` ->
+  `355c2990a4bfd3940d3234cb2077ad0127f43551` (version 0.29.12).
+- Remote target master remains 5266481; release target and v0.29.11 remain 7fb218e.
 
-- Master fix: c14e7d3..526648131af45df68c25ac0042a52f22c7a81df5 (one commit).
-- Release candidate: b27a031..7fb218e28a86ab1d27de74ccb92c2a45063a4f78
-  (focused fix, then separate 0.29.11 version/changelog commit).
-- No workflow/pin, application behavior, existing component test, Elixir or
-  migration change in either new range. Master version remains unchanged.
-- The user's ongoing patch-release request covers preparation of the corrected
-  candidate. The user has now authorized the corrected version and new master integration.
-  v0.29.11 still needs its own human GitHub environment approval; the earlier
-  v0.29.10 environment approval does not approve it.
+Publisher now follows GitHub CLI's GraphQL pending-tag lookup, then retrieves
+REST metadata by database ID. Only explicit null means absent; failed requests
+stop before creation/upload. Nine focused examples cover the contract; the old
+implementation fails eight of them. Both quick checks passed 30 helper examples
+normally and under GITHUB_RUN_ID=123, full Ruby lint, syntax and source checks.
+No runtime, protocol, artifact schema, migration, privileges or Elixir changes.
 
-- [x] Diagnose the first publishing failure and preserve originals.
-- [x] Commit the focused fix, regressions and corrected version metadata.
-- [x] Pass quick checks/hooks for both exact new heads.
-Retained reviewer0 accepted all four lanes, read-only, in native turn
-01a15559-f326-70f0-9b09-29b911309fd3. Native metadata confirms its saved
- gpt-6-astra/xhigh settings and exact session CWD; no overrides or fallback.
-The exact-range report, history/consolidation and no-migrations conclusions are
-recorded in [review](draft-fix-review.md). The packet and both final comparisons
-are registered in the session portal.
-The old local build was moved to local-0.29.10-dist/; tag originals remain in
-release-tag-artifacts/. Fresh SSH checks confirm targets still c14e7d3/b27a031,
-v0.29.10 unchanged and v0.29.11 absent.
+Retained reviewer0 (gpt-6-astra/xhigh, read-only) completed all four lanes on both
+complete committed ranges, with no findings. Exact heads, complete history,
+consolidation and no-migrations conclusions: [pending-tag-review.md](pending-tag-review.md).
+The reviewer checked the live GraphQL schema and error status. The user then
+ran the requested read-only gh release view command and supplied actual draft
+v0.29.11 / databaseId417635025 / isDrafttrue. This confirms live resolution with
+an authorized identity; it closes the pending diagnostic gate. Evidence and
+limits: [pending-tag-live-draft-diagnostic.md](pending-tag-live-draft-diagnostic.md).
+The session token still cannot see drafts; the Actions publishing job uses its
+own write-capable github.token. No manual diagnostic is part of routine releases.
 
-- [x] Complete retained independent review of both new ranges (no findings).
-- [x] Pass fresh complete component/package checks and safe Actions.
-  Fresh Luna/low utility completed with all status0, local component and clean
-  package checks green, all eight release-candidate and both master-fix CI runs
-  successful. Lead verified receipts and unchanged final diff hashes. Both
-  feature refs are published; both worktrees clean after test-cache removal.
-  See [verification](draft-fix-verification-summary.md).
-- [x] Obtain direction for the corrected release and new master integration.
-  User replied "continue" to the explicit request to merge the fix into
-  haveapi/master, advance haveapi-0.29 and push v0.29.11. This authorizes those
-  exact operations; the human GitHub release-environment approval remains a
-  separate required publication gate. Exact heads remain 5266481 /7fb218e.
-  Master-only background integration admitted as
-  30712947-5d77-4f21-8bfc-c380849e9e51, selected package i144xnc9p02svar5kz6jxjjpp6gz4cwh;
-  guide read via workspace-host (unchanged contract/operations hashes) and exact
-  selected source integration guide. Merge-only operation has no machine
-  reservation. Review/check receipts are frozen in the request.
-- [ ] Run the corrected tag through its protected approval gate.
-- [ ] Verify live registry/PHP receipts and Packagist indexing.
+Fresh Luna/low utility `/root/pending_tag_verification_watcher` completed its
+single verification batch in 98 seconds: all four status receipts are 0. Clean
+0.29.12 packaging, all maintained components, package smoke/verification and all
+8 release + 3 master exact-head Actions passed. Both release workflow publishing
+jobs were skipped. Parent verified the seven local file hashes and source/run
+identity; local manifest SHA256 d30650d1a8e4b5ffd1131a093398536a0cb2b22ab631d81c739e7882eb796ea1.
+Full receipt: [pending-tag-verification-summary.md](pending-tag-verification-summary.md).
+The generated untracked PHP test cache was removed; both worktrees are clean at
+the reviewed heads and final diff hashes remain identical. No operation runs now.
+No superseded queued/running CI needed cancellation at the feature pushes.
+Original local 0.29.11 verification dist was moved to `local-0.29.11-dist/` before
+building; original tag artifacts below remain separate and unchanged.
+
+- [x] Diagnose both failed publishing jobs and preserve original source/artifacts.
+- [x] Commit pending-tag correction, regressions, recovery docs and separate 0.29.12 metadata.
+- [x] Pass quick checks/hooks and independent final review of both complete ranges.
+- [x] Push both exact reviewed feature heads for safe build-only Actions.
+- [x] Pass fresh full component/package verification and exact-head safe Actions.
+- [x] Confirm actual pending-draft lookup with an authorized read-only diagnostic.
+- [x] Obtain fresh direction for HaveAPI master integration and 0.29.12 release.
+- [ ] Integrate authorized targets and push a new annotated tag; pass its build gate.
+- [ ] User approves protected release environment for the new version.
+- [ ] Verify registry/PHP receipts, GitHub assets and Packagist indexing.
+
+## Preserved prior release attempts
+
+The user approved v0.29.10 and v0.29.11 in GitHub, but both publishing jobs
+failed during draft preparation. Credential setup and registry/PHP publication
+were skipped; post-failure exact-version gem/npm checks were all 404. No blind
+retry, tag move or artifact substitution was performed.
+
+- v0.29.10 source b27a031, annotated tag object cd6a5f4c248de748d1b40bd54aeceedb4ebb743c;
+  tag run 39291918638. Saved originals: `release-tag-artifacts/`, manifest SHA256
+  b0b8600ee048019a48ef15d7e418c766eba8e7e300edc57e83a93428dc2755e4.
+  History: [release-0.29.10.md](release-0.29.10.md).
+- v0.29.11 source 7fb218e, annotated tag object df335479937a43f93e508ee19b93ba11f0fed8c3;
+  tag run 39305802582. Saved originals: `patch11-tag-artifacts/`, manifest SHA256
+  80006e3a986ba713401587f5067c58358f320bf54a681c55d27b31055779dfcf.
+  Failure/approval/registry evidence: `patch11-publish-attempt1-final.json`,
+  `patch11-publish-attempt1-failed.log`, `patch11-approvals.json`,
+  `patch11-post-failure-registry.json`; [release-0.29.11.md](release-0.29.11.md).
+
+Original files and both source/run/version/hash bindings were independently
+reverified in the latest source review. The first master fix5266481 and release
+7fb218e were integrated after the user's explicit "continue" direction; that
+approval does not authorize the new master correction or 0.29.12. Master merge
+run30712947-5d77-4f21-8bfc-c380849e9e51 is complete with succeeded job3335e2a3;
+prior original master integration runf06835bb-e0ed-4269-91b0-4c9f44f29914 is also
+complete. Both completion notices were reread and acknowledged with fresh
+schema-1 request IDs this turn; no new operation was submitted.
+
+Actual RubyGems/npm OIDC, scoped PHP key use and Packagist indexing remain
+first-publication checks. Cross-registry publication is non-atomic. Preserve
+accepted originals and diagnose any partial failure before retrying. Both
+feature refs/worktrees and retained targets remain; this session stays open.
+
+## Original master implementation history
 
 Earlier master integration is complete, as recorded below.
 
@@ -240,3 +287,44 @@ owns the resumed operation evidence separately from the first failure.
 
 Requested exact feature heads are integrated. See integration/30712947-5d77-4f21-8bfc-c380849e9e51/summary.md
 and integration/30712947-5d77-4f21-8bfc-c380849e9e51/result.json for operation receipts. Feature refs and session retained.
+
+## Pending-tag correction implementation
+
+Source fix committed with hooks as c8cfb16 on release feature. New regressions
+against the old implementation:9examples,8failures (explicit-null example alone
+passed), pending-tag-repro.log/status. Fixed30examples pass normally and with
+GITHUB_RUN_ID=123; focused Ruby lint and whitespace pass after the required
+anonymous argument-forwarding style correction. Evidence pending-tag-fixed-quick.
+Code resolves exact pending tag via GraphQL, retrieves REST metadata by returned
+ID, keeps failures at either stage visible, and explicitly reports a missing
+post-create draft. Release docs clarify unchanged tagged-source rerun behavior.
+Prepare successor0.29.12 metadata separately, preserving both merged/tagged
+predecessors and originals. No new version tag or master integration is authorized
+yet; requested read-only diagnostic from user's logged-in gh remains pending.
+
+Final new heads: masterc58704a08451a231fdf6c6123437133422af46dc (one focused
+helper/spec/recovery-doc commit) and release355c2990a4bfd3940d3234cb2077ad0127f43551
+(c8cfb16fix, then separate0.29.12version/changelog). Both exact-head quick suites
+pass metadata,30normal+30runID123 examples, whole lint243/244files, shell/whitespace,
+and stable runtime preservation. Review packet pending-tag-review-packet.md;
+retained reviewer0 assigned all four lanes at saved settings. User live-draft
+query output and fresh new-version/master integration authorization still pending.
+Long checks not started; planned master CI includes serverRSpec due to the changed
+doc path in addition to release and RuboCop. Release safeCI expects all8workflows.
+
+Pending-tag final review native turn01a15592-4953-78d1-8237-ffd406b099e1 verified
+from retained reviewer metadata: gpt-6-astra/xhigh and exact sessionCWD. No setting
+override/fallback. Both final comparisons captured with exact current bases/heads.
+Project recovery docs and nearby API rationale updated with implementation;
+reusable draft-lookup lesson corrected to GraphQL pending-tag resolution.
+
+Retained reviewer accepted both complete new ranges, all four lanes, no findings;
+whole-history/no-stream/no-migrations conclusion recorded in pending-tag-review.md.
+Native settings verified. Public live schema/semantic-error contract checked by
+reviewer; actual write-authorized pending-draft lookup remains unverified and
+required before another tag. Full source/local/package and safe CI may now run.
+
+## Integration 44265246-96eb-4791-a5be-bbc594dd8f4d
+
+Requested exact feature heads are integrated. See integration/44265246-96eb-4791-a5be-bbc594dd8f4d/summary.md
+and integration/44265246-96eb-4791-a5be-bbc594dd8f4d/result.json for operation receipts. Feature refs and session retained.
