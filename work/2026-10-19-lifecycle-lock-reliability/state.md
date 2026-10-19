@@ -3,13 +3,13 @@ lifecycle: active
 ---
 # Current status
 
-Phase: independent final review. The user approved the shared lifecycle repair and instructed implementation. External supervisor owns the work; managed root 01a1559d-7b7b-7fa3-a584-745dcf9b1282 remains idle.
+Phase: packaged verification and deployment preparation. The user approved the shared lifecycle repair and instructed implementation. External supervisor owns the work; managed root 01a1559d-7b7b-7fa3-a584-745dcf9b1282 remains idle.
 
 - [x] Investigate and reproduce nonblocking archive failure (shared observer causes failure in 1.2ms before a journal).
 - [x] Approve plan and create independent initiative.
 - [x] Implement shared acquisition policy and portal lock ordering with tests.
 - [x] Commit and quick verification.
-- [ ] Independent final review (all four lanes; in progress).
+- [x] Independent final review (all four lanes; accepted after fixes).
 - [ ] Packaged/VM verification and deployment preparation.
 - [ ] Coordinated aitherdev system/profile deployment and original request recovery.
 
@@ -95,3 +95,13 @@ runtime tree differs only by whitespace cleanup; CLI repair is in lifecycle comm
 Superseded CI cancel requests returned403 (token lacks permission); no active run
 was silently abandoned or mistaken for final revision. Final exact CI replaces
 acceptance, no rerun of failed attempts without diagnosis.
+
+Final review accepted final exact inventory; final-review.md records all findings and direct verification.
+
+Packaged verification and exact machine/profile preparation started by lead via verify-prepare.py, handle55280. Independently accessible per-operation result files retain exit codes; bounded utility watcher will observe them without mutation or relaunch.
+
+Deployment preparation remains running under watcher packaged_preparation_watch,
+fresh catalog utility gpt-6-luna/low, full access. No activation before exact
+package/VM checks and machine/profile preparation success. Review final report
+and repeatable operations docs are complete; rollout-specific sequence is in
+rollout.md. Actual reservation finish is complete; fixed package not yet selected.
