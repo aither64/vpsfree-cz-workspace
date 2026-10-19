@@ -1,0 +1,43 @@
+[
+  {
+    "name": "browser",
+    "command": [
+      "nix",
+      "develop",
+      "--command",
+      "env",
+      "TMPDIR=/tmp",
+      "PORTAL_BROWSER_TEST=1",
+      "NODE_PATH=/nix/store/fg778x0631ld4xd8fim2kbvxll5715xp-playwright-test-1.59.1/lib/node_modules",
+      "PLAYWRIGHT_BROWSERS_PATH=/nix/store/f0rap655j6wmqbfvqdw445kwcxkxwf7n-playwright-browsers",
+      "go",
+      "-C",
+      "portal",
+      "test",
+      "-mod=readonly",
+      "./internal/web",
+      "-run",
+      "^TestIndexRefreshPreservesSelection$",
+      "-v",
+      "-count=1"
+    ],
+    "exitStatus": 0,
+    "elapsed": 29.17773555032909,
+    "revision": "a0d4c202a2e68646aea2d93ce1f0cebaae59175b"
+  },
+  {
+    "name": "packaged",
+    "command": [
+      "nix",
+      "build",
+      "--no-link",
+      "--print-out-paths",
+      "--print-build-logs",
+      ".#checks.x86_64-linux.package",
+      ".#checks.x86_64-linux.session-archive-lifecycle"
+    ],
+    "exitStatus": 0,
+    "elapsed": 1160.5120915230364,
+    "revision": "a0d4c202a2e68646aea2d93ce1f0cebaae59175b"
+  }
+]
