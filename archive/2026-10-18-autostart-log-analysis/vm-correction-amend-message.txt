@@ -1,0 +1,21 @@
+osctld: prepare child descriptors before applying process limits
+
+Applying a container's NOFILE limit while its forked helper is still
+closing inherited descriptors can prevent opening /proc/self/fd. The
+helper then exits before returning a wrapper PID, aborting that autostart
+item with EOF instead of reaching the normal start result.
+
+Require the child to acknowledge completed descriptor cleanup and setup
+before the privileged parent applies the configured limits and releases
+the workload. Close helper-owned pipes on failure and collect only the
+failed helper PID, preserving caller ownership after a successful handoff.
+Retain existing descriptor, Ruby IO owner and socket cleanup behavior.
+
+Cover the ordering with a gated fork and actual low NOFILE limit, plus
+failed handshakes and process cleanup. Add a packaged-helper VM regression
+with excess inherited descriptors and parallel container autostart,
+configured limits, console, exec and clean stop coverage.
+
+This changes only the private helper handshake. Existing process limits,
+container state and public interfaces remain compatible across nodes.
+

@@ -1,0 +1,939 @@
+SHELL: 0
+
+START: 2026-10-18 12:53:13 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-18 12:53:13 +0200
+ELAPSED: 0.14s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:53:13 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-18 12:53:13 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:53:13 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 12:53:19 +0200
+ELAPSED: 5.22s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 12:53:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 12:53:21 +0200
+ELAPSED: 1.32s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 12:53:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 12:53:23 +0200
+ELAPSED: 1.26s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 12:53:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 12:53:25 +0200
+ELAPSED: 0.96s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 12:53:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 12:53:27 +0200
+ELAPSED: 1.21s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 12:53:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 12:53:36 +0200
+ELAPSED: 7.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 12:53:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 12:53:39 +0200
+ELAPSED: 2.26s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 12:53:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 12:53:42 +0200
+ELAPSED: 1.96s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-18 12:53:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 12:53:45 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-18 12:53:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 12:53:47 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-18 12:53:47 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-18 12:53:48 +0200
+ELAPSED: 0.3s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Sun, 18 Oct 2026 10:53:48 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-18 12:53:48 +0200
+COMMAND: /etc/switch-user-prlimits
+END: 2026-10-18 12:53:50 +0200
+ELAPSED: 2.1s
+STATUS: 0
+OUTPUT:
+{"preparation":{"inherited_fds":1200,"nofile":[8192,8192]},"nofile":[1024,8192],"uid":65534,"open_fds":7,"source":"/nix/store/267vmjs7dal780db6vid5q7dfq7wbl86-ruby3.4-osctld-26.05.0/lib/ruby/gems/3.4.0/gems/osctld-26.05.0/lib/osctld/switch_user.rb","sha256":"96ca72b3ee79bbff5627b2939674987725923706ec64669720c2ad5bfc58389f"}
+---
+
+START: 2026-10-18 12:53:50 +0200
+COMMAND: osctl ct new --distribution alpine prlimit-first
+END: 2026-10-18 12:53:55 +0200
+ELAPSED: 5.21s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-18 12:53:55 +0200
+COMMAND: osctl ct unset start-menu prlimit-first
+END: 2026-10-18 12:53:56 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:53:56 +0200
+COMMAND: osctl ct prlimits set prlimit-first nofile 1024 8192
+END: 2026-10-18 12:53:57 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:53:57 +0200
+COMMAND: osctl ct set autostart --delay 0 prlimit-first
+END: 2026-10-18 12:53:58 +0200
+ELAPSED: 1.17s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:53:58 +0200
+COMMAND: osctl ct mount prlimit-first
+END: 2026-10-18 12:53:59 +0200
+ELAPSED: 1.19s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:53:59 +0200
+COMMAND: osctl -j ct show prlimit-first
+END: 2026-10-18 12:54:00 +0200
+ELAPSED: 1.2s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"prlimit-first","user":"prlimit-first","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/prlimit-first","rootfs":"/tank/ct/prlimit-first/private","boot_dataset":"tank/ct/prlimit-first","boot_rootfs":"/tank/ct/prlimit-first/private","lxc_path":"/run/osctl/pools/tank/users/prlimit-first/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/prlimit-first/group.default/cts/prlimit-first","group_path":"osctl/pool.tank/group.default/user.prlimit-first/ct.prlimit-first/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":true,"autostart_priority":1000,"autostart_delay":0,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/prlimit-first.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-18 12:54:01 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/8d628cef-nix--store--297rp47ghjbqqvwbwi6gb3qwhd40g6j2-switch-user-console-init" "/tank/ct/prlimit-first/private/sbin/prlimit-console"
+END: 2026-10-18 12:54:01 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:01 +0200
+COMMAND: osctl ct set init-cmd prlimit-first /sbin/prlimit-console
+END: 2026-10-18 12:54:02 +0200
+ELAPSED: 1.35s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:02 +0200
+COMMAND: osctl ct new --distribution alpine prlimit-second
+END: 2026-10-18 12:54:07 +0200
+ELAPSED: 4.59s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-18 12:54:07 +0200
+COMMAND: osctl ct unset start-menu prlimit-second
+END: 2026-10-18 12:54:08 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:08 +0200
+COMMAND: osctl ct prlimits set prlimit-second nofile 1024 8192
+END: 2026-10-18 12:54:10 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:10 +0200
+COMMAND: osctl ct set autostart --delay 0 prlimit-second
+END: 2026-10-18 12:54:11 +0200
+ELAPSED: 1.9s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:11 +0200
+COMMAND: osctl ct mount prlimit-second
+END: 2026-10-18 12:54:13 +0200
+ELAPSED: 1.43s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:13 +0200
+COMMAND: osctl -j ct show prlimit-second
+END: 2026-10-18 12:54:15 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"prlimit-second","user":"prlimit-second","group":"/default","uid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/prlimit-second","rootfs":"/tank/ct/prlimit-second/private","boot_dataset":"tank/ct/prlimit-second","boot_rootfs":"/tank/ct/prlimit-second/private","lxc_path":"/run/osctl/pools/tank/users/prlimit-second/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/prlimit-second/group.default/cts/prlimit-second","group_path":"osctl/pool.tank/group.default/user.prlimit-second/ct.prlimit-second/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":true,"autostart_priority":1000,"autostart_delay":0,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/prlimit-second.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-18 12:54:15 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/7cce214e-nix--store--297rp47ghjbqqvwbwi6gb3qwhd40g6j2-switch-user-console-init" "/tank/ct/prlimit-second/private/sbin/prlimit-console"
+END: 2026-10-18 12:54:15 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:15 +0200
+COMMAND: osctl ct set init-cmd prlimit-second /sbin/prlimit-console
+END: 2026-10-18 12:54:16 +0200
+ELAPSED: 1.31s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:16 +0200
+COMMAND: osctl pool export tank
+END: 2026-10-18 12:54:18 +0200
+ELAPSED: 2.08s
+STATUS: 0
+OUTPUT:
+Grabbing all containers
+Stopping all containers
+[1/2] Stopping container tank:prlimit-second
+[2/2] Stopping container tank:prlimit-first
+Unregistering users, groups and containers
+Unregistering user tank:prlimit-first
+Unregistering user tank:prlimit-second
+Removing cgroups
+---
+
+START: 2026-10-18 12:54:18 +0200
+COMMAND: osctl pool import tank
+END: 2026-10-18 12:54:20 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 12:54:21 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-18 12:54:21 +0200
+COMMAND: osctl -j pool show tank
+END: 2026-10-18 12:54:22 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+{"name":"tank","dataset":"tank","state":"active","users":2,"groups":2,"containers":2,"parallel_start":2,"parallel_stop":4}
+---
+
+START: 2026-10-18 12:54:22 +0200
+COMMAND: test "$(osctl ct show -H -o state prlimit-first)" = running
+END: 2026-10-18 12:54:24 +0200
+ELAPSED: 1.21s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:25 +0200
+COMMAND: test "$(osctl ct show -H -o state prlimit-first)" = running
+END: 2026-10-18 12:54:26 +0200
+ELAPSED: 1.29s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:26 +0200
+COMMAND: osctl -j ct show prlimit-first
+END: 2026-10-18 12:54:27 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"prlimit-first","user":"prlimit-first","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/prlimit-first","rootfs":"/tank/ct/prlimit-first/private","boot_dataset":"tank/ct/prlimit-first","boot_rootfs":"/tank/ct/prlimit-first/private","lxc_path":"/run/osctl/pools/tank/users/prlimit-first/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/prlimit-first/group.default/cts/prlimit-first","group_path":"osctl/pool.tank/group.default/user.prlimit-first/ct.prlimit-first/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":3163,"autostart":true,"autostart_priority":1000,"autostart_delay":0,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/prlimit-console","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/prlimit-first.log","memory":2232320,"cpu_us":1387997,"cpu_user_us":861478,"cpu_system_us":526519,"loadavg":[0.15,0.03,0.01]}
+---
+
+START: 2026-10-18 12:54:27 +0200
+COMMAND: cat /proc/3163/limits
+END: 2026-10-18 12:54:27 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+Limit                     Soft Limit           Hard Limit           Units     
+Max cpu time              unlimited            unlimited            seconds   
+Max file size             unlimited            unlimited            bytes     
+Max data size             unlimited            unlimited            bytes     
+Max stack size            8388608              unlimited            bytes     
+Max core file size        0                    unlimited            bytes     
+Max resident set          unlimited            unlimited            bytes     
+Max processes             31757                31757                processes 
+Max open files            1024                 8192                 files     
+Max locked memory         8388608              8388608              bytes     
+Max address space         unlimited            unlimited            bytes     
+Max file locks            unlimited            unlimited            locks     
+Max pending signals       31757                31757                signals   
+Max msgqueue size         819200               819200               bytes     
+Max nice priority         0                    0                    
+Max realtime priority     0                    0                    
+Max realtime timeout      unlimited            unlimited            us        
+---
+
+START: 2026-10-18 12:54:27 +0200
+COMMAND: test "$(osctl ct show -H -o state prlimit-second)" = running
+END: 2026-10-18 12:54:29 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 12:54:29 +0200
+COMMAND: osctl -j ct show prlimit-second
+END: 2026-10-18 12:54:31 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"prlimit-second","user":"prlimit-second","group":"/default","uid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/prlimit-second","rootfs":"/tank/ct/prlimit-second/private","boot_dataset":"tank/ct/prlimit-second","boot_rootfs":"/tank/ct/prlimit-second/private","lxc_path":"/run/osctl/pools/tank/users/prlimit-second/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/prlimit-second/group.default/cts/prlimit-second","group_path":"osctl/pool.tank/group.default/user.prlimit-second/ct.prlimit-second/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":3200,"autostart":true,"autostart_priority":1000,"autostart_delay":0,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/prlimit-console","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/prlimit-second.log","memory":1470464,"cpu_us":1291440,"cpu_user_us":854120,"cpu_system_us":437319,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-18 12:54:31 +0200
+COMMAND: cat /proc/3200/limits
+END: 2026-10-18 12:54:31 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+Limit                     Soft Limit           Hard Limit           Units     
+Max cpu time              unlimited            unlimited            seconds   
+Max file size             unlimited            unlimited            bytes     
+Max data size             unlimited            unlimited            bytes     
+Max stack size            8388608              unlimited            bytes     
+Max core file size        0                    unlimited            bytes     
+Max resident set          unlimited            unlimited            bytes     
+Max processes             31757                31757                processes 
+Max open files            1024                 8192                 files     
+Max locked memory         8388608              8388608              bytes     
+Max address space         unlimited            unlimited            bytes     
+Max file locks            unlimited            unlimited            locks     
+Max pending signals       31757                31757                signals   
+Max msgqueue size         819200               819200               bytes     
+Max nice priority         0                    0                    
+Max realtime priority     0                    0                    
+Max realtime timeout      unlimited            unlimited            us        
+---
+
+START: 2026-10-18 12:54:31 +0200
+COMMAND: osctl ct exec prlimit-first sh -c 'printf PRLIMIT_EXEC'
+END: 2026-10-18 12:54:33 +0200
+ELAPSED: 2.82s
+STATUS: 0
+OUTPUT:
+PRLIMIT_EXEC
+---
+
+START: 2026-10-18 12:54:33 +0200
+COMMAND: /etc/switch-user-console prlimit-first
+END: 2026-10-18 12:54:35 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+Press Ctrl+a q to detach the console
+
+prlimit-console
+prlimit-console
+PRLIMIT_ECHO:prlimit-console
+---
+
+START: 2026-10-18 12:54:35 +0200
+COMMAND: osctl ct stop prlimit-first
+END: 2026-10-18 12:54:39 +0200
+ELAPSED: 4.04s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-18 12:54:39 +0200
+COMMAND: osctl -j ct show prlimit-first
+END: 2026-10-18 12:54:40 +0200
+ELAPSED: 1.28s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"prlimit-first","user":"prlimit-first","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/prlimit-first","rootfs":"/tank/ct/prlimit-first/private","boot_dataset":"tank/ct/prlimit-first","boot_rootfs":"/tank/ct/prlimit-first/private","lxc_path":"/run/osctl/pools/tank/users/prlimit-first/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/prlimit-first/group.default/cts/prlimit-first","group_path":"osctl/pool.tank/group.default/user.prlimit-first/ct.prlimit-first/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":true,"autostart_priority":1000,"autostart_delay":0,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/prlimit-console","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/prlimit-first.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-18 12:54:40 +0200
+COMMAND: osctl ct exec prlimit-second sh -c 'printf PRLIMIT_EXEC'
+END: 2026-10-18 12:54:44 +0200
+ELAPSED: 3.17s
+STATUS: 0
+OUTPUT:
+PRLIMIT_EXEC
+---
+
+START: 2026-10-18 12:54:44 +0200
+COMMAND: /etc/switch-user-console prlimit-second
+END: 2026-10-18 12:54:45 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+Press Ctrl+a q to detach the console
+
+prlimit-console
+prlimit-console
+PRLIMIT_ECHO:prlimit-console
+---
+
+START: 2026-10-18 12:54:45 +0200
+COMMAND: osctl ct stop prlimit-second
+END: 2026-10-18 12:54:49 +0200
+ELAPSED: 3.96s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-18 12:54:49 +0200
+COMMAND: osctl -j ct show prlimit-second
+END: 2026-10-18 12:54:51 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"prlimit-second","user":"prlimit-second","group":"/default","uid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/prlimit-second","rootfs":"/tank/ct/prlimit-second/private","boot_dataset":"tank/ct/prlimit-second","boot_rootfs":"/tank/ct/prlimit-second/private","lxc_path":"/run/osctl/pools/tank/users/prlimit-second/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/prlimit-second/group.default/cts/prlimit-second","group_path":"osctl/pool.tank/group.default/user.prlimit-second/ct.prlimit-second/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":true,"autostart_priority":1000,"autostart_delay":0,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/prlimit-console","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/prlimit-second.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-18 12:54:51 +0200
+COMMAND: cat /var/log/osctld
+END: 2026-10-18 12:54:51 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+2026-10-18T12:53:39.983794+02:00 vpsadminos osctld[2457]: [system-users] getent passwd
+2026-10-18T12:53:40.269051+02:00 vpsadminos osctld[2457]: [system-limits] Setting /proc/sys/fs/file-max to 1048576
+2026-10-18T12:53:40.272159+02:00 vpsadminos osctld[2457]: [cpu-scheduler] 4 CPUs in 1 packages
+2026-10-18T12:53:40.272483+02:00 vpsadminos osctld[2457]: [cpu-scheduler] CPU package 0: 4 CPUs, mask=0-3
+2026-10-18T12:53:40.273741+02:00 vpsadminos osctld[2457]: [daemon] AppArmor disabled
+2026-10-18T12:53:40.279988+02:00 vpsadminos osctld[2457]: [OsCtld::NetInterface::Routed] ip link show dev osrtr0
+2026-10-18T12:53:40.334442+02:00 vpsadminos osctld[2457]: [OsCtld::NetInterface::Routed] ip link add osrtr0 type dummy
+2026-10-18T12:53:40.361152+02:00 vpsadminos osctld[2457]: [OsCtld::NetInterface::Routed] ip -4 addr add 255.255.255.254/32 dev osrtr0
+2026-10-18T12:53:40.446894+02:00 vpsadminos osctld[2457]: [daemon] Listening on control socket at /run/osctl/osctld.sock
+2026-10-18T12:53:40.449030+02:00 vpsadminos osctld[2457]: [#<OsCtld::Commands::Pool::Import:0x00007019e16bfce0>] zfs list -H -d0 -o name,mounted,org.vpsadminos.osctl:active,org.vpsadminos.osctl:dataset
+2026-10-18T12:53:42.569093+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_show'
+2026-10-18T12:53:43.007156+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'self_ping'
+2026-10-18T12:53:44.570815+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_install'
+2026-10-18T12:53:44.571246+02:00 vpsadminos osctld[2457]: [#<OsCtld::Commands::Pool::Install:0x00007019e16b8bc0>] zfs set org.vpsadminos.osctl:active=yes tank
+2026-10-18T12:53:44.649579+02:00 vpsadminos osctld[2457]: [pool=tank] zfs get -Hp -ovalue mountpoint,org.vpsadminos.osctl:active,org.vpsadminos.osctl:dataset tank
+2026-10-18T12:53:44.822875+02:00 vpsadminos osctld[2457]: [#<OsCtld::Commands::Pool::Import:0x00007019e16b0b50>] zfs get -H -o value mounted,org.vpsadminos.osctl:dataset tank
+2026-10-18T12:53:44.880685+02:00 vpsadminos osctld[2457]: [pool=tank] Importing pool
+2026-10-18T12:53:44.882592+02:00 vpsadminos osctld[2457]: [pool=tank] zfs get -Hp -ovalue mountpoint,org.vpsadminos.osctl:active,org.vpsadminos.osctl:dataset tank
+2026-10-18T12:53:44.978132+02:00 vpsadminos osctld[2457]: [pool=tank] Ensuring presence of base datasets and directories
+2026-10-18T12:53:44.978606+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/ct
+2026-10-18T12:53:45.025666+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_show'
+2026-10-18T12:53:45.215587+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/conf
+2026-10-18T12:53:45.441600+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/hook
+2026-10-18T12:53:45.670965+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/log
+2026-10-18T12:53:45.904856+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/repository
+2026-10-18T12:53:46.139978+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/migration
+2026-10-18T12:53:46.402099+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/trash
+2026-10-18T12:53:46.589952+02:00 vpsadminos osctld[2457]: [pool=tank] Loading ID ranges
+2026-10-18T12:53:46.599221+02:00 vpsadminos osctld[2457]: [pool=tank] Loading users
+2026-10-18T12:53:46.601096+02:00 vpsadminos osctld[2457]: [bpf-program-cache] Loaded 0 programs
+2026-10-18T12:53:46.601305+02:00 vpsadminos osctld[2457]: [bpf-program-cache] Loaded 0 links
+2026-10-18T12:53:46.601339+02:00 vpsadminos osctld[2457]: [pool=tank] Loading groups
+2026-10-18T12:53:46.672673+02:00 vpsadminos osctld[2457]: [#<OsCtld::Devices::V2::BpfProgram:0x00007019e22253c8>] devcgprog -name 946a3e34004 new /run/osctl/bpf/osctl/progs/946a3e34004 allow c:1:3:rwm c:1:5:rwm c:1:7:rwm c:1:8:rwm c:1:9:rwm c:1:11:rwm c:5:0:rwm c:5:1:rwm c:5:2:rwm c:136:*:rwm b:*:*:m c:*:*:m
+2026-10-18T12:53:46.760103+02:00 vpsadminos osctld[2457]: [#<OsCtld::Devices::V2::BpfProgram:0x00007019e22253c8>] devcgprog attach /run/osctl/bpf/osctl/progs/946a3e34004 /run/osctl/cgroup/osctl/pool.tank /run/osctl/bpf/osctl/pools/tank/links/devcg-946a3e34004-on-run-osctl-cgroup-osctl-pool\x2etank
+2026-10-18T12:53:46.825288+02:00 vpsadminos osctld[2457]: [#<OsCtld::Devices::V2::BpfProgram:0x00007019e22253c8>] devcgprog attach /run/osctl/bpf/osctl/progs/946a3e34004 /run/osctl/cgroup/osctl/pool.tank/group.default /run/osctl/bpf/osctl/pools/tank/links/devcg-946a3e34004-on-run-osctl-cgroup-osctl-pool\x2etank-group\x2edefault
+2026-10-18T12:53:46.865041+02:00 vpsadminos osctld[2457]: [pool=tank] Loading containers
+2026-10-18T12:53:46.865589+02:00 vpsadminos osctld[2457]: [tank/ct] zfs get -r -H -p -o name,property,value -t filesystem name,mountpoint tank/ct
+2026-10-18T12:53:46.946136+02:00 vpsadminos osctld[2457]: [pool=tank] Going to load 0 containers, 2 at a time
+2026-10-18T12:53:46.948945+02:00 vpsadminos osctld[2457]: [pool=tank] All containers loaded
+2026-10-18T12:53:46.953081+02:00 vpsadminos osctld[2457]: [pool=tank] Loading repositories
+2026-10-18T12:53:46.971129+02:00 vpsadminos osctld[2457]: [pool=tank] Pool imported in 2.09 seconds
+2026-10-18T12:53:47.666612+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_show'
+2026-10-18T12:53:48.101989+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_set'
+2026-10-18T12:53:49.097066+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_set'
+2026-10-18T12:53:51.158722+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_create'
+2026-10-18T12:53:52.781512+02:00 vpsadminos osctld[2457]: [system-users] groupadd -g 100000 tank-prlimit-first
+2026-10-18T12:53:52.848998+02:00 vpsadminos osctld[2457]: [system-users] useradd -u 100000 -g 100000 -d /run/osctl/pools/tank/users/prlimit-first/.home -c osctl tank-prlimit-first
+2026-10-18T12:53:52.977248+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs create -p -o canmount=noauto tank/ct/prlimit-first
+2026-10-18T12:53:53.326044+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-first
+2026-10-18T12:53:53.399395+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs mount  tank/ct/prlimit-first
+2026-10-18T12:53:55.067270+02:00 vpsadminos osctld[2457]: [#<OsCtld::Container::Importer:0x00007019e06894c0>] zfs destroy  tank/ct/prlimit-first@osctl-base-1792207000
+2026-10-18T12:53:55.172473+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs get -H -o value mountpoint tank/ct/prlimit-first
+2026-10-18T12:53:55.274672+02:00 vpsadminos osctld[2457]: [monitor] Starting pool/user/group monitor for tank:prlimit-first:/default
+2026-10-18T12:53:56.352671+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_unset'
+2026-10-18T12:53:57.375987+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_prlimit_set'
+2026-10-18T12:53:58.512238+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_set'
+2026-10-18T12:53:59.667327+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_mount'
+2026-10-18T12:53:59.668135+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-first
+2026-10-18T12:54:00.923517+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:02.351517+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_set'
+2026-10-18T12:54:03.809159+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_create'
+2026-10-18T12:54:04.972093+02:00 vpsadminos osctld[2457]: [system-users] groupadd -g 100001 tank-prlimit-second
+2026-10-18T12:54:05.045494+02:00 vpsadminos osctld[2457]: [system-users] useradd -u 100001 -g 100001 -d /run/osctl/pools/tank/users/prlimit-second/.home -c osctl tank-prlimit-second
+2026-10-18T12:54:05.150316+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs create -p -o canmount=noauto tank/ct/prlimit-second
+2026-10-18T12:54:05.423161+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-second
+2026-10-18T12:54:05.501980+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs mount  tank/ct/prlimit-second
+2026-10-18T12:54:06.764853+02:00 vpsadminos osctld[2457]: [#<OsCtld::Container::Importer:0x00007019e1593c18>] zfs destroy  tank/ct/prlimit-second@osctl-base-1792207000
+2026-10-18T12:54:06.895713+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs get -H -o value mountpoint tank/ct/prlimit-second
+2026-10-18T12:54:06.978108+02:00 vpsadminos osctld[2457]: [monitor] Starting pool/user/group monitor for tank:prlimit-second:/default
+2026-10-18T12:54:08.409951+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_unset'
+2026-10-18T12:54:09.939968+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_prlimit_set'
+2026-10-18T12:54:11.842628+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_set'
+2026-10-18T12:54:13.238593+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_mount'
+2026-10-18T12:54:13.239100+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-second
+2026-10-18T12:54:15.039152+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:16.427983+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_set'
+2026-10-18T12:54:17.789581+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_export'
+2026-10-18T12:54:17.795722+02:00 vpsadminos osctld[2457]: [tank:auto-stop] Auto-stopping containers, 4 containers at a time
+2026-10-18T12:54:17.796144+02:00 vpsadminos osctld[2457]: [tank:auto-stop] 2 containers to stop
+2026-10-18T12:54:17.796457+02:00 vpsadminos osctld[2457]: [tank:auto-stop] Using priority auto-stop
+2026-10-18T12:54:17.801579+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Auto-stopping container
+2026-10-18T12:54:17.806164+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Auto-stopping container
+2026-10-18T12:54:17.807645+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] No started or retiring run, skipping exit promise
+2026-10-18T12:54:17.820891+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] No started or retiring run, skipping exit promise
+2026-10-18T12:54:17.954715+02:00 vpsadminos osctld[2457]: [monitor] Monitor of pool/user/group tank:prlimit-first:/default exited
+2026-10-18T12:54:17.986051+02:00 vpsadminos osctld[2457]: [monitor] Stopped lxc-monitord
+2026-10-18T12:54:17.991702+02:00 vpsadminos osctld[2457]: [monitor] Monitor of pool/user/group tank:prlimit-second:/default exited
+2026-10-18T12:54:18.024980+02:00 vpsadminos osctld[2457]: [monitor] Stopped lxc-monitord
+2026-10-18T12:54:18.029183+02:00 vpsadminos osctld[2457]: [system-users] userdel -f tank-prlimit-first
+2026-10-18T12:54:18.175081+02:00 vpsadminos osctld[2457]: [system-users] groupdel tank-prlimit-first
+2026-10-18T12:54:18.254123+02:00 vpsadminos osctld[2457]: [#<OsCtld::Commands::Pool::Export:0x00007019e172ee38>] rm -rf "/run/osctl/pools/tank/users/prlimit-first"
+2026-10-18T12:54:18.313893+02:00 vpsadminos osctld[2457]: [system-users] userdel -f tank-prlimit-second
+2026-10-18T12:54:18.412875+02:00 vpsadminos osctld[2457]: [system-users] groupdel tank-prlimit-second
+2026-10-18T12:54:18.458537+02:00 vpsadminos osctld[2457]: [#<OsCtld::Commands::Pool::Export:0x00007019e172ee38>] rm -rf "/run/osctl/pools/tank/users/prlimit-second"
+2026-10-18T12:54:19.648607+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_import'
+2026-10-18T12:54:19.649165+02:00 vpsadminos osctld[2457]: [#<OsCtld::Commands::Pool::Import:0x00007019e1597368>] zfs get -H -o value mounted,org.vpsadminos.osctl:dataset tank
+2026-10-18T12:54:19.729097+02:00 vpsadminos osctld[2457]: [pool=tank] Importing pool
+2026-10-18T12:54:19.730409+02:00 vpsadminos osctld[2457]: [pool=tank] zfs get -Hp -ovalue mountpoint,org.vpsadminos.osctl:active,org.vpsadminos.osctl:dataset tank
+2026-10-18T12:54:19.812634+02:00 vpsadminos osctld[2457]: [pool=tank] Ensuring presence of base datasets and directories
+2026-10-18T12:54:19.812712+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/ct
+2026-10-18T12:54:19.888652+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/conf
+2026-10-18T12:54:19.934020+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/hook
+2026-10-18T12:54:19.980139+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/log
+2026-10-18T12:54:20.024462+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/repository
+2026-10-18T12:54:20.069644+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/migration
+2026-10-18T12:54:20.110141+02:00 vpsadminos osctld[2457]: [pool=tank] zfs create -p tank/trash
+2026-10-18T12:54:20.155858+02:00 vpsadminos osctld[2457]: [pool=tank] Loading ID ranges
+2026-10-18T12:54:20.160321+02:00 vpsadminos osctld[2457]: [pool=tank] Loading users
+2026-10-18T12:54:20.175326+02:00 vpsadminos osctld[2457]: [system-users] groupadd -g 100000 tank-prlimit-first
+2026-10-18T12:54:20.229419+02:00 vpsadminos osctld[2457]: [system-users] useradd -u 100000 -g 100000 -d /run/osctl/pools/tank/users/prlimit-first/.home -c osctl tank-prlimit-first
+2026-10-18T12:54:20.285612+02:00 vpsadminos osctld[2457]: [system-users] groupadd -g 100001 tank-prlimit-second
+2026-10-18T12:54:20.349096+02:00 vpsadminos osctld[2457]: [system-users] useradd -u 100001 -g 100001 -d /run/osctl/pools/tank/users/prlimit-second/.home -c osctl tank-prlimit-second
+2026-10-18T12:54:20.414156+02:00 vpsadminos osctld[2457]: [bpf-program-cache] Loaded 0 links
+2026-10-18T12:54:20.414398+02:00 vpsadminos osctld[2457]: [pool=tank] Loading groups
+2026-10-18T12:54:20.427387+02:00 vpsadminos osctld[2457]: [#<OsCtld::Devices::V2::BpfProgram:0x00007019e0621050>] devcgprog -name 946a3e34004 new /run/osctl/bpf/osctl/progs/946a3e34004 allow c:1:3:rwm c:1:5:rwm c:1:7:rwm c:1:8:rwm c:1:9:rwm c:1:11:rwm c:5:0:rwm c:5:1:rwm c:5:2:rwm c:136:*:rwm b:*:*:m c:*:*:m
+2026-10-18T12:54:20.459085+02:00 vpsadminos osctld[2457]: [#<OsCtld::Devices::V2::BpfProgram:0x00007019e0621050>] devcgprog attach /run/osctl/bpf/osctl/progs/946a3e34004 /run/osctl/cgroup/osctl/pool.tank /run/osctl/bpf/osctl/pools/tank/links/devcg-946a3e34004-on-run-osctl-cgroup-osctl-pool\x2etank
+2026-10-18T12:54:20.499533+02:00 vpsadminos osctld[2457]: [#<OsCtld::Devices::V2::BpfProgram:0x00007019e0621050>] devcgprog attach /run/osctl/bpf/osctl/progs/946a3e34004 /run/osctl/cgroup/osctl/pool.tank/group.default /run/osctl/bpf/osctl/pools/tank/links/devcg-946a3e34004-on-run-osctl-cgroup-osctl-pool\x2etank-group\x2edefault
+2026-10-18T12:54:20.531136+02:00 vpsadminos osctld[2457]: [pool=tank] Loading containers
+2026-10-18T12:54:20.531363+02:00 vpsadminos osctld[2457]: [tank/ct] zfs get -r -H -p -o name,property,value -t filesystem name,mountpoint tank/ct
+2026-10-18T12:54:20.612025+02:00 vpsadminos osctld[2457]: [pool=tank] Going to load 2 containers, 2 at a time
+2026-10-18T12:54:20.613519+02:00 vpsadminos osctld[2457]: [pool=tank] Loading container prlimit-first
+2026-10-18T12:54:20.615041+02:00 vpsadminos osctld[2457]: [pool=tank] Loading container prlimit-second
+2026-10-18T12:54:20.678577+02:00 vpsadminos osctld[2457]: [monitor] Starting pool/user/group monitor for tank:prlimit-second:/default
+2026-10-18T12:54:20.686602+02:00 vpsadminos osctld[2457]: [monitor] Starting pool/user/group monitor for tank:prlimit-first:/default
+2026-10-18T12:54:20.688961+02:00 vpsadminos osctld[2457]: [pool=tank] All containers loaded
+2026-10-18T12:54:20.700218+02:00 vpsadminos osctld[2457]: [pool=tank] Loading repositories
+2026-10-18T12:54:20.750497+02:00 vpsadminos osctld[2457]: [tank:auto-start] Auto-starting containers, 2 containers at a time
+2026-10-18T12:54:20.751588+02:00 vpsadminos osctld[2457]: [tank:auto-start] 2 containers to start
+2026-10-18T12:54:20.751956+02:00 vpsadminos osctld[2457]: [tank:auto-start] Using priority auto-start
+2026-10-18T12:54:20.756413+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Delaying auto-start by 1.68s
+2026-10-18T12:54:20.757472+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Delaying auto-start by 0.82s
+2026-10-18T12:54:20.757741+02:00 vpsadminos osctld[2457]: [pool=tank] Pool imported in 1.03 seconds
+2026-10-18T12:54:21.578537+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Auto-starting container
+2026-10-18T12:54:21.593722+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-first
+2026-10-18T12:54:21.809725+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_show'
+2026-10-18T12:54:22.169629+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_wrapper_start'
+2026-10-18T12:54:22.171604+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Reattaching wrapper, PID 3131 -> osctl/pool.tank/group.default/user.prlimit-first/ct.prlimit-first/user-owned
+2026-10-18T12:54:22.182400+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Set /proc/3131/oom_score_adj=0
+2026-10-18T12:54:22.219302+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-first entered state STARTING
+2026-10-18T12:54:22.409492+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_pre_start'
+2026-10-18T12:54:22.412362+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-first
+2026-10-18T12:54:22.435731+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Auto-starting container
+2026-10-18T12:54:22.450702+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-second
+2026-10-18T12:54:22.495484+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Configuring cgroups
+2026-10-18T12:54:22.496991+02:00 vpsadminos osctld[2457]: [group=tank:/] Configuring group 'osctl/pool.tank'
+2026-10-18T12:54:22.497567+02:00 vpsadminos osctld[2457]: [group=tank:/default] Configuring group 'osctl/pool.tank/default'
+2026-10-18T12:54:22.504544+02:00 vpsadminos osctld[2457]: [#<OsCtld::Devices::V2::BpfProgram:0x00007019e0621050>] devcgprog attach /run/osctl/bpf/osctl/progs/946a3e34004 /run/osctl/cgroup/osctl/pool.tank/group.default/user.prlimit-first/ct.prlimit-first /run/osctl/bpf/osctl/pools/tank/links/devcg-946a3e34004-on-run-osctl-cgroup-osctl-pool\x2etank-group\x2edefault-user\x2eprlimit\x2dfirst-ct\x2eprlimit\x2dfirst
+2026-10-18T12:54:22.539204+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e21e6ad8>] mount --bind "/run/osctl/pools/tank/mounts/prlimit-first" "/run/osctl/pools/tank/mounts/prlimit-first"
+2026-10-18T12:54:22.571277+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e21e6ad8>] mount --make-rshared "/run/osctl/pools/tank/mounts/prlimit-first"
+2026-10-18T12:54:22.598573+02:00 vpsadminos osctld[2457]: [bpf-fs] mount -t bpf -o nosuid,nodev,noexec,uid\=1000000,gid\=1000000,mode\=700 bpf /run/osctl/ct-bpf/tank/prlimit-first
+2026-10-18T12:54:22.630978+02:00 vpsadminos osctld[2457]: [bpf-fs] mount --make-rprivate /run/osctl/ct-bpf/tank/prlimit-first
+2026-10-18T12:54:22.798666+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_wrapper_start'
+2026-10-18T12:54:22.799976+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Reattaching wrapper, PID 3157 -> osctl/pool.tank/group.default/user.prlimit-second/ct.prlimit-second/user-owned
+2026-10-18T12:54:22.811652+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Set /proc/3157/oom_score_adj=0
+2026-10-18T12:54:22.817714+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_show'
+2026-10-18T12:54:22.827576+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-second entered state STARTING
+2026-10-18T12:54:22.994179+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_pre_start'
+2026-10-18T12:54:22.995418+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-second
+2026-10-18T12:54:23.037351+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Configuring cgroups
+2026-10-18T12:54:23.038429+02:00 vpsadminos osctld[2457]: [group=tank:/] Configuring group 'osctl/pool.tank'
+2026-10-18T12:54:23.038856+02:00 vpsadminos osctld[2457]: [group=tank:/default] Configuring group 'osctl/pool.tank/default'
+2026-10-18T12:54:23.045495+02:00 vpsadminos osctld[2457]: [#<OsCtld::Devices::V2::BpfProgram:0x00007019e0621050>] devcgprog attach /run/osctl/bpf/osctl/progs/946a3e34004 /run/osctl/cgroup/osctl/pool.tank/group.default/user.prlimit-second/ct.prlimit-second /run/osctl/bpf/osctl/pools/tank/links/devcg-946a3e34004-on-run-osctl-cgroup-osctl-pool\x2etank-group\x2edefault-user\x2eprlimit\x2dsecond-ct\x2eprlimit\x2dsecond
+2026-10-18T12:54:23.064983+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e225cf30>] mount --bind "/run/osctl/pools/tank/mounts/prlimit-second" "/run/osctl/pools/tank/mounts/prlimit-second"
+2026-10-18T12:54:23.082464+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_pre_mount'
+2026-10-18T12:54:23.089935+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-first
+2026-10-18T12:54:23.094591+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e21e6ad8>] mount --bind -o X-mount.idmap\=/proc/3172/ns/user /tank/ct/prlimit-first/private /run/osctl/pools/tank/mounts/prlimit-first/9aaf29bbd5b55a33e6fee5ad4f7261fcfd4f3e3675e35fde30c1c097a19dc16e
+2026-10-18T12:54:23.117454+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e225cf30>] mount --make-rshared "/run/osctl/pools/tank/mounts/prlimit-second"
+2026-10-18T12:54:23.164613+02:00 vpsadminos osctld[2457]: [bpf-fs] mount -t bpf -o nosuid,nodev,noexec,uid\=1065536,gid\=1065536,mode\=700 bpf /run/osctl/ct-bpf/tank/prlimit-second
+2026-10-18T12:54:23.196180+02:00 vpsadminos osctld[2457]: [bpf-fs] mount --make-rprivate /run/osctl/ct-bpf/tank/prlimit-second
+2026-10-18T12:54:23.419705+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_post_mount'
+2026-10-18T12:54:23.426083+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-first
+2026-10-18T12:54:23.427398+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e21e6ad8>] umount "/run/osctl/pools/tank/mounts/prlimit-first/9aaf29bbd5b55a33e6fee5ad4f7261fcfd4f3e3675e35fde30c1c097a19dc16e"
+2026-10-18T12:54:23.585139+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_pre_mount'
+2026-10-18T12:54:23.587712+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-second
+2026-10-18T12:54:23.589652+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e225cf30>] mount --bind -o X-mount.idmap\=/proc/3206/ns/user /tank/ct/prlimit-second/private /run/osctl/pools/tank/mounts/prlimit-second/d08470673246489712f9d0f487449712a657acaa2636045c9cb3bd34ae676cbd
+2026-10-18T12:54:23.689420+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_autodev'
+2026-10-18T12:54:23.691629+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-first
+2026-10-18T12:54:23.872968+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_post_mount'
+2026-10-18T12:54:23.874853+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-second
+2026-10-18T12:54:23.875418+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e225cf30>] umount "/run/osctl/pools/tank/mounts/prlimit-second/d08470673246489712f9d0f487449712a657acaa2636045c9cb3bd34ae676cbd"
+2026-10-18T12:54:23.979041+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:23.990985+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_on_start'
+2026-10-18T12:54:24.023471+02:00 vpsadminos osctld[891]: D, [2026-10-18T12:54:24.020743 #3235] DEBUG -- : [prlimit-first] Using OsCtld::DistConfig::Distributions::Debian::Configurator for alpine
+2026-10-18T12:54:24.023594+02:00 vpsadminos osctld[891]: D, [2026-10-18T12:54:24.022567 #3235] DEBUG -- : [prlimit-first] Using OsCtld::DistConfig::Network::Ifupdown for network configuration
+2026-10-18T12:54:24.100291+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_autodev'
+2026-10-18T12:54:24.107096+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-second
+2026-10-18T12:54:24.136545+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-first entered state RUNNING
+2026-10-18T12:54:24.300637+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Skipping autostart delay thanks to low system load average
+2026-10-18T12:54:24.380605+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_on_start'
+2026-10-18T12:54:24.415395+02:00 vpsadminos osctld[891]: D, [2026-10-18T12:54:24.414114 #3252] DEBUG -- : [prlimit-second] Using OsCtld::DistConfig::Distributions::Debian::Configurator for alpine
+2026-10-18T12:54:24.416297+02:00 vpsadminos osctld[891]: D, [2026-10-18T12:54:24.415433 #3252] DEBUG -- : [prlimit-second] Using OsCtld::DistConfig::Network::Ifupdown for network configuration
+2026-10-18T12:54:24.538716+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-second entered state RUNNING
+2026-10-18T12:54:24.649582+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Skipping autostart delay thanks to low system load average
+2026-10-18T12:54:26.274313+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:27.781660+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:29.543992+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:30.975445+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:32.075472+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_exec'
+2026-10-18T12:54:35.361051+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_console'
+2026-10-18T12:54:35.363666+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Connecting client to TTY 0
+2026-10-18T12:54:35.364112+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Connection hijacked
+2026-10-18T12:54:35.632005+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Disconnecting client from TTY 0
+2026-10-18T12:54:36.930638+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_stop'
+2026-10-18T12:54:38.787706+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-first exited with 0
+2026-10-18T12:54:38.787959+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-first entered state STOPPING
+2026-10-18T12:54:38.932657+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-first entered state STOPPED
+2026-10-18T12:54:39.068624+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_post_stop'
+2026-10-18T12:54:39.070879+02:00 vpsadminos osctld[2457]: [bpf-fs] umount -f /run/osctl/ct-bpf/tank/prlimit-first
+2026-10-18T12:54:39.187215+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Closing TTY 0 (EOFError: end of file reached)
+2026-10-18T12:54:39.200656+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-first
+2026-10-18T12:54:39.274324+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs unmount  tank/ct/prlimit-first
+2026-10-18T12:54:39.425489+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-first
+2026-10-18T12:54:39.508864+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs mount  tank/ct/prlimit-first
+2026-10-18T12:54:39.641974+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Exit promise fulfilled
+2026-10-18T12:54:40.950252+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:42.303153+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_exec'
+2026-10-18T12:54:45.391629+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_console'
+2026-10-18T12:54:45.393373+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Connecting client to TTY 0
+2026-10-18T12:54:45.393692+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Connection hijacked
+2026-10-18T12:54:45.557177+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Disconnecting client from TTY 0
+2026-10-18T12:54:46.833002+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_stop'
+2026-10-18T12:54:48.594931+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-second exited with 0
+2026-10-18T12:54:48.595096+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-second entered state STOPPING
+2026-10-18T12:54:48.722241+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-second entered state STOPPED
+2026-10-18T12:54:48.889996+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_post_stop'
+2026-10-18T12:54:48.890552+02:00 vpsadminos osctld[2457]: [bpf-fs] umount -f /run/osctl/ct-bpf/tank/prlimit-second
+2026-10-18T12:54:49.021254+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Closing TTY 0 (EOFError: end of file reached)
+2026-10-18T12:54:49.033000+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-second
+2026-10-18T12:54:49.106316+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs unmount  tank/ct/prlimit-second
+2026-10-18T12:54:49.256249+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-second
+2026-10-18T12:54:49.349589+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs mount  tank/ct/prlimit-second
+2026-10-18T12:54:49.481352+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Exit promise fulfilled
+2026-10-18T12:54:51.211465+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+---
+
+START: 2026-10-18 12:54:51 +0200
+COMMAND: tail -n 100 /var/log/osctld
+END: 2026-10-18 12:54:51 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+2026-10-18T12:54:21.593722+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-first
+2026-10-18T12:54:21.809725+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_show'
+2026-10-18T12:54:22.169629+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_wrapper_start'
+2026-10-18T12:54:22.171604+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Reattaching wrapper, PID 3131 -> osctl/pool.tank/group.default/user.prlimit-first/ct.prlimit-first/user-owned
+2026-10-18T12:54:22.182400+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Set /proc/3131/oom_score_adj=0
+2026-10-18T12:54:22.219302+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-first entered state STARTING
+2026-10-18T12:54:22.409492+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_pre_start'
+2026-10-18T12:54:22.412362+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-first
+2026-10-18T12:54:22.435731+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Auto-starting container
+2026-10-18T12:54:22.450702+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-second
+2026-10-18T12:54:22.495484+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Configuring cgroups
+2026-10-18T12:54:22.496991+02:00 vpsadminos osctld[2457]: [group=tank:/] Configuring group 'osctl/pool.tank'
+2026-10-18T12:54:22.497567+02:00 vpsadminos osctld[2457]: [group=tank:/default] Configuring group 'osctl/pool.tank/default'
+2026-10-18T12:54:22.504544+02:00 vpsadminos osctld[2457]: [#<OsCtld::Devices::V2::BpfProgram:0x00007019e0621050>] devcgprog attach /run/osctl/bpf/osctl/progs/946a3e34004 /run/osctl/cgroup/osctl/pool.tank/group.default/user.prlimit-first/ct.prlimit-first /run/osctl/bpf/osctl/pools/tank/links/devcg-946a3e34004-on-run-osctl-cgroup-osctl-pool\x2etank-group\x2edefault-user\x2eprlimit\x2dfirst-ct\x2eprlimit\x2dfirst
+2026-10-18T12:54:22.539204+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e21e6ad8>] mount --bind "/run/osctl/pools/tank/mounts/prlimit-first" "/run/osctl/pools/tank/mounts/prlimit-first"
+2026-10-18T12:54:22.571277+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e21e6ad8>] mount --make-rshared "/run/osctl/pools/tank/mounts/prlimit-first"
+2026-10-18T12:54:22.598573+02:00 vpsadminos osctld[2457]: [bpf-fs] mount -t bpf -o nosuid,nodev,noexec,uid\=1000000,gid\=1000000,mode\=700 bpf /run/osctl/ct-bpf/tank/prlimit-first
+2026-10-18T12:54:22.630978+02:00 vpsadminos osctld[2457]: [bpf-fs] mount --make-rprivate /run/osctl/ct-bpf/tank/prlimit-first
+2026-10-18T12:54:22.798666+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_wrapper_start'
+2026-10-18T12:54:22.799976+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Reattaching wrapper, PID 3157 -> osctl/pool.tank/group.default/user.prlimit-second/ct.prlimit-second/user-owned
+2026-10-18T12:54:22.811652+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Set /proc/3157/oom_score_adj=0
+2026-10-18T12:54:22.817714+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'pool_show'
+2026-10-18T12:54:22.827576+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-second entered state STARTING
+2026-10-18T12:54:22.994179+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_pre_start'
+2026-10-18T12:54:22.995418+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-second
+2026-10-18T12:54:23.037351+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Configuring cgroups
+2026-10-18T12:54:23.038429+02:00 vpsadminos osctld[2457]: [group=tank:/] Configuring group 'osctl/pool.tank'
+2026-10-18T12:54:23.038856+02:00 vpsadminos osctld[2457]: [group=tank:/default] Configuring group 'osctl/pool.tank/default'
+2026-10-18T12:54:23.045495+02:00 vpsadminos osctld[2457]: [#<OsCtld::Devices::V2::BpfProgram:0x00007019e0621050>] devcgprog attach /run/osctl/bpf/osctl/progs/946a3e34004 /run/osctl/cgroup/osctl/pool.tank/group.default/user.prlimit-second/ct.prlimit-second /run/osctl/bpf/osctl/pools/tank/links/devcg-946a3e34004-on-run-osctl-cgroup-osctl-pool\x2etank-group\x2edefault-user\x2eprlimit\x2dsecond-ct\x2eprlimit\x2dsecond
+2026-10-18T12:54:23.064983+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e225cf30>] mount --bind "/run/osctl/pools/tank/mounts/prlimit-second" "/run/osctl/pools/tank/mounts/prlimit-second"
+2026-10-18T12:54:23.082464+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_pre_mount'
+2026-10-18T12:54:23.089935+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-first
+2026-10-18T12:54:23.094591+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e21e6ad8>] mount --bind -o X-mount.idmap\=/proc/3172/ns/user /tank/ct/prlimit-first/private /run/osctl/pools/tank/mounts/prlimit-first/9aaf29bbd5b55a33e6fee5ad4f7261fcfd4f3e3675e35fde30c1c097a19dc16e
+2026-10-18T12:54:23.117454+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e225cf30>] mount --make-rshared "/run/osctl/pools/tank/mounts/prlimit-second"
+2026-10-18T12:54:23.164613+02:00 vpsadminos osctld[2457]: [bpf-fs] mount -t bpf -o nosuid,nodev,noexec,uid\=1065536,gid\=1065536,mode\=700 bpf /run/osctl/ct-bpf/tank/prlimit-second
+2026-10-18T12:54:23.196180+02:00 vpsadminos osctld[2457]: [bpf-fs] mount --make-rprivate /run/osctl/ct-bpf/tank/prlimit-second
+2026-10-18T12:54:23.419705+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_post_mount'
+2026-10-18T12:54:23.426083+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-first
+2026-10-18T12:54:23.427398+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e21e6ad8>] umount "/run/osctl/pools/tank/mounts/prlimit-first/9aaf29bbd5b55a33e6fee5ad4f7261fcfd4f3e3675e35fde30c1c097a19dc16e"
+2026-10-18T12:54:23.585139+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_pre_mount'
+2026-10-18T12:54:23.587712+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-second
+2026-10-18T12:54:23.589652+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e225cf30>] mount --bind -o X-mount.idmap\=/proc/3206/ns/user /tank/ct/prlimit-second/private /run/osctl/pools/tank/mounts/prlimit-second/d08470673246489712f9d0f487449712a657acaa2636045c9cb3bd34ae676cbd
+2026-10-18T12:54:23.689420+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_autodev'
+2026-10-18T12:54:23.691629+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-first
+2026-10-18T12:54:23.872968+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_post_mount'
+2026-10-18T12:54:23.874853+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-second
+2026-10-18T12:54:23.875418+02:00 vpsadminos osctld[2457]: [#<OsCtld::Mount::SharedDir:0x00007019e225cf30>] umount "/run/osctl/pools/tank/mounts/prlimit-second/d08470673246489712f9d0f487449712a657acaa2636045c9cb3bd34ae676cbd"
+2026-10-18T12:54:23.979041+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:23.990985+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_on_start'
+2026-10-18T12:54:24.023471+02:00 vpsadminos osctld[891]: D, [2026-10-18T12:54:24.020743 #3235] DEBUG -- : [prlimit-first] Using OsCtld::DistConfig::Distributions::Debian::Configurator for alpine
+2026-10-18T12:54:24.023594+02:00 vpsadminos osctld[891]: D, [2026-10-18T12:54:24.022567 #3235] DEBUG -- : [prlimit-first] Using OsCtld::DistConfig::Network::Ifupdown for network configuration
+2026-10-18T12:54:24.100291+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Received command 'ct_autodev'
+2026-10-18T12:54:24.107096+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::NamespacedClientHandler] Forwarding request to user tank:prlimit-second
+2026-10-18T12:54:24.136545+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-first entered state RUNNING
+2026-10-18T12:54:24.300637+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Skipping autostart delay thanks to low system load average
+2026-10-18T12:54:24.380605+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_on_start'
+2026-10-18T12:54:24.415395+02:00 vpsadminos osctld[891]: D, [2026-10-18T12:54:24.414114 #3252] DEBUG -- : [prlimit-second] Using OsCtld::DistConfig::Distributions::Debian::Configurator for alpine
+2026-10-18T12:54:24.416297+02:00 vpsadminos osctld[891]: D, [2026-10-18T12:54:24.415433 #3252] DEBUG -- : [prlimit-second] Using OsCtld::DistConfig::Network::Ifupdown for network configuration
+2026-10-18T12:54:24.538716+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-second entered state RUNNING
+2026-10-18T12:54:24.649582+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Skipping autostart delay thanks to low system load average
+2026-10-18T12:54:26.274313+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:27.781660+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:29.543992+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:30.975445+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:32.075472+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_exec'
+2026-10-18T12:54:35.361051+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_console'
+2026-10-18T12:54:35.363666+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Connecting client to TTY 0
+2026-10-18T12:54:35.364112+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Connection hijacked
+2026-10-18T12:54:35.632005+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Disconnecting client from TTY 0
+2026-10-18T12:54:36.930638+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_stop'
+2026-10-18T12:54:38.787706+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-first exited with 0
+2026-10-18T12:54:38.787959+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-first entered state STOPPING
+2026-10-18T12:54:38.932657+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-first entered state STOPPED
+2026-10-18T12:54:39.068624+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_post_stop'
+2026-10-18T12:54:39.070879+02:00 vpsadminos osctld[2457]: [bpf-fs] umount -f /run/osctl/ct-bpf/tank/prlimit-first
+2026-10-18T12:54:39.187215+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Closing TTY 0 (EOFError: end of file reached)
+2026-10-18T12:54:39.200656+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-first
+2026-10-18T12:54:39.274324+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs unmount  tank/ct/prlimit-first
+2026-10-18T12:54:39.425489+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-first
+2026-10-18T12:54:39.508864+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-first] zfs mount  tank/ct/prlimit-first
+2026-10-18T12:54:39.641974+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-first] Exit promise fulfilled
+2026-10-18T12:54:40.950252+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+2026-10-18T12:54:42.303153+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_exec'
+2026-10-18T12:54:45.391629+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_console'
+2026-10-18T12:54:45.393373+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Connecting client to TTY 0
+2026-10-18T12:54:45.393692+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Connection hijacked
+2026-10-18T12:54:45.557177+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Disconnecting client from TTY 0
+2026-10-18T12:54:46.833002+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_stop'
+2026-10-18T12:54:48.594931+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-second exited with 0
+2026-10-18T12:54:48.595096+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-second entered state STOPPING
+2026-10-18T12:54:48.722241+02:00 vpsadminos osctld[2457]: [monitor] Container tank:prlimit-second entered state STOPPED
+2026-10-18T12:54:48.889996+02:00 vpsadminos osctld[2457]: [OsCtld::UserControl::Supervisor::ClientHandler] Received command 'ct_post_stop'
+2026-10-18T12:54:48.890552+02:00 vpsadminos osctld[2457]: [bpf-fs] umount -f /run/osctl/ct-bpf/tank/prlimit-second
+2026-10-18T12:54:49.021254+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Closing TTY 0 (EOFError: end of file reached)
+2026-10-18T12:54:49.033000+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-second
+2026-10-18T12:54:49.106316+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs unmount  tank/ct/prlimit-second
+2026-10-18T12:54:49.256249+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs list -H -o name,mounted -t filesystem -r tank/ct/prlimit-second
+2026-10-18T12:54:49.349589+02:00 vpsadminos osctld[2457]: [tank/ct/prlimit-second] zfs mount  tank/ct/prlimit-second
+2026-10-18T12:54:49.481352+02:00 vpsadminos osctld[2457]: [ct=tank:prlimit-second] Exit promise fulfilled
+2026-10-18T12:54:51.211465+02:00 vpsadminos osctld[2457]: [OsCtld::Daemon::ClientHandler] Received command 'ct_show'
+---
+
+START: 2026-10-18 12:54:51 +0200
+COMMAND: osctl ct stop prlimit-first
+END: 2026-10-18 12:54:52 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-18 12:54:52 +0200
+COMMAND: osctl ct del --prune prlimit-first
+END: 2026-10-18 12:54:54 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:prlimit-first
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-18 12:54:54 +0200
+COMMAND: osctl ct stop prlimit-second
+END: 2026-10-18 12:54:56 +0200
+ELAPSED: 1.29s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-18 12:54:56 +0200
+COMMAND: osctl ct del --prune prlimit-second
+END: 2026-10-18 12:54:58 +0200
+ELAPSED: 2.15s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:prlimit-second
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-18 12:54:58 +0200
+COMMAND: poweroff -f
+END: 2026-10-18 12:55:10 +0200
+ELAPSED: 11.91s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

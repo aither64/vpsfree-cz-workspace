@@ -1,0 +1,55 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-18-autostart-log-analysis/vpsadminos' is dirty
+Successfully installed bundler-4.0.23
+1 gem installed
+Bundle complete! 6 Gemfile dependencies, 44 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+Run options: include {full_description: /waits\ for\ cleanup\ with\ over\ 1024\ inherited\ FDs\ before\ lowering\ the\ child\ limit/}
+
+Randomized with seed 28375
+.
+
+Finished in 0.21718 seconds (files took 0.56312 seconds to load)
+1 example, 0 failures
+
+Randomized with seed 28375
+
+/tmp/autostart-order-control.T4qpoB/baseline.rb:9: warning: already initialized constant OsCtld::SwitchUser::SYSTEM_PATH
+/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-18-autostart-log-analysis/vpsadminos/osctld/lib/osctld/switch_user.rb:9: warning: previous definition of SYSTEM_PATH was here
+Run options: include {full_description: /waits\ for\ cleanup\ with\ over\ 1024\ inherited\ FDs\ before\ lowering\ the\ child\ limit/}
+
+Randomized with seed 52405
+RSpec::Expectations::ExpectationNotMetError: 
+expected: :waiting_for_preparation
+     got: :applying_limits
+
+(compared using ==)
+
+Diff:
+@@ -1 +1 @@
+-:waiting_for_preparation
++:applying_limits
+F
+
+Failures:
+
+  1) OsCtld::SwitchUser.fork_and_switch_to waits for cleanup with over 1024 inherited FDs before lowering the child limit
+     Failure/Error: expect(Process.wait2(pid).last.exitstatus).to eq(0)
+
+       expected: 0
+            got: 1
+
+       (compared using ==)
+     # ./spec/osctld/switch_user_spec.rb:39:in 'RSpec::ExampleGroups::OsCtldSwitchUser#in_cleanup_child'
+     # ./spec/osctld/switch_user_spec.rb:137:in 'block (3 levels) in <top (required)>'
+     # ./spec/osctld/switch_user_spec.rb:12:in 'block (2 levels) in <top (required)>'
+
+Finished in 0.18016 seconds (files took 0.71989 seconds to load)
+1 example, 1 failure
+
+Failed examples:
+
+rspec ./spec/osctld/switch_user_spec.rb:136 # OsCtld::SwitchUser.fork_and_switch_to waits for cleanup with over 1024 inherited FDs before lowering the child limit
+
+Randomized with seed 52405
+
+CONTROL: corrected helper passes; exact baseline applies limits before preparation.

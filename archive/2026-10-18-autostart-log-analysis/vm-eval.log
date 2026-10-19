@@ -1,0 +1,22 @@
+error:
+       … while evaluating attribute 'jsonDrv'
+         at «string»:1:286:
+            1| let f = builtins.getFlake (toString ./.); t = import ./tests/suite/osctld/switch-user-prlimits.nix { pkgs = f.inputs.nixpkgs.outPath; testFramework = f.lib.testFramework; }; m = t.config.machines.machine; in { name = t.config.name; kernel = m.kernel; toplevelDrv = m.toplevel.drvPath; jsonDrv = t.json.drvPath; }
+             |                                                                                                                                                                                                                                                                                              ^
+
+       … while evaluating the attribute 'json.drvPath'
+         at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-18-autostart-log-analysis/vpsadminos/tests/make-test.nix:371:3:
+          370|   config = renderedTestConfig;
+          371|   json = jsonConfig;
+             |   ^
+          372| }
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: attribute 'osctld' missing
+       at /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-18-autostart-log-analysis/vpsadminos/tests/suite/osctld/switch-user-prlimits.nix:162:25:
+          161|           command = [
+          162|             'GEM_HOME=${pkgs.osctld.basicEnv}/${pkgs.ruby_vpsadminos.gemPath}',
+             |                         ^
+          163|             'GEM_PATH=${pkgs.osctld.basicEnv}/${pkgs.ruby_vpsadminos.gemPath}',
+       Did you mean one of gsctl or oswald?

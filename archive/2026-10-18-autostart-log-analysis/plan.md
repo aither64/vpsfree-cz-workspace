@@ -1,6 +1,14 @@
 # osctld autostart descriptor-limit race
 
-## Goal and authorized endpoint
+## Latest scope decision
+
+Osctld subsequently merged into remote staging at60f9ed1c under explicit user
+direction. No deployment. The requested swap plan is superseded by confirmed
+colleague branch fix/kernel-stability-20261018, which pins the repaired kernel
+and adds large-swap tests. Stop our duplicate swap work; see
+[confirmation](colleague-swap-confirmation.md). Original scope follows as history.
+
+## Original goal and authorized endpoint
 
 Implement the accepted osctld-only plan and deliver a tested, independently reviewed, published feature branch. User explicitly deferred swap and histfile, selected reviewed branch rather than rollout, then requested implementation. No default-branch integration, deployment, service restart or node reboot is authorized by this task.
 

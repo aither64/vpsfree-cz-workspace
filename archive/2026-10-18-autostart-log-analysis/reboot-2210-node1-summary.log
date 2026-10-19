@@ -1,0 +1,69 @@
+node1.stg read-only log verification, 2026-10-18
+
+Collection: root@log.int.prg.vpsfree.cz, SSH -F /dev/null, BatchMode=yes,
+StrictHostKeyChecking=yes. Server checked 22:28:48+02:00, CEST,
+Europe/Amsterdam. Fixed window 22:10:00 through 22:28:48 inclusive seconds.
+Current host log and shared runit log cover the entire requested window.
+No line cap; no remote writes, node actions, recovery or source/Git/build work.
+
+reboot-2210-node1-host.log: 22645 retained lines; source window 32767,
+357 sshd lines and 9765 container kernel lines excluded. Coverage first
+22:10:00.638422+02:00, last 22:28:46.998558+02:00. Metadata in host-meta.log.
+reboot-2210-node1-runit.log: 1049 retained node1 FQDN-matched lines,
+first 22:10:05.090458+02:00, last 22:28:46.449485+02:00. No excluded matches.
+Metadata in runit-meta.log. Runit embedded 20:xx timestamps are UTC;
+outer 22:xx+02:00 timestamps are the local chronology used below.
+
+Shutdown vs new boot:
+- Host:524 self_shutdown at 22:10:23.935944; repeated at :5063 22:13:17.
+- Host:5198 new Linux 6.12.113 boot at 22:14:08.078434. Duplicate boot
+  banner :5645 has the same timestamp/version and is not a second reboot.
+- All 47 TTY EOF-close messages are old shutdown, 22:10:30.841357 through
+  22:12:43.892243 (:1176 to :4524). No new-boot EOF messages.
+
+Autostart:
+- Host:12233 22:15:06.809202 parallelism 8; :12234 22:15:06.830781 selects 47.
+- 47 unique Auto-starting container records, each once; 47 unique success
+  delay markers, each once; 47 ct_on_start commands. Attempt-minus-success
+  set is empty. First attempt :12423 22:15:07.488351; final success :17097
+  22:16:45.843060. These are log outcomes, not a live current-state query.
+- Zero new-boot EMFILE/Too many open files, executor EOF, any EOFError,
+  retry/exhaustion, swap_cgroup allocation, Call Trace, BUG or panic patterns.
+- Pool import succeeds host:12340 at 22:15:06.899675 (40.71 seconds).
+  nodectld resumes host:12482 at 22:15:07.978711; pool-tank finishes runit:805
+  at 22:15:10.280239.
+
+Swap:
+- Runit:84 /dev/sdb and :86 /dev/sda swapon fail Device or resource busy at
+  22:14:09.237591 and 22:14:09.238700. Each immediately has a service-success
+  message (:85 and :87). This is not the earlier allocation failure.
+- Kernel host:18308 at 22:18:46.502453 adds 195360980k swap on /dev/sda;
+  host:18316 at 22:19:04.522428 adds 195360980k on /dev/sdb, both priority 0.
+- No allocator failure or swap-cgroup trace. Logs establish those activation
+  events, not current /proc/swaps or the cause of the later activation.
+
+Independent issues:
+- Histfile still has 7 getent: command not found messages, runit:89 through
+  :166 at 22:14:09.294875--22:14:16.039892. It restores /.bash_history from
+  /tank/.bash_history (:167) and monitors /.bash_history (:168).
+- nodectld startup net-accounting thread exception host:7766--7791 at
+  22:14:22: osctld socket not yet present. Later PID6462 imports/resumes and
+  continues periodic status updates through 22:28; no repeated exception.
+- One 47-VPS ct-top-missing batch at 22:17:18.671202--.676243, host:17679--17725,
+  not a repeated later failure. Startup hostname warnings affect 10 NixOS
+  containers, last host:17013 22:16:40.263271, all have success markers.
+- 161 IRQ affinity permission warnings from 22:14:18 to 22:17:38; no later
+  repeats. NFS recovery tracking warning host:7403; early rsyslog transport
+  network-unreachable warnings host:7030--7037 and insecure-default notices.
+- Recurring late errors are Munin tomcat parse, sensors interface and IRQ
+  permission failures, including runit:892--926 near 22:20 and :983--1017
+  near 22:25. No matching host error/failed/exception/warn patterns after 22:20
+  through the fixed collection end.
+
+Deployed identity observable in logs:
+- Host:5198 kernel 6.12.113, build Sun Oct18 17:47:47 UTC2026.
+- Host:5200 init closure 1kncrf8mh77zq4llhg4xsf6lclm3dyi8, OS26.05.git.2abbe3c,
+  httproot generation192. Host:6961 nixpkgs=26f4107e; :6962 vpsadmin=ff730be4;
+  :6963 vpsadminos=2abbe3cc; :6964 repeats OS/kernel version.
+- Full Linux source SHA and full input SHAs are not present in this capture;
+  do not infer a particular bitmap patch from kernel version alone.

@@ -1,0 +1,10 @@
+tests/osctld: cover preparation before process limits
+
+Exercise the packaged SwitchUser helper with 1,200 inherited descriptors
+before applying the container's lower open-file limit. Check the loaded
+source, inherited descriptors, target identity and actual child limits so
+the regression covers the installed helper and native prlimit path.
+
+Autostart two small containers in parallel and verify their limits,
+console, exec and clean shutdown without EMFILE or EOF errors. Use the
+existing tank machine and kernel configuration.
