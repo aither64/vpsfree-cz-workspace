@@ -10,7 +10,8 @@ session, cluster, VM disk or KB data may be removed manually.
 
 ## Scope and evidence
 
-Owning project: dev-workspace. Extend its existing periodic coordination collector
+Owning project: dev-workspace. Matching generated runtime pins in workspace and
+vpsfree-cz-configuration prepare its coordinated rollout. Extend its existing periodic coordination collector
 rather than add a separate scheduler. At 09:32 CEST October 19 the filesystem was
 95% full with 50 GiB available. Since October 17: workspace Nix source snapshots
 40.7 -> 83.0 GiB; coordination 39.8 -> 80.1 GiB; feature worktrees 48.7 -> 64.7 GiB;

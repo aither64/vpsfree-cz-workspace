@@ -18,7 +18,11 @@ Validate Git registration, detached state, canonical repository ownership and
 cleanliness; preserve process references, holds, busy resources and live metadata
 references. Remove via Git, retain refs and compact journals. Journal optional
 payloadGcPending records bind exact path/common Git directory/head before removal
-and let a retry finish an interrupted removal even after the directory vanished.
+and let a retry finish an interrupted removal even after tracked files, `.git`
+or the whole directory vanished. Once admitted, remaining files belong to the
+pending removal; the checkout must not be reused. A surviving path must keep
+its exact detached Git registration, and holds/process/live references still
+postpone retries. Ordinary dirty checkouts without that admitted intent survive.
 Old source retention bookkeeping remains unchanged and old readers can ignore
 this additive journal field. No DB migration or new predecessor schema is needed.
 
