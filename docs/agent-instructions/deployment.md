@@ -12,6 +12,8 @@ Before deployment activation or a workspace profile switch, read
 claims; activate through the exact owner's approved jobs and machine reservation.
 Retain that reservation during human review, feedback and redeployment. Finish
 requires exact integration proofs and explicit deployment/review completion.
+Successful archival also releases the owner's reservations after cleanup, without
+claiming integration. See the runtime coordination guide for recovery rules.
 
 In every confctl-managed configuration repository, inspect its defined
 channels and the channel-to-input mapping before updating a flake input. For a

@@ -6,9 +6,11 @@ to the coordination workspace unless the text specifies another repository.
 
 Read [coordination](../coordination.md) before a lifecycle/package mutation that
 affects queued work or a machine reservation. Running/uncertain operations fence
-lifecycle changes; archived/deleted deployed owners retain recovery reservations.
-Revival preserves ownership. Package candidates must preserve the coordination
-contract and retained artifacts; inactivity never frees a review reservation.
+lifecycle changes. Successful archive completion releases machine reservations;
+failed or interrupted archival keeps deployed holds until recovery completes.
+Revival does not reacquire released machines or resume canceled work. Deletion
+retains its recovery holds. Package candidates must preserve the coordination
+contract and retained artifacts; inactivity alone never frees a review reservation.
 
 Sensitive sessions keep these lifecycle and coordination checks, but their
 tracking moves stay local and do not require or create Git commits. Preserve

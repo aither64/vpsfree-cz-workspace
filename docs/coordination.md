@@ -57,9 +57,11 @@ the matching host module separately from the application profile.
    A stale snapshot requires fresh preparation and applicable verification/review;
    an uncertain effect requires reconciliation.
 6. Keep the machine reservation during UI review, feedback and redeployment,
-   including periods when the session's agent is idle. Release only after exact
-   final integration proofs and explicit deployment/review completion. Keep the
-   initiative active while its feature heads remain unmerged.
+   including periods when the session's agent is idle. Normal completion releases
+   it after exact final integration proofs and explicit deployment/review completion.
+   Successful archival also releases the session's reservations after cleanup;
+   failed archives retain recovery holds. Keep the initiative active for follow-up
+   unless the user requests archival or the enabled automatic policy applies.
 
 Use `dev-session coordination status SLUG --as-is --json` for authoritative job,
 reservation and delivery state. The workspace menu's Operations page gives a
