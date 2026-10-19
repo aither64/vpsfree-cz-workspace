@@ -3,12 +3,13 @@ lifecycle: active
 ---
 # Current status
 
-Phase: implementation preparation. The user approved the shared lifecycle repair and instructed implementation. External supervisor owns the work; managed root 01a1559d-7b7b-7fa3-a584-745dcf9b1282 remains idle.
+Phase: independent final review. The user approved the shared lifecycle repair and instructed implementation. External supervisor owns the work; managed root 01a1559d-7b7b-7fa3-a584-745dcf9b1282 remains idle.
 
 - [x] Investigate and reproduce nonblocking archive failure (shared observer causes failure in 1.2ms before a journal).
 - [x] Approve plan and create independent initiative.
-- [ ] Implement shared acquisition policy and portal lock ordering with tests.
-- [ ] Commit and quick verification, independent review.
+- [x] Implement shared acquisition policy and portal lock ordering with tests.
+- [x] Commit and quick verification.
+- [ ] Independent final review (all four lanes; in progress).
 - [ ] Packaged/VM verification and deployment preparation.
 - [ ] Coordinated aitherdev system/profile deployment and original request recovery.
 
@@ -17,3 +18,80 @@ Affected repositories: dev-workspace, workspace, vpsfree-cz-configuration. Featu
 Observed existing workspace changes span unrelated initiatives and notes; preserve them and stage only owned records under the shared tracking lock. Initial start without a goal correctly refused noninteractive creation; retried with an explicit external-supervision goal. No abandoned setup shell was created by the refusal.
 
 Original failed session 2026-10-19-session-archive-refresh-fix has receipt ed5897f17bbb3424f6e6647c0d83dd6c953112280cb0718210e1ee70f46b41ac, operation a0feaf8be13b427703b17170a8b80d971fe91f2130aae488652809e598152ac1, attempt 1. No pending journal was present during planning. Do not edit that session records to repair the request.
+
+Configuration worktree checkout hook initially failed because local gems were absent. Entered its Nix shell, installed Gemfile.lock dependencies and installed Overcommit hooks, then repeated ordinary registration. No hook bypass.
+
+Focused concurrency verification passes (9 tests, 79 assertions); Go lifecycle/worker/identity subset passes. Full initial Ruby run stalled on its predecessor test expecting delete to fail immediately under a held lock. Parent diagnosed and cancelled that exact obsolete invocation (PID 3931626), updated the test to release admission and verify other sessions continue, and the focused regression passes. Fresh final quick verification is required; no timeout is accepted as a failure waiver.
+
+Initial Go suite failures diagnosed: old timeout/retry/deletion fixtures relied on the removed conversation mutex; updated them to executor/package-admission boundaries and real shared runtime locking. Unrelated Unix-socket bind failures were caused by the long nix-shell TMPDIR pushing test socket paths beyond sockaddr_un length; subsequent Go checks use TMPDIR=/tmp. Focused replacement tests pass. Full checks are rerunning under fresh final_quick_checks watcher; initial run is not accepted.
+
+Deployment resource observation: aitherdev reservation 1ce9be0f-bd17-4c85-ab64-1a94fd352c4c remains deployed_review under owner 6a0351a8-0f36-46ce-aed4-952be3b8a569, the original failed archive session. Its recorded state explicitly retains reservation pending review completion. No release or deployment bypass has been attempted. Continue independent artifact preparation before resolving this hold.
+
+User steering: successful archive must release its machine reservations. This
+supersedes the previous retain-deployed-reservations lifecycle rule for archive.
+Release at local archive completion atomically with the exact owner lifecycle
+receipt, including idempotent completion replay of predecessor receipts. Keep
+holds through incomplete cleanup and running/uncertain deployment recovery;
+cancel queued jobs, retain deployment artifacts/history and do not reacquire on
+revive. Deletion retains its prior semantics. No merge proof or review-finish
+ceremony is required to release an explicitly archived session. Focused store
+regressions pass (4 tests/19 assertions). Runtime coordinator docs own this policy.
+
+
+Final committed runtime: 588229634b2f0f4d86b1907b854b01ee14684957.
+Workspace: 6b87a9cd038c57c3499badfd5ab1c44766ed18b7 (rebased onto
+master dc97c0f0). Configuration: 0727cd8dec3e3c98d0f630276f6b4705a20a13ff.
+The final pin stream in each consumer is consolidated. No migrations.
+
+Quick results: full Go web/session pass; Ruby full suite had one obsolete
+immediate-fail expectation (467/6906), now fixed and focused pass 1/25, plus
+lifecycle subset 6/82. Full coordination suite 57/399 passed before final
+no-history archive hold tweak; focused final source 6/28 passes. Composition
+contract passes final runtime. Config hooks pass. Final package/VM verification
+will cover exact committed sources after review.
+
+High risk final review assigned to fresh standalone /root/final_review using
+installed default lead_reviewed reviewer gpt-6-astra/xhigh. No retained roster
+exists (roster null). Catalog ffaf9deb97720995ad1d662badae7645eba1fede5068eef529c9024efa7e7376.
+All four lanes; packet final-review-packet.md and branch-inventory.json.
+No implementation delegation. Monitor agents are bounded operation utilities.
+
+Old reservation rollout: prepared stable finish request with exact old/final
+ranges, patch-ID equality, retained independent review and checksummed evidence
+under original affected session release-* files. Existing stable finish will
+verify integration and live identity; no ledger edit or deployment bypass.
+
+CI 39314198692 at 5882296 failed solely in the timestamp test that expected
+an empty-history archive reservation to release at intent. Corrected it to
+assert no finishedAt during intent and completion-time finishedAt; focused
+1 test/5 assertions passes. No production behavior changed by that follow-up.
+Amended into reservation commit and regenerating consolidated consumer pins.
+Review notified; final inventory will replace the in-progress packet ranges.
+
+Independent review Important remediations:
+- Completed sidecar without main journal previously skipped coordinator completion.
+  Added completion after retirement/tracking proof and before sidecar unlink.
+  CLI/store fault regression passes 1/30, including failure retains sidecar.
+- Requested reservation must not become blocked_recovery (held) at archive intent
+  when another owner holds machine. Keep requested while jobs canceled/owner fenced;
+  release on completion. Focused waiting-owner/cancellation/timestamp suite 4/25 passes.
+Both are narrow requested fixes, no new public contract or schema. Amended into
+reservation commit. Final consumer pins will follow completed review.
+
+Original reservation release executed via installed stable coordinator finish,
+exit0: reservation1ce9be0f state released revision5. Existing integrated source,
+reviewed rebase lineage and unchanged machine/profile proofs were verified by
+ordinary finish. Receipt original-reservation-finish.json. No ledger edits,
+feature merges, direct deployment or source appropriation. New initiative can
+now reserve near prepared deployment. Original archive remains to retry after
+fixed package selection.
+
+Final committed heads after review-history cleanup:
+- Runtime6ab3b48f57981f4358094b47cac1ba724c458396 (lifecycle10eccec then reservation).
+- Workspace4b22d04f0fefddfd01e744f990d6d9ebb5cbea12.
+- Configuration9e90ff6e176370809e121d218f9687cc1967e847.
+Complete inventory and diffs updated. Composition passes. Prior9deefdf-to-final
+runtime tree differs only by whitespace cleanup; CLI repair is in lifecycle commit.
+Superseded CI cancel requests returned403 (token lacks permission); no active run
+was silently abandoned or mistaken for final revision. Final exact CI replaces
+acceptance, no rerun of failed attempts without diagnosis.

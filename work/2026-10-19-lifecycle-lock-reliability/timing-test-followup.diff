@@ -1,0 +1,20 @@
+diff --git a/test/workspace_coordination_test.rb b/test/workspace_coordination_test.rb
+index b8957c5..31fc80e 100644
+--- a/test/workspace_coordination_test.rb
++++ b/test/workspace_coordination_test.rb
+@@ -212,10 +212,13 @@ class WorkspaceCoordinationTest < Minitest::Test
+       end
+     end
+     assert_equal '2026-01-02T00:00:00Z', timing.read['reservations'][@reservation_id]['heldAt']
+-    with_time(Time.utc(2026, 1, 3)) { @engine.store.transaction { |data| @engine.store.fence_owners!(data, [data['owners'][first['id']]], 'archive') } }
++    archive_id = '7' * 64
++    with_time(Time.utc(2026, 1, 3)) { @engine.store.bind_lifecycle(@workspace, first['slug'], 'archive', archive_id) }
++    refute timing.read['reservations'][@reservation_id].key?('finishedAt')
++    with_time(Time.utc(2026, 1, 4)) { @engine.store.lifecycle_completed(@workspace, first['slug'], 'archive', operation_id: archive_id) }
+     dates = timing.read['reservations'][@reservation_id]
+     assert_equal '2026-01-02T00:00:00Z', dates['heldAt']
+-    assert_equal '2026-01-03T00:00:00Z', dates['finishedAt']
++    assert_equal '2026-01-04T00:00:00Z', dates['finishedAt']
+   end
+ 
+   def test_session_projection_excludes_a_recreated_slugs_retained_history

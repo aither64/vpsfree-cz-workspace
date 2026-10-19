@@ -1,0 +1,87 @@
+diff --git a/libexec/dev-session b/libexec/dev-session
+index 34620ec..d185ea2 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -2300,17 +2300,19 @@ module DevSession
+ 
+     def revive_confirmation(input, as_is: true)
+       slug = lookup_slug(input, as_is:)
+-      with_creation_lock(slug) do
+-        with_slug_lock(slug) do
+-          journal = load_revive_journal(slug)
+-          next({ lifecycle: journal.fetch('lifecycle'), pending: true }) if journal
+-
+-          {
+-            lifecycle: lifecycle_state(
+-              read_bounded_file(File.join(archive_dir(slug), 'state.md'), 'state.md')
+-            ),
+-            pending: false
+-          }
++      with_lifecycle_access(slug, 'revive', operation_id: nil) do
++        with_creation_lock(slug) do
++          with_slug_lock(slug) do
++            journal = load_revive_journal(slug)
++            next({ lifecycle: journal.fetch('lifecycle'), pending: true }) if journal
++  
++            {
++              lifecycle: lifecycle_state(
++                read_bounded_file(File.join(archive_dir(slug), 'state.md'), 'state.md')
++              ),
++              pending: false
++            }
++          end
+         end
+       end
+     end
+@@ -10068,7 +10070,7 @@ module DevSession
+         if opts.fetch(:allow_abandoned)
+           raise Error, '--allow-abandoned is reserved for the portal confirmation flow'
+         end
+-        confirmation = runner.revive_confirmation(slug, as_is: true)
++        confirmation = with_lifecycle_transition { runner.revive_confirmation(slug, as_is: true) }
+         lifecycle = confirmation.fetch(:lifecycle)
+         unless confirmation.fetch(:pending)
+           warnings = lifecycle == 'abandoned' ? [
+diff --git a/test/dev_session/lifecycle_access_test.rb b/test/dev_session/lifecycle_access_test.rb
+index 1d130f6..4ec14fe 100644
+--- a/test/dev_session/lifecycle_access_test.rb
++++ b/test/dev_session/lifecycle_access_test.rb
+@@ -58,6 +58,38 @@ class DevSessionTest < Minitest::Test
+     end
+   end
+ 
++  def test_cli_revive_confirmation_waits_for_session_access_before_prompting_once
++    [['creation', File::LOCK_EX], ['session', File::LOCK_SH]].each do |kind, mode|
++      with_workspace do |workspace|
++        slug = '2026-06-06-cli-revive-access'
++        runner = runner_for(workspace)
++        runner.ensure_tracking_files(slug)
++        FileUtils.mkdir_p(File.join(workspace, 'archive'))
++        File.rename(File.join(workspace, 'work', slug), File.join(workspace, 'archive', slug))
++        waiting, prompts, calls = Queue.new, Queue.new, []
++        runner.define_singleton_method(:lifecycle_access_waiting) { |_value| waiting << true }
++        runner.define_singleton_method(:revive) { |value, **options| calls << value }
++        errors = StringIO.new
++        cli = DevSession::CLI.new(['revive', slug, '--as-is'],
++          input: SignalingTTYInput.new("yes\n", read: prompts), out: StringIO.new, err: errors)
++        cli.define_singleton_method(:runner) { runner }
++        holder = File.open(runner.send(:session_lock_file, slug, kind:), File::RDWR | File::CREAT, 0o600)
++        holder.flock(mode)
++        worker = Thread.new { cli.run }
++        Timeout.timeout(5) { waiting.pop }
++        assert worker.alive?
++        assert prompts.empty?, 'confirmation ran before lifecycle access was obtained'
++        holder.flock(File::LOCK_UN)
++        assert_equal 0, Timeout.timeout(5) { worker.value }
++        assert_equal [slug], calls
++        assert_equal 1, errors.string.scan("Revive session #{slug}?").length
++      ensure
++        holder&.close
++        worker&.join(5)
++      end
++    end
++  end
++
+   def test_interrupted_archive_wait_releases_lifecycle_admission_without_a_journal
+     with_blocked_lifecycle('archive') do |_workspace, slug, runner, _holder, worker, _output|
+       worker.kill

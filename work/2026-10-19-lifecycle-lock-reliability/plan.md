@@ -9,3 +9,13 @@ Compatibility: no schema migration; old journals retain their saved policy, pack
 Verification: deterministic lock/barrier tests, opposite-lock-order regression, changed identity/conflicting journal while waiting, cancellation and restart, duplicates, auto-archive continuity, unrelated sessions and tracking deadlines. Quick Ruby/Go/browser checks precede committed whole-branch independent review; packaged suite and archive lifecycle VM follow review. Retry the original retained archive request after deployment and verify successful local closure plus recovery preservation.
 
 Documentation readers are runtime maintainers and operators. Supported invariants go in dev-workspace/docs/session-archive-recovery.md; individual rollout evidence remains here in rollout.md.
+
+User steering: successful archive must release its machine reservations. This
+supersedes the previous retain-deployed-reservations lifecycle rule for archive.
+Release at local archive completion atomically with the exact owner lifecycle
+receipt, including idempotent completion replay of predecessor receipts. Keep
+holds through incomplete cleanup and running/uncertain deployment recovery;
+cancel queued jobs, retain deployment artifacts/history and do not reacquire on
+revive. Deletion retains its prior semantics. No merge proof or review-finish
+ceremony is required to release an explicitly archived session. Focused store
+regressions pass (4 tests/19 assertions). Runtime coordinator docs own this policy.
