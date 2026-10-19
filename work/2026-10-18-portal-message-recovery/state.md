@@ -6,39 +6,60 @@ lifecycle: active
 
 ## Current status
 
-Phase: enabling native coordination after explicit permission.
-Implementation, quick checks and independent final review are complete. Source
-Go and browser checks, runtime package check, composed workspace build, exact
-aitherdev build and final-head CI passed. Nothing has been deployed or integrated.
+Phase: deployment verified; authorized foreground merge integration running.
+Native coordination is enabled. User permission “yes” on 2026-10-19 authorized
+replacing this initiative’s shell-only runtime. Normal stop removed it; a trailing
+empty-thread recovery error is recorded below. Normal startup created retained
+thread 01a152fe-49e3-7760-bf4c-3a7b894a031f and delivered its idle instruction.
+The external conversation retains responsibility for all changes and operations.
+No roster exists; the same independent fallback reviewer remains responsible.
 
-The user replied “yes” on 2026-10-19 to the exact request to stop only this
-initiative's shell runtime and enable native coordination. The normal stop
-command, with exact-slug interactive confirmation, removed that runtime and
-its authority. Its trailing recovery call then failed because the threadless
-session's empty thread ID cannot form a recovery identity. dev-session list
-confirms TMUX none. Do not repeat stop; normal native startup is next.
-Aitherdev was last observed reserved by 2026-10-18-provider-switch-redesign;
-use the coordinator queue when eligible, without polling or releasing its owner.
+Upstream advanced while waiting. Source rebased cleanly to 8385699; all four
+commits remain patch-equivalent (source-upstream-range-diff.txt). Regenerated
+consumers preserve current provider/lifecycle changes. New published heads:
+source ff36d615, workspace ea401918, configuration 060ea034. Focused checks and
+composition contract passed. Same reviewer completed affected compatibility/history review with no new
+findings (upstream-review-report.md). Refreshed full Go, browser and runtime
+package checks passed; composed-workspace/system/CI verification continues
+under watcher 01a15303-8d43-75c3-a266-d737d46b4c5c (parent exec 69723). Original
+successful evidence below remains historical proof for the previous baseline.
+No deployment or feature integration has occurred. Last coordination status
+reported no foreign reservation; preparation/queue remains the ownership authority.
 
 ## Phase checklist
 
-- [x] Investigate behavior and settle user choices.
-- [x] Implement, document and complete quick checks.
-- [x] Commit the complete deliverable and run independent final review.
-- [x] Finish package/host builds and final-head CI.
-- [ ] Enable native coordination (shell stop authorized and complete).
-- [ ] Deploy and verify aitherdev.
+- [x] Investigate, implement, document and complete original independent review.
+- [x] Original Go/browser/package/system/CI verification.
+- [x] Authorized shell stop and normal native coordination startup.
+- [x] Clean source rebase, consolidated current pins and quick checks.
+- [x] Refreshed compatibility/history review.
+- [x] Refreshed Go/browser/runtime/workspace/system/CI verification.
+- [x] Deploy and verify aitherdev.
 - [ ] Integrate exact final heads and complete handoff.
 
 ## Next action
 
-With shell-stop permission received, consolidate current tracking under the
-ownership-handoff exception and use normal native startup with the existing
-coordination-owner-goal.txt. The external conversation retains implementation
-and operational responsibility; the native owner is idle. Prepare approved
-coordinated system activation followed by user-profile activation. Verify both
-identities, portal behavior and Codex/tmux continuity before authorized merges.
-Do not archive, delete or close this initiative.
+Supervise merge-only integration e8db8fdd-22a3-42dd-a1ee-845253c9a4dd through
+parent exec 12896, merge-integration.log and merge-integration-exit.json. The
+external conversation launched the driver in foreground from the configuration
+Nix shell with its installed hook gems; no responsibility was delegated to the
+idle native owner. The policy watcher was unavailable, so announced parent
+monitoring continues. No permission is pending.
+
+Both activation jobs succeeded. Live identities, HTTPS 401/200, exact served
+JavaScript, healthy native thread and original tmux identity passed. The deployed
+Chromium/Firefox regression passed in 22.35s with mocked API responses; no real
+message or upload writes were performed. Source assets match the verified
+package exactly. deployed-identities.json and deployed-browser-result.json bind
+acceptance to ff36d615 / ea401918 / 060ea034.
+
+Source and configuration remote baselines remain reviewed. Workspace remote
+master advanced only through other-session tracking commits to 93df8eb6; its
+pin needs a certified mechanical refresh. Preserve the deployed ea401918 range
+for final reservation replacement proof. After integration, collect exact heads,
+monitor required default-head CI, then finish reservation
+870576a1-3f84-40f6-8cb3-4ce40f9cfd16 with exact integration/acceptance proofs.
+No archive/deletion/closure is authorized for this initiative.
 
 ## Exact branches and worktrees
 
@@ -47,12 +68,12 @@ worktrees/2026-10-18-portal-message-recovery/.
 
 | Repository | Final published head | Comparison base |
 | --- | --- | --- |
-| dev-workspace | d3de362f5d8fa86bbf0c4865b0766eb614cf4e2b | 705301228f726bcc9c5e0b516abc03f6f6c995cf |
-| workspace | 5ab415afbe766a16267b7ebd5c0646eecfb310e3 | 19eeeb9214eb515a0d6f919f91d8bd6665d9056e |
-| vpsfree-cz-configuration | e9dddabf713ab6ee4b4ef24b969ebd68932346dd | 30a20d0ea78afb9854be0845b68a1974ec069b2d |
+| dev-workspace | ff36d6153a6908751a18adfdf624c3619c1f397e | 8385699aabcc2cfc74b585ca653a4658ff3eef75 |
+| workspace | ea4019189685e5188cf72504e3027af1e6838b51 | c31bd809eafc7805297f35b4d57b9d1e56804a7c |
+| vpsfree-cz-configuration | 060ea03448af6f9083506d770315ad439279e76e | 95a8b88d383c177fc65bf67d51c901a69c0b2847 |
 
 The initial workspace registration base predates its final pre-review rebase.
-verified-branch-inventory.json and *-verified.diff contain the complete current
+upstream-refreshed-inventory.json and *-upstream-refreshed.diff contain the current
 series and final diffs. Four focused source commits and one final pin per
 consumer remain; no obsolete approaches, repeated pin streams or migrations.
 Repeat the immediate pre-merge history/baseline check and comparison capture.
@@ -140,3 +161,125 @@ Stable portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-18-
 
 The earlier accidental shell-only 2026-10-18-portal-recovery-displays initiative
 and its runtime/records remain intact; no cleanup is authorized.
+
+## Shell stop evidence
+
+Normal interactive stop was confirmed with the exact slug. close_session! killed
+the identity-checked tmux runtime and removed its authority; afterward
+recovery_state! received the empty shell-only thread ID and refused. dev-session
+list confirmed TMUX none. No bypass or second stop was used. Normal native startup
+then succeeded from committed tracking.
+
+## Refreshed verification and preparation
+
+upstream-verification.json records six successful operations: Go 70.50s,
+browsers 39.56s, runtime package 317.39s, workspace 339.18s, aitherdev 138.28s,
+CI 1.08s. Watcher 01a15303-8d43-75c3-a266-d737d46b4c5c exited; no verification
+remains. Existing CI run 39214031393 succeeded at ff36d615.
+
+First machine preparation returned 75 after git worktree add's post-checkout
+hook could not load the Gemfile gems in the ambient shell. No snapshot was
+returned, no profile preparation ran and no activation/submission happened.
+Original deployment-prepare-system.log and deployment-preparation-* receipts
+are retained. The configuration feature worktree has the required gems and its
+Nix-shell hooks already passed. Separate attempt deployment2-* uses that Nix
+shell and explicit BUNDLE_PATH/BUNDLE_BIN pointing to its owned .gems/.bin.
+The same environment will be used for integration preparation if required.
+
+## Profile preparation lifecycle blocker
+
+Corrected preparation attempt 2 used the configuration Nix shell and its absolute
+owned gem paths, with hooks enabled. Machine snapshot preparation succeeded in
+86.40s at 060ea034, covering ff36d615. Snapshot/immutable artifact:
+deployment2-prepare-system.json /
+sha256:ecc367e008f6e33aed325c6e72a12e19e63bf3344651d92f21041cba238f09dd.
+Expected live system remains lg6pjp0k. No activation was attempted.
+
+Profile preparation then refused (exit 2, 10.81s): “workspace package transition
+is blocked by unfinished session operations: vpsfree-cz/2026-10-18-haveapi-async-client
+(portal direct creation), vpsfree-cz/2026-10-19-haveapi-async-support (portal direct
+creation); retry the matching dev-session command first”. No profile snapshot
+was returned. No session-owned records for those other initiatives were modified.
+The preparation2 observer completed and retained all raw failure evidence; it
+performed no retry or mutation. No preparation or watcher remains running.
+
+On 2026-10-19, the external user was asked asynchronously for explicit scope to
+inspect/recover only those two creation operations, preserving sessions and
+queued requests. The workspace ownership rule requires that scope. Await reply.
+
+## User-authorized orphan creation destruction
+
+The user explicitly asked to get rid of the two failed creations and clarified:
+“the sessions don't exist, you can destroy them”. Both had schema-3 failed
+receipts, no tracking/archive/worktree directory, no authority or tmux session.
+Native dev-session delete was attempted for the first and refused missing
+tracking; it left no pending journal. The source bug is being fixed elsewhere.
+
+For the exact approved cleanup, stopped only workspace-portal@vpsfree-cz, acquired
+the transition and both exact creation/session locks, revalidated receipt hashes
+and absence of session effects, then atomically moved the two unchanged receipts
+to private state recovery/orphan-creations-2026-10-19-portal-message-recovery.
+Fsynced both directories and restarted the portal. No other receipt or session
+was changed. orphan-creation-inventory.json and orphan-creation-removal.json
+record safe identifiers/hashes and authorization; receipt payloads remain private.
+
+The package-transition blocker is removed. Profile-only attempt 3 is running;
+it reuses the successful sealed system snapshot from attempt 2. No activation
+or integration has yet occurred.
+
+Watcher capacity failure: preparation3-watcher.log records “Selected model is
+at capacity” and turn.failed. No preparation result was returned by the watcher;
+parent monitors the original tool handle. No observer Python process remains.
+The actual preparation child is nix build --no-link --print-out-paths against
+the retained exact ea401918 checkout. Quiet work is not treated as a timeout.
+
+## Prepared and submitted deployment
+
+Profile-only attempt 3 succeeded at ea401918. Its raw Nix-shell stdout caption
+is retained in deployment3-prepare-profile.stdout; the exact returned JSON is
+normalized in deployment3-prepare-profile.json. Candidate package:
+/nix/store/1xc5smb0v6fxyyk8ywsx9fgl1lzc3z0w-dev-workspace-0.2.0.
+Coverage explicitly matches reviewed source ff36d615, workspace ea401918 and
+configuration 060ea034. System/profile snapshots and actual user directions
+were recorded through approve, reserve and ordered submit. See deployment-submitted.json.
+
+## Deployed verification evidence
+
+System/profile jobs succeeded. Current system and system profile both resolve
+to flg2q0zin3930k9br3wcw2j2xvg7lnsk; user package is 1xc5smb0. App.js SHA-256
+510cbb5bd974abf90e5c88f3332bf5e8ee82cf202d956285cce1c49953792a02 matches
+the exact reviewed source. Native thread 01a152fe-49e3-7760-bf4c-3a7b894a031f
+and tmux $166 survived; both user services are active. Real index snapshot is
+healthy with no warning/loading. HTTPS rejects unauthenticated access with 401
+and accepts credentials with 200. Credentials were read in memory from the
+existing group-readable file; the first unnecessary sudo attempt refused before
+reading any credential. No credential was logged.
+
+Initial deployed test adaptations failed because paused-clock live-page pointer
+clicks did not dispatch form submission; diagnostic proved a valid form and
+correct button association. Native DOM button activation exercised the same
+deployed handlers deterministically. Thread fixture was aligned to the real
+initial thread. The index creation form also initializes an upload draft; the
+no-live-writes guard refused that POST, then a mock draft endpoint was added.
+All failed logs/results remain separate. Final adapted browser regression
+passed Chromium and Firefox, covering retry IDs/attachments, revised drafts,
+dismissal/storage failure/reload, exact/estimated timestamps and retained DOM,
+index loading/warning grace and immediate access errors. Packaged/source browser
+tests had already passed with ordinary pointer actions. No product edit was made.
+
+## Integration preflight refusals
+
+The first integration invocation ran nix develop for configuration from the
+workspace CWD; its shell required ./Gemfile and refused before an integration
+journal existed. Retried from the configuration CWD with the same request.
+Second invocation refused a shared workspace local default commit not yet
+published: 92a9a8d3, containing only ordinary coordination plan/state/design/
+portal records. Fetch confirmed remote still 93df8eb6. Publishing this exact
+tracking-only SHA over SSH preserves shared files/index and uses the documented
+tracking exemption; it includes no project feature content. No merge job or
+integration journal had been created by either refusal.
+
+## Integration e8db8fdd-22a3-42dd-a1ee-845253c9a4dd
+
+Requested exact feature heads are integrated. See integration/e8db8fdd-22a3-42dd-a1ee-845253c9a4dd/summary.md
+and integration/e8db8fdd-22a3-42dd-a1ee-845253c9a4dd/result.json for operation receipts. Feature refs and session retained.
