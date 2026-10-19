@@ -1,5 +1,9 @@
 # Prepare selected test images before starting VMs
 
+The separate [matched performance benchmark brief](performance-plan.md) defines
+the accepted same-head, warm-cache full-native A/B comparison. Its temporary
+workflow lives only on the session's benchmark ref and changes no product code.
+
 Status: implementation brief approved through the lead on 2026-10-17. The user
 authorized implementation. This document records the agreed scope; it does not
 authorize merge, deployment, or session closure.

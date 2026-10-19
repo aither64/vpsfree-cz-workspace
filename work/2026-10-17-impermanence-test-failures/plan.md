@@ -83,3 +83,17 @@ from a warm pass or promise arbitrary-build OOM prevention.
 Independent review found incomplete preparation-side machine validation. The accepted narrow repair uses canonical OSVM parsing and existing network renderers with MAC/port allocation disabled; no duplicate schema or runtime default change. See design.md R1 refinement and review.md disposition.
 
 Actual original fixture evaluation is expensive (~20GiB client high-water mark on this96GiB builder) and scripts are sequential. The long32GiB configured-ceiling run builds both original fixture and defaults images, then executes all13selected scripts. The planned smaller16GiB warm check selects exact cached defaults, avoiding another full giant fixture evaluation. Both are admission ceilings on one builder, not hard cgroup limits or evidence from two physical hosts. The first interrupted attempt was a monitoring false-positive on a systemd unit name; preserve it as invalid verification, not a product failure/cold success.
+
+## Performance acceptance correction,19October
+
+The user explicitly requires execution-time comparison with and without prebuild.
+Earlier correctness and capacity runs are insufficient for that acceptance.
+Measure the same full native selection at producta2ccd72d0 on one physical
+builder in one job, using identical defaults/cores/guest state and warm retained
+closures for both legs. Record end-to-end wall time (including evaluation and
+cleanup), preparation/runtime breakdown, results and resource state. Treat one
+A/B pair as exploratory and warm-cache-only; a regression cannot be excluded
+from correctness evidence, failed/incomplete legs, or different-host timing.
+See performance-plan.md once the architect brief is written. Benchmark-only
+workflow/harness stays on a separate ref; no product behavior or integration
+authority changes. No shared-store deletion or intentional kernel rebuild.

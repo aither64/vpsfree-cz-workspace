@@ -6,10 +6,15 @@ lifecycle: active
 
 ## Status
 
-Implementation is complete, independently reviewed and locally verified. The
+Implementation is complete, independently reviewed and checked for correctness.
+Performance acceptance remains open: user requested a matched execution-time
+comparison with and without prebuild; the prior runs do not supply that comparison. The
 feature branch is published at `a2ccd72d08dc67f678d7f115a92ed5eeca50c1a1`.
 All 12 original impermanence scripts plus defaults passed; cached defaults also
-passed with a smaller configured memory ceiling. Native GitHub CI remains queued.
+passed with a smaller configured memory ceiling. Native GitHub CI finished with
+126 passing test groups and one failure in upgrade/from-6.18-guests. Diagnosis
+found a capability-denied NixOS22.11 guest service on the pinned predecessor,
+before any upgrade; no evidence warrants a resource implementation change.
 No default-branch integration or deployment has been authorized or performed.
 The session remains open.
 
@@ -24,15 +29,26 @@ The session remains open.
 - [x] Build selected images and pass all 13 selected scripts.
 - [x] Pass cached representative test at the smaller configured ceiling.
 - [x] Publish exact final source head and capture native comparison.
-- [ ] Native GitHub CI completes (currently queued).
+- [x] Native GitHub CI completes; OS build passed, native suite has one failure.
+- [x] Diagnose upgrade/from-6.18-guests failure and record its separate scope.
+- [ ] Matched with/without-prebuild timing comparison (architect0 planning).
+- [ ] Overall CI remains red; six livepatch profiles also lack executed coverage.
 - [ ] Explicit integration direction, if requested later; no merge approval exists.
 
 ## Next action
 
-Observe native CI when a runner accepts it; investigate any actual failure before
-rerunning. Current code and local verification need no further fix. Integration
-into vpsadminos staging requires explicit user direction. Keep this session,
-worktrees and feature refs open/retained; do not archive or stop it.
+Architect0 owns a matched benchmark brief (performance-plan.md). Measure total
+wall time and preparation/runtime breakdown at identical source, selection,
+builder, limits, CPU settings and fresh VM state; keep Nix cache conditions
+explicit. Proceed with the stated full-native default after the optional scope question
+received no answer. Local full-suite outputs are no longer present and only
+about100GiB disk is free, so use one self-hosted CI job for both legs.
+A separate same-session vpsadminos-benchmark worktree/ref holds only temporary
+benchmark orchestration; both legs checkout producta2ccd72d0 exactly. Architect0
+owns the brief, implementer0 the harness, reviewer0 the required final check,
+and a fresh Luna/low watcher the eventual run. No benchmark has started yet.
+Existing correctness evidence does not establish performance parity. No merge or
+deployment has been authorized; leave the session/worktrees/refs open.
 
 ## Source and complete history
 
@@ -98,11 +114,17 @@ store-path reuse, phase boundary, root lifetime, measurements and limitations.
   VM cleanup. Both owned command processes exited; no local verification remains.
 - Final job cgroup max/oom/oom_kill event counts are zero.
 - GitHub exact-head RSpec39068521789 and RuboCop39068521800 succeeded.
-- Native CI39068521841 remains queued:
+- Native CI39068521841 failed: OS build passed; native suite126 test groups passed/1 failed
+  (upgrade/from-6.18-guests); four livepatch jobs passed and six jobs that never
+  started were cancelled after24h. Original logs/artifacts downloaded; architect0 traced the failure to
+  network-setup.service exit218/CAPABILITIES on NixOS22.11 before the upgrade.
+  Its fixture and capability policy are unchanged by this branch:
   https://github.com/vpsfreecz/vpsadminos/actions/runs/39068521841
 
-The ceilings were admission settings on one 96 GiB/64-CPU builder, not enforced
-cgroups or a second physical host. Evaluator client high-water mark was about
+The local ceilings were admission settings on one 96 GiB/64-CPU builder, not
+enforced cgroups. Native CI adds a second physical builder:100GiB/48CPUs,
+11 adaptive prep jobs and unchanged72-vCPU runtime capacity; all12 persistence
+scripts passed there too. Evaluator client high-water mark was about
 20 GiB; no aggregate daemon peak was measured. The per-job estimate and cache size
 are policies, not RSS caps or an arbitrary-build OOM guarantee. Dependency caches
 were partially primed; both selected images were actually compressed. No fully
@@ -157,6 +179,7 @@ compatible existing @v7 refs retained (checkout7.0.1/upload-artifact7.0.2).
 ## Artifacts and ownership
 
 - [plan.md](plan.md), architect-owned [design.md](design.md), [verification.md](verification.md).
+- [native-ci-follow-up.md](native-ci-follow-up.md): exact CI failure and scope.
 - Original job.log/native-logs.zip/ci-logs; review diffs and frozen quick receipts.
 - r1-runner/r1-osvm/ready-cache logs/status; integration-retry-32g and integration-16g
   logs/status; image-preparation.log, warm-preparation.log, compressor-sample.txt,
@@ -168,3 +191,42 @@ compatible existing @v7 refs retained (checkout7.0.1/upload-artifact7.0.2).
   no manual session/worktree/branch deletion, archival or stop requested/performed.
 
 Stable portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-17-impermanence-test-failures/
+
+## Performance comparison ownership
+
+- Benchmark-only worktree: worktrees/2026-10-17-impermanence-test-failures/vpsadminos-benchmark.
+- Benchmark-only ref: 2026-10-17-impermanence-test-failures-benchmark, initiallya2ccd72d0.
+- This ref is not part of the product integration request. Product branch stays unchanged.
+- Hooks installed/signed in declared Nix environment; retry registered the worktree
+  after the known inherited post-checkout signature refusal. No hook bypass.
+- Architect brief is written/accepted and registered. Implementer0 committed the temporary workflow/harness and focused specs as
+  4a3e43347ffe9913b330a97fd297d7e64db51d50 (treeb153c396a52f1bd7e9e72317de7dc67e8eeda2fa).
+  11 focused examples, YAML/bash syntax and hooks passed; source/index clean.
+  Lead final prose pass and actual admission-ceiling comparison are included.
+  Retained reviewer0 completed all-four-lane final review; benchmark-review.md
+  records two Important measurement findings (guest builds misclassified as host
+  builds; transient runtime capacity changes ignored). Both accepted and assigned
+  to implementer0 for narrow fixes/regressions/amendment. Lead directly verified both narrow fixes and meaningful regressions under
+  review steps9–10. Final amended benchmark06915925a7a63a2fac7135a752101228b5b699e0,
+  tree771895324cfc498413a8eb801ac0b0b9bac5fb4b;13 examples0failures, hooks pass,
+  clean worktree. Review gate satisfied; publication/dispatch next.
+
+## Active matched timing run
+
+Benchmark-only head06915925a7a63a2fac7135a752101228b5b699e0 was published over
+SSH after independent review and direct R1/R2 verification. No rebase onto a
+new product revision: exact producta2 is the deliberate benchmark boundary.
+Native comparison captured full inherited range from0081fc01 to06915925a.
+
+Dispatched manual CI39276852536 at2026-10-19T15:18:40Z:
+https://github.com/vpsfreecz/vpsadminos/actions/runs/39276852536
+Initially queued; one job, exact producta2 for both CLI legs, full native335
+scripts/127 groups, warm roots retained, A(no-prebuild) thenB(prebuild), auto jobs
+and production CPU/memory settings. No timing result yet.
+
+Fresh utility /root/prebuild_benchmark_ci_watch owns monitoring this exact run
+and head, resolved from retained verification_watcher gpt-6-luna/low and utility
+identitydw_024841fba072af1d79bd78026612eaeca055acfa31ecc89f; current installed
+execution_access=full_access. No retained-member reconfiguration. Follow monitor
+skill; original product branch unchanged. Root will interpret artifacts and
+report totals/deltas after completion, not infer performance from correctness.

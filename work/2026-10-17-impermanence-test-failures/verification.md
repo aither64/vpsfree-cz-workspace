@@ -8,7 +8,9 @@ Source head: `a2ccd72d08dc67f678d7f115a92ed5eeca50c1a1`. Tested tree: `98fab6887
 - Full OSVM specs: 184 examples, 0 failures, 62 seconds (`r1-osvm.log/.status`).
 - Pure SquashFS flags/module wiring: passed (`ready-cache.log/.status`).
 - Declared Nixfmt/RuboCop hooks passed, including enabled scoped commit/amend hooks.
-- Hosted GitHub RSpec 39068521789 and RuboCop 39068521800 passed on the exact head. Native CI 39068521841 is queued at last observation.
+- Hosted GitHub RSpec 39068521789 and RuboCop 39068521800 passed on the exact head. Native CI39068521841 completed with a failure in upgrade/from-6.18-guests;
+ 126 other native test groups passed. Original logs/artifacts are preserved below;
+ diagnosis is recorded in [native-ci-follow-up.md](native-ci-follow-up.md).
 - [Independent review and R1 resolution](review.md): all four lanes, complete three-owner history, no migrations or pin streams. Important R1 fixed through canonical allocation-free parser/render validation and verified directly under narrow-fix policy.
 
 ## Selected image and VM run
@@ -61,3 +63,23 @@ Final job cgroup `memory.events` reports zero max/oom/oom_kill events (`final-jo
 ## Measurement limits
 
 These are configured admission ceilings on one 96 GiB/64-CPU builder, not enforced memory cgroups or measurements from two physical builders. The large evaluator's observed client high-water mark was about 20 GiB; this is not total daemon/build memory. 8192 MiB/job and 2048 MiB cache are sizing policies, not RSS bounds or proof against arbitrary-build/unmanaged-neighbor OOM. No reliable aggregate daemon peak was measured. No fully cold original-fixture baseline or same-fixture warm repeat is claimed.
+
+## Native CI follow-up, 19 October
+
+Exact-head CI39068521841 completed. OS build passed; native job117523492265
+completed with126 passing test groups and one failure, upgrade/from-6.18-guests.
+Four livepatch jobs passed; six jobs had no steps and were cancelled after24h
+without acquiring a runner. Full original job log is native-ci-final-job.log;
+artifact12131444137 was downloaded to native-ci-final-artifacts. Architect0 completed
+read-only diagnosis: a capability-denied network-setup.service in the predecessor
+NixOS22.11 guest, before any upgrade. The branch does not change that fixture or
+capability policy; the underlying syscall denial remains unproven. See
+[native-ci-follow-up.md](native-ci-follow-up.md) for evidence and caveats. No rerun, source change, merge or deployment has been made.
+
+The native suite ran on gh-runner3.int.vpsadminos.org, a different builder from
+the local checks and original incident. Preparation logged assigned102400MiB,
+initially available101437MiB, reserve8192MiB, usable93245MiB and inherited
+Nix max-jobs48; it selected11 preparation jobs at8192MiB/job. All12 persistence
+scripts succeeded; their shared group completed in3662.63seconds. This extends
+the adaptation evidence to a second physical builder, but adds no aggregate
+memory-peak or hard-containment claim.
