@@ -30,7 +30,9 @@ User selected normal composer plus pinned questions, CLI turn/follow-up lifetime
 manual dismissal, immediate option sends, late inline replies, and visible answers.
 No automatic timed dismissal or answer. No Codex version upgrade or new RPC.
 No default-branch integration authorized. External conversation created a new
-threadless initiative rather than adopting another session. Lead owns design
+threadless initiative rather than adopting another session. Supported native
+creation later established managed lead01a155ed-fdf9-7da2-896e-acac2b031e72
+for queued deployment continuation. Lead owns design
 and implementation; mandatory standalone review uses installed catalog policy.
 
 ## Compatibility and deployment

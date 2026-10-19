@@ -4,9 +4,9 @@
 - [x] Implementation committed/published in all four repositories.
 - [x] Quick checks including review regressions pass.
 - [x] Initial independent review completed; two Important findings fixed.
-- [ ] Affected-lane final remediation review.
-- [ ] Long packaged/browser/native verification under fresh utility watcher.
-- [ ] Configure managed ownership and queue prepared aitherdev rollout.
+- [x] Affected-lane final remediation and final pin/history reviews.
+- [x] Long packaged/browser/native verification and final CI passed.
+- [x] Managed lead established; approved system/profile rollout submitted.
 - [ ] Deployed UI acceptance.
 - [ ] Explicit repository integration direction (not granted).
 
