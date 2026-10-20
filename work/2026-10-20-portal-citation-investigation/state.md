@@ -59,3 +59,46 @@ catalog fallback. No team is created or reconfigured.
 - [ ] Package/CI verification and deployment pins
 - [ ] Aitherdev system/profile build and retained preparation
 
+
+## Source implementation checkpoint
+
+Shared client a204708d32c12bfe547c5c8bbbcf1b4396490bcb and portal runtime
+2f2966bf518b84490e310304d28214ffcbe24f9a are published on the initiative feature
+branch. The runtime includes the exact deployed d68f88a baseline, identified
+by comparing every tracked file to the installed source. Its client baseline
+f3633de retains optional questions. These inherited refs remain untouched.
+
+Quick checks passed: citation Go tests, citation race tests, all 74 shared browser
+contracts, portal citation/sanitization tests, and the server-backed shipped
+browser contract after adding the new asset to its fixture dependency list.
+The broad portal Node glob was a wrong harness invocation: it requires
+Playwright and running fixture server URLs. Its surviving process was stopped;
+focused server-backed Go tests are authoritative. An initial direct Go executable
+call lacked the Nix compiler PATH; rerunning in the dev shell resolved it.
+Configuration checkout's post-checkout hook initially lacked Bundler gems. The
+verification utility installed its 40 ignored local gems through the config Nix
+shell; Overcommit hooks are installed and registration now succeeds.
+
+Pins in workspace/configuration are being generated. Independent review and long
+package checks remain pending. No activation or reservation has been requested.
+
+## Deployment ownership handoff preparation
+
+The coordinator requires an exact retained native conversation before it can
+seal preparations. This initiative was created as tracking-only during diagnosis.
+Initialize its first retained conversation through the supported dev-session
+creation flow, with no team preset and an acknowledgement-only initial request.
+The external supervising conversation keeps implementation responsibility; the
+new retained lead supplies native ownership for supervised preparation. It must
+not edit code, run checks or activate anything without explicit handoff.
+This is a genuine runtime ownership handoff checkpoint, allowed by the tracking
+cadence; it does not grant any integration/deployment approval.
+
+Current heads: codex-web a204708d32c12bfe547c5c8bbbcf1b4396490bcb; dev-workspace
+2f2966bf518b84490e310304d28214ffcbe24f9a; workspace
+c0187a433a95c4c42b4baa6e3cd872be468fca84; configuration
+34249ae7a131c03aad8e8af6a3e68e19a24042a0. Composed deployment contract passed,
+with only runtime/client lock nodes changed and the extension preserved.
+Standalone final reviewer citation_review uses catalog gpt-6-astra/xhigh across
+general, architecture, scope and risk lanes. Review is running; long checks and
+artifact builds remain gated on its result.
