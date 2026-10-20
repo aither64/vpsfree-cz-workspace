@@ -1,0 +1,326 @@
+Base: 74ff349efc9238922a63a47af815504c305c9838
+Head: f7ebc3e151cd52d1e45c22adb8da7b9fc1940e18
+f7ebc3e151cd52d1e45c22adb8da7b9fc1940e18 coordination: run session commands under logged resource locks
+
+ README.md                                         |   6 +-
+ docs/coordination-legacy.md                       | 277 +++++++++++++
+ docs/coordination-operations.md                   |   7 +
+ docs/coordination.md                              | 385 ++++++------------
+ docs/integration.md                               |   3 +
+ libexec/workspace-coordination-command.rb         |   3 +-
+ libexec/workspace-coordination-commands-host.rb   |  97 +++++
+ libexec/workspace-coordination-commands.rb        | 470 ++++++++++++++++++++++
+ libexec/workspace-coordination-gc.rb              |   7 +
+ libexec/workspace-coordination-host.rb            |  64 ++-
+ libexec/workspace-coordination.rb                 |  45 ++-
+ libexec/workspace-host                            |  10 +-
+ nix/command-contract.json                         |   1 +
+ nix/ruby-checks.nix                               |   3 +
+ nix/workspace-portal.nix                          |   6 +-
+ portal/internal/teamruntime/runtime.go            |   2 +-
+ portal/internal/web/coordination_browser_test.cjs |  21 +
+ portal/internal/web/static/coordination.js        |  16 +-
+ portal/internal/workspacecodex/lead_policy.go     |   2 +-
+ test/coordination_commands_overcommit_test.rb     | 104 +++++
+ test/coordination_commands_systemd_test.rb        | 101 +++++
+ test/coordination_commands_test.rb                | 355 ++++++++++++++++
+ test/integration_test.rb                          |   1 +
+ test/workspace_coordination_test.rb               |   1 +
+ test/workspace_host/archive_recovery_test.rb      |   4 +-
+ test/workspace_host/live_switch_test.rb           |  48 +++
+ 26 files changed, 1751 insertions(+), 288 deletions(-)
+
+Review delta:
+1:  d6690ab ! 1:  f7ebc3e coordination: run session commands under logged resource locks
+    @@ docs/coordination.md
+     +New work uses `run`. The old prepare/approve/submit/integrate workflow is retained
+     +for exact existing requests, integrations and jobs. An operator preparing a
+     +retained job for refresh includes its `legacyJobId` in the preparation request.
+    ++Fresh approval may bind a replacement snapshot for the same owner's unfinished
+    ++job and operation scope; it does not permit submitting a new job.
+     +Use the [retained workflow guide](coordination-legacy.md),
+     +[integration guide](integration.md) and [operations guide](coordination-operations.md)
+     +for those records. New command reservations cannot release legacy reservations.
+    @@ libexec/workspace-coordination-host.rb: module DevWorkspaceHost
+     +          same_scope = previous && previous['kind'] == request['kind'] &&
+     +            (request['kind'] == 'merge' ? operation['repository'] == request['repository'] : request['kind'] == 'profile_activate' || operation['target'] == request['target'])
+     +          retained ||= same_scope && previous['ownerId'] == engine.owner(slug)['id']
+    ++        elsif action == 'approve' && !retained && request
+    ++          # A refreshed snapshot needs a fresh approval before it can replace
+    ++          # the retained job's snapshot. It cannot be submitted as a new job.
+    ++          owner = engine.owner(slug)
+    ++          saved = engine.prepared_snapshot!(owner, request['reviewedSnapshot'])
+    ++          operation = saved.fetch('snapshot').fetch('operation')
+    ++          retained = engine.store.read['jobs'].values.any? do |job|
+    ++            previous = job.fetch('snapshot').fetch('operation')
+    ++            job['ownerId'] == owner['id'] && job['kind'] == saved['kind'] &&
+    ++              !WorkspaceCoordination::TERMINAL.include?(job['state']) &&
+    ++              (saved['kind'] == 'merge' ? previous.slice('repository', 'target') == operation.slice('repository', 'target') :
+    ++                saved['kind'] == 'profile_activate' || previous['target'] == operation['target'])
+    ++          end
+     +        end
+     +        raise WorkspaceCoordination::Error, 'new work uses coordination run; retained operations keep their original recovery interface' unless retained
+     +      end
+    @@ libexec/workspace-coordination.rb: module WorkspaceCoordination
+             'notifications' => data['outbox'].values.select { |event| ids.include?(event['ownerId']) }.map { |event| event.reject { |key, _| %w[text options].include?(key) } },
+             'foreignReservations' => data['reservations'].values.reject { |item| ids.include?(item['ownerId']) || item['state'] == 'released' }.map { |item| item.slice('machine', 'state').merge('portalUrl' => data['owners'][item['ownerId']]['portalUrl']) }}
+     +      command_state = store.commands
+    ++      result['foreignReservations'].concat(command_state['reservations'].values.reject do |item|
+    ++        ids.include?(item['ownerId']) || item['state'] == 'released'
+    ++      end.map do |item|
+    ++        item.slice('machine', 'state').merge('portalUrl' => data['owners'].fetch(item['ownerId'])['portalUrl'])
+    ++      end)
+     +      result['jobs'].concat(command_state['operations'].values.select { |item| ids.include?(item['ownerId']) }.map do |item|
+     +        item.slice('id', 'ownerId', 'state', 'revision', 'sequence').merge('kind' => 'command',
+     +          'reason' => item['reason'] && {'message' => item['reason']}, 'dependsOn' => [], 'reservationId' => nil,
+    @@ test/coordination_commands_overcommit_test.rb (new)
+     +            def run
+     +              common = IO.popen(['git', 'rev-parse', '--path-format=absolute', '--git-common-dir'], &:read).strip
+     +              File.open(File.join(common, 'probe.log'), 'a') { |file| file.puts('#{type}') }
+    ++              return [:fail, 'fixture deliberate failure'] if File.exist?(File.join(common, 'fail_#{type}'))
+     +              :pass
+     +            end
+     +          end
+    @@ test/coordination_commands_overcommit_test.rb (new)
+     +    # Every trust change below is an explicit session-supplied command against
+     +    # generated, known fixture content; the coordinator never signs anything.
+     +    run = lambda do |cwd, argv|
+    -+      execute(person, command(person, argv: argv, cwd: cwd))
+    ++      result = execute(person, command(person, argv: argv, cwd: cwd))
+    ++      warn File.read(File.join(@engine.command_directory(result['id']), 'log')) if result['state'] != 'succeeded'
+    ++      result
+     +    end
+     +    assert_equal 'succeeded', run.call(feature, [overcommit, '--install'])['state']
+    ++    hook_types.each { |type| assert_equal 'succeeded', run.call(feature, [overcommit, '--sign', type.tr('_', '-')])['state'] }
+     +    assert_equal 'succeeded', run.call(feature, ['git', 'checkout', person['slug']])['state']
+     +    target = File.join(@tmp, 'signed-target')
+    -+    assert_equal 'failed', run.call(feature, ['git', 'worktree', 'add', '--detach', target, baseline])['state']
+    ++    failed = run.call(feature, ['git', 'worktree', 'add', '--detach', target, baseline])
+    ++    assert_equal 'failed', failed['state']
+    ++    assert_includes File.read(File.join(@engine.command_directory(failed['id']), 'log')), 'Signature of configuration file has changed!'
+     +    assert File.directory?(target)
+     +    assert_equal 'succeeded', run.call(target, [overcommit, '--sign'])['state']
+    ++    hook_types.each { |type| assert_equal 'succeeded', run.call(target, [overcommit, '--sign', type.tr('_', '-')])['state'] }
+     +    assert_equal 'succeeded', run.call(target, ['git', 'checkout', '--detach', baseline])['state']
+     +    assert_equal 'failed', run.call(feature, ['git', 'checkout', person['slug']])['state']
+     +    assert_equal 'succeeded', run.call(feature, [overcommit, '--sign'])['state']
+    ++    hook_types.each { |type| assert_equal 'succeeded', run.call(feature, [overcommit, '--sign', type.tr('_', '-')])['state'] }
+     +    assert_equal 'succeeded', run.call(feature, ['git', 'checkout', person['slug']])['state']
+     +    assert_equal original_base, git('-C', @bare, 'rev-parse', 'master').strip
+    ++    blocker = File.join(@bare, 'fail_pre_push')
+    ++    File.write(blocker, 'deliberate fixture hook failure')
+     +    result = run.call(target, ['sh', '-c', 'git merge --ff-only "$1" && git push origin "$1:refs/heads/master"', 'fixture', head])
+    -+    assert_equal 'succeeded', result['state']
+    ++    assert_equal 'failed', result['state']
+    ++    assert_includes File.read(File.join(@engine.command_directory(result['id']), 'log')), 'fixture deliberate failure'
+    ++    assert_equal original_base, git('--git-dir', @remote, 'rev-parse', 'master').strip
+    ++    assert_equal head, git('-C', target, 'rev-parse', 'HEAD').strip
+    ++    File.unlink(blocker)
+    ++    assert_equal 'succeeded', run.call(target, ['git', 'push', 'origin', "#{head}:refs/heads/master"])['state']
+     +    assert_equal head, git('--git-dir', @remote, 'rev-parse', 'master').strip
+     +    calls = File.readlines(File.join(@bare, 'probe.log'), chomp: true)
+    -+    assert_equal %w[post_checkout post_checkout post_checkout post_merge pre_push], calls
+    ++    assert_equal %w[post_checkout post_checkout post_checkout post_merge pre_push pre_push], calls
+     +    refute File.exist?(File.join(@engine.store.root, 'sources'))
+     +  end
+     +end
+    @@ test/coordination_commands_systemd_test.rb (new)
+     +    source = File.expand_path('../libexec/workspace-host', __dir__)
+     +    File.write(wrapper, <<~RUBY)
+     +      #!#{RbConfig.ruby}
+    ++      # Loading the host from a workspace-host basename would run its CLI
+    ++      # before the fixture's private host and engine are installed.
+    ++      $PROGRAM_NAME = 'fixture-command-worker'
+     +      load #{source.inspect}
+     +      WorkspaceCoordination::Engine.class_eval do
+     +        alias_method :fixture_initialize, :initialize
+    @@ test/coordination_commands_systemd_test.rb (new)
+     +    File.chmod(0o700, wrapper)
+     +  end
+     +
+    ++  def wait_fixture(id, &block)
+    ++    Timeout.timeout(30, &block)
+    ++  rescue Timeout::Error
+    ++    journal, = Open3.capture3('journalctl', '--user', '--no-pager', '-n', '25', '-u', "workspace-command-#{id}.service")
+    ++    flunk "fixture worker timed out: #{@engine.store.commands['operations'][id].slice('state', 'reason')}\n#{journal}"
+    ++  end
+    ++
+     +  def wait_command_state(id, states)
+    -+    Timeout.timeout(30) do
+    ++    wait_fixture(id) do
+     +      loop do
+     +        item = @engine.store.commands['operations'].fetch(id)
+     +        return item if states.include?(item['state'])
+    @@ test/coordination_commands_systemd_test.rb (new)
+     +    dispatcher = fork { @engine.command_tick(person); exit! 0 }
+     +    Process.wait(dispatcher)
+     +    assert $?.success?
+    -+    Timeout.timeout(30) { sleep 0.05 until File.file?(started) }
+    ++    wait_fixture(item['id']) { sleep 0.05 until File.file?(started) }
+     +    assert_equal 'running', @engine.store.commands['operations'][item['id']]['state']
+     +    refute @engine.command_worker_idle?(item['id'])
+     +    input = item['request'].reject { |key, _| key == 'directoryIdentity' }
+    @@ test/coordination_commands_systemd_test.rb (new)
+     +    started = File.join(@tmp, 'started')
+     +    item = command(person, argv: [RbConfig.ruby, '-e', 'File.write(ARGV[0], "ready"); sleep 300', started])
+     +    @engine.command_tick(person)
+    -+    Timeout.timeout(30) { sleep 0.05 until File.file?(started) }
+    ++    wait_fixture(item['id']) { sleep 0.05 until File.file?(started) }
+     +    output, error, status = Open3.capture3('systemctl', '--user', 'stop', "workspace-command-#{item['id']}.service")
+     +    assert status.success?, output + error
+     +    @engine.command_tick(person)
+    @@ test/coordination_commands_test.rb (new)
+     +    assert_nil status['jobs'].first.dig('result', 'observed', 'exitStatus')
+     +  end
+     +
+    ++  def test_foreign_explicit_reservation_is_visible_to_its_waiter
+    ++    machines
+    ++    holder, waiter = owner('holder'), owner('waiter')
+    ++    reservation = @engine.command_reserve(holder, request('target' => 'first'))
+    ++    item = command(waiter, repositories: [], machines: ['first'])
+    ++    assert_equal 'waiting', @engine.command_start(waiter, item['id'])['state']
+    ++    status = @engine.status(waiter['slug'], portal: true)
+    ++    assert_equal [{'machine' => 'fixture:first', 'state' => 'held', 'portalUrl' => holder['portalUrl']}], status['foreignReservations']
+    ++    @engine.command_release(holder, reservation['id'])
+    ++    assert_empty @engine.status(waiter['slug'], portal: true)['foreignReservations']
+    ++  end
+    ++
+    ++  def test_retained_job_cli_prepares_approves_and_claims_a_refreshed_snapshot
+    ++    person = owner('legacy-refresh')
+    ++    job = submit_merge(person)
+    ++    checkout = File.join(@tmp, person['slug'])
+    ++    File.write(File.join(checkout, person['slug']), 'updated feature')
+    ++    git('-C', checkout, 'commit', '-am', 'fixture refresh')
+    ++    engine = @engine
+    ++    host = DevWorkspaceHost::Host.allocate
+    ++    output = StringIO.new
+    ++    host.instance_variable_set(:@out, output)
+    ++    host.define_singleton_method(:coordination_engine) { |_entry| engine }
+    ++    host.define_singleton_method(:command_workflow_selected?) { true }
+    ++    host.define_singleton_method(:with_coordination_session_admission) { |_entry, _slug, &block| block.call }
+    ++    host.define_singleton_method(:with_current_generation_lock) { |**_options, &block| block.call }
+    ++    invoke = lambda do |action, fields, id = nil, slug = person['slug']|
+    ++      path = File.join(@tmp, 'legacy-request.json')
+    ++      File.write(path, JSON.generate(fields))
+    ++      output.truncate(0)
+    ++      output.rewind
+    ++      host.send(:coordination_session_command, @entry, [action, slug, id, '--as-is', '--request', path].compact)
+    ++      JSON.parse(output.string)
+    ++    end
+    ++    preparation = request('kind' => 'merge', 'repository' => 'code', 'evidence' => evidence(person))
+    ++    assert_raises(WorkspaceCoordination::Error) { invoke.call('prepare', preparation) }
+    ++    snap = invoke.call('prepare', preparation.merge('legacyJobId' => job['id']))
+    ++    input = request('kind' => 'merge', 'scope' => [{'repository' => 'code', 'target' => 'refs/heads/master'}],
+    ++      'source' => {'kind' => 'user_instruction', 'reference' => 'fixture approval', 'quote' => 'integrate code into master'},
+    ++      'reviewedSnapshot' => snap['id'])
+    ++    other = owner('foreign-approval')
+    ++    assert_raises(WorkspaceCoordination::Error) { invoke.call('approve', input, nil, other['slug']) }
+    ++    approval = invoke.call('approve', input)
+    ++    assert_equal approval, invoke.call('approve', input)
+    ++    assert_raises(WorkspaceCoordination::Error) { invoke.call('approve', input.merge('source' => input['source'].merge('quote' => 'changed'))) }
+    ++    refreshed = invoke.call('refresh', request('expectedRevision' => job['revision'], 'snapshot' => snap, 'approvalId' => approval['id']), job['id'])
+    ++    assert_equal 'waiting_approval', refreshed['state']
+    ++    assert_equal job['id'], @engine.claim(owner_id: person['id']).first['id']
+    ++    # An approval exception cannot open a new independent workflow.
+    ++    assert_raises(WorkspaceCoordination::Error) do
+    ++      invoke.call('submit', request('kind' => 'merge', 'dependsOn' => [], 'approvalId' => approval['id'], 'reservationId' => nil, 'snapshot' => snap))
+    ++    end
+    ++    independent = owner('independent')
+    ++    feature(independent)
+    ++    independent_snapshot = @engine.prepare_merge(independent, 'code', evidence(independent))
+    ++    assert_raises(WorkspaceCoordination::Error) do
+    ++      invoke.call('approve', input.merge('requestId' => SecureRandom.uuid, 'reviewedSnapshot' => independent_snapshot['id']), nil, independent['slug'])
+    ++    end
+    ++  end
+    ++
+     +  def test_profile_context_requires_the_same_workspace_machine_lock_and_reservation
+     +    machines
+     +    person = owner('profile')
+    @@ test/coordination_commands_test.rb (new)
+     +  end
+     +end
+     
+    + ## test/integration_test.rb ##
+    +@@ test/integration_test.rb: class IntegrationTest < Minitest::Test
+    +     host.instance_variable_set(:@out, StringIO.new)
+    +     host.instance_variable_set(:@err, StringIO.new)
+    +     engine = @engine
+    ++    host.define_singleton_method(:package_root) { engine.package }
+    +     host.define_singleton_method(:coordination_engine) { |_entry| engine }
+    +     host.define_singleton_method(:with_coordination_session_admission) { |*_args, **_options, &block| block.call }
+    +     host
+    +
+    + ## test/workspace_coordination_test.rb ##
+    +@@ test/workspace_coordination_test.rb: class WorkspaceCoordinationTest < Minitest::Test
+    +     # Exercise the actual child activation claim guard, rather than mocking
+    +     # the entire candidate invocation and missing the recovery reservation.
+    +     host = DevWorkspaceHost::Host.allocate
+    ++    host.instance_variable_set(:@env, {})
+    +     engine = @engine
+    +     host.define_singleton_method(:coordination_store) { engine.store }
+    +     host.define_singleton_method(:coordination_catalog) { engine.catalog }
+    +
+      ## test/workspace_host/archive_recovery_test.rb ##
+     @@ test/workspace_host/archive_recovery_test.rb: class WorkspaceHostTest < Minitest::Test
+            packaged_session = File.join(packaged_libexec, 'workspace-portal')
+    @@ test/workspace_host/archive_recovery_test.rb: class WorkspaceHostTest < Minitest
+              File.symlink(File.join('..', name), File.join(packaged_session, name))
+            end
+            FileUtils.cp(File.expand_path('../../portal/internal/session/runtime-contract.json', __dir__),
+    +
+    + ## test/workspace_host/live_switch_test.rb ##
+    +@@
+    + require_relative 'suspension_test'
+    + 
+    + class WorkspaceHostTest < Minitest::Test
+    ++  def test_command_profile_switch_keeps_its_lock_and_recovers_forward
+    ++    with_ready_coordination_session do |host, entry, slug, _path, _journal, _manifest_path, _engine|
+    ++      predecessor = host.candidate
+    ++      paths_root = File.dirname(predecessor)
+    ++      host.candidate = make_package(paths_root, 'command-candidate')
+    ++      catalog = {'schema' => 1, 'repositories' => {'configuration' => {'remote' => 'git@github.com:example/configuration.git'}},
+    ++        'profileMachine' => 'example:host', 'adapters' => {'fixture' => {'protocol' => 1, 'command' => RbConfig.ruby}},
+    ++        'machines' => {'host' => {'id' => 'example:host', 'aliases' => [], 'adapter' => 'fixture', 'configurationRepository' => 'configuration', 'selector' => 'host'}}}
+    ++      [predecessor, host.candidate].each do |package|
+    ++        share = File.join(package, 'share/dev-workspace')
+    ++        File.write(File.join(share, 'coordination.json'), JSON.generate(catalog))
+    ++        File.write(File.join(share, 'coordination-contract.json'), JSON.generate(WorkspaceCoordination::CONTRACT))
+    ++        File.write(File.join(share, 'command-contract.json'), JSON.generate(WorkspaceCoordination::COMMAND_CONTRACT))
+    ++      end
+    ++      host.instance_variable_set(:@coordination_catalog, WorkspaceCoordination::Catalog.new(predecessor))
+    ++      host.define_singleton_method(:coordination_engine) do |selected|
+    ++        runtime = instance_runtime(selected)
+    ++        WorkspaceCoordination::Engine.new(state: @state, package: package_root, profile: @profile,
+    ++          workspace: selected['root'], entry: selected.merge('socket' => runtime[:codex], 'portalUrl' => 'https://workspace.example.test'), fixtures: true)
+    ++      end
+    ++      engine = host.send(:coordination_engine, entry)
+    ++      person = engine.command_owner(slug)
+    ++      reservation = engine.command_reserve(person, {'schema' => 1, 'requestId' => SecureRandom.uuid, 'target' => 'host'})
+    ++      operation = engine.command_submit(person, {'schema' => 1, 'requestId' => SecureRandom.uuid,
+    ++        'cwd' => entry['root'], 'argv' => ['true'], 'repositories' => [], 'machines' => ['host'], 'label' => 'profile fixture'})
+    ++      engine.command_start(person, operation['id'])
+    ++      env = host.instance_variable_get(:@env)
+    ++      env.merge!('DEV_WORKSPACE_COMMAND_ID' => operation['id'], 'DEV_WORKSPACE_NAME' => entry['name'],
+    ++        'DEV_SESSION_SLUG' => 'wrong-session', 'DEV_SESSION_WORKSPACE' => entry['root'])
+    ++      source = File.join(paths_root, 'source')
+    ++      assert_equal 4, host.run('workspace-host', ['switch', '--source', source])
+    ++      assert_equal predecessor, File.realpath(host.instance_variable_get(:@profile))
+    ++      env['DEV_SESSION_SLUG'] = slug
+    ++      host.fail_activation = true
+    ++      assert_equal 1, host.run('workspace-host', ['switch', '--source', source])
+    ++      assert_equal host.candidate, File.realpath(host.instance_variable_get(:@profile))
+    ++      refute_nil host.send(:pending_codex_update)
+    ++      assert_equal 'running', engine.store.commands['operations'][operation['id']]['state']
+    ++      assert_equal 0, host.run('workspace-host', ['switch', '--source', source]), host.instance_variable_get(:@err).string
+    ++      assert_nil host.send(:pending_codex_update)
+    ++      assert_equal host.candidate, File.realpath(host.instance_variable_get(:@profile))
+    ++      assert_equal 'held', engine.store.commands['reservations'][reservation['id']]['state']
+    ++      engine.command_execute(person, operation['id'])
+    ++      assert_empty engine.store.command_resources
+    ++      assert_equal 'released', engine.command_release(person, reservation['id'])['state']
+    ++    end
+    ++  end
+    ++
+    +   def with_reporting_transition_host
+    +     with_transition_host do |host, paths|
+    +       [host.candidate, make_package(paths.fetch(:root), 'package-two')].each do |package|
