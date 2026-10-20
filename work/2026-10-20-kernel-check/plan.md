@@ -39,3 +39,20 @@ No integration, lifecycle closure or cleanup is authorized by this investigation
   source references and log evidence; do not infer causality from symptoms alone.
 - Evidence and findings remain session artifacts; no product documentation
   change is useful unless investigation leads to an implemented change.
+
+## Scope and evidence decisions during investigation
+
+- User added three retained implementers, used for independent source lanes.
+- User authorized upstream Linux investigation if custom audit yielded no
+  supported cause. Full custom delta accounted first; then targeted upstream
+  memory, NFS/RPC, scheduler/RCU/locking, platform and printk intersections.
+- User confirms normal panic should crashboot/upload and none occurred; user
+  also confirms no runtime sysctl changes. Repo-configured policy therefore
+  applies. Sources establish softlockup panic1 but hardlockup panic0; this
+  explains a possible missing-dump path without proving hardlockup occurred.
+- Kdump loaded is positively logged26.5min before lastlog. Hardware VGA cursor
+  can blink independently of scheduler progress. Neither observation attributes
+  the hang.
+- Proven source bugs are documented separately from incident attribution; no
+  candidate establishes a host-hang chain or justifies blind reproduction.
+  No source/config changes, builds, tests, deployment or merge is planned.
