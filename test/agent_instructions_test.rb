@@ -92,7 +92,13 @@ class AgentInstructionsTest < Minitest::Test
 
   def test_implementer_packages_and_small_team_fallback_are_documented
     teams = File.read(File.join(ROOT, 'docs/agent-teams.md')).gsub(/\s+/, ' ')
-    assert_includes(teams, 'two implementers, reviewer (5 total)')
+    assert_includes(teams, 'New teams default to Full team with two implementers (`delegated`)')
+    (2..6).each do |count|
+      id = count == 2 ? 'delegated' : "delegated_#{count}"
+      assert_match(/`#{id}` .*#{count} implementers.*reviewer \(#{count + 3} total\).*\| #{count + 2} \|/, teams)
+    end
+    assert_includes(teams, 'Direct team registration still requests zero native child threads')
+    assert_includes(teams, 'now delegated\'s Sol/xhigh reviewer')
     assert_includes(teams, 'Dependent implementation stays with an implementer')
     assert_includes(teams, 'live roster without implementation members')
     assert_includes(teams, 'Busy, unready or inaccessible members')

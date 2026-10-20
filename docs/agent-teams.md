@@ -33,10 +33,12 @@ Saved role access remains part of retained settings; it does not restrict
 execution under this package policy. Reviewers follow read-only review
 instructions despite having full execution access.
 
-New teams use GPT-6.1 Sol (`gpt-6.1-sol`) for leads and implementers. The default
-Lead and reviewer team uses a Sol/xhigh lead and an Astra/xhigh reviewer; the
-other presets use Sol reviewers. Architects use GPT-6 Astra/xhigh. A separate
-GPT-6 Luna/low utility watches long checks.
+New teams default to Full team with two implementers (`delegated`). Full-team
+variants offer two through six implementers. Leads and implementers use GPT-6.1
+Sol (`gpt-6.1-sol`); Full-team leads use high effort, implementers use xhigh,
+architects use GPT-6 Astra/xhigh and reviewers use Sol/xhigh. The selectable
+Lead and reviewer preset retains its Sol/xhigh lead and Astra/xhigh reviewer.
+A separate GPT-6 Luna/low utility watches long checks.
 
 Members can message ready peers in the same session with `dev-session team
 assign <slug> --as-is --from <own-address> --to <peer-address> --message TEXT
@@ -47,9 +49,29 @@ uncertain delivery. `report_to_lead` remains dedicated to lead reports.
 | Preset | Persistent members | Design owner | Application edits | Specialist slots |
 | --- | --- | --- | --- | --- |
 | `solo` | lead (1 total) | lead | lead | 0 |
-| `lead_reviewed` (Lead and reviewer, default) | lead, reviewer (2 total) | lead | lead | 1 |
+| `lead_reviewed` (Lead and reviewer) | lead, reviewer (2 total) | lead | lead | 1 |
 | `lead_designed` | lead, implementer, reviewer (3 total) | lead | implementer | 2 |
-| `delegated` (Full team) | lead, architect, two implementers, reviewer (5 total) | architect | implementers | 4 |
+| `delegated` (Full team, 2 implementers, default) | lead, architect, 2 implementers, reviewer (5 total) | architect | implementers | 4 |
+| `delegated_3` (Full team, 3 implementers) | lead, architect, 3 implementers, reviewer (6 total) | architect | implementers | 5 |
+| `delegated_4` (Full team, 4 implementers) | lead, architect, 4 implementers, reviewer (7 total) | architect | implementers | 6 |
+| `delegated_5` (Full team, 5 implementers) | lead, architect, 5 implementers, reviewer (8 total) | architect | implementers | 7 |
+| `delegated_6` (Full team, 6 implementers) | lead, architect, 6 implementers, reviewer (9 total) | architect | implementers | 8 |
+
+For N implementers, specialist slots are N + 2: the implementers, architect and
+reviewer. The lead adds one persistent thread. The catalog derives its capacity
+from the largest preset, currently 8, and package metadata publishes that value
+for `agents.max_concurrent_threads_per_session`. Direct team registration still
+requests zero native child threads and adds no native role startup arguments;
+team members run as independent App Server threads. The capacity change does not
+reconfigure native launchers or existing sessions.
+
+The verification watcher remains a separate operation with `max_concurrent = 1`;
+it occupies no persistent specialist slot. Native utility capacity failures keep
+the monitoring skill's visible fallback. Without an eligible retained reviewer,
+mandatory review selects the first review-purpose role by name from the default
+development team, now delegated's Sol/xhigh reviewer. An explicitly selected
+Lead and reviewer team still uses Astra/xhigh. Retained reviewers keep their
+saved model and effort.
 
 Solo leads investigate, design and implement without automatic specialists.
 In Lead and reviewer sessions, the lead does the same and uses the retained
@@ -65,8 +87,9 @@ substantive investigation and design and identifies independent implementation
 packages. Implementers own their packages through diagnosis, source, tests,
 technical documentation, quick checks, commits and follow-up fixes, including
 review findings. The lead keeps a compact backlog with owners, acceptance
-criteria, dependencies and checks, assigns independent work to both implementers,
-and serializes overlapping edits and Git operations within each repository.
+criteria, dependencies and checks, assigns independent work to available
+implementers, and serializes overlapping edits and Git operations within each
+repository.
 Dependent implementation stays with an implementer. Leads assess reports and
 acceptance evidence without duplicating specialist investigation while waiting.
 

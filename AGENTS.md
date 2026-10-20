@@ -89,7 +89,8 @@ scope and accepting results.
   and investigate under the verification procedure's documented exceptions.
 - Direct teams retain member settings; use the installed catalog for new presets.
   New architects: GPT-6 Astra/xhigh. Leads and implementers: `gpt-6.1-sol`.
-  Default `lead_reviewed`: Sol/xhigh and Astra/xhigh.
+  Full team with two implementers (`delegated`) is the default.
+  `lead_reviewed` preset: Sol/xhigh and Astra/xhigh.
   Other reviewers: catalog settings. Verification watchers: GPT-6 Luna/low.
   Existing members retain their saved model, effort, access, and instructions.
   Execution uses installed policy. Substantive design uses xhigh. High is only
