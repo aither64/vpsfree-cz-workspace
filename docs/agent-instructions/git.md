@@ -5,9 +5,12 @@ Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
 Before feature integration, read [coordination](../coordination.md) in full.
-Prepare/rebase/review outside claims, then submit authorized merge jobs through
-the selected runtime. It executes the fast-forward/SSH procedure below. Use background integration so waiting agents can end their turns and resume
-on native action or review messages. A busy resource never authorizes a direct bypass.
+Complete preparation, verification and review before integration. Under a
+claims runtime, acquire repository ownership, run session-owned fast-forward/SSH
+commands, verify hooks and resulting refs, then explicitly release. Include shared
+hook-trust changes in that ownership. Waiting requests notify their retained
+session when granted; read status before acting. Older selected packages retain
+their installed job workflow. A busy resource never authorizes bypassing ownership.
 
 ## Published branches and pull requests
 
@@ -160,14 +163,15 @@ history that has already been merged.
 
 ## Final branch history and merge readiness
 
-For a later mechanical refresh of a fully independently reviewed branch, the
-installed coordinator's certified-equivalence workflow may reuse that review.
+For a later mechanical refresh of a fully independently reviewed branch,
+review reuse requires the applicable independent-review policy. Retained
+integration runs may use their installed certified-equivalence workflow.
 The certificate must bind the original exact range, reviewer, final range,
 reconstruction or installed pin proof, and migration conclusion. Changes outside
 that boundary require the applicable independent review. Preserve the original
 report and revisions. A certificate never grants integration approval or permits
-rewriting master. Use the integration driver for operation batches and retries;
-retain the individual coordination commands for uncertain-effect recovery.
+rewriting master. Sessions own new operation batches and command retries. Retain the original
+individual recovery commands for existing uncertain operations.
 
 Before final review of an unmerged branch, compare its complete base-to-head
 commit series and final diff with the intended result. Identify superseded

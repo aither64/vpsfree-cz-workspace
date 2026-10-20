@@ -8,12 +8,14 @@ The selected package also provides the authoritative installed guides through
 `workspace-host coordination guide`, including before workspace integration.
 
 Before deployment activation or a workspace profile switch, read
-[coordination](../coordination.md) in full. Build and copy outside execution
-claims; activate through the exact owner's approved jobs and machine reservation.
-Retain that reservation during human review, feedback and redeployment. Finish
-requires exact integration proofs and explicit deployment/review completion.
-Successful archival also releases the owner's reservations after cleanup, without
-claiming integration. See the runtime coordination guide for recovery rules.
+[coordination](../coordination.md) in full. Build and copy before taking machine
+ownership when supported. Under a claims runtime, acquire the physical machine,
+run authorized activation commands and verify actual results. Retain ownership
+through review, feedback and redeployment, then explicitly release. Pass the held
+claim and exact session identity to ordinary workspace-host profile activation.
+Release supplies no merge approval. Legacy jobs/reservations keep their original
+approval, integration-proof and recovery requirements. Held new claims require
+explicit release before lifecycle cleanup.
 
 In every confctl-managed configuration repository, inspect its defined
 channels and the channel-to-input mapping before updating a flake input. For a

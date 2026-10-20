@@ -4,9 +4,10 @@ Required workspace procedure, selected by the routing table in `AGENTS.md`.
 Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
-For queued merges/deployments, complete builds, tests and review before submitting
-the prepared snapshot. Resource contention is a wait, not a failed check. Follow
-[coordination](../coordination.md) for background continuation and stale-snapshot
+For queued merges/deployments, complete builds, tests and review before running
+the integration or activation command. New work runs session-owned commands under resource claims;
+retained snapshot-based operations keep their original submission contract. Resource contention is a wait, not a failed check. Follow
+[coordination](../coordination.md) for waiting-session notifications and retained-job stale-snapshot
 refresh; repeat only the checks/review required by the changed patch or baseline.
 
 Use separately exported Ruby checks and retained derivation/input receipts to
@@ -125,8 +126,7 @@ retired its data.
 Aitherdev's configuration-managed cleanup retains recognized completed
 `/tmp/**/os-test-*` runs for seven inactive days. Active run locks, process
 references and `.keep` markers preserve them. Ad hoc campaigns and benchmark
-directories need explicit owner cleanup. The user-profile coordinator separately
-collects finished source/target snapshots and expires unused preparations after
-seven days; use `workspace-host coordination gc --dry-run --json` to inspect its
+directories need explicit owner cleanup. New resource claims create no source/target snapshots. Its legacy
+collector retains its existing source, preparation and recovery rules; use `workspace-host coordination gc --dry-run --json` to inspect its
 reference decisions. See the configuration repository's
 `docs/operations/aitherdev-disk-retention.md` for host policy and recovery.
