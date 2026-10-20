@@ -98,11 +98,28 @@
               metadata=${package}/share/dev-workspace/package.json
               test -f "$catalog"
               ${pkgs.jq}/bin/jq -e '
+                . as $catalog |
+                [{id: "delegated", count: 2}, {id: "delegated_3", count: 3},
+                 {id: "delegated_4", count: 4}, {id: "delegated_5", count: 5},
+                 {id: "delegated_6", count: 6}] as $variants |
                 .schema_version == 6 and
                 .execution_access == "full_access" and
-                .default_team == "lead_reviewed" and
-                .default_development_team == "lead_reviewed" and
-                .capacity.required_native_child_threads == 4 and
+                .default_team == "delegated" and
+                .default_development_team == "delegated" and
+                (.teams | keys) == ["delegated", "delegated_3", "delegated_4", "delegated_5", "delegated_6", "lead_designed", "lead_reviewed", "solo"] and
+                .capacity.required_native_child_threads == 8 and
+                .capacity.required_native_child_threads == ([.teams[].max_open_agents] | max) and
+                (all($variants[]; . as $variant | $catalog.teams[$variant.id] |
+                  .initial_member_counts == {implementer: $variant.count} and
+                  .max_open_agents == ($variant.count + 2) and
+                  .design_owner == "designer" and
+                  .roles == $catalog.teams.delegated.roles and
+                  .routing == $catalog.teams.delegated.routing and
+                  .lifecycle == $catalog.teams.delegated.lifecycle and
+                  .mode == "development" and .service_policy == "non_priority"
+                )) and
+                (.teams[.default_development_team].roles | to_entries |
+                  map(select(.value.purpose == "review")) | sort_by(.key) | .[0].value) == .teams.delegated.roles.reviewer and
                 .work_policy.design.default == "xhigh" and
                 .work_policy.design.simple == "high" and
                 .work_policy.design.allowed == ["high", "xhigh"] and
@@ -132,6 +149,7 @@
                 .teams.delegated.roles.team_lead.model == "gpt-6.1-sol" and
                 .teams.delegated.roles.team_lead.effort == "high" and
                 (.teams.delegated.roles.team_lead.instructions | contains("At the end of every turn")) and
+                (.teams.delegated.roles.team_lead.instructions | contains("Use available implementers for independent work")) and
                 (.teams.delegated.roles.team_lead.instructions | contains("do not take over delegated application edits")) and
                 (.teams.delegated.roles.team_lead.instructions | contains("complete base-to-head commit series")) and
                 .teams.delegated.roles.designer.model == "gpt-6-astra" and
@@ -192,13 +210,14 @@
                   contains("Earlier review requires an explicit user request, is advisory, and does not replace final review") and
                   contains("Adding, replacing or reconfiguring team members requires explicit user direction")
                 )) and
-                ([.teams.delegated, .teams.lead_designed] | all(
+                ([.teams[] | select(.roles.implementer)] | all(
                   .roles.implementer.instructions | contains("architect-owned or lead-owned design and verification brief for substantive work")
                 )) and
                 .utilities.verification_watcher.model == "gpt-6-luna" and
                 .utilities.verification_watcher.effort == "low" and
                 .utilities.verification_watcher.behavior == "verification_watcher" and
                 .utilities.verification_watcher.lifetime == "operation" and
+                .utilities.verification_watcher.max_concurrent == 1 and
                 .utilities.verification_watcher.required_for == [
                   "long_check", "uncertain_check", "workflow_wait", "ci_wait", "deployment_wait"
                 ] and
@@ -210,7 +229,7 @@
                 .agent_teams.managed == true and
                 .agent_teams.catalog.schema_version == 6 and
                 .agent_teams.native_capacity.config_key == "agents.max_concurrent_threads_per_session" and
-                .agent_teams.native_capacity.required_value == 4
+                .agent_teams.native_capacity.required_value == 8
               ' "$metadata" >/dev/null
               ${pkgs.jq}/bin/jq -r '.agent_teams.native_role_configs[].path' "$metadata" |
                 while IFS= read -r path; do

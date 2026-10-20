@@ -14,7 +14,7 @@ let
   '';
   defaultInstructions = {
     team_lead = ''
-      Lead this Full-team development session as coordinator and user contact. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Delegate substantive investigation and design to a ready design-purpose member; the architect writes work/<slug>/design.md and identifies implementation boundaries and dependencies before substantive implementation. Assign complete execution packages to ready implementation-purpose members using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin. Use both implementers for independent work when available. A bounded small edit may go directly to an implementer. Keep a compact backlog with owners, expected results, acceptance criteria, dependencies and checks. Implementers own diagnosis, source, tests, technical documentation, quick checks, commits and follow-up fixes, including review findings. Delegate dependent implementation and integration fixes too; waiting for specialists is not a reason to duplicate their investigation or take over their work. Serialize overlapping edits and Git operations in each repository. Briefly tell the user who owns what, assess reports and acceptance evidence, resolve dependencies and keep the user informed. Keep brief scoping, acceptance inspection, session tracking, approval-bound coordination and required context-dependent user-facing writing yourself. Keep only short coordination steps yourself. Check saved workspace-write access before assigning edits. If a member cannot write or resolve this session, investigate and resolve the access or session identity failure; tell the user and do not take over delegated application edits. If no implementation-purpose member exists in the live roster, do the implementation yourself; a busy, unready or inaccessible member still exists. If no design-purpose member exists, own the design. Preserve retained member settings and use interruptible waits for reports.
+      Lead this Full-team development session as coordinator and user contact. For each substantive work item, inspect the verified same-session roster with dev-session team list <verified-slug> --as-is. Delegate substantive investigation and design to a ready design-purpose member; the architect writes work/<slug>/design.md and identifies implementation boundaries and dependencies before substantive implementation. Assign complete execution packages to ready implementation-purpose members using dev-session team assign <verified-slug> --as-is --to ADDRESS --message-stdin. Use available implementers for independent work. A bounded small edit may go directly to an implementer. Keep a compact backlog with owners, expected results, acceptance criteria, dependencies and checks. Implementers own diagnosis, source, tests, technical documentation, quick checks, commits and follow-up fixes, including review findings. Delegate dependent implementation and integration fixes too; waiting for specialists is not a reason to duplicate their investigation or take over their work. Serialize overlapping edits and Git operations in each repository. Briefly tell the user who owns what, assess reports and acceptance evidence, resolve dependencies and keep the user informed. Keep brief scoping, acceptance inspection, session tracking, approval-bound coordination and required context-dependent user-facing writing yourself. Keep only short coordination steps yourself. Check saved workspace-write access before assigning edits. If a member cannot write or resolve this session, investigate and resolve the access or session identity failure; tell the user and do not take over delegated application edits. If no implementation-purpose member exists in the live roster, do the implementation yourself; a busy, unready or inaccessible member still exists. If no design-purpose member exists, own the design. Preserve retained member settings and use interruptible waits for reports.
     ''
     + leadRequirements;
     lead_designed_lead = ''
@@ -116,14 +116,47 @@ let
       inherit implementer reviewer;
     };
   };
+  mkFullTeam =
+    count:
+    commonDevelopment
+    // {
+      description = "Sol coordinates; Astra designs; ${toString count} Sol implementers execute; Sol reviews";
+      initial_member_counts.implementer = count;
+      max_open_agents = count + 2;
+      design_owner = "designer";
+      routing = {
+        design_simple_effort = "high";
+        implementer_simple_effort = "high";
+      };
+      roles = commonDevelopment.roles // {
+        team_lead = solLead;
+        inherit designer;
+      };
+    };
+  fullTeams = builtins.listToAttrs (
+    map
+      (count: {
+        name = if count == 2 then "delegated" else "delegated_${toString count}";
+        value = mkFullTeam count;
+      })
+      [
+        2
+        3
+        4
+        5
+        6
+      ]
+  );
 in
-{
+rec {
   schema_version = 6;
   execution_access = "full_access";
-  default_team = "lead_reviewed";
-  default_development_team = "lead_reviewed";
+  default_team = "delegated";
+  default_development_team = "delegated";
 
-  capacity.required_native_child_threads = 4;
+  capacity.required_native_child_threads = builtins.foldl' (
+    maximum: team: if team.max_open_agents > maximum then team.max_open_agents else maximum
+  ) 0 (builtins.attrValues teams);
 
   work_policy = {
     design = {
@@ -185,21 +218,6 @@ in
       };
     };
 
-    delegated = commonDevelopment // {
-      description = "Sol coordinates; Astra designs; two Sol implementers execute; Sol reviews";
-      initial_member_counts.implementer = 2;
-      max_open_agents = 4;
-      design_owner = "designer";
-      routing = {
-        design_simple_effort = "high";
-        implementer_simple_effort = "high";
-      };
-      roles = commonDevelopment.roles // {
-        team_lead = solLead;
-        inherit designer;
-      };
-    };
-
     lead_designed = commonDevelopment // {
       description = "Sol lead designs; Sol implements and reviews";
       design_owner = "team_lead";
@@ -215,7 +233,8 @@ in
         };
       };
     };
-  };
+  }
+  // fullTeams;
 
   utilities.verification_watcher = {
     model = "gpt-6-luna";
