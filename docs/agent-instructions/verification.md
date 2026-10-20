@@ -18,6 +18,20 @@ An integration driver that also approves/submits/activates operations is launche
 by the lead. A verification utility may observe its independent logs/status; it
 must not launch or resume that mutation driver itself.
 
+## Workspace runtime availability
+
+Runtime development must keep the selected workspace usable. Run lifecycle,
+collection, creation and naming tests against disposable state and sockets;
+do not repoint them at the live registered workspace or restart its conversation
+service for a fixture. Keep the selected package unchanged until the candidate
+passes review and applicable checks. Source builds alone do not select a package.
+
+For changes to coordinator locking, collection, session creation or naming,
+verify session creation during an active collection sweep, required preparation
+and package-switch exclusion, and creation when the naming backend fails. After
+an authorized deployment, verify portal health, naming and conversation continuity
+before calling the runtime usable. A transient model failure must not block work.
+
 ## Development Environment
 
 The installed full-access execution policy applies to members and utilities.
