@@ -6,10 +6,43 @@ lifecycle: active
 
 ## Status
 
-Implemented, independently reviewed, verified and deployed on aitherdev.
-Ready for use; ready, awaiting merge approval. Lifecycle remains active.
-No default-branch integration, reboot, session closure or reservation release
-was performed. Reservation90fb300f is retained as deployed_review.
+Phase: approved coordinator integration; merge jobs submitted.
+The user accepted the deployed UI and directed: "ok, this is good enough, merge it".
+This authorizes codex-web, dev-workspace, workspace and vpsfree-cz-configuration
+feature integration into refs/heads/master. Source and scope: merge-authorization.json.
+No archive, delete, stop, branch deletion or live-session mutation is authorized.
+
+- [x] Implementation, quick checks, independent final review, package checks and CI.
+- [x] System/profile deployment and live asset/service verification.
+- [x] User UI acceptance and merge direction for all four repositories.
+- [ ] Final baseline/history check, saved comparisons and coordinated integration.
+- [ ] Exact remote integration proofs and normal deployment-review completion.
+
+Current reviewed inventory: navigation-final-inventory.json. Review:
+navigation-review.md. Verification: navigation-verification-report.md.
+Live acceptance: navigation-acceptance.md and navigation-live-deployment-verification.json.
+Reservation90fb300f remains held until exact normal completion proofs succeed.
+Feature contracts remain codex-web/docs/reference.md and
+dev-workspace/docs/workspace-portal.md; execution history remains in rollout.md.
+Foreground integration run: 3244c259-a5d3-4537-a149-e373c3acd23d. Read-only Luna/low observer:
+01a159f3-7c3c-7662-80e8-11c49ab2b2d1. The workspace pin refresh over the
+published tracking commits is certified mechanically; the composition contract
+still selects runtime74ff349e. Next: settle the four merge jobs, then normal
+reservation completion with reviewed lineage.
+
+The prior accepted minor focus Advisory remains unchanged. No new source changes
+are intended. Same-day tracking checkpoint cadence is preserved.
+
+## Prior verified deployment checkpoint
+
+## Status
+
+Optional questions, archive recovery and the naming provider repair are deployed
+and verified on aitherdev. Ready for use; ready, awaiting merge approval.
+Lifecycle remains active and reservation90fb300f is retained as deployed_review.
+No default-branch integration, reboot, reservation release or session closure.
+Final source heads and complete series: naming-deployment-final-inventory.json.
+No implementation, review, build, CI or deployment operation remains running.
 
 - [x] Optional questions answerable inline and in a panel below scrolling output.
 - [x] Original browser/native/package checks and final CI39397884404 passed.
@@ -19,9 +52,30 @@ was performed. Reservation90fb300f is retained as deployed_review.
 - [x] Live worktree snapshots unchanged before/after recovery and deployment.
 - [x] Fresh exact system/profile preparation and ordered activation succeeded.
 - [x] Live panel/assets, Codex0.163.0, services and conversation continuity verified.
+- [x] Naming follows accepted provider/default and imports catalog-only definitions.
+- [x] Final independent reviews, native regression, package and creation CI passed.
+- [x] Refreshed exact system and retained application profile activation succeeded.
+- [x] Live naming through openai succeeds despite global native defaultcodex-lb.
+- [x] Saved request byte-identical; three live worktrees/admin identities unchanged.
 - [ ] Explicit direction for repository integration and subsequent completion.
 
 ## Next actions
+
+The user can click Retry naming on the saved creation request70bb8013. Its
+prompt/settings and attempt1 failure record remain intact; no replay or new
+session was created for acceptance. No implementation or deployment action
+remains. Keep the initiative and machine reservation open for user acceptance;
+default-branch integration requires explicit direction for the four repositories.
+
+Current acceptance: naming-acceptance.md. Live identity, service, no-reboot and
+saved-request proof: naming-live-deployment-verification.json. Synthetic naming:
+naming-live-postdeploy.json. Worktree proof: naming-live-worktree-after.json.
+Final source inventory: naming-deployment-final-inventory.json. Review reports:
+naming-startup-review.md and naming-baseline-review.md, with the direct narrow
+fixture correction in naming-harness-correction.md. Final package/CI evidence:
+naming-final-verification-report.md and naming-final-ci-detail.json.
+
+Previous completed rollout:
 
 User review may proceed at the stable portal URL. Optional questions stay below
 normal output while pending and can be answered directly in their message.
@@ -38,7 +92,8 @@ is live-deployment-verification.json; deployment-acceptance.md summarizes it.
 ## Documentation
 
 Feature contracts remain in codex-web/docs/reference.md and
-dev-workspace/docs/workspace-portal.md. Final supplemental reviews are archive-repair-followup-review.md and
+dev-workspace/docs/workspace-portal.md. Naming provider routing and startup
+semantics are documented in dev-workspace/docs/session-preparations.md. Final supplemental reviews are archive-repair-followup-review.md and
 deployment-baseline-review.md;
 individual rollout status and preparation/recovery evidence are in rollout.md
 and the linked receipts below. No feature documentation changed during the
@@ -536,3 +591,147 @@ System jobc5cacc82 succeeded/applied at systemj98vjl4m (NixOS26.05.20261019.f3a7
 attemptcc1f0dc6. Matching profilejobb004f7a7 running, attempt52c564ca.
 Utility observer01a158bf hit repeated account errors; stopped only the unavailable
 utility and used documented parent-monitor fallback. No deployment replay.
+
+## Naming follow-up committed checkpoint
+
+Final ranges: naming-final-inventory.json. Quick checks: naming-quick-checks.md.
+Provider helperf3633de, runtime4df1052, workspace7b3e8a4b, configurationc464fe0d.
+Repeated dependency/pin updates consolidated; deployed exact source refs retained.
+No migrations; Codex0.163.0 and stored preparation identities unchanged.
+- [x] Naming provider propagation, default resolution and fail-closed response checks.
+- [x] Focused helper/runtime checks, owning docs and matching-pin contract.
+- [x] Independent final naming review (naming-review.md): no findings in all four lanes.
+- [x] Native regression and helper/runtime packaged checks.
+- [x] Earlier CI failures diagnosed and corrected; final CI39415027233 passed.
+- [x] Ordered system/profile redeployment and live naming verification.
+
+Naming review retained /root/optional_questions_review, gpt-6-astra/xhigh, no roster
+eligible; installed default policy fallback originally selected. High risk for
+provider protocol and deployment. Complete history, matching pins, consolidation
+and no-migration conclusion accepted. Native/package verification is next.
+
+Verification utility01a158f4 (gpt-6-luna/low, full access/never) reported native
+provider routing and full helper package checks passed; runtime package/final
+CI are still owned by that same watcher. Exact launch/settings retained.
+
+Live predeployment smoke with explicit active provideropenai passed using synthetic
+input and created no session (naming-live-predeploy-corrected.json). First smoke
+command missed Go -mod=readonly and failed at build setup, before contacting native;
+corrected command passed. Full verification utility report: naming-verification-report.md.
+Helper CI39410168497 passed. Native route regression passed in0.69s; runtime package
+passed its complete Go/browser checks. No deployment started pending CI diagnosis.
+
+## Catalog-only provider refinement
+
+CI39410404297 failed its creation VM: alternate was absent from naming child
+global definitions. No blind rerun. Reused existing host native-args projection
+at child startup; strengthened actual creation provider-route assertions.
+Focused tests passed0 at runtimec47e7b5, matching contract passed. Final source
+heads and full series: naming-final2-inventory.json. Review packet:
+naming-startup-review-packet.md; prior naming-review.md preserved unchanged.
+Final CI39412930820 is the new-source run, not a rerun of failed evidence.
+No deployment has started. All live sessions/worktrees remain unchanged.
+
+Final startup review passed, no findings across all four lanes, retained reviewer
+Astra/xhigh and native identity verified (naming-reviewer-settings.json).
+Source/history/matching-pin/no-migration conclusions in naming-startup-review.md.
+Fresh Luna/low utility now owns final runtime package and CI39412930820.
+
+Final2 runtime package passed. CI39412930820 fast/archive passed, but the new
+naming_proof tried to transport a large JSONL request log through the VM console
+and failed JSONDecodeError at column53232 after successful automatic naming.
+Downloaded exact failure evidence before any retry. Narrow harness correction
+filters complete records inside the guest and returns only compact route IDs.
+Python fixture syntax and extraction with a100KiB record plus incomplete tail
+passed. Production application source is byte-identical to reviewedc47e7b5.
+Corrected runtime head isd68f88a; generated matching pins being refreshed.
+
+Narrow fixture correction directly checked under mandatory review steps9/10;
+no new design/public/security boundary, so no affected-lane rerun needed.
+Evidence: naming-harness-correction.md. Final3 inventory names exact refreshed
+heads and consolidated series. Original independent review retained unchanged.
+
+Final verification utility01a15913 uses catalog Luna/low, full access/never,
+provideropenai verified from native metadata. It owns final package and
+CI39415027233; no parent duplicate polling of those logs/runs. Acceptance:
+naming-acceptance.md; final source inventory: naming-final3-inventory.json.
+Next after pass: exact prepare/approve/submit driver naming-rollout.sh under
+a fresh read-only utility observer; no default integration or request replay.
+
+Final utility reported the exact d68f88a runtime package check passed0;
+CI39415027233 remains running and is still owned by the same utility.
+No activation has started. Earlier failed runs and complete diagnostics retained.
+
+Final verification passed: native/helper checks, helper CI39410168497, exact
+final runtime package and all CI39415027233 jobs (fast/archive/creation; host
+skipped by workflow condition). Final utility report: naming-final-verification-report.md.
+Exact reviewed/published source preparation and ordered deployment are starting
+under reservation90fb300f; lead owns naming-rollout.sh and a fresh utility
+observes independent result/log files. No default integration or reboot.
+
+Rollout observer reported exact system preparation completed. Application-profile
+preparation remains active; its build/copy happens outside activation claims.
+The same lead-owned driver retains responsibility through ordered activation.
+
+## Naming deployment baseline refresh
+
+System snapshot fde6057a and profile07f7821a prepared0/0. Jobs system
+e0ecf4c6-809a-4161-8326-15652ec0f05a and profile9204972c-3220-4c27-a570-02d5a48fdea5
+were submitted under reservation90fb300f. System attemptdbb57477 returned
+needs_refresh/baseline_changed before mutation; profile remains unclaimed,
+waiting_dependency. Original artifacts and reports are retained.
+
+Configuration master advanced e646cf61 ->6e79db5a, changing only the vpsadminWebui
+pin b9f47f06 ->1092ea48. Feature rebased cleanly to e2013704; range-diff is
+identical and matching runtime deployment contract passed. No application/runtime
+source or workspace/profile input changed, so exact final application checks and
+prepared profile remain valid. Full refreshed inventory:
+naming-deployment-final-inventory.json; affected review packet:
+naming-baseline-review-packet.md. Retained independent config-baseline reviewer
+01a158b3 resumed with verified Astra/xhigh settings. No master integration,
+reboot, reservation release or live-session repair.
+
+After review, lead owns naming-baseline-rollout.sh: prepare exact new system,
+approve it under original deployment direction, refresh the existing system job
+and retain the same pending profile dependency. Fresh observer required.
+
+Baseline review passed (naming-baseline-review.md), general/history and risk
+lanes, retained Astra/xhigh verified. It proved aitherdev input trees unchanged
+and no vpsadminWebui consumption; self.rev still requires exact e2013704 system
+preparation. Lead is starting the supported same-job refresh under a fresh
+Luna/low observer. Original application artifact/approval and dependency retained.
+
+## Naming rollout completed
+
+Refreshed system jobe0ecf4c6 succeeded, attempt6c069f2e-ccea-4816-987c-d5a1369ea82d.
+Profile job9204972c succeeded, attempt1148cbce-6844-46e0-a4cb-821115c93c65.
+Original needs_refresh attempt and artifacts remain retained. The pending profile
+was reused only after exact artifact, source, selected-generation and token checks.
+Fresh observer reported driver0; its own CLI subsequently exited0, so no observer
+process remains. Selected application1i1g6rp8; system and system profilep0pkh5qp.
+Both exact roots match authoritative results. Codex0.163.0 and boot ID unchanged;
+router/portal active. Postdeploy naming returned valid JSON throughopenai while
+global config remainscodex-lb. Creation page and retry control accessible.
+Saved request SHA unchanged, no replay/session created; live worktree snapshots
+remain identical. Optional-question panel is present and both browser assets
+match reviewed helperf3633de bytes.
+
+Final documentation contracts remain helper reference.md and runtime
+session-preparations.md/workspace-portal.md; no additional feature-doc change
+was required by the mechanical configuration rebase. Exact deployment and
+recovery evidence remains here and in rollout.md. Daily tracking checkpoint
+already made today; these owned final records remain in the working tree under
+the established cadence. All substantive feature changes are committed/published.
+
+Owned temporary vendor tree, quick-check replacement modfiles and Python bytecode
+cache removed after verification; compact hash/results retained. Private native
+smoke/test scratch was removed by its owning harness. Deployment/recovery roots
+and source refs remain intentionally retained under reservation policy.
+
+Final reviewed heads: compact-focus-final-inventory.json. Review dispositions and
+accepted minor external-collapse focus limitation: compact-review-reconciliation.md.
+
+## Integration 3244c259-a5d3-4537-a149-e373c3acd23d
+
+Requested exact feature heads are integrated. See integration/3244c259-a5d3-4537-a149-e373c3acd23d/summary.md
+and integration/3244c259-a5d3-4537-a149-e373c3acd23d/result.json for operation receipts. Feature refs and session retained.
