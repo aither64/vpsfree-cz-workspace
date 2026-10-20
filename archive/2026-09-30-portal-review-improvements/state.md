@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 
 # 2026-09-30-portal-review-improvements
