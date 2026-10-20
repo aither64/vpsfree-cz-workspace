@@ -1,0 +1,49 @@
+diff --git a/tests/suite/vpsadmin-events.nix b/tests/suite/vpsadmin-events.nix
+index d288478..007df42 100644
+--- a/tests/suite/vpsadmin-events.nix
++++ b/tests/suite/vpsadmin-events.nix
+@@ -19,7 +19,7 @@ import ../make-test.nix (
+           host = "127.0.0.1";
+         };
+         channels = [ "#vpsfree" ];
+-        nick = "summarybot";
++        nick = "digbot";
+         api_url = "http://api.vpsadmin.test";
+         archive_url = "http://archive.test";
+         archive_dst = "/var/lib/vpsfree-irc-bot/archive";
+@@ -513,7 +513,8 @@ import ../make-test.nix (
+         it 'summarizes gradual advisory arrivals across polls while retaining individual notices' do
+           started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
+           irc.succeeds('systemctl start vpsfree-irc-bot-summary')
+-          client.wait_for_names_include('summarybot')
++          irc.wait_for_service('vpsfree-irc-bot-summary')
++          client.wait_for_names_include('digbot')
+           # The first persisted snapshot proves silent bootstrap has finished.
+           irc.wait_until_succeeds(
+             'test -f /var/lib/vpsfree-irc-bot/state/irc-summary.test/security_advisories.yml',
+@@ -529,15 +530,23 @@ import ../make-test.nix (
+           create_security_advisory_update(security_advisory_id, unique_label('Existing Advisory Update'))
+ 
+           expected = "2 new security advisories, 1 updated in vpsAdmin: #{WEBUI_BASE_URL}/?page=security_advisory"
+-          client.wait_for_privmsg(from: 'summarybot', target: CHANNEL, text: expected, timeout: 90)
++          client.wait_for_privmsg(from: 'digbot', target: CHANNEL, text: expected, timeout: 90)
+           elapsed = Process.clock_gettime(Process::CLOCK_MONOTONIC) - started
+           expect(elapsed).to be >= ${toString summaryInterval}
+ 
+           client.drain(quiet: 3)
+-          summary_lines = client.lines.grep(/\A:summarybot![^ ]+ PRIVMSG /)
++          summary_lines = client.lines.grep(/\A:digbot![^ ]+ PRIVMSG /)
+           expect(summary_lines.size).to eq(1)
+           expect(summary_lines.first).to end_with(expected)
+           expect(summary_lines.join).not_to include('New security advisory #', 'Update of security advisory #')
++        rescue StandardError
++          begin
++            _, output = irc.succeeds('journalctl -u vpsfree-irc-bot-summary -n 120 --no-pager')
++            warn output
++          rescue StandardError => diagnostic_error
++            warn "Unable to read summary bot service log: #{diagnostic_error.message}"
++          end
++          raise
+         end
+       end
+     '';

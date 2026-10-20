@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: archived
 ---
 
 # Hourly security advisory digests

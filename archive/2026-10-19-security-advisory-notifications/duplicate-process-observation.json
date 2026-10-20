@@ -1,0 +1,90 @@
+[
+  {
+    "pid": 2237658,
+    "ppid": 3387667,
+    "state": "S",
+    "start_ticks": 1175229367,
+    "cwd": "/home/aither/workspace/ai/vpsfree.cz",
+    "cmd": "/run/current-system/sw/bin/bash -lc python3 - <<'PY'\nfrom pathlib import Path\np=Path('work/2026-10-19-security-advisory-notifications')\ns=(p/'bot-runtime-final-request.md').read_text().replace('263ddbc0b541b5df2d025a73f1759d33db3f30b2','94ac4eb5a7caf0456fff7df86a44cae198463276').replace('RSpec39323728164 and Integration Tests39323728183','RSpec39325998769 and Integration Tests39325998761').replace('bot-runtime-final.log','bot-runtime-ready.log').replace('bot-runtime-final.exit','bot-runtime-ready.exit')\ns+='''\\nLatest263ddbc run passed digest and all7 other than first public-status readiness\\nexample. Exact observed API-not-ready reply confirms existing independent-plugin\\nsetup race. Lead inspected minimal firstexample-only bounded retry after explicit\\nnot-ready; original nodes-online success retained, silence/unmatched still fails.\\nNo app/public/helper change, full150/static/lint pass, sole commit consolidated.\\nNo unsupported per-example selector. Root-cause artifacts retained. This fresh\\nfull-suite run is required to establish all8 passing at exact final head.\\n'''\n(p/'bot-runtime-ready-request.md').write_text(s)\ns=(p/'runtime-final-watcher-prompt.txt').read_text().replace('263ddbc0b541b5df2d025a73f1759d33db3f30b2','94ac4eb5a7caf0456fff7df86a44cae198463276').replace('bot-runtime-final-request.md','bot-runtime-ready-request.md')\n(p/'runtime-ready-watcher-prompt.txt').write_text(s)\nPY\n/nix/store/ad0s75irvrbj6pz6qk1zf7v9sy4l1qyp-dev-workspace-0.2.0/libexec/codex/bin/codex --ask-for-approval never exec --model gpt-6-luna --config model_reasoning_effort='\"low\"' --sandbox danger-full-access --cd /home/aither/workspace/ai/vpsfree.cz --json --output-last-message /home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/runtime-ready-watcher-report.md - < work/2026-10-19-security-advisory-notifications/runtime-ready-watcher-prompt.txt > work/2026-10-19-security-advisory-notifications/runtime-ready-watcher-native.jsonl 2> work/2026-10-19-security-advisory-notifications/runtime-ready-watcher-native.log\nwatcher_status=$?\nprintf '%s\\n' \"$watcher_status\" > work/2026-10-19-security-advisory-notifications/runtime-ready-watcher-native.exit\nexit \"$watcher_status\""
+  },
+  {
+    "pid": 2237728,
+    "ppid": 2237658,
+    "state": "S",
+    "start_ticks": 1175229381,
+    "cwd": "/home/aither/workspace/ai/vpsfree.cz",
+    "cmd": "/nix/store/jrsm1rzxm1ak23j1f2vn0lil9qgxblym-codex-package-0.163.0/libexec/codex/bin/codex --ask-for-approval never exec --model gpt-6-luna --config model_reasoning_effort=\"low\" --sandbox danger-full-access --cd /home/aither/workspace/ai/vpsfree.cz --json --output-last-message /home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/runtime-ready-watcher-report.md -"
+  },
+  {
+    "pid": 2240153,
+    "ppid": 2237728,
+    "state": "S",
+    "start_ticks": 1175229888,
+    "cwd": "/home/aither/workspace/ai/vpsfree.cz",
+    "cmd": "/nix/store/jrsm1rzxm1ak23j1f2vn0lil9qgxblym-codex-package-0.163.0/libexec/codex/bin/codex-code-mode-host"
+  },
+  {
+    "pid": 2242089,
+    "ppid": 2237728,
+    "state": "S",
+    "start_ticks": 1175231638,
+    "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-security-advisory-notifications/vpsfree-irc-bot",
+    "cmd": "/run/current-system/sw/bin/bash -lc set -o pipefail; ./test-runner.sh test vpsadmin-events 2>&1 | tee /home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/bot-runtime-ready.log; result=${PIPESTATUS[0]}; printf '%s\\n' \"$result\" > /home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/bot-runtime-ready.exit; exit \"$result\""
+  },
+  {
+    "pid": 2242090,
+    "ppid": 2242089,
+    "state": "S",
+    "start_ticks": 1175231642,
+    "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-security-advisory-notifications/vpsfree-irc-bot",
+    "cmd": "/nix/store/66lv43ahxyny84k52yaar0bwk8dzrsn4-ruby-3.4.9/bin/ruby /nix/store/bv1jjciycka379c3q3w7i93grgkjp942-test-runner/bin/test-runner test vpsadmin-events"
+  },
+  {
+    "pid": 2242091,
+    "ppid": 2242089,
+    "state": "S",
+    "start_ticks": 1175231642,
+    "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-security-advisory-notifications/vpsfree-irc-bot",
+    "cmd": "tee /home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/bot-runtime-ready.log"
+  },
+  {
+    "pid": 2246311,
+    "ppid": 2242090,
+    "state": "S",
+    "start_ticks": 1175233310,
+    "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-security-advisory-notifications/vpsfree-irc-bot",
+    "cmd": "/nix/store/66lv43ahxyny84k52yaar0bwk8dzrsn4-ruby-3.4.9/bin/ruby /nix/store/bv1jjciycka379c3q3w7i93grgkjp942-test-runner/bin/test-runner test vpsadmin-events"
+  },
+  {
+    "pid": 2285283,
+    "ppid": 2246311,
+    "state": "S",
+    "start_ticks": 1175249511,
+    "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-security-advisory-notifications/vpsfree-irc-bot",
+    "cmd": "/nix/store/d0ldipwgxqf7nrvwg2m63vw68paagd20-virtiofsd-1.13.3/bin/virtiofsd --socket-path /tmp/os-test-runner/socks/59f1e6f8-services-fs-vmSharedDir.sock --shared-dir /tmp/os-test-runner/os-test-vpsadmin-events-8aba1688/shared-dir --cache auto"
+  },
+  {
+    "pid": 2285285,
+    "ppid": 2285283,
+    "state": "S",
+    "start_ticks": 1175249513,
+    "cwd": "/ (deleted)",
+    "cmd": "/nix/store/d0ldipwgxqf7nrvwg2m63vw68paagd20-virtiofsd-1.13.3/bin/virtiofsd --socket-path /tmp/os-test-runner/socks/59f1e6f8-services-fs-vmSharedDir.sock --shared-dir /tmp/os-test-runner/os-test-vpsadmin-events-8aba1688/shared-dir --cache auto"
+  },
+  {
+    "pid": 2285593,
+    "ppid": 2246311,
+    "state": "S",
+    "start_ticks": 1175249612,
+    "cwd": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-security-advisory-notifications/vpsfree-irc-bot",
+    "cmd": "/nix/store/raf0hydj79qm52aj9kdbk2zkcs8q3l4c-qemu-host-cpu-only-for-vm-tests-10.2.4/bin/qemu-kvm -name os-vm-services -m 8192 -cpu host -smp cpus=8,cores=8,threads=1,sockets=1 --no-reboot -device ahci,id=ahci -device virtio-net,netdev=net0,mac=52:54:00:20:d8:30 -netdev user,id=net0,net=10.0.2.0/24,host=10.0.2.2,dns=10.0.2.3 -device virtio-net,netdev=net1,mac=52:54:00:75:67:d6 -netdev socket,id=net1,mcast=230.0.0.1:10000 -device virtio-serial -chardev socket,id=shell,path=/tmp/os-test-runner/socks/59f1e6f8-services-shell.sock -device virtconsole,chardev=shell -nographic -kernel /nix/store/a493j0zfbm4gif5nj5jvivhlblvaq06q-linux-6.18.43/bzImage -initrd /nix/store/sm2s9ygkvji9g02nvh28wa7wmx9d5xyn-initrd-linux-6.18.43/initrd -append console=ttyS0 init=/nix/store/dm36c61lc8nl56lbdib9sgfys1r3glrg-nixos-system-vpsadmin-services-26.05pre-git/init console=ttyS0 rd.udev.children_max=1 udev.children_max=1 root=fstab loglevel=4 net.ifnames=0 lsm=landlock,yama,bpf panic=-1 -drive id=diskroot,file=/tmp/os-test-runner/os-test-vpsadmin-events-8aba1688/services-root.img,if=none,format=raw -device ide-hd,drive=diskroot,bus=ahci.0 -chardev socket,id=char0,path=/tmp/os-test-runner/socks/59f1e6f8-services-fs-vmSharedDir.sock -device vhost-user-fs-pci,queue-size=1024,chardev=char0,tag=vmSharedDir -object memory-backend-file,id=m0,size=8192M,mem-path=/dev/shm,share=on -numa node,memdev=m0"
+  },
+  {
+    "pid": 3387667,
+    "ppid": 4239,
+    "state": "S",
+    "start_ticks": 1162579375,
+    "cwd": "/home/aither",
+    "cmd": "/nix/store/jrsm1rzxm1ak23j1f2vn0lil9qgxblym-codex-package-0.163.0/libexec/codex/bin/codex -c mcp_servers.team_reporting.command=\"/nix/store/s4fbv3hya8l09jh4a67rd4brdkwx4piz-dev-workspace-0.2.0/bin/workspace-portal\" -c mcp_servers.team_reporting.args=[\"team-mcp\",\"--user-state-root\",\"/home/aither/.local/state/dev-workspaces\",\"--workspace\",\"/home/aither/workspace/ai/vpsfree.cz\",\"--host-profile\",\"/home/aither/.local/state/dev-workspaces/profile\"] -c mcp_servers.team_reporting.required=true -c mcp_servers.team_reporting.enabled_tools=[\"report_to_lead\"] -c mcp_servers.team_reporting.tools.report_to_lead.approval_mode=\"approve\" -c model_provider=\"openai\" -c model_providers.codex-lb.name=\"Snajpa codex-lb\" -c model_providers.codex-lb.base_url=\"http://172.16.106.12:2455/v1\" -c model_providers.codex-lb.wire_api=\"responses\" -c model_providers.codex-lb.supports_websockets=false -c model_providers.codex-lb.auth.command=\"/nix/store/61685rbaxmpigwi3z23i33sv3jyfl70q-coreutils-9.11/bin/cat\" -c model_providers.codex-lb.auth.args=[\"/home/aither/.codex/aither-on-snajpa-codex-lb.token\"] app-server --listen unix:///run/user/1000/dev-workspaces/vpsfree-cz/app-server.sock"
+  }
+]

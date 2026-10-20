@@ -1,0 +1,7 @@
+- **Result:** Failed; command exit status `1`. CI observation was not started because local verification failed.
+- **Tested revision:** `a5d1dfe565526c3532183d756c592a26e7270675`
+- **Command:** `./test-runner.sh test vpsadmin-events`
+- **Elapsed:** 566.22 seconds.
+- **Logs and status:** [bot-runtime-retry.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/bot-runtime-retry.log), [bot-runtime-retry.exit](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/bot-runtime-retry.exit)
+- **Runner evidence:** Examples 1–7 succeeded. Example 8, “summarizes gradual advisory arrivals across polls while retaining individual notices,” failed after 70.86 seconds. Runner details: `/tmp/os-test-runner/os-test-vpsadmin-events-8aba1688`.
+- **Still-running operation:** None. Normal runner shutdown completed.

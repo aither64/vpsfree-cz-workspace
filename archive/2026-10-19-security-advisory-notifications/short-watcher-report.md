@@ -1,0 +1,3 @@
+**Result: passed.** Local `vpsadmin-events` verification completed with exit status 0; all 8 examples succeeded on `94ac4eb5a7caf0456fff7df86a44cae198463276`. GitHub RSpec run `39325998769` and Integration Tests run `39325998761` also succeeded on that revision. No operation remains active.
+
+The report and CI evidence are saved in [short-watcher-report.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/short-watcher-report.md). Local output and status are in [short-runtime.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/short-runtime.log) and [short-runtime.exit](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/short-runtime.exit).

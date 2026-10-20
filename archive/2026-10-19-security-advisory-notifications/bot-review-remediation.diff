@@ -1,0 +1,168 @@
+diff --git a/README.md b/README.md
+index 5d8e0f2..52de203 100644
+--- a/README.md
++++ b/README.md
+@@ -36,6 +36,8 @@ The optional `mode` setting accepts:
+ - `off`: keep polling and updating the advisory store without announcements or
+   pending summaries.
+ 
++In YAML, quote the off value as `mode: 'off'`; an unquoted `off` is parsed as a boolean.
++
+ The bot polls every minute. In summary mode, `summary_interval` sets the minimum
+ time between summaries in seconds. It must be a positive integer and defaults to
+ `3600` (one hour). Arrivals do not move the deadline or trigger early output.
+diff --git a/dist/config.yml.sample b/dist/config.yml.sample
+index 5c70f8a..d777586 100644
+--- a/dist/config.yml.sample
++++ b/dist/config.yml.sample
+@@ -18,8 +18,8 @@ archive_url: http://irc.example.com
+ # Security advisories
+ # security_advisories:
+ #     channels: '#channel1'
+-#     # individual (default), summary or off
+-#     mode: summary
++#     # individual (default), summary or off; quote off as mode: 'off'
++#     mode: 'summary'
+ #     # Positive integer seconds between summaries; default: 3600
+ #     summary_interval: 3600
+ 
+diff --git a/lib/vpsfree-irc-bot/security_advisories.rb b/lib/vpsfree-irc-bot/security_advisories.rb
+index 0c28126..e0ff88d 100644
+--- a/lib/vpsfree-irc-bot/security_advisories.rb
++++ b/lib/vpsfree-irc-bot/security_advisories.rb
+@@ -36,19 +36,27 @@ module VpsFree::Irc::Bot
+ 
+     def post_api_setup
+       @advisory_mutex.synchronize do
++        @advisories_initialized = false
++        @summary_deadline = nil
++        @store = FileStorage.new(config[:state_dir], config[:server_label], :security_advisories)
++        @since = Time.now
+         initialize_advisories
+-        @summary_deadline = monotonic_time + @summary_interval
+-        @advisories_initialized = true
+       end
+     end
+ 
+     def check
+       @advisory_mutex.synchronize do
+-        unless api_setup? && @advisories_initialized
++        unless api_setup?
+           warn 'Skipping security advisory check, API not set up'
+           return
+         end
+ 
++        unless @advisories_initialized
++          # Retry incomplete bootstrap without polling or announcing its history.
++          initialize_advisories if @store
++          return
++        end
++
+         client do |api|
+           if @mode == 'individual'
+             check_individual(api)
+@@ -84,8 +92,6 @@ module VpsFree::Irc::Bot
+ 
+     def initialize_advisories
+       @webui = client { |api| api.system_config.show('webui', 'base_url').value }
+-      @store = FileStorage.new(config[:state_dir], config[:server_label], :security_advisories)
+-      @since = Time.now
+ 
+       client do |api|
+         advisories = api.security_advisory.list(
+@@ -95,6 +101,8 @@ module VpsFree::Irc::Bot
+           @store[advisory.id] = advisory_to_hash(advisory, advisory_cves(api, advisory.id))
+         end
+       end
++      @summary_deadline = monotonic_time + @summary_interval
++      @advisories_initialized = true
+     end
+ 
+     def check_individual(api)
+diff --git a/spec/vpsfree/irc/bot/security_advisories_spec.rb b/spec/vpsfree/irc/bot/security_advisories_spec.rb
+index 4eebf62..f6b73d8 100644
+--- a/spec/vpsfree/irc/bot/security_advisories_spec.rb
++++ b/spec/vpsfree/irc/bot/security_advisories_spec.rb
+@@ -352,6 +352,82 @@ RSpec.describe VpsFree::Irc::Bot::SecurityAdvisories do
+     expect(store.keys).to eq([1, 2])
+   end
+ 
++  it 'retries failed bootstrap lists silently and waits a full interval after recovery' do
++    plugin = build_plugin(mode: 'summary', summary_interval: 10)
++    original_since = clock[:wall].iso8601
++    historical = advisory(1)
++    failure = StandardError.new('bootstrap list failed')
++    attempts = 0
++    allow(updates).to receive(:list).and_call_original
++    allow(advisories).to receive(:list) do
++      attempts += 1
++      raise failure if attempts <= 2
++
++      [historical]
++    end
++
++    expect { plugin.post_api_setup }.to raise_error(failure)
++    clock[:monotonic] = 120
++    clock[:wall] += 60
++    plugin.check
++    plugin.flush_summary
++    expect(messages).to be_empty
++    expect(updates).not_to have_received(:list)
++    expect(store).to be_empty
++
++    clock[:monotonic] = 130
++    plugin.check
++    plugin.flush_summary
++    expect(messages).to be_empty
++    expect(store.keys).to eq([1])
++    allow(advisories).to receive(:list).and_call_original
++    poll(plugin, new: [historical, advisory(2)])
++    expect(advisories).to have_received(:list).with(recent_since: original_since)
++    expect(VpsFree::Irc::Bot::FileStorage).to have_received(:new).once
++    clock[:monotonic] = 139
++    plugin.flush_summary
++    expect(messages).to be_empty
++    clock[:monotonic] = 140
++    plugin.flush_summary
++    expect(messages).to eq(["1 new security advisory in vpsAdmin: #{list_url}"])
++  end
++
++  %w[individual summary off].each do |mode|
++    it "recovers a partial CVE bootstrap silently in #{mode} mode" do
++      plugin = build_plugin(mode: mode, summary_interval: 10)
++      historical = [advisory(1), advisory(2)]
++      advisories.rows = historical
++      allow(cves).to receive(:list).and_call_original
++      allow(cves).to receive(:list).with(security_advisory: 1).and_return([])
++      allow(cves).to receive(:list).with(security_advisory: 2).and_raise(StandardError, 'CVE read failed')
++      allow(updates).to receive(:list).and_call_original
++
++      expect { plugin.post_api_setup }.to raise_error(StandardError, 'CVE read failed')
++      expect(store.keys).to eq([1])
++      clock[:monotonic] = 120
++      allow(cves).to receive(:list).with(security_advisory: 2).and_return([])
++      plugin.check
++      plugin.flush_summary
++      expect(messages).to be_empty
++      expect(store.keys).to eq([1, 2])
++      expect(updates).not_to have_received(:list)
++      expect(VpsFree::Irc::Bot::FileStorage).to have_received(:new).once
++
++      poll(plugin, new: historical + [advisory(3)])
++      clock[:monotonic] = 130
++      plugin.flush_summary
++      if mode == 'individual'
++        expect(messages.join).to include('New security advisory #3')
++        expect(messages.join).not_to include('New security advisory #1', 'New security advisory #2')
++      elsif mode == 'summary'
++        expect(messages).to eq(["1 new security advisory in vpsAdmin: #{list_url}"])
++      else
++        expect(messages).to be_empty
++      end
++      expect(store.keys).to eq([1, 2, 3])
++    end
++  end
++
+   it 'discards pending counts on restart and starts a new full interval' do
+     first = build_plugin(mode: 'summary', summary_interval: 10)
+     first.post_api_setup

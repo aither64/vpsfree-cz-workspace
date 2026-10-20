@@ -1,0 +1,20 @@
+error:
+       … while evaluating the file '/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/config-eval.nix':
+
+       … in the condition of the assert statement
+         at /home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-security-advisory-notifications/config-eval.nix:72:1:
+           71| };
+           72| assert coreLib.hasInfix "--config ${settingsFile}" execStart;
+             | ^
+           73| {
+
+       … while calling the 'match' builtin
+         at /nix/store/jp4c6jcd6sr11az6r2754d2ycify5ph1-source/lib/strings.nix:901:8:
+          900|             This behavior is deprecated and will throw an error in the future.''
+          901|       (builtins.match ".*${escapeRegex infix}.*" "${content}" != null);
+             |        ^
+          902|
+
+       (stack trace truncated; use '--show-trace' to show the full, detailed trace)
+
+       error: the string '.*--config /nix/store/az5hyg24x01fmcdfcsb1y7x750yjy4fg-vpsfree-irc-bot-libera\.json.*' is not allowed to refer to a store path (such as '/nix/store/b410l56rpz29mxdg50ql09cbgh1bdbfz-vpsfree-irc-bot-libera.json.drv^out')

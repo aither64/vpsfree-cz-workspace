@@ -1,0 +1,30 @@
+diff --git a/tests/suite/vpsadmin-events.nix b/tests/suite/vpsadmin-events.nix
+index 62e3a72..8564706 100644
+--- a/tests/suite/vpsadmin-events.nix
++++ b/tests/suite/vpsadmin-events.nix
+@@ -388,8 +388,23 @@ import ../make-test.nix (
+ 
+       describe 'vpsAdmin API commands' do
+         it 'reports public node status' do
+-          client.command('!status')
+-          client.wait_for_privmsg(from: BOT_NICK, target: CHANNEL, pattern: /\d+ nodes online/)
++          deadline = Time.now + 120
++
++          loop do
++            remaining = deadline - Time.now
++            raise OsVm::TimeoutError, 'Timed out waiting for cluster plugin API setup' if remaining <= 0
++
++            client.command('!status')
++            line = client.wait_for_privmsg(
++              from: BOT_NICK,
++              target: CHANNEL,
++              pattern: /Status unknown, unable to reach vpsAdmin API|\d+ nodes online/,
++              timeout: [15, remaining].min
++            )
++            break if line.match?(/\d+ nodes online/)
++
++            sleep 2
++          end
+         end
+       end
+ 

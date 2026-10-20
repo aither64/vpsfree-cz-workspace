@@ -1,0 +1,21 @@
+diff --git a/tests/suite/vpsadmin-events.nix b/tests/suite/vpsadmin-events.nix
+index 007df42..62e3a72 100644
+--- a/tests/suite/vpsadmin-events.nix
++++ b/tests/suite/vpsadmin-events.nix
+@@ -535,11 +535,13 @@ import ../make-test.nix (
+           expect(elapsed).to be >= ${toString summaryInterval}
+ 
+           client.drain(quiet: 3)
+-          summary_lines = client.lines.grep(/\A:digbot![^ ]+ PRIVMSG /)
++          bot_lines = client.lines.grep(/\A:digbot![^ ]+ PRIVMSG /)
++          summary_lines = bot_lines.select { |line| line.include?(' in vpsAdmin: ') }
+           expect(summary_lines.size).to eq(1)
+           expect(summary_lines.first).to end_with(expected)
+-          expect(summary_lines.join).not_to include('New security advisory #', 'Update of security advisory #')
+-        rescue StandardError
++          expect(bot_lines.join).not_to include('New security advisory #', 'Update of security advisory #')
++        rescue StandardError, RSpec::Expectations::ExpectationNotMetError
++          warn "Recent IRC lines: #{client.lines.last(30).inspect}"
+           begin
+             _, output = irc.succeeds('journalctl -u vpsfree-irc-bot-summary -n 120 --no-pager')
+             warn output
