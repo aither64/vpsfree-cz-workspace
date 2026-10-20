@@ -1,13 +1,12 @@
 # Current phase
 
-- [x] Design agreed and initial tracking committed.
-- [x] Implementation committed/published in all four repositories.
-- [x] Quick checks including review regressions pass.
-- [x] Initial independent review completed; two Important findings fixed.
-- [x] Affected-lane final remediation and final pin/history reviews.
-- [x] Long packaged/browser/native verification and final CI passed.
-- [x] Managed lead established; approved system/profile rollout submitted.
-- [ ] Deployed UI acceptance.
-- [ ] Explicit repository integration direction (not granted).
+- [x] Optional-question implementation and browser/native/CI verification.
+- [x] Archive identity repair, interruption coverage and independent final review.
+- [x] Authorized archive recovery; tracking synced; live worktrees unchanged.
+- [x] Configuration baseline refresh and independent compatibility review.
+- [x] Exact system/profile preparation and coordinated ordered deployment.
+- [x] Live portal assets/panel, services, Codex and conversation continuity.
+- [ ] User review and explicit repository integration direction.
 
-Risk: another initiative holds aitherdev. No bypass or session takeover.
+Ready for use on aitherdev; active and awaiting merge approval. Reservation is
+retained as deployed_review. No build, test or deployment attempt remains active.

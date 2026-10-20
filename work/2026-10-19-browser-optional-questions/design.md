@@ -52,3 +52,59 @@ switching, identical titles, cross-client answers, late inline reply, read-only
 capabilities and transport uncertainty. Quick checks precede final committed
 independent review; longer native/browser/package checks follow it. Record
 commands and evidence in state, use fresh utility watcher for long operations.
+
+## Authorized stale deployment refresh
+
+The first system attempt ended before mutation because its prepared source would
+drop already-integrated machine coverage. Keep the original jobs, reservation,
+approval scope and review/check receipts. Refresh the same four registered
+feature branches over their current remote defaults, preserving the optional
+question patch and the selected Codex0.163.0. No default-branch integration,
+reboot, runtime-contract expansion or lifecycle action is authorized.
+
+Inspect complete baseline deltas before rebasing. Regenerate runtime and composed
+workspace/configuration pins in dependency order with their existing tools;
+consolidate each pin stream. Prove patch equivalence for unchanged feature code,
+check matching final inputs, capture complete final history/migration inventory,
+and obtain only the applicable review for conflicts or substantive interaction.
+No new migrations are intended. Preserve original inventory and rollout SHAs.
+Run changed-baseline checks and rebuild exact prepared system/profile artifacts
+outside claims with a fresh utility watcher for long verification. The installed coordinator cannot refresh terminal jobs: retain the failed
+original system job, cancel only its superseded unclaimed profile dependency,
+and submit approved successor jobs under the same reservation with an explicit
+system-to-profile dependency.
+
+
+## Archive recovery repair (2026-10-20)
+
+User explicitly directed fixing the erroneous Git administration-name collision
+without touching live sessions. Lead owns design and code (no retained roster).
+Fix ArchiveCleanup absence proof to distinguish the sealed removed admin identity
+from a positively registered replacement at another checkout path. Require old
+checkout and its registration absent; reject dangling/malformed/same-identity
+admin entries. Read-only proof of replacement, never edit/move/prune live data.
+Add real-Git regression with natural admin-name reuse and unchanged live files.
+
+Extend existing candidate recover-archive path narrowly for matching modern
+sidecar journals already past tracking move and with all checkouts/containers
+removed. Bind exact candidate source, selected predecessor/token/Codex, same
+runtime contract, recorded operation/root, tracking digest and cleanup inventory.
+Use capable candidate's ordinary archive executor under existing generation and
+session/transition locks to finish retained proof/conversation/receipt retirement.
+No profile selection, journal edits or new archive operation. Preserve legacy
+no-sidecar recovery as-is. Explicit local recovery direction is this user's
+request; no master integration is authorized. Recovery must not depend on
+startup changes or select a candidate with incompatible persistent contracts.
+
+Separate commit for archive repair from existing optional-question commit.
+No format migration: current journals/sidecars unchanged; predecessor remains
+readable but cannot recover name reuse. Candidate recovery operates only within
+recorded removed-resource boundary. New candidate runtime/workspace/config pins
+remain consolidated; exact reprepare after review.
+
+Quick: Ruby syntax, focused real-Git cleanup and host recovery tests, matching
+lock check. Independent final affected general/architecture/scope/risk review
+before long packaged suites/native preparation. Fresh utility owns long checks.
+Then candidate recovery of exact two old archive operations, verify live worktree
+head/status/admin identities unchanged, normal profile preparation, approved
+coordinated system then profile activation and browser acceptance.

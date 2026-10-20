@@ -59,3 +59,12 @@ failure/unknown outcome and retry; composer preservation; turn/follow-up/dismiss
 lifetime; reload/pagination/member scoping and cross-client answers; keyboard,
 mobile and read-only behavior. Quick checks before committed final independent
 review, longer browser/native/package checks afterwards with utility watchers.
+
+
+## Authorized archive repair
+
+User requested fixing recovery's Git administration-name reuse bug while keeping
+live sessions untouched, then continuing optional-question deployment. Add the
+cleanup identity fix and a bounded existing candidate recovery path for already
+removed modern journal resources. See design.md. Preserve live sessions, sealed
+receipts, selected runtime authority and no-merge boundary.

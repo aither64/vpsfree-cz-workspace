@@ -6,33 +6,50 @@ lifecycle: active
 
 ## Status
 
-Implementation ready, awaiting merge approval. All local/native checks, CI and
-independent review passed. Aitherdev deployment is queued behind another owner.
+Implemented, independently reviewed, verified and deployed on aitherdev.
+Ready for use; ready, awaiting merge approval. Lifecycle remains active.
+No default-branch integration, reboot, session closure or reservation release
+was performed. Reservation90fb300f is retained as deployed_review.
 
-- [x] Agreed interaction design and isolated worktrees.
-- [x] Implemented shared controls and portal integration.
-- [x] Quick checks; independent review; remediations verified and reviewed.
-- [x] Full codex-web checks, portal Chromium acceptance, runtime package build.
-- [x] Final matching deployment pins consolidated and published.
-- [x] Prepared exact aitherdev system and user-profile artifacts; native checks.
-- [ ] Coordinated deployment and live acceptance (machine currently held).
-- [ ] Explicit integration direction; no master merges authorized.
+- [x] Optional questions answerable inline and in a panel below scrolling output.
+- [x] Original browser/native/package checks and final CI39397884404 passed.
+- [x] Archive identity repair and completed-sidecar interruption regression.
+- [x] Independent archive and final configuration-baseline reviews, no findings.
+- [x] Both authorized archive recoveries completed; all three archives synced.
+- [x] Live worktree snapshots unchanged before/after recovery and deployment.
+- [x] Fresh exact system/profile preparation and ordered activation succeeded.
+- [x] Live panel/assets, Codex0.163.0, services and conversation continuity verified.
+- [ ] Explicit direction for repository integration and subsequent completion.
 
 ## Next actions
 
-Managed lead handles native coordinator notices for queued system97db0a42 and
-profile65f8a575 (system first). If only waiting on aitherdev's foreign review
-reservation, remain idle and let the coordinator continue. On stale snapshots,
-refresh outside claims with applicable review/checks. Verify live deployment and
-UI acceptance after activation. No master integration is authorized.
+User review may proceed at the stable portal URL. Optional questions stay below
+normal output while pending and can be answered directly in their message.
+No remaining implementation, review, build, CI or deployment operation is running.
+Do not merge or release the reservation without the required user direction and
+exact integration/completion proofs. The external parent completed deployment;
+the retained native lead has not been assigned new autonomous execution.
+
+Final heads and complete series: deployment-final-inventory.json and
+final-inventory.json. Exact applied system/profile jobs and attempts are in
+final-deployment-jobs.json and post-deployment-status.json. Current live evidence
+is live-deployment-verification.json; deployment-acceptance.md summarizes it.
 
 ## Documentation
 
+Feature contracts remain in codex-web/docs/reference.md and
+dev-workspace/docs/workspace-portal.md. Final supplemental reviews are archive-repair-followup-review.md and
+deployment-baseline-review.md;
+individual rollout status and preparation/recovery evidence are in rollout.md
+and the linked receipts below. No feature documentation changed during the
+patch-equivalent baseline refresh.
+
 ## Repositories
 
-Branches and worktrees all use 2026-10-19-browser-optional-questions. Bases:
-codex-web c064ce09; dev-workspace 09a40795; workspace da70912a;
-configuration 91639dec. Paths are worktrees/<slug>/<project>.
+Branches and worktrees all use 2026-10-19-browser-optional-questions. Exact final
+bases, heads and complete series are in final-inventory.json; final history and
+pin review is in final-pin-history-review.md. Paths are
+worktrees/<slug>/<project>.
 
 ## Commands run
 
@@ -46,9 +63,9 @@ bypass hooks. Initial tracking belongs only to this initiative.
 
 ## Open questions
 
-No product questions remain. Installed workspace-host currently exposes an
-older coordination CLI; investigate selected package before deployment, never
-bypass machine reservations. No merge approval.
+No product questions remain. The machine reservation is held by this session;
+profile preparation is blocked by unfinished foreign archive/cleanup operations.
+Their owners must settle those operations. No merge approval.
 
 ## Cleanup
 
@@ -232,3 +249,290 @@ External parent sends concrete deployment-continuation.md to verified native lea
 01a155ed-fdf9-7da2-896e-acac2b031e72; pickup must be verified before parent ends.
 All four final comparisons captured (codex-web, runtime, workspace, configuration).
 No master integration authorized; initiative remains active and open.
+
+## Native deployment continuation pickup
+
+Managed lead thread 01a155ed-fdf9-7da2-896e-acac2b031e72 accepted the external
+parent's explicit deployment handoff and deployment-continuation.md. Identity
+matches the trusted session binding; the live roster is absent and unchanged.
+Read final inventory, history review, authorization, preparation/approval/submit
+receipts and terminal verification exits. All final checks/preparations passed;
+no verification, build or watcher was restarted.
+
+The single authoritative pickup read is native-pickup-status.json, ledger
+revision 4217, owner b6f030df-b82a-4246-aee3-4fdc9646fe0b:
+
+- System job 97db0a42-d002-417c-8383-730a06892662, revision 2, is
+  waiting_resource (machine_owned by lifecycle-lock-reliability), with no attempt.
+- Profile job 65f8a575-1d81-4a71-bd42-ecbdb38dd5d9, revision 2, is
+  waiting_dependency on that exact system job, with no attempt.
+- Reservation 90fb300f-69f5-41e4-a04a-7762125cd713 remains requested,
+  revision 1; the foreign machine reservation is deployed_review.
+- Both jobs retain their approved prepared snapshots (system ed154424,
+  profile a800976e). No notifications or integration runs require acknowledgement.
+
+Only resource waiting remains. End the native turn and resume on coordinator
+notices, reading authoritative status then. Preserve the original jobs and
+reservation; refresh stale unclaimed snapshots with applicable review/checks.
+No activation, integration, reboot, roster change, release or session closure
+was performed. Feature documentation needs no change for this ownership pickup;
+rollout.md holds deployment-specific status.
+
+## Deployment admitted
+
+Received native notices for system job readiness and reservation held. Read
+authoritative own-session status once in response (native-ready-status.json,
+ledger revision 4274): reservation 90fb300f-69f5-41e4-a04a-7762125cd713 is held
+at revision 2; no foreign reservations remain. System job
+97db0a42-d002-417c-8383-730a06892662 is running at revision 5, attempt
+9a41c4fc-2f7e-4a75-99f9-52c6e93749b7. Profile job
+65f8a575-1d81-4a71-bd42-ecbdb38dd5d9 remains waiting_dependency at revision 2.
+The notices add no approval; both existing exact-snapshot approvals remain the
+authority. Informational notification events 3f092c48-f72d-daf7-64a9-8a08047647db
+and 695fb213-b4ee-82f8-f7b7-39239500856d were delivered to this managed thread;
+there is no integration handoff generation to acknowledge.
+
+Fresh /root/deployment_watch observes only these existing jobs under the
+dev-session-monitor skill, gpt-6-luna/low, full-access/never policy resolved from
+installed catalog ffaf9deb and matching verification_watcher utility. It does
+not launch/resume mutations or repeat checks. Actual launch confirmation is
+pending. The lead does not poll the same jobs while the watcher owns observation.
+
+## First attempt settled without activation
+
+The fresh watcher completed with corrected evidence: the exact original worker
+unit was retained active/exited, ExecMainStatus 0, while coordinator status still
+said running. Its initial mistyped-unit observation is superseded. Launch settings
+were explicitly gpt-6-luna/low, fork none, inherited danger-full-access/never;
+catalog utility behavior and policy were loaded before launch.
+
+The lead inspected only the original attempt receipts. phase.json was admitted;
+result.json recorded baseline_changed: "prepared deployment would undo integrated
+machine coverage; rebuild". The worker exited before mutation intent. Supported
+dev-session coordination reconcile on system job97db0a42 completed successfully,
+settling revision6 as failed/not_applied ("worker ended before machine mutation
+intent"). No activation was replayed and no system change occurred. The profile
+remains dependent; the reservation is retained. Deployment-watch artifacts retain
+the observation, and original private receipts remain intact.
+
+The live roster is still absent. The lead owns the authorized baseline/pin
+refresh; no member was created or reconfigured. All four feature worktrees are
+clean and retain their exact original final-inventory heads before refresh.
+
+## Refreshed committed deliverable
+
+Original inventory retained as pre-refresh-inventory.json; current complete
+inventory is final-inventory.json and PROJECT-refresh.diff. Runtime1afca4ab is a
+clean rebase of987a01b over integrated default ea3f9d36; Git range-diff reports an
+identical feature patch (runtime-refresh-range-diff.txt). Codex-web641907fb and
+its default base are unchanged. Workspace7f2eb097 overf9541343 and
+configurationde66fb5b over0067299a select runtime1afca4ab and codex-web641907fb.
+All four final ranges contain exactly one logical commit. No migrations.
+
+Generated pin conflicts were resolved by dropping each obsolete unmerged pin
+commit and regenerating with the existing nested flake update/confctl channel.
+Configuration's conflicted lock cannot materialize its own Nix shell; selecting
+the exact committed target via git+file?...rev= supplied the shell, preserving
+Overcommit. Reusable lesson: notes/dev-workspace/2026-10-19-rebase-flake-lock-nix-shell.md.
+Configuration hooks passed with generated-message width warnings preserved.
+Semantic checks prove node names/input relationships unchanged and only runtime
+and codex-web nodes changed. Extension767dfd58 and unrelated inputs are intact.
+Matching deployment contract passed at1afca4ab. Four focused portal Go/browser
+contracts passed in1.443s on the refreshed baseline. Original package/browser/CI
+evidence remains historical; fresh derivation reuse has not been claimed.
+
+All changed feature refs were published with exact force-with-lease guards.
+No defaults were modified. /root/refresh_review is a fresh independent
+gpt-6-astra/xhigh standalone reviewer selected from installed lead_reviewed policy,
+catalogffaf9deb, native behaviordw_cede8406d4e233c6df97d4829d8c32ccad739219a4913021.
+No roster exists. The original external standalone reviewer is inaccessible and
+not identity-verifiable in this native tree; original reports are retained.
+Affected general/history and risk/compatibility lanes only; packet is
+refresh-review-packet.md. No fresh local long tests or preparation began before this review. Branch
+publication automatically triggered current-head CI39329073959.
+
+Native failure notice was acknowledged by a new authoritative status read,
+native-not-applied-status.json revision4289: system failed/not_applied revision6,
+profile waiting_dependency revision2, reservation held revision2. It confirms
+the already-settled attempt and adds no approval.
+
+Refreshed review completed with no findings in the affected general/history and
+risk/compatibility lanes. Exact report is refresh-review.md, registered as a
+portal artifact. Reviewer independently confirmed complete consolidated history,
+unchanged feature patch, cumulative baseline composition, pins and no migrations.
+It also verified that terminal system jobs cannot be refreshed/canceled: retain
+the original failed job, cancel only the superseded unclaimed profile job at its
+current revision, and submit approved successor system/profile jobs under the
+same held reservation. No review findings remain unresolved.
+
+All four exact comparisons were recaptured. Fresh utility
+/root/refresh_verification (gpt-6-luna/low, catalogffaf9deb, full-access/never)
+ran the optional-question Chromium flow successfully at runtime1afca4ab (5.109s;
+refresh-browser.log and refresh-browser.exit0). It owns exact runtime
+CI39329073959 observation, then observes lead-owned preparation through independent
+log/exit files. It cannot launch/resume mutations. Previous deployment watcher
+is terminal and not reused. Codex-web's unchanged full source/CI results are
+retained rather than repeated.
+
+Lead launched run-refresh-preparation.sh (parent handle82095) inside the
+configuration Nix environment. It prepares system then profile outside execution
+claims and writes separate JSON/log/exit receipts plus refresh-preparation.exit.
+Immutable request evidence is refresh-review.md and refresh-local-verification.md;
+do not append later CI/preparation outcomes to those files. All required final
+receipts must pass before new snapshot approvals or successor submission.
+
+## Profile preparation lifecycle blocker
+
+The preparation driver is terminal: system exit0, profile exit2, aggregate exit2.
+System snapshot0f83bc8a5e93cbb27009fd953870acfbc9187d5467952a129d0a4ce230fad845
+prepares configurationde66fb5b/runtime1afca4ab; artifactad87fc09. Raw stdout is
+refresh-system-prepare.json. The Nix shell writes its readiness banner before the
+JSON; refresh-system-snapshot.json preserves the exact returned JSON separately,
+without altering raw output or native receipts.
+
+Profile preparation refused before selection because the installed transition
+guard reports unfinished archive and archive-cleanup operations for:
+
+- vpsfree-cz/2026-09-24-session-identity-team-prompts
+- vpsfree-cz/2026-09-30-portal-review-improvements
+- vpsfree-cz/2026-10-07-prepare-confctl-release-changelog
+
+Exact own-command diagnostic is refresh-profile-prepare.log. Those foreign
+operations are outside this session's authority. No lifecycle command, private
+helper, reservation release/bypass, retry or activation was used. Preserve their
+ownership; this session and its reservation remain open. The CI watcher continues
+only its already-running current-head watch and then returns aggregate incomplete.
+No successor jobs or fresh approval records have been submitted.
+
+## Terminal verification checkpoint / waiting handoff
+
+CI39329073959 passed at exact runtime1afca4ab, exit0. Fast, creation and archive
+passed; host was skipped. The utility's earlier interpretation of the skipped
+host line as remaining work was corrected. /root/refresh_verification completed;
+no owned verification, build or preparation remains running. The lead accepted
+the terminal receipts and retained refresh-final-verification.md as the concise
+current evidence record. All prepared/reviewed source heads remain unchanged.
+
+Own-session status checkpoint native-blocked-status.json at ledger4314 confirms
+system97db0a42 failed/not_applied revision6, profile65f8a575 waiting_dependency
+revision2, reservation90fb300f held revision2. No fresh approvals or successor
+jobs were submitted. End the native turn with the lifecycle-admission blocker
+recorded; do not poll foreign owners or start another preparation merely to wait.
+Resume on a concrete external continuation or coordinator notice with applicable
+authoritative evidence. Session lifecycle remains active and the reservation is
+retained. No master integration or live deployment acceptance is claimed.
+
+
+External-parent handoff verification: managed lead completed native turn
+01a15600-c8de-7161-bd44-5769837d5081, explicitly accepted continuation document
+and exact system/profile job UUIDs, read authoritative status once at revision4217,
+and ended idle pending coordinator notices. This proves pickup beyond delivery.
+Parent removed owned disposable /tmp/2026-10-19-browser-optional-questions-vendor
+after verifying no remaining process references. No tests/builds remain running.
+
+
+## User-authorized archive recovery (2026-10-20)
+
+User explicitly directed: “so finish the archive operations and continue”.
+This authorizes resuming the three existing matching archive operations named
+by the transition guard. Preserve their existing operation policy, receipts
+and retained conversation identities. Use supported dev-session archive retries;
+no manual journal deletion or unrelated feature changes. Parent owns this bounded
+recovery and subsequent deployment preparation; native lead remains idle until
+concrete handoff or coordinator notices. The third journal disappeared between
+reads; inspect authoritative status before attempting already completed work.
+
+
+Recovery inspection: changelog archive journals/sidecars are already absent and
+tracking-sync proves synced completion (operation711b24b6). Both remaining
+normal archive retries refused because sealed former Git admin names now point
+to live HaveAPI worktrees with different inode identities. Exact evidence in
+archive-recovery-evidence.json. The documented workaround requires those live
+owners to release them; user clarification to coordinate that release is pending.
+No sealed receipts, live worktrees or foreign session records were changed.
+Configuration remote master advanced by two IRC bot changes after last review;
+parent is refreshing the unchanged runtime pin onto that baseline to preserve
+cumulative deployment coverage. Runtime/workspace defaults remain unchanged.
+
+
+Configuration refresh completed cleanly:9154ed2116b8bd79a078405d7e866f6871141854
+over7ffa98a5, Git range-diff identical to reviewed de66fb5b pin. Published with
+exact force-with-lease, matching-lock check passed. Incoming two IRC bot changes
+affect a separate container. Same original external independent reviewer assigned
+affected general/history and deployment compatibility review only. New exact
+system preparation required because configuration embeds its revision; preserve
+old system snapshots and do not activate them.
+
+
+Clarified for user: session checkout paths are distinct; the collision is only
+a Git internal administration basename reused after old worktree removal.
+The selected archive reader incorrectly requires absence of that old admin path
+even when its current inode and gitdir identify a different live worktree.
+No checkout sharing or overlapping data was observed. Underlying identity-check
+repair is preferable to disrupting live worktrees, but selecting a fixed package
+is itself lifecycle-blocked; existing recover-archive only admits schema2
+no-sidecar tracking_committed operations and cannot handle these schema4/sidecar3
+journals. Do not bypass that contract or monkeypatch the installed executor.
+Current supported workaround still requires owner-coordinated release/restoration
+of the three clean live worktrees; permission to message owners remains pending.
+
+
+## Underlying archive repair authorized
+
+User explicitly instructed fixing the bug without touching live sessions. This
+supersedes the proposed owner-release workaround; no messages to HaveAPI owners
+or worktree mutations will be made. Lead implements in runtime feature worktree,
+separate logical commit from optional-question UI. Design recorded in design.md.
+Real-Git natural name reuse test passed, preserving replacement binary bytes,
+HEAD, status, reciprocal pointer and admin inode. Invalid pointer and remaining
+removal-progress tests passed; focused host candidate/legacy dispatch tests passed.
+Initial direct split-test invocation lacked aggregate fixture classes; corrected
+commands load test/dev_session_test.rb and test/workspace_host_test.rb. Syntax
+checks passed. No operational recovery has used the new code before review.
+
+
+Archive repair committed/published: runtimeefaae43f (separate archive commit
+after reviewed UI1afca4ab), workspace2acfab45, configuration92dc1342. Exact
+ranges/series and final diffs in archive-repair-inventory.json and corresponding
+PROJECT-archive-repair.diff. Both generated pin streams consolidated; config
+message intentionally corrected to actual6ab3b48f base and useful full changelog.
+Hooks passed, all worktrees clean, matching deployment contract passed. Four-lane
+independent final review assigned to same verified external Astra/xhigh reviewer.
+No manual long checks/recovery launched before review; auto CI39396651240 is
+in progress at efaae43f. All previous archive/refused-attempt evidence retained.
+
+
+Independent archive review identified Important interruption gap: journal deletion
+precedes completed-sidecar removal. Candidate recovery initially required the
+primary journal, stranding a crash in that supported final window. Fixed within
+the existing cleanup owner: shared completed_journal reconstruction, strict
+completed schema3 reader when primary is absent, revalidation through normal
+Runner locks/proofs, candidate ordinary receipt cleanup. Incomplete orphan
+sidecars still refuse. Legacy selected-executor route unchanged. Real-Git test
+now interrupts after primary deletion and proves completed-sidecar recovery
+with live bytes/head/status/admin unchanged. Focused2tests62assertions and
+all15host recovery tests251assertions pass. Fold into archive repair and send
+affected-lane follow-up to same reviewer after final mechanical pins.
+
+
+Final archive remediation heads: runtime1395387f, workspace0383f0bc,
+configuration2127f78c; exact inventory archive-repair-final-inventory.json.
+All quick regression tests passed (2real-Git62assertions;15host251assertions),
+matching contract passed, branches published. Both downstream update streams
+consolidated, hooks passed. Same reviewer receives actual new affected-lane turn
+with archive-repair-followup.md before long verification or recovery. Canceling
+superseded CI39396651240 was attempted and refused HTTP403 (token lacks access);
+current final CI39397884404 is distinct. No blind reruns or review exemption.
+
+
+Final affected general/architecture/risk follow-up review accepted exact runtime
+1395387f/workspace0383f0bc/config2127f78c. AR-1 resolved, no findings. Report
+archive-repair-followup-review.md confirms final complete history, matching pins
+and no migrations. Fresh standalone Luna/low utility launched with catalogffaf9deb
+and explicit danger-full-access/never to build composed candidate and watch exact
+CI39397884404. No parent duplicate monitoring of underlying checks.
+
+System jobc5cacc82 succeeded/applied at systemj98vjl4m (NixOS26.05.20261019.f3a73bc),
+attemptcc1f0dc6. Matching profilejobb004f7a7 running, attempt52c564ca.
+Utility observer01a158bf hit repeated account errors; stopped only the unavailable
+utility and used documented parent-monitor fallback. No deployment replay.
