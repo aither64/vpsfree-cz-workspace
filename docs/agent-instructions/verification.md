@@ -4,9 +4,10 @@ Required workspace procedure, selected by the routing table in `AGENTS.md`.
 Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
-For queued merges/deployments, complete builds, tests and review before submitting
-the prepared snapshot. Resource contention is a wait, not a failed check. Follow
-[coordination](../coordination.md) for background continuation and stale-snapshot
+For queued merges/deployments, complete builds, tests and review before running
+the integration or activation command. New work runs session-owned commands under resource claims;
+retained snapshot-based operations keep their original submission contract. Resource contention is a wait, not a failed check. Follow
+[coordination](../coordination.md) for waiting-session notifications and retained-job stale-snapshot
 refresh; repeat only the checks/review required by the changed patch or baseline.
 
 Use separately exported Ruby checks and retained derivation/input receipts to
@@ -16,6 +17,20 @@ unsharded diagnostic mode. Run independent checks concurrently where safe.
 An integration driver that also approves/submits/activates operations is launched
 by the lead. A verification utility may observe its independent logs/status; it
 must not launch or resume that mutation driver itself.
+
+## Workspace runtime availability
+
+Runtime development must keep the selected workspace usable. Run lifecycle,
+collection, creation and naming tests against disposable state and sockets;
+do not repoint them at the live registered workspace or restart its conversation
+service for a fixture. Keep the selected package unchanged until the candidate
+passes review and applicable checks. Source builds alone do not select a package.
+
+For changes to coordinator locking, collection, session creation or naming,
+verify session creation during an active collection sweep, required preparation
+and package-switch exclusion, and creation when the naming backend fails. After
+an authorized deployment, verify portal health, naming and conversation continuity
+before calling the runtime usable. A transient model failure must not block work.
 
 ## Development Environment
 
@@ -125,8 +140,7 @@ retired its data.
 Aitherdev's configuration-managed cleanup retains recognized completed
 `/tmp/**/os-test-*` runs for seven inactive days. Active run locks, process
 references and `.keep` markers preserve them. Ad hoc campaigns and benchmark
-directories need explicit owner cleanup. The user-profile coordinator separately
-collects finished source/target snapshots and expires unused preparations after
-seven days; use `workspace-host coordination gc --dry-run --json` to inspect its
+directories need explicit owner cleanup. New resource claims create no source/target snapshots. Its legacy
+collector retains its existing source, preparation and recovery rules; use `workspace-host coordination gc --dry-run --json` to inspect its
 reference decisions. See the configuration repository's
 `docs/operations/aitherdev-disk-retention.md` for host policy and recovery.

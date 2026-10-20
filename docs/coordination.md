@@ -1,121 +1,78 @@
-# Coordinating merges and deployments
+# Coordinating shared resources
 
-The workspace uses the selected user-profile runtime's
-[coordinator](https://github.com/aither64/dev-workspace/blob/master/docs/coordination.md).
-Its deterministic queue serializes small authorized mutations. Sessions prepare
-their branches, reviews and builds independently. The catalog in
-`config/coordination.nix` identifies canonical repositories and physical machines;
-the extension supplies the immutable confctl adapter.
+The selected user-profile runtime provides
+[resource claims and notifications](https://github.com/aither64/dev-workspace/blob/master/docs/coordination.md).
+Sessions acquire repository or machine ownership, run their own commands,
+verify effects and explicitly release. Read `workspace-host coordination guide`
+before using it. A predecessor without claims retains its installed job workflow.
 
-Read the runtime contract and its
-[operations guide](https://github.com/aither64/dev-workspace/blob/master/docs/coordination-operations.md)
-in full before submitting or recovering an operation. These procedures preserve
-the existing merge, deployment, session-ownership and mandatory-review gates.
+## Session workflow
 
-## Agent workflow
+Complete implementation, history consolidation, checks and independent review.
+Obtain the user's explicit direction for the affected repository/target or
+machine/actions. Deployment approval never grants merge approval.
 
-For a completed reviewed deliverable, prefer the installed runtime's
-[integration driver](https://github.com/aither64/dev-workspace/blob/master/docs/integration.md).
-Freeze the original review and check receipts, then provide the actual integration
-and deployment directions in its request. The driver batches dependent merges,
-refreshes proven mechanical changes and publishes compact completion records.
-Conflicts and substantive changes return to the lead for applicable review.
-The existing individual commands remain the recovery interface.
+Prepare commands and dependencies in the session's own worktrees. Build and copy
+large deployment artifacts before taking machine ownership when the tool supports
+that separation. Acquire repository ownership before shared Git mutations,
+including checkout hooks or reviewed signing that change common trust state.
+The session runs ordinary hooks and resolves trust through the repository's tools.
 
-`config/integration.nix` selects the nested workspace runtime and configuration's
-confctl channel. The extension supplies the immutable `workspace-pins` recipe.
-The workspace pin remains a direct nested override; configuration still selects
-the matching host module separately from the application profile.
+Use `coordination acquire SESSION --as-is --request FILE` with a schema-1 request
+containing a UUID `requestId`, `label`, and `repositories`/`machines` arrays.
+Supply at least one registered repository or configured machine. The request
+atomically returns `held` or `waiting`. A waiter owns no resources; the coordinator
+notifies its retained conversation when the complete request is granted. End the
+turn when only waiting remains. Read `claim-status` before acting on any notice.
+A notice neither authorizes work nor proves command completion.
 
-1. Keep the initiative's own branches and worktrees. Complete implementation,
-   history consolidation, quick checks and independent review. Run longer checks
-   under the verification procedure. Rebase and rebuild outside coordination
-   claims; preserve reviewed approval scope according to the Git procedure.
-2. Prepare the exact operation with session-owned checksummed evidence. Record
-   actual user approval for its repository/target or machine/actions. Deployment
-   approval never becomes merge approval.
-3. For the first deployment, request its machine reservation near completion of
-   preparation. List every affected integration obligation. Aitherdev system
-   activation and application profile selection share `vpsfree:aitherdev`.
-4. Submit the returned snapshot, approval, reservation and explicit dependencies.
-   Merge-only work needs no machine reservation. Read status and keep doing useful
-   independent work while claims or reservations are busy.
-5. Prefer `coordination integrate --background` for approved operation batches
-   when this conversation matches the retained managed lead. Background admission
-   verifies the recipient and checks every local/remote default branch before
-   accepting a run. For an external conversation, supervise foreground integration
-   under an attached observer, or deliberately select `--to-session-lead` to hand
-   responsibility to the managed lead. A delivered notice alone does not prove
-   pickup: acknowledge its event/generation from the matching conversation and
-   renew the acknowledgement while handling it. Follow the installed integration
-   guide for exact commands and preparation-only cancellation.
-   Record its run ID. After verified background handoff, if only waiting remains, end the turn; the worker continues
-   and the coordinator wakes the retained session when agent action or review is
-   needed. Reread authoritative status on that message. Individual submitted jobs
-   also run independently and retain their native notifications. Do not poll
-   reservations, ask the user to restart the agent, or bypass a busy resource.
-   A stale snapshot requires fresh preparation and applicable verification/review;
-   an uncertain effect requires reconciliation.
-6. Keep the machine reservation during UI review, feedback and redeployment,
-   including periods when the session's agent is idle. Normal completion releases
-   it after exact final integration proofs and explicit deployment/review completion.
-   Successful archival also releases the session's reservations after cleanup;
-   failed archives retain recovery holds. Keep the initiative active for follow-up
-   unless the user requests archival or the enabled automatic policy applies.
+Run ordinary commands only while the claim is held. Keep machine ownership
+through UI review, feedback and repeated deployment. Aitherdev system activation
+and workspace profile selection share the physical resource `vpsfree:aitherdev`.
+Use `release SESSION --as-is --id UUID` when finished or `cancel-claim` for an
+unneeded waiting request. Retrying the exact acquire request returns the same
+claim even after release; a new attempt needs a new UUID. Request all resources
+together or keep separate claims disjoint to avoid waiting on your own ownership.
 
-Use `dev-session coordination status SLUG --as-is --json` for authoritative job,
-reservation and delivery state. The workspace menu's Operations page gives a
-bounded read-only view and links to blocking owners. Session-list badges identify
-held machine reservations, including idle review and recovery. A notification supplies no approval.
-It preserves the receiving thread's retained settings and policy.
+Claims do not expire when an agent becomes idle or disconnected. After an
+interruption, inspect effects and stop remaining local/remote work before release.
+Held claims block lifecycle cleanup until explicitly released. A machine release
+needs no integration proof; session completion still requires exact final heads
+integrated and all work finished. Existing legacy reservations keep their original
+completion requirements. Never release another session's resources or edit records.
 
-## Git integration
+The Operations page shows owners and waiters; machine claims also appear in the
+session Reservations tab. This is cooperative locking. Ordinary project tools do
+not intercept arbitrary commands. Participating sessions must acquire the required
+resources before mutation and keep ownership until the work is safe to release.
 
-After explicit integration direction, prepare and submit a `merge` job for each
-named repository/target. Use dependencies for required cross-project order.
-The runtime prepares a private target checkout, runs ordinary `git merge --ff-only`
-and a normal non-force SSH push under the brief claim, with repository hook
-dependencies already prepared in its Nix environment. Feature refs remain.
+## Git and deployment
 
-The shared workspace stays on master. Its feature merge uses the existing
-`dev-session-tracking.lock`, preserves unrelated index/files and refuses overlap.
-A new tracking commit invalidates a previously prepared baseline. A certified
-refresh over tracking records preserves the original review when reconstruction
-and complete input identities prove the applicable equivalence. Tracking-only
-commits retain their existing approval exemption, but must use the same lock for
-shared staging/commit operations. Never reset, clean, stash or switch the shared
-checkout to force an integration.
+After explicit merge approval, use normal fast-forward integration and non-force
+SSH pushes under repository ownership. Create only the target worktree the session
+needs; retain feature refs and remove disposable worktrees when safe. Verify hooks
+and resulting refs: Git can exit zero after a failing post-merge hook.
 
-If the installed command/catalog cannot coordinate the required operation, stop
-that mutation and resolve the package/configuration mismatch. Do not fall back
-to direct Git or confctl activation around another owner's reservation. Manual
-operator commands and pre-contract store binaries are outside enforcement.
+The shared workspace stays on master. Preserve unrelated files/index changes and
+use its ordinary `dev-session-tracking.lock` for tracking commits in addition to
+repository ownership. A resource claim is metadata, not an acquired OS file lock.
 
-## Deployment and recovery
+Use confctl channels for inputs. Preserve the direct nested runtime override,
+extension selection and matching configuration runtime. Run
+`bin/check-dev-workspace-deployment` against final locks. The application stays
+in its user profile. For ordinary `workspace-host switch --source PATH`, hold the
+configured machine claim and pass `DEV_WORKSPACE_CLAIM_ID` plus the exact session
+environment identity. Workspace-host owns compatibility, activation journals and
+forward recovery. The configuration repository's operations guide owns concrete
+machine deployment steps. Runtime selection and default-branch integration retain
+their applicable explicit authorization gates.
 
-Manage configuration inputs with their confctl channels and preserve the
-workspace's nested runtime override. The matching system module/runtime and
-application profile come from the configuration and workspace feature branches.
-Run `bin/check-dev-workspace-deployment` against the composed final locks.
-The application remains in its user profile.
+## Retained operations
 
-The configuration's
-[aitherdev operations guide](https://github.com/vpsfreecz/vpsfree-cz-configuration/blob/master/docs/operations/workspace-coordination-aitherdev.md)
-owns machine-specific rollout and recovery. The initial pre-contract installation
-uses the reviewed candidate's bounded synchronous bootstrap. It creates no Codex
-thread. Retained bootstrap-owner maintenance requires its explicit UUID and the
-same active tracking incarnation; it cannot submit new unattended jobs.
-
-The [dated integration procedure](maintenance/bootstrap-merge-2026-10-13.md)
-covers the initiating threadless installation's authorized master merges. Its
-reviewed source-only helper uses the selected runtime's existing workers and
-receipts under a supervised exclusion of other bootstrap operations. It is
-limited to that installation and keeps the machine reservation held for review.
-
-Keep failed or interrupted attempts, deployed artifacts and GC roots. Archive,
-delete, suspend and auto-archive do not free deployed ownership. A profile failure
-after selection recovers forward under its original attempt. Ambiguous remote
-activation remains a visible blocker. Informational Codex status messages retry
-independently and do not hold machine ownership. There is no forced
-release or blind replay. An exceptional ownership transfer/removal requires a
-separate explicitly authorized reviewed recovery operation.
+Existing snapshot-based jobs, integrations, deployment history, reservations and
+uncertain attempts keep their original recovery procedures. New claims cannot
+release their reservations or replace evidence. A retained job's preparation
+supplies its exact `legacyJobId`; integrations resume by their original ID.
+Never submit a replacement job to hide an uncertain effect. Legacy bootstrap
+operations retain their dated recovery procedures. The generic package installs
+the retained integration guide alongside current coordination/recovery guides.

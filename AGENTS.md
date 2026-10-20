@@ -178,6 +178,12 @@ between old and new versions of affected components. Consider at least:
 - deployment ordering, rolling upgrades, and mixed-version operation;
 - whether a rollback can load state created by the new version.
 
+For new catalog-covered shared mutations, acquire the selected runtime's
+repository or machine resource claims when available. Sessions own commands,
+environments, hooks and effect verification, then explicitly release ownership.
+Queued requests notify waiting sessions. Existing operations keep their original
+recovery contracts. Read the selected package's coordination guide first.
+
 Prefer clean designs that can be deployed incrementally. Incompatible changes
 are allowed only when they are intentional and recorded in the plan with the
 reason, impact, required ordering, rollback implications, and required operator
