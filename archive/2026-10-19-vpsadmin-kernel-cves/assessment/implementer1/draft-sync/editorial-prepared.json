@@ -1,0 +1,608 @@
+{
+  "status": "execution_complete",
+  "preserved_consumed_head": "3fab2eaff537024f8ec32db6cdb3b0546808420d",
+  "preserved_feature_commit_count": 77,
+  "preserved_recovery_checkpoint_count": 66,
+  "released_source_head": "aa15ba719513d54c1e7942a085504777e4b7abfd",
+  "source_candidate": "aa15ba719513d54c1e7942a085504777e4b7abfd",
+  "required_gate": "final committed editorial/source support, accepted review/checks and explicit lead execution release plus exclusive Git/remote-write slots",
+  "frozen_evidence_sha256": "61904e984266df2f6c53435b2b026b0d0980b35a23ed843eebf95b23c27c9274",
+  "order": [
+    "CVE-2026-53260",
+    "CVE-2026-72069",
+    "CVE-2026-64387"
+  ],
+  "rows": [
+    {
+      "cve": "CVE-2026-53260",
+      "advisory_id": 112,
+      "previous_content_revision": 15,
+      "previous_remote_digest": "9ff68fa3a1949bdb2412693aee2910c7a9f40724433cabf8514d84d65528f03a",
+      "retained_snapshot_path": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-vpsadmin-kernel-cves/security-advisories/.state/draft-sync-final-three/CVE-2026-53260/apply.json",
+      "retained_snapshot_sha256": "b2ea3ef9615849c0d01e4c5ad551eebe695ad75cd3c3de310ae99de75abde750",
+      "source_candidate": "aa15ba719513d54c1e7942a085504777e4b7abfd",
+      "desired_dossier_digest": "c354b50ed846a848e3fdaa1b14b7ccf25c398750e217cbce1cbd4d1706cd0003",
+      "desired_public_attributes": {
+        "name": "PREEMPT_RT TCP request reference-count race",
+        "en_summary": "Local privilege escalation",
+        "en_description": "On a kernel built for real-time preemption, closing a TCP listener can race initialization of a connection request and leave the kernel using a freed request. This could support privilege escalation inside a VPS or affect the shared node, although the reviewed upstream report and fix do not establish a complete node-control or cross-VPS exploit. Real-time preemption has never been enabled on vpsFree.cz nodes, so this vulnerability has not affected them. On an affected real-time build, failed attempts may crash the kernel. Kernel warnings that may indicate this bug was triggered are monitored.",
+        "en_response": "Linux 6.12 includes the fix starting with 6.12.97. Disabling real-time preemption at build time prevents this specific trigger.",
+        "cs_summary": "Lokální eskalace oprávnění",
+        "cs_description": "Na jádře sestaveném s real-time preempcí může zavírání naslouchajícího TCP socketu proběhnout souběžně s inicializací požadavku na spojení a jádro pak může používat uvolněný požadavek. Chyba by mohla umožnit zvýšení oprávnění ve VPS nebo ohrozit sdílený node, ale analyzované upstreamové hlášení a oprava nedokládají úplný postup k ovládnutí node ani zneužití mezi VPS. Na nodech vpsFree.cz nebyla real-time preempce nikdy zapnutá, takže se jich tato chyba netýkala. Na zranitelném real-time sestavení může neúspěšný pokus shodit jádro. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována.",
+        "cs_response": "Ve větvi Linuxu 6.12 je oprava obsažena od verze 6.12.97. Vypnutí real-time preempce při sestavení zabraňuje tomuto konkrétnímu spuštění chyby."
+      },
+      "desired_node_projection": [
+        {
+          "node": 120,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-06T23:24:51Z",
+          "mitigated_since": "2026-07-06T23:24:51Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 121,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-06T23:24:11Z",
+          "mitigated_since": "2026-07-06T23:24:11Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 122,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T00:27:07Z",
+          "mitigated_since": "2026-07-07T00:27:07Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 123,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T00:21:28Z",
+          "mitigated_since": "2026-07-07T00:21:28Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 124,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T01:26:39Z",
+          "mitigated_since": "2026-07-07T01:26:39Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 125,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T01:26:26Z",
+          "mitigated_since": "2026-07-07T01:26:26Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 126,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T01:28:15Z",
+          "mitigated_since": "2026-07-07T01:28:15Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 161,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 214,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-06T23:22:40Z",
+          "mitigated_since": "2026-07-06T23:22:40Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 215,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T00:20:42Z",
+          "mitigated_since": "2026-07-07T00:20:42Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 300,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-06T23:18:20Z",
+          "mitigated_since": "2026-07-06T23:18:20Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 400,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-06T16:34:06Z",
+          "mitigated_since": "2026-07-06T16:34:06Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 401,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-20T09:47:33Z",
+          "mitigated_since": "2026-07-20T09:47:33Z",
+          "en_note": null,
+          "cs_note": null
+        }
+      ],
+      "expected_final_revision": 17,
+      "provisional_expected_revision_from_lead": 17,
+      "desired_public_attributes_digest": "cebb257c16beb496245958a54190b7b3eae68d85394685cef5f89bc7ad95451f",
+      "desired_node_projection_digest": "b50d0d1cd43730a48b6abb1033443c3811fc691f8ec9c7c2dbb86e43d47a0f48",
+      "desired_full_evaluation_nodes_digest": "3ef088f4feec788c9b61b5ccdcd0f2bd1989f2bd9b09ee42f633d2cc05f253cb",
+      "desired_node_counts": {
+        "mitigated": 12,
+        "not_affected": 1
+      },
+      "file_sha256": {
+        "analysis.md": "c041f462f1b22cd94df50d7f0bfbbc6ddbbca10c5cf34f6d627de0f0ce6695c1",
+        "advisory.yml": "138f419676e43303249492e798a749d742d44744e2a96f0ca7bdc82bc1495775",
+        "evaluation.json": "957244dd5db3e2dd1624ee5fa5332666d996ed6451911f46e156decc62f247c7",
+        "submission.yml": "670b511bed32232b0a6cbd03c0c3128f0764a3cbb014777a478ae2b11c61a04f"
+      },
+      "expected_node_updates": 1,
+      "expected_parent_updates": 1,
+      "expected_cve_or_child_create_delete": 0,
+      "all_states_times_reasons_unchanged_accepted_receipt": true
+    },
+    {
+      "cve": "CVE-2026-72069",
+      "advisory_id": 113,
+      "previous_content_revision": 15,
+      "previous_remote_digest": "d20c8ff44f1b0b35ca09c8371ee1fccdf80da89f9398897f555a624eb3b8d2af",
+      "retained_snapshot_path": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-vpsadmin-kernel-cves/security-advisories/.state/draft-sync-final-three/CVE-2026-72069/apply.json",
+      "retained_snapshot_sha256": "0a70c02257c30438dcc23701959d317e3cb0b95f9a3366f702bd0b8b6fe42d4c",
+      "source_candidate": "aa15ba719513d54c1e7942a085504777e4b7abfd",
+      "desired_dossier_digest": "4b0c4fc6f1f41b5f98a8ccd2acff73cd6941129a884e3228ecf8d62712a7af63",
+      "desired_public_attributes": {
+        "name": "PREEMPT_RT unlock RCU lifetime use-after-free",
+        "en_summary": "Local privilege escalation",
+        "en_description": "On a kernel built for real-time preemption, unlocking a protected object can end its lifetime protection too early. Another thread can free the object while the unlock operation is still accessing it. Such corruption could support privilege escalation inside a VPS or affect the shared node, but the reviewed upstream report and fix do not establish a complete node-control or cross-VPS exploit. Real-time preemption has never been enabled on vpsFree.cz nodes, so this vulnerability has not affected them. Failed attempts on an affected real-time build may crash the kernel. Kernel warnings that may indicate this bug was triggered are monitored.",
+        "en_response": "Linux 6.12 includes the fix starting with 6.12.101. Disabling real-time preemption at build time prevents this specific trigger.",
+        "cs_summary": "Lokální eskalace oprávnění",
+        "cs_description": "Na jádře sestaveném s real-time preempcí může odemykání chráněného objektu příliš brzy ukončit ochranu jeho životnosti. Jiné vlákno pak může objekt uvolnit, zatímco k němu operace odemknutí stále přistupuje. Takové poškození by mohlo umožnit zvýšení oprávnění ve VPS nebo ohrozit sdílený node, ale analyzované upstreamové hlášení a oprava nedokládají úplný postup k ovládnutí node ani zneužití mezi VPS. Na nodech vpsFree.cz nebyla real-time preempce nikdy zapnutá, takže se jich tato chyba netýkala. Neúspěšný pokus na zranitelném real-time sestavení může shodit jádro. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována.",
+        "cs_response": "Ve větvi Linuxu 6.12 je oprava obsažena od verze 6.12.101. Vypnutí real-time preempce při sestavení zabraňuje tomuto konkrétnímu spuštění chyby."
+      },
+      "desired_node_projection": [
+        {
+          "node": 120,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-06T23:24:51Z",
+          "mitigated_since": "2026-07-06T23:24:51Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 121,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-06T23:24:11Z",
+          "mitigated_since": "2026-07-06T23:24:11Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 122,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T00:27:07Z",
+          "mitigated_since": "2026-07-07T00:27:07Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 123,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T00:21:28Z",
+          "mitigated_since": "2026-07-07T00:21:28Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 124,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T01:26:39Z",
+          "mitigated_since": "2026-07-07T01:26:39Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 125,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T01:26:26Z",
+          "mitigated_since": "2026-07-07T01:26:26Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 126,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T01:28:15Z",
+          "mitigated_since": "2026-07-07T01:28:15Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 161,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 214,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-06T23:22:40Z",
+          "mitigated_since": "2026-07-06T23:22:40Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 215,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-07T00:20:42Z",
+          "mitigated_since": "2026-07-07T00:20:42Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 300,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-06T23:18:20Z",
+          "mitigated_since": "2026-07-06T23:18:20Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 400,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-06T16:34:06Z",
+          "mitigated_since": "2026-07-06T16:34:06Z",
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 401,
+          "state": "mitigated",
+          "vulnerable_until": "2026-07-20T09:47:33Z",
+          "mitigated_since": "2026-07-20T09:47:33Z",
+          "en_note": null,
+          "cs_note": null
+        }
+      ],
+      "expected_final_revision": 17,
+      "provisional_expected_revision_from_lead": 17,
+      "desired_public_attributes_digest": "d87dbd84326e970f153bc5d36e6e7f2a0ce073db7cae661ff7dcefcb5aa13ccd",
+      "desired_node_projection_digest": "b50d0d1cd43730a48b6abb1033443c3811fc691f8ec9c7c2dbb86e43d47a0f48",
+      "desired_full_evaluation_nodes_digest": "3ef088f4feec788c9b61b5ccdcd0f2bd1989f2bd9b09ee42f633d2cc05f253cb",
+      "desired_node_counts": {
+        "mitigated": 12,
+        "not_affected": 1
+      },
+      "file_sha256": {
+        "analysis.md": "7001ba1bf87edb501bf78d62cfc241186af61b11b8b4a3fa3e640f5fc17c8b0a",
+        "advisory.yml": "b251f31b0b3358625ec0da42e119fa075a2c809aeae2b98728d924cc0ce26d4e",
+        "evaluation.json": "9fee7217be30048a01b92db7b52c3b36fdd80746c0a3e9dc238e40d6546b2e7b",
+        "submission.yml": "786cdcad0dc4c26368e5972fd77bd2c7077967753b93cefa69e99d8144af3440"
+      },
+      "expected_node_updates": 1,
+      "expected_parent_updates": 1,
+      "expected_cve_or_child_create_delete": 0,
+      "all_states_times_reasons_unchanged_accepted_receipt": true
+    },
+    {
+      "cve": "CVE-2026-64387",
+      "advisory_id": 106,
+      "previous_content_revision": 26,
+      "previous_remote_digest": "5e17f17833661f87650b7fa139ad117afde1aa597cb4743cc1cc2206daa4af33",
+      "retained_snapshot_path": "/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-vpsadmin-kernel-cves/security-advisories/.state/draft-sync-final-three/CVE-2026-64387/apply.json",
+      "retained_snapshot_sha256": "42604f20bf15ecc7768fbaf9578540debd534110025f0452a552a8098f242c7b",
+      "source_candidate": "aa15ba719513d54c1e7942a085504777e4b7abfd",
+      "desired_dossier_digest": "90d5f85b8c545042a937c9b585c690794bb591cac20c1090e790f0329be853d6",
+      "desired_public_attributes": {
+        "name": "CIFS SMB2 QUERY_DIRECTORY replay double-free",
+        "en_summary": "Kernel memory corruption",
+        "en_description": "vpsFree.cz hosts do not use CIFS, so this vulnerability does not affect them. If an operator has prepared or delegated a CIFS mount, a malicious SMB2/3 server can return a replayable error to a QUERY_DIRECTORY request. If the next attempt fails before replacing the response buffer, cleanup can free the old buffer twice. A VPS administrator cannot mount this filesystem independently because the kernel does not allow it in a tenant user namespace. If the prerequisite mount exists, the corruption could affect the shared kernel and other VPSes; the reviewed primary record and patch do not establish a complete exploit giving VPS root, node control or access to another VPS on vpsFree.cz. A failed trigger can crash the node. Kernel warnings that may indicate this bug was triggered are monitored.",
+        "en_response": "The mainline correction resets response-buffer ownership before each directory-query retry and is included in Linux 7.2 and the 7.1 stable branch from 7.1.4. The official fixes named for 6.6.145, 6.12.96 and 6.18.39 change different functions; an effective correction for those branches has not been verified in the reviewed source.",
+        "cs_summary": "Poškození paměti jádra",
+        "cs_description": "Hostitelské systémy vpsFree.cz nepoužívají CIFS, takže se jich tato chyba netýká. Pokud správce node připravil nebo předal připojený souborový systém CIFS, škodlivý server SMB2/3 může vrátit chybu umožňující opakování požadavku QUERY_DIRECTORY (výpis adresáře). Jestliže další pokus selže před nahrazením vyrovnávací paměti odpovědi, úklid ji může uvolnit podruhé. Správce VPS nemůže tento souborový systém připojit samostatně, protože to jádro v uživatelském jmenném prostoru VPS nepovoluje. Pokud požadované připojení existuje, poškození paměti může zasáhnout sdílené jádro i ostatní VPS; analyzovaný primární záznam a oprava však nepopisují úplný postup zneužití k získání root ve VPS, ovládnutí node nebo přístupu do jiného VPS na vpsFree.cz. Neúspěšný pokus může shodit node. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována.",
+        "cs_response": "Oprava v hlavní větvi před každým opakováním dotazu na adresář obnoví záznam o vlastnictví paměti odpovědi. Je obsažena v Linuxu 7.2 a ve stabilní větvi 7.1 od verze 7.1.4. Oficiálně uvedené opravy pro 6.6.145, 6.12.96 a 6.18.39 mění jiné funkce; účinná oprava těchto větví nebyla v analyzovaných zdrojích potvrzena."
+      },
+      "desired_node_projection": [
+        {
+          "node": 120,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 121,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 122,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 123,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 124,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 125,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 126,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 161,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 214,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 215,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 300,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 400,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        },
+        {
+          "node": 401,
+          "state": "not_affected",
+          "vulnerable_until": null,
+          "mitigated_since": null,
+          "en_note": null,
+          "cs_note": null
+        }
+      ],
+      "expected_final_revision": 27,
+      "provisional_expected_revision_from_lead": 27,
+      "desired_public_attributes_digest": "c1a83ffb748718d30825d360e43bacee8726a30616ea2bb2a1ce2280c39765df",
+      "desired_node_projection_digest": "ef9315851c09c917ff7074fdeea16905cb420a66e07ab55487c3cafc2cd6f933",
+      "desired_full_evaluation_nodes_digest": "5a8e51a3fc5842d2b1680ec54ea09d35cc50ed9e3931189459e82b56fef9b0ff",
+      "desired_node_counts": {
+        "not_affected": 13
+      },
+      "file_sha256": {
+        "analysis.md": "afb89f483da5b9dec5849ba46fda125612268c862fb81b856f091912e781fa59",
+        "advisory.yml": "06e57ff697659a59f8d62a58822fbe3d0e082a255bb29242dcadf040c95e9444",
+        "evaluation.json": "e0a5dcefd0863d3f7a1b710af0dbf09df823824d76762927a72710bb5cac7b21",
+        "submission.yml": "153ab047eb5d361ab2f7eb5c077bd53031c6b4f45f79012e00908dbaddc15a67"
+      },
+      "expected_node_updates": 0,
+      "expected_parent_updates": 1,
+      "expected_cve_or_child_create_delete": 0,
+      "all_states_times_reasons_unchanged_accepted_receipt": true
+    }
+  ],
+  "prior_ledger_sha256": {
+    "ledger.json": "509aadea80374705f3ca392f27064228ed3a8ed9ffce249ba7b898351ca244bf",
+    "updates-ledger.json": "c07a5fc8a891cc71938c79774bcc67139cfda2412097f616f34477dd8146f815",
+    "final-three-ledger.json": "94c0047ff94cddcc7e6c32491360c1fae0e3e592b7e161dc72c094f05d8cd37a"
+  },
+  "new_raw_directory": ".state/draft-sync-editorial/<CVE>/",
+  "new_ledger_filename": "editorial-ledger.json",
+  "link_receipt": "final-three-webui-links.json",
+  "planned_scope": "Lead-owned RT public editorial clarification and removal of redundant storage notes; CIFS direct no-CIFS public wording. Bind actual committed deltas later; no independent technical state/source changes.",
+  "api_git_project_cli_nix_actions": false,
+  "candidate_feature_commit_count": 78,
+  "accepted_commit_receipt": "assessment/implementer0/editorial-scope-followup/commit-receipt.json",
+  "accepted_comparison_receipt": "assessment/implementer0/editorial-scope-followup/comparison.json",
+  "starting_submission_sha256": {
+    "advisories/CVE-2025-37964/submission.yml": "03a60bc793f47dc1285f76fb423fa8a4bf22c873f39d1b843baca7957b042e76",
+    "advisories/CVE-2026-23111/submission.yml": "5d36d7523aade26c58fe71666e63bd68ce08a1f337578b13a6785f4294b47afa",
+    "advisories/CVE-2026-43499/submission.yml": "2069212a8718b0243f120f1a2d680292365afd82b8285fb128073ed01af6cb27",
+    "advisories/CVE-2026-46093/submission.yml": "505a89a26b30764a5a95293c854026f3322f86e224bbcce27932b3d05eeb1ab3",
+    "advisories/CVE-2026-46242/submission.yml": "46df2868429e1ba6b194eb3543a4de05dbd4aaa015738ec64b049e5bad8fa400",
+    "advisories/CVE-2026-53260/submission.yml": "670b511bed32232b0a6cbd03c0c3128f0764a3cbb014777a478ae2b11c61a04f",
+    "advisories/CVE-2026-53359/submission.yml": "bc5bf6d20d8ca90c577423bb91d1e4b9ca656d2136232010858b88e1eecedc10",
+    "advisories/CVE-2026-53362/submission.yml": "f5b8123d1eb3e510b8fb8259d2a454ecb262a732c553bb238b29c4fb60be1cdf",
+    "advisories/CVE-2026-53365/submission.yml": "b91f5b2aa3d2cb7b4cb2665a7a05abb2d3dc2de61219428f73926dbbe055e3b6",
+    "advisories/CVE-2026-53388/submission.yml": "8b7766205bdb59af0f3e5fbfe972ad877fb80759698170058eaa923d45aa517f",
+    "advisories/CVE-2026-63824/submission.yml": "2b2e97369f66bb178a405e72e8cbbd857dde03bb2de4d7e824df61181bebd05b",
+    "advisories/CVE-2026-63830/submission.yml": "16b9a55e9674c04211d28af864b6a29b0d389642b452abe4bf82f8468604a0bd",
+    "advisories/CVE-2026-64017/submission.yml": "236b7da3e4de4108cba4d45c8161208f4c6502cb182067213d7140221ee56eb8",
+    "advisories/CVE-2026-64189/submission.yml": "f9da5d91a89cb44439cce3e33404bd5810be57ff1c0e79fc496bc7c66616e78c",
+    "advisories/CVE-2026-64265/submission.yml": "1db92910f953b684349910c76313e142d3be3260607234d942381954b8f040a5",
+    "advisories/CVE-2026-64266/submission.yml": "6074375f507120f65698c760d122e5fa6c40784acc9c88cb9cef3a53d3ce75fe",
+    "advisories/CVE-2026-64383/submission.yml": "28601a5664152e43b8bbbe370187c7ee2a41d057dbfaa8f2e61a7cc111a52f23",
+    "advisories/CVE-2026-64384/submission.yml": "e7884cb61271f7b4092aafbe44e6755e8d268406977c01f848de97c1d69f49ab",
+    "advisories/CVE-2026-64385/submission.yml": "25bf677bb75b28e8509438906e0c2a3dcf9cba1ef8ea6fe83436a07d5ffef80b",
+    "advisories/CVE-2026-64386/submission.yml": "bb1c0bf3ab9d07a6e77076e984d9114a1036c0104e8d10736f97d0a4525f3da2",
+    "advisories/CVE-2026-64387/submission.yml": "153ab047eb5d361ab2f7eb5c077bd53031c6b4f45f79012e00908dbaddc15a67",
+    "advisories/CVE-2026-64422/submission.yml": "c5dbf63804cf4a2a5ea3550e10d177f07ac05e81595f5173a149c09086a925e9",
+    "advisories/CVE-2026-64423/submission.yml": "3ffdc10f671bdb42e0d82bacb0504ad309420bb615971ac73f3328f2cf510b50",
+    "advisories/CVE-2026-64507/submission.yml": "d559efa4ceb27983d562c65e7ffa8a5e1c168125139f3d9c16588802c27618c1",
+    "advisories/CVE-2026-64508/submission.yml": "ecedabcdcfbc6e217063517265c71ba57651c488380d9e402a8210f9698b1f1b",
+    "advisories/CVE-2026-64551/submission.yml": "d36d60928615070b7d1f4740013e337fcf418ecefb51c809d2ee6cc6bb073fe5",
+    "advisories/CVE-2026-64554/submission.yml": "1d47f181fb822d502ffa80071cd1ab575eba2b1b39162b40707614efe1517e07",
+    "advisories/CVE-2026-64556/submission.yml": "64255024f49c4f42a70447687e5257578864886cdcc83883dd1fc23ac03a6bb0",
+    "advisories/CVE-2026-64560/submission.yml": "3f7dbcd87ddb698e3cef6a2019540cf76d1778d518bba7612f2bcacb6f36e505",
+    "advisories/CVE-2026-64561/submission.yml": "50ce118964d5fd699686550abca65489c94b36b4ce9e6c69ace6a391466c07d5",
+    "advisories/CVE-2026-64562/submission.yml": "54e460ef6a15fadb10f882697cdf667ff8ee3fb9820d1a19fb7a122f5d25555e",
+    "advisories/CVE-2026-64563/submission.yml": "7380a3c33033569a1f288e74ee3b5e3c1a9a6bcef5018bf86f10ba75aa2c4adb",
+    "advisories/CVE-2026-64564/submission.yml": "75f409e13723286ae10e99c0a59aa0b45a713bbd3a27c820d6af1cd43bae1aa1",
+    "advisories/CVE-2026-64580/submission.yml": "5c21919a07bae014370ec28d9701270672201fb92a7637a6668882d5d393816a",
+    "advisories/CVE-2026-64597/submission.yml": "800c028f86c52e8610368b49065493441d51c76011550bfe4d0856c387528bff",
+    "advisories/CVE-2026-68093/submission.yml": "b04a599494ac636e52855eeade2fcf146cfc16b53c73a27b102585220382a396",
+    "advisories/CVE-2026-68154/submission.yml": "91e8ab5c9effb9c60a406e013dcc524a350354cdde7c7620174ddb67d8821fcf",
+    "advisories/CVE-2026-68156/submission.yml": "4832d0405f9c42ff8f6520e9aa41b188696114e1561e72a95a16d9d41645098a",
+    "advisories/CVE-2026-68158/submission.yml": "42d5adf19f3b9f923e8f8205a9a00ffb171fae8128dfd5da4acd2257cd630819",
+    "advisories/CVE-2026-68159/submission.yml": "42792aa6880d2d9119da0bbc2071256a91e9bd581952dfe466876959bbf1188d",
+    "advisories/CVE-2026-68160/submission.yml": "f675fd934dc5c56cd79a436271a92d73486f4ae62366c9176e6f7b1b0bcf788c",
+    "advisories/CVE-2026-68162/submission.yml": "e0121696dfc880361fc4bcde45ea0c39dd978aa5e1166bb14f81721efb5b3d90",
+    "advisories/CVE-2026-68338/submission.yml": "22f83ad27b7138361454e77492a6cb16389ff1bce67f92d6ec3ca69bc472a33e",
+    "advisories/CVE-2026-68398/submission.yml": "af18e1b3e913bd47844f0a7c78e61d3497c0ba54dd9286aeaac114ff9cbe2018",
+    "advisories/CVE-2026-68476/submission.yml": "16f2b62f47cfffba49033e96ee7f9be39a4023c1bc4e0d195f6e6e90b8494cd0",
+    "advisories/CVE-2026-68480/submission.yml": "029cf2747c530ab2c323858ca7d777544144db4ccaa99699645367deffe35152",
+    "advisories/CVE-2026-72069/submission.yml": "786cdcad0dc4c26368e5972fd77bd2c7077967753b93cefa69e99d8144af3440",
+    "advisories/CVE-2026-72137/submission.yml": "cf438bcb879e62dc072fec805ecefc3a907e065725f3aaaf2eb87907257f0f7f",
+    "advisories/CVE-2026-72252/submission.yml": "3d119d675a496bbbcab6f4ecebc83558c973d7d2ce7f47cbfd6c03c77ba03c19",
+    "advisories/CVE-2026-72255/submission.yml": "80a3d53dd56140c84fa05d265b65252e4dbeb8b8793062365809862523c4a53d",
+    "advisories/CVE-2026-72317/submission.yml": "2c92f0b3a43ab9a673b3e037378b9d40fca12d867ad5a89301bd3cb7305f2284",
+    "advisories/CVE-2026-72322/submission.yml": "99fc5b52d4d650f30601c6af3ad47f2af19cddb779df437ff7c8d50ea4910994",
+    "advisories/CVE-2026-72323/submission.yml": "f33f5f38fc069e51826cd659d309769af624043628a824ae22bd3502598cb76d",
+    "advisories/CVE-2026-72389/submission.yml": "7724e252835f8b8fcfefe7a61d97d51d67cb6ad637a45916562a4da6b90a9e7a",
+    "advisories/CVE-2026-72434/submission.yml": "a03b619cddda510a39fffb56fb4f203179c9ca77ea99e5199b21cb5737dcb5be",
+    "advisories/CVE-2026-72451/submission.yml": "2650306eda97634dbe68a3209e2064ce608c8f9f2a7ef6877b04a3b14a339815",
+    "advisories/CVE-2026-72463/submission.yml": "11583c4af31b97aa11066d77b856e55a8050009ae34891f017689b5e7a73f5ce",
+    "advisories/CVE-2026-72472/submission.yml": "97ef88eafb2186c3664de59a2dcf2dc91090236141a5b1ee218596bd5e9e9300",
+    "advisories/CVE-2026-74469/submission.yml": "c9c5868ca0e92c241e6e6ff46ebd2d1ced11b3b874f96481814139c967fb329b",
+    "advisories/CVE-2026-74480/submission.yml": "a94cb083b36631462d613bb0ccd1d39458967cdaf540f8c0df3518ba4bc74d28",
+    "advisories/CVE-2026-74516/submission.yml": "0ea609a37d21ed73e9e6a82abd3a5a18a0e7cab3a4fd6ea4667f3951439cf41e",
+    "advisories/CVE-2026-74517/submission.yml": "ccec4e5e1186f16c00d448d5426c879985b229fbae95691214ea160176fdf699",
+    "advisories/CVE-2026-74565/submission.yml": "551393220d092865a6edcaba31aad742842b717d7c4918fc4de3cbd8abee48cc",
+    "advisories/CVE-2026-74569/submission.yml": "3d5f464b9c71c5a7a1092f99f5f780f50bee9ba020c0923a66e6065962faafac",
+    "advisories/CVE-2026-74581/submission.yml": "5d3573cb06e9d99fe2f0a95c3c8a25406e4a2e9c150b702890dd43a61902dbc4",
+    "advisories/CVE-2026-74582/submission.yml": "cbb2d01f61d987d8d38eb47a5c4f304705eb5d478758ff11a998a8b17409b764",
+    "advisories/CVE-2026-74586/submission.yml": "9dda32bfcb9e79ad9c0277c4307f0d7496db0092cb310682f9ec405e7ee0135c",
+    "advisories/CVE-2026-74587/submission.yml": "2971d6f68fd6949945b2cf0c086a1730869ff0681913d66451e580217d672311",
+    "advisories/CVE-2026-74588/submission.yml": "a3b455a8e806b60e3cb7ad1ce6a10775801fa4a3e281ffa2b2b1ddeaca6e3ae7",
+    "advisories/CVE-2026-74597/submission.yml": "2228d29ac00002ab4119461b2476e4054288ce416fce1741fb047268466904b1",
+    "advisories/CVE-2026-74615/submission.yml": "c8568988ddf54b67442af7d11da78d105dd1641fdda949dd8e16ff5d5470f174",
+    "advisories/CVE-2026-74616/submission.yml": "568e8dfcd1136a1172d358c7dea9d358393d4e851894cc6414b63004b4d856b2",
+    "advisories/CVE-2026-74630/submission.yml": "f6b097dbd12d51bfec5cb98a032bebb9c5b4475f2e858b39cad3d93eb6efa5a2",
+    "advisories/CVE-2026-74656/submission.yml": "6fe78c063f6bef237f41d1b8a93c43612c686458b371247a5686b578fbe3006b",
+    "advisories/CVE-2026-74662/submission.yml": "f3215125b92f591eca382dd6c07261bae469266edf7402af3e620e09a23e2693",
+    "advisories/CVE-2026-74668/submission.yml": "fd61095228650b69b016fa57ba13ea62bc654bb08cdaf641cf90455981bf3c69",
+    "advisories/CVE-2026-74669/submission.yml": "d9fdd84a93bc851e6e06296a177474133af7103a9d158ede2ba24d35e04dd709",
+    "advisories/CVE-2026-74688/submission.yml": "e9e311a41cef71743e0dea95846b8f97670184747b2d9127102ee7103230b008",
+    "advisories/CVE-2026-74724/submission.yml": "8ffd85ccf73220fe18aa64e163a0c84da57570bec2b9bacd7a73e34d32776df1",
+    "advisories/CVE-2026-74730/submission.yml": "310ccdc4226bf611ead4fb854d9a25a97bf0c66491d6cee6f7d0471b0a4757de",
+    "advisories/CVE-2026-74746/submission.yml": "fcd22e123891ceff84532ffd3b337ad8e62e5b8fa9c03049b5a319978f1abb5e",
+    "advisories/CVE-2026-74753/submission.yml": "bc4beb91e7f8cc3243491751f9a41d13466e39ea58f716483501e0a32aa5d9f3",
+    "advisories/CVE-2026-80521/submission.yml": "3d37f6fdf5d3c4ae78f5318a29fa44f1c246f20c74c05d4b22cbad3b8b0d34be",
+    "advisories/CVE-2026-80585/submission.yml": "2b09ca053108ec3531d16ed87a91067d54d8ce25121b9cdad3fe1c97685d5f45",
+    "advisories/CVE-2026-80586/submission.yml": "4af7636e066d4e5edcaaf6de7d75cede9b4e689cb960efadbf2fe9069dc259fa",
+    "advisories/CVE-2026-80587/submission.yml": "335301db28d84a714aef424a1153ac8d28becec756af7f276c0683f8e311b54a",
+    "advisories/CVE-2026-80714/submission.yml": "28ba637aa365b2d97168ca490ea96d48e9316e50fc0fd4de562ef6474ce21db8",
+    "advisories/CVE-2026-80725/submission.yml": "2c32a1626bac8d53dbee61b81944f3f130baff997bec960789b65c83d2f6a4ac",
+    "advisories/CVE-2026-80841/submission.yml": "0a86bacaeaa0100be7367dc9a9e36ff978dc14916af68b1a602dc3470175fb2e",
+    "advisories/CVE-2026-89478/submission.yml": "c932b483dc318dda6a404d2191dc6f72c2d03534e5ff5aaa679fd1305e1bbd0a",
+    "advisories/CVE-2026-89479/submission.yml": "9f8f33207de30b0629f069fbb15d509138b1078d477f9f5b53a4930dbb365a62",
+    "advisories/CVE-2026-89633/submission.yml": "a3d47899bfaca5be8d665b64a852ab8cb46380508705b9a2348ceac88e30db76",
+    "advisories/CVE-2026-89653/submission.yml": "4f3c63a59d8127995f0b89c11240ba559a843b514c31db33dad7d8a551c7198c",
+    "advisories/CVE-2026-89656/submission.yml": "a30a09d1f87a233a8a98f65e4601700d206637944f237339a4d76213ada152ff",
+    "advisories/CVE-2026-89783/submission.yml": "11233d8240327443d683077d90baefcd5d6bd2452136e09bcc14ee01eea541bf",
+    "advisories/CVE-2026-89929/submission.yml": "a659ae8d867f3fb03d27d7a15852691e19b75b7ac4234bd0234e4a0cf4268599",
+    "advisories/CVE-2026-89930/submission.yml": "e3220d504c4fb09299996d5c4e8b3ea5f3f6338339b606324bc4785a2dd3dac1",
+    "advisories/CVE-2026-89932/submission.yml": "00611ce2773f8253cbbd21f5561d9b590444ccaf8d958519187f31112f475e15",
+    "advisories/CVE-2026-90151/submission.yml": "607e4375d80b77173b2ffbe0aad2f6a5d5de3b045e5801b2cdc417107df19ac0",
+    "advisories/CVE-2026-93817/submission.yml": "5d1aea3a5e18f6bc11978df13e15c2fc09840ae13bda0d7c0d6f7d8b7765baf1",
+    "advisories/CVE-2026-97594/submission.yml": "2a984ca8b98b21b98e54a1ab156128e0fb9aae3037f0455b5eb283e2e171b5e3",
+    "advisories/CVE-2026-98039/submission.yml": "e5ac514c33273becb993acff070739cd3fccdc968b4a61799bb85a27487c7ac7",
+    "advisories/CVE-2026-98222/submission.yml": "6ed76ed2a309f3cd4337f9e58c259582b24a3b36dd76153d769d7f35f8b9ff1c",
+    "advisories/CVE-2026-98229/submission.yml": "aa365945ecd5d7bc6a7b77452449af669445507df0f615cd11b7ae386f241009",
+    "advisories/CVE-2026-98260/submission.yml": "66703105247617157bd87e49086b3b4c7e81148f1c24201e76352e2d5e8087d2",
+    "advisories/CVE-2026-98368/submission.yml": "41f3eaf92e0a791601d847b3223e96de295455ec8c66d19d0849086d89c511f1",
+    "advisories/CVE-2026-98370/submission.yml": "38fdb3ed3406f4c3afebd18dfd7ff872a1892606ba47acdf79d29ed642e0ef7e",
+    "advisories/CVE-2026-98586/submission.yml": "9a0e335e4e6d0af654ba73b6282096b2acefc06777cd8f2203ee3f32eb7fbb06",
+    "advisories/CVE-2026-98720/submission.yml": "460264dc816dcd71d42d57abc140f2ebe0fd2a0534697354b0da57284d4578b8",
+    "advisories/CVE-2026-98858/submission.yml": "a10b24984c391ae763bf3bce14dfb98cb5a6bea47332904c62e95500f5d43f2e",
+    "advisories/CVE-2026-99999/submission.yml": "af194bf320dc7e48fe91263e876d261e8bb6274ffd2aff4bb7f8ce93dcf28d08"
+  },
+  "binding_readback": {
+    "desired_rows": 39,
+    "node_updates": [
+      1,
+      1,
+      0
+    ],
+    "parent_updates": [
+      1,
+      1,
+      1
+    ],
+    "predicted_revisions": [
+      17,
+      17,
+      27
+    ],
+    "all_states_times_reasons_unchanged": true,
+    "only_node_delta": "remove two RT storage localized notes",
+    "starting_baselines": 111,
+    "frozen_evidence_unchanged": true,
+    "execution_released": false,
+    "Git_HEAD_not_inspected": true,
+    "binding_method": "Read-only filesystem/JSON; public RT JSON-quoted literals extracted without executing project code or YAML loader."
+  },
+  "binding_must_refresh_if_review_changes_source": true,
+  "source_ci_receipt": "assessment/editorial-source-ci-result.json",
+  "source_ci_run_ids": [
+    39427027882,
+    39427027769
+  ],
+  "release_source": "lead explicit editorial execution release after accepted review and exact source CI",
+  "completion_receipt": "editorial-completion.json",
+  "final_head": "e6ceb642878dd97546174217676d9861afc38d4e"
+}

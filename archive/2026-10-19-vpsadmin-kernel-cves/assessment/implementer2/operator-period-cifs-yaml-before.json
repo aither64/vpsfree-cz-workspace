@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "cve": "CVE-2026-64387",
+  "name": "CIFS SMB2 QUERY_DIRECTORY replay double-free",
+  "affected_from": "6.8.0",
+  "fixed_from": "7.2.0",
+  "version_rules": {
+    "6.6": {
+      "affected_from": "6.6.32",
+      "fixed_in": null,
+      "introduced_commit": "433042a91f9373241307725b52de573933ffedbf"
+    },
+    "6.12": {
+      "affected_from": "6.12.0",
+      "fixed_in": null,
+      "introduced_commit": "4f1fffa2376922f3d1d506e49c0fd445b023a28e"
+    },
+    "6.18": {
+      "affected_from": "6.18.0",
+      "fixed_in": null,
+      "introduced_commit": "4f1fffa2376922f3d1d506e49c0fd445b023a28e"
+    },
+    "7.1": {
+      "affected_from": "7.1.0",
+      "fixed_in": "7.1.4",
+      "introduced_commit": "4f1fffa2376922f3d1d506e49c0fd445b023a28e",
+      "fixed_commit": "3317a5d015fca976475aa71df224056777316fde"
+    }
+  },
+  "platform": {
+    "history_required_since": "2026-01-01T00:00:00Z",
+    "affected_node_roles": [
+      "node"
+    ],
+    "required_options": {
+      "CONFIG_CIFS": "enabled"
+    },
+    "required_sysctls": {},
+    "configuration_assessed": true,
+    "accepted_kernel_builds": [],
+    "accepted_livepatches": [],
+    "accepted_ebpf_programs": [],
+    "history_start_overrides": {
+      "126": {
+        "required_since": "2026-03-31T20:11:46Z",
+        "reason": "Production configuration first adds this hypervisor on 2026-03-31; frozen reconstructed history begins with its same-day initial boot observation. Scope begins at that retained baseline, not January.",
+        "source": "https://github.com/vpsfreecz/vpsfree-cz-configuration/commit/e27882a9bc8f6900903e6ae84841b9935190548c"
+      }
+    }
+  },
+  "impact": {
+    "vps_root": "possible",
+    "node_root": "possible",
+    "cross_vps": "possible",
+    "node_availability": "plausible"
+  },
+  "texts": {
+    "en": {
+      "summary": "Kernel memory corruption",
+      "description": "If an operator has prepared or delegated a CIFS mount, a malicious SMB2/3 server can return a replayable error to a QUERY_DIRECTORY request. If the next attempt fails before replacing the response buffer, cleanup can free the old buffer twice. A VPS administrator cannot mount this filesystem independently because the kernel does not allow it in a tenant user namespace. If the prerequisite mount exists, the corruption could affect the shared kernel and other VPSes; the reviewed primary record and patch do not establish a complete exploit giving VPS root, node control or access to another VPS on vpsFree.cz. A failed trigger can crash the node. Kernel warnings that may indicate this bug was triggered are monitored.",
+      "response": "The mainline correction resets response-buffer ownership before each directory-query retry and is included in Linux 7.2 and the 7.1 stable branch from 7.1.4. The official fixes named for 6.6.145, 6.12.96 and 6.18.39 change different functions; an effective correction for those branches has not been verified in the reviewed source."
+    },
+    "cs": {
+      "summary": "Poškození paměti jádra",
+      "description": "Pokud správce node připravil nebo předal připojený souborový systém CIFS, škodlivý server SMB2/3 může vrátit chybu umožňující opakování požadavku QUERY_DIRECTORY (výpis adresáře). Jestliže další pokus selže před nahrazením vyrovnávací paměti odpovědi, úklid ji může uvolnit podruhé. Správce VPS nemůže tento souborový systém připojit samostatně, protože to jádro v uživatelském jmenném prostoru VPS nepovoluje. Pokud požadované připojení existuje, poškození paměti může zasáhnout sdílené jádro i ostatní VPS; analyzovaný primární záznam a oprava však nepopisují úplný postup zneužití k získání root ve VPS, ovládnutí node nebo přístupu do jiného VPS na vpsFree.cz. Neúspěšný pokus může shodit node. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována.",
+      "response": "Oprava v hlavní větvi před každým opakováním dotazu na adresář obnoví záznam o vlastnictví paměti odpovědi. Je obsažena v Linuxu 7.2 a ve stabilní větvi 7.1 od verze 7.1.4. Oficiálně uvedené opravy pro 6.6.145, 6.12.96 a 6.18.39 mění jiné funkce; účinná oprava těchto větví nebyla v analyzovaných zdrojích potvrzena."
+    }
+  }
+}

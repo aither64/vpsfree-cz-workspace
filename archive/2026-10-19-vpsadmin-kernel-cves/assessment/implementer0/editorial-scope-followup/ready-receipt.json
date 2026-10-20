@@ -1,0 +1,175 @@
+{
+  "recorded_at": "2026-10-20T12:53:20.193269+00:00",
+  "base": "3fab2eaff537024f8ec32db6cdb3b0546808420d",
+  "status": "technical-ready-awaiting-Git-release",
+  "checks": [
+    {
+      "name": "validate3",
+      "args": [
+        "bin/security-advisory",
+        "validate",
+        "CVE-2026-53260",
+        "CVE-2026-72069",
+        "CVE-2026-64387"
+      ],
+      "exit_code": 0,
+      "log": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-vpsadmin-kernel-cves/assessment/implementer0/editorial-scope-followup/validate3.log"
+    },
+    {
+      "name": "evaluate-CVE-2026-53260",
+      "args": [
+        "bin/security-advisory",
+        "evaluate",
+        "CVE-2026-53260"
+      ],
+      "exit_code": 0,
+      "log": ".state/editorial-scope-followup/CVE-2026-53260.json"
+    },
+    {
+      "name": "evaluate-CVE-2026-72069",
+      "args": [
+        "bin/security-advisory",
+        "evaluate",
+        "CVE-2026-72069"
+      ],
+      "exit_code": 0,
+      "log": ".state/editorial-scope-followup/CVE-2026-72069.json"
+    },
+    {
+      "name": "evaluate-CVE-2026-64387",
+      "args": [
+        "bin/security-advisory",
+        "evaluate",
+        "CVE-2026-64387"
+      ],
+      "exit_code": 0,
+      "log": ".state/editorial-scope-followup/CVE-2026-64387.json"
+    },
+    {
+      "name": "comparison",
+      "args": [
+        "python3",
+        "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-vpsadmin-kernel-cves/assessment/implementer0/editorial-scope-followup/verify.py"
+      ],
+      "exit_code": 0,
+      "log": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-vpsadmin-kernel-cves/assessment/implementer0/editorial-scope-followup/comparison.log"
+    },
+    {
+      "name": "dossiers-spec",
+      "args": [
+        "bundle",
+        "exec",
+        "rspec",
+        "spec/dossiers_spec.rb"
+      ],
+      "exit_code": 0,
+      "log": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-vpsadmin-kernel-cves/assessment/implementer0/editorial-scope-followup/dossiers-spec.log"
+    },
+    {
+      "name": "dossiers-lint",
+      "args": [
+        "bundle",
+        "exec",
+        "rubocop",
+        "--force-exclusion",
+        "spec/dossiers_spec.rb"
+      ],
+      "exit_code": 0,
+      "log": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-vpsadmin-kernel-cves/assessment/implementer0/editorial-scope-followup/dossiers-lint.log"
+    },
+    {
+      "name": "final-loader3",
+      "args": [
+        "bundle",
+        "exec",
+        "ruby",
+        "-r",
+        "./lib/security_advisories",
+        "-e",
+        "r = SecurityAdvisories::Reconciler.new(client: nil); ARGV.each { |cve| a = SecurityAdvisories::Advisory.load(cve); r.load_evaluation(a); puts \"#{cve}: digest-bound evaluation accepted\" }",
+        "CVE-2026-53260",
+        "CVE-2026-72069",
+        "CVE-2026-64387"
+      ],
+      "exit_code": 0,
+      "log": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-vpsadmin-kernel-cves/assessment/implementer0/editorial-scope-followup/final-loader3.log"
+    }
+  ],
+  "comparison": {
+    "base": "3fab2eaff537024f8ec32db6cdb3b0546808420d",
+    "comparisons": [
+      {
+        "cve": "CVE-2026-53260",
+        "complete_evaluation_equal_except_dossier_digest_evaluated_at_and_exact_removed_notes": true,
+        "all_states_reasons_dates_and_other_fields_unchanged": true,
+        "removed_notes": [
+          {
+            "node_id": 161,
+            "notes": {
+              "en": "The required real-time mode was disabled throughout the reviewed period.",
+              "cs": "Po\u017eadovan\u00fd re\u017eim re\u00e1ln\u00e9ho \u010dasu byl po cel\u00e9 posuzovan\u00e9 obdob\u00ed vypnut\u00fd."
+            }
+          }
+        ],
+        "old_digest": "714f8178c98e54fc8cc0070f5e36bd086fd44d1c4ac143b35d7aa7c0e8da30d8",
+        "new_digest": "c354b50ed846a848e3fdaa1b14b7ccf25c398750e217cbce1cbd4d1706cd0003",
+        "states": {
+          "mitigated": 12,
+          "not_affected": 1
+        }
+      },
+      {
+        "cve": "CVE-2026-72069",
+        "complete_evaluation_equal_except_dossier_digest_evaluated_at_and_exact_removed_notes": true,
+        "all_states_reasons_dates_and_other_fields_unchanged": true,
+        "removed_notes": [
+          {
+            "node_id": 161,
+            "notes": {
+              "en": "The required real-time mode was disabled throughout the reviewed period.",
+              "cs": "Po\u017eadovan\u00fd re\u017eim re\u00e1ln\u00e9ho \u010dasu byl po cel\u00e9 posuzovan\u00e9 obdob\u00ed vypnut\u00fd."
+            }
+          }
+        ],
+        "old_digest": "fe003f2bf175561c397e80523e130dca8c3301841d4233f66cf634ce89e72e3a",
+        "new_digest": "4b0c4fc6f1f41b5f98a8ccd2acff73cd6941129a884e3228ecf8d62712a7af63",
+        "states": {
+          "mitigated": 12,
+          "not_affected": 1
+        }
+      },
+      {
+        "cve": "CVE-2026-64387",
+        "complete_evaluation_equal_except_dossier_digest_evaluated_at_and_exact_removed_notes": true,
+        "all_states_reasons_dates_and_other_fields_unchanged": true,
+        "removed_notes": [],
+        "old_digest": "477ae1ef5ad69d855636c54e1cdbd326e08eeac9b9fecfab08eef2eef4bf6540",
+        "new_digest": "90d5f85b8c545042a937c9b585c690794bb591cac20c1090e790f0329be853d6",
+        "states": {
+          "not_affected": 13
+        }
+      }
+    ],
+    "frozen_evidence_sha256": "61904e984266df2f6c53435b2b026b0d0980b35a23ed843eebf95b23c27c9274",
+    "all111_submissions_unchanged": true,
+    "consumed77_prefix_and66_boundaries_preserved": true,
+    "other57_and_perf_unchanged": true,
+    "lead_public_YAML_hashes_preserved": true,
+    "technical_YAML_prefixes_unchanged": true,
+    "index_empty": true,
+    "exact9_owned_path_sha256": {
+      "advisories/CVE-2026-53260/advisory.yml": "138f419676e43303249492e798a749d742d44744e2a96f0ca7bdc82bc1495775",
+      "advisories/CVE-2026-53260/analysis.md": "c041f462f1b22cd94df50d7f0bfbbc6ddbbca10c5cf34f6d627de0f0ce6695c1",
+      "advisories/CVE-2026-53260/evaluation.json": "957244dd5db3e2dd1624ee5fa5332666d996ed6451911f46e156decc62f247c7",
+      "advisories/CVE-2026-64387/advisory.yml": "06e57ff697659a59f8d62a58822fbe3d0e082a255bb29242dcadf040c95e9444",
+      "advisories/CVE-2026-64387/evaluation.json": "e0a5dcefd0863d3f7a1b710af0dbf09df823824d76762927a72710bb5cac7b21",
+      "advisories/CVE-2026-72069/advisory.yml": "b251f31b0b3358625ec0da42e119fa075a2c809aeae2b98728d924cc0ce26d4e",
+      "advisories/CVE-2026-72069/analysis.md": "7001ba1bf87edb501bf78d62cfc241186af61b11b8b4a3fa3e640f5fc17c8b0a",
+      "advisories/CVE-2026-72069/evaluation.json": "9fee7217be30048a01b92db7b52c3b36fdd80746c0a3e9dc238e40d6546b2e7b",
+      "spec/dossiers_spec.rb": "a3004ba8a1be2245b6d4f94995c6e1d3bed21ee3197b9387990441bd4073db7a"
+    }
+  },
+  "no_API_calls": true,
+  "no_index_or_ref_mutation": true,
+  "no_runtime_predicate_schema_or_version_changes": true
+}

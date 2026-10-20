@@ -1,0 +1,27 @@
+# Implementer1 assessment package
+
+Completed and committed the20 assigned networking assessments in `605d274310890aac5f514924d9b6566033feaee4`, based on `69027fd51efc5c7eb0a4711947b4f9d08190940e`. Exactly60files were committed: analysis, bilingual advisory and ordinary generated evaluation for each CVE. All20 final results are12mitigated and1tenant-workload role exclusion; no unknown/vulnerable remains in this owned package.
+
+The same frozen schema8 snapshot was used throughout: collected2026-10-19T21:48:39Z, SHA-256 `61904e984266df2f6c53435b2b026b0d0980b35a23ed843eebf95b23c27c9274`. Only the independently source-verified Node126 lifecycle scope was added; global January scope and storage role/history remain unchanged. Ten source-reviewed v6 fixes preserve9earlier node mitigation times each. Whole-CVE v6 acceptance for74630 is withheld under the architect’s final decision because full inline-caller replacement coverage is not proved; known partial correction and conservative later fixed-kernel boundary are documented.
+
+Validation: all20 CLI evaluations succeeded; exact digest/snapshot/lifecycle/tuple readback passed. Exact60path staging and diff check passed. Installed Overcommit hooks remained active and normal Nix pre-commit/commit-msg checks passed. Lead directly applied bilingual writing review to all20 and first-v6 response additions. Owned paths are clean and the shared index is empty. The Git slot was returned; remaining123changes at return were other owners’120untracked dossier files and3bounded shared-tool changes, untouched.
+
+Pending team gates: other-owner commits, final whole-branch independent review and follow-up fixes, required longer verification, then authorized serialized draft sync by the lead-designated writer. This owner performed no additional API collection, draft write, publication, email, deployment, push, fetch, rebase or build. Session remains open.
+
+Receipts: [commit](commit-receipt.json), [final validation](final-validation.json), [livepatch coverage](livepatch-coverage.json), [earlier mitigation preservation](livepatch-evaluation-diff.json), [source declarations](declaration-readback.json). Exact raw linkage remains restricted under ignored project `.state/`.
+
+Session: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-19-vpsadmin-kernel-cves/
+
+## Next operations package prepared
+
+Lead designated implementer1 as the later single draft-sync owner. The reviewable preparation-only [packet](draft-sync/README.md) preserves exact approval order60 and existing guarded CLI/recovery behavior. It contains no new API/client implementation and no automatic retry, adoption, recreation, readiness, publication or email. Remote apply waits for the lead’s explicit final-review/checks release and actual exclusive Git/write slot. Each successful exact remote readback must be checkpointed in a normal-hook one-file submission commit before the next write. Raw outputs remain ignored/restricted; the prepared sanitized ledger is empty. No API/Git/sync/evaluation/recollection/reservation operation was performed during this preparation.
+
+## Citation correction ready, awaiting Git slot
+
+Final review found20primary GitHub links with a Linux security/vulns revision used against the wrong provider. All20immutable Linux Gitiles replacement browser/TEXT endpoints returned200, and decoded bytes/hashes equal the original reviewed records. Lead released only these URL replacements. All20analyses now contain exactly that substitution; public YAML is byte-identical. Normal CLI re-evaluation and Nix validation passed for20. Every conclusion field, node row and completeness value is unchanged; only dossier digest/evaluation timestamp changed. The60pre-fix files match recorded committed605d274 hashes. No Git/index/API/recollection command was run for this remediation, and the draft-sync packet is unchanged. Evidence: [verification mapping](primary-citation-fix-preparation.json), [scope validation](citation-fix-validation.json), [committed baseline proof](citation-fix-committed-baseline.json). Await exact fixup/consolidation Git brief.
+
+## Review remedy committed and history consolidated
+
+Lead authorized the exact three-fixup autosquash above published69027fd. Own citation fixup550d3ab passed normal hooks and was folded together with the two owner0fixups. Final HEAD is `ef4b0604d8bfb9750a6a9a2a3487daac754234e5`; own20assessment commit is now `544bd4d969ea3e43e4c2e5a1c49772672253bd99`. There are five original logical commits above the unchanged docs anchor, six including it. Original reviewed34ad7d remains reachable through retained backupref `refs/heads/backup/2026-10-19-vpsadmin-kernel-cves-before-review-fixups`. No remote/default/other existing ref changed.
+
+Final tree equals the complete pre-squash tree. Against original review34ad7d, exact changes are40analysis files(citations and four approved KVM protection paragraphs) and40evaluation digests/timestamps. PublicYAML/code/schema/specs/otherfiles and every node conclusion are unchanged. Normal Nix validation111 and full diff check passed. [Consolidation handoff](history-consolidation/handoff.md) links complete series/range-diff/scope proof. Git slot returned with clean wholeworktree/index; no fullsuite/API/sync/push. Persistent owned Nix shell remains idle for a later authorized operation; it holds no reservation or Git slot. Draft-sync remains unreleased.

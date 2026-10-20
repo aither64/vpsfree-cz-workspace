@@ -1,0 +1,871 @@
+diff --git a/advisories/CVE-2026-53260/advisory.yml b/advisories/CVE-2026-53260/advisory.yml
+index 84ac335..4db230e 100644
+--- a/advisories/CVE-2026-53260/advisory.yml
++++ b/advisories/CVE-2026-53260/advisory.yml
+@@ -31,6 +31,17 @@
+   "required_options":
+     "CONFIG_PREEMPT_RT": "enabled"
+     "CONFIG_INET": "enabled"
++  "operator_node_exclusions":
++    "161":
++      "type": "required_kernel_option_disabled"
++      "node_name": "backuper2.prg"
++      "node_role": "storage"
++      "valid_from": "2026-01-01T00:00:00Z"
++      "valid_through": "2026-10-19T21:48:39Z"
++      "option": "CONFIG_PREEMPT_RT"
++      "value": "n"
++      "source": "analysis.md#operator-confirmed-non-rt-period"
++      "reason": "Operator confirms this node ran without PREEMPT_RT throughout the assessed period."
+   "required_sysctls": {}
+   "accepted_kernel_builds": []
+   "accepted_livepatches": []
+@@ -52,5 +63,5 @@
+ 
+ "node_notes":
+   "161":
+-    "en": "Current kernel lacks the required real-time mode; its earlier configuration is not established."
+-    "cs": "Současné jádro nepoužívá potřebný režim reálného času; jeho dřívější konfigurace není doložena."
++    "en": "The required real-time mode was disabled throughout the reviewed period."
++    "cs": "Požadovaný režim reálného času byl po celé posuzované období vypnutý."
+diff --git a/advisories/CVE-2026-53260/analysis.md b/advisories/CVE-2026-53260/analysis.md
+index b12ae4b..870f15e 100644
+--- a/advisories/CVE-2026-53260/analysis.md
++++ b/advisories/CVE-2026-53260/analysis.md
+@@ -94,8 +94,8 @@ post-January lifecycle scope. The supported Node126-only history override starts
+ at that retained baseline. The observation is not asserted as the exact
+ production activation instant, and source/range/runtime classification still
+ applies to every later interval. The global January 1 baseline is unchanged.
+-There is no lifecycle override for storage161; missing evidence remains unknown
+-when that role is applicable.
++There is no lifecycle override for storage161. Its reviewed operator-period
++exclusion below is separate from typed kernel-history evidence.
+ 
+ Current runtime observations report `kernel.io_uring_disabled=0`,
+ `kernel.io_uring_group=-1`, `kernel.unprivileged_bpf_disabled=0` and
+@@ -106,48 +106,56 @@ loaded on one reporting node, demonstrating why absence from a default preload
+ list cannot establish fleet-wide non-exposure. Intel/AMD KVM vendor module
+ observations do not by themselves prove nested VMX or IntelPT capabilities.
+ 
+-## Follow-up: storage workload and necessary RT condition
+-
+-The operator clarified that storage runs no user workloads. This removes a
+-tenant process route but does not establish that host backup/NFS TCP listeners
+-never reach `reqsk_queue_hash_req`, or that listener closure cannot race its
+-request timer on an affected RT build. The primary fix explicitly identifies
+-PREEMPT_RT preemption between timer arming and reference initialization, followed
+-by listener closure and timer expiry. Remote requests alone are not proof of
+-attacker control over that full sequence, and absence of VPSes is not proof of
+-its host-path exclusion.
+-
+-The frozen storage record contains no usable booted/reported release, exact
+-configuration, or complete retained history. In particular it cannot bind storage
+-to the independently archived non-RT .95 build. Resolution needs positive
+-`CONFIG_PREEMPT_RT=n` evidence for the actual applicable storage builds and
+-period, a supported pre-introduction/fixed kernel history, or a source-backed
+-exclusion of the necessary host listener lifecycle throughout that period. A
+-current-only non-RT statement without build/time scope cannot establish earlier
+-safety or a mitigation date. The role set remains `node` and `storage`; the
+-normal evaluation therefore retains the missing-evidence storage result as
+-unknown. No history override, build acceptance or manual status is added.
+-
+-### Operator observation of the running storage kernel
+-
+-In this follow-up the operator supplied this direct observation from
+-`backuper2.prg.vpsfree.cz`:
++## Operator-confirmed non-RT period
++
++On 2026-10-20 the operator was asked whether backuper2.prg ran without
++`CONFIG_PREEMPT_RT` throughout 2026-01-01 through 2026-10-19 and answered
++"1. yes". This direct period confirmation supersedes the initial current-only
++configuration observation and the unresolved historical storage conclusion.
++The API identity is Node161, `backuper2.prg`, role `storage`; the operator's
++`backuper2.prg.vpsfree.cz` command prompt names the same host. The confirmation
++is bounded to this node and assessment period, rather than every storage node
++or future collection.
++
++The preceding direct running-kernel observation corroborates the necessary
++configuration exclusion:
+ 
+ ```text
+ [root@backuper2.prg.vpsfree.cz] zgrep -i preempt_rt /proc/config.gz
+ # CONFIG_PREEMPT_RT is not set
+ ```
+ 
+-This positive runtime configuration evidence excludes the necessary RT lock
+-implementation on that running storage kernel, independently of whether storage
+-has user processes. It is an operator observation after the frozen collection;
+-no exact kernel/configuration digest, boot identity, historical start time or
+-January-to-snapshot scope accompanies it. It therefore establishes the current
+-necessary-gate exclusion without proving the older retained interval safe or
+-supplying a mitigation timestamp. The frozen snapshot and consumed submission
+-baselines remain unchanged. The reviewed Node161-only English/Czech note now
+-conveys that current necessary-gate exclusion while explicitly retaining the
+-unknown earlier configuration. The all-period state remains unknown because the
+-period question is unanswered and the frozen history has no supporting storage
+-build evidence. No evidence JSON, attestation or per-node evaluation is edited
+-by hand; the normal evaluator propagates the dossier-authored note.
++The primary defect and fix require the substituted PREEMPT_RT implementation.
++Absence of VPS workloads alone would not exclude real host TCP/NFS/RCU locking
++paths. The operator's confirmation that RT mode was absent throughout the
++period supplies the positive negative-applicability fact for this dossier.
++The archived non-RT build is corroboration only and is not assigned to unknown
++historical storage boots.
++
++`platform.operator_node_exclusions["161"]` records this necessary-option
++exclusion for the exact API name and role, from `2026-01-01T00:00:00Z` through
++`2026-10-19T21:48:39Z`, inclusive. The upper timestamp is the frozen collection
++boundary within the confirmed October19 day. It is a claim-scope boundary, not
++a fabricated observation, deployment or mitigation time. The frozen storage
++record still lacks build/configuration/history data; those raw facts are not
++rewritten. The normal evaluator may classify this exact node as `not_affected`
++from the reviewed operator attestation when it covers the complete assessment
++interval and no exact retained configuration contradicts it. Missing raw option
++data does not contradict the statement. Another node, mismatched identity or
++collection outside the bound cannot inherit this exemption.
++
++Both affected roles, necessary CONFIG requirements, canonical upstream ranges,
++accepted mitigation lists and lifecycle override remain unchanged. No kernel
++build, historical event, mitigation date, raw configuration or manual per-node
++result is invented. The existing historical-attestation file and all consumed
++submission baselines remain untouched. Ordinary evaluation applies everywhere
++outside this bounded claim. A known conflicting exact configuration yields
++unknown rather than letting the operator statement override it.
++
++The matching tool/dossier revision is required to reproduce this new result.
++The exact consumed parent loader accepts the additive map, but its evaluator
++ignores it and conservatively retains storage unknown. The ordinary pre-write
++comparison must reject that old recalculation against the new resolved result;
++no digest or conclusion guard is weakened for rollback. The English/Czech
++Node161 note states that the required mode was disabled throughout the reviewed
++period.
+diff --git a/advisories/CVE-2026-53260/evaluation.json b/advisories/CVE-2026-53260/evaluation.json
+index 89947c9..4af7af0 100644
+--- a/advisories/CVE-2026-53260/evaluation.json
++++ b/advisories/CVE-2026-53260/evaluation.json
+@@ -1,20 +1,18 @@
+ {
+   "schema_version": 4,
+   "cve": "CVE-2026-53260",
+-  "dossier_digest": "3342d9330e76a39ff8be3031a90afd6c02a63d860376d58b34c9cb7405761383",
+-  "evaluated_at": "2026-10-20T09:15:43Z",
++  "dossier_digest": "714f8178c98e54fc8cc0070f5e36bd086fd44d1c4ac143b35d7aa7c0e8da30d8",
++  "evaluated_at": "2026-10-20T11:20:51Z",
+   "completeness": {
+     "expected_node_count": 13,
+     "evaluated_node_count": 13,
+     "node_set_complete": true,
+-    "resolution_complete": false,
++    "resolution_complete": true,
+     "states": {
+       "mitigated": 12,
+-      "unknown": 1
++      "not_affected": 1
+     },
+-    "blocking_node_ids": [
+-      161
+-    ]
++    "blocking_node_ids": []
+   },
+   "nodes": [
+     {
+@@ -106,11 +104,11 @@
+       "node_name": "backuper2.prg",
+       "node_role": "storage",
+       "evidence_revision": "bdfe7fa8207d487cad1dab06f779f1bac89c69f182a5e78bfcbc4b508b7248a6",
+-      "state": "unknown",
+-      "reason": "security evidence observation time is invalid; security evidence receipt time is invalid; kernel history coverage start is invalid; kernel history coverage end is invalid; kernel history reconstruction is not complete for the required period",
++      "state": "not_affected",
++      "reason": "operator attestation excludes node 161 (backuper2.prg, storage): necessary CONFIG_PREEMPT_RT=n throughout 2026-01-01T00:00:00Z..2026-10-19T21:48:39Z; Operator confirms this node ran without PREEMPT_RT throughout the assessed period. Source: analysis.md#operator-confirmed-non-rt-period",
+       "notes": {
+-        "en": "Current kernel lacks the required real-time mode; its earlier configuration is not established.",
+-        "cs": "Současné jádro nepoužívá potřebný režim reálného času; jeho dřívější konfigurace není doložena."
++        "en": "The required real-time mode was disabled throughout the reviewed period.",
++        "cs": "Požadovaný režim reálného času byl po celé posuzované období vypnutý."
+       }
+     },
+     {
+diff --git a/advisories/CVE-2026-72069/advisory.yml b/advisories/CVE-2026-72069/advisory.yml
+index c21eaa5..751221d 100644
+--- a/advisories/CVE-2026-72069/advisory.yml
++++ b/advisories/CVE-2026-72069/advisory.yml
+@@ -45,6 +45,17 @@
+   "affected_node_roles": ["node", "storage"]
+   "required_options":
+     "CONFIG_PREEMPT_RT": "enabled"
++  "operator_node_exclusions":
++    "161":
++      "type": "required_kernel_option_disabled"
++      "node_name": "backuper2.prg"
++      "node_role": "storage"
++      "valid_from": "2026-01-01T00:00:00Z"
++      "valid_through": "2026-10-19T21:48:39Z"
++      "option": "CONFIG_PREEMPT_RT"
++      "value": "n"
++      "source": "analysis.md#operator-confirmed-non-rt-period"
++      "reason": "Operator confirms this node ran without PREEMPT_RT throughout the assessed period."
+   "required_sysctls": {}
+   "accepted_kernel_builds": []
+   "accepted_livepatches": []
+@@ -66,5 +77,5 @@
+ 
+ "node_notes":
+   "161":
+-    "en": "Current kernel lacks the required real-time mode; its earlier configuration is not established."
+-    "cs": "Současné jádro nepoužívá potřebný režim reálného času; jeho dřívější konfigurace není doložena."
++    "en": "The required real-time mode was disabled throughout the reviewed period."
++    "cs": "Požadovaný režim reálného času byl po celé posuzované období vypnutý."
+diff --git a/advisories/CVE-2026-72069/analysis.md b/advisories/CVE-2026-72069/analysis.md
+index 27b9675..7a3d4c3 100644
+--- a/advisories/CVE-2026-72069/analysis.md
++++ b/advisories/CVE-2026-72069/analysis.md
+@@ -96,8 +96,8 @@ post-January lifecycle scope. The supported Node126-only history override starts
+ at that retained baseline. The observation is not asserted as the exact
+ production activation instant, and source/range/runtime classification still
+ applies to every later interval. The global January 1 baseline is unchanged.
+-There is no lifecycle override for storage161; missing evidence remains unknown
+-when that role is applicable.
++There is no lifecycle override for storage161. Its reviewed operator-period
++exclusion below is separate from typed kernel-history evidence.
+ 
+ Current runtime observations report `kernel.io_uring_disabled=0`,
+ `kernel.io_uring_group=-1`, `kernel.unprivileged_bpf_disabled=0` and
+@@ -108,47 +108,56 @@ loaded on one reporting node, demonstrating why absence from a default preload
+ list cannot establish fleet-wide non-exposure. Intel/AMD KVM vendor module
+ observations do not by themselves prove nested VMX or IntelPT capabilities.
+ 
+-## Follow-up: storage workload and necessary RT condition
++## Operator-confirmed non-RT period
+ 
+-The operator clarified that storage runs no user workloads. The defect is in
+-the substituted RT spin/rw-lock unlock implementation, rather than a tenant-only
+-syscall or device. Host filesystem, backup/NFS and network code can still use
+-locks embedded in RCU-managed objects; the fix holds RCU protection until the
+-underlying unlock has finished. The primary source does not establish that the
+-absence of user processes removes every such host lifetime path, nor does it
+-establish a complete remote exploitation sequence for this storage workload.
++On 2026-10-20 the operator was asked whether backuper2.prg ran without
++`CONFIG_PREEMPT_RT` throughout 2026-01-01 through 2026-10-19 and answered
++"1. yes". This direct period confirmation supersedes the initial current-only
++configuration observation and the unresolved historical storage conclusion.
++The API identity is Node161, `backuper2.prg`, role `storage`; the operator's
++`backuper2.prg.vpsfree.cz` command prompt names the same host. The confirmation
++is bounded to this node and assessment period, rather than every storage node
++or future collection.
+ 
+-The frozen storage record has no usable kernel release, exact configuration or
+-complete retained history. The positive non-RT archived .95 configuration and
+-the reporting hypervisors' current non-RT configurations do not identify that
+-storage build or its earlier states. Resolution needs positive non-RT evidence
+-for the actual applicable storage builds and period, a retained pre-introduction
+-or corrected kernel history, or a source-backed exclusion of the relevant host
+-RCU/RT-lock lifetime path throughout the period. A current-only operator
+-statement without build/time scope cannot supply historical safety or a date.
+-The role set remains `node` and `storage`, and the normal evaluation retains
+-storage as unknown without a fabricated attestation or manual result.
+-
+-### Operator observation of the running storage kernel
+-
+-In this follow-up the operator supplied this direct observation from
+-`backuper2.prg.vpsfree.cz`:
++The preceding direct running-kernel observation corroborates the necessary
++configuration exclusion:
+ 
+ ```text
+ [root@backuper2.prg.vpsfree.cz] zgrep -i preempt_rt /proc/config.gz
+ # CONFIG_PREEMPT_RT is not set
+ ```
+ 
+-This positive runtime configuration evidence excludes the necessary RT lock
+-implementation on that running storage kernel, independently of whether storage
+-has user processes. It is an operator observation after the frozen collection;
+-no exact kernel/configuration digest, boot identity, historical start time or
+-January-to-snapshot scope accompanies it. It therefore establishes the current
+-necessary-gate exclusion without proving the older retained interval safe or
+-supplying a mitigation timestamp. The frozen snapshot and consumed submission
+-baselines remain unchanged. The reviewed Node161-only English/Czech note now
+-conveys that current necessary-gate exclusion while explicitly retaining the
+-unknown earlier configuration. The all-period state remains unknown because the
+-period question is unanswered and the frozen history has no supporting storage
+-build evidence. No evidence JSON, attestation or per-node evaluation is edited
+-by hand; the normal evaluator propagates the dossier-authored note.
++The primary defect and fix require the substituted PREEMPT_RT implementation.
++Absence of VPS workloads alone would not exclude real host TCP/NFS/RCU locking
++paths. The operator's confirmation that RT mode was absent throughout the
++period supplies the positive negative-applicability fact for this dossier.
++The archived non-RT build is corroboration only and is not assigned to unknown
++historical storage boots.
++
++`platform.operator_node_exclusions["161"]` records this necessary-option
++exclusion for the exact API name and role, from `2026-01-01T00:00:00Z` through
++`2026-10-19T21:48:39Z`, inclusive. The upper timestamp is the frozen collection
++boundary within the confirmed October19 day. It is a claim-scope boundary, not
++a fabricated observation, deployment or mitigation time. The frozen storage
++record still lacks build/configuration/history data; those raw facts are not
++rewritten. The normal evaluator may classify this exact node as `not_affected`
++from the reviewed operator attestation when it covers the complete assessment
++interval and no exact retained configuration contradicts it. Missing raw option
++data does not contradict the statement. Another node, mismatched identity or
++collection outside the bound cannot inherit this exemption.
++
++Both affected roles, necessary CONFIG requirements, canonical upstream ranges,
++accepted mitigation lists and lifecycle override remain unchanged. No kernel
++build, historical event, mitigation date, raw configuration or manual per-node
++result is invented. The existing historical-attestation file and all consumed
++submission baselines remain untouched. Ordinary evaluation applies everywhere
++outside this bounded claim. A known conflicting exact configuration yields
++unknown rather than letting the operator statement override it.
++
++The matching tool/dossier revision is required to reproduce this new result.
++The exact consumed parent loader accepts the additive map, but its evaluator
++ignores it and conservatively retains storage unknown. The ordinary pre-write
++comparison must reject that old recalculation against the new resolved result;
++no digest or conclusion guard is weakened for rollback. The English/Czech
++Node161 note states that the required mode was disabled throughout the reviewed
++period.
+diff --git a/advisories/CVE-2026-72069/evaluation.json b/advisories/CVE-2026-72069/evaluation.json
+index 3fb6b38..4a0000a 100644
+--- a/advisories/CVE-2026-72069/evaluation.json
++++ b/advisories/CVE-2026-72069/evaluation.json
+@@ -1,20 +1,18 @@
+ {
+   "schema_version": 4,
+   "cve": "CVE-2026-72069",
+-  "dossier_digest": "1be63ab72a2fadffd3eb361c237b870fecdd3d6e12209d9de57dbaefce93ca0f",
+-  "evaluated_at": "2026-10-20T09:15:45Z",
++  "dossier_digest": "fe003f2bf175561c397e80523e130dca8c3301841d4233f66cf634ce89e72e3a",
++  "evaluated_at": "2026-10-20T11:20:52Z",
+   "completeness": {
+     "expected_node_count": 13,
+     "evaluated_node_count": 13,
+     "node_set_complete": true,
+-    "resolution_complete": false,
++    "resolution_complete": true,
+     "states": {
+       "mitigated": 12,
+-      "unknown": 1
++      "not_affected": 1
+     },
+-    "blocking_node_ids": [
+-      161
+-    ]
++    "blocking_node_ids": []
+   },
+   "nodes": [
+     {
+@@ -106,11 +104,11 @@
+       "node_name": "backuper2.prg",
+       "node_role": "storage",
+       "evidence_revision": "bdfe7fa8207d487cad1dab06f779f1bac89c69f182a5e78bfcbc4b508b7248a6",
+-      "state": "unknown",
+-      "reason": "security evidence observation time is invalid; security evidence receipt time is invalid; kernel history coverage start is invalid; kernel history coverage end is invalid; kernel history reconstruction is not complete for the required period",
++      "state": "not_affected",
++      "reason": "operator attestation excludes node 161 (backuper2.prg, storage): necessary CONFIG_PREEMPT_RT=n throughout 2026-01-01T00:00:00Z..2026-10-19T21:48:39Z; Operator confirms this node ran without PREEMPT_RT throughout the assessed period. Source: analysis.md#operator-confirmed-non-rt-period",
+       "notes": {
+-        "en": "Current kernel lacks the required real-time mode; its earlier configuration is not established.",
+-        "cs": "Současné jádro nepoužívá potřebný režim reálného času; jeho dřívější konfigurace není doložena."
++        "en": "The required real-time mode was disabled throughout the reviewed period.",
++        "cs": "Požadovaný režim reálného času byl po celé posuzované období vypnutý."
+       }
+     },
+     {
+diff --git a/docs/evidence.md b/docs/evidence.md
+index e9da691..0e0f81d 100644
+--- a/docs/evidence.md
++++ b/docs/evidence.md
+@@ -102,6 +102,40 @@ kernel vulnerability therefore does not affect a storage Node merely because
+ its kernel is older. Storage belongs in `affected_node_roles` only when the
+ backup, NFS, or host workload itself can reach the vulnerable primitive.
+ 
++A reviewed operator statement can separately exclude a necessary kernel option
++for one identified node and a complete assessment period. The optional
++`platform.operator_node_exclusions` map uses positive decimal Node ID strings
++and only `type: required_kernel_option_disabled` records. Each record requires
++`node_name`, `node_role`, `valid_from`, `valid_through`, `option`, `value`,
++`source` and `reason`; unknown fields are rejected. Identity and source/reason
++must be nonempty strings, timestamps must be valid and ordered, `value` must be
++`n`, and the CONFIG option must be declared `enabled` in `required_options`.
++This is a reviewed negative applicability claim, not a historical kernel build
++or event attestation and not an arbitrary result override.
++
++The exact node ID, name and role must match. The claim must contain the full
++interval from that node's required history start through the evidence collection
++time, inclusively; later editorial time does not change this test. A mismatch,
++short claim or future collection falls back to ordinary evaluation. A matching
++claim may establish `not_affected` before unavailable typed kernel history is
++required, with an operator-attributed reason and no invented kernel identity or
++mitigation date. Exact current or retained in-period configuration that reports
++the necessary option as enabled conflicts with the claim and yields `unknown`.
++This includes the latest retained baseline at or before the required start,
++whose configuration can carry into the assessed period. Older pre-period
++snapshots superseded by that baseline are not contradictions for this period.
++The evaluator reads only this node's referenced configuration catalog entries
++and verified event attestations; missing option data and unrelated catalog
++entries do not contradict the operator statement. The raw snapshot is unchanged.
++
++These additive negative claims retain dossier schema 1. Older loaders accept
++the field but older evaluators ignore it and conservatively retain unresolved
++history. The matching tooling revision is required to reproduce a new exclusion;
++ordinary pre-write conclusion comparison rejects an old recalculation against
++the newly reviewed result. Do not weaken that guard for rollback or rewrite
++collected history to make old tools agree. An absent or empty map leaves prior
++behavior unchanged. A new collection outside the claim requires a new review.
++
+ Kernel history shown to all authenticated users is a separately sanitized API
+ resource. Reconstructed boot times are estimates. Runtime changes without an
+ exact effective time are represented as `observed_after`/`observed_before`
+diff --git a/lib/security_advisories/advisory.rb b/lib/security_advisories/advisory.rb
+index 1a8afba..e85a393 100644
+--- a/lib/security_advisories/advisory.rb
++++ b/lib/security_advisories/advisory.rb
+@@ -125,6 +125,7 @@ module SecurityAdvisories
+       unless SysctlEvidence.valid_requirements?(platform['required_sysctls'])
+         errors << 'platform.required_sysctls must map valid names to unique accepted effective values'
+       end
++      validate_operator_node_exclusions(errors)
+ 
+       %w[affected_node_roles accepted_kernel_builds accepted_livepatches accepted_ebpf_programs].each do |key|
+         errors << "platform.#{key} must be an array" unless platform[key].is_a?(Array)
+@@ -268,6 +269,43 @@ module SecurityAdvisories
+ 
+     protected
+ 
++    def validate_operator_node_exclusions(errors)
++      exclusions = platform.fetch('operator_node_exclusions', {})
++      unless exclusions.is_a?(Hash)
++        errors << 'platform.operator_node_exclusions must be a map'
++        return
++      end
++
++      exclusions.each do |node_id, claim|
++        next if node_id.is_a?(String) && node_id.match?(/\A[1-9]\d*\z/) &&
++                valid_operator_node_exclusion?(claim)
++
++        errors << "platform.operator_node_exclusions.#{node_id} is incomplete or unsupported"
++      end
++    end
++
++    def valid_operator_node_exclusion?(claim)
++      fields = %w[type node_name node_role valid_from valid_through option value source reason]
++      return false unless claim.is_a?(Hash) && claim.keys.length == fields.length && (claim.keys - fields).empty?
++      return false unless fields.all? { |key| claim[key].is_a?(String) && !claim[key].strip.empty? }
++      return false unless claim['type'] == 'required_kernel_option_disabled' && claim['value'] == 'n'
++      return false unless claim['option'].match?(/\ACONFIG_[A-Z0-9_]+\z/)
++      return false unless platform['required_options'].is_a?(Hash) &&
++                          platform['required_options'][claim['option']] == 'enabled'
++      return false unless %w[valid_from valid_through].all? { |key| valid_operator_time?(claim[key]) }
++
++      Time.iso8601(claim['valid_from']) <= Time.iso8601(claim['valid_through'])
++    end
++
++    def valid_operator_time?(value)
++      return false unless value.match?(/\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})\z/)
++
++      Date.iso8601(value[0, 10])
++      valid_time?(value)
++    rescue ArgumentError
++      false
++    end
++
+     def valid_livepatch_rule?(patch)
+       required = %w[id patch_version kernel_version kernel_source_revision vpsadminos_revision]
+       patch.is_a?(Hash) && required.all? { |key| !patch[key].to_s.empty? } &&
+diff --git a/lib/security_advisories/evaluator.rb b/lib/security_advisories/evaluator.rb
+index b2c206f..ff19bbe 100644
+--- a/lib/security_advisories/evaluator.rb
++++ b/lib/security_advisories/evaluator.rb
+@@ -94,6 +94,9 @@ module SecurityAdvisories
+                           ))
+       end
+ 
++      operator_exclusion = operator_node_exclusion(node)
++      return base.merge(operator_exclusion) if operator_exclusion
++
+       problems = evidence_problems(node) + coverage_problems(node) + attestation_problems(node)
+       return base.merge(unknown(problems.join('; '))) unless problems.empty?
+ 
+@@ -152,6 +155,46 @@ module SecurityAdvisories
+       base.merge(mitigated(transition, current_release, current_assessment)).merge(common)
+     end
+ 
++    def operator_node_exclusion(node)
++      claim = @advisory.platform.fetch('operator_node_exclusions', {})[node['node_id'].to_s]
++      return unless claim && claim['node_name'] == node['node_name'] && claim['node_role'] == node['node_role']
++
++      since = history_required_since(node)
++      return unless since && since <= @evidence_time &&
++                    parse_time(claim['valid_from']) <= since &&
++                    parse_time(claim['valid_through']) >= @evidence_time
++
++      evidence = [current_security_evidence(node)]
++      events = Array(node.dig('kernel', 'history')).sort_by do |event|
++        [event['observed_before'].to_s, event['id'].to_i]
++      end
++      baseline = events.reverse.find do |event|
++        observed = parse_time(event['observed_before'])
++        observed && observed <= since
++      end
++      events.each do |event|
++        observed = parse_time(event['observed_before'])
++        next unless event == baseline || (observed && observed > since && observed <= @evidence_time)
++
++        evidence << exact_event_evidence(node, event)
++      end
++      conflict = evidence.filter_map do |snapshot|
++        kernel = snapshot['kernel']
++        next unless kernel.is_a?(Hash)
++
++        configuration_options(snapshot, kernel)&.[](claim['option'])
++      end.find { |value| %w[y m].include?(value) }
++      if conflict
++        return unknown("operator attestation conflicts with exact #{claim['option']}=#{conflict} " \
++                       "configuration for node #{node['node_id']} (#{node['node_name']})")
++      end
++
++      not_affected(nil, "operator attestation excludes node #{node['node_id']} " \
++                        "(#{node['node_name']}, #{node['node_role']}): necessary #{claim['option']}=n " \
++                        "throughout #{since.utc.iso8601}..#{@evidence_time.utc.iso8601}; " \
++                        "#{claim['reason']} Source: #{claim['source']}")
++    end
++
+     def corrective_boot_after_uncertainty(assessments)
+       last_unsafe = assessments.rindex do |point|
+         %w[affected unknown].include?(point.dig('assessment', 'state'))
+diff --git a/schema/advisory.schema.json b/schema/advisory.schema.json
+index ceb8537..2b4f452 100644
+--- a/schema/advisory.schema.json
++++ b/schema/advisory.schema.json
+@@ -71,6 +71,63 @@
+             "items": { "type": "string" }
+           }
+         },
++        "operator_node_exclusions": {
++          "type": "object",
++          "propertyNames": {
++            "pattern": "^[1-9][0-9]*$"
++          },
++          "additionalProperties": {
++            "type": "object",
++            "required": [
++              "type",
++              "node_name",
++              "node_role",
++              "valid_from",
++              "valid_through",
++              "option",
++              "value",
++              "source",
++              "reason"
++            ],
++            "properties": {
++              "type": {
++                "const": "required_kernel_option_disabled"
++              },
++              "node_name": {
++                "type": "string",
++                "pattern": "\\S"
++              },
++              "node_role": {
++                "type": "string",
++                "pattern": "\\S"
++              },
++              "valid_from": {
++                "type": "string",
++                "format": "date-time"
++              },
++              "valid_through": {
++                "type": "string",
++                "format": "date-time"
++              },
++              "option": {
++                "type": "string",
++                "pattern": "^CONFIG_[A-Z0-9_]+$"
++              },
++              "value": {
++                "const": "n"
++              },
++              "source": {
++                "type": "string",
++                "pattern": "\\S"
++              },
++              "reason": {
++                "type": "string",
++                "pattern": "\\S"
++              }
++            },
++            "additionalProperties": false
++          }
++        },
+         "history_required_since": { "type": "string", "format": "date-time" },
+         "affected_node_roles": {
+           "type": "array",
+diff --git a/spec/advisory_spec.rb b/spec/advisory_spec.rb
+index e691a53..eb6788e 100644
+--- a/spec/advisory_spec.rb
++++ b/spec/advisory_spec.rb
+@@ -70,6 +70,72 @@ RSpec.describe SecurityAdvisories::Advisory do
+     expect { advisory.validate! }.not_to raise_error
+   end
+ 
++  describe 'operator necessary-option exclusions' do
++    let(:claim) do
++      {
++        'type' => 'required_kernel_option_disabled', 'node_name' => 'storage1', 'node_role' => 'storage',
++        'valid_from' => '2026-01-01T00:00:00Z', 'valid_through' => '2026-10-19T21:48:39Z',
++        'option' => 'CONFIG_PREEMPT_RT', 'value' => 'n', 'source' => 'analysis.md#operator-period',
++        'reason' => 'Operator confirms the required mode was disabled for this node and period.'
++      }
++    end
++
++    def operator_advisory(claim)
++      advisory = fixture_advisory(required_options: { 'CONFIG_PREEMPT_RT' => 'enabled' })
++      advisory.platform['operator_node_exclusions'] = { '161' => claim }
++      advisory
++    end
++
++    it 'accepts an optional empty map and a complete schema-one negative claim' do
++      advisory = operator_advisory(claim)
++      expect { advisory.validate! }.not_to raise_error
++      advisory.platform['operator_node_exclusions'] = {}
++      expect { advisory.validate! }.not_to raise_error
++    end
++
++    it 'requires a map and positive decimal string Node keys' do
++      [[], nil, { 161 => claim }, { '0' => claim }, { '-1' => claim }, { '0161' => claim }].each do |value|
++        advisory = operator_advisory(claim)
++        advisory.platform['operator_node_exclusions'] = value
++        expect { advisory.validate! }.to raise_error(SecurityAdvisories::Error, /operator_node_exclusions/)
++      end
++    end
++
++    it 'requires every field without accepting additional predicates or result states' do
++      claim.each_key do |field|
++        expect do
++          operator_advisory(claim.reject { |key, _value| key == field }).validate!
++        end.to raise_error(SecurityAdvisories::Error, /operator_node_exclusions/)
++      end
++      expect do
++        operator_advisory(claim.merge('state' => 'not_affected')).validate!
++      end.to raise_error(SecurityAdvisories::Error, /operator_node_exclusions/)
++      expect do
++        operator_advisory(claim.except('reason').merge(1 => 'unsupported')).validate!
++      end.to raise_error(SecurityAdvisories::Error, /operator_node_exclusions/)
++    end
++
++    [
++      ['type', 'arbitrary_predicate'], ['node_name', ' '], ['node_name', 161], ['node_role', nil],
++      ['source', false], ['reason', ''], ['valid_from', '2026-02-30T00:00:00Z'],
++      ['valid_from', '2026-01-01'], ['valid_through', 'not-a-time'],
++      ['valid_through', '2025-12-31T23:59:59Z'], ['option', 'preempt_rt'], ['option', 'CONFIG_OTHER'],
++      ['value', 'y'], ['value', false]
++    ].each do |field, value|
++      it "rejects malformed or unsupported #{field}=#{value.inspect}" do
++        expect do
++          operator_advisory(claim.merge(field => value)).validate!
++        end.to raise_error(SecurityAdvisories::Error, /operator_node_exclusions/)
++      end
++    end
++
++    it 'cannot disable an option whose necessity has not been declared enabled' do
++      advisory = operator_advisory(claim)
++      advisory.platform['required_options']['CONFIG_PREEMPT_RT'] = 'y'
++      expect { advisory.validate! }.to raise_error(SecurityAdvisories::Error, /operator_node_exclusions/)
++    end
++  end
++
+   it 'validates introduction tuples with the protection identity contract' do
+     advisory = fixture_advisory
+     advisory.data['schema_version'] = 2
+diff --git a/spec/dossiers_spec.rb b/spec/dossiers_spec.rb
+index 0369d7c..ae6f94e 100644
+--- a/spec/dossiers_spec.rb
++++ b/spec/dossiers_spec.rb
+@@ -839,25 +839,42 @@ RSpec.describe SecurityAdvisories::Advisory do
+     expect(evaluation.dig('completeness', 'resolution_complete')).to be(true)
+   end
+ 
+-  it 'preserves the RT storage uncertainty and tenant-only storage exclusions' do
+-    APPROVED_CVES.each do |cve|
++  it 'binds RT storage exclusions to the operator-confirmed node and period' do
++    RT_CVES.each do |cve|
+       advisory = described_class.load(cve)
+       storage = evaluation_for(advisory).fetch('nodes').find { |node| node.fetch('node_id') == 161 }
+       expect(storage.fetch('node_role')).to eq('storage')
+-      if RT_CVES.include?(cve)
+-        expect(advisory.platform.fetch('affected_node_roles')).to eq(%w[node storage])
+-        expect(storage).to include('state' => 'unknown', 'reason' => a_string_including('receipt time is invalid'))
+-        notes = {
+-          'en' => 'Current kernel lacks the required real-time mode; its earlier configuration is not established.',
+-          'cs' => 'Současné jádro nepoužívá potřebný režim reálného času; jeho dřívější konfigurace není doložena.'
++      expect(advisory.platform.fetch('affected_node_roles')).to eq(%w[node storage])
++      expect(advisory.platform.fetch('operator_node_exclusions')).to eq(
++        '161' => {
++          'type' => 'required_kernel_option_disabled', 'node_name' => 'backuper2.prg', 'node_role' => 'storage',
++          'valid_from' => '2026-01-01T00:00:00Z', 'valid_through' => '2026-10-19T21:48:39Z',
++          'option' => 'CONFIG_PREEMPT_RT', 'value' => 'n',
++          'source' => 'analysis.md#operator-confirmed-non-rt-period',
++          'reason' => 'Operator confirms this node ran without PREEMPT_RT throughout the assessed period.'
+         }
+-        expect(advisory.node_notes).to eq('161' => notes)
+-        expect(storage.fetch('notes')).to eq(notes)
+-        expect(notes.values).to all(satisfy { |text| text.length <= 120 && !text.include?("\n") })
+-      else
+-        expect(advisory.platform.fetch('affected_node_roles')).to eq(['node'])
+-        expect(storage).to include('state' => 'not_affected', 'reason' => a_string_including('node role storage'))
+-      end
++      )
++      expect(storage).to include('state' => 'not_affected',
++                                 'reason' => a_string_including('operator attestation', 'CONFIG_PREEMPT_RT=n'))
++      expect(storage.keys & %w[mitigated_since vulnerable_until kernel_release config_digest]).to be_empty
++      notes = {
++        'en' => 'The required real-time mode was disabled throughout the reviewed period.',
++        'cs' => 'Požadovaný režim reálného času byl po celé posuzované období vypnutý.'
++      }
++      expect(advisory.node_notes).to eq('161' => notes)
++      expect(storage.fetch('notes')).to eq(notes)
++      expect(notes.values).to all(satisfy { |text| text.length <= 120 && !text.include?("\n") })
++    end
++  end
++
++  it 'preserves the tenant-only storage exclusions outside the RT cohort' do
++    (APPROVED_CVES - RT_CVES).each do |cve|
++      advisory = described_class.load(cve)
++      storage = evaluation_for(advisory).fetch('nodes').find { |node| node.fetch('node_id') == 161 }
++      expect(storage.fetch('node_role')).to eq('storage')
++      expect(advisory.platform.fetch('operator_node_exclusions', {})).to be_empty
++      expect(advisory.platform.fetch('affected_node_roles')).to eq(['node'])
++      expect(storage).to include('state' => 'not_affected', 'reason' => a_string_including('node role storage'))
+     end
+   end
+ 
+diff --git a/spec/evaluator_spec.rb b/spec/evaluator_spec.rb
+index 944a0a1..9b7d25c 100644
+--- a/spec/evaluator_spec.rb
++++ b/spec/evaluator_spec.rb
+@@ -1172,6 +1172,126 @@ RSpec.describe SecurityAdvisories::Evaluator do
+     expect(result['reason']).to include('role storage')
+   end
+ 
++  describe 'operator necessary-option exclusions' do
++    before do
++      @advisory.platform['affected_node_roles'] = %w[node storage]
++      @advisory.platform['required_options'] = { 'CONFIG_PREEMPT_RT' => 'enabled' }
++      @advisory.platform['operator_node_exclusions'] = {
++        '1' => {
++          'type' => 'required_kernel_option_disabled', 'node_name' => 'node1.example', 'node_role' => 'storage',
++          'valid_from' => '2026-07-13T09:00:00Z', 'valid_through' => '2026-07-13T12:00:00Z',
++          'option' => 'CONFIG_PREEMPT_RT', 'value' => 'n', 'source' => 'analysis.md#operator-period',
++          'reason' => 'The operator confirms no RT kernel for this entire period.'
++        }
++      }
++    end
++
++    it 'excludes the exact node and complete period without inventing missing kernel evidence or dates' do
++      evidence = node(history: [], role: 'storage')
++      evidence['received_at'] = nil
++      result = evaluate(evidence)
++      expect(result).to include('state' => 'not_affected',
++                                'reason' => a_string_including('operator attestation', 'CONFIG_PREEMPT_RT=n',
++                                                               'node 1 (node1.example, storage)',
++                                                               '2026-07-13T09:00:00Z..2026-07-13T12:00:00Z'))
++      expect(result.keys & %w[mitigated_since vulnerable_until kernel_release config_digest]).to be_empty
++    end
++
++    %w[node_id node_name node_role].each do |field|
++      it "falls back for mismatched #{field}" do
++        evidence = node(history: [], role: 'storage')
++        evidence[field] = { 'node_id' => 2, 'node_name' => 'different', 'node_role' => 'node' }.fetch(field)
++        expect(evaluate(evidence)['state']).to eq('unknown')
++      end
++    end
++
++    it 'does not extend a short claim to cover the required history or a later collection' do
++      claim = @advisory.platform['operator_node_exclusions']['1']
++      claim['valid_from'] = '2026-07-13T09:00:01Z'
++      expect(evaluate(node(history: [], role: 'storage'))['state']).to eq('unknown')
++      claim['valid_from'] = '2026-07-13T09:00:00Z'
++      claim['valid_through'] = '2026-07-13T11:59:59Z'
++      expect(evaluate(node(history: [], role: 'storage'))['state']).to eq('unknown')
++    end
++
++    it 'uses collection time at the inclusive bound rather than the later editorial clock' do
++      result = described_class.new(@advisory, now: @now + 86_400, evidence_time: @now)
++                              .evaluate([node(history: [], role: 'storage')]).fetch('nodes').first
++      expect(result['state']).to eq('not_affected')
++    end
++
++    it 'keeps ordinary unknown behavior when the optional map is absent or empty' do
++      @advisory.platform.delete('operator_node_exclusions')
++      expect(evaluate(node(history: [], role: 'storage'))['state']).to eq('unknown')
++      @advisory.platform['operator_node_exclusions'] = {}
++      expect(evaluate(node(history: [], role: 'storage'))['state']).to eq('unknown')
++    end
++
++    it 'fails closed on an exact current configuration that contradicts the operator claim' do
++      current = event(1, '6.12.93', observed: '2026-07-13T09:00:00Z',
++                                    options: { 'CONFIG_PREEMPT_RT' => 'y' })
++      evidence = node(history: [], role: 'storage', current_evidence: current['security_evidence'])
++      result = evaluate(evidence)
++      expect(result['state']).to eq('unknown')
++      expect(result['reason']).to include('operator attestation conflicts', 'CONFIG_PREEMPT_RT=y')
++    end
++
++    it 'checks an in-scope retained configuration even when current configuration is unavailable' do
++      historical = event(1, '6.12.93', observed: '2026-07-13T10:00:00Z',
++                                       options: { 'CONFIG_PREEMPT_RT' => 'y' })
++      result = evaluate(node(history: [historical], role: 'storage', current_evidence: { 'kernel' => {} }))
++      expect(result['state']).to eq('unknown')
++      expect(result['reason']).to include('conflicts')
++    end
++
++    it 'uses the existing verified attestation reader when checking an exact historical conflict' do
++      historical = event(1, '6.12.93', observed: '2026-07-13T10:00:00Z',
++                                       options: { 'CONFIG_PREEMPT_RT' => 'y' })
++      exact = historical.delete('security_evidence')
++      @advisory.historical_attestations << {
++        'node_id' => 1, 'event_id' => 1, 'event_digest' => described_class.event_digest(historical),
++        'source' => 'exact reviewed event', 'security_evidence' => exact
++      }
++      result = evaluate(node(history: [historical], role: 'storage', current_evidence: { 'kernel' => {} }))
++      expect(result['state']).to eq('unknown')
++      expect(result['reason']).to include('conflicts')
++    end
++
++    it 'checks the retained pre-period baseline even when a later current configuration is non-RT' do
++      baseline = event(1, '6.12.93', observed: '2026-07-12T08:00:00Z',
++                                     options: { 'CONFIG_PREEMPT_RT' => 'y' })
++      baseline['security_evidence']['kernel']['config_digest'] = 'baseline-config'
++      current = event(2, '6.12.93', observed: '2026-07-13T11:00:00Z',
++                                    options: { 'CONFIG_PREEMPT_RT' => 'n' })
++      evidence = node(history: [baseline], role: 'storage', current_evidence: current['security_evidence'])
++      result = evaluate(evidence)
++      expect(result['state']).to eq('unknown')
++      expect(result['reason']).to include('operator attestation conflicts', 'CONFIG_PREEMPT_RT=y')
++    end
++
++    it 'ignores an older pre-period configuration superseded by the retained non-RT baseline' do
++      older = event(1, '6.12.93', observed: '2026-07-11T08:00:00Z',
++                                  options: { 'CONFIG_PREEMPT_RT' => 'y' })
++      older['security_evidence']['kernel']['config_digest'] = 'older-config'
++      baseline = event(2, '6.12.93', observed: '2026-07-12T08:00:00Z',
++                                     options: { 'CONFIG_PREEMPT_RT' => 'n' })
++      result = evaluate(node(history: [older, baseline], role: 'storage',
++                             current_evidence: { 'kernel' => {} }))
++      expect(result['state']).to eq('not_affected')
++    end
++
++    it 'does not treat a different node catalog entry as a conflict' do
++      historical = event(1, '6.12.93', observed: '2026-07-12T08:00:00Z',
++                                       options: { 'CONFIG_PREEMPT_RT' => 'n' })
++      evidence = node(history: [historical], role: 'storage', current_evidence: { 'kernel' => {} })
++      catalog = { 'other-node' => { 'options' => { 'CONFIG_PREEMPT_RT' => 'y' } } }
++      result = described_class.new(@advisory, now: @now,
++                                              kernel_configurations: catalog)
++                              .evaluate([evidence]).fetch('nodes').first
++      expect(result['state']).to eq('not_affected')
++    end
++  end
++
+   describe 'source-bound livepatch introductions' do
+     before do
+       @advisory.data['schema_version'] = 2

@@ -1,0 +1,7 @@
+# Review-fix consolidation handoff
+
+Final HEAD: `ef4b0604d8bfb9750a6a9a2a3487daac754234e5`. Preserved anchor: `69027fd51efc5c7eb0a4711947b4f9d08190940e`. Five original logical commits remain above that anchor, six including the unchanged docs anchor. Exactly three fixups folded; no conflict, new logical commit, fixup/tidy remnant or final-tree content change from the pre-squash snapshot.
+
+[Final series](series-after.txt), [range-diff against reviewed34ad7d](range-diff.txt), [exact changed paths](final-changed-paths.txt), [final diff](final-tree-diff.txt), [structured proof](final-proof.json). Original reviewed head remains reachable via `refs/heads/backup/2026-10-19-vpsadmin-kernel-cves-before-review-fixups`; no prior ref deleted. All remote/default/other existing refs are unchanged.
+
+Compared with original review:40analyses contain only verified citation changes plus the four approved KVM protection paragraphs(89929/89930/89932/98720);40evaluations change only dossier digest/evaluation timestamp. All per-node conclusions, publicYAML, code/schema/specs and other files are byte-identical. The frozen61904snapshot is unchanged. Normal Nix validate111 and anchor-to-head diff check passed. Normal fixup hooks passed;two nonfatal72column warnings remained within80column instructions. Whole worktree clean and index empty at Git-slot return. No full suite/API/sync/push/fetch/default-branch integration ran.

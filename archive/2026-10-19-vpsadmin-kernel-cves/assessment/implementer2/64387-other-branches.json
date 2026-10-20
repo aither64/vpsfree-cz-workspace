@@ -1,0 +1,23 @@
+[
+  {
+    "official_fix": "6.6.145",
+    "sha": "3409aedf3c81a810243da94164f6621c9d205c98",
+    "url": "https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux/+/3409aedf3c81a810243da94164f6621c9d205c98%5E%21/?format=TEXT",
+    "sha256": "7749c21fab5b8e1f54aaa1baf3c7496da9018a873c82d1f49d43ff0e70504a55",
+    "diff": "diff --git a/fs/smb/client/smb2pdu.c b/fs/smb/client/smb2pdu.c\nindex 176ae31..b430335 100644\n--- a/fs/smb/client/smb2pdu.c\n+++ b/fs/smb/client/smb2pdu.c\n@@ -5814,6 +5814,8 @@ SMB311_posix_qfs_info(const unsigned int xid, struct cifs_tcon *tcon,\n \n replay_again:\n \t/* reinitialize for possible replay */\n+\tresp_buftype = CIFS_NO_BUFFER;\n+\tmemset(&rsp_iov, 0, sizeof(rsp_iov));\n \tflags = 0;\n \tserver = cifs_pick_channel(ses);\n \n"
+  },
+  {
+    "official_fix": "6.18.39",
+    "sha": "00b0fa425941438b664950a8ee65dfba2def4336",
+    "url": "https://github.com/gregkh/linux/commit/00b0fa425941438b664950a8ee65dfba2def4336.patch",
+    "sha256": "72353f3a71d51504ad4b62598d634f652da0ee15b13b436621d65858a854e41d",
+    "diff": "From 00b0fa425941438b664950a8ee65dfba2def4336 Mon Sep 17 00:00:00 2001\nFrom: Henrique Carvalho <henrique.carvalho@suse.com>\nDate: Thu, 18 Jun 2026 17:34:38 -0300\nSubject: [PATCH] smb: client: fix query directory replay double-free\n\ncommit 9647492b5e41954be59d5157eddbcd4cdc1656f7 upstream.\n\nA response-bearing attempt can return a replayable error and free its\nresponse buffer. If SMB2_query_directory_init() fails before the next send,\ncleanup retains the previous buffer type and frees that response again.\n\nReset response bookkeeping before each attempt to prevent the stale free.\n\nFixes: 4f1fffa23769 (\"cifs: commands that are retried should have replay flag set\")\nCc: stable@vger.kernel.org\nSigned-off-by: Henrique Carvalho <henrique.carvalho@suse.com>\nSigned-off-by: Steve French <stfrench@microsoft.com>\nSigned-off-by: Greg Kroah-Hartman <gregkh@linuxfoundation.org>\n---\n fs/smb/client/smb2pdu.c | 2 ++\n 1 file changed, 2 insertions(+)\n\ndiff --git a/fs/smb/client/smb2pdu.c b/fs/smb/client/smb2pdu.c\nindex fa77dd31a39cc..ba488138e0498 100644\n--- a/fs/smb/client/smb2pdu.c\n+++ b/fs/smb/client/smb2pdu.c\n@@ -5668,6 +5668,8 @@ send_set_info(const unsigned int xid, struct cifs_tcon *tcon,\n \n replay_again:\n \t/* reinitialize for possible replay */\n+\tresp_buftype = CIFS_NO_BUFFER;\n+\tmemset(&rsp_iov, 0, sizeof(rsp_iov));\n \tflags = 0;\n \tserver = cifs_pick_channel(ses);\n \n"
+  },
+  {
+    "official_fix": "7.1.4",
+    "sha": "3317a5d015fca976475aa71df224056777316fde",
+    "url": "https://kernel.googlesource.com/pub/scm/linux/kernel/git/stable/linux/+/3317a5d015fca976475aa71df224056777316fde%5E%21/?format=TEXT",
+    "sha256": "1d2eabe511c8c4216bf9445ee3da498ea4d202bbc1b390ceec10e923aaece474",
+    "diff": "diff --git a/fs/smb/client/smb2pdu.c b/fs/smb/client/smb2pdu.c\nindex fbeb215..8ed9356 100644\n--- a/fs/smb/client/smb2pdu.c\n+++ b/fs/smb/client/smb2pdu.c\n@@ -5683,6 +5683,8 @@ SMB2_query_directory(const unsigned int xid, struct cifs_tcon *tcon,\n \n replay_again:\n \t/* reinitialize for possible replay */\n+\tresp_buftype = CIFS_NO_BUFFER;\n+\tmemset(&rsp_iov, 0, sizeof(rsp_iov));\n \tflags = 0;\n \tserver = cifs_pick_channel(ses);\n \n"
+  }
+]

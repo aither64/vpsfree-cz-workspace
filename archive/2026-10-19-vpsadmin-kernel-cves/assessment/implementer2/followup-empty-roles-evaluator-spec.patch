@@ -1,0 +1,29 @@
+--- a/spec/evaluator_spec.rb
++++ b/spec/evaluator_spec.rb
+@@ -1352,6 +1352,26 @@
+       expect(result['state']).to eq('unknown')
+       expect(result['reason']).to include('no reviewed execution ordering')
+     end
++  end
++
++  it 'excludes all roles with an explicitly empty reviewed applicability set' do
++    @advisory.platform['affected_node_roles'] = []
++    %w[node storage].each do |role|
++      evidence = node(history: [], role:)
++      evidence['observed_at'] = nil
++      evidence['received_at'] = nil
++      result = evaluate(evidence)
++      expect(result['state']).to eq('not_affected')
++      expect(result['reason']).to include("node role #{role}")
++    end
++  end
++
++  it 'keeps history and freshness requirements for a nonempty applicable role' do
++    @advisory.platform['affected_node_roles'] = ['node']
++    evidence = node(history: [], role: 'node')
++    evidence['observed_at'] = nil
++    evidence['received_at'] = nil
++    expect(evaluate(evidence)['state']).to eq('unknown')
+   end
+ 
+   protected

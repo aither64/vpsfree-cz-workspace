@@ -1,0 +1,32 @@
+--- a/spec/advisory_spec.rb
++++ b/spec/advisory_spec.rb
+@@ -94,6 +94,29 @@
+     expect { advisory.validate! }.to raise_error(SecurityAdvisories::Error, /schema_version must be 1 or 2/)
+   end
+ 
++  it 'accepts an explicitly reviewed empty affected-role set in schema 1' do
++    advisory = fixture_advisory
++    advisory.platform['affected_node_roles'] = []
++
++    expect { advisory.validate! }.not_to raise_error
++    expect(advisory.data.fetch('schema_version')).to eq(1)
++    schema = JSON.parse(File.read(File.join(SecurityAdvisories::ROOT, 'schema/advisory.schema.json')))
++    platform_schema = schema.fetch('properties').fetch('platform')
++    role_schema = platform_schema.fetch('properties').fetch('affected_node_roles')
++    expect(platform_schema.fetch('required')).to include('affected_node_roles')
++    expect(role_schema.fetch('type')).to eq('array')
++    expect(role_schema.fetch('minItems', 0)).to eq(0)
++    expect(role_schema.fetch('items')).to eq('type' => 'string')
++  end
++
++  it 'still requires an affected-role array when no role is applicable' do
++    advisory = fixture_advisory
++    [nil, 'none', {}].each do |invalid|
++      advisory.platform['affected_node_roles'] = invalid
++      expect { advisory.validate! }.to raise_error(SecurityAdvisories::Error, /affected_node_roles must be an array/)
++    end
++  end
++
+   it 'rejects inverted global version bounds' do
+     advisory = fixture_advisory
+     advisory.data['affected_from'] = '7.1.0'

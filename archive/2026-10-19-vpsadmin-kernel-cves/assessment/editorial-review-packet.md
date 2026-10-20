@@ -1,0 +1,70 @@
+# Direct public wording correction review packet (prepare)
+
+Session2026-10-19-vpsadmin-kernel-cves, security-advisoriesworktree in state.md.
+Consumed/publishedparent3fab2eaff537024f8ec32db6cdb3b0546808420d,77commits,
+66realexternalrecoveryboundaries. Fullbaseea6247687fd02417f87e1e5593fecd8b9055925d.
+FinalsourceHEADaa15ba719513d54c1e7942a085504777e4b7abfd parent3fab; reviewreleasedaftercommitreceipt.
+
+User RTstatement: "we have never had RT enabled anywhere". User finds earlier
+archived6.12.95-onlypublicqualificationmisleading, backupernotes redundant and
+undefined "reviewed period" publicCIFSsentenceimprecise. Lead applieddirect
+ENCSRTneverenabledfact andremovedentireRTnode_notes; CIFSdirectnohostCIFSfact.
+Leadskillvpsfree-user-facing-writing/humanizers applied, exactreceipt
+editorial-scope-lead-changes.json; userprovenanceeditorial-operator-clarification.json.
+No new proof needed/operatorconfirmation explicit. ThreecurrentdraftIDs112v15,
+113v15,106v26. Intendedscopepublictext+2RTanalysisprovenance/currentnotefocused
+specassertion+normal3CLIevalmetadata/RTnotesremovalONLY. No runtime/schema/source
+ranges/roles/RTmap/rawsnapshot changes. Keep allstates/reasons/dates unchanged;
+other57dossiers/perf/all111baselines/frozen61904 unchanged.
+
+Onefocusedsourcecommit afterquicknormalCLI3/focuseddossiersRSpec/lint/normalhooks.
+ReviewGENERAL +RISK/compat(publicsecurityclaims), SCOPE(highriskprecisefidelity).
+ARCHITECTURElane limited to the changed existing test assertion; runtime
+mechanism remainsunchanged, so reuse itsacceptedarchitectureconclusions. Retainedreviewer0Sol/xhigh/read_only unchanged, allreferences
+read asapplicable. Use mandatory-change-review aftercommitted+quickchecks,
+beforefeatureCI. Reuseaccepted4laneruntime and77history/66rawacceptance, do not
+repeatunaffectedsourceaudit. Independentlyinspectwholebase-to-headhistory/final
+diffincludingnowconsumedpriorprefix andretainconcreteactualsourceparentboundaries.
+No obsoleteunconsumediterations/dependency/pinstreams/migrations expected.
+
+Compatibilityunchangedformats/runtimemechanisms; removesnotesusingexisting
+optionalfield. Normalfrozenevaluation/syncguard unchanged. Public wording now
+states positiveoperatorfact plainly; noproductionexploitationabsenceclaim or
+fixedkernelfabrication. ExpectedRT12mitigated1notaffected/CIFS13notaffected;
+60aggregate708+72resolved unchanged. No broaderstateclaims/introductionchanges.
+
+Afterreview normalfeatureSSHFFpush/exactsourceCI, then3guardedexistingdraft
+updates in112/113/106order (parentdescription+RTstoragenoteremoval, CIFSparentonly).
+Actualreturnedrevisions/digests authoritative, exactreadback+normalbaseline
+checkpointbeforethenextwrite. Finalhistory/CI separate, no ready/publish/mail/
+defaultmerge/deploy/lifecycle. Userexpectsthethreeupdateddraftlinkswhencomplete.
+Commit/inventory/checkreceipts willbindatrelease. Reviewerfilewritesforbidden;
+complete reportreturntoleadforverbatimartifact ifneeded.
+
+Ready9pathunit atimplementer0/editorial-scope-followup/ready-receipt.json:
+3leadYAML+2RTanalysis+3evalJSON+existingdossiersspec. NormalCLIvalidate/eval3,
+exactevalcomparisonpermitsONLY2RT161notesremove+dossier_digest/evaluated_at;
+allstate/reason/date/evidence/completenessotherfieldsunchanged. Focuseddossiers
+15examples0(seed17739)/1RubyfilelintPASS/loader3PASS; no runtime/schema code.
+Leadall9hashreadback/analysisdiff/specdeltaaccepted; normalhookcommitreleased.
+Ownerfullhistory/diffartifacts/headwillbindbeforeindependentreviewrelease.
+
+RELEASEBOUNDARY: onefocusedsourcecommitaa15ba719513d54c1e7942a085504777e4b7abfd,
+exact9paths/normalhooks/wholeclean/indexempty. Complete78series/250finalpaths,
+unchanged77consumedprefix/all66externalboundaries. No migrations/redundantpins.
+Owner0commitreceipt andfullhistory/bounded9pathdiffartifacts under
+assessment/implementer0/editorial-scope-followup/: commit-receipt.json,
+history-migration-inventory.json,complete78-series.tsv,complete78-final.diff/
+.stat/.paths/.numstat,bounded-editorial.diff/.stat/.paths/.numstat. Actualhashes
+inreceipt; independentlyverifyGit. Quick15RSpec0/lint/normal3CLI+postcommit
+Reconcilerpersistfalse resultsequalcommittedexceptevaluated_at. Complete
+comparisonallowsONLY2RT161notesremoved/dossierdigest/time; allstates/reasons/
+dates/evidence/completenessintact. All111submissions/frozen61904/other57/perf
+unchanged. No fulltest/CI/APIstarted; reviewmustprecedefullfeatureCI.
+
+Useall4lanes withARCHITECTURElimitedexistingassertiondelta; do not rerun
+unchangedruntimearchitecture/sourceaudit/old66rawaudit. VerifyplainENCSfacts
+nowmatchuserglobalRTnever/CIFSnotused, removesnotes entirely, analysis retains
+provenancewithoutcontradictoryunqualifiedpossiblyhistoricalRTclaim. Report
+findingsorclearacceptance/exactsettings/ranges/explicitwholehistoryconsumed
+retention/no migrations/residuallimits. No new model/accessoverride/nestedagents.

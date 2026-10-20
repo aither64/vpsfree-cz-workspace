@@ -1,0 +1,72 @@
+# User-directed blocker follow-up review
+
+RELEASED after both intended commits and focused checks passed. Exact finalHEAD
+5c59ad921fbed2188716781a9478c24b9ef36baa. Sourcebaseline published8d1413efb041ab410d1a629c34d8aaf921439901,
+finalheads suppliedatassignment. Preserveall67publishedconsumedcommits.
+
+Userasks: storagewithoutuserworkloads notaffected;74753livepatchintroduction
+then.113fixsufficient;64387flawedstablepatchcanbestatedandVPSeslackexploitableCIFS
+mounts. TemporalCIFSscope andstoragePREEMPT_RTquestionspending; no assumptions.
+Architectbrief finaldesign.md 'User-directed follow-up: RT storage, perf history
+and CIFS workload'. ScopefourCVEs only, no publication/email/defaultmerge/API/
+collector expansion. WholeperiodCIFSroleexclusionrequiresoperatorconfirmation;
+RTnoVPSisnotnecessarynegativeagainsthostTCP/RCUlocking.
+
+Perfsmallterminalintervalcorrection: priorpointuncertaintycannotprecludeactual
+retainedfixedbootafterlastunknown/affectedwithfullyknownsafesuffix/current.
+Keepbaseline/coverage/currentfreshness/attestationguards,uncertainhistoryinreason,
+exactboot/observationbounds, nofakeearliestmitigation/current-onlyinference,
+noarbitraryworkloadtransitionframework. Testsincludeunknownafterfix/currentonly
+fixed/missingcoverage/baseline/atomicknownbehavior. Actual12perfnodeshavequalifying
+boot:11.113,oneearlier6.18.49;none ofthis erasesearlierexposureuncertainty.
+
+CIFSifconfirmedwholeperiod: existingRubyemptyrolearrayalreadyexcludesallroles,
+JSONschemaalignmentonlyafterold/currentruntimecompatproof. Preserveflawed
+6.6/6.12/6.18nullfixbounds+provenanceandmainline7.2/7.1.4fix. NofakeCONFIG,
+acceptedbuild/pernodeoverride/manualevaluationJSON. NootherCIFSscope.
+
+LeadpublicENCSfactualeditingwhenneeded;allfinalnormalCLIevalsfromsamefrozen61904,
+source/dossierdigestcomplete. Sharedfilesserialized0then2,Gitslotsserialized.
+Affectedriskhigh dueevaluation/securitysemantics. Reviewgeneral/architecture/scope/
+risklanes;oldsubstantivereportretained,nounrelatedsourceaudit. Exactquickchecks,
+finaldiff/commits/historyinventory providedatassignment. No migrations/dependency
+updates. Oldtoolsconservativeperf;emptyrolesexistingsemantics unchanged. Preserve
+externalbaselinesanddonotrewritelineage. Commitreviewbeforelongchecks/guardedsync.
+
+
+Narrowing beforecommit: operatorCIFSwholeperiodanswer stillpending; allowner2
+schema/advisoryspec/CIFSdiffs restoredexact8d,preparedpatchesretainedonlyartifact.
+Noemptyrolecontract/schema/test/docchanges included. RTactualusertranscript
+CONFIG_PREEMPT_RT=n provescurrentabsence; all-periodstateunknownretainsmissing
+history, leadstorage161singlelineENCSnotescarrycurrentfact/earlieruncertainty.
+Originaldescription/responsepreserved,PerfYAMLfullybyteidentical.
+
+Finalownerquickchecks128examples0failuresseed57203/3Rubyfilelint0, normalCLI3
+valid/evalfresh, actual12perfmitigationboottimes match, other57completeevalfields
+unchanged andother59state/reason/dateexceptRTnoteaddition unchanged.12pathinventory
+assessment/implementer0/followup-commit-inventory.json;followup-source-quickchecks.json,
+followup-evaluation-comparison.json,followup-perf-history.json andfollowup-rt-gates.json.
+Leadrequested2logicalcommits(model/perf+supportingregressions,RTfacts/notes+support),
+fullheads suppliedatassignment. Frozen61904/consumedbaselinesunchanged,noAPI.
+ReviewremainingCIFSpreparationisOUTOFSCOPE. Verifypriorunknownpointreasonretained,
+realcorrectiveboottime/observationboundsnotinventedearliestdate; currentonlyfixed
+sampleinsufficient. RTnotesmustnotclaimwholehistorysafe orrelabelallperiodstate.
+
+
+Committedexactfollowuprange8d1413ef..5c59ad92:
+15530eff4733933c3f6e1cefd8bf124096e1ed8d model/perf6paths,
+5c59ad921fbed2188716781a9478c24b9ef36baa RTfacts/notes7paths (sharedspecsplit),
+unionexact12paths/allacceptedhashesidentical. BothnormalNixOvercommitexplicit
+checks+precommit/commitmsghooksPASS. FinalReconcilerloaderactual3fullresults
+reproducedexcludingONLYevaluated_at;frozen61904/baselinesunchanged,wholeclean/indexempty.
+Receiptsimplementer0/followup-commit-receipt.json,followup-commit-A.json/B.json,
+followup-final-series.txt/final-diff.patch(ifnamesdifferseeownerreceipt).
+NoCIFS/schema/emptyrolechanges. NoAPI/sourcehistoryrewrite.
+
+Reviewfullbase-to-headhistorydelta: original67consumedcommitsretainedunchanged+
+2logicalfollowupcommits. IndependentsourcebehaviorandRToperatornotes splitcleanly,
+noobsoletefixups/migrations/pinupdates. No futureCIFScapability included.
+Verificationdesignaccepted: afterthisreviewexactsourceheadfeaturefullCI(Ruby3.4,
+unfilteredRSpec+RuboCop)before3guardeddraftupdates. Local128target+lint+3normal
+frozenCLI/all60comparisonsretained;CIisnotproductionevidencevalidation. Do not
+runlongchecks/APIorsecuritybroadreaudit. All4affectedlanes,highsecurityreasoningrisk.

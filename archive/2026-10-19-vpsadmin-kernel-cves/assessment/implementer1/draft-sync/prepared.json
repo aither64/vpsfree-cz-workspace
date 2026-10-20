@@ -1,0 +1,54 @@
+{
+  "schema": 1,
+  "status": "EXECUTION_RELEASED",
+  "prepared_at": "2026-10-19T22:05:19.484892+00:00",
+  "owner": "implementer1",
+  "verified_session": "2026-10-19-vpsadmin-kernel-cves",
+  "approved_count": 60,
+  "order_unchanged": true,
+  "snapshot_sha256": "61904e984266df2f6c53435b2b026b0d0980b35a23ed843eebf95b23c27c9274",
+  "snapshot_collected_at": "2026-10-19T21:48:39Z",
+  "execution_style": "explicit sequential per-CVE operator steps; no replacement API/client",
+  "no_preparation_actions": [
+    "No API requests",
+    "No Git commands or index mutation",
+    "No sync/ready/adopt/publish/collect/evaluate invocation",
+    "No runtime reservation or lifecycle action"
+  ],
+  "reviewed_source_hashes": {
+    "AGENTS.md": "85ac18424a1d93f22fb7a23896e4276465fca3ae322aff46ae207e49b43b9bea",
+    "bin/security-advisory": "e2b9342f8777cb0f8b283d9a2b30a66d9b56209a3780de173ed9646441212c23",
+    "docs/api-permissions.md": "44a4de61811337729d7c67a5f3e5ff6c73774319862912c6c58f68cc9aa708f7",
+    "docs/evidence.md": "cda6c6117d4bdc8171862c7993d804f5ad7a3cf1f384606dc567cbd8a11d609e",
+    "lib/security_advisories/advisory.rb": "de0a0a232fef5ec78ed81546923293ce5c3012cae12179fd15a4367ea1228a16",
+    "lib/security_advisories/evaluator.rb": "67d5b1ec9b6d4326ce0a4b0e2a4aac188892e42739b9eb865dd7e5ce43aee024",
+    "lib/security_advisories/reconciler.rb": "2d7a3794824c4138a44809df0db1b7bdca65cdf44ae09f0ce3bb8a989aa82be7",
+    "schema/advisory.schema.json": "07122778b164a2e7992a3ee8f7903846ed0284e23ff56b9f61227fa686dd0395"
+  },
+  "release_gate": "Lead exact execution release after complete-source commit, final independent branch review and required checks. No further user approval is requested for already-approved unpublished drafts.",
+  "execution_boundaries": [
+    "Existing dry-run followed by existing guarded apply with frozen evidence",
+    "Read exact returned remote snapshot and submission baseline",
+    "Commit only that CVE submission.yml with normal hooks before next CVE write",
+    "Stop first failure or uncertain outcome; no blind retry/adopt/recreate",
+    "No publication/email/readiness assumption"
+  ],
+  "environment_execution": "One owned persistent repository nix develop shell after lead release; normal CLI/hooks retained; per-step source/snapshot/index guards unchanged",
+  "reviewed_final_source_head": "ef4b0604d8bfb9750a6a9a2a3487daac754234e5",
+  "final_guard_readback": {
+    "at": "2026-10-19T22:35:22.396503+00:00",
+    "head_authority": "lead accepted consolidation receipt; no new Git command",
+    "cli_sync_reconciler_hashes_unchanged_since_preparation": true,
+    "added_schema2_source_hashes": [
+      "lib/security_advisories/advisory.rb",
+      "lib/security_advisories/evaluator.rb",
+      "schema/advisory.schema.json"
+    ],
+    "snapshot_sha256_unchanged": true,
+    "exact_order_count": 60,
+    "execution_released": false
+  },
+  "released_first_head": "d23040cd3f3e8e33677dafdeb8e59cc83466e17b",
+  "release_record": "assessment/draft-execution-release.md",
+  "full_checks": "RSpec212examples0failures seed5047;RuboCop29files0offenses;bothexit0"
+}

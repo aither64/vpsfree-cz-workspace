@@ -1,0 +1,258 @@
+diff --git a/advisories/CVE-2026-53260/advisory.yml b/advisories/CVE-2026-53260/advisory.yml
+index 4db230e7ce0e9c13e8997fd49d9f6aa54d20044b..d4f1bf6a9d5295c0b7b0bd344952cbe682a379cb 100644
+--- a/advisories/CVE-2026-53260/advisory.yml
++++ b/advisories/CVE-2026-53260/advisory.yml
+@@ -54,14 +54,9 @@
+ "texts":
+   "en":
+     "summary": "Local privilege escalation"
+-    "description": "On a kernel built for real-time preemption, closing a TCP listener can race initialization of a connection request and leave the kernel using a freed request. This could support privilege escalation inside a VPS or affect the shared node, although the reviewed upstream report and fix do not establish a complete node-control or cross-VPS exploit. The exact archived vpsAdminOS 6.12.95 build excludes the required real-time mode; that finding applies to this build and does not by itself prove every historical deployment safe. On an affected real-time build, failed attempts may crash the kernel. Kernel warnings that may indicate this bug was triggered are monitored."
++    "description": "On a kernel built for real-time preemption, closing a TCP listener can race initialization of a connection request and leave the kernel using a freed request. This could support privilege escalation inside a VPS or affect the shared node, although the reviewed upstream report and fix do not establish a complete node-control or cross-VPS exploit. Real-time preemption has never been enabled on vpsFree.cz nodes, so this vulnerability has not affected them. On an affected real-time build, failed attempts may crash the kernel. Kernel warnings that may indicate this bug was triggered are monitored."
+     "response": "Linux 6.12 includes the fix starting with 6.12.97. Disabling real-time preemption at build time prevents this specific trigger."
+   "cs":
+     "summary": "Lokální eskalace oprávnění"
+-    "description": "Na jádře sestaveném s real-time preempcí může zavírání naslouchajícího TCP socketu proběhnout souběžně s inicializací požadavku na spojení a jádro pak může používat uvolněný požadavek. Chyba by mohla umožnit zvýšení oprávnění ve VPS nebo ohrozit sdílený node, ale analyzované upstreamové hlášení a oprava nedokládají úplný postup k ovládnutí node ani zneužití mezi VPS. Přesné archivované sestavení vpsAdminOS 6.12.95 požadovaný real-time režim neobsahuje. Tento závěr platí pro dané sestavení a sám o sobě nedokládá bezpečnost všech historických nasazení. Na zranitelném real-time sestavení může neúspěšný pokus shodit jádro. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována."
++    "description": "Na jádře sestaveném s real-time preempcí může zavírání naslouchajícího TCP socketu proběhnout souběžně s inicializací požadavku na spojení a jádro pak může používat uvolněný požadavek. Chyba by mohla umožnit zvýšení oprávnění ve VPS nebo ohrozit sdílený node, ale analyzované upstreamové hlášení a oprava nedokládají úplný postup k ovládnutí node ani zneužití mezi VPS. Na nodech vpsFree.cz nebyla real-time preempce nikdy zapnutá, takže se jich tato chyba netýkala. Na zranitelném real-time sestavení může neúspěšný pokus shodit jádro. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována."
+     "response": "Ve větvi Linuxu 6.12 je oprava obsažena od verze 6.12.97. Vypnutí real-time preempce při sestavení zabraňuje tomuto konkrétnímu spuštění chyby."
+-
+-"node_notes":
+-  "161":
+-    "en": "The required real-time mode was disabled throughout the reviewed period."
+-    "cs": "Požadovaný režim reálného času byl po celé posuzované období vypnutý."
+diff --git a/advisories/CVE-2026-53260/analysis.md b/advisories/CVE-2026-53260/analysis.md
+index 870f15e95463bb774428a41423ae4107bac70a43..b3681cdd8eda392c3c0d1bcf34a3d95fdabaf896 100644
+--- a/advisories/CVE-2026-53260/analysis.md
++++ b/advisories/CVE-2026-53260/analysis.md
+@@ -24,6 +24,12 @@ Branches with direct CNA stable fixes and explicit older backport introductions
+ 
+ ## Tenant reachability and configuration
+ 
++The operator confirmed on 2026-10-20 that real-time preemption has never been
++enabled anywhere on vpsFree.cz nodes. The necessary RT implementation has
++therefore been absent, and this vulnerability has not affected those nodes.
++The archived configuration below is independent corroboration for one build;
++the broader conclusion rests on the operator's explicit historical statement.
++
+ Necessary CONFIG_PREEMPT_RT is not set in the exact archived .95 configuration; CONFIG_INET=y. This positive configuration evidence excludes that exact build. PREEMPT_DYNAMIC and the full/lazy preemption mode are not PREEMPT_RT and do not make the substituted RT locking path exist. Ordinary tenant TCP listener/connect/close is a potential trigger on a genuinely RT build. Host TCP listeners and network backup/NFS service workloads mean storage is also applicable if such a build was used; role exclusion cannot replace the RT config check.
+ 
+ The inspected current vpsAdmin feature/device code, vpsAdminOS container template and selected LXC profiles establish source behavior only. The template includes UID/GID mappings and the userns profile; capabilities retained there belong to the tenant user namespace. They do not satisfy an initial-user-namespace capability check. The default seccomp denylist blocks module loading and selected host interfaces, not arbitrary Linux syscalls; a per-container override remains a runtime fact.
+@@ -113,9 +119,13 @@ On 2026-10-20 the operator was asked whether backuper2.prg ran without
+ "1. yes". This direct period confirmation supersedes the initial current-only
+ configuration observation and the unresolved historical storage conclusion.
+ The API identity is Node161, `backuper2.prg`, role `storage`; the operator's
+-`backuper2.prg.vpsfree.cz` command prompt names the same host. The confirmation
+-is bounded to this node and assessment period, rather than every storage node
+-or future collection.
++`backuper2.prg.vpsfree.cz` command prompt names the same host. That initial
++confirmation was bounded to this node and assessment period. Later on
++2026-10-20 the operator clarified that RT has never been enabled anywhere on
++vpsFree.cz nodes. This broader operational statement supersedes the earlier
++uncertainty about whether other historical platform builds might have enabled
++RT. It does not supply missing historical build identities or configuration
++files.
+ 
+ The preceding direct running-kernel observation corroborates the necessary
+ configuration exclusion:
+@@ -156,6 +166,14 @@ The matching tool/dossier revision is required to reproduce this new result.
+ The exact consumed parent loader accepts the additive map, but its evaluator
+ ignores it and conservatively retains storage unknown. The ordinary pre-write
+ comparison must reject that old recalculation against the new resolved result;
+-no digest or conclusion guard is weakened for rollback. The English/Czech
+-Node161 note states that the required mode was disabled throughout the reviewed
+-period.
++no digest or conclusion guard is weakened for rollback.
++
++The final platform applicability conclusion incorporates the later global
++operator confirmation: the necessary real-time mode was never enabled, so
++this vulnerability has not affected vpsFree.cz nodes. The existing bounded
++Node161 exclusion and version/history evaluation remain unchanged. Their
++twelve `mitigated` and one `not_affected` results retain their original reasons
++and dates; the version-derived mitigation intervals do not assert that RT was
++previously enabled or that actual exposure occurred. The redundant Node161
++public notes are removed. No per-build evidence or evaluation result is
++invented to encode the broader operational fact.
+diff --git a/advisories/CVE-2026-53260/evaluation.json b/advisories/CVE-2026-53260/evaluation.json
+index 4af7af0c6c7e87d748b5c9a3e51b42aec93b3a24..e9be55969df78395bb6aa81feb878dabcd1d3810 100644
+--- a/advisories/CVE-2026-53260/evaluation.json
++++ b/advisories/CVE-2026-53260/evaluation.json
+@@ -1,8 +1,8 @@
+ {
+   "schema_version": 4,
+   "cve": "CVE-2026-53260",
+-  "dossier_digest": "714f8178c98e54fc8cc0070f5e36bd086fd44d1c4ac143b35d7aa7c0e8da30d8",
+-  "evaluated_at": "2026-10-20T11:20:51Z",
++  "dossier_digest": "c354b50ed846a848e3fdaa1b14b7ccf25c398750e217cbce1cbd4d1706cd0003",
++  "evaluated_at": "2026-10-20T12:53:09Z",
+   "completeness": {
+     "expected_node_count": 13,
+     "evaluated_node_count": 13,
+@@ -105,11 +105,7 @@
+       "node_role": "storage",
+       "evidence_revision": "bdfe7fa8207d487cad1dab06f779f1bac89c69f182a5e78bfcbc4b508b7248a6",
+       "state": "not_affected",
+-      "reason": "operator attestation excludes node 161 (backuper2.prg, storage): necessary CONFIG_PREEMPT_RT=n throughout 2026-01-01T00:00:00Z..2026-10-19T21:48:39Z; Operator confirms this node ran without PREEMPT_RT throughout the assessed period. Source: analysis.md#operator-confirmed-non-rt-period",
+-      "notes": {
+-        "en": "The required real-time mode was disabled throughout the reviewed period.",
+-        "cs": "Požadovaný režim reálného času byl po celé posuzované období vypnutý."
+-      }
++      "reason": "operator attestation excludes node 161 (backuper2.prg, storage): necessary CONFIG_PREEMPT_RT=n throughout 2026-01-01T00:00:00Z..2026-10-19T21:48:39Z; Operator confirms this node ran without PREEMPT_RT throughout the assessed period. Source: analysis.md#operator-confirmed-non-rt-period"
+     },
+     {
+       "node_id": 214,
+diff --git a/advisories/CVE-2026-64387/advisory.yml b/advisories/CVE-2026-64387/advisory.yml
+index a9743d0ce66419923ae07d4a1d5bbdf15e000208..112ad81cea2c11c1e9b4d948ca40e2c7f0d6fe43 100644
+--- a/advisories/CVE-2026-64387/advisory.yml
++++ b/advisories/CVE-2026-64387/advisory.yml
+@@ -55,12 +55,12 @@
+   "texts": {
+     "en": {
+       "summary": "Kernel memory corruption",
+-      "description": "vpsFree.cz hosts did not use CIFS during the reviewed period, so the prerequisite mount was absent. If an operator has prepared or delegated a CIFS mount, a malicious SMB2/3 server can return a replayable error to a QUERY_DIRECTORY request. If the next attempt fails before replacing the response buffer, cleanup can free the old buffer twice. A VPS administrator cannot mount this filesystem independently because the kernel does not allow it in a tenant user namespace. If the prerequisite mount exists, the corruption could affect the shared kernel and other VPSes; the reviewed primary record and patch do not establish a complete exploit giving VPS root, node control or access to another VPS on vpsFree.cz. A failed trigger can crash the node. Kernel warnings that may indicate this bug was triggered are monitored.",
++      "description": "vpsFree.cz hosts do not use CIFS, so this vulnerability does not affect them. If an operator has prepared or delegated a CIFS mount, a malicious SMB2/3 server can return a replayable error to a QUERY_DIRECTORY request. If the next attempt fails before replacing the response buffer, cleanup can free the old buffer twice. A VPS administrator cannot mount this filesystem independently because the kernel does not allow it in a tenant user namespace. If the prerequisite mount exists, the corruption could affect the shared kernel and other VPSes; the reviewed primary record and patch do not establish a complete exploit giving VPS root, node control or access to another VPS on vpsFree.cz. A failed trigger can crash the node. Kernel warnings that may indicate this bug was triggered are monitored.",
+       "response": "The mainline correction resets response-buffer ownership before each directory-query retry and is included in Linux 7.2 and the 7.1 stable branch from 7.1.4. The official fixes named for 6.6.145, 6.12.96 and 6.18.39 change different functions; an effective correction for those branches has not been verified in the reviewed source."
+     },
+     "cs": {
+       "summary": "Poškození paměti jádra",
+-      "description": "Hostitelské systémy vpsFree.cz v posuzovaném období CIFS nepoužívaly, takže potřebné připojení neexistovalo. Pokud správce node připravil nebo předal připojený souborový systém CIFS, škodlivý server SMB2/3 může vrátit chybu umožňující opakování požadavku QUERY_DIRECTORY (výpis adresáře). Jestliže další pokus selže před nahrazením vyrovnávací paměti odpovědi, úklid ji může uvolnit podruhé. Správce VPS nemůže tento souborový systém připojit samostatně, protože to jádro v uživatelském jmenném prostoru VPS nepovoluje. Pokud požadované připojení existuje, poškození paměti může zasáhnout sdílené jádro i ostatní VPS; analyzovaný primární záznam a oprava však nepopisují úplný postup zneužití k získání root ve VPS, ovládnutí node nebo přístupu do jiného VPS na vpsFree.cz. Neúspěšný pokus může shodit node. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována.",
++      "description": "Hostitelské systémy vpsFree.cz nepoužívají CIFS, takže se jich tato chyba netýká. Pokud správce node připravil nebo předal připojený souborový systém CIFS, škodlivý server SMB2/3 může vrátit chybu umožňující opakování požadavku QUERY_DIRECTORY (výpis adresáře). Jestliže další pokus selže před nahrazením vyrovnávací paměti odpovědi, úklid ji může uvolnit podruhé. Správce VPS nemůže tento souborový systém připojit samostatně, protože to jádro v uživatelském jmenném prostoru VPS nepovoluje. Pokud požadované připojení existuje, poškození paměti může zasáhnout sdílené jádro i ostatní VPS; analyzovaný primární záznam a oprava však nepopisují úplný postup zneužití k získání root ve VPS, ovládnutí node nebo přístupu do jiného VPS na vpsFree.cz. Neúspěšný pokus může shodit node. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována.",
+       "response": "Oprava v hlavní větvi před každým opakováním dotazu na adresář obnoví záznam o vlastnictví paměti odpovědi. Je obsažena v Linuxu 7.2 a ve stabilní větvi 7.1 od verze 7.1.4. Oficiálně uvedené opravy pro 6.6.145, 6.12.96 a 6.18.39 mění jiné funkce; účinná oprava těchto větví nebyla v analyzovaných zdrojích potvrzena."
+     }
+   }
+diff --git a/advisories/CVE-2026-64387/evaluation.json b/advisories/CVE-2026-64387/evaluation.json
+index 3f20166d09b9617cd5cdb0d818f48bdc230b8b3c..a5d7e2b3adbf1131bff60e64d5082fa9ee6805ec 100644
+--- a/advisories/CVE-2026-64387/evaluation.json
++++ b/advisories/CVE-2026-64387/evaluation.json
+@@ -1,8 +1,8 @@
+ {
+   "schema_version": 4,
+   "cve": "CVE-2026-64387",
+-  "dossier_digest": "477ae1ef5ad69d855636c54e1cdbd326e08eeac9b9fecfab08eef2eef4bf6540",
+-  "evaluated_at": "2026-10-20T11:27:32Z",
++  "dossier_digest": "90d5f85b8c545042a937c9b585c690794bb591cac20c1090e790f0329be853d6",
++  "evaluated_at": "2026-10-20T12:53:11Z",
+   "completeness": {
+     "expected_node_count": 13,
+     "evaluated_node_count": 13,
+diff --git a/advisories/CVE-2026-72069/advisory.yml b/advisories/CVE-2026-72069/advisory.yml
+index 751221ded68ee83c1c42ce636c6f9923d088cc7c..a7787684c27eadbb210bc476b7f0737f84a7d473 100644
+--- a/advisories/CVE-2026-72069/advisory.yml
++++ b/advisories/CVE-2026-72069/advisory.yml
+@@ -68,14 +68,9 @@
+ "texts":
+   "en":
+     "summary": "Local privilege escalation"
+-    "description": "On a kernel built for real-time preemption, unlocking a protected object can end its lifetime protection too early. Another thread can free the object while the unlock operation is still accessing it. Such corruption could support privilege escalation inside a VPS or affect the shared node, but the reviewed upstream report and fix do not establish a complete node-control or cross-VPS exploit. The exact archived vpsAdminOS 6.12.95 build excludes the required real-time mode; this does not by itself prove every historical deployment safe. Failed attempts on an affected real-time build may crash the kernel. Kernel warnings that may indicate this bug was triggered are monitored."
++    "description": "On a kernel built for real-time preemption, unlocking a protected object can end its lifetime protection too early. Another thread can free the object while the unlock operation is still accessing it. Such corruption could support privilege escalation inside a VPS or affect the shared node, but the reviewed upstream report and fix do not establish a complete node-control or cross-VPS exploit. Real-time preemption has never been enabled on vpsFree.cz nodes, so this vulnerability has not affected them. Failed attempts on an affected real-time build may crash the kernel. Kernel warnings that may indicate this bug was triggered are monitored."
+     "response": "Linux 6.12 includes the fix starting with 6.12.101. Disabling real-time preemption at build time prevents this specific trigger."
+   "cs":
+     "summary": "Lokální eskalace oprávnění"
+-    "description": "Na jádře sestaveném s real-time preempcí může odemykání chráněného objektu příliš brzy ukončit ochranu jeho životnosti. Jiné vlákno pak může objekt uvolnit, zatímco k němu operace odemknutí stále přistupuje. Takové poškození by mohlo umožnit zvýšení oprávnění ve VPS nebo ohrozit sdílený node, ale analyzované upstreamové hlášení a oprava nedokládají úplný postup k ovládnutí node ani zneužití mezi VPS. Přesné archivované sestavení vpsAdminOS 6.12.95 požadovaný real-time režim neobsahuje; to samo o sobě nedokládá bezpečnost všech historických nasazení. Neúspěšný pokus na zranitelném real-time sestavení může shodit jádro. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována."
++    "description": "Na jádře sestaveném s real-time preempcí může odemykání chráněného objektu příliš brzy ukončit ochranu jeho životnosti. Jiné vlákno pak může objekt uvolnit, zatímco k němu operace odemknutí stále přistupuje. Takové poškození by mohlo umožnit zvýšení oprávnění ve VPS nebo ohrozit sdílený node, ale analyzované upstreamové hlášení a oprava nedokládají úplný postup k ovládnutí node ani zneužití mezi VPS. Na nodech vpsFree.cz nebyla real-time preempce nikdy zapnutá, takže se jich tato chyba netýkala. Neúspěšný pokus na zranitelném real-time sestavení může shodit jádro. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována."
+     "response": "Ve větvi Linuxu 6.12 je oprava obsažena od verze 6.12.101. Vypnutí real-time preempce při sestavení zabraňuje tomuto konkrétnímu spuštění chyby."
+-
+-"node_notes":
+-  "161":
+-    "en": "The required real-time mode was disabled throughout the reviewed period."
+-    "cs": "Požadovaný režim reálného času byl po celé posuzované období vypnutý."
+diff --git a/advisories/CVE-2026-72069/analysis.md b/advisories/CVE-2026-72069/analysis.md
+index 7a3d4c3c126c18af7af291e15c249beaf311fd07..72fa1b34146cee817e7614e4440043f2fdcc5c79 100644
+--- a/advisories/CVE-2026-72069/analysis.md
++++ b/advisories/CVE-2026-72069/analysis.md
+@@ -27,6 +27,12 @@ Branches with direct CNA stable fixes and explicit older backport introductions
+ 
+ ## Tenant reachability and configuration
+ 
++The operator confirmed on 2026-10-20 that real-time preemption has never been
++enabled anywhere on vpsFree.cz nodes. The necessary RT implementation has
++therefore been absent, and this vulnerability has not affected those nodes.
++The archived configuration below is independent corroboration for one build;
++the broader conclusion rests on the operator's explicit historical statement.
++
+ CONFIG_PREEMPT_RT is not set in the exact archived .95 build, positively excluding the necessary substituted RT lock implementation in that build. PREEMPT_DYNAMIC/full preemption is not equivalent. On an RT kernel, ordinary filesystem, TCP, NFS or other RCU object-locking workloads can provide paths; no single special tenant device is necessary. Node and storage host workloads are applicable conditionally on the RT build. Exact historical configuration, not absence of a warning, determines a negative claim.
+ 
+ The inspected current vpsAdmin feature/device code, vpsAdminOS container template and selected LXC profiles establish source behavior only. The template includes UID/GID mappings and the userns profile; capabilities retained there belong to the tenant user namespace. They do not satisfy an initial-user-namespace capability check. The default seccomp denylist blocks module loading and selected host interfaces, not arbitrary Linux syscalls; a per-container override remains a runtime fact.
+@@ -115,9 +121,13 @@ On 2026-10-20 the operator was asked whether backuper2.prg ran without
+ "1. yes". This direct period confirmation supersedes the initial current-only
+ configuration observation and the unresolved historical storage conclusion.
+ The API identity is Node161, `backuper2.prg`, role `storage`; the operator's
+-`backuper2.prg.vpsfree.cz` command prompt names the same host. The confirmation
+-is bounded to this node and assessment period, rather than every storage node
+-or future collection.
++`backuper2.prg.vpsfree.cz` command prompt names the same host. That initial
++confirmation was bounded to this node and assessment period. Later on
++2026-10-20 the operator clarified that RT has never been enabled anywhere on
++vpsFree.cz nodes. This broader operational statement supersedes the earlier
++uncertainty about whether other historical platform builds might have enabled
++RT. It does not supply missing historical build identities or configuration
++files.
+ 
+ The preceding direct running-kernel observation corroborates the necessary
+ configuration exclusion:
+@@ -158,6 +168,14 @@ The matching tool/dossier revision is required to reproduce this new result.
+ The exact consumed parent loader accepts the additive map, but its evaluator
+ ignores it and conservatively retains storage unknown. The ordinary pre-write
+ comparison must reject that old recalculation against the new resolved result;
+-no digest or conclusion guard is weakened for rollback. The English/Czech
+-Node161 note states that the required mode was disabled throughout the reviewed
+-period.
++no digest or conclusion guard is weakened for rollback.
++
++The final platform applicability conclusion incorporates the later global
++operator confirmation: the necessary real-time mode was never enabled, so
++this vulnerability has not affected vpsFree.cz nodes. The existing bounded
++Node161 exclusion and version/history evaluation remain unchanged. Their
++twelve `mitigated` and one `not_affected` results retain their original reasons
++and dates; the version-derived mitigation intervals do not assert that RT was
++previously enabled or that actual exposure occurred. The redundant Node161
++public notes are removed. No per-build evidence or evaluation result is
++invented to encode the broader operational fact.
+diff --git a/advisories/CVE-2026-72069/evaluation.json b/advisories/CVE-2026-72069/evaluation.json
+index 4a0000a233c882f84f9d42316beecb3c1865a66b..f0c149e44236f084c038f856793befbb9f410f4c 100644
+--- a/advisories/CVE-2026-72069/evaluation.json
++++ b/advisories/CVE-2026-72069/evaluation.json
+@@ -1,8 +1,8 @@
+ {
+   "schema_version": 4,
+   "cve": "CVE-2026-72069",
+-  "dossier_digest": "fe003f2bf175561c397e80523e130dca8c3301841d4233f66cf634ce89e72e3a",
+-  "evaluated_at": "2026-10-20T11:20:52Z",
++  "dossier_digest": "4b0c4fc6f1f41b5f98a8ccd2acff73cd6941129a884e3228ecf8d62712a7af63",
++  "evaluated_at": "2026-10-20T12:53:10Z",
+   "completeness": {
+     "expected_node_count": 13,
+     "evaluated_node_count": 13,
+@@ -105,11 +105,7 @@
+       "node_role": "storage",
+       "evidence_revision": "bdfe7fa8207d487cad1dab06f779f1bac89c69f182a5e78bfcbc4b508b7248a6",
+       "state": "not_affected",
+-      "reason": "operator attestation excludes node 161 (backuper2.prg, storage): necessary CONFIG_PREEMPT_RT=n throughout 2026-01-01T00:00:00Z..2026-10-19T21:48:39Z; Operator confirms this node ran without PREEMPT_RT throughout the assessed period. Source: analysis.md#operator-confirmed-non-rt-period",
+-      "notes": {
+-        "en": "The required real-time mode was disabled throughout the reviewed period.",
+-        "cs": "Požadovaný režim reálného času byl po celé posuzované období vypnutý."
+-      }
++      "reason": "operator attestation excludes node 161 (backuper2.prg, storage): necessary CONFIG_PREEMPT_RT=n throughout 2026-01-01T00:00:00Z..2026-10-19T21:48:39Z; Operator confirms this node ran without PREEMPT_RT throughout the assessed period. Source: analysis.md#operator-confirmed-non-rt-period"
+     },
+     {
+       "node_id": 214,
+diff --git a/spec/dossiers_spec.rb b/spec/dossiers_spec.rb
+index 89a68519b8837e797b89e0617fedfc424babbfa9..cb06b0b32b2d1a189559cec4d0433444aaa67585 100644
+--- a/spec/dossiers_spec.rb
++++ b/spec/dossiers_spec.rb
+@@ -861,13 +861,10 @@ RSpec.describe SecurityAdvisories::Advisory do
+       expect(storage).to include('state' => 'not_affected',
+                                  'reason' => a_string_including('operator attestation', 'CONFIG_PREEMPT_RT=n'))
+       expect(storage.keys & %w[mitigated_since vulnerable_until kernel_release config_digest]).to be_empty
+-      notes = {
+-        'en' => 'The required real-time mode was disabled throughout the reviewed period.',
+-        'cs' => 'Požadovaný režim reálného času byl po celé posuzované období vypnutý.'
+-      }
+-      expect(advisory.node_notes).to eq('161' => notes)
+-      expect(storage.fetch('notes')).to eq(notes)
+-      expect(notes.values).to all(satisfy { |text| text.length <= 120 && !text.include?("\n") })
++      expect(advisory.node_notes).to be_empty
++      evaluation_for(advisory).fetch('nodes').each do |node|
++        expect(node).not_to have_key('notes')
++      end
+     end
+   end
+ 

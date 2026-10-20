@@ -1,0 +1,124 @@
+{
+  "recorded_at": "2026-10-19T20:00:10.100607+00:00",
+  "linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+  "scope": "Precisely assigned seven supplementary gates only; no runtime collection/exploit execution",
+  "rows": [
+    {
+      "cve": "CVE-2026-68159",
+      "title": "libceph: bound pg_{temp,upmap,upmap_items} length to CEPH_PG_MAX_SIZE",
+      "stable_fixes": [
+        {
+          "sha": "ebdf4b4f3b1474079980a2e5cd79ad65fb54db57",
+          "release": "6.12.105"
+        }
+      ],
+      "reachability_group": "tenant_controlled_ceph_mount",
+      "source_gate": "Ceph/libceph preloaded and CephFS permits user-namespace mounts in the downstream source already reviewed. Needs an accepted monitor OSDMap with a malformed pg_temp/upmap/upmap_items list and a mapping/OSD operation that uses it; not arbitrary unauthenticated TCP input.",
+      "protocol_and_impact_limit": "The RBD stack trace in the CNA is one reproducer, not a mandatory /dev/rbd requirement: shared libceph OSD-client calc_target invokes ceph_pg_to_up_acting_osds for CephFS too. A tenant can select/control the monitor/cluster it mounts and the corresponding credentials/protocol negotiation. No host cluster credentials or block-device delegation are inherently required; actual deployment/exploit remains unmeasured.",
+      "runtime_status": "not collected; exact deployed workload and trigger success unknown",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-68159.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-89653",
+      "title": "ceph: reject export_targets ranks >= CEPH_MAX_MDS in mdsmap decode",
+      "stable_fixes": [
+        {
+          "sha": "736adee11af36e407ed902264f8b2fb5cf94b62f",
+          "release": "6.12.109"
+        }
+      ],
+      "reachability_group": "tenant_controlled_ceph_mount",
+      "source_gate": "Same CephFS mount/module gate; malicious monitor must supply a validly processed MDSMap containing out-of-range export_targets ranks. check_new_map processes the map against old MDS sessions/rank state.",
+      "protocol_and_impact_limit": "CephFS metadata/MDS operation and the applicable map/session transition are material prerequisites; merely opening a Ceph socket or using RBD alone does not establish this MDS-client stack-bitmap path. Attacker-controlled monitor/session setup is a tenant-configurable protocol condition, not initial-user-namespace privilege.",
+      "runtime_status": "not collected; exact deployed workload and trigger success unknown",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-89653.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-89656",
+      "title": "libceph: reject buckets with mismatched CRUSH ids",
+      "stable_fixes": [
+        {
+          "sha": "3516a4131c4e45d62ee4e42e82c36930e8c1fbbd",
+          "release": "6.12.109"
+        }
+      ],
+      "reachability_group": "tenant_controlled_ceph_mount",
+      "source_gate": "Same Ceph/libceph/userns-mount gate. A malformed monitor-provided CRUSH/OSDMap must pass decoding with bucket id/slot mismatch, then selection of a uniform source bucket/replica must use the aliased workspace.",
+      "protocol_and_impact_limit": "Requires controlled cluster-map contents and an OSD-placement operation. Shared libceph mapper used by CephFS; no separate delegated RBD device or operator-only kernel module is identified. Peer/auth setup belongs to the controlled mount, not a claim that any remote peer can inject a trusted map.",
+      "runtime_status": "not collected; exact deployed workload and trigger success unknown",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-89656.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-80714",
+      "title": "ipvs: do not propagate one-packet flag to synced conns",
+      "stable_fixes": [
+        {
+          "sha": "4649e6faeecdc2d44bfa6ccbe405eef27e55d816",
+          "release": "6.12.103"
+        }
+      ],
+      "reachability_group": "tenant_configured_ipvs_sync",
+      "source_gate": "IP_VS=m and required schedulers/helpers are explicitly preloaded. IPVS generic-netlink IPVS_CMD_NEW_DAEMON is GENL_UNS_ADMIN_PERM; synchronization sockets and chosen multicast interface use ipvs->net. Tenant namespace CAP_NET_ADMIN can configure its own sync backup/source, services and destinations.",
+      "protocol_and_impact_limit": "Needs an imported/synced connection created before its destination, later binding to destination flags containing ONE_PACKET, followed by expiry/lookup. Ordinary unsynchronized IPVS traffic is insufficient. No initial-network-namespace-only restriction found in the reviewed start_sync_thread/command path.",
+      "runtime_status": "not collected; exact deployed workload and trigger success unknown",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-80714.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-74581",
+      "title": "net: ipv6: clear suppressed fib6 rule result",
+      "stable_fixes": [
+        {
+          "sha": "9bad152c42b37499162367fe47867411e62fffa3",
+          "release": "6.12.103"
+        }
+      ],
+      "reachability_group": "tenant_configured_ipv6_policy_route",
+      "source_gate": "CONFIG_IPV6_MULTIPLE_TABLES=y; fib6_rules registers per-netns policy state. Namespace CAP_NET_ADMIN can install own routing rules with suppress selectors; ordinary local lookup/traffic can consume the result. No extra unpreloaded module or physical device identified.",
+      "protocol_and_impact_limit": "Requires suppressed route followed by no replacement result; not every IPv6 route lookup. Primary evidence is stale/released route and next reference put; architect owns whether that supports the requested escalation tier.",
+      "runtime_status": "not collected; exact deployed workload and trigger success unknown",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-74581.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-72251",
+      "title": "netfilter: nf_nat_sip: reload possible stale data pointer",
+      "stable_fixes": [
+        {
+          "sha": "eae9c6ccb5af69c713a65f8ae219f5c1aa32cd17",
+          "release": "6.12.97"
+        }
+      ],
+      "reachability_group": "tenant_configured_sip_nat",
+      "source_gate": "NF_CONNTRACK_SIP/NF_NAT_SIP=m and both are explicitly preloaded. Tenant namespace CAP_NET_ADMIN can configure conntrack helper/NAT treatment of its own traffic through the preloaded nftables/iptables control path.",
+      "protocol_and_impact_limit": "Needs SIP helper assignment, NAT/reply with forced_dport behavior, and a cloned skb that skb_ensure_writable reallocates. Module presence alone does not apply the helper to all SIP traffic; primary analysis specifically excludes fragmented skbs here because conntrack SIP linearizes them. Claimed TCP branch is guarded defensively, not evidence of a proven TCP trigger.",
+      "runtime_status": "not collected; exact deployed workload and trigger success unknown",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-72251.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-90151",
+      "title": "NFSv4: remove callback IDR entry on client allocation failure",
+      "stable_fixes": [
+        {
+          "sha": "80b1c3d5a881f7d9081aa9f46da9742878a0f893",
+          "release": "6.12.110"
+        }
+      ],
+      "reachability_group": "tenant_controlled_nfsv4_0_mount",
+      "source_gate": "NFS client/v4 modules explicitly preloaded; downstream NFS allows user-namespace mounting. nfs_get_cb_ident_idr explicitly allocates identifiers only for version4 minorversion0 and stores them in the mount/client network namespace cb_ident_idr. Tenant can select a controlled NFSv4.0 server and arrange matching callback reachability.",
+      "protocol_and_impact_limit": "Requires later client-initialization failure after IDR insertion, then a callback lookup by the stale id; ordinary successful mounts and v4.1+ sessions do not establish this defect. A controlled server alone is not proof of reliable failure induction. Source analysis confirms namespace/mount availability, not that the allocation-failure/callback exploit was reproduced.",
+      "runtime_status": "not collected; exact deployed workload and trigger success unknown",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-90151.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    }
+  ],
+  "source_paths": [
+    "net/ceph/osd_client.c",
+    "net/ceph/mon_client.c",
+    "fs/ceph/mds_client.c",
+    "net/netfilter/ipvs/ip_vs_sync.c",
+    "net/netfilter/ipvs/ip_vs_ctl.c",
+    "net/ipv6/fib6_rules.c",
+    "net/netfilter/nf_nat_sip.c",
+    "net/netfilter/nf_conntrack_sip.c",
+    "fs/nfs/nfs4client.c",
+    "fs/nfs/client.c"
+  ]
+}

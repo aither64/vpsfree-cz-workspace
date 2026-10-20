@@ -1,0 +1,680 @@
+{
+  "owner": "implementer0",
+  "phase": "approved_assessment",
+  "recorded_at": "2026-10-19T21:18:32.436123+00:00",
+  "history_scope_reason": "Architect accepted 2026-01-01T00:00:00Z as the shared scoped assessment baseline; no per-Node history override copied or inferred.",
+  "semantics": "Options are necessary vulnerable interfaces. Sysctl values are reviewed values only, mismatch/unavailable gives unknown, not safe. Host sysctls cannot substitute for tenant-netns state. Unmodeled runtime predicates must not become ignored YAML keys or hand-edited evaluation.",
+  "rows": [
+    {
+      "cve": "CVE-2026-98858",
+      "required_options": {
+        "CONFIG_IO_URING": "enabled"
+      },
+      "required_sysctls": {
+        "kernel.io_uring_disabled": [
+          "0",
+          "1",
+          "2"
+        ],
+        "kernel.io_uring_group": [
+          "-1"
+        ]
+      },
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "SQPOLL rings, ordinary syscalls permitted by default seccomp",
+        "disabled0 permits unprivileged setup;1 requires initial-userns capability or group;2 denies setup"
+      ],
+      "unmodeled_prerequisites": [
+        "effective LSM SQPOLL policy;membership if group differs from -1;sysctl restrictive value does not automatically produce safe result"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/io_uring/io_uring.c",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/io_uring/sqpoll.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/98xxx/CVE-2026-98858.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/io_uring/io_uring.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/io_uring/sqpoll.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-98260",
+      "required_options": {
+        "CONFIG_POSIX_TIMERS": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "own CPU timer/nonleader exec/failure/reap lifetime"
+      ],
+      "unmodeled_prerequisites": [],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/98xxx/CVE-2026-98260.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/fs/exec.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/kernel/time/posix-cpu-timers.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-97594",
+      "required_options": {
+        "CONFIG_SECURITY_LANDLOCK": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "self-confinement with no_new_privs and own file link/rename/remove"
+      ],
+      "unmodeled_prerequisites": [
+        "active LSM list/boot lsm=;compiled Landlock alone does not prove activation"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/security/landlock/fs.c",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/security/landlock/setup.c",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/security/landlock/syscalls.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/97xxx/CVE-2026-97594.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/security/landlock/fs.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/security/landlock/syscalls.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/security/landlock/setup.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-80521",
+      "required_options": {
+        "CONFIG_UNIX": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "own AF_UNIX socket SCM_RIGHTS cyclic graph/send/close"
+      ],
+      "unmodeled_prerequisites": [],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/80xxx/CVE-2026-80521.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/net/unix/garbage.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-53388",
+      "required_options": {
+        "CONFIG_FUSE_FS": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "default-enabled /dev/fuse;userns-mountable FUSE;controlled daemon and request abort"
+      ],
+      "unmodeled_prerequisites": [
+        "per-VPS device permission;actual FUSE availability"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/53xxx/CVE-2026-53388.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/fs/fuse/dev.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/fs/fuse/inode.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-63824",
+      "required_options": {
+        "CONFIG_KEYS": "enabled",
+        "CONFIG_ASYMMETRIC_KEY_TYPE": "enabled",
+        "CONFIG_ASYMMETRIC_PUBLIC_KEY_SUBTYPE": "enabled",
+        "CONFIG_X509_CERTIFICATE_PARSER": "enabled",
+        "CONFIG_CRYPTO_RSA": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "owned searchable asymmetric public key;keyctl_pkey output operation;default seccomp permits keyctl"
+      ],
+      "unmodeled_prerequisites": [
+        "LSM/keyring restrictions"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/security/keys/keyctl.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/63xxx/CVE-2026-63824.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/security/keys/keyctl_pkey.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/crypto/asymmetric_keys/asymmetric_type.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-74753",
+      "required_options": {
+        "CONFIG_PERF_EVENTS": "enabled"
+      },
+      "required_sysctls": {
+        "kernel.perf_event_paranoid": [
+          "2"
+        ]
+      },
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "own per-task exclude_kernel event group/EXIT leader lifecycle;stable .96 introduction needs exact version rule"
+      ],
+      "unmodeled_prerequisites": [
+        "LSM perf restrictions;other paranoid values require explicit review"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/kernel/events/core.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/74xxx/CVE-2026-74753.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/kernel/events/core.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-93817",
+      "required_options": {
+        "CONFIG_PERF_EVENTS": "enabled",
+        "CONFIG_CPU_SUP_INTEL": "enabled"
+      },
+      "required_sysctls": {
+        "kernel.perf_event_paranoid": [
+          "2"
+        ]
+      },
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "per-task IntelPT event/address filter/inheritance/exec/mmap"
+      ],
+      "unmodeled_prerequisites": [
+        "actual IntelPT CPU/PMU support;LSM policy"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/kernel/events/core.c",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/arch/x86/events/intel/Makefile",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/arch/x86/events/intel/pt.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/93xxx/CVE-2026-93817.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/kernel/events/core.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/arch/x86/events/intel/pt.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-74517",
+      "required_options": {
+        "CONFIG_KVM": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "default-enabled delegated /dev/kvm;guest IRQchip/vCPU destruction"
+      ],
+      "unmodeled_prerequisites": [
+        "actual virtualization CPU support/vendor module loaded;device permissions"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/arch/x86/kvm/x86.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/74xxx/CVE-2026-74517.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/arch/x86/kvm/x86.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/arch/x86/kvm/ioapic.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-89929",
+      "required_options": {
+        "CONFIG_KVM": "enabled",
+        "CONFIG_KVM_INTEL": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "tenant VMM nested VMX/INVVPID/migration"
+      ],
+      "unmodeled_prerequisites": [
+        "Intel VMX and VPID enabled;effective kvm_intel.nested/module params;guest exposure"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/arch/x86/kvm/vmx/vmx.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/89xxx/CVE-2026-89929.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/arch/x86/kvm/vmx/nested.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-89930",
+      "required_options": {
+        "CONFIG_KVM": "enabled",
+        "CONFIG_KVM_INTEL": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "tenant VMM failed/successful nested VM-entry with pending TLB flush"
+      ],
+      "unmodeled_prerequisites": [
+        "Intel VMX/VPID/nested controls;guest exposure"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/arch/x86/kvm/vmx/vmx.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/89xxx/CVE-2026-89930.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/arch/x86/kvm/vmx/nested.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-89932",
+      "required_options": {
+        "CONFIG_KVM": "enabled",
+        "CONFIG_KVM_INTEL": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "tenant VMM nested VMXOFF/VMXON/VPID reuse"
+      ],
+      "unmodeled_prerequisites": [
+        "Intel VMX/VPID/nested controls;CPU VPID reuse"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/arch/x86/kvm/vmx/vmx.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/89xxx/CVE-2026-89932.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/arch/x86/kvm/vmx/nested.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-98720",
+      "required_options": {
+        "CONFIG_KVM": "enabled",
+        "CONFIG_KVM_INTEL": "enabled",
+        "CONFIG_KVM_HYPERV": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "tenant VMM ordinary KVM_ENABLE_CAP eVMCS;L2 TPR virtualization switch"
+      ],
+      "unmodeled_prerequisites": [
+        "Intel VMX/nested/eVMCS exposure;actual module/device"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/arch/x86/kvm/vmx/hyperv.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/98xxx/CVE-2026-98720.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/arch/x86/kvm/vmx/nested.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/arch/x86/kvm/x86.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-63830",
+      "required_options": {
+        "CONFIG_BPF_SYSCALL": "enabled",
+        "CONFIG_NET_SOCK_MSG": "enabled"
+      },
+      "required_sysctls": {
+        "kernel.unprivileged_bpf_disabled": [
+          "0",
+          "1",
+          "2"
+        ]
+      },
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "SK_MSG BPF needs initial-userns CAP_BPF+CAP_NET_ADMIN absent a valid delegated token;generic unprivileged BPF source default is not sufficient"
+      ],
+      "unmodeled_prerequisites": [
+        "token/delegation absence and privileged program authority unmodeled by evaluator"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/kernel/bpf/syscall.c",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/include/linux/bpf.h",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/63xxx/CVE-2026-63830.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/kernel/bpf/syscall.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/kernel/bpf/token.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/net/core/skmsg.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-74616",
+      "required_options": {
+        "CONFIG_BPF_SYSCALL": "enabled"
+      },
+      "required_sysctls": {
+        "kernel.unprivileged_bpf_disabled": [
+          "0",
+          "1",
+          "2"
+        ]
+      },
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "broadcast XDP clone/XDP-to-skb;XDP program load needs initial-userns CAP_BPF+CAP_NET_ADMIN absent delegated token"
+      ],
+      "unmodeled_prerequisites": [
+        "actual XDP program/device/path and privileged delegation unmodeled"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/kernel/bpf/syscall.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/74xxx/CVE-2026-74616.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/kernel/bpf/syscall.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/kernel/bpf/token.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/net/core/xdp.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-98039",
+      "required_options": {
+        "CONFIG_BPF_SYSCALL": "enabled",
+        "CONFIG_DEBUG_INFO_BTF": "enabled",
+        "CONFIG_BPF_JIT": "enabled"
+      },
+      "required_sysctls": {
+        "kernel.unprivileged_bpf_disabled": [
+          "0",
+          "1",
+          "2"
+        ]
+      },
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "percpu kptr capable BPF program/kfuncs;initial-userns or delegated token authority needed"
+      ],
+      "unmodeled_prerequisites": [
+        "program type,kfunc availability,token/capability delegation;not equivalent to ordinary socket-filter BPF"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/kernel/bpf/verifier.c",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/kernel/bpf/syscall.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/98xxx/CVE-2026-98039.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/kernel/bpf/verifier.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/kernel/bpf/syscall.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/kernel/bpf/token.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-53260",
+      "required_options": {
+        "CONFIG_PREEMPT_RT": "enabled",
+        "CONFIG_INET": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node",
+        "storage"
+      ],
+      "source_prerequisites": [
+        "TCP listener/request timer vs listener close on RT substituted locks"
+      ],
+      "unmodeled_prerequisites": [
+        "actual listener lifecycle/workload;CONFIG_PREEMPT_DYNAMIC/full is not PREEMPT_RT"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/53xxx/CVE-2026-53260.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/net/ipv4/inet_connection_sock.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-72069",
+      "required_options": {
+        "CONFIG_PREEMPT_RT": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node",
+        "storage"
+      ],
+      "source_prerequisites": [
+        "RT spin/rw unlock RCU lifetime;any applicable host/tenant workload on an RT build"
+      ],
+      "unmodeled_prerequisites": [
+        "actual RT affected path;non-RT build is positive configuration exclusion only for exact build"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/72xxx/CVE-2026-72069.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/kernel/locking/spinlock_rt.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-98222",
+      "required_options": {
+        "CONFIG_KEYS": "enabled",
+        "CONFIG_ENCRYPTED_KEYS": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "encrypted key type payload allocation overflow;keyctl allowed by default seccomp"
+      ],
+      "unmodeled_prerequisites": [
+        "encrypted_keys module registration/load not in default preload;key_type_lookup cannot supply missing type;runtime absence unmodeled"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/security/keys/encrypted-keys/encrypted.c",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/security/keys/key.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/98xxx/CVE-2026-98222.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/security/keys/encrypted-keys/encrypted.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/security/keys/key.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    },
+    {
+      "cve": "CVE-2026-99999",
+      "required_options": {
+        "CONFIG_INET": "enabled"
+      },
+      "required_sysctls": {},
+      "history_required_since": "2026-01-01T00:00:00Z",
+      "affected_node_roles": [
+        "node"
+      ],
+      "source_prerequisites": [
+        "crafted checksum metadata via delegated TUN/TAP or AF_PACKET;namespace NET_ADMIN/NET_RAW;TUN default enabled"
+      ],
+      "unmodeled_prerequisites": [
+        "device/AF_PACKET alternative paths;VM exploit scenario not equivalent to verified platform exploit"
+      ],
+      "source_citations": [
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/api/models/vps_feature.rb",
+        "https://github.com/vpsfreecz/vpsadmin/blob/fb2f51222503a45f2e5a42af505f719e44279ed0/libnodectld/lib/nodectld/commands/vps/features.rb",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/osctld/templates/ct/config.erb",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/userns.conf.in",
+        "https://github.com/vpsfreecz/lxc/blob/267e7844c122b9be56ca8a1ccc3d2f4d8986c326/config/templates/common.seccomp",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/kernel.nix",
+        "https://github.com/vpsfreecz/vpsadminos/blob/87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088/os/modules/config/tunables.nix",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/drivers/net/tun.c",
+        "https://github.com/vpsfreecz/linux/blob/a2384967b90f24d2470c9eb15f0e66d938df7e08/net/packet/af_packet.c",
+        "https://raw.githubusercontent.com/CVEProject/cvelistV5/56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9/cves/2026/99xxx/CVE-2026-99999.json",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/net/ipv4/ip_output.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/drivers/net/tun.c",
+        "https://github.com/vpsfreecz/linux/blob/1dfea587406b7dd79973831d1677fb2418e5e9aa/net/packet/af_packet.c"
+      ],
+      "unmodeled_resolution": "Typed current boot identity/config and runtime components plus scoped historical records; absence of historical config on affected releases is conservatively affected. Sysctl restrictive values do not themselves become mitigation."
+    }
+  ]
+}

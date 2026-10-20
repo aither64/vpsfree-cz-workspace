@@ -1,0 +1,15 @@
+import base64,concurrent.futures,datetime,hashlib,json,pathlib,re,urllib.error,urllib.request
+s=pathlib.Path('/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-vpsadmin-kernel-cves');o=s/'assessment/implementer0';w=s.parents[1]/'worktrees'/s.name/'security-advisories';ids=json.loads((s/'assessment/packages.json').read_text())['groups']['implementer0'];rev='56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9';out=o/'primary-citation-verification';out.mkdir(exist_ok=True)
+def fetch_status(u):
+ try:
+  with urllib.request.urlopen(u,timeout=20)as r:return r.status,r.read()
+ except urllib.error.HTTPError as e:return e.code,e.read()
+def one(c):
+ p=w/f'advisories/{c}/analysis.md';text=p.read_text();urls=re.findall(r'https://raw\.githubusercontent\.com/CVEProject/cvelistV5/[^)\s]+',text);assert len(urls)==2 and len(set(urls))==1
+ old=urls[0];status,err=fetch_status(old);new=f'https://kernel.googlesource.com/pub/scm/linux/security/vulns/+/{rev}/cve/published/2026/{c}.json';rawurl=new+'?format=TEXT';newstatus,b=fetch_status(rawurl);assert newstatus==200,(c,newstatus);decoded=base64.b64decode(b,validate=True);retained=(s/f'research/cve-evidence/records/{c}.json').read_bytes();assert decoded==retained,c
+ (out/f'{c}.json').write_bytes(decoded)
+ return dict(cve=c,analysis_path=str(p),analysis_sha256_before=hashlib.sha256(p.read_bytes()).hexdigest(),old_url=old,old_http_status=status,old_occurrences=2,replacement_url=new,verification_url=rawurl,verification_http_status=newstatus,retained_record_path=f'research/cve-evidence/records/{c}.json',verified_record_path=str((out/f'{c}.json').relative_to(s)),retained_sha256=hashlib.sha256(retained).hexdigest(),decoded_sha256=hashlib.sha256(decoded).hexdigest(),bytes=len(decoded),exact_bytes_match=True,checked_at=datetime.datetime.now(datetime.timezone.utc).isoformat())
+with concurrent.futures.ThreadPoolExecutor(max_workers=5)as ex:rows=list(ex.map(one,ids))
+assert all(x['old_http_status']==404 for x in rows)
+r=dict(schema=1,status='prepared_only_dossiers_and_git_frozen',source_repository='https://kernel.googlesource.com/pub/scm/linux/security/vulns',source_revision=rev,original_source_manifest='research/cve-evidence/source-manifest.json',original_archive_sha256='cd45a44219f12a96bb4f1ab0a8023c0d7f8379357ddee698803c21a4c47f72e9',diagnosis='All20owned analyses used a Linux security/vulns revision in a CVEProject/cvelistV5 repository URL. It is a provider/path error, not a changed source snapshot. Correct immutable Gitiles cve/published records match retained bytes exactly.',counts=dict(cves=len(rows),broken_occurrences=sum(x['old_occurrences']for x in rows),old_404=len(rows),replacement_200=len(rows),exact_byte_matches=len(rows)),rows=rows,mutation_scope='Onlyassessment/implementer0 research files written. No dossier edits, Git mutation, API/collection or claims changed. Await final review report and lead release.')
+p=o/'primary-citation-fix-preparation.json';p.write_text(json.dumps(r,indent=2)+'\n');print(json.dumps(json.loads(p.read_text())['counts']))

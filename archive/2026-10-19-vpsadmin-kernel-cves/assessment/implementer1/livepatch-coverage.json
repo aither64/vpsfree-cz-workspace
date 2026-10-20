@@ -1,0 +1,2395 @@
+{
+  "schema": 1,
+  "owner": "implementer1",
+  "snapshot_sha256": "61904e984266df2f6c53435b2b026b0d0980b35a23ed843eebf95b23c27c9274",
+  "reviewed_at": "2026-10-19T21:55:30.356486+00:00",
+  "status": "Final source decisions:10accepted and1withheld_partial_inline_fanout",
+  "payload_source": "https://github.com/vpsfreecz/vpsadminos/blob/97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0/os/livepatches/bp-6.12.95-cumulative.patch",
+  "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+  "same_payload_os_revisions": [
+    "80a0017d7b35cdfd4d11311876f487d2d56e3e3d",
+    "93014dd1f7126798617a927f1e8a3a556faf046c",
+    "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+  ],
+  "candidate_tuple_count": 12,
+  "rows": [
+    {
+      "cve": "CVE-2026-74668",
+      "upstream_fix": "21b5953e7494c16a42e6cd8cf110e18d13ae4a6b",
+      "stable_fix": {
+        "sha": "016763e829cac37b3234eace86fd0a4c560de4a7",
+        "release": "6.12.104"
+      },
+      "downstream_backport": "4aaeeb99f215c6cca45d16ec5fbfb4f544a10ab0",
+      "first_correcting_patch_version": "6.12.95.6",
+      "first_source_inclusion_version": "6.12.95.6",
+      "boot_intrinsic_fix": false,
+      "review": "manual_primary_semantics_and_module_replacement_source",
+      "decision": "source_content_accepted",
+      "reason": "One snapshot is threaded through TX_RING reservation, frame copy sizing and tpacket_fill_skb. LL_RESERVED_SPACE_EX consumes the explicit length without changing other callers of the original macro. Both changed implementation functions belong to targeted af_packet; no broad header caller substitution is required for this CVE. The separate DGRAM/header_ops issue remains outside upstream fix scope.",
+      "replacement_functions": [
+        "tpacket_snd",
+        "tpacket_fill_skb"
+      ],
+      "build_targets": [
+        "net/packet/af_packet.ko"
+      ],
+      "source_sections": [
+        {
+          "path": "net/packet/af_packet.c",
+          "start_line": 4696,
+          "end_line": 4773,
+          "sha256": "c98ba8a8b50f8272b4e2b3aa8898a3d0cd3ccd5c1939c3afda113a0fba59c450"
+        },
+        {
+          "path": "include/linux/netdevice.h",
+          "start_line": 1474,
+          "end_line": 1485,
+          "sha256": "7c3aaf4e4246731e645f311d6afa31cd51f307f89d95fd39e97141ebf783d3d3"
+        }
+      ],
+      "content_decisions": [
+        {
+          "tuple_key": "3893623c7c2b6d90fd8666585af1f4c3b768fdc89d9755be055c235e6c15142d",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "f6fd0440ae600ba6ae2275ccc5d1a3d167a033426cafa7f1f2735c00465a0f5e",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "17f96527784c50dee6c9eda093d097bcf40d8c98de5d3d3649ba529ad256a624",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "36561c1e37afc2a5eaec901f7e318ee07ed74ffd46e7eed10cc1089e1e4b04d4",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "a5d5ce07e620eb3846ca28b1d649713574496e8623d46bddfd2e0f8625dfecaa",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "035043377c4aaf1bf55ea76971323ebbeb00516979f4859738a5b9650d0f472b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "c9bb560b52c11f9b5bc529be1404014ef9fdb91b767a6b86088df973b23c3864",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "d1519467db1d3279287e5bf40b299beede6ed3125d290a1bcc3a6120f71ecd6b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "48631839f6526bf89d83eed47d467588308a8ffdfd18497790d1a0ca09f5660c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "3f6dfc77ca9ec34ba38685b071dbce512ebcbe48db6322ca1f2703cd2bee536c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "9beacfa2a72a1131bec971a317e5bc7dc233e55c2094931423c85b6ad7d7c474",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "e40b2778d29c8d367afbc9b3e34c1ad547c184530852412ab4be7d1f7ab9ddea",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        }
+      ]
+    },
+    {
+      "cve": "CVE-2026-74586",
+      "upstream_fix": "beb33f8ee1ca83acddb2a5ae80f3d22ec550b4c3",
+      "stable_fix": {
+        "sha": "291accf36febce751021888de5f15090f4875b56",
+        "release": "6.12.104"
+      },
+      "downstream_backport": "3e245d5bbea3dc52aa5ef1474fb0879d69b42019",
+      "first_correcting_patch_version": "6.12.95.6",
+      "first_source_inclusion_version": "6.12.95.6",
+      "boot_intrinsic_fix": false,
+      "review": "manual_primary_semantics_and_module_replacement_source",
+      "decision": "source_content_accepted",
+      "reason": "The replacement removal path clears the cached new transport before queuing a heartbeat can reuse a removed peer. No object layout change or external module inline repair is required.",
+      "replacement_functions": [
+        "sctp_assoc_rm_peer"
+      ],
+      "build_targets": [
+        "net/sctp/sctp.ko"
+      ],
+      "source_sections": [
+        {
+          "path": "net/sctp/associola.c",
+          "start_line": 4774,
+          "end_line": 4796,
+          "sha256": "62ec3107601202030e4930290c40d1834ab34b562947a00d23ae583ddf0081d7"
+        }
+      ],
+      "content_decisions": [
+        {
+          "tuple_key": "3893623c7c2b6d90fd8666585af1f4c3b768fdc89d9755be055c235e6c15142d",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "f6fd0440ae600ba6ae2275ccc5d1a3d167a033426cafa7f1f2735c00465a0f5e",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "17f96527784c50dee6c9eda093d097bcf40d8c98de5d3d3649ba529ad256a624",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "36561c1e37afc2a5eaec901f7e318ee07ed74ffd46e7eed10cc1089e1e4b04d4",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "a5d5ce07e620eb3846ca28b1d649713574496e8623d46bddfd2e0f8625dfecaa",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "035043377c4aaf1bf55ea76971323ebbeb00516979f4859738a5b9650d0f472b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "c9bb560b52c11f9b5bc529be1404014ef9fdb91b767a6b86088df973b23c3864",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "d1519467db1d3279287e5bf40b299beede6ed3125d290a1bcc3a6120f71ecd6b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "48631839f6526bf89d83eed47d467588308a8ffdfd18497790d1a0ca09f5660c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "3f6dfc77ca9ec34ba38685b071dbce512ebcbe48db6322ca1f2703cd2bee536c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "9beacfa2a72a1131bec971a317e5bc7dc233e55c2094931423c85b6ad7d7c474",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "e40b2778d29c8d367afbc9b3e34c1ad547c184530852412ab4be7d1f7ab9ddea",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        }
+      ]
+    },
+    {
+      "cve": "CVE-2026-74587",
+      "upstream_fix": "8c283e7b56adce00193837f3311b06662466fb21",
+      "stable_fix": {
+        "sha": "618b5c6d049896fcfabb91afc072954c92cb2693",
+        "release": "6.12.104"
+      },
+      "downstream_backport": "4f381e13ab2b08ea56d7d885d567ed932c7730b2",
+      "first_correcting_patch_version": "6.12.95.6",
+      "first_source_inclusion_version": "6.12.95.6",
+      "boot_intrinsic_fix": false,
+      "review": "manual_primary_semantics_and_module_replacement_source",
+      "decision": "source_content_accepted",
+      "reason": "Both halves of the primary correction are present in sctp: cleared cached ASCONF and safe late timer expiry. Accepting only the free-pointer half would leave the newly exposed timer NULL race; this payload covers it.",
+      "replacement_functions": [
+        "sctp_asconf_queue_teardown",
+        "sctp_sf_t4_timer_expire"
+      ],
+      "build_targets": [
+        "net/sctp/sctp.ko"
+      ],
+      "source_sections": [
+        {
+          "path": "net/sctp/associola.c",
+          "start_line": 4774,
+          "end_line": 4796,
+          "sha256": "62ec3107601202030e4930290c40d1834ab34b562947a00d23ae583ddf0081d7"
+        },
+        {
+          "path": "net/sctp/sm_statefuns.c",
+          "start_line": 4946,
+          "end_line": 4986,
+          "sha256": "10858b1b5a16113c5d09924c3f6ef721f8b5f347b4df1a9807d4343f72f16f39"
+        }
+      ],
+      "content_decisions": [
+        {
+          "tuple_key": "3893623c7c2b6d90fd8666585af1f4c3b768fdc89d9755be055c235e6c15142d",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "f6fd0440ae600ba6ae2275ccc5d1a3d167a033426cafa7f1f2735c00465a0f5e",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "17f96527784c50dee6c9eda093d097bcf40d8c98de5d3d3649ba529ad256a624",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "36561c1e37afc2a5eaec901f7e318ee07ed74ffd46e7eed10cc1089e1e4b04d4",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "a5d5ce07e620eb3846ca28b1d649713574496e8623d46bddfd2e0f8625dfecaa",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "035043377c4aaf1bf55ea76971323ebbeb00516979f4859738a5b9650d0f472b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "c9bb560b52c11f9b5bc529be1404014ef9fdb91b767a6b86088df973b23c3864",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "d1519467db1d3279287e5bf40b299beede6ed3125d290a1bcc3a6120f71ecd6b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "48631839f6526bf89d83eed47d467588308a8ffdfd18497790d1a0ca09f5660c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "3f6dfc77ca9ec34ba38685b071dbce512ebcbe48db6322ca1f2703cd2bee536c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "9beacfa2a72a1131bec971a317e5bc7dc233e55c2094931423c85b6ad7d7c474",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "e40b2778d29c8d367afbc9b3e34c1ad547c184530852412ab4be7d1f7ab9ddea",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        }
+      ]
+    },
+    {
+      "cve": "CVE-2026-74588",
+      "upstream_fix": "9f2cf069a9a72a2d6b97ca8b4c70e714aac99749",
+      "stable_fix": {
+        "sha": "e2e7c1de0e226ca1b7fea2de57a6c9bca408709b",
+        "release": "6.12.104"
+      },
+      "downstream_backport": "855a8085bf0a3f0b5a9e12362ed531084cb6978c",
+      "first_correcting_patch_version": "6.12.95.6",
+      "first_source_inclusion_version": "6.12.95.6",
+      "boot_intrinsic_fix": false,
+      "review": "manual_primary_semantics_and_module_replacement_source",
+      "decision": "source_content_accepted",
+      "reason": "The moved gap-acked chunk is rebound at the primary list move. An additional livepatch-side consistency repair in sctp_check_transmitted also reconciles a mismatched retained transport before later accounting. Both paths compile into the targeted sctp object; no layout substitution.",
+      "replacement_functions": [
+        "__sctp_outq_flush_rtx",
+        "sctp_check_transmitted"
+      ],
+      "build_targets": [
+        "net/sctp/sctp.ko"
+      ],
+      "source_sections": [
+        {
+          "path": "net/sctp/outqueue.c",
+          "start_line": 4886,
+          "end_line": 4895,
+          "sha256": "5c478e63675bc9f1d41a6fe75107937eabb3fccc5dba35935e9ca7ae806a8104"
+        }
+      ],
+      "content_decisions": [
+        {
+          "tuple_key": "3893623c7c2b6d90fd8666585af1f4c3b768fdc89d9755be055c235e6c15142d",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "f6fd0440ae600ba6ae2275ccc5d1a3d167a033426cafa7f1f2735c00465a0f5e",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "17f96527784c50dee6c9eda093d097bcf40d8c98de5d3d3649ba529ad256a624",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "36561c1e37afc2a5eaec901f7e318ee07ed74ffd46e7eed10cc1089e1e4b04d4",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "a5d5ce07e620eb3846ca28b1d649713574496e8623d46bddfd2e0f8625dfecaa",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "035043377c4aaf1bf55ea76971323ebbeb00516979f4859738a5b9650d0f472b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "c9bb560b52c11f9b5bc529be1404014ef9fdb91b767a6b86088df973b23c3864",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "d1519467db1d3279287e5bf40b299beede6ed3125d290a1bcc3a6120f71ecd6b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "48631839f6526bf89d83eed47d467588308a8ffdfd18497790d1a0ca09f5660c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "3f6dfc77ca9ec34ba38685b071dbce512ebcbe48db6322ca1f2703cd2bee536c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "9beacfa2a72a1131bec971a317e5bc7dc233e55c2094931423c85b6ad7d7c474",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "e40b2778d29c8d367afbc9b3e34c1ad547c184530852412ab4be7d1f7ab9ddea",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        }
+      ]
+    },
+    {
+      "cve": "CVE-2026-74688",
+      "upstream_fix": "c9158ceaf27780ef64534ad72f44ffde3f8ccc49",
+      "stable_fix": {
+        "sha": "6160e756db81d6cb63e3e2952efcf6c5134be385",
+        "release": "6.12.104"
+      },
+      "downstream_backport": "e59461558b817946b30f2b417fb244de312728fb",
+      "first_correcting_patch_version": "6.12.95.6",
+      "first_source_inclusion_version": "6.12.95.6",
+      "boot_intrinsic_fix": false,
+      "review": "manual_primary_semantics_and_module_replacement_source",
+      "decision": "source_content_accepted",
+      "reason": "The removal replacement scrubs control_chunk_list as well as the existing data list. This is the missing primary control-reply pointer cleanup in the targeted sctp object.",
+      "replacement_functions": [
+        "sctp_assoc_rm_peer"
+      ],
+      "build_targets": [
+        "net/sctp/sctp.ko"
+      ],
+      "source_sections": [
+        {
+          "path": "net/sctp/associola.c",
+          "start_line": 4774,
+          "end_line": 4796,
+          "sha256": "62ec3107601202030e4930290c40d1834ab34b562947a00d23ae583ddf0081d7"
+        }
+      ],
+      "content_decisions": [
+        {
+          "tuple_key": "3893623c7c2b6d90fd8666585af1f4c3b768fdc89d9755be055c235e6c15142d",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "f6fd0440ae600ba6ae2275ccc5d1a3d167a033426cafa7f1f2735c00465a0f5e",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "17f96527784c50dee6c9eda093d097bcf40d8c98de5d3d3649ba529ad256a624",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "36561c1e37afc2a5eaec901f7e318ee07ed74ffd46e7eed10cc1089e1e4b04d4",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "a5d5ce07e620eb3846ca28b1d649713574496e8623d46bddfd2e0f8625dfecaa",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "035043377c4aaf1bf55ea76971323ebbeb00516979f4859738a5b9650d0f472b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "c9bb560b52c11f9b5bc529be1404014ef9fdb91b767a6b86088df973b23c3864",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "d1519467db1d3279287e5bf40b299beede6ed3125d290a1bcc3a6120f71ecd6b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "48631839f6526bf89d83eed47d467588308a8ffdfd18497790d1a0ca09f5660c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "3f6dfc77ca9ec34ba38685b071dbce512ebcbe48db6322ca1f2703cd2bee536c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "9beacfa2a72a1131bec971a317e5bc7dc233e55c2094931423c85b6ad7d7c474",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "e40b2778d29c8d367afbc9b3e34c1ad547c184530852412ab4be7d1f7ab9ddea",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        }
+      ]
+    },
+    {
+      "cve": "CVE-2026-74724",
+      "upstream_fix": "646922a0379496154e8c8faca4f8e2fd9100cacc",
+      "stable_fix": {
+        "sha": "be65fa324640c7a95e30b146159a2be5cc73f22e",
+        "release": "6.12.104"
+      },
+      "downstream_backport": "2000050d916d4850b02cf6632cd1e91b0cf2bf94",
+      "first_correcting_patch_version": "6.12.95.6",
+      "first_source_inclusion_version": "6.12.95.6",
+      "boot_intrinsic_fix": false,
+      "review": "manual_primary_semantics_and_module_replacement_source",
+      "decision": "source_content_accepted",
+      "reason": "The module replacement includes the parsed header descriptor, one-time IPv4 length checks, writable-length bounds and both input/output callers of the changed helper signature. Core/xmit and inline parser code are compiled inside ip_vs, an explicit target. A commit in the backport graph alone would not prove this.",
+      "replacement_functions": [
+        "ip_vs_nat_icmp",
+        "ip_vs_out_icmp",
+        "ip_vs_in_icmp",
+        "handle_response_icmp",
+        "ip_vs_icmp_xmit"
+      ],
+      "build_targets": [
+        "net/netfilter/ipvs/ip_vs.ko"
+      ],
+      "source_sections": [
+        {
+          "path": "net/netfilter/ipvs/ip_vs_core.c",
+          "start_line": 3267,
+          "end_line": 3606,
+          "sha256": "eb6dd898ca273ee75ce4ae33c796bb2be74a819cd0d61ed3c822ff3dea50155f"
+        },
+        {
+          "path": "net/netfilter/ipvs/ip_vs_xmit.c",
+          "start_line": 3777,
+          "end_line": 3845,
+          "sha256": "e4b017979774e548ac840c293c0806e6419029f427b8c3c06bd6ccc323e9d6d9"
+        },
+        {
+          "path": "include/net/ip_vs.h",
+          "start_line": 1651,
+          "end_line": 1711,
+          "sha256": "05fdf08b55453bfed7fe35b732085935d59a1b1ab18604c5e2af279cf780879e"
+        }
+      ],
+      "content_decisions": [
+        {
+          "tuple_key": "3893623c7c2b6d90fd8666585af1f4c3b768fdc89d9755be055c235e6c15142d",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "f6fd0440ae600ba6ae2275ccc5d1a3d167a033426cafa7f1f2735c00465a0f5e",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "17f96527784c50dee6c9eda093d097bcf40d8c98de5d3d3649ba529ad256a624",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "36561c1e37afc2a5eaec901f7e318ee07ed74ffd46e7eed10cc1089e1e4b04d4",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "a5d5ce07e620eb3846ca28b1d649713574496e8623d46bddfd2e0f8625dfecaa",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "035043377c4aaf1bf55ea76971323ebbeb00516979f4859738a5b9650d0f472b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "c9bb560b52c11f9b5bc529be1404014ef9fdb91b767a6b86088df973b23c3864",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "d1519467db1d3279287e5bf40b299beede6ed3125d290a1bcc3a6120f71ecd6b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "48631839f6526bf89d83eed47d467588308a8ffdfd18497790d1a0ca09f5660c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "3f6dfc77ca9ec34ba38685b071dbce512ebcbe48db6322ca1f2703cd2bee536c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "9beacfa2a72a1131bec971a317e5bc7dc233e55c2094931423c85b6ad7d7c474",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "e40b2778d29c8d367afbc9b3e34c1ad547c184530852412ab4be7d1f7ab9ddea",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        }
+      ]
+    },
+    {
+      "cve": "CVE-2026-74669",
+      "upstream_fix": "e0ba936287dfe9783426aac27e5fd76fe35b38c9",
+      "stable_fix": {
+        "sha": "6f46fc460e9316062bdcdf89199eb5d7a33da33b",
+        "release": "6.12.104"
+      },
+      "downstream_backport": "542aec7d12bb1a2f7a69ff4089ec8c0b07db0e75",
+      "first_correcting_patch_version": "6.12.95.6",
+      "first_source_inclusion_version": "6.12.95.6",
+      "boot_intrinsic_fix": false,
+      "review": "manual_primary_semantics_and_module_replacement_source",
+      "decision": "source_content_accepted",
+      "reason": "The IPVS tunnel error replacement clears the stale options immediately after packet/network-header rebase, keeping the rest of the control block and ingress context. The complete affected helper is in targeted ip_vs.",
+      "replacement_functions": [
+        "ip_vs_in_icmp"
+      ],
+      "build_targets": [
+        "net/netfilter/ipvs/ip_vs.ko"
+      ],
+      "source_sections": [
+        {
+          "path": "net/netfilter/ipvs/ip_vs_core.c",
+          "start_line": 3267,
+          "end_line": 3606,
+          "sha256": "eb6dd898ca273ee75ce4ae33c796bb2be74a819cd0d61ed3c822ff3dea50155f"
+        }
+      ],
+      "content_decisions": [
+        {
+          "tuple_key": "3893623c7c2b6d90fd8666585af1f4c3b768fdc89d9755be055c235e6c15142d",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "f6fd0440ae600ba6ae2275ccc5d1a3d167a033426cafa7f1f2735c00465a0f5e",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "17f96527784c50dee6c9eda093d097bcf40d8c98de5d3d3649ba529ad256a624",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "36561c1e37afc2a5eaec901f7e318ee07ed74ffd46e7eed10cc1089e1e4b04d4",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "a5d5ce07e620eb3846ca28b1d649713574496e8623d46bddfd2e0f8625dfecaa",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "035043377c4aaf1bf55ea76971323ebbeb00516979f4859738a5b9650d0f472b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "c9bb560b52c11f9b5bc529be1404014ef9fdb91b767a6b86088df973b23c3864",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "d1519467db1d3279287e5bf40b299beede6ed3125d290a1bcc3a6120f71ecd6b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "48631839f6526bf89d83eed47d467588308a8ffdfd18497790d1a0ca09f5660c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "3f6dfc77ca9ec34ba38685b071dbce512ebcbe48db6322ca1f2703cd2bee536c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "9beacfa2a72a1131bec971a317e5bc7dc233e55c2094931423c85b6ad7d7c474",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "e40b2778d29c8d367afbc9b3e34c1ad547c184530852412ab4be7d1f7ab9ddea",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        }
+      ]
+    },
+    {
+      "cve": "CVE-2026-74656",
+      "upstream_fix": "bc5bde9ce3cc36502839dfe98e068f7303a50982",
+      "stable_fix": {
+        "sha": "5a28a4b22dde92f9d293b94236314b8d6181dc4a",
+        "release": "6.12.104"
+      },
+      "downstream_backport": "56bdd02fce5476d1f32fe842d20d04ea97d33379",
+      "first_correcting_patch_version": "6.12.95.6",
+      "first_source_inclusion_version": "6.12.95.6",
+      "boot_intrinsic_fix": false,
+      "review": "manual_primary_semantics_and_module_replacement_source",
+      "decision": "source_content_accepted",
+      "reason": "The replacement pairs RCU-protected walking with a new helper holding the existing fnhe_lock for the MTU/locked pair. Both implementation files are built into targeted vmlinux. The added header item is a prototype for this explicit changed caller, not a behavior change needing unrelated callers to be rebuilt.",
+      "replacement_functions": [
+        "fib_nhc_update_mtu",
+        "fnhe_update_pmtu"
+      ],
+      "build_targets": [
+        "vmlinux"
+      ],
+      "source_sections": [
+        {
+          "path": "net/ipv4/fib_semantics.c",
+          "start_line": 2713,
+          "end_line": 2756,
+          "sha256": "c1e4aa52a1a9f0f32c47b5cfdc845f62f0f661ddab3a2fa744d0745bfde944ce"
+        },
+        {
+          "path": "net/ipv4/route.c",
+          "start_line": 2780,
+          "end_line": 2813,
+          "sha256": "793e578f9e36c943a34d0f8b30fdccf860577d484f425a82c3cd595ddc0ea6bd"
+        },
+        {
+          "path": "include/net/route.h",
+          "start_line": 1747,
+          "end_line": 1753,
+          "sha256": "873e551443e6081156dd09c7f0400f7c6594e348d343413b7108f13f09eeb7c3"
+        }
+      ],
+      "content_decisions": [
+        {
+          "tuple_key": "3893623c7c2b6d90fd8666585af1f4c3b768fdc89d9755be055c235e6c15142d",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "f6fd0440ae600ba6ae2275ccc5d1a3d167a033426cafa7f1f2735c00465a0f5e",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "17f96527784c50dee6c9eda093d097bcf40d8c98de5d3d3649ba529ad256a624",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "36561c1e37afc2a5eaec901f7e318ee07ed74ffd46e7eed10cc1089e1e4b04d4",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "a5d5ce07e620eb3846ca28b1d649713574496e8623d46bddfd2e0f8625dfecaa",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "035043377c4aaf1bf55ea76971323ebbeb00516979f4859738a5b9650d0f472b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "c9bb560b52c11f9b5bc529be1404014ef9fdb91b767a6b86088df973b23c3864",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "d1519467db1d3279287e5bf40b299beede6ed3125d290a1bcc3a6120f71ecd6b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "48631839f6526bf89d83eed47d467588308a8ffdfd18497790d1a0ca09f5660c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "3f6dfc77ca9ec34ba38685b071dbce512ebcbe48db6322ca1f2703cd2bee536c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "9beacfa2a72a1131bec971a317e5bc7dc233e55c2094931423c85b6ad7d7c474",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "e40b2778d29c8d367afbc9b3e34c1ad547c184530852412ab4be7d1f7ab9ddea",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        }
+      ]
+    },
+    {
+      "cve": "CVE-2026-74615",
+      "upstream_fix": "b37971686ec59fb027fa4910ba16805e68fddb97",
+      "stable_fix": {
+        "sha": "6b095e99b9e67ea31f0c4b00260e010898253519",
+        "release": "6.12.104"
+      },
+      "downstream_backport": "ed13c947342ed69f7840b3bdeb82aa09ff68e270",
+      "first_correcting_patch_version": "6.12.95.6",
+      "first_source_inclusion_version": "6.12.95.6",
+      "boot_intrinsic_fix": false,
+      "review": "manual_primary_semantics_and_module_replacement_source",
+      "decision": "source_content_accepted",
+      "reason": "The module replacement contains the upstream missing-running check and additional synchronous timer cleanup in uninit for previously armed devices. Both changed methods belong to targeted vxlan; no device structure-layout change.",
+      "replacement_functions": [
+        "vxlan_changelink",
+        "vxlan_uninit"
+      ],
+      "build_targets": [
+        "drivers/net/vxlan/vxlan.ko"
+      ],
+      "source_sections": [
+        {
+          "path": "drivers/net/vxlan/vxlan_core.c",
+          "start_line": 881,
+          "end_line": 889,
+          "sha256": "2a0ad3ac2a77d2e09ad7a3705ca079cfff860a72aa7f298703369a268b1dceef"
+        }
+      ],
+      "content_decisions": [
+        {
+          "tuple_key": "3893623c7c2b6d90fd8666585af1f4c3b768fdc89d9755be055c235e6c15142d",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "f6fd0440ae600ba6ae2275ccc5d1a3d167a033426cafa7f1f2735c00465a0f5e",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "17f96527784c50dee6c9eda093d097bcf40d8c98de5d3d3649ba529ad256a624",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "36561c1e37afc2a5eaec901f7e318ee07ed74ffd46e7eed10cc1089e1e4b04d4",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "a5d5ce07e620eb3846ca28b1d649713574496e8623d46bddfd2e0f8625dfecaa",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "035043377c4aaf1bf55ea76971323ebbeb00516979f4859738a5b9650d0f472b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "c9bb560b52c11f9b5bc529be1404014ef9fdb91b767a6b86088df973b23c3864",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "d1519467db1d3279287e5bf40b299beede6ed3125d290a1bcc3a6120f71ecd6b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "48631839f6526bf89d83eed47d467588308a8ffdfd18497790d1a0ca09f5660c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "3f6dfc77ca9ec34ba38685b071dbce512ebcbe48db6322ca1f2703cd2bee536c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "9beacfa2a72a1131bec971a317e5bc7dc233e55c2094931423c85b6ad7d7c474",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "e40b2778d29c8d367afbc9b3e34c1ad547c184530852412ab4be7d1f7ab9ddea",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        }
+      ]
+    },
+    {
+      "cve": "CVE-2026-74597",
+      "upstream_fix": "f803c086399da277b5d0ff36a107d0f162751800",
+      "stable_fix": {
+        "sha": "484134e1eb07d700a73b1e4bbf3fb503e299be60",
+        "release": "6.12.104"
+      },
+      "downstream_backport": "29803ef12152a3b5981e153c797d061a6607a875",
+      "first_correcting_patch_version": "6.12.95.6",
+      "first_source_inclusion_version": "6.12.95.6",
+      "boot_intrinsic_fix": false,
+      "review": "manual_primary_semantics_and_module_replacement_source",
+      "decision": "source_content_accepted",
+      "reason": "The error function clears cloned IPv6 control metadata before the pull/rebase and icmpv6_send. Exact archived boot CONFIG_IPV6_TUNNEL=y places this function in targeted vmlinux; no absent ip6_tunnel module protection is assumed. MIP6 type/state availability remains conditional reachability, independent of correction content.",
+      "replacement_functions": [
+        "ip6ip6_err"
+      ],
+      "build_targets": [
+        "vmlinux"
+      ],
+      "source_sections": [
+        {
+          "path": "net/ipv6/ip6_tunnel.c",
+          "start_line": 2824,
+          "end_line": 2831,
+          "sha256": "d2dadddc84d8994d4ecbea0b451c62cca6627bff194e8a990cca6c61ad770fa7"
+        }
+      ],
+      "content_decisions": [
+        {
+          "tuple_key": "3893623c7c2b6d90fd8666585af1f4c3b768fdc89d9755be055c235e6c15142d",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "f6fd0440ae600ba6ae2275ccc5d1a3d167a033426cafa7f1f2735c00465a0f5e",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "17f96527784c50dee6c9eda093d097bcf40d8c98de5d3d3649ba529ad256a624",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "36561c1e37afc2a5eaec901f7e318ee07ed74ffd46e7eed10cc1089e1e4b04d4",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "a5d5ce07e620eb3846ca28b1d649713574496e8623d46bddfd2e0f8625dfecaa",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "035043377c4aaf1bf55ea76971323ebbeb00516979f4859738a5b9650d0f472b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "c9bb560b52c11f9b5bc529be1404014ef9fdb91b767a6b86088df973b23c3864",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "d1519467db1d3279287e5bf40b299beede6ed3125d290a1bcc3a6120f71ecd6b",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "48631839f6526bf89d83eed47d467588308a8ffdfd18497790d1a0ca09f5660c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "3f6dfc77ca9ec34ba38685b071dbce512ebcbe48db6322ca1f2703cd2bee536c",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "9beacfa2a72a1131bec971a317e5bc7dc233e55c2094931423c85b6ad7d7c474",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "e40b2778d29c8d367afbc9b3e34c1ad547c184530852412ab4be7d1f7ab9ddea",
+          "decision": "source_content_accepted",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        }
+      ]
+    },
+    {
+      "cve": "CVE-2026-74630",
+      "upstream_fix": "0e243671bc7b8eaf00f83dd2f4367436dc0cff98",
+      "stable_fix": {
+        "sha": "1c206d461c680c3151daa3c89fc26eaf5bf98a7f",
+        "release": "6.12.104"
+      },
+      "downstream_backport": "06b26dc456b9a3965fbda55d562c8e84c79550a9",
+      "first_correcting_patch_version": null,
+      "first_source_inclusion_version": "6.12.95.6",
+      "boot_intrinsic_fix": false,
+      "review": "manual_primary_semantics_and_module_replacement_source",
+      "decision": "withheld_partial_inline_fanout",
+      "reason": "Primary getter correction is present and forced inline. Core multicast caller under targeted vmlinux is covered in source. However v6 uses an explicit subset of module targets; a complete affected-inline-caller/replacement inventory is not yet proved. Later v7 source explicitly treats header fanout as unbounded and removes the target list. No unconditional accepted tuple until that exact v6 fanout scope is resolved.",
+      "replacement_functions": [
+        "in6_dev_get and all generated callers"
+      ],
+      "build_targets": [
+        "vmlinux and all affected callers/modules"
+      ],
+      "source_sections": [
+        {
+          "path": "include/net/addrconf.h",
+          "start_line": 1633,
+          "end_line": 1650,
+          "sha256": "937ed6e0e02f5eab5018762fc5e6fb59c3f72ea2d61e6aa0e4d639d13ecb0787"
+        }
+      ],
+      "content_decisions": [
+        {
+          "tuple_key": "3893623c7c2b6d90fd8666585af1f4c3b768fdc89d9755be055c235e6c15142d",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "f6fd0440ae600ba6ae2275ccc5d1a3d167a033426cafa7f1f2735c00465a0f5e",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "17f96527784c50dee6c9eda093d097bcf40d8c98de5d3d3649ba529ad256a624",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "36561c1e37afc2a5eaec901f7e318ee07ed74ffd46e7eed10cc1089e1e4b04d4",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "a5d5ce07e620eb3846ca28b1d649713574496e8623d46bddfd2e0f8625dfecaa",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "035043377c4aaf1bf55ea76971323ebbeb00516979f4859738a5b9650d0f472b",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "c9bb560b52c11f9b5bc529be1404014ef9fdb91b767a6b86088df973b23c3864",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": null,
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "d1519467db1d3279287e5bf40b299beede6ed3125d290a1bcc3a6120f71ecd6b",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "48631839f6526bf89d83eed47d467588308a8ffdfd18497790d1a0ca09f5660c",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "97a8c8fc64b1ef6339bca9e85a8ccdd6884cb3e0"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "3f6dfc77ca9ec34ba38685b071dbce512ebcbe48db6322ca1f2703cd2bee536c",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "80a0017d7b35cdfd4d11311876f487d2d56e3e3d"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "9beacfa2a72a1131bec971a317e5bc7dc233e55c2094931423c85b6ad7d7c474",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        },
+        {
+          "tuple_key": "e40b2778d29c8d367afbc9b3e34c1ad547c184530852412ab4be7d1f7ab9ddea",
+          "decision": "withheld_partial_inline_fanout",
+          "vpsadminos_identity_matches": [
+            "93014dd1f7126798617a927f1e8a3a556faf046c"
+          ],
+          "module_id": "livepatch_6",
+          "patch_version": "6",
+          "module_kernel_version": "6.12.95",
+          "booted_release": "6.12.95",
+          "reported_linux_revision": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+          "source_identity_receipt": "assessment/implementer0/livepatch-source-identities.json",
+          "payload_sha256": "b8ba1b2fba3ba64ae890f0633aef26e053a942dff7f930179a357af9fae23171",
+          "activation_not_certified": true
+        }
+      ],
+      "architect_disposition": "Final conservative partial coverage; whole-CVE mitigation uses later fixed kernel"
+    }
+  ],
+  "earlier_modules": "Observed versions2\u20135 precede the first-v6 corrections in canonical coverage; not accepted for these11. Their identity dispositions are separately central, not mistaken for source-content acceptance.",
+  "activation_contract": "Content acceptance permits only exact reviewed tuples. Existing evaluator alone decides loaded/enabled/stable state, boot continuity, counterpart transitions and mitigation timestamp. Quarantine is deployment risk, not denial of historical content.",
+  "limits": [
+    "No new kernel/module build, exploit or API call",
+    "Ten decisions are source replacement/target review, not binary symbol or transition execution tests",
+    "74630 has a material header-fanout completeness gap; leave unaccepted until resolved",
+    "No per-node safe history override or manual evaluation edit"
+  ],
+  "source_identity_receipt_sha256": "62bd95bae5d453c60f9061eb573677a4380bb74585ffe86b109d691d52f7c825",
+  "earlier_content_crosscheck": "assessment/implementer1/earlier-livepatch-content-check.json",
+  "architect_74630_decision": "Whole-v6 tuples withheld absent exact fanout replacement proof; known partial source correction retained, later fixed-kernel boundary accepted as conservative. No source-default safety or absent-protection assertion."
+}

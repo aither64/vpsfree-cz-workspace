@@ -1,0 +1,29 @@
+--- a/spec/dossiers_spec.rb
++++ b/spec/dossiers_spec.rb
+@@ -802,10 +802,10 @@
+       expect(rule).not_to have_key('fixed_commit')
+     end
+     evaluation = evaluation_for(advisory)
+-    applicable = evaluation.fetch('nodes').reject { |node| node.fetch('node_role') == 'storage' }
+-    expect(applicable.length).to eq(12)
+-    expect(applicable).to all(include('state' => 'vulnerable'))
+-    expect(evaluation.dig('completeness', 'resolution_complete')).to be(false)
++    expect(advisory.platform.fetch('affected_node_roles')).to be_empty
++    expect(evaluation.fetch('nodes')).to all(include('state' => 'not_affected'))
++    expect(evaluation.dig('completeness', 'resolution_complete')).to be(true)
++    expect(evaluation.dig('completeness', 'blocking_node_ids')).to be_empty
+   end
+ 
+   it 'retains canonical perf boundaries and source-bound runtime introduction uncertainty' do
+@@ -834,7 +834,10 @@
+       advisory = described_class.load(cve)
+       storage = evaluation_for(advisory).fetch('nodes').find { |node| node.fetch('node_id') == 161 }
+       expect(storage.fetch('node_role')).to eq('storage')
+-      if RT_CVES.include?(cve)
++      if cve == 'CVE-2026-64387'
++      expect(advisory.platform.fetch('affected_node_roles')).to be_empty
++      expect(storage).to include('state' => 'not_affected', 'reason' => a_string_including('node role storage'))
++    elsif RT_CVES.include?(cve)
+         expect(advisory.platform.fetch('affected_node_roles')).to eq(%w[node storage])
+         expect(storage).to include('state' => 'unknown', 'reason' => a_string_including('receipt time is invalid'))
+       else

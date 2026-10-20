@@ -1,0 +1,19 @@
+import json,pathlib
+P=pathlib.Path('assessment/implementer1');W=pathlib.Path('/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-vpsadmin-kernel-cves/security-advisories');r=json.load(open('assessment/node126-lifecycle.json'));assert r['status']=='accepted_scoped_history_start_override';ids=json.load(open('assessment/packages.json'))['groups']['implementer1']
+for c in ids:
+ p=W/'advisories'/c/'advisory.yml';s=p.read_text();assert '  history_start_overrides:' not in s
+ value={'required_since':r['required_since'],'reason':r['reason'],'source':r['source']};s=s.replace('  affected_node_roles:\n','  history_start_overrides:\n    "126": '+json.dumps(value)+'\n  affected_node_roles:\n');p.write_text(s)
+ p=W/'advisories'/c/'analysis.md';s=p.read_text();s=s.replace('No lifecycle start override or historical attestation is inferred or copied.','Only the independently reviewed Node126 lifecycle override described below is used; no historical attestation or old dossier override is inferred or copied.')
+ start=s.index('At this checkpoint the result is 11 mitigated, 1 unknown and 1 role-based not_affected.')
+ end=s.index('The excluded storage row lacks current timestamps',start)
+ s=s[:start]+'''The first evaluation retained one unknown because its history and reconstruction began after January. Architect subsequently independently reviewed configuration commit `e27882a9bc8f6900903e6ae84841b9935190548c`, its parent `76055edbba3b3b4cf0cd6df45d2255e812d8aa6a`, and the frozen initial boot. The commit first adds Node126 as a production hypervisor and its reconstructed boot begins the same day. This dossier uses the supported Node126-only `history_start_overrides` value `2026-03-31T20:11:46Z`, citing that commit. The value is the first retained baseline, not an asserted exact production deployment instant; the source commit itself predates that observation. Global January scope remains unchanged and ordinary affected/fixed/mitigation classification still applies throughout the scoped history. No storage override is applied. The final result and completeness are retained in `evaluation.json`. '''+s[end:]
+ s=s.replace('Baseline unknowns are retained unless a reviewed lifecycle source proves a later production entry; no old override is copied.','The independently reviewed Node126 lifecycle scope is applied as described below; no old override is copied, and unsupported gaps remain unknown.')
+ s=s.replace('pending architect reconciliation of this exact scope, and the generated later full-fix timestamp','under the architect’s final conservative decision for this exact scope, and the generated later full-fix timestamp')
+ s=s.replace('No unsupported source/build or manual-status override is used.','No unsupported source/build or manual-status override is used. The architect-owned design accepts this conservative later fixed-kernel boundary while retaining known partial v6 correction; complete fanout proof would be needed before revising it.')
+ p.write_text(s)
+coverage=json.load(open(P/'livepatch-coverage.json'));coverage['status']='Final source decisions:10accepted and1withheld_partial_inline_fanout';coverage['architect_74630_decision']='Whole-v6 tuples withheld absent exact fanout replacement proof; known partial source correction retained, later fixed-kernel boundary accepted as conservative. No source-default safety or absent-protection assertion.'
+for row in coverage['rows']:
+ if row['cve']=='CVE-2026-74630':
+  row['decision']='withheld_partial_inline_fanout';row['architect_disposition']='Final conservative partial coverage; whole-CVE mitigation uses later fixed kernel'
+  for t in row['content_decisions']:t['decision']='withheld_partial_inline_fanout'
+(P/'livepatch-coverage.json').write_text(json.dumps(coverage,indent=2)+'\n');print('Added exact source-supported Node126 lifecycle scope to20;74630 final qualifier recorded')

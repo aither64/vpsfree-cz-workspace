@@ -1,0 +1,408 @@
+{
+  "recorded_at": "2026-10-19T19:54:17.243760+00:00",
+  "source_linux": "a2384967b90f24d2470c9eb15f0e66d938df7e08",
+  "source_vpsadminos": "87fc13aac3fc8ce3d6c71c7ef3a8e72a5993a088",
+  "scope": "Candidate gates only, no exploit tests or live evidence",
+  "rows": [
+    {
+      "cve": "CVE-2026-80521",
+      "title": "af_unix: Unlink scc_entry in unix_del_edge().",
+      "stable_fixes": [
+        {
+          "sha": "1293fd69a50d188a5788b08ba3741a3e86be1608",
+          "release": "6.12.111"
+        }
+      ],
+      "group": "default_user",
+      "research_recommendation": "include",
+      "source_gate": "UNIX=y; own AF_UNIX socket/SCM_RIGHTS reference graph and close/send operations need no host capability or optional device. Default seccomp permits them.",
+      "impact_limit": "SCC garbage-collector freed-vertex traversal; shared-kernel lifetime corruption. No platform-specific host escape verified.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-80521.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-53388",
+      "title": "fuse: re-lock request before replacing page cache folio",
+      "stable_fixes": [
+        {
+          "sha": "46473ddccdc5065033e397d6e62c280dbcd3d9c2",
+          "release": "6.12.95"
+        }
+      ],
+      "group": "default_tenant_admin",
+      "research_recommendation": "include",
+      "source_gate": "FUSE=m explicitly preloaded; /dev/fuse feature defaults on; downstream FUSE has FS_USERNS_MOUNT. Tenant admin can mount/operate own daemon and arrange request abort/copy lifecycle. Device permission and mount state are runtime facts.",
+      "impact_limit": "fuse_io_args lifetime UAF; upstream .95 already contains this correction. Inclusive range selection does not mean .95 remains vulnerable.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-53388.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-98041",
+      "title": "bpf: Don't predict JMP32 pointer vs zero comparisons",
+      "stable_fixes": [
+        {
+          "sha": "d16f0eafcaa62e677a2b5b0dabc1f8d31dfe3d4d",
+          "release": "6.12.111"
+        }
+      ],
+      "group": "unresolved_verifier_mitigation",
+      "research_recommendation": "defer",
+      "source_gate": "BPF syscalls/socket filters enabled, 6.12 source unprivileged_bpf_disabled=0. check_cond_jmp_op predicts immediate-zero pointer branch before final pointer-comparison rejection. However bypass_spec_v1=false invokes sanitize_speculative_path, which marks the compared register unknown and verifies the alternative branch. bpf_bypass_spec_v1 requires cpu_mitigations_off or token/initial CAP_PERFMON; ordinary userns root is insufficient.",
+      "impact_limit": "The reviewed example cannot establish an ordinary unprivileged unsafe-memory path through speculative verification. Low-32-bit-zero pointer alignment and mitigation behavior remain prerequisites; no new exploit is tested. Keep conditional/unresolved rather than equating enabled BPF with a complete verifier bypass.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-98041.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-98222",
+      "title": "KEYS: encrypted: fix integer overflow of datablob_len",
+      "stable_fixes": [
+        {
+          "sha": "1e720f63dbafc093a8f5d519f05b67724993edd4",
+          "release": "6.12.112"
+        }
+      ],
+      "group": "conditional_operator_module",
+      "research_recommendation": "conditional",
+      "source_gate": "KEYS=y, ENCRYPTED_KEYS=m; encrypted_keys absent from default preload. key_type_lookup searches registered types and returns ENOKEY if missing; it does not automatically provide the key type. Host module loading/activation needed under autoload-disabled defaults. Once registered, own encrypted-key creation is not intrinsically host-root-only.",
+      "impact_limit": "Concrete integer truncation and large heap OOB write; no default tenant exposure claim while key type unregistered.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-98222.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-63823",
+      "title": "keys: Pin request_key_auth payload in instantiate paths",
+      "stable_fixes": [
+        {
+          "sha": "f9b68632ac93cc742f2e411021c4dbfe452ea0c2",
+          "release": "6.12.95"
+        }
+      ],
+      "group": "conditional_request_key_helper",
+      "research_recommendation": "defer",
+      "source_gate": "KEYS=y; request_key/keyctl permitted, but instantiate/reject paths require an actual request_key_auth instantiation permit. Source invokes host /sbin/request-key via usermode helper. A binary/configuration inside a tenant alone does not establish an attacker-accessible host helper/auth context. No host helper setup found in inspected OS module/package references.",
+      "impact_limit": "Auth-payload UAF is serious; default tenant path unresolved until helper/auth-context prerequisites are established. Upstream fixed at inclusive .95 boundary.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-63823.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-63824",
+      "title": "KEYS: fix overflow in keyctl_pkey_params_get_2()",
+      "stable_fixes": [
+        {
+          "sha": "5165f1cc727f1322456735df212d8e26ec237a8d",
+          "release": "6.12.95"
+        }
+      ],
+      "group": "default_user_with_owned_key",
+      "research_recommendation": "include",
+      "source_gate": "KEYS, ASYMMETRIC_KEY_TYPE, ASYMMETRIC_PUBLIC_KEY_SUBTYPE, X509_CERTIFICATE_PARSER and CRYPTO_RSA=y. keyctl not denied by default seccomp. Own searchable asymmetric public key supports PKEY_ENCRYPT route without initial-userns capabilities; private-key PKCS8 parser is m but not needed for every affected operation.",
+      "impact_limit": "Heap output-buffer OOB write/read in keyctl asymmetric operation. Fixed in .95; include as boundary fix, not claim .95 affected.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-63824.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-98503",
+      "title": "packet: use ubuf_info completion for TX_RING packets",
+      "stable_fixes": [
+        {
+          "sha": "e67c455d79fbf709a94965f09a2be6bf4f4ba5fd",
+          "release": "6.12.112"
+        }
+      ],
+      "group": "default_tenant_admin",
+      "research_recommendation": "borderline",
+      "source_gate": "AF_PACKET explicitly preloaded; namespace CAP_NET_RAW permits TX_RING. Socket payload/fragments can remain shared after early completion. Same baseline gate as other TX_RING defects; no extra host interface needed.",
+      "impact_limit": "Primary text proves early ring-slot reuse/payload ownership violation. Effect beyond attacker-owned packet data and a distinct kernel integrity/escape primitive remains for impact review; do not automatically equate it to arbitrary kernel write.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-98503.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-74517",
+      "title": "KVM: x86: Cancel delayed I/O APIC EOI handling before destroying vCPUs",
+      "stable_fixes": [
+        {
+          "sha": "69d040448067cebdd5598684db36ce7d8fb2f43e",
+          "release": "6.12.105"
+        }
+      ],
+      "group": "default_kvm_feature_hardware",
+      "research_recommendation": "include_hardware_condition",
+      "source_gate": "KVM feature defaults on, delegated /dev/kvm. KVM/Intel/AMD modules built; source hardware-config generator adds vendor module on vmx/svm. Tenant VMM can create irqchip/vCPUs, run guest and destroy VM. No nested VMX or special physical I/O device required. Actual virtualization support/module/device permissions are runtime facts.",
+      "impact_limit": "Delayed IOAPIC EOI work reaches freed vCPU; shared-kernel UAF. Default feature availability is distinct from proof that every compute/storage node runs a vulnerable KVM path.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-74517.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-89929",
+      "title": "KVM: nVM: Ensure INVVPID is emulated on the correct physical CPU",
+      "stable_fixes": [
+        {
+          "sha": "d03e721801ac54b9fdf05668aa0c069f07913b68",
+          "release": "6.12.110"
+        }
+      ],
+      "group": "intel_nested_kvm",
+      "research_recommendation": "include_hardware_condition",
+      "source_gate": "Tenant-controlled KVM VMM; Intel VMX CPU/module with nested virtualization and VPID enabled. kvm_intel nested defaults true in reviewed source. Attacker can run L1/L2 and drive INVVPID/migration inside its VM; no initial-userns capability check substitutes for these hardware/runtime prerequisites.",
+      "impact_limit": "Stale translation after wrong-pCPU invalidation. Do not infer cross-VPS success solely from stale-TLB mechanism.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-89929.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-89930",
+      "title": "KVM: nVMX: Service local TLB flushes on failed nested VM-Enter",
+      "stable_fixes": [
+        {
+          "sha": "f74fccdf4f7fb0780cd84944108d35f3d9dc46a7",
+          "release": "6.12.110"
+        }
+      ],
+      "group": "intel_nested_kvm",
+      "research_recommendation": "include_hardware_condition",
+      "source_gate": "Same Intel nested-VMX prerequisite; tenant VMM/guest can control failed/successful nested VM-entry and virtual VPID changes. Actual nested/VPID controls and CPU feature exposure unknown.",
+      "impact_limit": "Skipped TLB flush on failed VM-entry; stale guest translations. The scope of memory reached depends on the complete nested/KVM state, not CVSS alone.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-89930.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-89932",
+      "title": "KVM: nVMX: Always flush vpid02 on first use",
+      "stable_fixes": [
+        {
+          "sha": "8b98d662ab24f34710a56e03bc9169e4a5508606",
+          "release": "6.12.110"
+        }
+      ],
+      "group": "intel_nested_kvm",
+      "research_recommendation": "include_hardware_condition",
+      "source_gate": "Same Intel nested-VMX/VPID support. L1 can perform VMXOFF/VMXON within its VM and reuse nested VPID; hardware CPU migration/VPID reuse remains runtime-dependent.",
+      "impact_limit": "Primary fix explicitly says stale TLB entries may come from a different vCPU or completely different VM; strongest stated cross-VM isolation consequence of this three-fix group. No vpsAdminOS reproduction performed.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-89932.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-98720",
+      "title": "KVM: nVMX: Force MSR bitmap refresh if runtime eVMCS controls are modified",
+      "stable_fixes": [
+        {
+          "sha": "2db11598b59f16ddb6420693f9a4ac4efc3d4789",
+          "release": "6.12.113"
+        }
+      ],
+      "group": "intel_nested_kvm_evmcs",
+      "research_recommendation": "include_hardware_condition",
+      "source_gate": "KVM_HYPERV=y. Tenant VMM enables KVM_CAP_HYPERV_ENLIGHTENED_VMCS through ordinary vCPU KVM_ENABLE_CAP; nested_enable_evmcs sets its flag without initial-userns capability. Requires Intel VMX/nested and eVMCS use; running the host under Hyper-V is not the same prerequisite as enabling guest eVMCS.",
+      "impact_limit": "Primary defect permits L2/L1-proxy access to L0 TPR due stale MSR bitmap. Explicit guest-to-host register boundary violation; full node-root/cross-VPS code execution is not demonstrated by that register access alone.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-98720.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-74753",
+      "title": "perf: Reject exited events as group leaders",
+      "stable_fixes": [
+        {
+          "sha": "e593031ff19a9484e8a00bc47edd447187721846",
+          "release": "6.12.108"
+        }
+      ],
+      "group": "default_user_perf",
+      "research_recommendation": "include",
+      "source_gate": "PERF_EVENTS=y; source perf_event_paranoid defaults 2. Per-task events excluding kernel profiling are allowed without CAP_PERFMON; default seccomp allows perf_event_open. Own event groups/exec/fd lifecycle suffice. Effective sysctl/LSM policy unknown.",
+      "impact_limit": "EXIT leader UAF. Package B records supported 6.12 affected interval .96\u2013.107, fixed .108; do not mark .95 affected merely because perf is enabled.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-74753.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-93817",
+      "title": "perf: Fix addr_filter_ranges lifetime",
+      "stable_fixes": [
+        {
+          "sha": "cd8dab11046c03ab07899ce3fe2aa7d1a9702cf1",
+          "release": "6.12.111"
+        }
+      ],
+      "group": "hardware_conditional_user_perf",
+      "research_recommendation": "include_hardware_condition",
+      "source_gate": "CPU_SUP_INTEL=y builds Intel PT pmu (arch/x86/events/intel/Makefile pt.o); pt_init checks actual X86_FEATURE_INTEL_PT. Own per-task exclude_kernel events/filter/inherit/fork allowed at upstream paranoid2, without host CAP_PERFMON; no dedicated CONFIG_INTEL_PT symbol should be invented. Actual PT PMU and policy unknown.",
+      "impact_limit": "addr_filter_ranges freed while RCU paths read/write ranges. Hardware capability qualification; ordinary software perf events alone do not reach address-filter implementation.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-93817.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-74662",
+      "title": "inet: frags: publish queues before arming timer",
+      "stable_fixes": [
+        {
+          "sha": "39c6c4b267b65f00e0b0335a2ae00cbe9e3174f0",
+          "release": "6.12.106"
+        }
+      ],
+      "group": "optional_tenant_network_config",
+      "research_recommendation": "include",
+      "source_gate": "IPv4/IPv6 fragment core built; namespace fragment timeout sysctls registered per netns and writable by namespace CAP_NET_ADMIN. ipfrag_time parser has no positive minimum, so tenant can select zero then drive local fragment input. Default timeouts positive.",
+      "impact_limit": "Timer before hash publication leaves stale fragment queue; not host-only despite nondefault timeout.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-74662.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-74705",
+      "title": "udp: fix potential use-after-free in tunnel segmentation",
+      "stable_fixes": [
+        {
+          "sha": "5161e67c561c4f28a5d9335a6e859b02511de92b",
+          "release": "6.12.104"
+        }
+      ],
+      "group": "optional_tenant_network_config",
+      "research_recommendation": "include",
+      "source_gate": "UDP tunnel segmentation core available; preloaded vxlan/udp_tunnel, delegated TUN and AF_PACKET permit tenant-admin-controlled encapsulated/nonlinear traffic and own tunnel configuration. Needs pull-induced skb head relocation, not arbitrary UDP traffic.",
+      "impact_limit": "Stale UDP header after pull reallocates skb head; concrete potential UAF. No platform-specific weaponization verified.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-74705.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-80725",
+      "title": "net: gro: properly validate BIG TCP aggregation criteria",
+      "stable_fixes": [
+        {
+          "sha": "03cb8cc2961f5f781d12e903782cb3815ed84b1c",
+          "release": "6.12.106"
+        }
+      ],
+      "group": "optional_tenant_network_config",
+      "research_recommendation": "include",
+      "source_gate": "Software GRO/TCP/IPv4/IPv6 built. Device gro_max_size defaults GRO_LEGACY_MAX_SIZE; tenant namespace CAP_NET_ADMIN can raise GRO_MAX_SIZE for own device through rtnetlink and arrange suitable veth/TUN/AF_PACKET traffic. Needs >64KiB aggregation plus insufficient pre-MAC room/nonplain protocol condition.",
+      "impact_limit": "Pre-head memmove OOB write is concrete; BIG TCP is opt-in tenant network configuration, not universal default receive behavior.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-80725.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-89478",
+      "title": "sctp: drop a chunk if its transport was removed",
+      "stable_fixes": [
+        {
+          "sha": "c6c86a5e62a4fec36692ddd64b9144b660f71f96",
+          "release": "6.12.109"
+        }
+      ],
+      "group": "optional_tenant_sctp_addip",
+      "research_recommendation": "include",
+      "source_gate": "SCTP preloaded. Removed-transport path needs an association, authenticated ASCONF DEL-IP/ADDIP and concurrent socket-backlog/direct receive handling. Per-netns addip/auth controls are tenant-admin writable; defaults off.",
+      "impact_limit": "Transport restored into last_data_from after removal, later SACK UAF. No unconfigured Internet exposure claim.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-89478.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-89479",
+      "title": "sctp: stop processing a packet once its association is deleted",
+      "stable_fixes": [
+        {
+          "sha": "ee3f04cf566f6041aa9a0360494fd8db5ade383a",
+          "release": "6.12.109"
+        }
+      ],
+      "group": "tenant_sctp_endpoint",
+      "research_recommendation": "include",
+      "source_gate": "SCTP preloaded; requires matching endpoint/association handshake and bundled chunks on socket backlog. Distinct from ADDIP-only bugs: this described COOKIE ECHO/SHUTDOWN/ACK path does not establish an ADDIP/auth toggle requirement. Tenant can create own listener/peers using ordinary sockets.",
+      "impact_limit": "Freed transport last_time_heard write and association UAF after same-packet deletion. Shared-kernel memory corruption, not demonstrated platform host root.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-89479.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-98586",
+      "title": "sctp: hold asoc or transport before mod_timer() in timer handlers",
+      "stable_fixes": [
+        {
+          "sha": "27c51a9b55b227309161c903f9ecfbf022516bc2",
+          "release": "6.12.112"
+        }
+      ],
+      "group": "tenant_sctp_endpoint",
+      "research_recommendation": "include",
+      "source_gate": "SCTP preloaded; association/transport timer firing/rearm versus cleanup, plus proto-unreachable variant. Generic SCTP socket lifecycle, no ADDIP requirement established by primary description. Own sockets/peer traffic/close can exercise lifecycle.",
+      "impact_limit": "Rearming timer before acquiring reference permits freed-object refcount operations. No platform-specific exploit verified.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-98586.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-72463",
+      "title": "xfrm: Fix dev use-after-free in xfrm async resumption",
+      "stable_fixes": [
+        {
+          "sha": "fed4d3195a31125566876952ce66113ec1eb9008",
+          "release": "6.12.112"
+        }
+      ],
+      "group": "optional_tenant_xfrm_config",
+      "research_recommendation": "include",
+      "source_gate": "XFRM_USER/INTERFACE=y and ESP/IPv4/IPv6 XFRM built; namespace CAP_NET_ADMIN configures states/interfaces. VTI drivers are m/unpreloaded, but built-in xfrmi_rcv_cb also assigns skb->dev, so source is not exclusive to operator-loaded VTI. Needs asynchronous resumption plus device replacement/teardown.",
+      "impact_limit": "Device-reference imbalance and UAF; tenant-configured XFRM interface path plausible. Actual crypto async path/state/traffic remain candidate-specific prerequisites.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-72463.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-98229",
+      "title": "xfrm: save input state data before secpath resets",
+      "stable_fixes": [
+        {
+          "sha": "35de97850987b3d022ed17df5b2577242e746daf",
+          "release": "6.12.112"
+        }
+      ],
+      "group": "optional_tenant_xfrm_config",
+      "research_recommendation": "include",
+      "source_gate": "XFRM_USER/INTERFACE=y, namespace CAP_NET_ADMIN control. VTI needs modules, but built-in XFRM interface cross-netns callback or XFRM_MAX_DEPTH error can reset secpath without VTI. Tenant can control own nested network namespaces/state deletion.",
+      "impact_limit": "State protocol/type dereference after final secpath reference reset is a concrete UAF. Configuring depth/receive/callback sequence is required; generic arbitrary inbound packet is insufficient.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-98229.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-98368",
+      "title": "esp: downgrade zerocopy managed frags before mutating skb frags",
+      "stable_fixes": [
+        {
+          "sha": "6508304ac2c8cdafca2f4ab915df8c707893e134",
+          "release": "6.12.112"
+        }
+      ],
+      "group": "optional_tenant_xfrm_config",
+      "research_recommendation": "include",
+      "source_gate": "INET_ESP/INET6_ESP=y, XFRM configuration namespace-scoped; needed AES/GCM paths built. Requires managed zerocopy frags on an out-of-place ESP output path. io_uring and relevant user operations pass default seccomp, but effective io_uring and crypto selection must be checked before deployment conclusions.",
+      "impact_limit": "Mismatched managed-page ownership causes UAF/refcount loss and page leak; do not attribute every ESP output to this particular path.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-98368.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-98369",
+      "title": "xfrm: add missing rcu_read_lock(), skb_dst_force() and dev_hold() for xfrm_trans_reinject()",
+      "stable_fixes": [
+        {
+          "sha": "68a317b4aec8ca1868a39d69e40f9e29baa4f40a",
+          "release": "6.12.112"
+        }
+      ],
+      "group": "optional_tenant_xfrm_config",
+      "research_recommendation": "include",
+      "source_gate": "XFRM transport-mode reinjection path built and PREEMPT_RCU=y in exact historical config. Requires workqueue-deferred receive packet with unpinned destination/device and concurrent namespace/device/route lifetime change; namespace CAP_NET_ADMIN can control its network lifecycle.",
+      "impact_limit": "Missing RCU/dst/device references; warning evidence and lifetime risk, not proof of controlled host code execution. Introduction/range is owned by B stable join.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-98369.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    },
+    {
+      "cve": "CVE-2026-98370",
+      "title": "xfrm: fix compat ALLOCSPI request use-after-free",
+      "stable_fixes": [
+        {
+          "sha": "bb63ab52a18273ec68340ac49aebbaa7b514ccd5",
+          "release": "6.12.112"
+        }
+      ],
+      "group": "optional_tenant_xfrm_compat",
+      "research_recommendation": "include",
+      "source_gate": "XFRM_USER_COMPAT=y and IA32_EMULATION/COMPAT=y; compat ALLOCSPI and receiver path available to a 32-bit process under default seccomp. XFRM netlink control requires namespace CAP_NET_ADMIN, not initial-userns privilege. No xfrm_compat module load gate in this exact build.",
+      "impact_limit": "Compat translation attaches/frees shared skb child, races receiver copy (UAF plus four-byte overread). Requires compat messages and multicast/receiver arrangement.",
+      "runtime_status": "not collected; source gate is not deployed proof",
+      "cna_url": "https://git.kernel.org/pub/scm/linux/security/vulns.git/plain/cve/published/2026/CVE-2026-98370.json?id=56fdb3bed3f95b64b83c9f1a42ccb603452ec5c9"
+    }
+  ]
+}

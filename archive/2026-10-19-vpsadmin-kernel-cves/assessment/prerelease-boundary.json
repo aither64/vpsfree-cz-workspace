@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "cve": "CVE-2026-74753",
+  "mainline_affected_from": "7.2.0-rc1",
+  "mainline_fixed_from": "7.2.0",
+  "source_boundary_owner": "implementer0; exact HTTP Makefile at introduction and primary stable backport intervals",
+  "check": "In repository nix develop, instantiate current Advisory/Evaluator with the stated global bounds and 6.12.96..6.12.108 branch rule; no source edits",
+  "loader_rc_before_final": true,
+  "observed_evaluator_results": {
+    "6.12.95": "unaffected",
+    "6.12.96": "affected",
+    "6.12.107": "affected",
+    "6.12.108": "fixed",
+    "7.2.0-rc1": "fixed",
+    "7.2.0": "fixed"
+  },
+  "limitation": "Evaluator strips release-candidate suffixes, so a genuinely affected7.2 prerelease may be falsely fixed. Do not evaluate such a snapshot as safe.",
+  "decision": "Preserve exact rc-to-final source bounds in dossier; accept without tooling change only if frozen current/history release inventory has no affected7.2 prerelease/custom source-revision ambiguity requiring that distinction. Do not invent a released-mainline affected interval.",
+  "collection_gate": "Mechanical owner must flag any current/event/boot/reported7.2 prerelease identity or insufficient custom identity. Architect/source owner decides exact source membership; if observed and unsafe classification persists, escalate a narrow evaluator fix brief, not an ignored YAML/manual result override.",
+  "scope": "Stable final release branch rules retain exact known backport intervals; no production snapshot inspected by this check."
+}

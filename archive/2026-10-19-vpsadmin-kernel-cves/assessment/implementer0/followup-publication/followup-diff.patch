@@ -1,0 +1,751 @@
+diff --git a/advisories/CVE-2026-53260/advisory.yml b/advisories/CVE-2026-53260/advisory.yml
+index b977e4e..84ac335 100644
+--- a/advisories/CVE-2026-53260/advisory.yml
++++ b/advisories/CVE-2026-53260/advisory.yml
+@@ -49,3 +49,8 @@
+     "summary": "Lokální eskalace oprávnění"
+     "description": "Na jádře sestaveném s real-time preempcí může zavírání naslouchajícího TCP socketu proběhnout souběžně s inicializací požadavku na spojení a jádro pak může používat uvolněný požadavek. Chyba by mohla umožnit zvýšení oprávnění ve VPS nebo ohrozit sdílený node, ale analyzované upstreamové hlášení a oprava nedokládají úplný postup k ovládnutí node ani zneužití mezi VPS. Přesné archivované sestavení vpsAdminOS 6.12.95 požadovaný real-time režim neobsahuje. Tento závěr platí pro dané sestavení a sám o sobě nedokládá bezpečnost všech historických nasazení. Na zranitelném real-time sestavení může neúspěšný pokus shodit jádro. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována."
+     "response": "Ve větvi Linuxu 6.12 je oprava obsažena od verze 6.12.97. Vypnutí real-time preempce při sestavení zabraňuje tomuto konkrétnímu spuštění chyby."
++
++"node_notes":
++  "161":
++    "en": "Current kernel lacks the required real-time mode; its earlier configuration is not established."
++    "cs": "Současné jádro nepoužívá potřebný režim reálného času; jeho dřívější konfigurace není doložena."
+diff --git a/advisories/CVE-2026-53260/analysis.md b/advisories/CVE-2026-53260/analysis.md
+index 5f3e7a7..b12ae4b 100644
+--- a/advisories/CVE-2026-53260/analysis.md
++++ b/advisories/CVE-2026-53260/analysis.md
+@@ -105,3 +105,49 @@ old config/LSM/program/device/CPU policy. The encrypted-key module is actually
+ loaded on one reporting node, demonstrating why absence from a default preload
+ list cannot establish fleet-wide non-exposure. Intel/AMD KVM vendor module
+ observations do not by themselves prove nested VMX or IntelPT capabilities.
++
++## Follow-up: storage workload and necessary RT condition
++
++The operator clarified that storage runs no user workloads. This removes a
++tenant process route but does not establish that host backup/NFS TCP listeners
++never reach `reqsk_queue_hash_req`, or that listener closure cannot race its
++request timer on an affected RT build. The primary fix explicitly identifies
++PREEMPT_RT preemption between timer arming and reference initialization, followed
++by listener closure and timer expiry. Remote requests alone are not proof of
++attacker control over that full sequence, and absence of VPSes is not proof of
++its host-path exclusion.
++
++The frozen storage record contains no usable booted/reported release, exact
++configuration, or complete retained history. In particular it cannot bind storage
++to the independently archived non-RT .95 build. Resolution needs positive
++`CONFIG_PREEMPT_RT=n` evidence for the actual applicable storage builds and
++period, a supported pre-introduction/fixed kernel history, or a source-backed
++exclusion of the necessary host listener lifecycle throughout that period. A
++current-only non-RT statement without build/time scope cannot establish earlier
++safety or a mitigation date. The role set remains `node` and `storage`; the
++normal evaluation therefore retains the missing-evidence storage result as
++unknown. No history override, build acceptance or manual status is added.
++
++### Operator observation of the running storage kernel
++
++In this follow-up the operator supplied this direct observation from
++`backuper2.prg.vpsfree.cz`:
++
++```text
++[root@backuper2.prg.vpsfree.cz] zgrep -i preempt_rt /proc/config.gz
++# CONFIG_PREEMPT_RT is not set
++```
++
++This positive runtime configuration evidence excludes the necessary RT lock
++implementation on that running storage kernel, independently of whether storage
++has user processes. It is an operator observation after the frozen collection;
++no exact kernel/configuration digest, boot identity, historical start time or
++January-to-snapshot scope accompanies it. It therefore establishes the current
++necessary-gate exclusion without proving the older retained interval safe or
++supplying a mitigation timestamp. The frozen snapshot and consumed submission
++baselines remain unchanged. The reviewed Node161-only English/Czech note now
++conveys that current necessary-gate exclusion while explicitly retaining the
++unknown earlier configuration. The all-period state remains unknown because the
++period question is unanswered and the frozen history has no supporting storage
++build evidence. No evidence JSON, attestation or per-node evaluation is edited
++by hand; the normal evaluator propagates the dossier-authored note.
+diff --git a/advisories/CVE-2026-53260/evaluation.json b/advisories/CVE-2026-53260/evaluation.json
+index 6026fda..89947c9 100644
+--- a/advisories/CVE-2026-53260/evaluation.json
++++ b/advisories/CVE-2026-53260/evaluation.json
+@@ -1,8 +1,8 @@
+ {
+   "schema_version": 4,
+   "cve": "CVE-2026-53260",
+-  "dossier_digest": "d8067805ed0a28e10173091783ac7288458c735337a57ecde4914f9d0cf6575b",
+-  "evaluated_at": "2026-10-19T22:25:49Z",
++  "dossier_digest": "3342d9330e76a39ff8be3031a90afd6c02a63d860376d58b34c9cb7405761383",
++  "evaluated_at": "2026-10-20T09:15:43Z",
+   "completeness": {
+     "expected_node_count": 13,
+     "evaluated_node_count": 13,
+@@ -107,7 +107,11 @@
+       "node_role": "storage",
+       "evidence_revision": "bdfe7fa8207d487cad1dab06f779f1bac89c69f182a5e78bfcbc4b508b7248a6",
+       "state": "unknown",
+-      "reason": "security evidence observation time is invalid; security evidence receipt time is invalid; kernel history coverage start is invalid; kernel history coverage end is invalid; kernel history reconstruction is not complete for the required period"
++      "reason": "security evidence observation time is invalid; security evidence receipt time is invalid; kernel history coverage start is invalid; kernel history coverage end is invalid; kernel history reconstruction is not complete for the required period",
++      "notes": {
++        "en": "Current kernel lacks the required real-time mode; its earlier configuration is not established.",
++        "cs": "Současné jádro nepoužívá potřebný režim reálného času; jeho dřívější konfigurace není doložena."
++      }
+     },
+     {
+       "node_id": 214,
+diff --git a/advisories/CVE-2026-72069/advisory.yml b/advisories/CVE-2026-72069/advisory.yml
+index bd58703..c21eaa5 100644
+--- a/advisories/CVE-2026-72069/advisory.yml
++++ b/advisories/CVE-2026-72069/advisory.yml
+@@ -63,3 +63,8 @@
+     "summary": "Lokální eskalace oprávnění"
+     "description": "Na jádře sestaveném s real-time preempcí může odemykání chráněného objektu příliš brzy ukončit ochranu jeho životnosti. Jiné vlákno pak může objekt uvolnit, zatímco k němu operace odemknutí stále přistupuje. Takové poškození by mohlo umožnit zvýšení oprávnění ve VPS nebo ohrozit sdílený node, ale analyzované upstreamové hlášení a oprava nedokládají úplný postup k ovládnutí node ani zneužití mezi VPS. Přesné archivované sestavení vpsAdminOS 6.12.95 požadovaný real-time režim neobsahuje; to samo o sobě nedokládá bezpečnost všech historických nasazení. Neúspěšný pokus na zranitelném real-time sestavení může shodit jádro. Varování jádra, která mohou naznačovat spuštění této chyby, jsou monitorována."
+     "response": "Ve větvi Linuxu 6.12 je oprava obsažena od verze 6.12.101. Vypnutí real-time preempce při sestavení zabraňuje tomuto konkrétnímu spuštění chyby."
++
++"node_notes":
++  "161":
++    "en": "Current kernel lacks the required real-time mode; its earlier configuration is not established."
++    "cs": "Současné jádro nepoužívá potřebný režim reálného času; jeho dřívější konfigurace není doložena."
+diff --git a/advisories/CVE-2026-72069/analysis.md b/advisories/CVE-2026-72069/analysis.md
+index 428d79a..27b9675 100644
+--- a/advisories/CVE-2026-72069/analysis.md
++++ b/advisories/CVE-2026-72069/analysis.md
+@@ -107,3 +107,48 @@ old config/LSM/program/device/CPU policy. The encrypted-key module is actually
+ loaded on one reporting node, demonstrating why absence from a default preload
+ list cannot establish fleet-wide non-exposure. Intel/AMD KVM vendor module
+ observations do not by themselves prove nested VMX or IntelPT capabilities.
++
++## Follow-up: storage workload and necessary RT condition
++
++The operator clarified that storage runs no user workloads. The defect is in
++the substituted RT spin/rw-lock unlock implementation, rather than a tenant-only
++syscall or device. Host filesystem, backup/NFS and network code can still use
++locks embedded in RCU-managed objects; the fix holds RCU protection until the
++underlying unlock has finished. The primary source does not establish that the
++absence of user processes removes every such host lifetime path, nor does it
++establish a complete remote exploitation sequence for this storage workload.
++
++The frozen storage record has no usable kernel release, exact configuration or
++complete retained history. The positive non-RT archived .95 configuration and
++the reporting hypervisors' current non-RT configurations do not identify that
++storage build or its earlier states. Resolution needs positive non-RT evidence
++for the actual applicable storage builds and period, a retained pre-introduction
++or corrected kernel history, or a source-backed exclusion of the relevant host
++RCU/RT-lock lifetime path throughout the period. A current-only operator
++statement without build/time scope cannot supply historical safety or a date.
++The role set remains `node` and `storage`, and the normal evaluation retains
++storage as unknown without a fabricated attestation or manual result.
++
++### Operator observation of the running storage kernel
++
++In this follow-up the operator supplied this direct observation from
++`backuper2.prg.vpsfree.cz`:
++
++```text
++[root@backuper2.prg.vpsfree.cz] zgrep -i preempt_rt /proc/config.gz
++# CONFIG_PREEMPT_RT is not set
++```
++
++This positive runtime configuration evidence excludes the necessary RT lock
++implementation on that running storage kernel, independently of whether storage
++has user processes. It is an operator observation after the frozen collection;
++no exact kernel/configuration digest, boot identity, historical start time or
++January-to-snapshot scope accompanies it. It therefore establishes the current
++necessary-gate exclusion without proving the older retained interval safe or
++supplying a mitigation timestamp. The frozen snapshot and consumed submission
++baselines remain unchanged. The reviewed Node161-only English/Czech note now
++conveys that current necessary-gate exclusion while explicitly retaining the
++unknown earlier configuration. The all-period state remains unknown because the
++period question is unanswered and the frozen history has no supporting storage
++build evidence. No evidence JSON, attestation or per-node evaluation is edited
++by hand; the normal evaluator propagates the dossier-authored note.
+diff --git a/advisories/CVE-2026-72069/evaluation.json b/advisories/CVE-2026-72069/evaluation.json
+index d3842e7..3fb6b38 100644
+--- a/advisories/CVE-2026-72069/evaluation.json
++++ b/advisories/CVE-2026-72069/evaluation.json
+@@ -1,8 +1,8 @@
+ {
+   "schema_version": 4,
+   "cve": "CVE-2026-72069",
+-  "dossier_digest": "c86076e4651d41618f24029547cb83980448016bcaa37089fff553dc869fd085",
+-  "evaluated_at": "2026-10-19T22:25:50Z",
++  "dossier_digest": "1be63ab72a2fadffd3eb361c237b870fecdd3d6e12209d9de57dbaefce93ca0f",
++  "evaluated_at": "2026-10-20T09:15:45Z",
+   "completeness": {
+     "expected_node_count": 13,
+     "evaluated_node_count": 13,
+@@ -107,7 +107,11 @@
+       "node_role": "storage",
+       "evidence_revision": "bdfe7fa8207d487cad1dab06f779f1bac89c69f182a5e78bfcbc4b508b7248a6",
+       "state": "unknown",
+-      "reason": "security evidence observation time is invalid; security evidence receipt time is invalid; kernel history coverage start is invalid; kernel history coverage end is invalid; kernel history reconstruction is not complete for the required period"
++      "reason": "security evidence observation time is invalid; security evidence receipt time is invalid; kernel history coverage start is invalid; kernel history coverage end is invalid; kernel history reconstruction is not complete for the required period",
++      "notes": {
++        "en": "Current kernel lacks the required real-time mode; its earlier configuration is not established.",
++        "cs": "Současné jádro nepoužívá potřebný režim reálného času; jeho dřívější konfigurace není doložena."
++      }
+     },
+     {
+       "node_id": 214,
+diff --git a/advisories/CVE-2026-74753/analysis.md b/advisories/CVE-2026-74753/analysis.md
+index 1fa85b2..f70e4cc 100644
+--- a/advisories/CVE-2026-74753/analysis.md
++++ b/advisories/CVE-2026-74753/analysis.md
+@@ -171,17 +171,53 @@ current fixed 6.12.113 does not turn those unknown intervals into non-exposure.
+ ## Evaluated outcome
+ 
+ The normal CLI evaluation of this schema 2 dossier against the unchanged frozen
+-snapshot covers all 13 active nodes. It returns `unknown` for the 12 hypervisors
+-and `not_affected` for the storage role. All 12 hypervisors currently report the
+-fixed 6.12.113 kernel. Their unresolved state concerns earlier 6.12.95 intervals
+-where retained release-only history cannot establish whether introducing
+-replacement code was active. One hypervisor also has retained patch activation,
+-source-identity and transition ambiguity. A current fixed kernel does not supply
+-missing historical inventory or erase a previous introducing interval.
+-
+-These unknowns are accepted as accurate unpublished-draft conclusions; they
+-block publication readiness. There is no fabricated mitigation timestamp,
+-manual result edit or history attestation. The reviewed Node126 lifecycle scope
+-removes its unrelated January-baseline gap but does not resolve these runtime
+-introduction questions. The source and activation requirements in the evidence
+-contract remain in force. No additional production collection was performed.
++snapshot covers all 13 active nodes. It returns `mitigated` for the 12
++hypervisors and `not_affected` for the storage role. A retained corrective boot
++after each hypervisor's last affected or unknown point, followed by a fully
++classifiable safe interval through the current observation, establishes that
++final mitigation interval. Its supported transition time is retained; it is not
++asserted as the earliest possible mitigation.
++
++Earlier 6.12.95 introduction-inventory, source-identity and activation/transition
++uncertainties remain in the historical point assessments and result reasons.
++The initial all-history `unknown` result was superseded by the bounded
++corrective-boot evaluation described next. No earlier non-exposure, missing
++inventory, mitigation timestamp or historical attestation is invented. The
++reviewed Node126 lifecycle scope and every source/activation requirement remain
++in force. No additional production collection was performed.
++
++## Follow-up: corrective boots after uncertain introduction history
++
++The frozen histories contain point-level uncertainty about older introducing
++livepatch inventory or boot/source identity. Node401 also has ambiguous
++activation/transition points for modules 2 and 6. Those points remain unknown;
++all eleven exact introduction rules and every canonical upstream release bound
++remain unchanged. The correction does not infer the first introduction or
++pretend that the old .95 release proves absence of the backported defect.
++
++Each of the twelve applicable nodes has a later retained corrective boot after
++its last affected or unknown point, followed only by classifiable fixed states
++through the current observation. All global freshness, required-period baseline,
++coverage/reconstruction and attestation checks still pass. Eleven nodes' first
++qualifying final boot is into 6.12.113 on October 18 or 19; Node401 first boots
++corrected 6.18.49 at `2026-10-18T01:32:54Z`, before its later 6.12.113 boot. The
++per-node result uses the actual retained exact transition, rather than forcing
++every node's date to its latest .113 observation. The 6.18 correction is already
++part of this dossier's canonical stable rules.
++
++The evaluator now permits that fully safe terminal interval to establish
++mitigation while retaining the earlier exposure uncertainty in its reason. It
++requires an actual corrected-kernel boot after the last affected or unknown
++point; a fixed current sample, reported-release change or interface/configuration
++change alone does not suffice. Any later unknown or affected point blocks the
++interval unless followed by another qualifying corrective boot. Supported exact
++effective times are used only for exact boot evidence; otherwise retained
++observation bounds are preserved. This is a supported final mitigation bound,
++not a claim about the globally earliest possible mitigation or the exact first
++security impact. The storage role remains outside this tenant perf assessment.
++
++All evaluations are regenerated by the normal tool against the unchanged
++`61904e...` snapshot. The existing submitted-draft recovery baselines are retained
++byte for byte until separately authorized guarded synchronization. No production
++collection, hand-edited result, fabricated historical tuple or new API field is
++used.
+diff --git a/advisories/CVE-2026-74753/evaluation.json b/advisories/CVE-2026-74753/evaluation.json
+index c2ec80b..381769e 100644
+--- a/advisories/CVE-2026-74753/evaluation.json
++++ b/advisories/CVE-2026-74753/evaluation.json
+@@ -1,31 +1,18 @@
+ {
+   "schema_version": 4,
+   "cve": "CVE-2026-74753",
+-  "dossier_digest": "2c1b6f089142a5bb567344b454e8c9da3e0b8a8f356aa342ebc197e63446e214",
+-  "evaluated_at": "2026-10-19T22:25:40Z",
++  "dossier_digest": "eb6eab83c1236f010a7bdb4988c2808d6a8b1eabb4a77c3776a6eac286863b50",
++  "evaluated_at": "2026-10-20T09:41:00Z",
+   "completeness": {
+     "expected_node_count": 13,
+     "evaluated_node_count": 13,
+     "node_set_complete": true,
+-    "resolution_complete": false,
++    "resolution_complete": true,
+     "states": {
+-      "unknown": 12,
++      "mitigated": 12,
+       "not_affected": 1
+     },
+-    "blocking_node_ids": [
+-      120,
+-      121,
+-      122,
+-      123,
+-      124,
+-      125,
+-      126,
+-      214,
+-      215,
+-      300,
+-      400,
+-      401
+-    ]
++    "blocking_node_ids": []
+   },
+   "nodes": [
+     {
+@@ -33,56 +20,84 @@
+       "node_name": "node19.prg",
+       "node_role": "node",
+       "evidence_revision": "f8affedb847fb2e1ad4239182a5ffc3c29bf0ea025905df64b1c177018be7e88",
+-      "state": "unknown",
+-      "reason": "livepatch introduction inventory or boot identity is unavailable"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-18T23:22:51Z",
++      "mitigated_since": "2026-10-18T23:22:51Z",
++      "reason": "kernel 6.12.113 includes the upstream stable fix released in 6.12.108; earlier exposure remains uncertain: livepatch introduction inventory or boot identity is unavailable; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     },
+     {
+       "node_id": 121,
+       "node_name": "node20.prg",
+       "node_role": "node",
+       "evidence_revision": "87786fa53bd87e4445454389620efb8fd5604150369501439db7b0447f24e0bc",
+-      "state": "unknown",
+-      "reason": "livepatch introduction inventory or boot identity is unavailable"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-19T00:26:12Z",
++      "mitigated_since": "2026-10-19T00:26:12Z",
++      "reason": "kernel 6.12.113 includes the upstream stable fix released in 6.12.108; earlier exposure remains uncertain: livepatch introduction inventory or boot identity is unavailable; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     },
+     {
+       "node_id": 122,
+       "node_name": "node21.prg",
+       "node_role": "node",
+       "evidence_revision": "11c418fbee11b8d5b3c0f5ae4a58f51c3e43ddbfc6fdbdc26f710e81d8011e30",
+-      "state": "unknown",
+-      "reason": "livepatch introduction inventory or boot identity is unavailable"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-19T00:34:13Z",
++      "mitigated_since": "2026-10-19T00:34:13Z",
++      "reason": "kernel 6.12.113 includes the upstream stable fix released in 6.12.108; earlier exposure remains uncertain: livepatch introduction inventory or boot identity is unavailable; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     },
+     {
+       "node_id": 123,
+       "node_name": "node22.prg",
+       "node_role": "node",
+       "evidence_revision": "a085a5204336a3c6a52e9f642feb307039538ece58f205ea43322fc4a7f3ad8e",
+-      "state": "unknown",
+-      "reason": "livepatch introduction inventory or boot identity is unavailable"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-19T01:02:11Z",
++      "mitigated_since": "2026-10-19T01:02:11Z",
++      "reason": "kernel 6.12.113 includes the upstream stable fix released in 6.12.108; earlier exposure remains uncertain: livepatch introduction inventory or boot identity is unavailable; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     },
+     {
+       "node_id": 124,
+       "node_name": "node23.prg",
+       "node_role": "node",
+       "evidence_revision": "9691ed38914785ac8b1ddb74cca449b9e7b8d0142739a507502e7b595116ac0a",
+-      "state": "unknown",
+-      "reason": "livepatch introduction inventory or boot identity is unavailable"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-19T01:16:34Z",
++      "mitigated_since": "2026-10-19T01:16:34Z",
++      "reason": "kernel 6.12.113 includes the upstream stable fix released in 6.12.108; earlier exposure remains uncertain: livepatch introduction inventory or boot identity is unavailable; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     },
+     {
+       "node_id": 125,
+       "node_name": "node24.prg",
+       "node_role": "node",
+       "evidence_revision": "b5261199b7f956acbc805ed3950acc063f5f9d157ab7de76f457761ccd53575a",
+-      "state": "unknown",
+-      "reason": "livepatch introduction inventory or boot identity is unavailable"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-19T00:18:54Z",
++      "mitigated_since": "2026-10-19T00:18:54Z",
++      "reason": "kernel 6.12.113 includes the upstream stable fix released in 6.12.108; earlier exposure remains uncertain: livepatch introduction inventory or boot identity is unavailable; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     },
+     {
+       "node_id": 126,
+       "node_name": "node25.prg",
+       "node_role": "node",
+       "evidence_revision": "2abf65b2b45ecef770de430c7d72586ea9eca243dd7678612b493adf77652fd1",
+-      "state": "unknown",
+-      "reason": "livepatch introduction inventory or boot identity is unavailable"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-18T23:40:26Z",
++      "mitigated_since": "2026-10-18T23:40:26Z",
++      "reason": "kernel 6.12.113 includes the upstream stable fix released in 6.12.108; earlier exposure remains uncertain: livepatch introduction inventory or boot identity is unavailable; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     },
+     {
+       "node_id": 161,
+@@ -97,40 +112,60 @@
+       "node_name": "node5.brq",
+       "node_role": "node",
+       "evidence_revision": "e0a59f03fa59b95fb3581afd54aa1910bd904851253e1acbab25bcc8f2afc966",
+-      "state": "unknown",
+-      "reason": "livepatch introduction inventory or boot identity is unavailable"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-18T23:24:13Z",
++      "mitigated_since": "2026-10-18T23:24:13Z",
++      "reason": "kernel 6.12.113 includes the upstream stable fix released in 6.12.108; earlier exposure remains uncertain: livepatch introduction inventory or boot identity is unavailable; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     },
+     {
+       "node_id": 215,
+       "node_name": "node6.brq",
+       "node_role": "node",
+       "evidence_revision": "c8f13b3bc71fb93f7301b15cdedb26d24ae420c5afcbee20cb729d829813d543",
+-      "state": "unknown",
+-      "reason": "livepatch introduction inventory or boot identity is unavailable"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-19T01:09:06Z",
++      "mitigated_since": "2026-10-19T01:09:06Z",
++      "reason": "kernel 6.12.113 includes the upstream stable fix released in 6.12.108; earlier exposure remains uncertain: livepatch introduction inventory or boot identity is unavailable; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     },
+     {
+       "node_id": 300,
+       "node_name": "node1.pgnd",
+       "node_role": "node",
+       "evidence_revision": "b6dcc50d375fb0bd015fe5946b9ce80075c4ba47f2dc5fe474442f4bbe0d194f",
+-      "state": "unknown",
+-      "reason": "livepatch introduction inventory or boot identity is unavailable"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-18T23:19:28Z",
++      "mitigated_since": "2026-10-18T23:19:28Z",
++      "reason": "kernel 6.12.113 includes the upstream stable fix released in 6.12.108; earlier exposure remains uncertain: livepatch introduction inventory or boot identity is unavailable; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     },
+     {
+       "node_id": 400,
+       "node_name": "node1.stg",
+       "node_role": "node",
+       "evidence_revision": "900f6405a4c0cd342587d7887f0595d477728b939aa1626fd504b28e410a9eb6",
+-      "state": "unknown",
+-      "reason": "livepatch introduction inventory or boot identity is unavailable"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-18T20:13:24Z",
++      "mitigated_since": "2026-10-18T20:13:24Z",
++      "reason": "kernel 6.12.113 includes the upstream stable fix released in 6.12.108; earlier exposure remains uncertain: livepatch introduction inventory or boot identity is unavailable; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     },
+     {
+       "node_id": 401,
+       "node_name": "node2.stg",
+       "node_role": "node",
+       "evidence_revision": "37398a6351bdff24dcd1dc1cd39cb391c7af087229d8d1e0ee50795cc9fc495f",
+-      "state": "unknown",
+-      "reason": "livepatch introduction livepatch_2 activation is incomplete or transitioning; livepatch introduction livepatch_2 source or boot identity is unverified; livepatch introduction inventory or boot identity is unavailable; livepatch introduction livepatch_6 activation is incomplete or transitioning"
++      "state": "mitigated",
++      "vulnerable_until": "2026-10-18T01:32:54Z",
++      "mitigated_since": "2026-10-18T01:32:54Z",
++      "reason": "kernel 6.18.49 includes the upstream stable fix released in 6.18.46; earlier exposure remains uncertain: livepatch introduction livepatch_2 activation is incomplete or transitioning; livepatch introduction livepatch_2 source or boot identity is unverified; livepatch introduction inventory or boot identity is unavailable; livepatch introduction livepatch_6 activation is incomplete or transitioning; this retained corrective boot establishes the final safe interval, not the earliest possible mitigation",
++      "kernel_release": "6.12.113",
++      "config_digest": "8336f06b719283fed6024b571db196235813ae105eb406b9d70f3ede1729867a"
+     }
+   ],
+   "collected_at": "2026-10-19T21:48:39Z",
+diff --git a/docs/evidence.md b/docs/evidence.md
+index 4ee4482..e9da691 100644
+--- a/docs/evidence.md
++++ b/docs/evidence.md
+@@ -122,6 +122,20 @@ specific Node only with a reviewed `history_start_overrides` entry documenting
+ that the Node entered production later. A synthetic current-kernel row or an
+ unreviewed repository pin cannot establish an earlier state.
+ 
++After those freshness, coverage, baseline and attestation checks pass, an
++uncertain historical point can still precede a supported final mitigation
++interval. A retained boot into an upstream-corrected kernel after the last
++affected or unknown point establishes mitigation only when every subsequent
++point, including the current observation, is classifiable as safe. A fixed
++current observation or reported-release change alone is insufficient. Later
++uncertainty or reintroduction blocks that interval until another qualifying
++corrective boot. The result preserves the earlier uncertainty in its reason and
++uses the boot's supported exact effective time or retained observation bounds;
++it does not assert the earliest possible mitigation or earlier non-exposure.
++An inferred boot time is not substituted for exact timing, and a boot without
++defensible transition bounds cannot resolve the uncertainty. All-known histories
++retain their existing first-mitigation and atomic livepatch-replacement rules.
++
+ Each dossier declares the global upstream introduction and fix, stable-branch
+ version rules, Node roles, kernel options, and sysctls relevant to reachability.
+ Branch rules also cover vulnerable backports older than the mainline
+diff --git a/lib/security_advisories/evaluator.rb b/lib/security_advisories/evaluator.rb
+index f6e6f0d..b2c206f 100644
+--- a/lib/security_advisories/evaluator.rb
++++ b/lib/security_advisories/evaluator.rb
+@@ -111,11 +111,6 @@ module SecurityAdvisories
+         )
+       end
+       unresolved = assessments.select { |point| point.dig('assessment', 'state') == 'unknown' }
+-      unless unresolved.empty?
+-        reasons = unresolved.map { |point| point.dig('assessment', 'reason') }.uniq
+-        return base.merge(unknown(reasons.join('; ')))
+-      end
+-
+       current = assessments.last
+       current_assessment = current.fetch('assessment')
+       current_release = current.dig('security_evidence', 'kernel', 'reported_release')
+@@ -124,6 +119,18 @@ module SecurityAdvisories
+         'config_digest' => current.dig('security_evidence', 'kernel', 'config_digest')
+       }
+ 
++      unless unresolved.empty?
++        reasons = unresolved.map { |point| point.dig('assessment', 'reason') }.uniq
++        transition = corrective_boot_after_uncertainty(assessments)
++        return base.merge(unknown(reasons.join('; '))) unless transition
++
++        result = mitigated(transition, current_release, current_assessment)
++        result['reason'] += "; earlier exposure remains uncertain: #{reasons.join('; ')}; " \
++                            'this retained corrective boot establishes the final safe interval, ' \
++                            'not the earliest possible mitigation'
++        return base.merge(result).merge(common)
++      end
++
+       if current_assessment['state'] == 'affected'
+         return base.merge(vulnerable(current_release, current_assessment['reason'])).merge(common)
+       end
+@@ -145,6 +152,39 @@ module SecurityAdvisories
+       base.merge(mitigated(transition, current_release, current_assessment)).merge(common)
+     end
+ 
++    def corrective_boot_after_uncertainty(assessments)
++      last_unsafe = assessments.rindex do |point|
++        %w[affected unknown].include?(point.dig('assessment', 'state'))
++      end
++      suffix = assessments[(last_unsafe + 1)..]
++      return unless suffix.all? do |point|
++        %w[fixed unaffected unreachable mitigated].include?(point.dig('assessment', 'state'))
++      end
++
++      cutoff = parse_time(assessments[last_unsafe]['observed_before'])
++      return unless cutoff
++
++      suffix.each do |point|
++        next unless point['event_type'] == 'boot' && point.dig('assessment', 'state') == 'fixed'
++
++        # A reported release change or a fixed current sample is not a corrective boot.
++        boot_release = point.dig('security_evidence', 'kernel', 'booted_release')
++        next unless version_rule_result('reported_release' => boot_release)['state'] == 'fixed'
++
++        upper = parse_time(point['observed_before'])
++        next unless upper && upper > cutoff
++
++        exact = parse_time(point['effective_at']) if point['confidence'] == 'exact'
++        if exact
++          return point if exact > cutoff && exact <= upper
++        else
++          lower = parse_time(point['observed_after'])
++          return point.merge('effective_at' => nil) if lower && lower >= cutoff && lower < upper
++        end
++      end
++      nil
++    end
++
+     def evidence_problems(node)
+       ret = []
+       observed = parse_time(node['observed_at'])
+diff --git a/spec/dossiers_spec.rb b/spec/dossiers_spec.rb
+index 3b18a6c..0369d7c 100644
+--- a/spec/dossiers_spec.rb
++++ b/spec/dossiers_spec.rb
+@@ -808,7 +808,7 @@ RSpec.describe SecurityAdvisories::Advisory do
+     expect(evaluation.dig('completeness', 'resolution_complete')).to be(false)
+   end
+ 
+-  it 'retains canonical perf boundaries and source-bound runtime introduction uncertainty' do
++  it 'retains perf introductions and earlier uncertainty before a supported final fixed boot' do
+     advisory = described_class.load('CVE-2026-74753')
+     expect(advisory.data).to include('schema_version' => 2, 'affected_from' => '7.2.0-rc1', 'fixed_from' => '7.2.0')
+     expect(advisory.version_rules.fetch('6.12')).to include('affected_from' => '6.12.96', 'fixed_in' => '6.12.108')
+@@ -825,8 +825,18 @@ RSpec.describe SecurityAdvisories::Advisory do
+     evaluation = evaluation_for(advisory)
+     applicable = evaluation.fetch('nodes').reject { |node| node.fetch('node_role') == 'storage' }
+     expect(applicable.length).to eq(12)
+-    expect(applicable).to all(include('state' => 'unknown', 'reason' => a_string_including('livepatch introduction')))
+-    expect(evaluation.dig('completeness', 'resolution_complete')).to be(false)
++    expect(applicable).to all(include(
++                                'state' => 'mitigated',
++                                'kernel_release' => '6.12.113',
++                                'reason' => a_string_including('earlier exposure remains uncertain',
++                                                               'livepatch introduction',
++                                                               'not the earliest possible mitigation')
++                              ))
++    applicable.each do |node|
++      expect(node.fetch('mitigated_since')).to match(/\A2026-10-(?:18|19)T/)
++      expect(node.fetch('vulnerable_until')).to eq(node.fetch('mitigated_since'))
++    end
++    expect(evaluation.dig('completeness', 'resolution_complete')).to be(true)
+   end
+ 
+   it 'preserves the RT storage uncertainty and tenant-only storage exclusions' do
+@@ -837,6 +847,13 @@ RSpec.describe SecurityAdvisories::Advisory do
+       if RT_CVES.include?(cve)
+         expect(advisory.platform.fetch('affected_node_roles')).to eq(%w[node storage])
+         expect(storage).to include('state' => 'unknown', 'reason' => a_string_including('receipt time is invalid'))
++        notes = {
++          'en' => 'Current kernel lacks the required real-time mode; its earlier configuration is not established.',
++          'cs' => 'Současné jádro nepoužívá potřebný režim reálného času; jeho dřívější konfigurace není doložena.'
++        }
++        expect(advisory.node_notes).to eq('161' => notes)
++        expect(storage.fetch('notes')).to eq(notes)
++        expect(notes.values).to all(satisfy { |text| text.length <= 120 && !text.include?("\n") })
+       else
+         expect(advisory.platform.fetch('affected_node_roles')).to eq(['node'])
+         expect(storage).to include('state' => 'not_affected', 'reason' => a_string_including('node role storage'))
+diff --git a/spec/evaluator_spec.rb b/spec/evaluator_spec.rb
+index 906045f..944a0a1 100644
+--- a/spec/evaluator_spec.rb
++++ b/spec/evaluator_spec.rb
+@@ -1276,18 +1276,105 @@ RSpec.describe SecurityAdvisories::Evaluator do
+     end
+ 
+     %w[6.12.95 6.12.95.2].each do |release|
+-      it "does not infer patch absence from release-only history #{release}" do
++      it "retains uncertain patch history #{release} but resolves a later corrective boot" do
+         historical = event(1, release, observed: '2026-07-13T09:00:00Z')
+         historical['booted_release'] = '6.12.95'
+         historical['reported_release'] = release
+         historical['security_evidence'] = {}
+-        current = event(2, '6.12.113', observed: '2026-07-13T11:00:00Z')
++        current = corrective_boot
+         result = evaluate(node(history: [historical, current]))
++        expect(result).to include('state' => 'mitigated', 'mitigated_since' => '2026-07-13T11:00:00Z')
++        expect(result['reason']).to include('earlier exposure remains uncertain', 'introduction inventory',
++                                            'not the earliest possible mitigation')
++      end
++    end
++
++    it 'starts the final safe interval after both affected and unknown history' do
++      affected = event(1, '6.12.95', observed: '2026-07-13T09:00:00Z')
++      affected['security_evidence']['livepatches'] = [livepatch('6.12.95')]
++      uncertain = uncertain_introduction.merge('id' => 2, 'observed_before' => '2026-07-13T10:00:00Z')
++      result = evaluate(node(history: [affected, uncertain, corrective_boot]))
++      expect(result).to include('state' => 'mitigated', 'mitigated_since' => '2026-07-13T11:00:00Z',
++                                'vulnerable_until' => '2026-07-13T11:00:00Z')
++      expect(result['reason']).to include('earlier exposure remains uncertain')
++    end
++
++    it 'retains real observation bounds when a corrective boot time is inferred' do
++      fixed = corrective_boot.merge('confidence' => 'inferred',
++                                    'observed_after' => '2026-07-13T10:30:00Z',
++                                    'effective_at' => '2026-07-13T10:45:00Z')
++      result = evaluate(node(history: [uncertain_introduction, fixed]))
++      expect(result).to include('state' => 'mitigated', 'vulnerable_until' => '2026-07-13T10:30:00Z',
++                                'mitigated_since' => '2026-07-13T11:00:00Z')
++      expect(result['reason']).to include('confirmed by 2026-07-13T11:00:00Z')
++    end
++
++    it 'does not resolve historical uncertainty from a fixed current observation alone' do
++      result = evaluate(node(history: [uncertain_introduction],
++                             current_evidence: corrective_boot.fetch('security_evidence')))
++      expect(result['state']).to eq('unknown')
++    end
++
++    it 'does not substitute a reported release change for a corrective boot' do
++      fixed = corrective_boot.merge('event_type' => 'reported_release_change')
++      expect(evaluate(node(history: [uncertain_introduction, fixed]))['state']).to eq('unknown')
++    end
++
++    it 'does not mistake a changed reported release on an old boot for a corrected boot' do
++      fixed = corrective_boot
++      fixed['security_evidence']['kernel']['booted_release'] = '6.12.95'
++      expect(evaluate(node(history: [uncertain_introduction, fixed]))['state']).to eq('unknown')
++    end
++
++    %w[unknown affected].each do |later_state|
++      it "blocks a later #{later_state} point even with a fixed current observation" do
++        later = event(4, '6.12.95', observed: '2026-07-13T11:30:00Z')
++        later['security_evidence']['livepatches'] = [livepatch('6.12.95').merge(
++          'transition' => later_state == 'unknown'
++        )]
++        result = evaluate(node(history: [uncertain_introduction, corrective_boot, later],
++                               current_evidence: corrective_boot.fetch('security_evidence')))
+         expect(result['state']).to eq('unknown')
+-        expect(result['reason']).to include('introduction inventory')
+       end
+     end
+ 
++    it 'keeps an unknown current introduction unresolved after a fixed boot' do
++      current = uncertain_introduction.fetch('security_evidence')
++      current['livepatches'] = nil
++      expect(evaluate(node(history: [uncertain_introduction, corrective_boot],
++                           current_evidence: current))['state']).to eq('unknown')
++    end
++
++    %w[stale coverage baseline attestation].each do |problem|
++      it "keeps the #{problem} guard before resolving an uncertain timeline" do
++        uncertain = uncertain_introduction
++        evidence = node(history: [uncertain, corrective_boot])
++        case problem
++        when 'stale'
++          evidence['received_at'] = '2026-07-13T11:00:00Z'
++        when 'coverage'
++          evidence['kernel']['history_coverage']['reconstruction']['complete'] = false
++        when 'baseline'
++          evidence['kernel']['history'].shift
++        when 'attestation'
++          @advisory.historical_attestations << {
++            'node_id' => 1, 'event_id' => uncertain['id'], 'event_digest' => 'changed'
++          }
++        end
++        expect(evaluate(evidence)['state']).to eq('unknown')
++      end
++    end
++
++    it 'rejects a corrective boot with no defensible transition timing' do
++      fixed = corrective_boot.merge('effective_at' => nil, 'observed_after' => nil)
++      expect(evaluate(node(history: [uncertain_introduction, fixed]))['state']).to eq('unknown')
++    end
++
++    it 'rejects an exact corrective time before the last uncertain observation' do
++      fixed = corrective_boot.merge('effective_at' => '2026-07-13T08:59:00Z')
++      expect(evaluate(node(history: [uncertain_introduction, fixed]))['state']).to eq('unknown')
++    end
++
+     [nil, {}, { 'id' => nil }, { 'id' => '' }].each do |malformed|
+       it "does not treat an unidentified inventory entry as absence: #{malformed.inspect}" do
+         result = evaluate(introduction_node([malformed]))
+@@ -1356,6 +1443,17 @@ RSpec.describe SecurityAdvisories::Evaluator do
+ 
+   protected
+ 
++  def uncertain_introduction
++    historical = event(1, '6.12.95', observed: '2026-07-13T09:00:00Z')
++    historical['security_evidence'].delete('livepatches')
++    historical
++  end
++
++  def corrective_boot
++    event(3, '6.12.113', observed: '2026-07-13T11:00:00Z',
++                         effective: '2026-07-13T11:00:00Z').merge('confidence' => 'exact')
++  end
++
+   def evaluate(evidence)
+     evaluate_with(@advisory, evidence)
+   end

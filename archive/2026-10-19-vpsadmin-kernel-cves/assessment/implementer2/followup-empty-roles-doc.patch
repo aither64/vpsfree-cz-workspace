@@ -1,0 +1,19 @@
+--- a/docs/evidence.md
++++ b/docs/evidence.md
+@@ -101,6 +101,16 @@
+ kernel vulnerability therefore does not affect a storage Node merely because
+ its kernel is older. Storage belongs in `affected_node_roles` only when the
+ backup, NFS, or host workload itself can reach the vulnerable primitive.
++
++An explicitly empty `affected_node_roles` array records a reviewed exclusion of
++all node roles for the assessed workload. The analysis must name its source,
++workload and full assessment-period scope; a current-only operational statement
++does not prove a historical exclusion. Role dispatch applies before kernel
++freshness and history checks, so it does not invent missing kernel evidence or
++assert that the kernel source is fixed. Host workloads outside that assessed
++scope remain outside the conclusion. This empty-array behavior is supported by
++existing Ruby loaders/evaluators; the JSON schema permits it without a dossier
++version change.
+ 
+ Kernel history shown to all authenticated users is a separately sanitized API
+ resource. Reconstructed boot times are estimates. Runtime changes without an

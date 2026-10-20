@@ -1,0 +1,1282 @@
+require 'libosctl'
+require 'digest'
+require 'osctld/lockable'
+require 'osctld/manipulable'
+require 'osctld/assets/definition'
+require 'osctld/local_transfer/log'
+require 'osctld/net_interface'
+
+module OsCtld
+  class Container
+    include Lockable
+    include Manipulable
+    include Assets::Definition
+    include OsCtl::Lib::Utils::Log
+    include OsCtl::Lib::Utils::System
+    include OsCtl::Lib::Utils::File
+    include Utils::SwitchUser
+
+    MAP_MODES = %w[native zfs].freeze
+
+    DEFAULT_START_TIMEOUT = 120
+    DEFAULT_STOP_TIMEOUT = 300
+
+    def self.default_dataset(pool, id, dataset_cache: nil)
+      name = File.join(pool.ct_ds, id)
+      OsCtl::Lib::Zfs::Dataset.new(name, base: name, cache: dataset_cache)
+    end
+
+    attr_inclusive_reader :pool, :id, :user, :dataset, :group, :distribution, :version, :arch,
+                          :vendor, :variant, :autostart, :ephemeral, :hostname, :dns_resolvers,
+                          :nesting, :prlimits, :mounts, :send_log, :local_transfer_log, :netifs,
+                          :cgparams, :cpu_package, :devices, :seccomp_profile, :apparmor, :attrs,
+                          :state, :lxc_config,
+                          :init_cmd, :start_menu, :impermanence, :raw_configs, :run_conf, :next_run_conf,
+                          :hints, :map_mode
+
+    alias ephemeral? ephemeral
+
+    # @param pool [Pool]
+    # @param id [String]
+    # @param user [User, nil]
+    # @param group [Group, nil]
+    # @param dataset [String, nil]
+    # @param opts [Hash] options
+    # @option opts [Boolean] load load config
+    # @option opts [String] load_from load from this string instead of config file
+    # @option opts [Boolean] staged create a staged container
+    # @option opts [Boolean] devices determines whether devices are initialized
+    # @option opts [String] map_mode
+    # @option opts [OsCtl::Lib::Zfs::DatasetCache] dataset_cache
+    def initialize(pool, id, user = nil, group = nil, dataset = nil, opts = {})
+      init_lock
+      init_manipulable
+
+      opts[:load] = true unless opts.has_key?(:load)
+
+      if (user.nil? || group.nil?) && !opts[:load]
+        raise ArgumentError, 'either set load: true or provide user and group'
+      end
+
+      @pool = pool
+      @id = id
+      @user = user
+      @group = group
+      @dataset = dataset
+      @map_mode = opts[:map_mode]
+      @state = opts[:staged] ? :staged : :unknown
+      @recovery_tainted = false
+      @local_transfer_log = nil
+      @ephemeral = false
+      @netifs = NetInterface::Manager.new(self)
+      @cgparams = nil
+      @devices = nil
+      @prlimits = nil
+      @mounts = nil
+      @hostname = nil
+      @dns_resolvers = nil
+      @nesting = false
+      @cpu_package = 'auto'
+      @seccomp_profile = nil
+      @apparmor = AppArmor.new(self)
+      @lxc_config = Container::LxcConfig.new(self)
+      @init_cmd = nil
+      @raw_configs = Container::RawConfigs.new
+      @attrs = Attributes.new
+      @run_conf = nil
+      @hints = Container::Hints.new(self)
+
+      return unless opts[:load]
+
+      load_opts = {
+        init_devices: !opts.has_key?(:devices) || opts[:devices],
+        dataset_cache: opts[:dataset_cache]
+      }
+
+      setup_state_changed = if opts[:load_from]
+                              load_config_string(opts[:load_from], **load_opts)
+                            else
+                              load_config_file(**load_opts)
+                            end
+      save_config if setup_state_changed
+    end
+
+    def ident
+      inclusively { "#{pool.name}:#{id}" }
+    end
+
+    def configure(distribution, version, arch)
+      exclusively do
+        @distribution = distribution
+        @version = version
+        @arch = arch
+        @netifs = NetInterface::Manager.new(self)
+        @nesting = false
+        @seccomp_profile = default_seccomp_profile
+        @cgparams = CGroup::ContainerParams.new(self)
+        @devices = Devices::Manager.new_for(self)
+        @prlimits = PrLimits::Manager.default(self)
+        @mounts = Mount::Manager.new(self)
+        @run_conf ||= new_run_conf
+        devices.init
+        save_config
+      end
+    end
+
+    def assets
+      define_assets do |add|
+        # Datasets
+        add.dataset(
+          dataset.to_s,
+          desc: "Container's rootfs dataset",
+          uidmap: map_mode == 'zfs' ? uid_map.map(&:to_a) : nil,
+          gidmap: map_mode == 'zfs' ? gid_map.map(&:to_a) : nil,
+          properties: if map_mode == 'native'
+                        {
+                          'uidmap' => 'none',
+                          'gidmap' => 'none'
+                        }
+                      end,
+          user: map_mode == 'zfs' ? root_host_uid : 0,
+          group: map_mode == 'zfs' ? root_host_gid : 0,
+          mode: 0o770,
+          validate_if: mounted?
+        )
+
+        # Directories and files
+        add.directory(
+          rootfs,
+          desc: "Container's rootfs",
+          user: map_mode == 'zfs' ? root_host_uid : 0,
+          group: map_mode == 'zfs' ? root_host_gid : 0,
+          mode_bit_and: 0o111, # has all executable bits set
+          validate_if: mounted?
+        )
+
+        add.directory(
+          user_hook_script_dir,
+          desc: 'User supplied script hooks',
+          user: 0,
+          group: 0,
+          mode: 0o700
+        )
+        add.directory(
+          lxc_dir,
+          desc: 'LXC configuration',
+          user: 0,
+          group: user.ugid,
+          mode: 0o750
+        )
+
+        lxc_config.assets(add)
+
+        add.file(
+          File.join(lxc_dir, '.bashrc'),
+          desc: 'Shell configuration file for osctl ct su',
+          user: 0,
+          group: 0,
+          mode: 0o644
+        )
+
+        add.file(
+          config_path,
+          desc: 'Container config for osctld',
+          user: 0,
+          group: 0,
+          mode: 0o400
+        )
+        add.file(
+          log_path,
+          desc: 'LXC log file',
+          user: 0,
+          group: user.ugid,
+          mode: 0o660
+        )
+
+        run_conf.assets(add) if run_conf
+
+        devices.assets(add)
+      end
+    end
+
+    # Duplicate the container with a different ID
+    #
+    # The returned container has `state` set to `:staged` and its assets will
+    # not exist, so the caller has to build the container and call
+    # `ct.state = :complete` for the container to become usable.
+    #
+    # @param id [String] new container id
+    # @param opts [Hash] options
+    # @option opts [Pool] :pool target pool, optional
+    # @option opts [User] :user target user, optional
+    # @option opts [Group] :group target group, optional
+    # @option opts [String] :dataset target dataset, optional
+    def dup(id, opts = {})
+      ct = clone
+      ct.send(:clone_from, self, id, opts)
+      ct
+    end
+
+    # @return [Container::RunConfiguration]
+    def new_run_conf
+      Container::RunConfiguration.new(self, load_conf: false)
+    end
+
+    # @return [Container::RunConfiguration]
+    def get_run_conf
+      run_conf || new_run_conf
+    end
+
+    # STOPPED can precede asynchronous exit cleanup. Do not substitute a fresh
+    # configuration for the retired run when subscribing to its completion.
+    # @return [Promise::Token, nil]
+    def get_exit_promise
+      inclusively do
+        if @run_conf&.init_pid
+          @run_conf.get_exit_promise
+        else
+          @past_run_conf&.get_exit_promise
+        end
+      end
+    end
+
+    # @return [Container::RunConfiguration, nil]
+    def get_past_run_conf
+      inclusively { @past_run_conf }
+    end
+
+    def forget_past_run_conf(expected_run_conf = nil)
+      exclusively do
+        @past_run_conf = nil if expected_run_conf.nil? || @past_run_conf.equal?(expected_run_conf)
+      end
+    end
+
+    # @param next_run_conf [Container::RunConfiguration]
+    def set_next_run_conf(next_run_conf)
+      exclusively { @next_run_conf = next_run_conf }
+    end
+
+    # This must be called on container start
+    def init_run_conf
+      exclusively do
+        if @next_run_conf
+          @run_conf = @next_run_conf
+          @next_run_conf = nil
+        else
+          @run_conf = new_run_conf
+        end
+
+        @run_conf.save
+      end
+
+      # Generate LXC configs for current time namespace offsets
+      reconfigure
+    end
+
+    # Call {#init_run_conf} unless {#run_conf} is already set
+    # @return [Container::RunConfiguration]
+    def ensure_run_conf
+      exclusively do
+        init_run_conf if @run_conf.nil?
+        run_conf
+      end
+    end
+
+    # Mount the container's dataset
+    # @param force [Boolean] ensure the datasets are mounted even if osctld
+    #                        already mounted them
+    def mount(force: false)
+      return if !force && mounted
+
+      dataset.mount(recursive: true)
+      self.mounted = true
+    end
+
+    # Unmount the container's dataset
+    def unmount(force: false)
+      return if !force && !mounted
+
+      dataset.unmount(recursive: true)
+      self.mounted = false
+    end
+
+    # Check if the container's dataset is mounted
+    # @param force [Boolean] check if the dataset is mounted even if osctld
+    #                        already mounted it
+    def mounted?(force: false)
+      if force || mounted.nil?
+        self.mounted = dataset.mounted?(recursive: true)
+      else
+        mounted
+      end
+    end
+
+    def map_mode=(new_mode)
+      @map_mode = new_mode
+      save_config
+      lxc_config.configure
+    end
+
+    def chown(user)
+      self.user = user
+      save_config
+      lxc_config.configure
+      configure_bashrc
+    end
+
+    def chgrp(grp, missing_devices: nil)
+      self.group = grp
+
+      case missing_devices
+      when 'provide'
+        devices.ensure_all
+        devices.init
+
+      when 'remove'
+        devices.remove_missing
+        devices.init
+
+      when 'check'
+        devices.check_all_available!(group: grp)
+
+      else
+        raise "unsupported action for missing devices: '#{missing_devices}'"
+      end
+
+      save_config
+      lxc_config.configure
+      configure_bashrc
+    end
+
+    def state=(v)
+      if state == :staged
+        case v
+        when :complete
+          exclusively { @state = :stopped }
+          save_config
+
+        when :running
+          exclusively { @state = v }
+          save_config
+        end
+
+        return
+      end
+
+      exclusively { @state = v }
+    end
+
+    # Fetch current container state by forking into it
+    # @return [Symbol]
+    def current_state
+      st = ContainerControl::Commands::State.run!(self)
+      self.state = st.state
+      if st.state == :stopped
+        run_conf&.clear_dead_init_identity
+      elsif st.init_pid
+        set_init_pid(st.init_pid)
+      end
+      st.state
+    rescue ContainerControl::Error
+      self.state = :error
+    end
+
+    # Fetch current state if the state is not known, otherwise return the known state
+    # @return [Symbol]
+    def fresh_state
+      if state == :unknown
+        current_state
+      else
+        state
+      end
+    end
+
+    def running?
+      state == :running
+    end
+
+    def recovery_tainted?
+      inclusively { @recovery_tainted }
+    end
+
+    def taint_recovery!
+      exclusively { @recovery_tainted = true }
+      save_config
+    end
+
+    # Recovery owns this flag, not the generic configuration/runtime state.
+    def clear_recovery_taint!
+      exclusively { @recovery_tainted = false }
+      save_config
+    end
+
+    def can_start?
+      inclusively do
+        state != :staged && state != :error && !@recovery_tainted &&
+          !netifs.recovery_tainted? && pool.active?
+      end
+    end
+
+    def init_pid
+      inclusively do
+        @run_conf ? run_conf.init_pid : nil
+      end
+    end
+
+    def refresh_init_pid(expected_run_conf: nil)
+      return init_pid unless running?
+
+      st = ContainerControl::Commands::State.run!(self)
+      self.state = st.state
+      return unless st.init_pid
+
+      set_init_pid(st.init_pid, expected_run_conf:)
+    rescue ContainerControl::Error
+      nil
+    end
+
+    def set_init_pid(pid, expected_run_conf: nil)
+      return unless pid
+
+      target_run_conf =
+        if expected_run_conf
+          inclusively do
+            next unless @state == :running && @run_conf.equal?(expected_run_conf)
+
+            expected_run_conf
+          end
+        else
+          ensure_run_conf
+        end
+      return unless target_run_conf
+
+      target_run_conf.init_pid = pid
+      pid
+    rescue Errno::ESRCH, Container::RunConfiguration::LifecycleError
+      nil
+    end
+
+    def starting
+      exclusively do
+        # Normally {#init_run_conf} is called from {Commands::Container::Start},
+        # but in case the lxc-start was invoked manually outside of osctld,
+        # initiate the run conf if needed.
+        ensure_run_conf
+      end
+    end
+
+    def stopped(expected_run_conf = nil)
+      retiring_run_conf = nil
+      accepted = exclusively do
+        if expected_run_conf && !@run_conf.equal?(expected_run_conf)
+          next false
+        end
+
+        if run_conf
+          retiring_run_conf = @run_conf
+          retiring_run_conf.begin_retirement
+          @past_run_conf = @run_conf
+          @run_conf = nil
+        end
+
+        true
+      end
+
+      retiring_run_conf&.destroy
+      accepted
+    end
+
+    def can_dist_configure_network?
+      inclusively do
+        next false if netifs.detect { |netif| !netif.can_run_distconfig? }
+
+        true
+      end
+    end
+
+    def dir
+      dataset.mountpoint
+    end
+
+    def lxc_home(user: nil, group: nil)
+      inclusively { (group || self.group).userdir(user || self.user) }
+    end
+
+    def lxc_dir(user: nil, group: nil)
+      inclusively { File.join(lxc_home(user:, group:), id) }
+    end
+
+    def rootfs
+      File.join(dir, 'private')
+    rescue SystemCommandFailed
+      # Dataset for staged containers does not have to exist yet, relevant
+      # primarily for ct show/list
+      nil
+    end
+
+    def config_path
+      inclusively { File.join(pool.conf_path, 'ct', "#{id}.yml") }
+    end
+
+    def user_hook_script_dir
+      inclusively { File.join(pool.root_user_hook_script_dir, 'ct', id) }
+    end
+
+    def uid_map
+      user.uid_map
+    end
+
+    def gid_map
+      user.gid_map
+    end
+
+    def root_host_uid
+      user.uid_map.ns_to_host(0)
+    end
+
+    def root_host_gid
+      user.gid_map.ns_to_host(0)
+    end
+
+    # Return a list of all container datasets
+    # @return [Array<OsCtl::Lib::Zfs::Dataset>]
+    def datasets
+      ds = inclusively { dataset }
+      [ds] + ds.descendants
+    end
+
+    # Iterate over all container datasets
+    # @yieldparam ds [OsCtl::Lib::Zfs::Dataset]
+    def each_dataset(&)
+      datasets.each(&)
+    end
+
+    def base_cgroup_path
+      inclusively { File.join(group.full_cgroup_path(user), "ct.#{id}") }
+    end
+
+    def cgroup_path
+      File.join(base_cgroup_path, 'user-owned')
+    end
+
+    def wrapper_cgroup_path
+      File.join(base_cgroup_path, 'wrapper')
+    end
+
+    def entry_cgroup_path
+      File.join(cgroup_path, "lxc.monitor.#{id}")
+    end
+
+    def payload_cgroup_path
+      File.join(cgroup_path, "lxc.payload.#{id}")
+    end
+
+    def attach_cgroup_path
+      File.join(payload_cgroup_path, 'osctl.attach')
+    end
+
+    def abs_cgroup_path(subsystem)
+      CGroup.abs_cgroup_path(subsystem, cgroup_path)
+    end
+
+    def abs_apply_cgroup_path(subsystem)
+      CGroup.abs_cgroup_path(subsystem, base_cgroup_path)
+    end
+
+    # @return [Integer, nil] memory limit in bytes
+    def find_memory_limit(parents: true)
+      limit = cgparams&.find_memory_limit
+
+      if limit
+        return limit
+      elsif !parents
+        return
+      end
+
+      group.find_memory_limit(parents:)
+    end
+
+    # @return [Integer, nil] swap limit in bytes
+    def find_swap_limit(parents: true)
+      limit = cgparams&.find_swap_limit
+
+      if limit
+        return limit
+      elsif !parents
+        return
+      end
+
+      group.find_swap_limit(parents:)
+    end
+
+    # @return [Integer, nil] CPU limit in percent (100 % for one CPU)
+    def find_cpu_limit(parents: true)
+      limit = cgparams&.find_cpu_limit
+
+      if limit
+        return limit
+      elsif !parents
+        return
+      end
+
+      group.find_cpu_limit(parents:)
+    end
+
+    def set(opts)
+      opts.each do |k, v|
+        case k
+        when :autostart
+          self.autostart = AutoStart::Config.new(self, v[:priority], v[:delay])
+
+        when :ephemeral
+          self.ephemeral = true
+
+        when :hostname
+          original = nil
+
+          exclusively do
+            original = @hostname
+            @hostname = OsCtl::Lib::Hostname.new(v)
+          end
+
+          DistConfig.run(get_run_conf, :set_hostname, original:)
+
+        when :dns_resolvers
+          DistConfig.run(get_run_conf, :dns_resolvers, resolvers: v)
+          self.dns_resolvers = v
+
+        when :nesting
+          self.nesting = true
+
+        when :distribution
+          exclusively do
+            @distribution = v[:name]
+            @version = v[:version]
+            @arch = v[:arch] if v[:arch]
+            @vendor = v[:vendor]
+            @variant = v[:variant]
+          end
+
+          if (rc = run_conf)
+            rc.set_distribution(
+              distribution:,
+              version:,
+              arch:,
+              vendor:,
+              variant:
+            )
+          end
+
+        when :cpu_package
+          self.cpu_package = v
+
+        when :seccomp_profile
+          self.seccomp_profile = v
+
+        when :init_cmd
+          self.init_cmd = v
+
+        when :start_menu
+          self.start_menu = Container::StartMenu.new(self, v[:timeout])
+
+        when :impermanence
+          self.impermanence = Container::Impermanence.new(v[:zfs_properties].transform_keys(&:to_s))
+
+        when :raw_lxc
+          raw_configs.lxc = v
+
+        when :attrs
+          attrs.update(v)
+        end
+      end
+
+      save_config
+      lxc_config.configure_base
+    end
+
+    def unset(opts)
+      opts.each do |k, v|
+        case k
+        when :autostart
+          self.autostart = false
+          pool.autostart_plan.stop_ct(self)
+
+        when :ephemeral
+          self.ephemeral = false
+
+        when :hostname
+          self.hostname = nil
+          DistConfig.run(get_run_conf, :unset_etc_hosts)
+
+        when :dns_resolvers
+          DistConfig.run(get_run_conf, :unset_dns_resolvers)
+          self.dns_resolvers = nil
+
+        when :nesting
+          self.nesting = false
+
+        when :cpu_package
+          self.cpu_package = 'auto'
+
+        when :seccomp_profile
+          self.seccomp_profile = default_seccomp_profile
+
+        when :init_cmd
+          self.init_cmd = nil
+
+        when :start_menu
+          clear_start_menu
+          self.start_menu = nil
+
+        when :impermanence
+          self.impermanence = nil
+
+        when :raw_lxc
+          raw_configs.lxc = nil
+
+        when :attrs
+          v.each { |attr| attrs.unset(attr) }
+        end
+      end
+
+      save_config
+      lxc_config.configure_base
+    end
+
+    def setup_start_menu
+      menu = start_menu
+      menu.deploy if menu
+    end
+
+    def clear_start_menu
+      menu = start_menu
+      menu.unlink if menu
+    end
+
+    # Read hostname from a running container
+    # @return [String, nil]
+    def read_hostname
+      return nil unless running?
+
+      begin
+        ContainerControl::Commands::GetHostname.run!(self)
+      rescue ContainerControl::Error => e
+        log(:warn, "Unable to read container hostname: #{e.message}")
+        nil
+      end
+    end
+
+    def update_hints
+      hints.account_cpu_use
+      save_config
+    end
+
+    # Regenerate LXC config
+    def reconfigure
+      lxc_config.configure
+    end
+
+    def configure_bashrc
+      ErbTemplate.render_to('ct/bashrc', {
+        ct: self,
+        override: %w[
+          attach cgroup console device execute freeze info ls monitor stop top
+          unfreeze wait
+        ],
+        disable: %w[
+          autostart checkpoint clone copy create destroy snapshot
+          start-ephemeral unshare
+        ]
+      }, File.join(lxc_dir, '.bashrc'))
+    end
+
+    def open_send_log(role, token, opts = {})
+      exclusively do
+        self.send_log = SendReceive::Log.new(role:, token:, opts:)
+        save_config
+      end
+    end
+
+    def close_send_log(save: true)
+      exclusively do
+        send_log.close
+        self.send_log = nil
+        save_config if save
+      end
+    end
+
+    def open_local_transfer_log(role, opts = {})
+      exclusively do
+        self.local_transfer_log = LocalTransfer::Log.new(role:, opts:)
+        save_config
+      end
+    end
+
+    def close_local_transfer_log(save: true)
+      exclusively do
+        local_transfer_log.close
+        self.local_transfer_log = nil
+        save_config if save
+      end
+    end
+
+    def transfer_log
+      inclusively { send_log || local_transfer_log }
+    end
+
+    def transfer_in_progress?
+      inclusively { !!send_log || !!local_transfer_log }
+    end
+
+    # Unregister the container from internal uses in osctld, e.g. on pool export
+    def unregister
+      exclusively do
+        SendReceive::Tokens.free(send_log.token) if send_log
+      end
+    end
+
+    # Export to clients
+    def export
+      refresh_init_pid if running? && init_pid.nil?
+
+      inclusively do
+        {
+          pool: pool.name,
+          id:,
+          user: user.name,
+          group: group.name,
+          uid_map: user.uid_map.map(&:to_h),
+          gid_map: user.gid_map.map(&:to_h),
+          map_mode: map_mode,
+          dataset: dataset.name,
+          rootfs:,
+          boot_dataset: run_conf ? run_conf.dataset.name : dataset.name,
+          boot_rootfs: run_conf ? run_conf.rootfs : rootfs,
+          lxc_path: lxc_home,
+          lxc_dir:,
+          group_path: cgroup_path,
+          distribution: run_conf ? run_conf.distribution : distribution,
+          version: run_conf ? run_conf.version : version,
+          arch: run_conf ? run_conf.arch : arch,
+          vendor: run_conf ? run_conf.vendor : vendor,
+          variant: run_conf ? run_conf.variant : variant,
+          state:,
+          recovery_tainted: recovery_tainted?,
+          init_pid:,
+          autostart: autostart ? true : false,
+          autostart_priority: autostart && autostart.priority,
+          autostart_delay: autostart && autostart.delay,
+          ephemeral:,
+          hostname:,
+          dns_resolvers:,
+          nesting:,
+          seccomp_profile:,
+          init_cmd: format_user_init_cmd,
+          cpu_package_inuse: run_conf ? run_conf.cpu_package : nil,
+          cpu_package_set: cpu_package,
+          cpu_limit: find_cpu_limit(parents: false),
+          memory_limit: find_memory_limit(parents: false),
+          swap_limit: find_swap_limit(parents: false),
+          start_menu: start_menu ? true : false,
+          start_menu_timeout: start_menu && start_menu.timeout,
+          impermanence: impermanence ? true : false,
+          impermanence_zfs_properties: impermanence&.zfs_properties,
+          raw_lxc: raw_configs.lxc,
+          log_file: log_path
+        }.merge!(attrs.export)
+      end
+    end
+
+    # Dump to config
+    def dump_config
+      inclusively do
+        data = {
+          'user' => user.name,
+          'group' => group.name,
+          'dataset' => dataset.name,
+          'map_mode' => map_mode,
+          'distribution' => distribution,
+          'version' => version,
+          'arch' => arch,
+          'vendor' => vendor,
+          'variant' => variant,
+          'net_interfaces' => netifs.dump,
+          'cgparams' => cgparams.dump,
+          'devices' => devices.dump,
+          'prlimits' => prlimits.dump,
+          'mounts' => mounts.dump,
+          'autostart' => autostart && autostart.dump,
+          'ephemeral' => ephemeral,
+          'hostname' => hostname && hostname.to_s,
+          'dns_resolvers' => dns_resolvers,
+          'nesting' => nesting,
+          'seccomp_profile' => if seccomp_profile == default_seccomp_profile
+                                 nil
+                               else
+                                 seccomp_profile
+                               end,
+          'cpu_package' => cpu_package,
+          'init_cmd' => init_cmd,
+          'start_menu' => start_menu && start_menu.dump,
+          'impermanence' => impermanence && impermanence.dump,
+          'raw' => raw_configs.dump,
+          'attrs' => attrs.dump,
+          'hints' => hints.dump
+        }
+
+        data['state'] = state.to_s if %i[staged error].include?(state)
+        data['recovery_tainted'] = true if @recovery_tainted
+        data['send_log'] = send_log.dump if send_log
+        data['local_transfer_log'] = local_transfer_log.dump if local_transfer_log
+
+        data
+      end
+    end
+
+    def save_config
+      data = dump_config
+
+      regenerate_file(config_path, 0o400) do |f|
+        f.write(OsCtl::Lib::ConfigFile.dump_yaml(data))
+      end
+
+      File.chown(0, 0, config_path)
+    end
+
+    def reload_config
+      sync_host_link_configuration do
+        save_config if load_config_file
+      end
+    end
+
+    # @param config [String]
+    def replace_config(config)
+      sync_host_link_configuration do
+        load_config_string(config)
+        save_config
+      end
+    end
+
+    # Update keys/values from `new_config` in the container's config
+    # @param new_config [Hash]
+    def patch_config(new_config)
+      sync_host_link_configuration do
+        tmp = dump_config
+        tmp.update(new_config)
+        load_config_hash(tmp)
+        save_config
+      end
+    end
+
+    def format_user_init_cmd
+      (init_cmd || default_init_cmd).join(' ')
+    end
+
+    def format_exec_init_cmd
+      cmd = init_cmd || default_init_cmd
+      menu = start_menu
+
+      if menu
+        menu.init_cmd(cmd)
+      else
+        cmd
+      end.join(' ')
+    end
+
+    def syslogns_tag(run_id: nil)
+      max_size = OsCtl::Lib::Sys::SYSLOGNS_MAX_TAG_BYTESIZE
+
+      base =
+        if run_id || id.bytesize >= max_size - 1
+          id
+        else
+          ident
+        end
+
+      base = base.gsub(/[^A-Za-z0-9_.-]/, '_')
+      base = base.sub(/\A[^A-Za-z0-9]+/, '').sub(/[^A-Za-z0-9]+\z/, '')
+      base = 'ct' if base.empty?
+
+      if run_id
+        digest = Digest::SHA256.hexdigest(run_id.to_s)[0, 4]
+        prefix = base.byteslice(0, max_size - digest.bytesize - 1)
+        prefix = prefix.sub(/[^A-Za-z0-9]+\z/, '')
+        prefix = 'ct' if prefix.empty?
+
+        return "#{prefix}-#{digest}"
+      end
+
+      tag = base.byteslice(0, max_size)
+      tag = tag.sub(/[^A-Za-z0-9]+\z/, '')
+
+      tag.empty? ? 'ct' : tag
+    end
+
+    def log_path
+      inclusively { File.join(pool.log_path, 'ct', "#{id}.log") }
+    end
+
+    def log_type
+      inclusively { "ct=#{pool.name}:#{id}" }
+    end
+
+    def manipulation_resource
+      ['container', ident]
+    end
+
+    protected
+
+    attr_exclusive_writer :pool, :id, :user, :dataset, :group, :distribution, :version, :arch,
+                          :vendor, :variant, :autostart, :ephemeral, :hostname, :dns_resolvers,
+                          :nesting, :prlimits, :mounts, :send_log, :local_transfer_log, :netifs,
+                          :cgparams, :cpu_package, :devices, :seccomp_profile, :apparmor, :attrs,
+                          :lxc_config, :init_cmd, :start_menu, :impermanence
+    attr_synchronized_accessor :mounted
+
+    # Keep this ordering consistent with recovery, which holds the global
+    # registry while reading the container's installed netif manager.
+    def sync_host_link_configuration(&block)
+      NetInterface.sync_host_link_registry { exclusively(&block) }
+    end
+
+    def load_config_file(**)
+      cfg = parse_yaml do
+        OsCtl::Lib::ConfigFile.load_yaml_file(config_path)
+      end
+
+      load_config_hash(cfg, trusted_runtime: true, **)
+    end
+
+    def load_config_string(str, **)
+      cfg = parse_yaml { OsCtl::Lib::ConfigFile.load_yaml(str) }
+      load_config_hash(cfg, **)
+    end
+
+    def parse_yaml
+      yield
+    rescue Psych::Exception => e
+      raise ConfigError.new("Unable to load config of container #{id}", e)
+    end
+
+    def load_config_hash(cfg, init_devices: true, dataset_cache: nil, trusted_runtime: false)
+      cfg = Container::Adaptor.adapt(self, cfg)
+      setup_state_changed = false
+
+      sync_host_link_configuration do
+        cfg = sanitize_external_runtime_state(cfg) unless trusted_runtime
+        @state = cfg['state'].to_sym if cfg['state']
+        @recovery_tainted = cfg.fetch('recovery_tainted', false)
+        unless [true, false].include?(@recovery_tainted)
+          raise ConfigError, 'invalid recovery taint'
+        end
+
+        @user ||= DB::Users.find(cfg['user'], pool) || (raise ConfigError, "container #{id}: user '#{cfg['user']}' not found")
+        @group ||= DB::Groups.find(cfg['group'], pool) || (raise ConfigError, "container #{id}: group '#{cfg['group']}' not found")
+
+        @dataset ||= if cfg['dataset']
+                       OsCtl::Lib::Zfs::Dataset.new(
+                         cfg['dataset'],
+                         base: cfg['dataset'],
+                         cache: dataset_cache
+                       )
+                     else
+                       Container.default_dataset(
+                         pool,
+                         id,
+                         dataset_cache:
+                       )
+                     end
+
+        @map_mode ||= cfg.fetch('map_mode', 'zfs')
+        @distribution = cfg['distribution']
+        @version = cfg['version']
+        @arch = cfg['arch']
+        @vendor = cfg.fetch('vendor', 'default')
+        @variant = cfg.fetch('variant', 'default')
+        @autostart = cfg['autostart'] && AutoStart::Config.load(self, cfg['autostart'])
+        @ephemeral = cfg['ephemeral']
+        @hostname = cfg['hostname'] && OsCtl::Lib::Hostname.new(cfg['hostname'])
+        @dns_resolvers = cfg['dns_resolvers']
+        @nesting = cfg['nesting'] || false
+        @cpu_package = cfg.fetch('cpu_package', 'auto')
+        @seccomp_profile = cfg['seccomp_profile'] || default_seccomp_profile
+        @init_cmd = cfg['init_cmd']
+
+        @start_menu =
+          if !cfg.has_key?('start_menu') || cfg['start_menu']
+            Container::StartMenu.load(self, cfg['start_menu'] || {})
+          end
+
+        @impermanence =
+          if cfg['impermanence']
+            Container::Impermanence.load(cfg['impermanence'])
+          end
+
+        @run_conf = Container::RunConfiguration.load(self)
+
+        if cfg['send_log']
+          @send_log = SendReceive::Log.load(cfg['send_log'])
+          SendReceive::Tokens.register(@send_log.token)
+        end
+
+        if cfg['local_transfer_log']
+          @local_transfer_log = LocalTransfer::Log.load(cfg['local_transfer_log'])
+        end
+
+        @cgparams = CGroup::ContainerParams.load(self, cfg['cgparams'])
+        @prlimits = PrLimits::Manager.load(self, cfg['prlimits'] || {})
+        @raw_configs = Container::RawConfigs.new(cfg['raw'] || {})
+        @attrs = Attributes.load(cfg['attrs'] || {})
+
+        # It's necessary to load devices _before_ netifs. The device manager needs
+        # to create cgroups first, in order for echo a > devices.deny to work.
+        # If the container has a veth interface, the setup code switches to the
+        # container's user, which creates cgroups in all subsystems. Devices then
+        # can't be initialized properly.
+        @devices = Devices::Manager.load(self, cfg['devices'] || [])
+        @devices.init if init_devices
+
+        @netifs = NetInterface::Manager.load(
+          self,
+          cfg['net_interfaces'] || [],
+          discover_host_links: trusted_runtime
+        )
+        setup_state_changed = @netifs.setup_state_changed?
+        if @netifs.recovery_tainted?
+          setup_state_changed ||= !@recovery_tainted
+          @recovery_tainted = true
+        end
+        @mounts = Mount::Manager.load(self, cfg['mounts'] || [])
+
+        @hints = Container::Hints.load(self, cfg['hints'] || {})
+      end
+
+      setup_state_changed
+    end
+
+    # Runtime state and host-side link identities are daemon-owned metadata and
+    # therefore cannot come from imported/replaced/patched container YAML.
+    # Preserve only records already owned by this daemon, matched to the exact
+    # configured type/name. Every retained identity, clean or tainted, must be
+    # cleared by deliberate lifecycle cleanup before an external edit can
+    # discard or rename its owner.
+    def sanitize_external_runtime_state(cfg)
+      current = {}
+      @netifs&.each do |netif|
+        next unless netif.respond_to?(:host_link_identity)
+
+        name, ifindex, ifb_ifindex = netif.host_link_identity
+        next unless name
+
+        key = [netif.type.to_s, netif.name]
+        if current.has_key?(key)
+          raise ConfigError, "duplicate internal host-link owner #{key.join('/')}"
+        end
+
+        current[key] = {
+          'name' => name,
+          'ifindex' => ifindex,
+          'ifb_ifindex' => ifb_ifindex,
+          'tainted' => netif.respond_to?(:host_link_tainted?) && netif.host_link_tainted?
+        }
+      end
+
+      owner_keys = current.keys
+      seen = Hash.new(0)
+      netifs = Array(cfg['net_interfaces']).map do |netif_cfg|
+        next netif_cfg unless netif_cfg.is_a?(Hash)
+
+        sanitized = netif_cfg.dup
+        sanitized.delete('host_link')
+        key = [sanitized['type'].to_s, sanitized['name']]
+        seen[key] += 1
+        if seen[key] > 1 && owner_keys.include?(key)
+          raise ConfigError,
+                "external config duplicates internal host-link owner #{key.join('/')}"
+        end
+        sanitized['host_link'] = current.delete(key) if seen[key] == 1 && current.has_key?(key)
+        sanitized
+      end
+
+      unless current.empty?
+        owners = current.keys.map { |type, name| "#{type}/#{name}" }.join(', ')
+        raise ConfigError, "external config cannot discard internal host-link owners: #{owners}"
+      end
+
+      sanitized = cfg.merge('net_interfaces' => netifs)
+      sanitized['recovery_tainted'] = @recovery_tainted
+      if %i[staged error].include?(@state)
+        sanitized['state'] = @state.to_s
+      else
+        sanitized.delete('state')
+      end
+      sanitized
+    end
+
+    # Change the container so that it becomes a clone of `ct` with a different id
+    # @param ct [Container] the source container
+    # @param id [String] new container id
+    # @param opts [Hash] options
+    # @option opts [Pool] :pool target pool, optional
+    # @option opts [User] :user target user, optional
+    # @option opts [Group] :group target group, optional
+    # @option opts [String] :dataset target dataset, optional
+    # @option opts [Boolean] :network_interfaces
+    def clone_from(_ct, id, opts = {})
+      init_lock
+      init_manipulable
+
+      @id = id
+      @pool = opts[:pool] if opts[:pool]
+      @user = opts[:user] if opts[:user]
+      @group = opts[:group] if opts[:group]
+      @state = :staged
+      @send_log = nil
+      @recovery_tainted = false
+      @local_transfer_log = nil
+
+      @dataset = if opts[:dataset]
+                   OsCtl::Lib::Zfs::Dataset.new(
+                     opts[:dataset],
+                     base: opts[:dataset]
+                   )
+                 else
+                   Container.default_dataset(@pool, @id)
+                 end
+
+      @apparmor = @apparmor.dup(self)
+      @autostart &&= @autostart.dup(self)
+      @cgparams = cgparams.dup(self)
+      @prlimits = prlimits.dup(self)
+      @mounts = mounts.dup(self)
+      @start_menu &&= @start_menu.dup(self)
+      @impermanence &&= @impermanence.dup
+      @lxc_config = lxc_config.dup(self)
+      @raw_configs = raw_configs.dup
+      @attrs = attrs.dup
+      @run_conf = nil
+      @next_run_conf = nil
+      @past_run_conf = nil
+
+      @devices = devices.dup(self)
+      devices.init
+
+      if opts[:network_interfaces]
+        @netifs = netifs.dup(self)
+        netifs.each(&:setup)
+      else
+        @netifs = NetInterface::Manager.new(self)
+      end
+
+      @hints = hints.dup(self)
+    end
+
+    def default_seccomp_profile
+      '/etc/lxc/config/common.seccomp'
+    end
+
+    def default_init_cmd
+      ['/sbin/init']
+    end
+  end
+end
