@@ -1,0 +1,88 @@
+diff --git a/tests/log-reader-vm.nix b/tests/log-reader-vm.nix
+index 9b03fb2a..2f271b53 100644
+--- a/tests/log-reader-vm.nix
++++ b/tests/log-reader-vm.nix
+@@ -22,6 +22,9 @@ pkgs.testers.runNixOSTest {
+           User = "syslog-exporter";
+           Group = "syslog-exporter";
+           StateDirectory = "test-exporter";
++          # cat exits on FIFO EOF when rsyslog closes its writer. Keep the
++          # synthetic consumer available across service restarts and rotation.
++          Restart = "always";
+         };
+         script = "exec cat /var/log/rsyslog.pipe >> /var/lib/test-exporter/captured";
+       };
+diff --git a/tests/log-reader-vm.py b/tests/log-reader-vm.py
+index c7e63399..27c434d7 100644
+--- a/tests/log-reader-vm.py
++++ b/tests/log-reader-vm.py
+@@ -13,7 +13,9 @@ def remote(command):
+ 
+ 
+ def ingest(host, marker):
+-    payload = f"<13>Oct 21 12:00:00 {host} fixture: {marker}\n"
++    # Production senders use LocalHostName plus SyslogProtocol23Format. RFC3164
++    # does not preserve this slash-containing hostname in rsyslog's parser.
++    payload = f"<13>1 2026-10-21T12:00:00Z {host} fixture - - - {marker}\n"
+     logger.succeed(
+         "python3 -c " + shlex.quote(
+             "import socket; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); "
+@@ -22,8 +24,23 @@ def ingest(host, marker):
+     )
+ 
+ 
++def wait_for_ingested(current, marker):
++    try:
++        logger.wait_until_succeeds(remote(f"grep {marker} {current}"), timeout=30)
++        logger.wait_until_succeeds(f"grep {marker} /var/lib/test-exporter/captured", timeout=30)
++    except Exception:
++        for command in [
++            "journalctl -b -u syslog.service -u test-exporter.service --no-pager -n 80",
++            "ss -H -lun; find /var/log/remote -maxdepth 8 -printf '%m %u:%g %p\\n'",
++        ]:
++            print(logger.execute(command)[1])
++        raise
++
++
+ with subtest("reviewed historical reconciliation and refusal boundaries"):
+-    logger.succeed("systemctl stop syslog.service")
++    logger.succeed("systemctl stop syslog.socket syslog.service")
++    logger.fail("systemctl is-active --quiet syslog.socket")
++    logger.fail("systemctl is-active --quiet syslog.service")
+     logger.succeed("install -d -m 700 /var/log/remote/legacy")
+     logger.succeed("printf archive > /var/log/remote/legacy/log-20260101; chmod 600 /var/log/remote/legacy/log-20260101")
+     logger.succeed("printf archive > /var/log/messages-20260101; chmod 600 /var/log/messages-20260101")
+@@ -51,18 +68,19 @@ with subtest("reviewed historical reconciliation and refusal boundaries"):
+     logger.succeed(remote("grep archive /var/log/remote/legacy/log-20260101"))
+     logger.succeed(remote("tail -n 1 /var/log/messages-20260101"))
+     logger.succeed("test $(stat -c %a:%U:%G /var/log/unrelated) = 600:root:root")
+-    logger.succeed("systemctl start syslog.service")
++    logger.succeed("systemctl start syslog.socket syslog.service")
++    logger.wait_for_unit("test-exporter.service")
++    logger.wait_until_succeeds("ss -H -lun 'sport = :11515' | grep -q .", timeout=10)
+ 
+ with subtest("new host creation, ingestion and exporter pipe"):
+     ingest("cz.vpsfree/nodes/prg/node-fixture", "before-rotation")
+     current = "/var/log/remote/cz.vpsfree/nodes/prg/node-fixture/log"
+-    logger.wait_until_succeeds(remote(f"grep before-rotation {current}"))
+-    logger.wait_until_succeeds("grep before-rotation /var/lib/test-exporter/captured")
++    wait_for_ingested(current, "before-rotation")
+     logger.succeed(f"test $(stat -c %a:%U:%G {current}) = 640:root:log-readers")
+     logger.succeed("test $(stat -c %a:%U:%G /var/log/remote/cz.vpsfree/nodes/prg) = 750:root:log-readers")
+     logger.succeed("test $(stat -c %a:%U:%G /var/log/rsyslog.pipe) = 640:root:syslog-exporter")
+     logger.succeed("logger local-reader-marker")
+-    logger.wait_until_succeeds(remote("grep local-reader-marker /var/log/messages"))
++    logger.wait_until_succeeds(remote("grep local-reader-marker /var/log/messages"), timeout=30)
+ 
+ with subtest("protected logs, directories and privileged actions"):
+     for command in [
+@@ -102,8 +120,7 @@ with subtest("rotation keeps current and archived logs readable"):
+     logger.succeed("systemctl start logrotate.service")
+     logger.succeed(remote(f"grep before-rotation {current}-*"))
+     ingest("cz.vpsfree/nodes/prg/node-fixture", "after-rotation")
+-    logger.wait_until_succeeds(remote(f"grep after-rotation {current}"))
+-    logger.wait_until_succeeds("grep after-rotation /var/lib/test-exporter/captured")
++    wait_for_ingested(current, "after-rotation")
+     logger.succeed(f"test $(stat -c %a:%U:%G {current}) = 640:root:log-readers")
+     logger.succeed("test $(stat -c %a:%U:%G /var/log/messages) = 640:root:log-readers")
+     logger.succeed(remote("grep local-reader-marker /var/log/messages-*"))

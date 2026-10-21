@@ -1,0 +1,12 @@
+1:  7bd4be8d ! 1:  bcd2bee1 int.log: add unprivileged SSH log reader
+    @@ tests/log-reader-vm.py (new)
+     +    logger.succeed("log-reader-reconcile --inventory /root/before.json")
+     +    logger.succeed("log-reader-reconcile --apply /root/before.json")
+     +    logger.succeed("log-reader-reconcile --apply /root/before.json")
+    -+    logger.succeed(remote("grep archive /var/log/remote/legacy/log-20260101; tail -n 1 /var/log/messages-20260101"))
+    ++    logger.succeed(remote("grep archive /var/log/remote/legacy/log-20260101"))
+    ++    logger.succeed(remote("tail -n 1 /var/log/messages-20260101"))
+     +    logger.succeed("test $(stat -c %a:%U:%G /var/log/unrelated) = 600:root:root")
+     +    logger.succeed("systemctl start syslog.service")
+     +
+2:  072f7e01 = 2:  4c041589 proxy: add dedicated Prometheus query access

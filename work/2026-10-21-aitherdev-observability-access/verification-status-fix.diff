@@ -1,0 +1,14 @@
+diff --git a/tests/prometheus-query-access.py b/tests/prometheus-query-access.py
+index 4cd9dbd3..2fa319e3 100644
+--- a/tests/prometheus-query-access.py
++++ b/tests/prometheus-query-access.py
+@@ -261,7 +261,8 @@ def exercise(auth_file):
+     htpasswd(auth_file, USERNAME, PASSWORD)
+     http2_rotation(auth_file)
+     auth_file.unlink()
+-    denied(HOSTS[0], "/codex/api/v1/query", statuses=(500,))
++    # Native nginx maps an absent password file (ENOENT) to 403, not 500.
++    denied(HOSTS[0], "/codex/api/v1/query", statuses=(403,))
+ 
+ 
+ def main():

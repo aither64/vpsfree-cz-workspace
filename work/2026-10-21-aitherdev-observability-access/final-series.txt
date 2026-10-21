@@ -1,0 +1,38 @@
+commit 7bd4be8d591bbf52492ed73fdab1140b8b1bf403
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 21 23:09:02 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 21 23:12:06 2026 +0200
+
+    int.log: add unprivileged SSH log reader
+    
+    Authorize the aitherdev machine key for an ordinary log-reader shell.
+    Use root-managed keys and public-key-only authentication. Disable SSH
+    forwarding, PTYs, tunnels and user rc execution, retaining grep and tail.
+    
+    Create remote logs and messages as root:log-readers with read-only group
+    access. Preserve ingestion, exporter pipe handling and rotation policy.
+    Provide an operator-triggered, bounded metadata reconciliation procedure
+    for historical logs without changing their permissions during activation.
+    
+    Document acceptance, existing-reader preservation and recovery. The
+    manual root-key grant remains a separate user-owned removal step.
+
+commit 072f7e01f5000bfd43439c5ba27aee28cfe69b17
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Wed Oct 21 23:07:32 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Wed Oct 21 23:12:10 2026 +0200
+
+    proxy: add dedicated Prometheus query access
+    
+    Expose a restricted HTTPS API on both Prague monitor vhosts so aitherdev
+    can query metrics without reusing human credentials or opening raw monitor
+    ports. Share a default-deny route policy and bounded request budgets,
+    replace inherited UI authentication only on approved endpoints, and drop
+    the credential before forwarding requests.
+    
+    Keep the dedicated bcrypt credential in an operator-provisioned runtime
+    file outside Nix. Document private curl configuration, atomic provisioning,
+    rotation and revocation, and add production-policy fixtures covering both
+    monitors. Register the separate log-reader check and operations links.

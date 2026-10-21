@@ -1,0 +1,14 @@
+diff --git a/tests/log-reader-vm.py b/tests/log-reader-vm.py
+index 7622bc5a..c7e63399 100644
+--- a/tests/log-reader-vm.py
++++ b/tests/log-reader-vm.py
+@@ -48,7 +48,8 @@ with subtest("reviewed historical reconciliation and refusal boundaries"):
+     logger.succeed("log-reader-reconcile --inventory /root/before.json")
+     logger.succeed("log-reader-reconcile --apply /root/before.json")
+     logger.succeed("log-reader-reconcile --apply /root/before.json")
+-    logger.succeed(remote("grep archive /var/log/remote/legacy/log-20260101; tail -n 1 /var/log/messages-20260101"))
++    logger.succeed(remote("grep archive /var/log/remote/legacy/log-20260101"))
++    logger.succeed(remote("tail -n 1 /var/log/messages-20260101"))
+     logger.succeed("test $(stat -c %a:%U:%G /var/log/unrelated) = 600:root:root")
+     logger.succeed("systemctl start syslog.service")
+ 

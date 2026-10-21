@@ -1,0 +1,49 @@
+diff --git a/docs/operations/prometheus-query-access.md b/docs/operations/prometheus-query-access.md
+index ae73eedb..7b57d882 100644
+--- a/docs/operations/prometheus-query-access.md
++++ b/docs/operations/prometheus-query-access.md
+@@ -248,8 +248,10 @@ passthru runs both vhosts against permissive local stubs with synthetic
+ credentials. It covers GET/form POST routing, query/body preservation,
+ Authorization removal, method/path/normalization denial, separate human auth,
+ missing/wrong credentials, body/rate/concurrency limits, and rotation/revocation
+-on existing HTTP/1.1 and HTTP/2 connections. Run the longer integration fixture
+-after independent review, through the workspace verification watcher:
++on existing HTTP/1.1 and HTTP/2 connections. The local listener explicitly enables
++cleartext HTTP/2 (h2c); it does not exercise public TLS or ALPN. Run the longer
++integration fixture after independent review, through the workspace verification
++watcher:
+ 
+ ```sh
+ nix build .#checks.x86_64-linux.prometheus-query-access
+diff --git a/tests/prometheus-query-access.nix b/tests/prometheus-query-access.nix
+index ac9ec852..5f382afb 100644
+--- a/tests/prometheus-query-access.nix
++++ b/tests/prometheus-query-access.nix
+@@ -35,6 +35,9 @@ let
+                   }
+                 ];
+                 http2 = true;
++                # NixOS emits vhost.http2 only for TLS listeners. This local
++                # fixture uses prior-knowledge h2c instead of public TLS.
++                extraConfig = "http2 on;";
+                 locations = lib.mapAttrs (
+                   _: location:
+                   location
+diff --git a/tests/prometheus-query-access.py b/tests/prometheus-query-access.py
+index 1b85cd45..4cd9dbd3 100644
+--- a/tests/prometheus-query-access.py
++++ b/tests/prometheus-query-access.py
+@@ -138,8 +138,12 @@ def http2_rotation(auth_file):
+         while stream not in ended:
+             data = sock.recv(65535)
+             if not data:
+-                raise RuntimeError("HTTP/2 connection closed before stream completion")
++                raise RuntimeError(f"HTTP/2 connection closed before stream {stream} completed")
+             for event in conn.receive_data(data):
++                if isinstance(event, h2.events.ConnectionTerminated):
++                    raise RuntimeError(f"HTTP/2 GOAWAY before stream completion: {event.error_code}")
++                if isinstance(event, h2.events.StreamReset):
++                    raise RuntimeError(f"HTTP/2 stream {event.stream_id} reset: {event.error_code}")
+                 if isinstance(event, h2.events.ResponseReceived):
+                     responses[event.stream_id] = int(dict(event.headers)[":status"])
+                 if isinstance(event, h2.events.DataReceived):

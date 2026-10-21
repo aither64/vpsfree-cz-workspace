@@ -1,0 +1,12 @@
+1:  bcd2bee1 = 1:  bcd2bee1 int.log: add unprivileged SSH log reader
+2:  89168470 ! 2:  27be1238 proxy: add dedicated Prometheus query access
+    @@ tests/prometheus-query-access.py (new)
+     +    htpasswd(auth_file, USERNAME, PASSWORD)
+     +    http2_rotation(auth_file)
+     +    auth_file.unlink()
+    -+    denied(HOSTS[0], "/codex/api/v1/query", statuses=(500,))
+    ++    # Native nginx maps an absent password file (ENOENT) to 403, not 500.
+    ++    denied(HOSTS[0], "/codex/api/v1/query", statuses=(403,))
+     +
+     +
+     +def main():

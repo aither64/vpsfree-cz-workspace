@@ -1,0 +1,1630 @@
+diff --git a/README.md b/README.md
+index 3486c132..39f334a4 100644
+--- a/README.md
++++ b/README.md
+@@ -77,5 +77,9 @@ See [API configuration and abuse notice processing](configs/vpsadmin/api/README.
+ 
+ ## Aitherdev operations
+ 
++See [log reader access](docs/operations/log-reader-access.md) for SSH access to
++central logs and [Prometheus query access](docs/operations/prometheus-query-access.md)
++for the dedicated HTTPS API credential and its provisioning procedure.
++
+ See [disk cleanup and retention](docs/operations/aitherdev-disk-retention.md) for
+ Nix profile/test retention, coordination collection, and rollout/recovery.
+diff --git a/cluster/cz.vpsfree/containers/prg/int.log/config.nix b/cluster/cz.vpsfree/containers/prg/int.log/config.nix
+index f2baa416..b10b9dc8 100644
+--- a/cluster/cz.vpsfree/containers/prg/int.log/config.nix
++++ b/cluster/cz.vpsfree/containers/prg/int.log/config.nix
+@@ -53,6 +53,7 @@ in
+   imports = [
+     ../../../../../environments/base.nix
+     ../../../../../profiles/ct.nix
++    ./log-reader.nix
+   ];
+ 
+   networking.firewall = {
+@@ -91,6 +92,16 @@ in
+   services.rsyslogd = {
+     enable = true;
+     defaultConfig = mkForce ''
++      # Apply to both dynamic remote logs and the local messages action. The
++      # exporter pipe retains its separately managed ownership and permissions.
++      $FileOwner root
++      $FileGroup log-readers
++      $FileCreateMode 0640
++      $DirOwner root
++      $DirGroup log-readers
++      $DirCreateMode 0750
++      $Umask 0027
++
+       template(name="remote-log-file" type="string" string="/var/log/remote/%HOSTNAME%/log")
+ 
+       ruleset(name="remote-file"){
+@@ -137,6 +148,7 @@ in
+         dateext = true;
+         notifempty = true;
+         nocompress = true;
++        create = "0640 root log-readers";
+         postrotate = reloadRsyslog;
+       };
+ 
+@@ -150,6 +162,7 @@ in
+         dateext = true;
+         notifempty = true;
+         nocompress = true;
++        create = "0640 root log-readers";
+         postrotate = reloadRsyslog;
+       };
+ 
+@@ -165,6 +178,7 @@ in
+         dateext = true;
+         notifempty = true;
+         nocompress = true;
++        create = "0640 root log-readers";
+         postrotate = reloadRsyslog;
+       };
+ 
+@@ -178,6 +192,7 @@ in
+         dateext = true;
+         notifempty = true;
+         nocompress = true;
++        create = "0640 root log-readers";
+         maxsize = "512M";
+         postrotate = reloadRsyslog;
+       };
+diff --git a/cluster/cz.vpsfree/containers/prg/int.log/log-reader-reconcile.py b/cluster/cz.vpsfree/containers/prg/int.log/log-reader-reconcile.py
+new file mode 100644
+index 00000000..c6fb6232
+--- /dev/null
++++ b/cluster/cz.vpsfree/containers/prg/int.log/log-reader-reconcile.py
+@@ -0,0 +1,200 @@
++"""Explicit, metadata-only reconciliation of the logger's historical files."""
++
++import argparse
++import grp
++import json
++import os
++import re
++import stat
++import sys
++
++
++DIRECTORY_FLAGS = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
++FILE_FLAGS = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
++MESSAGES = re.compile(r"messages(?:-\d{8}|\.\d+)?(?:\.gz)?\Z")
++ACL_NAMES = {"system.posix_acl_access", "system.posix_acl_default"}
++
++
++class UnsafeMetadata(Exception):
++    pass
++
++
++def metadata(fd, path, device, reader_gid):
++    info = os.fstat(fd)
++    directory = stat.S_ISDIR(info.st_mode)
++    if not directory and not stat.S_ISREG(info.st_mode):
++        raise UnsafeMetadata(f"special file: {path}")
++    if info.st_dev != device:
++        raise UnsafeMetadata(f"foreign filesystem: {path}")
++    if info.st_uid != 0 or info.st_gid not in (0, reader_gid):
++        raise UnsafeMetadata(f"unexpected owner/group: {path}")
++    if info.st_mode & 0o7022:
++        raise UnsafeMetadata(f"special bits or group/other writes: {path}")
++    if not directory and info.st_nlink != 1:
++        raise UnsafeMetadata(f"hard-linked file: {path}")
++    if ACL_NAMES.intersection(os.listxattr(fd)):
++        raise UnsafeMetadata(f"extended/default ACL: {path}")
++    return {
++        "path": path,
++        "device": info.st_dev,
++        "inode": info.st_ino,
++        "uid": info.st_uid,
++        "gid": info.st_gid,
++        "mode": stat.S_IMODE(info.st_mode),
++        "kind": "directory" if directory else "file",
++    }
++
++
++def open_log_root(reader_gid):
++    fd = os.open("/", DIRECTORY_FLAGS)
++    try:
++        for part in ("var", "log"):
++            next_fd = os.open(part, DIRECTORY_FLAGS, dir_fd=fd)
++            os.close(fd)
++            fd = next_fd
++            info = os.fstat(fd)
++            if info.st_uid != 0 or info.st_mode & 0o022:
++                raise UnsafeMetadata("/var/log parent must be root-owned and unwritable")
++            if not (info.st_mode & 0o001 or (info.st_gid == reader_gid and info.st_mode & 0o010)):
++                raise UnsafeMetadata("/var/log parents need existing log-reader traversal")
++        return fd
++    except BaseException:
++        os.close(fd)
++        raise
++
++
++def reject_mounts():
++    # st_dev alone cannot detect a bind mount of the same filesystem.
++    with open("/proc/self/mountinfo", encoding="utf-8") as stream:
++        for line in stream:
++            mount = re.sub(
++                r"\\([0-7]{3})", lambda match: chr(int(match[1], 8)), line.split()[4]
++            )
++            if mount == "/var/log/remote" or mount.startswith("/var/log/remote/"):
++                raise UnsafeMetadata(f"mount inside remote tree: {mount}")
++            if mount.startswith("/var/log/") and MESSAGES.fullmatch(mount[9:]):
++                raise UnsafeMetadata(f"mount over messages: {mount}")
++
++
++def inventory(root_fd, reader_gid, max_entries, max_depth):
++    device = os.fstat(root_fd).st_dev
++    parent = os.fstat(root_fd)
++    if not (parent.st_mode & 0o001 or (parent.st_gid == reader_gid and parent.st_mode & 0o010)):
++        raise UnsafeMetadata("/var/log needs existing log-reader traversal; inspect separately")
++    rows = []
++
++    def visit(parent_fd, name, path, depth):
++        if depth > max_depth or len(rows) >= max_entries:
++            raise UnsafeMetadata("inventory exceeds explicit entry/depth bound")
++        before = os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
++        directory = stat.S_ISDIR(before.st_mode)
++        if not directory and not stat.S_ISREG(before.st_mode):
++            raise UnsafeMetadata(f"symlink or special file: {path}")
++        fd = os.open(name, DIRECTORY_FLAGS if directory else FILE_FLAGS, dir_fd=parent_fd)
++        try:
++            row = metadata(fd, path, device, reader_gid)
++            if (row["device"], row["inode"]) != (before.st_dev, before.st_ino):
++                raise UnsafeMetadata(f"changed during inventory: {path}")
++            rows.append(row)
++            if directory:
++                for child in sorted(os.listdir(fd)):
++                    visit(fd, child, f"{path}/{child}", depth + 1)
++        finally:
++            os.close(fd)
++
++    for name in sorted(os.listdir(root_fd)):
++        if name == "remote" or MESSAGES.fullmatch(name):
++            visit(root_fd, name, name, 0)
++    return rows
++
++
++def open_entry(root_fd, row):
++    fd = os.dup(root_fd)
++    try:
++        parts = row["path"].split("/")
++        for index, part in enumerate(parts):
++            flags = DIRECTORY_FLAGS if index < len(parts) - 1 or row["kind"] == "directory" else FILE_FLAGS
++            next_fd = os.open(part, flags, dir_fd=fd)
++            os.close(fd)
++            fd = next_fd
++        return fd
++    except BaseException:
++        os.close(fd)
++        raise
++
++
++def reconcile(root_fd, rows, reader_gid):
++    # Validate the entire tree before the first write. The operator must quiesce
++    # rotation/ingestion too: unrelated root processes can always change metadata.
++    for row in rows:
++        fd = open_entry(root_fd, row)
++        try:
++            if metadata(fd, row["path"], row["device"], reader_gid) != row:
++                raise UnsafeMetadata(f"changed before apply: {row['path']}")
++        finally:
++            os.close(fd)
++    for row in rows:
++        fd = open_entry(root_fd, row)
++        try:
++            if metadata(fd, row["path"], row["device"], reader_gid) != row:
++                raise UnsafeMetadata(f"changed during apply: {row['path']}; inspect partial changes")
++            if row["gid"] != reader_gid:
++                os.fchown(fd, 0, reader_gid)
++            mode = 0o750 if row["kind"] == "directory" else 0o640
++            if row["mode"] != mode:
++                os.fchmod(fd, mode)
++        finally:
++            os.close(fd)
++
++
++def main():
++    parser = argparse.ArgumentParser(description=__doc__)
++    action = parser.add_mutually_exclusive_group(required=True)
++    action.add_argument("--inventory", metavar="NEW_JSON_FILE")
++    action.add_argument("--apply", metavar="REVIEWED_JSON_FILE")
++    parser.add_argument("--max-entries", type=int, default=100000)
++    parser.add_argument("--max-depth", type=int, default=32)
++    args = parser.parse_args()
++    if os.geteuid() != 0:
++        parser.error("requires root")
++    if args.max_entries < 1 or args.max_depth < 0:
++        parser.error("invalid inventory bound")
++    reader_gid = grp.getgrnam("log-readers").gr_gid
++    reject_mounts()
++    root_fd = open_log_root(reader_gid)
++    try:
++        rows = inventory(root_fd, reader_gid, args.max_entries, args.max_depth)
++        snapshot = {"version": 1, "root": "/var/log", "reader_gid": reader_gid, "entries": rows}
++        if args.inventory:
++            # Never overwrite the recovery inventory or follow an output symlink.
++            fd = os.open(args.inventory, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
++            with os.fdopen(fd, "w", encoding="utf-8") as stream:
++                json.dump(snapshot, stream, indent=2)
++                stream.write("\n")
++            print(f"inventoried {len(rows)} entries; no log metadata changed")
++        else:
++            fd = os.open(args.apply, FILE_FLAGS)
++            with os.fdopen(fd, encoding="utf-8") as stream:
++                info = os.fstat(stream.fileno())
++                if not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_mode & 0o077:
++                    raise UnsafeMetadata("reviewed inventory must be a private root-owned regular file")
++                reviewed = json.load(stream)
++            # The same reviewed inventory may be applied again: only our exact
++            # target metadata may differ; identities and the scope must match.
++            target = json.loads(json.dumps(reviewed))
++            for row in target.get("entries", []):
++                row["gid"] = reader_gid
++                row["mode"] = 0o750 if row["kind"] == "directory" else 0o640
++            if reviewed != snapshot and target != snapshot:
++                raise UnsafeMetadata("inventory changed; take and review a fresh inventory")
++            reconcile(root_fd, rows, reader_gid)
++            print(f"reconciled {len(rows)} entries; retain the original recovery inventory")
++    finally:
++        os.close(root_fd)
++
++
++if __name__ == "__main__":
++    try:
++        main()
++    except (OSError, KeyError, ValueError, UnsafeMetadata) as error:
++        sys.exit(f"log-reader-reconcile: {error}")
+diff --git a/cluster/cz.vpsfree/containers/prg/int.log/log-reader.nix b/cluster/cz.vpsfree/containers/prg/int.log/log-reader.nix
+new file mode 100644
+index 00000000..fe28e546
+--- /dev/null
++++ b/cluster/cz.vpsfree/containers/prg/int.log/log-reader.nix
+@@ -0,0 +1,42 @@
++{ pkgs, confData, ... }:
++{
++  users.groups.log-readers = { };
++  users.users.log-reader = {
++    isNormalUser = true;
++    group = "log-readers";
++    home = "/home/log-reader";
++    homeMode = "0700";
++    shell = pkgs.bashInteractive;
++    openssh.authorizedKeys.keys = [ "restrict ${confData.sshKeys.aither.aitherdev}" ];
++  };
++
++  # A writable home must not let this shell account authorize less restricted keys.
++  services.openssh.extraConfig = ''
++    Match User log-reader
++      AuthenticationMethods publickey
++      PubkeyAuthentication yes
++      PasswordAuthentication no
++      KbdInteractiveAuthentication no
++      AuthorizedKeysFile /etc/ssh/authorized_keys.d/%u
++      AuthorizedKeysCommand none
++      AuthorizedPrincipalsFile none
++      TrustedUserCAKeys none
++      DisableForwarding yes
++      AllowTcpForwarding no
++      AllowStreamLocalForwarding no
++      AllowAgentForwarding no
++      X11Forwarding no
++      PermitTTY no
++      PermitTunnel no
++      PermitUserRC no
++    Match all
++  '';
++
++  # Historical permissions are deliberately operator-controlled, never activation.
++  environment.systemPackages = [
++    (pkgs.writeScriptBin "log-reader-reconcile" ''
++      #!${pkgs.python3}/bin/python3
++      ${builtins.readFile ./log-reader-reconcile.py}
++    '')
++  ];
++}
+diff --git a/cluster/cz.vpsfree/containers/prg/proxy/config.nix b/cluster/cz.vpsfree/containers/prg/proxy/config.nix
+index 4f273e00..ac07782b 100644
+--- a/cluster/cz.vpsfree/containers/prg/proxy/config.nix
++++ b/cluster/cz.vpsfree/containers/prg/proxy/config.nix
+@@ -1,10 +1,12 @@
+ {
+   pkgs,
++  lib,
+   config,
+   confLib,
+   ...
+ }:
+ let
++  prometheusQuery = import ./prometheus-query.nix { inherit lib; };
+   alerts1Prg = confLib.findMetaConfig {
+     cluster = config.cluster;
+     name = "cz.vpsfree/containers/prg/int.alerts1";
+@@ -135,7 +137,10 @@ in
+     recommendedProxySettings = true;
+     recommendedTlsSettings = true;
+ 
+-    commonHttpConfig = "access_log /var/log/nginx/access.log combined;";
++    commonHttpConfig = ''
++      access_log /var/log/nginx/access.log combined;
++      ${prometheusQuery.httpConfig}
++    '';
+ 
+     virtualHosts = {
+       "newadmin.vpsfree.cz" = {
+@@ -201,16 +206,24 @@ in
+         enableACME = true;
+         forceSSL = true;
+         basicAuthFile = "/private/nginx/mon.htpasswd";
+-        locations."/".proxyPass =
+-          "http://${mon1Prg.services.prometheus.address}:${toString mon1Prg.services.prometheus.port}";
++        locations =
++          prometheusQuery.locations "http://${mon1Prg.services.prometheus.address}:${toString mon1Prg.services.prometheus.port}"
++          // {
++            "/".proxyPass =
++              "http://${mon1Prg.services.prometheus.address}:${toString mon1Prg.services.prometheus.port}";
++          };
+       };
+ 
+       "mon2.prg.vpsfree.cz" = {
+         enableACME = true;
+         forceSSL = true;
+         basicAuthFile = "/private/nginx/mon.htpasswd";
+-        locations."/".proxyPass =
+-          "http://${mon2Prg.services.prometheus.address}:${toString mon2Prg.services.prometheus.port}";
++        locations =
++          prometheusQuery.locations "http://${mon2Prg.services.prometheus.address}:${toString mon2Prg.services.prometheus.port}"
++          // {
++            "/".proxyPass =
++              "http://${mon2Prg.services.prometheus.address}:${toString mon2Prg.services.prometheus.port}";
++          };
+       };
+ 
+       "grafana.prg.vpsfree.cz" = {
+diff --git a/cluster/cz.vpsfree/containers/prg/proxy/prometheus-query.nix b/cluster/cz.vpsfree/containers/prg/proxy/prometheus-query.nix
+new file mode 100644
+index 00000000..d8a86fc7
+--- /dev/null
++++ b/cluster/cz.vpsfree/containers/prg/proxy/prometheus-query.nix
+@@ -0,0 +1,70 @@
++{ lib }:
++let
++  authFile = "/var/lib/nginx-auth/prometheus-codex.htpasswd";
++  postEndpoints = [
++    "query"
++    "query_range"
++    "series"
++    "labels"
++  ];
++  getEndpoints = [
++    "metadata"
++    "targets"
++    "targets/metadata"
++    "rules"
++    "alerts"
++    "status/buildinfo"
++    "status/runtimeinfo"
++  ];
++  labelValues = "label/[a-zA-Z_][a-zA-Z0-9_]*/values";
++
++  location = upstream: endpoint: methods: {
++    basicAuthFile = authFile;
++    proxyPass = upstream;
++    recommendedProxySettings = false;
++    extraConfig = ''
++      # Reject alternate raw spellings before rewriting the normalized URI.
++      if ($request_uri !~ "^/codex/api/v1/${endpoint}([?]|$)") { return 404; }
++      if ($request_method !~ "^(${methods})$") { return 405; }
++      rewrite ^/codex(/api/v1/.*)$ $1 break;
++      proxy_set_header Authorization "";
++      proxy_set_header Host $host;
++      proxy_set_header Connection "";
++      proxy_http_version 1.1;
++      proxy_connect_timeout 5s;
++      proxy_send_timeout 15s;
++      proxy_read_timeout 30s;
++      client_max_body_size 64k;
++      client_body_timeout 10s;
++      limit_req zone=prometheus_codex_rate burst=5 nodelay;
++      limit_req_status 429;
++      limit_conn prometheus_codex_connections 4;
++      limit_conn_status 429;
++    '';
++  };
++in
++{
++  # A constant key shares both budgets across vhosts and unauthenticated clients.
++  # $remote_user is unavailable when nginx runs its limit phases.
++  httpConfig = ''
++    limit_req_zone prometheus-codex zone=prometheus_codex_rate:1m rate=2r/s;
++    limit_conn_zone prometheus-codex zone=prometheus_codex_connections:1m;
++  '';
++
++  locations =
++    upstream:
++    lib.listToAttrs (
++      map (
++        endpoint:
++        lib.nameValuePair "= /codex/api/v1/${endpoint}" (location upstream endpoint "GET|HEAD|POST")
++      ) postEndpoints
++      ++ map (
++        endpoint: lib.nameValuePair "= /codex/api/v1/${endpoint}" (location upstream endpoint "GET|HEAD")
++      ) getEndpoints
++    )
++    // {
++      "~ ^/codex/api/v1/${labelValues}$" = location upstream labelValues "GET|HEAD";
++      "= /codex".return = 404;
++      "/codex/".return = 404;
++    };
++}
+diff --git a/docs/operations/log-reader-access.md b/docs/operations/log-reader-access.md
+new file mode 100644
+index 00000000..af3c4b21
+--- /dev/null
++++ b/docs/operations/log-reader-access.md
+@@ -0,0 +1,150 @@
++# Log reader access
++
++The Prague logger provides the `log-reader` SSH account for inspecting collected
++logs with ordinary commands such as `grep` and `tail`. Its root-managed public
++key is the existing aitherdev machine key. There is no source-address restriction.
++
++```sh
++ssh -T log-reader@log.int.prg.vpsfree.cz \
++  'tail -n 100 /var/log/remote/cz.vpsfree/nodes/prg/node1/log'
++ssh -T log-reader@log.int.prg.vpsfree.cz \
++  'grep -F "search text" /var/log/messages'
++```
++
++Use the normal SSH identity selection on aitherdev if the machine key is not
++selected automatically. Bound searches by host, date or output size where
++possible. All selected log contents are readable without redaction.
++
++## Access boundary
++
++The account belongs only to `log-readers`. Remote log directories are owned by
++`root:log-readers` with mode `0750`; regular logs and messages archives use
++`0640`. Rsyslog applies that policy when creating new files and host directories.
++Logrotate creates replacements as `0640 root log-readers`, retaining the existing
++daily/monthly schedules, retention, date suffixes, uncompressed files and rsyslog
++HUP. The exporter pipe retains its own group and mode.
++
++The reader cannot directly overwrite, truncate, delete or rename those logs or
++change production configuration. It has no sudo, wheel membership, Nix trust or
++service-control grant. SSH permits public-key authentication only and disables
++PTYs, TCP/Unix-socket/agent/X11 forwarding, tunnels and user rc execution. Only
++`/etc/ssh/authorized_keys.d/log-reader` supplies authorized keys; keys in the
++writable home cannot override these restrictions.
++
++This is an ordinary unprivileged shell. It can write its home and `/tmp`, run
++programs, create sockets, connect outbound and generate ordinary log messages.
++It has no resource sandbox or per-session isolation. Other processes using the
++same Unix account share its access.
++
++## Historical permissions
++
++Configuration activation does not rewrite historical metadata. Before enabling
++routine reader use, an authorized operator must inspect the existing readers and
++reconcile the selected files. This is a separate operation from deploying the
++configuration; the commands below have no automatic activation hook.
++
++`log-reader-reconcile` handles only `/var/log/remote` and its descendants, plus
++`/var/log/messages` and its date-suffixed or numbered archives (optional `.gz`).
++It inventories directories and regular files without reading log contents. It
++does not change `/var/log` itself, the exporter pipe or unrelated log trees.
++The default bounds are 100,000 entries and 32 directory levels. Exceeding either
++refuses the operation; choose a larger explicit bound only after inspecting why
++the tree exceeds the expected size.
++
++The helper refuses symlinks, special files, hard-linked files, mount points
++inside the scope (including bind mounts), foreign filesystems, non-root owners,
++groups other than `root`/`log-readers`, extended/default POSIX ACLs, special mode
++bits and group/other write permissions. It opens paths relative to directory
++descriptors with no symlink following. `/var/log` and its parents must already be
++root-owned and protected from group/other writes; `/var/log` must permit reader
++traversal. These refusals require inspection rather than a recursive chmod.
++
++Before taking the inventory:
++
++1. Identify every service or operator that needs the old group/ACL/world-read
++   access. Preserve required non-root readers with declarative membership in
++   `log-readers`, under the usual configuration review process. Broader existing
++   access is intentionally removed by the new modes.
++2. Inspect any refusal with `stat` and `getfacl -p -- EXACT_PATH`. Save its original
++   owner, group, mode and ACL in a private recovery record. Resolve only the
++   inspected paths: for example, after preserving an existing reader's access,
++   replace its old group with `log-readers` using `chgrp`, or remove a redundant
++   ACL with `setfacl -b` (and `setfacl -k` for a default directory ACL). Do not
++   remove an ACL or change a group until its readers are accounted for. Unknown
++   owners, links, special files or mounts need their own diagnosis.
++3. Schedule a brief logging maintenance window. Stop rotation and quiesce input
++   with `systemctl stop logrotate.timer logrotate.service` followed by
++   `systemctl stop syslog.service syslog.socket`. Remote senders may queue or
++   lose messages according to their transport; do not leave ingestion stopped.
++   Ensure no other root process rotates or changes the selected tree.
++
++Then, as root on the logger:
++
++```sh
++install -d -m 0700 /root/log-reader-recovery
++log-reader-reconcile \
++  --inventory /root/log-reader-recovery/before.json
++```
++
++The inventory is created exclusively with mode `0600`; an existing output file
++causes refusal. It records the path, device/inode, owner/group, mode and file kind
++for each selected entry. Review it before applying. Keep it on the logger or in
++private operator storage, outside this repository.
++
++```sh
++log-reader-reconcile --apply /root/log-reader-recovery/before.json
++systemctl start syslog.socket syslog.service
++systemctl start logrotate.timer
++```
++
++Apply rescans the full bounded scope and requires the reviewed metadata and
++identities to match before writing. It changes only group/mode, retaining root
++ownership and log contents. Reapplying the same inventory after a successful
++application is supported when the scope and identities are unchanged. New files,
++rotation or other metadata changes require a fresh inventory and review. A
++failure before apply writes nothing; a failure during apply can leave some
++entries reconciled. Inspect them against the retained inventory before retrying,
++and restore ingestion promptly even when reconciliation fails.
++
++## Acceptance, revocation and recovery
++
++After deployment and reconciliation, verify bounded reads from current remote
++logs, historical remote logs, `/var/log/messages` and its archives through the
++reader account. Observe normal ingestion and exporter health, a newly appearing
++host directory, and an ordinary scheduled rotation. Confirm the resulting
++files/directories use the expected owner/group/modes. Test destructive denials
++only in a disposable fixture; do not probe production by truncating or deleting
++logs.
++
++The aitherdev key may also be manually authorized for root on the logger.
++Deploying this account does not revoke that grant. After reader acceptance,
++the user removes that manual root authorized-key entry personally. The
++configuration and reconciliation helper never edit root's authorized keys.
++
++Revoke reader access by removing its configured public key and deploying the
++change; end already-open sessions separately if immediate revocation is needed.
++Reverting configuration does not undo historical group/mode changes. For a
++metadata rollback, first disable reader access, quiesce rotation/ingestion, then
++restore only reviewed paths whose device/inode still match the saved inventory,
++using their recorded owner/group/mode and any separately saved ACLs. Do not apply
++old metadata to replacements created by rotation. The helper does not automate
++rollback. Retain logs and the exporter pipe; never restore root key access as a
++side effect of recovery.
++
++## Disposable verification
++
++The `log-reader-access` flake check evaluates the account, key, log creation and
++rotation policy and checks rsyslog/Python syntax. Its `vmTest` attribute runs
++the production logger rules with a synthetic public key and exporter consumer:
++
++```sh
++nix build .#checks.x86_64-linux.log-reader-access
++nix build .#checks.x86_64-linux.log-reader-access.vmTest
++```
++
++The VM covers historical reconciliation/refusals, new-host ingestion, exporter
++output, SSH restrictions and home-key rejection, protected-file denials, and
++current/archive access across rotation. Run the VM and affected-host builds
++through the development session's verification watcher after final review.
++Disposable tests do not establish production ownership, ACLs or reader lists;
++those remain rollout checks.
+diff --git a/docs/operations/prometheus-query-access.md b/docs/operations/prometheus-query-access.md
+new file mode 100644
+index 00000000..ae73eedb
+--- /dev/null
++++ b/docs/operations/prometheus-query-access.md
+@@ -0,0 +1,277 @@
++# Prometheus query access
++
++The Prague HTTPS proxy exposes a dedicated authenticated API at:
++
++- `https://mon1.prg.vpsfree.cz/codex/api/v1`
++- `https://mon2.prg.vpsfree.cz/codex/api/v1`
++
++Each address queries its own Prometheus instance. Mon1 retains up to 365 days
++or 500 GB; mon2 retains up to 30 days or 60 GB. Actual history depends on ingestion
++and the first retention limit reached. Public HTTPS routing needs no private
++address mapping or change to aitherdev. Raw port 9090 remains restricted.
++
++The dedicated Basic username is `codex-aitherdev`. Its password is a separately
++generated 32-byte random value encoded as 64 hexadecimal characters. Human
++credentials remain in `/private/nginx/mon.htpasswd`: they do not authenticate
++dedicated routes, and the dedicated credential does not unlock the human UI or
++other API routes. This separation applies on both monitors.
++
++## API boundary and limits
++
++Paths below are relative to `/codex/api/v1`. Only these exact routes are allowed:
++
++| Paths | Methods |
++| --- | --- |
++| `/query`, `/query_range`, `/series`, `/labels` | GET, POST |
++| `/label/<name>/values` | GET |
++| `/metadata`, `/targets`, `/targets/metadata`, `/rules`, `/alerts` | GET |
++| `/status/buildinfo`, `/status/runtimeinfo` | GET |
++
++HEAD accompanies GET. Label names use `[a-zA-Z_][a-zA-Z0-9_]*` in a single path
++segment. Trailing slashes, encoded path spellings and unlisted paths or methods
++are rejected. Query strings and form POST bodies pass through unchanged. Nginx
++removes `/codex` and the `Authorization` header before contacting Prometheus.
++Admin/TSDB mutation, reload/quit, receivers, remote read, config/flags, debugging,
++federation and UI routes are unavailable through this credential.
++
++The new routes share one budget across both vhosts: 2 requests/s with a burst
++of 5 and at most 4 active requests. Excess requests receive HTTP 429. The fixed
++quota key also counts unauthenticated requests; public clients can exhaust the
++quota. Human UI and Grafana requests do not use it. Bodies are limited to 64 KiB,
++with a 10s body timeout. Upstream connect/send/read timeouts are 5s/15s/30s.
++The read timeout measures inactivity, not total execution time or CPU use.
++
++Use bounded ranges and `timeout=20s` in queries. That timeout is client courtesy,
++not an enforced proxy CPU budget. The credential can read all metrics and the
++listed operational metadata, without tenant isolation or redaction.
++
++## Runtime credential files
++
++Provision these outside Git and Nix before activating the query policy:
++
++| Host and file | Owner | Mode | Contents |
++| --- | --- | --- | --- |
++| Proxy: `/var/lib/nginx-auth` | `root:nginx` | `0750` | Dedicated directory |
++| Proxy: `/var/lib/nginx-auth/prometheus-codex.htpasswd` | `root:nginx` | `0640` | One username and bcrypt cost-8 hash |
++| Aitherdev: `/home/aither/.config/vpsfree-observability` | `aither:users` | `0700` | Dedicated directory |
++| Aitherdev: `/home/aither/.config/vpsfree-observability/prometheus.curlrc` | `aither:users` | `0600` | Basic credential and HTTPS curl defaults |
++
++Only the server pathname appears in Nix. Do not use `basicAuth`, `readFile`,
++`writeText`, Home Manager content/source, or a Nix-generated credential file.
++Neither plaintext nor the hash belongs in Git, the Nix store, command arguments,
++environment variables, shell history, logs or chat. A missing runtime hash file
++fails closed. Build and activation do not generate a default credential.
++
++Inspect the paths, mounts and ACLs before provisioning. Stop on unexpected
++symlinks, foreign ownership, ACL grants or mounts rather than repairing them
++blindly. Leave `/private` permissions and the human password file alone. File
++permissions protect against other users; processes and sessions running as
++`aither`, and root, can read the client credential.
++
++### Provision or rotate
++
++This is an operator procedure, separate from source builds and deployment.
++Run it as `aither` on aitherdev, from a private terminal with shell tracing,
++session recording and command-output capture disabled. Verify the proxy SSH host
++key first. The proxy needs `python3` and `htpasswd` in the root SSH command's
++PATH; `htpasswd` is supplied by its configured Apache package. Prepare any
++temporary Python environment separately if needed.
++
++The following example replaces the whole dedicated password file. It generates
++the password in memory, passes it over SSH stdin to `htpasswd -i -B -C 8`, and
++stages both files in their destination directories before atomic replacement.
++It never prints the password or hash. Existing paths must already have the
++documented ownership and modes. A failure after the server replacement can leave
++the previous client credential invalid; rerun the procedure to recover with a
++fresh credential. It does not change the human password file.
++
++```sh
++umask 077
++python3 - <<'PY'
++import grp
++import os
++from pathlib import Path
++import pwd
++import secrets
++import shlex
++import stat
++import subprocess
++import tempfile
++
++remote = r'''
++import grp
++import os
++from pathlib import Path
++import re
++import stat
++import subprocess
++import sys
++import tempfile
++
++def check(path, uid, gid, mode, directory):
++    s = path.lstat()
++    kind = stat.S_ISDIR if directory else stat.S_ISREG
++    if not kind(s.st_mode) or (s.st_uid, s.st_gid, stat.S_IMODE(s.st_mode)) != (uid, gid, mode):
++        raise RuntimeError("Unexpected credential path metadata: " + str(path))
++
++if os.geteuid() != 0:
++    raise RuntimeError("Proxy provisioning requires root")
++for ancestor in [Path("/var"), Path("/var/lib")]:
++    s = ancestor.lstat()
++    if not stat.S_ISDIR(s.st_mode) or s.st_uid != 0 or s.st_mode & 0o022:
++        raise RuntimeError("Unexpected server ancestor metadata")
++gid = grp.getgrnam("nginx").gr_gid
++parent = Path("/var/lib/nginx-auth")
++if not parent.exists() and not parent.is_symlink():
++    parent.mkdir(mode=0o750)
++    os.chown(parent, 0, gid)
++check(parent, 0, gid, 0o750, True)
++target = parent / "prometheus-codex.htpasswd"
++if target.exists() or target.is_symlink():
++    check(target, 0, gid, 0o640, False)
++password = sys.stdin.readline().rstrip("\n")
++if re.fullmatch(r"[0-9a-f]{64}", password) is None:
++    raise RuntimeError("Invalid generated password format")
++hashed = subprocess.run(
++    ["htpasswd", "-niBC", "8", "codex-aitherdev"],
++    input=password + "\n", text=True, capture_output=True, check=True,
++).stdout.strip() + "\n"
++if re.fullmatch(r"codex-aitherdev:\$2[aby]\$08\$[./A-Za-z0-9]{53}\n", hashed) is None:
++    raise RuntimeError("Unexpected htpasswd output format")
++fd, temporary = tempfile.mkstemp(prefix=".prometheus-", dir=parent)
++try:
++    with os.fdopen(fd, "w") as output:
++        os.fchown(output.fileno(), 0, gid)
++        os.fchmod(output.fileno(), 0o640)
++        output.write(hashed)
++        output.flush()
++        os.fsync(output.fileno())
++    os.replace(temporary, target)
++finally:
++    if os.path.exists(temporary):
++        os.unlink(temporary)
++'''
++
++uid = pwd.getpwnam("aither").pw_uid
++gid = grp.getgrnam("users").gr_gid
++if os.geteuid() != uid:
++    raise RuntimeError("Run this procedure as aither")
++for ancestor in [Path("/home"), Path("/home/aither"), Path("/home/aither/.config")]:
++    s = ancestor.lstat()
++    owner = 0 if ancestor == Path("/home") else uid
++    if not stat.S_ISDIR(s.st_mode) or s.st_uid != owner or s.st_mode & 0o022:
++        raise RuntimeError("Unexpected client ancestor metadata")
++parent = Path("/home/aither/.config/vpsfree-observability")
++if not parent.exists() and not parent.is_symlink():
++    parent.mkdir(mode=0o700)
++    os.chown(parent, uid, gid)
++target = parent / "prometheus.curlrc"
++for path, mode, directory in [(parent, 0o700, True), (target, 0o600, False)]:
++    if path.exists() or path.is_symlink():
++        s = path.lstat()
++        kind = stat.S_ISDIR if directory else stat.S_ISREG
++        if not kind(s.st_mode) or (s.st_uid, s.st_gid, stat.S_IMODE(s.st_mode)) != (uid, gid, mode):
++            raise RuntimeError("Unexpected client credential metadata")
++password = secrets.token_hex(32)
++client = (
++    'user = "codex-aitherdev:' + password + '"\n'
++    'basic\nfail\nsilent\nshow-error\nproto = "=https"\n'
++    'proto-redir = "=https"\nconnect-timeout = 5\nmax-time = 45\n'
++)
++fd, temporary = tempfile.mkstemp(prefix=".prometheus-", dir=parent)
++try:
++    with os.fdopen(fd, "w") as output:
++        os.fchown(output.fileno(), uid, gid)
++        os.fchmod(output.fileno(), 0o600)
++        output.write(client)
++        output.flush()
++        os.fsync(output.fileno())
++    subprocess.run(
++        ["ssh", "-T", "root@proxy.prg.vpsfree.cz", "python3 -c " + shlex.quote(remote)],
++        input=password + "\n", text=True, check=True,
++    )
++    os.replace(temporary, target)
++finally:
++    if os.path.exists(temporary):
++        os.unlink(temporary)
++PY
++```
++
++The password has no automatic expiry. Rotate after suspected disclosure or
++when access ownership changes. For ordinary rotation, atomically replace the
++hash entry and client config as above. A brief HTTP 401 gap is acceptable.
++Nginx reads the runtime password file for each request, so routine file rotation
++does not need a reload or restart. If overlap is required, use distinct usernames
++and explicitly retire the old one; duplicate entries for one username do not
++provide reliable overlap.
++
++To revoke access, atomically replace the dedicated file with an empty regular
++file at `root:nginx 0640` in the same directory, or remove the old username entry
++while preserving separately approved users. Remove the unused client file.
++New requests then fail authentication, including on existing keepalive/HTTP/2
++connections; requests already executing are not canceled. Do not use credential
++rotation as a substitute for investigating a compromised account.
++
++## Query from aitherdev
++
++Use `-q` as curl's first option to suppress a global/default curlrc, followed
++by the explicit private config and a fixed HTTPS URL:
++
++```sh
++curl -q --config /home/aither/.config/vpsfree-observability/prometheus.curlrc \
++  --get --data-urlencode 'query=up' --data-urlencode 'timeout=20s' \
++  https://mon1.prg.vpsfree.cz/codex/api/v1/query
++
++curl -q --config /home/aither/.config/vpsfree-observability/prometheus.curlrc \
++  --data-urlencode 'query=sum(up)' --data-urlencode 'timeout=20s' \
++  https://mon2.prg.vpsfree.cz/codex/api/v1/query
++
++curl -q --config /home/aither/.config/vpsfree-observability/prometheus.curlrc \
++  --get --data-urlencode 'query=up' \
++  --data-urlencode 'start=2026-10-20T12:00:00Z' \
++  --data-urlencode 'end=2026-10-20T12:10:00Z' \
++  --data-urlencode 'step=60s' --data-urlencode 'timeout=20s' \
++  https://mon1.prg.vpsfree.cz/codex/api/v1/query_range
++```
++
++Choose a recent interval within the selected monitor's retention for range
++queries. Keep credentials out of URLs and command arguments. Do not add `-u`,
++`-k`/`--insecure`, redirect following, verbose/trace output, or a global curlrc.
++The config enforces HTTPS, normal certificate validation, a 5s connection timeout
++and a 45s total client timeout. There is no client wrapper or system deployment.
++
++## Verification and recovery
++
++The flake check `prometheus-query-access` evaluates the production vhost policy
++and checks nginx syntax using disposable runtime paths. Its `integration`
++passthru runs both vhosts against permissive local stubs with synthetic
++credentials. It covers GET/form POST routing, query/body preservation,
++Authorization removal, method/path/normalization denial, separate human auth,
++missing/wrong credentials, body/rate/concurrency limits, and rotation/revocation
++on existing HTTP/1.1 and HTTP/2 connections. Run the longer integration fixture
++after independent review, through the workspace verification watcher:
++
++```sh
++nix build .#checks.x86_64-linux.prometheus-query-access
++nix build .#checks.x86_64-linux.prometheus-query-access.integration
++```
++
++Live acceptance needs separate deployment authorization. Prepare the server
++file before activating the proxy configuration. Use bounded reads to verify
++both public HTTPS addresses, the expected separate backends, human UI access,
++and failure with missing/wrong dedicated credentials. Confirm old/new credential
++behavior after rotation without printing either credential or HTTP headers.
++Do not run destructive API probes against production. The local fixture does
++not certify public TLS, deployed runtime ownership, or live availability.
++
++Configuration rollback removes dedicated API access. Credential file changes
++are independent of Nix generations; rolling back Nix does not restore an old
++password. Retain the intended runtime files or revoke them explicitly. Do not
++roll back by adding this credential to the human password file or opening raw
++Prometheus access. Logger access and its separate manual root-key removal are
++described in [log reader access](log-reader-access.md).
++
++See the upstream [nginx Basic auth](https://nginx.org/en/docs/http/ngx_http_auth_basic_module.html),
++[proxy](https://nginx.org/en/docs/http/ngx_http_proxy_module.html),
++[htpasswd](https://httpd.apache.org/docs/2.4/programs/htpasswd.html) and
++[curl](https://curl.se/docs/manpage.html) references for the underlying interfaces.
+diff --git a/flake.nix b/flake.nix
+index 0dec4d0b..fd776324 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -171,6 +171,14 @@
+         ];
+       };
+       checks.${system} = {
++        log-reader-access = import ./tests/log-reader-access.nix {
++          pkgs = devPkgs;
++          machines = confctlOutputs.machines;
++        };
++        prometheus-query-access = import ./tests/prometheus-query-access.nix {
++          pkgs = devPkgs;
++          machines = confctlOutputs.machines;
++        };
+         nix-store-cleanup =
+           devPkgs.runCommand "aitherdev-nix-store-cleanup-tests"
+             {
+diff --git a/mkdocs.yml b/mkdocs.yml
+index add19491..bd48b281 100644
+--- a/mkdocs.yml
++++ b/mkdocs.yml
+@@ -3,6 +3,8 @@ theme: readthedocs
+ extra_css: ['extra.css']
+ nav:
+ - Operations:
++  - Log reader access: 'operations/log-reader-access.md'
++  - Prometheus query access: 'operations/prometheus-query-access.md'
+   - New vpsAdmin WebUI service: 'operations/newadmin-webui.md'
+   - DeepSeek Codex on aitherdev: 'operations/codex-deepseek-aitherdev.md'
+   - Codex providers on aitherdev: 'operations/codex-providers-aitherdev.md'
+diff --git a/tests/log-reader-access.nix b/tests/log-reader-access.nix
+new file mode 100644
+index 00000000..fbda5b43
+--- /dev/null
++++ b/tests/log-reader-access.nix
+@@ -0,0 +1,100 @@
++{ pkgs, machines }:
++let
++  inherit (pkgs) lib;
++  keys = import (pkgs.path + "/nixos/tests/ssh-keys.nix") pkgs;
++  readerModule = ../cluster/cz.vpsfree/containers/prg/int.log/log-reader.nix;
++  confData = {
++    sshKeys.aither.aitherdev = keys.snakeOilEd25519PublicKey;
++    vpsadmin.networks.management = {
++      ipv4 = [ ];
++      dhcp = [ ];
++    };
++  };
++  # Reuse the production logger module; omit only site/container dependencies.
++  loggerModule =
++    { pkgs, lib, ... }:
++    builtins.removeAttrs (import ../cluster/cz.vpsfree/containers/prg/int.log/config.nix {
++      inherit pkgs lib confData;
++      confLib = {
++        getAllAddressesOf = _: _: [ ];
++        getClusterMachines = _: [ ];
++      };
++      confMachine = machines."cz.vpsfree/containers/prg/int.log".metaConfig;
++      config = {
++        cluster = { };
++        services.prometheus.confExporters.syslog.settings.syslog_pipe = "/var/log/rsyslog.pipe";
++      };
++    }) [ "imports" ];
++  fixtureModule =
++    { lib, ... }:
++    {
++      imports = [
++        loggerModule
++        readerModule
++      ];
++      options.services.prometheus.confExporters.syslog = lib.mkOption {
++        type = lib.types.attrs;
++      };
++      config = {
++        _module.args = { inherit confData; };
++        services.openssh.enable = true;
++        system.stateVersion = "22.05";
++      };
++    };
++  evaluated = import (pkgs.path + "/nixos/lib/eval-config.nix") {
++    inherit pkgs;
++    system = pkgs.stdenv.hostPlatform.system;
++    modules = [ fixtureModule ];
++  };
++  cfg = evaluated.config;
++  reader = cfg.users.users.log-reader;
++  rotations = map (name: cfg.services.logrotate.settings.${name}) [
++    "nodes"
++    "machines"
++    "containers"
++    "others"
++  ];
++  syntaxConfig = pkgs.writeText "log-reader-rsyslog.conf" (
++    lib.replaceStrings
++      [ "$FileGroup log-readers" "$DirGroup log-readers" ]
++      [ "$FileGroup root" "$DirGroup root" ]
++      cfg.services.rsyslogd.defaultConfig
++  );
++in
++assert reader.isNormalUser && reader.group == "log-readers";
++assert reader.extraGroups == [ ];
++assert reader.openssh.authorizedKeys.keys == [ "restrict ${keys.snakeOilEd25519PublicKey}" ];
++assert !(lib.elem "log-reader" cfg.nix.settings.trusted-users);
++assert builtins.all (rotation: rotation.create == "0640 root log-readers") rotations;
++assert (builtins.head rotations).frequency == "daily" && (builtins.head rotations).rotate == 180;
++assert builtins.all (rotation: rotation.frequency == "monthly" && rotation.rotate == 13) (
++  builtins.tail rotations
++);
++assert builtins.all (rotation: rotation.nocompress && rotation.dateext) rotations;
++assert lib.hasInfix "AuthorizedKeysFile /etc/ssh/authorized_keys.d/%u"
++  cfg.services.openssh.extraConfig;
++assert !(lib.hasInfix "from=" (builtins.head reader.openssh.authorizedKeys.keys));
++assert lib.hasInfix "$FileCreateMode 0640" cfg.services.rsyslogd.defaultConfig;
++assert lib.hasInfix "$DirCreateMode 0750" cfg.services.rsyslogd.defaultConfig;
++assert lib.hasInfix "$Umask 0027" cfg.services.rsyslogd.defaultConfig;
++assert lib.hasInfix "call remote-pipe" cfg.services.rsyslogd.defaultConfig;
++pkgs.runCommand "log-reader-policy"
++  {
++    nativeBuildInputs = [
++      pkgs.rsyslog
++      pkgs.python3
++    ];
++    passthru.vmTest = import ./log-reader-vm.nix {
++      inherit pkgs fixtureModule keys;
++    };
++  }
++  ''
++    rsyslogd -N1 -f ${syntaxConfig}
++    # NixOS validates the generated logrotate configuration during its build.
++    test -s ${cfg.services.logrotate.configFile}
++    python3 - <<'PY'
++    import ast
++    ast.parse(open('${../cluster/cz.vpsfree/containers/prg/int.log/log-reader-reconcile.py}').read())
++    PY
++    touch "$out"
++  ''
+diff --git a/tests/log-reader-vm.nix b/tests/log-reader-vm.nix
+new file mode 100644
+index 00000000..9b03fb2a
+--- /dev/null
++++ b/tests/log-reader-vm.nix
+@@ -0,0 +1,55 @@
++{
++  pkgs,
++  fixtureModule,
++  keys,
++}:
++pkgs.testers.runNixOSTest {
++  name = "log-reader-access";
++  nodes.logger =
++    { ... }:
++    {
++      imports = [ fixtureModule ];
++      networking.firewall.enable = false;
++      users.groups.syslog-exporter = { };
++      users.users.syslog-exporter = {
++        isSystemUser = true;
++        group = "syslog-exporter";
++      };
++      systemd.tmpfiles.rules = [ "p /var/log/rsyslog.pipe 0640 root syslog-exporter - -" ];
++      systemd.services.test-exporter = {
++        wantedBy = [ "multi-user.target" ];
++        serviceConfig = {
++          User = "syslog-exporter";
++          Group = "syslog-exporter";
++          StateDirectory = "test-exporter";
++        };
++        script = "exec cat /var/log/rsyslog.pipe >> /var/lib/test-exporter/captured";
++      };
++      systemd.services.syslog.after = [ "test-exporter.service" ];
++      # Empty fixture categories must not make force-rotation fail.
++      services.logrotate.settings = builtins.listToAttrs (
++        map
++          (name: {
++            inherit name;
++            value.missingok = true;
++          })
++          [
++            "nodes"
++            "machines"
++            "containers"
++            "others"
++          ]
++      );
++      services.logrotate.extraArgs = [
++        "--force"
++        "--state"
++        "/var/lib/log-reader-test.state"
++      ];
++      environment.systemPackages = [
++        pkgs.python3
++        pkgs.acl
++      ];
++      environment.etc."test-client-key".source = keys.snakeOilEd25519PrivateKey;
++    };
++  testScript = builtins.readFile ./log-reader-vm.py;
++}
+diff --git a/tests/log-reader-vm.py b/tests/log-reader-vm.py
+new file mode 100644
+index 00000000..7622bc5a
+--- /dev/null
++++ b/tests/log-reader-vm.py
+@@ -0,0 +1,108 @@
++import shlex
++
++start_all()
++logger.wait_for_unit("sshd.service")
++logger.wait_for_unit("syslog.service")
++logger.succeed("systemctl stop logrotate.timer")
++logger.succeed("cp /etc/test-client-key /root/test-key; chmod 600 /root/test-key")
++ssh = "ssh -i /root/test-key -o BatchMode=yes -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null log-reader@localhost"
++
++
++def remote(command):
++    return ssh + " " + shlex.quote(command)
++
++
++def ingest(host, marker):
++    payload = f"<13>Oct 21 12:00:00 {host} fixture: {marker}\n"
++    logger.succeed(
++        "python3 -c " + shlex.quote(
++            "import socket; s=socket.socket(socket.AF_INET,socket.SOCK_DGRAM); "
++            f"s.sendto({payload.encode()!r}, ('127.0.0.1', 11515))"
++        )
++    )
++
++
++with subtest("reviewed historical reconciliation and refusal boundaries"):
++    logger.succeed("systemctl stop syslog.service")
++    logger.succeed("install -d -m 700 /var/log/remote/legacy")
++    logger.succeed("printf archive > /var/log/remote/legacy/log-20260101; chmod 600 /var/log/remote/legacy/log-20260101")
++    logger.succeed("printf archive > /var/log/messages-20260101; chmod 600 /var/log/messages-20260101")
++    logger.succeed("printf unrelated > /var/log/unrelated; chmod 600 /var/log/unrelated")
++    logger.fail(remote("cat /var/log/remote/legacy/log-20260101"))
++    logger.succeed("ln -s /etc/shadow /var/log/remote/escape")
++    logger.fail("log-reader-reconcile --inventory /root/refused.json")
++    logger.succeed("test ! -e /root/refused.json; rm /var/log/remote/escape")
++    logger.succeed("mkfifo /var/log/remote/special")
++    logger.fail("log-reader-reconcile --inventory /root/refused.json")
++    logger.succeed("rm /var/log/remote/special")
++    logger.succeed("ln /var/log/unrelated /var/log/remote/hardlink")
++    logger.fail("log-reader-reconcile --inventory /root/refused.json")
++    logger.succeed("rm /var/log/remote/hardlink")
++    logger.succeed("setfacl -m u:log-reader:r /var/log/remote/legacy/log-20260101")
++    logger.fail("log-reader-reconcile --inventory /root/refused.json")
++    logger.succeed("setfacl -b /var/log/remote/legacy/log-20260101")
++    logger.fail("log-reader-reconcile --max-entries 1 --inventory /root/refused.json")
++    logger.succeed("mount -t tmpfs tmpfs /var/log/remote/legacy")
++    logger.fail("log-reader-reconcile --inventory /root/refused.json")
++    logger.succeed("umount /var/log/remote/legacy")
++    logger.succeed("log-reader-reconcile --inventory /root/before.json")
++    logger.succeed("log-reader-reconcile --apply /root/before.json")
++    logger.succeed("log-reader-reconcile --apply /root/before.json")
++    logger.succeed(remote("grep archive /var/log/remote/legacy/log-20260101; tail -n 1 /var/log/messages-20260101"))
++    logger.succeed("test $(stat -c %a:%U:%G /var/log/unrelated) = 600:root:root")
++    logger.succeed("systemctl start syslog.service")
++
++with subtest("new host creation, ingestion and exporter pipe"):
++    ingest("cz.vpsfree/nodes/prg/node-fixture", "before-rotation")
++    current = "/var/log/remote/cz.vpsfree/nodes/prg/node-fixture/log"
++    logger.wait_until_succeeds(remote(f"grep before-rotation {current}"))
++    logger.wait_until_succeeds("grep before-rotation /var/lib/test-exporter/captured")
++    logger.succeed(f"test $(stat -c %a:%U:%G {current}) = 640:root:log-readers")
++    logger.succeed("test $(stat -c %a:%U:%G /var/log/remote/cz.vpsfree/nodes/prg) = 750:root:log-readers")
++    logger.succeed("test $(stat -c %a:%U:%G /var/log/rsyslog.pipe) = 640:root:syslog-exporter")
++    logger.succeed("logger local-reader-marker")
++    logger.wait_until_succeeds(remote("grep local-reader-marker /var/log/messages"))
++
++with subtest("protected logs, directories and privileged actions"):
++    for command in [
++        f"echo corrupt >> {current}", f": > {current}", f"rm {current}",
++        f"mv {current} {current}.moved", f"touch {current}.new",
++        "echo corrupt >> /var/log/messages", "rm /var/log/messages-20260101",
++        "cat /etc/shadow", "touch /etc/reader-test", "sudo -n true",
++        "systemctl restart syslog.service",
++    ]:
++        logger.fail(remote(command))
++    logger.succeed(remote("touch ~/allowed-home-write /tmp/allowed-temp-write"))
++    groups = logger.succeed("id -nG log-reader").split()
++    assert groups == ["log-readers"], groups
++    logger.fail(remote("cat /var/log/rsyslog.pipe"))
++
++with subtest("SSH policy and root-managed keys"):
++    policy = logger.succeed("sshd -T -C user=log-reader,host=arbitrary,addr=198.51.100.9").lower()
++    for directive in [
++        "authenticationmethods publickey", "passwordauthentication no",
++        "kbdinteractiveauthentication no", "authorizedkeysfile /etc/ssh/authorized_keys.d/%u",
++        "disableforwarding yes", "allowtcpforwarding no", "allowstreamlocalforwarding no",
++        "allowagentforwarding no", "x11forwarding no", "permittty no",
++        "permittunnel no", "permituserrc no", "authorizedkeyscommand none",
++    ]:
++        assert directive in policy, directive
++    logger.fail(remote("echo unrestricted >> /etc/ssh/authorized_keys.d/log-reader"))
++    logger.succeed("ssh-keygen -q -t ed25519 -N '' -f /root/unrestricted")
++    logger.succeed("install -d -o log-reader -g log-readers /home/log-reader/.ssh; cp /root/unrestricted.pub /home/log-reader/.ssh/authorized_keys; chown log-reader:log-readers /home/log-reader/.ssh/authorized_keys")
++    logger.fail("ssh -i /root/unrestricted -o BatchMode=yes -o StrictHostKeyChecking=no log-reader@localhost true")
++    logger.succeed(remote("printf 'touch /tmp/user-rc-ran\\n' > ~/.ssh/rc"))
++    logger.succeed(remote("true"))
++    logger.succeed("test ! -e /tmp/user-rc-ran")
++    logger.fail(ssh.replace(" log-reader@", " -tt log-reader@") + " test -t 0")
++    logger.fail(ssh.replace(" log-reader@", " -o ExitOnForwardFailure=yes -R 12345:localhost:22 log-reader@") + " true")
++
++with subtest("rotation keeps current and archived logs readable"):
++    logger.succeed("systemctl start logrotate.service")
++    logger.succeed(remote(f"grep before-rotation {current}-*"))
++    ingest("cz.vpsfree/nodes/prg/node-fixture", "after-rotation")
++    logger.wait_until_succeeds(remote(f"grep after-rotation {current}"))
++    logger.wait_until_succeeds("grep after-rotation /var/lib/test-exporter/captured")
++    logger.succeed(f"test $(stat -c %a:%U:%G {current}) = 640:root:log-readers")
++    logger.succeed("test $(stat -c %a:%U:%G /var/log/messages) = 640:root:log-readers")
++    logger.succeed(remote("grep local-reader-marker /var/log/messages-*"))
+diff --git a/tests/prometheus-query-access.nix b/tests/prometheus-query-access.nix
+new file mode 100644
+index 00000000..ac9ec852
+--- /dev/null
++++ b/tests/prometheus-query-access.nix
+@@ -0,0 +1,90 @@
++{ pkgs, machines }:
++let
++  inherit (pkgs) lib;
++  production = import ../cluster/cz.vpsfree/containers/prg/proxy/config.nix {
++    inherit pkgs lib;
++    config.cluster = lib.mapAttrs (_: machine: machine.metaConfig) machines;
++    confLib.findMetaConfig = { cluster, name }: cluster.${name};
++  };
++  hosts = [
++    "mon1.prg.vpsfree.cz"
++    "mon2.prg.vpsfree.cz"
++  ];
++  fixture = import (pkgs.path + "/nixos/lib/eval-config.nix") {
++    system = pkgs.stdenv.hostPlatform.system;
++    modules = [
++      {
++        services.nginx = {
++          enable = true;
++          enableReload = true;
++          validateConfigFile = false;
++          logError = "stderr";
++          inherit (production.services.nginx) commonHttpConfig recommendedProxySettings;
++          virtualHosts = lib.listToAttrs (
++            lib.imap0 (
++              index: name:
++              let
++                source = production.services.nginx.virtualHosts.${name};
++              in
++              lib.nameValuePair name {
++                inherit (source) basicAuthFile;
++                listen = [
++                  {
++                    addr = "127.0.0.1";
++                    port = 18080;
++                  }
++                ];
++                http2 = true;
++                locations = lib.mapAttrs (
++                  _: location:
++                  location
++                  // lib.optionalAttrs (location ? proxyPass) {
++                    proxyPass = "http://127.0.0.1:${toString (18090 + index)}";
++                  }
++                ) source.locations;
++              }
++            ) hosts
++          );
++        };
++        system.stateVersion = "26.05";
++      }
++    ];
++  };
++  configFile = fixture.config.environment.etc."nginx/nginx.conf".source;
++  python = pkgs.python3.withPackages (ps: [ ps.h2 ]);
++  inputs = [
++    python
++    pkgs.nginx
++    pkgs.apacheHttpd
++  ];
++  integration =
++    pkgs.runCommand "prometheus-query-access-integration"
++      {
++        nativeBuildInputs = inputs;
++      }
++      ''
++        python3 ${./prometheus-query-access.py} ${configFile}
++        touch "$out"
++      '';
++in
++assert
++  production.networking.firewall.allowedTCPPorts == [
++    80
++    443
++  ];
++assert lib.all (
++  host:
++  production.services.nginx.virtualHosts.${host}.basicAuthFile == "/private/nginx/mon.htpasswd"
++  &&
++    production.services.nginx.virtualHosts.${host}.locations."= /codex/api/v1/query".basicAuthFile
++    == "/var/lib/nginx-auth/prometheus-codex.htpasswd"
++) hosts;
++pkgs.runCommand "prometheus-query-access"
++  {
++    nativeBuildInputs = inputs;
++    passthru = { inherit integration configFile; };
++  }
++  ''
++    python3 ${./prometheus-query-access.py} --syntax ${configFile}
++    touch "$out"
++  ''
+diff --git a/tests/prometheus-query-access.py b/tests/prometheus-query-access.py
+new file mode 100644
+index 00000000..1b85cd45
+--- /dev/null
++++ b/tests/prometheus-query-access.py
+@@ -0,0 +1,313 @@
++"""Exercise the production-generated policy against deliberately permissive stubs.
++
++All credentials are synthetic and stay in process memory or disposable files.
++The HTTP fixture checks the nginx boundary; public TLS remains a deployment check.
++"""
++
++import argparse
++import base64
++import concurrent.futures
++import http.client
++import http.server
++import json
++from pathlib import Path
++import socket
++import subprocess
++import tempfile
++import threading
++import time
++
++HOSTS = ["mon1.prg.vpsfree.cz", "mon2.prg.vpsfree.cz"]
++USERNAME = "codex-aitherdev"
++PASSWORD = "synthetic-query-fixture-password"
++HUMAN = "synthetic-human"
++HUMAN_PASSWORD = "synthetic-human-password"
++POST_PATHS = ["query", "query_range", "series", "labels"]
++GET_PATHS = [
++    "label/__name__/values", "metadata", "targets", "targets/metadata",
++    "rules", "alerts", "status/buildinfo", "status/runtimeinfo",
++]
++RECEIVED = []
++RECEIVED_LOCK = threading.Lock()
++SLOW = threading.Event()
++ACTIVE = 0
++ACTIVE_CONDITION = threading.Condition()
++
++
++class Stub(http.server.BaseHTTPRequestHandler):
++    def do_GET(self):
++        global ACTIVE
++        length = int(self.headers.get("Content-Length", "0"))
++        record = {
++            "server": self.server.server_port, "method": self.command,
++            "path": self.path, "body": self.rfile.read(length).decode(),
++            "authorization": self.headers.get("Authorization"),
++        }
++        with RECEIVED_LOCK:
++            RECEIVED.append(record)
++        if "slow=1" in self.path:
++            with ACTIVE_CONDITION:
++                ACTIVE += 1
++                ACTIVE_CONDITION.notify_all()
++            SLOW.wait(15)
++            with ACTIVE_CONDITION:
++                ACTIVE -= 1
++        body = json.dumps(record).encode()
++        self.send_response(200)
++        self.send_header("Content-Length", str(len(body)))
++        self.end_headers()
++        if self.command != "HEAD":
++            self.wfile.write(body)
++
++    do_POST = do_PUT = do_DELETE = do_PATCH = do_HEAD = do_OPTIONS = do_GET
++
++    def log_message(self, *_):
++        pass
++
++
++def authorization(user=USERNAME, password=PASSWORD):
++    return "Basic " + base64.b64encode(f"{user}:{password}".encode()).decode()
++
++
++def request(host, path, method="GET", body=None, auth=True, connection=None):
++    own = connection is None
++    conn = connection or http.client.HTTPConnection("127.0.0.1", 18080, timeout=20)
++    headers = {"Host": host}
++    if auth:
++        headers["Authorization"] = authorization() if auth is True else auth
++    if body is not None:
++        headers["Content-Type"] = "application/x-www-form-urlencoded"
++    conn.request(method, path, body=body, headers=headers)
++    response = conn.getresponse()
++    result = (response.status, response.read())
++    if own:
++        conn.close()
++    return result
++
++
++def spaced_request(*args, **kwargs):
++    # Drain the shared token bucket between policy probes.
++    time.sleep(0.52)
++    return request(*args, **kwargs)
++
++
++def denied(host, path, method="GET", auth=True, statuses=(400, 401, 403, 404, 405)):
++    with RECEIVED_LOCK:
++        before = len(RECEIVED)
++    status, _ = spaced_request(host, path, method=method, auth=auth)
++    assert status in statuses, (host, path, method, status)
++    with RECEIVED_LOCK:
++        assert len(RECEIVED) == before, ("denied request reached upstream", path)
++
++
++def htpasswd(path, user, password):
++    result = subprocess.run(
++        ["htpasswd", "-niBC", "8", user], input=password + "\n",
++        text=True, capture_output=True, check=True,
++    )
++    assert result.stdout.startswith(user + ":$2")
++    replacement = path.with_suffix(".new")
++    replacement.write_text(result.stdout)
++    replacement.chmod(0o600)
++    replacement.replace(path)
++
++
++def http2_rotation(auth_file):
++    import h2.config
++    import h2.connection
++    import h2.events
++
++    sock = socket.create_connection(("127.0.0.1", 18080), timeout=10)
++    conn = h2.connection.H2Connection(config=h2.config.H2Configuration(header_encoding="utf-8"))
++    conn.initiate_connection()
++    sock.sendall(conn.data_to_send())
++
++    responses = {}
++    ended = set()
++
++    def send(auth, path="/codex/api/v1/query?query=up"):
++        stream = conn.get_next_available_stream_id()
++        conn.send_headers(stream, [
++            (":method", "GET"), (":scheme", "http"), (":authority", HOSTS[1]),
++            (":path", path), ("authorization", auth),
++        ], end_stream=True)
++        sock.sendall(conn.data_to_send())
++        return stream
++
++    def finish(stream):
++        while stream not in ended:
++            data = sock.recv(65535)
++            if not data:
++                raise RuntimeError("HTTP/2 connection closed before stream completion")
++            for event in conn.receive_data(data):
++                if isinstance(event, h2.events.ResponseReceived):
++                    responses[event.stream_id] = int(dict(event.headers)[":status"])
++                if isinstance(event, h2.events.DataReceived):
++                    conn.acknowledge_received_data(event.flow_controlled_length, event.stream_id)
++                if isinstance(event, h2.events.StreamEnded):
++                    ended.add(event.stream_id)
++            sock.sendall(conn.data_to_send())
++        return responses[stream]
++
++    def get(auth):
++        time.sleep(0.52)
++        return finish(send(auth))
++
++    # HTTP/2 streams share the same request and concurrency budgets.
++    time.sleep(3.1)
++    streams = [send(authorization()) for _ in range(12)]
++    assert 429 in [finish(stream) for stream in streams]
++    time.sleep(3.1)
++    SLOW.clear()
++    slow_streams = []
++    try:
++        for i in range(4):
++            slow_streams.append(send(authorization(), "/codex/api/v1/query?slow=1"))
++            with ACTIVE_CONDITION:
++                assert ACTIVE_CONDITION.wait_for(lambda: ACTIVE == i + 1, timeout=5)
++            time.sleep(0.52)
++        assert finish(send(authorization())) == 429
++    finally:
++        SLOW.set()
++    assert all(finish(stream) == 200 for stream in slow_streams)
++
++    assert get(authorization()) == 200
++    htpasswd(auth_file, USERNAME, "synthetic-rotated-password")
++    assert get(authorization()) == 401
++    assert get(authorization(password="synthetic-rotated-password")) == 200
++    replacement = auth_file.with_suffix(".empty")
++    replacement.write_text("")
++    replacement.replace(auth_file)
++    assert get(authorization(password="synthetic-rotated-password")) == 401
++    sock.close()
++
++
++def exercise(auth_file):
++    for index, host in enumerate(HOSTS):
++        for endpoint in POST_PATHS + GET_PATHS:
++            status, raw = spaced_request(host, "/codex/api/v1/" + endpoint + "?query=up&timeout=20s")
++            assert status == 200, (endpoint, status)
++            record = json.loads(raw)
++            assert record["path"] == "/api/v1/" + endpoint + "?query=up&timeout=20s"
++            assert record["server"] == 18090 + index
++            assert record["authorization"] is None
++        for endpoint in POST_PATHS:
++            body = "query=sum%28up%29&match%5B%5D=up&timeout=20s"
++            status, raw = spaced_request(host, "/codex/api/v1/" + endpoint, method="POST", body=body)
++            record = json.loads(raw)
++            assert status == 200 and record["method"] == "POST" and record["body"] == body
++            assert record["authorization"] is None
++        for path in [
++            "/codex", "/codex/", "/codex/api/v1/query/", "/codex/api/v1/admin/tsdb/delete_series",
++            "/codex/-/reload", "/codex/-/quit", "/codex/federate", "/codex/metrics",
++            "/codex/api/v1/read", "/codex/api/v1/write", "/codex/api/v1/status/config",
++            "/codex/api/v1/status/flags", "/codex/debug/pprof/", "/codex/graph",
++            "/codex/api/v1/label/a/b/values", "/codex/api/v1/label/9invalid/values",
++            "/codex/api/v1/%71uery", "/codex//api/v1/query", "/codex/api/v1/./query",
++            "/codex/api/v1/label/a%2fb/values", "/codex/api/v1/label/%252e%252e/values",
++            "/codex/api/v1/query%2f..%2fadmin/tsdb/delete_series",
++            "/codex/../api/v1/admin/tsdb/delete_series",
++        ]:
++            denied(host, path)
++        for method in ["PUT", "DELETE", "PATCH", "OPTIONS"]:
++            denied(host, "/codex/api/v1/query", method=method)
++        for endpoint in GET_PATHS:
++            denied(host, "/codex/api/v1/" + endpoint, method="POST")
++        denied(host, "/codex/api/v1/query", auth=False)
++        denied(host, "/codex/api/v1/query", auth=authorization(password="wrong"))
++        denied(host, "/codex/api/v1/query", auth=authorization(HUMAN, HUMAN_PASSWORD))
++        denied(host, "/api/v1/query")
++        denied(host, "/")
++        status, _ = spaced_request(host, "/api/v1/query", auth=authorization(HUMAN, HUMAN_PASSWORD))
++        assert status == 200
++        status, _ = spaced_request(host, "/", auth=authorization(HUMAN, HUMAN_PASSWORD))
++        assert status == 200
++        denied(host, "/codex/api/v1/query", method="HEAD", auth=False)
++        status, _ = spaced_request(host, "/codex/api/v1/query", method="HEAD")
++        assert status == 200
++        before = len(RECEIVED)
++        status, _ = spaced_request(host, "/codex/api/v1/query", method="POST", body="x" * 65537)
++        assert status == 413 and len(RECEIVED) == before
++
++    # The quota spans both vhosts and credentials, including missing credentials.
++    time.sleep(3.1)
++    statuses = [request(HOSTS[i % 2], "/codex/api/v1/query", auth=False)[0] for i in range(12)]
++    assert statuses.count(401) <= 6 and 429 in statuses, statuses
++
++    # Hold four upstream requests across both hosts; human routes stay independent.
++    time.sleep(3.1)
++    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
++        futures = []
++        for i in range(4):
++            futures.append(pool.submit(request, HOSTS[i % 2], "/codex/api/v1/query?slow=1"))
++            with ACTIVE_CONDITION:
++                assert ACTIVE_CONDITION.wait_for(lambda: ACTIVE == i + 1, timeout=5)
++            time.sleep(0.52)
++        assert request(HOSTS[1], "/codex/api/v1/query")[0] == 429
++        assert request(HOSTS[1], "/api/v1/query", auth=authorization(HUMAN, HUMAN_PASSWORD))[0] == 200
++        SLOW.set()
++        assert all(f.result()[0] == 200 for f in futures)
++
++    # Existing HTTP/1.1 connections reauthenticate every request after revocation.
++    conn = http.client.HTTPConnection("127.0.0.1", 18080, timeout=10)
++    assert spaced_request(HOSTS[0], "/codex/api/v1/query", connection=conn)[0] == 200
++    htpasswd(auth_file, USERNAME, "synthetic-rotated-password")
++    assert spaced_request(HOSTS[0], "/codex/api/v1/query", connection=conn)[0] == 401
++    conn.close()
++    htpasswd(auth_file, USERNAME, PASSWORD)
++    http2_rotation(auth_file)
++    auth_file.unlink()
++    denied(HOSTS[0], "/codex/api/v1/query", statuses=(500,))
++
++
++def main():
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--syntax", action="store_true")
++    parser.add_argument("config", type=Path)
++    args = parser.parse_args()
++    with tempfile.TemporaryDirectory(prefix="prometheus-query-test-") as directory:
++        root = Path(directory)
++        auth_file = root / "dedicated.htpasswd"
++        human_file = root / "human.htpasswd"
++        config = args.config.read_text()
++        # Only fixture paths change; the production-generated locations are intact.
++        config = config.replace("/run/nginx/nginx.pid", str(root / "nginx.pid"))
++        config = config.replace("/var/log/nginx/access.log", str(root / "access.log"))
++        config = config.replace("/var/lib/nginx-auth/prometheus-codex.htpasswd", str(auth_file))
++        config = config.replace("/private/nginx/mon.htpasswd", str(human_file))
++        config_path = root / "nginx.conf"
++        config_path.write_text(config)
++        subprocess.run(["nginx", "-t", "-e", "stderr", "-p", directory + "/", "-c", str(config_path)], check=True)
++        if args.syntax:
++            return
++        htpasswd(auth_file, USERNAME, PASSWORD)
++        htpasswd(human_file, HUMAN, HUMAN_PASSWORD)
++        servers = [http.server.ThreadingHTTPServer(("127.0.0.1", port), Stub) for port in [18090, 18091]]
++        for server in servers:
++            threading.Thread(target=server.serve_forever, daemon=True).start()
++        with (root / "stderr.log").open("w") as stderr:
++            process = subprocess.Popen(["nginx", "-e", "stderr", "-p", directory + "/", "-c", str(config_path)], stderr=stderr)
++            try:
++                for _ in range(100):
++                    try:
++                        with socket.create_connection(("127.0.0.1", 18080), timeout=0.1):
++                            break
++                    except OSError:
++                        if process.poll() is not None:
++                            raise RuntimeError("nginx exited before listening")
++                        time.sleep(0.02)
++                exercise(auth_file)
++            finally:
++                SLOW.set()
++                process.terminate()
++                process.wait(timeout=10)
++                for server in servers:
++                    server.shutdown()
++        logs = (root / "stderr.log").read_text() + (root / "access.log").read_text()
++        for secret in [PASSWORD, HUMAN_PASSWORD, "synthetic-rotated-password", authorization()]:
++            assert secret not in logs
++        print("Prometheus query boundary, authentication, limits and rotation passed")
++
++
++if __name__ == "__main__":
++    main()

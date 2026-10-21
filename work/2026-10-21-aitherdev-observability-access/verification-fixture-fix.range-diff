@@ -1,0 +1,39 @@
+1:  bcd2bee1 = 1:  bcd2bee1 int.log: add unprivileged SSH log reader
+2:  4c041589 ! 2:  89168470 proxy: add dedicated Prometheus query access
+    @@ docs/operations/prometheus-query-access.md (new)
+     +credentials. It covers GET/form POST routing, query/body preservation,
+     +Authorization removal, method/path/normalization denial, separate human auth,
+     +missing/wrong credentials, body/rate/concurrency limits, and rotation/revocation
+    -+on existing HTTP/1.1 and HTTP/2 connections. Run the longer integration fixture
+    -+after independent review, through the workspace verification watcher:
+    ++on existing HTTP/1.1 and HTTP/2 connections. The local listener explicitly enables
+    ++cleartext HTTP/2 (h2c); it does not exercise public TLS or ALPN. Run the longer
+    ++integration fixture after independent review, through the workspace verification
+    ++watcher:
+     +
+     +```sh
+     +nix build .#checks.x86_64-linux.prometheus-query-access
+    @@ tests/prometheus-query-access.nix (new)
+     +                  }
+     +                ];
+     +                http2 = true;
+    ++                # NixOS emits vhost.http2 only for TLS listeners. This local
+    ++                # fixture uses prior-knowledge h2c instead of public TLS.
+    ++                extraConfig = "http2 on;";
+     +                locations = lib.mapAttrs (
+     +                  _: location:
+     +                  location
+    @@ tests/prometheus-query-access.py (new)
+     +        while stream not in ended:
+     +            data = sock.recv(65535)
+     +            if not data:
+    -+                raise RuntimeError("HTTP/2 connection closed before stream completion")
+    ++                raise RuntimeError(f"HTTP/2 connection closed before stream {stream} completed")
+     +            for event in conn.receive_data(data):
+    ++                if isinstance(event, h2.events.ConnectionTerminated):
+    ++                    raise RuntimeError(f"HTTP/2 GOAWAY before stream completion: {event.error_code}")
+    ++                if isinstance(event, h2.events.StreamReset):
+    ++                    raise RuntimeError(f"HTTP/2 stream {event.stream_id} reset: {event.error_code}")
+     +                if isinstance(event, h2.events.ResponseReceived):
+     +                    responses[event.stream_id] = int(dict(event.headers)[":status"])
+     +                if isinstance(event, h2.events.DataReceived):

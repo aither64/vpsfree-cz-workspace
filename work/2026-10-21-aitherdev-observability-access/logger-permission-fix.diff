@@ -1,0 +1,107 @@
+diff --git a/cluster/cz.vpsfree/containers/prg/int.log/config.nix b/cluster/cz.vpsfree/containers/prg/int.log/config.nix
+index b10b9dc8..c01305aa 100644
+--- a/cluster/cz.vpsfree/containers/prg/int.log/config.nix
++++ b/cluster/cz.vpsfree/containers/prg/int.log/config.nix
+@@ -92,8 +92,9 @@ in
+   services.rsyslogd = {
+     enable = true;
+     defaultConfig = mkForce ''
+-      # Apply to both dynamic remote logs and the local messages action. The
+-      # exporter pipe retains its separately managed ownership and permissions.
++      # Legacy defaults apply to the local messages selector. The RainerScript
++      # omfile action below needs its own creation properties. The exporter pipe
++      # retains its separately managed ownership and permissions.
+       $FileOwner root
+       $FileGroup log-readers
+       $FileCreateMode 0640
+@@ -105,7 +106,9 @@ in
+       template(name="remote-log-file" type="string" string="/var/log/remote/%HOSTNAME%/log")
+ 
+       ruleset(name="remote-file"){
+-        action(type="omfile" dynaFile="remote-log-file")
++        action(type="omfile" dynaFile="remote-log-file"
++          fileOwner="root" fileGroup="log-readers" fileCreateMode="0640"
++          dirOwner="root" dirGroup="log-readers" dirCreateMode="0750")
+         call remote-pipe
+       }
+ 
+diff --git a/docs/operations/log-reader-access.md b/docs/operations/log-reader-access.md
+index af3c4b21..1d86a485 100644
+--- a/docs/operations/log-reader-access.md
++++ b/docs/operations/log-reader-access.md
+@@ -19,7 +19,9 @@ possible. All selected log contents are readable without redaction.
+ 
+ The account belongs only to `log-readers`. Remote log directories are owned by
+ `root:log-readers` with mode `0750`; regular logs and messages archives use
+-`0640`. Rsyslog applies that policy when creating new files and host directories.
++`0640`. The remote RainerScript `omfile` action sets its creation policy explicitly;
++legacy defaults apply to the local messages selector. These settings apply to
++newly created files and directories and leave existing metadata unchanged.
+ Logrotate creates replacements as `0640 root log-readers`, retaining the existing
+ daily/monthly schedules, retention, date suffixes, uncompressed files and rsyslog
+ HUP. The exporter pipe retains its own group and mode.
+diff --git a/tests/log-reader-access.nix b/tests/log-reader-access.nix
+index fbda5b43..fb80633d 100644
+--- a/tests/log-reader-access.nix
++++ b/tests/log-reader-access.nix
+@@ -56,8 +56,18 @@ let
+   ];
+   syntaxConfig = pkgs.writeText "log-reader-rsyslog.conf" (
+     lib.replaceStrings
+-      [ "$FileGroup log-readers" "$DirGroup log-readers" ]
+-      [ "$FileGroup root" "$DirGroup root" ]
++      [
++        "$FileGroup log-readers"
++        "$DirGroup log-readers"
++        ''fileGroup="log-readers"''
++        ''dirGroup="log-readers"''
++      ]
++      [
++        "$FileGroup root"
++        "$DirGroup root"
++        ''fileGroup="root"''
++        ''dirGroup="root"''
++      ]
+       cfg.services.rsyslogd.defaultConfig
+   );
+ in
+@@ -77,6 +87,14 @@ assert !(lib.hasInfix "from=" (builtins.head reader.openssh.authorizedKeys.keys)
+ assert lib.hasInfix "$FileCreateMode 0640" cfg.services.rsyslogd.defaultConfig;
+ assert lib.hasInfix "$DirCreateMode 0750" cfg.services.rsyslogd.defaultConfig;
+ assert lib.hasInfix "$Umask 0027" cfg.services.rsyslogd.defaultConfig;
++assert builtins.all (property: lib.hasInfix property cfg.services.rsyslogd.defaultConfig) [
++  ''fileOwner="root"''
++  ''fileGroup="log-readers"''
++  ''fileCreateMode="0640"''
++  ''dirOwner="root"''
++  ''dirGroup="log-readers"''
++  ''dirCreateMode="0750"''
++];
+ assert lib.hasInfix "call remote-pipe" cfg.services.rsyslogd.defaultConfig;
+ pkgs.runCommand "log-reader-policy"
+   {
+diff --git a/tests/log-reader-vm.py b/tests/log-reader-vm.py
+index 27c434d7..0973b1a5 100644
+--- a/tests/log-reader-vm.py
++++ b/tests/log-reader-vm.py
+@@ -73,14 +73,19 @@ with subtest("reviewed historical reconciliation and refusal boundaries"):
+     logger.wait_until_succeeds("ss -H -lun 'sport = :11515' | grep -q .", timeout=10)
+ 
+ with subtest("new host creation, ingestion and exporter pipe"):
++    logger.succeed("test ! -e /var/log/remote/cz.vpsfree")
+     ingest("cz.vpsfree/nodes/prg/node-fixture", "before-rotation")
+     current = "/var/log/remote/cz.vpsfree/nodes/prg/node-fixture/log"
+     wait_for_ingested(current, "before-rotation")
+     logger.succeed(f"test $(stat -c %a:%U:%G {current}) = 640:root:log-readers")
+-    logger.succeed("test $(stat -c %a:%U:%G /var/log/remote/cz.vpsfree/nodes/prg) = 750:root:log-readers")
++    directory = "/var/log/remote"
++    for component in ["cz.vpsfree", "nodes", "prg", "node-fixture"]:
++        directory += "/" + component
++        logger.succeed(f"test $(stat -c %a:%U:%G {directory}) = 750:root:log-readers")
+     logger.succeed("test $(stat -c %a:%U:%G /var/log/rsyslog.pipe) = 640:root:syslog-exporter")
+     logger.succeed("logger local-reader-marker")
+     logger.wait_until_succeeds(remote("grep local-reader-marker /var/log/messages"), timeout=30)
++    logger.succeed("test $(stat -c %a:%U:%G /var/log/messages) = 640:root:log-readers")
+ 
+ with subtest("protected logs, directories and privileged actions"):
+     for command in [
