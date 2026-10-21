@@ -1,0 +1,68 @@
+Preparing worktree (checking out 'master')
+HEAD is now at 74ff349 portal: simplify optional questions and message receipts
+Updating 74ff349..2c29b80
+Fast-forward
+ README.md                                          |   6 +-
+ docs/coordination-legacy.md                        | 277 +++++++++++++++
+ docs/coordination-operations.md                    |  13 +-
+ docs/coordination.md                               | 376 ++++++--------------
+ docs/integration.md                                |   3 +
+ docs/session-preparations.md                       |   8 +-
+ libexec/workspace-coordination-claims-host.rb      |  38 ++
+ libexec/workspace-coordination-claims.rb           | 284 +++++++++++++++
+ libexec/workspace-coordination-gc.rb               |  16 +-
+ libexec/workspace-coordination-host.rb             | 150 ++++++--
+ libexec/workspace-coordination.rb                  |  52 ++-
+ libexec/workspace-host                             |   7 +-
+ libexec/workspace-integration.rb                   |  10 +
+ nix/claim-contract.json                            |   1 +
+ nix/ruby-checks.nix                                |   3 +
+ nix/tests/session-creation.nix                     |  20 +-
+ nix/workspace-portal.nix                           |   8 +-
+ portal/cmd/workspace-portal/main.go                |   3 +-
+ portal/internal/teamruntime/runtime.go             |   2 +-
+ portal/internal/web/coordination_browser_test.cjs  |  19 +
+ portal/internal/web/creation.go                    |   6 +-
+ portal/internal/web/creation_test.go               |  46 +++
+ portal/internal/web/preparation_name_test.go       |  31 ++
+ portal/internal/web/preparation_test.go            |   2 +-
+ portal/internal/web/server.go                      |   2 +-
+ portal/internal/web/session_name.go                |   9 +-
+ portal/internal/web/session_namer.go               |  12 +-
+ portal/internal/web/session_namer_test.go          |  24 +-
+ portal/internal/web/static/coordination.js         |  18 +-
+ portal/internal/workspacecodex/lead_policy.go      |   4 +-
+ portal/internal/workspacecodex/lead_policy_test.go |   2 +-
+ test/coordination_claims_overcommit_test.rb        | 108 ++++++
+ test/coordination_claims_test.rb                   | 386 +++++++++++++++++++++
+ test/coordination_gc_test.rb                       |  27 ++
+ test/creation_acceptance_browser.cjs               |   1 +
+ test/integration_test.rb                           |  60 ++++
+ test/workspace_coordination_test.rb                | 103 ++++++
+ test/workspace_host/archive_recovery_test.rb       |   4 +-
+ test/workspace_host/live_switch_test.rb            |  63 +++-
+ 39 files changed, 1857 insertions(+), 347 deletions(-)
+ create mode 100644 docs/coordination-legacy.md
+ create mode 100644 libexec/workspace-coordination-claims-host.rb
+ create mode 100644 libexec/workspace-coordination-claims.rb
+ create mode 100644 nix/claim-contract.json
+ create mode 100644 test/coordination_claims_overcommit_test.rb
+ create mode 100644 test/coordination_claims_test.rb
+Updating 2c29b80..52dcd47
+Fast-forward
+ docs/workspace-portal.md                   | 17 ++++++++++++++++
+ flake.lock                                 |  8 ++++----
+ flake.nix                                  |  2 +-
+ nix/workspace-portal.nix                   |  2 +-
+ portal/go.mod                              |  2 +-
+ portal/go.sum                              |  6 ++----
+ portal/internal/web/citations_test.go      | 32 ++++++++++++++++++++++++++++++
+ portal/internal/web/server.go              |  4 +++-
+ portal/internal/web/server_test.go         |  2 +-
+ portal/internal/web/static/app.js          | 10 +++++-----
+ portal/internal/web/templates/session.html |  2 +-
+ test/repository_browser.cjs                |  1 +
+ 12 files changed, 69 insertions(+), 19 deletions(-)
+ create mode 100644 portal/internal/web/citations_test.go
+To github.com:aither64/dev-workspace.git
+   2c29b80..52dcd47  master -> master
