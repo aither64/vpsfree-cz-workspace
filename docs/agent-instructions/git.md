@@ -61,6 +61,16 @@ This gate does not apply to tracking-only coordination commits on the shared
 workspace `master`; stage only owned tracking paths and never include feature
 content in that exception.
 
+Integration proof for a deployed machine must account for its complete deployed
+feature lineage, including dependency pins and canonical repository/target
+aliases. Preserve old/new base/head ranges and reviewed equivalence or substantive
+replacement evidence when history changes; a nonancestor deployed commit is not
+literally merged. See [machine retention](../coordination.md#machine-retention).
+An approved merge does not authorize releasing a deployed machine: retain it
+until integration evidence, user acceptance of the resulting UI/behavior and
+explicit direction to release that machine are all present. Repository merge
+claims remain short and separate; release them before CI or records.
+
 ## Git And Worktrees
 
 The top-level workspace repository has two distinct workflows:

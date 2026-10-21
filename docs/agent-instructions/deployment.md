@@ -12,11 +12,21 @@ Before deployment activation or a workspace profile switch, read
 ownership when supported. Under a claims runtime, acquire the physical machine,
 request only the machine, run authorized activation commands and verify actual
 results. Repository ownership is never held through builds or live review. Retain
-machine ownership through review, feedback and redeployment, then explicitly release. Pass the held
-claim and exact session identity to ordinary workspace-host profile activation.
+every deployed physical machine through review, feedback and redeployment until
+its deployed feature lineage is integrated into approved remote defaults, the
+user accepts the resulting UI/behavior and explicitly directs that machine's
+release. Follow [machine retention](../coordination.md#machine-retention) for
+source, system/profile and acceptance evidence and the final ownership check.
+Idle time or turn completion does not permit release. Pass the held claim and
+exact session identity to ordinary workspace-host profile activation.
 Release supplies no merge approval. Legacy jobs/reservations keep their original
 approval, integration-proof and recovery requirements. Held new claims require
 explicit release before lifecycle cleanup.
+
+Legacy automatic reservation release during lifecycle completion is an
+implementation behavior, not permission to bypass machine retention or perform
+a lifecycle action. Preserve the original recovery contract without initiating
+archive, deletion or release merely to finish a deployment.
 
 In every confctl-managed configuration repository, inspect its defined
 channels and the channel-to-input mapping before updating a flake input. For a
