@@ -1,5 +1,5 @@
 ---
-lifecycle: active
+lifecycle: complete
 ---
 # Current status
 
@@ -24,8 +24,8 @@ remote/live proofs and reviewed runtime/workspace replacement mappings. The next
 queued session (browser-optional-questions) has acquired aitherdev normally.
 Original failed-session reservation1ce9be0f remains released. Feature refs and
 session retained; the user requested no archive. Additional CI39325776282 for
-rebased runtime has fast/archive success, creation still running at last check;
-keep lifecycle active while that additional verification remains pending.
+rebased runtime completed successfully: fast, archive and creation passed; host
+was skipped by workflow policy. No remaining verification or integration work.
 
 Prior deployed runtime6ab3b48 / workspace4b22d04f / config0067299a and package
 ad0s75ir remain their exact tested/deployed provenance. No extra activation was
@@ -260,3 +260,10 @@ force-push to master, no direct Git merge/deployment/ledger bypass. Scheduler-on
 restart repeated once to detach cleanup startup wait; no worker or unrelated
 scan was stopped. Separate synchronous cleanup-start scheduling issue remains
 documented operational evidence, outside this source merge request.
+
+
+2026-10-20 status verification: CI39325776282 is complete/success, including
+creation (completed2026-10-19T21:30:48Z), fast and archive; host skipped by workflow.
+Final receipt merge-ci-final.json. Reservation441300ed remains released revision5;
+aitherdev is now held by browser-optional-questions. All requested work complete;
+set tracking lifecycle complete. Session/branches retained; no archive requested.

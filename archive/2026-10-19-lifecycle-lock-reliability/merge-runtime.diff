@@ -1,0 +1,1597 @@
+diff --git a/docs/coordination-operations.md b/docs/coordination-operations.md
+index fcef449..c0835cf 100644
+--- a/docs/coordination-operations.md
++++ b/docs/coordination-operations.md
+@@ -56,14 +56,21 @@ verified receipt and both live-system/profile identities. Ambiguous rollback or
+ partial publication keeps the reservation and claim. Do not replay activation or
+ use a fresh job to hide the original uncertainty.
+ 
+-Archive and deletion hold notifications and deployed ownership. Coordination
+-receipts bind each ordinary lifecycle journal to exact owner incarnations.
+-Completion persists before journal removal; retries after an interrupted removal
+-are idempotent. Revival freezes its archive association before tracking changes. Explicit revival
+-reconnects the same owner but does not resolve its deployment blocker. A recreated
+-slug has no claim to the previous owner's resources. An exceptional release or
+-transfer needs a separate reviewed operation with exact user direction and live
+-evidence; there is no force-release command.
++Archive and deletion hold notifications and cancel queued operations before
++cleanup. Coordination receipts bind each ordinary lifecycle journal to exact
++owner incarnations. Archive completion releases that owner's machine
++reservations in the same ledger transaction that records lifecycle completion.
++The reservation stays held during failed or interrupted cleanup. Retrying a
++completed archive receipt can release a hold retained by a predecessor executor;
++the exact owner binding must still match. Deployment history and recovery
++artifacts remain available after release.
++
++Revival freezes its archive association before tracking changes. It reconnects
++the same owner without reacquiring reservations or resuming canceled jobs. A
++recreated slug has no claim to the previous owner's resources. Running or
++uncertain deployments require their original recovery before archival. Deletion
++retains its existing deployed-ownership hold. Exceptional transfers remain
++separate recovery operations; there is no force-release command.
+ 
+ ## First reporting-startup upgrade
+ 
+diff --git a/docs/coordination.md b/docs/coordination.md
+index 4d72f02..d49bead 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -42,12 +42,18 @@ unchanged live identities, and an explicit declaration that deployment and revie
+ work is finished. Integration alone does not release a machine. Deployment or
+ review does not supply merge approval.
+ 
+-Archive and deletion retain deployed or uncertain reservations as recovery
+-blockers. Revival preserves ownership. An uncertain effect retains its execution
+-claim too; a dead process, failed SSH command or timeout cannot prove no effect.
+-The first implementation refuses exceptional release without integration. Resolve
+-it through an explicitly authorized, reviewed recovery operation rather than
+-editing or deleting the ledger.
++Archival releases the session's machine reservations when its local lifecycle
++transition completes. It cancels queued jobs and holds notifications before
++cleanup; a paused or failed archive retains reservations until recovery finishes.
++Release preserves deployment history, artifacts and recovery evidence and does
++not claim that feature branches were integrated. Revival does not reacquire the
++released reservations or resume canceled jobs. A later deployment requests a new
++reservation through the ordinary approval flow.
++
++A running or uncertain deployment must settle before archival can begin. Its
++execution claim remains held; a dead process, failed SSH command or timeout cannot
++prove no effect. Deletion retains its existing recovery holds. Never edit or
++delete the ledger to bypass a refusal.
+ 
+ ## Session commands
+ 
+diff --git a/docs/session-archive-recovery.md b/docs/session-archive-recovery.md
+index f761585..f7a3732 100644
+--- a/docs/session-archive-recovery.md
++++ b/docs/session-archive-recovery.md
+@@ -118,10 +118,30 @@ Completion and abandoned cleanup use non-force `git worktree remove` and `rmdir`
+ containers. Stop external writers first; helper locks do not serialize arbitrary
+ Git commands, editors or native clients.
+ 
+-Ordinary archive, delete, revive and hold commands retain a shared package
+-transition lock and their existing session locks. Different sessions can proceed
+-while package switches and recovery retain the exclusive transition lock.
+-For operations with a deadline, lock waits count toward that deadline.
++Archive, delete and revive retain a shared package transition lock, then acquire
++the creation lock and exclusive session lock in that order. Confirmed requests
++wait for session access and recheck their target and operation ownership after
++acquisition. Revival keeps this policy when starting its retained runtime and
++reacquiring locks. Different sessions can proceed while package switches and
++recovery retain the exclusive transition lock. For operations with a deadline,
++lock waits count toward that deadline. Archive has no total wall-clock deadline.
++
++The portal shows “Waiting for session access” while an archive waits. Its
++supervised worker and accepted receipt remain the same across portal restarts;
++waiting does not create a lifecycle journal or authorize another attempt.
++Conversation mutations retain a shared session lock until completion. Portal
++lifecycle execution does not hold a conversation mutex while waiting for the
++exclusive session lock, so an existing mutation can finish and release access.
++
++Successful local archive completion also releases the session's machine
++reservations. Interrupted archives retain their reservations until the same
++operation finishes. Running or uncertain coordinated deployments must settle
++before archival starts. Queued jobs are canceled and remain canceled after
++revival; deployment history and recovery artifacts are retained.
++
++Automatic scans skip busy sessions and preserve their cached inactivity evidence.
++They recheck eligibility on a later scan. A busy lock is not a failed activity or
++merge proof. Other session writers retain their existing contention policy.
+ Managed browser archives run in independent `workspace-archive-RECEIPT-ATTEMPT`
+ user services. The unit identity must match the retained portal authorization.
+ Portal restart reconciles the unit instead of starting another worker. Private
+diff --git a/libexec/dev-session b/libexec/dev-session
+index 42e009c..98e61b6 100755
+--- a/libexec/dev-session
++++ b/libexec/dev-session
+@@ -241,6 +241,7 @@ module DevSession
+   class Error < StandardError; end
+   class SupersededGenerationError < Error; end
+   class TemporaryRecoveryError < Error; end
++  class SessionBusyError < Error; end
+ 
+   class CommandError < Error
+     attr_reader :argv, :status, :stdout, :stderr
+@@ -1959,6 +1960,13 @@ module DevSession
+ 	end
+ 
+     def archive(input, as_is:, abandoned: false, explicit: false, operation_id: nil, automatic: nil)
++      slug = lookup_slug(input, as_is:)
++      with_lifecycle_access(slug, 'archive', operation_id:, wait: !automatic) do
++        archive_with_access(slug, as_is: true, abandoned:, explicit:, operation_id:, automatic:)
++      end
++    end
++
++    def archive_with_access(input, as_is:, abandoned: false, explicit: false, operation_id: nil, automatic: nil)
+       slug = lookup_slug(input, as_is:)
+       mode = abandoned ? 'abandoned' : (explicit ? 'archived' : 'complete')
+       @explicit_archive_operation_id = nil
+@@ -1986,7 +1994,9 @@ module DevSession
+           end
+           @archive_progress_operation_id = operation_id || journal&.fetch('operation_id')
+           if sidecar && !journal && sidecar.fetch('completed')
+-            cleanup.discard_completed!(sidecar)
++            cleanup.discard_completed!(sidecar) do
++              coordination_store.lifecycle_completed(workspace, slug, 'archive', operation_id: sidecar.fetch('operation_id'))
++            end
+             @out.puts "archived session: #{slug}"
+             next
+           end
+@@ -2157,6 +2167,8 @@ module DevSession
+       @archive_progress_operation_id = nil
+     end
+ 
++    private :archive_with_access
++
+     def with_verified_committed_archive(slug, expected_journal)
+       with_creation_lock(slug) do
+         with_slug_lock(slug) do
+@@ -2172,6 +2184,13 @@ module DevSession
+     end
+ 
+     def revive(input, as_is:, allow_abandoned: false, operation_id: nil)
++      slug = lookup_slug(input, as_is:)
++      with_lifecycle_access(slug, 'revive', operation_id:) do
++        revive_with_access(slug, as_is: true, allow_abandoned:, operation_id:)
++      end
++    end
++
++    def revive_with_access(input, as_is:, allow_abandoned: false, operation_id: nil)
+       slug = lookup_slug(input, as_is:)
+       if operation_id && !operation_id.match?(/\A[0-9a-f]{64}\z/)
+         raise Error, 'invalid session revive operation identity'
+@@ -2277,24 +2296,35 @@ module DevSession
+       @out.puts "revived session: #{slug}"
+     end
+ 
++    private :revive_with_access
++
+     def revive_confirmation(input, as_is: true)
+       slug = lookup_slug(input, as_is:)
+-      with_creation_lock(slug) do
+-        with_slug_lock(slug) do
+-          journal = load_revive_journal(slug)
+-          next({ lifecycle: journal.fetch('lifecycle'), pending: true }) if journal
++      with_lifecycle_access(slug, 'revive', operation_id: nil) do
++        with_creation_lock(slug) do
++          with_slug_lock(slug) do
++            journal = load_revive_journal(slug)
++            next({ lifecycle: journal.fetch('lifecycle'), pending: true }) if journal
+ 
+-          {
+-            lifecycle: lifecycle_state(
+-              read_bounded_file(File.join(archive_dir(slug), 'state.md'), 'state.md')
+-            ),
+-            pending: false
+-          }
++            {
++              lifecycle: lifecycle_state(
++                read_bounded_file(File.join(archive_dir(slug), 'state.md'), 'state.md')
++              ),
++              pending: false
++            }
++          end
+         end
+       end
+     end
+ 
+     def delete(input, as_is:, force:, operation_id: nil)
++      slug = lookup_slug(input, as_is:)
++      with_lifecycle_access(slug, 'delete', operation_id:) do
++        delete_with_access(slug, as_is: true, force:, operation_id:)
++      end
++    end
++
++    def delete_with_access(input, as_is:, force:, operation_id: nil)
+       slug = lookup_slug(input, as_is:)
+       removal = nil
+       quiesced = nil
+@@ -2365,6 +2395,8 @@ module DevSession
+       end
+     end
+ 
++    private :delete_with_access
++
+     def finalize_locked!(
+       slug,
+       announce: true,
+@@ -7765,7 +7797,7 @@ module DevSession
+       ['mv', *ARCHIVE_MOVE_OPTIONS, *arguments]
+     end
+ 
+-    def with_host_lock(path, description, wait: false, busy_message: nil, mode: File::LOCK_EX)
++    def with_host_lock(path, description, wait: false, busy_message: nil, mode: File::LOCK_EX, on_wait: nil)
+       raise Error, "invalid #{description} mode" unless [File::LOCK_SH, File::LOCK_EX].include?(mode)
+       reject_symlink_components!(path, description)
+       File.open(path, File::RDWR | File::CREAT | File::NOFOLLOW, 0o600) do |file|
+@@ -7778,6 +7810,7 @@ module DevSession
+         end
+         locked = file.flock(mode | File::LOCK_NB)
+         if !locked && wait
++          on_wait&.call
+           if @tracking_sync_deadline
+             until locked
+               remaining = @tracking_sync_deadline - Process.clock_gettime(Process::CLOCK_MONOTONIC)
+@@ -7791,7 +7824,7 @@ module DevSession
+           end
+         end
+         unless locked
+-          raise Error, busy_message || "cannot lock #{description}: #{path}"
++          raise SessionBusyError, busy_message || "cannot lock #{description}: #{path}"
+         end
+ 
+         yield file
+@@ -7817,6 +7850,98 @@ module DevSession
+       end
+     end
+ 
++    # Scope waiting to the accepted lifecycle request, including revive's start
++    # and reacquisitions. Other writers and background scans remain opportunistic.
++    def with_lifecycle_access(slug, operation, operation_id:, wait: true)
++      if @lifecycle_access
++        unless @lifecycle_access.values_at(:slug, :operation) == [slug, operation]
++          raise Error, 'another lifecycle request owns this executor'
++        end
++        return yield
++      end
++      owns_access = true
++      if operation_id && !operation_id.match?(/\A[0-9a-f]{64}\z/)
++        raise Error, "invalid session #{operation} operation identity"
++      end
++      journal = lifecycle_access_journal(slug, operation)
++      receipt = portal_lifecycle_receipt(slug, operation, operation_id) if @require_runtime && operation_id && wait
++      @lifecycle_access = {
++        slug:, operation:, operation_id:, wait:, journal:, receipt:,
++        target: journal ? nil : (receipt ? receipt.dig('options', 'targetId') : lifecycle_access_target(slug)),
++        admitted: false
++      }
++      @archive_progress_operation_id = operation_id if operation == 'archive'
++      yield
++    ensure
++      @lifecycle_access = nil if owns_access
++    end
++
++    def lifecycle_access_wait?(slug)
++      @lifecycle_access && @lifecycle_access[:slug] == slug && @lifecycle_access[:wait]
++    end
++
++    def lifecycle_access_waiting(slug)
++      return unless @lifecycle_access && @lifecycle_access[:slug] == slug
++
++      @lifecycle_access[:waiting] = true
++      if @lifecycle_access[:operation] == 'archive'
++        archive_progress!(slug, 'Waiting for session access')
++      else
++        @err.puts 'Waiting for session access'
++      end
++    end
++
++    def lifecycle_access_journal(slug, operation)
++      path = lifecycle_journal_file(slug, operation)
++      path = ArchiveCleanup.new(self, slug).path if operation == 'archive' && !path_exists?(path)
++      return nil unless path_exists?(path)
++
++      read_private_json_object(path, 'lifecycle operation', max_size: ArchiveCleanup::MAX_BYTES, mode: 0o600)['operation_id']
++    end
++
++    # Same version-2 identity as the portal: administrative writes do not change
++    # confirmation, but replacing tracking, its location or its root does.
++    def lifecycle_access_target(slug)
++      location = path_exists?(work_dir(slug)) ? 'work' : 'archive'
++      directory = File.join(workspace, location, slug)
++      return nil unless path_exists?(directory)
++
++      stat = File.lstat(directory)
++      raise Error, 'session tracking is not a directory' unless stat.directory?
++      manifest = load_portal_manifest(File.join(directory, PORTAL_MANIFEST), required: false, expected_slug: slug)
++      thread = manifest&.dig('codex', 'thread_id')
++      root = thread && !thread.empty? ? "present\0#{thread}" : 'absent'
++      Digest::SHA256.hexdigest("2\0#{workspace}\0#{slug}\0#{location}\0#{stat.dev}\0#{stat.ino}\0#{root}")
++    end
++
++    def revalidate_lifecycle_access!(slug)
++      request = @lifecycle_access
++      return unless request[:slug] == slug
++
++      if request[:receipt]
++        current = portal_lifecycle_receipt(slug, request[:operation], request[:operation_id])
++        identity = ->(receipt) do
++          [receipt.values_at('receiptId', 'attempt', 'targetIdentityVersion'),
++           receipt.fetch('options').slice('journalId', 'targetId', 'mode', 'force', 'allowAbandoned')]
++        end
++        unless identity.call(current) == identity.call(request[:receipt])
++          raise Error, 'portal lifecycle authorization changed while waiting'
++        end
++      end
++      return if request[:admitted]
++
++      reject_conflicting_lifecycle_journal!(slug, operation: request[:operation])
++      journal = lifecycle_access_journal(slug, request[:operation])
++      unless journal == request[:journal] || (journal && journal == request[:operation_id])
++        raise Error, 'another lifecycle operation started while waiting; retry its original request'
++      end
++      if !journal && request[:target] != lifecycle_access_target(slug)
++        raise Error, 'session changed while waiting; review the current session and confirm again'
++      end
++      request[:admitted] = true
++      archive_progress!(slug, 'Preparing archive') if request[:waiting] && request[:operation] == 'archive'
++    end
++
+     # All cooperating session tracking commits share the Git common directory.
+     # Fetch before this boundary; hooks, owned-path rollback and final proof stay
+     # inside it, so a waiter validates the HEAD it actually commits on.
+@@ -7832,6 +7957,8 @@ module DevSession
+       with_host_lock(
+         session_lock_file(slug, kind: 'creation'),
+         "development session creation lock for #{slug}",
++        wait: lifecycle_access_wait?(slug),
++        on_wait: -> { lifecycle_access_waiting(slug) },
+         busy_message: "another dev-session command is creating or closing #{slug}",
+         &block
+       )
+@@ -7844,12 +7971,14 @@ module DevSession
+       with_host_lock(
+         path,
+         "development session lock for #{slug}",
+-        wait: authority&.fetch('state', nil) == 'creating',
++        wait: lifecycle_access_wait?(slug) || (!@lifecycle_access && authority&.fetch('state', nil) == 'creating'),
++        on_wait: -> { lifecycle_access_waiting(slug) },
+         busy_message: "another dev-session command is changing #{slug}"
+       ) do |file|
+         unless @env['DEV_WORKSPACE_PROVIDER_TERMINAL_SNAPSHOT']
+           WorkspaceProviderAdmission.require!(@env, workspace, @codex_socket, slug:)
+         end
++        revalidate_lifecycle_access!(slug) if @lifecycle_access
+         previous = @held_slug_lock
+         @held_slug_lock = { slug:, path:, file:, mode: File::LOCK_EX }
+         block.call
+@@ -9941,7 +10070,7 @@ module DevSession
+         if opts.fetch(:allow_abandoned)
+           raise Error, '--allow-abandoned is reserved for the portal confirmation flow'
+         end
+-        confirmation = runner.revive_confirmation(slug, as_is: true)
++        confirmation = with_lifecycle_transition { runner.revive_confirmation(slug, as_is: true) }
+         lifecycle = confirmation.fetch(:lifecycle)
+         unless confirmation.fetch(:pending)
+           warnings = lifecycle == 'abandoned' ? [
+diff --git a/libexec/workspace-archive-cleanup.rb b/libexec/workspace-archive-cleanup.rb
+index 0f41030..5a5fc89 100644
+--- a/libexec/workspace-archive-cleanup.rb
++++ b/libexec/workspace-archive-cleanup.rb
+@@ -408,6 +408,7 @@ module DevSession
+         raise Error, 'archive retirement phases are unfinished' unless recorded_journal.fetch('phase') == 'archived'
+       end
+       @runner.archive_cleanup_check_completed!(@slug, journal, recorded_retirement: !recorded_journal.nil?)
++      yield if block_given?
+       File.unlink(path)
+       fsync_directory(File.dirname(path))
+     end
+diff --git a/libexec/workspace-auto-archive.rb b/libexec/workspace-auto-archive.rb
+index 4650dd9..629c150 100644
+--- a/libexec/workspace-auto-archive.rb
++++ b/libexec/workspace-auto-archive.rb
+@@ -438,6 +438,10 @@ module WorkspaceAutoArchive
+       result
+     rescue DevSession::SupersededGenerationError
+       raise
++    rescue DevSession::SessionBusyError
++      # Busy is not a failed activity/merge proof. Keep continuity and cached
++      # evidence intact; a later scan will observe this session normally.
++      { 'slug' => slug, 'eligible' => false, 'blockers' => ['Session is busy; waiting for a later scan.'], 'result' => 'deferred' }
+     rescue StandardError => e
+       unless dry_run
+         observation.call do
+diff --git a/libexec/workspace-coordination.rb b/libexec/workspace-coordination.rb
+index 463bc99..0cbdb98 100644
+--- a/libexec/workspace-coordination.rb
++++ b/libexec/workspace-coordination.rb
+@@ -472,13 +472,12 @@ module WorkspaceCoordination
+     end
+ 
+     def fence_owners!(data, owners, command)
++      require_idle_owners!(data, owners.map { |owner| owner['id'] })
+       owners.each do |owner|
+         if owner['fence'] && owner['fence']['command'] != command && !owner['fence']['completed']
+           raise Error.new("coordination lifecycle intent requires #{owner['fence']['command']}", 5)
+         end
+         jobs = data['jobs'].values.select { |job| job['ownerId'] == owner['id'] }
+-        active = jobs.find { |job| CLAIMED.include?(job['state']) }
+-        raise Error.new("lifecycle waits for coordinated operation #{active['id']}", 5) if active
+         integration_journals.each do |run|
+           next unless run['schema'] == 2 && run['ownerId'] == owner['id'] && run['phase'] != 'complete'
+           # A separate marker survives a preparing worker's journal publication.
+@@ -493,7 +492,11 @@ module WorkspaceCoordination
+         end
+         data['reservations'].each_value do |reservation|
+           next unless reservation['ownerId'] == owner['id'] && reservation['state'] != 'released'
+-          reservation['state'] = reservation['history'].empty? ? 'released' : 'blocked_recovery'
++          if command == 'archive'
++            reservation['state'] = 'blocked_recovery' unless reservation['state'] == 'requested'
++          else
++            reservation['state'] = reservation['history'].empty? ? 'released' : 'blocked_recovery'
++          end
+           reservation['revision'] += 1
+         end
+         data['outbox'].each_value do |event|
+@@ -528,8 +531,17 @@ module WorkspaceCoordination
+     def require_lifecycle_idle!(workspace, slug)
+       data = read
+       ids = lifecycle_owners(data, workspace, slug).map { |owner| owner['id'] }
++      require_idle_owners!(data, ids)
++    end
++
++    def require_idle_owners!(data, ids)
+       active = data['jobs'].values.find { |job| ids.include?(job['ownerId']) && CLAIMED.include?(job['state']) }
+       raise Error.new("lifecycle waits for coordinated operation #{active['id']}", 5) if active
++      uncertain = data['reservations'].values.any? do |reservation|
++        ids.include?(reservation['ownerId']) && reservation['state'] != 'released' &&
++          reservation['history'].any? { |record| record['outcome'] == 'unknown' }
++      end
++      raise Error.new('lifecycle waits for uncertain deployment recovery', 5) if uncertain
+     end
+ 
+     def require_lifecycle_capacity!(workspace, slug, command)
+@@ -609,12 +621,23 @@ module WorkspaceCoordination
+         unless receipt.slice('workspace', 'slug', 'command') == {'workspace' => workspace, 'slug' => slug, 'command' => command}
+           raise Error.new('lifecycle completion identity changed', 5)
+         end
+-        next if receipt['completed']
++        # A completed archive closes deployment review too. Rechecking this
++        # on retry also releases holds left by a predecessor executor.
+         receipt['owners'].each do |binding|
+           owner = data['owners'].fetch(binding['id'])
+           unless owner['identity'] == binding['identity'] && owner.dig('fence', 'operationId') == operation_id
++            next if receipt['completed']
++
+             raise Error.new('lifecycle completion owner changed', 5)
+           end
++          if command == 'archive'
++            require_idle_owners!(data, [owner['id']])
++            reservations = data['reservations'].values.select { |item| item['ownerId'] == owner['id'] && item['state'] != 'released' }
++            reservations.each do |reservation|
++              reservation['state'] = 'released'
++              reservation['revision'] += 1
++            end
++          end
+           owner['fence']['completed'] = true
+         end
+         receipt['completed'] = true
+diff --git a/libexec/workspace-tracking-sync.rb b/libexec/workspace-tracking-sync.rb
+index dec4e11..10fa57e 100644
+--- a/libexec/workspace-tracking-sync.rb
++++ b/libexec/workspace-tracking-sync.rb
+@@ -8,18 +8,27 @@ module DevSession
+       @env['DEV_WORKSPACE_DEFER_TRACKING'] == '1'
+     end
+ 
+-    def authorized_archive_worker?(slug, operation_id, unit)
++    def portal_lifecycle_receipt(slug, operation, operation_id)
+       workspace_id = "#{File.basename(workspace)}-#{Digest::SHA256.hexdigest(workspace)[0, 16]}"
+       path = File.join(@workspace_state_root, 'portal', workspace_id, 'lifecycle-operations.json')
+-      receipts = read_private_json_object(path, 'portal archive authorization', max_size: 256 * 1024, mode: 0o600)
+-      return false unless [1, 2].include?(receipts['schema']) && receipts['workspace'] == workspace
+-
+-      Array(receipts['operations']).any? do |receipt|
+-        receipt['slug'] == slug && receipt['kind'] == 'archive' &&
+-          %w[running paused failed].include?(receipt['state']) &&
+-          receipt.dig('options', 'journalId') == operation_id &&
+-          unit == "workspace-archive-#{receipt['receiptId']}-#{receipt['attempt']}.service"
++      receipts = read_private_json_object(path, 'portal lifecycle authorization', max_size: 256 * 1024, mode: 0o600)
++      unless [1, 2].include?(receipts['schema']) && receipts['workspace'] == workspace
++        raise Error, 'invalid portal lifecycle authorization'
++      end
++      receipt = Array(receipts['operations']).find do |item|
++        item['slug'] == slug && item['kind'] == operation &&
++          %w[running paused failed].include?(item['state']) && item.dig('options', 'journalId') == operation_id
+       end
++      raise Error, 'portal lifecycle authorization is no longer available' unless receipt
++
++      receipt
++    end
++
++    def authorized_archive_worker?(slug, operation_id, unit)
++      receipt = portal_lifecycle_receipt(slug, 'archive', operation_id)
++      unit == "workspace-archive-#{receipt['receiptId']}-#{receipt['attempt']}.service"
++    rescue Error
++      false
+     end
+ 
+     def tracking_sync_root
+diff --git a/nix/tests/session-archive-lifecycle.nix b/nix/tests/session-archive-lifecycle.nix
+index cf9877e..40993f5 100644
+--- a/nix/tests/session-archive-lifecycle.nix
++++ b/nix/tests/session-archive-lifecycle.nix
+@@ -19,11 +19,19 @@ pkgs.testers.runNixOSTest {
+       wildcardHost = "*.workspace.example.test";
+     };
+     networking.extraHosts = "127.0.0.1 fixture.workspace.example.test";
+-    environment.systemPackages = [ pkgs.git pkgs.curl pkgs.nodejs pkgs.chromium ];
++    environment.systemPackages = [
++      pkgs.git
++      pkgs.curl
++      pkgs.nodejs
++      pkgs.chromium
++    ];
+     virtualisation = {
+       memorySize = 4096;
+       cores = 2;
+-      additionalPaths = [ devWorkspace pkgs.playwright-driver ];
++      additionalPaths = [
++        devWorkspace
++        pkgs.playwright-driver
++      ];
+     };
+     system.stateVersion = "26.05";
+   };
+@@ -146,6 +154,33 @@ pkgs.testers.runNixOSTest {
+             assert user("systemctl --user show " + unit(completed) + " -p ExecMainStatus --value").strip() == "0"
+             revive(slug, checkout)
+ 
++        with subtest("accepted archive waits for shared session access across portal restart"):
++            slug = "2026-10-19-contended-archive"
++            checkout = fixture(slug)
++            lock = "/run/user/1000/dev-workspaces/fixture/authority/" + slug + ".lock"
++            holder = "archive-lock-holder.service"
++            user("systemd-run --user --quiet --unit=" + holder + " ${pkgs.util-linux}/bin/flock -s "
++                 + lock + " ${pkgs.bash}/bin/bash -c 'touch /tmp/archive-lock-ready; exec sleep infinity'")
++            machine.wait_until_succeeds(user_prefix + "test -f /tmp/archive-lock-ready")
++            accepted = browser(slug, "archive")
++            command = "curl -fsS --unix-socket /run/user/1000/dev-workspaces/fixture/portal.sock "
++            command += "http://localhost/api/sessions/" + slug + "/operation"
++            command += " | ${pkgs.python3}/bin/python3 -c " + shlex.quote(
++                "import sys,json; d=json.load(sys.stdin); assert d.get('state') == 'running' and "
++                "d.get('progress', {}).get('stage') == 'Waiting for session access', d")
++            machine.wait_until_succeeds(user_prefix + "sh -c " + shlex.quote(command), timeout=60)
++            user("test -d " + checkout + " && test ! -f " + root + "/worktrees/.locks/" + slug + ".archive.json")
++            worker = unit(accepted)
++            before = user("systemctl --user show " + worker + " -p InvocationID --value").strip()
++            user("systemctl --user restart workspace-portal@fixture")
++            machine.wait_until_succeeds(user_prefix + "sh -c " + shlex.quote(command), timeout=60)
++            current = operation(slug)
++            assert current["receiptId"] == accepted["receiptId"] and current["attempt"] == accepted["attempt"], current
++            assert before == user("systemctl --user show " + worker + " -p InvocationID --value").strip()
++            user("systemctl --user stop " + holder)
++            archived(slug, checkout)
++            revive(slug, checkout)
++
+         with subtest("portal restart and worker interruption preserve admitted identity"):
+             slug = "2026-10-17-restart"
+             checkout = fixture(slug)
+diff --git a/portal/internal/web/archive_worker_test.go b/portal/internal/web/archive_worker_test.go
+index a7c3bb9..6475123 100644
+--- a/portal/internal/web/archive_worker_test.go
++++ b/portal/internal/web/archive_worker_test.go
+@@ -2,7 +2,9 @@ package web
+ 
+ import (
+ 	"context"
++	"crypto/sha256"
+ 	"errors"
++	"fmt"
+ 	"os"
+ 	"path/filepath"
+ 	"strings"
+@@ -141,3 +143,24 @@ func TestCommandFailurePreservesDeadlineOverSuccessfulFetchOutput(t *testing.T)
+ 		t.Fatalf("deadline hidden by fetch output: %v", err)
+ 	}
+ }
++
++func TestLifecycleDisplayIncludesProgressForItsExactArchiveOperation(t *testing.T) {
++	server := newTestServer(t)
++	operation := lifecycleOperation{Slug: "example", Kind: "archive", State: "running", Options: lifecycleOperationOptions{JournalID: strings.Repeat("a", 64)}}
++	directory := filepath.Join(server.config.UserStateRoot, "archive-progress", fmt.Sprintf("%x", sha256.Sum256([]byte(server.config.Workspace))))
++	if err := os.MkdirAll(directory, 0o700); err != nil {
++		t.Fatal(err)
++	}
++	data := fmt.Sprintf(`{"schema":1,"workspace":%q,"slug":"example","operation_id":%q,"stage":"Waiting for session access"}`, server.config.Workspace, operation.Options.JournalID)
++	if err := os.WriteFile(filepath.Join(directory, "example.json"), []byte(data), 0o600); err != nil {
++		t.Fatal(err)
++	}
++	view := server.lifecycleOperationView("example", operation)
++	if view.Progress == nil || view.Progress.Stage != "Waiting for session access" {
++		t.Fatalf("waiting progress missing from display: %#v", view)
++	}
++	operation.Options.JournalID = strings.Repeat("b", 64)
++	if view := server.lifecycleOperationView("example", operation); view.Progress != nil {
++		t.Fatalf("display adopted another operation's progress: %#v", view)
++	}
++}
+diff --git a/portal/internal/web/operation_state.go b/portal/internal/web/operation_state.go
+index 7a5b89e..d1be148 100644
+--- a/portal/internal/web/operation_state.go
++++ b/portal/internal/web/operation_state.go
+@@ -469,6 +469,7 @@ func (s *Server) proposeLifecycleOperation(slug string, operation lifecycleOpera
+ // Copy target data only after native/tracking proof, outside both display and
+ // receipt mutexes. This response-only view never changes receipt authority.
+ func (s *Server) lifecycleOperationView(slug string, operation lifecycleOperation) lifecycleOperation {
++	operation.Progress = session.ReadArchiveProgress(s.config.Workspace, s.config.UserStateRoot, slug, operation.Options.JournalID)
+ 	operation.CurrentTarget = s.lifecycleSnapshot(slug)
+ 	if operation.State == "failed" && !operation.Options.JournalExpected {
+ 		if summary, err := session.Find(s.config.Workspace, slug); err == nil {
+diff --git a/portal/internal/web/operation_state_test.go b/portal/internal/web/operation_state_test.go
+index 83a5582..3713a25 100644
+--- a/portal/internal/web/operation_state_test.go
++++ b/portal/internal/web/operation_state_test.go
+@@ -1078,8 +1078,8 @@ func TestLifecycleFreshOwnerReconciliationAcceptsNoopAndAbsence(t *testing.T) {
+ 	}
+ }
+ 
+-func TestLifecycleOperationTimeoutIncludesBothLockWaits(t *testing.T) {
+-	for _, gate := range []string{"generation", "session"} {
++func TestLifecycleOperationTimeoutIncludesPackageAndExecutorWaits(t *testing.T) {
++	for _, gate := range []string{"generation", "executor"} {
+ 		t.Run(gate, func(t *testing.T) {
+ 			server := newTestServer(t)
+ 			path := filepath.Join(t.TempDir(), "transition.lock")
+@@ -1094,14 +1094,27 @@ func TestLifecycleOperationTimeoutIncludesBothLockWaits(t *testing.T) {
+ 					t.Fatal(err)
+ 				}
+ 			} else {
+-				lock := server.messageLock("example")
+-				if err := lock.Lock(context.Background()); err != nil {
++				browserTargetFixture(t, server, "work", "active", "")
++				helper := filepath.Join(t.TempDir(), "dev-session")
++				if err := os.WriteFile(helper, []byte("#!/bin/sh\nexec sleep infinity\n"), 0o755); err != nil {
++					t.Fatal(err)
++				}
++				server.config.DevSession = fixtureDevSessionCommand(t, server.config.Workspace, helper)
++			}
++
++			options := lifecycleOperationOptions{}
++			if gate == "executor" {
++				summary, findErr := session.Find(server.config.Workspace, "example")
++				if findErr != nil {
++					t.Fatal(findErr)
++				}
++				options.TargetID, err = lifecycleTargetIdentity(summary)
++				if err != nil {
+ 					t.Fatal(err)
+ 				}
+-				defer lock.Unlock()
+ 			}
+ 			started := time.Now()
+-			err = server.executeLifecycleOperation(context.Background(), 25*time.Millisecond, "example", "archive", nil, lifecycleOperationOptions{})
++			err = server.executeLifecycleOperation(context.Background(), 25*time.Millisecond, "example", "archive", nil, options)
+ 			if !errors.Is(err, context.DeadlineExceeded) || time.Since(started) > time.Second {
+ 				t.Fatalf("%s wait = %v after %s", gate, err, time.Since(started))
+ 			}
+diff --git a/portal/internal/web/server.go b/portal/internal/web/server.go
+index 13c2fb0..c7fd8ba 100644
+--- a/portal/internal/web/server.go
++++ b/portal/internal/web/server.go
+@@ -3064,11 +3064,9 @@ func (s *Server) executeLifecycleOperation(
+ 	if err := s.requireCurrentHostProfile(); err != nil {
+ 		return err
+ 	}
+-	mutationLock := s.messageLock(slug)
+-	if err := mutationLock.Lock(ctx); err != nil {
+-		return fmt.Errorf("lock conversation mutations for %s: %w", kind, err)
+-	}
+-	defer mutationLock.Unlock()
++	// The executor takes the exclusive runtime lock. Conversation mutations
++	// retain a shared runtime lock before taking their message mutex; holding
++	// that mutex here while waiting for the executor would invert that order.
+ 	progress, progressErr := session.PendingLifecycleProgress(s.config.Workspace, slug)
+ 	if progressErr != nil {
+ 		return fmt.Errorf("verify %s operation identity: %w", kind, progressErr)
+diff --git a/portal/internal/web/server_test.go b/portal/internal/web/server_test.go
+index 7e90732..6918f28 100644
+--- a/portal/internal/web/server_test.go
++++ b/portal/internal/web/server_test.go
+@@ -314,86 +314,67 @@ func TestPortalMutationRejectsProfileSwitchWhileWaiting(t *testing.T) {
+ 	}
+ }
+ 
+-func TestLifecycleOperationAcquiresTransitionBeforeTheSessionMutationLock(t *testing.T) {
++func TestLifecycleExecutorDoesNotHoldConversationMutexWhileWaitingForRuntime(t *testing.T) {
++	server := newTestServer(t)
+ 	path := filepath.Join(t.TempDir(), "transition.lock")
+-	owner, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
+-	if err != nil {
++	if err := os.WriteFile(path, nil, 0o600); err != nil {
+ 		t.Fatal(err)
+ 	}
+-	owner.Close()
+-	server := newTestServer(t)
+ 	server.config.TransitionLock = path
++	started, release := filepath.Join(t.TempDir(), "started"), filepath.Join(t.TempDir(), "release")
++	t.Setenv("LIFECYCLE_STARTED", started)
++	t.Setenv("LIFECYCLE_RELEASE", release)
+ 	helper := filepath.Join(t.TempDir(), "dev-session")
+-	if err := os.WriteFile(helper, []byte(
+-		"#!/bin/sh\n"+
+-			"[ \"$DEV_WORKSPACE_TRANSITION_LOCK_FD\" = 3 ] || exit 23\n"+
+-			"[ -e /proc/$$/fd/3 ] || exit 24\n",
+-	), 0o755); err != nil {
++	if err := os.WriteFile(helper, []byte("#!/bin/sh\n"+
++		"[ \"$DEV_WORKSPACE_TRANSITION_LOCK_FD\" = 3 ] || exit 23\n"+
++		"touch \"$LIFECYCLE_STARTED\"\nwhile [ ! -e \"$LIFECYCLE_RELEASE\" ]; do sleep 0.01; done\n"), 0o755); err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	server.config.DevSession = fixtureDevSessionCommand(t, server.config.Workspace, helper)
+-	slug := "2026-09-06-lock-order"
+-	tracking := filepath.Join(server.config.Workspace, "work", slug)
+-	if err := os.MkdirAll(tracking, 0o755); err != nil {
+-		t.Fatal(err)
+-	}
+-	writeWebTrackingFiles(t, tracking, "active")
+-	if err := os.WriteFile(
+-		filepath.Join(tracking, "portal.yml"),
+-		[]byte("schema: 1\nslug: "+slug+"\n"), 0o644,
+-	); err != nil {
++	summary := browserTargetFixture(t, server, "work", "active", "")
++	targetID, err := lifecycleTargetIdentity(summary)
++	if err != nil {
+ 		t.Fatal(err)
+ 	}
+-	targetID := deletionTargetForTest(t, server, slug)
+-	mutationLock := server.messageLock(slug)
+-	if err := mutationLock.Lock(context.Background()); err != nil {
++	mutation := server.messageLock("example")
++	if err := mutation.Lock(context.Background()); err != nil {
+ 		t.Fatal(err)
+ 	}
++	defer mutation.Unlock()
++	ctx, cancel := context.WithCancel(context.Background())
++	defer cancel()
+ 	result := make(chan error, 1)
+ 	go func() {
+-		result <- server.runLifecycleOperation(
+-			context.Background(), slug, "archive", []string{"archive", slug, "--as-is"},
+-			lifecycleOperationOptions{Mode: "abandoned", TargetID: targetID},
+-		)
++		result <- server.runLifecycleOperation(ctx, "example", "archive", []string{"archive", "example", "--as-is"}, lifecycleOperationOptions{Mode: "abandoned", TargetID: targetID})
+ 	}()
+-
+-	probe, err := os.OpenFile(path, os.O_RDWR, 0)
+-	if err != nil {
+-		t.Fatal(err)
+-	}
+-	defer probe.Close()
+-	deadline := time.Now().Add(2 * time.Second)
++	deadline := time.Now().Add(3 * time.Second)
+ 	for {
+-		err = unix.Flock(int(probe.Fd()), unix.LOCK_EX|unix.LOCK_NB)
+-		if errors.Is(err, unix.EWOULDBLOCK) {
++		if _, err := os.Stat(started); err == nil {
+ 			break
+ 		}
+-		if err != nil {
+-			t.Fatal(err)
+-		}
+-		if err := unix.Flock(int(probe.Fd()), unix.LOCK_UN); err != nil {
+-			t.Fatal(err)
+-		}
+ 		if time.Now().After(deadline) {
+-			t.Fatal("lifecycle operation waited for the session lock before excluding package switches")
++			t.Fatal("executor blocked behind the conversation mutex")
+ 		}
+-		time.Sleep(5 * time.Millisecond)
++		time.Sleep(time.Millisecond)
+ 	}
+-
+-	if err := unix.Flock(int(probe.Fd()), unix.LOCK_SH|unix.LOCK_NB); err != nil {
+-		t.Fatalf("ordinary SH was blocked: %v", err)
++	probe, err := os.OpenFile(path, os.O_RDWR, 0)
++	if err != nil {
++		t.Fatal(err)
+ 	}
+-	if err := unix.Flock(int(probe.Fd()), unix.LOCK_UN); err != nil {
++	defer probe.Close()
++	if err := unix.Flock(int(probe.Fd()), unix.LOCK_EX|unix.LOCK_NB); !errors.Is(err, unix.EWOULDBLOCK) {
++		t.Fatalf("executor lost package exclusion: %v", err)
++	}
++	if err := os.WriteFile(release, nil, 0o600); err != nil {
+ 		t.Fatal(err)
+ 	}
+-	mutationLock.Unlock()
+ 	select {
+ 	case err := <-result:
+ 		if err != nil {
+ 			t.Fatal(err)
+ 		}
+-	case <-time.After(2 * time.Second):
+-		t.Fatal("lifecycle operation did not release its locks")
++	case <-time.After(3 * time.Second):
++		t.Fatal("executor did not complete while conversation mutex was held")
+ 	}
+ }
+ 
+@@ -3519,170 +3500,57 @@ func TestDeleteRetryRequiresTheDisplayedReceiptBeforeAJournalExists(t *testing.T
+ 	}
+ }
+ 
+-func TestDeleteJournalRetryRefusesASameKindReplacementWhileWaitingForTheLock(t *testing.T) {
+-	server := newTestServer(t)
+-	tracking := filepath.Join(server.config.Workspace, "work", "example")
+-	if err := os.MkdirAll(tracking, 0o755); err != nil {
+-		t.Fatal(err)
+-	}
+-	writeWebTrackingFiles(t, tracking, "active")
+-	if err := os.WriteFile(
+-		filepath.Join(tracking, "portal.yml"),
+-		[]byte("schema: 1\nslug: example\nrepositories: []\n"), 0o644,
+-	); err != nil {
+-		t.Fatal(err)
+-	}
+-	journalRoot := filepath.Join(server.config.Workspace, "worktrees", ".locks")
+-	if err := os.MkdirAll(journalRoot, 0o700); err != nil {
+-		t.Fatal(err)
+-	}
+-	journalPath := filepath.Join(journalRoot, "example.removal.json")
+-	journalA := strings.Repeat("a", 64)
+-	journal := fmt.Sprintf(
+-		`{"schema":1,"slug":"example","workspace":%q,"phase":"validated","force":true,"operation_id":%q}`,
+-		server.config.Workspace, journalA,
+-	)
+-	if err := os.WriteFile(journalPath, []byte(journal), 0o600); err != nil {
+-		t.Fatal(err)
+-	}
+-	invoked := filepath.Join(t.TempDir(), "invoked")
+-	helper := filepath.Join(t.TempDir(), "dev-session")
+-	if err := os.WriteFile(
+-		helper, []byte("#!/bin/sh\ntouch \"$INVOKED\"\n"), 0o755,
+-	); err != nil {
+-		t.Fatal(err)
+-	}
+-	t.Setenv("INVOKED", invoked)
+-	server.config.DevSession = fixtureDevSessionCommand(t, server.config.Workspace, helper)
+-	mutationLock := server.messageLock("example")
+-	if err := mutationLock.Lock(context.Background()); err != nil {
+-		t.Fatal(err)
+-	}
+-	locked := true
+-	defer func() {
+-		if locked {
+-			mutationLock.Unlock()
+-		}
+-	}()
+-	initialOperation, exists, err := server.lifecycleOperationForSlug("example")
+-	if err != nil || !exists {
+-		t.Fatalf("discover initial journal receipt = %t, %v", exists, err)
+-	}
+-	response := httptest.NewRecorder()
+-	server.retryLifecycleOperation(response, httptest.NewRequest(
+-		http.MethodPost, "/", strings.NewReader(fmt.Sprintf(
+-			`{"receiptId":%q,"journalId":%q}`,
+-			initialOperation.ReceiptID, journalA,
+-		)),
+-	), "example")
+-	if response.Code != http.StatusAccepted {
+-		t.Fatalf("journal retry response = %d %q", response.Code, response.Body.String())
+-	}
+-	server.operationMu.Lock()
+-	attemptA := server.operations["example"]
+-	server.operationMu.Unlock()
+-	replacement := fmt.Sprintf(
+-		`{"schema":1,"slug":"example","workspace":%q,"phase":"validated","force":false,"operation_id":%q}`,
+-		server.config.Workspace, strings.Repeat("b", 64),
+-	)
+-	if err := os.WriteFile(journalPath, []byte(replacement), 0o600); err != nil {
+-		t.Fatal(err)
+-	}
+-	replacementOperation, exists, err := server.lifecycleOperationForSlug("example")
+-	if err != nil || !exists || replacementOperation.State != "paused" ||
+-		replacementOperation.Options.JournalID != strings.Repeat("b", 64) ||
+-		replacementOperation.ReceiptID == attemptA.ReceiptID {
+-		t.Fatalf("replacement receipt = %#v, %t, %v", replacementOperation, exists, err)
+-	}
+-	mutationLock.Unlock()
+-	locked = false
+-	server.operationWG.Wait()
+-	operation, exists, err := server.lifecycleOperationForSlug("example")
+-	if err != nil || !exists || operation.State != "paused" ||
+-		operation.ReceiptID != replacementOperation.ReceiptID ||
+-		operation.Options.JournalID != strings.Repeat("b", 64) {
+-		t.Fatalf("replacement journal receipt was overwritten = %#v, %t, %v", operation, exists, err)
+-	}
+-	if _, err := os.Stat(invoked); !errors.Is(err, os.ErrNotExist) {
+-		t.Fatalf("replacement session delete command ran: %v", err)
+-	}
+-}
+-
+-func TestArchiveJournalRetryRefusesASameKindReplacementWhileWaitingForTheLock(t *testing.T) {
+-	server := newTestServer(t)
+-	journalRoot := filepath.Join(server.config.Workspace, "worktrees", ".locks")
+-	if err := os.MkdirAll(journalRoot, 0o700); err != nil {
+-		t.Fatal(err)
+-	}
+-	journalPath := filepath.Join(journalRoot, "example.archive.json")
+-	journalA := strings.Repeat("a", 64)
+-	writeJournal := func(mode, journalID string) {
+-		t.Helper()
+-		journal := fmt.Sprintf(
+-			`{"schema":2,"slug":"example","workspace":%q,"phase":"prepared","mode":%q,"operation_id":%q}`,
+-			server.config.Workspace, mode, journalID,
+-		)
+-		temporary := journalPath + ".tmp"
+-		if err := os.WriteFile(temporary, []byte(journal), 0o600); err != nil {
+-			t.Fatal(err)
+-		}
+-		if err := os.Rename(temporary, journalPath); err != nil {
+-			t.Fatal(err)
+-		}
+-	}
+-	writeJournal("complete", journalA)
+-
+-	invoked := filepath.Join(t.TempDir(), "invoked")
+-	helper := filepath.Join(t.TempDir(), "dev-session")
+-	if err := os.WriteFile(helper, []byte("#!/bin/sh\ntouch \"$INVOKED\"\n"), 0o755); err != nil {
+-		t.Fatal(err)
+-	}
+-	t.Setenv("INVOKED", invoked)
+-	server.config.DevSession = fixtureDevSessionCommand(t, server.config.Workspace, helper)
+-	mutationLock := server.messageLock("example")
+-	if err := mutationLock.Lock(context.Background()); err != nil {
+-		t.Fatal(err)
+-	}
+-	locked := true
+-	defer func() {
+-		if locked {
+-			mutationLock.Unlock()
+-		}
+-	}()
+-	initial, exists, err := server.lifecycleOperationForSlug("example")
+-	if err != nil || !exists {
+-		t.Fatalf("discover archive receipt = %t, %v", exists, err)
+-	}
+-	response := httptest.NewRecorder()
+-	server.retryLifecycleOperation(response, httptest.NewRequest(
+-		http.MethodPost, "/", strings.NewReader(fmt.Sprintf(
+-			`{"receiptId":%q,"journalId":%q}`, initial.ReceiptID, journalA,
+-		)),
+-	), "example")
+-	if response.Code != http.StatusAccepted {
+-		t.Fatalf("archive retry = %d %q", response.Code, response.Body.String())
+-	}
+-	server.operationMu.Lock()
+-	attemptA := server.operations["example"]
+-	server.operationMu.Unlock()
+-	journalB := strings.Repeat("b", 64)
+-	writeJournal("abandoned", journalB)
+-	replacement, exists, err := server.lifecycleOperationForSlug("example")
+-	if err != nil || !exists || replacement.State != "paused" ||
+-		replacement.Options.Mode != "abandoned" || replacement.Options.JournalID != journalB ||
+-		replacement.ReceiptID == attemptA.ReceiptID {
+-		t.Fatalf("replacement archive receipt = %#v, %t, %v", replacement, exists, err)
+-	}
+-	mutationLock.Unlock()
+-	locked = false
+-	server.operationWG.Wait()
+-	current, exists, err := server.lifecycleOperationForSlug("example")
+-	if err != nil || !exists || current.ReceiptID != replacement.ReceiptID ||
+-		current.Options.Mode != "abandoned" || current.Options.JournalID != journalB {
+-		t.Fatalf("replacement archive was overwritten = %#v, %t, %v", current, exists, err)
+-	}
+-	if _, err := os.Stat(invoked); !errors.Is(err, os.ErrNotExist) {
+-		t.Fatalf("replacement archive command ran: %v", err)
++func TestLifecycleJournalRevalidatedAfterPackageAdmission(t *testing.T) {
++	for _, kind := range []string{"archive", "delete"} {
++		t.Run(kind, func(t *testing.T) {
++			server := newTestServer(t)
++			journalRoot := filepath.Join(server.config.Workspace, "worktrees", ".locks")
++			if err := os.MkdirAll(journalRoot, 0o700); err != nil {
++				t.Fatal(err)
++			}
++			name, payload := "archive", `"schema":2,"phase":"prepared","mode":"complete"`
++			if kind == "delete" {
++				name, payload = "removal", `"schema":1,"phase":"validated","force":true`
++			}
++			journal := filepath.Join(journalRoot, "example."+name+".json")
++			write := func(id string) {
++				t.Helper()
++				if err := os.WriteFile(journal, []byte(fmt.Sprintf(`{%s,"slug":"example","workspace":%q,"operation_id":%q}`, payload, server.config.Workspace, id)), 0o600); err != nil {
++					t.Fatal(err)
++				}
++			}
++			write(strings.Repeat("a", 64))
++			progress, err := session.PendingLifecycleProgress(server.config.Workspace, "example")
++			if err != nil {
++				t.Fatal(err)
++			}
++			path := filepath.Join(t.TempDir(), "transition.lock")
++			gate, err := os.OpenFile(path, os.O_CREATE|os.O_RDWR, 0o600)
++			if err != nil {
++				t.Fatal(err)
++			}
++			defer gate.Close()
++			if err := unix.Flock(int(gate.Fd()), unix.LOCK_EX); err != nil {
++				t.Fatal(err)
++			}
++			server.config.TransitionLock = path
++			result := make(chan error, 1)
++			go func() {
++				result <- server.runLifecycleOperation(context.Background(), "example", kind, nil, lifecycleOperationOptions{JournalExpected: true, JournalID: progress.JournalID, JournalEvidence: progress.Evidence})
++			}()
++			write(strings.Repeat("b", 64))
++			if err := unix.Flock(int(gate.Fd()), unix.LOCK_UN); err != nil {
++				t.Fatal(err)
++			}
++			select {
++			case err := <-result:
++				if err == nil || !strings.Contains(err.Error(), "lifecycle operation changed") {
++					t.Fatalf("replaced journal reached executor: %v", err)
++				}
++			case <-time.After(3 * time.Second):
++				t.Fatal("executor did not settle")
++			}
++		})
+ 	}
+ }
+ 
+@@ -3933,20 +3801,16 @@ func TestDeleteSessionExcludesConcurrentWorkspaceOperations(t *testing.T) {
+ 		t.Fatal(err)
+ 	}
+ 	helper := filepath.Join(t.TempDir(), "dev-session")
+-	if err := os.WriteFile(helper, []byte("#!/bin/sh\nexit 0\n"), 0o755); err != nil {
++	if err := os.WriteFile(helper, []byte("#!/bin/sh\nexec flock -x \"$DELETE_RUNTIME_LOCK\" true\n"), 0o755); err != nil {
+ 		t.Fatal(err)
+ 	}
+ 	server.config.DevSession = fixtureDevSessionCommand(t, server.config.Workspace, helper)
+-	mutationLock := server.messageLock("example")
+-	if err := mutationLock.Lock(context.Background()); err != nil {
++	t.Setenv("DELETE_RUNTIME_LOCK", filepath.Join(server.config.AuthorityDir, "example.lock"))
++	runtimeLock, err := session.LockRuntimeShared(server.config.AuthorityDir, "example")
++	if err != nil {
+ 		t.Fatal(err)
+ 	}
+-	locked := true
+-	defer func() {
+-		if locked {
+-			mutationLock.Unlock()
+-		}
+-	}()
++	defer runtimeLock.Close()
+ 
+ 	request := httptest.NewRequest(
+ 		http.MethodPost, "/api/sessions/example/delete",
+@@ -3966,13 +3830,12 @@ func TestDeleteSessionExcludesConcurrentWorkspaceOperations(t *testing.T) {
+ 	operation := server.operations["example"]
+ 	server.operationMu.Unlock()
+ 	if operation.State != "running" {
+-		t.Fatalf("deletion did not wait for the session mutation lock: %#v", operation)
++		t.Fatalf("deletion did not wait for the shared session runtime lock: %#v", operation)
+ 	}
+-	mutationLock.Unlock()
+-	locked = false
++	runtimeLock.Close()
+ 	operation = waitLifecycleOperation(t, server, "example")
+ 	if operation.State != "complete" {
+-		t.Fatalf("deletion did not continue after the session mutation lock was released: %#v", operation)
++		t.Fatalf("deletion did not continue after the shared session runtime lock was released: %#v", operation)
+ 	}
+ }
+ 
+diff --git a/portal/internal/web/static/app.js b/portal/internal/web/static/app.js
+index 5ce8790..4f13467 100644
+--- a/portal/internal/web/static/app.js
++++ b/portal/internal/web/static/app.js
+@@ -1676,7 +1676,7 @@
+         if (name instanceof HTMLAnchorElement) name.href = `/${encodeURIComponent(operation.slug)}/`;
+         const phase = document.createElement("span");
+         phase.className = "muted";
+-        phase.textContent = `${lifecycleKindLabel(operation.kind)} · ${lifecyclePhaseLabel(operation.phase)}`;
++        phase.textContent = `${lifecycleKindLabel(operation.kind)} · ${operation.progress?.stage || lifecyclePhaseLabel(operation.phase)}`;
+         identity.append(name, phase);
+ 
+         const state = document.createElement("span");
+@@ -1792,7 +1792,7 @@
+ 
+         entry.item = item;
+         entry.update = (operation, presentation) => {
+-          updateText(phase, `${lifecycleKindLabel(operation.kind)} · ${lifecyclePhaseLabel(operation.phase)}`);
++          updateText(phase, `${lifecycleKindLabel(operation.kind)} · ${operation.progress?.stage || lifecyclePhaseLabel(operation.phase)}`);
+           state.className = `operation-state ${presentation.tone}`;
+           updateText(state, operation.state === "running" ? presentation.detail : presentation.title);
+           if (detail) updateText(detail, presentation.detail);
+diff --git a/test/dev_session/archive_cleanup_test.rb b/test/dev_session/archive_cleanup_test.rb
+index ea133e4..baf1ed3 100644
+--- a/test/dev_session/archive_cleanup_test.rb
++++ b/test/dev_session/archive_cleanup_test.rb
+@@ -125,11 +125,11 @@ class DevSessionTest < Minitest::Test
+         sleep 0.02
+       end
+       reviver = archive_runner_for(workspace, env: {'DEV_WORKSPACE_DEFER_TRACKING' => '1'})
+-      assert_raises(DevSession::Error) { reviver.revive(slug, as_is: true) }
++      revive = Thread.new { reviver.revive(slug, as_is: true) }
+       assert(sync.join(10), 'tracking hook retained lifecycle locks')
+-      assert_equal('pending', runner.tracking_sync_receipt(slug).fetch('state'))
++      assert(revive.join(10), 'revival did not continue after tracking sync yielded access')
++      revive.value
+       File.unlink(hook)
+-      reviver.revive(slug, as_is: true)
+       assert_equal('revive', reviver.tracking_sync_receipt(slug).fetch('direction'))
+       reviver.tracking_sync(slug, force: true)
+       assert_equal('synced', reviver.tracking_sync_receipt(slug).fetch('state'))
+@@ -137,6 +137,7 @@ class DevSessionTest < Minitest::Test
+     ensure
+       File.unlink(hook) if hook && File.file?(hook)
+       sync&.join(10)
++      revive&.join(10)
+     end
+   end
+ 
+@@ -767,6 +768,23 @@ class DevSessionTest < Minitest::Test
+ 
+   def test_archive_cleanup_completed_receipt_recovers_without_repeating_the_tracking_commit
+     with_archive_cleanup_fixture do |runner, workspace, slug, _common, _feature|
++      store = runner.send(:coordination_store)
++      manifest = YAML.safe_load(File.read(File.join(workspace, 'work', slug, 'portal.yml')))
++      stat = File.stat(File.join(workspace, 'work', slug))
++      owner_id, reservation_id = SecureRandom.uuid, SecureRandom.uuid
++      store.transaction do |data|
++        data['owners'][owner_id] = {'id' => owner_id,
++          'identity' => WorkspaceCoordination.digest([workspace, 'fixture', slug, stat.dev, stat.ino,
++            manifest.dig('codex', 'thread_id'), WorkspaceCoordination.creation_identity(manifest)]),
++          'workspace' => workspace, 'workspaceName' => 'fixture', 'slug' => slug,
++          'thread' => nil, 'socket' => '/fixture', 'portalUrl' => 'https://fixture.test', 'bootstrap' => true, 'fence' => nil}
++        data['reservations'][reservation_id] = {'id' => reservation_id, 'ownerId' => owner_id,
++          'machine' => 'fixture:machine', 'target' => 'machine', 'state' => 'deployed_review',
++          'revision' => 1, 'sequence' => store.sequence(data), 'mode' => 'deploy_first',
++          'approvalId' => nil, 'integrationObligations' => [], 'history' => [
++            {'attempt' => SecureRandom.uuid, 'kind' => 'machine_activate', 'artifact' => 'sha256:' + 'a' * 64,
++             'coverage' => [], 'coverageContracts' => [], 'observed' => {}, 'outcome' => 'applied'}]}
++      end
+       interrupt_completion = true
+       runner.define_singleton_method(:archive_cleanup_check_completed!) do |*arguments, **options|
+         if interrupt_completion && options[:recorded_retirement]
+@@ -779,6 +797,15 @@ class DevSessionTest < Minitest::Test
+       cleanup = DevSession::ArchiveCleanup.new(runner, slug)
+       assert_equal(true, cleanup.load.fetch('completed'))
+       refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
++      # A predecessor marked completion but retained deployed reservations.
++      store.transaction { |data| data['reservations'][reservation_id]['state'] = 'blocked_recovery' }
++      failed_store = Object.new
++      failed_store.define_singleton_method(:lifecycle_completed) { |*args, **options| raise WorkspaceCoordination::Error, 'injected completion replay failure' }
++      runner.define_singleton_method(:coordination_store) { failed_store }
++      assert_raises(WorkspaceCoordination::Error) { runner.archive(slug, as_is: true) }
++      assert(File.exist?(cleanup.path), 'completion failure discarded recovery evidence')
++      assert_equal 'blocked_recovery', store.read['reservations'][reservation_id]['state']
++      runner.define_singleton_method(:coordination_store) { store }
+       head = git_capture_success('git', '-C', workspace, 'rev-parse', 'HEAD').strip
+       assert_raises(DevSession::Error) { runner.archive(slug, as_is: true, abandoned: true) }
+       assert(File.exist?(cleanup.path))
+@@ -786,6 +813,7 @@ class DevSessionTest < Minitest::Test
+       runner.archive(slug, as_is: true)
+ 
+       assert_equal(head, git_capture_success('git', '-C', workspace, 'rev-parse', 'HEAD').strip)
++      assert_equal 'released', store.read['reservations'][reservation_id]['state']
+       refute(File.exist?(cleanup.path))
+     end
+   end
+diff --git a/test/dev_session/lifecycle_access_test.rb b/test/dev_session/lifecycle_access_test.rb
+new file mode 100644
+index 0000000..4ec14fe
+--- /dev/null
++++ b/test/dev_session/lifecycle_access_test.rb
+@@ -0,0 +1,247 @@
++# frozen_string_literal: true
++
++require 'timeout'
++require_relative '../support/dev_session_test_case'
++
++class DevSessionTest < Minitest::Test
++  class LifecycleAccessProbe < StandardError; end
++
++  def with_blocked_lifecycle(operation, kind: 'session', mode: File::LOCK_SH)
++    with_workspace do |workspace|
++      slug = '2026-06-06-lifecycle-access'
++      output = StringIO.new
++      runner = runner_for(workspace, out: output)
++      runner.ensure_tracking_files(slug)
++      path = runner.send(:session_lock_file, slug, kind:)
++      waiting = Queue.new
++      runner.define_singleton_method(:lifecycle_access_waiting) do |value|
++        super(value)
++        waiting << true
++      end
++      runner.define_singleton_method(:select_tmux_for_slug!) { |_value| raise LifecycleAccessProbe }
++      holder = File.open(path, File::RDWR | File::CREAT, 0o600)
++      holder.flock(mode)
++      worker = Thread.new do
++        case operation
++        when 'archive' then runner.archive(slug, as_is: true, explicit: true, operation_id: 'a' * 64)
++        when 'delete' then runner.delete(slug, as_is: true, force: false)
++        when 'revive' then runner.revive(slug, as_is: true)
++        end
++      rescue StandardError => error
++        error
++      end
++      Timeout.timeout(5) { waiting.pop }
++      yield workspace, slug, runner, holder, worker, output
++    ensure
++      holder&.flock(File::LOCK_UN)
++      holder&.close
++      worker&.join(5)
++      worker&.kill if worker&.alive?
++    end
++  end
++
++  def test_explicit_lifecycle_waits_for_creation_shared_and_exclusive_session_locks
++    %w[archive revive delete].each do |operation|
++      [['creation', File::LOCK_EX], ['session', File::LOCK_SH], ['session', File::LOCK_EX]].each do |kind, mode|
++        with_blocked_lifecycle(operation, kind:, mode:) do |workspace, slug, _runner, holder, worker, output|
++          assert(worker.alive?, "#{operation} did not wait for #{kind}")
++          refute(File.exist?(File.join(workspace, 'worktrees', '.locks', "#{slug}.archive.json")))
++          if operation == 'archive'
++            assert_includes(output.string, 'Waiting for session access')
++            path = Dir.glob(File.join(workspace, '.xdg-state', 'dev-workspaces', 'archive-progress', '*', "#{slug}.json")).fetch(0)
++            assert_equal('a' * 64, JSON.parse(File.read(path)).fetch('operation_id'))
++          end
++          holder.flock(File::LOCK_UN)
++          assert_instance_of(LifecycleAccessProbe, Timeout.timeout(5) { worker.value })
++        end
++      end
++    end
++  end
++
++  def test_cli_revive_confirmation_waits_for_session_access_before_prompting_once
++    [['creation', File::LOCK_EX], ['session', File::LOCK_SH]].each do |kind, mode|
++      with_workspace do |workspace|
++        slug = '2026-06-06-cli-revive-access'
++        runner = runner_for(workspace)
++        runner.ensure_tracking_files(slug)
++        FileUtils.mkdir_p(File.join(workspace, 'archive'))
++        File.rename(File.join(workspace, 'work', slug), File.join(workspace, 'archive', slug))
++        waiting, prompts, calls = Queue.new, Queue.new, []
++        runner.define_singleton_method(:lifecycle_access_waiting) { |_value| waiting << true }
++        runner.define_singleton_method(:revive) { |value, **options| calls << value }
++        errors = StringIO.new
++        cli = DevSession::CLI.new(['revive', slug, '--as-is'],
++          input: SignalingTTYInput.new("yes\n", read: prompts), out: StringIO.new, err: errors)
++        cli.define_singleton_method(:runner) { runner }
++        holder = File.open(runner.send(:session_lock_file, slug, kind:), File::RDWR | File::CREAT, 0o600)
++        holder.flock(mode)
++        worker = Thread.new { cli.run }
++        Timeout.timeout(5) { waiting.pop }
++        assert worker.alive?
++        assert prompts.empty?, 'confirmation ran before lifecycle access was obtained'
++        holder.flock(File::LOCK_UN)
++        assert_equal 0, Timeout.timeout(5) { worker.value }
++        assert_equal [slug], calls
++        assert_equal 1, errors.string.scan("Revive session #{slug}?").length
++      ensure
++        holder&.close
++        worker&.join(5)
++      end
++    end
++  end
++
++  def test_interrupted_archive_wait_releases_lifecycle_admission_without_a_journal
++    with_blocked_lifecycle('archive') do |_workspace, slug, runner, _holder, worker, _output|
++      worker.kill
++      Timeout.timeout(5) { worker.join }
++      assert_nil(runner.instance_variable_get(:@lifecycle_access))
++      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
++      File.open(runner.send(:session_lock_file, slug, kind: 'creation'), File::RDWR) do |probe|
++        assert(probe.flock(File::LOCK_EX | File::LOCK_NB))
++      end
++    end
++  end
++
++  def test_waiting_lifecycle_rejects_a_replaced_tracking_directory
++    with_blocked_lifecycle('archive') do |workspace, slug, runner, holder, worker, _output|
++      directory = File.join(workspace, 'work', slug)
++      File.rename(directory, directory + '.old')
++      runner.ensure_tracking_files(slug)
++      holder.flock(File::LOCK_UN)
++      error = Timeout.timeout(5) { worker.value }
++      assert_instance_of(DevSession::Error, error)
++      assert_includes(error.message, 'session changed while waiting')
++      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
++    end
++  end
++
++  def test_waiting_lifecycle_rejects_a_new_conflicting_journal
++    with_blocked_lifecycle('archive') do |_workspace, slug, runner, holder, worker, _output|
++      path = runner.send(:lifecycle_journal_file, slug, 'delete')
++      FileUtils.mkdir_p(File.dirname(path))
++      File.write(path, '{}')
++      holder.flock(File::LOCK_UN)
++      error = Timeout.timeout(5) { worker.value }
++      assert_instance_of(DevSession::Error, error)
++      assert_includes(error.message, 'unfinished')
++      refute(File.exist?(runner.send(:lifecycle_journal_file, slug, 'archive')))
++    end
++  end
++
++  def test_waiting_lifecycle_rejects_a_changed_retained_root
++    with_blocked_lifecycle('archive') do |workspace, slug, _runner, holder, worker, _output|
++      path = File.join(workspace, 'work', slug, 'portal.yml')
++      manifest = { 'schema' => 1, 'slug' => slug, 'repositories' => [], 'artifacts' => [] }
++      manifest['codex'] = { 'thread_id' => 'different-root', 'socket_path' => '/run/test/codex.sock', 'client_version' => '0.160.0' }
++      File.write(path, YAML.dump(manifest))
++      holder.flock(File::LOCK_UN)
++      error = Timeout.timeout(5) { worker.value }
++      assert_instance_of(DevSession::Error, error)
++      assert_includes(error.message, 'session changed while waiting')
++    end
++  end
++
++  def test_lifecycle_reacquisitions_keep_waiting_without_retargeting_restored_tracking
++    with_workspace do |workspace|
++      slug = '2026-06-06-revive-access'
++      runner = runner_for(workspace)
++      runner.ensure_tracking_files(slug)
++      waiting = Queue.new
++      runner.define_singleton_method(:lifecycle_access_waiting) { |_value| waiting << true }
++      holder = worker = nil
++      runner.send(:with_lifecycle_access, slug, 'revive', operation_id: nil) do
++        runner.send(:with_creation_lock, slug) { runner.send(:with_slug_lock, slug) {} }
++        path = runner.send(:session_lock_file, slug)
++        File.open(path, File::RDWR) do |holder|
++          holder.flock(File::LOCK_SH)
++          worker = Thread.new { runner.send(:with_creation_lock, slug) { runner.send(:with_slug_lock, slug) { :resumed } } }
++          Timeout.timeout(5) { waiting.pop }
++          assert(worker.alive?)
++          holder.flock(File::LOCK_UN)
++          assert_equal(:resumed, Timeout.timeout(5) { worker.value })
++        end
++      ensure
++        holder&.flock(File::LOCK_UN) unless holder&.closed?
++        worker&.kill if worker&.alive?
++      end
++      assert_nil(runner.instance_variable_get(:@lifecycle_access))
++    end
++  end
++
++  def test_portal_authorization_is_rechecked_after_waiting
++    with_workspace do |workspace|
++      slug = '2026-06-06-portal-access'
++      runner = runner_for(workspace)
++      runner.ensure_tracking_files(slug)
++      receipt = { 'receiptId' => 'b' * 64, 'attempt' => 1, 'targetIdentityVersion' => 2,
++                  'options' => { 'journalId' => 'a' * 64, 'targetId' => runner.send(:lifecycle_access_target, slug) } }
++      runner.instance_variable_set(:@require_runtime, true)
++      runner.define_singleton_method(:portal_lifecycle_receipt) { |*_args| Marshal.load(Marshal.dump(receipt)) }
++      runner.define_singleton_method(:select_tmux_for_slug!) { |_value| raise LifecycleAccessProbe }
++      waiting = Queue.new
++      runner.define_singleton_method(:lifecycle_access_waiting) { |_value| waiting << true }
++      holder = worker = nil
++      File.open(runner.send(:session_lock_file, slug), File::RDWR | File::CREAT, 0o600) do |holder|
++        holder.flock(File::LOCK_SH)
++        worker = Thread.new do
++          runner.archive(slug, as_is: true, explicit: true, operation_id: 'a' * 64)
++        rescue StandardError => error
++          error
++        end
++        Timeout.timeout(5) { waiting.pop }
++        receipt['attempt'] = 2
++        holder.flock(File::LOCK_UN)
++        error = Timeout.timeout(5) { worker.value }
++        assert_instance_of(DevSession::Error, error)
++        assert_includes(error.message, 'portal lifecycle authorization changed')
++      ensure
++        holder&.flock(File::LOCK_UN) unless holder&.closed?
++        worker&.kill if worker&.alive?
++      end
++    end
++  end
++
++  def test_waiting_archive_rejects_a_replaced_recovery_operation
++    with_workspace do |workspace|
++      slug = '2026-06-06-recovery-access'
++      runner = runner_for(workspace)
++      path = runner.send(:lifecycle_journal_file, slug, 'archive')
++      FileUtils.mkdir_p(File.dirname(path))
++      File.write(path, JSON.generate('operation_id' => 'a' * 64))
++      File.chmod(0o600, path)
++      waiting = Queue.new
++      runner.define_singleton_method(:lifecycle_access_waiting) { |_value| waiting << true }
++      File.open(runner.send(:session_lock_file, slug), File::RDWR | File::CREAT, 0o600) do |holder|
++        holder.flock(File::LOCK_SH)
++        worker = Thread.new do
++          runner.archive(slug, as_is: true, explicit: true, operation_id: 'a' * 64)
++        rescue StandardError => error
++          error
++        end
++        Timeout.timeout(5) { waiting.pop }
++        File.write(path, JSON.generate('operation_id' => 'b' * 64))
++        holder.flock(File::LOCK_UN)
++        error = Timeout.timeout(5) { worker.value }
++        assert_instance_of(DevSession::Error, error)
++        assert_includes(error.message, 'another lifecycle operation started')
++      end
++    end
++  end
++
++  def test_automatic_scan_defers_busy_session_without_changing_cached_activity
++    with_workspace do |workspace|
++      slug = '2026-06-06-busy-observation'
++      runner = automatic_fixture(workspace, slug)
++      automatic_scan(runner)
++      path = File.join(runner.auto_archive_store.root, "session-#{slug}.json")
++      before = File.binread(path)
++      File.open(runner.send(:session_lock_file, slug), File::RDWR) do |holder|
++        holder.flock(File::LOCK_EX)
++        result = automatic_scan(runner).fetch(0)
++        assert_equal('deferred', result.fetch('result'))
++        assert_includes(result.fetch('blockers').join, 'busy')
++        assert_equal(before, File.binread(path))
++      end
++    end
++  end
++end
+diff --git a/test/dev_session/lifecycle_archive_test.rb b/test/dev_session/lifecycle_archive_test.rb
+index cffab76..ed7c2d6 100644
+--- a/test/dev_session/lifecycle_archive_test.rb
++++ b/test/dev_session/lifecycle_archive_test.rb
+@@ -1,5 +1,6 @@
+ # frozen_string_literal: true
+ 
++require 'timeout'
+ require_relative '../support/dev_session_test_case'
+ 
+ class DevSessionTest < Minitest::Test
+@@ -640,16 +641,18 @@ class DevSessionTest < Minitest::Test
+       File.open(lock_path, File::RDWR | File::CREAT, 0o600) do |lock|
+         assert(lock.flock(File::LOCK_EX | File::LOCK_NB))
+ 
+-        error = assert_raises(DevSession::Error) do
+-          runner.delete(slug, as_is: true, force: false)
+-        end
+-        assert_match(/another dev-session command/, error.message)
+-
+-        runner.delete(other_slug, as_is: true, force: false)
++        waiting = Queue.new
++        runner.define_singleton_method(:lifecycle_access_waiting) { |_slug| waiting << true }
++        worker = Thread.new { runner.delete(slug, as_is: true, force: false) }
++        Timeout.timeout(5) { waiting.pop }
++        assert(worker.alive?)
++        other_runner = runner_for(workspace)
++        other_runner.delete(other_slug, as_is: true, force: false)
+         refute(File.exist?(File.join(workspace, 'worktrees', other_slug)))
++        lock.flock(File::LOCK_UN)
++        Timeout.timeout(5) { worker.value }
+       end
+ 
+-      runner.delete(slug, as_is: true, force: false)
+       refute(File.exist?(File.join(workspace, 'worktrees', slug)))
+     end
+   end
+diff --git a/test/dev_session_test.rb b/test/dev_session_test.rb
+index c95edbf..9718978 100644
+--- a/test/dev_session_test.rb
++++ b/test/dev_session_test.rb
+@@ -28,3 +28,5 @@ require_relative 'dev_session/retained_tracking_test'
+ require_relative 'dev_session/ordinary_readiness_test'
+ 
+ require_relative 'dev_session/sensitive_test'
++
++require_relative 'dev_session/lifecycle_access_test'
+diff --git a/test/workspace_coordination_test.rb b/test/workspace_coordination_test.rb
+index c6df029..f01032b 100644
+--- a/test/workspace_coordination_test.rb
++++ b/test/workspace_coordination_test.rb
+@@ -226,10 +226,13 @@ class WorkspaceCoordinationTest < Minitest::Test
+       end
+     end
+     assert_equal '2026-01-02T00:00:00Z', timing.read['reservations'][@reservation_id]['heldAt']
+-    with_time(Time.utc(2026, 1, 3)) { @engine.store.transaction { |data| @engine.store.fence_owners!(data, [data['owners'][first['id']]], 'archive') } }
++    archive_id = '7' * 64
++    with_time(Time.utc(2026, 1, 3)) { @engine.store.bind_lifecycle(@workspace, first['slug'], 'archive', archive_id) }
++    refute timing.read['reservations'][@reservation_id].key?('finishedAt')
++    with_time(Time.utc(2026, 1, 4)) { @engine.store.lifecycle_completed(@workspace, first['slug'], 'archive', operation_id: archive_id) }
+     dates = timing.read['reservations'][@reservation_id]
+     assert_equal '2026-01-02T00:00:00Z', dates['heldAt']
+-    assert_equal '2026-01-03T00:00:00Z', dates['finishedAt']
++    assert_equal '2026-01-04T00:00:00Z', dates['finishedAt']
+   end
+ 
+   def test_session_projection_excludes_a_recreated_slugs_retained_history
+@@ -718,7 +721,7 @@ class WorkspaceCoordinationTest < Minitest::Test
+     [reservation, job]
+   end
+ 
+-  def test_review_reservation_survives_idle_and_lifecycle
++  def test_review_reservation_survives_idle_then_releases_after_archive
+     configure_machine
+     first, second = owner('first'), owner('second')
+     reservation, a = deployment(first)
+@@ -739,11 +742,85 @@ class WorkspaceCoordinationTest < Minitest::Test
+     @engine.store.bind_lifecycle(@workspace, first['slug'], 'archive', archive_id)
+     assert_equal 'blocked_recovery', @engine.store.read['reservations'][reservation['id']]['state']
+     @engine.store.lifecycle_completed(@workspace, first['slug'], 'archive', operation_id: archive_id)
++    released = @engine.store.read['reservations'][reservation['id']]
++    assert_equal 'released', released['state']
++    @engine.store.lifecycle_completed(@workspace, first['slug'], 'archive', operation_id: archive_id)
++    assert_equal released, @engine.store.read['reservations'][reservation['id']]
++    assert_equal [b['id']], @engine.claim.map { |job| job['id'] }
+     @engine.store.revived(@workspace, first['slug'], operation_id: 'b' * 64, archive_operation_id: archive_id)
+-    assert_equal 'blocked_recovery', @engine.store.read['reservations'][reservation['id']]['state']
++    assert_equal 'released', @engine.store.read['reservations'][reservation['id']]['state']
++  end
++
++  def test_archive_cancels_queued_deployment_and_revival_does_not_resume_it
++    configure_machine
++    first = owner('queued-deployer')
++    reservation, job = deployment(first)
++    archive_id = '9' * 64
++    @engine.store.bind_lifecycle(@workspace, first['slug'], 'archive', archive_id)
++    assert_equal 'canceled', @engine.store.read['jobs'][job['id']]['state']
++    assert_equal 'requested', @engine.store.read['reservations'][reservation['id']]['state']
++    @engine.store.lifecycle_completed(@workspace, first['slug'], 'archive', operation_id: archive_id)
++    @engine.store.revived(@workspace, first['slug'], operation_id: '8' * 64, archive_operation_id: archive_id)
++    assert_equal 'released', @engine.store.read['reservations'][reservation['id']]['state']
++    assert_equal 'canceled', @engine.store.read['jobs'][job['id']]['state']
+     assert_empty @engine.claim
+   end
+ 
++  def test_archive_of_waiting_owner_never_claims_another_owners_machine
++    configure_machine
++    first, second = owner('live-deployer'), owner('waiting-deployer')
++    held, = deployment(first)
++    @engine.claim
++    waiting, queued = deployment(second)
++    archive_id = '6' * 64
++    @engine.store.bind_lifecycle(@workspace, second['slug'], 'archive', archive_id)
++    assert_equal 'held', @engine.store.read['reservations'][held['id']]['state']
++    assert_equal 'requested', @engine.store.read['reservations'][waiting['id']]['state']
++    assert_equal 'canceled', @engine.store.read['jobs'][queued['id']]['state']
++    @engine.store.lifecycle_completed(@workspace, second['slug'], 'archive', operation_id: archive_id)
++    assert_equal 'held', @engine.store.read['reservations'][held['id']]['state']
++    assert_equal 'released', @engine.store.read['reservations'][waiting['id']]['state']
++  end
++
++  def test_archive_completion_releases_predecessor_hold_but_not_another_owner
++    configure_machine
++    first, second = owner('archived-holder'), owner('waiting-holder')
++    reservation, job = deployment(first)
++    other, = deployment(second, submit: false)
++    @engine.claim
++    @engine.store.transaction do |data|
++      data['jobs'][job['id']]['state'] = 'succeeded'
++      data['reservations'][reservation['id']]['state'] = 'deployed_review'
++    end
++    archive_id = 'c' * 64
++    @engine.store.bind_lifecycle(@workspace, first['slug'], 'archive', archive_id)
++    @engine.store.transaction do |data|
++      data['lifecycles'][archive_id]['completed'] = true
++      data['owners'][first['id']]['fence']['completed'] = true
++      data['reservations'][reservation['id']]['state'] = 'blocked_recovery'
++    end
++    @engine.store.lifecycle_completed(@workspace, first['slug'], 'archive', operation_id: archive_id)
++    assert_equal 'released', @engine.store.read['reservations'][reservation['id']]['state']
++    assert_equal 'requested', @engine.store.read['reservations'][other['id']]['state']
++  end
++
++  def test_unknown_deployment_blocks_archive_before_releasing_ownership
++    configure_machine
++    first = owner('uncertain-holder')
++    reservation, submitted = deployment(first)
++    job = @engine.claim.first
++    @engine.store.transaction do |data|
++      data['jobs'][submitted['id']]['state'] = 'failed'
++      data['reservations'][reservation['id']]['state'] = 'blocked_recovery'
++      data['reservations'][reservation['id']]['history'] << {'attempt' => job['attempt'], 'kind' => job['kind'],
++        'artifact' => job.dig('snapshot', 'operation', 'preparedArtifact'), 'coverage' => [],
++        'coverageContracts' => job['coverageContracts'], 'observed' => nil, 'outcome' => 'unknown'}
++    end
++    assert_raises(WorkspaceCoordination::Error) { @engine.store.require_lifecycle_idle!(@workspace, first['slug']) }
++    assert_raises(WorkspaceCoordination::Error) { @engine.store.bind_lifecycle(@workspace, first['slug'], 'archive', 'e' * 64) }
++    assert_equal 'blocked_recovery', @engine.store.read['reservations'][reservation['id']]['state']
++  end
++
+   def test_portal_badges_report_held_states_and_archived_owners_without_mutation
+     configure_machine
+     first = owner('holder')

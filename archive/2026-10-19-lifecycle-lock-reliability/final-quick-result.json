@@ -1,0 +1,17 @@
+{
+  "result": "failed",
+  "tested_head_at_start": "dd39d62c31f7a6e2eee30588e4b1891410eae7f7",
+  "working_diff_sha256_at_start": "172110cbebd06b35cc5263df0ddab0f4b026771debb77d54e855d47ae952a18b",
+  "command": "nix develop --command bash -c 'export TMPDIR=/tmp DEV_SESSION_SKIP_REAL_TMUX_TESTS=1; ruby test/dev_session_test.rb > /home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-lifecycle-lock-reliability/final-quick-ruby.log 2>&1; ruby_status=$?; cd portal; go test -mod=readonly ./internal/web ./internal/session > /home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-lifecycle-lock-reliability/final-quick-go.log 2>&1; go_status=$?; printf \"ruby=%s go=%s\\n\" \"$ruby_status\" \"$go_status\"; test \"$ruby_status\" = 0 && test \"$go_status\" = 0'",
+  "elapsed_seconds": 702,
+  "statuses": {
+    "ruby": 1,
+    "go": 0,
+    "batch": 1
+  },
+  "logs": {
+    "ruby": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-lifecycle-lock-reliability/final-quick-ruby.log",
+    "go": "/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-lifecycle-lock-reliability/final-quick-go.log"
+  },
+  "evidence": "Ruby: 467 runs, 6906 assertions, 1 failure, 0 errors, 13 skips. Failure: DevSessionTest#test_tracking_sync_hanging_hook_releases_lifecycle_locks_and_preserves_shared_index at test/dev_session/archive_cleanup_test.rb:128; DevSession::Error expected but nothing was raised. Go: internal/web and internal/session both passed. Parent reports this is an obsolete expectation and is updating it; Ruby was not rerun."
+}

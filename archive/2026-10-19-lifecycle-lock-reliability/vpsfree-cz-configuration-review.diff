@@ -1,0 +1,40 @@
+diff --git a/docs/operations/workspace-coordination-aitherdev.md b/docs/operations/workspace-coordination-aitherdev.md
+index 1f8c8d0a..69bf21d5 100644
+--- a/docs/operations/workspace-coordination-aitherdev.md
++++ b/docs/operations/workspace-coordination-aitherdev.md
+@@ -53,9 +53,15 @@ acceptance evidence in the initiating session's rollout record.
+ Review the deployed interface while the machine stays reserved. Normal managed
+ sessions can iterate under the same reservation and applicable approval scope.
+ Other sessions prepare independently and wait for activation ownership. Release
+-requires exact final integration of every owned feature, integrated deployed
++through normal completion requires exact final integration of every owned feature, integrated deployed
+ dependencies, settled jobs and explicit deployment/review completion. Internal
+ Codex status messages retry independently and do not hold the machine reservation.
++A successful session archive also releases its machine reservations after local
++cleanup. Failed archives retain deployed holds until recovery completes. Running
++or uncertain deployments must settle first; revival does not reacquire machines
++or resume canceled jobs. The runtime coordination guide owns these lifecycle
++rules.
++
+ Deployment authorization does not authorize configuration or application master
+ integration. Keep development pins on their feature branches until that direction.
+ 
+diff --git a/flake.lock b/flake.lock
+index 977c459c..b2bdd974 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -119,11 +119,11 @@
+         "nixpkgs": "nixpkgs_4"
+       },
+       "locked": {
+-        "lastModified": 1792431364,
+-        "narHash": "sha256-2Eu0jp6JRg3Ubi1YmrpReW6hr9KW0wEqorLh1xmVbmU=",
++        "lastModified": 1792439957,
++        "narHash": "sha256-YZ8gWFwhinN+NfovuGXEgEyjQT0ggS/BpY6gIIS/cBQ=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "09a407953026514ae84be81dab9442fd74b6a362",
++        "rev": "6ab3b48f57981f4358094b47cac1ba724c458396",
+         "type": "github"
+       },
+       "original": {

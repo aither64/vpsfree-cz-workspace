@@ -1,0 +1,8 @@
+Read /home/aither/.codex/skills/dev-session-monitor/SKILL.md. Fresh utility watcher gpt-6-luna/low, explicit full access/approval never inherited executor. No edits/diagnosis/retry/approval/mutation/nested agents.
+Observe existing merge jobs in ledger /home/aither/.local/state/dev-workspaces/coordination/ledger.json:
+runtime392a7bd6-eb3e-427d-89f5-80fdf05f1ed4 (just refreshed manually to ea3f9d3), configb8436a8a-75ff-479e-b6aa-72346a28947b, workspace216d8db6-583d-4a4d-8476-5d2472db82b4. Parent owns decisions; do not resume integration yourself.
+Save merge-workers-result.json here. Report if needs_refresh/failed/reconciling/blocked or all3 succeeded, exact attempts/head snapshots, bounded errors. No deadline or cancellation authorized. Previously old runtime attempt baseline_changed no mutation; new exact snapshot/approval refreshed same job.
+In same batch observe exact CI39325776282 at runtimeea3f9d36397e8c2c846bd456e51385d73a3a358a, repo aither64/dev-workspace, using runtime worktree nix develop --command gh run watch/view. Save merge-ci-metadata.json and failure logs if any. No reruns. Report worker completion promptly even if CI remains active, retaining CI ownership.
+Canonical root /home/aither/workspace/ai/vpsfree.cz, worktree /home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-19-lifecycle-lock-reliability/dev-workspace. No secret/full ledger dump. Utilities do not join roster. One operation batch only.
+
+Parent restarted scheduler only after diagnosing synchronous cleanup-start wait; unrelated scan and independent workers retained. Existing jobs now eligible. Observe only, no scheduler actions by watcher.

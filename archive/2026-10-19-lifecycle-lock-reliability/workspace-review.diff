@@ -1,0 +1,90 @@
+diff --git a/docs/agent-instructions/deployment.md b/docs/agent-instructions/deployment.md
+index 56cb7d78..3e20444e 100644
+--- a/docs/agent-instructions/deployment.md
++++ b/docs/agent-instructions/deployment.md
+@@ -12,6 +12,8 @@ Before deployment activation or a workspace profile switch, read
+ claims; activate through the exact owner's approved jobs and machine reservation.
+ Retain that reservation during human review, feedback and redeployment. Finish
+ requires exact integration proofs and explicit deployment/review completion.
++Successful archival also releases the owner's reservations after cleanup, without
++claiming integration. See the runtime coordination guide for recovery rules.
+ 
+ In every confctl-managed configuration repository, inspect its defined
+ channels and the channel-to-input mapping before updating a flake input. For a
+diff --git a/docs/agent-instructions/lifecycle.md b/docs/agent-instructions/lifecycle.md
+index 59e2a3d9..e76691db 100644
+--- a/docs/agent-instructions/lifecycle.md
++++ b/docs/agent-instructions/lifecycle.md
+@@ -6,9 +6,11 @@ to the coordination workspace unless the text specifies another repository.
+ 
+ Read [coordination](../coordination.md) before a lifecycle/package mutation that
+ affects queued work or a machine reservation. Running/uncertain operations fence
+-lifecycle changes; archived/deleted deployed owners retain recovery reservations.
+-Revival preserves ownership. Package candidates must preserve the coordination
+-contract and retained artifacts; inactivity never frees a review reservation.
++lifecycle changes. Successful archive completion releases machine reservations;
++failed or interrupted archival keeps deployed holds until recovery completes.
++Revival does not reacquire released machines or resume canceled work. Deletion
++retains its recovery holds. Package candidates must preserve the coordination
++contract and retained artifacts; inactivity alone never frees a review reservation.
+ 
+ Sensitive sessions keep these lifecycle and coordination checks, but their
+ tracking moves stay local and do not require or create Git commits. Preserve
+diff --git a/docs/coordination.md b/docs/coordination.md
+index 5fbd4e13..55a157cd 100644
+--- a/docs/coordination.md
++++ b/docs/coordination.md
+@@ -57,9 +57,11 @@ the matching host module separately from the application profile.
+    A stale snapshot requires fresh preparation and applicable verification/review;
+    an uncertain effect requires reconciliation.
+ 6. Keep the machine reservation during UI review, feedback and redeployment,
+-   including periods when the session's agent is idle. Release only after exact
+-   final integration proofs and explicit deployment/review completion. Keep the
+-   initiative active while its feature heads remain unmerged.
++   including periods when the session's agent is idle. Normal completion releases
++   it after exact final integration proofs and explicit deployment/review completion.
++   Successful archival also releases the session's reservations after cleanup;
++   failed archives retain recovery holds. Keep the initiative active for follow-up
++   unless the user requests archival or the enabled automatic policy applies.
+ 
+ Use `dev-session coordination status SLUG --as-is --json` for authoritative job,
+ reservation and delivery state. The workspace menu's Operations page gives a
+diff --git a/flake.lock b/flake.lock
+index 5c82130e..ef445086 100644
+--- a/flake.lock
++++ b/flake.lock
+@@ -66,17 +66,17 @@
+         "nixpkgs": "nixpkgs_2"
+       },
+       "locked": {
+-        "lastModified": 1792431364,
+-        "narHash": "sha256-2Eu0jp6JRg3Ubi1YmrpReW6hr9KW0wEqorLh1xmVbmU=",
++        "lastModified": 1792439957,
++        "narHash": "sha256-YZ8gWFwhinN+NfovuGXEgEyjQT0ggS/BpY6gIIS/cBQ=",
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "09a407953026514ae84be81dab9442fd74b6a362",
++        "rev": "6ab3b48f57981f4358094b47cac1ba724c458396",
+         "type": "github"
+       },
+       "original": {
+         "owner": "aither64",
+         "repo": "dev-workspace",
+-        "rev": "09a407953026514ae84be81dab9442fd74b6a362",
++        "rev": "6ab3b48f57981f4358094b47cac1ba724c458396",
+         "type": "github"
+       }
+     },
+diff --git a/flake.nix b/flake.nix
+index 51860ad9..c83f291d 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -5,7 +5,7 @@
+     nixpkgs.follows = "vpsfree-dev-workspace/nixpkgs";
+     vpsfree-dev-workspace = {
+       url = "github:vpsfreecz/dev-workspace/767dfd587e346168e1443e65ccdb67ce748f3fe3";
+-      inputs.dev-workspace.url = "github:aither64/dev-workspace/09a407953026514ae84be81dab9442fd74b6a362";
++      inputs.dev-workspace.url = "github:aither64/dev-workspace/6ab3b48f57981f4358094b47cac1ba724c458396";
+     };
+   };
+ 

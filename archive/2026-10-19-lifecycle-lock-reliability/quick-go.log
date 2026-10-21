@@ -1,0 +1,20 @@
+--- FAIL: TestLifecycleOperationTimeoutIncludesBothLockWaits (0.05s)
+    --- FAIL: TestLifecycleOperationTimeoutIncludesBothLockWaits/session (0.01s)
+        operation_state_test.go:1106: session wait = The session no longer exists. Reload the workspace before retrying it. after 286.83µs
+--- FAIL: TestRecoveryNoticeResetsForCanonicalRestorationAndNewSocket (0.01s)
+    --- FAIL: TestRecoveryNoticeResetsForCanonicalRestorationAndNewSocket/cli-restoration (0.01s)
+        recovery_notice_test.go:109: listen unix /tmp/nix-shell.cpSN3N/TestRecoveryNoticeResetsForCanonicalRestorationAndNewSocketcli-1901216660/008/codex.sock: bind: invalid argument
+    --- FAIL: TestRecoveryNoticeResetsForCanonicalRestorationAndNewSocket/portal-interrupted-after-restoration (0.01s)
+        recovery_notice_test.go:109: listen unix /tmp/nix-shell.cpSN3N/TestRecoveryNoticeResetsForCanonicalRestorationAndNewSocketport3871644647/008/codex.sock: bind: invalid argument
+--- FAIL: TestRecoveryContinueUsesFreshDecisionAfterActivationStopAndSocketLoss (0.01s)
+    recovery_test.go:17: listen unix /tmp/nix-shell.cpSN3N/TestRecoveryContinueUsesFreshDecisionAfterActivationStopAndSocke1358480163/008/codex.sock: bind: invalid argument
+--- FAIL: TestRecoveryHelperTemporaryFailureRemainsEligibleForAutomaticRetry (0.01s)
+    recovery_test.go:67: listen unix /tmp/nix-shell.cpSN3N/TestRecoveryHelperTemporaryFailureRemainsEligibleForAutomaticRet3028939347/008/codex.sock: bind: invalid argument
+--- FAIL: TestArchiveJournalRetryRefusesASameKindReplacementWhileWaitingForTheLock (0.05s)
+    server_test.go:3666: replacement archive command ran: <nil>
+--- FAIL: TestDeleteSessionExcludesConcurrentWorkspaceOperations (0.12s)
+    server_test.go:3950: deletion did not wait for the session mutation lock: web.lifecycleOperation{Slug:"example", Kind:"delete", State:"complete", Phase:"complete", StartedAt:"2026-10-19T19:35:29.830774211Z", UpdatedAt:"2026-10-19T19:35:29.854853588Z", FinishedAt:"2026-10-19T19:35:29.854853588Z", TrackingSync:(*session.TrackingSyncStatus)(nil), Progress:(*session.ArchiveProgress)(nil), Error:"", Redirect:"/", ReceiptID:"1ebb680c6a70494202a8254892b3e0de70a4c6af1fe5c9d744537a68e091520e", TargetIdentityVersion:2, Attempt:1, CurrentTarget:(*web.lifecycleTargetSnapshot)(nil), ErrorCode:"", Options:web.lifecycleOperationOptions{Mode:"", AllowAbandoned:false, Force:false, TargetID:"b6471dc1c80d57a2cf7fe78a5ead314cab81dfacac6dc80585ff7ed41ae6b3a7", DeletedThreadID:"", JournalID:"d461746a784fc819591785b5e3277c527e2287611daa70a7d93aadc72bfb69b2", JournalExpected:false, TargetLocation:"work", JournalEvidence:"", JournalTargetID:"", JournalTargetLocation:""}}
+FAIL
+FAIL	github.com/aither64/dev-workspace/portal/internal/web	78.349s
+ok  	github.com/aither64/dev-workspace/portal/internal/session	1.501s
+FAIL
