@@ -30,22 +30,57 @@ Run the shared merge or deployment only while its claim is held. Independent
 feature commands remain available during a merge wait. Keep machine ownership
 through UI review, feedback and repeated deployment. Aitherdev system activation
 and workspace profile selection share the physical resource `vpsfree:aitherdev`.
-Use `release SESSION --as-is --id UUID` when finished or `cancel-claim` for an
-unneeded waiting request. Retrying the exact acquire request returns the same
-claim even after release; a new attempt needs a new UUID. Request all resources
+Use `release SESSION --as-is --id UUID` after the applicable release requirements
+are met, or `cancel-claim` for an unneeded waiting request. Retrying the exact
+acquire request returns the same claim even after release; a new attempt needs
+a new UUID. Request all resources
 together or keep separate claims disjoint to avoid waiting on your own ownership.
 
 Claims do not expire when an agent becomes idle or disconnected. After an
-interruption, inspect effects and stop remaining local/remote work before release.
-Held claims block lifecycle cleanup until explicitly released. A machine release
-needs no integration proof; session completion still requires exact final heads
-integrated and all work finished. Existing legacy reservations keep their original
-completion requirements. Never release another session's resources or edit records.
+interruption, inspect effects and stop remaining local/remote mutations before
+considering release. Repository locks follow the short merge procedure below;
+deployed machines follow the retention rule below. Held claims block lifecycle
+cleanup until explicitly released. Session completion still requires exact final
+heads integrated and all work finished. Existing legacy reservations keep their
+original completion requirements. Never release another session's resources or
+edit records.
 
 The Operations page shows owners and waiters; machine claims also appear in the
 session Reservations tab. This is cooperative locking. Ordinary project tools do
 not intercept arbitrary commands. Participating sessions must acquire the required
 resources before mutation and keep ownership until the work is safe to release.
+
+## Machine retention
+
+Retain ownership of every deployed physical machine until all three conditions
+are met:
+
+1. Its deployed feature lineage is integrated into the approved remote default
+   branches, including deployed dependencies.
+2. The user accepts the resulting UI or behavior on that machine.
+3. The user explicitly directs release of that machine.
+
+Review, CI and source completion do not establish user acceptance. Record the
+accepted environment and result. Idle time, feedback, redeployment, disconnects
+and turn completion do not permit release. Default-branch integration needs its
+own explicit approval; deployment approval supplies neither merge approval nor
+release direction. Missing evidence keeps the machine held.
+
+Retain the rollout and review receipts: physical machine and aliases, resolved
+system and user-profile store paths, complete source/input graph, canonical
+repository/target mapping, exact deployed and intended final feature heads, and
+fresh remote ancestry proofs. For refreshed history, retain reviewed old/new
+base/head ranges, range-diff or patch-equivalence evidence and migration lineage.
+Do not call a nonancestor deployed commit literally merged. An independently
+proven equivalent successor can establish integrated feature lineage; a
+substantive successor requires redeployment and renewed user acceptance. Ordinary
+session completion still requires every registered exact final feature head.
+
+Before release, inspect authoritative status for the exact claim owned by this
+session, reconcile known command effects and verify all three conditions.
+Release that claim and verify its resulting state. The owner-only,
+idempotent release API does not enforce this human workflow. Do not edit claim
+records or add release receipts to substitute for the evidence.
 
 ## Git and deployment
 
@@ -85,3 +120,8 @@ supplies its exact `legacyJobId`; integrations resume by their original ID.
 Never submit a replacement job to hide an uncertain effect. Legacy bootstrap
 operations retain their dated recovery procedures. The generic package installs
 the retained integration guide alongside current coordination/recovery guides.
+
+Legacy lifecycle completion can automatically release reservations as part of
+its existing implementation. That behavior grants no permission to archive,
+delete or release a deployed machine before the retention conditions above.
+No lifecycle action is implied by finishing work or preparing a handoff.
