@@ -165,16 +165,16 @@ and forward compatibility of old and new affected components, including:
 - deployment ordering, rolling upgrades, and mixed-version operation;
 - whether a rollback can load state created by the new version.
 
-Repository claims protect only approved integration into shared branches. Develop,
-commit, rebase, push feature branches, prepare hooks, test and review independently
-without a claim. Finish preparation and obtain approval before acquiring one
-repository for the fresh target check, merge/hooks, push and remote verification.
-Release immediately before CI, records or cleanup. Stale preparation or an
-intervention returns to unlocked work after commands stop and effects are known;
-uncertain shared mutations require reconciliation before release. Machine-only
-reservations cover deployment and live review, with builds/copies prepared outside
-ownership. Read the selected package's coordination guide. Existing operations keep
-their original recovery contracts.
+Repository claims cover approved shared merges only; feature work, hook setup, tests
+and review need none. Prepare, then claim one repository for fresh target checks,
+merge/hooks, SSH push and remote proof; release before CI, records or cleanup.
+On stale preparation/intervention, stop commands and verify effects; repair
+unlocked; reconcile uncertain shared mutations before release. Build/copy
+before machine claims when supported. Hold every deployed physical machine
+until deployed feature lineage is integrated into approved remote defaults, the
+user accepts its UI/behavior and explicitly directs its release. Idle time, review,
+feedback, redeployment and turn completion never permit release. Read the selected
+coordination guide; keep existing recovery contracts.
 
 Prefer clean designs that can be deployed incrementally. Incompatible changes
 are allowed only when they are intentional and recorded in the plan with the
