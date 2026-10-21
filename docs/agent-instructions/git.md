@@ -5,12 +5,22 @@ Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
 Before feature integration, read [coordination](../coordination.md) in full.
-Complete preparation, verification and review before integration. Under a
-claims runtime, acquire repository ownership, run session-owned fast-forward/SSH
-commands, verify hooks and resulting refs, then explicitly release. Include shared
-hook-trust changes in that ownership. Waiting requests notify their retained
-session when granted; read status before acting. Older selected packages retain
-their installed job workflow. A busy resource never authorizes bypassing ownership.
+Complete preparation, verification and review without repository claims. Editing,
+commits, rebases, feature-branch pushes and hook preparation are independent work.
+After explicit integration approval, acquire one repository merge claim immediately
+before the fresh target check, ordinary merge/hooks, SSH push and remote proof.
+For integration from the shared workspace master, take the repository claim first,
+then try `dev-session-tracking.lock` without waiting. If busy, release the claim
+and retry after the tracking writer finishes. Hold both through the final target
+check, merge/hooks, push and remote proof. Preserve unrelated dirty paths and index
+entries; disposable targets must be clean. Release before CI, records and checkout
+cleanup. If the baseline moved or a hook
+needs intervention, stop commands, inspect effects and release before repairing
+outside the claim. Reconcile uncertain shared mutations before release. Never hold
+repository ownership for development, review, tests or approval waits. Waiting merge
+requests notify their retained session; independent work can continue meanwhile.
+Older selected packages and retained operations keep their installed recovery
+workflow. A busy merge resource does not restrict feature development.
 
 ## Published branches and pull requests
 

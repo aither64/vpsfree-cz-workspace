@@ -5,7 +5,8 @@ Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
 For queued merges/deployments, complete builds, tests and review before running
-the integration or activation command. New work runs session-owned commands under resource claims;
+the integration or activation command. Feature development, checks, review and CI monitoring require no repository claim;
+only approved shared-branch integration and machine deployment acquire ownership;
 retained snapshot-based operations keep their original submission contract. Resource contention is a wait, not a failed check. Follow
 [coordination](../coordination.md) for waiting-session notifications and retained-job stale-snapshot
 refresh; repeat only the checks/review required by the changed patch or baseline.

@@ -178,11 +178,16 @@ between old and new versions of affected components. Consider at least:
 - deployment ordering, rolling upgrades, and mixed-version operation;
 - whether a rollback can load state created by the new version.
 
-For new catalog-covered shared mutations, acquire the selected runtime's
-repository or machine resource claims when available. Sessions own commands,
-environments, hooks and effect verification, then explicitly release ownership.
-Queued requests notify waiting sessions. Existing operations keep their original
-recovery contracts. Read the selected package's coordination guide first.
+Repository claims protect only approved integration into shared branches. Develop,
+commit, rebase, push feature branches, prepare hooks, test and review independently
+without a claim. Finish preparation and obtain approval before acquiring one
+repository for the fresh target check, merge/hooks, push and remote verification.
+Release immediately before CI, records or cleanup. Stale preparation or an
+intervention returns to unlocked work after commands stop and effects are known;
+uncertain shared mutations require reconciliation before release. Machine-only
+reservations cover deployment and live review, with builds/copies prepared outside
+ownership. Read the selected package's coordination guide. Existing operations keep
+their original recovery contracts.
 
 Prefer clean designs that can be deployed incrementally. Incompatible changes
 are allowed only when they are intentional and recorded in the plan with the

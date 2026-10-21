@@ -10,8 +10,9 @@ The selected package also provides the authoritative installed guides through
 Before deployment activation or a workspace profile switch, read
 [coordination](../coordination.md) in full. Build and copy before taking machine
 ownership when supported. Under a claims runtime, acquire the physical machine,
-run authorized activation commands and verify actual results. Retain ownership
-through review, feedback and redeployment, then explicitly release. Pass the held
+request only the machine, run authorized activation commands and verify actual
+results. Repository ownership is never held through builds or live review. Retain
+machine ownership through review, feedback and redeployment, then explicitly release. Pass the held
 claim and exact session identity to ordinary workspace-host profile activation.
 Release supplies no merge approval. Legacy jobs/reservations keep their original
 approval, integration-proof and recovery requirements. Held new claims require

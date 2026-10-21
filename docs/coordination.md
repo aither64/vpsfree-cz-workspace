@@ -12,11 +12,11 @@ Complete implementation, history consolidation, checks and independent review.
 Obtain the user's explicit direction for the affected repository/target or
 machine/actions. Deployment approval never grants merge approval.
 
-Prepare commands and dependencies in the session's own worktrees. Build and copy
-large deployment artifacts before taking machine ownership when the tool supports
-that separation. Acquire repository ownership before shared Git mutations,
-including checkout hooks or reviewed signing that change common trust state.
-The session runs ordinary hooks and resolves trust through the repository's tools.
+Develop independently in session-owned worktrees. Edits, commits, rebases,
+dependency updates, feature pushes, hook preparation, tests and review take no
+repository claim. Prepare the clean target checkout and its dependencies first;
+obtain merge approval before requesting ownership. Repository tools own hook
+trust and ordinary Git locking. Keep hooks and signatures enabled.
 
 Use `coordination acquire SESSION --as-is --request FILE` with a schema-1 request
 containing a UUID `requestId`, `label`, and `repositories`/`machines` arrays.
@@ -26,7 +26,8 @@ notifies its retained conversation when the complete request is granted. End the
 turn when only waiting remains. Read `claim-status` before acting on any notice.
 A notice neither authorizes work nor proves command completion.
 
-Run ordinary commands only while the claim is held. Keep machine ownership
+Run the shared merge or deployment only while its claim is held. Independent
+feature commands remain available during a merge wait. Keep machine ownership
 through UI review, feedback and repeated deployment. Aitherdev system activation
 and workspace profile selection share the physical resource `vpsfree:aitherdev`.
 Use `release SESSION --as-is --id UUID` when finished or `cancel-claim` for an
@@ -48,14 +49,22 @@ resources before mutation and keep ownership until the work is safe to release.
 
 ## Git and deployment
 
-After explicit merge approval, use normal fast-forward integration and non-force
-SSH pushes under repository ownership. Create only the target worktree the session
-needs; retain feature refs and remove disposable worktrees when safe. Verify hooks
-and resulting refs: Git can exit zero after a failing post-merge hook.
+Acquire one repository only for the final target/feature/cleanliness checks,
+ordinary fast-forward merge and hooks, non-force SSH push and remote verification.
+Release immediately before CI, records, artifact registration or checkout cleanup.
+Do not hold multiple repositories while integrating them sequentially. Stale
+baselines or hook intervention return to unlocked preparation once commands stop
+and effects are known. Reconcile uncertain shared mutations before release.
 
 The shared workspace stays on master. Preserve unrelated files/index changes and
-use its ordinary `dev-session-tracking.lock` for tracking commits in addition to
-repository ownership. A resource claim is metadata, not an acquired OS file lock.
+use its short `dev-session-tracking.lock` for shared tracking writes; independent
+bookkeeping does not need a durable repository claim. Shared-checkout integration
+acquires the repository claim first and then tries that tracking lock without
+waiting; if busy, release the claim and retry after the writer finishes. Hold both
+through the fresh target check, merge/hooks, push and remote proof. Preserve
+unrelated dirty paths and index entries; disposable target checkouts must be clean.
+A resource claim is metadata, not an acquired OS file lock. Keep machine reservations separate from merge claims;
+build and copy artifacts before reserving a machine when supported.
 
 Use confctl channels for inputs. Preserve the direct nested runtime override,
 extension selection and matching configuration runtime. Run
