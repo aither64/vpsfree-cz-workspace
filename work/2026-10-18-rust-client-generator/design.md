@@ -1,7 +1,7 @@
 # Rust HaveAPI generator and vpsAdmin client: implementation design
 
 Status: implementation authorized; P0 shared contract FROZEN revision 1,
-with numbered clarifications 2 through 5 below.
+with numbered clarifications 2 through 7 below.
 Architect0 owns this design. Ruby/ERB generation, embedded runtime source,
 async default and optional reqwest blocking support are accepted. Material
 contract changes require a numbered clarification through the lead. Four source
@@ -318,11 +318,12 @@ and rt-multi-thread is a dev/example dependency, not a second runtime adapter.
 No additional production dependency is required by the contract. Rustls here
 uses reqwest's platform verifier and aws-lc backend; do not promise a C-free build.
 
-Use current HaveAPI Nix pin fe13242281a67641c0102cdb1087f0ebe586c7df:
-rustc 1.98.1, cargo 1.98.0, rustfmt 1.9.0 as verified by runtime owner. Config records
-the complete actual rustfmt --version stdout, not just its package version.
-Use edition 2024 formatting and reject formatter mismatch. MSRV 1.95 is a separate
-later acceptance run; do not downgrade the current Nix input to enforce it.
+The actual client retains Nix pin fe13242281a67641c0102cdb1087f0ebe586c7df:
+rustc 1.98.1, cargo 1.98.0, rustfmt 1.9.0. HaveAPI's own development pin may
+advance independently; clarification 7 defines the test/reproduction boundary.
+Config records the complete selected rustfmt --version stdout, not its package
+version. Use edition 2024 formatting and reject formatter mismatch. MSRV 1.95
+is a separate check; do not downgrade either Nix input to enforce it.
 
 All lanes may author tests now and run only known quick checks. Generated
 fixture compilation, real HaveAPI/vpsAdmin fixture execution, real generated
@@ -477,6 +478,306 @@ If delivery must be rolled back, hold DELETE use until a corrected build is
 available rather than replaying mutations. Prior checks at HaveAPI `b80ed05`
 and client `e4f4638f48b99d0944ffaa2e8e6e684831bea0a8` exercised old encoding;
 they remain historical evidence, not verification of the corrected runtime.
+
+### Clarification 6: client publication through GitHub Actions (2026-10-19)
+
+The user prefers Actions publication; local Cargo publication is on hold and
+the Cargo-login request is retracted. This brief changes the client publication
+path only. It authorizes no registry settings, upload, tag/branch mutation or
+HaveAPI shared release. Source remains frozen until the lead's current dry-run
+watcher at client `c4a0f597cd3602e28ae11846962e2d1e07a0c1ff` finishes.
+
+Official requirements checked today:
+
+- [crates.io trusted publishing](https://crates.io/docs/trusted-publishing)
+  requires an existing crate and crate ownership. Its
+  [current documentation source](https://github.com/rust-lang/crates.io/blob/6cf63268f7fac38f8d255bbb22497c8ecff35d57/svelte/src/routes/docs/trusted-publishing/+page.svelte)
+  explicitly requires an API token for initial publication. That first upload
+  can run in GitHub Actions; local Cargo login/publication is unnecessary.
+- [RubyGems pending publishers](https://guides.rubygems.org/trusted-publishing/#pushing-a-new-gem-with-a-trusted-publisher)
+  permit a new gem's first upload with OIDC. The registering account becomes
+  an owner after the first push. This capability does not exist in the checked
+  crates.io prerequisites. Both public package APIs returned 404 for
+  `vpsadmin-client` and `haveapi-rust-client` at this checkpoint.
+
+Implementer3 owns exactly the client `.github/workflows/release.yml`, a small
+reuse change to `.github/workflows/ci.yml`, and release instructions in
+`docs/development.md`. No README/generated/schema/runtime changes; the README
+review and all HaveAPI release work remain separate. Implement this sequence:
+
+1. New release workflow uses `workflow_dispatch` only, with required choice
+   `authentication: oidc | bootstrap`, default `oidc`. Dispatch against a version
+   tag; [gh workflow run --ref](https://cli.github.com/manual/gh_workflow_run)
+   accepts a tag. A non-tag dispatch fails. Require repository
+   `vpsfreecz/vpsadmin-rust-client`, package name `vpsadmin-client`, and tag
+   exactly `v<Cargo.toml package.version>`. Resolve the source commit once and
+   retain it through verification/publication; fail if its tag moves. Workflow
+   must exist on the default branch and at the tagged revision before use.
+   No automatic publication on pushes/PRs and no new release-management framework.
+2. Add `workflow_call` to existing `ci.yml`; a release `verify` job calls
+   `./.github/workflows/ci.yml` from the same revision after tag validation.
+   Reuse its async/blocking tests, docs/package, MSRV and regeneration jobs.
+   `publish` needs both validation and successful verification. Keep ordinary
+   branch/PR/manual CI; limit standalone push CI to branches to avoid duplicate
+   tag verification. Do not copy the test matrix into the release workflow or
+   accept a green result for another commit. Pass no publishing secrets to CI.
+3. Publishing job uses protected environment `release`, with required reviewers
+   and permitted version tags configured by a repository administrator. Use
+   `contents: read` globally; grant `id-token: write` only to this job. Check out
+   the verified commit with persisted credentials disabled. Serialize client
+   publication runs with `cancel-in-progress: false`. Use the committed Nix
+   environment and `cargo publish --locked`; no cargo login or upload scripts.
+4. `bootstrap` is an explicit first-publication choice, never an automatic
+   fallback from failed OIDC. Require the crate to be absent (registry 404;
+   network/auth/other failures are errors) and protected environment secret
+   `CARGO_PUBLISH_BOOTSTRAP_TOKEN`. The maintainer creates a short-expiry API
+   token with the minimum available crate/publish scope. Supply it only as
+   `CARGO_REGISTRY_TOKEN` to the publish step. Missing token fails visibly.
+5. For `oidc`, use official `rust-lang/crates-io-auth-action`, then pass its
+   `token` output only to the publish step. Verified latest release is v1.0.5,
+   commit `c6f97d42243bad5fab37ca0427f495c86d5b1a18`; pin that SHA. Keep token
+   acquisition late, after checks/tool setup. Never print credentials. After
+   the initial upload, the crate owner registers owner `vpsfreecz`, repository
+   `vpsadmin-rust-client`, workflow filename `release.yml`, environment `release`
+   in crates.io Settings → Trusted Publishing, then revokes/removes the bootstrap
+   token/secret. Subsequent releases select `oidc`; no retained token is needed.
+
+Acceptance: quick workflow/YAML/shell validation and review of the tag/mode/
+permissions gates; negative paths for wrong repository/tag/version, unavailable
+bootstrap secret and registry lookup/auth failure must stop before upload.
+Commit intended workflow/docs changes and obtain independent final review before
+watcher-run CI/package checks. Confirm reused CI covers the exact published
+source. Only an explicitly authorized registry upload can validate end-to-end
+OIDC; package/dry-run success is not evidence of that. After a failed upload,
+check registry state before retrying; never move tags or overwrite a version.
+Recovery can disable publication/remove its trust binding without changing the
+API7.0 client contract. Existing package SemVer and source-provenance rules apply.
+
+Generator recommendation only: HaveAPI
+`9e4c29a0412a25256ce944641f60ba13e9f03c2b` already has protected
+`.github/workflows/release.yml`, job-level OIDC and
+`rubygems/configure-rubygems-credentials` pinned v2.1.0. Source gem
+`clients/rust/haveapi-rust-client.gemspec` is `haveapi-rust-client` 0.29.0,
+sharing VERSION and depending on `haveapi-client ~> 0.29.0`; `make version`
+already updates both. It is NOT yet in the shared release artifact/build list.
+If separately requested, extend existing `utils/release/artifacts.rb` GEMS,
+version/dependency/lock checks, `utils/release/build.sh`, Makefile dependency/test
+coverage and release specs/docs. The existing generic publish loop then handles
+the fourth gem after `haveapi-client`; add no second gem-publishing workflow.
+An intended RubyGems owner would register a pending publisher for this gem with
+`vpsfreecz` / `haveapi` / `release.yml` / `release`. Existing shared-release
+approval publishes the other gems, npm and PHP mirror too: the client Actions
+request does not authorize that integration, configuration or publication.
+
+### Clarification 7: formatter ownership after HaveAPI rebase (2026-10-21)
+
+Lead accepted this bounded correction before implementation. Source stays frozen
+until the lead assigns the changes. Preserve the exact production formatter
+guard, the client's own toolchain, and all generated client bytes. No new pin,
+formatter framework, generation mode, API behavior or publication is involved.
+
+Evidence at HaveAPI `68cc80b012b7a6b9bcdf35c008c338cbc3f4c000` and client
+`945af6a97717a7a6373507bbc9592d5cd53727c2`:
+
+- [Final integration review](final-review-integration-rebase.md) records unchanged
+  generator/runtime source and HaveAPI's new nixpkgs
+  `02c087f3fe673c9e317f206a627cb6b910336dbe`; the client retains its own
+  `fe13242281a67641c0102cdb1087f0ebe586c7df` pin and rustfmt 1.9.0 config.
+- [Batch result](artifacts/integration-package-recheck/result.json) has nine
+  passing workflows, failed HaveAPI clients/rust run 39600600027, failed local
+  package reproduction, and no active operations. Exact client CI 39600821857
+  passed at `945af6a` with its own toolchain.
+- [Failed CI log](artifacts/integration-package-recheck/failed-39600600027.log)
+  shows four generator specs stopping at `generator.rb:29` before rendering.
+  `clients/rust/spec/spec_helper.rb:13` hard-codes rustfmt 1.9.0. The new
+  HaveAPI shell supplies Ruby 3.4.11, rustc/Cargo 1.99.0 and rustfmt 1.10.0.
+- [Packaged generation log](generator-package-integration-acceptance/generation.log)
+  shows the same guard failure. The saved probe reads unchanged client
+  `generator.toml`, but the operation selected HaveAPI's newer PATH formatter.
+  This is an environment-selection error, not evidence of changed API7 bytes.
+
+Recommendation and bounded file ownership:
+
+1. Implementer1 changes `clients/rust/spec/spec_helper.rb` so temporary test
+   config obtains exact version text from the SAME executable the generator
+   uses: `ENV.fetch('RUSTFMT', 'rustfmt')`, passed as one executable argument
+   with `--version` to Open3. Check successful status and nonempty stripped
+   stdout; a missing/failing tool is a test setup failure, never a skipped spec
+   or fallback to a constant. Derive once per selected fixture configuration,
+   then reuse that configuration for repeated/shuffled/check-only assertions.
+   This adapts ephemeral fixtures, not stored client configuration.
+2. Keep `lib/haveapi/rust_client/generator.rb` unchanged: its exact comparison
+   remains mandatory. In `spec/unit/generator_spec.rb`, retain deliberate
+   mismatch rejection and prove it preserves an existing output tree as well
+   as refusing to create a new one. Cover selected-executable override and
+   failed version-probe handling in the fixture setup where useful. Keep the
+   successful real-formatter determinism/ownership tests; do not mock them away.
+3. Implementer1 reconciles `clients/rust/README.md` and
+   `clients/rust/docs/generation.md`: current shell supplies development tools;
+   an existing client uses its own recorded exact formatter, optionally selected
+   by existing RUSTFMT. The example 1.9.0 value must be labelled as an example,
+   not claimed to be the current HaveAPI shell version. Implementer0 owns the
+   equivalent stale claim in `clients/rust/runtime/README.md`; docs-only there.
+4. No integration source edit is needed for the observed failure:
+   `spec/integration/run.rb:101` already derives a temporary formatter version.
+   Run that fixture matrix with current HaveAPI PATH and RUSTFMT unset. If a
+   later assigned check intentionally supplies RUSTFMT to this runner, its
+   version probe must first be aligned with the same selected executable and
+   checked status, by implementer2. Do not introduce a cross-lane helper or
+   silently inherit the saved-client override into generic integration checks.
+
+Saved API7 package verification is a separate operation, owned by the lead's
+session-only harness and fresh watcher. Build/extract the gem and run its probe
+under current HaveAPI Ruby 3.4, but set RUSTFMT to the absolute rustfmt executable
+resolved from the actual client's locked Nix environment. Restore/root that
+tool through the fresh setup utility if needed, retain it for the whole run,
+and record executable/store path, complete version stdout and both source/lock
+identities. Probe version must match the UNCHANGED client generator.toml before
+generation. Do not hard-code a garbage-collected store path, substitute current
+HaveAPI rustfmt, rewrite saved config, or enter the client's older Ruby shell
+for the package probe: that would lose current-Ruby acceptance coverage.
+The existing RUSTFMT override is enough; no generator production change is needed.
+
+Acceptance after intended changes are committed and quick checks pass:
+
+- Independent affected review covers fixture selection, mismatch tests, docs
+  and any session probe-command change; no broader source review is inferred.
+- Fresh watcher verifies the full HaveAPI clients/rust workflow at the final
+  feature head, including previously unexecuted later runtime/lint/integration
+  steps under the new shell. A passing first unit step alone is insufficient.
+- The extracted-gem probe, under current Ruby plus client rustfmt 1.9.0, must
+  reproduce the saved API7 generated manifest and every owned file byte, then
+  pass read-only --check. It must retain the existing proof that loaded
+  generator logic came from the extracted package, not the source checkout.
+- Compare generator/runtime/template/lock/schema/client config inputs before
+  claiming retained client evidence. `generator_digest` covers lib/template,
+  not specs/docs; these bounded edits should not change generated bytes or
+  require client source/config/provenance edits. Keep the recorded compatible
+  HaveAPI source ref available. Any unexpected output/digest delta returns to
+  diagnosis instead of updating expected files to make the check green.
+
+Alternative rejected: adding a second fixed formatter pin to HaveAPI's shell
+would couple generic generator tests to one client's formatting history and
+hide rather than exercise the updated development environment. Exact formatting
+belongs to each saved generation config/toolchain, not a universal generator
+release pin. No cross-formatter byte equality is promised. Recovery is retaining
+the client's input bundle and selecting its recorded formatter; never weakening
+the mismatch guard. Nine unrelated passes remain evidence only for their exact
+heads/inputs; the failed Rust/package gates still block integration until fixed
+and verified. Release hold, no registry/token access and no production changes
+remain in effect.
+
+### Clarification 8: new-client merge catalog prerequisite (2026-10-21)
+
+Status: bounded diagnosis and configuration proposal only. HaveAPI/master is
+merged and its six default-branch checks passed, per the lead. Client feature
+`945af6a97717a7a6373507bbc9592d5cd53727c2` is reviewed and CI-green; its `main`
+target remains `b67a3ba5eef89b2bd6533050aa8769aaa0574114`. The user approved
+those project merges, not workspace configuration integration or activation.
+No client mutation, claim, package build, deployment or registry action was
+performed for this diagnosis. Releases and token access remain on hold.
+
+**Cause and owning configuration.** The session's `portal.yml` already registers
+`vpsadmin-rust-client` with default branch `main`, and its canonical bare clone
+exists. That does not register an immutable coordination resource. The installed
+guide requires both session registration and catalog presence. Workspace
+`config/coordination.nix` owns remote/target identities; `flake.nix:48` passes it
+as `coordinationConfig` to the composed package. Generic runtime
+`nix/workspace-portal.nix` writes it to `share/dev-workspace/coordination.json`.
+Installed `libexec/workspace-coordination.rb`, `Catalog#initialize` and
+`Catalog#repository`, read that package file and reject an absent repository.
+The installed host/session command dispatchers provide no ordinary catalog-add
+command. `workspace-host register` registers a workspace root, not a repository.
+Neither re-registering this client worktree nor editing its portal entry fixes
+the refusal recorded with
+[the requested client claim](artifacts/approved-default-integration/vpsadmin-rust-client-claim.json).
+
+The exact minimal source proposal is two additions to the workspace-owned file:
+
+```diff
+--- a/config/coordination.nix
++++ b/config/coordination.nix
+@@
+   targets = {
++    vpsadmin-rust-client = "main";
+     vpsadminos = "staging";
+@@
+           "vpsadmin-go-client"
++          "vpsadmin-rust-client"
+           "confctl"
+```
+
+Its evaluated entry must be exactly
+`remote = "git@github.com:vpsfreecz/vpsadmin-rust-client.git"` and
+`defaultTarget = "refs/heads/main"`. The existing map supplies the remote;
+omitting the target override would incorrectly select `master`. No local-path
+field, runtime implementation, system configuration, input update or new
+registration framework is needed.
+
+**Selected-source boundary.** Read-only inspection found that the selected
+package has advanced from the lead's earlier `6bbjch8…` package to
+`/nix/store/hzf9qda2ckjsv72b689bclc6p3v8ap9l-dev-workspace-0.2.0`; it still lacks
+the client entry. Its catalog digest is
+`sha256:7f101a6bb029df484140060a13ad73f01f78a7f6839eb9e346904c2067b554bc`.
+Its extension catalog references workspace source
+`/nix/store/29b3kfr8xjx4v8dm6qd74hrhcx009zik-source`. That source locks the generic
+runtime to `f8f2938b4e2cfd6e5b82657d08f014357817808f`, retaining extension
+`767dfd587e346168e1443e65ccdb67ce748f3fe3`. Its nine packaging inputs under
+`flake.nix`, `flake.lock`, `config/` and `skills/update-codex/` match workspace
+Git commit `530038a8ee2bf6772144b07ca0cb02426fc1e6d6` by direct blob comparison.
+This identifies input content; it does not authorize using that branch/history.
+
+Shared workspace HEAD `1ec83cc87b2ad4e9fa944524fe8c0c2cd6e4fbf8` instead locks
+runtime `968646471b1190c16a8cf60ff50736cd0525fa3f` and has different team settings;
+the selected package supports eight native child threads and additional Full
+team variants. Thus building from current master would also change selected
+runtime/team behavior. Do not revert that deployment, consume another session's
+unmerged history, access its worktree, or characterize such a package as merely
+the client catalog addition. The owning workspace source/base and deployment
+scope need a separate decision before a candidate package is prepared.
+
+**Bounded next options and authority.** The supported ordinary route is the
+two-entry workspace configuration change followed by reviewed forward profile
+activation. The lead must first settle the source/base with the workspace
+deployment owner. An assigned implementer then works in this session's dedicated
+`worktrees/2026-10-18-rust-client-generator/workspace` feature worktree, using an
+explicitly agreed base. Preserve the selected runtime, extension, lock graph,
+team policy and other catalog mappings; do not silently expand this patch.
+Prepare the concrete reviewed candidate before seeking final user approval for
+the new workspace integration/activation scope. Publication of that feature
+branch follows ordinary SSH policy; workspace/master integration is a separate
+explicit approval, not implied by client/main approval. No such candidate or
+activation is authorized or performed by this design-only assignment.
+
+Quick preparation checks are whitespace/Nix syntax and evaluated catalog checks:
+the new entry has the exact remote/main target above, removing it reproduces
+the baseline catalog, and the flake/lock/team/runtime inputs are unchanged from
+the agreed baseline. Commit intended changes and pass quick checks before
+independent final review of the complete branch and source-selection proof.
+Only afterward may a fresh watcher build the minimal composed workspace package
+and verify its installed catalog, claims contract and registration plans against
+the selected package; no activation or claim is part of verification. Stop on
+any unrelated runtime, Codex, team, machine or registration-plan difference.
+No generic coordinator or full infrastructure test campaign is indicated.
+
+If later authorized, the lead follows the then-selected installed guide for a
+machine-only `vpsfree:aitherdev` claim and ordinary forward profile activation,
+checks continuity and catalog visibility, then releases machine ownership.
+Only afterward does the client use its ordinary short repository merge claim.
+Prepare/build outside claims. Preserve existing claim/state mappings; recover
+an interrupted selection through its supported forward recovery, never by
+editing store/state files or selecting the older package as a shortcut.
+
+Alternatively, the lead may ask the user for an explicit one-off exception to
+the workspace's catalog-claim requirement for this exact already-approved
+client/main merge, instead of undertaking workspace deployment in this task.
+No exception is inferred or granted here. Unless and until that direction is
+given, the missing catalog entry remains a hard merge blocker. Even with such
+direction, retain fresh exact local/remote ref checks, required hooks, ordinary
+fast-forward-only integration and non-force SSH push, remote proof, and no
+release/token actions. A moved target or changed reviewed feature returns to
+preparation. The architect hands off this decision; the lead owns communication,
+any separately authorized setup, and the final merge operation.
 
 ## Recommendation and scope
 

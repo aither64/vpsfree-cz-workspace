@@ -1,0 +1,42 @@
+1:  930a5f3 = 1:  77dd041 clients/rust: add embedded protocol runtime
+2:  8701baa ! 2:  03c765b clients/rust: generate clients from saved API schemas
+    @@ Makefile
+      doc:
+      	./utils/copydoc.sh servers/ruby
+     @@ Makefile: test: doc
+    - 	cd clients/js && npm test
+    - 	cd clients/php && vendor/bin/phpunit
+    + 	clients/python/utils/check.sh
+    + 	cd clients/python && uv run --locked pytest tests/integration
+      
+     +test-rust-unit:
+     +	cd clients/rust && bundle exec rspec spec/unit
+    @@ Makefile: version:
+      	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/go/lib/haveapi/go_client/version.rb
+     +	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/rust/lib/haveapi/rust_client/version.rb
+      	@sed -ri "s/\"version\": \"[^\"]+\"/\"version\": \"$(VERSION)\"/" clients/js/package.json
+    - 	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/src/haveapi/client.js
+    - 	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/dist/haveapi-client.js
+    - 	@sed -ri "s/\"version\": \"[^\"]+\"/\"version\": \"$(VERSION)\"/" clients/php/composer.json
+    - 	@sed -ri "s/const VERSION = '[^']+'/const VERSION = '$(VERSION)'/" clients/php/src/Client.php
+    + 	@node -e 'const fs = require("fs"); const p = "clients/js/package-lock.json"; const lock = JSON.parse(fs.readFileSync(p, "utf8")); lock.version = lock.packages[""].version = process.argv[1]; fs.writeFileSync(p, JSON.stringify(lock, null, "\t") + "\n");' "$(VERSION)"
+    + 	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/src/haveapi/client.ts
+    +@@ Makefile: version:
+    + 	@sed -ri 's/^version = "[^"]+"/version = "$(VERSION)"/' clients/python/pyproject.toml
+    + 	@cd clients/python && uv lock
+      	@sed -ri "s/s.add_dependency 'haveapi-client', '~> [^']+'/s.add_dependency 'haveapi-client', '~> $(VERSION)'/" servers/ruby/haveapi.gemspec
+     +	@sed -ri "s/spec.add_dependency 'haveapi-client', '~> [^']+'/spec.add_dependency 'haveapi-client', '~> $(VERSION)'/" clients/rust/haveapi-rust-client.gemspec
+      	@sed -ri "s/spec.add_dependency 'haveapi-client', '~> [^']+'/spec.add_dependency 'haveapi-client', '~> $(VERSION)'/" clients/go/haveapi-go-client.gemspec
+    @@ doc/agent-instructions/development.md: repository root unless explicitly stated
+      - Use `nix develop` from the top-level directory for tree-wide work, e.g. making new releases.
+      - Component development shells are available as `nix develop .#server-ruby`,
+        `nix develop .#client-ruby`, `nix develop .#client-js`,
+    --  `nix develop .#client-go`, and
+    -+  `nix develop .#client-go`, `nix develop .#client-rust`, and
+    +-  `nix develop .#client-go`, `nix develop .#client-python`, and
+    ++  `nix develop .#client-go`, `nix develop .#client-python`,
+    ++  `nix develop .#client-rust`, and
+        `nix develop .#example-ruby-activerecord-auth`. From within the shell,
+        standard language tools are used.
+      - Sync documentation into server packages with `make doc`.
+3:  9e4c29a = 3:  68cc80b clients/rust: add protocol acceptance fixtures

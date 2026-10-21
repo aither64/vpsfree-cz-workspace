@@ -1,5 +1,49 @@
 # Rust generator and actual client verification
 
+## Current integration verification (2026-10-21)
+
+HaveAPI master is merged at e09142ad241bd63fc4c014ca3afa50ad75106103.
+All six automatic default-branch workflows passed, including the complete Rust
+unit/style, runtime fmt/default/blocking/Clippy and generic server acceptance
+steps. The release workflow's publication job was skipped (build-only push).
+See artifacts/haveapi-default-ci/result.json and
+artifacts/approved-default-integration/haveapi-default-remote-proof.txt.
+
+The final extracted-gem/API7 proof passed in29.12s under current HaveAPI
+Ruby3.4.11 with the client's own rustfmt1.9.0 explicitly selected. It compares
+current package payload, extracted-library ownership, the full manifest/all686
+Rust files and read-only --check; artifacts/integration-formatter-acceptance/result.json
+and generator-package-formatter-acceptance/result.json. No old archive-byte
+reuse is claimed for changed package documentation.
+
+Final client945af6a97717a7a6373507bbc9592d5cd53727c2 CI39600821857 passed
+async/blocking/examples/docs/package/MSRV1.95/regeneration with its own unchanged
+inputs. Its exact recorded compatible HaveAPI source68cc is publicly retained.
+Client main remains the neutralb67 root because the installed coordinator lacks
+its repository entry and refused claim acquisition. No client merge occurred;
+normal registration would require separate workspace package activation.
+
+Final committed affected reviews: final-review-integration-rebase.md and
+final-review-formatter-fixtures.md, retained reviewer0 Sol/xhigh/read_only,
+all four lanes, no unresolved findings. Complete3+4feature histories are clean;
+no obsolete approaches, migrations or repeated update streams.
+
+Failures preserved: initial wrong-cwd launch did not reach software tests;
+corrected68cc Ruby generator/package checks failed the exact rustfmt1.9/1.10
+guard. Architect Clarification7 led to bounded temporary-fixture/docs correction,
+keeping production guard and source bytes. Fresh finale091 tests passed; old
+failed receipts were never relabeled. All current receipts bind exact inputs.
+
+No releases, tag, publishing dispatch, registry upload or credential read.
+Only the client catalog-authority decision remains before its approved merge.
+
+## Historical implementation acceptance (2026-10-19)
+
+The records below bind their historical heads; current baseline verification is
+reported above. Original full acceptance remains useful within independently
+reviewed unchanged input scopes.
+
+
 Implementation, independent review and final branch/provenance reconciliation
 are complete. All local gates and remote CI passed. API target 7.0,
 public capture SHA 70f89335e15263fd7177f29a00fab04b5ff1923c6922dfd318b07c3ae922fb8d.
@@ -47,3 +91,23 @@ conclusions are retained in [the CI result](artifacts/final-ci/final-summary.jso
 No authorized workflow remains active. The initiative is ready, awaiting merge
 approval, and stays active until explicitly authorized integration meets the
 workspace completion criteria.
+
+
+## User-focused README follow-up
+
+The later README-only commit c4a0f597cd3602e28ae11846962e2d1e07a0c1ff
+refocuses installation and examples on library consumers. General-lane review
+found no Blocking/Important issues; one packaged-link Advisory was fixed and
+directly verified. A fresh Cargo publication dry-run passed at this clean head
+(exit 0, 34 seconds); no upload occurred. Exact-head CI run
+[39316994971](https://github.com/vpsfreecz/vpsadmin-rust-client/actions/runs/39316994971)
+also passed async, blocking, MSRV and regeneration. The changed README archive
+payload was freshly checked; original archive bytes are not reused.
+
+The user selected GitHub Actions trusted publishing. Architect Clarification 6
+and trusted-publishing.md describe a separate client workflow change and
+registry-owner prerequisites. Workflow implementation is committed at 091bd70 with Actionlint/ShellCheck and
+26 positive/negative gate checks passing. Independent four-lane review passed
+with no findings; workflow feature push091bd70 is published and exact-head
+CI run39318944837 passed all four jobs, confirmed by a fresh watcher; no local
+Cargo login or upload, release tag, registry setup or default merge occurred.

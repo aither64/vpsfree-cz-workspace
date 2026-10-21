@@ -4,130 +4,144 @@ lifecycle: active
 
 # Rust HaveAPI generator and vpsAdmin client
 
-Ready, awaiting merge approval. Implementation, independent review, all local
-acceptance gates and exact-head CI passed. Both feature branches are published;
-no feature has entered a default branch, been released or deployed.
+## Current phase: HaveAPI merged; client integration blocked on catalog (2026-10-21)
 
-## Phase checklist
+User directed: "let's merge the code into default branches, no releases yet".
+This authorizes HaveAPI/master and vpsadmin-rust-client/main integration.
+No release, tag, registry upload, publishing dispatch, credential read or secret
+setup is included. The user reports a RubyGems pending publisher exists; the
+supplied crates.io credential remains untouched. Session and feature refs stay open.
 
-- [x] Design: embedded runtime, async default and optional blocking, API 7.0.
-- [x] Generator/runtime, actual generated client and disposable fixtures implemented.
-- [x] Quick checks and independent four-lane review; R1/R2 remediations complete.
-- [x] DELETE JSON correction, affected-lane review and corrected verification.
-- [x] Runtime default/blocking tests and strict Clippy.
-- [x] Actual client default/blocking tests, examples, docs and Cargo package.
-- [x] Rust 1.95 with the committed lockfile in both feature modes.
-- [x] Extracted generator gem reproduces all generated Rust and manifest.
-- [x] Real/scripted HaveAPI suite at root and mounted paths, both modes.
-- [x] Actual disposable vpsAdmin tests: VPS show/update/paging, DNS null, Custom,
-      token request/use/renew/revoke and expected authentication failures.
-- [x] Public read-only async/blocking public_stats smoke, HTTP 200 in both modes.
-- [x] Final three/two logical commit histories and source/provenance consolidation.
-- [x] Independent final history/rebase/input-equivalence addendum: no new findings.
-- [x] Publish both feature branches; all six exact-head CI workflows passed.
-- [ ] Explicit user direction for default-branch integration; not authorized.
+- [x] Embedded runtime, generator, real API7 client, disposable fixtures implemented.
+- [x] Runtime/client/MSRV/package/real-server acceptance; earlier exact-head CI.
+- [x] Library-user README and manual Actions bootstrap/OIDC capability reviewed.
+- [x] Rebase HaveAPI on advanced master7835; preserve upstream Python/JS/Ruby3.4.
+- [x] Final client provenance/docs refresh consolidated; client945 CI passed.
+- [x] Independent affected reviews of rebase and formatter correction; no open findings.
+- [x] Focused formatter-fixture quick specs/style/syntax and final mandatory hooks.
+- [x] Retain compatible68cc remote source; publish final HaveAPIe091 feature.
+- [x] Fresh full e091 Rust CI and corrected extracted-gem/API7 reproduction
+      PASS: six final-head workflows, localpackage29.12s. Client945 CI green.
+- [x] Claimed HaveAPI/master fast-forward, normal SSH push and remote proof
+      e09142a; claim6b062149 released after proof, before CI.
+- [ ] Claimed client/main fast-forward, normal SSH push and remote proof.
+- [x] HaveAPI default-branch CI and disposable-target cleanup.
+- [ ] Client default-branch CI/target cleanup after authorized claim resolution.
+- [x] Durable partial-integration handoff; release hold preserved.
 
-## Repositories and final heads
+No repository merge claim is held. HaveAPI/master is merged at e09142a.
+Client/main remains b67: claim acquisition refused because the new repository
+is absent from the selected runtime coordination catalog. Architect0 confirmed the immutable selected catalog requires a workspace
+package update; selected runtime/source already differs from shared workspace
+master. No runtime activation/integration authority is inferred. The exact
+client945 fast-forward remains fully prepared and independently reviewed.
+Pending user decision: a one-off exception to the coordinator-claim rule for
+this new repository, or separate workspace catalog/profile update scope.
+No refusal bypass or client mutation occurred.
+Fresh Luna/low utility completed all six automatic HaveAPI default-branch
+workflows successfully; artifacts/haveapi-default-ci/result.json. Build-only
+release publication was skipped. Clean disposable HaveAPI target removed
+without force after claim release; feature/source refs retained.
 
-| Repository | Branch and worktree | Final head and base |
-| --- | --- | --- |
-| HaveAPI | 2026-10-18-rust-client-generator; worktrees/2026-10-18-rust-client-generator/haveapi | 9e4c29a0412a25256ce944641f60ba13e9f03c2b; comparison base 526648131af45df68c25ac0042a52f22c7a81df5 |
-| vpsadmin-rust-client | same branch; worktrees/2026-10-18-rust-client-generator/vpsadmin-rust-client | 62753f006d7bd3e5befe1033c49a2c630ca3ff02; neutral empty root b67a3ba5eef89b2bd6533050aa8769aaa0574114 |
-| vpsAdmin | fixture-only same-session checkout; worktrees/2026-10-18-rust-client-generator/vpsadmin | unchanged fb2f51222503a45f2e5a42af505f719e44279ed0; no application edits |
+Reviewer0 completed the final four-lane
+inspection with no findings. Implementer1 completed final feature
+publication, independently proving remote backup68cc before lease rewrite. A fresh Luna/low
+utility completed artifacts/integration-formatter-acceptance: PASS288.459s,
+no active operation. Lead rechecked complete3+4series/finaldiff inventories
+against completed independent reports immediately before merge; see
+artifacts/approved-default-integration/lead-final-inventory.json.
+Lead performs each approved default merge under a short repository claim after
+all pending gates pass. Release each claim before CI, records or cleanup.
 
-HaveAPI initial registered base c14e7d3158b91c134c2817b489cd29772fc09f82 is
-preserved. Final feature commits: runtime 930a5f3, generator 8701baa, fixtures 9e4c29a.
-The rebase onto 5266481 adds only two unrelated upstream release-tool files;
-three patches are equivalent, no conflicts or feature source edits.
-Client commits: handwritten f88d86a, generated 62753f0. All corrections and
-provenance refreshes are folded into their owners. No migrations, obsolete
-shims/fixups, repeated dependency streams or consumed intermediate state.
+## Exact repositories and histories
 
-Both feature branches are now published. The new repository main points only
-to neutral empty rootb67a3ba and is verified as its GitHub default; the feature
-points exactly to62753f0. HaveAPI feature points exactly to9e4c29a. No default
-feature integration was performed.
+| Repository | Final head | Comparison base | Default target before merge |
+| --- | --- | --- | --- |
+| HaveAPI | e09142ad241bd63fc4c014ca3afa50ad75106103 | 7835acafdda19779815a0f1ba905d78e0085456d | master e09142a (merged) |
+| vpsadmin-rust-client | 945af6a97717a7a6373507bbc9592d5cd53727c2 | b67a3ba5eef89b2bd6533050aa8769aaa0574114 | mainb67 (neutral empty root) |
+| vpsAdmin | fb2f51222503a45f2e5a42af505f719e44279ed0 unchanged fixture source | same | No source edits or merge required |
 
-## Contract and provenance
+Worktrees are under worktrees/2026-10-18-rust-client-generator/{haveapi,
+vpsadmin-rust-client,vpsadmin}. The HaveAPI disposable merge target was removed cleanly after completion;
+vpsadmin-rust-client-merge-target remains clean/detached at b67.
+HaveAPI tree408531478de497f59399dc04ae0cc50f73f86928; client tree
+c993cef64194e86bac41c073409d345846eecf8a. Feature branches retain the dated slug.
 
-Crate vpsadmin-client, Rust edition 2024, MSRV 1.95; embedded maintained runtime,
-no separate runtime dependency. Public snapshot profile public-live-api-7.0,
-protocol 2.0, 152 resources/524 actions/8720 parameters. Plugin completeness unknown.
-Schema SHA256 70f89335e15263fd7177f29a00fab04b5ff1923c6922dfd318b07c3ae922fb8d.
-Runtime SHA256 9c50b8167a8b82118ba42372633e3b004276ba49fbdfed75d4979a913feea739.
-API version alone selects compatibility. GET uses query input; DELETE and other
-supported body methods use JSON. No automatic mutation retries or auth refresh.
+HaveAPI final3logicalcommits:62d7b3c runtime,5cad449 generator/tooling,e09142a
+integration. Client final4logicalcommits:3353620 package,38750a5 generated,
+f5f28cb README,945af6a Actions. Registered initial HaveAPI basec14e7d3 is
+preserved; latest upstream7835 is the comparison base. Runtime/integration
+patches remain equivalent; generator owns the final five-path spec/docs fix.
+Reviewer0 independently concluded no obsolete approach/fixup/shim, no repeated
+pin/lock/schema/generated/provenance update stream, and no migrations or consumed
+intermediate schema boundary. Preserve exact compatible source68cc for the
+unchanged client provenance, plus earlier reviewed9e4/client091 backups.
 
-## Reviews and verification
+## Verification boundary and the formatter failure
 
-Original review: reviewer0, retained Sol/xhigh/read_only, all four lanes,
-two Important findings (reserved-name collisions, locked-bundle activation),
-fixed and folded. DELETE correction received another four-lane review with no
-new findings. The same reviewer accepted final cleaned histories and rebase/input equivalence
-with no new findings; exact reports are linked below.
+Upstream advanced21commits from comparisonbase526, changed HaveAPI nixpkgs from
+fe132 to02c087 and Ruby3.3 to3.4. Rebase preserved all upstream behavior; only
+manual conflict combined Python+Rust development-shell list entries. Prior
+HaveAPI environment/matrix evidence was not relabeled as current.
 
-All local gates passed. Corrected runtime/client/MSRV/package receipts are bound
-to tested e9173e20/1a818c4; generic root/mounted to 3aaf7cf; full actual vpsAdmin
-to 41bbb37/client 7279dd9. Final component sources, locks, flake derivations and
-compiler identities match their scopes. Final client differs from passing 7279
-only in one provenance revision line. No archive byte hash equivalence is claimed;
-CI also verified the exact final head.
+The first fresh local attempt selected the wrong working directory/flake before
+software tests; its failed receipt and launch diagnosis remain. The corrected
+batch at68cc/client945 completed nine passing workflows and failed Rust CI
+39600600027 (four specs) plus package reproduction at the exact formatter guard:
+HaveAPI now supplies rustfmt1.10, temporaryfixtures and savedclient required1.9.
+See artifacts/integration-package-recheck/summary.json. These remain failed
+historical results, not acceptance evidence.
 
-- [Verification summary](verification-summary.md)
-- [Original review](final-review.md)
-- [DELETE correction review](final-review-delete.md)
-- [Final history packet](review-packet-final-history.md)
-- [Accepted final history addendum](final-review-history.md)
-- [Source history](haveapi-final-history.md)
-- [Source input receipt](haveapi-final-input-receipt.json)
-- [Client history](client-final-history.md)
-- [Client input receipt](client-final-input-receipt.json)
-- [Actual vpsAdmin pass](artifacts/vpsadmin-token-prereq/watcher-result.txt)
-- [Final CI results](artifacts/final-ci/final-summary.json)
-- [Detailed earlier checkpoints](progress-history.md)
+Architect Clarification7 led to temporary fixture selection via checked
+ENV RUSTFMT/PATH version probe, mismatch preservation/selection regressions,
+and three technical docs corrections. Production exact guard/lib/template/
+runtime/locks/config and integration source stayed byte-identical. Eight focused
+specs passed1.97s, Ruby syntax/RuboCop/whitespace and mandatory explicit3commit
+hooks passed under rooted Ruby3.4.11/Overcommit0.73.0, no bypass. Final history
+consolidated before the retained independent reviewer0 Sol/xhigh/read_only
+reviewed all four lanes and complete histories, with no findings.
 
-No production mutation or credentialed production request occurred. Public live
-verification made two unauthenticated public_stats GET requests. Actual updates
-and token actions ran only against a fresh private database and loopback API.
-Owned fixture processes/databases were cleaned by their wrappers.
+Client945 CI39600821857 passed async/blocking/examples/docs/package/MSRV1.95/
+regeneration with its own unchanged pin/inputs. Its recorded compatible source
+remains68cc, whose production generator/runtime/Ruby-lock hashes match finale091.
+No client source/config/generated/provenance refresh is needed for the test/docs
+correction. Its source ref must remain publicly obtainable.
 
-## Owners and next action
+The corrected package operation uses current HaveAPI Ruby3.4.11 and explicit
+client rustfmt1.9 from its own lockedfe132 Nix environment. Both toolpaths are
+rooted under artifacts/approved-default-integration until hook/check work ends.
+It builds/extracts current gem docs, proves loaded library ownership, compares
+full saved API7 manifest/all686generatedRust files, and runs read-only --check.
+No old archive-byte or full packaged-inventory equivalence is claimed.
 
-Implementer0 owns runtime; implementer1 generator/tooling/history/publication;
-implementer2 fixtures; implementer3 actual client; reviewer0 independent review.
-Lead accepts evidence, coordinates Git/verification and maintains tracking.
-Both feature publications completed; remote heads and clean worktrees verified.
-HaveAPI9e4c29a and client62753f0 are the exact published heads.
-A fresh Luna/low watcher completed all six exact-head workflow observations:
-every workflow passed, with release publication correctly skipped. No operation
-remains active. No known verification blocker remains. Next action is explicit
-user direction to integrate HaveAPI into master and the client into main;
-neither integration is authorized yet. Keep the session and branches open.
+Earlier retained acceptance includes runtime default/blocking/Clippy; actual
+client tests/examples/docs/package/MSRV; generic root+mounted real/scripted
+both modes; actual disposable vpsAdmin VPS/DNSnullable/Custom/token lifecycle
+PASS55s at41bbb/client7279. Actual fixture owns its own unchanged vpsAdmin
+Nix environment; exact input reuse is documented in reviews/receipts. Public
+smoke made only two unauthenticated public_stats GET requests. All mutating
+API tests used disposable loopback fixtures; no production mutation occurred.
+
+## Evidence and documentation
+
+- [Design and accepted formatter brief](design.md)
+- [Rebase review](final-review-integration-rebase.md)
+- [Formatter affected review](final-review-formatter-fixtures.md)
+- [Formatter review packet](review-packet-formatter-fixtures.md)
+- [Final source proof](haveapi-formatter-fixture-proof.json)
+- [Client provenance/history proof](client-integration-provenance.md)
+- [Current verification batch](artifacts/integration-formatter-acceptance)
+- [Failed prior batch](artifacts/integration-package-recheck/summary.json)
+- [Earlier verification summary](verification-summary.md)
+- [Earlier implementation/history](progress-history.md)
+- [README review](final-review-readme-release.md)
+- [Actions review](final-review-actions-release.md)
+- [Trusted publication prerequisites](trusted-publishing.md)
+
+Lasting behavior and development/release guidance live in HaveAPI clients/rust
+README/docs and client README/docs/development.md. This merge phase adds only
+session execution records; project docs already describe the final behavior.
+Registry setup and releases remain deferred by user direction, not readiness
+claims. No session lifecycle action is authorized.
 
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-18-rust-client-generator/
-
-
-## Published branches and passed CI
-
-- HaveAPI: https://github.com/vpsfreecz/haveapi/tree/2026-10-18-rust-client-generator
-- Client: https://github.com/vpsfreecz/vpsadmin-rust-client/tree/2026-10-18-rust-client-generator
-
-| Workflow | Result |
-| --- | --- |
-| [HaveAPI Rust](https://github.com/vpsfreecz/haveapi/actions/runs/39310683647) | Passed |
-| [HaveAPI RuboCop](https://github.com/vpsfreecz/haveapi/actions/runs/39310683493) | Passed |
-| [HaveAPI build](https://github.com/vpsfreecz/haveapi/actions/runs/39310683496) | Passed; publication skipped |
-| [HaveAPI server RSpec](https://github.com/vpsfreecz/haveapi/actions/runs/39310683502) | Passed |
-| [HaveAPI i18n](https://github.com/vpsfreecz/haveapi/actions/runs/39310683509) | Passed |
-| [Client](https://github.com/vpsfreecz/vpsadmin-rust-client/actions/runs/39310893770) | Passed: async, blocking, MSRV, regeneration |
-
-Retained Luna/low utility thread 01a155a0-480a-7b63-ad77-7f3ae8518210 completed
-read-only monitoring without retries, cancellations or dispatch. Results bind
-the exact final heads above, with no active authorized workflow remaining.
-
-Both portal comparisons captured at final heads. HaveAPI base5266481/head9e4c29a;
-client exact recorded neutralbaseb67/head62753f0. Automatic client capture could
-not resolve its newly born remote base locally, so explicit known registered
-base/head were supplied (not guessed), and capture succeeded. Initial bootstrap
-fetch similarly reported unbornremoteHEAD before explicitzero-refcheck; no
-unexpectedref or featuredefaultpush occurred.

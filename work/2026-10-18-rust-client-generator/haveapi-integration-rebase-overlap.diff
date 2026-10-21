@@ -1,0 +1,104 @@
+diff --git a/Makefile b/Makefile
+index 09da118..92eb484 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,6 +1,6 @@
+ VERSION=$(shell cat VERSION)
+ 
+-.PHONY: doc publish release release-check release-test release-deps test version
++.PHONY: doc publish release release-check release-test release-deps test test-rust test-rust-unit version
+ 
+ doc:
+ 	./utils/copydoc.sh servers/ruby
+@@ -15,6 +15,15 @@ test: doc
+ 	clients/python/utils/check.sh
+ 	cd clients/python && uv run --locked pytest tests/integration
+ 
++test-rust-unit:
++	cd clients/rust && bundle exec rspec spec/unit
++
++# Run in nix develop .#client-rust after the generator unit checks.
++test-rust: test-rust-unit
++	cd clients/rust/runtime && cargo test --locked
++	cd clients/rust/runtime && cargo test --locked --features blocking
++	HAVEAPI_RUST_INTEGRATION=1 ruby clients/rust/spec/integration/run.rb
++
+ release-deps:
+ 	cd servers/ruby && bundle install
+ 	cd clients/ruby && bundle install
+@@ -42,6 +51,7 @@ version:
+ 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" servers/ruby/lib/haveapi/version.rb
+ 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/ruby/lib/haveapi/client/version.rb
+ 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/go/lib/haveapi/go_client/version.rb
++	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/rust/lib/haveapi/rust_client/version.rb
+ 	@sed -ri "s/\"version\": \"[^\"]+\"/\"version\": \"$(VERSION)\"/" clients/js/package.json
+ 	@node -e 'const fs = require("fs"); const p = "clients/js/package-lock.json"; const lock = JSON.parse(fs.readFileSync(p, "utf8")); lock.version = lock.packages[""].version = process.argv[1]; fs.writeFileSync(p, JSON.stringify(lock, null, "\t") + "\n");' "$(VERSION)"
+ 	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/src/haveapi/client.ts
+@@ -51,5 +61,6 @@ version:
+ 	@sed -ri 's/^version = "[^"]+"/version = "$(VERSION)"/' clients/python/pyproject.toml
+ 	@cd clients/python && uv lock
+ 	@sed -ri "s/s.add_dependency 'haveapi-client', '~> [^']+'/s.add_dependency 'haveapi-client', '~> $(VERSION)'/" servers/ruby/haveapi.gemspec
++	@sed -ri "s/spec.add_dependency 'haveapi-client', '~> [^']+'/spec.add_dependency 'haveapi-client', '~> $(VERSION)'/" clients/rust/haveapi-rust-client.gemspec
+ 	@sed -ri "s/spec.add_dependency 'haveapi-client', '~> [^']+'/spec.add_dependency 'haveapi-client', '~> $(VERSION)'/" clients/go/haveapi-go-client.gemspec
+ 	@sed -ri "s/gem 'haveapi', '~> [^']+'/gem 'haveapi', '~> $(VERSION)'/" examples/servers/ruby/activerecord_auth/Gemfile
+diff --git a/README.md b/README.md
+index fc3a82a..8e93140 100644
+--- a/README.md
++++ b/README.md
+@@ -67,6 +67,7 @@ For development rules and required procedures, start with [AGENTS.md](AGENTS.md)
+  - [Protocol definition](doc/protocol.md)
+  - [How to create a client](doc/create-client.md)
+  - [Typed input validation rules](doc/typed-input-validation.md)
++ - [Rust client generator](clients/rust/README.md)
+  - [Release procedure](doc/agent-instructions/releases.md)
+  - [Project templates](templates)
+  - [API examples](examples)
+diff --git a/doc/agent-instructions/development.md b/doc/agent-instructions/development.md
+index 05d3340..ecfac16 100644
+--- a/doc/agent-instructions/development.md
++++ b/doc/agent-instructions/development.md
+@@ -8,7 +8,8 @@ repository root unless explicitly stated otherwise.
+ - Use `nix develop` from the top-level directory for tree-wide work, e.g. making new releases.
+ - Component development shells are available as `nix develop .#server-ruby`,
+   `nix develop .#client-ruby`, `nix develop .#client-js`,
+-  `nix develop .#client-go`, `nix develop .#client-python`, and
++  `nix develop .#client-go`, `nix develop .#client-python`,
++  `nix develop .#client-rust`, and
+   `nix develop .#example-ruby-activerecord-auth`. From within the shell,
+   standard language tools are used.
+ - Sync documentation into server packages with `make doc`.
+@@ -31,3 +32,11 @@ repository root unless explicitly stated otherwise.
+   local update, run `./utils/update-nixpkgs.sh`, review the generated commit,
+   and push it. The commit subject must be
+   `flake: nixpkgs <oldrev11> -> <newrev11>`.
++
++## Rust generator and runtime
++
++See [the Rust client development guide](../../clients/rust/README.md) for the
++locked Ruby component bundle, pinned Rust formatter, generator unit specs and
++separate runtime/integration checks. `make test-rust-unit` is the quick Ruby
++check; `make test-rust` also compiles and exercises generated clients. The Rust
++generator is not added to existing broad release/publication targets.
+diff --git a/flake.nix b/flake.nix
+index 6b59e28..64e04a1 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -167,6 +167,18 @@
+             afterInstall = "export RUBYOPT=-rbundler/setup";
+           };
+ 
++          client-rust = rubyShell {
++            name = "haveapi-rust-client";
++            label = "haveapi:client-rust";
++            componentDir = "clients/rust";
++            gemHome = "$HAVEAPI_REPO_ROOT/clients/rust/.gems";
++            packages = with pkgs; [ cargo rustc rustfmt clippy pkg-config openssl ];
++            installBundler = "gem install --no-document bundler";
++            afterInstall = ''
++              export RUBOCOP_CACHE_ROOT="$HAVEAPI_REPO_ROOT/.rubocop_cache"
++            '';
++          };
++
+           example-ruby-activerecord-auth = rubyShell {
+             name = "haveapi-example-servers-ruby";
+             label = "haveapi:example-ruby-activerecord-auth";

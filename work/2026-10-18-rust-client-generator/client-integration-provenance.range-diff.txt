@@ -1,0 +1,33 @@
+1:  f88d86a ! 1:  3353620 Add the vpsAdmin API 7.0 Rust client package
+    @@ docs/development.md (new)
+     +
+     +## Tools
+     +
+    -+Enter the committed Nix environment with `nix develop`. Its nixpkgs revision is
+    -+shared with HaveAPI's generation environment:
+    ++Enter the committed Nix environment with `nix develop`. The client retains its
+    ++own pinned nixpkgs revision:
+     +`fe13242281a67641c0102cdb1087f0ebe586c7df`. Generation requires the exact formatter
+     +output `rustfmt 1.9.0` recorded in `generator.toml`, using edition 2024.
+     +The pinned compiler is newer than the separate Rust 1.95 minimum.
+    @@ schema/provenance.json (new)
+     +      "rustfmt_version": "rustfmt 1.9.0"
+     +    },
+     +    "repository": "https://github.com/vpsfreecz/haveapi",
+    -+    "revision": "9e4c29a0412a25256ce944641f60ba13e9f03c2b",
+    ++    "revision": "68cc80b012b7a6b9bcdf35c008c338cbc3f4c000",
+     +    "ruby_dependency_lock_sha256": "7ab15ed0bf0ded01fbb03f2f8e6b4ad73ef2806b1ee9199acea8a5269080b2f1",
+     +    "source_sha256": "b2f1408d9a53eda4bdf33054f4293e5e1ae712d69c66863e6c0ee71902bcfc13",
+     +    "version": "0.29.0"
+2:  62753f0 ! 2:  38750a5 Generate the captured vpsAdmin API 7.0 client
+    @@ Commit message
+         copy the common HaveAPI runtime into the crate. Async and blocking modes
+         share the generated builders, models, validation and wire descriptions.
+     
+    -    Use HaveAPI source 9e4c29a0412a25256ce944641f60ba13e9f03c2b and the recorded
+    +    Use HaveAPI source 68cc80b012b7a6b9bcdf35c008c338cbc3f4c000 and the recorded
+         formatter. The ownership manifest binds the snapshot, generator source,
+         Ruby lock and runtime digests for reproducible offline refreshes.
+     
+3:  c4a0f59 = 3:  f5f28cb Focus the README on using the Rust client library
+4:  091bd70 = 4:  945af6a Add guarded manual crate publication through GitHub Actions

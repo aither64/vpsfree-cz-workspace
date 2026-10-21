@@ -84,3 +84,51 @@ checks all passed. The public GET smoke was unaffected and was not repeated
 solely for this classifier change. See [verification summary](verification-summary.md)
 and [current state](state.md) for exact evidence. Final published-head CI also
 passed in both repositories; default-branch integration awaits explicit approval.
+
+## User-requested library README and Cargo publication
+
+The user subsequently requested a library-user README inspired by
+vpsadmin-go-client and publication using Cargo when finished. Refocus the README
+on installation, public and authenticated usage, input setters, blocking calls
+and library documentation. Keep generator/provenance details in their existing
+maintenance documentation. Release `vpsadmin-client` 0.1.0 to crates.io after
+the committed docs delta passes independent review and focused Cargo release
+verification. Check credentials without exposing values. Registry publication
+does not authorize merging either feature branch into its default branch.
+
+The user prefers GitHub Actions and asked about trusted publishing for both
+registries. Do not publish locally or request local Cargo login. Current
+official crates.io guidance requires an API-token first upload before a trusted
+publisher can be configured; that upload can itself run in Actions with a
+one-time bootstrap secret. RubyGems supports a pending trusted publisher for a
+new gem, including its first release. HaveAPI already uses RubyGems OIDC in its
+release workflow; the Rust generator must be included in the maintained
+artifact contract before that workflow can release it. Exact implementation
+and one-time owner setup are being checked by architect0.
+
+
+## Approved integration, releases held (2026-10-21)
+
+The user explicitly requested merging the code into default branches and said
+"no releases yet". Integrate HaveAPI into master and vpsadmin-rust-client into
+main using the reviewed final series, after fresh remote checks. Use one short
+repository claim per fast-forward, normal SSH push and remote proof; release
+before CI monitoring and cleanup. No registry upload, tag, release dispatch,
+secret configuration or token-file access is part of this action. The reported
+RubyGems pending publisher is noted for future release work. Keep release work
+deferred until fresh direction; integration does not authorize it.
+
+
+## Client claim catalog boundary (2026-10-21)
+
+HaveAPI default integration and all six default CI workflows completed at
+e09142a. Client945 remains fully reviewed, published and CI-green, with mainb67
+unchanged. The coordinator refused the new repository because its immutable
+catalog omits it; no claim or client mutation occurred. Design Clarification8
+records the exact two-entry source proposal and why current selected runtime
+differs from shared workspace master. Do not deploy/revert/consume that other
+source history merely to obtain this claim. Await an explicit one-off exception
+to the claim rule for this exact new-repository merge, or separately authorized
+workspace catalog/profile scope. Existing user approval for client/main merge
+remains valid; no second merge approval is requested. Releases and token access
+stay on hold.
