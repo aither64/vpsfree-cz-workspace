@@ -170,11 +170,11 @@ and review need none. Prepare, then claim one repository for fresh target checks
 merge/hooks, SSH push and remote proof; release before CI, records or cleanup.
 On stale preparation/intervention, stop commands and verify effects; repair
 unlocked; reconcile uncertain shared mutations before release. Build/copy
-before machine claims when supported. Hold every deployed physical machine
-until deployed feature lineage is integrated into approved remote defaults, the
-user accepts its UI/behavior and explicitly directs its release. Idle time, review,
-feedback, redeployment and turn completion never permit release. Read the selected
-coordination guide; keep existing recovery contracts.
+before machine claims when supported. Once deployment/effect verification succeeds
+and deployed feature lineage is integrated into approved remote defaults,
+promptly release the exact claim owned by this session and verify its released
+status, without another user confirmation. Missing proof or uncertain effects keep
+ownership. Read the selected coordination guide; keep existing recovery contracts.
 
 Prefer clean designs that can be deployed incrementally. Incompatible changes
 are allowed only when they are intentional and recorded in the plan with the

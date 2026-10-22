@@ -39,6 +39,31 @@ class AgentInstructionsTest < Minitest::Test
     assert_match(/ready, awaiting merge approval/, sessions)
   end
 
+  def test_machine_release_follows_verified_deployment_and_integration
+    paths = %w[AGENTS.md docs/coordination.md docs/agent-instructions/deployment.md
+               docs/agent-instructions/lifecycle.md docs/agent-instructions/git.md]
+
+    paths.each do |path|
+      text = File.read(File.join(ROOT, path)).gsub(/\s+/, ' ')
+      assert_match(/deployment(?:\/effect verification| and (?:its )?effects?| and effect verification)/i, text, path)
+      assert_match(/deployed feature lineage.*approved remote default(?:s| branches)/, text, path)
+      assert_match(/promptly release/i, text, path)
+      assert_match(/without another user confirmation/, text, path)
+      refute_match(/all three conditions|user accepts (?:the resulting|its)|renewed user acceptance|explicit direction to release that (?:physical )?machine|explicitly directs (?:its release|release of that machine)/, text, path)
+    end
+
+    coordination = File.read(File.join(ROOT, 'docs/coordination.md')).gsub(/\s+/, ' ')
+    assert_match(/authoritative status for the exact claim owned by this session/, coordination)
+    assert_match(/reconcile known command effects and verify both conditions/, coordination)
+    assert_match(/release that claim and verify its resulting state/, coordination)
+    assert_match(/Release does not archive, delete, stop or clean a session/, coordination)
+    assert_match(/A later deployment requires a fresh machine claim/, coordination)
+
+    lifecycle = File.read(File.join(ROOT, 'docs/agent-instructions/lifecycle.md')).gsub(/\s+/, ' ')
+    assert_match(/Do not infer permission to archive, delete, or stop a session/, lifecycle)
+    assert_match(/Legacy archive completion automatically releases machine reservations/, lifecycle)
+  end
+
   def test_review_uses_saved_member_settings_or_catalog_fallback
     core = File.read(File.join(ROOT, 'AGENTS.md'))
     verification = File.read(File.join(ROOT, 'docs/agent-instructions/verification.md'))

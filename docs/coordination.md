@@ -28,8 +28,9 @@ A notice neither authorizes work nor proves command completion.
 
 Run the shared merge or deployment only while its claim is held. Independent
 feature commands remain available during a merge wait. Keep machine ownership
-through UI review, feedback and repeated deployment. Aitherdev system activation
-and workspace profile selection share the physical resource `vpsfree:aitherdev`.
+until deployment and integration are verified as described below. Aitherdev system
+activation and workspace profile selection share the physical resource
+`vpsfree:aitherdev`.
 Use `release SESSION --as-is --id UUID` after the applicable release requirements
 are met, or `cancel-claim` for an unneeded waiting request. Retrying the exact
 acquire request returns the same claim even after release; a new attempt needs
@@ -52,19 +53,18 @@ resources before mutation and keep ownership until the work is safe to release.
 
 ## Machine retention
 
-Retain ownership of every deployed physical machine until all three conditions
-are met:
+Promptly release each deployed physical machine once both conditions are met:
 
-1. Its deployed feature lineage is integrated into the approved remote default
-   branches, including deployed dependencies.
-2. The user accepts the resulting UI or behavior on that machine.
-3. The user explicitly directs release of that machine.
+1. Deployment and its effects have been successfully verified.
+2. Its complete deployed feature lineage is integrated into the approved remote
+   default branches, including deployed dependencies.
 
-Review, CI and source completion do not establish user acceptance. Record the
-accepted environment and result. Idle time, feedback, redeployment, disconnects
-and turn completion do not permit release. Default-branch integration needs its
-own explicit approval; deployment approval supplies neither merge approval nor
-release direction. Missing evidence keeps the machine held.
+The agent runs the normal release command without another user confirmation.
+No separate UI acceptance or release direction is required. Missing integration
+or failed/uncertain deployment keeps ownership. Idle time, feedback, review,
+redeployment, disconnects and turn completion do not replace either proof.
+Default-branch integration still needs its own explicit approval; deployment
+approval grants no merge approval.
 
 Retain the rollout and review receipts: physical machine and aliases, resolved
 system and user-profile store paths, complete source/input graph, canonical
@@ -73,14 +73,16 @@ fresh remote ancestry proofs. For refreshed history, retain reviewed old/new
 base/head ranges, range-diff or patch-equivalence evidence and migration lineage.
 Do not call a nonancestor deployed commit literally merged. An independently
 proven equivalent successor can establish integrated feature lineage; a
-substantive successor requires redeployment and renewed user acceptance. Ordinary
-session completion still requires every registered exact final feature head.
+substantive successor requires its own verified deployment. Ordinary session
+completion still requires every registered exact final feature head.
 
 Before release, inspect authoritative status for the exact claim owned by this
-session, reconcile known command effects and verify all three conditions.
-Release that claim and verify its resulting state. The owner-only,
-idempotent release API does not enforce this human workflow. Do not edit claim
+session, reconcile known command effects and verify both conditions.
+Promptly release that claim and verify its resulting state. The owner-only,
+idempotent release API does not enforce this workflow. Do not edit claim
 records or add release receipts to substitute for the evidence.
+Release does not archive, delete, stop or clean a session. A later deployment
+requires a fresh machine claim.
 
 ## Git and deployment
 
