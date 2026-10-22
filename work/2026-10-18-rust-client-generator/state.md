@@ -4,7 +4,7 @@ lifecycle: active
 
 # Rust HaveAPI generator and vpsAdmin client
 
-## Current phase: HaveAPI merged; client integration blocked on catalog (2026-10-21)
+## Current phase: merged and verified; releases deferred (2026-10-22)
 
 User directed: "let's merge the code into default branches, no releases yet".
 This authorizes HaveAPI/master and vpsadmin-rust-client/main integration.
@@ -24,20 +24,34 @@ supplied crates.io credential remains untouched. Session and feature refs stay o
       PASS: six final-head workflows, localpackage29.12s. Client945 CI green.
 - [x] Claimed HaveAPI/master fast-forward, normal SSH push and remote proof
       e09142a; claim6b062149 released after proof, before CI.
-- [ ] Claimed client/main fast-forward, normal SSH push and remote proof.
+- [x] Claimed client/main fast-forward, normal SSH push and remote proof
+      at945af6a; claim62cb6ae8 released and verified before CI/cleanup.
 - [x] HaveAPI default-branch CI and disposable-target cleanup.
-- [ ] Client default-branch CI/target cleanup after authorized claim resolution.
+- [x] Clean detached client merge target removed; feature/backup refs retained.
+- [x] Client default-branch CI39739951412 PASS: async/blocking/MSRV/regeneration.
+      Fresh Luna/low observation finished; no active CI operation.
+- [x] User-requested root HaveAPI README clients-list Rust entry committed
+      a32b15e; onlyREADME+1, quickchecks and mandatoryhooks passed.
+- [x] General-lane independent docs review: reviewer0Sol/xhigh/read_only,
+      no findings at e091..a32b15e; exactonecommitREADME+1, no migrations,
+      obsoletehistory or repeatedstreams.
+- [x] README follow-up published/ffmerged into mastera32b15e, remoteproof
+      verified, claimd696ff48 released, clean disposabletarget removed.
+      No CI runs discovered for README-onlypush; product inputs unchanged.
+      No implementation/schema/generated changes or releases.
 - [x] Durable partial-integration handoff; release hold preserved.
 
-No repository merge claim is held. HaveAPI/master is merged at e09142a.
-Client/main remains b67: claim acquisition refused because the new repository
-is absent from the selected runtime coordination catalog. Architect0 confirmed the immutable selected catalog requires a workspace
-package update; selected runtime/source already differs from shared workspace
-master. No runtime activation/integration authority is inferred. The exact
-client945 fast-forward remains fully prepared and independently reviewed.
-Pending user decision: a one-off exception to the coordinator-claim rule for
-this new repository, or separate workspace catalog/profile update scope.
-No refusal bypass or client mutation occurred.
+User requested the client merge again on2026-10-22 after the coordinator update.
+Selected packagef5h1qmr supports registered repositories outside the catalog;
+normal claim acquisition succeeded without a catalog/config/deployment change.
+Clientmain is945af6a; independent remoteproof and clean four-commit history
+match the retained independent review. Main CI39739951412 passed all4jobs.
+HaveAPI master is nowa32b15e including the requested rootREADME+1line followup,
+independently reviewed with no findings and mandatoryhooks passed. Its parent
+is the already verified implementatione091. Both claims were released directly
+after remoteproof; clean disposable merge targets removed, feature/backuprefs
+retained. No mutation/check/watcher remains active. Session remains open for
+user-directed publication later; no releases/tags/tokenreads/dispatch performed.
 Fresh Luna/low utility completed all six automatic HaveAPI default-branch
 workflows successfully; artifacts/haveapi-default-ci/result.json. Build-only
 release publication was skipped. Clean disposable HaveAPI target removed
@@ -57,14 +71,16 @@ all pending gates pass. Release each claim before CI, records or cleanup.
 
 | Repository | Final head | Comparison base | Default target before merge |
 | --- | --- | --- | --- |
-| HaveAPI | e09142ad241bd63fc4c014ca3afa50ad75106103 | 7835acafdda19779815a0f1ba905d78e0085456d | master e09142a (merged) |
-| vpsadmin-rust-client | 945af6a97717a7a6373507bbc9592d5cd53727c2 | b67a3ba5eef89b2bd6533050aa8769aaa0574114 | mainb67 (neutral empty root) |
+| HaveAPI | a32b15e379f44fc6dae4b15ef4ec17a142e5f465 | implementation7835; docsfollowup e091 | master a32b15e (README follow-up merged) |
+| vpsadmin-rust-client | 945af6a97717a7a6373507bbc9592d5cd53727c2 | b67a3ba5eef89b2bd6533050aa8769aaa0574114 | main945af6a (merged) |
 | vpsAdmin | fb2f51222503a45f2e5a42af505f719e44279ed0 unchanged fixture source | same | No source edits or merge required |
 
 Worktrees are under worktrees/2026-10-18-rust-client-generator/{haveapi,
 vpsadmin-rust-client,vpsadmin}. The HaveAPI disposable merge target was removed cleanly after completion;
-vpsadmin-rust-client-merge-target remains clean/detached at b67.
-HaveAPI tree408531478de497f59399dc04ae0cc50f73f86928; client tree
+The clean detached client merge target was removed after its successful merge;
+all feature worktrees/branches and compatible generator source refs remain.
+HaveAPI implementationtree408531478de497f59399dc04ae0cc50f73f86928,
+README followuptreef85e63f3e238ed19abd17f9c1a3b012d14cf9e2b; client tree
 c993cef64194e86bac41c073409d345846eecf8a. Feature branches retain the dated slug.
 
 HaveAPI final3logicalcommits:62d7b3c runtime,5cad449 generator/tooling,e09142a
@@ -145,3 +161,16 @@ Registry setup and releases remain deferred by user direction, not readiness
 claims. No session lifecycle action is authorized.
 
 Portal: https://vpsfree-cz.workspace.aitherdev.int.vpsfree.cz/2026-10-18-rust-client-generator/
+
+## Final October22 merge evidence
+
+- [Client main remote proof](artifacts/client-default-integration-20261022/remote-proof.txt)
+- [Client main CI passed](artifacts/client-default-integration-20261022/ci-result.json)
+- [Root README general review](final-review-root-readme.md)
+- [Root README master integration](artifacts/haveapi-readme-integration-20261022/result.json)
+
+The READMEfollowup is Low risk, general lane only, reviewer0Sol/xhigh/read_only,
+no findings/nooverride. It adds the Rustgenerator afterGo using the same style.
+No runtime/build/test input changed; no tests or additional matrix warranted.
+The earlier catalog proposal in designClarification8 is historical and was not
+implemented; the separately updated coordinator resolved it normally.

@@ -2,7 +2,11 @@
 
 ## Current integration verification (2026-10-21)
 
-HaveAPI master is merged at e09142ad241bd63fc4c014ca3afa50ad75106103.
+HaveAPI implementation merged ate09142ad241bd63fc4c014ca3afa50ad75106103.
+Root READMEfollowup a32b15e379f44fc6dae4b15ef4ec17a142e5f465 subsequently
+merged on2026-10-22: oneRustgeneratorclients-list entry, independent general
+review/mandatoryhooks passed, no code or build-inputchange. No CI triggered
+for README-onlypush; priorimplementationCI below remains correctly scoped.
 All six automatic default-branch workflows passed, including the complete Rust
 unit/style, runtime fmt/default/blocking/Clippy and generic server acceptance
 steps. The release workflow's publication job was skipped (build-only push).
@@ -19,9 +23,11 @@ reuse is claimed for changed package documentation.
 Final client945af6a97717a7a6373507bbc9592d5cd53727c2 CI39600821857 passed
 async/blocking/examples/docs/package/MSRV1.95/regeneration with its own unchanged
 inputs. Its exact recorded compatible HaveAPI source68cc is publicly retained.
-Client main remains the neutralb67 root because the installed coordinator lacks
-its repository entry and refused claim acquisition. No client merge occurred;
-normal registration would require separate workspace package activation.
+Client main was fast-forwarded to945af6a on2026-10-22 after the coordinator
+update enabled ordinary registered-repository claims. Fresh default-branch
+CI39739951412 passed all four jobs, observed by a new Luna/low utility. Remote proof and merge
+evidence: artifacts/client-default-integration-20261022. No source changes
+or test repeats were needed for the unchanged reviewed/verified head.
 
 Final committed affected reviews: final-review-integration-rebase.md and
 final-review-formatter-fixtures.md, retained reviewer0 Sol/xhigh/read_only,
@@ -35,7 +41,8 @@ keeping production guard and source bytes. Fresh finale091 tests passed; old
 failed receipts were never relabeled. All current receipts bind exact inputs.
 
 No releases, tag, publishing dispatch, registry upload or credential read.
-Only the client catalog-authority decision remains before its approved merge.
+The earlier catalog-authority blocker is resolved through the updated coordinator;
+both approved default-branch merges are complete. No releases were performed.
 
 ## Historical implementation acceptance (2026-10-19)
 

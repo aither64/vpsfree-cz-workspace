@@ -132,3 +132,16 @@ to the claim rule for this exact new-repository merge, or separately authorized
 workspace catalog/profile scope. Existing user approval for client/main merge
 remains valid; no second merge approval is requested. Releases and token access
 stay on hold.
+
+
+## Client integration resumed (2026-10-22)
+
+User requested another merge attempt after the coordinator update. Selected
+packagef5h1qmr supports session-registered repositories without catalog entries.
+The ordinary claim succeeded; all fresh identity/head/cleanliness/ancestry
+guards passed. Fast-forward and normal SSH push merged client945af6a into
+main, independently verified remotely, then claim62cb6ae8 was released.
+No workspace configuration change, policy exception or runtime activation
+was needed. Preserve the earlier catalog diagnosis as historical evidence.
+Fresh default-branch CI39739951412 is monitored separately; no releases,
+tags, credential access or publishing dispatch.
