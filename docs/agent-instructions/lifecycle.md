@@ -5,20 +5,17 @@ Its rules retain workspace scope and precedence. Paths and commands are relative
 to the coordination workspace unless the text specifies another repository.
 
 Read [coordination](../coordination.md) before a lifecycle/package mutation that
-affects queued work or a machine reservation. Running/uncertain operations fence
-lifecycle changes. Legacy archive completion automatically releases machine
-reservations; that is implementation behavior, not permission to archive or
-release a machine. Before any lifecycle action that could release deployed
-ownership, satisfy [machine retention](../coordination.md#machine-retention):
-successful deployment and effect verification, and complete deployed feature
-lineage integrated into approved remote defaults. Promptly release the exact
-claim owned by this session and verify its released status, without another user
-confirmation. Missing proof or uncertain effects keep ownership. Release does
-not authorize a session lifecycle action. Failed or interrupted archival keeps
-deployed holds until recovery completes.
-Revival does not reacquire released machines or resume canceled work. Deletion
-retains its recovery holds. Package candidates must preserve the coordination
-contract and retained artifacts; inactivity alone never frees a review reservation.
+affects queued work or a machine reservation. Running or uncertain operations
+fence lifecycle changes. Apply the runtime's
+[machine retention and release policy](../coordination.md#machine-retention)
+and preserve its original recovery contracts.
+
+Legacy archive completion automatically releases machine reservations; this is
+implementation behavior, not permission for a lifecycle action. Failed or
+interrupted archival keeps deployed holds until recovery completes. Revival does
+not reacquire released machines or resume canceled work. Deletion retains its
+recovery holds. Package candidates must preserve the coordination contract and
+retained artifacts.
 
 Sensitive sessions keep these lifecycle and coordination checks, but their
 tracking moves stay local and do not require or create Git commits. Preserve
