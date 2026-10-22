@@ -39,29 +39,36 @@ class AgentInstructionsTest < Minitest::Test
     assert_match(/ready, awaiting merge approval/, sessions)
   end
 
-  def test_machine_release_follows_verified_deployment_and_integration
-    paths = %w[AGENTS.md docs/coordination.md docs/agent-instructions/deployment.md
-               docs/agent-instructions/lifecycle.md docs/agent-instructions/git.md]
+  def test_machine_release_routes_to_the_authoritative_runtime_policy
+    coordination = File.read(File.join(ROOT, 'docs/coordination.md')).gsub(/\s+/, ' ')
+    canonical = 'https://github.com/aither64/dev-workspace/blob/master/docs/coordination.md#machine-retention'
 
+    assert_includes(coordination, "](#{canonical})")
+    assert_includes(coordination, 'automatic release for all deployed physical machines')
+    assert_includes(coordination, '`workspace-host coordination guide`')
+    assert_includes(coordination, 'https://github.com/aither64/dev-workspace/blob/master/docs/coordination-operations.md')
+    refute_match(/aitherdev/i, coordination, 'Machine identity belongs in configured catalogs and operations guides')
+    refute_match(/Promptly release each deployed physical machine once both conditions/, coordination,
+                 'Release prerequisites belong in the runtime guide')
+
+    paths = %w[AGENTS.md docs/agent-instructions/deployment.md
+               docs/agent-instructions/lifecycle.md docs/agent-instructions/git.md]
     paths.each do |path|
-      text = File.read(File.join(ROOT, path)).gsub(/\s+/, ' ')
-      assert_match(/deployment(?:\/effect verification| and (?:its )?effects?| and effect verification)/i, text, path)
-      assert_match(/deployed feature lineage.*approved remote default(?:s| branches)/, text, path)
-      assert_match(/promptly release/i, text, path)
-      assert_match(/without another user confirmation/, text, path)
-      refute_match(/all three conditions|user accepts (?:the resulting|its)|renewed user acceptance|explicit direction to release that (?:physical )?machine|explicitly directs (?:its release|release of that machine)/, text, path)
+      text = File.read(File.join(ROOT, path))
+      target = path == 'AGENTS.md' ? 'docs/coordination.md#machine-retention' : '../coordination.md#machine-retention'
+      assert_includes(text, "](#{target})", path)
+      resolved = File.expand_path(target.split('#').first, File.dirname(File.join(ROOT, path)))
+      assert_equal(File.join(ROOT, 'docs/coordination.md'), resolved, path)
+      refute_match(/promptly release|without another user confirmation/i, text,
+                   "#{path} must reference, rather than copy, the release policy")
     end
 
-    coordination = File.read(File.join(ROOT, 'docs/coordination.md')).gsub(/\s+/, ' ')
-    assert_match(/authoritative status for the exact claim owned by this session/, coordination)
-    assert_match(/reconcile known command effects and verify both conditions/, coordination)
-    assert_match(/release that claim and verify its resulting state/, coordination)
-    assert_match(/Release does not archive, delete, stop or clean a session/, coordination)
-    assert_match(/A later deployment requires a fresh machine claim/, coordination)
-
+    deployment = File.read(File.join(ROOT, 'docs/agent-instructions/deployment.md')).gsub(/\s+/, ' ')
+    assert_includes(deployment, 'Deployment and release supply no merge or lifecycle approval')
     lifecycle = File.read(File.join(ROOT, 'docs/agent-instructions/lifecycle.md')).gsub(/\s+/, ' ')
     assert_match(/Do not infer permission to archive, delete, or stop a session/, lifecycle)
     assert_match(/Legacy archive completion automatically releases machine reservations/, lifecycle)
+    assert_match(/original recovery contracts/, lifecycle)
   end
 
   def test_review_uses_saved_member_settings_or_catalog_fallback

@@ -169,12 +169,10 @@ Repository claims cover approved shared merges only; feature work, hook setup, t
 and review need none. Prepare, then claim one repository for fresh target checks,
 merge/hooks, SSH push and remote proof; release before CI, records or cleanup.
 On stale preparation/intervention, stop commands and verify effects; repair
-unlocked; reconcile uncertain shared mutations before release. Build/copy
-before machine claims when supported. Once deployment/effect verification succeeds
-and deployed feature lineage is integrated into approved remote defaults,
-promptly release the exact claim owned by this session and verify its released
-status, without another user confirmation. Missing proof or uncertain effects keep
-ownership. Read the selected coordination guide; keep existing recovery contracts.
+unlocked; reconcile uncertain shared mutations before release. For machine
+reservations and automatic release, follow the runtime policy referenced by
+[machine retention](docs/coordination.md#machine-retention). Preserve existing
+recovery contracts.
 
 Prefer clean designs that can be deployed incrementally. Incompatible changes
 are allowed only when they are intentional and recorded in the plan with the

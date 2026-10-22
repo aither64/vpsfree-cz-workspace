@@ -61,15 +61,8 @@ This gate does not apply to tracking-only coordination commits on the shared
 workspace `master`; stage only owned tracking paths and never include feature
 content in that exception.
 
-Integration proof for a deployed machine must account for its complete deployed
-feature lineage, including dependency pins and canonical repository/target
-aliases. Preserve old/new base/head ranges and reviewed equivalence or substantive
-replacement evidence when history changes; a nonancestor deployed commit is not
-literally merged. See [machine retention](../coordination.md#machine-retention).
-Once deployment and effect verification succeeds and the complete deployed
-feature lineage is integrated into approved remote defaults, promptly release the
-exact claim owned by this session and verify its released status, without another
-user confirmation. Missing proof or uncertain effects keep ownership.
+For deployed-lineage evidence and machine release, follow the authoritative
+runtime policy referenced by [machine retention](../coordination.md#machine-retention).
 Repository merge claims remain short and separate; release them before CI or
 records.
 

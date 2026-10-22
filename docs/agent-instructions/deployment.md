@@ -8,26 +8,12 @@ The selected package also provides the authoritative installed guides through
 `workspace-host coordination guide`, including before workspace integration.
 
 Before deployment activation or a workspace profile switch, read
-[coordination](../coordination.md) in full. Build and copy before taking machine
-ownership when supported. Under a claims runtime, acquire the physical machine,
-request only the machine, run authorized activation commands and verify actual
-results. Repository ownership is never held through builds or live review. Once
-deployment and effect verification succeeds and the complete deployed feature
-lineage is integrated into approved remote defaults, promptly release the exact
-claim owned by this session and verify its released status, without another user
-confirmation. Follow [machine retention](../coordination.md#machine-retention) for
-source, system/profile and verification evidence and the final ownership check.
-Missing proof or uncertain effects keep ownership; idle time or turn completion
-does not replace either proof. Pass the held claim and exact session identity to
-ordinary workspace-host profile activation.
-Release supplies no merge approval. Legacy jobs/reservations keep their original
-approval, integration-proof and recovery requirements. Held new claims require
-explicit release before lifecycle cleanup.
-
-Legacy automatic reservation release during lifecycle completion is an
-implementation behavior, not permission to bypass machine retention or perform
-a lifecycle action. Preserve the original recovery contract without initiating
-archive, deletion or release merely to finish a deployment.
+[coordination](../coordination.md) and its authoritative runtime
+[machine retention and release policy](../coordination.md#machine-retention).
+Pass the held machine claim and exact session identity to ordinary workspace-host
+profile activation. Deployment and release supply no merge or lifecycle approval.
+Legacy jobs and reservations retain their original approval, integration-proof
+and recovery requirements through the runtime's operations guide.
 
 In every confctl-managed configuration repository, inspect its defined
 channels and the channel-to-input mapping before updating a flake input. For a
@@ -54,7 +40,7 @@ portal is still under development, keep its `vpsfree-cz-configuration` changes
 on the dated initiative branch. The workspace application itself is deployed
 from its own user profile and must not be added to, pinned by, or iterated
 through the system configuration. Do not merge or push configuration changes
-to `master` merely to deploy aitherdev. Integrate that branch only after the
+to `master` merely to deploy them. Integrate that branch only after the
 user explicitly directs the merge; accepting a plan or deployment result alone
 is insufficient.
 
