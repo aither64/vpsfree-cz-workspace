@@ -1,0 +1,158 @@
+1:  82c9e77 ! 1:  41e37c2 release: automate maintained packages with GitHub Actions
+    @@ Metadata
+      ## Commit message ##
+         release: automate maintained packages with GitHub Actions
+     
+    -    Build and test the maintained server and clients from tagged source, then
+    -    publish their retained artifacts after GitHub environment approval. Use
+    -    trusted registry credentials, verify existing versions during recovery,
+    -    and synchronize the PHP mirror over scoped SSH access.
+    +    Build and retain the maintained packages in one validated Actions run,
+    +    then publish those artifacts after protected-environment approval. Use
+    +    trusted registry credentials and a scoped PHP deploy key, with immutable
+    +    version checks and recovery from partial publication.
+     
+    -    Keep build-only verification available for release tooling changes and
+    -    exclude Elixir from all release operations. Preserve package identities
+    -    and the existing shared-version release-branch policy.
+    +    Backport the release tooling while retaining release-line tests and
+    +    server-shell dependencies. Pin the current Nix setup action patch for its
+    +    upstream security fix.
+    +
+    +    (cherry picked from commit 82c9e778d04e0228785413a515e9ca76b2956215)
+     
+      ## .github/workflows/release.yml (new) ##
+     @@
+    @@ .github/workflows/release.yml (new)
+     +          persist-credentials: false
+     +
+     +      - name: Install Nix
+    -+        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+    ++        uses: cachix/install-nix-action@448cde739abec1eaf0646249e3d25bb8d9bc7702 # v31.11.2
+     +
+     +      - name: Check source and release metadata
+     +        shell: bash
+    @@ .github/workflows/release.yml (new)
+     +          persist-credentials: false
+     +
+     +      - name: Install Nix
+    -+        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
+    ++        uses: cachix/install-nix-action@448cde739abec1eaf0646249e3d25bb8d9bc7702 # v31.11.2
+     +
+     +      - name: Download approved artifacts
+     +        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+2:  c14e7d3 ! 2:  c59483e docs: describe approved releases and publication recovery
+    @@ Metadata
+      ## Commit message ##
+         docs: describe approved releases and publication recovery
+     
+    -    Document the GitHub Actions release procedure, one-time registry setup,
+    -    maintainer approval, build-only checks and recovery from partial writes.
+    -    Link the procedure from the project entry points so maintainers and agents
+    -    use the same publication contract.
+    +    Document the GitHub Actions release procedure, registry setup, maintainer
+    +    approval and recovery from partial publication. Link the procedure from
+    +    the existing release-branch instructions and replace manual publishing
+    +    steps with the same approved workflow used on master.
+     
+    - ## AGENTS.md ##
+    -@@ AGENTS.md: stop the affected action and report it.
+    - | Changing framework/client translations, generated catalogs, parameter metadata or localization lookup behavior | [Localization](doc/agent-instructions/localization.md) |
+    - | Selecting a branch for a release/backport, versioning, publishing or synchronizing the PHP client | [Branches and releases](doc/agent-instructions/releases.md) |
+    - 
+    --Always ask before publishing a new version. Do not edit generated locale or
+    -+Always ask before publishing a new version. GitHub Actions publication requires
+    -+approval in the protected `release` environment; build-only runs do not publish.
+    -+Follow the release procedure for setup and recovery. Do not edit generated locale or
+    - catalog artifacts directly; translation changes start in `i18n/haveapi.yml` and
+    - require the localization procedure. Release and publish commands must run in the
+    - top-level Nix development shell.
+    +    Keep development and localization instructions in the branch's existing
+    +    layout rather than importing the unrelated documentation refactor.
+     
+    - ## README.md ##
+    -@@ README.md: For development rules and required procedures, start with [AGENTS.md](AGENTS.md)
+    -  - [Protocol definition](doc/protocol.md)
+    -  - [How to create a client](doc/create-client.md)
+    -  - [Typed input validation rules](doc/typed-input-validation.md)
+    -+ - [Release procedure](doc/agent-instructions/releases.md)
+    -  - [Project templates](templates)
+    -  - [API examples](examples)
+    +    (cherry picked from commit c14e7d3158b91c134c2817b489cd29772fc09f82)
+     
+    - ## doc/agent-instructions/development.md ##
+    -@@ doc/agent-instructions/development.md: repository root unless explicitly stated otherwise.
+    + ## AGENTS.md ##
+    +@@
+        `nix develop .#example-ruby-activerecord-auth`. From within the shell,
+        standard language tools are used.
+      - Sync documentation into server packages with `make doc`.
+    -+- Release tooling checks: `make release-check` and `make release-test` in the
+    -+  top-level Nix shell. `make release-deps` installs maintained-component
+    -+  dependencies. See [Branches and releases](releases.md) for packaging and
+    -+  GitHub Actions publication.
+    ++- Run `make release-check` and `make release-test` for release metadata and
+    ++  helper checks. `make release-deps` installs maintained-component dependencies.
+      - Run `make doc` before Ruby server specs. They check shared documentation and
+        build/extract a real server gem to exercise the packaged documentation routes.
+      - Run the full suite from repo root with `make test` (install deps first or use `nix develop`; this starts local test servers and needs permission to bind localhost ports).
+    -
+    - ## doc/agent-instructions/releases.md ##
+     @@
+    - # Branches and releases
+    + - Avoid mixing version bumps with feature changes; use `make version` to update
+    +   the shared `VERSION` value when coordinating releases.
+      
+    --Required procedure selected by the repository AGENTS.md. The rules retain their
+    --repository scope and precedence. Paths and commands below are relative to the
+    --repository root unless explicitly stated otherwise.
+    --
+     -## Branches
+     -- `master` branch contains the latest development version.
+     -- When a new major/minor release is made, a new brach is created, e.g. `haveapi-0.26`. Fixes from the master are than cherry-picked (`git cherry-pick -x`) into the release branch and a new patch version is made, e.g. `v0.26.1` in branch `haveapi-0.26`.
+     -- Only the latest release branch is supported.
+    --
+    --
+    ++## Branches and releases
+    + 
+     -## Releasing a new version
+     -- When releasing a new major/minor version, create a new release branch.
+     -- When releasing a patch version, work within the release branch.
+    @@ doc/agent-instructions/releases.md
+     -  the documentation routes using the extracted framework. This catches missing
+     -  package content that a prepared source checkout could conceal.
+     -- `make publish` will upload the built artifacts to package repositories, e.g. rubygems.org, npmjs.com, etc. Run it inside `nix develop` and always ask before publishing a new version.
+    --
+    --
+    ++Before selecting a release/backport branch, changing versions, publishing or
+    ++synchronizing the PHP client, read [Branches and releases](doc/agent-instructions/releases.md)
+    ++in full. It defines the supported release line, maintained packages, GitHub
+    ++Actions publication, setup and recovery.
+    + 
+     -## PHP client irregularity
+     -- The PHP client at `clients/php/` must be released separately due to a restriction in `composer` -- it does not support monorepos, the PHP package is expected to live in the top-level directory.
+     -- When releasing a new version, the contents of `clients/php/` is synchronized with another repository at `https://github.com/vpsfreecz/haveapi-client-php`.
+     -- Synchronization is done by cloning repository `vpsfreecz/haveapi-client-php` and using rsyncto update/remove files.
+     -- Release branches are not created in `vpsfreecz/haveapi-client-php`, since only the latest release is supported, only the `master` branch is updated.
+     -- New version is tagged and the changes are pushed.
+    ++Always ask before publishing a new version. Run release commands in the top-level
+    ++Nix shell. GitHub Actions publishes retained artifacts after approval in the
+    ++protected `release` environment. Build-only runs do not publish. Elixir components
+    ++are unmaintained and excluded from releases.
+    +
+    + ## README.md ##
+    +@@ README.md: If there isn't a client in the language you need, you can
+    +  - [Protocol definition](doc/protocol.md)
+    +  - [How to create a client](doc/create-client.md)
+    +  - [Typed input validation rules](doc/typed-input-validation.md)
+    ++ - [Release procedure](doc/agent-instructions/releases.md)
+    +  - [Project templates](templates)
+    +  - [API examples](examples)
+    +
+    + ## doc/agent-instructions/releases.md (new) ##
+    +@@
+    ++# Branches and releases
+    ++
+     +Required procedure selected by AGENTS.md. Paths and commands are relative to the
+     +repository root. Always ask before publishing a new version. Preparing release
+     +metadata or running a build does not authorize publication.

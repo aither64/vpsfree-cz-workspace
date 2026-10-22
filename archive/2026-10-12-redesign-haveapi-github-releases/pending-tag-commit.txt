@@ -1,0 +1,11 @@
+release: resolve draft releases through their pending tag
+
+Draft releases can have an untagged REST name until publication. Looking
+for the intended version tag in the REST list missed the new draft.
+
+Resolve the intended tag through GraphQL, then fetch metadata by release
+ID, as gh does. Treat only a null lookup as absent and preserve query
+errors. Report a missing post-create draft before asset uploads.
+
+Cover pending drafts, creation, published releases and failures at both
+query stages without registry writes.

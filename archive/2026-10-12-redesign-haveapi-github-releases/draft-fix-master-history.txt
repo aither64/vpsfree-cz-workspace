@@ -1,0 +1,17 @@
+commit 526648131af45df68c25ac0042a52f22c7a81df5
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 20:06:39 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 20:06:39 2026 +0200
+
+    release: find draft GitHub releases before uploading assets
+    
+    The release-by-tag endpoint returns published releases. Preparation treated
+    a newly created draft as missing and stopped before publication. Find the
+    exact tag in the paginated listing, which includes authorized drafts, and
+    keep API errors visible before any creation.
+    
+    Cover existing and new drafts, pagination, published releases and failed
+    queries without making registry writes.
+    
+    (cherry picked from commit 2b745b738f08a1cfb55b9983eac48b7094c527e2)

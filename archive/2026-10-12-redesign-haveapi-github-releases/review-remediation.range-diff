@@ -1,0 +1,161 @@
+1:  aa23f97 ! 1:  e8fe45e release: automate maintained packages with GitHub Actions
+    @@ utils/release/cli.rb (new)
+     +    if command == 'github-prepare'
+     +      publisher.prepare_github
+     +    else
+    -+      publisher.php_key
+    -+      publisher.publish_registries
+    -+      publisher.publish_php
+    -+      publisher.finish_github
+    ++      publisher.publish
+     +    end
+     +  else
+     +    raise HaveAPI::Release::Error, 'See doc/agent-instructions/releases.md for release helper commands'
+    @@ utils/release/publish.rb (new)
+     +      end
+     +
+     +      # mirror is an isolated clone owned by this publication, never a workspace checkout.
+    -+      def sync_php(mirror)
+    ++      def preflight_php(mirror)
+     +        snapshot = php_snapshot
+     +        raise Error, 'PHP source conflicts with mirror-owned metadata' if snapshot.keys.any? { |path| protected_php_path?(path) }
+     +
+    @@ utils/release/publish.rb (new)
+     +            raise Error, 'Existing PHP tag has different content or source provenance'
+     +          end
+     +
+    -+          puts "Confirmed PHP tag: #{tag}"
+    -+          return
+    ++          return true
+     +        end
+     +
+     +        current_tags = Release.capture('git', 'tag', '--points-at', 'HEAD', chdir: mirror).lines.map(&:strip)
+    @@ utils/release/publish.rb (new)
+     +          raise Error, 'Refusing to move PHP master to an older or conflicting version'
+     +        end
+     +
+    ++        false
+    ++      end
+    ++
+    ++      def sync_php(mirror, transport: {})
+    ++        if preflight_php(mirror)
+    ++          puts "Confirmed PHP tag: #{@artifacts.tag}"
+    ++          return
+    ++        end
+    ++
+    ++        snapshot = php_snapshot
+    ++        current = mirror_snapshot(mirror, 'HEAD')
+    ++        tag = @artifacts.tag
+     +        owned = (current.keys + snapshot.keys).uniq
+     +        current.each_key { |path| FileUtils.rm_f(File.join(mirror, path)) }
+     +        snapshot.each do |path, (content, mode)|
+    @@ utils/release/publish.rb (new)
+     +          Release.run(*author, 'commit', '-F', message, chdir: mirror)
+     +          Release.run(*author, 'tag', '-a', tag, '-F', message, chdir: mirror)
+     +        end
+    -+        Release.run('git', 'push', '--atomic', 'origin', 'HEAD:refs/heads/master', "refs/tags/#{tag}", chdir: mirror)
+    ++        Release.run(transport, 'git', 'push', '--atomic', 'origin', 'HEAD:refs/heads/master', "refs/tags/#{tag}", chdir: mirror)
+     +        raise Error, 'PHP mirror content differs after synchronization' unless mirror_snapshot(mirror, tag) == snapshot
+     +
+     +        puts "Confirmed PHP tag: #{tag}; Packagist indexing follows its configured webhook"
+    @@ utils/release/publish.rb (new)
+     +        "#{key.strip}\n"
+     +      end
+     +
+    -+      def publish_php
+    ++      def with_php_mirror
+     +        Dir.mktmpdir('haveapi-php-publish-') do |tmp|
+     +          key_path = File.join(tmp, 'key')
+     +          File.write(key_path, php_key, perm: 0o600)
+    @@ utils/release/publish.rb (new)
+     +          env = { 'GIT_SSH_COMMAND' => Shellwords.join(ssh) }
+     +          mirror = File.join(tmp, 'mirror')
+     +          Release.run(env, 'git', 'clone', '--quiet', '--branch', 'master', PHP_REPOSITORY, mirror)
+    -+          # Pass credentials only to Git transport, not to source or package scripts.
+    -+          old_ssh = ENV.fetch('GIT_SSH_COMMAND', nil)
+    -+          begin
+    -+            ENV['GIT_SSH_COMMAND'] = env.fetch('GIT_SSH_COMMAND')
+    -+            sync_php(mirror)
+    -+          ensure
+    -+            ENV['GIT_SSH_COMMAND'] = old_ssh
+    -+          end
+    ++          yield mirror, env
+    ++        end
+    ++      end
+    ++
+    ++      def publish
+    ++        with_php_mirror do |mirror, transport|
+    ++          preflight_php(mirror)
+    ++          publish_registries
+    ++          sync_php(mirror, transport:)
+    ++          finish_github
+     +        end
+     +      end
+     +
+    @@ utils/release/spec/release_spec.rb (new)
+     +    artifacts.names.each { |name| File.write(File.join(tmp, name), name) }
+     +    manifest = {
+     +      schema: 1, source: artifacts.source, version: artifacts.version, tag: artifacts.tag,
+    -+      run_id: 'local', files: artifacts.names.to_h { |name| [name, Digest::SHA256.file(File.join(tmp, name)).hexdigest] }
+    ++      run_id: ENV.fetch('GITHUB_RUN_ID', 'local'), files: artifacts.names.to_h { |name| [name, Digest::SHA256.file(File.join(tmp, name)).hexdigest] }
+     +    }
+     +    File.write(File.join(tmp, 'release-manifest.json'), JSON.generate(manifest))
+     +    manifest
+    @@ utils/release/spec/release_spec.rb (new)
+     +      expect { artifacts.verify(tmp) }.to raise_error(HaveAPI::Release::Error, /this source/)
+     +    end
+     +
+    ++    it 'rejects artifacts from a different workflow run' do
+    ++      manifest = fixture_manifest
+    ++      manifest[:run_id] = 'another-run'
+    ++      File.write(File.join(tmp, 'release-manifest.json'), JSON.generate(manifest))
+    ++      allow(ENV).to receive(:[]).and_call_original
+    ++      allow(ENV).to receive(:[]).with('GITHUB_RUN_ID').and_return('123')
+    ++      allow(ENV).to receive(:fetch).and_call_original
+    ++      allow(ENV).to receive(:fetch).with('GITHUB_RUN_ID').and_return('123')
+    ++      expect { artifacts.verify(tmp) }.to raise_error(HaveAPI::Release::Error, /different workflow run/)
+    ++    end
+    ++
+     +    it 'rejects archive paths that escape the extraction directory' do
+     +      path = File.join(tmp, 'unsafe.tar')
+     +      tar(path, { '../outside' => 'data' })
+    @@ utils/release/spec/release_spec.rb (new)
+     +      expect(File.read(File.join(mirror, 'removed.php'))).to eq('unreleased change')
+     +    end
+     +
+    ++    it 'refuses a PHP conflict before any registry publication' do
+    ++      git(mirror, 'tag', artifacts.tag)
+    ++      allow(publisher).to receive(:with_php_mirror).and_yield(mirror, {})
+    ++      allow(publisher).to receive(:publish_registries)
+    ++      allow(publisher).to receive(:finish_github)
+    ++      expect { publisher.publish }.to raise_error(HaveAPI::Release::Error, /different content or source/)
+    ++      expect(publisher).not_to have_received(:publish_registries)
+    ++      expect(publisher).not_to have_received(:finish_github)
+    ++    end
+    ++
+     +    it 'refuses an existing version tag with different content or provenance' do
+     +      git(mirror, 'tag', artifacts.tag)
+     +      expect { publisher.sync_php(mirror) }.to raise_error(HaveAPI::Release::Error, /different content or source/)
+2:  1bc5178 ! 2:  cb256a8 docs: describe approved releases and publication recovery
+    @@ doc/agent-instructions/releases.md
+     +   `haveapi-client-php/master` with the corresponding version tag. Rejecting the
+     +   request fails the workflow before the publishing job starts.
+     +6. The publishing job verifies the saved files and retains them in a draft
+    -+   GitHub Release. It pushes the Ruby client before its dependent server and
+    ++   GitHub Release. It validates the PHP mirror before writing to any registry,
+    ++   then pushes the Ruby client before its dependent server and
+     +   Go-generator gems, publishes the npm tarball and updates the PHP mirror. It
+     +   publishes the GitHub Release only after all destinations succeed.
+     +7. Confirm the workflow's publication receipts and verify that the PHP version
+    @@ doc/agent-instructions/releases.md
+     +ordinary workflow does not automatically rebuild or replace missing artifacts.
+     +If no original files remain, prepare a new version after diagnosing the failure.
+     +
+    ++The PHP preflight rejects existing tag/source conflicts, untagged master changes
+    ++and backward version updates before any gem or npm push. Its later atomic push
+    ++still refuses a conflicting concurrent update; such a race can leave partial
+    ++publication and must be diagnosed before retrying.
+    ++
+     +The PHP helper uses a clean isolated clone, preserves mirror-owned `.github`
+     +configuration and AGENTS.md, and replaces the released library files with the
+     +tracked PHP snapshot. It refuses untagged master changes and backward version

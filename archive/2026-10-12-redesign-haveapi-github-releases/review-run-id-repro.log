@@ -1,0 +1,88 @@
+Successfully installed bundler-4.0.22
+1 gem installed
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=3.4.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.7.3 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=debug version=1.9.2 platform=ruby> because it is missing extensions
+Bundle complete! 5 Gemfile dependencies, 33 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+bundle exec rspec utils/release/spec
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=3.4.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.7.3 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=debug version=1.9.2 platform=ruby> because it is missing extensions
+....F........FFFInitialized empty Git repository in /tmp/nix-shell.39hjSw/haveapi-release-spec-20261012-3368302-hh74bl/remote.git/
+Cloning into '/tmp/nix-shell.39hjSw/haveapi-release-spec-20261012-3368302-hh74bl/mirror'...
+warning: You appear to have cloned an empty repository.
+done.
+[master aa49372] Release 0.29.0
+ 3 files changed, 2 insertions(+), 2 deletions(-)
+ delete mode 100644 removed.php
+ create mode 100644 src/Client.php
+To /tmp/nix-shell.39hjSw/haveapi-release-spec-20261012-3368302-hh74bl/remote.git
+   56ac639..aa49372  HEAD -> master
+ * [new tag]         v0.29.0 -> v0.29.0
+Confirmed PHP tag: v0.29.0; Packagist indexing follows its configured webhook
+Confirmed PHP tag: v0.29.0
+.Initialized empty Git repository in /tmp/nix-shell.39hjSw/haveapi-release-spec-20261012-3368302-60iu1w/remote.git/
+Cloning into '/tmp/nix-shell.39hjSw/haveapi-release-spec-20261012-3368302-60iu1w/mirror'...
+warning: You appear to have cloned an empty repository.
+done.
+.Initialized empty Git repository in /tmp/nix-shell.39hjSw/haveapi-release-spec-20261012-3368302-l6cp1b/remote.git/
+Cloning into '/tmp/nix-shell.39hjSw/haveapi-release-spec-20261012-3368302-l6cp1b/mirror'...
+warning: You appear to have cloned an empty repository.
+done.
+.
+
+Failures:
+
+  1) HaveAPI::Release metadata and artifacts accepts retained hashes and rejects changed bytes
+     Failure/Error: expect(artifacts.verify(tmp).fetch('source')).to eq('a' * 40)
+
+     HaveAPI::Release::Error:
+       Artifacts belong to a different workflow run
+     # ./utils/release/artifacts.rb:136:in `verify'
+     # ./utils/release/spec/release_spec.rb:68:in `block (3 levels) in <top (required)>'
+
+  2) HaveAPI::Release existing registry versions accepts a gem only when its registry checksum matches the retained gem
+     Failure/Error: let(:publisher) { HaveAPI::Release::Publisher.new(artifacts, tmp) }
+
+     HaveAPI::Release::Error:
+       Artifacts belong to a different workflow run
+     # ./utils/release/artifacts.rb:136:in `verify'
+     # ./utils/release/publish.rb:11:in `initialize'
+     # ./utils/release/spec/release_spec.rb:132:in `new'
+     # ./utils/release/spec/release_spec.rb:132:in `block (3 levels) in <top (required)>'
+     # ./utils/release/spec/release_spec.rb:138:in `block (3 levels) in <top (required)>'
+
+  3) HaveAPI::Release existing registry versions accepts npm only when identity and tarball integrity match
+     Failure/Error: let(:publisher) { HaveAPI::Release::Publisher.new(artifacts, tmp) }
+
+     HaveAPI::Release::Error:
+       Artifacts belong to a different workflow run
+     # ./utils/release/artifacts.rb:136:in `verify'
+     # ./utils/release/publish.rb:11:in `initialize'
+     # ./utils/release/spec/release_spec.rb:132:in `new'
+     # ./utils/release/spec/release_spec.rb:132:in `block (3 levels) in <top (required)>'
+     # ./utils/release/spec/release_spec.rb:147:in `block (3 levels) in <top (required)>'
+
+  4) HaveAPI::Release existing registry versions checks for conflicting versions before making any registry write
+     Failure/Error: let(:publisher) { HaveAPI::Release::Publisher.new(artifacts, tmp) }
+
+     HaveAPI::Release::Error:
+       Artifacts belong to a different workflow run
+     # ./utils/release/artifacts.rb:136:in `verify'
+     # ./utils/release/publish.rb:11:in `initialize'
+     # ./utils/release/spec/release_spec.rb:132:in `new'
+     # ./utils/release/spec/release_spec.rb:132:in `block (3 levels) in <top (required)>'
+     # ./utils/release/spec/release_spec.rb:154:in `block (3 levels) in <top (required)>'
+
+Finished in 0.82662 seconds (files took 0.42852 seconds to load)
+19 examples, 4 failures
+
+Failed examples:
+
+rspec ./utils/release/spec/release_spec.rb:66 # HaveAPI::Release metadata and artifacts accepts retained hashes and rejects changed bytes
+rspec ./utils/release/spec/release_spec.rb:136 # HaveAPI::Release existing registry versions accepts a gem only when its registry checksum matches the retained gem
+rspec ./utils/release/spec/release_spec.rb:144 # HaveAPI::Release existing registry versions accepts npm only when identity and tarball integrity match
+rspec ./utils/release/spec/release_spec.rb:153 # HaveAPI::Release existing registry versions checks for conflicting versions before making any registry write
+
+make: *** [Makefile:27: release-test] Error 1

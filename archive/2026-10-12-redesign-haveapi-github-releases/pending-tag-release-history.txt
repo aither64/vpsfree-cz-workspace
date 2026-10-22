@@ -1,0 +1,30 @@
+commit c8cfb16e96c9c9237d733af2a657dee42e71c79f
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 21:06:04 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 21:06:04 2026 +0200
+
+    release: resolve draft releases through their pending tag
+    
+    Draft releases can have an untagged REST name until publication. Looking
+    for the intended version tag in the REST list missed the new draft.
+    
+    Resolve the intended tag through GraphQL, then fetch metadata by release
+    ID, as gh does. Treat only a null lookup as absent and preserve query
+    errors. Report a missing post-create draft before asset uploads.
+    
+    Cover pending drafts, creation, published releases and failures at both
+    query stages without registry writes.
+
+commit 355c2990a4bfd3940d3234cb2077ad0127f43551
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 21:08:20 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 21:08:20 2026 +0200
+
+    Version 0.29.12
+    
+    Include the pending-tag lookup correction in a new immutable candidate.
+    Preserve the failed 0.29.10 and 0.29.11 tags and their original artifacts;
+    neither version published registry packages. Keep the first automated
+    release and npm metadata corrections in the consumer release notes.

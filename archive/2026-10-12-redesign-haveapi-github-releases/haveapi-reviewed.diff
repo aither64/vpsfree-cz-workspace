@@ -1,0 +1,1357 @@
+diff --git a/.github/workflows/release.yml b/.github/workflows/release.yml
+new file mode 100644
+index 0000000..6057f16
+--- /dev/null
++++ b/.github/workflows/release.yml
+@@ -0,0 +1,156 @@
++name: release
++
++on:
++  push:
++    branches: ['**']
++    tags: ['v*']
++    paths:
++      - '.github/workflows/release.yml'
++      - 'utils/release/**'
++      - 'Makefile'
++      - 'Gemfile'
++      - 'flake.nix'
++      - 'flake.lock'
++      - 'clients/js/package.json'
++  pull_request:
++    paths:
++      - '.github/workflows/release.yml'
++      - 'utils/release/**'
++      - 'Makefile'
++      - 'Gemfile'
++      - 'flake.nix'
++      - 'flake.lock'
++      - 'clients/js/package.json'
++  workflow_dispatch:
++
++# Finish one tagged release before starting another. Branch checks are separate.
++concurrency:
++  group: ${{ startsWith(github.ref, 'refs/tags/') && 'haveapi-release' || format('haveapi-release-check-{0}', github.ref) }}
++  cancel-in-progress: false
++
++permissions:
++  contents: read
++
++jobs:
++  build:
++    name: Validate, test and build
++    runs-on: ubuntu-latest
++    permissions:
++      contents: read
++      actions: read
++    outputs:
++      artifact-id: ${{ steps.restore.outputs.id || steps.upload.outputs.artifact-id }}
++    env:
++      GH_TOKEN: ${{ github.token }}
++      RELEASE_TAG: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
++    steps:
++      - name: Check out source
++        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          fetch-depth: 0
++          persist-credentials: false
++
++      - name: Install Nix
++        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
++
++      - name: Check source and release metadata
++        shell: bash
++        run: |
++          if [[ -n "$RELEASE_TAG" ]]; then
++            nix develop -c ruby utils/release/cli.rb check-clean "$RELEASE_TAG"
++          else
++            nix develop -c ruby utils/release/cli.rb check-clean
++          fi
++
++      - name: Check publication setup
++        if: env.RELEASE_TAG != ''
++        env:
++          HAVEAPI_RELEASE_ENABLED: ${{ vars.HAVEAPI_RELEASE_ENABLED }}
++        run: nix develop -c ruby utils/release/cli.rb check-activation
++
++      - name: Find original artifacts
++        id: restore
++        run: nix develop -c ruby utils/release/cli.rb artifact-state
++
++      - name: Restore original artifacts
++        if: steps.restore.outputs.id != ''
++        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
++        with:
++          artifact-ids: ${{ steps.restore.outputs.id }}
++          path: dist
++          github-token: ${{ github.token }}
++
++      - name: Test and build maintained packages
++        if: steps.restore.outputs.id == ''
++        run: |
++          nix develop -c bash -euo pipefail -c '
++            make release-deps
++            bundle exec rake i18n:health
++            make release-test
++            make release
++            make test
++            ruby utils/release/cli.rb smoke-npm dist
++          '
++
++      - name: Retain release artifacts
++        id: upload
++        if: steps.restore.outputs.id == ''
++        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
++        with:
++          name: release-${{ github.run_id }}
++          path: dist/*
++          if-no-files-found: error
++          retention-days: 90
++
++      - name: Verify retained artifacts
++        run: nix develop -c ruby utils/release/cli.rb verify dist
++
++      - name: Summarize candidate release
++        shell: bash
++        run: |
++          echo 'Artifacts are retained under release-${{ github.run_id }}.' >> "$GITHUB_STEP_SUMMARY"
++          if [[ -z "$RELEASE_TAG" ]]; then
++            echo 'Build-only run: no packages will be published.' >> "$GITHUB_STEP_SUMMARY"
++          fi
++          cat dist/release-notes.md >> "$GITHUB_STEP_SUMMARY"
++
++  publish:
++    name: Publish approved artifacts
++    needs: build
++    if: github.repository == 'vpsfreecz/haveapi' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
++    runs-on: ubuntu-latest
++    environment: release
++    permissions:
++      contents: write
++      actions: read
++      id-token: write
++    env:
++      GH_TOKEN: ${{ github.token }}
++      HAVEAPI_RELEASE_TOOLS_ONLY: '1'
++    steps:
++      - name: Check out source
++        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
++        with:
++          fetch-depth: 0
++          persist-credentials: false
++
++      - name: Install Nix
++        uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
++
++      - name: Download approved artifacts
++        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
++        with:
++          artifact-ids: ${{ needs.build.outputs.artifact-id }}
++          path: dist
++          github-token: ${{ github.token }}
++
++      - name: Verify artifacts and retain draft release assets
++        run: nix develop -c ruby utils/release/cli.rb github-prepare dist
++
++      - name: Configure RubyGems trusted publishing
++        uses: rubygems/configure-rubygems-credentials@dc5a8d8553e6ee01fc26761a49e99e733d17954a # v2.1.0
++
++      - name: Publish packages and complete the GitHub Release
++        env:
++          HAVEAPI_PHP_DEPLOY_KEY: ${{ secrets.HAVEAPI_PHP_DEPLOY_KEY }}
++        run: nix develop -c ruby utils/release/cli.rb publish dist
+diff --git a/.gitignore b/.gitignore
+index 092c0e5..10de14f 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -7,6 +7,8 @@
+ .yardoc
+ .gems
+ Gemfile.lock
++clients/js/package-lock.json
++clients/php/composer.lock
+ InstalledFiles
+ _yardoc
+ coverage
+diff --git a/AGENTS.md b/AGENTS.md
+index 31a91fd..9a35013 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -17,7 +17,9 @@ stop the affected action and report it.
+ | Changing framework/client translations, generated catalogs, parameter metadata or localization lookup behavior | [Localization](doc/agent-instructions/localization.md) |
+ | Selecting a branch for a release/backport, versioning, publishing or synchronizing the PHP client | [Branches and releases](doc/agent-instructions/releases.md) |
+ 
+-Always ask before publishing a new version. Do not edit generated locale or
++Always ask before publishing a new version. GitHub Actions publication requires
++approval in the protected `release` environment; build-only runs do not publish.
++Follow the release procedure for setup and recovery. Do not edit generated locale or
+ catalog artifacts directly; translation changes start in `i18n/haveapi.yml` and
+ require the localization procedure. Release and publish commands must run in the
+ top-level Nix development shell.
+diff --git a/Gemfile b/Gemfile
+index c3aa8af..e3646c1 100644
+--- a/Gemfile
++++ b/Gemfile
+@@ -3,6 +3,7 @@ source 'https://rubygems.org'
+ group :development do
+   gem 'overcommit'
+   gem 'rake'
++  gem 'rspec'
+   gem 'rubocop', '~> 1.85.0'
+   gem 'rubocop-rspec'
+ end
+diff --git a/Makefile b/Makefile
+index c16aaee..9a56f55 100644
+--- a/Makefile
++++ b/Makefile
+@@ -1,51 +1,43 @@
+ VERSION=$(shell cat VERSION)
+ 
+-.PHONY: doc publish release test version
++.PHONY: doc publish release release-check release-test release-deps test version
+ 
+ doc:
+-	./utils/copydoc.sh servers/*
++	./utils/copydoc.sh servers/ruby
+ 
+ # Run component test suites (install deps first or use nix develop).
+-test:
++test: doc
+ 	cd servers/ruby && bundle exec rspec
+ 	cd clients/ruby && bundle exec rspec
+ 	cd clients/go && bundle exec rspec
+ 	cd clients/js && npm test
+ 	cd clients/php && vendor/bin/phpunit
+ 
+-release: doc
+-	mkdir -p dist
+-	
+-	cd clients/ruby && bundle install && bundle exec rake build
+-	mv clients/ruby/pkg/haveapi-client-$(VERSION).gem dist/
+-	gem install dist/haveapi-client-$(VERSION).gem
+-	
+-	cd servers/ruby && bundle install && bundle exec rake build
+-	mv servers/ruby/pkg/haveapi-$(VERSION).gem dist/
+-	
+-	cd clients/go && bundle install && bundle exec rake build
+-	mv clients/go/pkg/haveapi-go-client-$(VERSION).gem dist/
+-	
+-	cd clients/js && ./node_modules/.bin/gulp
+-	cp clients/js/dist/haveapi-client.js dist/
++release-deps:
++	cd servers/ruby && bundle install
++	cd clients/ruby && bundle install
++	cd clients/go && bundle install
++	cd clients/js && npm install --no-audit --no-fund
++	cd clients/php && composer install --no-interaction --prefer-dist
++
++release-check:
++	ruby utils/release/cli.rb check
++
++release-test:
++	bundle exec rspec utils/release/spec
++
++release:
++	bash utils/release/build.sh
+ 
+ publish:
+-	gem push dist/haveapi-client-$(VERSION).gem
+-	gem push dist/haveapi-$(VERSION).gem
+-	gem push dist/haveapi-go-client-$(VERSION).gem
+-	
+-	mkdir -p tmp/haveapi-client-js
+-	cd clients/js && cp -p --parents $(shell cd clients/js && git ls-files) ../../tmp/haveapi-client-js/
+-	cd tmp/haveapi-client-js && npm publish
+-	rm -rf tmp/haveapi-client-js
++	@echo 'Publish through the release GitHub Actions workflow; see doc/agent-instructions/releases.md.' >&2
++	@exit 1
+ 
+ version:
+ 	@echo "$(VERSION)" > VERSION
+ 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" servers/ruby/lib/haveapi/version.rb
+-	#@sed -ri "s/version: \"[^\"]+\"/version: \"$(VERSION)\"/" servers/elixir/mix.exs
+ 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/ruby/lib/haveapi/client/version.rb
+ 	@sed -ri "s/ VERSION = '[^']+'/ VERSION = '$(VERSION)'/" clients/go/lib/haveapi/go_client/version.rb
+-	#@sed -ri "s/version: \"[^\"]+\"/version: \"$(VERSION)\"/" clients/elixir/mix.exs
+ 	@sed -ri "s/\"version\": \"[^\"]+\"/\"version\": \"$(VERSION)\"/" clients/js/package.json
+ 	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/src/haveapi/client.js
+ 	@sed -ri "s/Client\.Version = '[^']+'/Client.Version = '$(VERSION)'/" clients/js/dist/haveapi-client.js
+diff --git a/README.md b/README.md
+index 8129e2b..7182c13 100644
+--- a/README.md
++++ b/README.md
+@@ -66,5 +66,6 @@ For development rules and required procedures, start with [AGENTS.md](AGENTS.md)
+  - [Protocol definition](doc/protocol.md)
+  - [How to create a client](doc/create-client.md)
+  - [Typed input validation rules](doc/typed-input-validation.md)
++ - [Release procedure](doc/agent-instructions/releases.md)
+  - [Project templates](templates)
+  - [API examples](examples)
+diff --git a/clients/js/package.json b/clients/js/package.json
+index 28e44c5..fa06587 100644
+--- a/clients/js/package.json
++++ b/clients/js/package.json
+@@ -13,7 +13,8 @@
+ 	"main": "dist/haveapi-client.js",
+ 	"repository": {
+ 		"type": "git",
+-		"url": "https://github.com/vpsfreecz/haveapi-client-js"
++		"url": "https://github.com/vpsfreecz/haveapi",
++		"directory": "clients/js"
+ 	},
+ 	"scripts": {
+ 		"test": "mocha"
+diff --git a/doc/agent-instructions/development.md b/doc/agent-instructions/development.md
+index 23233ad..d944a7f 100644
+--- a/doc/agent-instructions/development.md
++++ b/doc/agent-instructions/development.md
+@@ -12,6 +12,10 @@ repository root unless explicitly stated otherwise.
+   `nix develop .#example-ruby-activerecord-auth`. From within the shell,
+   standard language tools are used.
+ - Sync documentation into server packages with `make doc`.
++- Release tooling checks: `make release-check` and `make release-test` in the
++  top-level Nix shell. `make release-deps` installs maintained-component
++  dependencies. See [Branches and releases](releases.md) for packaging and
++  GitHub Actions publication.
+ - Run `make doc` before Ruby server specs. They check shared documentation and
+   build/extract a real server gem to exercise the packaged documentation routes.
+ - Run the full suite from repo root with `make test` (install deps first or use `nix develop`; this starts local test servers and needs permission to bind localhost ports).
+diff --git a/doc/agent-instructions/releases.md b/doc/agent-instructions/releases.md
+index 5138385..6197f1d 100644
+--- a/doc/agent-instructions/releases.md
++++ b/doc/agent-instructions/releases.md
+@@ -1,36 +1,166 @@
+ # Branches and releases
+ 
+-Required procedure selected by the repository AGENTS.md. The rules retain their
+-repository scope and precedence. Paths and commands below are relative to the
+-repository root unless explicitly stated otherwise.
+-
+-## Branches
+-- `master` branch contains the latest development version.
+-- When a new major/minor release is made, a new brach is created, e.g. `haveapi-0.26`. Fixes from the master are than cherry-picked (`git cherry-pick -x`) into the release branch and a new patch version is made, e.g. `v0.26.1` in branch `haveapi-0.26`.
+-- Only the latest release branch is supported.
+-
+-
+-## Releasing a new version
+-- When releasing a new major/minor version, create a new release branch.
+-- When releasing a patch version, work within the release branch.
+-- `make version VERSION=<major>.<minor>.<patch>` will update versions of all components.
+-- Update `CHANGELOG.md` and add a brief description of changes for each component. If there are no changes to a component, it is not mentioned.
+-- Always run `make release` and `make publish` from within the top-level `nix develop` shell so the correct toolchain is used; running them outside nix can produce build failures or mismatched Ruby versions.
+-- `make release` will build artifacts of all components. Run it inside `nix develop`.
+-- `make release` generates shared server documentation before building gems.
+-  Generation failures stop the release. A direct server `bundle exec rake build`
+-  rejects missing or empty shared documentation; run `make doc` from the
+-  repository root first. Do not commit the generated server documents.
+-- Before publication, run the Ruby server specs after `make doc`. The packaging
+-  specs build and extract a server gem, check the required documents and serve
+-  the documentation routes using the extracted framework. This catches missing
+-  package content that a prepared source checkout could conceal.
+-- `make publish` will upload the built artifacts to package repositories, e.g. rubygems.org, npmjs.com, etc. Run it inside `nix develop` and always ask before publishing a new version.
+-
+-
+-## PHP client irregularity
+-- The PHP client at `clients/php/` must be released separately due to a restriction in `composer` -- it does not support monorepos, the PHP package is expected to live in the top-level directory.
+-- When releasing a new version, the contents of `clients/php/` is synchronized with another repository at `https://github.com/vpsfreecz/haveapi-client-php`.
+-- Synchronization is done by cloning repository `vpsfreecz/haveapi-client-php` and using rsyncto update/remove files.
+-- Release branches are not created in `vpsfreecz/haveapi-client-php`, since only the latest release is supported, only the `master` branch is updated.
+-- New version is tagged and the changes are pushed.
++Required procedure selected by AGENTS.md. Paths and commands are relative to the
++repository root. Always ask before publishing a new version. Preparing release
++metadata or running a build does not authorize publication.
++
++## Branches and packages
++
++`master` contains the development version. For a major or minor release, create
++`haveapi-X.Y` from master. For a patch release, work on that release branch and
++backport fixes with `git cherry-pick -x`. Only the newest release branch is
++supported. The tag-triggered workflow verifies that its commit belongs to the
++newest `haveapi-X.Y` branch and that its tag agrees with VERSION.
++
++All maintained components use the shared version and are released together:
++
++| Component | Package or destination |
++| --- | --- |
++| Ruby server | RubyGems `haveapi` |
++| Ruby client and CLI | RubyGems `haveapi-client` |
++| Go client generator, implemented in Ruby | RubyGems `haveapi-go-client` |
++| JavaScript client | npm `haveapi-client` and a browser bundle |
++| PHP client | Composer `haveapi/client`, through `vpsfreecz/haveapi-client-php` |
++
++The Elixir server and client are unmaintained and excluded from releases.
++Consumers keep their existing package names and installation commands. Release
++automation does not change API behavior, data formats or deployment ordering.
++
++## One-time GitHub and registry setup
++
++Install `.github/workflows/release.yml` on master and the supported release
++branch before tagging an automated release. A tag uses the workflow in its own
++source revision.
++
++1. Under **Settings → Environments**, create `release` and enable **Required
++   reviewers**. Select the maintainers allowed to approve publication. One
++   reviewer approves the publishing job; **Prevent self-review** optionally
++   requires someone other than the person who pushed the tag. Restrict deployment
++   to tags matching `v*`. Disable administrator bypass if that is the desired
++   repository policy. The workflow checks that required reviewers are configured;
++   merely naming an environment does not enable approval.
++2. Configure a [RubyGems trusted publisher](https://guides.rubygems.org/trusted-publishing/)
++   for each of the three gems: owner `vpsfreecz`, repository `haveapi`, workflow
++   `release.yml`, environment `release`.
++3. Configure the [npm trusted publisher](https://docs.npmjs.com/trusted-publishers/)
++   for `haveapi-client` with the same owner, repository, workflow and environment.
++   Allow direct `npm publish`. The package's repository URL must identify
++   `https://github.com/vpsfreecz/haveapi`. The Nix release shell supplies Node 24;
++   publication checks that npm is at least 11.5.1. Registry access uses OIDC, with
++   no stored RubyGems or npm publishing tokens.
++4. Add a write deploy key to `vpsfreecz/haveapi-client-php`. Store its private key
++   as environment secret `HAVEAPI_PHP_DEPLOY_KEY` in HaveAPI's `release`
++   environment. This credential can push only to that repository. SSH verifies
++   GitHub against `utils/release/github_known_hosts`; update that file only after
++   verifying an upstream host-key change against [GitHub's published keys](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/githubs-ssh-key-fingerprints).
++5. Verify the PHP package's [Packagist push webhook](https://packagist.org/about).
++   A successful mirror push and completed webhook indexing are separate events.
++6. Set the HaveAPI repository Actions variable `HAVEAPI_RELEASE_ENABLED` to
++   `true` after setup is complete. Tag builds fail visibly while publication is
++   disabled or the release environment lacks required reviewers.
++
++Only the publishing job receives OIDC and repository write permissions. It uses
++the top-level Nix shell with `HAVEAPI_RELEASE_TOOLS_ONLY=1`, which skips dependency
++installation while publishing credentials are present.
++
++## Preparing and publishing a version
++
++Run release commands from the top-level `nix develop` shell.
++
++1. Prepare the new major/minor branch or the supported patch branch. Keep its
++   source and release metadata changes in separate commits.
++2. Run `make version VERSION=X.Y.Z`. Update CHANGELOG.md using the existing
++   `# <date> - version X.Y.Z` heading, followed by descriptions of changed
++   components. Omit components that have no changes. Run `make release-check`
++   and commit the version/changelog changes with the declared hooks enabled.
++3. Push the release branch and an annotated `vX.Y.Z` tag after obtaining
++   publication authorization. Do not move existing tags or push another release
++   tag until this release has finished. The workflow serializes tagged releases.
++4. GitHub Actions validates the metadata, generates Ruby server documentation,
++   tests all maintained components and builds the packages in the locked Nix
++   toolchain. It retains `release-<run-id>` as an Actions artifact for 90 days.
++   Its manifest records source commit, version, checksums, tool versions and
++   resolved dependency locks. Dependencies are resolved for this build; separate
++   builds are not promised to be byte-identical.
++5. Open the Actions run and inspect its test results, candidate summary and
++   artifacts. Click **Review deployments**, select `release`, then **Approve and
++   deploy**. This authorizes RubyGems/npm publication and synchronization into
++   `haveapi-client-php/master` with the corresponding version tag. Rejecting the
++   request fails the workflow before the publishing job starts.
++6. The publishing job verifies the saved files and retains them in a draft
++   GitHub Release. It pushes the Ruby client before its dependent server and
++   Go-generator gems, publishes the npm tarball and updates the PHP mirror. It
++   publishes the GitHub Release only after all destinations succeed.
++7. Confirm the workflow's publication receipts and verify that the PHP version
++   appears on Packagist. Packagist indexes the mirror asynchronously.
++
++The GitHub Release contains the three gems, npm tarball, browser bundle, PHP
++source archive, release notes and manifest. No package is rebuilt after approval.
++`make publish` directs maintainers to this workflow and exits without publishing.
++
++## Build-only checks and local packaging
++
++The release workflow also runs without publication on pushes and pull requests
++that change release tooling. Its **Run workflow** button is another build-only
++entry point once the workflow exists on the default branch. These paths do not
++enter the release environment or write to registries or the PHP repository.
++
++For local verification in the top-level Nix shell:
++
++```sh
++make release-check
++make release-test
++make release-deps
++make release
++make test
++ruby utils/release/cli.rb smoke-npm dist
++ruby utils/release/cli.rb verify dist
++```
++
++`make release` requires a clean tracked checkout and an empty `dist` directory.
++Move earlier artifacts aside before building. It generates shared documentation
++for the Ruby server, builds three gems, rebuilds and packs JavaScript, and
++archives the tracked PHP subtree. It never uploads packages. Component gems use
++the local Ruby client, so a new shared version need not already exist on RubyGems.
++Do not commit generated server documentation or build artifacts.
++
++The Ruby server packaging specs extract a gem and test its documentation routes.
++They require `make doc`, which `make test` runs automatically. Direct server
++`bundle exec rake build` still rejects missing or empty shared documentation.
++
++## Partial failure and recovery
++
++Publication across registries is not atomic. A failure can leave some packages
++published and others missing. Keep the source tag, original Actions artifacts
++and draft Release. Fix or diagnose the failure before rerunning jobs.
++
++Use **Re-run failed jobs** for a failed publishing job. **Re-run all jobs** also
++reuses the original artifact and skips its build/test stage. If an early build
++failed before uploading artifacts, it can retry the build. Once an artifact
++upload has succeeded, a rerun refuses to rebuild if that artifact is missing or
++expired. Do not substitute a new build for an accepted package version.
++
++Each destination is checked before publication. Existing gems must match the
++retained SHA-256; npm must match package identity and tarball integrity. An
++existing PHP tag must contain the same snapshot and HaveAPI source commit. The
++workflow skips only verified matches. Conflicting versions, authentication
++errors and network errors fail visibly.
++
++If retained Actions artifacts have expired, preserve or download the draft
++Release assets and their manifest for recovery. Operator-assisted recovery must
++use those exact files after checking their recorded source and hashes; the
++ordinary workflow does not automatically rebuild or replace missing artifacts.
++If no original files remain, prepare a new version after diagnosing the failure.
++
++The PHP helper uses a clean isolated clone, preserves mirror-owned `.github`
++configuration and AGENTS.md, and replaces the released library files with the
++tracked PHP snapshot. It refuses untagged master changes and backward version
++updates. It records the HaveAPI source commit and pushes master and the version
++tag atomically without force. An unexpected mirror state needs inspection; do
++not bypass the refusal or overwrite unrelated changes. A Packagist delay needs
++webhook/indexing diagnosis rather than retagging.
++
++Defective published content requires a new patch version. Never overwrite
++package versions, move tags or delete accepted versions as part of recovery.
++Consumers can select a previous package version through their normal package
++manager. Release automation introduces no database or on-disk migration.
+diff --git a/flake.nix b/flake.nix
+index 70813d0..52d1ca4 100644
+--- a/flake.nix
++++ b/flake.nix
+@@ -83,7 +83,10 @@
+             packages = with pkgs; [
+               git
+               gnumake
+-              nodejs
++              gh
++              go
++              nodejs_24
++              openssh
+               php83
+               php83Packages.composer
+               php83Packages.php-cs-fixer
+@@ -96,13 +99,14 @@
+               export GEM_HOME="$HAVEAPI_REPO_ROOT/.gems"
+               export PATH="$GEM_HOME/bin:$PATH"
+               export RUBOCOP_CACHE_ROOT="$HAVEAPI_REPO_ROOT/.rubocop_cache"
+-              gem install --no-document bundler
+-
+-              # Purity disabled because of prism gem, which has a native extension.
+-              # The extension has its header files in .gems, which gets stripped by
+-              # the cc wrapper in Nix. Without NIX_ENFORCE_PURITY=0, we get a
+-              # prism.h not found error.
+-              (cd "$HAVEAPI_REPO_ROOT" && NIX_ENFORCE_PURITY=0 bundle install)
++              # Publishing only needs packaged tools and Ruby's standard library.
++              # Do not install dependencies while registry credentials are present.
++              if [ "''${HAVEAPI_RELEASE_TOOLS_ONLY:-0}" != 1 ]; then
++                gem install --no-document bundler
++
++                # prism's native extension reads headers from the local gem home.
++                (cd "$HAVEAPI_REPO_ROOT" && NIX_ENFORCE_PURITY=0 bundle install)
++              fi
+             '';
+           };
+ 
+diff --git a/utils/release/artifacts.rb b/utils/release/artifacts.rb
+new file mode 100644
+index 0000000..b0ef821
+--- /dev/null
++++ b/utils/release/artifacts.rb
+@@ -0,0 +1,212 @@
++require 'digest'
++require 'fileutils'
++require 'json'
++require 'open3'
++require 'rubygems/package'
++require 'tmpdir'
++require 'zlib'
++
++module HaveAPI
++  module Release
++    class Error < StandardError; end
++
++    # The package names and their order are the maintained publication contract.
++    GEMS = {
++      'haveapi-client' => 'clients/ruby',
++      'haveapi' => 'servers/ruby',
++      'haveapi-go-client' => 'clients/go'
++    }.freeze
++    REPOSITORY = 'vpsfreecz/haveapi'.freeze
++    PHP_REPOSITORY = 'git@github.com:vpsfreecz/haveapi-client-php.git'.freeze
++
++    def self.capture(*command, chdir: Dir.pwd)
++      stdout, stderr, status = Open3.capture3(*command, chdir:)
++      raise Error, "#{command.first} failed: #{stderr.strip}" unless status.success?
++
++      stdout
++    end
++
++    def self.run(*command, chdir: Dir.pwd)
++      raise Error, "#{command.first} failed" unless system(*command, chdir:)
++    end
++
++    class Artifacts
++      attr_reader :root, :version
++
++      def initialize(root)
++        @root = File.expand_path(root)
++        @version = File.read(File.join(root, 'VERSION')).strip
++        raise Error, 'VERSION must be X.Y.Z' unless version.match?(/\A(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\z/)
++      end
++
++      def source
++        Release.capture('git', 'rev-parse', 'HEAD', chdir: root).strip
++      end
++
++      def tag
++        "v#{version}"
++      end
++
++      def names
++        GEMS.keys.map { |name| "#{name}-#{version}.gem" } + [
++          "haveapi-client-#{version}.tgz", 'haveapi-client.js',
++          "haveapi-client-php-#{version}.tar", 'release-notes.md'
++        ]
++      end
++
++      def notes
++        changelog = File.read(File.join(root, 'CHANGELOG.md'))
++        sections = changelog.split(/(?=^# )/)
++        section = sections.find { |s| s.lines.first.match?(/ - version #{Regexp.escape(version)}\s*$/) }
++        raise Error, "CHANGELOG.md has no entry for #{version}" unless section && section.include?('## ')
++
++        "#{section.strip}\n"
++      end
++
++      def check(clean: false, release_tag: nil)
++        paths = {
++          'servers/ruby/lib/haveapi/version.rb' => /\bVERSION = '([^']+)'/,
++          'clients/ruby/lib/haveapi/client/version.rb' => /\bVERSION = '([^']+)'/,
++          'clients/go/lib/haveapi/go_client/version.rb' => /\bVERSION = '([^']+)'/,
++          'clients/js/src/haveapi/client.js' => /Client\.Version = '([^']+)'/,
++          'clients/php/src/Client.php' => /const VERSION = '([^']+)'/
++        }
++        paths.each do |path, pattern|
++          actual = File.read(File.join(root, path)).match(pattern)&.captures&.first
++          raise Error, "Version mismatch in #{path}" unless actual == version
++        end
++        %w[clients/js/package.json clients/php/composer.json].each do |path|
++          raise Error, "Version mismatch in #{path}" unless JSON.parse(File.read(File.join(root, path))).fetch('version') == version
++        end
++        %w[servers/ruby/haveapi.gemspec clients/go/haveapi-go-client.gemspec].each do |path|
++          dependency = File.read(File.join(root, path)).match(/add_dependency 'haveapi-client', '([^']+)'/)
++          raise Error, "Dependency mismatch in #{path}" unless dependency && dependency[1] == "~> #{version}"
++        end
++        notes
++        if clean && !Release.capture('git', 'status', '--porcelain', '--untracked-files=no', chdir: root).empty?
++          raise Error, 'Release builds require a clean tracked checkout'
++        end
++
++        check_tag(release_tag) if release_tag
++      end
++
++      def check_tag(release_tag)
++        raise Error, "Tag must be #{tag}" unless release_tag == tag
++        raise Error, 'Tag no longer points to this source commit' unless Release.capture('git', 'rev-parse', "#{tag}^{commit}", chdir: root).strip == source
++
++        refs = Release.capture('git', 'ls-remote', 'origin', "refs/tags/#{tag}", "refs/tags/#{tag}^{}", chdir: root).lines.to_h do |ref|
++          sha, name = ref.split
++          [name, sha]
++        end
++        remote = refs["refs/tags/#{tag}^{}"] || refs["refs/tags/#{tag}"]
++        raise Error, 'Remote tag is missing or has moved' unless remote == source
++
++        line = version.split('.').first(2).join('.')
++        branches = Release.capture('git', 'for-each-ref', '--format=%(refname:short)', 'refs/remotes/origin', chdir: root).lines.filter_map do |ref|
++          ref.strip.match(%r{\Aorigin/haveapi-(\d+\.\d+)\z})&.captures&.first
++        end
++        latest = branches.max_by { |v| Gem::Version.new(v) }
++        raise Error, 'Tag must belong to the newest release branch' unless line == latest
++
++        Release.capture('git', 'merge-base', '--is-ancestor', source, "origin/haveapi-#{line}", chdir: root)
++      end
++
++      def write_manifest(directory)
++        directory = File.expand_path(directory)
++        File.write(File.join(directory, 'release-notes.md'), notes)
++        inspect_packages(directory)
++        files = names.to_h { |name| [name, Digest::SHA256.file(File.join(directory, name)).hexdigest] }
++        tools = %w[ruby gem node npm go php composer].to_h do |tool|
++          flag = tool == 'go' ? 'version' : '--version'
++          [tool, Release.capture(tool, flag).strip]
++        end
++        lock_paths = %w[Gemfile.lock servers/ruby/Gemfile.lock clients/ruby/Gemfile.lock clients/go/Gemfile.lock clients/js/package-lock.json clients/php/composer.lock]
++        dependency_locks = lock_paths.to_h { |path| [path, File.read(File.join(root, path))] }
++        manifest = { schema: 1, source:, version:, tag:, run_id: ENV.fetch('GITHUB_RUN_ID', 'local'), files:, tools:, dependency_locks: }
++        File.write(File.join(directory, 'release-manifest.json'), "#{JSON.pretty_generate(manifest)}\n")
++      end
++
++      def verify(directory)
++        directory = File.expand_path(directory)
++        manifest = JSON.parse(File.read(File.join(directory, 'release-manifest.json')))
++        unless manifest.values_at('schema', 'source', 'version', 'tag') == [1, source, version, tag]
++          raise Error, 'Manifest does not describe this source/version'
++        end
++        if ENV['GITHUB_RUN_ID'] && manifest.fetch('run_id') != ENV.fetch('GITHUB_RUN_ID')
++          raise Error, 'Artifacts belong to a different workflow run'
++        end
++        raise Error, 'Unexpected artifact set' unless manifest.fetch('files').keys.sort == names.sort
++
++        manifest.fetch('files').each do |name, digest|
++          path = File.join(directory, name)
++          raise Error, "Artifact checksum mismatch: #{name}" unless File.file?(path) && !File.symlink?(path) && Digest::SHA256.file(path).hexdigest == digest
++        end
++        inspect_packages(directory)
++        manifest
++      end
++
++      def tar_files(path, gzip: false)
++        files = {}
++        File.open(path, 'rb') do |file|
++          stream = gzip ? Zlib::GzipReader.new(file) : file
++          Gem::Package::TarReader.new(stream) do |tar|
++            tar.each do |entry|
++              name = entry.full_name
++              raise Error, "Unsafe archive entry: #{name}" if name.start_with?('/') || name.split('/').include?('..')
++              next if entry.directory?
++
++              raise Error, "Unsupported archive entry: #{name}" unless entry.file?
++              raise Error, "Duplicate archive entry: #{name}" if files.has_key?(name)
++
++              mode = entry.header.mode.nobits?(0o111) ? 0o644 : 0o755
++              files[name] = [entry.read, mode]
++            end
++          end
++        end
++        files
++      end
++
++      def inspect_packages(directory)
++        GEMS.each_key do |name|
++          package = Gem::Package.new(File.join(directory, "#{name}-#{version}.gem"))
++          spec = package.spec
++          raise Error, "Wrong gem identity: #{name}" unless spec.name == name && spec.version.to_s == version
++          next if name == 'haveapi-client'
++
++          dependency = spec.dependencies.find { |d| d.name == 'haveapi-client' }
++          raise Error, "Wrong gem dependency: #{name}" unless dependency && dependency.requirement.to_s == "~> #{version}"
++          next unless name == 'haveapi'
++
++          required = %w[json-schema.html protocol.md create-client.md typed-input-validation.md protocol.png].map { |f| "doc/#{f}" }
++          raise Error, 'Server gem is missing shared documentation' unless (required - package.contents).empty?
++        end
++        npm = tar_files(File.join(directory, "haveapi-client-#{version}.tgz"), gzip: true)
++        metadata = JSON.parse(npm.fetch('package/package.json').first)
++        repository = metadata.fetch('repository')
++        unless metadata.values_at('name', 'version') == ['haveapi-client', version] && repository.fetch('url') == "https://github.com/#{REPOSITORY}"
++          raise Error, 'Wrong npm identity or publishing repository'
++        end
++
++        bundle = File.binread(File.join(directory, 'haveapi-client.js'))
++        raise Error, 'npm tarball does not contain the built bundle' unless npm.fetch('package/dist/haveapi-client.js').first == bundle
++        raise Error, 'Wrong browser bundle version' unless bundle.include?("Client.Version = '#{version}'")
++
++        php = tar_files(File.join(directory, "haveapi-client-php-#{version}.tar"))
++        raise Error, 'Wrong Composer identity' unless JSON.parse(php.fetch('composer.json').first).values_at('name', 'version') == ['haveapi/client', version]
++      end
++
++      def smoke_npm(directory)
++        files = tar_files(File.join(directory, "haveapi-client-#{version}.tgz"), gzip: true)
++        Dir.mktmpdir('haveapi-npm-') do |tmp|
++          files.each do |name, (content, mode)|
++            path = File.join(tmp, name)
++            FileUtils.mkdir_p(File.dirname(path))
++            File.write(path, content, mode: 'wb', perm: mode)
++          end
++          script = "const api = require(process.argv[1]); if (api.Client.Version !== process.argv[2]) process.exit(1); new api.Client('http://localhost');"
++          Release.run({ 'NODE_PATH' => File.join(root, 'clients/js/node_modules') }, 'node', '-e', script, File.join(tmp, 'package'), version)
++        end
++      end
++    end
++  end
++end
+diff --git a/utils/release/build.sh b/utils/release/build.sh
+new file mode 100644
+index 0000000..b050d1f
+--- /dev/null
++++ b/utils/release/build.sh
+@@ -0,0 +1,29 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++if [[ ${HAVEAPI_DEV_SHELL:-} != haveapi ]]; then
++  echo 'Run make release in the top-level nix develop shell.' >&2
++  exit 1
++fi
++
++ruby utils/release/cli.rb check-clean
++make doc
++mkdir -p dist
++if [[ -n $(find dist -mindepth 1 -maxdepth 1 -print -quit) ]]; then
++  echo 'dist must be empty; move the previous release artifacts aside first.' >&2
++  exit 1
++fi
++
++version=$(cat VERSION)
++for component in clients/ruby servers/ruby clients/go; do
++  (cd "$component" && bundle exec rake build)
++done
++cp "clients/ruby/pkg/haveapi-client-$version.gem" dist/
++cp "servers/ruby/pkg/haveapi-$version.gem" dist/
++cp "clients/go/pkg/haveapi-go-client-$version.gem" dist/
++
++(cd clients/js && ./node_modules/.bin/gulp)
++(cd clients/js && npm pack --ignore-scripts --pack-destination ../../dist)
++cp clients/js/dist/haveapi-client.js dist/
++git archive --format=tar --output="dist/haveapi-client-php-$version.tar" HEAD:clients/php
++ruby utils/release/cli.rb manifest dist
+diff --git a/utils/release/cli.rb b/utils/release/cli.rb
+new file mode 100644
+index 0000000..f5b2436
+--- /dev/null
++++ b/utils/release/cli.rb
+@@ -0,0 +1,47 @@
++require_relative 'publish'
++require_relative 'workflow'
++
++begin
++  root = File.expand_path('../..', __dir__)
++  artifacts = HaveAPI::Release::Artifacts.new(root)
++  command, argument = ARGV
++  case command
++  when 'artifact-state'
++    File.open(ENV.fetch('GITHUB_OUTPUT'), 'a') { |f| f.puts "id=#{HaveAPI::Release::Workflow.artifact_id}" }
++  when 'check-activation'
++    HaveAPI::Release::Workflow.check_activation
++  when 'check', 'check-clean'
++    artifacts.check(clean: command == 'check-clean', release_tag: argument)
++    puts "Release metadata valid: #{artifacts.version}"
++  when 'manifest'
++    artifacts.write_manifest(argument || 'dist')
++  when 'verify'
++    artifacts.verify(argument || 'dist')
++    puts "Verified retained artifacts: #{artifacts.tag} at #{artifacts.source}"
++  when 'smoke-npm'
++    artifacts.verify(argument || 'dist')
++    artifacts.smoke_npm(argument || 'dist')
++  when 'github-prepare', 'publish'
++    unless ENV['GITHUB_ACTIONS'] == 'true' && ENV['GITHUB_REPOSITORY'] == HaveAPI::Release::REPOSITORY &&
++           ENV['GITHUB_EVENT_NAME'] == 'push' && ENV['GITHUB_REF'] == "refs/tags/#{artifacts.tag}"
++      raise HaveAPI::Release::Error, 'Publication is available only in the tagged GitHub Actions release job'
++    end
++    raise HaveAPI::Release::Error, 'Use the top-level Nix release shell' unless ENV['HAVEAPI_DEV_SHELL'] == 'haveapi'
++
++    artifacts.check_tag(artifacts.tag)
++    publisher = HaveAPI::Release::Publisher.new(artifacts, argument || 'dist')
++    if command == 'github-prepare'
++      publisher.prepare_github
++    else
++      publisher.php_key
++      publisher.publish_registries
++      publisher.publish_php
++      publisher.finish_github
++    end
++  else
++    raise HaveAPI::Release::Error, 'See doc/agent-instructions/releases.md for release helper commands'
++  end
++rescue HaveAPI::Release::Error, KeyError, JSON::ParserError, Errno::ENOENT => e
++  warn "Release failed: #{e.message}"
++  exit 1
++end
+diff --git a/utils/release/github_known_hosts b/utils/release/github_known_hosts
+new file mode 100644
+index 0000000..90150c2
+--- /dev/null
++++ b/utils/release/github_known_hosts
+@@ -0,0 +1 @@
++github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl
+diff --git a/utils/release/publish.rb b/utils/release/publish.rb
+new file mode 100644
+index 0000000..a1f418b
+--- /dev/null
++++ b/utils/release/publish.rb
+@@ -0,0 +1,209 @@
++require 'net/http'
++require 'shellwords'
++require_relative 'artifacts'
++
++module HaveAPI
++  module Release
++    class Publisher
++      def initialize(artifacts, directory)
++        @artifacts = artifacts
++        @directory = File.expand_path(directory)
++        @manifest = artifacts.verify(@directory)
++      end
++
++      def registry_json(url)
++        uri = URI(url)
++        response = Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 15, read_timeout: 30) do |http|
++          http.get(uri.request_uri)
++        end
++        return nil if response.code == '404'
++
++        raise Error, "Registry query failed (HTTP #{response.code})" unless response.is_a?(Net::HTTPSuccess)
++
++        JSON.parse(response.body)
++      end
++
++      def gem_present?(name)
++        metadata = registry_json("https://rubygems.org/api/v2/rubygems/#{name}/versions/#{@artifacts.version}.json")
++        return false unless metadata
++
++        expected = @manifest.fetch('files').fetch("#{name}-#{@artifacts.version}.gem")
++        raise Error, "Existing RubyGems version differs: #{name}" unless metadata.fetch('sha') == expected
++
++        true
++      end
++
++      def npm_present?
++        metadata = registry_json("https://registry.npmjs.org/haveapi-client/#{@artifacts.version}")
++        return false unless metadata
++
++        expected = "sha512-#{Digest::SHA512.file(File.join(@directory, "haveapi-client-#{@artifacts.version}.tgz")).base64digest}"
++        unless metadata.values_at('name', 'version') == ['haveapi-client', @artifacts.version] && metadata.fetch('dist').fetch('integrity').split.include?(expected)
++          raise Error, 'Existing npm version differs'
++        end
++
++        true
++      end
++
++      def confirm
++        12.times do
++          return if yield
++
++          sleep 5
++        end
++        raise Error, 'Publication was not confirmed by the registry; rerun with the retained artifacts'
++      end
++
++      def publish_registries
++        existing_gems = GEMS.keys.to_h { |name| [name, gem_present?(name)] }
++        existing_npm = npm_present?
++        npm_version = Gem::Version.new(Release.capture('npm', '--version').strip)
++        raise Error, 'Trusted publishing requires npm >= 11.5.1' if !existing_npm && npm_version < Gem::Version.new('11.5.1')
++
++        GEMS.each_key do |name|
++          unless existing_gems.fetch(name)
++            Release.run('gem', 'push', File.join(@directory, "#{name}-#{@artifacts.version}.gem"), '--host', 'https://rubygems.org')
++            confirm { gem_present?(name) }
++          end
++          puts "Confirmed RubyGems: #{name} #{@artifacts.version}"
++        end
++        unless existing_npm
++          Release.run('npm', 'publish', File.join(@directory, "haveapi-client-#{@artifacts.version}.tgz"), '--ignore-scripts', '--access', 'public', '--registry', 'https://registry.npmjs.org')
++          confirm { npm_present? }
++        end
++        puts "Confirmed npm: haveapi-client #{@artifacts.version}"
++      end
++
++      def protected_php_path?(path)
++        path == 'AGENTS.md' || path == '.github' || path.start_with?('.github/')
++      end
++
++      def php_snapshot
++        @artifacts.tar_files(File.join(@directory, "haveapi-client-php-#{@artifacts.version}.tar"))
++      end
++
++      def mirror_snapshot(mirror, ref)
++        Dir.mktmpdir('haveapi-php-tree-') do |tmp|
++          archive = File.join(tmp, 'tree.tar')
++          # Archive the tree so Git does not add a commit-level PAX metadata header.
++          Release.run('git', 'archive', '--format=tar', "--output=#{archive}", "#{ref}^{tree}", chdir: mirror)
++          @artifacts.tar_files(archive).reject { |path, _| protected_php_path?(path) }
++        end
++      end
++
++      # mirror is an isolated clone owned by this publication, never a workspace checkout.
++      def sync_php(mirror)
++        snapshot = php_snapshot
++        raise Error, 'PHP source conflicts with mirror-owned metadata' if snapshot.keys.any? { |path| protected_php_path?(path) }
++
++        tag = @artifacts.tag
++        tags = Release.capture('git', 'tag', '--list', tag, chdir: mirror).strip
++        unless tags.empty?
++          message = Release.capture('git', 'log', '-1', '--format=%B', tag, chdir: mirror)
++          unless mirror_snapshot(mirror, tag) == snapshot && message.lines.map(&:strip).include?("HaveAPI-Source: #{@artifacts.source}")
++            raise Error, 'Existing PHP tag has different content or source provenance'
++          end
++
++          puts "Confirmed PHP tag: #{tag}"
++          return
++        end
++
++        current_tags = Release.capture('git', 'tag', '--points-at', 'HEAD', chdir: mirror).lines.map(&:strip)
++        unless current_tags.any? { |t| t.match?(/\Av\d+\.\d+\.\d+\z/) }
++          raise Error, 'PHP master has untagged changes; inspect the mirror before publication'
++        end
++
++        current = mirror_snapshot(mirror, 'HEAD')
++        current_version = JSON.parse(current.fetch('composer.json').first).fetch('version')
++        unless Gem::Version.new(current_version) < Gem::Version.new(@artifacts.version)
++          raise Error, 'Refusing to move PHP master to an older or conflicting version'
++        end
++
++        owned = (current.keys + snapshot.keys).uniq
++        current.each_key { |path| FileUtils.rm_f(File.join(mirror, path)) }
++        snapshot.each do |path, (content, mode)|
++          destination = File.join(mirror, path)
++          FileUtils.mkdir_p(File.dirname(destination))
++          File.write(destination, content, mode: 'wb', perm: mode)
++        end
++        Release.run('git', 'add', '--all', '--', *owned, chdir: mirror)
++        Dir.mktmpdir('haveapi-php-message-') do |tmp|
++          message = File.join(tmp, 'message')
++          File.write(message, "Release #{@artifacts.version}\n\nHaveAPI-Source: #{@artifacts.source}\n")
++          author = ['git', '-c', 'user.name=github-actions[bot]', '-c', 'user.email=41898282+github-actions[bot]@users.noreply.github.com']
++          Release.run(*author, 'commit', '-F', message, chdir: mirror)
++          Release.run(*author, 'tag', '-a', tag, '-F', message, chdir: mirror)
++        end
++        Release.run('git', 'push', '--atomic', 'origin', 'HEAD:refs/heads/master', "refs/tags/#{tag}", chdir: mirror)
++        raise Error, 'PHP mirror content differs after synchronization' unless mirror_snapshot(mirror, tag) == snapshot
++
++        puts "Confirmed PHP tag: #{tag}; Packagist indexing follows its configured webhook"
++      end
++
++      def php_key
++        key = ENV.fetch('HAVEAPI_PHP_DEPLOY_KEY')
++        raise Error, 'PHP deploy key is empty' if key.strip.empty?
++
++        "#{key.strip}\n"
++      end
++
++      def publish_php
++        Dir.mktmpdir('haveapi-php-publish-') do |tmp|
++          key_path = File.join(tmp, 'key')
++          File.write(key_path, php_key, perm: 0o600)
++          ssh = ['ssh', '-i', key_path, '-o', 'IdentitiesOnly=yes', '-o', 'StrictHostKeyChecking=yes', '-o', "UserKnownHostsFile=#{File.join(@artifacts.root, 'utils/release/github_known_hosts')}"]
++          env = { 'GIT_SSH_COMMAND' => Shellwords.join(ssh) }
++          mirror = File.join(tmp, 'mirror')
++          Release.run(env, 'git', 'clone', '--quiet', '--branch', 'master', PHP_REPOSITORY, mirror)
++          # Pass credentials only to Git transport, not to source or package scripts.
++          old_ssh = ENV.fetch('GIT_SSH_COMMAND', nil)
++          begin
++            ENV['GIT_SSH_COMMAND'] = env.fetch('GIT_SSH_COMMAND')
++            sync_php(mirror)
++          ensure
++            ENV['GIT_SSH_COMMAND'] = old_ssh
++          end
++        end
++      end
++
++      def github_release
++        stdout, stderr, status = Open3.capture3('gh', 'api', "repos/#{REPOSITORY}/releases/tags/#{@artifacts.tag}")
++        return JSON.parse(stdout) if status.success?
++        return nil if stderr.include?('HTTP 404')
++
++        raise Error, "GitHub release query failed: #{stderr.strip}"
++      end
++
++      def prepare_github
++        release = github_release
++        unless release
++          Release.run('gh', 'release', 'create', @artifacts.tag, '--repo', REPOSITORY, '--verify-tag', '--draft', '--title', "HaveAPI #{@artifacts.version}", '--notes-file', File.join(@directory, 'release-notes.md'))
++          release = github_release
++        end
++        asset_names = release.fetch('assets').map { |asset| asset.fetch('name') }
++        (@artifacts.names + ['release-manifest.json']).each do |name|
++          path = File.join(@directory, name)
++          if asset_names.include?(name)
++            Dir.mktmpdir('haveapi-asset-') do |tmp|
++              Release.run('gh', 'release', 'download', @artifacts.tag, '--repo', REPOSITORY, '--pattern', name, '--dir', tmp)
++              unless Digest::SHA256.file(File.join(tmp, name)).hexdigest == Digest::SHA256.file(path).hexdigest
++                raise Error, "Existing GitHub asset differs: #{name}"
++              end
++            end
++          else
++            raise Error, 'Existing public GitHub Release has missing artifacts' unless release.fetch('draft')
++
++            Release.run('gh', 'release', 'upload', @artifacts.tag, path, '--repo', REPOSITORY)
++          end
++        end
++      end
++
++      def finish_github
++        raise Error, 'Registry publication is incomplete' unless GEMS.keys.all? { |name| gem_present?(name) } && npm_present?
++
++        Release.run('gh', 'release', 'edit', @artifacts.tag, '--repo', REPOSITORY, '--draft=false') if github_release.fetch('draft')
++        puts "Release complete: https://github.com/#{REPOSITORY}/releases/tag/#{@artifacts.tag}"
++      end
++    end
++  end
++end
+diff --git a/utils/release/spec/release_spec.rb b/utils/release/spec/release_spec.rb
+new file mode 100644
+index 0000000..ad3b3e5
+--- /dev/null
++++ b/utils/release/spec/release_spec.rb
+@@ -0,0 +1,211 @@
++require 'rspec'
++require_relative '../publish'
++require_relative '../workflow'
++
++RSpec.describe HaveAPI::Release do
++  def root
++    File.expand_path('../../..', __dir__)
++  end
++  let(:artifacts) { HaveAPI::Release::Artifacts.new(root) }
++
++  let(:tmp) { Dir.mktmpdir('haveapi-release-spec-') }
++
++  after { FileUtils.remove_entry(tmp) }
++
++  def git(directory, *args)
++    HaveAPI::Release.capture('git', *args, chdir: directory)
++  end
++
++  def commit(directory, message)
++    path = File.join(tmp, 'commit-message')
++    File.write(path, "#{message}\n")
++    git(directory, '-c', 'user.name=Release Test', '-c', 'user.email=release@example.invalid', 'commit', '-F', path)
++  end
++
++  def tar(path, files)
++    File.open(path, 'wb') do |file|
++      Gem::Package::TarWriter.new(file) do |writer|
++        files.each { |name, content| writer.add_file_simple(name, 0o644, content.bytesize) { |f| f.write(content) } }
++      end
++    end
++  end
++
++  def fixture_manifest
++    allow(artifacts).to receive(:source).and_return('a' * 40)
++    allow(artifacts).to receive(:inspect_packages)
++    artifacts.names.each { |name| File.write(File.join(tmp, name), name) }
++    manifest = {
++      schema: 1, source: artifacts.source, version: artifacts.version, tag: artifacts.tag,
++      run_id: 'local', files: artifacts.names.to_h { |name| [name, Digest::SHA256.file(File.join(tmp, name)).hexdigest] }
++    }
++    File.write(File.join(tmp, 'release-manifest.json'), JSON.generate(manifest))
++    manifest
++  end
++
++  describe 'metadata and artifacts' do
++    it 'validates the maintained source versions without reading Elixir' do
++      expect { artifacts.check }.not_to raise_error
++    end
++
++    it 'rejects a version tag that differs from VERSION' do
++      expect { artifacts.check_tag('v999.0.0') }.to raise_error(HaveAPI::Release::Error, /Tag must be/)
++    end
++
++    it 'rejects a missing changelog entry' do
++      allow(File).to receive(:read).and_call_original
++      allow(File).to receive(:read).with(File.join(root, 'CHANGELOG.md')).and_return('# unrelated')
++      expect { artifacts.check }.to raise_error(HaveAPI::Release::Error, /no entry/)
++    end
++
++    it 'rejects a mismatched dependency before building' do
++      allow(File).to receive(:read).and_call_original
++      allow(File).to receive(:read).with(File.join(root, 'servers/ruby/haveapi.gemspec')).and_return("s.add_dependency 'haveapi-client', '~> 999.0.0'")
++      expect { artifacts.check }.to raise_error(HaveAPI::Release::Error, /Dependency mismatch/)
++    end
++
++    it 'accepts retained hashes and rejects changed bytes' do
++      fixture_manifest
++      expect(artifacts.verify(tmp).fetch('source')).to eq('a' * 40)
++      File.write(File.join(tmp, 'haveapi-client.js'), 'different bytes')
++      expect { artifacts.verify(tmp) }.to raise_error(HaveAPI::Release::Error, /checksum mismatch/)
++    end
++
++    it 'rejects a manifest from another source commit' do
++      manifest = fixture_manifest
++      manifest[:source] = 'b' * 40
++      File.write(File.join(tmp, 'release-manifest.json'), JSON.generate(manifest))
++      expect { artifacts.verify(tmp) }.to raise_error(HaveAPI::Release::Error, /this source/)
++    end
++
++    it 'rejects archive paths that escape the extraction directory' do
++      path = File.join(tmp, 'unsafe.tar')
++      tar(path, { '../outside' => 'data' })
++      expect { artifacts.tar_files(path) }.to raise_error(HaveAPI::Release::Error, /Unsafe archive/)
++    end
++
++    it 'rejects symlinks in an archive' do
++      path = File.join(tmp, 'symlink.tar')
++      File.open(path, 'wb') { |file| Gem::Package::TarWriter.new(file) { |writer| writer.add_symlink('src', '/tmp', 0o777) } }
++      expect { artifacts.tar_files(path) }.to raise_error(HaveAPI::Release::Error, /Unsupported archive/)
++    end
++  end
++
++  describe 'artifact reuse' do
++    let(:workflow) { HaveAPI::Release::Workflow }
++
++    before do
++      allow(ENV).to receive(:fetch).and_call_original
++      allow(ENV).to receive(:fetch).with('GITHUB_RUN_ID').and_return('123')
++      allow(ENV).to receive(:fetch).with('GITHUB_REPOSITORY').and_return('vpsfreecz/haveapi')
++      allow(ENV).to receive(:fetch).with('GITHUB_RUN_ATTEMPT').and_return('2')
++    end
++
++    it 'restores the original immutable artifact on reruns' do
++      allow(workflow).to receive(:api).and_return([{ 'artifacts' => [{ 'id' => 42, 'name' => 'release-123', 'expired' => false }] }])
++      expect(workflow.artifact_id).to eq('42')
++    end
++
++    it 'allows retrying a build that failed before artifact upload' do
++      allow(workflow).to receive(:api).and_return([{ 'artifacts' => [] }], [{ 'jobs' => [{ 'steps' => [{ 'name' => 'Retain release artifacts', 'conclusion' => 'skipped' }] }] }])
++      expect(workflow.artifact_id).to eq('')
++    end
++
++    it 'refuses to rebuild when a previous successful upload has disappeared' do
++      allow(workflow).to receive(:api).and_return([{ 'artifacts' => [] }], [{ 'jobs' => [{ 'steps' => [{ 'name' => 'Retain release artifacts', 'conclusion' => 'success' }] }] }])
++      expect { workflow.artifact_id }.to raise_error(HaveAPI::Release::Error, /Original artifacts are missing/)
++    end
++
++    it 'refuses to rebuild expired artifacts' do
++      allow(workflow).to receive(:api).and_return([{ 'artifacts' => [{ 'id' => 42, 'name' => 'release-123', 'expired' => true }] }])
++      expect { workflow.artifact_id }.to raise_error(HaveAPI::Release::Error, /expired/)
++    end
++
++    it 'rejects an environment without required reviewers' do
++      allow(ENV).to receive(:[]).and_call_original
++      allow(ENV).to receive(:[]).with('HAVEAPI_RELEASE_ENABLED').and_return('true')
++      allow(workflow).to receive(:api).and_return([{ 'protection_rules' => [] }])
++      expect { workflow.check_activation }.to raise_error(HaveAPI::Release::Error, /required reviewers/)
++    end
++  end
++
++  describe 'existing registry versions' do
++    let(:publisher) { HaveAPI::Release::Publisher.new(artifacts, tmp) }
++
++    before { fixture_manifest }
++
++    it 'accepts a gem only when its registry checksum matches the retained gem' do
++      name = "haveapi-client-#{artifacts.version}.gem"
++      allow(publisher).to receive(:registry_json).and_return({ 'sha' => Digest::SHA256.file(File.join(tmp, name)).hexdigest })
++      expect(publisher.gem_present?('haveapi-client')).to be(true)
++      allow(publisher).to receive(:registry_json).and_return({ 'sha' => 'different' })
++      expect { publisher.gem_present?('haveapi-client') }.to raise_error(HaveAPI::Release::Error, /differs/)
++    end
++
++    it 'accepts npm only when identity and tarball integrity match' do
++      path = File.join(tmp, "haveapi-client-#{artifacts.version}.tgz")
++      metadata = { 'name' => 'haveapi-client', 'version' => artifacts.version, 'dist' => { 'integrity' => "sha512-#{Digest::SHA512.file(path).base64digest}" } }
++      allow(publisher).to receive(:registry_json).and_return(metadata)
++      expect(publisher.npm_present?).to be(true)
++      metadata['dist']['integrity'] = 'sha512-different'
++      expect { publisher.npm_present? }.to raise_error(HaveAPI::Release::Error, /differs/)
++    end
++
++    it 'checks for conflicting versions before making any registry write' do
++      allow(publisher).to receive(:gem_present?).and_return(false)
++      allow(publisher).to receive(:npm_present?).and_raise(HaveAPI::Release::Error, 'Existing npm version differs')
++      allow(described_class).to receive(:run)
++      expect { publisher.publish_registries }.to raise_error(HaveAPI::Release::Error, /differs/)
++      expect(described_class).not_to have_received(:run)
++    end
++  end
++
++  describe 'PHP synchronization' do
++    let(:publisher) { HaveAPI::Release::Publisher.new(artifacts, tmp) }
++    let(:mirror) { File.join(tmp, 'mirror') }
++    let(:remote) { File.join(tmp, 'remote.git') }
++
++    before do
++      fixture_manifest
++      tar(File.join(tmp, "haveapi-client-php-#{artifacts.version}.tar"), {
++        'composer.json' => JSON.generate({ name: 'haveapi/client', version: artifacts.version }),
++        'src/Client.php' => 'new client'
++      })
++      # The fixture archive changes after construction; hash validation is covered separately.
++      allow(artifacts).to receive(:verify).and_return({ 'files' => {} })
++      described_class.run('git', 'init', '--bare', '--initial-branch=master', remote)
++      described_class.run('git', 'clone', remote, mirror)
++      File.write(File.join(mirror, 'composer.json'), JSON.generate({ name: 'haveapi/client', version: '0.0.1' }))
++      File.write(File.join(mirror, 'removed.php'), 'obsolete')
++      FileUtils.mkdir_p(File.join(mirror, '.github'))
++      File.write(File.join(mirror, '.github/policy'), 'preserve')
++      git(mirror, 'add', '--', 'composer.json', 'removed.php', '.github/policy')
++      commit(mirror, 'Initial published PHP version')
++      git(mirror, 'tag', 'v0.0.1')
++      git(mirror, 'push', '--atomic', 'origin', 'master', 'refs/tags/v0.0.1')
++    end
++
++    it 'pushes a clean snapshot and tag, preserves mirror metadata and resumes without changes' do
++      publisher.sync_php(mirror)
++      first_head = git(mirror, 'rev-parse', 'HEAD')
++      expect(File.read(File.join(mirror, 'src/Client.php'))).to eq('new client')
++      expect(File.exist?(File.join(mirror, 'removed.php'))).to be(false)
++      expect(File.read(File.join(mirror, '.github/policy'))).to eq('preserve')
++      expect(git(remote, 'rev-parse', 'master')).to eq(first_head)
++      publisher.sync_php(mirror)
++      expect(git(mirror, 'rev-parse', 'HEAD')).to eq(first_head)
++    end
++
++    it 'refuses untagged mirror changes before altering files' do
++      File.write(File.join(mirror, 'removed.php'), 'unreleased change')
++      git(mirror, 'add', '--', 'removed.php')
++      commit(mirror, 'Unreleased mirror change')
++      expect { publisher.sync_php(mirror) }.to raise_error(HaveAPI::Release::Error, /untagged changes/)
++      expect(File.read(File.join(mirror, 'removed.php'))).to eq('unreleased change')
++    end
++
++    it 'refuses an existing version tag with different content or provenance' do
++      git(mirror, 'tag', artifacts.tag)
++      expect { publisher.sync_php(mirror) }.to raise_error(HaveAPI::Release::Error, /different content or source/)
++    end
++  end
++end
+diff --git a/utils/release/workflow.rb b/utils/release/workflow.rb
+new file mode 100644
+index 0000000..0915c4f
+--- /dev/null
++++ b/utils/release/workflow.rb
+@@ -0,0 +1,45 @@
++require_relative 'artifacts'
++
++module HaveAPI
++  module Release
++    module Workflow
++      def self.api(path)
++        JSON.parse(Release.capture('gh', 'api', '--paginate', '--slurp', path))
++      end
++
++      def self.artifact_id
++        run = ENV.fetch('GITHUB_RUN_ID')
++        repository = ENV.fetch('GITHUB_REPOSITORY')
++        artifacts = api("repos/#{repository}/actions/runs/#{run}/artifacts").flat_map { |page| page.fetch('artifacts') }
++        matches = artifacts.select { |artifact| artifact.fetch('name') == "release-#{run}" }
++        raise Error, 'Ambiguous retained artifact set' if matches.length > 1
++
++        unless matches.empty?
++          artifact = matches.first
++          raise Error, 'Original artifacts have expired; do not rebuild a partially published version' if artifact.fetch('expired')
++
++          return artifact.fetch('id').to_s
++        end
++
++        # An early failed build can retry. A deleted successful upload cannot.
++        (1...Integer(ENV.fetch('GITHUB_RUN_ATTEMPT'))).each do |attempt|
++          jobs = api("repos/#{repository}/actions/runs/#{run}/attempts/#{attempt}/jobs").flat_map { |page| page.fetch('jobs') }
++          if jobs.any? { |job| job.fetch('steps').any? { |step| step.fetch('name') == 'Retain release artifacts' && step['conclusion'] == 'success' } }
++            raise Error, 'Original artifacts are missing; recover the saved files rather than rebuilding'
++          end
++        end
++        ''
++      end
++
++      def self.check_activation
++        raise Error, 'Set HAVEAPI_RELEASE_ENABLED=true only after completing release setup' unless ENV['HAVEAPI_RELEASE_ENABLED'] == 'true'
++
++        environment = api("repos/#{REPOSITORY}/environments/release").first
++        protected = environment.fetch('protection_rules').any? do |rule|
++          rule.fetch('type') == 'required_reviewers' && !rule.fetch('reviewers').empty?
++        end
++        raise Error, 'The release environment must have required reviewers' unless protected
++      end
++    end
++  end
++end

@@ -1,0 +1,88 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-redesign-haveapi-github-releases/haveapi' is dirty
+Successfully installed bundler-4.0.22
+1 gem installed
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=3.4.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.7.3 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=debug version=1.9.2 platform=ruby> because it is missing extensions
+Bundle complete! 5 Gemfile dependencies, 33 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=3.4.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.7.3 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=debug version=1.9.2 platform=ruby> because it is missing extensions
+== utils/release/artifacts.rb ==
+C: 63:  9: [Corrected] Style/StringConcatenation: Prefer string interpolation to string concatenation.
+C:126: 67: [Corrected] Style/StringConcatenation: Prefer string interpolation to string concatenation.
+C:161: 22: [Corrected] Style/BitwisePredicate: Replace with entry.header.mode.nobits?(0o111) for comparison with bit flags.
+C:161: 22: [Corrected] Style/NumericPredicate: Use (entry.header.mode & 0o111) == 0 instead of (entry.header.mode & 0o111).zero?.
+== utils/release/publish.rb ==
+C: 40: 20: [Corrected] Style/StringConcatenation: Prefer string interpolation to string concatenation.
+C:146: 32: [Corrected] Style/StringConcatenation: Prefer string interpolation to string concatenation.
+== utils/release/spec/release_spec.rb ==
+C: 21: 22: [Corrected] Style/StringConcatenation: Prefer string interpolation to string concatenation.
+C:146:107: [Corrected] Style/StringConcatenation: Prefer string interpolation to string concatenation.
+C:167:  7: [Corrected] RSpec/DescribedClass: Use described_class instead of HaveAPI::Release.
+C:168:  7: [Corrected] RSpec/DescribedClass: Use described_class instead of HaveAPI::Release.
+
+5 files inspected, 10 offenses detected, 10 offenses corrected
+ruby utils/release/cli.rb check
+Release metadata valid: 0.29.0
+bundle exec rspec utils/release/spec
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=3.4.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.7.3 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=debug version=1.9.2 platform=ruby> because it is missing extensions
+...............Initialized empty Git repository in /tmp/nix-shell.D9tX24/haveapi-release-spec-20261012-3336434-6xvqxj/remote.git/
+Cloning into '/tmp/nix-shell.D9tX24/haveapi-release-spec-20261012-3336434-6xvqxj/mirror'...
+warning: You appear to have cloned an empty repository.
+done.
+FInitialized empty Git repository in /tmp/nix-shell.D9tX24/haveapi-release-spec-20261012-3336434-3kiw8l/remote.git/
+Cloning into '/tmp/nix-shell.D9tX24/haveapi-release-spec-20261012-3336434-3kiw8l/mirror'...
+warning: You appear to have cloned an empty repository.
+done.
+.Initialized empty Git repository in /tmp/nix-shell.D9tX24/haveapi-release-spec-20261012-3336434-bvgrnq/remote.git/
+Cloning into '/tmp/nix-shell.D9tX24/haveapi-release-spec-20261012-3336434-bvgrnq/mirror'...
+warning: You appear to have cloned an empty repository.
+done.
+F
+
+Failures:
+
+  1) HaveAPI::Release PHP synchronization pushes a clean snapshot and tag, preserves mirror metadata and resumes without changes
+     Failure/Error: publisher.sync_php(mirror)
+
+     HaveAPI::Release::Error:
+       Unsupported archive entry: pax_global_header
+     # ./utils/release/artifacts.rb:158:in `block (3 levels) in tar_files'
+     # ./utils/release/artifacts.rb:153:in `block (2 levels) in tar_files'
+     # ./utils/release/artifacts.rb:152:in `block in tar_files'
+     # ./utils/release/artifacts.rb:150:in `open'
+     # ./utils/release/artifacts.rb:150:in `tar_files'
+     # ./utils/release/publish.rb:87:in `block in mirror_snapshot'
+     # ./utils/release/publish.rb:84:in `mirror_snapshot'
+     # ./utils/release/publish.rb:113:in `sync_php'
+     # ./utils/release/spec/release_spec.rb:180:in `block (3 levels) in <top (required)>'
+
+  2) HaveAPI::Release PHP synchronization refuses an existing version tag with different content or provenance
+     Failure/Error: expect { publisher.sync_php(mirror) }.to raise_error(HaveAPI::Release::Error, /different content or source/)
+
+       expected HaveAPI::Release::Error with message matching /different content or source/, got #<HaveAPI::Release::Error: Unsupported archive entry: pax_global_header> with backtrace:
+         # ./utils/release/artifacts.rb:158:in `block (3 levels) in tar_files'
+         # ./utils/release/artifacts.rb:153:in `block (2 levels) in tar_files'
+         # ./utils/release/artifacts.rb:152:in `block in tar_files'
+         # ./utils/release/artifacts.rb:150:in `open'
+         # ./utils/release/artifacts.rb:150:in `tar_files'
+         # ./utils/release/publish.rb:87:in `block in mirror_snapshot'
+         # ./utils/release/publish.rb:84:in `mirror_snapshot'
+         # ./utils/release/publish.rb:100:in `sync_php'
+         # ./utils/release/spec/release_spec.rb:200:in `block (4 levels) in <top (required)>'
+         # ./utils/release/spec/release_spec.rb:200:in `block (3 levels) in <top (required)>'
+     # ./utils/release/spec/release_spec.rb:200:in `block (3 levels) in <top (required)>'
+
+Finished in 0.67722 seconds (files took 0.38994 seconds to load)
+18 examples, 2 failures
+
+Failed examples:
+
+rspec ./utils/release/spec/release_spec.rb:179 # HaveAPI::Release PHP synchronization pushes a clean snapshot and tag, preserves mirror metadata and resumes without changes
+rspec ./utils/release/spec/release_spec.rb:198 # HaveAPI::Release PHP synchronization refuses an existing version tag with different content or provenance
+
+make: *** [Makefile:27: release-test] Error 1

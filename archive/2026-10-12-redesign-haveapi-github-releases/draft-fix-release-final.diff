@@ -1,0 +1,236 @@
+diff --git a/CHANGELOG.md b/CHANGELOG.md
+index 0bcb5f4..d81d43c 100644
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -1,3 +1,12 @@
++# Mon Oct 19 2026 - version 0.29.11
++## Releases
++- Find draft GitHub Releases before uploading retained artifacts.
++- Build and publish maintained packages through GitHub Actions after maintainer
++  approval, with retained artifacts for recovery from partial publication.
++
++## JavaScript client
++- Correct npm repository metadata to reference vpsfreecz/haveapi.
++
+ # Mon Oct 19 2026 - version 0.29.10
+ ## Releases
+ - Build and publish maintained packages through GitHub Actions after maintainer
+diff --git a/VERSION b/VERSION
+index f5ee893..befa3cf 100644
+--- a/VERSION
++++ b/VERSION
+@@ -1 +1 @@
+-0.29.10
++0.29.11
+diff --git a/clients/go/haveapi-go-client.gemspec b/clients/go/haveapi-go-client.gemspec
+index 1623985..194a98f 100644
+--- a/clients/go/haveapi-go-client.gemspec
++++ b/clients/go/haveapi-go-client.gemspec
+@@ -18,5 +18,5 @@ Gem::Specification.new do |spec|
+   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
+   spec.require_paths = ['lib']
+ 
+-  spec.add_dependency 'haveapi-client', '~> 0.29.10'
++  spec.add_dependency 'haveapi-client', '~> 0.29.11'
+ end
+diff --git a/clients/go/lib/haveapi/go_client/version.rb b/clients/go/lib/haveapi/go_client/version.rb
+index 7a08b65..781fc3f 100644
+--- a/clients/go/lib/haveapi/go_client/version.rb
++++ b/clients/go/lib/haveapi/go_client/version.rb
+@@ -1,5 +1,5 @@
+ module HaveAPI
+   module GoClient
+-    VERSION = '0.29.10'.freeze
++    VERSION = '0.29.11'.freeze
+   end
+ end
+diff --git a/clients/js/dist/haveapi-client.js b/clients/js/dist/haveapi-client.js
+index 32bf329..5ac070b 100644
+--- a/clients/js/dist/haveapi-client.js
++++ b/clients/js/dist/haveapi-client.js
+@@ -271,7 +271,7 @@ function Client(url, opts) {
+ }
+ 
+ /** @constant HaveAPI.Client.Version */
+-Client.Version = '0.29.10';
++Client.Version = '0.29.11';
+ 
+ /** @constant HaveAPI.Client.ProtocolVersion */
+ Client.ProtocolVersion = '2.0';
+diff --git a/clients/js/package.json b/clients/js/package.json
+index ba42313..c285e16 100644
+--- a/clients/js/package.json
++++ b/clients/js/package.json
+@@ -1,6 +1,6 @@
+ {
+ 	"name": "haveapi-client",
+-	"version": "0.29.10",
++	"version": "0.29.11",
+ 	"description": "Client for HaveAPI based APIs",
+ 	"license": "MIT",
+ 	"author": {
+diff --git a/clients/js/src/haveapi/client.js b/clients/js/src/haveapi/client.js
+index 8140c04..1210e4c 100644
+--- a/clients/js/src/haveapi/client.js
++++ b/clients/js/src/haveapi/client.js
+@@ -54,7 +54,7 @@ function Client(url, opts) {
+ }
+ 
+ /** @constant HaveAPI.Client.Version */
+-Client.Version = '0.29.10';
++Client.Version = '0.29.11';
+ 
+ /** @constant HaveAPI.Client.ProtocolVersion */
+ Client.ProtocolVersion = '2.0';
+diff --git a/clients/php/composer.json b/clients/php/composer.json
+index 52d0418..46ab098 100644
+--- a/clients/php/composer.json
++++ b/clients/php/composer.json
+@@ -1,7 +1,7 @@
+ {
+     "name": "haveapi/client",
+     "description": "A client for HaveAPI based APIs",
+-    "version": "0.29.10",
++    "version": "0.29.11",
+     "homepage": "https://github.com/vpsfreecz/haveapi-client-php",
+     "license": "MIT",
+     "authors": [
+diff --git a/clients/php/src/Client.php b/clients/php/src/Client.php
+index 05ac4f0..0b24909 100644
+--- a/clients/php/src/Client.php
++++ b/clients/php/src/Client.php
+@@ -9,7 +9,7 @@ use HaveAPI\Client\Action;
+  */
+ class Client extends Client\Resource
+ {
+-    public const VERSION = '0.29.10';
++    public const VERSION = '0.29.11';
+     public const PROTOCOL_VERSION = '2.0';
+ 
+     private $uri;
+diff --git a/clients/ruby/lib/haveapi/client/version.rb b/clients/ruby/lib/haveapi/client/version.rb
+index 931a32b..2be6e6d 100644
+--- a/clients/ruby/lib/haveapi/client/version.rb
++++ b/clients/ruby/lib/haveapi/client/version.rb
+@@ -1,6 +1,6 @@
+ module HaveAPI
+   module Client
+     PROTOCOL_VERSION = '2.0'.freeze
+-    VERSION = '0.29.10'.freeze
++    VERSION = '0.29.11'.freeze
+   end
+ end
+diff --git a/examples/servers/ruby/activerecord_auth/Gemfile b/examples/servers/ruby/activerecord_auth/Gemfile
+index 820214f..0bae851 100644
+--- a/examples/servers/ruby/activerecord_auth/Gemfile
++++ b/examples/servers/ruby/activerecord_auth/Gemfile
+@@ -1,7 +1,7 @@
+ source 'https://rubygems.org'
+ 
+ gem 'activerecord', '~> 8.1.0'
+-gem 'haveapi', '~> 0.29.10', path: '../../../../servers/ruby'
++gem 'haveapi', '~> 0.29.11', path: '../../../../servers/ruby'
+ gem 'rake'
+ gem 'sinatra-activerecord', '~> 2.0.26'
+ 
+diff --git a/servers/ruby/haveapi.gemspec b/servers/ruby/haveapi.gemspec
+index 1360222..667c804 100644
+--- a/servers/ruby/haveapi.gemspec
++++ b/servers/ruby/haveapi.gemspec
+@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
+   s.required_ruby_version = ">= #{File.read('../../.ruby-version').strip}"
+ 
+   s.add_dependency 'activesupport', '>= 7.1'
+-  s.add_dependency 'haveapi-client', '~> 0.29.10'
++  s.add_dependency 'haveapi-client', '~> 0.29.11'
+   s.add_dependency 'i18n', '>= 1.6', '< 2'
+   s.add_dependency 'json'
+   s.add_dependency 'mail'
+diff --git a/servers/ruby/lib/haveapi/version.rb b/servers/ruby/lib/haveapi/version.rb
+index 69de4f7..e4e1941 100644
+--- a/servers/ruby/lib/haveapi/version.rb
++++ b/servers/ruby/lib/haveapi/version.rb
+@@ -1,4 +1,4 @@
+ module HaveAPI
+   PROTOCOL_VERSION = '2.0'.freeze
+-  VERSION = '0.29.10'.freeze
++  VERSION = '0.29.11'.freeze
+ end
+diff --git a/utils/release/publish.rb b/utils/release/publish.rb
+index 5ac286a..94f3612 100644
+--- a/utils/release/publish.rb
++++ b/utils/release/publish.rb
+@@ -180,9 +180,11 @@ module HaveAPI
+       end
+ 
+       def github_release
+-        stdout, stderr, status = Open3.capture3('gh', 'api', "repos/#{REPOSITORY}/releases/tags/#{@artifacts.tag}")
+-        return JSON.parse(stdout) if status.success?
+-        return nil if stderr.include?('HTTP 404')
++        # The tag endpoint only returns published releases; preparation needs drafts.
++        stdout, stderr, status = Open3.capture3('gh', 'api', '--paginate', '--slurp', "repos/#{REPOSITORY}/releases?per_page=100")
++        if status.success?
++          return JSON.parse(stdout).flatten(1).find { |release| release.fetch('tag_name') == @artifacts.tag }
++        end
+ 
+         raise Error, "GitHub release query failed: #{stderr.strip}"
+       end
+diff --git a/utils/release/spec/release_spec.rb b/utils/release/spec/release_spec.rb
+index 73e6f22..eb92f4b 100644
+--- a/utils/release/spec/release_spec.rb
++++ b/utils/release/spec/release_spec.rb
+@@ -170,6 +170,54 @@ RSpec.describe HaveAPI::Release do
+     end
+   end
+ 
++  describe 'GitHub release preparation' do
++    let(:publisher) { HaveAPI::Release::Publisher.new(artifacts, tmp) }
++    let(:draft) { { 'tag_name' => artifacts.tag, 'draft' => true, 'assets' => [] } }
++    let(:list_command) { ['gh', 'api', '--paginate', '--slurp', 'repos/vpsfreecz/haveapi/releases?per_page=100'] }
++
++    def github_response(pages, error: '')
++      [JSON.generate(pages), error, instance_double(Process::Status, success?: error.empty?)]
++    end
++
++    before do
++      fixture_manifest
++      allow(described_class).to receive(:run)
++      # The tag endpoint does not expose drafts, even after creating one.
++      allow(Open3).to receive(:capture3).with('gh', 'api', "repos/vpsfreecz/haveapi/releases/tags/#{artifacts.tag}").and_return(github_response([], error: 'gh: Not Found (HTTP 404)'))
++      pages = [[{ 'tag_name' => 'v0.0.1', 'draft' => false, 'assets' => [] }], [draft]]
++      allow(Open3).to receive(:capture3).with(*list_command).and_return(github_response(pages))
++    end
++
++    it 'finds an existing draft on a later page and uploads its retained artifacts' do
++      publisher.prepare_github
++      expect(described_class).not_to have_received(:run).with('gh', 'release', 'create', any_args)
++      (artifacts.names + ['release-manifest.json']).each do |name|
++        expect(described_class).to have_received(:run).with('gh', 'release', 'upload', artifacts.tag, File.join(tmp, name), '--repo', 'vpsfreecz/haveapi')
++      end
++    end
++
++    it 'finds a newly created draft before uploading artifacts' do
++      allow(Open3).to receive(:capture3).with(*list_command).and_return(github_response([[]]), github_response([[draft]]))
++      expect { publisher.prepare_github }.not_to raise_error
++      expect(described_class).to have_received(:run).with('gh', 'release', 'create', artifacts.tag, '--repo', 'vpsfreecz/haveapi', '--verify-tag', '--draft', '--title', "HaveAPI #{artifacts.version}", '--notes-file', File.join(tmp, 'release-notes.md'))
++      expect(described_class).to have_received(:run).with('gh', 'release', 'upload', artifacts.tag, File.join(tmp, 'release-manifest.json'), '--repo', 'vpsfreecz/haveapi')
++    end
++
++    it 'also finds an already published release with the exact tag' do
++      published = draft.merge('draft' => false)
++      allow(Open3).to receive(:capture3).with(*list_command).and_return(github_response([[published]]))
++      expect(publisher.github_release).to eq(published)
++    end
++
++    [403, 404].each do |status|
++      it "keeps HTTP #{status} query failures visible without creating a draft" do
++        allow(Open3).to receive(:capture3).with(*list_command).and_return(github_response([], error: "gh: query failed (HTTP #{status})"))
++        expect { publisher.prepare_github }.to raise_error(HaveAPI::Release::Error, /GitHub release query failed.*#{status}/)
++        expect(described_class).not_to have_received(:run)
++      end
++    end
++  end
++
+   describe 'PHP synchronization' do
+     let(:publisher) { HaveAPI::Release::Publisher.new(artifacts, tmp) }
+     let(:mirror) { File.join(tmp, 'mirror') }

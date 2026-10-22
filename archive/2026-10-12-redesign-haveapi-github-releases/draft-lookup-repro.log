@@ -1,0 +1,64 @@
+warning: Git tree '/home/aither/workspace/ai/vpsfree.cz/worktrees/2026-10-12-redesign-haveapi-github-releases/haveapi-release' is dirty
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=rbs version=3.4.0 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=racc version=1.7.3 platform=ruby> because it is missing extensions
+Source locally installed gems is ignoring #<Bundler::StubSpecification name=debug version=1.9.2 platform=ruby> because it is missing extensions
+Run options: include {:full_description=>/GitHub\ release\ preparation/}
+FFFFF
+
+Failures:
+
+  1) HaveAPI::Release GitHub release preparation finds an existing draft on a later page and uploads its retained artifacts
+     Failure/Error: publisher.prepare_github
+
+     NoMethodError:
+       undefined method `fetch' for nil
+     # ./utils/release/publish.rb:196:in `prepare_github'
+     # ./utils/release/spec/release_spec.rb:191:in `block (3 levels) in <top (required)>'
+
+  2) HaveAPI::Release GitHub release preparation finds a newly created draft before uploading artifacts
+     Failure/Error: expect { publisher.prepare_github }.not_to raise_error
+
+       expected no Exception, got #<NoMethodError: undefined method `fetch' for nil> with backtrace:
+         # ./utils/release/publish.rb:196:in `prepare_github'
+         # ./utils/release/spec/release_spec.rb:201:in `block (4 levels) in <top (required)>'
+         # ./utils/release/spec/release_spec.rb:201:in `block (3 levels) in <top (required)>'
+     # ./utils/release/spec/release_spec.rb:201:in `block (3 levels) in <top (required)>'
+
+  3) HaveAPI::Release GitHub release preparation also finds an already published release with the exact tag
+     Failure/Error: expect(publisher.github_release).to eq(published)
+
+       expected: {"assets"=>[], "draft"=>false, "tag_name"=>"v0.29.10"}
+            got: nil
+
+       (compared using ==)
+     # ./utils/release/spec/release_spec.rb:209:in `block (3 levels) in <top (required)>'
+
+  4) HaveAPI::Release GitHub release preparation keeps HTTP 403 query failures visible without creating a draft
+     Failure/Error: expect { publisher.prepare_github }.to raise_error(HaveAPI::Release::Error, /GitHub release query failed.*#{status}/)
+
+       expected HaveAPI::Release::Error with message matching /GitHub release query failed.*403/, got #<NoMethodError: undefined method `fetch' for nil> with backtrace:
+         # ./utils/release/publish.rb:196:in `prepare_github'
+         # ./utils/release/spec/release_spec.rb:215:in `block (5 levels) in <top (required)>'
+         # ./utils/release/spec/release_spec.rb:215:in `block (4 levels) in <top (required)>'
+     # ./utils/release/spec/release_spec.rb:215:in `block (4 levels) in <top (required)>'
+
+  5) HaveAPI::Release GitHub release preparation keeps HTTP 404 query failures visible without creating a draft
+     Failure/Error: expect { publisher.prepare_github }.to raise_error(HaveAPI::Release::Error, /GitHub release query failed.*#{status}/)
+
+       expected HaveAPI::Release::Error with message matching /GitHub release query failed.*404/, got #<NoMethodError: undefined method `fetch' for nil> with backtrace:
+         # ./utils/release/publish.rb:196:in `prepare_github'
+         # ./utils/release/spec/release_spec.rb:215:in `block (5 levels) in <top (required)>'
+         # ./utils/release/spec/release_spec.rb:215:in `block (4 levels) in <top (required)>'
+     # ./utils/release/spec/release_spec.rb:215:in `block (4 levels) in <top (required)>'
+
+Finished in 0.06034 seconds (files took 0.46302 seconds to load)
+5 examples, 5 failures
+
+Failed examples:
+
+rspec ./utils/release/spec/release_spec.rb:190 # HaveAPI::Release GitHub release preparation finds an existing draft on a later page and uploads its retained artifacts
+rspec ./utils/release/spec/release_spec.rb:198 # HaveAPI::Release GitHub release preparation finds a newly created draft before uploading artifacts
+rspec ./utils/release/spec/release_spec.rb:206 # HaveAPI::Release GitHub release preparation also finds an already published release with the exact tag
+rspec ./utils/release/spec/release_spec.rb[1:4:4] # HaveAPI::Release GitHub release preparation keeps HTTP 403 query failures visible without creating a draft
+rspec ./utils/release/spec/release_spec.rb[1:4:5] # HaveAPI::Release GitHub release preparation keeps HTTP 404 query failures visible without creating a draft
+

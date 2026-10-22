@@ -1,0 +1,28 @@
+commit 2b745b738f08a1cfb55b9983eac48b7094c527e2
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 20:01:00 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 20:02:34 2026 +0200
+
+    release: find draft GitHub releases before uploading assets
+    
+    The release-by-tag endpoint returns published releases. Preparation treated
+    a newly created draft as missing and stopped before publication. Find the
+    exact tag in the paginated listing, which includes authorized drafts, and
+    keep API errors visible before any creation.
+    
+    Cover existing and new drafts, pagination, published releases and failed
+    queries without making registry writes.
+
+commit 7fb218e28a86ab1d27de74ccb92c2a45063a4f78
+Author:     Jakub Skokan <jakub.skokan@havefun.cz>
+AuthorDate: Mon Oct 19 20:02:47 2026 +0200
+Commit:     Jakub Skokan <jakub.skokan@havefun.cz>
+CommitDate: Mon Oct 19 20:02:47 2026 +0200
+
+    Version 0.29.11
+    
+    Include the corrected draft-release lookup in a new immutable tag. Keep the
+    failed 0.29.10 tag and original artifacts intact; no registry packages
+    were published for that version. Retain the first automated release and
+    npm metadata changes in the release notes.
