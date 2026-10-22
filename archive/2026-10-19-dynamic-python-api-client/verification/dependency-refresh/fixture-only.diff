@@ -1,0 +1,26 @@
+diff --git a/clients/go/spec/support/test_server.rb b/clients/go/spec/support/test_server.rb
+index b14cb85..7c4f15f 100644
+--- a/clients/go/spec/support/test_server.rb
++++ b/clients/go/spec/support/test_server.rb
+@@ -20,7 +20,7 @@ class ClientTestServer
+   def start
+     return if @wait_thr
+ 
+-    env = { 'BUNDLE_GEMFILE' => @gemfile }
++    env = { 'BUNDLE_GEMFILE' => @gemfile, 'BUNDLE_LOCKFILE' => "#{@gemfile}.lock" }
+     cmd = ['bundle', 'exec', 'ruby', @server_script, '--port', '0']
+     @stdin, @stdout, @wait_thr = Open3.popen2e(env, *cmd, chdir: @cwd)
+ 
+diff --git a/clients/ruby/spec/support/test_server.rb b/clients/ruby/spec/support/test_server.rb
+index 4543c32..c3c29d5 100644
+--- a/clients/ruby/spec/support/test_server.rb
++++ b/clients/ruby/spec/support/test_server.rb
+@@ -20,7 +20,7 @@ class ClientTestServer
+   def start
+     return if @wait_thr
+ 
+-    env = { 'BUNDLE_GEMFILE' => @gemfile }
++    env = { 'BUNDLE_GEMFILE' => @gemfile, 'BUNDLE_LOCKFILE' => "#{@gemfile}.lock" }
+     cmd = ['bundle', 'exec', 'ruby', @server_script, '--port', '0']
+     @stdin, @stdout, @wait_thr = Open3.popen2e(env, *cmd, chdir: @cwd)
+ 

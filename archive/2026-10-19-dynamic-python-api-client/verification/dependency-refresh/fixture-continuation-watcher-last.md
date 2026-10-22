@@ -1,0 +1,5 @@
+**Result: incomplete.** The assigned runner executed once against head `a8ea3132e7efe601aaa8965afe648459b3dab5c5` and exited 1 after 158.377 seconds.
+
+The Go server fixture setup, Ruby client specs (47 examples), Go client specs (9 examples), and Python generic Rack tests (59 passed) passed. Python package smoke and both release checks did not run: the next session guard failed because `dev-session current` reported “workspace command belongs to a superseded package generation; rerun it.”
+
+Logs, status files, and the requested [result.md](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-19-dynamic-python-api-client/verification/dependency-refresh/postreview-fixture-continuation/result.md) are in the operation’s evidence directory. The owned runner had exited; no matching fixture or check process remained. No cancellation was taken.
