@@ -1,0 +1,77 @@
+warning: logrotate in debug mode does nothing except printing debug messages!  Consider using verbose mode (-v) instead if this is not what you want.
+
+reading config file /nix/store/19l3bx0zc24ppmbxhvgmp9s89rfycafr-logrotate.conf
+note: 'monthly' overrides previously specified 'weekly'
+Reading state from file: /dev/null
+Allocating hash table for state file, size 64 entries
+
+Handling 4 logs
+
+rotating pattern: "/var/log/btmp" monthly empty log files are not rotated, only log files >= 1048576 bytes are rotated, (1 rotations), old logs are removed
+considering log /var/log/btmp
+Creating new state
+  Now: 2026-10-22 10:27
+  Last rotated at 2026-10-22 10:00
+  log does not need rotating (log has already been rotated)
+
+rotating pattern: "/var/log/wtmp" monthly empty log files are not rotated, only log files >= 1048576 bytes are rotated, (1 rotations), old logs are removed
+considering log /var/log/wtmp
+Creating new state
+  Now: 2026-10-22 10:27
+  Last rotated at 2026-10-22 10:00
+  log does not need rotating (log has already been rotated)
+
+rotating pattern: "/var/log/nginx/*.log" weekly empty log files are not rotated, (26 rotations), old logs are removed
+No logs found. Rotation not needed.
+
+rotating pattern: "/var/log/messages"
+"/var/log/warn"
+"/var/log/mail"
+"/var/log/dhcpd" after 1 days empty log files are not rotated, log files >= 104857600 are rotated earlier, (14 rotations), old logs are removed
+considering log /var/log/messages
+Creating new state
+  Now: 2026-10-22 10:27
+  Last rotated at 2026-10-22 10:00
+  log needs rotating
+considering log /var/log/warn
+Creating new state
+  Now: 2026-10-22 10:27
+  Last rotated at 2026-10-22 10:00
+  log does not need rotating (log has already been rotated)
+considering log /var/log/mail
+Creating new state
+  Now: 2026-10-22 10:27
+  Last rotated at 2026-10-22 10:00
+  log does not need rotating (log has already been rotated)
+considering log /var/log/dhcpd
+  log /var/log/dhcpd does not exist -- skipping
+Creating new state
+rotating log /var/log/messages, log->rotateCount is 14
+dateext suffix '-20261022'
+glob pattern '-[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'
+previous log /var/log/messages.1 does not exist
+renaming /var/log/messages.14.gz to /var/log/messages.15.gz (rotatecount 14, logstart 1, i 14), 
+renaming /var/log/messages.13.gz to /var/log/messages.14.gz (rotatecount 14, logstart 1, i 13), 
+renaming /var/log/messages.12.gz to /var/log/messages.13.gz (rotatecount 14, logstart 1, i 12), 
+renaming /var/log/messages.11.gz to /var/log/messages.12.gz (rotatecount 14, logstart 1, i 11), 
+renaming /var/log/messages.10.gz to /var/log/messages.11.gz (rotatecount 14, logstart 1, i 10), 
+renaming /var/log/messages.9.gz to /var/log/messages.10.gz (rotatecount 14, logstart 1, i 9), 
+renaming /var/log/messages.8.gz to /var/log/messages.9.gz (rotatecount 14, logstart 1, i 8), 
+renaming /var/log/messages.7.gz to /var/log/messages.8.gz (rotatecount 14, logstart 1, i 7), 
+renaming /var/log/messages.6.gz to /var/log/messages.7.gz (rotatecount 14, logstart 1, i 6), 
+renaming /var/log/messages.5.gz to /var/log/messages.6.gz (rotatecount 14, logstart 1, i 5), 
+renaming /var/log/messages.4.gz to /var/log/messages.5.gz (rotatecount 14, logstart 1, i 4), 
+renaming /var/log/messages.3.gz to /var/log/messages.4.gz (rotatecount 14, logstart 1, i 3), 
+renaming /var/log/messages.2.gz to /var/log/messages.3.gz (rotatecount 14, logstart 1, i 2), 
+renaming /var/log/messages.1.gz to /var/log/messages.2.gz (rotatecount 14, logstart 1, i 1), 
+log /var/log/messages.15.gz doesn't exist -- won't try to dispose of it
+renaming /var/log/messages to /var/log/messages.1
+creating new /var/log/messages mode = 0644 uid = 0 gid = 0
+running postrotate script
+running script with args "/var/log/messages"
+"/var/log/warn"
+"/var/log/mail"
+"/var/log/dhcpd" : "
+    /nix/store/kmzlca218j6j1ar292fxj7707qzypij8-systemd-260.5/bin/systemctl kill --kill-whom=main --signal=HUP syslog.service
+
+"

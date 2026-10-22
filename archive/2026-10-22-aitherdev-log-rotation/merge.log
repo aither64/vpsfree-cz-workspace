@@ -1,0 +1,21 @@
+$ /home/aither/bin/dev-session coordination claim-status 2026-10-22-aitherdev-log-rotation --as-is --id 2e936da8-ee91-4984-9148-fa7a3e20bd21 --json
+{"createdAt":"2026-10-22T08:52:08Z","id":"2e936da8-ee91-4984-9148-fa7a3e20bd21","notificationPending":false,"ownerId":"033e07b8-a126-463f-b235-758e479ec906","request":{"label":"Merge approved aitherdev log rotation into configuration master","machines":[],"repositories":["vpsfree-cz-configuration"],"requestId":"2e936da8-ee91-4984-9148-fa7a3e20bd21","schema":1},"resources":["git:/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git","repository:github.com/vpsfreecz/vpsfree-cz-configuration"],"revision":1,"sequence":52,"state":"held","updatedAt":"2026-10-22T08:52:08Z"}
+
+$ git fetch origin
+
+$ git merge --ff-only --no-edit 52b8ccd33fdf60d231816cfb6f166e34671122f0
+Updating 38e7c837..52b8ccd3
+Fast-forward
+ cluster/cz.vpsfree/machines/aitherdev/config.nix | 25 ++++++++++++++++++++++
+ docs/operations/aitherdev-disk-retention.md      | 27 ++++++++++++++++++++++++
+ 2 files changed, 52 insertions(+)
+
+$ git push origin HEAD:refs/heads/master
+To github.com:vpsfreecz/vpsfree-cz-configuration.git
+   38e7c837..52b8ccd3  HEAD -> master
+
+$ git ls-remote --heads origin refs/heads/master
+52b8ccd33fdf60d231816cfb6f166e34671122f0	refs/heads/master
+
+$ /home/aither/bin/dev-session coordination release 2026-10-22-aitherdev-log-rotation --as-is --id 2e936da8-ee91-4984-9148-fa7a3e20bd21 --json
+{"createdAt":"2026-10-22T08:52:08Z","id":"2e936da8-ee91-4984-9148-fa7a3e20bd21","notificationPending":false,"ownerId":"033e07b8-a126-463f-b235-758e479ec906","request":{"label":"Merge approved aitherdev log rotation into configuration master","machines":[],"repositories":["vpsfree-cz-configuration"],"requestId":"2e936da8-ee91-4984-9148-fa7a3e20bd21","schema":1},"resources":["git:/home/aither/workspace/ai/vpsfree.cz/repos/vpsfree-cz-configuration.git","repository:github.com/vpsfreecz/vpsfree-cz-configuration"],"revision":2,"sequence":52,"state":"released","updatedAt":"2026-10-22T08:54:08Z"}

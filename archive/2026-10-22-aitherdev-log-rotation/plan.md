@@ -31,7 +31,8 @@ mandatory-review standalone fallback and the installed utility policy.
 - User selected 100 MiB and 14 archives during planning.
 - Scope is aitherdev only; no shared logging-module policy change.
 - Do not truncate logs, force rotation, fix Codex, activate a configuration,
-  merge master, or archive this initiative as part of implementation.
+  or archive this initiative. Master integration was initially separate from
+  implementation; the user subsequently approved it with "ok, merge it".
 - Use existing logrotate validation rather than adding a permanent test suite
   for a small declarative policy change.
 
@@ -44,7 +45,8 @@ rotates after a separately authorized activation at the next hourly invocation;
 delayed compression leaves its newest archive uncompressed until the following
 rotation. Size can overshoot between checks and 14 archives need not mean
 14 days. A rollback can read existing logs but cannot restore expired archives.
-Deliver a published reviewed branch, awaiting explicit merge/activation direction.
+Deliver the reviewed change on configuration master using the subsequently
+approved fast-forward integration. Live activation still needs separate direction.
 
 ## Documentation
 
@@ -59,5 +61,7 @@ configuration for the four paths and all policy directives, and use logrotate
 debug mode without changing live logs. Commit the complete change and obtain
 independent final review before running the required aitherdev confctl build.
 Use a fresh catalog verification watcher for the uncertain-duration build.
-Publish the feature branch, capture its comparison, update state, and return
-the stable portal link while keeping lifecycle active.
+Publish the feature branch, capture its comparison, and integrate the exact
+reviewed head after the user's explicit approval. Verify remote master and
+release the short repository claim before cleanup and handoff. Complete the
+initiative once all requested work is done; retain the session and feature refs.
