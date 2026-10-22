@@ -1,0 +1,46 @@
+{
+  "nixPhpsRevision": "1bf10b8c3c378e14d11861a056e885775a2ebc73",
+  "files": {
+    "pkgs/php/5.6.nix": {
+      "url": "https://raw.githubusercontent.com/fossar/nix-phps/1bf10b8c3c378e14d11861a056e885775a2ebc73/pkgs/php/5.6.nix",
+      "sha256": "e11a4e4a8c8e45dcb5e00b068e7a49475d6e056153365dc416852bcb1c066763",
+      "versionLines": [
+        "version = \"5.6.40\";",
+        "hash = \"sha256-/9Al00YjVTqy9/2Psh0Mnm+fow3FZcoDode3YwI/ugA=\";"
+      ]
+    },
+    "pkgs/phps.nix": {
+      "url": "https://raw.githubusercontent.com/fossar/nix-phps/1bf10b8c3c378e14d11861a056e885775a2ebc73/pkgs/phps.nix",
+      "sha256": "93de48a76e30a3b5df694f688095b1c6c894a6d8a68ddace223c5f5943a2850a",
+      "sourceEvidence": [
+        "phpAttrsOverrides =",
+        "patches =",
+        "./patches/php56-autoconf.patch",
+        "generic = \"${nixpkgs}/pkgs/development/interpreters/php/generic.nix\";",
+        "mkPhp = args: prev.callPackage generic (_mkArgs args);",
+        "php56 = import ./php/5.6.nix { inherit prev mkPhp; };"
+      ]
+    },
+    "flake.nix": {
+      "url": "https://raw.githubusercontent.com/fossar/nix-phps/1bf10b8c3c378e14d11861a056e885775a2ebc73/flake.nix",
+      "sha256": "648115d4d3c24d1029831974b3fe495315501d7f0106443d479a4897009b084f",
+      "sourceEvidence": [
+        "nixpkgs.url = \"github:NixOS/nixpkgs/nixpkgs-unstable\";",
+        "pkgs = import nixpkgs.outPath {",
+        "overlays.default = import ./pkgs/phps.nix nixpkgs.outPath;"
+      ]
+    },
+    "flake.lock": {
+      "url": "https://raw.githubusercontent.com/fossar/nix-phps/1bf10b8c3c378e14d11861a056e885775a2ebc73/flake.lock",
+      "sha256": "c5027670fa7495aa3552d525e8d42a95955ab7377942998a86aff5d9fc771b23",
+      "lockedNixpkgs": {
+        "lastModified": 1712420723,
+        "narHash": "sha256-VnG0Eu394Ga2FCe8Q66m6OEQF8iAqjDYsjmtl+N2omk=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "9e7f26f82acb057498335362905fde6fea4ca50a",
+        "type": "github"
+      }
+    }
+  }
+}

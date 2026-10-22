@@ -1,0 +1,304 @@
+{
+  "hosts": {
+    "cz.vpsfree/containers/int.blog": {
+      "apacheEnablePHP": false,
+      "pools": {
+        "wordpress-blog.vpsfree.cz": {
+          "phpOptions": "\nsession.upload_progress.enabled = Off\n",
+          "settings": {
+            "group": "nginx",
+            "listen": "/run/phpfpm/wordpress-blog.vpsfree.cz.sock",
+            "listen.group": "nginx",
+            "listen.owner": "nginx",
+            "php_admin_flag[session.upload_progress.enabled]": false,
+            "pm": "dynamic",
+            "pm.max_children": 32,
+            "pm.max_requests": 500,
+            "pm.max_spare_servers": 4,
+            "pm.min_spare_servers": 2,
+            "pm.start_servers": 2,
+            "user": "wordpress"
+          },
+          "phpEnv": {},
+          "extraConfig": null
+        }
+      },
+      "nested": {}
+    },
+    "cz.vpsfree/containers/int.kb": {
+      "apacheEnablePHP": false,
+      "pools": {
+        "dokuwiki-kb.vpsfree.cz": {
+          "phpOptions": "\nsession.upload_progress.enabled = Off\n\nsession.save_path = /var/lib/phpfpm/dokuwiki-kb.vpsfree.cz/sessions\nsession.gc_probability = 0\nsession.gc_maxlifetime = 86400\n",
+          "settings": {
+            "group": "nginx",
+            "listen": "/run/phpfpm/dokuwiki-kb.vpsfree.cz.sock",
+            "listen.group": "nginx",
+            "listen.owner": "nginx",
+            "php_admin_flag[session.upload_progress.enabled]": false,
+            "pm": "dynamic",
+            "pm.max_children": 32,
+            "pm.max_requests": 500,
+            "pm.max_spare_servers": 4,
+            "pm.min_spare_servers": 2,
+            "pm.start_servers": 2,
+            "user": "dokuwiki"
+          },
+          "phpEnv": {
+            "DOKUWIKI_ACL_AUTH_CONFIG": "/nix/store/swpshjh0nnn1cj0ya8d6f5q9q61lb2jc-acl.auth-kb.vpsfree.cz.php",
+            "DOKUWIKI_USERS_AUTH_CONFIG": "/private/kb/users.auth.php"
+          },
+          "extraConfig": null
+        },
+        "dokuwiki-kb.vpsfree.org": {
+          "phpOptions": "\nsession.upload_progress.enabled = Off\n\nsession.save_path = /var/lib/phpfpm/dokuwiki-kb.vpsfree.org/sessions\nsession.gc_probability = 0\nsession.gc_maxlifetime = 86400\n",
+          "settings": {
+            "group": "nginx",
+            "listen": "/run/phpfpm/dokuwiki-kb.vpsfree.org.sock",
+            "listen.group": "nginx",
+            "listen.owner": "nginx",
+            "php_admin_flag[session.upload_progress.enabled]": false,
+            "pm": "dynamic",
+            "pm.max_children": 32,
+            "pm.max_requests": 500,
+            "pm.max_spare_servers": 4,
+            "pm.min_spare_servers": 2,
+            "pm.start_servers": 2,
+            "user": "dokuwiki"
+          },
+          "phpEnv": {
+            "DOKUWIKI_ACL_AUTH_CONFIG": "/nix/store/a6v87y1j39i17zbsbfklpd9sadyl7bma-acl.auth-kb.vpsfree.org.php",
+            "DOKUWIKI_USERS_AUTH_CONFIG": "/private/kb/users.auth.php"
+          },
+          "extraConfig": null
+        }
+      },
+      "nested": {}
+    },
+    "cz.vpsfree/containers/int.utils": {
+      "apacheEnablePHP": false,
+      "pools": {
+        "adminer": {
+          "phpOptions": "\nsession.upload_progress.enabled = Off\n\nsession.save_path = /var/lib/phpfpm/adminer/sessions\nsession.gc_probability = 0\nsession.gc_maxlifetime = 86400\n",
+          "settings": {
+            "catch_workers_output": true,
+            "group": "adminer",
+            "listen": "/run/phpfpm/adminer.sock",
+            "listen.owner": "nginx",
+            "php_admin_flag[log_errors]": true,
+            "php_admin_flag[session.upload_progress.enabled]": false,
+            "php_admin_value[error_log]": "stderr",
+            "pm": "dynamic",
+            "pm.max_children": 32,
+            "pm.max_requests": 500,
+            "pm.max_spare_servers": 5,
+            "pm.min_spare_servers": 2,
+            "pm.start_servers": 2,
+            "user": "adminer"
+          },
+          "phpEnv": {
+            "PATH": "/nix/store/x7xv32zhi5cfbbl7kq75rqx6r70dzcbw-php-with-extensions-8.4.26/bin"
+          },
+          "extraConfig": null
+        }
+      },
+      "nested": {}
+    },
+    "cz.vpsfree/containers/int.web": {
+      "apacheEnablePHP": false,
+      "pools": {
+        "foto": {
+          "phpOptions": "\nsession.upload_progress.enabled = Off\n\nsession.save_path = /var/lib/phpfpm/foto/sessions\nsession.gc_probability = 0\nsession.gc_maxlifetime = 86400\n",
+          "settings": {
+            "group": "foto",
+            "listen": "/run/phpfpm/foto.sock",
+            "listen.owner": "nginx",
+            "php_admin_flag[session.upload_progress.enabled]": false,
+            "pm": "dynamic",
+            "pm.max_children": 5,
+            "pm.max_requests": 500,
+            "pm.max_spare_servers": 3,
+            "pm.min_spare_servers": 1,
+            "pm.start_servers": 2,
+            "user": "foto"
+          },
+          "phpEnv": {},
+          "extraConfig": null
+        },
+        "vpsfree": {
+          "phpOptions": "\nsession.upload_progress.enabled = Off\n\nsession.save_path = /var/lib/phpfpm/vpsfree/sessions\nsession.gc_probability = 0\nsession.gc_maxlifetime = 86400\n",
+          "settings": {
+            "group": "vpsfree",
+            "listen": "/run/phpfpm/vpsfree.sock",
+            "listen.owner": "nginx",
+            "php_admin_flag[session.upload_progress.enabled]": false,
+            "pm": "dynamic",
+            "pm.max_children": 5,
+            "pm.max_requests": 500,
+            "pm.max_spare_servers": 3,
+            "pm.min_spare_servers": 1,
+            "pm.start_servers": 2,
+            "user": "vpsfree"
+          },
+          "phpEnv": {},
+          "extraConfig": null
+        }
+      },
+      "nested": {}
+    },
+    "cz.vpsfree/machines/aitherdev": {
+      "apacheEnablePHP": false,
+      "pools": {},
+      "nested": {
+        "kb-staging": {
+          "autoStart": false,
+          "apacheEnablePHP": false,
+          "pools": {
+            "dokuwiki-kb-cs.aitherdev.int.vpsfree.cz": {
+              "phpOptions": "\nsession.upload_progress.enabled = Off\n",
+              "settings": {
+                "group": "nginx",
+                "listen": "/run/phpfpm/dokuwiki-kb-cs.aitherdev.int.vpsfree.cz.sock",
+                "listen.group": "nginx",
+                "listen.owner": "nginx",
+                "php_admin_flag[session.upload_progress.enabled]": false,
+                "pm": "dynamic",
+                "pm.max_children": 32,
+                "pm.max_requests": 500,
+                "pm.max_spare_servers": 4,
+                "pm.min_spare_servers": 2,
+                "pm.start_servers": 2,
+                "user": "dokuwiki"
+              },
+              "phpEnv": {
+                "DOKUWIKI_ACL_AUTH_CONFIG": "/nix/store/fk5a5rnc72l926h0y9pld70qmgnbc4vr-acl.auth-kb-cs.aitherdev.int.vpsfree.cz.php",
+                "DOKUWIKI_USERS_AUTH_CONFIG": "/private/kb-staging/cz.users.auth.php"
+              },
+              "extraConfig": null
+            },
+            "dokuwiki-kb-en.aitherdev.int.vpsfree.cz": {
+              "phpOptions": "\nsession.upload_progress.enabled = Off\n",
+              "settings": {
+                "group": "nginx",
+                "listen": "/run/phpfpm/dokuwiki-kb-en.aitherdev.int.vpsfree.cz.sock",
+                "listen.group": "nginx",
+                "listen.owner": "nginx",
+                "php_admin_flag[session.upload_progress.enabled]": false,
+                "pm": "dynamic",
+                "pm.max_children": 32,
+                "pm.max_requests": 500,
+                "pm.max_spare_servers": 4,
+                "pm.min_spare_servers": 2,
+                "pm.start_servers": 2,
+                "user": "dokuwiki"
+              },
+              "phpEnv": {
+                "DOKUWIKI_ACL_AUTH_CONFIG": "/nix/store/2dcqjgzrdvmz4pq7zc5y68lxnwisx5z3-acl.auth-kb-en.aitherdev.int.vpsfree.cz.php",
+                "DOKUWIKI_USERS_AUTH_CONFIG": "/private/kb-staging/org.users.auth.php"
+              },
+              "extraConfig": null
+            }
+          }
+        }
+      }
+    },
+    "cz.vpsfree/vpsadmin/int.webui-dev": {
+      "apacheEnablePHP": false,
+      "pools": {
+        "vpsadmin-webui": {
+          "phpOptions": "\nerror_reporting = E_ALL\ndate.timezone = Europe/Amsterdam\nextension=/nix/store/w389r6n024f94bilhfsjcfixzsm0mlv0-php-session-8.4.26/lib/php/extensions/session.so\nextension=/nix/store/q7p0d2m8r320z5nn9296vabkxmrbw781-php-redis-6.3.0/lib/php/extensions/redis.so\n\nsession.upload_progress.enabled = Off\n",
+          "settings": {
+            "catch_workers_output": true,
+            "group": "vpsadmin-webui",
+            "listen": "/run/phpfpm/vpsadmin-webui.sock",
+            "listen.owner": "nginx",
+            "php_admin_flag[log_errors]": true,
+            "php_admin_flag[session.upload_progress.enabled]": false,
+            "php_admin_value[error_log]": "stderr",
+            "pm": "dynamic",
+            "pm.max_children": 32,
+            "pm.max_requests": 500,
+            "pm.max_spare_servers": 5,
+            "pm.min_spare_servers": 2,
+            "pm.start_servers": 2,
+            "user": "vpsadmin-webui"
+          },
+          "phpEnv": {
+            "LOCALE_ARCHIVE": "/nix/store/3690zlfi7xknfmnccwrvh5i4bhmax9xs-glibc-locales-2.42-100/lib/locale/locale-archive",
+            "PATH": "/nix/store/b1wn5clix1mz4vpfih7x9cnj9qfh7c6h-git-2.54.0/bin:/nix/store/x7xv32zhi5cfbbl7kq75rqx6r70dzcbw-php-with-extensions-8.4.26/bin"
+          },
+          "extraConfig": null
+        }
+      },
+      "nested": {}
+    },
+    "cz.vpsfree/vpsadmin/int.webui1": {
+      "apacheEnablePHP": false,
+      "pools": {
+        "vpsadmin-webui": {
+          "phpOptions": "\nerror_reporting = E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED\ndate.timezone = Europe/Amsterdam\nextension=/nix/store/w389r6n024f94bilhfsjcfixzsm0mlv0-php-session-8.4.26/lib/php/extensions/session.so\nextension=/nix/store/q7p0d2m8r320z5nn9296vabkxmrbw781-php-redis-6.3.0/lib/php/extensions/redis.so\n\nsession.upload_progress.enabled = Off\n",
+          "settings": {
+            "catch_workers_output": true,
+            "group": "vpsadmin-webui",
+            "listen": "/run/phpfpm/vpsadmin-webui.sock",
+            "listen.owner": "nginx",
+            "php_admin_flag[log_errors]": true,
+            "php_admin_flag[session.upload_progress.enabled]": false,
+            "php_admin_value[error_log]": "stderr",
+            "pm": "dynamic",
+            "pm.max_children": 32,
+            "pm.max_requests": 500,
+            "pm.max_spare_servers": 5,
+            "pm.min_spare_servers": 2,
+            "pm.start_servers": 2,
+            "user": "vpsadmin-webui"
+          },
+          "phpEnv": {
+            "LOCALE_ARCHIVE": "/nix/store/3690zlfi7xknfmnccwrvh5i4bhmax9xs-glibc-locales-2.42-100/lib/locale/locale-archive",
+            "PATH": "/nix/store/b1wn5clix1mz4vpfih7x9cnj9qfh7c6h-git-2.54.0/bin:/nix/store/x7xv32zhi5cfbbl7kq75rqx6r70dzcbw-php-with-extensions-8.4.26/bin"
+          },
+          "extraConfig": null
+        }
+      },
+      "nested": {}
+    },
+    "cz.vpsfree/vpsadmin/int.webui2": {
+      "apacheEnablePHP": false,
+      "pools": {
+        "vpsadmin-webui": {
+          "phpOptions": "\nerror_reporting = E_ALL & ~E_NOTICE & ~E_STRICT & ~E_DEPRECATED\ndate.timezone = Europe/Amsterdam\nextension=/nix/store/w389r6n024f94bilhfsjcfixzsm0mlv0-php-session-8.4.26/lib/php/extensions/session.so\nextension=/nix/store/q7p0d2m8r320z5nn9296vabkxmrbw781-php-redis-6.3.0/lib/php/extensions/redis.so\n\nsession.upload_progress.enabled = Off\n",
+          "settings": {
+            "catch_workers_output": true,
+            "group": "vpsadmin-webui",
+            "listen": "/run/phpfpm/vpsadmin-webui.sock",
+            "listen.owner": "nginx",
+            "php_admin_flag[log_errors]": true,
+            "php_admin_flag[session.upload_progress.enabled]": false,
+            "php_admin_value[error_log]": "stderr",
+            "pm": "dynamic",
+            "pm.max_children": 32,
+            "pm.max_requests": 500,
+            "pm.max_spare_servers": 5,
+            "pm.min_spare_servers": 2,
+            "pm.start_servers": 2,
+            "user": "vpsadmin-webui"
+          },
+          "phpEnv": {
+            "LOCALE_ARCHIVE": "/nix/store/3690zlfi7xknfmnccwrvh5i4bhmax9xs-glibc-locales-2.42-100/lib/locale/locale-archive",
+            "PATH": "/nix/store/b1wn5clix1mz4vpfih7x9cnj9qfh7c6h-git-2.54.0/bin:/nix/store/x7xv32zhi5cfbbl7kq75rqx6r70dzcbw-php-with-extensions-8.4.26/bin"
+          },
+          "extraConfig": null
+        }
+      },
+      "nested": {}
+    }
+  },
+  "provenance": {
+    "confctlSource": "/nix/store/8mjng71gica53p9jr4085f22xq1zslzg-source/nix/flake/mk-confctl-outputs.nix",
+    "confctlSourceSha256": "37936e294f8a60fee590f2242f77f1df64f871e8ce44c05f2b9b2f1250925768",
+    "configurationRevision": "38687a8438a6e75b20a1924fb65d060a05217b06",
+    "configurationSource": "/nix/store/2q5ar7wpdivcz06vvibqc8bc7k6rvnm2-source",
+    "needle": "  settings = settings;\n",
+    "replacement": "evaluatedConfigurations = builtins.listToAttrs (map (m: {\n  name = m.name;\n  value = (evalConfigFor m).evalConfig;\n}) machinesWithKey);\nsettings = settings;\n"
+  }
+}

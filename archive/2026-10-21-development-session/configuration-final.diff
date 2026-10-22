@@ -1,0 +1,49 @@
+diff --git a/cluster/cz.vpsfree/machines/aitherdev/kb-staging.nix b/cluster/cz.vpsfree/machines/aitherdev/kb-staging.nix
+index 0a21ed1a..f8441d76 100644
+--- a/cluster/cz.vpsfree/machines/aitherdev/kb-staging.nix
++++ b/cluster/cz.vpsfree/machines/aitherdev/kb-staging.nix
+@@ -270,6 +270,8 @@ in
+         '';
+       in
+       {
++        imports = [ ../../../../modules/system/php-upload-progress.nix ];
++
+         networking = {
+           useHostResolvConf = lib.mkForce false;
+           nameservers = [ hostAddress ];
+diff --git a/modules/module-list.nix b/modules/module-list.nix
+index dfb621da..71ce52d0 100644
+--- a/modules/module-list.nix
++++ b/modules/module-list.nix
+@@ -19,6 +19,7 @@ let
+     ./services/sachet.nix
+     ./services/vpsfree-irc-bot.nix
+     ./services/vpsfree-web.nix
++    ./system/php-upload-progress.nix
+     ./system/phpfpm-session-cleanup.nix
+     ./system/logging/nixos.nix
+   ];
+diff --git a/modules/system/php-upload-progress.nix b/modules/system/php-upload-progress.nix
+new file mode 100644
+index 00000000..f3a22ab1
+--- /dev/null
++++ b/modules/system/php-upload-progress.nix
+@@ -0,0 +1,18 @@
++{ lib, ... }:
++{
++  # Disable session upload progress as a precaution pending upstream PHP fixes.
++  options.services.phpfpm.pools = lib.mkOption {
++    type = lib.types.attrsOf (
++      lib.types.submodule {
++        config = {
++          phpOptions = lib.mkAfter ''
++            session.upload_progress.enabled = Off
++          '';
++
++          # Enforce this after package INI and per-directory configuration.
++          settings."php_admin_flag[session.upload_progress.enabled]" = lib.mkForce false;
++        };
++      }
++    );
++  };
++}
