@@ -177,11 +177,11 @@ action. This does not add a tracking-only commit for each turn; use the cadence
 above.
 
 After material changes, review checkpoints, or user-requested status updates,
-use `~/.codex/skills/dev-session-handoff/SKILL.md`. Keep the initiative portal manifest
-current. Register or update artifacts with
-`dev-session artifact add <slug> <path> --label "Caption" --as-is` instead of
-hand-editing artifact YAML. This uses the validated atomic writer and preserves
-the session's identity and repository scope. Include the stable link printed by
+use `~/.codex/skills/dev-session-handoff/SKILL.md`. Save useful files directly
+in the current session's tracking directory. The portal lists regular files there
+automatically, including ignored files, and keeps them available after archival.
+Artifact registration is not required. Keep existing manifest entries and links
+intact. Include the stable link printed by
 `dev-session url <slug> --as-is` in the handoff. If the portal has not been
 deployed yet, identify it as the post-deployment URL.
 
