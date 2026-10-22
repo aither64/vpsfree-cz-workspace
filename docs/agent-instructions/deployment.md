@@ -11,14 +11,15 @@ Before deployment activation or a workspace profile switch, read
 [coordination](../coordination.md) in full. Build and copy before taking machine
 ownership when supported. Under a claims runtime, acquire the physical machine,
 request only the machine, run authorized activation commands and verify actual
-results. Repository ownership is never held through builds or live review. Retain
-every deployed physical machine through review, feedback and redeployment until
-its deployed feature lineage is integrated into approved remote defaults, the
-user accepts the resulting UI/behavior and explicitly directs that machine's
-release. Follow [machine retention](../coordination.md#machine-retention) for
-source, system/profile and acceptance evidence and the final ownership check.
-Idle time or turn completion does not permit release. Pass the held claim and
-exact session identity to ordinary workspace-host profile activation.
+results. Repository ownership is never held through builds or live review. Once
+deployment and effect verification succeeds and the complete deployed feature
+lineage is integrated into approved remote defaults, promptly release the exact
+claim owned by this session and verify its released status, without another user
+confirmation. Follow [machine retention](../coordination.md#machine-retention) for
+source, system/profile and verification evidence and the final ownership check.
+Missing proof or uncertain effects keep ownership; idle time or turn completion
+does not replace either proof. Pass the held claim and exact session identity to
+ordinary workspace-host profile activation.
 Release supplies no merge approval. Legacy jobs/reservations keep their original
 approval, integration-proof and recovery requirements. Held new claims require
 explicit release before lifecycle cleanup.

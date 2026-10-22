@@ -10,10 +10,12 @@ lifecycle changes. Legacy archive completion automatically releases machine
 reservations; that is implementation behavior, not permission to archive or
 release a machine. Before any lifecycle action that could release deployed
 ownership, satisfy [machine retention](../coordination.md#machine-retention):
-integrated deployed feature lineage, user acceptance of the resulting UI/behavior
-and explicit direction to release that physical machine. Idle time, feedback,
-review, redeployment and turn completion do not supply that direction. Failed or
-interrupted archival keeps deployed holds until recovery completes.
+successful deployment and effect verification, and complete deployed feature
+lineage integrated into approved remote defaults. Promptly release the exact
+claim owned by this session and verify its released status, without another user
+confirmation. Missing proof or uncertain effects keep ownership. Release does
+not authorize a session lifecycle action. Failed or interrupted archival keeps
+deployed holds until recovery completes.
 Revival does not reacquire released machines or resume canceled work. Deletion
 retains its recovery holds. Package candidates must preserve the coordination
 contract and retained artifacts; inactivity alone never frees a review reservation.
