@@ -1,0 +1,189 @@
+SHELL: 1
+
+START: 2026-10-18 09:04:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:04:36 +0200
+ELAPSED: 1.51s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:04:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:04:37 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:04:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:04:39 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:04:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:04:40 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:04:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:04:42 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:04:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:04:44 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:04:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:04:45 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:04:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:04:47 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:04:48 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:04:49 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-18 09:04:50 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:04:50 +0200
+ELAPSED: 0.74s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-18 09:04:50 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-18 09:04:50 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Sun, 18 Oct 2026 07:04:50 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-18 09:04:50 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-10-18 09:04:51 +0200
+ELAPSED: 0.76s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:04:51 +0200
+COMMAND: osctl ct new --distribution alpine kmisc-nice-f02d
+END: 2026-10-18 09:04:57 +0200
+ELAPSED: 6.18s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-18 09:04:57 +0200
+COMMAND: osctl ct start kmisc-nice-f02d
+END: 2026-10-18 09:04:59 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 09:04:59 +0200
+COMMAND: osctl ct exec kmisc-nice-f02d nice -n 19 uptime
+END: 2026-10-18 09:05:00 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+ 09:05:00 up 0 min,  0 users,  load average: 0.00, 0.00, 0.00
+---
+
+START: 2026-10-18 09:05:00 +0200
+COMMAND: osctl ct exec kmisc-nice-f02d nice -n -20 uptime
+END: 2026-10-18 09:05:02 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+ 09:05:02 up 0 min,  0 users,  load average: 0.00, 0.00, 0.00
+---
+
+START: 2026-10-18 09:05:02 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-10-18 09:05:02 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+kmisc-attrs-native-3b6e
+kmisc-oom-944d
+kmisc-proc-4663
+kmisc-nice-f02d
+kmisc-attrs-zfs-967e
+kmisc-oom-f54d
+---
+
+START: 2026-10-18 09:05:02 +0200
+COMMAND: osctl ct del -f --prune kmisc-nice-f02d >/dev/null 2>&1 || true
+END: 2026-10-18 09:05:04 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+
+---
+

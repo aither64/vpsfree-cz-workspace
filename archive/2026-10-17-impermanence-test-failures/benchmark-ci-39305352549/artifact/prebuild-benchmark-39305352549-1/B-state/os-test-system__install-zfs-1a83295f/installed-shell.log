@@ -1,0 +1,769 @@
+SHELL: 0
+
+START: 2026-10-20 03:11:29 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 03:11:29 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:29 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 03:11:29 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:29 +0200
+COMMAND: test -e /etc/VPSADMINOS
+END: 2026-10-20 03:11:29 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:29 +0200
+COMMAND: test -L /run/current-system
+END: 2026-10-20 03:11:29 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:29 +0200
+COMMAND: test -d /boot/grub
+END: 2026-10-20 03:11:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:29 +0200
+COMMAND: test "$(findmnt -n -o FSTYPE /)" = "zfs"
+END: 2026-10-20 03:11:29 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:29 +0200
+COMMAND: command -v vpsadminos-rebuild
+END: 2026-10-20 03:11:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/run/current-system/sw/bin/vpsadminos-rebuild
+---
+
+START: 2026-10-20 03:11:29 +0200
+COMMAND: uname -r
+END: 2026-10-20 03:11:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+6.12.109
+---
+
+START: 2026-10-20 03:11:29 +0200
+COMMAND: zpool list tank
+END: 2026-10-20 03:11:29 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+cannot open 'tank': no such pool
+---
+
+START: 2026-10-20 03:11:30 +0200
+COMMAND: zpool list tank
+END: 2026-10-20 03:11:30 +0200
+ELAPSED: 0.05s
+STATUS: 1
+OUTPUT:
+cannot open 'tank': no such pool
+---
+
+START: 2026-10-20 03:11:31 +0200
+COMMAND: zpool list tank
+END: 2026-10-20 03:11:31 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+NAME   SIZE  ALLOC   FREE  CKPOINT  EXPANDSZ   FRAG    CAP  DEDUP    HEALTH  ALTROOT
+tank  3.75G   150K  3.75G        -         -     1%     0%  1.00x    ONLINE  -
+---
+
+START: 2026-10-20 03:11:31 +0200
+COMMAND: sv check pool-tank
+END: 2026-10-20 03:11:39 +0200
+ELAPSED: 7.7s
+STATUS: 1
+OUTPUT:
+timeout: run: pool-tank: (pid 1282) 10s
+---
+
+START: 2026-10-20 03:11:40 +0200
+COMMAND: sv check pool-tank
+END: 2026-10-20 03:11:47 +0200
+ELAPSED: 7.69s
+STATUS: 1
+OUTPUT:
+timeout: run: pool-tank: (pid 1282) 19s
+---
+
+START: 2026-10-20 03:11:48 +0200
+COMMAND: sv check pool-tank
+END: 2026-10-20 03:11:56 +0200
+ELAPSED: 7.69s
+STATUS: 1
+OUTPUT:
+timeout: run: pool-tank: (pid 1282) 28s
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: sv check pool-tank
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: down: pool-tank: 1s, normally up
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: test "$(zfs get -H -o value org.vpsadminos.osctl:active tank)" = "yes"
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: test -s /tank/.migrations
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: zfs list -H -o name tank/ct tank/conf tank/hook tank/log tank/repository tank/migration tank/trash
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tank/conf
+tank/ct
+tank/hook
+tank/log
+tank/migration
+tank/repository
+tank/trash
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: test -d /tank/conf/pool
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: test -d /tank/conf/user
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: test -d /tank/conf/group
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: test -d /tank/conf/ct
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: test -d /tank/log/ct
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: test "$(findmnt -n -o SOURCE /)" = rpool/root
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: test "$(zpool get -H -o value bootfs rpool)" = rpool/root
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: mkdir -p /var/tmp
+END: 2026-10-20 03:11:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:57 +0200
+COMMAND: export STF_SUITE=/root/zfs-root-tests/zfs-tests
+export STF_TOOLS=/root/zfs-root-tests/test-runner
+export UNAME=Linux
+ksh -p -c '. "$STF_SUITE/include/default.cfg"; . "$1"' ksh   "$STF_SUITE/tests/functional/rootpool/rootpool_002_neg.ksh"
+END: 2026-10-20 03:11:58 +0200
+ELAPSED: 0.27s
+STATUS: 0
+OUTPUT:
+ASSERTION: zpool/zfs destroy <rootpool> should fail
+SUCCESS: zpool destroy rpool exited 1
+SUCCESS: zfs destroy rpool exited 1
+rootpool/rootfs can not be destroyed
+---
+
+START: 2026-10-20 03:11:58 +0200
+COMMAND: test "$(findmnt -n -o SOURCE /)" = rpool/root
+END: 2026-10-20 03:11:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:58 +0200
+COMMAND: test -L /run/current-system
+END: 2026-10-20 03:11:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:58 +0200
+COMMAND: zpool status -x rpool
+END: 2026-10-20 03:11:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+pool 'rpool' is healthy
+---
+
+START: 2026-10-20 03:11:58 +0200
+COMMAND: export STF_SUITE=/root/zfs-root-tests/zfs-tests
+export STF_TOOLS=/root/zfs-root-tests/test-runner
+export UNAME=Linux
+ksh -p -c '. "$STF_SUITE/include/default.cfg"; . "$1"' ksh   "$STF_SUITE/tests/functional/rootpool/rootpool_007_pos.ksh"
+END: 2026-10-20 03:11:58 +0200
+ELAPSED: 0.46s
+STATUS: 0
+OUTPUT:
+ASSERTION: the zfs rootfs's compression property can be set to gzip and gzip[1-9]
+SUCCESS: zfs set compression=gzip rpool/root
+SUCCESS: zfs set compression=gzip-1 rpool/root
+SUCCESS: zfs set compression=gzip-2 rpool/root
+SUCCESS: zfs set compression=gzip-3 rpool/root
+SUCCESS: zfs set compression=gzip-4 rpool/root
+SUCCESS: zfs set compression=gzip-5 rpool/root
+SUCCESS: zfs set compression=gzip-6 rpool/root
+SUCCESS: zfs set compression=gzip-7 rpool/root
+SUCCESS: zfs set compression=gzip-8 rpool/root
+SUCCESS: zfs set compression=gzip-9 rpool/root
+the zfs rootfs's compression property can be set to gzip and gzip[1-9]
+NOTE: Performing local cleanup via log_onexit (cleanup)
+SUCCESS: zfs set compression=on rpool/root
+---
+
+START: 2026-10-20 03:11:58 +0200
+COMMAND: test "$(findmnt -n -o SOURCE /)" = rpool/root
+END: 2026-10-20 03:11:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:58 +0200
+COMMAND: test -L /run/current-system
+END: 2026-10-20 03:11:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:11:58 +0200
+COMMAND: zpool status -x rpool
+END: 2026-10-20 03:11:58 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+pool 'rpool' is healthy
+---
+
+START: 2026-10-20 03:11:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:11:59 +0200
+ELAPSED: 0.75s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 03:11:59 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-20 03:11:59 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Tue, 20 Oct 2026 01:11:59 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 03:11:59 +0200
+COMMAND: osctl ct new --distribution alpine persistent
+END: 2026-10-20 03:12:02 +0200
+ELAPSED: 2.63s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 03:12:02 +0200
+COMMAND: osctl ct unset start-menu persistent
+END: 2026-10-20 03:12:03 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:12:03 +0200
+COMMAND: osctl ct set autostart persistent
+END: 2026-10-20 03:12:04 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:12:04 +0200
+COMMAND: osctl ct start persistent
+END: 2026-10-20 03:12:06 +0200
+ELAPSED: 2.38s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 03:12:06 +0200
+COMMAND: osctl ct exec persistent sh -c 'echo installed-data > /root/installed-data'
+END: 2026-10-20 03:12:08 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:12:08 +0200
+COMMAND: set -e
+tmp="$(mktemp)"
+head -n -1 /etc/vpsadminos/configuration.nix > "$tmp"
+cat >> "$tmp" <<'EOF'
+environment.etc."vpsadminos-install-test-marker".text = "ok\n";
+
+EOF
+echo "}" >> "$tmp"
+cat "$tmp" > /etc/vpsadminos/configuration.nix
+rm "$tmp"
+END: 2026-10-20 03:12:08 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:12:08 +0200
+COMMAND: vpsadminos-rebuild switch
+END: 2026-10-20 03:13:56 +0200
+ELAPSED: 107.44s
+STATUS: 0
+OUTPUT:
+building the system configuration from /etc/vpsadminos#vpsadminosConfigurations.vpsadminos-installed.config.system.build.toplevel...
+evaluation warning: networking.firewall.allowedTCPPorts/allowedUDPPorts are ignored when
+                    networking.firewall.conntrack.enable is false; use
+                    networking.firewall.protectedRules for source-restricted services.
+these 3 derivations will be built:
+  /nix/store/vqczrighlwwc2225ks460fr8d1mxg68f-etc-vpsadminos-install-test-marker.drv
+  /nix/store/x3bf1qxrzjwxyn41h282kgb0c2m1abhk-etc.drv
+  /nix/store/jgla8f50bj3gqxxq0khy9w9fpanqr3zk-vpsadminos-system-vpsadminos-installed-26.05.git.a2ccd72.drv
+building '/nix/store/vqczrighlwwc2225ks460fr8d1mxg68f-etc-vpsadminos-install-test-marker.drv'...
+building '/nix/store/x3bf1qxrzjwxyn41h282kgb0c2m1abhk-etc.drv'...
+building '/nix/store/jgla8f50bj3gqxxq0khy9w9fpanqr3zk-vpsadminos-system-vpsadminos-installed-26.05.git.a2ccd72.drv'...
+updating GRUB 2 menu...
+skipping corrupt system profile entry ‘/nix/var/nix/profiles/system-2-link’
+skipping corrupt system profile entry ‘/nix/var/nix/profiles/system-1-link’
+probing runit services...
+probing pools...
+stopping deprecated services...
+stopping changed services...
+activating the configuration...
+setting up /etc...
+reloading changed services...
+restarting changed services...
+runit will start new services...
+> osctl activate --system
+Regenerating system files
+---
+
+START: 2026-10-20 03:13:56 +0200
+COMMAND: test "$(cat /etc/vpsadminos-install-test-marker)" = ok
+END: 2026-10-20 03:13:56 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:13:56 +0200
+COMMAND: readlink -f /run/current-system
+END: 2026-10-20 03:13:56 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/nix/store/3jxcr1h05mikfflhgza6ifhri4q39hgh-vpsadminos-system-vpsadminos-installed-26.05.git.a2ccd72
+---
+
+START: 2026-10-20 03:13:56 +0200
+COMMAND: cat /proc/sys/kernel/random/boot_id
+END: 2026-10-20 03:13:56 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+8e35ffba-de51-413a-b2d4-2f61a40bf02b
+---
+
+START: 2026-10-20 03:13:56 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 03:14:00 +0200
+ELAPSED: 4.81s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:persistent
+Unregistering users, groups and containers
+---
+
+START: 2026-10-20 03:14:31 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 03:14:31 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:14:31 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 03:14:31 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:14:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:32 +0200
+ELAPSED: 1.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:34 +0200
+ELAPSED: 0.93s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:36 +0200
+ELAPSED: 0.68s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:38 +0200
+ELAPSED: 0.91s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:40 +0200
+ELAPSED: 1.0s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:42 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:44 +0200
+ELAPSED: 1.05s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:45 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:47 +0200
+ELAPSED: 0.93s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:48 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:49 +0200
+ELAPSED: 0.72s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:50 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:51 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:53 +0200
+ELAPSED: 0.95s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:54 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:54 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:14:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:56 +0200
+ELAPSED: 0.74s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 03:14:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:14:58 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 03:14:58 +0200
+COMMAND: osctl ct exec persistent true
+END: 2026-10-20 03:14:58 +0200
+ELAPSED: 0.67s
+STATUS: 1
+OUTPUT:
+error: container not running
+---
+
+START: 2026-10-20 03:14:59 +0200
+COMMAND: osctl ct exec persistent true
+END: 2026-10-20 03:15:00 +0200
+ELAPSED: 0.85s
+STATUS: 1
+OUTPUT:
+error: container not running
+---
+
+START: 2026-10-20 03:15:01 +0200
+COMMAND: osctl ct exec persistent true
+END: 2026-10-20 03:15:04 +0200
+ELAPSED: 2.51s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:15:04 +0200
+COMMAND: readlink -f /run/current-system
+END: 2026-10-20 03:15:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/nix/store/3jxcr1h05mikfflhgza6ifhri4q39hgh-vpsadminos-system-vpsadminos-installed-26.05.git.a2ccd72
+---
+
+START: 2026-10-20 03:15:04 +0200
+COMMAND: cat /proc/sys/kernel/random/boot_id
+END: 2026-10-20 03:15:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+846b0b46-3d0a-40ae-86b1-f1bc4caeb8be
+---
+
+START: 2026-10-20 03:15:04 +0200
+COMMAND: test "$(findmnt -n -o FSTYPE /)" = "zfs"
+END: 2026-10-20 03:15:04 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:15:04 +0200
+COMMAND: test "$(cat /etc/vpsadminos-install-test-marker)" = ok
+END: 2026-10-20 03:15:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:15:04 +0200
+COMMAND: osctl ct exec persistent sh -c 'test "$(cat /root/installed-data)" = installed-data'
+END: 2026-10-20 03:15:06 +0200
+ELAPSED: 2.21s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:15:06 +0200
+COMMAND: zpool status -x tank
+END: 2026-10-20 03:15:06 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+pool 'tank' is healthy
+---
+
+START: 2026-10-20 03:15:06 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 03:15:11 +0200
+ELAPSED: 4.83s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:persistent
+Unregistering users, groups and containers
+---
+

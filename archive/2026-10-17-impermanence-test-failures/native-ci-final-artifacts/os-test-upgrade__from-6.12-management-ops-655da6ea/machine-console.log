@@ -1,0 +1,412 @@
+c[?7l[2J[0mSeaBIOS (version rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org)
+
+
+iPXE (http://ipxe.org) 00:03.0 C000 PCI2.10 PnP PMM+BEFD1AA0+BEF31AA0 C000
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from ROM...
+c[?7l[2J
+[1;32m<<< vpsAdminOS Stage 1 >>>[0m
+
+running udev...
+kbd_mode: KDSKBMODE: Inappropriate ioctl for device
+%Gcreated directory: '/mnt/nix/.overlay-store/work'
+created directory: '/mnt/nix/.overlay-store/rw'
+
+[1;32m<<< vpsAdminOS Stage 2 >>>[0m
+
+setting up /etc...
+- runit: $Id: c66c1e3b98d1b630bd51b1d56aaed5c2994e8c9d $: booting.
+- runit: enter stage: /etc/runit/1
+* Applying /etc/sysctl.d/55-nixos-aslr-entropy.conf ...
+* Applying /etc/sysctl.d/60-nixos.conf ...
+vm.mmap_rnd_bits = 32
+vm.mmap_rnd_compat_bits = 16
+fs.aio-max-nr = 3221225471
+fs.inotify.max_queued_events = 2147483647
+fs.inotify.max_user_instances = 2147483647
+fs.inotify.max_user_watches = 2147483647
+fs.nr_open = 4194304
+fs.protected_hardlinks = 1
+fs.protected_symlinks = 1
+kernel.dmesg_restrict = 1
+kernel.keys.maxbytes = 2500000
+kernel.keys.maxkeys = 100000
+kernel.kptr_restrict = 1
+kernel.modprobe = /nix/store/awj272fg81b8rfzm9kyv4pxci93z43ls-kernel-modprobe-wrapper
+kernel.pid_max = 4194304
+kernel.printk = 4
+kernel.pty.max = 16384
+kernel.pty.reserve = 1024
+kernel.sysctl_unprivileged_bpf_time_adjust_nsec = 5000000
+kernel.threads-max = 4194304
+[   12.739511] Spectre V2 : WARNING: Unprivileged eBPF is enabled with eIBRS on, data leaks possible via Spectre v2 BHB attacks!
+kernel.unprivileged_bpf_disabled = 0
+net.core.default_qdisc = fq
+net.ipv4.neigh.default.gc_thresh1 = 2048
+net.ipv4.neigh.default.gc_thresh2 = 4096
+net.ipv4.neigh.default.gc_thresh3 = 8192
+net.ipv4.route.max_size = 2147483647
+net.ipv4.tcp_congestion_control = bbr
+net.ipv6.neigh.default.gc_thresh1 = 2048
+net.ipv6.neigh.default.gc_thresh2 = 4096
+net.ipv6.neigh.default.gc_thresh3 = 8192
+net.ipv6.route.max_size = 2147483647
+net.netfilter.nf_log_all_netns = 1
+vm.max_map_count = 1048576
+vm.min_free_kbytes = 1048576
+vm.min_slab_ratio = 12
+vm.overcommit_ratio = 3200
+vm.swappiness = 0
+- runit: leave stage: /etc/runit/1
+- runit: enter stage: /etc/runit/2
+lxcbr-dnsmasq waiting for interface lxcbr0
+ok: run: eudev: (pid 845) 0s
+
+vpsadminos login: root (automatic login)
+
+/var/cron: No such file or directory
+/var/cron: created
+tabs: No such file or directory
+tabs: created
+Generating public/private rsa key pair.
+Waiting for rpcbind to start
+rsyslogd: getaddrinfo failed obtaining local hostname - using 'vpsadminos' instead; error: System error [v8.2608.0]
+[?2004h
+[1;31m[]0;root@vpsadminos: ~root@vpsadminos:~]#[0m lxcbr-dnsmasq waiting for interface lxcbr0
+Your identification has been saved in /etc/ssh/ssh_host_rsa_key
+Your public key has been saved in /etc/ssh/ssh_host_rsa_key.pub
+The key fingerprint is:
+SHA256:LoPJgjtibzdJVdn3bgAteew1VgWlawAlqb0uEIUlQFA root@vpsadminos
+The key's randomart image is:
++---[RSA 4096]----+
+|  .+E..o. =o= .o*|
+|      ...o.B = = |
+|       ..o  B = .|
+|      ... .  + o |
+|      ..S  .  =  |
+| . . +..  .  . o |
+|. . = +...    .  |
+|oo o + o. .      |
+|+.o.. .  .       |
++----[SHA256]-----+
+Generating public/private ed25519 key pair.
+Your identification has been saved in /etc/ssh/ssh_host_ed25519_key
+Your public key has been saved in /etc/ssh/ssh_host_ed25519_key.pub
+The key fingerprint is:
+SHA256:ZErQ7XSeibfAJT7GHVTRfEpB6mtAq1cD+LlmFimOAvk root@vpsadminos
+The key's randomart image is:
++--[ED25519 256]--+
+|    .. . ...o=o. |
+|     .. +.+  .+ .|
+|      .*+Bo+.. o |
+|   . . +Xo**  .  |
+|  o   ..S+B.+    |
+|   o   o o.= o   |
+|    E . o * o    |
+|     .   = .     |
+|                 |
++----[SHA256]-----+
+sm-notify: Version 2.9.1 starting
+sm-notify: No hosts to notify; exiting
+Service eudev-trigger successfully finished
+lxcbr-dnsmasq waiting for interface lxcbr0
+Service cpufreq successfully finished
+Service networking successfully finished
+Waiting for service restrict-proc-sysfs to start
+Waiting for service set-clock to start
+18 Oct 08:45:20 ntpdate[1972]: adjust time server 78.108.96.197 offset +0.053383 sec
+System clock set
+Service set-clock successfully finished
+[   79.939874] [ tank:limited ] Memory cgroup out of memory: Killed process 3535 (upgrade-resourc) total-vm:262384kB, anon-rss:92032kB, file-rss:0kB, shmem-rss:0kB, UID:1000000 pgtables:220kB oom_score_adj:1000
+modprobe: FATAL: Module act_csum not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module act_mirred not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module af_alg not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module af_packet not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module af_packet_diag not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ahci not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module algif_hash not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module algif_rng not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module algif_skcipher not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module asn1_encoder not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module atkbd not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module auth_rpcgss not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module autofs4 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module blowfish_common not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module blowfish_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module br_netfilter not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module bridge not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module bsd_comp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module camellia_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module cast5_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module cast_common not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ceph not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module cifs not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module cifs_arc4 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module cifs_md4 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module cls_matchall not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module cls_u32 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module cmac not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module crc16 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module crc32c_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module cryptd not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module crypto_simd not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module crypto_user not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module des_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module dm_mod not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module dns_resolver not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module dummy not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ehci_hcd not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ehci_pci not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module fuse not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module grace not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module gre not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module hid_apple not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module hid_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module hid_lenovo not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module hid_logitech_dj not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module hid_logitech_hidpp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module hid_roccat not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module i8042 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ifb not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module inet_diag not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip6_tables not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip6_udp_tunnel not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip6t_REJECT not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip6t_ah not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip6t_rpfilter not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip6t_rt not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip6table_filter not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip6table_mangle not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip6table_nat not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip6table_raw not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip6table_security not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_gre not found in directory /lib/modules/6.12.95.6
+Service cpufreq successfully finished
+modprobe: FATAL: Module ip_set not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_set_bitmap_port not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_set_hash_ip not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_set_hash_net not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_tables not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_tunnel not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_dh not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_fo not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_ftp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_lblc not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_lblcr not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_lc not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_nq not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_ovf not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_pe_sip not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_rr not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_sed not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_sh not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_wlc not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ip_vs_wrr not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ipip not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ipt_REJECT not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ipt_rpfilter not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module iptable_filter not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module iptable_mangle not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module iptable_nat not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module iptable_raw not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module iptable_security not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module isci not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module l2tp_core not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module l2tp_eth not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module l2tp_ip not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module l2tp_ip6 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module l2tp_netlink not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module l2tp_ppp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module libceph not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module libchacha not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module libchacha20poly1305 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module libcrc32c not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module libcurve25519_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module libdes not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module llc not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module lockd not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module loop not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module md4 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module netfs not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module netlink_diag not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conncount not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_amanda not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_broadcast not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_ftp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_h323 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_irc not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_netbios_ns not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_netlink not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_pptp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_sane not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_sip not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_snmp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_conntrack_tftp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_defrag_ipv4 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_defrag_ipv6 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_log_syslog not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_nat not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_nat_amanda not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_nat_ftp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_nat_h323 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_nat_irc not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_nat_pptp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_nat_sip not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_nat_snmp_basic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_nat_tftp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_reject_ipv4 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_reject_ipv6 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_tables not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_tproxy_ipv4 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nf_tproxy_ipv6 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nfnetlink not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nfnetlink_acct not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nfnetlink_log not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nfnetlink_queue not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nfs not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nfs_acl not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nfsd not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nfsv3 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nfsv4 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_chain_nat not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_compat not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_connlimit not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_ct not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_fib not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_fib_inet not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_fib_ipv4 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_fib_ipv6 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_limit not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_log not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_masq not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_nat not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_redir not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_reject not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_reject_inet not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_reject_ipv4 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_reject_ipv6 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nft_reject_netdev not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nls_ucs2_utils not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nls_utf8 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module nvme not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ohci_hcd not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ohci_pci not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module overlay not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module pcips2 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module polyval_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ppp_async not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ppp_deflate not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ppp_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module pppox not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module raw_diag not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module rmd160 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module rpcsec_gss_krb5 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sata_nv not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sata_sis not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sata_uli not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sata_via not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sch_cake not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sch_fq not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sch_htb not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sch_ingress not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sctp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sctp_diag not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sd_mod not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module serpent_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sha1_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module slhc not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sm3 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sm3_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sm4 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sm4_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module squashfs not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sr_mod not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module stp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module sunrpc not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module tcp_bbr not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module tcp_diag not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module ts_kmp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module tun not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module twofish_common not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module twofish_generic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module udp_diag not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module udp_tunnel not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module uhci_hcd not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module unix_diag not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module usbhid not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module veth not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module virtiofs not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module vrf not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module vsock not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module vsock_diag not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module vsock_loopback not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module vxlan not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module wireguard not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module x_tables not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xcbc not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xhci_hcd not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xhci_pci not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_AUDIT not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_CHECKSUM not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_CLASSIFY not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_CT not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_DSCP not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_LOG not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_MASQUERADE not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_NFLOG not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_NFQUEUE not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_REDIRECT not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_TCPMSS not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_TPROXY not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_TRACE not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_addrtype not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_bpf not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_cgroup not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_comment not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_connlimit not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_connmark not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_conntrack not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_dscp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_hashlimit not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_helper not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_hl not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_iprange not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_ipvs not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_length not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_limit not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_mark not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_multiport not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_nat not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_nfacct not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_owner not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_physdev not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_pkttype not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_policy not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_realm not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_recent not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_sctp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_set not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_state not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_statistic not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_tcpmss not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_tcpudp not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_time not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module xt_u32 not found in directory /lib/modules/6.12.95.6
+modprobe: FATAL: Module zfs not found in directory /lib/modules/6.12.95.6
+rsyslogd: getaddrinfo failed obtaining local hostname - using 'vpsadminos' instead; error: System error [v8.2608.0]
+[  486.325765] [ tank:limited ] Memory cgroup out of memory: Killed process 14620 (upgrade-resourc) total-vm:262384kB, anon-rss:89600kB, file-rss:0kB, shmem-rss:0kB, UID:1000000 pgtables:216kB oom_score_adj:1000
+[  529.675694] [ tank:limited ] Memory cgroup out of memory: Killed process 15196 (upgrade-resourc) total-vm:262384kB, anon-rss:122368kB, file-rss:0kB, shmem-rss:0kB, UID:1000000 pgtables:280kB oom_score_adj:1000
+[  659.732910] [ limited-51c8 ] Memory cgroup out of memory: Killed process 17398 (upgrade-resourc) total-vm:262384kB, anon-rss:122368kB, file-rss:0kB, shmem-rss:0kB, UID:1000000 pgtables:280kB oom_score_adj:1000
+- runit: leave stage: /etc/runit/2
+- runit: enter stage: /etc/runit/3
+Grabbing pools
+Grabbing all containers
+and down we go
+- runit: leave stage: /etc/runit/3
+- runit: sending KILL signal to all processes...
+- runit: power off...
+[  860.039275] reboot: Power down

@@ -1,0 +1,1949 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 5969196e7..2bcaebd0d 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -2,6 +2,7 @@ name: CI
+ run-name: "CI (${{ inputs.test_suite || 'ci' }}${{ inputs.test_pattern && format(': {0}', inputs.test_pattern) || '' }}${{ inputs.test_suite == 'zfs-full' && inputs.zfs_tags && inputs.zfs_tags != 'functional' && format(': {0}', inputs.zfs_tags) || '' }})"
+ 
+ env:
++  TEST_RUNNER_PREBUILD: ${{ github.event_name != 'workflow_dispatch' || inputs.prebuild }}
+   VPSADMINOS_CONFIG: >-
+     ${{ (inputs.test_suite == 'ci-unstable' || inputs.test_suite == 'zfs-full' || github.ref == 'refs/heads/snajpa-6.18' || github.head_ref == 'snajpa-6.18') && format('{0}/os/configs/unstable.nix', github.workspace) || '' }}
+ 
+@@ -45,6 +46,11 @@ on:
+         required: false
+         type: string
+         default: ''
++      prebuild:
++        description: Build selected test images before starting VMs
++        required: true
++        default: true
++        type: boolean
+       stop_on_failure:
+         description: Stop scheduling after the first unexpected result
+         required: true
+@@ -107,6 +113,9 @@ jobs:
+       - name: Check NixOS guest compatibility modules and generated flakes
+         run: bash tests/nixos-container-eval.sh
+ 
++      - name: Check squashfs cache flags and module wiring
++        run: nix eval --impure --raw --file tests/squashfs-memory-eval.nix
++
+       - name: Check NixOS persistent activation
+         run: nix build .#checks.x86_64-linux.nixos-container-persistence --no-link
+ 
+@@ -266,6 +275,12 @@ jobs:
+             args+=(--stop-on-failure)
+           fi
+ 
++          if [[ "$TEST_RUNNER_PREBUILD" == "true" ]]; then
++            args+=(--prebuild)
++          else
++            args+=(--no-prebuild)
++          fi
++
+           if [[ -n "$TEST_PATTERN" ]]; then
+             # One quoted positional glob, never shell words or CLI options.
+             args+=(-- "$TEST_PATTERN")
+@@ -444,6 +459,12 @@ jobs:
+             args+=(--max-cpus 128 --cpu-overcommit "$cpu_factor")
+           fi
+ 
++          if [[ "$TEST_RUNNER_PREBUILD" == "true" ]]; then
++            args+=(--prebuild)
++          else
++            args+=(--no-prebuild)
++          fi
++
+           ./test-runner.sh "${args[@]}" | tee "$TEST_RUNNER_STATE_DIR/test.log"
+ 
+       # Keep producer module checksums available even when every case passes.
+diff --git a/docs/os/testing.md b/docs/os/testing.md
+index f8ddae7b1..4f4d3ebce 100644
+--- a/docs/os/testing.md
++++ b/docs/os/testing.md
+@@ -400,6 +400,66 @@ are post-failure observations, and an overwritten ring cannot establish that
+ an earlier disconnect or reset was absent. No lock or cancellation assertion
+ depends on a particular transport topology or on the diagnostic contents.
+ 
++## Preparing images before running tests
++
++`./test-runner.sh test --prebuild --jobs auto -t ci` builds the configurations
++and image closures for the selected tests before starting any selected VM.
++Patterns, script selectors, tags, labels and metadata expressions keep their
++usual meaning. Several selected scripts from one test share one prepared
++configuration. The prepared JSON and its closure stay GC-rooted through all
++attempts and VM cleanup; runtime loads those exact configurations without
++invoking Nix. A test script or extension that explicitly starts a separate host
++build is outside this boundary.
++
++Prebuild is opt-in. `--no-prebuild` keeps per-test image preparation. It does
++not remove the test squashfs cache default or relax memory admission. `debug`
++continues to prepare one test when it starts. CI enables prebuild for native
++tests; the manual `prebuild` boolean can disable it.
++
++Preparation snapshots VM capacity before building, then refreshes assigned
++limits before starting VMs. It chooses local Nix build jobs separately from
++`--jobs`, using available host/cgroup memory bounded by assigned capacity and
++`--max-memory-mib`. After subtracting `--memory-reserve-mib` (default 8192), it
++divides the usable memory by `--prebuild-memory-per-job-mib` (default 8192),
++rounds down, and caps the result at inherited local Nix `max-jobs`. The estimate
++must be positive. Unknown headroom requires an explicit usable maximum;
++insufficient capacity fails before any VM starts. Runtime memory overcommit is
++not applied to preparation sizing. Inherited `max-jobs=0` keeps remote-only or
++substitution behavior; local headroom does not size remote builders.
++
++The 8192 MiB estimate is an admission heuristic, not a derivation RSS limit.
++Preparation changes neither Nix `cores` nor kernel/compression CPU parallelism.
++Evaluation, substitution and daemon overhead, one unusually heavy derivation,
++and unrelated builds can exceed the estimate. CI sizing assumes one worker job
++per runner container without a competing test or build workload.
++
++Preparation errors are reported as infrastructure/build failures, with the
++selected identities, full build log path, and exit code or signal. They start
++zero selected VMs and do not fabricate script assertion results. Cancellation
++reaps the owned Nix client and releases its root; shared daemon work is not
++killed. Retrying the command reuses valid cached outputs. Disk reset through
++`--fresh` begins only after complete preparation succeeds.
++
++### Squashfs cache
++
++vpsAdminOS test images default to `system.squashfsMemoryMiB = 2048`, passed to
++both `sqfstar` and `mksquashfs`. This bounds the compressor cache, not total
++build memory. Metadata, dictionaries, compression contexts and other processes
++use additional memory. The setting preserves CPU parallelism, compression
++settings (zstd level 10 by default) and image metadata. Override it when needed;
++`null` restores the tool default. Production defaults to `null`. Historical
++pinned OS sources and unrelated Nixpkgs image builders do not inherit this
++setting.
++
++### Runtime memory admission
++
++A test whose aggregate RAM or `/dev/shm` request exceeds the nominal capacity
++fails explicitly instead of bypassing the limit or waiting forever. The error
++names the test, constraint, requested amount and capacity. CPU-only oversized
++tests can still run alone when both memory requests fit, including intentional
++large-vCPU livepatch fixtures. Guest memory, CPU counts and shared-memory
++requests are unchanged.
++
+ ## Expected failure
+ A test can be expected to fail. The failure is shown, but it does not result
+ in error exit status. If a test succeeds and we expected it to fail, it is
+diff --git a/os/lib/make-squashfs.nix b/os/lib/make-squashfs.nix
+index 1e1ca785d..8605a6a95 100644
+--- a/os/lib/make-squashfs.nix
++++ b/os/lib/make-squashfs.nix
+@@ -16,6 +16,9 @@
+   # Preserve source pathnames in the generated filesystem.
+   noStrip ? false,
+ 
++  # Compressor cache in MiB; null retains squashfs-tools' default.
++  memoryMiB ? null,
++
+   # Compression parameters.
+   # For zstd compression you can use [ "zstd" "-Xcompression-level" "10" ].
+   comp ? [
+@@ -29,7 +32,9 @@ let
+   compFlags = lib.escapeShellArgs (
+     if comp == null then [ "-no-compression" ] else [ "-comp" ] ++ comp
+   );
++  memoryFlags = lib.optionalString (memoryMiB != null) " -mem ${toString memoryMiB}M";
+ in
++assert memoryMiB == null || (builtins.isInt memoryMiB && memoryMiB > 0);
+ stdenv.mkDerivation {
+   name = "squashfs.img";
+ 
+@@ -75,14 +80,14 @@ stdenv.mkDerivation {
+           --files-from "$closureInfo/store-paths" \
+         | sqfstar \
+           -all-root -root-uid 0 -root-gid 0 -root-mode 0755 \
+-          -b 1048576 ${compFlags} \
++          -b 1048576 ${compFlags}${memoryFlags} \
+           "$out"
+       ''
+     else
+       ''
+         mksquashfs nix-path-registration $(cat $closureInfo/store-paths) \
+           ${lib.optionalString (secretsDir != null) "secrets"} \
+-          $out -keep-as-directory -all-root -b 1048576 ${compFlags}
++          $out -keep-as-directory -all-root -b 1048576 ${compFlags}${memoryFlags}
+       ''
+   );
+ }
+diff --git a/os/modules/installer/cd-dvd/iso-image.nix b/os/modules/installer/cd-dvd/iso-image.nix
+index b95d97787..7a42dcb5e 100644
+--- a/os/modules/installer/cd-dvd/iso-image.nix
++++ b/os/modules/installer/cd-dvd/iso-image.nix
+@@ -281,6 +281,7 @@ in
+       storeContents = config.isoImage.storeContents;
+       noStrip = true;
+       comp = config.system.squashfsCompression;
++      memoryMiB = config.system.squashfsMemoryMiB;
+     };
+ 
+     # Individual files to be included on the CD, outside of the Nix
+diff --git a/os/modules/system/activation/top-level.nix b/os/modules/system/activation/top-level.nix
+index 0caa80af0..d2bb97f71 100644
+--- a/os/modules/system/activation/top-level.nix
++++ b/os/modules/system/activation/top-level.nix
+@@ -139,6 +139,17 @@ in
+       '';
+     };
+ 
++    system.squashfsMemoryMiB = mkOption {
++      default = null;
++      type = types.nullOr types.ints.positive;
++      description = lib.mdDoc ''
++        Compressor cache size in MiB for `mksquashfs` and `sqfstar`.
++        `null` keeps the tool default. Compressor metadata and worker state
++        use additional memory. CPU parallelism and compression settings
++        are unchanged.
++      '';
++    };
++
+     system.squashfsCompression = mkOption {
+       default = [
+         "zstd"
+@@ -426,6 +437,7 @@ in
+       secretsDir = config.system.secretsDir;
+       noStrip = true;
+       comp = config.system.squashfsCompression;
++      memoryMiB = config.system.squashfsMemoryMiB;
+     };
+ 
+     system.build.dist = pkgs.runCommand "vpsadminos-dist" { } ''
+diff --git a/test-runner/lib/test-runner.rb b/test-runner/lib/test-runner.rb
+index 0444cc88c..36fd71f88 100644
+--- a/test-runner/lib/test-runner.rb
++++ b/test-runner/lib/test-runner.rb
+@@ -10,6 +10,7 @@ require 'test-runner/example_result'
+ require 'test-runner/executor'
+ require 'test-runner/hook'
+ require 'test-runner/nix_cli'
++require 'test-runner/prebuild'
+ require 'test-runner/repository_source'
+ require 'test-runner/resource_pool'
+ require 'test-runner/retry_classifier'
+diff --git a/test-runner/lib/test-runner/cli/app.rb b/test-runner/lib/test-runner/cli/app.rb
+index 077b1f710..e21d920d2 100644
+--- a/test-runner/lib/test-runner/cli/app.rb
++++ b/test-runner/lib/test-runner/cli/app.rb
+@@ -58,6 +58,12 @@ module TestRunner::Cli
+         c.desc 'How many tests to run in parallel, or auto'
+         c.flag %w[j jobs], default_value: '1'
+ 
++        c.desc 'Build selected test images before starting VMs; disabling keeps the test cache and memory admission policies'
++        c.switch 'prebuild', default_value: false
++
++        c.desc 'Estimated preparation memory per Nix build job, in MiB (positive integer; CPU parallelism is unchanged)'
++        c.flag 'prebuild-memory-per-job-mib', type: Integer, default_value: TestRunner::Prebuild::DEFAULT_MEMORY_PER_JOB_MIB
++
+         c.desc 'Maximum memory available to running test VMs, in MiB'
+         c.flag 'max-memory-mib', type: Integer
+ 
+diff --git a/test-runner/lib/test-runner/cli/command.rb b/test-runner/lib/test-runner/cli/command.rb
+index 3385f612a..beb73a2f6 100644
+--- a/test-runner/lib/test-runner/cli/command.rb
++++ b/test-runner/lib/test-runner/cli/command.rb
+@@ -21,14 +21,18 @@ module TestRunner
+     end
+ 
+     def test
++      estimate = opts['prebuild-memory-per-job-mib']
++      if estimate && Integer(estimate) <= 0
++        raise ArgumentError, 'prebuild-memory-per-job-mib must be positive'
++      end
++
+       test_scripts = select_test_scripts(args[0])
+ 
+       puts 'The following test scripts will be run:'
+       test_scripts.each { |t| puts "  #{t.path}" }
+       puts
+ 
+-      exec = TestRunner::Executor.new(
+-        test_scripts,
++      executor_options = {
+         state_dir:,
+         jobs: test_jobs(test_scripts),
+         jobs_auto: jobs_auto?,
+@@ -51,8 +55,22 @@ module TestRunner
+         system: opts['system'],
+         test_config_path:,
+         repo_root:
+-      )
+-      results = exec.run
++      }
++      results = if opts['prebuild']
++                  pool = ResourcePool.from_options(executor_options)
++                  Prebuild.new(
++                    test_scripts,
++                    resource_pool: pool,
++                    state_dir:,
++                    memory_per_job_mib: opts['prebuild-memory-per-job-mib'] || Prebuild::DEFAULT_MEMORY_PER_JOB_MIB,
++                    system: opts['system'], test_config_path:, repo_root:
++                  ).open do |configs|
++                    pool.refresh_capacity
++                    Executor.new(test_scripts, **executor_options, resource_pool: pool, prepared_configs: configs).run
++                  end
++                else
++                  Executor.new(test_scripts, **executor_options).run
++                end
+ 
+       return unless results.detect(&:unexpected_result?)
+ 
+@@ -142,7 +160,11 @@ module TestRunner
+ 
+     def with_repository_environment(source_path)
+       original_env = ENV.fetch('TEST_RUNNER_REPO_ROOT', nil)
++      original_config = ENV.fetch('VPSADMINOS_CONFIG', nil)
+       ENV['TEST_RUNNER_REPO_ROOT'] = source_path
++      if original_config && !original_config.empty? && @repository_source
++        ENV['VPSADMINOS_CONFIG'] = @repository_source.resolve_path(original_config)
++      end
+ 
+       yield
+     ensure
+@@ -151,6 +173,11 @@ module TestRunner
+       else
+         ENV['TEST_RUNNER_REPO_ROOT'] = original_env
+       end
++      if original_config.nil?
++        ENV.delete('VPSADMINOS_CONFIG')
++      else
++        ENV['VPSADMINOS_CONFIG'] = original_config
++      end
+     end
+ 
+     def load_extensions
+diff --git a/test-runner/lib/test-runner/executor.rb b/test-runner/lib/test-runner/executor.rb
+index 3ec33250d..eb9264cdd 100644
+--- a/test-runner/lib/test-runner/executor.rb
++++ b/test-runner/lib/test-runner/executor.rb
+@@ -7,6 +7,7 @@ require 'test-runner/resource_pool'
+ 
+ module TestRunner
+   class Executor
++    class ResourceError < StandardError; end
+     # Private parent/child status that cannot be accepted by expectFailure.
+     KERNEL_FAILURE_EXIT_STATUS = 86
+     DEFAULT_RESOURCE_REFRESH_INTERVAL = 15
+@@ -46,7 +47,7 @@ module TestRunner
+       @mutex = Mutex.new
+       @scheduler_mutex = Mutex.new
+       @scheduler_cv = ConditionVariable.new
+-      @resource_pool = ResourcePool.from_options(opts)
++      @resource_pool = opts[:resource_pool] || ResourcePool.from_options(opts)
+       @last_resource_wait_log_at = nil
+       @resource_refresh_interval = parse_resource_refresh_interval(opts[:resource_refresh_interval])
+       @resource_monitor_mutex = Mutex.new
+@@ -82,6 +83,15 @@ module TestRunner
+         end
+ 
+         wait_for_workers
++      rescue Exception # rubocop:disable Lint/RescueException
++        stop_work!
++        # The preparation root must outlive every worker's guest cleanup.
++        workers.each do |worker|
++          worker.join
++        rescue StandardError
++          next
++        end
++        raise
+       ensure
+         stop_status_monitor
+         stop_resource_monitor
+@@ -197,6 +207,9 @@ module TestRunner
+           mark_test_finished(test, result)
+         end
+       end
++    rescue StandardError
++      stop_work!
++      raise
+     end
+ 
+     def reserve_next_test
+@@ -231,15 +244,18 @@ module TestRunner
+ 
+       return i unless i.nil?
+ 
+-      # Never deadlock the suite just because one test is larger than the
+-      # detected capacity. Run it alone and let QEMU or the host enforce the
+-      # real limit.
+       if resource_pool.running == 0
+         _test_i, test, = pending.first
++        unless resource_pool.memory_fits?(test.resources)
++          raise ResourceError,
++                "Test #{test.path}: #{resource_pool.memory_overflows(test.resources).join('; ')}"
++        end
++
++        # Keep the CPU-only exception for deliberately large-vCPU tests.
+         log(
+-          "WARNING: Test #{test.path} requests resources beyond the scheduler " \
++          "WARNING: Test #{test.path} requests CPUs beyond the scheduler " \
+           "limits (requested: #{test.resources.summary}; available: #{resource_pool.status}); " \
+-          'running it alone may exhaust the host'
++          'running it alone with memory admission enforced'
+         )
+         return 0
+       end
+@@ -629,7 +645,8 @@ module TestRunner
+           sock_dir: test_sock_dir,
+           default_timeout: opts[:default_timeout],
+           destructive: opts[:destructive],
+-          recreate_disks: opts[:recreate_disks]
++          recreate_disks: opts[:recreate_disks],
++          **prepared_config_options(test)
+         )
+ 
+         begin
+@@ -775,6 +792,12 @@ module TestRunner
+       scheduler_mutex.synchronize { scheduler_cv.broadcast }
+     end
+ 
++    def prepared_config_options(test)
++      return {} unless opts.has_key?(:prepared_configs)
++
++      { prepared_config: opts.fetch(:prepared_configs).fetch(test) }
++    end
++
+     def stop_work?
+       @stop_work
+     end
+diff --git a/test-runner/lib/test-runner/gc_root.rb b/test-runner/lib/test-runner/gc_root.rb
+new file mode 100644
+index 000000000..e7ad51bca
+--- /dev/null
++++ b/test-runner/lib/test-runner/gc_root.rb
+@@ -0,0 +1,109 @@
++require 'fileutils'
++require 'securerandom'
++require 'tmpdir'
++
++module TestRunner
++  # Invocation-owned indirect GC root, with flock-based stale-root recovery.
++  class GcRoot
++    attr_reader :path, :root_directory
++
++    def initialize(root_directory:)
++      @root_directory = File.expand_path(root_directory)
++    end
++
++    def open
++      FileUtils.mkdir_p(root_directory, mode: 0o700)
++      reserve_gc_root
++      yield(path)
++    ensure
++      remove_gc_root
++    end
++
++    protected
++
++    def reserve_gc_root
++      with_registry_lock do
++        cleanup_stale_roots
++
++        loop do
++          token = "#{Process.pid}-#{SecureRandom.hex(8)}"
++          @lock_path = File.join(root_directory, "#{token}.lock")
++          @path = File.join(root_directory, "#{token}.root")
++
++          begin
++            @lock_file = File.open(
++              @lock_path,
++              File::RDWR | File::CREAT | File::EXCL,
++              0o600
++            )
++            break
++          rescue Errno::EEXIST
++            next
++          end
++        end
++
++        @lock_file.flock(File::LOCK_EX)
++      end
++    end
++
++    def remove_gc_root
++      return if @lock_path.nil? && @path.nil?
++
++      with_registry_lock do
++        unlink_gc_root(@path)
++
++        @lock_file&.flock(File::LOCK_UN)
++        @lock_file&.close
++        @lock_file = nil
++
++        File.unlink(@lock_path) if @lock_path && File.file?(@lock_path)
++      end
++    rescue Errno::ENOENT
++      nil
++    ensure
++      @lock_path = nil
++      @path = nil
++    end
++
++    def cleanup_stale_roots
++      Dir.glob(File.join(root_directory, '*.lock')).each do |lock_path|
++        File.open(lock_path, File::RDWR) do |lock_file|
++          next unless lock_file.flock(File::LOCK_EX | File::LOCK_NB)
++
++          unlink_gc_root(lock_path.sub(/\.lock\z/, '.root'))
++          File.unlink(lock_path)
++        end
++      rescue Errno::ENOENT
++        next
++      end
++
++      Dir.glob(File.join(root_directory, '*.root')).each do |root_path|
++        lock_path = root_path.sub(/\.root\z/, '.lock')
++        unlink_gc_root(root_path) unless File.exist?(lock_path)
++      end
++    end
++
++    def with_registry_lock
++      File.open(registry_lock_path, File::RDWR | File::CREAT, 0o600) do |lock_file|
++        lock_file.flock(File::LOCK_EX)
++        yield
++      ensure
++        lock_file.flock(File::LOCK_UN)
++      end
++    end
++
++    def unlink_gc_root(root_path)
++      return if root_path.nil?
++      return unless File.file?(root_path) || File.symlink?(root_path)
++
++      File.unlink(root_path)
++    rescue Errno::ENOENT
++      nil
++    end
++
++    def registry_lock_path
++      "#{root_directory}.lock"
++    end
++
++  end
++end
+diff --git a/test-runner/lib/test-runner/nix_cli.rb b/test-runner/lib/test-runner/nix_cli.rb
+index 3b13b037e..1e9970548 100644
+--- a/test-runner/lib/test-runner/nix_cli.rb
++++ b/test-runner/lib/test-runner/nix_cli.rb
+@@ -34,6 +34,23 @@ module TestRunner
+       run!(*build_cmd(mode: 'testJson', test_path: path, test_args:, out_link: out_link))
+     end
+ 
++    def build_test_batch(selection, out_link, max_jobs:, log_path:)
++      cmd = build_cmd(mode: 'testBatch', test_path: nil, test_args: nil, out_link:)
++      cmd += ['--argstr', 'selectedTestsJson', JSON.generate(selection), '--max-jobs', max_jobs.to_s]
++      run!(*cmd, log_path:)
++    end
++
++    def local_max_jobs
++      config = JSON.parse(capture_output('nix', 'config', 'show', '--json'))
++      value = config.fetch('max-jobs').fetch('value')
++      # Nix normally serializes the resolved value even for max-jobs=auto.
++      value = ResourcePool.detect_cpus if value == 'auto'
++      jobs = Integer(value)
++      raise ArgumentError, 'Nix max-jobs must be non-negative' if jobs < 0
++
++      jobs
++    end
++
+     protected
+ 
+     def helper_file
+@@ -85,15 +102,44 @@ module TestRunner
+ 
+     def capture_output(*cmd)
+       out, status = Open3.capture2(*cmd)
+-      raise "#{cmd.join(' ')} failed (#{status.exitstatus})" unless status.success?
++      raise "#{cmd.join(' ')} failed (#{status_description(status)})" unless status.success?
+ 
+       out
+     end
+ 
+-    def run!(*cmd)
+-      pid = spawn(*cmd)
+-      Process.wait(pid)
+-      raise "#{cmd.join(' ')} failed (#{$?.exitstatus})" unless $?.exitstatus == 0
++    def run!(*cmd, log_path: nil)
++      log = File.open(log_path, 'a') if log_path
++      options = { pgroup: true }
++      options.merge!(out: log, err: [:child, :out]) if log
++      pid = spawn(*cmd, **options)
++      _pid, status = Process.wait2(pid)
++      return if status.success?
++
++      log&.puts("Preparation build failed (#{status_description(status)})")
++      raise "#{cmd.join(' ')} failed (#{status_description(status)})"
++    rescue SignalException => e
++      if pid
++        begin
++          Process.kill(e.signo, -pid)
++        rescue Errno::ESRCH
++          # The owned client already exited.
++        end
++        begin
++          Process.wait(pid)
++        rescue Errno::ECHILD
++          # Cancellation can arrive after wait2 has already reaped the client.
++        end
++      end
++      log&.puts("Preparation interrupted by signal #{e.signo} (#{Signal.signame(e.signo)})")
++      raise
++    ensure
++      log&.close
++    end
++
++    def status_description(status)
++      return status.exitstatus.to_s unless status.signaled?
++
++      "signal #{status.termsig} (#{Signal.signame(status.termsig)})"
+     end
+   end
+ end
+diff --git a/test-runner/lib/test-runner/prebuild.rb b/test-runner/lib/test-runner/prebuild.rb
+new file mode 100644
+index 000000000..00704fe2d
+--- /dev/null
++++ b/test-runner/lib/test-runner/prebuild.rb
+@@ -0,0 +1,126 @@
++require 'digest'
++require 'json'
++require 'tmpdir'
++require 'test-runner/gc_root'
++
++module TestRunner
++  class Prebuild
++    DEFAULT_MEMORY_PER_JOB_MIB = 8192
++    ROOT_DIRECTORY = 'os-test-runner-prebuilds'.freeze
++
++    attr_reader :log_path
++
++    def initialize(test_scripts, resource_pool:, state_dir:, memory_per_job_mib: DEFAULT_MEMORY_PER_JOB_MIB,
++                   system: NixCli::DEFAULT_SYSTEM, test_config_path: nil, repo_root: nil, root_directory: nil)
++      @scripts = test_scripts
++      @pool = resource_pool
++      @state_dir = state_dir
++      @memory_per_job_mib = Integer(memory_per_job_mib)
++      raise ArgumentError, 'prebuild-memory-per-job-mib must be positive' if @memory_per_job_mib <= 0
++
++      @nix = NixCli.new(system:, test_config_path:, repo_root:)
++      runtime = ENV['XDG_RUNTIME_DIR']
++      runtime = Dir.tmpdir if runtime.nil? || runtime.empty?
++      @root_directory = root_directory || File.join(runtime, "#{ROOT_DIRECTORY}-#{Process.uid}")
++    end
++
++    def open
++      prepared = @scripts.empty?
++      return yield({}) if prepared
++
++      FileUtils.mkdir_p(@state_dir)
++      directory = Dir.mktmpdir('prebuild-', @state_dir)
++      @log_path = File.join(directory, 'build.log')
++      selected = @scripts.map(&:test).uniq.group_by { |test| identity(test) }
++      requests = selected.map do |id, tests|
++        test = tests.first
++        { id:, path: test.path, testArgs: test.test_args || {}, templateArgs: test.template_args || {} }
++      end
++      File.write(File.join(directory, 'selection.json'), JSON.pretty_generate(requests))
++      File.write(log_path, "Preparation selection: #{JSON.generate(requests)}\n")
++      jobs = preparation_jobs
++      warn "Preparing #{requests.length} selected tests; build log: #{log_path}"
++      File.open(log_path, 'a') { |file| file.puts(@capacity_message) }
++
++      GcRoot.new(root_directory: @root_directory).open do |root|
++        with_cancellation do
++          @nix.build_test_batch(requests, root, max_jobs: jobs, log_path:)
++        end
++        configs = load_manifest(root, selected)
++        warn "Preparation complete: #{configs.length} test configurations; starting runtime"
++        prepared = true
++        yield(configs)
++      end
++    rescue StandardError => e
++      raise if prepared
++
++      raise "Test preparation failed: #{e.message}#{log_path ? "; build log: #{log_path}" : ''}"
++    end
++
++    protected
++
++    def identity(test)
++      Digest::SHA256.hexdigest(JSON.generate([test.path, test.test_args || {}, test.template_args || {}]))
++    end
++
++    def preparation_jobs
++      inherited = @nix.local_max_jobs
++      available = @pool.prebuild_memory_mib
++      @capacity_message = "Preparation capacity: #{@pool.prebuild_memory_status}; " \
++        "usable=#{available.inspect} MiB, estimate=#{@memory_per_job_mib} MiB/job, " \
++        "inherited Nix local max-jobs=#{inherited}"
++      if inherited == 0
++        @capacity_message += '; max-jobs=0 (remote-only/substitution; remote memory is not sized)'
++        warn @capacity_message
++        return 0
++      end
++
++      if available.nil?
++        raise 'Unable to detect preparation memory; set --max-memory-mib to a usable capacity'
++      end
++
++      jobs = [inherited, available / @memory_per_job_mib].min
++      if jobs <= 0
++        raise "Insufficient preparation memory: #{@capacity_message}; " \
++          'adjust capacity, reserve, or --prebuild-memory-per-job-mib'
++      end
++
++      @capacity_message += "; preparation max-jobs=#{jobs}"
++      warn @capacity_message
++      jobs
++    end
++
++    def load_manifest(path, selected)
++      manifest = JSON.parse(File.read(path))
++      unless manifest.is_a?(Array) && manifest.all? { |entry| entry.is_a?(Hash) }
++        raise 'Invalid preparation manifest'
++      end
++
++      ids = manifest.map { |entry| entry['id'] }
++      unless ids.uniq.length == ids.length && ids.sort == selected.keys.sort
++        raise 'Preparation manifest has missing, duplicate, or unexpected tests'
++      end
++
++      manifest.each_with_object({}) do |entry, configs|
++        json = entry.fetch('json')
++        unless json.is_a?(String) && json.start_with?('/nix/store/') && File.file?(json)
++          raise "Invalid prepared JSON store path for #{entry.fetch('id')}"
++        end
++
++        selected.fetch(entry.fetch('id')).each do |test|
++          scripts = @scripts.select { |script| script.test == test }
++          configs[test] = TestConfig.load(test, config_path: json).validate!(scripts)
++        end
++      end
++    end
++
++    def with_cancellation
++      handlers = %w[TERM HUP].to_h do |signal|
++        [signal, Signal.trap(signal) { raise SignalException, signal }]
++      end
++      yield
++    ensure
++      handlers&.each { |signal, handler| Signal.trap(signal, handler) }
++    end
++  end
++end
+diff --git a/test-runner/lib/test-runner/repository_source.rb b/test-runner/lib/test-runner/repository_source.rb
+index a8a68b6ed..532343efe 100644
+--- a/test-runner/lib/test-runner/repository_source.rb
++++ b/test-runner/lib/test-runner/repository_source.rb
+@@ -1,7 +1,7 @@
+ require 'fileutils'
+ require 'open3'
+ require 'pathname'
+-require 'securerandom'
++require 'test-runner/gc_root'
+ require 'tmpdir'
+ 
+ module TestRunner
+@@ -20,19 +20,13 @@ module TestRunner
+       @nixpkgs_path = File.expand_path(nixpkgs_path || ENV.fetch('TEST_RUNNER_NIXPKGS_PATH'))
+       @nix_system = nix_system || ENV.fetch('TEST_RUNNER_NIX_SYSTEM')
+       @path = nil
+-      @lock_file = nil
+-      @lock_path = nil
+-      @root_path = nil
+     end
+ 
+     def open
+-      FileUtils.mkdir_p(root_directory, mode: 0o700)
+-      reserve_gc_root
+-      @path = resolve_and_root_source
+-
+-      yield(self)
+-    ensure
+-      remove_gc_root
++      GcRoot.new(root_directory:).open do |root_path|
++        @path = resolve_and_root_source(root_path)
++        yield(self)
++      end
+     end
+ 
+     def resolve_path(file_path)
+@@ -51,11 +45,11 @@ module TestRunner
+       File.expand_path('../../nix/resolve-repository-source.nix', __dir__)
+     end
+ 
+-    def resolve_and_root_source
++    def resolve_and_root_source(root_path)
+       out, status = Open3.capture2(
+         'nix-build',
+         '--out-link',
+-        @root_path,
++        root_path,
+         helper_file,
+         '--arg',
+         'repoRoot',
+@@ -78,90 +72,6 @@ module TestRunner
+       File.realpath(File.join(output_path, 'source'))
+     end
+ 
+-    def reserve_gc_root
+-      with_registry_lock do
+-        cleanup_stale_roots
+-
+-        loop do
+-          token = "#{Process.pid}-#{SecureRandom.hex(8)}"
+-          @lock_path = File.join(root_directory, "#{token}.lock")
+-          @root_path = File.join(root_directory, "#{token}.root")
+-
+-          begin
+-            @lock_file = File.open(
+-              @lock_path,
+-              File::RDWR | File::CREAT | File::EXCL,
+-              0o600
+-            )
+-            break
+-          rescue Errno::EEXIST
+-            next
+-          end
+-        end
+-
+-        @lock_file.flock(File::LOCK_EX)
+-      end
+-    end
+-
+-    def remove_gc_root
+-      return if @lock_path.nil? && @root_path.nil?
+-
+-      with_registry_lock do
+-        unlink_gc_root(@root_path)
+-
+-        @lock_file&.flock(File::LOCK_UN)
+-        @lock_file&.close
+-        @lock_file = nil
+-
+-        File.unlink(@lock_path) if @lock_path && File.file?(@lock_path)
+-      end
+-    rescue Errno::ENOENT
+-      nil
+-    ensure
+-      @lock_path = nil
+-      @root_path = nil
+-    end
+-
+-    def cleanup_stale_roots
+-      Dir.glob(File.join(root_directory, '*.lock')).each do |lock_path|
+-        File.open(lock_path, File::RDWR) do |lock_file|
+-          next unless lock_file.flock(File::LOCK_EX | File::LOCK_NB)
+-
+-          unlink_gc_root(lock_path.sub(/\.lock\z/, '.root'))
+-          File.unlink(lock_path)
+-        end
+-      rescue Errno::ENOENT
+-        next
+-      end
+-
+-      Dir.glob(File.join(root_directory, '*.root')).each do |root_path|
+-        lock_path = root_path.sub(/\.root\z/, '.lock')
+-        unlink_gc_root(root_path) unless File.exist?(lock_path)
+-      end
+-    end
+-
+-    def with_registry_lock
+-      File.open(registry_lock_path, File::RDWR | File::CREAT, 0o600) do |lock_file|
+-        lock_file.flock(File::LOCK_EX)
+-        yield
+-      ensure
+-        lock_file.flock(File::LOCK_UN)
+-      end
+-    end
+-
+-    def unlink_gc_root(root_path)
+-      return if root_path.nil?
+-      return unless File.file?(root_path) || File.symlink?(root_path)
+-
+-      File.unlink(root_path)
+-    rescue Errno::ENOENT
+-      nil
+-    end
+-
+-    def registry_lock_path
+-      "#{root_directory}.lock"
+-    end
+-
+     def default_root_directory
+       runtime_dir = ENV.fetch('XDG_RUNTIME_DIR', nil)
+       runtime_dir = Dir.tmpdir if runtime_dir.nil? || runtime_dir.empty?
+diff --git a/test-runner/lib/test-runner/resource_pool.rb b/test-runner/lib/test-runner/resource_pool.rb
+index 1d01cb02a..3ad335645 100644
+--- a/test-runner/lib/test-runner/resource_pool.rb
++++ b/test-runner/lib/test-runner/resource_pool.rb
+@@ -33,7 +33,7 @@ module TestRunner
+     end
+ 
+     class CapacitySource
+-      attr_reader :detected, :initial_available, :reserve, :current_value
++      attr_reader :detected, :initial_available, :reserve, :current_value, :max_value
+ 
+       def initialize(
+         max_value:,
+@@ -65,9 +65,14 @@ module TestRunner
+         @current_value = value
+       end
+ 
+-      protected
++      # Preparation uses the startup sample without runtime overcommit.
++      def preparation_capacity
++        return nil if initial_available.nil? && max_value.nil?
++
++        ResourcePool.capacity(limit(usable_detected), reserve)
++      end
+ 
+-      attr_reader :max_value
++      protected
+ 
+       def usable_detected
+         if detected && initial_available
+@@ -420,6 +425,29 @@ module TestRunner
+         fits?(cpus, used.cpus + resources.cpus)
+     end
+ 
++    def memory_fits?(resources)
++      memory_overflows(resources).empty?
++    end
++
++    def memory_overflows(resources)
++      [["memory", memory_mib, resources.memory_mib], ["/dev/shm", shm_mib, resources.shm_mib]].filter_map do |name, cap, requested|
++        "#{name} request #{requested} MiB exceeds capacity #{cap} MiB" if cap && requested > cap
++      end
++    end
++
++    def prebuild_memory_mib
++      @memory_capacity ? @memory_capacity.preparation_capacity : memory_mib
++    end
++
++    def prebuild_memory_status
++      return "explicit pool capacity=#{memory_mib.inspect} MiB" unless @memory_capacity
++
++      "detected assigned=#{@memory_capacity.detected.inspect} MiB, " \
++        "available-at-start=#{@memory_capacity.initial_available.inspect} MiB, " \
++        "configured maximum=#{@memory_capacity.max_value.inspect} MiB, " \
++        "reserve=#{@memory_capacity.reserve} MiB"
++    end
++
+     def reserve(resources)
+       @used += resources
+       @running += 1
+diff --git a/test-runner/lib/test-runner/test_config.rb b/test-runner/lib/test-runner/test_config.rb
+index 764b8dc25..4d305f8f7 100644
+--- a/test-runner/lib/test-runner/test_config.rb
++++ b/test-runner/lib/test-runner/test_config.rb
+@@ -11,6 +11,12 @@ module TestRunner
+       tc
+     end
+ 
++    def self.load(test, config_path:)
++      tc = new(test, config_path:)
++      tc.load
++      tc
++    end
++
+     # @return [Test]
+     attr_reader :test, :config_path
+ 
+@@ -18,17 +24,69 @@ module TestRunner
+     # @param config_path [String]
+     def initialize(test, config_path:, system: NixCli::DEFAULT_SYSTEM, test_config_path: nil, repo_root: nil)
+       @test = test
+-      @nix = NixCli.new(system:, test_config_path:, repo_root:)
++      @nix_options = { system:, test_config_path:, repo_root: }
+       @config_path = config_path
+       @config = {}
+     end
+ 
+     def build
+       FileUtils.mkdir_p(File.dirname(config_path))
+-      @nix.build_test_json(test.path, config_path, test_args: test.test_args)
++      NixCli.new(**@nix_options).build_test_json(test.path, config_path, test_args: test.test_args)
++      load
++    end
++
++    def load
+       @config = JSON.parse(File.read(config_path))
+     end
+ 
++    def validate!(scripts)
++      unless @config.is_a?(Hash) && @config['machines'].is_a?(Hash) && @config['testScripts'].is_a?(Hash)
++        raise ArgumentError, "Invalid prepared configuration for #{test.path}"
++      end
++
++      scripts.each do |script|
++        entry = @config['testScripts'][script.name]
++        next if entry.is_a?(Hash) && entry['script'].is_a?(String)
++
++        raise ArgumentError, "Missing or invalid prepared script #{script.path}"
++      end
++
++      @config['machines'].each_value do |machine|
++        unless machine.is_a?(Hash) && machine['memory'].is_a?(Integer) && machine['memory'] > 0 &&
++               machine['cpus'].is_a?(Integer) && machine['cpus'] > 0
++          raise ArgumentError, "Invalid prepared machine for #{test.path}"
++        end
++        validate_machine!(machine)
++      end
++
++      self
++    end
++
++    def validate_machine!(machine)
++      %w[qemu virtiofsd].each { |key| machine.fetch(key) }
++      cpu = machine.fetch('cpu')
++      %w[cores threads sockets].each do |key|
++        value = cpu.fetch(key)
++        raise ArgumentError, "Invalid prepared CPU #{key}" unless value.is_a?(Integer) && value > 0
++      end
++      spin = machine.fetch('spin', 'vpsadminos')
++      mode = machine.fetch('bootMode', 'direct')
++      raise ArgumentError, "Unknown machine spin #{spin.inspect}" unless %w[vpsadminos nixos].include?(spin)
++      raise ArgumentError, "Invalid prepared boot mode #{mode.inspect}" unless %w[direct firmware].include?(mode)
++
++      disks = machine.fetch('disks', []).dup
++      disks << machine['rootDisk'] if machine['rootDisk']
++      disks.each { |disk| OsVm::MachineConfig::Disk.new(disk) }
++      return if mode == 'firmware'
++
++      required = %w[kernel initrd toplevel]
++      required << 'squashfs' if spin == 'vpsadminos'
++      required.each { |key| machine.fetch(key) }
++      return unless spin == 'nixos' && !machine['rootDisk'] && !machine['diskImage']
++
++      raise ArgumentError, 'Missing prepared NixOS root disk'
++    end
++
+     def [](key)
+       @config[key]
+     end
+diff --git a/test-runner/lib/test-runner/test_evaluator.rb b/test-runner/lib/test-runner/test_evaluator.rb
+index 70d5dc9af..d9afc04c9 100644
+--- a/test-runner/lib/test-runner/test_evaluator.rb
++++ b/test-runner/lib/test-runner/test_evaluator.rb
+@@ -37,7 +37,7 @@ module TestRunner
+     # @option opts [Boolean] :recreate_disks
+     # @option opts [String] :state_dir
+     # @option opts [String] :sock_dir
+-    def initialize(test, scripts, system: NixCli::DEFAULT_SYSTEM, test_config_path: nil, repo_root: nil, **opts)
++    def initialize(test, scripts, system: NixCli::DEFAULT_SYSTEM, test_config_path: nil, repo_root: nil, prepared_config: nil, **opts)
+       scripts.each do |s|
+         next if s.test == test
+ 
+@@ -47,13 +47,17 @@ module TestRunner
+       @test = test
+       @scripts = scripts
+       @opts = opts
+-      @config = TestConfig.build(
+-        test,
+-        system:,
+-        test_config_path:,
+-        repo_root:,
++      @config = prepared_config || TestConfig.build(
++        test, system:, test_config_path:, repo_root:,
+         config_path: File.join(@opts.fetch(:state_dir), 'config.json')
+       )
++      if prepared_config
++        raise ArgumentError, 'Prepared configuration belongs to another test' unless prepared_config.test == test
++
++        prepared_config.validate!(scripts)
++        FileUtils.mkdir_p(@opts.fetch(:state_dir))
++        FileUtils.ln_sf(prepared_config.config_path, File.join(@opts.fetch(:state_dir), 'config.json'))
++      end
+       @machines = {}
+       @default_timeout = opts.fetch(:default_timeout)
+       @used_container_ids = []
+diff --git a/test-runner/man/man1/test-runner.1.md b/test-runner/man/man1/test-runner.1.md
+index 132ec9288..31440f2c7 100644
+--- a/test-runner/man/man1/test-runner.1.md
++++ b/test-runner/man/man1/test-runner.1.md
+@@ -58,6 +58,27 @@ selected tests and reporting results.
+       runner starts enough scheduler workers for all selected tests and lets
+       resource reservations decide how many VMs can actually run.
+ 
++    `--prebuild`, `--no-prebuild`
++      Build selected test JSON and image closures before starting any selected
++      VM. Runtime and retries load the exact prepared configurations without
++      Nix, with their closures GC-rooted through VM cleanup. Disabled by
++      default; `--no-prebuild` keeps per-test preparation. Disabling prebuild
++      retains the test squashfs cache default and strict memory admission.
++      Explicit host builds started by test scripts or extensions are outside
++      this boundary. Preparation failure starts no selected VMs, reports the
++      build log and exit code or signal, and creates no script assertion results.
++
++    `--prebuild-memory-per-job-mib` *n*
++      Positive memory estimate per local Nix preparation job, in MiB; defaults
++      to `8192`. Preparation jobs are usable startup host/cgroup headroom,
++      bounded by assigned capacity and `--max-memory-mib`, minus the memory
++      reserve, divided by this estimate and rounded down, capped at inherited
++      local Nix `max-jobs`. Runtime memory overcommit is not applied. Unknown
++      headroom needs an explicit usable maximum; insufficient memory fails.
++      Inherited `max-jobs=0` keeps remote-only/substitution behavior without
++      sizing remote memory. The estimate is a heuristic, not an RSS cap.
++      Nix `cores`, kernel parallelism and VM `--jobs` remain unchanged.
++
+     `--max-memory-mib` *n*
+       Maximum memory available to running test VMs, in MiB. Detected memory
+       capacity is limited by memory available when the run starts and cannot
+@@ -212,6 +233,20 @@ root filesystem. Installed systems booted from disks retain those disks.
+ Retained NixOS roots need the selected system closure before direct boot; after
+ changing configuration, use `--fresh` or update the running VM before restart.
+ 
++## IMAGE CACHE AND MEMORY ADMISSION
++
++vpsAdminOS test images use a 2048 MiB squashfs compressor cache by default.
++`system.squashfsMemoryMiB` can override it; `null` uses the tool default,
++which remains the production default. The setting preserves CPU parallelism
++and compression settings, including the default zstd level 10. The cache bound
++does not cap total RSS, and does not apply
++to historical pinned OS sources or unrelated Nixpkgs image builders.
++
++Tests exceeding the nominal RAM or `/dev/shm` capacity fail explicitly. A
++CPU-only overage may run alone when memory fits, including large-vCPU livepatch
++fixtures. These policies apply with either prebuild setting. Preparation sizing
++assumes no competing test/build workload in the runner container.
++
+ ## BUGS
+ Report bugs to https://github.com/vpsfreecz/vpsadminos/issues.
+ 
+diff --git a/test-runner/nix/evaluate-tests.nix b/test-runner/nix/evaluate-tests.nix
+index 826413cd0..e8231a216 100644
+--- a/test-runner/nix/evaluate-tests.nix
++++ b/test-runner/nix/evaluate-tests.nix
+@@ -5,6 +5,7 @@
+   mode ? "testsMetaAll",
+   testPath ? null,
+   testArgsJson ? null,
++  selectedTestsJson ? "[]",
+   configuration ?
+     let
+       cfg = builtins.getEnv "VPSADMINOS_CONFIG";
+@@ -36,7 +37,10 @@ let
+   effectiveTestConfig = if testConfig == null then { } else testConfig;
+   testsRoot = repoRoot + "/tests";
+   directSingleTestAvailable =
+-    testPath != null && builtins.pathExists (testsRoot + "/suite/${testPath}.nix");
++    path:
++    path != null
++    && builtins.pathExists (repoRoot + "/test-runner/nix/lib.nix")
++    && builtins.pathExists (testsRoot + "/suite/${path}.nix");
+   directTestArgs = if testArgsJson == null then { } else builtins.fromJSON testArgsJson;
+ 
+   directTestLib =
+@@ -64,42 +68,64 @@ let
+       testConfig = effectiveTestConfig;
+     };
+ 
+-  directTest =
++  directTest = path: args:
+     (directTestLib.makeSingleTest {
+-      test = testPath;
+-      args = directTestArgs;
++      test = path;
++      inherit args;
+     }).value;
+ 
++  useConfiguredFramework = testConfigPath != null || (configuration != null && haveTestFramework);
++  configuredFramework = if testConfigPath != null then testFramework else flake.lib.testFramework;
++
+   tests =
+-    if testConfigPath == null then
++    if !useConfiguredFramework then
+       flake.tests.${system}
+     else
+-      testFramework.mkTests {
+-        inherit system testConfig;
++      configuredFramework.mkTests {
++        inherit system;
++        testConfig = effectiveTestConfig;
+         testsRoot = repoRoot + "/tests";
+         inherit configuration;
+       };
+ 
+   testsMeta =
+-    if testConfigPath == null then
++    if !useConfiguredFramework then
+       flake.testsMeta.${system}
+     else
+-      testFramework.mkTestsMeta {
+-        inherit system testConfig;
++      configuredFramework.mkTestsMeta {
++        inherit system;
++        testConfig = effectiveTestConfig;
+         testsRoot = repoRoot + "/tests";
+         inherit configuration;
+       };
++  resolveTestJson = path: args:
++    if directSingleTestAvailable path then
++      (directTest path args).test.json
++    else
++      builtins.getAttr path tests;
++
++  selected = builtins.fromJSON selectedTestsJson;
++  manifest = map (request: {
++    inherit (request) id;
++    json = resolveTestJson request.path (request.testArgs or { });
++  }) selected;
++  # Preserve the JSON string contexts: this output roots all selected JSONs and
++  # their referenced closures, rather than only a list of discarded path text.
++  batchPkgs = import (builtins.toPath (builtins.getEnv "TEST_RUNNER_NIXPKGS_PATH")) { inherit system; };
++  batch = batchPkgs.writeText "os-test-prebuild.json" (builtins.toJSON manifest);
+ in
+ if mode == "testsMetaAll" then
+   testsMeta
+ else if mode == "testsMetaOne" then
+   if testPath != null && builtins.hasAttr testPath testsMeta then
+     builtins.getAttr testPath testsMeta
+-  else if directSingleTestAvailable then
+-    directTestLib.testMeta directTest
++  else if directSingleTestAvailable testPath then
++    directTestLib.testMeta (directTest testPath directTestArgs)
+   else
+     builtins.getAttr testPath testsMeta
+ else if mode == "testJson" then
+-  if directSingleTestAvailable then directTest.test.json else builtins.getAttr testPath tests
++  resolveTestJson testPath directTestArgs
++else if mode == "testBatch" then
++  batch
+ else
+   builtins.throw "Unsupported mode '${mode}'"
+diff --git a/test-runner/spec/test_runner/cli/app_spec.rb b/test-runner/spec/test_runner/cli/app_spec.rb
+index 596a173ab..79da374bc 100644
+--- a/test-runner/spec/test_runner/cli/app_spec.rb
++++ b/test-runner/spec/test_runner/cli/app_spec.rb
+@@ -11,4 +11,17 @@ RSpec.describe TestRunner::Cli::App do
+       expect(app.commands[name.to_sym].switches[:f].aliases.map(&:to_s)).to include('fresh')
+     end
+   end
++  [[], ['--prebuild'], ['--no-prebuild']].each do |flags|
++    it "parses prebuild selection #{flags.inspect} with an opt-in default" do
++      selected = nil
++      allow(TestRunner::Cli::Command).to receive(:run).and_call_original
++      allow(TestRunner::Cli::Command).to receive(:run).with(:test).and_return(
++        proc { |_global, opts, _args| selected = opts }
++      )
++      expect(described_class.get.run(['test', *flags])).to eq(0)
++      expect(selected.fetch('prebuild')).to eq(flags == ['--prebuild'])
++      expect(selected.fetch('prebuild-memory-per-job-mib')).to eq(8192)
++    end
++  end
++
+ end
+diff --git a/test-runner/spec/test_runner/cli/command_spec.rb b/test-runner/spec/test_runner/cli/command_spec.rb
+index 72722a2b4..3ee8a886f 100644
+--- a/test-runner/spec/test_runner/cli/command_spec.rb
++++ b/test-runner/spec/test_runner/cli/command_spec.rb
+@@ -320,4 +320,53 @@ RSpec.describe TestRunner::Cli::Command do
+       end
+     end
+   end
++  it 'constructs no executor before full preparation and injects the startup pool' do
++    test = build_test
++    scripts = [build_test_script(test)]
++    stub_test_script_list(scripts)
++    pool = instance_double(TestRunner::ResourcePool, refresh_capacity: false)
++    preparation = instance_double(TestRunner::Prebuild)
++    executor = instance_double(TestRunner::Executor, run: [])
++    config = instance_double(TestRunner::TestConfig)
++    events = []
++    allow(TestRunner::ResourcePool).to receive(:from_options).and_return(pool)
++    allow(TestRunner::Prebuild).to receive(:new) do |*args, **options|
++      expect(options.fetch(:resource_pool)).to equal(pool)
++      preparation
++    end
++    allow(preparation).to receive(:open) do |&runtime|
++      events << :preparation_complete
++      results = runtime.call(test => config)
++      events << :runtime_cleanup_complete
++      results
++    end
++    allow(TestRunner::Executor).to receive(:new) do |*args, **options|
++      expect(events).to eq([:preparation_complete])
++      expect(options.fetch(:resource_pool)).to equal(pool)
++      expect(options.fetch(:prepared_configs)).to eq(test => config)
++      executor
++    end
++    described_class.new({}, opts.merge('prebuild' => true), []).test
++    expect(pool).to have_received(:refresh_capacity).once
++    expect(events).to eq([:preparation_complete, :runtime_cleanup_complete])
++  end
++
++  it 'never constructs an executor when preparation fails, even for expected failures' do
++    test = build_test(expect_failure: true)
++    stub_test_script_list([build_test_script(test)])
++    preparation = instance_double(TestRunner::Prebuild)
++    allow(TestRunner::Prebuild).to receive(:new).and_return(preparation)
++    allow(preparation).to receive(:open).and_raise('preparation failed')
++    expect(TestRunner::Executor).not_to receive(:new)
++    expect do
++      described_class.new({}, opts.merge('prebuild' => true), []).test
++    end.to raise_error('preparation failed')
++  end
++
++  it 'rejects a non-positive preparation estimate even when prebuild is disabled' do
++    expect do
++      described_class.new({}, opts.merge('prebuild-memory-per-job-mib' => 0), []).test
++    end.to raise_error(ArgumentError, /must be positive/)
++  end
++
+ end
+diff --git a/test-runner/spec/test_runner/executor_spec.rb b/test-runner/spec/test_runner/executor_spec.rb
+index 0e6dabeb4..7ff12f712 100644
+--- a/test-runner/spec/test_runner/executor_spec.rb
++++ b/test-runner/spec/test_runner/executor_spec.rb
+@@ -698,38 +698,54 @@ RSpec.describe TestRunner::Executor do
+     expect(executor.instance_variable_get(:@status_monitor)).to be_nil
+   end
+ 
+-  it 'runs an oversized pending test alone to avoid scheduler deadlock' do
+-    large = build_test(
+-      path: 'suite/large',
+-      resources: {
+-        'machines' => 1,
+-        'memoryMiB' => 12_000,
+-        'shmMiB' => 12_000,
+-        'maxMachineMemoryMiB' => 12_000,
+-        'cpus' => 4
+-      }
+-    )
++  %w[memoryMiB shmMiB].each do |constraint|
++    it "rejects oversized #{constraint} finitely without starting a test" do
++      test = build_test(resources: { constraint => 12_000 })
++      executor = build_executor(
++        [build_test_script(test)], max_memory_mib: 10_000, max_shm_mib: 10_000,
++        memory_reserve_mib: 0, shm_reserve_mib: 0
++      )
++      expect(executor).not_to receive(:run_test_with_retries)
++      expect do
++        executor.send(:reserve_next_test)
++      end.to raise_error(TestRunner::Executor::ResourceError, /request 12000 MiB exceeds capacity 10000 MiB/)
++      expect(executor.send(:resource_pool).running).to eq(0)
++    end
++  end
++
++  it 'runs CPU-only oversized tests alone when both memory constraints fit' do
++    test = build_test(resources: { 'memoryMiB' => 8000, 'shmMiB' => 8000, 'cpus' => 128 })
+     executor = build_executor(
+-      [large.test_scripts['default']],
+-      max_memory_mib: 10_000,
+-      max_shm_mib: 10_000,
+-      memory_reserve_mib: 0,
+-      shm_reserve_mib: 0
++      [build_test_script(test)], max_memory_mib: 10_000, max_shm_mib: 10_000, max_cpus: 4,
++      memory_reserve_mib: 0, shm_reserve_mib: 0, resource_detector: resource_detector(cpus: 4)
+     )
+-    logs = []
+-    allow(executor).to receive(:log) { |msg| logs << msg }
+-
+-    _i, test, = executor.send(:reserve_next_test)
++    allow(executor).to receive(:log)
++    _i, selected, = executor.send(:reserve_next_test)
++    expect(selected).to eq(test)
++    expect(executor.send(:resource_pool).used.cpus).to eq(128)
++    expect(executor.send(:resource_pool).used.memory_mib).to eq(8000)
++    expect(executor).to have_received(:log).with(/CPUs beyond.*memory admission enforced/)
++  end
+ 
+-    expect(test).to eq(large)
+-    expect(executor.send(:resource_pool).used.memory_mib).to eq(12_000)
+-    expect(logs).to include(
+-      a_string_including(
+-        'WARNING: Test suite/large requests resources beyond the scheduler limits',
+-        'requested: machines=1, memory=11.7 GiB, shm=11.7 GiB, cpus=4',
+-        'running it alone may exhaust the host'
+-      )
++  it 'uses an injected startup pool without resampling post-build availability' do
++    pool = TestRunner::ResourcePool.from_options(
++      { resource_detector: resource_detector(memory_mib: [48_000, 40_000], memory_available_mib: [40_000, 1000]),
++        memory_reserve_mib: 8000 }, env: {}
+     )
++    expect(TestRunner::ResourcePool).not_to receive(:from_options)
++    executor = build_executor([], resource_pool: pool)
++    expect(executor.send(:resource_pool)).to equal(pool)
++    expect(pool.memory_mib).to eq(32_000)
++    executor.send(:refresh_resource_capacity)
++    expect(pool.memory_mib).to eq(32_000)
++  end
++
++  it 'requires prepared configs and reuses the exact object across retries' do
++    test = build_test(attempts: 2)
++    config = instance_double(TestRunner::TestConfig)
++    executor = build_executor([build_test_script(test)], prepared_configs: { test => config })
++    2.times { expect(executor.send(:prepared_config_options, test)).to eq(prepared_config: config) }
++    expect { executor.send(:prepared_config_options, build_test) }.to raise_error(KeyError)
+   end
+ 
+   it 'releases reserved resources after a test finishes' do
+@@ -1032,4 +1048,30 @@ RSpec.describe TestRunner::Executor do
+     expect(OsVm::PortReservation).to have_received(:get_ports).with(key: 'test:osctl/ct-exec-v1', size: 4)
+     expect(OsVm::PortReservation).to have_received(:release_ports).with(key: 'test:osctl/ct-exec-v1')
+   end
++  it 'runs an actual prepared evaluator through retry without any Nix calls' do
++    with_tmpdir do |dir|
++      counter = File.join(dir, 'attempts')
++      test = build_test(attempts: 2)
++      path = File.join(dir, 'prepared.json')
++      script = <<~RUBY
++        count = File.exist?(#{counter.inspect}) ? File.read(#{counter.inspect}).to_i : 0
++        File.write(#{counter.inspect}, (count + 1).to_s)
++        raise 'first attempt fails' if count == 0
++      RUBY
++      File.write(path, JSON.generate('machines' => {}, 'testScripts' => { 'default' => { 'script' => script } }))
++      config = TestRunner::TestConfig.load(test, config_path: path)
++      executor = build_executor([build_test_script(test)], prepared_configs: { test => config }, status_interval: 0)
++      allow(executor).to receive(:sleep)
++      allow(executor).to receive(:log)
++      allow(OsVm::PortReservation).to receive(:get_ports).and_return([10_000, 10_001, 10_002, 10_003])
++      allow(OsVm::PortReservation).to receive(:release_ports)
++      expect(TestRunner::TestConfig).not_to receive(:build)
++      expect(TestRunner::NixCli).not_to receive(:new)
++      results = executor.run
++      expect(results.first).to be_expected_result
++      expect(File.read(counter)).to eq('2')
++      expect(File.realpath(File.join(results.first.state_dir, 'config.json'))).to eq(path)
++    end
++  end
++
+ end
+diff --git a/test-runner/spec/test_runner/nix_cli_spec.rb b/test-runner/spec/test_runner/nix_cli_spec.rb
+index fe3c6b448..94a30a088 100644
+--- a/test-runner/spec/test_runner/nix_cli_spec.rb
++++ b/test-runner/spec/test_runner/nix_cli_spec.rb
+@@ -2,6 +2,7 @@
+ 
+ require 'rbconfig'
+ require 'spec_helper'
++require 'timeout'
+ 
+ RSpec.describe TestRunner::NixCli do
+   it 'uses the default system when none is provided' do
+@@ -64,7 +65,7 @@ RSpec.describe TestRunner::NixCli do
+   end
+ 
+   it 'raises on capture_output failures' do
+-    status = instance_double(Process::Status, success?: false, exitstatus: 1)
++    status = instance_double(Process::Status, success?: false, exitstatus: 1, signaled?: false)
+     allow(Open3).to receive(:capture2).and_return(['', status])
+     cli = described_class.new
+ 
+@@ -80,4 +81,71 @@ RSpec.describe TestRunner::NixCli do
+       cli.send(:run!, RbConfig.ruby, '-e', 'exit 1')
+     end.to raise_error(RuntimeError, /failed \(1\)/)
+   end
++  it 'limits only aggregate max-jobs and preserves CPU/cores settings' do
++    cli = described_class.new
++    allow(cli).to receive(:run!)
++    selected = [{ id: 'one', path: 'suite/example', testArgs: { value: 'argument' } }]
++    cli.build_test_batch(selected, '/tmp/root', max_jobs: 3, log_path: '/tmp/build.log')
++    expect(cli).to have_received(:run!) do |*args, **options|
++      expect(args).to include('testBatch', '--max-jobs', '3', 'selectedTestsJson', JSON.generate(selected))
++      expect(args).not_to include('--cores', 'NIX_BUILD_CORES')
++      expect(options).to eq(log_path: '/tmp/build.log')
++    end
++  end
++
++  it 'reads effective inherited numeric and remote-only max-jobs without a CPU clamp' do
++    cli = described_class.new
++    [128, 0].each do |jobs|
++      allow(cli).to receive(:capture_output).with('nix', 'config', 'show', '--json').and_return(
++        JSON.generate('max-jobs' => { 'value' => jobs })
++      )
++      expect(cli.local_max_jobs).to eq(jobs)
++    end
++  end
++
++  it 'resolves an inherited auto job setting' do
++    cli = described_class.new
++    allow(cli).to receive(:capture_output).and_return(JSON.generate('max-jobs' => { 'value' => 'auto' }))
++    allow(TestRunner::ResourcePool).to receive(:detect_cpus).and_return(12)
++    expect(cli.local_max_jobs).to eq(12)
++  end
++
++  it 'reports the actual terminating signal instead of a nil exit status' do
++    with_tmpdir do |dir|
++      log = File.join(dir, 'build.log')
++      expect do
++        described_class.new.send(:run!, RbConfig.ruby, '-e', 'Process.kill("KILL", Process.pid)', log_path: log)
++      end.to raise_error(/failed \(signal 9 \(KILL\)\)/)
++      expect(File.read(log)).to include('Preparation build failed (signal 9 (KILL))')
++    end
++  end
++
++  it 'forwards cancellation to its owned build process group and reaps the client' do
++    with_tmpdir do |dir|
++      marker = File.join(dir, 'pid')
++      log = File.join(dir, 'build.log')
++      code = "File.write(#{marker.inspect}, Process.pid); sleep 30"
++      worker = Thread.new do
++        Thread.current.report_on_exception = false
++        described_class.new.send(:run!, RbConfig.ruby, '-e', code, log_path: log)
++      end
++      pid = nil
++      begin
++        Timeout.timeout(3) { sleep(0.01) until File.file?(marker) }
++        pid = Integer(File.read(marker))
++        worker.raise(Interrupt)
++        expect { Timeout.timeout(3) { worker.value } }.to raise_error(Interrupt)
++        expect { Process.kill(0, pid) }.to raise_error(Errno::ESRCH)
++        expect(File.read(log)).to include('Preparation interrupted by signal 2 (INT)')
++      ensure
++        begin
++          Process.kill('KILL', -pid) if pid
++        rescue Errno::ESRCH
++          nil
++        end
++        worker.kill if worker.alive?
++      end
++    end
++  end
++
+ end
+diff --git a/test-runner/spec/test_runner/prebuild_nix_spec.rb b/test-runner/spec/test_runner/prebuild_nix_spec.rb
+new file mode 100644
+index 000000000..51d03f193
+--- /dev/null
++++ b/test-runner/spec/test_runner/prebuild_nix_spec.rb
+@@ -0,0 +1,123 @@
++# frozen_string_literal: true
++
++require 'spec_helper'
++require 'open3'
++
++RSpec.describe 'Nix preparation selection' do
++  def write_repository(dir, native:, framework:)
++    nixpkgs = ENV.fetch('TEST_RUNNER_NIXPKGS_PATH')
++    tests_dir = File.join(dir, 'tests/suite')
++    FileUtils.mkdir_p(tests_dir)
++    if native
++      File.symlink(nixpkgs, File.join(dir, 'nixpkgs'))
++      library_dir = File.join(dir, 'test-runner/nix')
++      FileUtils.mkdir_p(library_dir)
++      FileUtils.cp(File.join(REPO_ROOT, 'test-runner/nix/lib.nix'), library_dir)
++      File.write(File.join(tests_dir, 'registered.nix'), <<~NIX)
++        { pkgs, system, testArgs, testConfig, configuration, ... }:
++        let p = import pkgs { inherit system; }; in {
++          json = p.writeText "native.json" (builtins.toJSON {
++            args = testArgs;
++            cfg = testConfig;
++            host = configuration;
++          });
++        }
++      NIX
++    else
++      # A matching suite pathname alone must not activate native imports.
++      File.write(File.join(tests_dir, 'registered.nix'), 'throw "external suite must use registered export"')
++    end
++    File.write(File.join(dir, 'flake.nix'), <<~NIX)
++      {
++        outputs = { self }: let
++          p = import #{nixpkgs} { system = "x86_64-linux"; };
++          testsFor = cfg: host: {
++            registered = p.writeText "registered.json" (builtins.toJSON { inherit cfg host; args.value = "registered"; });
++            "template@a" = p.writeText "template-a.json" (builtins.toJSON { inherit cfg host; version = "a"; });
++            unselected = p.writeText "unselected.json" "unselected";
++          };
++        in {
++          tests.x86_64-linux = testsFor {} null;
++          testsMeta.x86_64-linux = {};
++          #{if framework
++              'lib.testFramework = { mkTests = args: testsFor args.testConfig args.configuration; mkTestsMeta = args: {}; };'
++            end}
++        };
++      }
++    NIX
++  end
++
++  def evaluate_batch(dir, requests, env: {}, test_config_path: nil)
++    helper = File.join(REPO_ROOT, 'test-runner/nix/evaluate-tests.nix')
++    expression = <<~NIX
++      let
++        common = { repoRoot = #{dir}; #{"testConfigPath = #{test_config_path};" if test_config_path} };
++        requests = builtins.fromJSON #{JSON.generate(JSON.generate(requests))};
++        batch = import #{helper} (common // { mode = "testBatch"; selectedTestsJson = builtins.toJSON requests; });
++        single = request: import #{helper} (common // {
++          mode = "testJson"; testPath = request.path;
++          testArgsJson = builtins.toJSON (request.testArgs or {});
++        });
++      in {
++        manifest = builtins.fromJSON batch.text;
++        references = builtins.attrNames (builtins.getContext batch.text);
++        singles = map (request: { json = toString (single request); data = builtins.fromJSON (single request).text; }) requests;
++      }
++    NIX
++    output, status = Open3.capture2(env, 'nix-instantiate', '--eval', '--strict', '--json', '--expr', expression)
++    raise "Nix selection evaluation failed (#{status.exitstatus})" unless status.success?
++
++    JSON.parse(output)
++  end
++
++  it 'preserves external registered exports and templates without a native helper or framework' do
++    with_tmpdir do |dir|
++      write_repository(dir, native: false, framework: false)
++      result = evaluate_batch(dir, [{ id: 'a', path: 'registered' }, { id: 'b', path: 'template@a' }])
++      expect(result.fetch('manifest').map { |entry| entry.fetch('json') }).to eq(
++        result.fetch('singles').map { |entry| entry.fetch('json') }
++      )
++      expect(result.fetch('singles').first.fetch('data').fetch('args')).to eq('value' => 'registered')
++      expect(result.fetch('singles').last.fetch('data').fetch('version')).to eq('a')
++      expect(result.fetch('references').size).to eq(2)
++      expect(result.fetch('references').join).not_to include('unselected')
++    end
++  end
++
++  it 'keeps native arguments, test configuration and host configuration in the exact selected closure' do
++    with_tmpdir do |dir|
++      write_repository(dir, native: true, framework: true)
++      config = File.join(dir, 'config.nix')
++      File.write(config, '{ fixture = "host-override"; }')
++      result = evaluate_batch(
++        dir, [{ id: 'a', path: 'registered', testArgs: { value: 'selected-argument' } }, { id: 'b', path: 'template@a' }],
++        env: { 'VPSADMINOS_CONFIG' => config }
++      )
++      expect(result.fetch('singles').first.fetch('data')).to include(
++        'args' => { 'value' => 'selected-argument' }, 'host' => { 'fixture' => 'host-override' }
++      )
++      expect(result.fetch('singles').last.fetch('data').fetch('host')).to eq('fixture' => 'host-override')
++      expect(result.fetch('manifest').map { |entry| entry.fetch('json') }).to eq(
++        result.fetch('singles').map { |entry| entry.fetch('json') }
++      )
++      expect(result.fetch('references').size).to eq(2)
++    end
++  end
++  it 'preserves explicit test configuration for native tests and registered templates' do
++    with_tmpdir do |dir|
++      write_repository(dir, native: true, framework: true)
++      config = File.join(dir, 'test-config.nix')
++      File.write(config, '{ fixture = "test-override"; }')
++      result = evaluate_batch(
++        dir, [{ id: 'a', path: 'registered' }, { id: 'b', path: 'template@a' }], test_config_path: config
++      )
++      result.fetch('singles').each do |entry|
++        expect(entry.fetch('data').fetch('cfg')).to eq('fixture' => 'test-override')
++      end
++      expect(result.fetch('manifest').map { |entry| entry.fetch('json') }).to eq(
++        result.fetch('singles').map { |entry| entry.fetch('json') }
++      )
++    end
++  end
++
++end
+diff --git a/test-runner/spec/test_runner/prebuild_spec.rb b/test-runner/spec/test_runner/prebuild_spec.rb
+new file mode 100644
+index 000000000..1006c7d84
+--- /dev/null
++++ b/test-runner/spec/test_runner/prebuild_spec.rb
+@@ -0,0 +1,172 @@
++# frozen_string_literal: true
++
++require 'spec_helper'
++
++RSpec.describe TestRunner::Prebuild do
++  let(:nix) { instance_double(TestRunner::NixCli, local_max_jobs: 20) }
++  let(:pool) do
++    TestRunner::ResourcePool.from_options(
++      {
++        resource_detector: resource_detector(memory_mib: 64_000, memory_available_mib: 48_000),
++        memory_reserve_mib: 8000
++      }, env: {}
++    )
++  end
++
++  before do
++    allow(TestRunner::NixCli).to receive(:new).and_return(nix)
++  end
++
++  def prepare(scripts, dir, **opts, &block)
++    described_class.new(
++      scripts, resource_pool: pool, state_dir: dir,
++      root_directory: File.join(dir, 'roots'), **opts
++    ).open(&block)
++  end
++
++  def stub_batch(&change)
++    allow(nix).to receive(:build_test_batch) do |requests, root, **options|
++      entries = requests.map do |request|
++        path = "/nix/store/prepared-#{request.fetch(:id)}.json"
++        data = JSON.generate(
++          'machines' => {},
++          'testScripts' => { 'default' => { 'script' => '' }, 'extra' => { 'script' => '' } }
++        )
++        allow(File).to receive(:read).with(path).and_return(data)
++        allow(File).to receive(:file?).with(path).and_return(true)
++        { 'id' => request.fetch(:id), 'json' => path }
++      end
++      change&.call(entries, requests, options)
++      File.write(root, JSON.generate(entries))
++    end
++    allow(File).to receive(:read).and_call_original
++    allow(File).to receive(:file?).and_call_original
++  end
++
++  it 'prepares only selected tests once, preserving arguments and retaining its root through runtime cleanup' do
++    test = build_test(test_args: { 'variant' => 'a' }, scripts: { 'default' => {}, 'extra' => {} })
++    template = build_test(path: 'template@a', type: 'template', template_args: { 'version' => 'a' })
++    stub_batch
++    with_tmpdir do |dir|
++      prepare([*test.test_scripts.values, template.test_scripts.fetch('default')], dir) do |configs|
++        expect(configs.keys).to contain_exactly(test, template)
++        expect(configs.fetch(test)['testScripts'].keys).to include('default', 'extra')
++        expect(Dir.glob(File.join(dir, 'roots/*.root')).length).to eq(1)
++        # This block represents runtime, including its ensure/cleanup path.
++        begin
++          raise 'runtime error'
++        ensure
++          expect(Dir.glob(File.join(dir, 'roots/*.root')).length).to eq(1)
++        end
++      end
++    rescue RuntimeError => e
++      expect(e.message).to eq('runtime error')
++      expect(Dir.glob(File.join(dir, 'roots/*.root'))).to be_empty
++    end
++    expect(nix).to have_received(:build_test_batch) do |requests, _root, max_jobs:, log_path:|
++      expect(requests.size).to eq(2)
++      expect(requests.map { |request| request.fetch(:path) }).to contain_exactly(test.path, template.path)
++      expect(requests.first.fetch(:testArgs)).to eq('variant' => 'a')
++      expect(requests.last.fetch(:templateArgs)).to eq('version' => 'a')
++      expect(max_jobs).to eq(4)
++      expect(File.basename(log_path)).to eq('build.log')
++    end
++  end
++
++  it 'skips all preparation for an empty selection' do
++    expect(nix).not_to receive(:build_test_batch)
++    with_tmpdir { |dir| prepare([], dir) { |configs| expect(configs).to eq({}) } }
++  end
++
++  it 'does not classify an empty runtime failure as preparation failure' do
++    with_tmpdir do |dir|
++      expect { prepare([], dir) { raise 'runtime failure' } }.to raise_error('runtime failure')
++    end
++  end
++
++  it 'fails preparation before runtime and keeps selection/build diagnostics' do
++    test = build_test(expect_failure: true)
++    allow(nix).to receive(:build_test_batch) do |_requests, _root, **options|
++      File.write(options.fetch(:log_path), 'builder died with signal 9 (KILL)')
++      raise 'signal 9 (KILL)'
++    end
++    with_tmpdir do |dir|
++      expect do
++        prepare([build_test_script(test)], dir) { raise 'runtime was entered' }
++      end.to raise_error(/Test preparation failed: signal 9 \(KILL\); build log:/)
++      expect(Dir.glob(File.join(dir, 'roots/*.root'))).to be_empty
++      expect(File.read(Dir.glob(File.join(dir, 'prebuild-*/build.log')).first)).to include('signal 9')
++      expect(JSON.parse(File.read(Dir.glob(File.join(dir, 'prebuild-*/selection.json')).first)).size).to eq(1)
++      expect(Dir.glob(File.join(dir, '**/test-result.txt'))).to be_empty
++    end
++  end
++
++  %w[missing duplicate unexpected].each do |kind|
++    it "rejects a #{kind} manifest identity before runtime" do
++      stub_batch do |entries|
++        entries.clear if kind == 'missing'
++        entries << entries.first if kind == 'duplicate'
++        entries.first['id'] = 'wrong' if kind == 'unexpected'
++      end
++      with_tmpdir do |dir|
++        expect do
++          prepare([build_test_script], dir) { raise 'runtime was entered' }
++        end.to raise_error(/manifest has missing, duplicate, or unexpected/)
++      end
++    end
++  end
++
++  it 'validates selected scripts before entering runtime' do
++    test = build_test(scripts: { 'missing' => {} })
++    stub_batch
++    with_tmpdir do |dir|
++      expect do
++        prepare(test.test_scripts.values, dir) { raise 'runtime was entered' }
++      end.to raise_error(/Missing or invalid prepared script/)
++    end
++  end
++
++  it 'releases its own root after cancellation without entering runtime' do
++    allow(nix).to receive(:build_test_batch).and_raise(Interrupt)
++    with_tmpdir do |dir|
++      expect { prepare([build_test_script], dir) { raise 'runtime was entered' } }.to raise_error(Interrupt)
++      expect(Dir.glob(File.join(dir, 'roots/*.root'))).to be_empty
++    end
++  end
++
++  it 'honors remote-only max-jobs even with unknown headroom' do
++    allow(nix).to receive(:local_max_jobs).and_return(0)
++    allow(pool).to receive(:prebuild_memory_mib).and_return(nil)
++    stub_batch
++    with_tmpdir { |dir| prepare([build_test_script], dir) { |_configs| } }
++    expect(nix).to have_received(:build_test_batch).with(anything, anything, max_jobs: 0, log_path: anything)
++  end
++
++  it 'rejects unknown local headroom instead of selecting unbounded jobs' do
++    allow(pool).to receive(:prebuild_memory_mib).and_return(nil)
++    with_tmpdir do |dir|
++      expect { prepare([build_test_script], dir) {} }.to raise_error(/Unable to detect preparation memory/)
++    end
++  end
++
++  it 'rejects insufficient local headroom instead of coercing zero jobs into one' do
++    allow(pool).to receive(:prebuild_memory_mib).and_return(8191)
++    with_tmpdir do |dir|
++      expect { prepare([build_test_script], dir) {} }.to raise_error(/Insufficient preparation memory/)
++    end
++  end
++
++  it 'uses the positive estimate and inherited numeric max-jobs without a CPU clamp' do
++    allow(nix).to receive(:local_max_jobs).and_return(30)
++    allow(pool).to receive(:prebuild_memory_mib).and_return(64_000)
++    stub_batch
++    with_tmpdir { |dir| prepare([build_test_script], dir, memory_per_job_mib: 1000) {} }
++    expect(nix).to have_received(:build_test_batch).with(anything, anything, max_jobs: 30, log_path: anything)
++  end
++
++  it 'rejects a non-positive estimate' do
++    expect do
++      described_class.new([], resource_pool: pool, state_dir: '/tmp/state', memory_per_job_mib: 0)
++    end.to raise_error(ArgumentError, /must be positive/)
++  end
++end
+diff --git a/test-runner/spec/test_runner/resource_pool_spec.rb b/test-runner/spec/test_runner/resource_pool_spec.rb
+index 466b552a7..7753e14b6 100644
+--- a/test-runner/spec/test_runner/resource_pool_spec.rb
++++ b/test-runner/spec/test_runner/resource_pool_spec.rb
+@@ -278,4 +278,21 @@ RSpec.describe TestRunner::ResourcePool do
+     expect(described_class.detect_shm_mib).to eq(1024)
+     expect(described_class.detect_shm_available_mib).to eq(256)
+   end
++  it 'sizes preparation from startup headroom and maximum before reserve, without overcommit' do
++    [24_000, 64_000].each do |available|
++      pool = build_pool(
++        max_memory_mib: 40_000, memory_reserve_mib: 8000, memory_overcommit: 3,
++        resource_detector: resource_detector(memory_mib: 96_000, memory_available_mib: available)
++      )
++      expect(pool.prebuild_memory_mib).to eq([available, 40_000].min - 8000)
++    end
++  end
++
++  it 'needs explicit capacity when available headroom cannot be detected' do
++    pool = build_pool(resource_detector: resource_detector(memory_mib: 96_000))
++    expect(pool.prebuild_memory_mib).to be_nil
++    explicit = build_pool(max_memory_mib: 32_000, memory_reserve_mib: 8000)
++    expect(explicit.prebuild_memory_mib).to eq(24_000)
++  end
++
+ end
+diff --git a/test-runner/spec/test_runner/test_config_spec.rb b/test-runner/spec/test_runner/test_config_spec.rb
+index e4d1f35d2..c499406de 100644
+--- a/test-runner/spec/test_runner/test_config_spec.rb
++++ b/test-runner/spec/test_runner/test_config_spec.rb
+@@ -27,4 +27,24 @@ RSpec.describe TestRunner::TestConfig do
+       expect(config.dig('framework', 'testConfig', 'foo')).to eq('bar')
+     end
+   end
++  it 'loads and validates a prepared config without creating a Nix client' do
++    with_tmpdir do |dir|
++      test = build_test
++      path = File.join(dir, 'config.json')
++      File.write(path, JSON.generate('machines' => {}, 'testScripts' => { 'default' => { 'script' => '' } }))
++      expect(TestRunner::NixCli).not_to receive(:new)
++      cfg = described_class.load(test, config_path: path)
++      expect(cfg.validate!(test.test_scripts.values)).to equal(cfg)
++    end
++  end
++
++  it 'rejects an invalid prepared machine before runtime can reset any disk' do
++    with_tmpdir do |dir|
++      path = File.join(dir, 'config.json')
++      File.write(path, JSON.generate('machines' => { 'bad' => {} }, 'testScripts' => {}))
++      cfg = described_class.load(build_test, config_path: path)
++      expect { cfg.validate!([]) }.to raise_error(ArgumentError, /Invalid prepared machine/)
++    end
++  end
++
+ end
+diff --git a/tests/configs/vpsadminos/base.nix b/tests/configs/vpsadminos/base.nix
+index d8bc8990e..7c5c5b05a 100644
+--- a/tests/configs/vpsadminos/base.nix
++++ b/tests/configs/vpsadminos/base.nix
+@@ -39,4 +39,5 @@ with lib;
+   tty.autologin.enable = mkDefault true;
+   services.haveged.enable = mkDefault true;
+   os.channel-registration.enable = mkDefault false;
++  system.squashfsMemoryMiB = mkDefault 2048;
+ }
+diff --git a/tests/squashfs-memory-eval.nix b/tests/squashfs-memory-eval.nix
+new file mode 100644
+index 000000000..0f8589572
+--- /dev/null
++++ b/tests/squashfs-memory-eval.nix
+@@ -0,0 +1,63 @@
++# Evaluate cache flags and option wiring without building an image.
++let
++  pkgsPath =
++    let env = builtins.getEnv "TEST_RUNNER_NIXPKGS_PATH";
++    in if env != "" then builtins.toPath env else (builtins.getFlake (toString ../.)).inputs.nixpkgs.outPath;
++  lib = (import pkgsPath { }).lib;
++  builder = memoryMiB: noStrip: import ../os/lib/make-squashfs.nix {
++    inherit lib memoryMiB noStrip;
++    stdenv.mkDerivation = attrs: attrs;
++    gnutar = null;
++    squashfsTools = null;
++    closureInfo = _: "/closure";
++  };
++  moduleArgs = {
++    inherit lib;
++    nixpkgsPath = pkgsPath;
++    pkgs.callPackage = _: args: args;
++    config = {
++      system = {
++        squashfsMemoryMiB = 1234;
++        squashfsCompression = [ "zstd" "-Xcompression-level" "10" ];
++        secretsDir = null;
++        build.toplevel = "/system";
++      };
++      isoImage.storeContents = [ "/system" ];
++    };
++  };
++  rootModule = import ../os/modules/system/activation/top-level.nix moduleArgs;
++  isoModule = import ../os/modules/installer/cd-dvd/iso-image.nix moduleArgs;
++  testModule = import ./configs/vpsadminos/base.nix moduleArgs;
++  option = rootModule.options.system.squashfsMemoryMiB;
++  testValue = overrides: (lib.evalModules {
++    modules = [
++      {
++        options.system.squashfsMemoryMiB = option;
++        config.system.squashfsMemoryMiB = testModule.system.squashfsMemoryMiB;
++      }
++      overrides
++    ];
++  }).config.system.squashfsMemoryMiB;
++  checkBranch = noStrip:
++    let
++      bounded = (builder 2048 noStrip).buildCommand;
++      unbounded = (builder null noStrip).buildCommand;
++    in
++    assert lib.hasInfix "-mem 2048M" bounded;
++    assert !(lib.hasInfix "-mem " unbounded);
++    assert lib.hasInfix (lib.escapeShellArgs [ "-comp" "zstd" "-Xcompression-level" "10" ]) bounded;
++    assert !(lib.hasInfix "-processors" bounded);
++    assert lib.hasInfix (if noStrip then "| sqfstar" else "mksquashfs nix-path-registration") bounded;
++    true;
++in
++assert checkBranch true;
++assert checkBranch false;
++assert option.default == null;
++assert !(option.type.check 0);
++assert option.type.check 2048;
++assert testValue { } == 2048;
++assert testValue { system.squashfsMemoryMiB = 4096; } == 4096;
++assert testValue { system.squashfsMemoryMiB = null; } == null;
++assert rootModule.config.system.build.squashfs.memoryMiB == 1234;
++assert isoModule.config.system.build.squashfsStore.memoryMiB == 1234;
++"squashfs cache flags and module wiring passed\n"

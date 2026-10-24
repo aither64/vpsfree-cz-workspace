@@ -1,0 +1,925 @@
+SHELL: 0
+
+START: 2026-10-20 03:28:00 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 03:28:00 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:28:00 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 03:28:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:28:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:28:02 +0200
+ELAPSED: 2.52s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:28:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:28:04 +0200
+ELAPSED: 0.73s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:28:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:28:06 +0200
+ELAPSED: 0.94s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:28:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:28:08 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:28:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:28:09 +0200
+ELAPSED: 0.81s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:28:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:28:11 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:28:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:28:13 +0200
+ELAPSED: 0.98s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 03:28:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:28:15 +0200
+ELAPSED: 1.05s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 03:28:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:28:17 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-20 03:28:18 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 03:28:19 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 03:28:19 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-20 03:28:19 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Tue, 20 Oct 2026 01:28:19 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 03:28:19 +0200
+COMMAND: osctl user new --no-standalone --map 0:1000000:524288 incus-de7f
+END: 2026-10-20 03:28:20 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+Registering user tank:incus-de7f
+---
+
+START: 2026-10-20 03:28:20 +0200
+COMMAND: osctl ct new --user incus-de7f --distribution arch --version latest incus-de7f
+END: 2026-10-20 03:28:37 +0200
+ELAPSED: 16.85s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 03:28:37 +0200
+COMMAND: osctl ct unset start-menu incus-de7f
+END: 2026-10-20 03:28:38 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:28:38 +0200
+COMMAND: osctl ct set nesting incus-de7f
+END: 2026-10-20 03:28:39 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:28:39 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 --no-dhcp --gateway-v4 auto --gateway-v6 none incus-de7f eth0
+END: 2026-10-20 03:28:40 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:28:40 +0200
+COMMAND: osctl ct netif ip add incus-de7f eth0 192.168.1.36/24
+END: 2026-10-20 03:28:41 +0200
+ELAPSED: 1.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:28:41 +0200
+COMMAND: osctl ct set dns-resolver incus-de7f 192.168.1.1
+END: 2026-10-20 03:28:42 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:28:42 +0200
+COMMAND: osctl ct start incus-de7f
+END: 2026-10-20 03:28:44 +0200
+ELAPSED: 2.31s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 03:28:44 +0200
+COMMAND: osctl ct exec incus-de7f sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-20 03:28:46 +0200
+ELAPSED: 2.01s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=0.408 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.408/0.408/0.408/0.000 ms
+---
+
+START: 2026-10-20 03:28:46 +0200
+COMMAND: osctl ct exec incus-de7f sh -c 'pacman -Q iptables >/dev/null 2>&1 && pacman -Rdd --noconfirm iptables || true'
+END: 2026-10-20 03:28:49 +0200
+ELAPSED: 2.92s
+STATUS: 0
+OUTPUT:
+
+Packages (1) iptables-1:1.8.13-1
+
+Total Removed Size:  2.35 MiB
+
+:: Do you want to remove these packages? [Y/n] 
+:: Processing package changes...
+removing iptables...
+:: Running post-transaction hooks...
+(1/2) Reloading system manager configuration...
+(2/2) Arming ConditionNeedsUpdate...
+---
+
+START: 2026-10-20 03:28:49 +0200
+COMMAND: osctl ct exec incus-de7f pacman -Syu --noconfirm iptables-nft incus
+END: 2026-10-20 03:29:10 +0200
+ELAPSED: 21.15s
+STATUS: 1
+OUTPUT:
+:: Synchronizing package databases...
+ core downloading...
+ extra downloading...
+:: Starting full system upgrade...
+resolving dependencies...
+looking for conflicting packages...
+
+Packages (91) capstone-5.0.9-1  cowsql-1.15.9-1  db5.3-5.3.28-7  dbus-1.16.2-2  dbus-glib-0.116-1  default-cursors-3-1  dnsmasq-2.93-1  dtc-1:1.8.1-1  duktape-2.7.0-7  edk2-ovmf-202608-1  fuse-common-3.18.3-1  fuse3-3.18.3-1  hicolor-icon-theme-0.18-1  iniparser-4.3.2-1  libaio-0.3.113-5  libcacard-2.8.1-1  libcbor-0.14.0-1  libdrm-2.4.134-1  libepoxy-1.5.10-3  libglvnd-1.7.0-3  libjpeg-turbo-3.2.0-2  libnih-1.0.3-5  libpciaccess-0.19-1  libpng-1.6.59-1  libslirp-4.9.5-1  libtraceevent-1:1.9.0-1  libtracefs-1.8.3-1  liburing-2.15-1  libuv-1.52.1-2  libx11-1.8.14-1  libxau-1.0.12-1  libxcb-1.17.0-1  libxdmcp-1.1.5-2  libxdp-1.6.3-2  libxext-1.3.7-1  libxshmfence-1.3.3-1  libxxf86vm-1.1.7-1  libyaml-0.2.5-3  linux-api-headers-7.3-1  llvm-libs-23.1.3-3  lm_sensors-1:3.6.2-1  lxc-1:7.0.0-2  lxcfs-7.0.0-2  lzo-2.10-5  mesa-1:26.2.5-1  mpdecimal-4.0.1-3  ndctl-85-1  nspr-4.40-1  nss-3.131-1  numactl-2.0.19-1  opus-1.6.1-1  pcsclite-2.5.3-1  perl-5.44.0-1  pixman-0.46.4-1  polkit-128-1  python-3.14.8-1  qemu-audio-spice-11.1.2-1  qemu-base-11.1.2-1  qemu-chardev-spice-11.1.2-1  qemu-common-11.1.2-1  qemu-hw-display-virtio-gpu-11.1.2-1  qemu-hw-display-virtio-vga-11.1.2-1  qemu-hw-usb-redirect-11.1.2-1  qemu-img-11.1.2-1  qemu-system-x86-11.1.2-1  qemu-system-x86-firmware-11.1.2-1  qemu-ui-opengl-11.1.2-1  qemu-ui-spice-core-11.1.2-1  raft-0.22.1-1  rdma-core-65.0-1  rsync-3.5.1-3  seabios-1.17.0-2  snappy-1.3.1-1  spice-0.16.0-4  spice-protocol-0.14.5-1  spirv-tools-1:1.4.363.0-1  squashfs-tools-4.7.5-1  systemd-262.1-1  systemd-libs-262.1-1  systemd-sysvcompat-262.1-1  usbredir-0.15.0-1  vde2-2.3.3-10  virtiofsd-1.14.0-1  wayland-1.26.0-1  wget-1.25.0-6  wolfssl-5.9.4-1  xcb-proto-1.17.0-4  xorgproto-2026.1-1  xxhash-0.8.4-1  incus-7.5.1-1  iptables-1:1.8.13-1
+
+Total Download Size:   254.94 MiB
+Total Installed Size:  946.87 MiB
+Net Upgrade Size:      894.57 MiB
+
+:: Proceed with installation? [Y/n] 
+:: Retrieving packages...
+ incus-7.5.1-1-x86_64 downloading...
+ llvm-libs-23.1.3-3-x86_64 downloading...
+ perl-5.44.0-1-x86_64 downloading...
+ python-3.14.8-1-x86_64 downloading...
+ mesa-1:26.2.5-1-x86_64 downloading...
+ systemd-262.1-1-x86_64 downloading...
+ qemu-system-x86-11.1.2-1-x86_64 downloading...
+ edk2-ovmf-202608-1-any downloading...
+ opus-1.6.1-1-x86_64 downloading...
+ rdma-core-65.0-1-x86_64 downloading...
+ qemu-img-11.1.2-1-x86_64 downloading...
+ spirv-tools-1:1.4.363.0-1-x86_64 downloading...
+ libx11-1.8.14-1-x86_64 downloading...
+ qemu-common-11.1.2-1-x86_64 downloading...
+ nss-3.131-1-x86_64 downloading...
+ linux-api-headers-7.3-1-x86_64 downloading...
+ systemd-libs-262.1-1-x86_64 downloading...
+ db5.3-5.3.28-7-x86_64 downloading...
+ wolfssl-5.9.4-1-x86_64 downloading...
+ libxcb-1.17.0-1-x86_64 downloading...
+ capstone-5.0.9-1-x86_64 downloading...
+ virtiofsd-1.14.0-1-x86_64 downloading...
+ lxc-1:7.0.0-2-x86_64 downloading...
+ wget-1.25.0-6-x86_64 downloading...
+ libjpeg-turbo-3.2.0-2-x86_64 downloading...
+ dnsmasq-2.93-1-x86_64 downloading...
+ polkit-128-1-x86_64 downloading...
+ rsync-3.5.1-3-x86_64 downloading...
+ ndctl-85-1-x86_64 downloading...
+ dbus-1.16.2-2-x86_64 downloading...
+ libdrm-2.4.134-1-x86_64 downloading...
+ spice-0.16.0-4-x86_64 downloading...
+ libglvnd-1.7.0-3-x86_64 downloading...
+ libepoxy-1.5.10-3-x86_64 downloading...
+ pixman-0.46.4-1-x86_64 downloading...
+ liburing-2.15-1-x86_64 downloading...
+ libuv-1.52.1-2-x86_64 downloading...
+ squashfs-tools-4.7.5-1-x86_64 downloading...
+ libpng-1.6.59-1-x86_64 downloading...
+ xorgproto-2026.1-1-any downloading...
+ libtracefs-1.8.3-1-x86_64 downloading...
+ vde2-2.3.3-10-x86_64 downloading...
+ nspr-4.40-1-x86_64 downloading...
+ duktape-2.7.0-7-x86_64 downloading...
+ libtraceevent-1:1.9.0-1-x86_64 downloading...
+ seabios-1.17.0-2-any downloading...
+ libnih-1.0.3-5-x86_64 downloading...
+error: failed retrieving file 'rdma-core-65.0-1-x86_64.pkg.tar.zst.sig' from mirror.vpsfree.cz : Operation too slow. Less than 1 bytes/sec transferred the last 10 seconds
+error: failed retrieving file 'perl-5.44.0-1-x86_64.pkg.tar.zst.sig' from mirror.vpsfree.cz : Operation too slow. Less than 1 bytes/sec transferred the last 10 seconds
+error: failed retrieving file 'lxc-1:7.0.0-2-x86_64.pkg.tar.zst' from mirror.vpsfree.cz : Operation too slow. Less than 1 bytes/sec transferred the last 10 seconds
+warning: too many errors from mirror.vpsfree.cz, skipping for the remainder of this transaction
+warning: failed to retrieve some files
+error: failed to commit transaction (failed to retrieve some files)
+Errors occurred, no packages were upgraded.
+error: executed command failed
+---
+
+START: 2026-10-20 03:29:25 +0200
+COMMAND: osctl ct exec incus-de7f pacman -Syu --noconfirm iptables-nft incus
+END: 2026-10-20 03:29:48 +0200
+ELAPSED: 22.64s
+STATUS: 0
+OUTPUT:
+:: Synchronizing package databases...
+ core downloading...
+ extra downloading...
+:: Starting full system upgrade...
+resolving dependencies...
+looking for conflicting packages...
+
+Packages (91) capstone-5.0.9-1  cowsql-1.15.9-1  db5.3-5.3.28-7  dbus-1.16.2-2  dbus-glib-0.116-1  default-cursors-3-1  dnsmasq-2.93-1  dtc-1:1.8.1-1  duktape-2.7.0-7  edk2-ovmf-202608-1  fuse-common-3.18.3-1  fuse3-3.18.3-1  hicolor-icon-theme-0.18-1  iniparser-4.3.2-1  libaio-0.3.113-5  libcacard-2.8.1-1  libcbor-0.14.0-1  libdrm-2.4.134-1  libepoxy-1.5.10-3  libglvnd-1.7.0-3  libjpeg-turbo-3.2.0-2  libnih-1.0.3-5  libpciaccess-0.19-1  libpng-1.6.59-1  libslirp-4.9.5-1  libtraceevent-1:1.9.0-1  libtracefs-1.8.3-1  liburing-2.15-1  libuv-1.52.1-2  libx11-1.8.14-1  libxau-1.0.12-1  libxcb-1.17.0-1  libxdmcp-1.1.5-2  libxdp-1.6.3-2  libxext-1.3.7-1  libxshmfence-1.3.3-1  libxxf86vm-1.1.7-1  libyaml-0.2.5-3  linux-api-headers-7.3-1  llvm-libs-23.1.3-3  lm_sensors-1:3.6.2-1  lxc-1:7.0.0-2  lxcfs-7.0.0-2  lzo-2.10-5  mesa-1:26.2.5-1  mpdecimal-4.0.1-3  ndctl-85-1  nspr-4.40-1  nss-3.131-1  numactl-2.0.19-1  opus-1.6.1-1  pcsclite-2.5.3-1  perl-5.44.0-1  pixman-0.46.4-1  polkit-128-1  python-3.14.8-1  qemu-audio-spice-11.1.2-1  qemu-base-11.1.2-1  qemu-chardev-spice-11.1.2-1  qemu-common-11.1.2-1  qemu-hw-display-virtio-gpu-11.1.2-1  qemu-hw-display-virtio-vga-11.1.2-1  qemu-hw-usb-redirect-11.1.2-1  qemu-img-11.1.2-1  qemu-system-x86-11.1.2-1  qemu-system-x86-firmware-11.1.2-1  qemu-ui-opengl-11.1.2-1  qemu-ui-spice-core-11.1.2-1  raft-0.22.1-1  rdma-core-65.0-1  rsync-3.5.1-3  seabios-1.17.0-2  snappy-1.3.1-1  spice-0.16.0-4  spice-protocol-0.14.5-1  spirv-tools-1:1.4.363.0-1  squashfs-tools-4.7.5-1  systemd-262.1-1  systemd-libs-262.1-1  systemd-sysvcompat-262.1-1  usbredir-0.15.0-1  vde2-2.3.3-10  virtiofsd-1.14.0-1  wayland-1.26.0-1  wget-1.25.0-6  wolfssl-5.9.4-1  xcb-proto-1.17.0-4  xorgproto-2026.1-1  xxhash-0.8.4-1  incus-7.5.1-1  iptables-1:1.8.13-1
+
+Total Download Size:     3.28 MiB
+Total Installed Size:  946.87 MiB
+Net Upgrade Size:      894.57 MiB
+
+:: Proceed with installation? [Y/n] 
+:: Retrieving packages...
+ perl-5.44.0-1-x86_64 downloading...
+ rdma-core-65.0-1-x86_64 downloading...
+ lxc-1:7.0.0-2-x86_64 downloading...
+ dtc-1:1.8.1-1-x86_64 downloading...
+ wayland-1.26.0-1-x86_64 downloading...
+ fuse3-3.18.3-1-x86_64 downloading...
+ lm_sensors-1:3.6.2-1-x86_64 downloading...
+ dbus-glib-0.116-1-x86_64 downloading...
+ xcb-proto-1.17.0-4-any downloading...
+ raft-0.22.1-1-x86_64 downloading...
+ xxhash-0.8.4-1-x86_64 downloading...
+ libxext-1.3.7-1-x86_64 downloading...
+ pcsclite-2.5.3-1-x86_64 downloading...
+ mpdecimal-4.0.1-3-x86_64 downloading...
+ libxdp-1.6.3-2-x86_64 downloading...
+ lzo-2.10-5-x86_64 downloading...
+ numactl-2.0.19-1-x86_64 downloading...
+ cowsql-1.15.9-1-x86_64 downloading...
+ libslirp-4.9.5-1-x86_64 downloading...
+ lxcfs-7.0.0-2-x86_64 downloading...
+ libyaml-0.2.5-3-x86_64 downloading...
+ libcbor-0.14.0-1-x86_64 downloading...
+ usbredir-0.15.0-1-x86_64 downloading...
+ libcacard-2.8.1-1-x86_64 downloading...
+ snappy-1.3.1-1-x86_64 downloading...
+ qemu-hw-display-virtio-gpu-11.1.2-1-x86_64 downloading...
+ qemu-ui-spice-core-11.1.2-1-x86_64 downloading...
+ qemu-hw-usb-redirect-11.1.2-1-x86_64 downloading...
+ libxdmcp-1.1.5-2-x86_64 downloading...
+ qemu-ui-opengl-11.1.2-1-x86_64 downloading...
+ qemu-system-x86-firmware-11.1.2-1-x86_64 downloading...
+ libaio-0.3.113-5-x86_64 downloading...
+ libpciaccess-0.19-1-x86_64 downloading...
+ spice-protocol-0.14.5-1-any downloading...
+ iniparser-4.3.2-1-x86_64 downloading...
+ qemu-chardev-spice-11.1.2-1-x86_64 downloading...
+ qemu-hw-display-virtio-vga-11.1.2-1-x86_64 downloading...
+ qemu-audio-spice-11.1.2-1-x86_64 downloading...
+ libxxf86vm-1.1.7-1-x86_64 downloading...
+ qemu-base-11.1.2-1-x86_64 downloading...
+ hicolor-icon-theme-0.18-1-any downloading...
+ libxau-1.0.12-1-x86_64 downloading...
+ systemd-sysvcompat-262.1-1-x86_64 downloading...
+ libxshmfence-1.3.3-1-x86_64 downloading...
+ fuse-common-3.18.3-1-x86_64 downloading...
+ default-cursors-3-1-any downloading...
+checking keyring...
+checking package integrity...
+loading package files...
+checking for file conflicts...
+checking available disk space...
+:: Processing package changes...
+upgrading linux-api-headers...
+upgrading systemd-libs...
+upgrading dbus...
+installing iptables...
+installing db5.3...
+installing perl...
+installing mpdecimal...
+installing python...
+Optional dependencies for python
+    python-setuptools: for building Python packages using tooling that is usually bundled with Python
+    python-pip: for installing Python packages using tooling that is usually bundled with Python
+    python-pipx: for installing Python software not packaged on Arch Linux
+    sqlite: for a default database integration [installed]
+    xz: for lzma [installed]
+    tk: for tkinter
+installing xxhash...
+installing rsync...
+Optional dependencies for rsync
+    python: for rrsync [installed]
+installing wget...
+Optional dependencies for wget
+    ca-certificates: HTTPS downloads [installed]
+installing lxc...
+Optional dependencies for lxc
+    dnsmasq: lxc-net.service [pending]
+    lua
+    lua-filesystem: lxc-top
+    lua-alt-getopt: lxc-top
+installing libnih...
+installing fuse-common...
+installing liburing...
+installing numactl...
+installing fuse3...
+installing dbus-glib...
+installing lxcfs...
+installing lzo...
+installing squashfs-tools...
+installing dnsmasq...
+installing libuv...
+installing raft...
+installing cowsql...
+installing hicolor-icon-theme...
+installing qemu-common...
+installing libaio...
+installing qemu-img...
+installing capstone...
+installing libjpeg-turbo...
+installing libpng...
+installing libslirp...
+installing libxdp...
+installing iniparser...
+installing libtraceevent...
+Optional dependencies for libtraceevent
+    libtraceevent-docs: for documentation
+installing libtracefs...
+Optional dependencies for libtracefs
+    libtracefs-docs: for documentation
+installing ndctl...
+installing pixman...
+installing rdma-core...
+Optional dependencies for rdma-core
+    python: for the Python API (pyverbs) [installed]
+installing snappy...
+installing wolfssl...
+installing vde2...
+installing libyaml...
+installing dtc...
+Optional dependencies for dtc
+    python: Python bindings [installed]
+installing edk2-ovmf...
+installing libcbor...
+installing qemu-system-x86-firmware...
+installing seabios...
+Optional dependencies for seabios
+    seabios-docs: for documentation
+installing qemu-system-x86...
+installing virtiofsd...
+installing qemu-base...
+Optional dependencies for qemu-base
+    qemu-user-static: for static user mode emulation of QEMU targets
+    samba: for SMB/CIFS server support
+    qemu-block-iscsi: for iSCSI block driver
+    qemu-chardev-baum: for Baum chardev driver
+    qemu-docs: for documentation
+    qemu-emulators-full: for all system emulators
+    qemu-full: for a full QEMU installation
+    qemu-hw-s390x-virtio-gpu-ccw: for s390x-virtio-gpu-ccw display device
+    qemu-pr-helper: for persistent reservation utility
+    qemu-system-aarch64: for AARCH64 system emulator
+    qemu-system-alpha: for Alpha system emulator
+    qemu-system-arm: for ARM system emulator
+    qemu-system-avr: for AVR system emulator
+    qemu-system-hexagon: for Hexagon system emulator
+    qemu-system-hppa: for HPPA system emulator
+    qemu-system-m68k: for ColdFire (m68k) system emulator
+    qemu-system-microblaze: for Microblaze system emulator
+    qemu-system-mips: for MIPS system emulator
+    qemu-system-or1k: for OpenRisc32 system emulator
+    qemu-system-ppc: for PPC system emulator
+    qemu-system-riscv: for RISC-V system emulator
+    qemu-system-rx: for RX system emulator
+    qemu-system-s390x: for S390 system emulator
+    qemu-system-sh4: for SH4 system emulator
+    qemu-system-sparc: for SPARC system emulator
+    qemu-system-tricore: for tricore system emulator
+    qemu-system-xtensa: for Xtensa system emulator
+    qemu-tests: for QEMU tests
+    qemu-tools: for QEMU tools
+    qemu-user: for user mode emulation of QEMU targets
+    qemu-audio-alsa: for ALSA audio driver
+    qemu-audio-dbus: for D-Bus audio driver
+    qemu-audio-jack: for JACK audio driver
+    qemu-audio-oss: for OSS audio driver
+    qemu-audio-pa: for PulseAudio audio driver
+    qemu-audio-pipewire: for PipeWire audio driver
+    qemu-audio-sdl: for SDL audio driver
+    qemu-audio-spice: for spice audio driver [pending]
+    qemu-block-curl: for curl block driver
+    qemu-block-dmg: for DMG block driver
+    qemu-block-nfs: for NFS block driver
+    qemu-block-ssh: for SSH block driver
+    qemu-chardev-spice: for the spice chardev driver [pending]
+    qemu-desktop: for dependencies commonly used on a desktop
+    qemu-hw-display-qxl: for the QXL display device
+    qemu-hw-display-virtio-vga: for the virtio-vga display device [pending]
+    qemu-hw-display-virtio-vga-gl: for the virtio-vga-gl display device
+    qemu-hw-display-virtio-vga-rutabaga: for the virtio-vga-rutabaga display device
+    qemu-hw-display-virtio-gpu: for the virtio-gpu display device [pending]
+    qemu-hw-display-virtio-gpu-gl: for the virtio-gpu-gl display device
+    qemu-hw-display-virtio-gpu-rutabaga: for the virtio-gpu-rutabaga display device
+    qemu-hw-display-virtio-gpu-pci: for the virtio-gpu-pci display device
+    qemu-hw-display-virtio-gpu-pci-gl: for the virtio-gpu-pci-gl display device
+    qemu-hw-display-virtio-gpu-pci-rutabaga: for the virtio-gpu-pci-rutabaga display device
+    qemu-hw-uefi-vars: for UEFI variable support
+    qemu-hw-usb-host: for host USB support
+    qemu-hw-usb-redirect: for USB redirect support [pending]
+    qemu-hw-usb-smartcard: for USB smartcard support
+    qemu-ui-curses: for ncurses UI driver
+    qemu-ui-dbus: for D-Bus UI driver
+    qemu-ui-egl-headless: for EGL headless UI driver
+    qemu-ui-gtk: for GTK UI driver
+    qemu-ui-opengl: for OpenGL UI driver [pending]
+    qemu-ui-sdl: for SDL UI driver
+    qemu-ui-spice-app: for spice app UI driver
+    qemu-ui-spice-core: for spice core UI driver [pending]
+    qemu-user: for user mode emulation of QEMU targets
+    qemu-vhost-user-gpu: for vhost-user-gpu display device
+    qemu-vmsr-helper: for accessing the Running Average Power Limit (RAPL) MSR
+installing xcb-proto...
+installing xorgproto...
+installing libxdmcp...
+installing libxau...
+installing libxcb...
+installing libx11...
+installing libxext...
+installing libpciaccess...
+installing libdrm...
+Optional dependencies for libdrm
+    cairo: needed for modetest tool
+installing libxshmfence...
+installing libxxf86vm...
+installing llvm-libs...
+installing lm_sensors...
+Optional dependencies for lm_sensors
+    rrdtool: for logging with sensord
+    perl: for sensor detection and configuration convert [installed]
+installing spirv-tools...
+installing default-cursors...
+Optional dependencies for default-cursors
+    adwaita-cursors: default cursor theme
+installing wayland...
+installing mesa...
+Optional dependencies for mesa
+    opengl-man-pages: for the OpenGL API man pages
+installing libglvnd...
+installing libepoxy...
+installing qemu-ui-opengl...
+installing opus...
+installing spice-protocol...
+installing nspr...
+installing nss...
+installing duktape...
+upgrading systemd...
+Creating group 'rdma' with GID 967.
+Creating group 'dnsmasq' with GID 966.
+Creating user 'dnsmasq' (dnsmasq daemon) with UID 966 and GID 966.
+Creating group 'qemu' with GID 965.
+Creating user 'qemu' (QEMU user) with UID 965 and GID 965.
+installing polkit...
+installing pcsclite...
+Optional dependencies for pcsclite
+    python: API call trace logging with the pcsc-spy [installed]
+    ccid: USB Chip/Smart Card Interface Devices driver
+installing libcacard...
+installing spice...
+installing qemu-ui-spice-core...
+installing qemu-chardev-spice...
+installing usbredir...
+installing qemu-hw-usb-redirect...
+installing qemu-hw-display-virtio-vga...
+installing qemu-hw-display-virtio-gpu...
+installing qemu-audio-spice...
+installing incus...
+Optional dependencies for incus
+    lvm2: lvm2 support
+    thin-provisioning-tools: thin provisioning support
+    btrfs-progs: btrfs storage driver support
+    minio: storage buckets support
+    cdrtools: VM support
+    systemd-libs: unix device hotplug support [installed]
+    apparmor: apparmor support
+    xdelta3: support delta downloads of images
+    skopeo: OCI support
+    umoci: OCI support
+upgrading systemd-sysvcompat...
+:: Running post-transaction hooks...
+( 1/12) Creating system user accounts...
+Creating group 'incus' with GID 964.
+Creating group 'incus-admin' with GID 963.
+Creating group 'polkitd' with GID 102.
+Creating user 'incus' (Incus user) with UID 964 and GID 964.
+Creating group 'pcscd' with GID 962.
+Creating user 'pcscd' (PC/SC Smart Card Daemon) with UID 962 and GID 962.
+Creating user 'polkitd' (User for polkitd) with UID 102 and GID 102.
+( 2/12) Creating temporary files...
+( 3/12) Updating journal message catalog...
+( 4/12) Updating udev hardware database...
+( 5/12) Applying kernel sysctl settings...
+( 6/12) Reloading system manager configuration...
+( 7/12) Reloading user manager configuration...
+( 8/12) Enqueuing marked services...
+( 9/12) Reloading device manager configuration...
+Failed to scan devices: Permission denied
+error: command failed to execute correctly
+(10/12) Arming ConditionNeedsUpdate...
+(11/12) Reloading system bus configuration...
+(12/12) Checking for old perl modules...
+---
+
+START: 2026-10-20 03:29:48 +0200
+COMMAND: osctl ct exec incus-de7f sh -c printf\ \'\%s'
+'\'\ \'root:100000:65536\'\ \>\ /etc/subuid'
+'printf\ \'\%s'
+'\'\ \'root:100000:65536\'\ \>\ /etc/subgid'
+'
+END: 2026-10-20 03:29:50 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:29:50 +0200
+COMMAND: osctl ct exec incus-de7f sh -c systemctl\ stop\ incus.service\ incus.socket\ 2\>/dev/null\ \|\|\ true'
+'systemctl\ enable\ --now\ incus.socket\ \|\|\ systemctl\ enable\ --now\ incus.service'
+'
+END: 2026-10-20 03:29:52 +0200
+ELAPSED: 2.09s
+STATUS: 0
+OUTPUT:
+Created symlink '/etc/systemd/system/sockets.target.wants/incus.socket' → '/usr/lib/systemd/system/incus.socket'.
+---
+
+START: 2026-10-20 03:29:52 +0200
+COMMAND: osctl ct exec incus-de7f sh -c 'systemctl is-active --quiet incus.socket || systemctl is-active --quiet incus.service'
+END: 2026-10-20 03:29:54 +0200
+ELAPSED: 2.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:29:54 +0200
+COMMAND: osctl ct exec incus-de7f sh -c cat\ \<\<\'EOF\'\ \|\ incus\ admin\ init\ --preseed'
+'storage_pools:'
+'-\ name:\ default'
+'\ \ driver:\ dir'
+'profiles:'
+'-\ name:\ default'
+'\ \ devices:'
+'\ \ \ \ root:'
+'\ \ \ \ \ \ path:\ /'
+'\ \ \ \ \ \ pool:\ default'
+'\ \ \ \ \ \ type:\ disk'
+'EOF'
+'
+END: 2026-10-20 03:29:57 +0200
+ELAPSED: 2.81s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:29:57 +0200
+COMMAND: osctl ct exec incus-de7f incus image list images: debian --format json
+END: 2026-10-20 03:30:01 +0200
+ELAPSED: 3.51s
+STATUS: 0
+OUTPUT:
+[{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian bookworm arm64 (cloud) (20261019_20:00)","os":"Debian","release":"bookworm","serial":"20261019_20:00","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/cloud/arm64","description":""},{"name":"debian/12/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"5c239b7495e643cf48c1e29df2605db6f2b645b35ef29681a1970b17fefcb606","size":140424372,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian bookworm arm64 (cloud) (20261019_20:00)","os":"Debian","release":"bookworm","serial":"20261019_20:00","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/cloud/arm64","description":""},{"name":"debian/12/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"d6aeaee2057df96c764adbcb65ec4c2bbdeb5d3321c9a3f1946f161eadca5db8","size":402693300,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian bookworm amd64 (cloud) (20261019_19:46)","os":"Debian","release":"bookworm","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/cloud","description":""},{"name":"debian/bookworm/cloud/amd64","description":""},{"name":"debian/12/cloud","description":""},{"name":"debian/12/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"2c504bb7faa34fca85f57cde5d4bc842e8e48208ee30beaf0fbd7c0ea2b28c2b","size":144667804,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian bookworm amd64 (cloud) (20261019_19:46)","os":"Debian","release":"bookworm","serial":"20261019_19:46","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/cloud","description":""},{"name":"debian/bookworm/cloud/amd64","description":""},{"name":"debian/12/cloud","description":""},{"name":"debian/12/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"aea095fe055cde3ba16fd4a744d422d3f625384ced67d9771dbe52801a40ec26","size":413669532,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian bookworm armhf (cloud) (20261019_19:46)","os":"Debian","release":"bookworm","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/cloud/armhf","description":""},{"name":"debian/12/cloud/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"a43be6812d0c0f2ecadf7e8307e2841dad40bac770c6f3c2d79087fdeef1b432","size":121386228,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian bookworm armhf (20261019_20:21)","os":"Debian","release":"bookworm","serial":"20261019_20:21","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/default/armhf","description":""},{"name":"debian/12/default/armhf","description":""},{"name":"debian/bookworm/armhf","description":""},{"name":"debian/12/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"6268e6a8fc8e1a5673d6897cc4e270f914f30caa51e9d35ab08b96bba710ebe1","size":89940684,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian bookworm arm64 (20261019_20:07)","os":"Debian","release":"bookworm","serial":"20261019_20:07","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/default/arm64","description":""},{"name":"debian/12/default/arm64","description":""},{"name":"debian/bookworm/arm64","description":""},{"name":"debian/12/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"fa28cbdf75aa490500347120a9d9e5317a802c242d9bed41a46e3106de648e5a","size":108143300,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian bookworm arm64 (20261019_20:07)","os":"Debian","release":"bookworm","serial":"20261019_20:07","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/default/arm64","description":""},{"name":"debian/12/default/arm64","description":""},{"name":"debian/bookworm/arm64","description":""},{"name":"debian/12/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"3c39b6fdcf8a1be0395c1b4ee71ba8233252f20e7fdb06baeb6743361f8a5f3a","size":365530820,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian bookworm amd64 (20261019_19:46)","os":"Debian","release":"bookworm","serial":"20261019_19:46","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/default","description":""},{"name":"debian/bookworm/default/amd64","description":""},{"name":"debian/12/default","description":""},{"name":"debian/12/default/amd64","description":""},{"name":"debian/bookworm","description":""},{"name":"debian/bookworm/amd64","description":""},{"name":"debian/12","description":""},{"name":"debian/12/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"31f836ba30da529082193c99908a78f4b17f2b765f9b2448175a67588906804d","size":111497888,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian bookworm amd64 (20261019_19:46)","os":"Debian","release":"bookworm","serial":"20261019_19:46","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/default","description":""},{"name":"debian/bookworm/default/amd64","description":""},{"name":"debian/12/default","description":""},{"name":"debian/12/default/amd64","description":""},{"name":"debian/bookworm","description":""},{"name":"debian/bookworm/amd64","description":""},{"name":"debian/12","description":""},{"name":"debian/12/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"37884b1c3808411046727e3d551bc12eb3470b39c8209a3e53bb9720a1846d57","size":376271008,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"riscv64","description":"Debian forky riscv64 (cloud) (20261019_20:05)","os":"Debian","release":"forky","serial":"20261019_20:05","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud/riscv64","description":""},{"name":"debian/14/cloud/riscv64","description":""}],"architecture":"riscv64","cached":false,"filename":"incus.tar.xz","fingerprint":"ee45aea5a2c943592a0d799fefef0238db313faaac40fa72639dc9af2918fce3","size":144037044,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian forky arm64 (cloud) (20261019_20:01)","os":"Debian","release":"forky","serial":"20261019_20:01","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud/arm64","description":""},{"name":"debian/14/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"5004ff23d96cc5f05c8c27f4c5557b096a7117a656cfd9dd1f27e566063cbb1a","size":141812928,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian forky arm64 (cloud) (20261019_20:01)","os":"Debian","release":"forky","serial":"20261019_20:01","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud/arm64","description":""},{"name":"debian/14/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"e7807d7fb4db02cae168f988c8eab5c055696f5d18b7c6ca655e526b7dff31b1","size":464144064,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"loong64","description":"Debian forky loong64 (cloud) (20261019_19:52)","os":"Debian","release":"forky","serial":"20261019_19:52","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud/loong64","description":""},{"name":"debian/14/cloud/loong64","description":""}],"architecture":"loongarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"98d4e02f33d609c7ae5257c103994a80c680542fe757c9478a92062e8ea960ac","size":143148160,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian forky amd64 (cloud) (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud","description":""},{"name":"debian/forky/cloud/amd64","description":""},{"name":"debian/14/cloud","description":""},{"name":"debian/14/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"c5a9d6cf0cb32d6a1ac7b884bd218a3f3f24032b146438713cb48356fb39c18f","size":148042908,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian forky amd64 (cloud) (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud","description":""},{"name":"debian/forky/cloud/amd64","description":""},{"name":"debian/14/cloud","description":""},{"name":"debian/14/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"bbf374f229883ba8599b2c6cf44a3123ed8d131b3cd971cb5ea331d0111cafb5","size":457333404,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian forky armhf (cloud) (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud/armhf","description":""},{"name":"debian/14/cloud/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"7ba00a3d516da7c25d15c6f007957eefd9d1ebb0c68427852affb0e62c2a4593","size":138826988,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian forky armhf (20261019_20:50)","os":"Debian","release":"forky","serial":"20261019_20:50","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default/armhf","description":""},{"name":"debian/14/default/armhf","description":""},{"name":"debian/forky/armhf","description":""},{"name":"debian/14/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"78d8c4fe003250300d9e0a644a4246e76c8cd6c5144bb4cb496a4f93fc5da882","size":92910292,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian forky arm64 (20261019_20:03)","os":"Debian","release":"forky","serial":"20261019_20:03","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default/arm64","description":""},{"name":"debian/14/default/arm64","description":""},{"name":"debian/forky/arm64","description":""},{"name":"debian/14/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"e1a68ad364252d73c13cb3dfa9e4f1b832ba6ddd436a85423197a369bbd13bcb","size":101085860,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian forky arm64 (20261019_20:03)","os":"Debian","release":"forky","serial":"20261019_20:03","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default/arm64","description":""},{"name":"debian/14/default/arm64","description":""},{"name":"debian/forky/arm64","description":""},{"name":"debian/14/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"7b300e93bae96004504d946743774e647f10f5136cd206f3c9e96c7151a726b0","size":425024676,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian forky amd64 (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default","description":""},{"name":"debian/forky/default/amd64","description":""},{"name":"debian/14/default","description":""},{"name":"debian/14/default/amd64","description":""},{"name":"debian/forky","description":""},{"name":"debian/forky/amd64","description":""},{"name":"debian/14","description":""},{"name":"debian/14/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"bc34863335a498e4d13288525698e76d0cc18a8bdab5d5273266485861f577ca","size":105517744,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian forky amd64 (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default","description":""},{"name":"debian/forky/default/amd64","description":""},{"name":"debian/14/default","description":""},{"name":"debian/14/default/amd64","description":""},{"name":"debian/forky","description":""},{"name":"debian/forky/amd64","description":""},{"name":"debian/14","description":""},{"name":"debian/14/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"25df4a9a2c1c4a35bba46679c2cafd9a335dd8d7b619695262d3b5106502b54f","size":417181360,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"loong64","description":"Debian forky loong64 (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default/loong64","description":""},{"name":"debian/14/default/loong64","description":""},{"name":"debian/forky/loong64","description":""},{"name":"debian/14/loong64","description":""}],"architecture":"loongarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"16248ebcdd03e126c42bdcaaf6e9dc89e328d0c5753dde2f31a2117562849d49","size":95965856,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"riscv64","description":"Debian forky riscv64 (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default/riscv64","description":""},{"name":"debian/14/default/riscv64","description":""},{"name":"debian/forky/riscv64","description":""},{"name":"debian/14/riscv64","description":""}],"architecture":"riscv64","cached":false,"filename":"incus.tar.xz","fingerprint":"64335c7ba97c98e91c8f19097bbdec6f66d2adcc9df985a7ca06993f3378dc4a","size":96576180,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian trixie armhf (cloud) (20261019_20:18)","os":"Debian","release":"trixie","serial":"20261019_20:18","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud/armhf","description":""},{"name":"debian/13/cloud/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"6516e8312f866171b3c0dd6cd51c449c838f90ff661323caf4ecb821546a894a","size":126203128,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian trixie arm64 (cloud) (20261019_20:01)","os":"Debian","release":"trixie","serial":"20261019_20:01","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud/arm64","description":""},{"name":"debian/13/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"f149c3dd15f1d7bc1fda820241af54274d2a6d5d6ee17af156fde07ada59507f","size":135214268,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian trixie arm64 (cloud) (20261019_20:01)","os":"Debian","release":"trixie","serial":"20261019_20:01","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud/arm64","description":""},{"name":"debian/13/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"64bfad4888922395697ad037b3d0608d9b030bdd9d23efd7aee47194f3215422","size":394423996,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian trixie amd64 (cloud) (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud","description":""},{"name":"debian/trixie/cloud/amd64","description":""},{"name":"debian/13/cloud","description":""},{"name":"debian/13/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"ecb367be32c3236b64fd71a111484b1047d01627759f4a5834ae37c64e6d7aef","size":138785940,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian trixie amd64 (cloud) (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud","description":""},{"name":"debian/trixie/cloud/amd64","description":""},{"name":"debian/13/cloud","description":""},{"name":"debian/13/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"eb62dbd14518487b4a006ca0eaac2f78d114619e9f31b8da241370a573351886","size":396321940,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"loong64","description":"Debian trixie loong64 (cloud) (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud/loong64","description":""},{"name":"debian/13/cloud/loong64","description":""}],"architecture":"loongarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"7b0d00a6f51a7878d2b8076ea7f48b290a43199c4e7f158c79a562ba3319abc7","size":133866628,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"riscv64","description":"Debian trixie riscv64 (cloud) (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud/riscv64","description":""},{"name":"debian/13/cloud/riscv64","description":""}],"architecture":"riscv64","cached":false,"filename":"incus.tar.xz","fingerprint":"6b5198a7f64eccde43aa43f429381ca6c28e36044b7086ca027507ac06b50048","size":131605664,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian trixie armhf (20261019_20:45)","os":"Debian","release":"trixie","serial":"20261019_20:45","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default/armhf","description":""},{"name":"debian/13/default/armhf","description":""},{"name":"debian/trixie/armhf","description":""},{"name":"debian/13/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"72f3c7d0ed8116ce86479fa37b6f8aaa6e587f3aa400615d4cfddc8a51e5c1c1","size":94307012,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian trixie arm64 (20261019_20:00)","os":"Debian","release":"trixie","serial":"20261019_20:00","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default/arm64","description":""},{"name":"debian/13/default/arm64","description":""},{"name":"debian/trixie/arm64","description":""},{"name":"debian/13/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"92fd12791ab943888cb9b9125501a04bad87403b38c11b59ec78831e4c2b1de9","size":102740652,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian trixie arm64 (20261019_20:00)","os":"Debian","release":"trixie","serial":"20261019_20:00","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default/arm64","description":""},{"name":"debian/13/default/arm64","description":""},{"name":"debian/trixie/arm64","description":""},{"name":"debian/13/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"5589d8fcc50ef4d04ee4cd83fd1f8754989aa3cb30381dc9ea2fa7202adeaebf","size":363064492,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"riscv64","description":"Debian trixie riscv64 (20261019_20:00)","os":"Debian","release":"trixie","serial":"20261019_20:00","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default/riscv64","description":""},{"name":"debian/13/default/riscv64","description":""},{"name":"debian/trixie/riscv64","description":""},{"name":"debian/13/riscv64","description":""}],"architecture":"riscv64","cached":false,"filename":"incus.tar.xz","fingerprint":"28814f9c291a855c6fd1565459a33fc8aefcfa971a31d7c78c62acb0e52f14a1","size":98587304,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"loong64","description":"Debian trixie loong64 (20261019_19:49)","os":"Debian","release":"trixie","serial":"20261019_19:49","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default/loong64","description":""},{"name":"debian/13/default/loong64","description":""},{"name":"debian/trixie/loong64","description":""},{"name":"debian/13/loong64","description":""}],"architecture":"loongarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"d7b7d1cd6bf6f05a96248d37ded7e811e14d649bda993c45d2238af2325260a3","size":100999844,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian trixie amd64 (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default","description":""},{"name":"debian/trixie/default/amd64","description":""},{"name":"debian/13/default","description":""},{"name":"debian/13/default/amd64","description":""},{"name":"debian/trixie","description":""},{"name":"debian/trixie/amd64","description":""},{"name":"debian/13","description":""},{"name":"debian/13/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"ea6961e75779112386a4b72d8f7c035f93f782cc7ff78558dc5f67be675d5aca","size":105484964,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian trixie amd64 (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default","description":""},{"name":"debian/trixie/default/amd64","description":""},{"name":"debian/13/default","description":""},{"name":"debian/13/default/amd64","description":""},{"name":"debian/trixie","description":""},{"name":"debian/trixie/amd64","description":""},{"name":"debian/13","description":""},{"name":"debian/13/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"4477695f957f8de113988a322acf80bd58f8c7448bf7221fa85c3372c16b56b9","size":365185188,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":"","locations":null}]
+---
+
+START: 2026-10-20 03:30:01 +0200
+COMMAND: osctl ct exec incus-de7f sh -c rm\ -f\ /tmp/incus-init.status\ /tmp/incus-init.log\ /tmp/incus-init.pid'
+'nohup\ sh\ -c\ incus\\\ init\\\ images:debian/13\\\ i1\\\ \\\>\\\ /tmp/incus-init.log\\\ 2\\\>\\\&1\\\;\\\ printf\\\ \\\'\\\%s\\\\n\\\'\\\ \\\$\\\?\\\ \\\>\\\ /tmp/incus-init.status\ \>/dev/null\ 2\>\&1\ \&'
+'echo\ \$\!\ \>\ /tmp/incus-init.pid'
+'
+END: 2026-10-20 03:30:03 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:30:03 +0200
+COMMAND: osctl ct exec incus-de7f sh -c test\ -f\ /tmp/incus-init.status\ \&\&\ cat\ /tmp/incus-init.status
+END: 2026-10-20 03:30:05 +0200
+ELAPSED: 2.47s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 03:30:07 +0200
+COMMAND: osctl ct exec incus-de7f sh -c test\ -f\ /tmp/incus-init.status\ \&\&\ cat\ /tmp/incus-init.status
+END: 2026-10-20 03:30:10 +0200
+ELAPSED: 2.47s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 03:30:12 +0200
+COMMAND: osctl ct exec incus-de7f sh -c test\ -f\ /tmp/incus-init.status\ \&\&\ cat\ /tmp/incus-init.status
+END: 2026-10-20 03:30:14 +0200
+ELAPSED: 2.05s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-20 03:30:14 +0200
+COMMAND: osctl ct exec incus-de7f sh -c incus\ config\ set\ i1\ raw.lxc\\\=lxc.sched.core\\\ \\\=\\\ 0
+END: 2026-10-20 03:30:16 +0200
+ELAPSED: 2.17s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:30:16 +0200
+COMMAND: osctl ct exec incus-de7f sh -c rm\ -f\ /tmp/incus-start.status\ /tmp/incus-start.log\ /tmp/incus-start.pid'
+'nohup\ sh\ -c\ incus\\\ start\\\ i1\\\ \\\>\\\ /tmp/incus-start.log\\\ 2\\\>\\\&1\\\;\\\ printf\\\ \\\'\\\%s\\\\n\\\'\\\ \\\$\\\?\\\ \\\>\\\ /tmp/incus-start.status\ \>/dev/null\ 2\>\&1\ \&'
+'echo\ \$\!\ \>\ /tmp/incus-start.pid'
+'
+END: 2026-10-20 03:30:18 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:30:18 +0200
+COMMAND: osctl ct exec incus-de7f sh -c test\ -f\ /tmp/incus-start.status\ \&\&\ cat\ /tmp/incus-start.status
+END: 2026-10-20 03:30:20 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-20 03:30:20 +0200
+COMMAND: osctl ct exec incus-de7f sh -c "incus info i1 | grep -q 'Status: RUNNING'"
+END: 2026-10-20 03:30:23 +0200
+ELAPSED: 2.48s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:30:23 +0200
+COMMAND: osctl ct exec incus-de7f incus info i1
+END: 2026-10-20 03:30:25 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+Name: i1
+Description: 
+Status: RUNNING
+Type: container
+Architecture: x86_64
+PID: 893
+Created: 2026/10/20 03:30 CEST
+Last Used: 2026/10/20 03:30 CEST
+Started: 2026/10/20 03:30 CEST
+
+Resources:
+  Processes: 8
+  CPU usage:
+    CPU usage (in seconds): 2
+  Memory usage:
+    Memory (current): 31.90MiB
+  Network usage:
+    erspan0:
+      Type: broadcast
+      State: DOWN
+      MAC address: 00:00:00:00:00:00
+      MTU: 1450
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    gre0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00
+      MTU: 1476
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    gretap0:
+      Type: broadcast
+      State: DOWN
+      MAC address: 00:00:00:00:00:00
+      MTU: 1462
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    ip6tnl0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
+      MTU: 1452
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    lo:
+      Type: loopback
+      State: UP
+      MTU: 65536
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+        inet:  127.0.0.1/8 (local)
+        inet6: ::1/128 (local)
+    tunl0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00
+      MTU: 1480
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+---
+
+START: 2026-10-20 03:30:25 +0200
+COMMAND: osctl ct exec incus-de7f incus exec i1 -- true
+END: 2026-10-20 03:30:27 +0200
+ELAPSED: 2.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 03:30:27 +0200
+COMMAND: osctl ct del -f --prune incus-de7f
+END: 2026-10-20 03:30:30 +0200
+ELAPSED: 2.9s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:incus-de7f
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-20 03:30:30 +0200
+COMMAND: osctl user del incus-de7f
+END: 2026-10-20 03:30:31 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: user not found
+---
+
+START: 2026-10-20 03:30:31 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-20 03:30:32 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/arch/20261017/image-stream.tar
+---
+
+START: 2026-10-20 03:30:32 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 03:30:46 +0200
+ELAPSED: 13.88s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

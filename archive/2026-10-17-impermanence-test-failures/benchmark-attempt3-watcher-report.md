@@ -1,0 +1,3 @@
+**Run 39305352549 failed** on harness head `295b814ad3aadca80ee10c043327c4676d71913c` after 7h 50m 38s. Both benchmark legs exited 0, but the comparison marked `comparable_work: false` and the CI step exited 1. This reports the run outcome only; I made no diagnosis or acceptance decision.
+
+The recorded leg times were A: 12,297.6s and B: 12,515.1s. Warmup took 3,369.9s. The complete logs, status receipts, and downloaded artifact are retained under [benchmark-ci-39305352549](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-17-impermanence-test-failures/benchmark-ci-39305352549); its [results.json](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-17-impermanence-test-failures/benchmark-ci-39305352549/results.json) contains the measured phase receipts.

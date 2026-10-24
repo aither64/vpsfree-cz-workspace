@@ -1,0 +1,742 @@
+SHELL: 0
+
+START: 2026-10-20 01:41:40 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 01:41:40 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:41:40 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 01:41:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:41:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:41:42 +0200
+ELAPSED: 2.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:41:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:41:44 +0200
+ELAPSED: 0.91s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:41:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:41:46 +0200
+ELAPSED: 0.99s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:41:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:41:48 +0200
+ELAPSED: 1.0s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:41:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:41:50 +0200
+ELAPSED: 0.96s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:41:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:41:52 +0200
+ELAPSED: 0.83s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:41:53 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:41:54 +0200
+ELAPSED: 1.0s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:41:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:41:56 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 01:41:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:41:58 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-20 01:41:59 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:42:00 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 01:42:00 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-20 01:42:00 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 23:42:00 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 01:42:00 +0200
+COMMAND: osctl ct new --distribution alpine testct-4fc8
+END: 2026-10-20 01:42:03 +0200
+ELAPSED: 2.6s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 01:42:03 +0200
+COMMAND: osctl ct unset start-menu testct-4fc8
+END: 2026-10-20 01:42:04 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:04 +0200
+COMMAND: osctl ct netif new routed testct-4fc8 eth0
+END: 2026-10-20 01:42:05 +0200
+ELAPSED: 1.21s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:05 +0200
+COMMAND: osctl ct netif ip add testct-4fc8 eth0 192.0.2.90/32
+END: 2026-10-20 01:42:06 +0200
+ELAPSED: 1.08s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:06 +0200
+COMMAND: osctl ct new --distribution alpine testct-4fc8-victim
+END: 2026-10-20 01:42:08 +0200
+ELAPSED: 2.66s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 01:42:08 +0200
+COMMAND: osctl ct unset start-menu testct-4fc8-victim
+END: 2026-10-20 01:42:10 +0200
+ELAPSED: 1.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:10 +0200
+COMMAND: osctl ct start testct-4fc8-victim
+END: 2026-10-20 01:42:12 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 01:42:12 +0200
+COMMAND: osctl ct exec testct-4fc8-victim sh -c 'echo retained > /root/netns-guard'
+END: 2026-10-20 01:42:15 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:15 +0200
+COMMAND: osctl -j ct show testct-4fc8-victim
+END: 2026-10-20 01:42:16 +0200
+ELAPSED: 1.21s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4fc8-victim","user":"testct-4fc8-victim","group":"/default","uid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4fc8-victim","rootfs":"/tank/ct/testct-4fc8-victim/private","boot_dataset":"tank/ct/testct-4fc8-victim","boot_rootfs":"/tank/ct/testct-4fc8-victim/private","lxc_path":"/run/osctl/pools/tank/users/testct-4fc8-victim/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4fc8-victim/group.default/cts/testct-4fc8-victim","group_path":"osctl/pool.tank/group.default/user.testct-4fc8-victim/ct.testct-4fc8-victim/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":2585,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4fc8-victim.log","memory":9211904,"cpu_us":3595055,"cpu_user_us":2714569,"cpu_system_us":880485,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-20 01:42:16 +0200
+COMMAND: ip -o address show dev lo
+END: 2026-10-20 01:42:16 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host proto kernel_lo \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-20 01:42:16 +0200
+COMMAND: osctl ct exec testct-4fc8-victim ip -o address show dev lo
+END: 2026-10-20 01:42:18 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-20 01:42:18 +0200
+COMMAND: osctl -j ct show testct-4fc8
+END: 2026-10-20 01:42:19 +0200
+ELAPSED: 1.12s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4fc8","user":"testct-4fc8","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4fc8","rootfs":"/tank/ct/testct-4fc8/private","boot_dataset":"tank/ct/testct-4fc8","boot_rootfs":"/tank/ct/testct-4fc8/private","lxc_path":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts/testct-4fc8","group_path":"osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4fc8.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-20 01:42:19 +0200
+COMMAND: printf '%s\n' exec\ lxc-start\ -P\ /run/osctl/pools/tank/users/testct-4fc8/group.default/cts\ -n\ testct-4fc8\ -d\ -l\ TRACE\ -o\ /tank/log/ct/testct-4fc8.log | osctl ct su testct-4fc8 || { rc=$?; cat /tank/log/ct/testct-4fc8.log; exit $rc; }
+END: 2026-10-20 01:42:24 +0200
+ELAPSED: 5.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:24 +0200
+COMMAND: osctl ct exec testct-4fc8 true
+END: 2026-10-20 01:42:27 +0200
+ELAPSED: 2.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:27 +0200
+COMMAND: osctl -j ct show testct-4fc8
+END: 2026-10-20 01:42:28 +0200
+ELAPSED: 1.15s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4fc8","user":"testct-4fc8","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4fc8","rootfs":"/tank/ct/testct-4fc8/private","boot_dataset":"tank/ct/testct-4fc8","boot_rootfs":"/tank/ct/testct-4fc8/private","lxc_path":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts/testct-4fc8","group_path":"osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":3022,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4fc8.log","memory":7847936,"cpu_us":5019121,"cpu_user_us":3881556,"cpu_system_us":1137565,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-20 01:42:28 +0200
+COMMAND: printf '%s\n' ruby\ /etc/ct-user-netns-probe.rb\ testct-4fc8\ 1\ 2585\ 3022 | osctl ct su testct-4fc8
+END: 2026-10-20 01:42:30 +0200
+ELAPSED: 2.68s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:30 +0200
+COMMAND: ip -o address show dev lo
+END: 2026-10-20 01:42:30 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host proto kernel_lo \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-20 01:42:30 +0200
+COMMAND: osctl ct exec testct-4fc8-victim ip -o address show dev lo
+END: 2026-10-20 01:42:33 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-20 01:42:33 +0200
+COMMAND: readlink /proc/3022/ns/syslog
+END: 2026-10-20 01:42:33 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-20 01:42:33 +0200
+COMMAND: osctl ct exec testct-4fc8 readlink /proc/self/ns/syslog
+END: 2026-10-20 01:42:35 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-20 01:42:35 +0200
+COMMAND: readlink /proc/3022/ns/tracing
+END: 2026-10-20 01:42:35 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-20 01:42:35 +0200
+COMMAND: osctl ct exec testct-4fc8 readlink /proc/self/ns/tracing
+END: 2026-10-20 01:42:37 +0200
+ELAPSED: 1.9s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-20 01:42:37 +0200
+COMMAND: cat /proc/3022/cgroup
+END: 2026-10-20 01:42:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0::/osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned/lxc.payload.testct-4fc8/init.scope
+---
+
+START: 2026-10-20 01:42:37 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned
+END: 2026-10-20 01:42:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-20 01:42:37 +0200
+COMMAND: printf '%s\n' true | osctl ct su testct-4fc8
+END: 2026-10-20 01:42:39 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:39 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned
+END: 2026-10-20 01:42:39 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-20 01:42:39 +0200
+COMMAND: osctl -j ct show testct-4fc8
+END: 2026-10-20 01:42:40 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4fc8","user":"testct-4fc8","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4fc8","rootfs":"/tank/ct/testct-4fc8/private","boot_dataset":"tank/ct/testct-4fc8","boot_rootfs":"/tank/ct/testct-4fc8/private","lxc_path":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts/testct-4fc8","group_path":"osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":3022,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4fc8.log","memory":9007104,"cpu_us":7731878,"cpu_user_us":6079746,"cpu_system_us":1652131,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-20 01:42:40 +0200
+COMMAND: ! tr '\0' '\n' < /proc/3022/environ | grep -q '^OSCTL_RUN_ID='
+END: 2026-10-20 01:42:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:40 +0200
+COMMAND: osctl ct exec testct-4fc8 grep -w memory /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-20 01:42:41 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+cpuset cpu memory hugetlb pids rdma misc
+---
+
+START: 2026-10-20 01:42:41 +0200
+COMMAND: ping -c 1 192.0.2.90
+END: 2026-10-20 01:42:41 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.0.2.90 (192.0.2.90) 56(84) bytes of data.
+64 bytes from 192.0.2.90: icmp_seq=1 ttl=64 time=0.188 ms
+
+--- 192.0.2.90 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.188/0.188/0.188/0.000 ms
+---
+
+START: 2026-10-20 01:42:41 +0200
+COMMAND: osctl ct stop testct-4fc8
+END: 2026-10-20 01:42:47 +0200
+ELAPSED: 5.22s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-20 01:42:47 +0200
+COMMAND: osctl -j ct show testct-4fc8
+END: 2026-10-20 01:42:48 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4fc8","user":"testct-4fc8","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4fc8","rootfs":"/tank/ct/testct-4fc8/private","boot_dataset":"tank/ct/testct-4fc8","boot_rootfs":"/tank/ct/testct-4fc8/private","lxc_path":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts/testct-4fc8","group_path":"osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4fc8.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-20 01:42:48 +0200
+COMMAND: osctl ct start testct-4fc8
+END: 2026-10-20 01:42:50 +0200
+ELAPSED: 2.6s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 01:42:50 +0200
+COMMAND: osctl ct exec testct-4fc8 true
+END: 2026-10-20 01:42:52 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:52 +0200
+COMMAND: osctl ct stop testct-4fc8
+END: 2026-10-20 01:42:58 +0200
+ELAPSED: 5.18s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-20 01:42:58 +0200
+COMMAND: osctl -j ct show testct-4fc8
+END: 2026-10-20 01:42:58 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4fc8","user":"testct-4fc8","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4fc8","rootfs":"/tank/ct/testct-4fc8/private","boot_dataset":"tank/ct/testct-4fc8","boot_rootfs":"/tank/ct/testct-4fc8/private","lxc_path":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts/testct-4fc8","group_path":"osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4fc8.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-20 01:42:58 +0200
+COMMAND: printf '%s\n' exec\ lxc-start\ -P\ /run/osctl/pools/tank/users/testct-4fc8/group.default/cts\ -n\ testct-4fc8\ -d\ -l\ TRACE\ -o\ /tank/log/ct/testct-4fc8.log | osctl ct su testct-4fc8 || { rc=$?; cat /tank/log/ct/testct-4fc8.log; exit $rc; }
+END: 2026-10-20 01:43:04 +0200
+ELAPSED: 5.47s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:43:04 +0200
+COMMAND: osctl ct exec testct-4fc8 true
+END: 2026-10-20 01:43:06 +0200
+ELAPSED: 2.47s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:43:06 +0200
+COMMAND: osctl -j ct show testct-4fc8
+END: 2026-10-20 01:43:07 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4fc8","user":"testct-4fc8","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4fc8","rootfs":"/tank/ct/testct-4fc8/private","boot_dataset":"tank/ct/testct-4fc8","boot_rootfs":"/tank/ct/testct-4fc8/private","lxc_path":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts/testct-4fc8","group_path":"osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":4505,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4fc8.log","memory":8036352,"cpu_us":4864763,"cpu_user_us":3769923,"cpu_system_us":1094839,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-20 01:43:07 +0200
+COMMAND: printf '%s\n' ruby\ /etc/ct-user-netns-probe.rb\ testct-4fc8\ 1\ 2585\ 4505 | osctl ct su testct-4fc8
+END: 2026-10-20 01:43:10 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:43:10 +0200
+COMMAND: ip -o address show dev lo
+END: 2026-10-20 01:43:10 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host proto kernel_lo \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-20 01:43:10 +0200
+COMMAND: osctl ct exec testct-4fc8-victim ip -o address show dev lo
+END: 2026-10-20 01:43:12 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-20 01:43:12 +0200
+COMMAND: readlink /proc/4505/ns/syslog
+END: 2026-10-20 01:43:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-20 01:43:12 +0200
+COMMAND: osctl ct exec testct-4fc8 readlink /proc/self/ns/syslog
+END: 2026-10-20 01:43:15 +0200
+ELAPSED: 2.3s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-20 01:43:15 +0200
+COMMAND: readlink /proc/4505/ns/tracing
+END: 2026-10-20 01:43:15 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-20 01:43:15 +0200
+COMMAND: osctl ct exec testct-4fc8 readlink /proc/self/ns/tracing
+END: 2026-10-20 01:43:17 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-20 01:43:17 +0200
+COMMAND: cat /proc/4505/cgroup
+END: 2026-10-20 01:43:17 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0::/osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned/lxc.payload.testct-4fc8/init.scope
+---
+
+START: 2026-10-20 01:43:17 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned
+END: 2026-10-20 01:43:17 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-20 01:43:17 +0200
+COMMAND: printf '%s\n' true | osctl ct su testct-4fc8
+END: 2026-10-20 01:43:19 +0200
+ELAPSED: 2.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:43:19 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned
+END: 2026-10-20 01:43:19 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-20 01:43:19 +0200
+COMMAND: osctl -j ct show testct-4fc8
+END: 2026-10-20 01:43:19 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4fc8","user":"testct-4fc8","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4fc8","rootfs":"/tank/ct/testct-4fc8/private","boot_dataset":"tank/ct/testct-4fc8","boot_rootfs":"/tank/ct/testct-4fc8/private","lxc_path":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts/testct-4fc8","group_path":"osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":4505,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4fc8.log","memory":7397376,"cpu_us":7582498,"cpu_user_us":5972412,"cpu_system_us":1610085,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-20 01:43:19 +0200
+COMMAND: ! tr '\0' '\n' < /proc/4505/environ | grep -q '^OSCTL_RUN_ID='
+END: 2026-10-20 01:43:19 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:43:19 +0200
+COMMAND: osctl ct exec testct-4fc8 grep -w memory /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-20 01:43:22 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+cpuset cpu memory hugetlb pids rdma misc
+---
+
+START: 2026-10-20 01:43:22 +0200
+COMMAND: ping -c 1 192.0.2.90
+END: 2026-10-20 01:43:22 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.0.2.90 (192.0.2.90) 56(84) bytes of data.
+64 bytes from 192.0.2.90: icmp_seq=1 ttl=64 time=0.113 ms
+
+--- 192.0.2.90 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.113/0.113/0.113/0.000 ms
+---
+
+START: 2026-10-20 01:43:22 +0200
+COMMAND: osctl ct stop testct-4fc8
+END: 2026-10-20 01:43:27 +0200
+ELAPSED: 5.56s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-20 01:43:27 +0200
+COMMAND: osctl -j ct show testct-4fc8
+END: 2026-10-20 01:43:28 +0200
+ELAPSED: 1.03s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-4fc8","user":"testct-4fc8","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-4fc8","rootfs":"/tank/ct/testct-4fc8/private","boot_dataset":"tank/ct/testct-4fc8","boot_rootfs":"/tank/ct/testct-4fc8/private","lxc_path":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-4fc8/group.default/cts/testct-4fc8","group_path":"osctl/pool.tank/group.default/user.testct-4fc8/ct.testct-4fc8/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-4fc8.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-20 01:43:28 +0200
+COMMAND: osctl ct exec testct-4fc8-victim grep -Fx retained /root/netns-guard
+END: 2026-10-20 01:43:30 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+retained
+---
+
+START: 2026-10-20 01:43:30 +0200
+COMMAND: osctl ct stop testct-4fc8-victim
+END: 2026-10-20 01:43:35 +0200
+ELAPSED: 4.66s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-20 01:43:35 +0200
+COMMAND: osctl ct del --prune testct-4fc8-victim
+END: 2026-10-20 01:43:37 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-4fc8-victim
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-20 01:43:37 +0200
+COMMAND: osctl ct del --prune testct-4fc8
+END: 2026-10-20 01:43:38 +0200
+ELAPSED: 1.29s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-4fc8
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-20 01:43:38 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 01:43:52 +0200
+ELAPSED: 13.86s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

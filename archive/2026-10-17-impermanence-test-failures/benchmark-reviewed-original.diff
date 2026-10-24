@@ -1,0 +1,1202 @@
+diff --git a/.github/workflows/ci.yml b/.github/workflows/ci.yml
+index 2bcaebd0d..b3f1b5f2f 100644
+--- a/.github/workflows/ci.yml
++++ b/.github/workflows/ci.yml
+@@ -1,509 +1,88 @@
+ name: CI
+-run-name: "CI (${{ inputs.test_suite || 'ci' }}${{ inputs.test_pattern && format(': {0}', inputs.test_pattern) || '' }}${{ inputs.test_suite == 'zfs-full' && inputs.zfs_tags && inputs.zfs_tags != 'functional' && format(': {0}', inputs.zfs_tags) || '' }})"
+-
+-env:
+-  TEST_RUNNER_PREBUILD: ${{ github.event_name != 'workflow_dispatch' || inputs.prebuild }}
+-  VPSADMINOS_CONFIG: >-
+-    ${{ (inputs.test_suite == 'ci-unstable' || inputs.test_suite == 'zfs-full' || github.ref == 'refs/heads/snajpa-6.18' || github.head_ref == 'snajpa-6.18') && format('{0}/os/configs/unstable.nix', github.workspace) || '' }}
++run-name: Warm full native suite, no-prebuild then prebuild
+ 
+ on:
+   workflow_dispatch:
+-    inputs:
+-      test_suite:
+-        description: Native suite (unstable and ZTS use the selected vpsAdminOS 6.18 tuple)
+-        required: true
+-        default: ci
+-        type: choice
+-        options:
+-          - ci
+-          - ci-unstable
+-          - zfs-full
+-      test_pattern:
+-        description: 'Optional native test/script glob (not regex); empty runs the whole suite'
+-        required: false
+-        type: string
+-        default: ''
+-      test_tag:
+-        description: 'Native CI tag; proxy-exec selects the opt-in scheduler fixtures'
+-        required: true
+-        default: ci
+-        type: choice
+-        options:
+-          - ci
+-          - proxy-exec
+-      proxy_lock_full_matrix:
+-        description: 'Run all existing lock classes and disabled controls (proxy-exec tag only)'
+-        required: false
+-        default: false
+-        type: boolean
+-      zfs_tags:
+-        description: 'ZTS tags for zfs-full; comma-separated affected groups or functional for all'
+-        required: false
+-        type: string
+-        default: functional
+-      zfs_test_body:
+-        description: 'Optional single ZTS body for native diagnosis (e.g. cli_root/zpool_reopen/zpool_reopen_003_pos); empty runs full ZTS'
+-        required: false
+-        type: string
+-        default: ''
+-      prebuild:
+-        description: Build selected test images before starting VMs
+-        required: true
+-        default: true
+-        type: boolean
+-      stop_on_failure:
+-        description: Stop scheduling after the first unexpected result
+-        required: true
+-        default: false
+-        type: boolean
+-  push:
+-    paths:
+-      - .github/workflows/ci.yml
+-      - flake.nix
+-      - ctstartmenu/**
+-      - libosctl/**
+-      - os/**
+-      - osctl/**
+-      - osctl-exporter/**
+-      - osctl-exportfs/**
+-      - osctl-image/**
+-      - osctl-repo/**
+-      - osctld/**
+-      - osup/**
+-      - osvm/**
+-      - svctl/**
+-      - test-runner/**
+-      - tests/**
+-  pull_request:
+-    paths:
+-      - .github/workflows/ci.yml
+-      - flake.nix
+-      - ctstartmenu/**
+-      - libosctl/**
+-      - os/**
+-      - osctl/**
+-      - osctl-exporter/**
+-      - osctl-exportfs/**
+-      - osctl-image/**
+-      - osctl-repo/**
+-      - osctld/**
+-      - osup/**
+-      - osvm/**
+-      - svctl/**
+-      - test-runner/**
+-      - tests/**
+-
+-jobs:
+-  build:
+-    name: Build OS and populate binary cache
+-    runs-on: self-hosted
+-    timeout-minutes: 480
+-
+-    steps:
+-      - uses: actions/checkout@v7
+-        # Git >= 2.54 maintenance is not disabled by checkout's gc.auto=0.
+-        env:
+-          GIT_CONFIG_COUNT: "1"
+-          GIT_CONFIG_KEY_0: maintenance.auto
+-          GIT_CONFIG_VALUE_0: "false"
+-
+-      - name: Check NixOS container image repository module
+-        run: nix eval --impure --raw --file tests/nixos-container-image-repository-eval.nix
+-
+-      - name: Check NixOS guest compatibility modules and generated flakes
+-        run: bash tests/nixos-container-eval.sh
+-
+-      - name: Check squashfs cache flags and module wiring
+-        run: nix eval --impure --raw --file tests/squashfs-memory-eval.nix
+-
+-      - name: Check NixOS persistent activation
+-        run: nix build .#checks.x86_64-linux.nixos-container-persistence --no-link
+-
+-      - name: Check NixOS disk image reuse
+-        run: nix build .#checks.x86_64-linux.nixos-disk-image-reuse --no-link
+-
+-      - name: Check vpsAdminOS disk image reuse
+-        run: nix build .#checks.x86_64-linux.vpsadminos-disk-image-reuse --no-link
+-
+-      - name: Determine branch name
+-        id: vars
+-        run: |
+-          echo "branch=${GITHUB_HEAD_REF:-${GITHUB_REF#refs/heads/}}" >> "$GITHUB_OUTPUT"
+ 
+-      - name: Build toplevel closure
+-        run: |
+-          make OUTPUT=ci-toplevel toplevel
+-          build_out=$(readlink -e os/result/toplevel)
+-          livepatch_out=$(readlink -e "$build_out/livepatch-6.12.95")
+-          echo "BUILD_OUT=$build_out" >> "$GITHUB_ENV"
+-          echo "LIVEPATCH_BUILD_OUT=$livepatch_out" >> "$GITHUB_ENV"
++permissions:
++  contents: read
+ 
+-      - name: Upload production livepatch package
+-        uses: actions/upload-artifact@v7
+-        with:
+-          name: production-livepatch-6.12.95-${{ github.run_id }}
+-          path: ${{ env.LIVEPATCH_BUILD_OUT }}/
+-          include-hidden-files: true
+-          if-no-files-found: error
++concurrency:
++  group: prebuild-benchmark
++  cancel-in-progress: false
+ 
+-      - name: Copy toplevel closure to binary cache
+-        env:
+-          VPSADMINOS_CACHE_SSH_KEY: ${{ secrets.VPSADMINOS_CACHE_SSH_KEY }}
+-        run: |
+-          install -m 600 -D <(echo "$VPSADMINOS_CACHE_SSH_KEY") .ssh/cache_id
+-          NIX_SSHOPTS="-i .ssh/cache_id -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" nix-copy-closure --to push@cache.int.vpsadminos.org "$BUILD_OUT"
+-
+-      - name: Add new profile generation
+-        env:
+-          BRANCH: ${{ steps.vars.outputs.branch }}
+-        run: |
+-          ssh -i .ssh/cache_id \
+-              -o StrictHostKeyChecking=no \
+-              -o UserKnownHostsFile=/dev/null \
+-              push@cache.int.vpsadminos.org \
+-              sudo push-ci-generation "$BRANCH" "$BUILD_OUT"
+-
+-  test:
+-    name: Run test suite
+-    needs: build
++jobs:
++  compare:
++    name: Matched warm native suite timing
+     runs-on: self-hosted
+-    # Full ZTS takes about ten hours, plus closure construction. Leave time
+-    # for artifact upload before the job's 24-hour GITHUB_TOKEN lifetime.
+-    # An unfiltered ci-unstable run can still be making progress after 3.5 hours;
+-    # ordinary full CI also needs cold livepatch builds and the NFS guests.
+-    # Keep focused selectors at their original four-hour limit.
+-    timeout-minutes: ${{ inputs.test_suite == 'zfs-full' && 1380 || (inputs.test_suite == 'ci-unstable' && !inputs.test_pattern) && 420 || ((inputs.test_suite || 'ci') == 'ci' && !inputs.test_pattern) && 360 || 240 }}
+-
++    timeout-minutes: 1380
++    env:
++      VPSADMINOS_CONFIG: ""
+     steps:
+-      - uses: actions/checkout@v7
+-        # Keep checkout's fetch from starting a background repack.
++      - name: Check out benchmark harness
++        uses: actions/checkout@v7
++        with:
++          ref: ${{ github.sha }}
++          path: benchmark-harness
++          persist-credentials: false
+         env:
+           GIT_CONFIG_COUNT: "1"
+           GIT_CONFIG_KEY_0: maintenance.auto
+           GIT_CONFIG_VALUE_0: "false"
+ 
+-      - name: Prepare test state
+-        id: prepare-tests
+-        uses: ./.github/actions/prepare-test-state
+-
+-      - name: Run tests
+-        id: run-tests
+-        # Keep upload time for ordinary full CI without capping ZTS/native runs
+-        # at the shorter livepatch/NFS budget.
+-        timeout-minutes: ${{ inputs.test_suite == 'zfs-full' && 1380 || (inputs.test_suite == 'ci-unstable' && !inputs.test_pattern) && 420 || ((inputs.test_suite || 'ci') == 'ci' && !inputs.test_pattern) && 350 || 240 }}
+-        env:
+-          STOP_ON_FAILURE: ${{ github.event.inputs.stop_on_failure || 'false' }}
+-          TEST_SUITE: ${{ inputs.test_suite || 'ci' }}
+-          TEST_PATTERN: ${{ inputs.test_pattern }}
+-          TEST_TAG: ${{ inputs.test_tag || 'ci' }}
+-          VPSADMINOS_ZFS_FULL_TAGS: ${{ inputs.zfs_tags || 'functional' }}
+-          VPSADMINOS_ZFS_FULL_TEST_BODY: ${{ inputs.zfs_test_body }}
+-          VPSADMINOS_PROXY_LOCK_FULL_MATRIX: ${{ inputs.proxy_lock_full_matrix && '1' || '0' }}
+-        run: |
+-          set -o pipefail
+-
+-          if [[ "$VPSADMINOS_PROXY_LOCK_FULL_MATRIX" == "1" &&
+-                ( "$TEST_SUITE" == "zfs-full" || "$TEST_TAG" != "proxy-exec" ) ]]; then
+-            echo "::error::The full lock matrix requires a native proxy-exec run"
+-            exit 1
+-          fi
+-
+-          printf 'Native suite: %s\nConfiguration: %s\n' "$TEST_SUITE" "$VPSADMINOS_CONFIG"
+-          printf 'Native test pattern: %s\n' "${TEST_PATTERN:-<whole suite>}"
+-          printf 'Proxy lock full matrix: %s\n' "$VPSADMINOS_PROXY_LOCK_FULL_MATRIX"
+-          if [[ "$TEST_SUITE" == "zfs-full" ]]; then
+-            printf 'ZTS tags: %s\n' "$VPSADMINOS_ZFS_FULL_TAGS"
+-          fi
+-          git show --no-patch --format='Source: %H%nTree: %T' HEAD
+-          cat os/packages/linux/available-kernels.nix
+-
+-          args=(
+-            test
+-            --test-config tests/test-configs/ci.nix
+-            --state-dir "$TEST_RUNNER_STATE_DIR"
+-            -f
+-          )
+-
+-          case "$TEST_SUITE" in
+-            ci|ci-unstable)
+-              case "$TEST_TAG" in
+-                ci) ;;
+-                proxy-exec)
+-                  # This existing locktorture fixture also needs discovery opt-in.
+-                  export VPSADMINOS_ENABLE_SCHED_PROXY_EXEC_TEST=1
+-                  ;;
+-                *)
+-                  echo "::error::Unknown native test tag: $TEST_TAG"
+-                  exit 1
+-                  ;;
+-              esac
+-              printf 'Native test tag: %s\n' "$TEST_TAG"
+-              args+=(--jobs auto -t "$TEST_TAG")
+-              ;;
+-            zfs-full)
+-              if [[ -n "$TEST_PATTERN" ]]; then
+-                echo "::error::Full ZTS does not accept a native test pattern"
+-                exit 1
+-              fi
+-              # Keep the default complete ZTS on the native VM; the optional
+-              # single-body selector uses that same supported fixture for RCA.
+-              unset VPSADMINOS_LOCAL_ZFS_STAGE VPSADMINOS_ZFS_FULL_USER_SOURCE
+-              unset VPSADMINOS_ZFS_FULL_TEST
+-              if [[ -n "$VPSADMINOS_ZFS_FULL_TEST_BODY" ]]; then
+-                if [[ ! "$VPSADMINOS_ZFS_FULL_TEST_BODY" =~ ^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)+$ ]]; then
+-                  echo "::error::Expected a ZTS group/body path without .ksh or traversal"
+-                  exit 1
+-                fi
+-                export VPSADMINOS_ZFS_FULL_TEST="$VPSADMINOS_ZFS_FULL_TEST_BODY"
+-                printf 'ZTS body (focused native diagnostic, not full ZTS): %s\n' "$VPSADMINOS_ZFS_FULL_TEST"
+-              else
+-                echo 'ZTS body: <whole suite>'
+-              fi
+-              export VPSADMINOS_ZFS_FULL_PROFILE=full
+-              export VPSADMINOS_ZFS_FULL_USE_BUILTIN=1
+-              export VPSADMINOS_ZFS_FULL_RUNFILES=common.run,linux.run
+-              export VPSADMINOS_ZFS_FULL_TAGS="${VPSADMINOS_ZFS_FULL_TAGS:-functional}"
+-              args+=(--jobs 1 -t zfs-full zfs/full-suite)
+-              ;;
+-            *)
+-              echo "::error::Unknown native test suite: $TEST_SUITE"
+-              exit 1
+-              ;;
+-          esac
+-
+-          if [[ "$STOP_ON_FAILURE" == "true" ]]; then
+-            args+=(--stop-on-failure)
+-          fi
+-
+-          if [[ "$TEST_RUNNER_PREBUILD" == "true" ]]; then
+-            args+=(--prebuild)
+-          else
+-            args+=(--no-prebuild)
+-          fi
+-
+-          if [[ -n "$TEST_PATTERN" ]]; then
+-            # One quoted positional glob, never shell words or CLI options.
+-            args+=(-- "$TEST_PATTERN")
+-          fi
+-
+-          ./test-runner.sh "${args[@]}" | tee "$TEST_RUNNER_STATE_DIR/test.log"
+-
+-      - name: Upload full test logs
+-        id: upload-test-logs
+-        if: >-
+-          (failure() || cancelled() || inputs.test_pattern || inputs.test_suite == 'zfs-full' || inputs.test_suite == 'ci-unstable') &&
+-          steps.prepare-tests.outcome == 'success' &&
+-          steps.run-tests.outcome != 'skipped'
+-        uses: ./.github/actions/upload-test-logs
++      - name: Check out exact product source
++        uses: actions/checkout@v7
+         with:
+-          name: os-test-logs-${{ github.run_id }}-${{ github.run_attempt }}-native
+-          # Preserve ZTS report paths such as posix-sa:Linux inside tar.
+-          archive-root: ${{ inputs.test_suite == 'zfs-full' && steps.prepare-tests.outputs.state-directory || '' }}
+-          # ZTS's text reports have no suffix. Do not upload binary test state
+-          # or VM images along with these diagnostic files.
+-          paths: |
+-            ${{ steps.prepare-tests.outputs.state-directory }}/**/*.log
+-            ${{ steps.prepare-tests.outputs.state-directory }}/**/*.txt
+-            ${{ steps.prepare-tests.outputs.state-directory }}/**/zfs-test-results/**/log
+-            ${{ steps.prepare-tests.outputs.state-directory }}/**/zfs-test-results/**/results
+-            ${{ steps.prepare-tests.outputs.state-directory }}/**/zfs-test-results/**/stdout
+-            ${{ steps.prepare-tests.outputs.state-directory }}/**/zfs-test-results/**/stderr
+-            ${{ steps.prepare-tests.outputs.state-directory }}/**/zfs-test-results/**/merged
+-
+-      - name: Evaluate test results
+-        if: >-
+-          always() &&
+-          steps.prepare-tests.outcome == 'success' &&
+-          steps.run-tests.outcome != 'skipped'
+-        uses: ./.github/actions/evaluate-test-results
+-        with:
+-          log-file: ${{ steps.prepare-tests.outputs.state-directory }}/test.log
+-
+-      - name: Summarise test logs
+-        if: >-
+-          always() &&
+-          steps.prepare-tests.outcome == 'success' &&
+-          steps.run-tests.outcome != 'skipped'
+-        uses: ./.github/actions/summarise-test-logs
+-        with:
+-          logs-root: ${{ steps.prepare-tests.outputs.state-directory }}
+-
+-      - name: Cleanup test state
+-        # Successful qualification still needs its complete uploaded evidence.
+-        if: >-
+-          always() &&
+-          ((!inputs.test_pattern && inputs.test_suite != 'zfs-full' && inputs.test_suite != 'ci-unstable') ||
+-          steps.upload-test-logs.outcome == 'success')
+-        uses: ./.github/actions/cleanup-test-state
+-        with:
+-          state-directory: ${{ steps.prepare-tests.outputs.state-directory }}
+-          prepare-outcome: ${{ steps.prepare-tests.outcome }}
+-          test-outcome: ${{ steps.run-tests.outcome }}
+-          upload-outcome: ${{ steps.upload-test-logs.outcome }}
+-
+-  livepatch-lifecycle:
+-    name: Livepatch lifecycle (${{ matrix.label }})
+-    # Whole CI retains these jobs; ZTS-only/focused runs do not repeat them.
+-    if: ${{ inputs.test_suite != 'zfs-full' && !inputs.test_pattern }}
+-    needs: build
+-    runs-on:
+-      group: vpsAdminOS runners
+-      labels: "${{ matrix.runner }}"
+-    timeout-minutes: 360
+-
+-    strategy:
+-      fail-fast: false
+-      matrix:
+-        include:
+-          - vendor: amd
+-            runner: amd-livepatch
+-            label: amd
+-            tag: livepatch-amd
+-          - vendor: intel
+-            runner: intel-kvm
+-            label: intel
+-            tag: livepatch-intel
+-          - vendor: amd
+-            runner: amd-livepatch
+-            label: amd-fresh
+-            tag: livepatch-qualification-amd-fresh
+-          - vendor: amd
+-            runner: amd-livepatch
+-            label: amd-scale-aged-v5
+-            tag: livepatch-qualification-amd-scale-aged-v5
+-            large: true
+-          - vendor: amd
+-            runner: amd-livepatch
+-            label: amd-scale-aged-v6
+-            tag: livepatch-qualification-amd-scale-aged-v6
+-            large: true
+-          - vendor: amd
+-            runner: amd-livepatch
+-            label: amd-low-memory-v5
+-            tag: livepatch-qualification-amd-low-memory-v5
+-          - vendor: amd
+-            runner: amd-livepatch
+-            label: amd-low-memory-v6
+-            tag: livepatch-qualification-amd-low-memory-v6
+-          - vendor: intel
+-            runner: intel-kvm
+-            label: intel-representative-v5
+-            tag: livepatch-qualification-intel-representative-v5
+-          - vendor: intel
+-            runner: intel-kvm
+-            label: intel-representative-v6
+-            tag: livepatch-qualification-intel-representative-v6
+-
+-    steps:
+-      - uses: actions/checkout@v7
+-        # Keep checkout's fetch from starting a background repack.
++          ref: a2ccd72d08dc67f678d7f115a92ed5eeca50c1a1
++          path: product
++          persist-credentials: false
+         env:
+           GIT_CONFIG_COUNT: "1"
+           GIT_CONFIG_KEY_0: maintenance.auto
+           GIT_CONFIG_VALUE_0: "false"
+ 
+-      - name: Prepare test state
+-        id: prepare-tests
+-        uses: ./.github/actions/prepare-test-state
++      - name: Prepare isolated benchmark state
++        id: prepare
++        uses: ./benchmark-harness/.github/actions/prepare-test-state
+ 
+-      - name: Run livepatch lifecycle tests
+-        id: run-tests
+-        # Include main/security checks on AMD and perf on both vendors, using
+-        # the existing tag selectors. Keep ten minutes for logs and cleanup.
+-        timeout-minutes: 350
++      - name: Prepare environment, warm closures and measure both legs
++        id: measure
++        timeout-minutes: 1350
++        working-directory: product
+         env:
+-          VPSADMINOS_ENABLE_LIVEPATCH_TEST: "1"
++          BENCHMARK_HARNESS: ${{ github.workspace }}/benchmark-harness/.github/workflows/scripts/prebuild_benchmark.rb
++          BENCHMARK_HARNESS_SHA: ${{ github.sha }}
+         run: |
+           set -euo pipefail
+-
+-          # Prepare normal repository fixtures, preserving every main/perf
+-          # identity assertion. The expected hash is a reviewed source pin,
+-          # not a checksum computed from the module being tested.
+-          unset VPSADMINOS_LIVEPATCH_SINGLE_SERIES_MODULE \
+-            VPSADMINOS_LIVEPATCH_MODULE_NAME VPSADMINOS_LIVEPATCH_EXAMPLE_FILTER \
+-            VPSADMINOS_ONLY_LIVEPATCH_TEST
+-          nix eval --impure --raw --expr \
+-            '(import ./tests/fixtures/livepatch {}).correctedSha256' \
+-            > "$TEST_RUNNER_STATE_DIR/livepatch-corrected-sha256.txt"
+-          export VPSADMINOS_LIVEPATCH_CORRECTED_SHA256="$(cat "$TEST_RUNNER_STATE_DIR/livepatch-corrected-sha256.txt")"
+-          nix-build tests/fixtures/livepatch -A corrected \
+-            --out-link "$TEST_RUNNER_STATE_DIR/livepatch-corrected" \
+-            > "$TEST_RUNNER_STATE_DIR/livepatch-corrected-path.txt"
+-          nix-build tests/fixtures/livepatch -A releasedV5 \
+-            --out-link "$TEST_RUNNER_STATE_DIR/livepatch-released-v5" \
+-            > "$TEST_RUNNER_STATE_DIR/livepatch-released-v5-path.txt"
+-          nix-build tests/fixtures/livepatch -A shippedV6 \
+-            --out-link "$TEST_RUNNER_STATE_DIR/livepatch-predecessor-v6" \
+-            > "$TEST_RUNNER_STATE_DIR/livepatch-predecessor-v6-path.txt"
+-          export VPSADMINOS_LIVEPATCH_CORRECTED_MODULE="$(cat "$TEST_RUNNER_STATE_DIR/livepatch-corrected-path.txt")"
+-          export VPSADMINOS_LIVEPATCH_RELEASED_V5_MODULE="$(cat "$TEST_RUNNER_STATE_DIR/livepatch-released-v5-path.txt")"
+-          export VPSADMINOS_LIVEPATCH_PREDECESSOR_MODULE="$(cat "$TEST_RUNNER_STATE_DIR/livepatch-predecessor-v6-path.txt")"
+-
+-          args=(
+-            test
+-            --state-dir "$TEST_RUNNER_STATE_DIR"
+-            --fresh
+-            --jobs 1
+-            --tag "${{ matrix.tag }}"
+-          )
+-
+-          if [[ "${{ matrix.large || false }}" == "true" ]]; then
+-            # Step 25 requires 128 *guest* vCPUs. Admit one such VM using
+-            # the normal runner's CPU-only oversubscription option. Keep
+-            # memory admission unchanged; never pretend these are 128
+-            # physical host CPUs or lower the guest/task requirements.
+-            host_cpus=$(nproc)
+-            cpu_factor=$(((128 + host_cpus - 1) / host_cpus))
+-            printf '128 guest vCPUs on %s host-visible CPUs; factor=%s\n' \
+-              "$host_cpus" "$cpu_factor"
+-            args+=(--max-cpus 128 --cpu-overcommit "$cpu_factor")
+-          fi
+-
+-          if [[ "$TEST_RUNNER_PREBUILD" == "true" ]]; then
+-            args+=(--prebuild)
+-          else
+-            args+=(--no-prebuild)
+-          fi
+-
+-          ./test-runner.sh "${args[@]}" | tee "$TEST_RUNNER_STATE_DIR/test.log"
+-
+-      # Keep producer module checksums available even when every case passes.
+-      - name: Upload full test logs
+-        id: upload-test-logs
+-        if: >-
+-          always() &&
+-          steps.prepare-tests.outcome == 'success' &&
+-          steps.run-tests.outcome != 'skipped'
+-        uses: ./.github/actions/upload-test-logs
+-        with:
+-          name: os-test-logs-${{ github.run_id }}-${{ github.run_attempt }}-livepatch-${{ matrix.label }}
+-          paths: |
+-            ${{ steps.prepare-tests.outputs.state-directory }}/**/*.log
+-            ${{ steps.prepare-tests.outputs.state-directory }}/**/*.txt
+-
+-      - name: Evaluate test results
+-        if: >-
+-          always() &&
+-          steps.prepare-tests.outcome == 'success' &&
+-          steps.run-tests.outcome != 'skipped'
+-        uses: ./.github/actions/evaluate-test-results
+-        with:
+-          log-file: ${{ steps.prepare-tests.outputs.state-directory }}/test.log
+-
+-      - name: Summarise test logs
+-        if: >-
+-          always() &&
+-          steps.prepare-tests.outcome == 'success' &&
+-          steps.run-tests.outcome != 'skipped'
+-        uses: ./.github/actions/summarise-test-logs
++          # Environment and the native extension are prepared outside both timers.
++          nix develop .#test-runner --command bash -c '
++            cd libosctl/ext/libosctl
++            ruby extconf.rb
++            make
++            cp native.so ../../lib/libosctl/native.so
++          ' > "$TEST_RUNNER_STATE_DIR/environment.log" 2>&1
++          nix develop .#test-runner --command bundle exec ruby "$BENCHMARK_HARNESS" \
++            "$PWD" "$TEST_RUNNER_STATE_DIR" \
++            2>&1 | tee "$TEST_RUNNER_STATE_DIR/benchmark.log"
++
++      - name: Upload timings and complete text logs
++        id: upload
++        if: always() && steps.prepare.outcome == 'success'
++        uses: actions/upload-artifact@v7
+         with:
+-          logs-root: ${{ steps.prepare-tests.outputs.state-directory }}
++          name: prebuild-benchmark-${{ github.run_id }}-${{ github.run_attempt }}
++          path: |
++            ${{ steps.prepare.outputs.state-directory }}/**/*.log
++            ${{ steps.prepare.outputs.state-directory }}/**/*.txt
++            ${{ steps.prepare.outputs.state-directory }}/**/*.json
++          include-hidden-files: false
++          if-no-files-found: error
++          retention-days: 14
+ 
+-      - name: Cleanup test state
++      - name: Retain benchmark diagnostics
+         if: always()
+-        uses: ./.github/actions/cleanup-test-state
+-        with:
+-          state-directory: ${{ steps.prepare-tests.outputs.state-directory }}
+-          prepare-outcome: ${{ steps.prepare-tests.outcome }}
+-          test-outcome: ${{ steps.run-tests.outcome }}
+-          upload-outcome: ${{ steps.upload-test-logs.outcome }}
++        env:
++          BENCHMARK_ROOT: ${{ steps.prepare.outputs.state-directory }}
++        run: |
++          printf 'Benchmark state retained for configured host retention: %s\n' "$BENCHMARK_ROOT"
++          echo 'Guest teardown is part of each measured native test-runner invocation.'
+diff --git a/.github/workflows/scripts/prebuild_benchmark.rb b/.github/workflows/scripts/prebuild_benchmark.rb
+new file mode 100644
+index 000000000..877b961b8
+--- /dev/null
++++ b/.github/workflows/scripts/prebuild_benchmark.rb
+@@ -0,0 +1,442 @@
++require 'json'
++require 'digest'
++require 'open3'
++require 'fileutils'
++require 'socket'
++require 'time'
++
++# Temporary measurement code; product methods and resource settings are unchanged.
++module PrebuildBenchmark
++  PRODUCT_SHA = 'a2ccd72d08dc67f678d7f115a92ed5eeca50c1a1'.freeze
++  CONFIG = 'tests/test-configs/ci.nix'.freeze
++  SYSTEM = 'x86_64-linux'.freeze
++  EXPECTED_TESTS = 127
++  EXPECTED_SCRIPTS = 335
++
++  def self.clock
++    Process.clock_gettime(Process::CLOCK_MONOTONIC)
++  end
++
++  def self.command(flag, state)
++    ['./test-runner.sh', 'test', flag, '--jobs', 'auto', '--test-config', CONFIG,
++     '--system', SYSTEM, '--fresh', '--state-dir', state, '-t', 'ci']
++  end
++
++  def self.parse_log(text)
++    selection = text.split("The following test scripts will be run:\n", 2)[1]&.split("\n\n", 2)&.first
++    scripts = selection ? selection.lines.map(&:strip).reject(&:empty?).sort : nil
++    completed = text.scan(/Run (\d+) test scripts of (\d+) tests in ([\d.]+) seconds/).last
++    {
++      'scripts' => scripts,
++      'selection_digest' => scripts && Digest::SHA256.hexdigest(JSON.generate(scripts)),
++      'completed_scripts' => completed && completed[0].to_i,
++      'completed_tests' => completed && completed[1].to_i,
++      'executor_reported_seconds' => completed && completed[2].to_f,
++      'initial_resource_limits' => text[/Resource limits: ([^\n]+)/, 1],
++      'unexpected_failed_scripts' => summary_paths(text, 'Unexpectedly failed test scripts:'),
++      'unexpected_successful_scripts' => summary_paths(text, 'Unexpectedly successful test scripts:'),
++      'retries' => text.scan(%r{Retrying test '([^']+)' \((.*?)\) \(attempt (\d+)/\d+\)}).map { |path, names, attempt| [path, names.split(', ').sort, attempt] }.sort,
++      'kernel_failures' => text.lines.grep(/stopped after .+ due to a guest kernel failure/).map(&:strip)
++    }
++  end
++
++  def self.summary_paths(text, heading)
++    section = text.split("#{heading}\n", 2)[1]
++    return [] unless section
++
++    section.lines.take_while { |line| line.match?(/\A\[[^\]]+\]   /) }.map { |line| line.sub(/\A\[[^\]]+\]   /, '').strip }.sort
++  end
++
++  def self.phase_marker(line)
++    return 'executor_start' if line.match?(/Running \d+ scripts of \d+ tests,/)
++    return 'executor_summary' if line.match?(/Run \d+ test scripts of \d+ tests in /)
++    return 'preparing' if line.start_with?('Preparing ')
++    return 'prepared' if line.start_with?('Preparation complete:')
++
++    nil
++  end
++
++  def self.compare(legs, expected_digest)
++    unless legs.size == 2 && legs.all? { |leg| leg.has_key?('wall_seconds') }
++      return { 'complete' => false, 'qualification' => 'The comparison does not contain two completed CLI runs' }
++    end
++
++    a, b = legs
++    complete = legs.all? do |leg|
++      leg['completed_tests'] == EXPECTED_TESTS && leg['completed_scripts'] == EXPECTED_SCRIPTS &&
++        leg['signal'].nil? && !leg['exit_status'].nil? && !leg['error']
++    end
++    equal_work = complete && legs.all? do |leg|
++      leg['selection_digest'] == expected_digest && leg['completed_tests'] == EXPECTED_TESTS &&
++        leg['completed_scripts'] == EXPECTED_SCRIPTS && Array(leg['owned_processes_remaining']).empty? && !leg['forced_cleanup'] && !leg['resource_identity_changed'] &&
++        Array(leg['image_builds']).empty? && Array(leg['kernel_failures']).empty? && leg['oom_delta'] == 0
++    end
++    equal_work &&= !a['initial_resource_limits'].nil? && a['initial_resource_limits'] == b['initial_resource_limits'] &&
++                   a['outcomes'] == b['outcomes'] && a['resource_identity'] == b['resource_identity'] &&
++                   a.values_at('unexpected_failed_scripts', 'unexpected_successful_scripts', 'retries') == b.values_at('unexpected_failed_scripts', 'unexpected_successful_scripts', 'retries')
++    ratio = b.fetch('wall_seconds').to_f / a.fetch('wall_seconds')
++    {
++      'complete' => complete,
++      'comparable_work' => equal_work, 'both_successful' => legs.all? { |leg| leg['exit_status'] == 0 },
++      'delta_seconds' => b.fetch('wall_seconds') - a.fetch('wall_seconds'),
++      'ratio' => ratio, 'percent_change' => 100 * (ratio - 1),
++      'qualification' => if equal_work
++                           (legs.all? { |leg| leg['exit_status'] == 0 } ? 'One exploratory warm A/B pair; order and host effects remain' : 'Matching failures remain in both legs; totals include failure and cleanup delays')
++                         else
++                           'Unequal work, failures, image builds, OOM or capacity drift prevent a clean suite-time conclusion'
++                         end
++    }
++  end
++
++  class Run
++    def initialize(product, root)
++      @product = File.realpath(product)
++      @root = File.expand_path(root)
++      @report = { 'owned_cleanup_complete' => true, 'product_sha' => PRODUCT_SHA, 'harness_sha' => ENV.fetch('BENCHMARK_HARNESS_SHA', nil), 'legs' => [] }
++      @report['measurement_notes'] = [
++        'Wall seconds use a monotonic clock around each complete external CLI invocation, including cleanup.',
++        'Phase receipts depend on buffered log delivery; intervals need not sum to wall seconds.',
++        'The disabled executor span overlaps per-test evaluation and preparation. It is not VM-only runtime.',
++        'Enabled global preparation includes aggregate evaluation and build checks. Both legs use warm image closures.',
++        'The runner randomizes test order in each leg; host neighbors, filesystem caches and thermal effects remain uncontrolled.'
++      ]
++    end
++
++    def run
++      handlers = %w[TERM HUP].to_h { |signal| [signal, Signal.trap(signal) { raise SignalException, signal }] }
++      require 'test-runner/cli'
++      raise 'Product checkout differs from the fixed benchmark revision' unless capture('git', 'rev-parse', 'HEAD').strip == PRODUCT_SHA
++      raise 'Tracked product source is dirty' unless capture('git', 'status', '--porcelain', '--untracked-files=no').empty?
++
++      reject_overrides
++      FileUtils.mkdir_p(@root)
++      write('identity.json', snapshot)
++      @report['product_tree'] = capture('git', 'rev-parse', 'HEAD^{tree}').strip
++      @report['warmup_started_at'] = Time.now.utc.iso8601
++      warm_start = PrebuildBenchmark.clock
++      # Warm the normal CLI package check outside both timers.
++      capture('nix', 'build', '--out-link', File.join(@root, 'runner-package'), '.#test-runner')
++      TestRunner::RepositorySource.open(original_path: @product) do |source|
++        config = source.resolve_path(CONFIG)
++        scripts = TestRunner::TestScriptList.new(system: SYSTEM, test_config_path: config, repo_root: source.path)
++                                            .matching(nil).select { |script| TestRunner::Cli::TagFilters.new(['ci']).pass?(script) }
++        tests = scripts.map(&:test).uniq
++        paths = scripts.map(&:path).sort
++        raise "Unexpected native selection: #{tests.size} tests/#{paths.size} scripts" unless tests.size == EXPECTED_TESTS && paths.size == EXPECTED_SCRIPTS
++
++        @report['selection_digest'] = Digest::SHA256.hexdigest(JSON.generate(paths))
++        write('selection.json', paths)
++        preflight(tests, source.path, config)
++        TestRunner::Prebuild.new(
++          scripts, resource_pool: TestRunner::ResourcePool.from_options({}), state_dir: File.join(@root, 'warmup'),
++                   system: SYSTEM, test_config_path: config, repo_root: source.path
++        ).open do |configs|
++          configs.each_value do |cfg|
++            raise "Missing warm JSON: #{cfg.config_path}" unless File.file?(cfg.config_path)
++
++            verify_store_paths(cfg['machines'])
++          end
++          write('prepared.json', configs.to_h { |test, cfg| [test.path, cfg.config_path] })
++          write('managed-disks.json', configs.to_h { |test, cfg| [test.path, cfg['machines'].transform_values { |m| m.slice('disks', 'rootDisk', 'diskImage') }] })
++          @report['warmup_seconds'] = PrebuildBenchmark.clock - warm_start
++          save
++          [['A', '--no-prebuild'], ['B', '--prebuild']].each do |label, flag|
++            leg = measure(label, flag)
++            save
++            unless safe_to_continue?(leg)
++              raise "Leg #{label} ended without a complete, cleaned native workload; comparison stopped"
++            end
++          end
++        end
++      end
++      @report['comparison'] = PrebuildBenchmark.compare(@report['legs'], @report['selection_digest'])
++      save
++      puts JSON.pretty_generate(@report['comparison'])
++      @report['comparison']['comparable_work'] && @report['comparison']['both_successful'] ? 0 : 1
++    rescue StandardError, SignalException => e
++      @report['warmup_seconds'] ||= PrebuildBenchmark.clock - warm_start if warm_start
++      @report['error'] = "#{e.class}: #{e.message}"
++      @report['comparison'] = PrebuildBenchmark.compare(@report['legs'], @report['selection_digest'])
++      save
++      warn @report['error']
++      1
++    ensure
++      handlers&.each { |signal, handler| Signal.trap(signal, handler) }
++    end
++
++    private
++
++    def reject_overrides
++      forbidden = ENV.keys.select do |name|
++        name.start_with?('TEST_RUNNER_') && name != 'TEST_RUNNER_STATE_DIR' && name != 'TEST_RUNNER_NIXPKGS_PATH' && name != 'TEST_RUNNER_NIX_SYSTEM' && name != 'TEST_RUNNER_ROOT'
++      end
++      forbidden += ENV.keys.select { |name| name.start_with?('VPSADMINOS_') && name != 'VPSADMINOS_CONFIG' && name != 'VPSADMINOS_DEV_SHELL' }
++      raise "Unexpected inherited suite overrides: #{forbidden.sort.join(', ')}" unless forbidden.empty? && ENV.fetch('VPSADMINOS_CONFIG', '').empty?
++    end
++
++    def capture(*cmd)
++      out, status = Open3.capture2e(*cmd, chdir: @product)
++      raise "#{cmd.first} failed (#{status.exitstatus || "signal #{status.termsig}"}): #{out}" unless status.success?
++
++      out
++    end
++
++    def write(name, value)
++      File.write(File.join(@root, name), JSON.pretty_generate(value))
++    end
++
++    def save
++      FileUtils.mkdir_p(@root)
++      write('timings.json', @report)
++    end
++
++    def read_optional(path)
++      File.read(path).strip
++    rescue Errno::ENOENT, Errno::EACCES, Errno::ESRCH
++      nil
++    end
++
++    def snapshot
++      detector = TestRunner::ResourcePool::HostResourceDetector.new
++      group = TestRunner::ResourcePool.current_cgroup_path(nil)
++      cgroup = group && File.join('/sys/fs/cgroup', group.sub(%r{\A/}, ''))
++      disk = capture('df', '-Pk', @root)
++      {
++        'observed_at' => Time.now.utc.iso8601, 'hostname' => Socket.gethostname,
++        'runner' => ENV.values_at('RUNNER_NAME', 'RUNNER_OS', 'RUNNER_ARCH'),
++        'machine_id' => read_optional('/etc/machine-id'),
++        'physical_host_id' => read_optional('/sys/class/dmi/id/product_uuid'),
++        'cpu' => capture('lscpu'), 'affinity' => capture('taskset', '-pc', Process.pid.to_s),
++        'cpus' => detector.cpus, 'assigned_memory_mib' => detector.memory_mib,
++        'available_memory_mib' => detector.memory_available_mib,
++        'shm_mib' => detector.shm_mib, 'shm_available_mib' => detector.shm_available_mib,
++        'disk' => disk, 'disk_available_bytes' => disk.lines.last.split[3].to_i * 1024,
++        'nix_version' => capture('nix', '--version').strip,
++        'nix_max_jobs' => capture('nix', 'config', 'show', 'max-jobs').strip,
++        'nix_cores' => capture('nix', 'config', 'show', 'cores').strip,
++        'pressure' => %w[memory cpu io].to_h { |name| [name, read_optional("/proc/pressure/#{name}")] },
++        'cgroup' => cgroup, 'cgroup_memory_max' => cgroup && read_optional(File.join(cgroup, 'memory.max')),
++        'memory_events' => cgroup && read_optional(File.join(cgroup, 'memory.events')),
++        'cpu_stat' => cgroup && read_optional(File.join(cgroup, 'cpu.stat')),
++        'environment' => ENV.select { |name, _| name.start_with?('TEST_RUNNER_', 'VPSADMINOS_') || name == 'NIX_BUILD_CORES' }
++      }
++    end
++
++    def preflight(tests, source, config)
++      nix = TestRunner::NixCli.new(system: SYSTEM, test_config_path: config, repo_root: source)
++      requests = tests.map { |test| { id: test.path, path: test.path, testArgs: test.test_args || {}, templateArgs: test.template_args || {} } }
++      cmd = nix.send(:build_cmd, mode: 'testBatch', test_path: nil, test_args: nil, out_link: File.join(@root, 'dry-run-root'))
++      cmd += ['--argstr', 'selectedTestsJson', JSON.generate(requests), '--dry-run']
++      output = capture(*cmd)
++      File.write(File.join(@root, 'nix-dry-run.log'), output)
++      current = snapshot
++      raise 'No available memory or shared-memory capacity' if [current['available_memory_mib'], current['shm_available_mib']].compact.any? { |v| v <= 0 }
++
++      disk_available_kib = current['disk'].lines.last.split[3].to_i
++      raise 'No free disk capacity' if disk_available_kib <= 0
++      if current['pressure']['memory'].to_s.match?(/full avg10=(?!0\.00(?: |$))\d/)
++        raise 'Active full memory pressure; benchmark requires operator investigation'
++      end
++
++      missing = output.lines.filter_map { |line| line.strip if line.strip.match?(%r{\A/nix/store/[^/]+\.drv\z}) }
++      unless missing.empty?
++        derivations = JSON.parse(capture('nix', 'derivation', 'show', *missing))
++        kernels = derivations.select { |_path, drv| drv.fetch('env', {})['pname'] == 'linux' }
++        raise "Uncached kernel compilation required: #{kernels.keys.join(', ')}" unless kernels.empty?
++      end
++      @report['preflight'] = {
++        'resources' => current,
++        'missing_derivations' => missing,
++        'substitution_estimate' => output.lines.select { |line| line.include?('will be fetched') || line.include?('unpacked') },
++        'disk_limitations' => 'Build temporary peaks and sparse VM disk peaks are unknown; logical disk sums are not capacity guarantees'
++      }
++      save
++    end
++
++    def process_table
++      Dir.glob('/proc/[0-9]*/stat').filter_map do |file|
++        value = File.read(file)
++        pid = File.basename(File.dirname(file)).to_i
++        fields = value.sub(/\A\d+ \(.*\) /, '').split
++        [pid, { 'ppid' => fields[1].to_i, 'start' => fields[19], 'state' => fields[0] }]
++      rescue Errno::ENOENT, Errno::ESRCH, Errno::EACCES
++        nil
++      end.to_h
++    end
++
++    def descendants(table, parent)
++      found = [parent]
++      loop do
++        extra = table.keys.select { |pid| found.include?(table[pid]['ppid']) && !found.include?(pid) }
++        break if extra.empty?
++
++        found.concat(extra)
++      end
++      found
++    end
++
++    def measure(label, flag)
++      state = File.join(@root, "#{label}-state")
++      raise "State already exists: #{state}" if File.exist?(state)
++
++      before = snapshot
++      cmd = PrebuildBenchmark.command(flag, state)
++      leg = { 'label' => label, 'command' => cmd, 'before' => before, 'phase_receipts' => {} }
++      @report['legs'] << leg
++      save
++      owned = {}
++      clean_env = ENV.keys.grep(/\A(?:BUNDLE_|RUBY|GEM_)/).to_h { |name| [name, nil] }
++      start = PrebuildBenchmark.clock
++      Open3.popen2e(clean_env, *cmd, chdir: @product, pgroup: true) do |stdin, output, waiter|
++        stdin.close
++        monitoring = true
++        monitor = Thread.new do
++          loop do
++            table = process_table
++            descendants(table, waiter.pid).each { |pid| owned[pid] ||= table[pid] if table[pid] }
++            break unless monitoring && waiter.alive?
++
++            sleep(0.25)
++          end
++        end
++        begin
++          File.open(File.join(@root, "#{label}.log"), 'w') do |log|
++            output.each_line do |line|
++              log.write(line)
++              log.flush
++              puts "#{label}: #{line}"
++              marker = PrebuildBenchmark.phase_marker(line)
++              leg['phase_receipts'][marker] ||= PrebuildBenchmark.clock - start if marker
++            end
++          end
++          status = waiter.value
++          leg['wall_seconds'] = PrebuildBenchmark.clock - start
++          leg['exit_status'] = status.exitstatus
++          leg['signal'] = status.termsig
++        rescue StandardError, SignalException => e
++          leg['error'] = "#{e.class}: #{e.message}"
++          monitoring = false
++          monitor.join
++          table = process_table
++          descendants(table, waiter.pid).each { |pid| owned[pid] ||= table[pid] if table[pid] }
++          leg['forced_cleanup'] = true
++          cleanup_owned(owned, state)
++          status = waiter.value
++          leg['exit_status'] = status.exitstatus
++          leg['signal'] = status.termsig
++          raise
++        ensure
++          monitoring = false
++          monitor.join
++          leg['wall_seconds'] ||= PrebuildBenchmark.clock - start
++        end
++      end
++      leg
++    ensure
++      leg['wall_seconds'] ||= PrebuildBenchmark.clock - start if leg && start
++      summarize_leg(leg, owned, state, flag) if leg && start
++      save
++    end
++
++    def summarize_leg(leg, owned, state, flag)
++      table = process_table
++      leg['owned_processes_remaining'] = active_owned(owned, table, state).keys
++      unless leg['owned_processes_remaining'].empty?
++        leg['forced_cleanup'] = true
++        cleanup_owned(owned, state)
++      end
++      after = snapshot
++      leg['after'] = after
++      leg['oom_delta'] = oom_events(after) - oom_events(leg['before'])
++      leg['resource_identity'] = leg['before'].slice('hostname', 'machine_id', 'physical_host_id', 'affinity', 'cpus', 'assigned_memory_mib', 'shm_mib', 'cgroup_memory_max', 'nix_max_jobs', 'nix_cores')
++      leg['resource_identity_changed'] = leg['resource_identity'] != after.slice(*leg['resource_identity'].keys)
++      label = leg.fetch('label')
++      text = File.read(File.join(@root, "#{label}.log"))
++      leg.merge!(PrebuildBenchmark.parse_log(text))
++      leg['outcomes'] = Dir.glob(File.join(state, '*', 'test-result.txt')).to_h { |path| [File.basename(File.dirname(path)), File.read(path).strip] }
++      leg['image_builds'] = [File.join(@root, "#{label}.log"), *Dir.glob(File.join(state, '**', '*.log'))].flat_map do |path|
++        File.foreach(path).filter_map { |line| "#{path}: #{line.strip}" if line.match?(%r{building ['"]/nix/store/.+\.drv['"]}) }
++      end
++      leg['phase_seconds'] = {
++        'cli_prefix_receipt' => leg['phase_receipts']['executor_start'],
++        'executor_reported' => leg['executor_reported_seconds'],
++        'tail_after_summary_receipt' => leg['phase_receipts']['executor_summary'] && (leg['wall_seconds'] - leg['phase_receipts']['executor_summary']),
++        'global_preparation_receipt' => flag == '--prebuild' && leg['phase_receipts'].has_key?('prepared') && leg['phase_receipts'].has_key?('preparing') ? leg['phase_receipts']['prepared'] - leg['phase_receipts']['preparing'] : nil
++      }
++    rescue StandardError => e
++      leg['error'] ||= "Unable to summarize leg: #{e.class}: #{e.message}"
++    end
++
++    def active_owned(owned, table, state)
++      # Include processes whose exact invocation-owned state appears in argv or
++      # cwd, so an orphaned QEMU does not depend only on ancestry sampling.
++      table.each do |pid, identity|
++        next if pid == Process.pid
++
++        cmd = read_optional("/proc/#{pid}/cmdline").to_s.tr("\0", ' ')
++        cwd = begin
++          File.readlink("/proc/#{pid}/cwd")
++        rescue Errno::ENOENT, Errno::EACCES, Errno::ESRCH
++          nil
++        end
++        owned[pid] ||= identity if cmd.include?("#{state}/") || cmd.split.include?(state) || cwd == state || cwd&.start_with?("#{state}/")
++      end
++      owned.select { |pid, identity| table[pid] && table[pid]['start'] == identity['start'] && table[pid]['state'] != 'Z' }
++    end
++
++    def cleanup_owned(owned, state)
++      @report['owned_cleanup_complete'] = false
++      %w[TERM KILL].each do |signal|
++        active = active_owned(owned, process_table, state)
++        active.each_key do |pid|
++          Process.kill(signal, pid)
++        rescue Errno::ESRCH
++          next
++        end
++        20.times do
++          break if active_owned(owned, process_table, state).empty?
++
++          sleep(0.25)
++        end
++      end
++      # Keep the existing warm roots alive if an uninterruptible owned process
++      # survives bounded termination; do not start B or release its closures.
++      until active_owned(owned, process_table, state).empty?
++        warn 'Owned process cleanup is incomplete; retaining warm roots'
++        sleep(5)
++      end
++      @report['owned_cleanup_complete'] = true
++    end
++
++    def verify_store_paths(value)
++      case value
++      when Hash
++        value.each_value { |item| verify_store_paths(item) }
++      when Array
++        value.each { |item| verify_store_paths(item) }
++      when String
++        raise "Missing warm image path: #{value}" if value.start_with?('/nix/store/') && !File.exist?(value)
++      end
++    end
++
++    def oom_events(sample)
++      sample['memory_events'].to_s.lines.sum do |line|
++        name, value = line.split
++        name == 'oom_kill' ? value.to_i : 0
++      end
++    end
++
++    def safe_to_continue?(leg)
++      !leg['error'] && leg['signal'].nil? && !leg['forced_cleanup'] && !leg['resource_identity_changed'] && leg['kernel_failures'].empty? && leg['owned_processes_remaining'].empty? && leg['oom_delta'] == 0 &&
++        leg['completed_tests'] == EXPECTED_TESTS && leg['completed_scripts'] == EXPECTED_SCRIPTS &&
++        leg['outcomes'].size == EXPECTED_TESTS && leg['selection_digest'] == @report['selection_digest'] && leg['image_builds'].empty?
++    end
++  end
++end
++
++if $0 == __FILE__
++  product, root = ARGV
++  raise 'Expected product checkout and isolated benchmark state' unless product && root
++
++  Dir.chdir(product) { exit PrebuildBenchmark::Run.new(product, root).run }
++end
+diff --git a/test-runner/spec/github_actions/prebuild_benchmark_spec.rb b/test-runner/spec/github_actions/prebuild_benchmark_spec.rb
+new file mode 100644
+index 000000000..ce8f3fd03
+--- /dev/null
++++ b/test-runner/spec/github_actions/prebuild_benchmark_spec.rb
+@@ -0,0 +1,173 @@
++# frozen_string_literal: true
++
++require 'spec_helper'
++require 'yaml'
++require 'rbconfig'
++require_relative '../../../.github/workflows/scripts/prebuild_benchmark'
++
++RSpec.describe PrebuildBenchmark do
++  it 'compares normal full CLI commands with only the mode and isolated state changed' do
++    a = described_class.command('--no-prebuild', '/state/A-state')
++    b = described_class.command('--prebuild', '/state/B-state')
++    expect(a.first(2)).to eq(['./test-runner.sh', 'test'])
++    expect(a.values_at(2, 11)).to eq(['--no-prebuild', '/state/A-state'])
++    expect(a.each_index.reject { |i| a[i] == b[i] }).to eq([2, 11])
++    expect(a).to include('--jobs', 'auto', '--fresh', '-t', 'ci', 'tests/test-configs/ci.nix')
++    expect(a).not_to include('--max-cpus', '--max-memory-mib', '--cores', '--stop-on-failure')
++  end
++
++  it 'captures exact selected scripts, completed work and reported executor time' do
++    log = <<~LOG
++      The following test scripts will be run:
++        z/test#b
++        a/test
++
++      [2026-10-19 15:00:00 +0200] Running 2 scripts of 2 tests, at most 2 tests at a time (auto)
++      [2026-10-19 15:00:00 +0200] Resource limits: memory=0.00 GiB/64.00 GiB, shm=0.00 GiB/32.00 GiB, cpus=0/48.0, running=0
++      [2026-10-19 15:01:00 +0200] Run 2 test scripts of 2 tests in 60.25 seconds
++      [2026-10-19 15:01:00 +0200] Unexpectedly failed test scripts:
++      [2026-10-19 15:01:00 +0200]   z/test#b
++
++    LOG
++    result = described_class.parse_log(log)
++    expect(result).to include('scripts' => ['a/test', 'z/test#b'], 'completed_scripts' => 2,
++                              'completed_tests' => 2, 'executor_reported_seconds' => 60.25)
++    expect(result['selection_digest']).to eq(Digest::SHA256.hexdigest(JSON.generate(['a/test', 'z/test#b'])))
++    expect(result['unexpected_failed_scripts']).to eq(['z/test#b'])
++    expect(result['initial_resource_limits']).to eq('memory=0.00 GiB/64.00 GiB, shm=0.00 GiB/32.00 GiB, cpus=0/48.0, running=0')
++    expect(described_class.phase_marker(log.lines[4])).to eq('executor_start')
++  end
++
++  def completed_leg(seconds)
++    {
++      'wall_seconds' => seconds, 'selection_digest' => 'selected',
++      'completed_scripts' => 335, 'completed_tests' => 127,
++      'owned_processes_remaining' => [], 'image_builds' => [], 'oom_delta' => 0,
++      'resource_identity' => { 'cpus' => 32 }, 'outcomes' => { 'test' => 'expected_success' }, 'exit_status' => 0,
++      'initial_resource_limits' => 'memory=0.00 GiB/64.00 GiB, shm=0.00 GiB/32.00 GiB, cpus=0/48.0, running=0'
++    }
++  end
++
++  it 'reports exploratory delta, ratio and percentage for matched completed work' do
++    report = described_class.compare([completed_leg(100), completed_leg(110)], 'selected')
++    expect(report).to include('complete' => true, 'comparable_work' => true, 'delta_seconds' => 10, 'ratio' => 1.1)
++    expect(report['percent_change']).to be_within(0.0001).of(10)
++  end
++
++  it 'retains timings but qualifies unequal failures and resource drift' do
++    a = completed_leg(100)
++    b = completed_leg(125).merge('outcomes' => { 'test' => 'unexpected_failure' }, 'exit_status' => 1,
++                                 'resource_identity' => { 'cpus' => 16 })
++    report = described_class.compare([a, b], 'selected')
++    expect(report).to include('comparable_work' => false, 'ratio' => 1.25, 'both_successful' => false)
++  end
++
++  it 'qualifies different failed scripts or retries even when group outcomes match' do
++    a = completed_leg(100).merge('unexpected_failed_scripts' => ['test#one'], 'retries' => [])
++    b = a.merge('unexpected_failed_scripts' => ['test#two'])
++    expect(described_class.compare([a, b], 'selected')['comparable_work']).to be(false)
++    b = a.merge('retries' => [['test', ['#one'], '2']])
++    expect(described_class.compare([a, b], 'selected')['comparable_work']).to be(false)
++    b = a.merge('resource_identity_changed' => true)
++    expect(described_class.compare([a, b], 'selected')['comparable_work']).to be(false)
++  end
++
++  it 'qualifies different initial executor ceilings despite identical assigned host resources' do
++    a = completed_leg(100)
++    b = completed_leg(125).merge('initial_resource_limits' => 'memory=0.00 GiB/48.00 GiB, shm=0.00 GiB/24.00 GiB, cpus=0/48.0, running=0')
++    expect(described_class.compare([a, b], 'selected')).to include('complete' => true, 'comparable_work' => false, 'ratio' => 1.25)
++    expect(described_class.compare([a, b.merge('initial_resource_limits' => nil)], 'selected')['comparable_work']).to be(false)
++  end
++
++  it 'marks an interrupted pair incomplete while retaining the first leg elsewhere' do
++    expect(described_class.compare([completed_leg(100)], 'selected')).to include('complete' => false)
++    b = completed_leg(20).merge('signal' => 15, 'completed_tests' => nil)
++    expect(described_class.compare([completed_leg(100), b], 'selected')).to include('complete' => false, 'comparable_work' => false)
++  end
++
++  it 'does not treat matching failed suites as a passing benchmark' do
++    a = completed_leg(100).merge('exit_status' => 1)
++    report = described_class.compare([a, a], 'selected')
++    expect(report).to include('both_successful' => false)
++    expect(report['qualification']).to include('Matching failures')
++  end
++
++  it 'uses one manual job with separate harness and exact product checkouts and always uploads evidence' do
++    workflow = YAML.load_file(File.join(REPO_ROOT, '.github/workflows/ci.yml'))
++    expect(workflow.fetch(true).keys).to eq(['workflow_dispatch'])
++    expect(workflow.fetch('jobs').keys).to eq(['compare'])
++    job = workflow.fetch('jobs').fetch('compare')
++    expect(job).to include('runs-on' => 'self-hosted', 'timeout-minutes' => 1380)
++    steps = job.fetch('steps')
++    expect(steps[0].fetch('with')).to include('path' => 'benchmark-harness')
++    expect(steps[1].fetch('with')).to include('path' => 'product', 'ref' => described_class::PRODUCT_SHA)
++    upload = steps.find { |step| step['id'] == 'upload' }
++    expect(upload['if']).to include('always()')
++    expect(steps.last['if']).to eq('always()')
++  end
++
++  it 'records a failed complete CLI without treating its exit as permission to skip cleanup or leg B' do
++    with_tmpdir do |dir|
++      product = File.join(dir, 'product')
++      root = File.join(dir, 'state')
++      FileUtils.mkdir_p([product, root])
++      scripts = Array.new(335) { |i| "test/#{i}" }.sort
++      digest = Digest::SHA256.hexdigest(JSON.generate(scripts))
++      run = described_class::Run.new(product, root)
++      run.instance_variable_get(:@report)['selection_digest'] = digest
++      allow(run).to receive(:snapshot).and_return('memory_events' => "oom_kill 0\n", 'cpus' => 4)
++      code = <<~RUBY
++        require 'fileutils'
++        state = ARGV.fetch(0)
++        puts 'The following test scripts will be run:'
++        335.times { |i| puts "  test/\#{i}" }
++        puts
++        puts '[2026-10-19] Running 335 scripts of 127 tests, at most 127 tests at a time (auto)'
++        127.times do |i|
++          dir = File.join(state, i.to_s)
++          FileUtils.mkdir_p(dir)
++          File.write(File.join(dir, 'test-result.txt'), 'unexpected_failure')
++        end
++        puts '[2026-10-19] Run 335 test scripts of 127 tests in 0.25 seconds'
++        exit 1
++      RUBY
++      allow(described_class).to receive(:command) do |_flag, state|
++        [RbConfig.ruby, '-e', code, state]
++      end
++      leg = nil
++      capture_stdout { leg = run.send(:measure, 'A', '--no-prebuild') }
++      expect(leg).to include('exit_status' => 1, 'signal' => nil, 'selection_digest' => digest,
++                             'completed_tests' => 127, 'completed_scripts' => 335, 'owned_processes_remaining' => [])
++      expect(leg['wall_seconds']).to be > 0
++      expect(run.send(:safe_to_continue?, leg)).to be(true)
++      expect(JSON.parse(File.read(File.join(root, 'timings.json')))['legs'].size).to eq(1)
++      expect(run.send(:safe_to_continue?, leg.merge('forced_cleanup' => true))).to be(false)
++    end
++  end
++
++  it 'reaps an interrupted owned CLI and retains its partial timing and signal' do
++    with_tmpdir do |dir|
++      product = File.join(dir, 'product')
++      root = File.join(dir, 'state')
++      FileUtils.mkdir_p([product, root])
++      run = described_class::Run.new(product, root)
++      allow(run).to receive(:snapshot).and_return('memory_events' => "oom_kill 0\n")
++      code = '$stdout.sync = true; puts Process.pid; sleep 30'
++      allow(described_class).to receive(:command).and_return([RbConfig.ruby, '-e', code])
++      pid = nil
++      allow(described_class).to receive(:phase_marker) do |line|
++        pid = Integer(line)
++        raise Interrupt, 'cancelled fixture'
++      end
++      capture_stdout do
++        expect { run.send(:measure, 'A', '--no-prebuild') }.to raise_error(Interrupt, 'cancelled fixture')
++      end
++      leg = JSON.parse(File.read(File.join(root, 'timings.json')))['legs'].first
++      expect(leg).to include('forced_cleanup' => true, 'signal' => Signal.list.fetch('TERM'), 'owned_processes_remaining' => [])
++      expect(leg['wall_seconds']).to be > 0
++      expect(leg['error']).to include('cancelled fixture')
++      expect { Process.kill(0, pid) }.to raise_error(Errno::ESRCH)
++      expect(run.send(:safe_to_continue?, leg)).to be(false)
++    end
++  end
++end

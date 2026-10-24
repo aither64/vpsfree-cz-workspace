@@ -1,0 +1,119 @@
+SHELL: client
+
+START: 2026-10-19 22:19:01 +0200
+COMMAND: ruby -rsocket -e '
+  sockets = Array.new(8) do
+    s = UNIXSocket.new("/run/osctl/osctld.sock")
+    s.gets
+    s
+  end
+
+  File.write("/tmp/osctld-restart-jobs/idle-clients.ready", "1
+")
+  sockets.each(&:read)
+'
+END: 2026-10-19 22:19:03 +0200
+ELAPSED: 1.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:19:07 +0200
+COMMAND: ruby <<'RUBY'
+  require 'json'
+  require 'socket'
+
+  socket = UNIXSocket.new("/run/osctl/osctld.sock")
+  socket.gets
+  socket.puts({ cmd: :event_subscribe, opts: {} }.to_json)
+
+  response = JSON.parse(socket.gets, symbolize_names: true)
+
+  unless response[:status] && response[:response] == 'subscribed'
+    raise(response[:message] || "unexpected response: " + response.inspect)
+  end
+
+  File.write("/tmp/osctld-restart-jobs/ct-monitor-osctld-graceful-restart.ready", "1\n")
+
+  socket.each_line do |line|
+    response = JSON.parse(line, symbolize_names: true)
+
+    unless response[:status]
+      warn "error: " + response[:message].to_s
+      exit(1)
+    end
+
+    event = response[:response]
+    break if event.nil?
+
+    puts event.to_json
+    STDOUT.flush
+  end
+RUBY
+END: 2026-10-19 22:19:08 +0200
+ELAPSED: 1.18s
+STATUS: 1
+OUTPUT:
+{"type":"management","opts":{"id":6,"state":"run","cmd":"event_subscribe","opts":{}}}
+{"type":"osctld_shutdown","opts":{}}
+error: osctld is shutting down
+---
+
+START: 2026-10-19 22:19:13 +0200
+COMMAND: : > /tmp/osctld-restart-jobs/ct-monitor-osctld-killed.ready
+osctl ct monitor
+END: 2026-10-19 22:19:14 +0200
+ELAPSED: 0.91s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:19:17 +0200
+COMMAND: : > /tmp/osctld-restart-jobs/ct-top-osctld-killed.ready
+osctl -j ct top --rate 60
+END: 2026-10-19 22:19:18 +0200
+ELAPSED: 0.82s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:19:25 +0200
+COMMAND: : > /tmp/osctld-restart-jobs/ct-start.ready
+osctl ct start testct-72c3-start-restart
+END: 2026-10-19 22:19:29 +0200
+ELAPSED: 4.21s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-19 22:19:48 +0200
+COMMAND: : > /tmp/osctld-restart-jobs/ct-restart-osctld-killed.ready
+osctl ct restart testct-1e86-restart-killed
+END: 2026-10-19 22:19:49 +0200
+ELAPSED: 1.15s
+STATUS: 1
+OUTPUT:
+error: osctld closed connection
+Stopping container
+---
+
+START: 2026-10-19 22:20:11 +0200
+COMMAND: : > /tmp/osctld-restart-jobs/ct-copy-state.ready
+osctl ct cp state testct-b7e6-copy-restart
+END: 2026-10-19 22:20:18 +0200
+ELAPSED: 7.53s
+STATUS: 0
+OUTPUT:
+> Stopping container
+> Starting container
+> Connecting console
+> Waiting for the container to start
+> Copying dataset /
+---
+

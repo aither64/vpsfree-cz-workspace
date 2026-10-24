@@ -1,0 +1,3341 @@
+SHELL: 0
+
+START: 2026-10-20 00:01:09 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 00:01:10 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:01:10 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 00:01:10 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:01:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:01:12 +0200
+ELAPSED: 2.37s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:01:13 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:01:14 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:01:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:01:15 +0200
+ELAPSED: 0.74s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:01:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:01:17 +0200
+ELAPSED: 0.91s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:01:18 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:01:19 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:01:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:01:21 +0200
+ELAPSED: 0.83s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:01:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:01:23 +0200
+ELAPSED: 0.76s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:01:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:01:24 +0200
+ELAPSED: 0.8s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:01:25 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:01:26 +0200
+ELAPSED: 1.13s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 00:01:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:01:28 +0200
+ELAPSED: 0.79s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 00:01:28 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-20 00:01:28 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 22:01:28 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 00:01:28 +0200
+COMMAND: osctl ct new --distribution almalinux --version 9 docker-4d65
+END: 2026-10-20 00:01:39 +0200
+ELAPSED: 10.26s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 00:01:39 +0200
+COMMAND: osctl ct unset start-menu docker-4d65
+END: 2026-10-20 00:01:40 +0200
+ELAPSED: 0.9s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:01:40 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 --no-dhcp --gateway-v4 auto --gateway-v6 none docker-4d65 eth0
+END: 2026-10-20 00:01:41 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:01:41 +0200
+COMMAND: osctl ct netif ip add docker-4d65 eth0 192.168.1.95/24
+END: 2026-10-20 00:01:41 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:01:41 +0200
+COMMAND: osctl ct set dns-resolver docker-4d65 1.1.1.1
+END: 2026-10-20 00:01:42 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:01:42 +0200
+COMMAND: osctl ct start docker-4d65
+END: 2026-10-20 00:01:45 +0200
+ELAPSED: 2.37s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 00:01:45 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-20 00:01:47 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58 (37.205.14.58): icmp_seq=1 ttl=254 time=0.401 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.401/0.401/0.401/0.000 ms
+---
+
+START: 2026-10-20 00:01:47 +0200
+COMMAND: osctl ct exec docker-4d65 yum update -y
+END: 2026-10-20 00:02:16 +0200
+ELAPSED: 29.0s
+STATUS: 0
+OUTPUT:
+AlmaLinux 9 - AppStream                          33 MB/s |  30 MB     00:00    
+AlmaLinux 9 - BaseOS                             36 MB/s |  48 MB     00:01    
+AlmaLinux 9 - Extras                             91 kB/s |  33 kB     00:00    
+Last metadata expiration check: 0:00:01 ago on Tue Oct 20 00:02:11 2026.
+Dependencies resolved.
+================================================================================
+ Package               Arch       Version                      Repository  Size
+================================================================================
+Upgrading:
+ kernel-tools          x86_64     5.14.0-687.58.1.el9_8        baseos     1.3 M
+ kernel-tools-libs     x86_64     5.14.0-687.58.1.el9_8        baseos     1.1 M
+
+Transaction Summary
+================================================================================
+Upgrade  2 Packages
+
+Total download size: 2.4 M
+Downloading Packages:
+(1/2): kernel-tools-libs-5.14.0-687.58.1.el9_8.  28 MB/s | 1.1 MB     00:00    
+(2/2): kernel-tools-5.14.0-687.58.1.el9_8.x86_6  24 MB/s | 1.3 MB     00:00    
+--------------------------------------------------------------------------------
+Total                                           6.2 MB/s | 2.4 MB     00:00     
+AlmaLinux 9 - BaseOS                            2.6 MB/s | 3.1 kB     00:00    
+Importing GPG key 0xB86B3716:
+ Userid     : "AlmaLinux OS 9 <packager@almalinux.org>"
+ Fingerprint: BF18 AC28 7617 8908 D6E7 1267 D36C B86C B86B 3716
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-9
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Upgrading        : kernel-tools-libs-5.14.0-687.58.1.el9_8.x86_64         1/4 
+  Running scriptlet: kernel-tools-libs-5.14.0-687.58.1.el9_8.x86_64         1/4 
+  Upgrading        : kernel-tools-5.14.0-687.58.1.el9_8.x86_64              2/4 
+  Running scriptlet: kernel-tools-5.14.0-687.58.1.el9_8.x86_64              2/4 
+  Running scriptlet: kernel-tools-5.14.0-687.57.1.el9_8.x86_64              3/4 
+  Cleanup          : kernel-tools-5.14.0-687.57.1.el9_8.x86_64              3/4 
+  Running scriptlet: kernel-tools-5.14.0-687.57.1.el9_8.x86_64              3/4 
+  Cleanup          : kernel-tools-libs-5.14.0-687.57.1.el9_8.x86_64         4/4 
+  Running scriptlet: kernel-tools-libs-5.14.0-687.57.1.el9_8.x86_64         4/4 
+  Verifying        : kernel-tools-5.14.0-687.58.1.el9_8.x86_64              1/4 
+  Verifying        : kernel-tools-5.14.0-687.57.1.el9_8.x86_64              2/4 
+  Verifying        : kernel-tools-libs-5.14.0-687.58.1.el9_8.x86_64         3/4 
+  Verifying        : kernel-tools-libs-5.14.0-687.57.1.el9_8.x86_64         4/4 
+
+Upgraded:
+  kernel-tools-5.14.0-687.58.1.el9_8.x86_64                                     
+  kernel-tools-libs-5.14.0-687.58.1.el9_8.x86_64                                
+
+Complete!
+---
+
+START: 2026-10-20 00:02:16 +0200
+COMMAND: osctl ct exec docker-4d65 yum install -y yum-utils
+END: 2026-10-20 00:02:20 +0200
+ELAPSED: 4.04s
+STATUS: 0
+OUTPUT:
+Last metadata expiration check: 0:00:08 ago on Tue Oct 20 00:02:11 2026.
+Dependencies resolved.
+================================================================================
+ Package            Architecture    Version               Repository       Size
+================================================================================
+Installing:
+ yum-utils          noarch          4.3.0-26.el9          baseos           34 k
+
+Transaction Summary
+================================================================================
+Install  1 Package
+
+Total download size: 34 k
+Installed size: 23 k
+Downloading Packages:
+yum-utils-4.3.0-26.el9.noarch.rpm               4.6 MB/s |  34 kB     00:00    
+--------------------------------------------------------------------------------
+Total                                           101 kB/s |  34 kB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : yum-utils-4.3.0-26.el9.noarch                          1/1 
+  Running scriptlet: yum-utils-4.3.0-26.el9.noarch                          1/1 
+  Verifying        : yum-utils-4.3.0-26.el9.noarch                          1/1 
+
+Installed:
+  yum-utils-4.3.0-26.el9.noarch                                                 
+
+Complete!
+---
+
+START: 2026-10-20 00:02:20 +0200
+COMMAND: osctl ct exec docker-4d65 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+END: 2026-10-20 00:02:23 +0200
+ELAPSED: 2.63s
+STATUS: 0
+OUTPUT:
+Adding repo from: https://download.docker.com/linux/centos/docker-ce.repo
+---
+
+START: 2026-10-20 00:02:23 +0200
+COMMAND: osctl ct exec docker-4d65 yum install -y docker-ce docker-ce-cli containerd.io
+END: 2026-10-20 00:03:00 +0200
+ELAPSED: 36.77s
+STATUS: 0
+OUTPUT:
+Docker CE Stable - x86_64                       647 kB/s |  88 kB     00:00    
+Last metadata expiration check: 0:00:01 ago on Tue Oct 20 00:02:25 2026.
+Dependencies resolved.
+================================================================================
+ Package                    Arch    Version             Repository         Size
+================================================================================
+Installing:
+ containerd.io              x86_64  2.4.2-2.el9         docker-ce-stable   35 M
+ docker-ce                  x86_64  3:29.9.1-1.el9      docker-ce-stable   26 M
+ docker-ce-cli              x86_64  1:29.9.1-1.el9      docker-ce-stable  8.9 M
+Installing dependencies:
+ container-selinux          noarch  4:2.247.0-1.el9_8   appstream          57 k
+ tar                        x86_64  2:1.34-13.el9_8     baseos            878 k
+Installing weak dependencies:
+ docker-buildx-plugin       x86_64  0.38.0-1.el9        docker-ce-stable   18 M
+ docker-ce-rootless-extras  x86_64  29.9.1-1.el9        docker-ce-stable  5.6 M
+ docker-compose-plugin      x86_64  5.6.0-1.el9         docker-ce-stable  8.4 M
+
+Transaction Summary
+================================================================================
+Install  8 Packages
+
+Total download size: 103 M
+Installed size: 390 M
+Downloading Packages:
+(1/8): container-selinux-2.247.0-1.el9_8.noarch 6.8 MB/s |  57 kB     00:00    
+(2/8): tar-1.34-13.el9_8.x86_64.rpm              21 MB/s | 878 kB     00:00    
+(3/8): docker-buildx-plugin-0.38.0-1.el9.x86_64  33 MB/s |  18 MB     00:00    
+(4/8): docker-ce-29.9.1-1.el9.x86_64.rpm         27 MB/s |  26 MB     00:00    
+(5/8): docker-ce-cli-29.9.1-1.el9.x86_64.rpm     16 MB/s | 8.9 MB     00:00    
+(6/8): docker-ce-rootless-extras-29.9.1-1.el9.x  13 MB/s | 5.6 MB     00:00    
+(7/8): containerd.io-2.4.2-2.el9.x86_64.rpm      19 MB/s |  35 MB     00:01    
+(8/8): docker-compose-plugin-5.6.0-1.el9.x86_64  11 MB/s | 8.4 MB     00:00    
+--------------------------------------------------------------------------------
+Total                                            40 MB/s | 103 MB     00:02     
+Docker CE Stable - x86_64                        35 kB/s | 1.6 kB     00:00    
+Importing GPG key 0x621E9F35:
+ Userid     : "Docker Release (CE rpm) <docker@docker.com>"
+ Fingerprint: 060A 61C5 1B55 8A7F 742B 77AA C52F EB6B 621E 9F35
+ From       : https://download.docker.com/linux/centos/gpg
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : docker-buildx-plugin-0.38.0-1.el9.x86_64               1/8 
+  Running scriptlet: docker-buildx-plugin-0.38.0-1.el9.x86_64               1/8 
+  Installing       : docker-compose-plugin-5.6.0-1.el9.x86_64               2/8 
+  Running scriptlet: docker-compose-plugin-5.6.0-1.el9.x86_64               2/8 
+  Running scriptlet: container-selinux-4:2.247.0-1.el9_8.noarch             3/8 
+  Installing       : container-selinux-4:2.247.0-1.el9_8.noarch             3/8 
+  Running scriptlet: container-selinux-4:2.247.0-1.el9_8.noarch             3/8 
+  Installing       : containerd.io-2.4.2-2.el9.x86_64                       4/8 
+  Running scriptlet: containerd.io-2.4.2-2.el9.x86_64                       4/8 
+  Installing       : docker-ce-cli-1:29.9.1-1.el9.x86_64                    5/8 
+  Running scriptlet: docker-ce-cli-1:29.9.1-1.el9.x86_64                    5/8 
+  Installing       : tar-2:1.34-13.el9_8.x86_64                             6/8 
+  Installing       : docker-ce-rootless-extras-29.9.1-1.el9.x86_64          7/8 
+  Running scriptlet: docker-ce-rootless-extras-29.9.1-1.el9.x86_64          7/8 
+  Installing       : docker-ce-3:29.9.1-1.el9.x86_64                        8/8 
+  Running scriptlet: docker-ce-3:29.9.1-1.el9.x86_64                        8/8 
+  Running scriptlet: container-selinux-4:2.247.0-1.el9_8.noarch             8/8 
+  Running scriptlet: docker-ce-3:29.9.1-1.el9.x86_64                        8/8 
+  Verifying        : container-selinux-4:2.247.0-1.el9_8.noarch             1/8 
+  Verifying        : tar-2:1.34-13.el9_8.x86_64                             2/8 
+  Verifying        : containerd.io-2.4.2-2.el9.x86_64                       3/8 
+  Verifying        : docker-buildx-plugin-0.38.0-1.el9.x86_64               4/8 
+  Verifying        : docker-ce-3:29.9.1-1.el9.x86_64                        5/8 
+  Verifying        : docker-ce-cli-1:29.9.1-1.el9.x86_64                    6/8 
+  Verifying        : docker-ce-rootless-extras-29.9.1-1.el9.x86_64          7/8 
+  Verifying        : docker-compose-plugin-5.6.0-1.el9.x86_64               8/8 
+
+Installed:
+  container-selinux-4:2.247.0-1.el9_8.noarch                                    
+  containerd.io-2.4.2-2.el9.x86_64                                              
+  docker-buildx-plugin-0.38.0-1.el9.x86_64                                      
+  docker-ce-3:29.9.1-1.el9.x86_64                                               
+  docker-ce-cli-1:29.9.1-1.el9.x86_64                                           
+  docker-ce-rootless-extras-29.9.1-1.el9.x86_64                                 
+  docker-compose-plugin-5.6.0-1.el9.x86_64                                      
+  tar-2:1.34-13.el9_8.x86_64                                                    
+
+Complete!
+---
+
+START: 2026-10-20 00:03:00 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-20 00:03:02 +0200
+ELAPSED: 2.07s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 00:03:02 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c mkdir\ -p\ /etc/docker'
+'cat\ \>\ /etc/docker/daemon.json\ \<\<\'EOF\''
+'\{'
+'\ \ \"registry-mirrors\":\ \['
+'\ \ \ \ \"https://docker-registry.vpsadminos.org\"'
+'\ \ \]'
+'\}'
+''
+'EOF'
+'
+END: 2026-10-20 00:03:04 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:03:04 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c if\ command\ -v\ update-alternatives\ \>/dev/null\ 2\>\&1\;\ then'
+'\ \ for\ name\ in\ iptables\ ip6tables\ arptables\ ebtables\;\ do'
+'\ \ \ \ target\=\"/usr/sbin/\$\{name\}-nft\"'
+'\ \ \ \ if\ \[\ -x\ \"\$target\"\ \]\ \&\&\ update-alternatives\ --list\ \"\$name\"\ 2\>/dev/null\ \|\ grep\ -Fxq\ \"\$target\"\;\ then'
+'\ \ \ \ \ \ update-alternatives\ --set\ \"\$name\"\ \"\$target\"'
+'\ \ \ \ fi'
+'\ \ done'
+'fi'
+'
+END: 2026-10-20 00:03:06 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:03:06 +0200
+COMMAND: osctl ct exec docker-4d65 systemctl reset-failed docker || true
+END: 2026-10-20 00:03:08 +0200
+ELAPSED: 1.96s
+STATUS: 0
+OUTPUT:
+Failed to reset failed state of unit docker.service: Unit docker.service not loaded.
+error: executed command failed
+---
+
+START: 2026-10-20 00:03:08 +0200
+COMMAND: osctl ct exec docker-4d65 systemctl restart docker
+END: 2026-10-20 00:03:11 +0200
+ELAPSED: 3.33s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:03:11 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-20 00:03:13 +0200
+ELAPSED: 2.05s
+STATUS: 0
+OUTPUT:
+{
+  "registry-mirrors": [
+    "https://docker-registry.vpsadminos.org"
+  ]
+}
+
+---
+
+START: 2026-10-20 00:03:13 +0200
+COMMAND: osctl ct exec docker-4d65 docker info
+END: 2026-10-20 00:03:15 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+Client: Docker Engine - Community
+ Version:    29.9.1
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.38.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.6.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 0
+ Server Version: 29.9.1
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: b7a25261e029d68978bbf290df0a62fc819b3c51
+ runc version: v1.5.2-0-g29dd3dc2
+ init version: de40ad0
+ Security Options:
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.12.109
+ Operating System: AlmaLinux 9.8 (Olive Jaguar)
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 4
+ Total Memory: 7.765GiB
+ Name: docker-4d65
+ ID: d572c33d-dbc0-4380-af24-677bf44c48f4
+ Docker Root Dir: /var/lib/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  127.0.0.0/8
+  ::1/128
+ Registry Mirrors:
+  https://docker-registry.vpsadminos.org/
+ Live Restore Enabled: false
+ Firewall Backend: iptables
+  EnableUserlandProxy: true
+  UserlandProxyPath: /usr/bin/docker-proxy
+
+WARNING: No io.weight support
+WARNING: No io.weight (per device) support
+WARNING: No io.max (rbps) support
+WARNING: No io.max (wbps) support
+WARNING: No io.max (riops) support
+WARNING: No io.max (wiops) support
+---
+
+START: 2026-10-20 00:03:15 +0200
+COMMAND: osctl ct exec docker-4d65 docker run hello-world
+END: 2026-10-20 00:03:19 +0200
+ELAPSED: 3.8s
+STATUS: 0
+OUTPUT:
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+4f55086f7dd0: Pulling fs layer
+d5e71e642bf5: Download complete
+4f55086f7dd0: Download complete
+4f55086f7dd0: Pull complete
+Digest: sha256:11a3eb1597e864c51b3f56733cb2e8a90bf0c284bfc05f9444d81c558bc848aa
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+---
+
+START: 2026-10-20 00:03:19 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c mkdir\ -p\ /tmp/docker-build-test'
+'cat\ \>\ /tmp/docker-build-test/Dockerfile\ \<\<\'EOF\''
+'\#\ syntax\=docker/dockerfile:1'
+''
+'FROM\ alpine:latest'
+'RUN\ echo\ \"Docker\ build\ works\!\"\ \>\ /message.txt'
+'CMD\ \[\"cat\",\ \"/message.txt\"\]'
+''
+'EOF'
+'
+END: 2026-10-20 00:03:21 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:03:21 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ build\ -t\ docker-build-test\ /tmp/docker-build-test
+END: 2026-10-20 00:03:26 +0200
+ELAPSED: 5.01s
+STATUS: 0
+OUTPUT:
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 161B 0.0s done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.5s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 7.34MB / 14.28MB 0.2s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 14.28MB / 14.28MB 0.3s done
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 0.2s done
+#3 DONE 0.6s
+
+#4 [internal] load metadata for docker.io/library/alpine:latest
+#4 DONE 0.4s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [1/2] FROM docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+#6 resolve docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 0.0s done
+#6 sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 3.85MB / 3.85MB 0.1s done
+#6 extracting sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5
+#6 extracting sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 0.2s done
+#6 DONE 0.3s
+
+#7 [2/2] RUN echo "Docker build works!" > /message.txt
+#7 DONE 0.2s
+
+#8 exporting to image
+#8 exporting layers 0.1s done
+#8 exporting manifest sha256:eec71bc6a451daa209c2e14a92e4e36ee9ab56e1c5122bc41cfb4e5c10d331a2 done
+#8 exporting config sha256:456ff1157582b9fd0f56ed28cf8774c8e22dc5715bc4ff53841dcf4678134f18 done
+#8 exporting attestation manifest sha256:2b217f8119753264302b1fd7399686adbe97bdcbc2dd89aa9285c2e7c94d6fb0
+#8 exporting attestation manifest sha256:2b217f8119753264302b1fd7399686adbe97bdcbc2dd89aa9285c2e7c94d6fb0 0.0s done
+#8 exporting manifest list sha256:db22cf32382ca695e5db2849a82dad8a219407a80780e1de07a93eb2acfeb149 done
+#8 naming to docker.io/library/docker-build-test:latest done
+#8 unpacking to docker.io/library/docker-build-test:latest
+#8 unpacking to docker.io/library/docker-build-test:latest 0.2s done
+#8 DONE 0.4s
+---
+
+START: 2026-10-20 00:03:26 +0200
+COMMAND: osctl ct exec docker-4d65 docker run --rm docker-build-test
+END: 2026-10-20 00:03:28 +0200
+ELAPSED: 2.19s
+STATUS: 0
+OUTPUT:
+Docker build works!
+---
+
+START: 2026-10-20 00:03:28 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:03:30 +0200
+ELAPSED: 1.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:03:30 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ create\ --name\ resource-limit-mem64-cpu0_5\ --memory\ 64m\ --cpu-period\ 100000\ --cpu-quota\ 50000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=67108864\''
+'\'expected_cpu_quota\\\=50000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-20 00:03:32 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+a70ffd0f4261eac83549e5516c4a7e25b38fa2964f331c454b8468211d027666
+---
+
+START: 2026-10-20 00:03:32 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ start\ --attach\ resource-limit-mem64-cpu0_5
+END: 2026-10-20 00:03:34 +0200
+ELAPSED: 2.24s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-20 00:03:34 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:03:36 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:03:36 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:03:37 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:03:37 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ create\ --name\ resource-limit-mem128-cpu1\ --memory\ 128m\ --cpu-period\ 100000\ --cpu-quota\ 100000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=134217728\''
+'\'expected_cpu_quota\\\=100000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-20 00:03:40 +0200
+ELAPSED: 2.17s
+STATUS: 0
+OUTPUT:
+593d70c04ef3283317aabaf80605a3852157d04b6876946b870eb527733a8916
+---
+
+START: 2026-10-20 00:03:40 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ start\ --attach\ resource-limit-mem128-cpu1
+END: 2026-10-20 00:03:42 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-20 00:03:42 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:03:44 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:03:44 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:03:46 +0200
+ELAPSED: 1.99s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:03:46 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ create\ --name\ resource-limit-mem256-cpu2\ --memory\ 256m\ --cpu-period\ 100000\ --cpu-quota\ 200000\ --cpuset-cpus\ 0-1\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=268435456\''
+'\'expected_cpu_quota\\\=200000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-20 00:03:48 +0200
+ELAPSED: 2.27s
+STATUS: 0
+OUTPUT:
+190450e32324ce4695cb10a01a8e12feb18016cc8fae85d566dd19e2d940da1d
+---
+
+START: 2026-10-20 00:03:48 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ start\ --attach\ resource-limit-mem256-cpu2
+END: 2026-10-20 00:03:50 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-20 00:03:50 +0200
+COMMAND: osctl ct exec docker-4d65 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:03:52 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:03:52 +0200
+COMMAND: osctl ct exec docker-4d65 docker pull gitlab/gitlab-ee:latest
+END: 2026-10-20 00:06:04 +0200
+ELAPSED: 131.53s
+STATUS: 0
+OUTPUT:
+latest: Pulling from gitlab/gitlab-ee
+a60ef8ec184e: Pulling fs layer
+921339dbed1b: Pulling fs layer
+4df2190a564d: Pulling fs layer
+35f1d1c4d2fc: Pulling fs layer
+29fd8e020463: Pulling fs layer
+efc789c857d4: Pulling fs layer
+d09a49a97fbc: Pulling fs layer
+a79790b56084: Pulling fs layer
+236de2eed0f1: Pulling fs layer
+4df2190a564d: Download complete
+35f1d1c4d2fc: Download complete
+921339dbed1b: Download complete
+29fd8e020463: Download complete
+d09a49a97fbc: Download complete
+a79790b56084: Download complete
+236de2eed0f1: Download complete
+a60ef8ec184e: Download complete
+a60ef8ec184e: Pull complete
+a79790b56084: Pull complete
+29fd8e020463: Pull complete
+4df2190a564d: Pull complete
+921339dbed1b: Pull complete
+d09a49a97fbc: Pull complete
+236de2eed0f1: Pull complete
+35f1d1c4d2fc: Pull complete
+efc789c857d4: Download complete
+efc789c857d4: Pull complete
+Digest: sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec
+Status: Downloaded newer image for gitlab/gitlab-ee:latest
+docker.io/gitlab/gitlab-ee:latest
+---
+
+START: 2026-10-20 00:06:04 +0200
+COMMAND: osctl ct exec docker-4d65 docker image inspect gitlab/gitlab-ee:latest
+END: 2026-10-20 00:06:06 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+[
+    {
+        "Id": "sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec",
+        "RepoTags": [
+            "gitlab/gitlab-ee:latest"
+        ],
+        "RepoDigests": [
+            "gitlab/gitlab-ee@sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-10-15T01:23:45.89919621Z",
+        "Config": {
+            "ExposedPorts": {
+                "22/tcp": {},
+                "443/tcp": {},
+                "80/tcp": {}
+            },
+            "Env": [
+                "PATH=/opt/gitlab/embedded/bin:/opt/gitlab/bin:/assets:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "EDITOR=/bin/vi",
+                "GITLAB_ALLOW_SHA1_RSA=false",
+                "TERM=xterm"
+            ],
+            "Cmd": [
+                "/assets/init-container"
+            ],
+            "Volumes": {
+                "/etc/gitlab": {},
+                "/var/log/gitlab": {},
+                "/var/opt/gitlab": {}
+            },
+            "Labels": {
+                "org.opencontainers.image.authors": "GitLab Distribution Team <distribution-be@gitlab.com>",
+                "org.opencontainers.image.base.name": "docker.io/ubuntu:24.04",
+                "org.opencontainers.image.documentation": "https://docs.gitlab.com/ee/install/docker/",
+                "org.opencontainers.image.source": "https://gitlab.com/gitlab-org/omnibus-gitlab",
+                "org.opencontainers.image.title": "GitLab Omnibus Docker",
+                "org.opencontainers.image.version": "24.04"
+            },
+            "ArgsEscaped": true,
+            "Healthcheck": {
+                "Test": [
+                    "CMD-SHELL",
+                    "/opt/gitlab/bin/gitlab-healthcheck --fail --max-time 10"
+                ],
+                "Interval": 60000000000,
+                "Timeout": 30000000000,
+                "Retries": 5
+            },
+            "Shell": [
+                "/bin/sh",
+                "-c"
+            ]
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 4444734206,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:d81fb2a7c6ee3be05fdefaa7fd223be219c1ab172083ec1b994c3ecda33ac0a8",
+                "sha256:ec4f887c43ef5cc03c5ecdb6ad059b581eadeb3fdebffb2b42c51e454e46601c",
+                "sha256:004caf9960f741ac1ecb4da67c047b51e50e850fcb06ab53f96e35bd41ead9c7",
+                "sha256:35bf502a602d309419afc4c6c4f942fca700f6d6ea2f941cf5a3043f80e613b0",
+                "sha256:44b92107f2ad7d3345c43067e388706479373ce55a5b0ab253d3491a45f83b26",
+                "sha256:bee1346e0b3bb0224c0da75000e7847dd5e8ed39545acf7e149e61dd3c70d597",
+                "sha256:796f2a6a4c9a506fa2189569288402ea2a2c63b23c7107154daa10e1d3f67893",
+                "sha256:7df49fde7f2ec29347e68668ae242e659b6e53d8aaa371e714b1c55cc5407acf",
+                "sha256:9992d41c5af8db68fc1799f2f3c926398b37d4270ed161e788d728a3b10c944d"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-10-19T22:06:04.357142363Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec",
+            "size": 647
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "docker.io/gitlab/gitlab-ee"
+                }
+            ]
+        }
+    }
+]
+---
+
+START: 2026-10-20 00:06:06 +0200
+COMMAND: osctl ct del -f --prune docker-4d65
+END: 2026-10-20 00:06:10 +0200
+ELAPSED: 3.49s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:docker-4d65
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-20 00:06:10 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-20 00:06:10 +0200
+ELAPSED: 0.84s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/almalinux/9/image-stream.tar
+---
+
+START: 2026-10-20 00:06:10 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 00:06:25 +0200
+ELAPSED: 14.76s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+
+START: 2026-10-20 00:07:00 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 00:07:00 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:07:00 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 00:07:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:07:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:07:02 +0200
+ELAPSED: 2.1s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:07:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:07:04 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:07:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:07:05 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:07:06 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:07:07 +0200
+ELAPSED: 0.8s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:07:08 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:07:09 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:07:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:07:11 +0200
+ELAPSED: 0.91s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:07:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:07:13 +0200
+ELAPSED: 0.75s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:07:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:07:14 +0200
+ELAPSED: 0.91s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:07:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:07:16 +0200
+ELAPSED: 0.67s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 00:07:17 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:07:18 +0200
+ELAPSED: 0.9s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 00:07:18 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-20 00:07:18 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 22:07:18 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 00:07:18 +0200
+COMMAND: osctl ct new --distribution almalinux --version 8 docker-c5d7
+END: 2026-10-20 00:07:32 +0200
+ELAPSED: 13.71s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 00:07:32 +0200
+COMMAND: osctl ct unset start-menu docker-c5d7
+END: 2026-10-20 00:07:33 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:07:33 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 --no-dhcp --gateway-v4 auto --gateway-v6 none docker-c5d7 eth0
+END: 2026-10-20 00:07:33 +0200
+ELAPSED: 0.8s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:07:33 +0200
+COMMAND: osctl ct netif ip add docker-c5d7 eth0 192.168.1.94/24
+END: 2026-10-20 00:07:34 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:07:34 +0200
+COMMAND: osctl ct set dns-resolver docker-c5d7 1.1.1.1
+END: 2026-10-20 00:07:35 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:07:35 +0200
+COMMAND: osctl ct start docker-c5d7
+END: 2026-10-20 00:07:38 +0200
+ELAPSED: 2.18s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 00:07:38 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-20 00:07:39 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58 (37.205.14.58): icmp_seq=1 ttl=254 time=0.318 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.318/0.318/0.318/0.000 ms
+---
+
+START: 2026-10-20 00:07:39 +0200
+COMMAND: osctl ct exec docker-c5d7 yum update -y
+END: 2026-10-20 00:08:32 +0200
+ELAPSED: 52.2s
+STATUS: 0
+OUTPUT:
+AlmaLinux 8 - BaseOS                             47 MB/s | 107 MB     00:02    
+AlmaLinux 8 - AppStream                          31 MB/s |  33 MB     00:01    
+AlmaLinux 8 - Extras                             63 kB/s |  24 kB     00:00    
+Dependencies resolved.
+Nothing to do.
+Complete!
+---
+
+START: 2026-10-20 00:08:32 +0200
+COMMAND: osctl ct exec docker-c5d7 yum install -y yum-utils
+END: 2026-10-20 00:08:38 +0200
+ELAPSED: 6.26s
+STATUS: 0
+OUTPUT:
+Last metadata expiration check: 0:00:07 ago on Tue Oct 20 00:08:27 2026.
+Dependencies resolved.
+================================================================================
+ Package           Architecture   Version                  Repository      Size
+================================================================================
+Installing:
+ yum-utils         noarch         4.0.21-25.el8            baseos          75 k
+
+Transaction Summary
+================================================================================
+Install  1 Package
+
+Total download size: 75 k
+Installed size: 23 k
+Downloading Packages:
+yum-utils-4.0.21-25.el8.noarch.rpm              8.9 MB/s |  75 kB     00:00    
+--------------------------------------------------------------------------------
+Total                                           215 kB/s |  75 kB     00:00     
+AlmaLinux 8 - BaseOS                            4.9 MB/s | 5.0 kB     00:00    
+Importing GPG key 0xC21AD6EA:
+ Userid     : "AlmaLinux <packager@almalinux.org>"
+ Fingerprint: E53C F5EF 91CE B0AD 1812 ECB8 51D6 647E C21A D6EA
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+Key imported successfully
+Importing GPG key 0xCED7258B:
+ Userid     : "AlmaLinux OS 8 <packager@almalinux.org>"
+ Fingerprint: BC5E DDCA DF50 2C07 7F15 8288 2AE8 1E8A CED7 258B
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : yum-utils-4.0.21-25.el8.noarch                         1/1 
+  Running scriptlet: yum-utils-4.0.21-25.el8.noarch                         1/1 
+  Verifying        : yum-utils-4.0.21-25.el8.noarch                         1/1 
+
+Installed:
+  yum-utils-4.0.21-25.el8.noarch                                                
+
+Complete!
+---
+
+START: 2026-10-20 00:08:38 +0200
+COMMAND: osctl ct exec docker-c5d7 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+END: 2026-10-20 00:08:40 +0200
+ELAPSED: 2.39s
+STATUS: 0
+OUTPUT:
+Adding repo from: https://download.docker.com/linux/centos/docker-ce.repo
+---
+
+START: 2026-10-20 00:08:40 +0200
+COMMAND: osctl ct exec docker-c5d7 yum install -y docker-ce docker-ce-cli containerd.io
+END: 2026-10-20 00:10:18 +0200
+ELAPSED: 97.37s
+STATUS: 0
+OUTPUT:
+Docker CE Stable - x86_64                       555 kB/s |  66 kB     00:00    
+Dependencies resolved.
+======================================================================================================
+ Package                     Arch    Version                                   Repository         Size
+======================================================================================================
+Installing:
+ containerd.io               x86_64  1.6.32-3.1.el8                            docker-ce-stable   35 M
+ docker-ce                   x86_64  3:26.1.3-1.el8                            docker-ce-stable   27 M
+ docker-ce-cli               x86_64  1:26.1.3-1.el8                            docker-ce-stable  7.8 M
+Installing dependencies:
+ container-selinux           noarch  2:2.229.0-3.module_el8.10.0+4269+94686149 appstream          70 k
+ fuse-common                 x86_64  3.3.0-19.el8                              baseos             21 k
+ fuse-overlayfs              x86_64  1.13-1.module_el8.10.0+4120+03ad4b47      appstream          69 k
+ fuse3                       x86_64  3.3.0-19.el8                              baseos             54 k
+ fuse3-libs                  x86_64  3.3.0-19.el8                              baseos             95 k
+ libcgroup                   x86_64  0.41-19.el8                               baseos             69 k
+ libslirp                    x86_64  4.4.0-2.module_el8.10.0+4120+03ad4b47     appstream          69 k
+ slirp4netns                 x86_64  1.2.3-1.module_el8.10.0+4120+03ad4b47     appstream          55 k
+ tar                         x86_64  2:1.30-13.el8_10                          baseos            845 k
+Installing weak dependencies:
+ docker-buildx-plugin        x86_64  0.14.0-1.el8                              docker-ce-stable   14 M
+ docker-ce-rootless-extras   x86_64  26.1.3-1.el8                              docker-ce-stable  5.0 M
+ docker-compose-plugin       x86_64  2.27.0-1.el8                              docker-ce-stable   13 M
+Enabling module streams:
+ container-tools                     rhel8                                                            
+
+Transaction Summary
+======================================================================================================
+Install  15 Packages
+
+Total download size: 104 M
+Installed size: 393 M
+Downloading Packages:
+(1/15): fuse-common-3.3.0-19.el8.x86_64.rpm     2.8 MB/s |  21 kB     00:00    
+(2/15): fuse3-3.3.0-19.el8.x86_64.rpm           6.0 MB/s |  54 kB     00:00    
+(3/15): fuse3-libs-3.3.0-19.el8.x86_64.rpm      8.8 MB/s |  95 kB     00:00    
+(4/15): libcgroup-0.41-19.el8.x86_64.rpm        7.4 MB/s |  69 kB     00:00    
+(5/15): container-selinux-2.229.0-3.module_el8. 5.8 MB/s |  70 kB     00:00    
+(6/15): fuse-overlayfs-1.13-1.module_el8.10.0+4  13 MB/s |  69 kB     00:00    
+(7/15): libslirp-4.4.0-2.module_el8.10.0+4120+0  13 MB/s |  69 kB     00:00    
+(8/15): slirp4netns-1.2.3-1.module_el8.10.0+412  11 MB/s |  55 kB     00:00    
+(9/15): tar-1.30-13.el8_10.x86_64.rpm            31 MB/s | 845 kB     00:00    
+(10/15): docker-buildx-plugin-0.14.0-1.el8.x86_  28 MB/s |  14 MB     00:00    
+(11/15): docker-ce-cli-26.1.3-1.el8.x86_64.rpm   28 MB/s | 7.8 MB     00:00    
+(12/15): docker-ce-26.1.3-1.el8.x86_64.rpm       27 MB/s |  27 MB     00:01    
+(13/15): docker-ce-rootless-extras-26.1.3-1.el8  13 MB/s | 5.0 MB     00:00    
+(14/15): containerd.io-1.6.32-3.1.el8.x86_64.rp  25 MB/s |  35 MB     00:01    
+(15/15): docker-compose-plugin-2.27.0-1.el8.x86  26 MB/s |  13 MB     00:00    
+--------------------------------------------------------------------------------
+Total                                            46 MB/s | 104 MB     00:02     
+Docker CE Stable - x86_64                        40 kB/s | 1.6 kB     00:00    
+Importing GPG key 0x621E9F35:
+ Userid     : "Docker Release (CE rpm) <docker@docker.com>"
+ Fingerprint: 060A 61C5 1B55 8A7F 742B 77AA C52F EB6B 621E 9F35
+ From       : https://download.docker.com/linux/centos/gpg
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : docker-compose-plugin-2.27.0-1.el8.x86_64             1/15 
+  Running scriptlet: docker-compose-plugin-2.27.0-1.el8.x86_64             1/15 
+  Running scriptlet: container-selinux-2:2.229.0-3.module_el8.10.0+4269    2/15 
+  Installing       : container-selinux-2:2.229.0-3.module_el8.10.0+4269    2/15 
+  Running scriptlet: container-selinux-2:2.229.0-3.module_el8.10.0+4269    2/15 
+  Installing       : fuse3-libs-3.3.0-19.el8.x86_64                        3/15 
+  Running scriptlet: fuse3-libs-3.3.0-19.el8.x86_64                        3/15 
+  Installing       : containerd.io-1.6.32-3.1.el8.x86_64                   4/15 
+  Running scriptlet: containerd.io-1.6.32-3.1.el8.x86_64                   4/15 
+  Installing       : docker-buildx-plugin-0.14.0-1.el8.x86_64              5/15 
+  Running scriptlet: docker-buildx-plugin-0.14.0-1.el8.x86_64              5/15 
+  Installing       : docker-ce-cli-1:26.1.3-1.el8.x86_64                   6/15 
+  Running scriptlet: docker-ce-cli-1:26.1.3-1.el8.x86_64                   6/15 
+  Installing       : libslirp-4.4.0-2.module_el8.10.0+4120+03ad4b47.x86    7/15 
+  Installing       : slirp4netns-1.2.3-1.module_el8.10.0+4120+03ad4b47.    8/15 
+  Installing       : tar-2:1.30-13.el8_10.x86_64                           9/15 
+  Running scriptlet: tar-2:1.30-13.el8_10.x86_64                           9/15 
+  Running scriptlet: libcgroup-0.41-19.el8.x86_64                         10/15 
+  Installing       : libcgroup-0.41-19.el8.x86_64                         10/15 
+  Running scriptlet: libcgroup-0.41-19.el8.x86_64                         10/15 
+  Installing       : fuse-common-3.3.0-19.el8.x86_64                      11/15 
+  Installing       : fuse3-3.3.0-19.el8.x86_64                            12/15 
+  Installing       : fuse-overlayfs-1.13-1.module_el8.10.0+4120+03ad4b4   13/15 
+  Running scriptlet: fuse-overlayfs-1.13-1.module_el8.10.0+4120+03ad4b4   13/15 
+  Installing       : docker-ce-3:26.1.3-1.el8.x86_64                      14/15 
+  Running scriptlet: docker-ce-3:26.1.3-1.el8.x86_64                      14/15 
+  Installing       : docker-ce-rootless-extras-26.1.3-1.el8.x86_64        15/15 
+  Running scriptlet: docker-ce-rootless-extras-26.1.3-1.el8.x86_64        15/15 
+  Running scriptlet: container-selinux-2:2.229.0-3.module_el8.10.0+4269   15/15 
+  Running scriptlet: docker-ce-rootless-extras-26.1.3-1.el8.x86_64        15/15 
+  Verifying        : fuse-common-3.3.0-19.el8.x86_64                       1/15 
+  Verifying        : fuse3-3.3.0-19.el8.x86_64                             2/15 
+  Verifying        : fuse3-libs-3.3.0-19.el8.x86_64                        3/15 
+  Verifying        : libcgroup-0.41-19.el8.x86_64                          4/15 
+  Verifying        : tar-2:1.30-13.el8_10.x86_64                           5/15 
+  Verifying        : container-selinux-2:2.229.0-3.module_el8.10.0+4269    6/15 
+  Verifying        : fuse-overlayfs-1.13-1.module_el8.10.0+4120+03ad4b4    7/15 
+  Verifying        : libslirp-4.4.0-2.module_el8.10.0+4120+03ad4b47.x86    8/15 
+  Verifying        : slirp4netns-1.2.3-1.module_el8.10.0+4120+03ad4b47.    9/15 
+  Verifying        : containerd.io-1.6.32-3.1.el8.x86_64                  10/15 
+  Verifying        : docker-buildx-plugin-0.14.0-1.el8.x86_64             11/15 
+  Verifying        : docker-ce-3:26.1.3-1.el8.x86_64                      12/15 
+  Verifying        : docker-ce-cli-1:26.1.3-1.el8.x86_64                  13/15 
+  Verifying        : docker-ce-rootless-extras-26.1.3-1.el8.x86_64        14/15 
+  Verifying        : docker-compose-plugin-2.27.0-1.el8.x86_64            15/15 
+
+Installed:
+  container-selinux-2:2.229.0-3.module_el8.10.0+4269+94686149.noarch            
+  containerd.io-1.6.32-3.1.el8.x86_64                                           
+  docker-buildx-plugin-0.14.0-1.el8.x86_64                                      
+  docker-ce-3:26.1.3-1.el8.x86_64                                               
+  docker-ce-cli-1:26.1.3-1.el8.x86_64                                           
+  docker-ce-rootless-extras-26.1.3-1.el8.x86_64                                 
+  docker-compose-plugin-2.27.0-1.el8.x86_64                                     
+  fuse-common-3.3.0-19.el8.x86_64                                               
+  fuse-overlayfs-1.13-1.module_el8.10.0+4120+03ad4b47.x86_64                    
+  fuse3-3.3.0-19.el8.x86_64                                                     
+  fuse3-libs-3.3.0-19.el8.x86_64                                                
+  libcgroup-0.41-19.el8.x86_64                                                  
+  libslirp-4.4.0-2.module_el8.10.0+4120+03ad4b47.x86_64                         
+  slirp4netns-1.2.3-1.module_el8.10.0+4120+03ad4b47.x86_64                      
+  tar-2:1.30-13.el8_10.x86_64                                                   
+
+Complete!
+---
+
+START: 2026-10-20 00:10:18 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-20 00:10:19 +0200
+ELAPSED: 1.82s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 00:10:19 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c mkdir\ -p\ /etc/docker'
+'cat\ \>\ /etc/docker/daemon.json\ \<\<\'EOF\''
+'\{'
+'\ \ \"registry-mirrors\":\ \['
+'\ \ \ \ \"https://docker-registry.vpsadminos.org\"'
+'\ \ \]'
+'\}'
+''
+'EOF'
+'
+END: 2026-10-20 00:10:22 +0200
+ELAPSED: 2.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:10:22 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c if\ command\ -v\ update-alternatives\ \>/dev/null\ 2\>\&1\;\ then'
+'\ \ for\ name\ in\ iptables\ ip6tables\ arptables\ ebtables\;\ do'
+'\ \ \ \ target\=\"/usr/sbin/\$\{name\}-nft\"'
+'\ \ \ \ if\ \[\ -x\ \"\$target\"\ \]\ \&\&\ update-alternatives\ --list\ \"\$name\"\ 2\>/dev/null\ \|\ grep\ -Fxq\ \"\$target\"\;\ then'
+'\ \ \ \ \ \ update-alternatives\ --set\ \"\$name\"\ \"\$target\"'
+'\ \ \ \ fi'
+'\ \ done'
+'fi'
+'
+END: 2026-10-20 00:10:23 +0200
+ELAPSED: 1.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:10:23 +0200
+COMMAND: osctl ct exec docker-c5d7 systemctl reset-failed docker || true
+END: 2026-10-20 00:10:25 +0200
+ELAPSED: 2.17s
+STATUS: 0
+OUTPUT:
+Failed to reset failed state of unit docker.service: Unit docker.service not loaded.
+error: executed command failed
+---
+
+START: 2026-10-20 00:10:25 +0200
+COMMAND: osctl ct exec docker-c5d7 systemctl restart docker
+END: 2026-10-20 00:10:28 +0200
+ELAPSED: 2.81s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:10:28 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-20 00:10:30 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+{
+  "registry-mirrors": [
+    "https://docker-registry.vpsadminos.org"
+  ]
+}
+
+---
+
+START: 2026-10-20 00:10:30 +0200
+COMMAND: osctl ct exec docker-c5d7 docker info
+END: 2026-10-20 00:10:32 +0200
+ELAPSED: 1.91s
+STATUS: 0
+OUTPUT:
+Client: Docker Engine - Community
+ Version:    26.1.3
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.14.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v2.27.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 0
+ Server Version: 26.1.3
+ Storage Driver: overlay2
+  Backing Filesystem: cramfs
+  Supports d_type: true
+  Using metacopy: false
+  Native Overlay Diff: true
+  userxattr: false
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: 8b3b7ca2e5ce38e8f31a34f35b2b68ceb8470d89
+ runc version: v1.1.12-0-g51d5e94
+ init version: de40ad0
+ Security Options:
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.12.109
+ Operating System: AlmaLinux 8.10 (Cerulean Leopard)
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 4
+ Total Memory: 7.765GiB
+ Name: docker-c5d7
+ ID: dba6e0a4-e2c2-47bb-92fe-c64a02d9f2a5
+ Docker Root Dir: /var/lib/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  127.0.0.0/8
+ Registry Mirrors:
+  https://docker-registry.vpsadminos.org/
+ Live Restore Enabled: false
+
+WARNING: No io.weight support
+WARNING: No io.weight (per device) support
+WARNING: No io.max (rbps) support
+WARNING: No io.max (wbps) support
+WARNING: No io.max (riops) support
+WARNING: No io.max (wiops) support
+---
+
+START: 2026-10-20 00:10:32 +0200
+COMMAND: osctl ct exec docker-c5d7 docker run hello-world
+END: 2026-10-20 00:10:35 +0200
+ELAPSED: 3.17s
+STATUS: 0
+OUTPUT:
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+4f55086f7dd0: Pulling fs layer
+4f55086f7dd0: Verifying Checksum
+4f55086f7dd0: Download complete
+4f55086f7dd0: Pull complete
+Digest: sha256:11a3eb1597e864c51b3f56733cb2e8a90bf0c284bfc05f9444d81c558bc848aa
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+---
+
+START: 2026-10-20 00:10:35 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c mkdir\ -p\ /tmp/docker-build-test'
+'cat\ \>\ /tmp/docker-build-test/Dockerfile\ \<\<\'EOF\''
+'\#\ syntax\=docker/dockerfile:1'
+''
+'FROM\ alpine:latest'
+'RUN\ echo\ \"Docker\ build\ works\!\"\ \>\ /message.txt'
+'CMD\ \[\"cat\",\ \"/message.txt\"\]'
+''
+'EOF'
+'
+END: 2026-10-20 00:10:37 +0200
+ELAPSED: 1.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:10:37 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ build\ -t\ docker-build-test\ /tmp/docker-build-test
+END: 2026-10-20 00:10:42 +0200
+ELAPSED: 4.52s
+STATUS: 0
+OUTPUT:
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 161B 0.0s done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.3s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#3 sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 9.08kB / 9.08kB done
+#3 sha256:7b32114e84ca21aeb2d6f871a0b62b3a0762193f75d9afd048ee4cbe889f3148 1.13kB / 1.13kB done
+#3 sha256:528c92d70d7e39dbb3dd1c6681f6750c565c7e45b70527cda47c1a61495c1b6a 1.41kB / 1.41kB done
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 5.24MB / 14.28MB 0.1s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 12.58MB / 14.28MB 0.2s
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 14.28MB / 14.28MB 0.2s done
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 0.3s done
+#3 DONE 0.5s
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 161B 0.0s done
+#1 DONE 0.0s
+
+#4 [internal] load build definition from Dockerfile
+#4 DONE 0.0s
+
+#5 [internal] load metadata for docker.io/library/alpine:latest
+#5 DONE 0.3s
+
+#6 [internal] load .dockerignore
+#6 transferring context: 2B done
+#6 DONE 0.0s
+
+#7 [1/2] FROM docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+#7 resolve docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 0.0s done
+#7 extracting sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5
+#7 sha256:d56c381f961d307a21b3ca004cf1e3910f106644aefb1f43e654c8a56c4fd395 1.02kB / 1.02kB done
+#7 sha256:320994c3b997e2ec6433f717f153e108023c5bec8fefa8d76b83451d16d05ea8 611B / 611B done
+#7 sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 3.85MB / 3.85MB 0.1s done
+#7 sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 9.22kB / 9.22kB done
+#7 extracting sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 0.2s done
+#7 DONE 0.3s
+
+#8 [2/2] RUN echo "Docker build works!" > /message.txt
+#8 DONE 0.3s
+
+#9 exporting to image
+#9 exporting layers 0.0s done
+#9 writing image sha256:7653c033a5ddf39f1670ed6b36e36c56a95c26554c29ff80f3141f74c2cab133 done
+#9 naming to docker.io/library/docker-build-test done
+#9 DONE 0.0s
+---
+
+START: 2026-10-20 00:10:42 +0200
+COMMAND: osctl ct exec docker-c5d7 docker run --rm docker-build-test
+END: 2026-10-20 00:10:44 +0200
+ELAPSED: 2.58s
+STATUS: 0
+OUTPUT:
+Docker build works!
+---
+
+START: 2026-10-20 00:10:44 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:10:46 +0200
+ELAPSED: 2.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:10:46 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ create\ --name\ resource-limit-mem64-cpu0_5\ --memory\ 64m\ --cpu-period\ 100000\ --cpu-quota\ 50000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=67108864\''
+'\'expected_cpu_quota\\\=50000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-20 00:10:48 +0200
+ELAPSED: 2.27s
+STATUS: 0
+OUTPUT:
+c0eed236c8522fba667b6cc852199eb36f49bf210b072139ba1a1c9fb7e39186
+---
+
+START: 2026-10-20 00:10:48 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ start\ --attach\ resource-limit-mem64-cpu0_5
+END: 2026-10-20 00:10:51 +0200
+ELAPSED: 2.24s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-20 00:10:51 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:10:53 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:10:53 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:10:55 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:10:55 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ create\ --name\ resource-limit-mem128-cpu1\ --memory\ 128m\ --cpu-period\ 100000\ --cpu-quota\ 100000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=134217728\''
+'\'expected_cpu_quota\\\=100000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-20 00:10:57 +0200
+ELAPSED: 1.98s
+STATUS: 0
+OUTPUT:
+b9835e866dced9152d2dda5aef07ea99e80854b2500595c7e2751d21974dad4c
+---
+
+START: 2026-10-20 00:10:57 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ start\ --attach\ resource-limit-mem128-cpu1
+END: 2026-10-20 00:10:59 +0200
+ELAPSED: 2.4s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-20 00:10:59 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:11:01 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:11:01 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:11:03 +0200
+ELAPSED: 1.9s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:11:03 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ create\ --name\ resource-limit-mem256-cpu2\ --memory\ 256m\ --cpu-period\ 100000\ --cpu-quota\ 200000\ --cpuset-cpus\ 0-1\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=268435456\''
+'\'expected_cpu_quota\\\=200000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-20 00:11:06 +0200
+ELAPSED: 2.29s
+STATUS: 0
+OUTPUT:
+60cdc7e6e207746beeb31925470d914c8227ed690d172735611fcac7b436c8d3
+---
+
+START: 2026-10-20 00:11:06 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ start\ --attach\ resource-limit-mem256-cpu2
+END: 2026-10-20 00:11:08 +0200
+ELAPSED: 2.15s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-20 00:11:08 +0200
+COMMAND: osctl ct exec docker-c5d7 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:11:10 +0200
+ELAPSED: 2.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:11:10 +0200
+COMMAND: osctl ct exec docker-c5d7 docker pull gitlab/gitlab-ee:latest
+END: 2026-10-20 00:13:22 +0200
+ELAPSED: 132.28s
+STATUS: 0
+OUTPUT:
+latest: Pulling from gitlab/gitlab-ee
+a60ef8ec184e: Pulling fs layer
+a79790b56084: Pulling fs layer
+29fd8e020463: Pulling fs layer
+236de2eed0f1: Pulling fs layer
+d09a49a97fbc: Pulling fs layer
+921339dbed1b: Pulling fs layer
+4df2190a564d: Pulling fs layer
+35f1d1c4d2fc: Pulling fs layer
+efc789c857d4: Pulling fs layer
+35f1d1c4d2fc: Waiting
+921339dbed1b: Waiting
+4df2190a564d: Waiting
+236de2eed0f1: Waiting
+d09a49a97fbc: Waiting
+efc789c857d4: Waiting
+a79790b56084: Verifying Checksum
+a79790b56084: Download complete
+236de2eed0f1: Verifying Checksum
+236de2eed0f1: Download complete
+d09a49a97fbc: Verifying Checksum
+d09a49a97fbc: Download complete
+921339dbed1b: Verifying Checksum
+921339dbed1b: Download complete
+4df2190a564d: Download complete
+35f1d1c4d2fc: Verifying Checksum
+35f1d1c4d2fc: Download complete
+29fd8e020463: Verifying Checksum
+29fd8e020463: Download complete
+a60ef8ec184e: Verifying Checksum
+a60ef8ec184e: Download complete
+a60ef8ec184e: Pull complete
+a79790b56084: Pull complete
+29fd8e020463: Pull complete
+236de2eed0f1: Pull complete
+d09a49a97fbc: Pull complete
+921339dbed1b: Pull complete
+4df2190a564d: Pull complete
+35f1d1c4d2fc: Pull complete
+efc789c857d4: Download complete
+efc789c857d4: Pull complete
+Digest: sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec
+Status: Downloaded newer image for gitlab/gitlab-ee:latest
+docker.io/gitlab/gitlab-ee:latest
+---
+
+START: 2026-10-20 00:13:22 +0200
+COMMAND: osctl ct exec docker-c5d7 docker image inspect gitlab/gitlab-ee:latest
+END: 2026-10-20 00:13:24 +0200
+ELAPSED: 1.83s
+STATUS: 0
+OUTPUT:
+[
+    {
+        "Id": "sha256:9d42973e78aa361ae5f6d639c5e6092c7fbdfd7a91de18b96eff59d5a9571ec1",
+        "RepoTags": [
+            "gitlab/gitlab-ee:latest"
+        ],
+        "RepoDigests": [
+            "gitlab/gitlab-ee@sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec"
+        ],
+        "Parent": "",
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-10-15T01:23:45.89919621Z",
+        "DockerVersion": "",
+        "Author": "",
+        "Config": {
+            "Hostname": "",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "22/tcp": {},
+                "443/tcp": {},
+                "80/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/opt/gitlab/embedded/bin:/opt/gitlab/bin:/assets:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "EDITOR=/bin/vi",
+                "GITLAB_ALLOW_SHA1_RSA=false",
+                "TERM=xterm"
+            ],
+            "Cmd": [
+                "/assets/init-container"
+            ],
+            "Healthcheck": {
+                "Test": [
+                    "CMD-SHELL",
+                    "/opt/gitlab/bin/gitlab-healthcheck --fail --max-time 10"
+                ],
+                "Interval": 60000000000,
+                "Timeout": 30000000000,
+                "Retries": 5
+            },
+            "ArgsEscaped": true,
+            "Image": "",
+            "Volumes": {
+                "/etc/gitlab": {},
+                "/var/log/gitlab": {},
+                "/var/opt/gitlab": {}
+            },
+            "WorkingDir": "",
+            "Entrypoint": null,
+            "OnBuild": null,
+            "Labels": {
+                "org.opencontainers.image.authors": "GitLab Distribution Team <distribution-be@gitlab.com>",
+                "org.opencontainers.image.base.name": "docker.io/ubuntu:24.04",
+                "org.opencontainers.image.documentation": "https://docs.gitlab.com/ee/install/docker/",
+                "org.opencontainers.image.source": "https://gitlab.com/gitlab-org/omnibus-gitlab",
+                "org.opencontainers.image.title": "GitLab Omnibus Docker",
+                "org.opencontainers.image.version": "24.04"
+            },
+            "Shell": [
+                "/bin/sh",
+                "-c"
+            ]
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 4661466290,
+        "GraphDriver": {
+            "Data": {
+                "LowerDir": "/var/lib/docker/overlay2/47a44f934ee41ddeba11124b12b182deb4970b03978c727e3dfc0a1d9f314676/diff:/var/lib/docker/overlay2/bfa42438f61290401a5130a774d73bbfc5929f55f370d82c6a6019a7a5dc29f7/diff:/var/lib/docker/overlay2/b2c61a874b7e0e421fbccfb1ee44d3924de1aa44076b4f4f0b4f32a3a101f593/diff:/var/lib/docker/overlay2/ebdfeb02f29bea51657f3a7dbaf5ce696644a4e0baae55e7a30e292ffd8f1d2e/diff:/var/lib/docker/overlay2/84238ccfb2ffd607502128d5a71506abb50f56edd818d161ba1a9052ac4c9874/diff:/var/lib/docker/overlay2/fa0b1a8d82942c4dffe5af9118e8668e517b00575b3437fca53f9ea8fdb2a3bd/diff:/var/lib/docker/overlay2/065cfe2f5115807bb731162a443bf2b6d7561299337a9c9b4dedb259d286d000/diff:/var/lib/docker/overlay2/9c7c806bcea8092951ffbc507eca43f3a392b2a6b7dc5e3e290a90d3f8c00eb3/diff",
+                "MergedDir": "/var/lib/docker/overlay2/7e04a69654a66a0882c182ead44fdbef22ab3b259b4993b2744c1290aa1517dc/merged",
+                "UpperDir": "/var/lib/docker/overlay2/7e04a69654a66a0882c182ead44fdbef22ab3b259b4993b2744c1290aa1517dc/diff",
+                "WorkDir": "/var/lib/docker/overlay2/7e04a69654a66a0882c182ead44fdbef22ab3b259b4993b2744c1290aa1517dc/work"
+            },
+            "Name": "overlay2"
+        },
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:d81fb2a7c6ee3be05fdefaa7fd223be219c1ab172083ec1b994c3ecda33ac0a8",
+                "sha256:ec4f887c43ef5cc03c5ecdb6ad059b581eadeb3fdebffb2b42c51e454e46601c",
+                "sha256:004caf9960f741ac1ecb4da67c047b51e50e850fcb06ab53f96e35bd41ead9c7",
+                "sha256:35bf502a602d309419afc4c6c4f942fca700f6d6ea2f941cf5a3043f80e613b0",
+                "sha256:44b92107f2ad7d3345c43067e388706479373ce55a5b0ab253d3491a45f83b26",
+                "sha256:bee1346e0b3bb0224c0da75000e7847dd5e8ed39545acf7e149e61dd3c70d597",
+                "sha256:796f2a6a4c9a506fa2189569288402ea2a2c63b23c7107154daa10e1d3f67893",
+                "sha256:7df49fde7f2ec29347e68668ae242e659b6e53d8aaa371e714b1c55cc5407acf",
+                "sha256:9992d41c5af8db68fc1799f2f3c926398b37d4270ed161e788d728a3b10c944d"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "0001-01-01T00:00:00Z"
+        }
+    }
+]
+---
+
+START: 2026-10-20 00:13:24 +0200
+COMMAND: osctl ct del -f --prune docker-c5d7
+END: 2026-10-20 00:13:28 +0200
+ELAPSED: 3.99s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:docker-c5d7
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-20 00:13:28 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-20 00:13:28 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/almalinux/8/image-stream.tar
+---
+
+START: 2026-10-20 00:13:28 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 00:13:43 +0200
+ELAPSED: 14.96s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+
+START: 2026-10-20 00:14:16 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 00:14:16 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:14:16 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 00:14:16 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:14:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:14:18 +0200
+ELAPSED: 2.38s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:14:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:14:20 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:14:21 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:14:22 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:14:23 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:14:24 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:14:25 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:14:26 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:14:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:14:27 +0200
+ELAPSED: 0.86s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:14:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:14:29 +0200
+ELAPSED: 0.86s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:14:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:14:31 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:14:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:14:33 +0200
+ELAPSED: 0.88s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 00:14:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:14:35 +0200
+ELAPSED: 0.86s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 00:14:35 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-20 00:14:35 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 22:14:35 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 00:14:35 +0200
+COMMAND: osctl ct new --distribution almalinux --version 10 docker-a986
+END: 2026-10-20 00:14:44 +0200
+ELAPSED: 9.51s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 00:14:44 +0200
+COMMAND: osctl ct unset start-menu docker-a986
+END: 2026-10-20 00:14:45 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:14:45 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 --no-dhcp --gateway-v4 auto --gateway-v6 none docker-a986 eth0
+END: 2026-10-20 00:14:46 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:14:46 +0200
+COMMAND: osctl ct netif ip add docker-a986 eth0 192.168.1.37/24
+END: 2026-10-20 00:14:47 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:14:47 +0200
+COMMAND: osctl ct set dns-resolver docker-a986 1.1.1.1
+END: 2026-10-20 00:14:47 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:14:47 +0200
+COMMAND: osctl ct start docker-a986
+END: 2026-10-20 00:14:50 +0200
+ELAPSED: 2.88s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 00:14:50 +0200
+COMMAND: osctl ct exec docker-a986 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-20 00:15:07 +0200
+ELAPSED: 17.28s
+STATUS: 0
+OUTPUT:
+ping: check-online.vpsadminos.org: Name or service not known
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0  0     7    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 22:15:07 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 00:15:07 +0200
+COMMAND: osctl ct exec docker-a986 yum update -y
+END: 2026-10-20 00:15:28 +0200
+ELAPSED: 20.27s
+STATUS: 0
+OUTPUT:
+AlmaLinux 10 - AppStream                        7.4 MB/s | 2.8 MB     00:00    
+AlmaLinux 10 - BaseOS                            45 MB/s |  48 MB     00:01    
+AlmaLinux 10 - CRB                              1.9 MB/s | 647 kB     00:00    
+AlmaLinux 10 - Extras                            39 kB/s |  13 kB     00:00    
+Dependencies resolved.
+================================================================================
+ Package               Arch       Version                      Repository  Size
+================================================================================
+Upgrading:
+ kernel-tools          x86_64     6.12.0-211.66.1.el10_2       baseos     2.3 M
+ kernel-tools-libs     x86_64     6.12.0-211.66.1.el10_2       baseos     1.7 M
+
+Transaction Summary
+================================================================================
+Upgrade  2 Packages
+
+Total download size: 4.0 M
+Downloading Packages:
+(1/2): kernel-tools-libs-6.12.0-211.66.1.el10_2  28 MB/s | 1.7 MB     00:00    
+(2/2): kernel-tools-6.12.0-211.66.1.el10_2.x86_  29 MB/s | 2.3 MB     00:00    
+--------------------------------------------------------------------------------
+Total                                           9.9 MB/s | 4.0 MB     00:00     
+AlmaLinux 10 - BaseOS                           1.6 MB/s | 1.6 kB     00:00    
+Importing GPG key 0xC2A1E572:
+ Userid     : "AlmaLinux OS 10 <packager@almalinux.org>"
+ Fingerprint: EE6D B7B9 8F5B F5ED D9DA 0DE5 DEE5 C11C C2A1 E572
+ From       : /etc/pki/rpm-gpg/RPM-GPG-KEY-AlmaLinux-10
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Upgrading        : kernel-tools-libs-6.12.0-211.66.1.el10_2.x86_64        1/4 
+  Running scriptlet: kernel-tools-libs-6.12.0-211.66.1.el10_2.x86_64        1/4 
+  Upgrading        : kernel-tools-6.12.0-211.66.1.el10_2.x86_64             2/4 
+  Cleanup          : kernel-tools-6.12.0-211.65.1.el10_2.x86_64             3/4 
+  Cleanup          : kernel-tools-libs-6.12.0-211.65.1.el10_2.x86_64        4/4 
+  Running scriptlet: kernel-tools-libs-6.12.0-211.65.1.el10_2.x86_64        4/4 
+
+Upgraded:
+  kernel-tools-6.12.0-211.66.1.el10_2.x86_64                                    
+  kernel-tools-libs-6.12.0-211.66.1.el10_2.x86_64                               
+
+Complete!
+---
+
+START: 2026-10-20 00:15:28 +0200
+COMMAND: osctl ct exec docker-a986 yum install -y yum-utils
+END: 2026-10-20 00:15:32 +0200
+ELAPSED: 3.87s
+STATUS: 0
+OUTPUT:
+Last metadata expiration check: 0:00:06 ago on Tue Oct 20 00:15:24 2026.
+Dependencies resolved.
+================================================================================
+ Package           Architecture   Version                  Repository      Size
+================================================================================
+Installing:
+ yum-utils         noarch         4.7.0-10.el10            baseos          33 k
+
+Transaction Summary
+================================================================================
+Install  1 Package
+
+Total download size: 33 k
+Installed size: 21 k
+Downloading Packages:
+yum-utils-4.7.0-10.el10.noarch.rpm              4.4 MB/s |  33 kB     00:00    
+--------------------------------------------------------------------------------
+Total                                            96 kB/s |  33 kB     00:00     
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : yum-utils-4.7.0-10.el10.noarch                         1/1 
+  Running scriptlet: yum-utils-4.7.0-10.el10.noarch                         1/1 
+
+Installed:
+  yum-utils-4.7.0-10.el10.noarch                                                
+
+Complete!
+---
+
+START: 2026-10-20 00:15:32 +0200
+COMMAND: osctl ct exec docker-a986 yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+END: 2026-10-20 00:15:34 +0200
+ELAPSED: 2.62s
+STATUS: 0
+OUTPUT:
+Adding repo from: https://download.docker.com/linux/centos/docker-ce.repo
+---
+
+START: 2026-10-20 00:15:34 +0200
+COMMAND: osctl ct exec docker-a986 yum install -y docker-ce docker-ce-cli containerd.io
+END: 2026-10-20 00:16:06 +0200
+ELAPSED: 31.91s
+STATUS: 0
+OUTPUT:
+Docker CE Stable - x86_64                       306 kB/s |  27 kB     00:00    
+Dependencies resolved.
+================================================================================
+ Package                    Arch    Version             Repository         Size
+================================================================================
+Installing:
+ containerd.io              x86_64  2.4.2-2.el10        docker-ce-stable   35 M
+ docker-ce                  x86_64  3:29.9.1-1.el10     docker-ce-stable   26 M
+ docker-ce-cli              x86_64  1:29.9.1-1.el10     docker-ce-stable  8.9 M
+Installing dependencies:
+ container-selinux          noarch  4:2.248.0-1.el10_2  appstream          62 k
+ tar                        x86_64  2:1.35-13.el10_2    baseos            872 k
+Installing weak dependencies:
+ docker-buildx-plugin       x86_64  0.38.0-1.el10       docker-ce-stable   18 M
+ docker-ce-rootless-extras  x86_64  29.9.1-1.el10       docker-ce-stable  5.6 M
+ docker-compose-plugin      x86_64  5.6.0-1.el10        docker-ce-stable  8.4 M
+
+Transaction Summary
+================================================================================
+Install  8 Packages
+
+Total download size: 103 M
+Installed size: 390 M
+Downloading Packages:
+(1/8): container-selinux-2.248.0-1.el10_2.noarc 2.1 MB/s |  62 kB     00:00    
+(2/8): tar-1.35-13.el10_2.x86_64.rpm             21 MB/s | 872 kB     00:00    
+(3/8): docker-buildx-plugin-0.38.0-1.el10.x86_6  28 MB/s |  18 MB     00:00    
+(4/8): docker-ce-29.9.1-1.el10.x86_64.rpm        25 MB/s |  26 MB     00:01    
+(5/8): containerd.io-2.4.2-2.el10.x86_64.rpm     24 MB/s |  35 MB     00:01    
+(6/8): docker-ce-cli-29.9.1-1.el10.x86_64.rpm    11 MB/s | 8.9 MB     00:00    
+(7/8): docker-ce-rootless-extras-29.9.1-1.el10.  10 MB/s | 5.6 MB     00:00    
+(8/8): docker-compose-plugin-5.6.0-1.el10.x86_6  28 MB/s | 8.4 MB     00:00    
+--------------------------------------------------------------------------------
+Total                                            43 MB/s | 103 MB     00:02     
+Docker CE Stable - x86_64                        41 kB/s | 1.6 kB     00:00    
+Importing GPG key 0x621E9F35:
+ Userid     : "Docker Release (CE rpm) <docker@docker.com>"
+ Fingerprint: 060A 61C5 1B55 8A7F 742B 77AA C52F EB6B 621E 9F35
+ From       : https://download.docker.com/linux/centos/gpg
+Key imported successfully
+Running transaction check
+Transaction check succeeded.
+Running transaction test
+Transaction test succeeded.
+Running transaction
+  Preparing        :                                                        1/1 
+  Installing       : docker-buildx-plugin-0.38.0-1.el10.x86_64              1/8 
+  Running scriptlet: docker-buildx-plugin-0.38.0-1.el10.x86_64              1/8 
+  Installing       : docker-compose-plugin-5.6.0-1.el10.x86_64              2/8 
+  Running scriptlet: docker-compose-plugin-5.6.0-1.el10.x86_64              2/8 
+  Running scriptlet: container-selinux-4:2.248.0-1.el10_2.noarch            3/8 
+  Installing       : container-selinux-4:2.248.0-1.el10_2.noarch            3/8 
+  Running scriptlet: container-selinux-4:2.248.0-1.el10_2.noarch            3/8 
+  Installing       : containerd.io-2.4.2-2.el10.x86_64                      4/8 
+  Running scriptlet: containerd.io-2.4.2-2.el10.x86_64                      4/8 
+  Installing       : docker-ce-cli-1:29.9.1-1.el10.x86_64                   5/8 
+  Running scriptlet: docker-ce-cli-1:29.9.1-1.el10.x86_64                   5/8 
+  Installing       : tar-2:1.35-13.el10_2.x86_64                            6/8 
+  Installing       : docker-ce-rootless-extras-29.9.1-1.el10.x86_64         7/8 
+  Running scriptlet: docker-ce-rootless-extras-29.9.1-1.el10.x86_64         7/8 
+  Installing       : docker-ce-3:29.9.1-1.el10.x86_64                       8/8 
+  Running scriptlet: docker-ce-3:29.9.1-1.el10.x86_64                       8/8 
+  Running scriptlet: container-selinux-4:2.248.0-1.el10_2.noarch            8/8 
+  Running scriptlet: docker-ce-3:29.9.1-1.el10.x86_64                       8/8 
+
+Installed:
+  container-selinux-4:2.248.0-1.el10_2.noarch                                   
+  containerd.io-2.4.2-2.el10.x86_64                                             
+  docker-buildx-plugin-0.38.0-1.el10.x86_64                                     
+  docker-ce-3:29.9.1-1.el10.x86_64                                              
+  docker-ce-cli-1:29.9.1-1.el10.x86_64                                          
+  docker-ce-rootless-extras-29.9.1-1.el10.x86_64                                
+  docker-compose-plugin-5.6.0-1.el10.x86_64                                     
+  tar-2:1.35-13.el10_2.x86_64                                                   
+
+Complete!
+---
+
+START: 2026-10-20 00:16:06 +0200
+COMMAND: osctl ct exec docker-a986 sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-20 00:16:08 +0200
+ELAPSED: 1.93s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 00:16:08 +0200
+COMMAND: osctl ct exec docker-a986 sh -c mkdir\ -p\ /etc/docker'
+'cat\ \>\ /etc/docker/daemon.json\ \<\<\'EOF\''
+'\{'
+'\ \ \"registry-mirrors\":\ \['
+'\ \ \ \ \"https://docker-registry.vpsadminos.org\"'
+'\ \ \]'
+'\}'
+''
+'EOF'
+'
+END: 2026-10-20 00:16:10 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:16:10 +0200
+COMMAND: osctl ct exec docker-a986 sh -c if\ command\ -v\ update-alternatives\ \>/dev/null\ 2\>\&1\;\ then'
+'\ \ for\ name\ in\ iptables\ ip6tables\ arptables\ ebtables\;\ do'
+'\ \ \ \ target\=\"/usr/sbin/\$\{name\}-nft\"'
+'\ \ \ \ if\ \[\ -x\ \"\$target\"\ \]\ \&\&\ update-alternatives\ --list\ \"\$name\"\ 2\>/dev/null\ \|\ grep\ -Fxq\ \"\$target\"\;\ then'
+'\ \ \ \ \ \ update-alternatives\ --set\ \"\$name\"\ \"\$target\"'
+'\ \ \ \ fi'
+'\ \ done'
+'fi'
+'
+END: 2026-10-20 00:16:13 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:16:13 +0200
+COMMAND: osctl ct exec docker-a986 systemctl reset-failed docker || true
+END: 2026-10-20 00:16:15 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+Failed to reset failed state of unit docker.service: Unit docker.service not loaded.
+error: executed command failed
+---
+
+START: 2026-10-20 00:16:15 +0200
+COMMAND: osctl ct exec docker-a986 systemctl restart docker
+END: 2026-10-20 00:16:19 +0200
+ELAPSED: 3.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:16:19 +0200
+COMMAND: osctl ct exec docker-a986 sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-20 00:16:21 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+{
+  "registry-mirrors": [
+    "https://docker-registry.vpsadminos.org"
+  ]
+}
+
+---
+
+START: 2026-10-20 00:16:21 +0200
+COMMAND: osctl ct exec docker-a986 docker info
+END: 2026-10-20 00:16:23 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+Client: Docker Engine - Community
+ Version:    29.9.1
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.38.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.6.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 0
+ Server Version: 29.9.1
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: b7a25261e029d68978bbf290df0a62fc819b3c51
+ runc version: v1.5.2-0-g29dd3dc2
+ init version: de40ad0
+ Security Options:
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.12.109
+ Operating System: AlmaLinux 10.2 (Lavender Lion)
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 4
+ Total Memory: 7.765GiB
+ Name: docker-a986
+ ID: 229a37f0-3df6-45d0-96a3-fe4613437e2c
+ Docker Root Dir: /var/lib/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  127.0.0.0/8
+  ::1/128
+ Registry Mirrors:
+  https://docker-registry.vpsadminos.org/
+ Live Restore Enabled: false
+ Firewall Backend: iptables
+  EnableUserlandProxy: true
+  UserlandProxyPath: /usr/bin/docker-proxy
+
+WARNING: No io.weight support
+WARNING: No io.weight (per device) support
+WARNING: No io.max (rbps) support
+WARNING: No io.max (wbps) support
+WARNING: No io.max (riops) support
+WARNING: No io.max (wiops) support
+---
+
+START: 2026-10-20 00:16:23 +0200
+COMMAND: osctl ct exec docker-a986 docker run hello-world
+END: 2026-10-20 00:16:27 +0200
+ELAPSED: 4.5s
+STATUS: 0
+OUTPUT:
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+4f55086f7dd0: Pulling fs layer
+4f55086f7dd0: Download complete
+d5e71e642bf5: Download complete
+4f55086f7dd0: Pull complete
+Digest: sha256:11a3eb1597e864c51b3f56733cb2e8a90bf0c284bfc05f9444d81c558bc848aa
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+---
+
+START: 2026-10-20 00:16:27 +0200
+COMMAND: osctl ct exec docker-a986 sh -c mkdir\ -p\ /tmp/docker-build-test'
+'cat\ \>\ /tmp/docker-build-test/Dockerfile\ \<\<\'EOF\''
+'\#\ syntax\=docker/dockerfile:1'
+''
+'FROM\ alpine:latest'
+'RUN\ echo\ \"Docker\ build\ works\!\"\ \>\ /message.txt'
+'CMD\ \[\"cat\",\ \"/message.txt\"\]'
+''
+'EOF'
+'
+END: 2026-10-20 00:16:29 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:16:29 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ build\ -t\ docker-build-test\ /tmp/docker-build-test
+END: 2026-10-20 00:16:35 +0200
+ELAPSED: 5.54s
+STATUS: 0
+OUTPUT:
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 161B 0.0s done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.4s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 1.05MB / 14.28MB 0.2s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 5.24MB / 14.28MB 0.3s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 14.28MB / 14.28MB 0.4s done
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 0.2s done
+#3 DONE 0.7s
+
+#4 [internal] load metadata for docker.io/library/alpine:latest
+#4 DONE 0.4s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [1/2] FROM docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+#6 resolve docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 0.0s done
+#6 sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 2.10MB / 3.85MB 0.2s
+#6 sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 3.15MB / 3.85MB 0.3s
+#6 sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 3.85MB / 3.85MB 0.4s done
+#6 extracting sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5
+#6 extracting sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 0.2s done
+#6 DONE 0.6s
+
+#7 [2/2] RUN echo "Docker build works!" > /message.txt
+#7 DONE 0.3s
+
+#8 exporting to image
+#8 exporting layers 0.1s done
+#8 exporting manifest sha256:02f75b79e89ab74121e12e74ace0eaf0eb7d54615b3799b9435c964233e9c84d 0.0s done
+#8 exporting config sha256:9b50a695bc525562bf9fd53dd06c3900e7d3d2a5951d1e5059d8c2db8f8141e5 done
+#8 exporting attestation manifest sha256:d2c5248a8a3b307f399f16cb915733998738708445e0b5c1e37dd58846d85d83 0.0s done
+#8 exporting manifest list sha256:36ca2986cbe655007ce2b2e96b44f88194fbf4d15f041bb907f1574b65374883 done
+#8 naming to docker.io/library/docker-build-test:latest done
+#8 unpacking to docker.io/library/docker-build-test:latest
+#8 unpacking to docker.io/library/docker-build-test:latest 0.2s done
+#8 DONE 0.4s
+---
+
+START: 2026-10-20 00:16:35 +0200
+COMMAND: osctl ct exec docker-a986 docker run --rm docker-build-test
+END: 2026-10-20 00:16:37 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+Docker build works!
+---
+
+START: 2026-10-20 00:16:37 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:16:39 +0200
+ELAPSED: 2.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:16:39 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ create\ --name\ resource-limit-mem64-cpu0_5\ --memory\ 64m\ --cpu-period\ 100000\ --cpu-quota\ 50000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=67108864\''
+'\'expected_cpu_quota\\\=50000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-20 00:16:41 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+51515f6d8af0502410660c040a831fca9a9a094100a15715420c32873f83a8f0
+---
+
+START: 2026-10-20 00:16:41 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ start\ --attach\ resource-limit-mem64-cpu0_5
+END: 2026-10-20 00:16:44 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-20 00:16:44 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:16:45 +0200
+ELAPSED: 1.92s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:16:45 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:16:47 +0200
+ELAPSED: 1.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:16:47 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ create\ --name\ resource-limit-mem128-cpu1\ --memory\ 128m\ --cpu-period\ 100000\ --cpu-quota\ 100000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=134217728\''
+'\'expected_cpu_quota\\\=100000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-20 00:16:50 +0200
+ELAPSED: 2.2s
+STATUS: 0
+OUTPUT:
+f2c5789e239844705140c4160011099d912933e02da9b307c1ddeefeac1f21e3
+---
+
+START: 2026-10-20 00:16:50 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ start\ --attach\ resource-limit-mem128-cpu1
+END: 2026-10-20 00:16:52 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-20 00:16:52 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:16:54 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:16:54 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:16:56 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:16:56 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ create\ --name\ resource-limit-mem256-cpu2\ --memory\ 256m\ --cpu-period\ 100000\ --cpu-quota\ 200000\ --cpuset-cpus\ 0-1\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=268435456\''
+'\'expected_cpu_quota\\\=200000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-20 00:16:58 +0200
+ELAPSED: 1.95s
+STATUS: 0
+OUTPUT:
+102288fa46dc996ef98a96556a4d8f113b1b8977a5f0b8d7fe18a18897a68c77
+---
+
+START: 2026-10-20 00:16:58 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ start\ --attach\ resource-limit-mem256-cpu2
+END: 2026-10-20 00:17:01 +0200
+ELAPSED: 2.53s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-20 00:17:01 +0200
+COMMAND: osctl ct exec docker-a986 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-20 00:17:03 +0200
+ELAPSED: 1.85s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:17:03 +0200
+COMMAND: osctl ct exec docker-a986 docker pull gitlab/gitlab-ee:latest
+END: 2026-10-20 00:19:08 +0200
+ELAPSED: 125.22s
+STATUS: 0
+OUTPUT:
+latest: Pulling from gitlab/gitlab-ee
+a60ef8ec184e: Pulling fs layer
+efc789c857d4: Pulling fs layer
+a79790b56084: Pulling fs layer
+35f1d1c4d2fc: Pulling fs layer
+29fd8e020463: Pulling fs layer
+236de2eed0f1: Pulling fs layer
+921339dbed1b: Pulling fs layer
+d09a49a97fbc: Pulling fs layer
+4df2190a564d: Pulling fs layer
+35f1d1c4d2fc: Download complete
+a79790b56084: Download complete
+4df2190a564d: Download complete
+236de2eed0f1: Download complete
+921339dbed1b: Download complete
+d09a49a97fbc: Download complete
+29fd8e020463: Download complete
+a60ef8ec184e: Download complete
+a60ef8ec184e: Pull complete
+a79790b56084: Pull complete
+29fd8e020463: Pull complete
+236de2eed0f1: Pull complete
+921339dbed1b: Pull complete
+d09a49a97fbc: Pull complete
+35f1d1c4d2fc: Pull complete
+4df2190a564d: Pull complete
+efc789c857d4: Download complete
+efc789c857d4: Pull complete
+Digest: sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec
+Status: Downloaded newer image for gitlab/gitlab-ee:latest
+docker.io/gitlab/gitlab-ee:latest
+---
+
+START: 2026-10-20 00:19:08 +0200
+COMMAND: osctl ct exec docker-a986 docker image inspect gitlab/gitlab-ee:latest
+END: 2026-10-20 00:19:10 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+[
+    {
+        "Id": "sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec",
+        "RepoTags": [
+            "gitlab/gitlab-ee:latest"
+        ],
+        "RepoDigests": [
+            "gitlab/gitlab-ee@sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-10-15T01:23:45.89919621Z",
+        "Config": {
+            "ExposedPorts": {
+                "22/tcp": {},
+                "443/tcp": {},
+                "80/tcp": {}
+            },
+            "Env": [
+                "PATH=/opt/gitlab/embedded/bin:/opt/gitlab/bin:/assets:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "EDITOR=/bin/vi",
+                "GITLAB_ALLOW_SHA1_RSA=false",
+                "TERM=xterm"
+            ],
+            "Cmd": [
+                "/assets/init-container"
+            ],
+            "Volumes": {
+                "/etc/gitlab": {},
+                "/var/log/gitlab": {},
+                "/var/opt/gitlab": {}
+            },
+            "Labels": {
+                "org.opencontainers.image.authors": "GitLab Distribution Team <distribution-be@gitlab.com>",
+                "org.opencontainers.image.base.name": "docker.io/ubuntu:24.04",
+                "org.opencontainers.image.documentation": "https://docs.gitlab.com/ee/install/docker/",
+                "org.opencontainers.image.source": "https://gitlab.com/gitlab-org/omnibus-gitlab",
+                "org.opencontainers.image.title": "GitLab Omnibus Docker",
+                "org.opencontainers.image.version": "24.04"
+            },
+            "ArgsEscaped": true,
+            "Healthcheck": {
+                "Test": [
+                    "CMD-SHELL",
+                    "/opt/gitlab/bin/gitlab-healthcheck --fail --max-time 10"
+                ],
+                "Interval": 60000000000,
+                "Timeout": 30000000000,
+                "Retries": 5
+            },
+            "Shell": [
+                "/bin/sh",
+                "-c"
+            ]
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 4457811710,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:d81fb2a7c6ee3be05fdefaa7fd223be219c1ab172083ec1b994c3ecda33ac0a8",
+                "sha256:ec4f887c43ef5cc03c5ecdb6ad059b581eadeb3fdebffb2b42c51e454e46601c",
+                "sha256:004caf9960f741ac1ecb4da67c047b51e50e850fcb06ab53f96e35bd41ead9c7",
+                "sha256:35bf502a602d309419afc4c6c4f942fca700f6d6ea2f941cf5a3043f80e613b0",
+                "sha256:44b92107f2ad7d3345c43067e388706479373ce55a5b0ab253d3491a45f83b26",
+                "sha256:bee1346e0b3bb0224c0da75000e7847dd5e8ed39545acf7e149e61dd3c70d597",
+                "sha256:796f2a6a4c9a506fa2189569288402ea2a2c63b23c7107154daa10e1d3f67893",
+                "sha256:7df49fde7f2ec29347e68668ae242e659b6e53d8aaa371e714b1c55cc5407acf",
+                "sha256:9992d41c5af8db68fc1799f2f3c926398b37d4270ed161e788d728a3b10c944d"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-10-19T22:19:08.280961788Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec",
+            "size": 647
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "docker.io/gitlab/gitlab-ee"
+                }
+            ]
+        }
+    }
+]
+---
+
+START: 2026-10-20 00:19:10 +0200
+COMMAND: osctl ct del -f --prune docker-a986
+END: 2026-10-20 00:19:14 +0200
+ELAPSED: 3.62s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:docker-a986
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-20 00:19:14 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-20 00:19:15 +0200
+ELAPSED: 0.74s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/almalinux/10/image-stream.tar
+---
+
+START: 2026-10-20 00:19:15 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 00:19:29 +0200
+ELAPSED: 14.86s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

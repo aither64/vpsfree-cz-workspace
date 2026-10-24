@@ -1,0 +1,204 @@
+[2026-10-18 09:54:35 +0200] Running script default
+[2026-10-18 10:02:51 +0200] Exception occurred while running script default in 496.31s
+[2026-10-18 10:02:51 +0200] (eval at /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:660):94:in 'TestRunner::TestEvaluator#assert_guest_ready': guest nixold readiness failed (1): degraded (RuntimeError)
+error: executed command failed
+
+  UNIT                  LOAD   ACTIVE SUB    DESCRIPTION
+● network-setup.service loaded failed failed Networking Setup
+
+LOAD   = Reflects whether the unit definition was properly loaded.
+ACTIVE = The high-level unit activation state, i.e. generalization of SUB.
+SUB    = The low-level unit activation state, values depend on unit type.
+1 loaded units listed.
+
+b2b5f0f8-9b42-4794-a45e-6035eae451b5
+
+IDX BOOT ID                          FIRST ENTRY                  LAST ENTRY
+  0 b2b5f0f89b424794a45e6035eae451b5 Sun 2026-10-18 10:01:53 CEST Sun 2026-10-18 10:02:23 CEST
+
+Oct 18 10:01:53 nixos dhcpcd[248]: dhcpcd_prestartinterface: Cannot assign requested address
+Oct 18 10:01:53 nixos dhcpcd[248]: dhcpcd_prestartinterface: Cannot assign requested address
+Oct 18 10:01:53 nixos (up-start)[372]: network-setup.service: Failed to apply ambient capabilities (before UID change): Permission denied
+Oct 18 10:01:53 nixos (up-start)[372]: network-setup.service: Failed at step CAPABILITIES spawning /nix/store/ic49fk0csn05jlal9fln5nizq194wlzc-unit-script-network-setup-start/bin/network-setup-start: Permission denied
+Oct 18 10:01:53 nixos systemd[1]: Failed to start Networking Setup.
+Oct 18 10:02:23 nixos dhcpcd[248]: timed out
+
+
+--- guest access state ---
+uid=0(root) gid=0(root) groups=0(root)
+
+--- guest runtime versions ---
+6.18.49
+systemd 251 (251.16)
++PAM +AUDIT -SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY -P11KIT -QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -XKBCOMMON +UTMP -SYSVINIT default-hierarchy=unified
+/dev directory 755 0:0 0:0
+/dev/null character special file 666 0:0 1:3
+/dev/console character special file 620 0:3 88:0
+/dev/tty character special file 666 0:0 5:0
+/dev/pts directory 755 0:0 0:0
+/sys/fs/cgroup directory 775 65534:0 0:0
+# file: /dev/null
+# owner: root
+# group: root
+user::rw-
+group::rw-
+other::rw-
+
+# file: /dev/console
+# owner: root
+# group: tty
+user::rw-
+group::-w-
+other::---
+
+
+--- /proc/self namespace and credentials ---
+0::/osctl.attach
+         0    1393216      65536
+         0    1393216      65536
+Name:	grep
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+Groups:	 
+CapInh:	0000000000000000
+CapPrm:	000001ffffffffff
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+NoNewPrivs:	0
+Seccomp:	2
+
+--- /proc/1 namespace and credentials ---
+0::/init.scope
+         0    1393216      65536
+         0    1393216      65536
+Name:	systemd
+Uid:	0	0	0	0
+Gid:	0	0	0	0
+Groups:	 
+CapInh:	0000000000000000
+CapPrm:	000001ffffffffff
+CapEff:	000001ffffffffff
+CapBnd:	000001ffffffffff
+NoNewPrivs:	0
+Seccomp:	2
+
+--- init mount table ---
+526 470 0:89 /private / rw,relatime,idmapped shared:293 - zfs tank/ct/nixold rw,xattr,noacl,casesensitive
+527 526 0:92 / /dev rw,nosuid - tmpfs none rw,size=407144k,mode=755,uid=0,gid=0
+528 526 0:93 / /proc rw,nosuid,nodev,noexec,relatime shared:303 - proc proc rw
+531 528 0:93 /sysrq-trigger /proc/sysrq-trigger ro,relatime shared:304 - proc proc rw
+532 526 0:94 / /sys rw,relatime shared:305 - sysfs sysfs rw
+533 532 0:22 /fs/fuse/connections /sys/fs/fuse/connections rw,nosuid,nodev,noexec,relatime shared:306 - sysfs sys rw
+534 532 0:32 /osctl/debugfs /sys/kernel/debug ro,nosuid,nodev shared:307 - tmpfs tmpfs rw,size=2035720k,mode=755
+535 532 0:32 /osctl/tracing /sys/kernel/tracing ro,nosuid,nodev shared:308 - tmpfs tmpfs rw,size=2035720k,mode=755
+536 532 0:7 / /sys/kernel/security rw,relatime shared:309 - securityfs securityfs rw
+537 532 0:22 /fs/pstore /sys/fs/pstore rw,nosuid,nodev,noexec,relatime shared:310 - sysfs sys rw
+538 527 0:91 / /dev/mqueue rw,relatime - mqueue mqueue rw
+539 527 0:32 /osctl/pools/tank/mounts/nixold /dev/.osctl-mount-helper ro,nosuid,nodev master:292 - tmpfs tmpfs rw,size=2035720k,mode=755
+540 532 0:90 / /sys/fs/bpf rw,nosuid,nodev,noexec,relatime - bpf bpf rw,uid=1393216,gid=1393216,mode=700
+541 526 0:95 / /run rw,nosuid,nodev shared:313 - tmpfs tmpfs rw,size=2035720k,mode=755,uid=0,gid=0
+542 532 0:36 / /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime shared:312 - cgroup2 none rw
+524 527 0:96 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+525 527 0:96 /0 /dev/console rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+529 527 0:96 /1 /dev/tty1 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+530 527 0:96 /2 /dev/tty2 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+543 527 0:96 /3 /dev/tty3 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+544 527 0:96 /4 /dev/tty4 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1393219,mode=620,ptmxmode=666
+545 528 0:92 /.lxc-boot-id /proc/sys/kernel/random/boot_id ro,nosuid,nodev,noexec,relatime shared:294 - tmpfs none rw,size=407144k,mode=755,uid=0,gid=0
+476 526 0:89 /private/nix/store /nix/store ro,relatime,idmapped shared:293 - zfs tank/ct/nixold rw,xattr,noacl,casesensitive
+477 527 0:97 / /dev/shm rw,nosuid,nodev - tmpfs tmpfs rw,uid=0,gid=0
+478 541 0:98 / /run/keys rw,nosuid,nodev,relatime shared:295 - tmpfs tmpfs rw,mode=750,uid=0,gid=0
+479 541 0:99 / /run/wrappers rw,nodev,relatime shared:296 - tmpfs tmpfs rw,mode=755,uid=0,gid=0
+
+--- failed unit settings and cgroup ownership (up to 8) ---
+
+Result=exit-code
+ExecMainStatus=218
+ExecStart={ path=/nix/store/ic49fk0csn05jlal9fln5nizq194wlzc-unit-script-network-setup-start/bin/network-setup-start ; argv[]=/nix/store/ic49fk0csn05jlal9fln5nizq194wlzc-unit-script-network-setup-start/bin/network-setup-start ; ignore_errors=no ; start_time=[Sun 2026-10-18 10:01:53 CEST] ; stop_time=[Sun 2026-10-18 10:01:53 CEST] ; pid=372 ; code=exited ; status=218 }
+Slice=system.slice
+ControlGroup=
+Delegate=no
+StandardInput=null
+TTYPath=
+SecureBits=0
+CapabilityBoundingSet=cap_chown cap_dac_override cap_dac_read_search cap_fowner cap_fsetid cap_kill cap_setgid cap_setuid cap_setpcap cap_linux_immutable cap_net_bind_service cap_net_broadcast cap_net_admin cap_net_raw cap_ipc_lock cap_ipc_owner cap_sys_module cap_sys_rawio cap_sys_chroot cap_sys_ptrace cap_sys_pacct cap_sys_admin cap_sys_boot cap_sys_nice cap_sys_resource cap_sys_time cap_sys_tty_config cap_mknod cap_lease cap_audit_write cap_audit_control cap_setfcap cap_mac_override cap_mac_admin cap_syslog cap_wake_alarm cap_block_suspend cap_audit_read cap_perfmon cap_bpf cap_checkpoint_restore
+AmbientCapabilities=
+User=
+Group=
+DynamicUser=no
+ProtectControlGroups=no
+PrivateUsers=no
+NoNewPrivileges=no
+SystemCallFilter=~
+SystemCallErrorNumber=2147483646
+RestrictNamespaces=no
+Id=network-setup.service
+FragmentPath=/etc/systemd/system/network-setup.service
+DropInPaths=
+
+--- latest failed unit journal, without boot filter: network-setup.service ---
+[    4.190657] nixos (up-start)[372]: network-setup.service: Failed to apply ambient capabilities (before UID change): Permission denied
+[    4.191193] nixos (up-start)[372]: network-setup.service: Failed at step CAPABILITIES spawning /nix/store/ic49fk0csn05jlal9fln5nizq194wlzc-unit-script-network-setup-start/bin/network-setup-start: Permission denied
+[    4.191293] nixos systemd[1]: Starting Networking Setup...
+[    4.194992] nixos systemd[1]: network-setup.service: Main process exited, code=exited, status=218/CAPABILITIES
+[    4.195365] nixos systemd[1]: network-setup.service: Failed with result 'exit-code'.
+[    4.195860] nixos systemd[1]: Failed to start Networking Setup.
+InferredControlGroup=/system.slice/network-setup.service (from Slice; unit path may be absent)
+/sys/fs/cgroup directory 775 65534:0
+/sys/fs/cgroup/cgroup.procs regular empty file 664 65534:0
+stat: cannot statx '/sys/fs/cgroup/tasks': No such file or directory
+stat: cannot statx '/sys/fs/cgroup/system.slice/network-setup.service': No such file or directory
+stat: cannot statx '/sys/fs/cgroup/system.slice/network-setup.service/cgroup.procs': No such file or directory
+stat: cannot statx '/sys/fs/cgroup/system.slice/network-setup.service/tasks': No such file or directory
+/sys/fs/cgroup/system.slice directory 755 0:0
+/sys/fs/cgroup/system.slice/cgroup.procs regular empty file 644 0:0
+stat: cannot statx '/sys/fs/cgroup/system.slice/tasks': No such file or directory
+
+	from (eval at /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:660):406:in 'block (2 levels) in TestRunner::TestEvaluator#test_script'
+	from (eval at /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:660):372:in 'Array#each'
+	from (eval at /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:660):372:in 'block in TestRunner::TestEvaluator#test_script'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:660:in 'Binding#eval'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:660:in 'block in TestRunner::TestEvaluator#test_script'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:759:in 'TestRunner::TestEvaluator#with_script_state'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:659:in 'TestRunner::TestEvaluator#test_script'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:624:in 'TestRunner::TestEvaluator#run_script'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:110:in 'block (3 levels) in TestRunner::TestEvaluator#run'
+	from /nix/store/hbxqbmd08gcyg6cs0238z03wvzk61471-osvm/lib/osvm/machine.rb:148:in 'OsVm::Machine.with_shell'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:109:in 'block (2 levels) in TestRunner::TestEvaluator#run'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:608:in 'block (3 levels) in TestRunner::TestEvaluator#run_script_workers'
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:598:in 'block (2 levels) in TestRunner::TestEvaluator#run_script_workers'
+/nix/store/hbxqbmd08gcyg6cs0238z03wvzk61471-osvm/lib/osvm/shell.rb:535:in 'IO#close': Timeout occurred while running command 'poweroff -f' (OsVm::TimeoutError)
+	from /nix/store/hbxqbmd08gcyg6cs0238z03wvzk61471-osvm/lib/osvm/shell.rb:535:in 'OsVm::Shell#reset'
+	from /nix/store/hbxqbmd08gcyg6cs0238z03wvzk61471-osvm/lib/osvm/shell.rb:422:in 'OsVm::Shell#execute_command'
+	from /nix/store/hbxqbmd08gcyg6cs0238z03wvzk61471-osvm/lib/osvm/shell.rb:180:in 'block (2 levels) in OsVm::Shell#execute'
+	from /nix/store/hbxqbmd08gcyg6cs0238z03wvzk61471-osvm/lib/osvm/shell.rb:174:in 'Thread::Mutex#synchronize'
+	from /nix/store/hbxqbmd08gcyg6cs0238z03wvzk61471-osvm/lib/osvm/shell.rb:174:in 'block in OsVm::Shell#execute'
+	from /nix/store/m0nfdb4mhfgwkgss4ymyqmvviwy30i6y-ruby-3.4.9/lib/ruby/3.4.0/timeout.rb:185:in 'block in Timeout.timeout'
+	from /nix/store/m0nfdb4mhfgwkgss4ymyqmvviwy30i6y-ruby-3.4.9/lib/ruby/3.4.0/timeout.rb:192:in 'Timeout.timeout'
+	from /nix/store/hbxqbmd08gcyg6cs0238z03wvzk61471-osvm/lib/osvm/shell.rb:518:in 'OsVm::Shell#with_deadline'
+	from /nix/store/hbxqbmd08gcyg6cs0238z03wvzk61471-osvm/lib/osvm/shell.rb:161:in 'OsVm::Shell#execute'
+	from /nix/store/hbxqbmd08gcyg6cs0238z03wvzk61471-osvm/lib/osvm/machine.rb:473:in 'OsVm::Machine#execute'
+	from /nix/store/hbxqbmd08gcyg6cs0238z03wvzk61471-osvm/lib/osvm/machine.rb:348:in 'OsVm::Machine#stop'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:768:in 'block in TestRunner::TestEvaluator#do_run'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:767:in 'Hash#each_value'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:767:in 'TestRunner::TestEvaluator#do_run'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_evaluator.rb:107:in 'TestRunner::TestEvaluator#run'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/executor.rb:653:in 'block in TestRunner::Executor#run_test_locked'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_state.rb:44:in 'block (2 levels) in TestRunner::TestState.fork'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_state.rb:40:in 'Process.fork'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_state.rb:40:in 'block in TestRunner::TestState.fork'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_state.rb:39:in 'Thread::Mutex#synchronize'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_state.rb:39:in 'TestRunner::TestState.fork'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/executor.rb:629:in 'TestRunner::Executor#run_test_locked'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/executor.rb:617:in 'block in TestRunner::Executor#run_test'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/test_state.rb:26:in 'TestRunner::TestState.with_lock'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/executor.rb:616:in 'TestRunner::Executor#run_test'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/executor.rb:568:in 'TestRunner::Executor#run_test_attempt'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/executor.rb:500:in 'block in TestRunner::Executor#run_test_with_retries'
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/executor.rb:499:in 'TestRunner::Executor#run_test_with_retries'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/executor.rb:203:in 'block in TestRunner::Executor#run_worker'
+	from <internal:kernel>:168:in 'Kernel#loop'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/executor.rb:192:in 'TestRunner::Executor#run_worker'
+	from /nix/store/9gvczyzwr9xp57w4ww71ljbxrkkbykmh-test-runner/lib/test-runner/executor.rb:177:in 'block in TestRunner::Executor#start_worker'

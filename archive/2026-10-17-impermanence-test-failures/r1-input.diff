@@ -1,0 +1,333 @@
+diff --git a/osvm/lib/osvm/machine_config.rb b/osvm/lib/osvm/machine_config.rb
+index 6c4078066..846cb1638 100644
+--- a/osvm/lib/osvm/machine_config.rb
++++ b/osvm/lib/osvm/machine_config.rb
+@@ -75,7 +75,7 @@ module OsVm
+ 
+     class Network
+       # @return [Network]
+-      def self.from_config(i, cfg)
++      def self.from_config(i, cfg, allocate_resources: true)
+         type = cfg.fetch('type')
+         klass =
+           case type
+@@ -89,7 +89,7 @@ module OsVm
+             raise ArgumentError, "unknown network type #{type.inspect}"
+           end
+ 
+-        klass.new(i, cfg)
++        klass.new(i, cfg, allocate_resources:)
+       end
+ 
+       # @return [String]
+@@ -105,7 +105,8 @@ module OsVm
+       # @return [String]
+       attr_reader :model
+ 
+-      def initialize(i, cfg)
++      def initialize(i, cfg, allocate_resources: true)
++        @allocate_resources = allocate_resources
+         @index = i
+         @type = cfg.fetch('type')
+         @opts = cfg.fetch('opts', default_opts)
+@@ -122,9 +123,11 @@ module OsVm
+       def resolve_mac_address(cfg)
+         mac = cfg['macAddress'] || cfg['mac'] || @opts['macAddress'] || @opts['mac']
+         mac = mac.to_s.downcase unless mac.nil?
+-        return MacAddressGenerator.register_mac(mac) if mac && !mac.empty?
++        if mac && !mac.empty?
++          return @allocate_resources ? MacAddressGenerator.register_mac(mac) : mac
++        end
+ 
+-        MacAddressGenerator.next_mac
++        MacAddressGenerator.next_mac if @allocate_resources
+       end
+ 
+       def resolve_model(cfg)
+@@ -160,7 +163,7 @@ module OsVm
+       # @return [Integer]
+       attr_reader :mcast_port
+ 
+-      def initialize(_i, cfg)
++      def initialize(_i, cfg, allocate_resources: true)
+         super
+ 
+         mcast = cfg.fetch('mcast', {})
+@@ -172,7 +175,7 @@ module OsVm
+         @mcast_port =
+           case mcast_port
+           when String
+-            PortReservation.get_port(key: "mcast:#{mcast_port}")
++            PortReservation.get_port(key: "mcast:#{mcast_port}") if allocate_resources
+           when Integer
+             mcast_port
+           else
+@@ -195,7 +198,7 @@ module OsVm
+       # @return [String, nil]
+       attr_reader :helper
+ 
+-      def initialize(_i, cfg)
++      def initialize(_i, cfg, allocate_resources: true)
+         super
+         @link = @opts.fetch('link')
+         @helper = @opts['helper']&.to_s
+@@ -223,19 +226,28 @@ module OsVm
+     # Build machine config from hash
+     # @param cfg [Hash]
+     # @return [MachineConfig]
+-    def self.from_config(cfg)
++    def self.from_config(cfg, allocate_resources: true)
+       spin = cfg.fetch('spin', 'vpsadminos')
+ 
+       case spin
+       when 'vpsadminos'
+-        VpsadminosMachineConfig.new(cfg)
++        VpsadminosMachineConfig.new(cfg, allocate_resources:)
+       when 'nixos'
+-        NixosMachineConfig.new(cfg)
++        NixosMachineConfig.new(cfg, allocate_resources:)
+       else
+         raise ArgumentError, "Unknown machine spin #{spin.inspect}"
+       end
+     end
+ 
++    # Check the canonical parser and deferred network fields without reserving
++    # global MAC addresses/ports or constructing a machine. Discard this object:
++    # host availability and allocation collisions remain runtime checks.
++    def self.validate_config!(cfg)
++      parsed = from_config(cfg, allocate_resources: false)
++      parsed.networks.each(&:qemu_options)
++      true
++    end
++
+     # @return [String]
+     attr_reader :spin
+ 
+@@ -309,7 +321,7 @@ module OsVm
+     attr_reader :labels
+ 
+     # @param cfg [Hash]
+-    def initialize(cfg)
++    def initialize(cfg, allocate_resources: true)
+       @spin = cfg.fetch('spin', 'vpsadminos')
+       @qemu = cfg.fetch('qemu')
+       @boot_mode = cfg.fetch('bootMode', 'direct')
+@@ -331,7 +343,7 @@ module OsVm
+       @cpu = Cpu.new(cfg.fetch('cpu'))
+       @shared_filesystems = cfg.fetch('sharedFileSystems', {})
+       @networks = cfg.fetch('networks', [{ 'type' => 'user' }]).each_with_index.map do |net_cfg, i|
+-        Network.from_config(i, net_cfg)
++        Network.from_config(i, net_cfg, allocate_resources:)
+       end
+       @tags = cfg.fetch('tags', [])
+       @labels = cfg.fetch('labels', {})
+@@ -379,7 +391,7 @@ module OsVm
+     attr_reader :squashfs
+ 
+     # @param cfg [Hash]
+-    def initialize(cfg)
++    def initialize(cfg, allocate_resources: true)
+       @squashfs = cfg['squashfs']
+       super
+ 
+@@ -402,7 +414,7 @@ module OsVm
+     end
+ 
+     # @param cfg [Hash]
+-    def initialize(cfg)
++    def initialize(cfg, allocate_resources: true)
+       if cfg['rootDisk'] && cfg['diskImage']
+         raise ArgumentError, 'rootDisk and diskImage cannot be used together'
+       end
+diff --git a/osvm/spec/osvm/machine_config_spec.rb b/osvm/spec/osvm/machine_config_spec.rb
+index dfb3cfa21..d00816e37 100644
+--- a/osvm/spec/osvm/machine_config_spec.rb
++++ b/osvm/spec/osvm/machine_config_spec.rb
+@@ -35,6 +35,59 @@ RSpec.describe OsVm::MachineConfig do
+     end
+   end
+ 
++  describe '.validate_config!' do
++    it 'parses all network kinds without allocating global addresses or ports' do
++      raw = machine_config_hash(
++        'networks' => [
++          { 'type' => 'user' },
++          { 'type' => 'socket', 'mac' => '52:54:00:00:00:11', 'mcast' => { 'port' => 'group-a' } },
++          { 'type' => 'socket', 'mcast' => { 'port' => 12_346 } },
++          { 'type' => 'bridge', 'opts' => { 'link' => 'br0' } }
++        ]
++      )
++      allow(OsVm::MacAddressGenerator).to receive(:next_mac).and_call_original
++      allow(OsVm::MacAddressGenerator).to receive(:register_mac).and_call_original
++      allow(OsVm::PortReservation).to receive(:get_port).and_return(12_345)
++
++      expect(described_class.validate_config!(raw)).to be(true)
++      expect(OsVm::MacAddressGenerator).not_to have_received(:next_mac)
++      expect(OsVm::MacAddressGenerator).not_to have_received(:register_mac)
++      expect(OsVm::PortReservation).not_to have_received(:get_port)
++
++      parsed = described_class.from_config(raw)
++      expect(parsed.networks[1].mcast_port).to eq(12_345)
++      expect(parsed.networks[2].mcast_port).to eq(12_346)
++      expect(OsVm::MacAddressGenerator).to have_received(:next_mac).exactly(3).times
++      expect(OsVm::MacAddressGenerator).to have_received(:register_mac).with('52:54:00:00:00:11').once
++      expect(OsVm::PortReservation).to have_received(:get_port).with(key: 'mcast:group-a').once
++    end
++
++    [
++      [{ 'testShells' => 0 }, ArgumentError, /testShells must be an integer/],
++      [{ 'testShellTransport' => 'unknown' }, ArgumentError, /unsupported test shell transport/],
++      [{ 'shells' => %w[first first] }, ArgumentError, /shell names must be unique/],
++      [{ 'testShells' => 2, 'shells' => %w[first second] }, ArgumentError, /testShells must be greater than/],
++      [{ 'networks' => [{ 'type' => 'bridge', 'opts' => {} }] }, KeyError, /link/],
++      [{ 'networks' => [{ 'type' => 'user', 'opts' => {} }] }, KeyError, /network/],
++      [{ 'networks' => [{ 'type' => 'socket', 'mcast' => { 'port' => nil } }] }, RuntimeError, /Invalid mcast port/],
++      [{ 'rootDisk' => {} }, ArgumentError, /cannot be used together/],
++      [{ 'disks' => [{ 'device' => 'bad.img', 'type' => 'bogus' }] }, ArgumentError, /unsupported disk type/],
++      [{ 'kernel' => nil }, ArgumentError, /missing "kernel"/]
++    ].each do |overrides, error_class, error_message|
++      it "enforces canonical parsing and rendering for #{overrides.inspect}" do
++        raw = machine_config_hash(overrides, spin: 'nixos')
++        allow(OsVm::MacAddressGenerator).to receive(:next_mac).and_call_original
++        allow(OsVm::MacAddressGenerator).to receive(:register_mac).and_call_original
++        allow(OsVm::PortReservation).to receive(:get_port).and_call_original
++
++        expect { described_class.validate_config!(raw) }.to raise_error(error_class, error_message)
++        expect(OsVm::MacAddressGenerator).not_to have_received(:next_mac)
++        expect(OsVm::MacAddressGenerator).not_to have_received(:register_mac)
++        expect(OsVm::PortReservation).not_to have_received(:get_port)
++      end
++    end
++  end
++
+   it 'requires kernel, initrd, and toplevel for direct boot machines' do
+     %w[kernel initrd toplevel].each do |key|
+       expect do
+diff --git a/test-runner/lib/test-runner/test_config.rb b/test-runner/lib/test-runner/test_config.rb
+index e3dbf2435..3465f0832 100644
+--- a/test-runner/lib/test-runner/test_config.rb
++++ b/test-runner/lib/test-runner/test_config.rb
+@@ -57,37 +57,12 @@ module TestRunner
+           raise ArgumentError, "Invalid prepared machine for #{test.path}"
+         end
+ 
+-        validate_machine!(machine)
++        OsVm::MachineConfig.validate_config!(machine)
+       end
+ 
+       self
+     end
+ 
+-    def validate_machine!(machine)
+-      %w[qemu virtiofsd].each { |key| machine.fetch(key) }
+-      cpu = machine.fetch('cpu')
+-      %w[cores threads sockets].each do |key|
+-        value = cpu.fetch(key)
+-        raise ArgumentError, "Invalid prepared CPU #{key}" unless value.is_a?(Integer) && value > 0
+-      end
+-      spin = machine.fetch('spin', 'vpsadminos')
+-      mode = machine.fetch('bootMode', 'direct')
+-      raise ArgumentError, "Unknown machine spin #{spin.inspect}" unless %w[vpsadminos nixos].include?(spin)
+-      raise ArgumentError, "Invalid prepared boot mode #{mode.inspect}" unless %w[direct firmware].include?(mode)
+-
+-      disks = machine.fetch('disks', []).dup
+-      disks << machine['rootDisk'] if machine['rootDisk']
+-      disks.each { |disk| OsVm::MachineConfig::Disk.new(disk) }
+-      return if mode == 'firmware'
+-
+-      required = %w[kernel initrd toplevel]
+-      required << 'squashfs' if spin == 'vpsadminos'
+-      required.each { |key| machine.fetch(key) }
+-      return unless spin == 'nixos' && !machine['rootDisk'] && !machine['diskImage']
+-
+-      raise ArgumentError, 'Missing prepared NixOS root disk'
+-    end
+-
+     def [](key)
+       @config[key]
+     end
+diff --git a/test-runner/spec/test_runner/cli/command_spec.rb b/test-runner/spec/test_runner/cli/command_spec.rb
+index 876b7d27e..3705801ad 100644
+--- a/test-runner/spec/test_runner/cli/command_spec.rb
++++ b/test-runner/spec/test_runner/cli/command_spec.rb
+@@ -370,4 +370,80 @@ RSpec.describe TestRunner::Cli::Command do
+       described_class.new({}, opts.merge('prebuild-memory-per-job-mib' => 0), []).test
+     end.to raise_error(ArgumentError, /must be positive/)
+   end
++
++  describe 'prepared machine validation barrier' do
++    let(:machine_config) do
++      {
++        'spin' => 'vpsadminos', 'qemu' => '/qemu', 'virtiofsd' => '/virtiofsd',
++        'kernel' => '/kernel', 'initrd' => '/initrd', 'toplevel' => '/system', 'squashfs' => '/root.squashfs',
++        'memory' => 1024, 'cpus' => 2, 'cpu' => { 'cores' => 2, 'threads' => 1, 'sockets' => 1 },
++        'disks' => [{ 'device' => 'data.img', 'type' => 'file', 'size' => '1G' }],
++        'networks' => [
++          { 'type' => 'user' },
++          { 'type' => 'socket', 'mac' => '52:54:00:00:00:11', 'mcast' => { 'port' => 'test' } }
++        ]
++      }
++    end
++
++    [
++      [{ 'networks' => [{ 'type' => 'bridge', 'opts' => {} }] }, /link/],
++      [{ 'networks' => [{ 'type' => 'user', 'opts' => {} }] }, /network/],
++      [{ 'testShells' => 0 }, /testShells must be an integer/],
++      [{ 'testShellTransport' => 'invalid' }, /unsupported test shell transport/],
++      [{ 'testShells' => 2, 'shells' => %w[first second] }, /testShells must be greater than/],
++      [{ 'spin' => 'nixos', 'rootDisk' => {}, 'diskImage' => '/root.img' }, /cannot be used together/]
++    ].each do |invalid_fields, error_message|
++      it "rejects a later malformed machine before Executor or fresh disk reset: #{invalid_fields.inspect}" do
++        with_tmpdir do |dir|
++          test = build_test(expect_failure: true)
++          script = build_test_script(test)
++          stub_test_script_list([script])
++          invalid = machine_config.merge(invalid_fields)
++          config_data = {
++            'machines' => { 'first' => machine_config, 'second' => invalid },
++            'testScripts' => { 'default' => { 'script' => '' } }
++          }
++          json_path = '/nix/store/prepared-invalid-later-machine.json'
++          root = File.join(dir, 'preparation.root')
++          nix = instance_double(TestRunner::NixCli, local_max_jobs: 1)
++          pool = instance_double(TestRunner::ResourcePool, prebuild_memory_mib: 16_384, prebuild_memory_status: 'test')
++          gc_root = instance_double(TestRunner::GcRoot)
++          machine = instance_double(OsVm::VpsadminosMachine, destroy_disks: nil)
++          marker = File.join(dir, 'retained-disk.img')
++          File.write(marker, 'retained data')
++          allow(TestRunner::ResourcePool).to receive(:from_options).and_return(pool)
++          allow(TestRunner::NixCli).to receive(:new).and_return(nix)
++          allow(TestRunner::GcRoot).to receive(:new).and_return(gc_root)
++          allow(gc_root).to receive(:open).and_yield(root)
++          allow(nix).to receive(:build_test_batch) do |requests, output, **_options|
++            File.write(output, JSON.generate([{ id: requests.first.fetch(:id), json: json_path }]))
++          end
++          allow(File).to receive(:file?).and_call_original
++          allow(File).to receive(:file?).with(json_path).and_return(true)
++          allow(File).to receive(:read).and_call_original
++          allow(File).to receive(:read).with(json_path).and_return(JSON.generate(config_data))
++          allow(TestRunner::Executor).to receive(:new).and_raise('Executor entered before validation')
++          allow(OsVm::VpsadminosMachine).to receive(:new).and_return(machine)
++          allow(OsVm::NixosMachine).to receive(:new)
++          allow(OsVm::MacAddressGenerator).to receive(:next_mac).and_call_original
++          allow(OsVm::MacAddressGenerator).to receive(:register_mac).and_call_original
++          allow(OsVm::PortReservation).to receive(:get_port).and_call_original
++
++          expect do
++            described_class.new({}, opts.merge('prebuild' => true, 'fresh' => true, 'state-dir' => dir), []).test
++          end.to raise_error(RuntimeError, /Test preparation failed:.*#{error_message.source}/)
++
++          expect(TestRunner::Executor).not_to have_received(:new)
++          expect(OsVm::VpsadminosMachine).not_to have_received(:new)
++          expect(OsVm::NixosMachine).not_to have_received(:new)
++          expect(machine).not_to have_received(:destroy_disks)
++          expect(OsVm::MacAddressGenerator).not_to have_received(:next_mac)
++          expect(OsVm::MacAddressGenerator).not_to have_received(:register_mac)
++          expect(OsVm::PortReservation).not_to have_received(:get_port)
++          expect(File.read(marker)).to eq('retained data')
++          expect(Dir.glob(File.join(dir, '**/test-result.txt'))).to be_empty
++        end
++      end
++    end
++  end
+ end

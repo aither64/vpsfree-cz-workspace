@@ -1,0 +1,491 @@
+SHELL: 3
+
+START: 2026-10-19 22:59:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:59:55 +0200
+ELAPSED: 2.4s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:59:56 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:59:57 +0200
+ELAPSED: 1.17s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:59:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:59:59 +0200
+ELAPSED: 0.96s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:00:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:00:01 +0200
+ELAPSED: 1.09s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:00:02 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:00:03 +0200
+ELAPSED: 1.07s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:00:04 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:00:05 +0200
+ELAPSED: 0.93s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:00:06 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:00:07 +0200
+ELAPSED: 0.99s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:00:08 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:00:09 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:00:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:00:11 +0200
+ELAPSED: 0.93s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-19 23:00:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:00:13 +0200
+ELAPSED: 0.87s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-19 23:00:13 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-19 23:00:13 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 21:00:13 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-19 23:00:13 +0200
+COMMAND: osctl ct new --distribution void --version latest-musl testct-3f77
+END: 2026-10-19 23:00:22 +0200
+ELAPSED: 9.17s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-19 23:00:22 +0200
+COMMAND: osctl ct unset start-menu testct-3f77
+END: 2026-10-19 23:00:23 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:00:23 +0200
+COMMAND: osctl ct start testct-3f77
+END: 2026-10-19 23:00:25 +0200
+ELAPSED: 2.18s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-19 23:00:35 +0200
+COMMAND: osctl ct exec testct-3f77 cat /proc/mounts
+END: 2026-10-19 23:00:37 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-3f77 / zfs rw,relatime,idmapped,xattr,noacl,casesensitive 0 0
+none /dev tmpfs rw,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys/net proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys proc ro,relatime 0 0
+proc /proc/sysrq-trigger proc ro,relatime 0 0
+sysfs /sys sysfs rw,relatime 0 0
+sys /sys/fs/fuse/connections sysfs rw,nosuid,nodev,noexec,relatime 0 0
+tmpfs /sys/kernel/debug tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+tmpfs /sys/kernel/tracing tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+securityfs /sys/kernel/security securityfs rw,relatime 0 0
+sys /sys/fs/pstore sysfs rw,nosuid,nodev,noexec,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+tmpfs /dev/.osctl-mount-helper tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+bpf /sys/fs/bpf bpf rw,nosuid,nodev,noexec,relatime,uid=1000000,gid=1000000,mode=700 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/console devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty1 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty2 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty3 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty4 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty5 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+devpts /dev/tty6 devpts rw,nosuid,noexec,relatime,gid=1000005,mode=620,ptmxmode=666,max=1030 0 0
+none /proc/sys/kernel/random/boot_id tmpfs ro,nosuid,nodev,noexec,relatime,size=492k,mode=755,uid=0,gid=0 0 0
+run /run tmpfs rw,nosuid,nodev,relatime,mode=755,uid=0,gid=0 0 0
+shm /dev/shm tmpfs rw,nosuid,nodev,relatime,uid=0,gid=0 0 0
+cgroup2 /sys/fs/cgroup cgroup2 rw,relatime 0 0
+tmpfs /sys/fs/cgroup tmpfs ro,relatime,uid=0,gid=0 0 0
+cgroup /sys/fs/cgroup/systemd cgroup rw,nosuid,nodev,noexec,relatime,name=systemd 0 0
+cgroup /sys/fs/cgroup/hugetlb cgroup rw,nosuid,nodev,noexec,relatime,hugetlb 0 0
+cgroup /sys/fs/cgroup/rdma cgroup rw,nosuid,nodev,noexec,relatime,rdma 0 0
+cgroup /sys/fs/cgroup/perf_event cgroup rw,nosuid,nodev,noexec,relatime,perf_event 0 0
+cgroup /sys/fs/cgroup/pids cgroup rw,nosuid,nodev,noexec,relatime,pids 0 0
+cgroup /sys/fs/cgroup/net_cls,net_prio cgroup rw,nosuid,nodev,noexec,relatime,net_cls,net_prio 0 0
+cgroup /sys/fs/cgroup/freezer cgroup rw,nosuid,nodev,noexec,relatime,freezer 0 0
+cgroup /sys/fs/cgroup/devices cgroup rw,nosuid,nodev,noexec,relatime,devices 0 0
+cgroup /sys/fs/cgroup/memory cgroup rw,nosuid,nodev,noexec,relatime,memory 0 0
+cgroup /sys/fs/cgroup/cpu,cpuacct cgroup rw,nosuid,nodev,noexec,relatime,cpu,cpuacct 0 0
+cgroup /sys/fs/cgroup/cpuset cgroup rw,nosuid,nodev,noexec,relatime,cpuset 0 0
+cgroup2 /sys/fs/cgroup/unified cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+---
+
+START: 2026-10-19 23:00:37 +0200
+COMMAND: osctl ct exec testct-3f77 cat /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-19 23:00:39 +0200
+ELAPSED: 2.06s
+STATUS: 1
+OUTPUT:
+cat: /sys/fs/cgroup/cgroup.controllers: No such file or directory
+error: executed command failed
+---
+
+START: 2026-10-19 23:00:39 +0200
+COMMAND: osctl ct del -f --prune testct-3f77
+END: 2026-10-19 23:00:44 +0200
+ELAPSED: 5.19s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-3f77
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-19 23:00:44 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-19 23:01:20 +0200
+ELAPSED: 36.17s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/void/musl-20261017/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/void/glibc-20261017/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/gentoo/musl-systemd-20261017/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/26.04/image-stream.tar
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/debian/testing-20261017/image-stream.tar
+---
+
+START: 2026-10-19 23:01:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:01:21 +0200
+ELAPSED: 0.76s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-19 23:01:21 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-19 23:01:21 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 21:01:21 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-19 23:01:21 +0200
+COMMAND: osctl ct new --distribution nixos --version stable testct-2fc0
+END: 2026-10-19 23:01:50 +0200
+ELAPSED: 28.83s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-19 23:01:50 +0200
+COMMAND: osctl ct unset start-menu testct-2fc0
+END: 2026-10-19 23:01:51 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:01:51 +0200
+COMMAND: osctl ct start testct-2fc0
+END: 2026-10-19 23:01:53 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-19 23:01:53 +0200
+COMMAND: osctl ct exec testct-2fc0 systemctl is-system-running
+END: 2026-10-19 23:01:56 +0200
+ELAPSED: 2.35s
+STATUS: 1
+OUTPUT:
+initializing
+error: executed command failed
+---
+
+START: 2026-10-19 23:01:57 +0200
+COMMAND: osctl ct exec testct-2fc0 systemctl is-system-running
+END: 2026-10-19 23:01:59 +0200
+ELAPSED: 1.98s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-19 23:02:00 +0200
+COMMAND: osctl ct exec testct-2fc0 systemctl is-system-running
+END: 2026-10-19 23:02:03 +0200
+ELAPSED: 2.68s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-19 23:02:04 +0200
+COMMAND: osctl ct exec testct-2fc0 systemctl is-system-running
+END: 2026-10-19 23:02:06 +0200
+ELAPSED: 2.68s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-19 23:02:07 +0200
+COMMAND: osctl ct exec testct-2fc0 systemctl is-system-running
+END: 2026-10-19 23:02:10 +0200
+ELAPSED: 2.34s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-19 23:02:11 +0200
+COMMAND: osctl ct exec testct-2fc0 systemctl is-system-running
+END: 2026-10-19 23:02:13 +0200
+ELAPSED: 2.47s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-19 23:02:14 +0200
+COMMAND: osctl ct exec testct-2fc0 systemctl is-system-running
+END: 2026-10-19 23:02:17 +0200
+ELAPSED: 2.87s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-19 23:02:18 +0200
+COMMAND: osctl ct exec testct-2fc0 systemctl is-system-running
+END: 2026-10-19 23:02:20 +0200
+ELAPSED: 1.94s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-19 23:02:21 +0200
+COMMAND: osctl ct exec testct-2fc0 systemctl is-system-running
+END: 2026-10-19 23:02:23 +0200
+ELAPSED: 2.37s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-19 23:02:24 +0200
+COMMAND: osctl ct exec testct-2fc0 systemctl is-system-running
+END: 2026-10-19 23:02:27 +0200
+ELAPSED: 2.49s
+STATUS: 1
+OUTPUT:
+starting
+error: executed command failed
+---
+
+START: 2026-10-19 23:02:28 +0200
+COMMAND: osctl ct exec testct-2fc0 systemctl is-system-running
+END: 2026-10-19 23:02:30 +0200
+ELAPSED: 2.41s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-10-19 23:02:40 +0200
+COMMAND: osctl ct exec testct-2fc0 cat /proc/mounts
+END: 2026-10-19 23:02:42 +0200
+ELAPSED: 2.18s
+STATUS: 0
+OUTPUT:
+tank/ct/testct-2fc0 / zfs rw,relatime,idmapped,xattr,noacl,casesensitive 0 0
+none /dev tmpfs rw,nosuid,size=407136k,mode=755,uid=0,gid=0 0 0
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys/net proc rw,nosuid,nodev,noexec,relatime 0 0
+proc /proc/sys proc ro,relatime 0 0
+proc /proc/sysrq-trigger proc ro,relatime 0 0
+sysfs /sys sysfs rw,relatime 0 0
+sys /sys/fs/fuse/connections sysfs rw,nosuid,nodev,noexec,relatime 0 0
+tmpfs /sys/kernel/debug tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+tmpfs /sys/kernel/tracing tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+securityfs /sys/kernel/security securityfs rw,relatime 0 0
+sys /sys/fs/pstore sysfs rw,nosuid,nodev,noexec,relatime 0 0
+mqueue /dev/mqueue mqueue rw,relatime 0 0
+tmpfs /dev/.osctl-mount-helper tmpfs ro,nosuid,nodev,size=2035672k,mode=755 0 0
+bpf /sys/fs/bpf bpf rw,nosuid,nodev,noexec,relatime,uid=1000000,gid=1000000,mode=700 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,size=2035672k,mode=755,uid=0,gid=0 0 0
+devpts /dev/pts devpts rw,nosuid,noexec,relatime,gid=1000003,mode=620,ptmxmode=666 0 0
+devpts /dev/console devpts rw,nosuid,noexec,relatime,gid=1000003,mode=620,ptmxmode=666 0 0
+devpts /dev/tty1 devpts rw,nosuid,noexec,relatime,gid=1000003,mode=620,ptmxmode=666 0 0
+devpts /dev/tty2 devpts rw,nosuid,noexec,relatime,gid=1000003,mode=620,ptmxmode=666 0 0
+devpts /dev/tty3 devpts rw,nosuid,noexec,relatime,gid=1000003,mode=620,ptmxmode=666 0 0
+devpts /dev/tty4 devpts rw,nosuid,noexec,relatime,gid=1000003,mode=620,ptmxmode=666 0 0
+none /proc/sys/kernel/random/boot_id tmpfs ro,nosuid,nodev,noexec,relatime,size=407136k,mode=755,uid=0,gid=0 0 0
+tank/ct/testct-2fc0 /nix/store zfs ro,nosuid,nodev,relatime,idmapped,xattr,noacl,casesensitive 0 0
+tmpfs /dev/shm tmpfs rw,nosuid,nodev,size=4071340k,uid=0,gid=0 0 0
+tmpfs /run/keys tmpfs rw,nosuid,nodev,relatime,mode=750,uid=0,gid=0 0 0
+cgroup2 /sys/fs/cgroup cgroup2 rw,nosuid,nodev,noexec,relatime 0 0
+none /run/credentials/systemd-journald.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+tmpfs /run/wrappers tmpfs rw,nodev,relatime,size=4071340k,mode=755,uid=0,gid=0 0 0
+none /run/credentials/console-getty.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@3.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@1.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@2.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+none /run/credentials/container-getty@4.service ramfs ro,nosuid,nodev,noexec,relatime,nosymfollow,mode=700 0 0
+---
+
+START: 2026-10-19 23:02:42 +0200
+COMMAND: osctl ct exec testct-2fc0 cat /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-19 23:02:44 +0200
+ELAPSED: 2.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:02:44 +0200
+COMMAND: osctl ct del -f --prune testct-2fc0
+END: 2026-10-19 23:02:46 +0200
+ELAPSED: 1.98s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-2fc0
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-19 23:02:46 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-19 23:03:22 +0200
+ELAPSED: 35.84s
+STATUS: 0
+OUTPUT:
+
+---
+

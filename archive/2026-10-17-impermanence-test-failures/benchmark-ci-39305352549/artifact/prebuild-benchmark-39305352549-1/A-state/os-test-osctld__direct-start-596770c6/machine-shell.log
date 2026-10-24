@@ -1,0 +1,732 @@
+SHELL: 0
+
+START: 2026-10-19 23:30:51 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-19 23:30:51 +0200
+ELAPSED: 0.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:30:51 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-19 23:30:52 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:30:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:30:57 +0200
+ELAPSED: 5.04s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:30:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:30:59 +0200
+ELAPSED: 1.14s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:31:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:31:01 +0200
+ELAPSED: 1.47s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:31:02 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:31:04 +0200
+ELAPSED: 1.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:31:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:31:06 +0200
+ELAPSED: 1.42s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:31:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:31:09 +0200
+ELAPSED: 1.96s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:31:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:31:12 +0200
+ELAPSED: 1.51s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:31:13 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:31:14 +0200
+ELAPSED: 1.7s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-19 23:31:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:31:17 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-19 23:31:17 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-19 23:31:17 +0200
+ELAPSED: 0.19s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 21:31:17 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-19 23:31:17 +0200
+COMMAND: osctl ct new --distribution alpine testct-9b0c
+END: 2026-10-19 23:31:22 +0200
+ELAPSED: 4.52s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-19 23:31:22 +0200
+COMMAND: osctl ct unset start-menu testct-9b0c
+END: 2026-10-19 23:31:23 +0200
+ELAPSED: 1.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:31:23 +0200
+COMMAND: osctl ct netif new routed testct-9b0c eth0
+END: 2026-10-19 23:31:25 +0200
+ELAPSED: 1.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:31:25 +0200
+COMMAND: osctl ct netif ip add testct-9b0c eth0 192.0.2.90/32
+END: 2026-10-19 23:31:26 +0200
+ELAPSED: 1.43s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:31:26 +0200
+COMMAND: osctl ct new --distribution alpine testct-9b0c-victim
+END: 2026-10-19 23:31:30 +0200
+ELAPSED: 3.92s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-19 23:31:30 +0200
+COMMAND: osctl ct unset start-menu testct-9b0c-victim
+END: 2026-10-19 23:31:32 +0200
+ELAPSED: 1.3s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:31:32 +0200
+COMMAND: osctl ct start testct-9b0c-victim
+END: 2026-10-19 23:31:36 +0200
+ELAPSED: 3.92s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-19 23:31:36 +0200
+COMMAND: osctl ct exec testct-9b0c-victim sh -c 'echo retained > /root/netns-guard'
+END: 2026-10-19 23:31:39 +0200
+ELAPSED: 3.27s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:31:39 +0200
+COMMAND: osctl -j ct show testct-9b0c-victim
+END: 2026-10-19 23:31:40 +0200
+ELAPSED: 1.64s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9b0c-victim","user":"testct-9b0c-victim","group":"/default","uid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9b0c-victim","rootfs":"/tank/ct/testct-9b0c-victim/private","boot_dataset":"tank/ct/testct-9b0c-victim","boot_rootfs":"/tank/ct/testct-9b0c-victim/private","lxc_path":"/run/osctl/pools/tank/users/testct-9b0c-victim/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9b0c-victim/group.default/cts/testct-9b0c-victim","group_path":"osctl/pool.tank/group.default/user.testct-9b0c-victim/ct.testct-9b0c-victim/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":2626,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9b0c-victim.log","memory":8859648,"cpu_us":5165182,"cpu_user_us":3735403,"cpu_system_us":1429778,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-19 23:31:40 +0200
+COMMAND: ip -o address show dev lo
+END: 2026-10-19 23:31:40 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host proto kernel_lo \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-19 23:31:40 +0200
+COMMAND: osctl ct exec testct-9b0c-victim ip -o address show dev lo
+END: 2026-10-19 23:31:44 +0200
+ELAPSED: 3.2s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-19 23:31:44 +0200
+COMMAND: osctl -j ct show testct-9b0c
+END: 2026-10-19 23:31:45 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9b0c","user":"testct-9b0c","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9b0c","rootfs":"/tank/ct/testct-9b0c/private","boot_dataset":"tank/ct/testct-9b0c","boot_rootfs":"/tank/ct/testct-9b0c/private","lxc_path":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts/testct-9b0c","group_path":"osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9b0c.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-19 23:31:45 +0200
+COMMAND: printf '%s\n' exec\ lxc-start\ -P\ /run/osctl/pools/tank/users/testct-9b0c/group.default/cts\ -n\ testct-9b0c\ -d\ -l\ TRACE\ -o\ /tank/log/ct/testct-9b0c.log | osctl ct su testct-9b0c || { rc=$?; cat /tank/log/ct/testct-9b0c.log; exit $rc; }
+END: 2026-10-19 23:31:53 +0200
+ELAPSED: 7.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:31:53 +0200
+COMMAND: osctl ct exec testct-9b0c true
+END: 2026-10-19 23:31:56 +0200
+ELAPSED: 3.14s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:31:56 +0200
+COMMAND: osctl -j ct show testct-9b0c
+END: 2026-10-19 23:31:58 +0200
+ELAPSED: 1.35s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9b0c","user":"testct-9b0c","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9b0c","rootfs":"/tank/ct/testct-9b0c/private","boot_dataset":"tank/ct/testct-9b0c","boot_rootfs":"/tank/ct/testct-9b0c/private","lxc_path":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts/testct-9b0c","group_path":"osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":3069,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9b0c.log","memory":8216576,"cpu_us":6887709,"cpu_user_us":5210513,"cpu_system_us":1677196,"loadavg":[0.08,0.02,0.01]}
+---
+
+START: 2026-10-19 23:31:58 +0200
+COMMAND: printf '%s\n' ruby\ /etc/ct-user-netns-probe.rb\ testct-9b0c\ 1\ 2626\ 3069 | osctl ct su testct-9b0c
+END: 2026-10-19 23:32:01 +0200
+ELAPSED: 3.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:32:01 +0200
+COMMAND: ip -o address show dev lo
+END: 2026-10-19 23:32:01 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host proto kernel_lo \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-19 23:32:01 +0200
+COMMAND: osctl ct exec testct-9b0c-victim ip -o address show dev lo
+END: 2026-10-19 23:32:04 +0200
+ELAPSED: 3.16s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-19 23:32:04 +0200
+COMMAND: readlink /proc/3069/ns/syslog
+END: 2026-10-19 23:32:04 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-19 23:32:04 +0200
+COMMAND: osctl ct exec testct-9b0c readlink /proc/self/ns/syslog
+END: 2026-10-19 23:32:08 +0200
+ELAPSED: 3.15s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-19 23:32:08 +0200
+COMMAND: readlink /proc/3069/ns/tracing
+END: 2026-10-19 23:32:08 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-19 23:32:08 +0200
+COMMAND: osctl ct exec testct-9b0c readlink /proc/self/ns/tracing
+END: 2026-10-19 23:32:11 +0200
+ELAPSED: 3.25s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-19 23:32:11 +0200
+COMMAND: cat /proc/3069/cgroup
+END: 2026-10-19 23:32:11 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+0::/osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned/lxc.payload.testct-9b0c/init.scope
+---
+
+START: 2026-10-19 23:32:11 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned
+END: 2026-10-19 23:32:11 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-19 23:32:11 +0200
+COMMAND: printf '%s\n' true | osctl ct su testct-9b0c
+END: 2026-10-19 23:32:14 +0200
+ELAPSED: 2.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:32:14 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned
+END: 2026-10-19 23:32:14 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-19 23:32:14 +0200
+COMMAND: osctl -j ct show testct-9b0c
+END: 2026-10-19 23:32:15 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9b0c","user":"testct-9b0c","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9b0c","rootfs":"/tank/ct/testct-9b0c/private","boot_dataset":"tank/ct/testct-9b0c","boot_rootfs":"/tank/ct/testct-9b0c/private","lxc_path":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts/testct-9b0c","group_path":"osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":3069,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9b0c.log","memory":8622080,"cpu_us":11264085,"cpu_user_us":8717217,"cpu_system_us":2546867,"loadavg":[0.06,0.01,0.0]}
+---
+
+START: 2026-10-19 23:32:15 +0200
+COMMAND: ! tr '\0' '\n' < /proc/3069/environ | grep -q '^OSCTL_RUN_ID='
+END: 2026-10-19 23:32:15 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:32:15 +0200
+COMMAND: osctl ct exec testct-9b0c grep -w memory /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-19 23:32:18 +0200
+ELAPSED: 3.11s
+STATUS: 0
+OUTPUT:
+cpuset cpu memory hugetlb pids rdma misc
+---
+
+START: 2026-10-19 23:32:18 +0200
+COMMAND: ping -c 1 192.0.2.90
+END: 2026-10-19 23:32:18 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+PING 192.0.2.90 (192.0.2.90) 56(84) bytes of data.
+64 bytes from 192.0.2.90: icmp_seq=1 ttl=64 time=0.281 ms
+
+--- 192.0.2.90 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.281/0.281/0.281/0.000 ms
+---
+
+START: 2026-10-19 23:32:18 +0200
+COMMAND: osctl ct stop testct-9b0c
+END: 2026-10-19 23:32:26 +0200
+ELAPSED: 7.12s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-19 23:32:26 +0200
+COMMAND: osctl -j ct show testct-9b0c
+END: 2026-10-19 23:32:27 +0200
+ELAPSED: 1.28s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9b0c","user":"testct-9b0c","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9b0c","rootfs":"/tank/ct/testct-9b0c/private","boot_dataset":"tank/ct/testct-9b0c","boot_rootfs":"/tank/ct/testct-9b0c/private","lxc_path":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts/testct-9b0c","group_path":"osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9b0c.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-19 23:32:27 +0200
+COMMAND: osctl ct start testct-9b0c
+END: 2026-10-19 23:32:30 +0200
+ELAPSED: 3.42s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-19 23:32:30 +0200
+COMMAND: osctl ct exec testct-9b0c true
+END: 2026-10-19 23:32:33 +0200
+ELAPSED: 3.15s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:32:33 +0200
+COMMAND: osctl ct stop testct-9b0c
+END: 2026-10-19 23:32:40 +0200
+ELAPSED: 6.13s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-19 23:32:40 +0200
+COMMAND: osctl -j ct show testct-9b0c
+END: 2026-10-19 23:32:41 +0200
+ELAPSED: 1.42s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9b0c","user":"testct-9b0c","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9b0c","rootfs":"/tank/ct/testct-9b0c/private","boot_dataset":"tank/ct/testct-9b0c","boot_rootfs":"/tank/ct/testct-9b0c/private","lxc_path":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts/testct-9b0c","group_path":"osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9b0c.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-19 23:32:41 +0200
+COMMAND: printf '%s\n' exec\ lxc-start\ -P\ /run/osctl/pools/tank/users/testct-9b0c/group.default/cts\ -n\ testct-9b0c\ -d\ -l\ TRACE\ -o\ /tank/log/ct/testct-9b0c.log | osctl ct su testct-9b0c || { rc=$?; cat /tank/log/ct/testct-9b0c.log; exit $rc; }
+END: 2026-10-19 23:32:48 +0200
+ELAPSED: 6.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:32:48 +0200
+COMMAND: osctl ct exec testct-9b0c true
+END: 2026-10-19 23:32:51 +0200
+ELAPSED: 2.91s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:32:51 +0200
+COMMAND: osctl -j ct show testct-9b0c
+END: 2026-10-19 23:32:52 +0200
+ELAPSED: 1.29s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9b0c","user":"testct-9b0c","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9b0c","rootfs":"/tank/ct/testct-9b0c/private","boot_dataset":"tank/ct/testct-9b0c","boot_rootfs":"/tank/ct/testct-9b0c/private","lxc_path":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts/testct-9b0c","group_path":"osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":4545,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9b0c.log","memory":6983680,"cpu_us":6104993,"cpu_user_us":4644153,"cpu_system_us":1460839,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-19 23:32:52 +0200
+COMMAND: printf '%s\n' ruby\ /etc/ct-user-netns-probe.rb\ testct-9b0c\ 1\ 2626\ 4545 | osctl ct su testct-9b0c
+END: 2026-10-19 23:32:55 +0200
+ELAPSED: 3.34s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:32:55 +0200
+COMMAND: ip -o address show dev lo
+END: 2026-10-19 23:32:55 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host proto kernel_lo \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-19 23:32:55 +0200
+COMMAND: osctl ct exec testct-9b0c-victim ip -o address show dev lo
+END: 2026-10-19 23:32:58 +0200
+ELAPSED: 2.96s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-19 23:32:58 +0200
+COMMAND: readlink /proc/4545/ns/syslog
+END: 2026-10-19 23:32:58 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-19 23:32:58 +0200
+COMMAND: osctl ct exec testct-9b0c readlink /proc/self/ns/syslog
+END: 2026-10-19 23:33:02 +0200
+ELAPSED: 3.4s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-19 23:33:02 +0200
+COMMAND: readlink /proc/4545/ns/tracing
+END: 2026-10-19 23:33:02 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-19 23:33:02 +0200
+COMMAND: osctl ct exec testct-9b0c readlink /proc/self/ns/tracing
+END: 2026-10-19 23:33:05 +0200
+ELAPSED: 3.0s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-19 23:33:05 +0200
+COMMAND: cat /proc/4545/cgroup
+END: 2026-10-19 23:33:05 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+0::/osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned/lxc.payload.testct-9b0c/init.scope
+---
+
+START: 2026-10-19 23:33:05 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned
+END: 2026-10-19 23:33:05 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-19 23:33:05 +0200
+COMMAND: printf '%s\n' true | osctl ct su testct-9b0c
+END: 2026-10-19 23:33:08 +0200
+ELAPSED: 2.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:33:08 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned
+END: 2026-10-19 23:33:08 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-19 23:33:08 +0200
+COMMAND: osctl -j ct show testct-9b0c
+END: 2026-10-19 23:33:09 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9b0c","user":"testct-9b0c","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9b0c","rootfs":"/tank/ct/testct-9b0c/private","boot_dataset":"tank/ct/testct-9b0c","boot_rootfs":"/tank/ct/testct-9b0c/private","lxc_path":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts/testct-9b0c","group_path":"osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":4545,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9b0c.log","memory":7315456,"cpu_us":10432449,"cpu_user_us":8171355,"cpu_system_us":2261093,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-19 23:33:09 +0200
+COMMAND: ! tr '\0' '\n' < /proc/4545/environ | grep -q '^OSCTL_RUN_ID='
+END: 2026-10-19 23:33:09 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:33:09 +0200
+COMMAND: osctl ct exec testct-9b0c grep -w memory /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-19 23:33:12 +0200
+ELAPSED: 2.94s
+STATUS: 0
+OUTPUT:
+cpuset cpu memory hugetlb pids rdma misc
+---
+
+START: 2026-10-19 23:33:12 +0200
+COMMAND: ping -c 1 192.0.2.90
+END: 2026-10-19 23:33:12 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+PING 192.0.2.90 (192.0.2.90) 56(84) bytes of data.
+64 bytes from 192.0.2.90: icmp_seq=1 ttl=64 time=0.364 ms
+
+--- 192.0.2.90 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.364/0.364/0.364/0.000 ms
+---
+
+START: 2026-10-19 23:33:12 +0200
+COMMAND: osctl ct stop testct-9b0c
+END: 2026-10-19 23:33:18 +0200
+ELAPSED: 6.44s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-19 23:33:18 +0200
+COMMAND: osctl -j ct show testct-9b0c
+END: 2026-10-19 23:33:19 +0200
+ELAPSED: 1.27s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-9b0c","user":"testct-9b0c","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-9b0c","rootfs":"/tank/ct/testct-9b0c/private","boot_dataset":"tank/ct/testct-9b0c","boot_rootfs":"/tank/ct/testct-9b0c/private","lxc_path":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-9b0c/group.default/cts/testct-9b0c","group_path":"osctl/pool.tank/group.default/user.testct-9b0c/ct.testct-9b0c/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-9b0c.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-19 23:33:19 +0200
+COMMAND: osctl ct exec testct-9b0c-victim grep -Fx retained /root/netns-guard
+END: 2026-10-19 23:33:22 +0200
+ELAPSED: 3.0s
+STATUS: 0
+OUTPUT:
+retained
+---
+
+START: 2026-10-19 23:33:22 +0200
+COMMAND: osctl ct stop testct-9b0c-victim
+END: 2026-10-19 23:33:28 +0200
+ELAPSED: 5.67s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-19 23:33:28 +0200
+COMMAND: osctl ct del --prune testct-9b0c-victim
+END: 2026-10-19 23:33:30 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-9b0c-victim
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-19 23:33:30 +0200
+COMMAND: osctl ct del --prune testct-9b0c
+END: 2026-10-19 23:33:31 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-9b0c
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-19 23:33:31 +0200
+COMMAND: poweroff -f
+END: 2026-10-19 23:33:45 +0200
+ELAPSED: 13.74s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

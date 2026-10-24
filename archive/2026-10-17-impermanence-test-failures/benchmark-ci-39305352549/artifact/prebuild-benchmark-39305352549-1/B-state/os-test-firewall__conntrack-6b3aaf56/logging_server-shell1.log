@@ -1,0 +1,62 @@
+SHELL: 1
+
+START: 2026-10-20 04:19:07 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 04:19:07 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:19:07 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 04:19:07 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:19:07 +0200
+COMMAND: sv check firewall
+END: 2026-10-20 04:19:08 +0200
+ELAPSED: 0.49s
+STATUS: 0
+OUTPUT:
+iptables v1.8.13 (nf_tables): Chain 'nixos-fw' does not exist
+Try `iptables -h' or 'iptables --help' for more information.
+ok: run: firewall: (pid 878) 2s
+---
+
+START: 2026-10-20 04:19:08 +0200
+COMMAND: iptables-save | grep -- "^-A nixos-fw-log-refuse " | grep -- "-j LOG" | grep -q -- "refused connection"
+END: 2026-10-20 04:19:08 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:19:08 +0200
+COMMAND: iptables-save | grep -- "^-A nixos-fw-log-refuse " | { grep -c -- " -j LOG" || true; }
+END: 2026-10-20 04:19:08 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+1
+---
+
+START: 2026-10-20 04:20:26 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 04:20:27 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Grabbing all containers
+---
+

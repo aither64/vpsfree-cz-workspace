@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "head": "49636f902704ce6019a7a8ae47ec0b3ca6902f68",
+  "source": "premerge-nix-watcher.jsonl",
+  "checks": [
+    {
+      "command": "/run/current-system/sw/bin/bash -lc 'set +e\nsource /home/aither/workspace/ai/vpsfree.cz/work/2026-10-17-impermanence-test-failures/runner-nix-env.sh\nsource_status=$?\nprintf '\"'source_status=%s\\\\n' \\\"\"'$source_status\"\nif [ \"$source_status\" -ne 0 ]; then exit \"$source_status\"; fi\ntask_nixpkgs_path=$(nix eval --impure --raw --expr '\"'(builtins.getFlake (toString ./.)).inputs.nixpkgs.outPath')\nselection_status=\"'$?\nprintf '\"'selection_status=%s\\\\n' \\\"\"'$selection_status\"\nprintf '\"'task_nixpkgs_path=%s\\\\n' \\\"\"'$task_nixpkgs_path\"\nif [ \"$selection_status\" -ne 0 ]; then exit \"$selection_status\"; fi\nexport TEST_RUNNER_NIXPKGS_PATH=\"$task_nixpkgs_path\"\nbundle exec rspec -I test-runner/spec test-runner/spec/test_runner/prebuild_nix_spec.rb\nrspec_status=$?\nprintf '\"'rspec_status=%s\\\\n' \\\"\"'$rspec_status\"\nexit \"$rspec_status\"'",
+      "output": "source_status=0\nselection_status=0\ntask_nixpkgs_path=/nix/store/kv7b75nbhc93yrs276n0ba9gsiv8cz3b-source\n\nRandomized with seed 10096\n...\n\nFinished in 7.85 seconds (files took 0.57284 seconds to load)\n3 examples, 0 failures\n\nRandomized with seed 10096\n\nrspec_status=0\n\u001b]0;\u0007",
+      "exit_status": 0
+    },
+    {
+      "command": "/run/current-system/sw/bin/bash -lc 'nix eval --impure --raw --file tests/squashfs-memory-eval.nix'",
+      "output": "squashfs cache flags and module wiring passed\n",
+      "exit_status": 0
+    }
+  ]
+}

@@ -1,0 +1,311 @@
+SHELL: 0
+
+START: 2026-10-20 04:13:28 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 04:13:28 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:13:28 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 04:13:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:13:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 04:13:30 +0200
+ELAPSED: 2.08s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 04:13:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 04:13:31 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 04:13:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 04:13:33 +0200
+ELAPSED: 0.82s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 04:13:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 04:13:35 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 04:13:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 04:13:37 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 04:13:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 04:13:38 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 04:13:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 04:13:40 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 04:13:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 04:13:42 +0200
+ELAPSED: 0.88s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 04:13:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 04:13:43 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 04:13:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 04:13:45 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 04:13:45 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-20 04:13:45 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Tue, 20 Oct 2026 02:13:45 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 04:13:45 +0200
+COMMAND: osctl group new -p /cgv2-rundir/child
+END: 2026-10-20 04:13:45 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:13:45 +0200
+COMMAND: osctl ct new --distribution arch cgv2-testct
+END: 2026-10-20 04:13:58 +0200
+ELAPSED: 12.56s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 04:13:58 +0200
+COMMAND: osctl ct chgrp cgv2-testct /cgv2-rundir/child
+END: 2026-10-20 04:13:59 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+Moving LXC configuration
+Reconfiguring container
+Cleaning up original LXC home
+---
+
+START: 2026-10-20 04:13:59 +0200
+COMMAND: osctl ct exec -r cgv2-testct df -t tmpfs --output=size /run
+END: 2026-10-20 04:14:02 +0200
+ELAPSED: 3.69s
+STATUS: 0
+OUTPUT:
+1K-blocks
+  4071340
+---
+
+START: 2026-10-20 04:14:02 +0200
+COMMAND: osctl ct set memory cgv2-testct 1G
+END: 2026-10-20 04:14:03 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:14:03 +0200
+COMMAND: osctl ct exec -r cgv2-testct df -t tmpfs --output=size /run | grep 524288
+END: 2026-10-20 04:14:06 +0200
+ELAPSED: 3.48s
+STATUS: 0
+OUTPUT:
+   524288
+---
+
+START: 2026-10-20 04:14:06 +0200
+COMMAND: osctl ct unset memory cgv2-testct
+END: 2026-10-20 04:14:07 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:14:07 +0200
+COMMAND: osctl group set memory /cgv2-rundir/child 512M
+END: 2026-10-20 04:14:08 +0200
+ELAPSED: 0.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:14:08 +0200
+COMMAND: osctl ct exec -r cgv2-testct df -t tmpfs --output=size /run | grep 262144
+END: 2026-10-20 04:14:11 +0200
+ELAPSED: 3.58s
+STATUS: 0
+OUTPUT:
+   262144
+---
+
+START: 2026-10-20 04:14:11 +0200
+COMMAND: osctl group unset memory /cgv2-rundir/child
+END: 2026-10-20 04:14:12 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:14:12 +0200
+COMMAND: osctl group set memory /cgv2-rundir 1G
+END: 2026-10-20 04:14:12 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:14:12 +0200
+COMMAND: osctl ct exec -r cgv2-testct df -t tmpfs --output=size /run | grep 524288
+END: 2026-10-20 04:14:16 +0200
+ELAPSED: 3.71s
+STATUS: 0
+OUTPUT:
+   524288
+---
+
+START: 2026-10-20 04:14:16 +0200
+COMMAND: osctl group unset memory /cgv2-rundir
+END: 2026-10-20 04:14:17 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:14:17 +0200
+COMMAND: osctl ct del -f --prune cgv2-testct
+END: 2026-10-20 04:14:25 +0200
+ELAPSED: 8.39s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:cgv2-testct
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-20 04:14:25 +0200
+COMMAND: osctl group del /cgv2-rundir/child
+END: 2026-10-20 04:14:26 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:14:26 +0200
+COMMAND: osctl group del /cgv2-rundir
+END: 2026-10-20 04:14:26 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 04:14:26 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 04:14:40 +0200
+ELAPSED: 14.01s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

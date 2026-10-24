@@ -1,0 +1,899 @@
+SHELL: 0
+
+START: 2026-10-19 23:01:51 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-19 23:01:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:01:51 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-19 23:01:51 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:01:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:01:53 +0200
+ELAPSED: 2.46s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:01:54 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:01:55 +0200
+ELAPSED: 0.82s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:01:56 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:01:57 +0200
+ELAPSED: 0.83s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:01:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:01:58 +0200
+ELAPSED: 0.79s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:01:59 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:02:00 +0200
+ELAPSED: 0.79s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:02:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:02:02 +0200
+ELAPSED: 0.95s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:02:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:02:04 +0200
+ELAPSED: 1.03s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:02:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:02:06 +0200
+ELAPSED: 0.75s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 23:02:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:02:08 +0200
+ELAPSED: 0.79s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-19 23:02:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:02:10 +0200
+ELAPSED: 0.82s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-19 23:02:11 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:02:11 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-19 23:02:11 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-19 23:02:11 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 21:02:11 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-19 23:02:11 +0200
+COMMAND: osctl user new --no-standalone --map 0:2800000:524288 snap-5fce
+END: 2026-10-19 23:02:13 +0200
+ELAPSED: 1.08s
+STATUS: 0
+OUTPUT:
+Registering user tank:snap-5fce
+---
+
+START: 2026-10-19 23:02:13 +0200
+COMMAND: osctl ct new --user snap-5fce --distribution fedora --version latest snap-5fce
+END: 2026-10-19 23:02:31 +0200
+ELAPSED: 18.49s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-19 23:02:31 +0200
+COMMAND: osctl ct unset start-menu snap-5fce
+END: 2026-10-19 23:02:32 +0200
+ELAPSED: 0.79s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:02:32 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 snap-5fce eth0
+END: 2026-10-19 23:02:33 +0200
+ELAPSED: 0.78s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:02:33 +0200
+COMMAND: osctl ct devices add -p snap-5fce char 10 229 rwm /dev/fuse
+END: 2026-10-19 23:02:34 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:02:34 +0200
+COMMAND: osctl ct set dns-resolver snap-5fce 1.1.1.1
+END: 2026-10-19 23:02:35 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:02:35 +0200
+COMMAND: osctl ct start snap-5fce
+END: 2026-10-19 23:02:37 +0200
+ELAPSED: 2.25s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-19 23:02:37 +0200
+COMMAND: osctl ct exec snap-5fce sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-19 23:02:39 +0200
+ELAPSED: 2.29s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-10-19 23:02:40 +0200
+COMMAND: osctl ct exec snap-5fce sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-19 23:02:42 +0200
+ELAPSED: 1.96s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-10-19 23:02:43 +0200
+COMMAND: osctl ct exec snap-5fce sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-19 23:02:45 +0200
+ELAPSED: 2.19s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=2.09 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2.094/2.094/2.094/0.000 ms
+---
+
+START: 2026-10-19 23:02:45 +0200
+COMMAND: osctl ct exec snap-5fce dnf -y install screen squashfuse snapd
+END: 2026-10-19 23:03:24 +0200
+ELAPSED: 38.73s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+ Fedora 44 - x86_64 - Updates           100% |   5.3 MiB/s |  11.9 MiB |  00m02s
+ Fedora 44 openh264 (From Cisco) - x86_ 100% |   2.4 KiB/s |   5.3 KiB |  00m02s
+ Fedora 44 - x86_64                     100% |   6.4 MiB/s |  36.7 MiB |  00m06s
+Repositories loaded.
+Package                       Arch   Version         Repository      Size
+Installing:
+ screen                       x86_64 0:5.0.1-6.fc44  fedora     951.9 KiB
+ snapd                        x86_64 0:2.77.1-0.fc44 updates     47.4 MiB
+ squashfuse                   x86_64 0:0.5.2-6.fc44  fedora      94.0 KiB
+Installing dependencies:
+ checkpolicy                  x86_64 0:3.11-1.fc44   updates      1.7 MiB
+ fuse                         x86_64 0:2.9.9-25.fc44 fedora     214.1 KiB
+ fuse-common                  x86_64 0:3.18.3-1.fc44 updates     38.0   B
+ policycoreutils-python-utils noarch 0:3.11-2.fc44   updates     94.5 KiB
+ python3-audit                x86_64 0:4.2.1-1.fc44  updates    295.3 KiB
+ python3-distro               noarch 0:1.9.0-11.fc44 fedora     210.2 KiB
+ python3-libselinux           x86_64 0:3.11-2.fc44   updates    629.3 KiB
+ python3-libsemanage          x86_64 0:3.11-1.fc44   updates    398.9 KiB
+ python3-policycoreutils      noarch 0:3.11-2.fc44   updates      5.8 MiB
+ python3-setools              x86_64 0:4.6.0-6.fc44  updates      2.8 MiB
+ snap-confine                 x86_64 0:2.77.1-0.fc44 updates     11.3 MiB
+ snapd-selinux                noarch 0:2.77.1-0.fc44 updates     44.6 KiB
+ squashfs-tools               x86_64 0:4.6.1-8.fc44  fedora     661.3 KiB
+ squashfuse-libs              x86_64 0:0.5.2-6.fc44  fedora     114.2 KiB
+ xdelta                       x86_64 0:3.1.0-24.fc44 fedora     189.4 KiB
+
+Transaction Summary:
+ Installing:        18 packages
+
+Total size of inbound packages is 24 MiB. Need to download 24 MiB.
+After this operation, 73 MiB extra will be used (install 73 MiB, remove 0 B).
+[ 1/18] squashfuse-0:0.5.2-6.fc44.x86_6 100% | 339.6 KiB/s |  46.5 KiB |  00m00s
+[ 2/18] squashfuse-libs-0:0.5.2-6.fc44. 100% | 319.1 KiB/s |  44.7 KiB |  00m00s
+[ 3/18] screen-0:5.0.1-6.fc44.x86_64    100% |   4.1 MiB/s | 639.7 KiB |  00m00s
+[ 4/18] snapd-selinux-0:2.77.1-0.fc44.n 100% |   3.1 MiB/s |  91.6 KiB |  00m00s
+[ 5/18] squashfs-tools-0:4.6.1-8.fc44.x 100% |   3.1 MiB/s | 247.6 KiB |  00m00s
+[ 6/18] snap-confine-0:2.77.1-0.fc44.x8 100% |  19.6 MiB/s |   3.4 MiB |  00m00s
+[ 7/18] snapd-0:2.77.1-0.fc44.x86_64    100% |  49.0 MiB/s |  15.2 MiB |  00m00s
+[ 8/18] xdelta-0:3.1.0-24.fc44.x86_64   100% | 487.7 KiB/s |  92.7 KiB |  00m00s
+[ 9/18] policycoreutils-python-utils-0: 100% | 362.7 KiB/s |  50.4 KiB |  00m00s
+[10/18] python3-libsemanage-0:3.11-1.fc 100% |  16.5 MiB/s |  84.4 KiB |  00m00s
+[11/18] python3-distro-0:1.9.0-11.fc44. 100% |   7.7 MiB/s |  47.2 KiB |  00m00s
+[12/18] checkpolicy-0:3.11-1.fc44.x86_6 100% |  24.9 MiB/s | 381.9 KiB |  00m00s
+[13/18] python3-audit-0:4.2.1-1.fc44.x8 100% |   4.5 MiB/s |  73.4 KiB |  00m00s
+[14/18] python3-policycoreutils-0:3.11- 100% |  43.2 MiB/s |   2.2 MiB |  00m00s
+[15/18] python3-libselinux-0:3.11-2.fc4 100% |   6.7 MiB/s | 212.0 KiB |  00m00s
+[16/18] python3-setools-0:4.6.0-6.fc44. 100% |  19.3 MiB/s | 730.4 KiB |  00m00s
+[17/18] fuse-0:2.9.9-25.fc44.x86_64     100% |   5.2 MiB/s |  79.9 KiB |  00m00s
+[18/18] fuse-common-0:3.18.3-1.fc44.x86 100% | 732.2 KiB/s |   8.1 KiB |  00m00s
+--------------------------------------------------------------------------------
+[18/18] Total                           100% |  44.4 MiB/s |  23.5 MiB |  00m01s
+Running transaction
+[ 1/20] Verify package files            100% |  51.0   B/s |  18.0   B |  00m00s
+[ 2/20] Prepare transaction             100% |  90.0   B/s |  18.0   B |  00m00s
+[ 3/20] Installing python3-libselinux-0 100% |  23.8 MiB/s | 632.8 KiB |  00m00s
+[ 4/20] Installing python3-libsemanage- 100% |  43.4 MiB/s | 400.3 KiB |  00m00s
+[ 5/20] Installing fuse-common-0:3.18.3 100% |  95.1 KiB/s | 292.0   B |  00m00s
+[ 6/20] Installing fuse-0:2.9.9-25.fc44 100% |   4.8 MiB/s | 217.2 KiB |  00m00s
+[ 7/20] Installing python3-setools-0:4. 100% |  31.6 MiB/s |   2.9 MiB |  00m00s
+[ 8/20] Installing python3-audit-0:4.2. 100% |  24.2 MiB/s | 297.3 KiB |  00m00s
+[ 9/20] Installing checkpolicy-0:3.11-1 100% |  25.5 MiB/s |   1.7 MiB |  00m00s
+[10/20] Installing python3-distro-0:1.9 100% |   3.6 MiB/s | 214.9 KiB |  00m00s
+[11/20] Installing python3-policycoreut 100% |  31.0 MiB/s |   5.9 MiB |  00m00s
+[12/20] Installing policycoreutils-pyth 100% |   1.4 MiB/s |  98.2 KiB |  00m00s
+[13/20] Installing snapd-selinux-0:2.77 100% |   3.4 KiB/s |  45.7 KiB |  00m13s
+[14/20] Installing xdelta-0:3.1.0-24.fc 100% |   3.7 MiB/s | 190.9 KiB |  00m00s
+[15/20] Installing squashfs-tools-0:4.6 100% |  10.5 MiB/s | 664.9 KiB |  00m00s
+[16/20] Installing snap-confine-0:2.77. 100% |  65.7 MiB/s |  11.3 MiB |  00m00s
+[17/20] Installing squashfuse-libs-0:0. 100% |  12.6 MiB/s | 115.9 KiB |  00m00s
+[18/20] Installing squashfuse-0:0.5.2-6 100% |   2.0 MiB/s |  96.4 KiB |  00m00s
+[19/20] Installing snapd-0:2.77.1-0.fc4 100% |  65.9 MiB/s |  47.4 MiB |  00m01s
+>>> Running %post scriptlet: snapd-0:2.77.1-0.fc44.x86_64
+>>> Finished %post scriptlet: snapd-0:2.77.1-0.fc44.x86_64
+>>> Scriptlet output:
+>>> Created symlink '/etc/systemd/system/sockets.target.wants/snapd.socket' → '/usr/lib/systemd/system/snapd.socket'.
+>>> Created symlink '/etc/systemd/user/sockets.target.wants/snapd.session-agent.socket' → '/usr/lib/systemd/user/snapd.session-agent.socket'.
+>>> 
+>>> Running sysusers scriptlet: screen-0:5.0.1-6.fc44.x86_64
+>>> Finished sysusers scriptlet: screen-0:5.0.1-6.fc44.x86_64
+>>> Scriptlet output:
+>>> Creating group 'screen' with GID 84.
+>>> 
+[20/20] Installing screen-0:5.0.1-6.fc4 100% |   1.0 MiB/s | 957.4 KiB |  00m01s
+Complete!
+---
+
+START: 2026-10-19 23:03:24 +0200
+COMMAND: osctl ct exec snap-5fce ln -s /var/lib/snapd/snap /snap
+END: 2026-10-19 23:03:27 +0200
+ELAPSED: 2.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:03:42 +0200
+COMMAND: osctl ct exec snap-5fce snap wait system seed.loaded
+END: 2026-10-19 23:03:45 +0200
+ELAPSED: 3.27s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:03:45 +0200
+COMMAND: osctl ct exec snap-5fce snap install lxd
+END: 2026-10-19 23:04:08 +0200
+ELAPSED: 23.46s
+STATUS: 0
+OUTPUT:
+2026-10-19T23:03:51+02:00 INFO Waiting for automatic snapd restart...
+2026-10-19T23:03:52+02:00 INFO Waiting for automatic snapd restart...
+2026-10-19T23:03:53+02:00 INFO Waiting for automatic snapd restart...
+2026-10-19T23:03:54+02:00 INFO Waiting for automatic snapd restart...
+lxd (5.21/stable) 5.21.8-3a06799 from Canonical** installed
+Warning: /var/lib/snapd/snap/bin was not found in your $PATH. If you've not
+         restarted your session since you installed snapd, try doing that.
+         Please see https://forum.snapcraft.io/t/9469 for more details.
+
+---
+
+START: 2026-10-19 23:04:08 +0200
+COMMAND: osctl ct exec snap-5fce /snap/bin/lxd init --auto
+END: 2026-10-19 23:04:21 +0200
+ELAPSED: 12.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:04:21 +0200
+COMMAND: osctl ct exec snap-5fce screen -d -m /bin/sh -c '/snap/bin/lxc launch ubuntu:22.04 u1 ; echo $? > /lxc.status'
+END: 2026-10-19 23:04:23 +0200
+ELAPSED: 2.11s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:04:23 +0200
+COMMAND: osctl ct exec snap-5fce cat /lxc.status
+END: 2026-10-19 23:04:25 +0200
+ELAPSED: 2.33s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-10-19 23:04:26 +0200
+COMMAND: osctl ct exec snap-5fce cat /lxc.status
+END: 2026-10-19 23:04:28 +0200
+ELAPSED: 2.09s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-10-19 23:04:29 +0200
+COMMAND: osctl ct exec snap-5fce cat /lxc.status
+END: 2026-10-19 23:04:32 +0200
+ELAPSED: 2.7s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-10-19 23:04:33 +0200
+COMMAND: osctl ct exec snap-5fce cat /lxc.status
+END: 2026-10-19 23:04:36 +0200
+ELAPSED: 2.53s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-10-19 23:04:37 +0200
+COMMAND: osctl ct exec snap-5fce cat /lxc.status
+END: 2026-10-19 23:04:40 +0200
+ELAPSED: 2.94s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-10-19 23:04:41 +0200
+COMMAND: osctl ct exec snap-5fce cat /lxc.status
+END: 2026-10-19 23:04:44 +0200
+ELAPSED: 3.44s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-10-19 23:04:45 +0200
+COMMAND: osctl ct exec snap-5fce cat /lxc.status
+END: 2026-10-19 23:04:48 +0200
+ELAPSED: 2.94s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-10-19 23:04:49 +0200
+COMMAND: osctl ct exec snap-5fce cat /lxc.status
+END: 2026-10-19 23:04:51 +0200
+ELAPSED: 2.51s
+STATUS: 1
+OUTPUT:
+cat: /lxc.status: No such file or directory
+error: executed command failed
+---
+
+START: 2026-10-19 23:04:52 +0200
+COMMAND: osctl ct exec snap-5fce cat /lxc.status
+END: 2026-10-19 23:04:55 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-19 23:05:10 +0200
+COMMAND: osctl ct exec snap-5fce /snap/bin/lxc info u1
+END: 2026-10-19 23:05:12 +0200
+ELAPSED: 2.14s
+STATUS: 0
+OUTPUT:
+Name: u1
+Status: RUNNING
+Type: container
+Architecture: x86_64
+PID: 1900
+Created: 2026/10/19 23:04 CEST
+Last Used: 2026/10/19 23:04 CEST
+
+Resources:
+  Processes: 42
+  Disk usage:
+    root: 0B
+  Disk total:
+    root: 0B
+  CPU usage:
+    CPU usage (in seconds): 7
+  Memory usage:
+    Memory (current): 132.60MiB
+  Network usage:
+    eth0:
+      Type: broadcast
+      State: UP
+      Host interface: veth0655d712
+      MAC address: 00:16:3e:aa:c0:c7
+      MTU: 1500
+      Bytes received: 1.80kB
+      Bytes sent: 3.21kB
+      Packets received: 12
+      Packets sent: 25
+      IP addresses:
+        inet6: fd42:452:fece:c2af:216:3eff:feaa:c0c7/64 (global)
+        inet6: fe80::216:3eff:feaa:c0c7/64 (link)
+    gre0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00
+      MTU: 1476
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    gretap0:
+      Type: broadcast
+      State: DOWN
+      MAC address: 00:00:00:00:00:00
+      MTU: 1462
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    ip6tnl0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
+      MTU: 1452
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    lo:
+      Type: loopback
+      State: UP
+      MTU: 65536
+      Bytes received: 308B
+      Bytes sent: 308B
+      Packets received: 4
+      Packets sent: 4
+      IP addresses:
+        inet:  127.0.0.1/8 (local)
+        inet6: ::1/128 (local)
+    tunl0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00
+      MTU: 1480
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    erspan0:
+      Type: broadcast
+      State: DOWN
+      MAC address: 00:00:00:00:00:00
+      MTU: 1450
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+---
+
+START: 2026-10-19 23:05:12 +0200
+COMMAND: osctl ct del -f --prune snap-5fce
+END: 2026-10-19 23:06:43 +0200
+ELAPSED: 91.22s
+STATUS: 1
+OUTPUT:
+error: Container stop cleanup has not finished
+Stopping container
+Stopping container
+---
+
+START: 2026-10-19 23:06:43 +0200
+COMMAND: osctl user del snap-5fce
+END: 2026-10-19 23:06:44 +0200
+ELAPSED: 0.67s
+STATUS: 1
+OUTPUT:
+error: user has container(s)
+---
+
+START: 2026-10-19 23:06:44 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-19 23:06:45 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/fedora/44/image-stream.tar
+---
+
+START: 2026-10-19 23:06:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 23:06:46 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-19 23:06:46 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-19 23:06:46 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 21:06:46 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-19 23:06:46 +0200
+COMMAND: osctl ct new --distribution fedora --version latest snap-d5ca
+END: 2026-10-19 23:07:00 +0200
+ELAPSED: 14.04s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-19 23:07:00 +0200
+COMMAND: osctl ct unset start-menu snap-d5ca
+END: 2026-10-19 23:07:01 +0200
+ELAPSED: 1.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:07:01 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 snap-d5ca eth0
+END: 2026-10-19 23:07:02 +0200
+ELAPSED: 1.14s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:07:02 +0200
+COMMAND: osctl ct devices add -p snap-d5ca char 10 229 rwm /dev/fuse
+END: 2026-10-19 23:07:03 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:07:03 +0200
+COMMAND: osctl ct set dns-resolver snap-d5ca 1.1.1.1
+END: 2026-10-19 23:07:04 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:07:04 +0200
+COMMAND: osctl ct start snap-d5ca
+END: 2026-10-19 23:07:06 +0200
+ELAPSED: 2.32s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-19 23:07:06 +0200
+COMMAND: osctl ct exec snap-d5ca sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-19 23:07:09 +0200
+ELAPSED: 2.66s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=0.751 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.751/0.751/0.751/0.000 ms
+---
+
+START: 2026-10-19 23:07:09 +0200
+COMMAND: osctl ct exec snap-d5ca dnf -y install squashfuse snapd
+END: 2026-10-19 23:07:48 +0200
+ELAPSED: 39.3s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+ Fedora 44 openh264 (From Cisco) - x86_ 100% |   2.2 KiB/s |   5.3 KiB |  00m02s
+ Fedora 44 - x86_64 - Updates           100% |   4.5 MiB/s |  12.0 MiB |  00m03s
+ Fedora 44 - x86_64                     100% |   6.5 MiB/s |  36.7 MiB |  00m06s
+Repositories loaded.
+Package                       Arch   Version         Repository      Size
+Installing:
+ snapd                        x86_64 0:2.77.1-0.fc44 updates     47.4 MiB
+ squashfuse                   x86_64 0:0.5.2-6.fc44  fedora      94.0 KiB
+Installing dependencies:
+ checkpolicy                  x86_64 0:3.11-1.fc44   updates      1.7 MiB
+ fuse                         x86_64 0:2.9.9-25.fc44 fedora     214.1 KiB
+ fuse-common                  x86_64 0:3.18.3-1.fc44 updates     38.0   B
+ policycoreutils-python-utils noarch 0:3.11-2.fc44   updates     94.5 KiB
+ python3-audit                x86_64 0:4.2.1-1.fc44  updates    295.3 KiB
+ python3-distro               noarch 0:1.9.0-11.fc44 fedora     210.2 KiB
+ python3-libselinux           x86_64 0:3.11-2.fc44   updates    629.3 KiB
+ python3-libsemanage          x86_64 0:3.11-1.fc44   updates    398.9 KiB
+ python3-policycoreutils      noarch 0:3.11-2.fc44   updates      5.8 MiB
+ python3-setools              x86_64 0:4.6.0-6.fc44  updates      2.8 MiB
+ snap-confine                 x86_64 0:2.77.1-0.fc44 updates     11.3 MiB
+ snapd-selinux                noarch 0:2.77.1-0.fc44 updates     44.6 KiB
+ squashfs-tools               x86_64 0:4.6.1-8.fc44  fedora     661.3 KiB
+ squashfuse-libs              x86_64 0:0.5.2-6.fc44  fedora     114.2 KiB
+ xdelta                       x86_64 0:3.1.0-24.fc44 fedora     189.4 KiB
+
+Transaction Summary:
+ Installing:        17 packages
+
+Total size of inbound packages is 23 MiB. Need to download 23 MiB.
+After this operation, 72 MiB extra will be used (install 72 MiB, remove 0 B).
+[ 1/17] squashfuse-0:0.5.2-6.fc44.x86_6 100% | 320.9 KiB/s |  46.5 KiB |  00m00s
+[ 2/17] squashfuse-libs-0:0.5.2-6.fc44. 100% | 301.9 KiB/s |  44.7 KiB |  00m00s
+[ 3/17] snapd-selinux-0:2.77.1-0.fc44.n 100% |   6.4 MiB/s |  91.6 KiB |  00m00s
+[ 4/17] squashfs-tools-0:4.6.1-8.fc44.x 100% |   5.8 MiB/s | 247.6 KiB |  00m00s
+[ 5/17] snap-confine-0:2.77.1-0.fc44.x8 100% |  33.6 MiB/s |   3.4 MiB |  00m00s
+[ 6/17] xdelta-0:3.1.0-24.fc44.x86_64   100% |   2.1 MiB/s |  92.7 KiB |  00m00s
+[ 7/17] policycoreutils-python-utils-0: 100% |   7.0 MiB/s |  50.4 KiB |  00m00s
+[ 8/17] python3-libsemanage-0:3.11-1.fc 100% |   9.2 MiB/s |  84.4 KiB |  00m00s
+[ 9/17] python3-distro-0:1.9.0-11.fc44. 100% |   2.2 MiB/s |  47.2 KiB |  00m00s
+[10/17] python3-policycoreutils-0:3.11- 100% |  35.0 MiB/s |   2.2 MiB |  00m00s
+[11/17] checkpolicy-0:3.11-1.fc44.x86_6 100% |  10.7 MiB/s | 381.9 KiB |  00m00s
+[12/17] python3-audit-0:4.2.1-1.fc44.x8 100% |   6.5 MiB/s |  73.4 KiB |  00m00s
+[13/17] python3-libselinux-0:3.11-2.fc4 100% |  25.9 MiB/s | 212.0 KiB |  00m00s
+[14/17] python3-setools-0:4.6.0-6.fc44. 100% |  32.4 MiB/s | 730.4 KiB |  00m00s
+[15/17] fuse-0:2.9.9-25.fc44.x86_64     100% |   4.1 MiB/s |  79.9 KiB |  00m00s
+[16/17] fuse-common-0:3.18.3-1.fc44.x86 100% |   2.6 MiB/s |   8.1 KiB |  00m00s
+[17/17] snapd-0:2.77.1-0.fc44.x86_64    100% |  27.3 MiB/s |  15.2 MiB |  00m01s
+--------------------------------------------------------------------------------
+[17/17] Total                           100% |  40.3 MiB/s |  22.9 MiB |  00m01s
+Running transaction
+[ 1/19] Verify package files            100% |  49.0   B/s |  17.0   B |  00m00s
+[ 2/19] Prepare transaction             100% | 111.0   B/s |  17.0   B |  00m00s
+[ 3/19] Installing python3-libselinux-0 100% |  26.9 MiB/s | 632.8 KiB |  00m00s
+[ 4/19] Installing python3-libsemanage- 100% |  32.6 MiB/s | 400.3 KiB |  00m00s
+[ 5/19] Installing fuse-common-0:3.18.3 100% |  95.1 KiB/s | 292.0   B |  00m00s
+[ 6/19] Installing fuse-0:2.9.9-25.fc44 100% |   3.9 MiB/s | 217.2 KiB |  00m00s
+[ 7/19] Installing python3-setools-0:4. 100% |  30.0 MiB/s |   2.9 MiB |  00m00s
+[ 8/19] Installing python3-audit-0:4.2. 100% |  26.4 MiB/s | 297.3 KiB |  00m00s
+[ 9/19] Installing checkpolicy-0:3.11-1 100% |  28.1 MiB/s |   1.7 MiB |  00m00s
+[10/19] Installing python3-distro-0:1.9 100% |   4.1 MiB/s | 214.9 KiB |  00m00s
+[11/19] Installing python3-policycoreut 100% |  28.3 MiB/s |   5.9 MiB |  00m00s
+[12/19] Installing policycoreutils-pyth 100% |   1.4 MiB/s |  98.2 KiB |  00m00s
+[13/19] Installing snapd-selinux-0:2.77 100% |   3.5 KiB/s |  45.7 KiB |  00m13s
+[14/19] Installing xdelta-0:3.1.0-24.fc 100% |   4.2 MiB/s | 190.9 KiB |  00m00s
+[15/19] Installing squashfs-tools-0:4.6 100% |  14.1 MiB/s | 664.9 KiB |  00m00s
+[16/19] Installing snap-confine-0:2.77. 100% |  63.2 MiB/s |  11.3 MiB |  00m00s
+[17/19] Installing squashfuse-libs-0:0. 100% |  11.3 MiB/s | 115.9 KiB |  00m00s
+[18/19] Installing squashfuse-0:0.5.2-6 100% |   2.6 MiB/s |  96.4 KiB |  00m00s
+[19/19] Installing snapd-0:2.77.1-0.fc4 100% |  31.1 MiB/s |  47.4 MiB |  00m02s
+>>> Running %post scriptlet: snapd-0:2.77.1-0.fc44.x86_64
+>>> Finished %post scriptlet: snapd-0:2.77.1-0.fc44.x86_64
+>>> Scriptlet output:
+>>> Created symlink '/etc/systemd/system/sockets.target.wants/snapd.socket' → '/usr/lib/systemd/system/snapd.socket'.
+>>> Created symlink '/etc/systemd/user/sockets.target.wants/snapd.session-agent.socket' → '/usr/lib/systemd/user/snapd.session-agent.socket'.
+>>> 
+Complete!
+---
+
+START: 2026-10-19 23:08:03 +0200
+COMMAND: osctl ct exec snap-d5ca snap wait system seed.loaded
+END: 2026-10-19 23:08:06 +0200
+ELAPSED: 3.38s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 23:08:06 +0200
+COMMAND: osctl ct exec snap-d5ca snap install hello-world
+END: 2026-10-19 23:08:27 +0200
+ELAPSED: 20.55s
+STATUS: 0
+OUTPUT:
+2026-10-19T23:08:13+02:00 INFO Waiting for automatic snapd restart...
+2026-10-19T23:08:14+02:00 INFO Waiting for automatic snapd restart...
+2026-10-19T23:08:15+02:00 INFO Waiting for automatic snapd restart...
+2026-10-19T23:08:16+02:00 INFO Waiting for automatic snapd restart...
+hello-world 6.4 from Canonical** installed
+Warning: /var/lib/snapd/snap/bin was not found in your $PATH. If you've not
+         restarted your session since you installed snapd, try doing that.
+         Please see https://forum.snapcraft.io/t/9469 for more details.
+
+---
+
+START: 2026-10-19 23:08:27 +0200
+COMMAND: osctl ct exec snap-d5ca snap run hello-world
+END: 2026-10-19 23:08:30 +0200
+ELAPSED: 2.84s
+STATUS: 0
+OUTPUT:
+Hello World!
+---
+
+START: 2026-10-19 23:08:30 +0200
+COMMAND: osctl ct del -f --prune snap-d5ca
+END: 2026-10-19 23:08:32 +0200
+ELAPSED: 2.48s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:snap-d5ca
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-19 23:08:32 +0200
+COMMAND: osctl user del snap-d5ca
+END: 2026-10-19 23:08:33 +0200
+ELAPSED: 0.95s
+STATUS: 1
+OUTPUT:
+error: user not found
+---
+
+START: 2026-10-19 23:08:33 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-19 23:08:34 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/fedora/44/image-stream.tar
+---
+
+START: 2026-10-19 23:08:34 +0200
+COMMAND: poweroff -f
+END: 2026-10-19 23:08:57 +0200
+ELAPSED: 22.92s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:snap-5fce
+Unregistering users, groups and containers
+---
+

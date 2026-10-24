@@ -1,0 +1,88 @@
+/nix/store/6kq17dzvfkcn6iyx9qsfra6vinky91r6-os-test-systemd-ebpf.json
+[2026-10-19 22:00:20 +0200] Running script default
+[2026-10-19 22:04:43 +0200] Script default finished in 262.96s
+stock_systemd_has_btf=0
+=== issue 52 direction-mismatch syscall transcript ===
+ingress_loaded_egress_attached_cgroup_path=/sys/fs/cgroup/system.slice/systemd-ebpf-direction-mismatch.service
+ingress_loaded_egress_attached_cgroup_open_errno=0
+ingress_loaded_egress_attached_expected_attach_type=0
+ingress_loaded_egress_attached_attach_type=1
+ingress_loaded_egress_attached_prog_load_errno=0
+ingress_loaded_egress_attached_prog_info_errno=0 id=216
+ingress_loaded_egress_attached_attach_errno=0 flags=0
+ingress_loaded_egress_attached_query_errno=0 count=1 contains_id=1
+ingress_loaded_egress_attached_exercise_errno=0
+ingress_loaded_egress_attached_detach_errno=0
+ingress_loaded_egress_attached_post_query_errno=0 count=0 contains_id=0
+egress_loaded_ingress_attached_cgroup_path=/sys/fs/cgroup/system.slice/systemd-ebpf-direction-mismatch.service
+egress_loaded_ingress_attached_cgroup_open_errno=0
+egress_loaded_ingress_attached_expected_attach_type=1
+egress_loaded_ingress_attached_attach_type=0
+egress_loaded_ingress_attached_prog_load_errno=0
+egress_loaded_ingress_attached_prog_info_errno=0 id=217
+egress_loaded_ingress_attached_attach_errno=0 flags=0
+egress_loaded_ingress_attached_query_errno=0 count=1 contains_id=1
+egress_loaded_ingress_attached_exercise_errno=0
+egress_loaded_ingress_attached_detach_errno=0
+egress_loaded_ingress_attached_post_query_errno=0 count=0 contains_id=0
+cgroup_skb_direction_mismatch_result=pass
+=== issue 52 exact-final context ===
+issue52_systemd_origin=container-installed-stock
+issue52_default_gate=systemd-ebpf
+issue52_include_btf_wrapper=0
+issue52_boot_id=ca2806b5-fec8-4ab3-9aa3-43616bf119d7
+=== systemd version and feature flags ===
+systemd 260 (260.5)
++PAM +AUDIT -SELINUX +APPARMOR +IMA +IPE +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 +KMOD +LIBCRYPTSETUP +LIBCRYPTSETUP_PLUGINS +LIBFDISK +PCRE2 +PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD +BPF_FRAMEWORK -BTF -XKBCOMMON +UTMP +LIBARCHIVE
+=== kernel identity ===
+Linux systemd-ebpf 6.18.49 #1-vpsAdminOS SMP PREEMPT_DYNAMIC Sun Oct 11 19:28:07 UTC 2026 x86_64 GNU/Linux
+Linux version 6.18.49 (nixbld@localhost) (gcc (GCC) 15.3.0, GNU ld (GNU Binutils) 2.46) #1-vpsAdminOS SMP PREEMPT_DYNAMIC Sun Oct 11 19:28:07 UTC 2026
+=== cgroup mode and namespace identities ===
+cgroup2 /sys/fs/cgroup rw,nosuid,nodev,noexec,relatime
+0::/init.scope
+0::/osctl.attach.9a9cdd1dd6b1e153048fce35db1b7bc1
+pid1_user=user:[4026532408]
+self_user=user:[4026532408]
+pid1_pid=pid:[4026532412]
+self_pid=pid:[4026532412]
+pid1_pid_for_children=pid:[4026532412]
+self_pid_for_children=pid:[4026532412]
+pid1_cgroup=cgroup:[4026532413]
+self_cgroup=cgroup:[4026532413]
+pid1_syslog=syslog:[4026532407]
+self_syslog=syslog:[4026532407]
+pid1_tracing=tracing:[4026532414]
+self_tracing=tracing:[4026532414]
+issue52_journal_cursor=s=4c549727e84740ca8e44370bdc2c8fe3;i=a7;b=ca2806b5fec84ab39aa343616bf119d7;m=6fd6b8f;t=65e37018f9c0b;x=d52d33fa73cfaa31
+issue52_journal_boot_id=ca2806b5fec84ab39aa343616bf119d7
+=== issue 52 complete positive-unit journal ===
+=== issue 52 positive unit: systemd-ebpf-ip-deny.service ===
+ActiveState=inactive
+Result=success
+ExecMainStatus=0
+IPIngressBytes=[no data]
+IPEgressBytes=[no data]
+Oct 19 22:03:24.316429 systemd-ebpf systemd[1]: Started [systemd-run] /run/current-system/sw/bin/systemd-ebpf-connect 127.0.0.1 19080 deny.
+Oct 19 22:03:25.407694 systemd-ebpf systemd[1]: systemd-ebpf-ip-deny.service: Deactivated successfully.
+=== issue 52 positive unit: systemd-ebpf-ip-allow.service ===
+ActiveState=inactive
+Result=success
+ExecMainStatus=0
+IPIngressBytes=[no data]
+IPEgressBytes=[no data]
+Oct 19 22:03:27.103890 systemd-ebpf systemd[1]: Started [systemd-run] /run/current-system/sw/bin/systemd-ebpf-connect 127.0.0.1 19080 allow.
+Oct 19 22:03:27.193314 systemd-ebpf systemd[1]: systemd-ebpf-ip-allow.service: Deactivated successfully.
+Oct 19 22:03:27.194083 systemd-ebpf systemd[1]: systemd-ebpf-ip-allow.service: Consumed 78ms CPU time over 89ms wall clock time, 5.2M memory peak, 219B incoming IP traffic, 216B outgoing IP traffic.
+=== issue 52 positive unit: systemd-ebpf-ip-accounting.service ===
+ActiveState=inactive
+Result=success
+ExecMainStatus=0
+IPIngressBytes=[no data]
+IPEgressBytes=[no data]
+Oct 19 22:03:29.061236 systemd-ebpf systemd[1]: Started [systemd-run] /run/current-system/sw/bin/systemd-ebpf-connect 127.0.0.1 19080 allow.
+Oct 19 22:03:29.130357 systemd-ebpf systemd[1]: systemd-ebpf-ip-accounting.service: Deactivated successfully.
+Oct 19 22:03:29.130744 systemd-ebpf systemd[1]: systemd-ebpf-ip-accounting.service: Consumed 58ms CPU time over 69ms wall clock time, 5.4M memory peak, 219B incoming IP traffic, 268B outgoing IP traffic.
+=== issue 52 original stock-service warning matches ===
+bind_network_interface_supported=1
+stock_systemd_btf_nsresourced_supported=0
+stock_systemd_btf_nsresourced_skipped_no_btf=1

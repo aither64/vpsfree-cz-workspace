@@ -1,0 +1,94 @@
+diff --git a/.github/workflows/scripts/prebuild_benchmark.rb b/.github/workflows/scripts/prebuild_benchmark.rb
+index 587821673..c94a06dc8 100644
+--- a/.github/workflows/scripts/prebuild_benchmark.rb
++++ b/.github/workflows/scripts/prebuild_benchmark.rb
+@@ -240,11 +240,7 @@ module PrebuildBenchmark
+       end
+ 
+       missing = output.lines.filter_map { |line| line.strip if line.strip.match?(%r{\A/nix/store/[^/]+\.drv\z}) }
+-      unless missing.empty?
+-        derivations = JSON.parse(capture('nix', 'derivation', 'show', *missing))
+-        kernels = derivations.select { |_path, drv| drv.fetch('env', {})['pname'] == 'linux' }
+-        raise "Uncached kernel compilation required: #{kernels.keys.join(', ')}" unless kernels.empty?
+-      end
++      reject_uncached_kernels(missing)
+       @report['preflight'] = {
+         'resources' => current,
+         'missing_derivations' => missing,
+@@ -254,6 +250,21 @@ module PrebuildBenchmark
+       save
+     end
+ 
++    def reject_uncached_kernels(missing)
++      return if missing.empty?
++
++      document = JSON.parse(capture('nix', 'derivation', 'show', *missing))
++      # Nix 2.34 wraps the map in a versioned envelope and uses store basenames.
++      derivations = document.fetch('derivations', document)
++      unless derivations.is_a?(Hash) && derivations.values.all? { |drv| drv.is_a?(Hash) && drv['env'].is_a?(Hash) } &&
++             derivations.keys.map { |path| File.basename(path) }.sort == missing.map { |path| File.basename(path) }.sort
++        raise 'Invalid Nix derivation inspection response for missing builds'
++      end
++
++      kernels = derivations.select { |_path, drv| drv.fetch('env')['pname'] == 'linux' }
++      raise "Uncached kernel compilation required: #{kernels.keys.join(', ')}" unless kernels.empty?
++    end
++
+     def process_table
+       Dir.glob('/proc/[0-9]*/stat').filter_map do |file|
+         value = File.read(file)
+diff --git a/test-runner/spec/github_actions/prebuild_benchmark_spec.rb b/test-runner/spec/github_actions/prebuild_benchmark_spec.rb
+index f18ef44ec..e32a081ae 100644
+--- a/test-runner/spec/github_actions/prebuild_benchmark_spec.rb
++++ b/test-runner/spec/github_actions/prebuild_benchmark_spec.rb
+@@ -125,6 +125,50 @@ RSpec.describe PrebuildBenchmark do
+     end
+   end
+ 
++  it 'checks actual Nix derivation inspection output before warming and still rejects uncached kernels' do
++    expression = <<~NIX
++      map (attrs: builtins.derivation ({
++        system = builtins.currentSystem;
++        builder = "/bin/false";
++      } // attrs)) [
++        { name = "benchmark-kernel-metadata"; pname = "ordinary-image"; }
++        { name = "benchmark-uncached-kernel"; pname = "linux"; }
++      ]
++    NIX
++    output, error, status = Open3.capture3('nix-instantiate', '--expr', expression)
++    raise "Fixture instantiation failed: #{error}" unless status.success?
++
++    ordinary, kernel = output.lines.map(&:strip)
++    with_tmpdir do |dir|
++      run = described_class::Run.new(REPO_ROOT, dir)
++      allow(run).to receive(:capture).and_call_original
++      allow(run).to receive(:snapshot).and_return(
++        'available_memory_mib' => 8192, 'shm_available_mib' => 8192,
++        'disk' => "Filesystem 1024-blocks Used Available Capacity Mounted on\nfixture 100 1 99 1% /\n", 'pressure' => {}
++      )
++      allow(run).to receive(:capture).with('nix-build', any_args).and_return("this derivation will be built:\n  #{ordinary}\n")
++      expect { run.send(:preflight, [], REPO_ROOT, nil) }.not_to raise_error
++      report = JSON.parse(File.read(File.join(dir, 'timings.json')))
++      expect(report.fetch('preflight').fetch('missing_derivations')).to eq([ordinary])
++
++      allow(run).to receive(:capture).with('nix-build', any_args).and_return("these derivations will be built:\n  #{ordinary}\n  #{kernel}\n")
++      expect { run.send(:preflight, [], REPO_ROOT, nil) }.to raise_error(RuntimeError, /Uncached kernel compilation required: .*benchmark-uncached-kernel/)
++    end
++  end
++
++  it 'accepts legacy flat derivation maps and fails closed on missing or malformed inspection entries' do
++    with_tmpdir do |dir|
++      run = described_class::Run.new(dir, dir)
++      path = '/nix/store/fixture-image.drv'
++      allow(run).to receive(:capture).with('nix', 'derivation', 'show', path).and_return(JSON.generate(path => { 'env' => { 'pname' => 'ordinary-image' } }))
++      expect { run.send(:reject_uncached_kernels, [path]) }.not_to raise_error
++      [{ 'version' => 4, 'derivations' => {} }, { path => 4 }].each do |response|
++        allow(run).to receive(:capture).with('nix', 'derivation', 'show', path).and_return(JSON.generate(response))
++        expect { run.send(:reject_uncached_kernels, [path]) }.to raise_error(RuntimeError, 'Invalid Nix derivation inspection response for missing builds')
++      end
++    end
++  end
++
+   it 'marks an interrupted pair incomplete while retaining the first leg elsewhere' do
+     expect(described_class.compare([completed_leg(100)], 'selected')).to include('complete' => false)
+     b = completed_leg(20).merge('signal' => 15, 'completed_tests' => nil)

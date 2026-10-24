@@ -1,0 +1,741 @@
+SHELL: 0
+
+START: 2026-10-18 09:21:00 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-18 09:21:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:00 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-18 09:21:00 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:21:02 +0200
+ELAPSED: 1.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:21:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:21:04 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:21:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:21:05 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:21:06 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:21:07 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:21:08 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:21:08 +0200
+ELAPSED: 0.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:21:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:21:10 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:21:11 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:21:11 +0200
+ELAPSED: 0.62s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:21:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:21:13 +0200
+ELAPSED: 0.67s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:21:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:21:15 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-18 09:21:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:21:16 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-18 09:21:16 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-18 09:21:16 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Sun, 18 Oct 2026 07:21:16 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-18 09:21:16 +0200
+COMMAND: osctl ct new --distribution alpine testct-ad72
+END: 2026-10-18 09:21:18 +0200
+ELAPSED: 1.95s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-18 09:21:18 +0200
+COMMAND: osctl ct unset start-menu testct-ad72
+END: 2026-10-18 09:21:19 +0200
+ELAPSED: 0.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:19 +0200
+COMMAND: osctl ct netif new routed testct-ad72 eth0
+END: 2026-10-18 09:21:20 +0200
+ELAPSED: 0.79s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:20 +0200
+COMMAND: osctl ct netif ip add testct-ad72 eth0 192.0.2.90/32
+END: 2026-10-18 09:21:20 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:20 +0200
+COMMAND: osctl ct new --distribution alpine testct-ad72-victim
+END: 2026-10-18 09:21:22 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-18 09:21:22 +0200
+COMMAND: osctl ct unset start-menu testct-ad72-victim
+END: 2026-10-18 09:21:23 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:23 +0200
+COMMAND: osctl ct start testct-ad72-victim
+END: 2026-10-18 09:21:24 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 09:21:24 +0200
+COMMAND: osctl ct exec testct-ad72-victim sh -c 'echo retained > /root/netns-guard'
+END: 2026-10-18 09:21:26 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:26 +0200
+COMMAND: osctl -j ct show testct-ad72-victim
+END: 2026-10-18 09:21:26 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-ad72-victim","user":"testct-ad72-victim","group":"/default","uid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1065536,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-ad72-victim","rootfs":"/tank/ct/testct-ad72-victim/private","boot_dataset":"tank/ct/testct-ad72-victim","boot_rootfs":"/tank/ct/testct-ad72-victim/private","lxc_path":"/run/osctl/pools/tank/users/testct-ad72-victim/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-ad72-victim/group.default/cts/testct-ad72-victim","group_path":"osctl/pool.tank/group.default/user.testct-ad72-victim/ct.testct-ad72-victim/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":2561,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-ad72-victim.log","memory":8765440,"cpu_us":2098350,"cpu_user_us":1423747,"cpu_system_us":674602,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-18 09:21:26 +0200
+COMMAND: ip -o address show dev lo
+END: 2026-10-18 09:21:26 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host proto kernel_lo \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-18 09:21:26 +0200
+COMMAND: osctl ct exec testct-ad72-victim ip -o address show dev lo
+END: 2026-10-18 09:21:28 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-18 09:21:28 +0200
+COMMAND: osctl -j ct show testct-ad72
+END: 2026-10-18 09:21:29 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-ad72","user":"testct-ad72","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-ad72","rootfs":"/tank/ct/testct-ad72/private","boot_dataset":"tank/ct/testct-ad72","boot_rootfs":"/tank/ct/testct-ad72/private","lxc_path":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts/testct-ad72","group_path":"osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-ad72.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-18 09:21:29 +0200
+COMMAND: printf '%s\n' exec\ lxc-start\ -P\ /run/osctl/pools/tank/users/testct-ad72/group.default/cts\ -n\ testct-ad72\ -d\ -l\ TRACE\ -o\ /tank/log/ct/testct-ad72.log | osctl ct su testct-ad72 || { rc=$?; cat /tank/log/ct/testct-ad72.log; exit $rc; }
+END: 2026-10-18 09:21:32 +0200
+ELAPSED: 3.4s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:32 +0200
+COMMAND: osctl ct exec testct-ad72 true
+END: 2026-10-18 09:21:33 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:33 +0200
+COMMAND: osctl -j ct show testct-ad72
+END: 2026-10-18 09:21:34 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-ad72","user":"testct-ad72","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-ad72","rootfs":"/tank/ct/testct-ad72/private","boot_dataset":"tank/ct/testct-ad72","boot_rootfs":"/tank/ct/testct-ad72/private","lxc_path":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts/testct-ad72","group_path":"osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":2997,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-ad72.log","memory":7938048,"cpu_us":3262804,"cpu_user_us":2442581,"cpu_system_us":820223,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-18 09:21:34 +0200
+COMMAND: printf '%s\n' ruby\ /etc/ct-user-netns-probe.rb\ testct-ad72\ 1\ 2561\ 2997 | osctl ct su testct-ad72
+END: 2026-10-18 09:21:36 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:36 +0200
+COMMAND: ip -o address show dev lo
+END: 2026-10-18 09:21:36 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host proto kernel_lo \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-18 09:21:36 +0200
+COMMAND: osctl ct exec testct-ad72-victim ip -o address show dev lo
+END: 2026-10-18 09:21:37 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-18 09:21:37 +0200
+COMMAND: readlink /proc/2997/ns/syslog
+END: 2026-10-18 09:21:37 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-18 09:21:37 +0200
+COMMAND: osctl ct exec testct-ad72 readlink /proc/self/ns/syslog
+END: 2026-10-18 09:21:39 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-18 09:21:39 +0200
+COMMAND: readlink /proc/2997/ns/tracing
+END: 2026-10-18 09:21:39 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-18 09:21:39 +0200
+COMMAND: osctl ct exec testct-ad72 readlink /proc/self/ns/tracing
+END: 2026-10-18 09:21:40 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-18 09:21:40 +0200
+COMMAND: cat /proc/2997/cgroup
+END: 2026-10-18 09:21:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0::/osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned/lxc.payload.testct-ad72/init.scope
+---
+
+START: 2026-10-18 09:21:40 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned
+END: 2026-10-18 09:21:40 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-18 09:21:40 +0200
+COMMAND: printf '%s\n' true | osctl ct su testct-ad72
+END: 2026-10-18 09:21:42 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:42 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned
+END: 2026-10-18 09:21:42 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-18 09:21:42 +0200
+COMMAND: osctl -j ct show testct-ad72
+END: 2026-10-18 09:21:43 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-ad72","user":"testct-ad72","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-ad72","rootfs":"/tank/ct/testct-ad72/private","boot_dataset":"tank/ct/testct-ad72","boot_rootfs":"/tank/ct/testct-ad72/private","lxc_path":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts/testct-ad72","group_path":"osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":2997,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-ad72.log","memory":8642560,"cpu_us":5324461,"cpu_user_us":4083755,"cpu_system_us":1240706,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-18 09:21:43 +0200
+COMMAND: ! tr '\0' '\n' < /proc/2997/environ | grep -q '^OSCTL_RUN_ID='
+END: 2026-10-18 09:21:43 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:43 +0200
+COMMAND: osctl ct exec testct-ad72 grep -w memory /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-18 09:21:44 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+cpuset cpu memory hugetlb pids rdma misc
+---
+
+START: 2026-10-18 09:21:44 +0200
+COMMAND: ping -c 1 192.0.2.90
+END: 2026-10-18 09:21:44 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.0.2.90 (192.0.2.90) 56(84) bytes of data.
+64 bytes from 192.0.2.90: icmp_seq=1 ttl=64 time=0.095 ms
+
+--- 192.0.2.90 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.095/0.095/0.095/0.000 ms
+---
+
+START: 2026-10-18 09:21:44 +0200
+COMMAND: osctl ct stop testct-ad72
+END: 2026-10-18 09:21:49 +0200
+ELAPSED: 4.6s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-18 09:21:49 +0200
+COMMAND: osctl -j ct show testct-ad72
+END: 2026-10-18 09:21:49 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-ad72","user":"testct-ad72","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-ad72","rootfs":"/tank/ct/testct-ad72/private","boot_dataset":"tank/ct/testct-ad72","boot_rootfs":"/tank/ct/testct-ad72/private","lxc_path":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts/testct-ad72","group_path":"osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-ad72.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-18 09:21:49 +0200
+COMMAND: osctl ct start testct-ad72
+END: 2026-10-18 09:21:51 +0200
+ELAPSED: 1.82s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 09:21:51 +0200
+COMMAND: osctl ct exec testct-ad72 true
+END: 2026-10-18 09:21:53 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:21:53 +0200
+COMMAND: osctl ct stop testct-ad72
+END: 2026-10-18 09:21:57 +0200
+ELAPSED: 4.3s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-18 09:21:57 +0200
+COMMAND: osctl -j ct show testct-ad72
+END: 2026-10-18 09:21:58 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-ad72","user":"testct-ad72","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-ad72","rootfs":"/tank/ct/testct-ad72/private","boot_dataset":"tank/ct/testct-ad72","boot_rootfs":"/tank/ct/testct-ad72/private","lxc_path":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts/testct-ad72","group_path":"osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-ad72.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-18 09:21:58 +0200
+COMMAND: printf '%s\n' exec\ lxc-start\ -P\ /run/osctl/pools/tank/users/testct-ad72/group.default/cts\ -n\ testct-ad72\ -d\ -l\ TRACE\ -o\ /tank/log/ct/testct-ad72.log | osctl ct su testct-ad72 || { rc=$?; cat /tank/log/ct/testct-ad72.log; exit $rc; }
+END: 2026-10-18 09:22:01 +0200
+ELAPSED: 3.25s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:22:01 +0200
+COMMAND: osctl ct exec testct-ad72 true
+END: 2026-10-18 09:22:02 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:22:02 +0200
+COMMAND: osctl -j ct show testct-ad72
+END: 2026-10-18 09:22:03 +0200
+ELAPSED: 0.76s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-ad72","user":"testct-ad72","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-ad72","rootfs":"/tank/ct/testct-ad72/private","boot_dataset":"tank/ct/testct-ad72","boot_rootfs":"/tank/ct/testct-ad72/private","lxc_path":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts/testct-ad72","group_path":"osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":4473,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-ad72.log","memory":6963200,"cpu_us":2989286,"cpu_user_us":2214391,"cpu_system_us":774895,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-18 09:22:03 +0200
+COMMAND: printf '%s\n' ruby\ /etc/ct-user-netns-probe.rb\ testct-ad72\ 1\ 2561\ 4473 | osctl ct su testct-ad72
+END: 2026-10-18 09:22:05 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:22:05 +0200
+COMMAND: ip -o address show dev lo
+END: 2026-10-18 09:22:05 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host proto kernel_lo \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-18 09:22:05 +0200
+COMMAND: osctl ct exec testct-ad72-victim ip -o address show dev lo
+END: 2026-10-18 09:22:06 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+1: lo    inet 127.0.0.1/8 scope host lo\       valid_lft forever preferred_lft forever
+1: lo    inet6 ::1/128 scope host \       valid_lft forever preferred_lft forever
+---
+
+START: 2026-10-18 09:22:06 +0200
+COMMAND: readlink /proc/4473/ns/syslog
+END: 2026-10-18 09:22:06 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-18 09:22:06 +0200
+COMMAND: osctl ct exec testct-ad72 readlink /proc/self/ns/syslog
+END: 2026-10-18 09:22:08 +0200
+ELAPSED: 1.42s
+STATUS: 0
+OUTPUT:
+syslog:[4026532434]
+---
+
+START: 2026-10-18 09:22:08 +0200
+COMMAND: readlink /proc/4473/ns/tracing
+END: 2026-10-18 09:22:08 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-18 09:22:08 +0200
+COMMAND: osctl ct exec testct-ad72 readlink /proc/self/ns/tracing
+END: 2026-10-18 09:22:09 +0200
+ELAPSED: 1.47s
+STATUS: 0
+OUTPUT:
+tracing:[4026532552]
+---
+
+START: 2026-10-18 09:22:09 +0200
+COMMAND: cat /proc/4473/cgroup
+END: 2026-10-18 09:22:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0::/osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned/lxc.payload.testct-ad72/init.scope
+---
+
+START: 2026-10-18 09:22:09 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned
+END: 2026-10-18 09:22:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-18 09:22:09 +0200
+COMMAND: printf '%s\n' true | osctl ct su testct-ad72
+END: 2026-10-18 09:22:11 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:22:11 +0200
+COMMAND: stat -c %u:%g /run/osctl/cgroup/osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned
+END: 2026-10-18 09:22:11 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+100000:1000000
+---
+
+START: 2026-10-18 09:22:11 +0200
+COMMAND: osctl -j ct show testct-ad72
+END: 2026-10-18 09:22:12 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-ad72","user":"testct-ad72","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-ad72","rootfs":"/tank/ct/testct-ad72/private","boot_dataset":"tank/ct/testct-ad72","boot_rootfs":"/tank/ct/testct-ad72/private","lxc_path":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts/testct-ad72","group_path":"osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":4473,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-ad72.log","memory":6860800,"cpu_us":4931680,"cpu_user_us":3811307,"cpu_system_us":1120373,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-18 09:22:12 +0200
+COMMAND: ! tr '\0' '\n' < /proc/4473/environ | grep -q '^OSCTL_RUN_ID='
+END: 2026-10-18 09:22:12 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:22:12 +0200
+COMMAND: osctl ct exec testct-ad72 grep -w memory /sys/fs/cgroup/cgroup.controllers
+END: 2026-10-18 09:22:13 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+cpuset cpu memory hugetlb pids rdma misc
+---
+
+START: 2026-10-18 09:22:13 +0200
+COMMAND: ping -c 1 192.0.2.90
+END: 2026-10-18 09:22:13 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PING 192.0.2.90 (192.0.2.90) 56(84) bytes of data.
+64 bytes from 192.0.2.90: icmp_seq=1 ttl=64 time=0.087 ms
+
+--- 192.0.2.90 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.087/0.087/0.087/0.000 ms
+---
+
+START: 2026-10-18 09:22:13 +0200
+COMMAND: osctl ct stop testct-ad72
+END: 2026-10-18 09:22:18 +0200
+ELAPSED: 4.52s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-18 09:22:18 +0200
+COMMAND: osctl -j ct show testct-ad72
+END: 2026-10-18 09:22:18 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-ad72","user":"testct-ad72","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-ad72","rootfs":"/tank/ct/testct-ad72/private","boot_dataset":"tank/ct/testct-ad72","boot_rootfs":"/tank/ct/testct-ad72/private","lxc_path":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-ad72/group.default/cts/testct-ad72","group_path":"osctl/pool.tank/group.default/user.testct-ad72/ct.testct-ad72/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"stopped","recovery_tainted":false,"init_pid":null,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-ad72.log","memory":null,"cpu_us":null,"loadavg":null}
+---
+
+START: 2026-10-18 09:22:18 +0200
+COMMAND: osctl ct exec testct-ad72-victim grep -Fx retained /root/netns-guard
+END: 2026-10-18 09:22:20 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+retained
+---
+
+START: 2026-10-18 09:22:20 +0200
+COMMAND: osctl ct stop testct-ad72-victim
+END: 2026-10-18 09:22:24 +0200
+ELAPSED: 4.13s
+STATUS: 0
+OUTPUT:
+Stopping container
+---
+
+START: 2026-10-18 09:22:24 +0200
+COMMAND: osctl ct del --prune testct-ad72-victim
+END: 2026-10-18 09:22:25 +0200
+ELAPSED: 1.09s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-ad72-victim
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-18 09:22:25 +0200
+COMMAND: osctl ct del --prune testct-ad72
+END: 2026-10-18 09:22:26 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-ad72
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-18 09:22:26 +0200
+COMMAND: poweroff -f
+END: 2026-10-18 09:22:40 +0200
+ELAPSED: 14.21s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

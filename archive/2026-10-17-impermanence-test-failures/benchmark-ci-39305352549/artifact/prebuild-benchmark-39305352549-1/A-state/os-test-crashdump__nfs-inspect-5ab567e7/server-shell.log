@@ -1,0 +1,341 @@
+SHELL: 0
+
+START: 2026-10-20 00:30:28 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 00:30:29 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:30:29 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 00:30:29 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:30:29 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:30:31 +0200
+ELAPSED: 2.5s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:30:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:30:33 +0200
+ELAPSED: 0.95s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:30:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:30:35 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:30:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:30:37 +0200
+ELAPSED: 0.85s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:30:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:30:39 +0200
+ELAPSED: 0.91s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:30:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:30:41 +0200
+ELAPSED: 0.94s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:30:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:30:43 +0200
+ELAPSED: 1.03s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 00:30:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:30:44 +0200
+ELAPSED: 0.7s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 00:30:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:30:46 +0200
+ELAPSED: 0.88s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 00:30:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 00:30:48 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 00:30:48 +0200
+COMMAND: sv check nfsd
+END: 2026-10-20 00:30:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: nfsd: (pid 871) 22s
+---
+
+START: 2026-10-20 00:30:48 +0200
+COMMAND: test -d /storage/vpsfree.cz/crashdump
+END: 2026-10-20 00:30:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:30:48 +0200
+COMMAND: zfs share -a
+END: 2026-10-20 00:30:48 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:30:48 +0200
+COMMAND: exportfs -v | tr '\n\t' '  ' | grep -F /storage/vpsfree.cz/crashdump | grep -F 192.168.10.11
+END: 2026-10-20 00:30:48 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/storage/vpsfree.cz/crashdump   192.168.10.11/32(sync,wdelay,hide,no_subtree_check,mountpoint,sec=sys,rw,secure,no_root_squash,no_all_squash) 
+---
+
+START: 2026-10-20 00:31:18 +0200
+COMMAND: ping -c 1 192.168.10.11
+END: 2026-10-20 00:31:18 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.168.10.11 (192.168.10.11) 56(84) bytes of data.
+64 bytes from 192.168.10.11: icmp_seq=1 ttl=64 time=0.669 ms
+
+--- 192.168.10.11 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.669/0.669/0.669/0.000 ms
+---
+
+START: 2026-10-20 00:32:16 +0200
+COMMAND: cat /storage/vpsfree.cz/crashdump/host-stage.txt
+END: 2026-10-20 00:32:16 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+host-stage
+---
+
+START: 2026-10-20 00:33:23 +0200
+COMMAND: find /storage/vpsfree.cz/crashdump/crasher -mindepth 1 -maxdepth 1 -type d | sort | tail -n 1
+END: 2026-10-20 00:33:23 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/storage/vpsfree.cz/crashdump/crasher/20261019T223223
+---
+
+START: 2026-10-20 00:33:23 +0200
+COMMAND: test -s /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect/sys.txt
+END: 2026-10-20 00:33:23 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:33:23 +0200
+COMMAND: target=$(find /storage/vpsfree.cz/crashdump/crasher -mindepth 1 -maxdepth 1 -type d | sort | tail -n 1)
+test -n "$target"
+test -s "$target/dmesg"
+test -f "$target/kernel-version"
+test -f "$target/cmdline"
+test -f "$target/inspect.exit-status"
+test -f "$target/inspect/status"
+test -f "$target/inspect/manifest"
+test -f "$target/inspect/timings"
+test -f "$target/inspect/tasks.txt"
+test -f "$target/inspect/bt-active.txt"
+END: 2026-10-20 00:33:23 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:33:23 +0200
+COMMAND: find /storage/vpsfree.cz/crashdump/crasher -mindepth 1 -maxdepth 1 -type d | sort | tail -n 1
+END: 2026-10-20 00:33:23 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+/storage/vpsfree.cz/crashdump/crasher/20261019T223223
+---
+
+START: 2026-10-20 00:33:23 +0200
+COMMAND: cat /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect.exit-status
+END: 2026-10-20 00:33:23 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-20 00:33:23 +0200
+COMMAND: grep -F hello\ crash\ kernel\ nfs\ inspect\ test /storage/vpsfree.cz/crashdump/crasher/20261019T223223/dmesg
+END: 2026-10-20 00:34:08 +0200
+ELAPSED: 45.02s
+STATUS: 0
+OUTPUT:
+[   85.311197] [   T2224] hello crash kernel nfs inspect test
+---
+
+START: 2026-10-20 00:34:08 +0200
+COMMAND: grep -F 'vmcore=/proc/vmcore' /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect/manifest
+END: 2026-10-20 00:34:08 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+vmcore=/proc/vmcore
+---
+
+START: 2026-10-20 00:34:08 +0200
+COMMAND: grep -F 'profile=essential' /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect/manifest
+END: 2026-10-20 00:34:08 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+profile=essential
+---
+
+START: 2026-10-20 00:34:08 +0200
+COMMAND: grep -F 'session 0' /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect/status
+END: 2026-10-20 00:34:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+session 0
+---
+
+START: 2026-10-20 00:34:09 +0200
+COMMAND: grep -F 'tasks.txt 0' /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect/status
+END: 2026-10-20 00:34:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+tasks.txt 0
+---
+
+START: 2026-10-20 00:34:09 +0200
+COMMAND: grep -F 'bt-active.txt 0' /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect/status
+END: 2026-10-20 00:34:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+bt-active.txt 0
+---
+
+START: 2026-10-20 00:34:09 +0200
+COMMAND: grep -E '^session start=[0-9]+ end=[0-9]+ duration=[0-9]+s$' /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect/timings
+END: 2026-10-20 00:34:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+session start=1792449143 end=1792449200 duration=57s
+---
+
+START: 2026-10-20 00:34:09 +0200
+COMMAND: test -e /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect/ps.txt
+END: 2026-10-20 00:34:09 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:34:09 +0200
+COMMAND: test -e /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect/ps-active.txt
+END: 2026-10-20 00:34:09 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:34:09 +0200
+COMMAND: test -e /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect/ps-last-run.txt
+END: 2026-10-20 00:34:09 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:34:09 +0200
+COMMAND: test -e /storage/vpsfree.cz/crashdump/crasher/20261019T223223/inspect/bt-sleeping-interruptible.txt
+END: 2026-10-20 00:34:09 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-20 00:34:09 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 00:34:10 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

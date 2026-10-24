@@ -1,0 +1,1009 @@
+SHELL: 0
+
+START: 2026-10-20 01:42:27 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 01:42:27 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:27 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 01:42:27 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:42:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:42:30 +0200
+ELAPSED: 2.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:42:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:42:32 +0200
+ELAPSED: 1.03s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:42:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:42:33 +0200
+ELAPSED: 0.76s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:42:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:42:35 +0200
+ELAPSED: 0.77s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:42:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:42:37 +0200
+ELAPSED: 0.74s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:42:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:42:39 +0200
+ELAPSED: 0.98s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:42:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:42:41 +0200
+ELAPSED: 0.88s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:42:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:42:43 +0200
+ELAPSED: 0.83s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 01:42:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:42:44 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-20 01:42:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:42:46 +0200
+ELAPSED: 1.11s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 01:42:46 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-20 01:42:47 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 23:42:47 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 01:42:47 +0200
+COMMAND: osctl user new --no-standalone --map 0:2200000:524288 incus-f8e3
+END: 2026-10-20 01:42:48 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+Registering user tank:incus-f8e3
+---
+
+START: 2026-10-20 01:42:48 +0200
+COMMAND: osctl ct new --user incus-f8e3 --distribution fedora --version latest incus-f8e3
+END: 2026-10-20 01:43:01 +0200
+ELAPSED: 13.05s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 01:43:01 +0200
+COMMAND: osctl ct unset start-menu incus-f8e3
+END: 2026-10-20 01:43:02 +0200
+ELAPSED: 1.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:43:02 +0200
+COMMAND: osctl ct set nesting incus-f8e3
+END: 2026-10-20 01:43:03 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:43:03 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 --no-dhcp --gateway-v4 auto --gateway-v6 none incus-f8e3 eth0
+END: 2026-10-20 01:43:04 +0200
+ELAPSED: 1.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:43:04 +0200
+COMMAND: osctl ct netif ip add incus-f8e3 eth0 192.168.1.51/24
+END: 2026-10-20 01:43:05 +0200
+ELAPSED: 1.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:43:05 +0200
+COMMAND: osctl ct set dns-resolver incus-f8e3 192.168.1.1
+END: 2026-10-20 01:43:06 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:43:06 +0200
+COMMAND: osctl ct start incus-f8e3
+END: 2026-10-20 01:43:08 +0200
+ELAPSED: 2.47s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 01:43:08 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-20 01:43:10 +0200
+ELAPSED: 2.27s
+STATUS: 2
+OUTPUT:
+ping: check-online.vpsadminos.org: Temporary failure in name resolution
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0curl: (6) Could not resolve host: check-online.vpsadminos.org
+sh: line 1: wget: command not found
+error: executed command failed
+---
+
+START: 2026-10-20 01:43:11 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-20 01:43:13 +0200
+ELAPSED: 1.98s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=0.359 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.359/0.359/0.359/0.000 ms
+---
+
+START: 2026-10-20 01:43:13 +0200
+COMMAND: osctl ct exec incus-f8e3 dnf -y install incus
+END: 2026-10-20 01:44:22 +0200
+ELAPSED: 68.96s
+STATUS: 0
+OUTPUT:
+Updating and loading repositories:
+ Fedora 44 openh264 (From Cisco) - x86_ 100% |   1.9 KiB/s |   5.3 KiB |  00m03s
+ Fedora 44 - x86_64                     100% |   9.4 MiB/s |  41.4 MiB |  00m04s
+ Fedora 44 - x86_64 - Updates           100% |   2.5 MiB/s |  12.0 MiB |  00m05s
+Repositories loaded.
+Package                         Arch   Version                          Repository      Size
+Installing:
+ incus                          x86_64 0:6.23-3.fc44                    updates     72.2 MiB
+Installing dependencies:
+ abattis-cantarell-vf-fonts     noarch 0:0.301-17.fc44                  fedora     192.7 KiB
+ alsa-lib                       x86_64 0:1.2.16.1-1.fc44                updates      1.5 MiB
+ attr                           x86_64 0:2.6.0-1.fc44                   updates    178.2 KiB
+ cairo                          x86_64 0:1.18.6-1.fc44                  updates      1.8 MiB
+ capstone                       x86_64 0:5.0.6-4.fc44                   fedora      14.2 MiB
+ cdparanoia-libs                x86_64 0:10.2-50.fc44                   fedora     113.3 KiB
+ container-selinux              noarch 4:2.251.0-1.fc44                 updates     75.7 KiB
+ containers-common              noarch 5:0.67.2-1.fc44                  updates    134.0 KiB
+ cowsql                         x86_64 0:1.15.9-5.fc44                  fedora     203.7 KiB
+ daxctl-libs                    x86_64 0:85-1.fc44                      updates     86.9 KiB
+ default-fonts-core-sans        noarch 0:4.3-1.fc44                     fedora      11.9 KiB
+ dns-root-data                  noarch 0:2026260100-2.fc44              fedora      10.9 KiB
+ dnsmasq                        x86_64 0:2.92rel2-9.fc44                updates    821.1 KiB
+ fontconfig                     x86_64 0:2.17.0-4.fc44                  fedora     776.4 KiB
+ freetype                       x86_64 0:2.14.3-1.fc44                  updates    918.3 KiB
+ fribidi                        x86_64 0:1.0.16-4.fc44                  fedora     190.0 KiB
+ fuse-common                    x86_64 0:3.18.3-1.fc44                  updates     38.0   B
+ fuse3                          x86_64 0:3.18.3-1.fc44                  updates    139.1 KiB
+ gettext                        x86_64 0:0.26-5.fc44                    updates     12.9 MiB
+ gettext-envsubst               x86_64 0:0.26-5.fc44                    updates     87.5 KiB
+ gettext-libs                   x86_64 0:0.26-5.fc44                    updates      2.4 MiB
+ gettext-runtime                x86_64 0:0.26-5.fc44                    updates    738.3 KiB
+ gnutls-dane                    x86_64 0:3.8.13-1.fc44                  updates    153.9 KiB
+ google-noto-fonts-common       noarch 0:20251201-2.fc44                fedora      17.7 KiB
+ google-noto-sans-vf-fonts      noarch 0:20251201-2.fc44                fedora       1.4 MiB
+ graphene                       x86_64 0:1.10.8-4.fc44                  fedora     158.3 KiB
+ graphite2                      x86_64 0:1.3.14-20.fc44                 fedora     191.5 KiB
+ gstreamer1                     x86_64 0:1.28.8-1.fc44                  updates      5.5 MiB
+ gstreamer1-plugins-base        x86_64 0:1.28.8-1.fc44                  updates      7.5 MiB
+ harfbuzz                       x86_64 0:14.1.0-2.fc44                  updates      2.8 MiB
+ hiredis                        x86_64 0:1.2.0-8.fc44                   fedora     105.7 KiB
+ igvm-libs                      x86_64 0:0.4.0-10.fc44                  updates    463.4 KiB
+ incus-client                   x86_64 0:6.23-3.fc44                    updates     24.9 MiB
+ ipxe-roms-qemu                 noarch 0:20240119-5.gitde8a0821.fc44    fedora       2.7 MiB
+ iso-codes                      noarch 0:4.20.1-3.fc44                  fedora      22.3 MiB
+ kde-filesystem                 x86_64 0:5-7.fc44                       fedora     774.0   B
+ kf5-filesystem                 x86_64 0:5.116.0-6.fc44                 fedora       1.4 KiB
+ libX11                         x86_64 0:1.8.13-3.fc44                  updates      1.3 MiB
+ libX11-common                  noarch 0:1.8.13-3.fc44                  updates      1.1 MiB
+ libX11-xcb                     x86_64 0:1.8.13-3.fc44                  updates     10.8 KiB
+ libXau                         x86_64 0:1.0.12-4.fc44                  fedora      72.8 KiB
+ libXext                        x86_64 0:1.3.6-5.fc44                   fedora      89.8 KiB
+ libXft                         x86_64 0:2.3.8-10.fc44                  fedora     168.3 KiB
+ libXi                          x86_64 0:1.8.3-1.fc44                   updates     80.6 KiB
+ libXrender                     x86_64 0:0.9.12-4.fc44                  fedora      49.9 KiB
+ libXv                          x86_64 0:1.0.13-4.fc44                  fedora      25.9 KiB
+ libXxf86vm                     x86_64 0:1.1.6-4.fc44                   fedora      25.1 KiB
+ libaio                         x86_64 0:0.3.111-23.fc44                fedora      48.3 KiB
+ libburn                        x86_64 0:1.5.8-1.fc44                   updates    378.4 KiB
+ libdatrie                      x86_64 0:0.2.14-2.fc44                  fedora      61.7 KiB
+ libepoxy                       x86_64 0:1.5.10-12.fc44                 fedora       1.1 MiB
+ libfdt                         x86_64 0:1.8.1-6.fc44                   updates     61.9 KiB
+ libglvnd                       x86_64 1:1.7.0-9.fc44                   fedora     526.5 KiB
+ libglvnd-egl                   x86_64 1:1.7.0-9.fc44                   fedora      68.6 KiB
+ libglvnd-glx                   x86_64 1:1.7.0-9.fc44                   fedora     601.0 KiB
+ libibverbs                     x86_64 0:61.1^20260812git975bdaf-1.fc44 updates      1.3 MiB
+ libisoburn                     x86_64 0:1.5.8-2.fc44                   updates      1.2 MiB
+ libisofs                       x86_64 0:1.5.8-3.fc44                   updates    548.7 KiB
+ libjpeg-turbo                  x86_64 0:3.1.3-1.fc44                   fedora     818.2 KiB
+ libogg                         x86_64 2:1.3.6-2.fc44                   fedora      45.6 KiB
+ libpmem                        x86_64 0:2.1.0-5.fc44                   fedora     421.3 KiB
+ libpng                         x86_64 2:1.6.58-1.fc44                  updates    249.6 KiB
+ librdmacm                      x86_64 0:61.1^20260812git975bdaf-1.fc44 updates    153.9 KiB
+ libslirp                       x86_64 0:4.9.1-3.fc44                   fedora     160.7 KiB
+ libtextstyle                   x86_64 0:0.26-5.fc44                    updates    382.0 KiB
+ libthai                        x86_64 0:0.1.30-2.fc44                  fedora     800.9 KiB
+ libtheora                      x86_64 1:1.1.1-41.fc44                  fedora     480.9 KiB
+ liburing                       x86_64 0:2.13-2.fc44                    fedora     115.2 KiB
+ libuv                          x86_64 1:1.52.1-2.fc44                  updates    593.1 KiB
+ libvisual                      x86_64 1:0.4.2-4.fc44                   fedora     464.5 KiB
+ libvorbis                      x86_64 1:1.3.7-14.fc44                  fedora     837.0 KiB
+ libwayland-client              x86_64 0:1.26.0-1.fc44                  updates     66.0 KiB
+ libwayland-cursor              x86_64 0:1.26.0-1.fc44                  updates     37.2 KiB
+ libwayland-egl                 x86_64 0:1.26.0-1.fc44                  updates     12.3 KiB
+ libxcb                         x86_64 0:1.17.0-7.fc44                  fedora       1.1 MiB
+ libxdp                         x86_64 0:1.6.3-1.fc44                   fedora     167.9 KiB
+ libxshmfence                   x86_64 0:1.3.2-8.fc44                   fedora      12.3 KiB
+ llvm-filesystem                x86_64 0:22.1.8-4.fc44                  updates      0.0   B
+ llvm-libs                      x86_64 0:22.1.8-4.fc44                  updates    140.5 MiB
+ lm_sensors-libs                x86_64 0:3.6.0-24.fc44                  fedora      85.7 KiB
+ lxc-libs                       x86_64 0:6.0.6-1.fc44                   fedora       2.5 MiB
+ lxc-templates                  x86_64 0:6.0.6-1.fc44                   fedora      48.6 KiB
+ lxcfs                          x86_64 0:6.0.6-1.fc44                   fedora     230.6 KiB
+ mesa-dri-drivers               x86_64 0:26.2.4-1.fc44                  updates     53.2 MiB
+ mesa-filesystem                x86_64 0:26.2.4-1.fc44                  updates      3.6 KiB
+ mesa-libEGL                    x86_64 0:26.2.4-1.fc44                  updates    398.4 KiB
+ mesa-libGL                     x86_64 0:26.2.4-1.fc44                  updates    374.1 KiB
+ mesa-libgbm                    x86_64 0:26.2.4-1.fc44                  updates     19.5 KiB
+ ndctl-libs                     x86_64 0:85-1.fc44                      updates    225.6 KiB
+ numactl-libs                   x86_64 0:2.0.19-4.fc44                  fedora      56.8 KiB
+ opus                           x86_64 0:1.6-2.fc44                     fedora     467.7 KiB
+ orc                            x86_64 0:0.4.41-3.fc44                  fedora     721.9 KiB
+ pango                          x86_64 0:1.57.1-1.fc44                  fedora       1.0 MiB
+ pciutils                       x86_64 0:3.15.0-1.fc44                  updates    300.5 KiB
+ pixman                         x86_64 0:0.46.2-3.fc44                  fedora     718.2 KiB
+ podman-sequoia                 x86_64 0:0.3.2-2.fc44                   updates      7.0 MiB
+ protobuf-c                     x86_64 0:1.5.2-2.fc44                   fedora      53.7 KiB
+ qatlib                         x86_64 0:26.08.0-1.fc44                 updates    723.2 KiB
+ qatzip-libs                    x86_64 0:2.0.0-1.fc44                   updates    172.3 KiB
+ qemu-common                    x86_64 2:10.2.2-1.fc44                  fedora       2.6 MiB
+ qemu-system-x86-core           x86_64 2:10.2.2-1.fc44                  fedora      60.6 MiB
+ qemu-ui-opengl                 x86_64 2:10.2.2-1.fc44                  fedora      36.1 KiB
+ qemu-ui-spice-core             x86_64 2:10.2.2-1.fc44                  fedora      67.8 KiB
+ raft                           x86_64 0:0.22.1-5.fc44                  fedora     242.0 KiB
+ rdma-core-common               noarch 0:61.1^20260812git975bdaf-1.fc44 updates     21.9 KiB
+ rsync                          x86_64 0:3.5.1-1.fc44                   updates    913.8 KiB
+ seabios-bin                    noarch 0:1.17.0-10.fc44                 fedora     960.8 KiB
+ seavgabios-bin                 noarch 0:1.17.0-10.fc44                 fedora     366.8 KiB
+ shadow-utils-subid             x86_64 2:4.19.0-7.fc44                  updates     50.0 KiB
+ skopeo                         x86_64 1:1.22.3-1.fc44                  updates     25.0 MiB
+ snappy                         x86_64 0:1.2.2-4.fc44                   fedora      79.9 KiB
+ spice-server                   x86_64 0:0.16.0-2.fc43                  fedora       1.2 MiB
+ spirv-tools-libs               x86_64 0:2026.1-1.fc44                  fedora       6.1 MiB
+ squashfs-tools                 x86_64 0:4.6.1-8.fc44                   fedora     661.3 KiB
+ tar                            x86_64 2:1.35-9.fc44                    updates      3.0 MiB
+ unbound-libs                   x86_64 0:1.26.1-1.fc44                  updates      1.6 MiB
+ usbredir                       x86_64 0:0.15.0-3.fc44                  fedora     109.9 KiB
+ wget2                          x86_64 0:2.3.0-1.fc44                   updates      1.3 MiB
+ wget2-libs                     x86_64 0:2.3.0-1.fc44                   updates    377.5 KiB
+ wget2-wget                     x86_64 0:2.3.0-1.fc44                   updates     42.0   B
+ xdelta                         x86_64 0:3.1.0-24.fc44                  fedora     189.4 KiB
+ xen-libs                       x86_64 0:4.21.2-2.fc44                  updates      1.8 MiB
+ xen-licenses                   x86_64 0:4.21.2-2.fc44                  updates    290.2 KiB
+ xml-common                     noarch 0:0.6.3-68.fc44                  fedora      78.4 KiB
+ xxhash-libs                    x86_64 0:0.8.4-1.fc44                   updates     94.0 KiB
+Installing weak dependencies:
+ edk2-ovmf                      noarch 0:20260812-8.fc44                updates     45.4 MiB
+ edk2-shell-x64                 noarch 0:20260812-8.fc44                updates      1.2 MiB
+ fuse-overlayfs                 x86_64 0:1.17-1.fc44                    updates    135.9 KiB
+ incus-agent                    x86_64 0:6.23-3.fc44                    updates     18.4 MiB
+ qatlib-service                 x86_64 0:26.08.0-1.fc44                 updates     71.7 KiB
+ qemu-audio-spice               x86_64 2:10.2.2-1.fc44                  fedora      15.5 KiB
+ qemu-char-spice                x86_64 2:10.2.2-1.fc44                  fedora      20.3 KiB
+ qemu-device-display-virtio-gpu x86_64 2:10.2.2-1.fc44                  fedora      69.7 KiB
+ qemu-device-display-virtio-vga x86_64 2:10.2.2-1.fc44                  fedora      19.3 KiB
+ qemu-device-usb-redirect       x86_64 2:10.2.2-1.fc44                  fedora      68.2 KiB
+ qemu-img                       x86_64 2:10.2.2-1.fc44                  fedora      24.4 MiB
+ qemu-kvm-core                  x86_64 2:10.2.2-1.fc44                  fedora       0.0   B
+ unbound-anchor                 x86_64 0:1.26.1-1.fc44                  updates     56.4 KiB
+ xorriso                        x86_64 0:1.5.8-2.fc44                   updates    365.0 KiB
+
+Transaction Summary:
+ Installing:       140 packages
+
+Total size of inbound packages is 158 MiB. Need to download 158 MiB.
+After this operation, 600 MiB extra will be used (install 600 MiB, remove 0 B).
+[  1/140] cowsql-0:1.15.9-5.fc44.x86_64 100% | 556.9 KiB/s |  91.9 KiB |  00m00s
+[  2/140] lxc-libs-0:6.0.6-1.fc44.x86_6 100% |   5.8 MiB/s |   1.0 MiB |  00m00s
+[  3/140] lxcfs-0:6.0.6-1.fc44.x86_64   100% |   8.0 MiB/s |  98.4 KiB |  00m00s
+[  4/140] xdelta-0:3.1.0-24.fc44.x86_64 100% |   4.1 MiB/s |  92.7 KiB |  00m00s
+[  5/140] squashfs-tools-0:4.6.1-8.fc44 100% |   7.8 MiB/s | 247.6 KiB |  00m00s
+[  6/140] raft-0:0.22.1-5.fc44.x86_64   100% |   5.4 MiB/s | 115.6 KiB |  00m00s
+[  7/140] lxc-templates-0:6.0.6-1.fc44. 100% |   2.1 MiB/s |  21.4 KiB |  00m00s
+[  8/140] gettext-0:0.26-5.fc44.x86_64  100% |  12.8 MiB/s |   1.7 MiB |  00m00s
+[  9/140] incus-0:6.23-3.fc44.x86_64    100% |  40.2 MiB/s |  20.9 MiB |  00m01s
+[ 10/140] incus-client-0:6.23-3.fc44.x8 100% |  20.9 MiB/s |   7.9 MiB |  00m00s
+[ 11/140] gettext-runtime-0:0.26-5.fc44 100% | 822.4 KiB/s | 174.3 KiB |  00m00s
+[ 12/140] libtextstyle-0:0.26-5.fc44.x8 100% |   2.0 MiB/s | 140.7 KiB |  00m00s
+[ 13/140] gettext-envsubst-0:0.26-5.fc4 100% |   5.5 MiB/s |  45.3 KiB |  00m00s
+[ 14/140] attr-0:2.6.0-1.fc44.x86_64    100% |  12.6 MiB/s |  64.7 KiB |  00m00s
+[ 15/140] gettext-libs-0:0.26-5.fc44.x8 100% |  45.3 MiB/s | 789.3 KiB |  00m00s
+[ 16/140] dnsmasq-0:2.92rel2-9.fc44.x86 100% |  22.2 MiB/s | 385.9 KiB |  00m00s
+[ 17/140] rsync-0:3.5.1-1.fc44.x86_64   100% |  25.0 MiB/s | 487.2 KiB |  00m00s
+[ 18/140] tar-2:1.35-9.fc44.x86_64      100% |  35.4 MiB/s | 870.0 KiB |  00m00s
+[ 19/140] libuv-1:1.52.1-2.fc44.x86_64  100% |   9.9 MiB/s | 274.0 KiB |  00m00s
+[ 20/140] containers-common-5:0.67.2-1. 100% |   4.3 MiB/s | 102.1 KiB |  00m00s
+[ 21/140] skopeo-1:1.22.3-1.fc44.x86_64 100% |  53.5 MiB/s |   7.8 MiB |  00m00s
+[ 22/140] shadow-utils-subid-2:4.19.0-7 100% | 323.4 KiB/s |  30.7 KiB |  00m00s
+[ 23/140] podman-sequoia-0:0.3.2-2.fc44 100% |  17.1 MiB/s |   2.4 MiB |  00m00s
+[ 24/140] xxhash-libs-0:0.8.4-1.fc44.x8 100% |   1.2 MiB/s |  41.2 KiB |  00m00s
+[ 25/140] wget2-wget-0:2.3.0-1.fc44.x86 100% | 275.8 KiB/s |   8.5 KiB |  00m00s
+[ 26/140] wget2-0:2.3.0-1.fc44.x86_64   100% |  27.7 MiB/s | 339.8 KiB |  00m00s
+[ 27/140] gnutls-dane-0:3.8.13-1.fc44.x 100% |   4.6 MiB/s |  56.1 KiB |  00m00s
+[ 28/140] wget2-libs-0:2.3.0-1.fc44.x86 100% |  10.0 MiB/s | 154.0 KiB |  00m00s
+[ 29/140] unbound-libs-0:1.26.1-1.fc44. 100% |  33.3 MiB/s | 614.3 KiB |  00m00s
+[ 30/140] dns-root-data-0:2026260100-2. 100% | 911.4 KiB/s |  14.6 KiB |  00m00s
+[ 31/140] hiredis-0:1.2.0-8.fc44.x86_64 100% |   3.7 MiB/s |  52.6 KiB |  00m00s
+[ 32/140] container-selinux-4:2.251.0-1 100% |  14.3 MiB/s |  58.4 KiB |  00m00s
+[ 33/140] protobuf-c-0:1.5.2-2.fc44.x86 100% |   3.3 MiB/s |  33.7 KiB |  00m00s
+[ 34/140] fuse-overlayfs-0:1.17-1.fc44. 100% |  11.3 MiB/s |  69.2 KiB |  00m00s
+[ 35/140] fuse3-0:3.18.3-1.fc44.x86_64  100% |  12.3 MiB/s |  63.2 KiB |  00m00s
+[ 36/140] unbound-anchor-0:1.26.1-1.fc4 100% |  10.2 MiB/s |  41.6 KiB |  00m00s
+[ 37/140] fuse-common-0:3.18.3-1.fc44.x 100% |   2.0 MiB/s |   8.1 KiB |  00m00s
+[ 38/140] libaio-0:0.3.111-23.fc44.x86_ 100% |   2.1 MiB/s |  23.5 KiB |  00m00s
+[ 39/140] liburing-0:2.13-2.fc44.x86_64 100% |   4.0 MiB/s |  44.6 KiB |  00m00s
+[ 40/140] numactl-libs-0:2.0.19-4.fc44. 100% |   3.1 MiB/s |  32.2 KiB |  00m00s
+[ 41/140] qemu-img-2:10.2.2-1.fc44.x86_ 100% |  21.5 MiB/s |   2.7 MiB |  00m00s
+[ 42/140] incus-agent-0:6.23-3.fc44.x86 100% |  27.8 MiB/s |   5.8 MiB |  00m00s
+[ 43/140] kde-filesystem-0:5-7.fc44.x86 100% |   1.5 MiB/s |  37.8 KiB |  00m00s
+[ 44/140] kf5-filesystem-0:5.116.0-6.fc 100% | 435.3 KiB/s |  10.0 KiB |  00m00s
+[ 45/140] xorriso-0:1.5.8-2.fc44.x86_64 100% |   2.5 MiB/s | 349.6 KiB |  00m00s
+[ 46/140] edk2-ovmf-0:20260812-8.fc44.n 100% |  36.9 MiB/s |  18.2 MiB |  00m00s
+[ 47/140] libisoburn-0:1.5.8-2.fc44.x86 100% |   1.5 MiB/s | 468.8 KiB |  00m00s
+[ 48/140] libburn-0:1.5.8-1.fc44.x86_64 100% | 631.0 KiB/s | 178.0 KiB |  00m00s
+[ 49/140] libisofs-0:1.5.8-3.fc44.x86_6 100% |  13.7 MiB/s | 252.8 KiB |  00m00s
+[ 50/140] qemu-kvm-core-2:10.2.2-1.fc44 100% |   1.4 MiB/s |  15.4 KiB |  00m00s
+[ 51/140] capstone-0:5.0.6-4.fc44.x86_6 100% |   8.3 MiB/s |   1.0 MiB |  00m00s
+[ 52/140] libjpeg-turbo-0:3.1.3-1.fc44. 100% |   1.9 MiB/s | 243.4 KiB |  00m00s
+[ 53/140] libslirp-0:4.9.1-3.fc44.x86_6 100% |   2.5 MiB/s |  80.9 KiB |  00m00s
+[ 54/140] libpmem-0:2.1.0-5.fc44.x86_64 100% |   2.7 MiB/s | 108.7 KiB |  00m00s
+[ 55/140] libxdp-0:1.6.3-1.fc44.x86_64  100% |   2.6 MiB/s |  71.9 KiB |  00m00s
+[ 56/140] pixman-0:0.46.2-3.fc44.x86_64 100% |   8.5 MiB/s | 297.4 KiB |  00m00s
+[ 57/140] qemu-common-2:10.2.2-1.fc44.x 100% |  11.5 MiB/s | 578.4 KiB |  00m00s
+[ 58/140] seabios-bin-0:1.17.0-10.fc44. 100% |   4.4 MiB/s | 189.6 KiB |  00m00s
+[ 59/140] seavgabios-bin-0:1.17.0-10.fc 100% |   2.8 MiB/s |  51.6 KiB |  00m00s
+[ 60/140] snappy-0:1.2.2-4.fc44.x86_64  100% |   1.9 MiB/s |  43.2 KiB |  00m00s
+[ 61/140] qemu-system-x86-core-2:10.2.2 100% |  23.1 MiB/s |   8.9 MiB |  00m00s
+[ 62/140] qemu-char-spice-2:10.2.2-1.fc 100% | 217.6 KiB/s |  23.1 KiB |  00m00s
+[ 63/140] qemu-ui-spice-core-2:10.2.2-1 100% |   2.3 MiB/s |  40.1 KiB |  00m00s
+[ 64/140] ipxe-roms-qemu-0:20240119-5.g 100% |  10.9 MiB/s |   1.7 MiB |  00m00s
+[ 65/140] qemu-ui-opengl-2:10.2.2-1.fc4 100% |   1.3 MiB/s |  29.5 KiB |  00m00s
+[ 66/140] spice-server-0:0.16.0-2.fc43. 100% |   8.7 MiB/s | 401.2 KiB |  00m00s
+[ 67/140] opus-0:1.6-2.fc44.x86_64      100% |  15.6 MiB/s | 255.4 KiB |  00m00s
+[ 68/140] orc-0:0.4.41-3.fc44.x86_64    100% |  10.0 MiB/s | 224.2 KiB |  00m00s
+[ 69/140] libepoxy-0:1.5.10-12.fc44.x86 100% |  10.7 MiB/s | 230.4 KiB |  00m00s
+[ 70/140] qemu-device-display-virtio-gp 100% |   2.7 MiB/s |  42.1 KiB |  00m00s
+[ 71/140] qemu-device-display-virtio-vg 100% |   2.4 MiB/s |  22.0 KiB |  00m00s
+[ 72/140] qemu-audio-spice-2:10.2.2-1.f 100% |   2.1 MiB/s |  21.6 KiB |  00m00s
+[ 73/140] qemu-device-usb-redirect-2:10 100% |   3.6 MiB/s |  40.3 KiB |  00m00s
+[ 74/140] gstreamer1-0:1.28.8-1.fc44.x8 100% |  30.4 MiB/s |   1.7 MiB |  00m00s
+[ 75/140] usbredir-0:0.15.0-3.fc44.x86_ 100% | 787.7 KiB/s |  51.2 KiB |  00m00s
+[ 76/140] gstreamer1-plugins-base-0:1.2 100% |  27.1 MiB/s |   2.4 MiB |  00m00s
+[ 77/140] cdparanoia-libs-0:10.2-50.fc4 100% |   1.6 MiB/s |  56.0 KiB |  00m00s
+[ 78/140] graphene-0:1.10.8-4.fc44.x86_ 100% |   1.7 MiB/s |  60.9 KiB |  00m00s
+[ 79/140] libXv-0:1.0.13-4.fc44.x86_64  100% |   2.0 MiB/s |  18.7 KiB |  00m00s
+[ 80/140] libXext-0:1.3.6-5.fc44.x86_64 100% |   3.3 MiB/s |  40.7 KiB |  00m00s
+[ 81/140] libglvnd-egl-1:1.7.0-9.fc44.x 100% |   3.6 MiB/s |  37.2 KiB |  00m00s
+[ 82/140] libglvnd-glx-1:1.7.0-9.fc44.x 100% |  10.0 MiB/s | 132.5 KiB |  00m00s
+[ 83/140] libogg-2:1.3.6-2.fc44.x86_64  100% |   3.0 MiB/s |  33.5 KiB |  00m00s
+[ 84/140] libtheora-1:1.1.1-41.fc44.x86 100% |  11.1 MiB/s | 170.0 KiB |  00m00s
+[ 85/140] libvisual-1:0.4.2-4.fc44.x86_ 100% |   8.6 MiB/s | 158.5 KiB |  00m00s
+[ 86/140] libvorbis-1:1.3.7-14.fc44.x86 100% |  15.5 MiB/s | 191.0 KiB |  00m00s
+[ 87/140] libxcb-0:1.17.0-7.fc44.x86_64 100% |  15.5 MiB/s | 238.0 KiB |  00m00s
+[ 88/140] xml-common-0:0.6.3-68.fc44.no 100% |   3.0 MiB/s |  31.1 KiB |  00m00s
+[ 89/140] pango-0:1.57.1-1.fc44.x86_64  100% |  10.8 MiB/s | 366.1 KiB |  00m00s
+[ 90/140] libglvnd-1:1.7.0-9.fc44.x86_6 100% |   8.6 MiB/s | 114.7 KiB |  00m00s
+[ 91/140] libXau-0:1.0.12-4.fc44.x86_64 100% |   3.0 MiB/s |  33.7 KiB |  00m00s
+[ 92/140] fontconfig-0:2.17.0-4.fc44.x8 100% |  16.0 MiB/s | 278.2 KiB |  00m00s
+[ 93/140] fribidi-0:1.0.16-4.fc44.x86_6 100% |   4.0 MiB/s |  53.8 KiB |  00m00s
+[ 94/140] libXrender-0:0.9.12-4.fc44.x8 100% |   2.5 MiB/s |  27.9 KiB |  00m00s
+[ 95/140] libXft-0:2.3.8-10.fc44.x86_64 100% |   4.0 MiB/s |  74.3 KiB |  00m00s
+[ 96/140] default-fonts-core-sans-0:4.3 100% |   2.6 MiB/s |  29.2 KiB |  00m00s
+[ 97/140] libthai-0:0.1.30-2.fc44.x86_6 100% |  11.1 MiB/s | 216.1 KiB |  00m00s
+[ 98/140] libdatrie-0:0.2.14-2.fc44.x86 100% |   3.2 MiB/s |  33.1 KiB |  00m00s
+[ 99/140] abattis-cantarell-vf-fonts-0: 100% |   8.4 MiB/s | 120.4 KiB |  00m00s
+[100/140] iso-codes-0:4.20.1-3.fc44.noa 100% |  18.6 MiB/s |   4.0 MiB |  00m00s
+[101/140] google-noto-fonts-common-0:20 100% | 377.3 KiB/s |  17.7 KiB |  00m00s
+[102/140] mesa-libgbm-0:26.2.4-1.fc44.x 100% |   3.7 MiB/s |  15.0 KiB |  00m00s
+[103/140] google-noto-sans-vf-fonts-0:2 100% |   8.8 MiB/s | 614.9 KiB |  00m00s
+[104/140] mesa-libEGL-0:26.2.4-1.fc44.x 100% |   8.6 MiB/s | 140.9 KiB |  00m00s
+[105/140] libxshmfence-0:1.3.2-8.fc44.x 100% |   1.3 MiB/s |  13.2 KiB |  00m00s
+[106/140] lm_sensors-libs-0:3.6.0-24.fc 100% |   2.7 MiB/s |  41.9 KiB |  00m00s
+[107/140] spirv-tools-libs-0:2026.1-1.f 100% |  19.3 MiB/s |   1.7 MiB |  00m00s
+[108/140] mesa-filesystem-0:26.2.4-1.fc 100% |  96.2 KiB/s |   9.0 KiB |  00m00s
+[109/140] libXxf86vm-0:1.1.6-4.fc44.x86 100% |   1.8 MiB/s |  18.2 KiB |  00m00s
+[110/140] mesa-dri-drivers-0:26.2.4-1.f 100% |  34.9 MiB/s |  13.8 MiB |  00m00s
+[111/140] mesa-libGL-0:26.2.4-1.fc44.x8 100% | 482.7 KiB/s | 138.5 KiB |  00m00s
+[112/140] daxctl-libs-0:85-1.fc44.x86_6 100% | 159.5 KiB/s |  42.4 KiB |  00m00s
+[113/140] ndctl-libs-0:85-1.fc44.x86_64 100% |   9.8 MiB/s |  90.6 KiB |  00m00s
+[114/140] libfdt-0:1.8.1-6.fc44.x86_64  100% |   7.1 MiB/s |  36.6 KiB |  00m00s
+[115/140] rdma-core-common-0:61.1^20260 100% |   2.8 MiB/s |  17.1 KiB |  00m00s
+[116/140] libibverbs-0:61.1^20260812git 100% |  32.3 MiB/s | 495.7 KiB |  00m00s
+[117/140] librdmacm-0:61.1^20260812git9 100% |   8.5 MiB/s |  78.5 KiB |  00m00s
+[118/140] igvm-libs-0:0.4.0-10.fc44.x86 100% |   8.0 MiB/s | 229.7 KiB |  00m00s
+[119/140] libpng-2:1.6.58-1.fc44.x86_64 100% |  14.1 MiB/s | 129.5 KiB |  00m00s
+[120/140] xen-libs-0:4.21.2-2.fc44.x86_ 100% |  31.3 MiB/s | 673.3 KiB |  00m00s
+[121/140] cairo-0:1.18.6-1.fc44.x86_64  100% |  29.6 MiB/s | 757.6 KiB |  00m00s
+[122/140] qatzip-libs-0:2.0.0-1.fc44.x8 100% |   2.1 MiB/s |  77.0 KiB |  00m00s
+[123/140] freetype-0:2.14.3-1.fc44.x86_ 100% |  28.9 MiB/s | 444.0 KiB |  00m00s
+[124/140] graphite2-0:1.3.14-20.fc44.x8 100% |   6.7 MiB/s |  96.5 KiB |  00m00s
+[125/140] harfbuzz-0:14.1.0-2.fc44.x86_ 100% |  39.4 MiB/s |   1.1 MiB |  00m00s
+[126/140] libX11-0:1.8.13-3.fc44.x86_64 100% |  23.7 MiB/s | 680.0 KiB |  00m00s
+[127/140] libX11-common-0:1.8.13-3.fc44 100% |   7.4 MiB/s | 175.3 KiB |  00m00s
+[128/140] xen-licenses-0:4.21.2-2.fc44. 100% |   3.3 MiB/s |  44.1 KiB |  00m00s
+[129/140] qatlib-0:26.08.0-1.fc44.x86_6 100% |  29.5 MiB/s | 272.1 KiB |  00m00s
+[130/140] libX11-xcb-0:1.8.13-3.fc44.x8 100% |   1.8 MiB/s |  10.8 KiB |  00m00s
+[131/140] libwayland-client-0:1.26.0-1. 100% |   5.8 MiB/s |  35.5 KiB |  00m00s
+[132/140] libwayland-cursor-0:1.26.0-1. 100% |   6.3 MiB/s |  19.2 KiB |  00m00s
+[133/140] llvm-filesystem-0:22.1.8-4.fc 100% |   1.6 MiB/s |  10.0 KiB |  00m00s
+[134/140] libXi-0:1.8.3-1.fc44.x86_64   100% |   1.8 MiB/s |  41.3 KiB |  00m00s
+[135/140] alsa-lib-0:1.2.16.1-1.fc44.x8 100% |  15.3 MiB/s | 565.7 KiB |  00m00s
+[136/140] libwayland-egl-0:1.26.0-1.fc4 100% | 203.5 KiB/s |  12.4 KiB |  00m00s
+[137/140] edk2-shell-x64-0:20260812-8.f 100% |   3.4 MiB/s | 325.9 KiB |  00m00s
+[138/140] qatlib-service-0:26.08.0-1.fc 100% | 235.7 KiB/s |  39.6 KiB |  00m00s
+[139/140] pciutils-0:3.15.0-1.fc44.x86_ 100% | 660.9 KiB/s | 128.9 KiB |  00m00s
+[140/140] llvm-libs-0:22.1.8-4.fc44.x86 100% |  36.7 MiB/s |  34.1 MiB |  00m01s
+--------------------------------------------------------------------------------
+[140/140] Total                         100% |  43.5 MiB/s | 157.5 MiB |  00m04s
+Running transaction
+[  1/142] Verify package files          100% |  40.0   B/s | 140.0   B |  00m03s
+[  2/142] Prepare transaction           100% | 756.0   B/s | 140.0   B |  00m00s
+[  3/142] Installing pixman-0:0.46.2-3. 100% |  43.9 MiB/s | 719.3 KiB |  00m00s
+[  4/142] Installing numactl-libs-0:2.0 100% |  11.3 MiB/s |  57.7 KiB |  00m00s
+[  5/142] Installing libX11-xcb-0:1.8.1 100% |   2.3 MiB/s |  11.6 KiB |  00m00s
+[  6/142] Installing libpng-2:1.6.58-1. 100% |  22.3 MiB/s | 250.9 KiB |  00m00s
+[  7/142] Installing libwayland-client- 100% |   9.4 MiB/s |  67.2 KiB |  00m00s
+[  8/142] Installing daxctl-libs-0:85-1 100% |   9.6 MiB/s |  88.6 KiB |  00m00s
+[  9/142] Installing libogg-2:1.3.6-2.f 100% |   6.6 MiB/s |  47.1 KiB |  00m00s
+[ 10/142] Installing libjpeg-turbo-0:3. 100% |  12.5 MiB/s | 819.9 KiB |  00m00s
+>>> Running sysusers scriptlet: qatlib-0:26.08.0-1.fc44.x86_64
+>>> Finished sysusers scriptlet: qatlib-0:26.08.0-1.fc44.x86_64
+>>> Scriptlet output:
+>>> Creating group 'qat' with GID 992.
+>>> 
+[ 11/142] Installing qatlib-0:26.08.0-1 100% |  41.7 MiB/s | 725.5 KiB |  00m00s
+[ 12/142] Installing rdma-core-common-0 100% |   5.7 MiB/s |  23.2 KiB |  00m00s
+[ 13/142] Installing libibverbs-0:61.1^ 100% |  26.1 MiB/s |   1.3 MiB |  00m00s
+[ 14/142] Installing libglvnd-1:1.7.0-9 100% |  23.4 MiB/s | 527.8 KiB |  00m00s
+[ 15/142] Installing xml-common-0:0.6.3 100% |   9.9 MiB/s |  81.1 KiB |  00m00s
+[ 16/142] Installing gstreamer1-0:1.28. 100% |  29.3 MiB/s |   5.5 MiB |  00m00s
+[ 17/142] Installing orc-0:0.4.41-3.fc4 100% |  12.4 MiB/s | 724.4 KiB |  00m00s
+[ 18/142] Installing opus-0:1.6-2.fc44. 100% |  28.6 MiB/s | 468.8 KiB |  00m00s
+[ 19/142] Installing kde-filesystem-0:5 100% | 645.5 KiB/s |  54.2 KiB |  00m00s
+[ 20/142] Installing liburing-0:2.13-2. 100% |  12.7 MiB/s | 116.9 KiB |  00m00s
+[ 21/142] Installing libaio-0:0.3.111-2 100% |   1.6 MiB/s |  49.9 KiB |  00m00s
+[ 22/142] Installing container-selinux- 100% |   4.6 KiB/s |  79.3 KiB |  00m17s
+[ 23/142] Installing libuv-1:1.52.1-2.f 100% |  26.5 MiB/s | 595.9 KiB |  00m00s
+[ 24/142] Installing libtextstyle-0:0.2 100% |  28.8 MiB/s | 382.8 KiB |  00m00s
+[ 25/142] Installing gettext-libs-0:0.2 100% |  55.0 MiB/s |   2.4 MiB |  00m00s
+[ 26/142] Installing raft-0:0.22.1-5.fc 100% |  18.3 MiB/s | 243.5 KiB |  00m00s
+[ 27/142] Installing cowsql-0:1.15.9-5. 100% |  25.0 MiB/s | 205.0 KiB |  00m00s
+[ 28/142] Installing kf5-filesystem-0:5 100% | 254.2 KiB/s |   3.3 KiB |  00m00s
+[ 29/142] Installing iso-codes-0:4.20.1 100% |  48.1 MiB/s |  22.5 MiB |  00m00s
+[ 30/142] Installing librdmacm-0:61.1^2 100% |  13.8 MiB/s | 155.9 KiB |  00m00s
+[ 31/142] Installing qatzip-libs-0:2.0. 100% |  17.0 MiB/s | 174.1 KiB |  00m00s
+[ 32/142] Installing libtheora-1:1.1.1- 100% |  33.7 MiB/s | 483.3 KiB |  00m00s
+[ 33/142] Installing libvorbis-1:1.3.7- 100% |  45.5 MiB/s | 839.6 KiB |  00m00s
+[ 34/142] Installing ndctl-libs-0:85-1. 100% |  20.2 MiB/s | 227.3 KiB |  00m00s
+[ 35/142] Installing libpmem-0:2.1.0-5. 100% |  27.6 MiB/s | 423.3 KiB |  00m00s
+[ 36/142] Installing libwayland-cursor- 100% |   7.5 MiB/s |  38.3 KiB |  00m00s
+[ 37/142] Installing pciutils-0:3.15.0- 100% |   6.7 MiB/s | 303.3 KiB |  00m00s
+[ 38/142] Installing libwayland-egl-0:1 100% |   3.3 MiB/s |  13.4 KiB |  00m00s
+[ 39/142] Installing alsa-lib-0:1.2.16. 100% |  22.5 MiB/s |   1.5 MiB |  00m00s
+[ 40/142] Installing llvm-filesystem-0: 100% | 265.6 KiB/s |   1.1 KiB |  00m00s
+[ 41/142] Installing llvm-libs-0:22.1.8 100% |  64.8 MiB/s | 140.5 MiB |  00m02s
+[ 42/142] Installing xen-licenses-0:4.2 100% |   6.8 MiB/s | 300.8 KiB |  00m00s
+[ 43/142] Installing xen-libs-0:4.21.2- 100% |  14.1 MiB/s |   1.9 MiB |  00m00s
+[ 44/142] Installing libX11-common-0:1. 100% |  16.0 MiB/s |   1.2 MiB |  00m00s
+[ 45/142] Installing graphite2-0:1.3.14 100% |   4.3 MiB/s | 193.6 KiB |  00m00s
+[ 46/142] Installing freetype-0:2.14.3- 100% |  39.1 MiB/s | 920.0 KiB |  00m00s
+[ 47/142] Installing harfbuzz-0:14.1.0- 100% |  53.1 MiB/s |   2.8 MiB |  00m00s
+[ 48/142] Installing libfdt-0:1.8.1-6.f 100% |   8.8 MiB/s |  63.0 KiB |  00m00s
+[ 49/142] Installing igvm-libs-0:0.4.0- 100% |  34.9 MiB/s | 464.7 KiB |  00m00s
+[ 50/142] Installing mesa-filesystem-0: 100% |   1.0 MiB/s |   4.3 KiB |  00m00s
+[ 51/142] Installing spirv-tools-libs-0 100% |  70.1 MiB/s |   6.1 MiB |  00m00s
+[ 52/142] Installing lm_sensors-libs-0: 100% |  12.1 MiB/s |  86.8 KiB |  00m00s
+[ 53/142] Installing libxshmfence-0:1.3 100% |   1.9 MiB/s |  13.4 KiB |  00m00s
+[ 54/142] Installing google-noto-fonts- 100% |   4.5 MiB/s |  18.5 KiB |  00m00s
+[ 55/142] Installing google-noto-sans-v 100% |  51.5 MiB/s |   1.4 MiB |  00m00s
+[ 56/142] Installing abattis-cantarell- 100% |  21.1 MiB/s | 194.4 KiB |  00m00s
+[ 57/142] Installing default-fonts-core 100% |   1.2 MiB/s |  18.2 KiB |  00m00s
+[ 58/142] Installing fontconfig-0:2.17. 100% | 674.9 KiB/s | 795.8 KiB |  00m01s
+[ 59/142] Installing libdatrie-0:0.2.14 100% |   6.8 MiB/s |  62.8 KiB |  00m00s
+[ 60/142] Installing libthai-0:0.1.30-2 100% |  41.3 MiB/s | 802.7 KiB |  00m00s
+[ 61/142] Installing fribidi-0:1.0.16-4 100% |   3.7 MiB/s | 192.5 KiB |  00m00s
+[ 62/142] Installing libXau-0:1.0.12-4. 100% |   9.1 MiB/s |  74.3 KiB |  00m00s
+[ 63/142] Installing libxcb-0:1.17.0-7. 100% |  23.9 MiB/s |   1.1 MiB |  00m00s
+[ 64/142] Installing libX11-0:1.8.13-3. 100% |  79.1 MiB/s |   1.3 MiB |  00m00s
+[ 65/142] Installing libXext-0:1.3.6-5. 100% |  11.1 MiB/s |  91.1 KiB |  00m00s
+[ 66/142] Installing libXrender-0:0.9.1 100% |   8.3 MiB/s |  51.2 KiB |  00m00s
+[ 67/142] Installing mesa-dri-drivers-0 100% | 107.5 MiB/s |  53.2 MiB |  00m00s
+[ 68/142] Installing mesa-libgbm-0:26.2 100% |   2.8 MiB/s |  20.2 KiB |  00m00s
+[ 69/142] Installing cairo-0:1.18.6-1.f 100% |  48.1 MiB/s |   1.8 MiB |  00m00s
+[ 70/142] Installing libglvnd-egl-1:1.7 100% |   8.6 MiB/s |  70.2 KiB |  00m00s
+[ 71/142] Installing mesa-libEGL-0:26.2 100% |  35.5 MiB/s | 399.4 KiB |  00m00s
+[ 72/142] Installing libXft-0:2.3.8-10. 100% |  20.7 MiB/s | 169.8 KiB |  00m00s
+[ 73/142] Installing pango-0:1.57.1-1.f 100% |  16.1 MiB/s |   1.0 MiB |  00m00s
+[ 74/142] Installing libXv-0:1.0.13-4.f 100% |   4.4 MiB/s |  27.1 KiB |  00m00s
+[ 75/142] Installing libXxf86vm-0:1.1.6 100% |   4.3 MiB/s |  26.4 KiB |  00m00s
+[ 76/142] Installing mesa-libGL-0:26.2. 100% |  30.5 MiB/s | 375.1 KiB |  00m00s
+[ 77/142] Installing libglvnd-glx-1:1.7 100% |  42.0 MiB/s | 602.4 KiB |  00m00s
+[ 78/142] Installing libXi-0:1.8.3-1.fc 100% |  11.4 MiB/s |  81.6 KiB |  00m00s
+[ 79/142] Installing libvisual-1:0.4.2- 100% |  30.4 MiB/s | 467.0 KiB |  00m00s
+[ 80/142] Installing graphene-0:1.10.8- 100% |  17.4 MiB/s | 160.0 KiB |  00m00s
+[ 81/142] Installing cdparanoia-libs-0: 100% |  14.0 MiB/s | 114.7 KiB |  00m00s
+[ 82/142] Installing gstreamer1-plugins 100% |  43.3 MiB/s |   7.5 MiB |  00m00s
+[ 83/142] Installing spice-server-0:0.1 100% |  47.0 MiB/s |   1.2 MiB |  00m00s
+[ 84/142] Installing usbredir-0:0.15.0- 100% |  12.1 MiB/s | 111.6 KiB |  00m00s
+[ 85/142] Installing libepoxy-0:1.5.10- 100% |  57.2 MiB/s |   1.1 MiB |  00m00s
+[ 86/142] Installing ipxe-roms-qemu-0:2 100% |  31.2 MiB/s |   2.7 MiB |  00m00s
+>>> Running sysusers scriptlet: qemu-common-2:10.2.2-1.fc44.x86_64
+>>> Finished sysusers scriptlet: qemu-common-2:10.2.2-1.fc44.x86_64
+>>> Scriptlet output:
+>>> Creating group 'qemu' with GID 107.
+>>> Creating user 'qemu' (qemu user) with UID 107 and GID 107.
+>>> 
+[ 87/142] Installing qemu-common-2:10.2 100% |  41.0 MiB/s |   2.6 MiB |  00m00s
+[ 88/142] Installing qemu-ui-opengl-2:1 100% |   6.0 MiB/s |  36.8 KiB |  00m00s
+[ 89/142] Installing qemu-ui-spice-core 100% |   9.6 MiB/s |  68.5 KiB |  00m00s
+[ 90/142] Installing qemu-device-displa 100% |  13.8 MiB/s |  70.4 KiB |  00m00s
+[ 91/142] Installing snappy-0:1.2.2-4.f 100% |  10.0 MiB/s |  81.6 KiB |  00m00s
+[ 92/142] Installing seavgabios-bin-0:1 100% |  32.8 MiB/s | 369.0 KiB |  00m00s
+[ 93/142] Installing seabios-bin-0:1.17 100% |  55.3 MiB/s | 962.3 KiB |  00m00s
+[ 94/142] Installing libxdp-0:1.6.3-1.f 100% |  15.1 MiB/s | 169.9 KiB |  00m00s
+[ 95/142] Installing libslirp-0:4.9.1-3 100% |  15.8 MiB/s | 162.2 KiB |  00m00s
+[ 96/142] Installing capstone-0:5.0.6-4 100% |  78.7 MiB/s |  14.2 MiB |  00m00s
+[ 97/142] Installing libisofs-0:1.5.8-3 100% |  44.8 MiB/s | 550.3 KiB |  00m00s
+[ 98/142] Installing libburn-0:1.5.8-1. 100% |  30.9 MiB/s | 380.0 KiB |  00m00s
+[ 99/142] Installing libisoburn-0:1.5.8 100% |  49.6 MiB/s |   1.2 MiB |  00m00s
+[100/142] Installing edk2-ovmf-0:202608 100% | 113.3 MiB/s |  45.4 MiB |  00m00s
+[101/142] Installing qemu-system-x86-co 100% | 113.4 MiB/s |  60.6 MiB |  00m01s
+[102/142] Installing fuse-common-0:3.18 100% |  71.3 KiB/s | 292.0   B |  00m00s
+[103/142] Installing fuse3-0:3.18.3-1.f 100% |   2.6 MiB/s | 141.4 KiB |  00m00s
+[104/142] Installing fuse-overlayfs-0:1 100% |   1.7 MiB/s | 137.5 KiB |  00m00s
+[105/142] Installing containers-common- 100% |   5.1 MiB/s | 141.2 KiB |  00m00s
+[106/142] Installing protobuf-c-0:1.5.2 100% |   6.0 MiB/s |  55.2 KiB |  00m00s
+[107/142] Installing hiredis-0:1.2.0-8. 100% |   9.5 MiB/s | 107.4 KiB |  00m00s
+[108/142] Installing dns-root-data-0:20 100% | 202.2 KiB/s |  12.5 KiB |  00m00s
+>>> Running sysusers scriptlet: unbound-libs-0:1.26.1-1.fc44.x86_64
+>>> Finished sysusers scriptlet: unbound-libs-0:1.26.1-1.fc44.x86_64
+>>> Scriptlet output:
+>>> Creating group 'unbound' with GID 991.
+>>> Creating user 'unbound' (Unbound DNS resolver) with UID 991 and GID 991.
+>>> 
+[109/142] Installing unbound-libs-0:1.2 100% |  39.0 MiB/s |   1.6 MiB |  00m00s
+[110/142] Installing gnutls-dane-0:3.8. 100% |  13.7 MiB/s | 154.6 KiB |  00m00s
+[111/142] Installing wget2-libs-0:2.3.0 100% |  24.7 MiB/s | 378.8 KiB |  00m00s
+[112/142] Installing wget2-0:2.3.0-1.fc 100% |  14.8 MiB/s |   1.3 MiB |  00m00s
+[113/142] Installing wget2-wget-0:2.3.0 100% |  10.1 KiB/s | 444.0   B |  00m00s
+[114/142] Installing xxhash-libs-0:0.8. 100% |  10.3 MiB/s |  95.4 KiB |  00m00s
+[115/142] Installing rsync-0:3.5.1-1.fc 100% |  13.4 MiB/s | 919.5 KiB |  00m00s
+[116/142] Installing lxc-libs-0:6.0.6-1 100% |  13.8 MiB/s |   2.6 MiB |  00m00s
+[117/142] Installing lxc-templates-0:6. 100% |   8.2 MiB/s |  50.3 KiB |  00m00s
+[118/142] Installing lxcfs-0:6.0.6-1.fc 100% |   2.9 MiB/s | 233.4 KiB |  00m00s
+[119/142] Installing shadow-utils-subid 100% |   1.1 MiB/s |  51.4 KiB |  00m00s
+[120/142] Installing podman-sequoia-0:0 100% |  59.1 MiB/s |   7.0 MiB |  00m00s
+[121/142] Installing skopeo-1:1.22.3-1. 100% |  64.4 MiB/s |  25.0 MiB |  00m00s
+[122/142] Installing tar-2:1.35-9.fc44. 100% |  21.0 MiB/s |   3.0 MiB |  00m00s
+>>> Running sysusers scriptlet: dnsmasq-0:2.92rel2-9.fc44.x86_64
+>>> Finished sysusers scriptlet: dnsmasq-0:2.92rel2-9.fc44.x86_64
+>>> Scriptlet output:
+>>> Creating group 'dnsmasq' with GID 990.
+>>> Creating user 'dnsmasq' (Dnsmasq DHCP and DNS server) with UID 990 and GID 990.
+>>> 
+[123/142] Installing dnsmasq-0:2.92rel2 100% |   7.9 MiB/s | 824.4 KiB |  00m00s
+[124/142] Installing attr-0:2.6.0-1.fc4 100% |   3.2 MiB/s | 182.6 KiB |  00m00s
+[125/142] Installing gettext-envsubst-0 100% |   2.0 MiB/s |  88.9 KiB |  00m00s
+[126/142] Installing gettext-runtime-0: 100% |   9.8 MiB/s | 748.8 KiB |  00m00s
+[127/142] Installing gettext-0:0.26-5.f 100% |  53.5 MiB/s |  12.9 MiB |  00m00s
+[128/142] Installing incus-client-0:6.2 100% |  52.4 MiB/s |  25.0 MiB |  00m00s
+[129/142] Installing xdelta-0:3.1.0-24. 100% |   3.6 MiB/s | 190.9 KiB |  00m00s
+[130/142] Installing squashfs-tools-0:4 100% |   2.7 MiB/s | 664.9 KiB |  00m00s
+>>> Running sysusers scriptlet: incus-0:6.23-3.fc44.x86_64
+>>> Finished sysusers scriptlet: incus-0:6.23-3.fc44.x86_64
+>>> Scriptlet output:
+>>> Creating group 'incus' with GID 989.
+>>> Creating group 'incus-admin' with GID 988.
+>>> 
+[131/142] Installing incus-0:6.23-3.fc4 100% |  60.8 MiB/s |  72.2 MiB |  00m01s
+[132/142] Installing unbound-anchor-0:1 100% | 470.5 KiB/s |  57.9 KiB |  00m00s
+>>> Running %post scriptlet: unbound-anchor-0:1.26.1-1.fc44.x86_64
+>>> Finished %post scriptlet: unbound-anchor-0:1.26.1-1.fc44.x86_64
+>>> Scriptlet output:
+>>> Created symlink '/etc/systemd/system/timers.target.wants/unbound-anchor.timer' → '/usr/lib/systemd/system/unbound-anchor.timer'.
+>>> 
+[133/142] Installing qemu-kvm-core-2:10 100% |  30.3 KiB/s | 124.0   B |  00m00s
+[134/142] Installing xorriso-0:1.5.8-2. 100% |   5.9 MiB/s | 367.8 KiB |  00m00s
+[135/142] Installing qemu-device-displa 100% |   3.3 MiB/s |  20.0 KiB |  00m00s
+[136/142] Installing qemu-char-spice-2: 100% |   2.9 MiB/s |  21.0 KiB |  00m00s
+[137/142] Installing qemu-audio-spice-2 100% |   3.2 MiB/s |  16.2 KiB |  00m00s
+[138/142] Installing qemu-device-usb-re 100% |  11.2 MiB/s |  68.9 KiB |  00m00s
+[139/142] Installing qatlib-service-0:2 100% | 369.1 KiB/s |  73.1 KiB |  00m00s
+>>> Running %post scriptlet: qatlib-service-0:26.08.0-1.fc44.x86_64
+>>> Finished %post scriptlet: qatlib-service-0:26.08.0-1.fc44.x86_64
+>>> Scriptlet output:
+>>> Failed to scan devices: Permission denied
+>>> 
+[140/142] Installing qemu-img-2:10.2.2- 100% |  78.4 MiB/s |  24.4 MiB |  00m00s
+[141/142] Installing edk2-shell-x64-0:2 100% |  64.5 MiB/s |   1.2 MiB |  00m00s
+[142/142] Installing incus-agent-0:6.23 100% |  12.5 MiB/s |  18.4 MiB |  00m01s
+Complete!
+---
+
+START: 2026-10-20 01:44:22 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c printf\ \'\%s'
+'\'\ \'root:100000:65536\'\ \>\ /etc/subuid'
+'printf\ \'\%s'
+'\'\ \'root:100000:65536\'\ \>\ /etc/subgid'
+'
+END: 2026-10-20 01:44:25 +0200
+ELAPSED: 2.5s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:44:25 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c systemctl\ stop\ incus.service\ incus.socket\ 2\>/dev/null\ \|\|\ true'
+'systemctl\ enable\ --now\ incus.socket\ \|\|\ systemctl\ enable\ --now\ incus.service'
+'
+END: 2026-10-20 01:44:28 +0200
+ELAPSED: 2.76s
+STATUS: 0
+OUTPUT:
+Created symlink '/etc/systemd/system/sockets.target.wants/incus.socket' → '/usr/lib/systemd/system/incus.socket'.
+---
+
+START: 2026-10-20 01:44:28 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c 'systemctl is-active --quiet incus.socket || systemctl is-active --quiet incus.service'
+END: 2026-10-20 01:44:30 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:44:30 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c cat\ \<\<\'EOF\'\ \|\ incus\ admin\ init\ --preseed'
+'storage_pools:'
+'-\ name:\ default'
+'\ \ driver:\ dir'
+'profiles:'
+'-\ name:\ default'
+'\ \ devices:'
+'\ \ \ \ root:'
+'\ \ \ \ \ \ path:\ /'
+'\ \ \ \ \ \ pool:\ default'
+'\ \ \ \ \ \ type:\ disk'
+'EOF'
+'
+END: 2026-10-20 01:44:33 +0200
+ELAPSED: 2.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:44:33 +0200
+COMMAND: osctl ct exec incus-f8e3 incus image list images: debian --format json
+END: 2026-10-20 01:44:36 +0200
+ELAPSED: 3.72s
+STATUS: 0
+OUTPUT:
+[{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian bookworm arm64 (20261019_20:00)","os":"Debian","release":"bookworm","serial":"20261019_20:00","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/cloud/arm64","description":""},{"name":"debian/12/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"5c239b7495e643cf48c1e29df2605db6f2b645b35ef29681a1970b17fefcb606","size":140424372,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian bookworm arm64 (20261019_20:00)","os":"Debian","release":"bookworm","serial":"20261019_20:00","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/cloud/arm64","description":""},{"name":"debian/12/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"d6aeaee2057df96c764adbcb65ec4c2bbdeb5d3321c9a3f1946f161eadca5db8","size":402693300,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian bookworm amd64 (20261019_19:46)","os":"Debian","release":"bookworm","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/cloud","description":""},{"name":"debian/bookworm/cloud/amd64","description":""},{"name":"debian/12/cloud","description":""},{"name":"debian/12/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"2c504bb7faa34fca85f57cde5d4bc842e8e48208ee30beaf0fbd7c0ea2b28c2b","size":144667804,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian bookworm amd64 (20261019_19:46)","os":"Debian","release":"bookworm","serial":"20261019_19:46","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/cloud","description":""},{"name":"debian/bookworm/cloud/amd64","description":""},{"name":"debian/12/cloud","description":""},{"name":"debian/12/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"aea095fe055cde3ba16fd4a744d422d3f625384ced67d9771dbe52801a40ec26","size":413669532,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian bookworm armhf (20261019_19:46)","os":"Debian","release":"bookworm","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/cloud/armhf","description":""},{"name":"debian/12/cloud/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"a43be6812d0c0f2ecadf7e8307e2841dad40bac770c6f3c2d79087fdeef1b432","size":121386228,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian bookworm armhf (20261019_20:21)","os":"Debian","release":"bookworm","serial":"20261019_20:21","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/default/armhf","description":""},{"name":"debian/12/default/armhf","description":""},{"name":"debian/bookworm/armhf","description":""},{"name":"debian/12/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"6268e6a8fc8e1a5673d6897cc4e270f914f30caa51e9d35ab08b96bba710ebe1","size":89940684,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian bookworm arm64 (20261019_20:07)","os":"Debian","release":"bookworm","serial":"20261019_20:07","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/default/arm64","description":""},{"name":"debian/12/default/arm64","description":""},{"name":"debian/bookworm/arm64","description":""},{"name":"debian/12/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"fa28cbdf75aa490500347120a9d9e5317a802c242d9bed41a46e3106de648e5a","size":108143300,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian bookworm arm64 (20261019_20:07)","os":"Debian","release":"bookworm","serial":"20261019_20:07","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/default/arm64","description":""},{"name":"debian/12/default/arm64","description":""},{"name":"debian/bookworm/arm64","description":""},{"name":"debian/12/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"3c39b6fdcf8a1be0395c1b4ee71ba8233252f20e7fdb06baeb6743361f8a5f3a","size":365530820,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian bookworm amd64 (20261019_19:46)","os":"Debian","release":"bookworm","serial":"20261019_19:46","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/default","description":""},{"name":"debian/bookworm/default/amd64","description":""},{"name":"debian/12/default","description":""},{"name":"debian/12/default/amd64","description":""},{"name":"debian/bookworm","description":""},{"name":"debian/bookworm/amd64","description":""},{"name":"debian/12","description":""},{"name":"debian/12/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"31f836ba30da529082193c99908a78f4b17f2b765f9b2448175a67588906804d","size":111497888,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian bookworm amd64 (20261019_19:46)","os":"Debian","release":"bookworm","serial":"20261019_19:46","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/bookworm/default","description":""},{"name":"debian/bookworm/default/amd64","description":""},{"name":"debian/12/default","description":""},{"name":"debian/12/default/amd64","description":""},{"name":"debian/bookworm","description":""},{"name":"debian/bookworm/amd64","description":""},{"name":"debian/12","description":""},{"name":"debian/12/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"37884b1c3808411046727e3d551bc12eb3470b39c8209a3e53bb9720a1846d57","size":376271008,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"riscv64","description":"Debian forky riscv64 (20261019_20:05)","os":"Debian","release":"forky","serial":"20261019_20:05","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud/riscv64","description":""},{"name":"debian/14/cloud/riscv64","description":""}],"architecture":"riscv64","cached":false,"filename":"incus.tar.xz","fingerprint":"ee45aea5a2c943592a0d799fefef0238db313faaac40fa72639dc9af2918fce3","size":144037044,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian forky arm64 (20261019_20:01)","os":"Debian","release":"forky","serial":"20261019_20:01","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud/arm64","description":""},{"name":"debian/14/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"5004ff23d96cc5f05c8c27f4c5557b096a7117a656cfd9dd1f27e566063cbb1a","size":141812928,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian forky arm64 (20261019_20:01)","os":"Debian","release":"forky","serial":"20261019_20:01","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud/arm64","description":""},{"name":"debian/14/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"e7807d7fb4db02cae168f988c8eab5c055696f5d18b7c6ca655e526b7dff31b1","size":464144064,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"loong64","description":"Debian forky loong64 (20261019_19:52)","os":"Debian","release":"forky","serial":"20261019_19:52","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud/loong64","description":""},{"name":"debian/14/cloud/loong64","description":""}],"architecture":"loongarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"98d4e02f33d609c7ae5257c103994a80c680542fe757c9478a92062e8ea960ac","size":143148160,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian forky amd64 (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud","description":""},{"name":"debian/forky/cloud/amd64","description":""},{"name":"debian/14/cloud","description":""},{"name":"debian/14/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"c5a9d6cf0cb32d6a1ac7b884bd218a3f3f24032b146438713cb48356fb39c18f","size":148042908,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian forky amd64 (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud","description":""},{"name":"debian/forky/cloud/amd64","description":""},{"name":"debian/14/cloud","description":""},{"name":"debian/14/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"bbf374f229883ba8599b2c6cf44a3123ed8d131b3cd971cb5ea331d0111cafb5","size":457333404,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian forky armhf (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/cloud/armhf","description":""},{"name":"debian/14/cloud/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"7ba00a3d516da7c25d15c6f007957eefd9d1ebb0c68427852affb0e62c2a4593","size":138826988,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian forky armhf (20261019_20:50)","os":"Debian","release":"forky","serial":"20261019_20:50","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default/armhf","description":""},{"name":"debian/14/default/armhf","description":""},{"name":"debian/forky/armhf","description":""},{"name":"debian/14/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"78d8c4fe003250300d9e0a644a4246e76c8cd6c5144bb4cb496a4f93fc5da882","size":92910292,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian forky arm64 (20261019_20:03)","os":"Debian","release":"forky","serial":"20261019_20:03","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default/arm64","description":""},{"name":"debian/14/default/arm64","description":""},{"name":"debian/forky/arm64","description":""},{"name":"debian/14/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"e1a68ad364252d73c13cb3dfa9e4f1b832ba6ddd436a85423197a369bbd13bcb","size":101085860,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian forky arm64 (20261019_20:03)","os":"Debian","release":"forky","serial":"20261019_20:03","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default/arm64","description":""},{"name":"debian/14/default/arm64","description":""},{"name":"debian/forky/arm64","description":""},{"name":"debian/14/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"7b300e93bae96004504d946743774e647f10f5136cd206f3c9e96c7151a726b0","size":425024676,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian forky amd64 (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default","description":""},{"name":"debian/forky/default/amd64","description":""},{"name":"debian/14/default","description":""},{"name":"debian/14/default/amd64","description":""},{"name":"debian/forky","description":""},{"name":"debian/forky/amd64","description":""},{"name":"debian/14","description":""},{"name":"debian/14/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"bc34863335a498e4d13288525698e76d0cc18a8bdab5d5273266485861f577ca","size":105517744,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian forky amd64 (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default","description":""},{"name":"debian/forky/default/amd64","description":""},{"name":"debian/14/default","description":""},{"name":"debian/14/default/amd64","description":""},{"name":"debian/forky","description":""},{"name":"debian/forky/amd64","description":""},{"name":"debian/14","description":""},{"name":"debian/14/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"25df4a9a2c1c4a35bba46679c2cafd9a335dd8d7b619695262d3b5106502b54f","size":417181360,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"loong64","description":"Debian forky loong64 (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default/loong64","description":""},{"name":"debian/14/default/loong64","description":""},{"name":"debian/forky/loong64","description":""},{"name":"debian/14/loong64","description":""}],"architecture":"loongarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"16248ebcdd03e126c42bdcaaf6e9dc89e328d0c5753dde2f31a2117562849d49","size":95965856,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"riscv64","description":"Debian forky riscv64 (20261019_19:46)","os":"Debian","release":"forky","serial":"20261019_19:46","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/forky/default/riscv64","description":""},{"name":"debian/14/default/riscv64","description":""},{"name":"debian/forky/riscv64","description":""},{"name":"debian/14/riscv64","description":""}],"architecture":"riscv64","cached":false,"filename":"incus.tar.xz","fingerprint":"64335c7ba97c98e91c8f19097bbdec6f66d2adcc9df985a7ca06993f3378dc4a","size":96576180,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian trixie armhf (20261019_20:18)","os":"Debian","release":"trixie","serial":"20261019_20:18","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud/armhf","description":""},{"name":"debian/13/cloud/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"6516e8312f866171b3c0dd6cd51c449c838f90ff661323caf4ecb821546a894a","size":126203128,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian trixie arm64 (20261019_20:01)","os":"Debian","release":"trixie","serial":"20261019_20:01","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud/arm64","description":""},{"name":"debian/13/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"f149c3dd15f1d7bc1fda820241af54274d2a6d5d6ee17af156fde07ada59507f","size":135214268,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian trixie arm64 (20261019_20:01)","os":"Debian","release":"trixie","serial":"20261019_20:01","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud/arm64","description":""},{"name":"debian/13/cloud/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"64bfad4888922395697ad037b3d0608d9b030bdd9d23efd7aee47194f3215422","size":394423996,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian trixie amd64 (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud","description":""},{"name":"debian/trixie/cloud/amd64","description":""},{"name":"debian/13/cloud","description":""},{"name":"debian/13/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"ecb367be32c3236b64fd71a111484b1047d01627759f4a5834ae37c64e6d7aef","size":138785940,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian trixie amd64 (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"disk-kvm.img","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud","description":""},{"name":"debian/trixie/cloud/amd64","description":""},{"name":"debian/13/cloud","description":""},{"name":"debian/13/cloud/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"eb62dbd14518487b4a006ca0eaac2f78d114619e9f31b8da241370a573351886","size":396321940,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"loong64","description":"Debian trixie loong64 (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud/loong64","description":""},{"name":"debian/13/cloud/loong64","description":""}],"architecture":"loongarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"7b0d00a6f51a7878d2b8076ea7f48b290a43199c4e7f158c79a562ba3319abc7","size":133866628,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"riscv64","description":"Debian trixie riscv64 (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"squashfs","variant":"cloud"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/cloud/riscv64","description":""},{"name":"debian/13/cloud/riscv64","description":""}],"architecture":"riscv64","cached":false,"filename":"incus.tar.xz","fingerprint":"6b5198a7f64eccde43aa43f429381ca6c28e36044b7086ca027507ac06b50048","size":131605664,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"armhf","description":"Debian trixie armhf (20261019_20:45)","os":"Debian","release":"trixie","serial":"20261019_20:45","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default/armhf","description":""},{"name":"debian/13/default/armhf","description":""},{"name":"debian/trixie/armhf","description":""},{"name":"debian/13/armhf","description":""}],"architecture":"armv7l","cached":false,"filename":"incus.tar.xz","fingerprint":"72f3c7d0ed8116ce86479fa37b6f8aaa6e587f3aa400615d4cfddc8a51e5c1c1","size":94307012,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian trixie arm64 (20261019_20:00)","os":"Debian","release":"trixie","serial":"20261019_20:00","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default/arm64","description":""},{"name":"debian/13/default/arm64","description":""},{"name":"debian/trixie/arm64","description":""},{"name":"debian/13/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"92fd12791ab943888cb9b9125501a04bad87403b38c11b59ec78831e4c2b1de9","size":102740652,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"arm64","description":"Debian trixie arm64 (20261019_20:00)","os":"Debian","release":"trixie","serial":"20261019_20:00","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default/arm64","description":""},{"name":"debian/13/default/arm64","description":""},{"name":"debian/trixie/arm64","description":""},{"name":"debian/13/arm64","description":""}],"architecture":"aarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"5589d8fcc50ef4d04ee4cd83fd1f8754989aa3cb30381dc9ea2fa7202adeaebf","size":363064492,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"riscv64","description":"Debian trixie riscv64 (20261019_20:00)","os":"Debian","release":"trixie","serial":"20261019_20:00","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default/riscv64","description":""},{"name":"debian/13/default/riscv64","description":""},{"name":"debian/trixie/riscv64","description":""},{"name":"debian/13/riscv64","description":""}],"architecture":"riscv64","cached":false,"filename":"incus.tar.xz","fingerprint":"28814f9c291a855c6fd1565459a33fc8aefcfa971a31d7c78c62acb0e52f14a1","size":98587304,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"loong64","description":"Debian trixie loong64 (20261019_19:49)","os":"Debian","release":"trixie","serial":"20261019_19:49","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default/loong64","description":""},{"name":"debian/13/default/loong64","description":""},{"name":"debian/trixie/loong64","description":""},{"name":"debian/13/loong64","description":""}],"architecture":"loongarch64","cached":false,"filename":"incus.tar.xz","fingerprint":"d7b7d1cd6bf6f05a96248d37ded7e811e14d649bda993c45d2238af2325260a3","size":100999844,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian trixie amd64 (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"squashfs","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default","description":""},{"name":"debian/trixie/default/amd64","description":""},{"name":"debian/13/default","description":""},{"name":"debian/13/default/amd64","description":""},{"name":"debian/trixie","description":""},{"name":"debian/trixie/amd64","description":""},{"name":"debian/13","description":""},{"name":"debian/13/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"ea6961e75779112386a4b72d8f7c035f93f782cc7ff78558dc5f67be675d5aca","size":105484964,"type":"container","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""},{"auto_update":false,"properties":{"architecture":"amd64","description":"Debian trixie amd64 (20261019_19:46)","os":"Debian","release":"trixie","serial":"20261019_19:46","type":"disk-kvm.img","variant":"default"},"public":true,"expires_at":"1970-01-01T00:00:00Z","profiles":null,"aliases":[{"name":"debian/trixie/default","description":""},{"name":"debian/trixie/default/amd64","description":""},{"name":"debian/13/default","description":""},{"name":"debian/13/default/amd64","description":""},{"name":"debian/trixie","description":""},{"name":"debian/trixie/amd64","description":""},{"name":"debian/13","description":""},{"name":"debian/13/amd64","description":""}],"architecture":"x86_64","cached":false,"filename":"incus.tar.xz","fingerprint":"4477695f957f8de113988a322acf80bd58f8c7448bf7221fa85c3372c16b56b9","size":365185188,"type":"virtual-machine","created_at":"2026-10-19T00:00:00Z","last_used_at":"0001-01-01T00:00:00Z","uploaded_at":"2026-10-19T00:00:00Z","project":""}]
+---
+
+START: 2026-10-20 01:44:36 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c rm\ -f\ /tmp/incus-init.status\ /tmp/incus-init.log\ /tmp/incus-init.pid'
+'nohup\ sh\ -c\ incus\\\ init\\\ images:debian/13\\\ i1\\\ \\\>\\\ /tmp/incus-init.log\\\ 2\\\>\\\&1\\\;\\\ printf\\\ \\\'\\\%s\\\\n\\\'\\\ \\\$\\\?\\\ \\\>\\\ /tmp/incus-init.status\ \>/dev/null\ 2\>\&1\ \&'
+'echo\ \$\!\ \>\ /tmp/incus-init.pid'
+'
+END: 2026-10-20 01:44:39 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:44:39 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c test\ -f\ /tmp/incus-init.status\ \&\&\ cat\ /tmp/incus-init.status
+END: 2026-10-20 01:44:41 +0200
+ELAPSED: 2.44s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 01:44:43 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c test\ -f\ /tmp/incus-init.status\ \&\&\ cat\ /tmp/incus-init.status
+END: 2026-10-20 01:44:46 +0200
+ELAPSED: 2.76s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 01:44:48 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c test\ -f\ /tmp/incus-init.status\ \&\&\ cat\ /tmp/incus-init.status
+END: 2026-10-20 01:44:50 +0200
+ELAPSED: 2.48s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-20 01:44:50 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c rm\ -f\ /tmp/incus-start.status\ /tmp/incus-start.log\ /tmp/incus-start.pid'
+'nohup\ sh\ -c\ incus\\\ start\\\ i1\\\ \\\>\\\ /tmp/incus-start.log\\\ 2\\\>\\\&1\\\;\\\ printf\\\ \\\'\\\%s\\\\n\\\'\\\ \\\$\\\?\\\ \\\>\\\ /tmp/incus-start.status\ \>/dev/null\ 2\>\&1\ \&'
+'echo\ \$\!\ \>\ /tmp/incus-start.pid'
+'
+END: 2026-10-20 01:44:53 +0200
+ELAPSED: 2.38s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:44:53 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c test\ -f\ /tmp/incus-start.status\ \&\&\ cat\ /tmp/incus-start.status
+END: 2026-10-20 01:44:55 +0200
+ELAPSED: 2.55s
+STATUS: 0
+OUTPUT:
+0
+---
+
+START: 2026-10-20 01:44:55 +0200
+COMMAND: osctl ct exec incus-f8e3 sh -c "incus info i1 | grep -q 'Status: RUNNING'"
+END: 2026-10-20 01:44:58 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:44:58 +0200
+COMMAND: osctl ct exec incus-f8e3 incus info i1
+END: 2026-10-20 01:45:00 +0200
+ELAPSED: 2.54s
+STATUS: 0
+OUTPUT:
+Name: i1
+Description: 
+Status: RUNNING
+Type: container
+Architecture: x86_64
+PID: 552
+Created: 2026/10/20 01:44 CEST
+Last Used: 2026/10/20 01:44 CEST
+Started: 2026/10/20 01:44 CEST
+
+Resources:
+  Processes: 8
+  CPU usage:
+    CPU usage (in seconds): 2
+  Memory usage:
+    Memory (current): 31.91MiB
+  Network usage:
+    erspan0:
+      Type: broadcast
+      State: DOWN
+      MAC address: 00:00:00:00:00:00
+      MTU: 1450
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    gre0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00
+      MTU: 1476
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    gretap0:
+      Type: broadcast
+      State: DOWN
+      MAC address: 00:00:00:00:00:00
+      MTU: 1462
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    ip6tnl0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00:00:00:00:00:00:00:00:00:00:00:00:00
+      MTU: 1452
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+    lo:
+      Type: loopback
+      State: UP
+      MTU: 65536
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+        inet:  127.0.0.1/8 (local)
+        inet6: ::1/128 (local)
+    tunl0:
+      Type: unknown
+      State: DOWN
+      MAC address: 00:00:00:00
+      MTU: 1480
+      Bytes received: 0B
+      Bytes sent: 0B
+      Packets received: 0
+      Packets sent: 0
+      IP addresses:
+---
+
+START: 2026-10-20 01:45:00 +0200
+COMMAND: osctl ct exec incus-f8e3 incus exec i1 -- true
+END: 2026-10-20 01:45:03 +0200
+ELAPSED: 2.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:45:03 +0200
+COMMAND: osctl ct del -f --prune incus-f8e3
+END: 2026-10-20 01:45:05 +0200
+ELAPSED: 2.65s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:incus-f8e3
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-20 01:45:05 +0200
+COMMAND: osctl user del incus-f8e3
+END: 2026-10-20 01:45:06 +0200
+ELAPSED: 0.96s
+STATUS: 1
+OUTPUT:
+error: user not found
+---
+
+START: 2026-10-20 01:45:06 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-20 01:45:07 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/fedora/44/image-stream.tar
+---
+
+START: 2026-10-20 01:45:07 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 01:45:21 +0200
+ELAPSED: 13.96s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

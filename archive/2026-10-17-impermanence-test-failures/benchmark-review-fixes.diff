@@ -1,0 +1,128 @@
+diff --git a/.github/workflows/scripts/prebuild_benchmark.rb b/.github/workflows/scripts/prebuild_benchmark.rb
+index 877b961b8..587821673 100644
+--- a/.github/workflows/scripts/prebuild_benchmark.rb
++++ b/.github/workflows/scripts/prebuild_benchmark.rb
+@@ -33,6 +33,7 @@ module PrebuildBenchmark
+       'completed_tests' => completed && completed[1].to_i,
+       'executor_reported_seconds' => completed && completed[2].to_f,
+       'initial_resource_limits' => text[/Resource limits: ([^\n]+)/, 1],
++      'resource_limit_updates' => text.lines.grep(/Resource limits updated: /).map(&:strip),
+       'unexpected_failed_scripts' => summary_paths(text, 'Unexpectedly failed test scripts:'),
+       'unexpected_successful_scripts' => summary_paths(text, 'Unexpectedly successful test scripts:'),
+       'retries' => text.scan(%r{Retrying test '([^']+)' \((.*?)\) \(attempt (\d+)/\d+\)}).map { |path, names, attempt| [path, names.split(', ').sort, attempt] }.sort,
+@@ -69,7 +70,7 @@ module PrebuildBenchmark
+     equal_work = complete && legs.all? do |leg|
+       leg['selection_digest'] == expected_digest && leg['completed_tests'] == EXPECTED_TESTS &&
+         leg['completed_scripts'] == EXPECTED_SCRIPTS && Array(leg['owned_processes_remaining']).empty? && !leg['forced_cleanup'] && !leg['resource_identity_changed'] &&
+-        Array(leg['image_builds']).empty? && Array(leg['kernel_failures']).empty? && leg['oom_delta'] == 0
++        Array(leg['image_builds']).empty? && Array(leg['kernel_failures']).empty? && Array(leg['resource_limit_updates']).empty? && leg['oom_delta'] == 0
+     end
+     equal_work &&= !a['initial_resource_limits'].nil? && a['initial_resource_limits'] == b['initial_resource_limits'] &&
+                    a['outcomes'] == b['outcomes'] && a['resource_identity'] == b['resource_identity'] &&
+@@ -354,9 +355,7 @@ module PrebuildBenchmark
+       text = File.read(File.join(@root, "#{label}.log"))
+       leg.merge!(PrebuildBenchmark.parse_log(text))
+       leg['outcomes'] = Dir.glob(File.join(state, '*', 'test-result.txt')).to_h { |path| [File.basename(File.dirname(path)), File.read(path).strip] }
+-      leg['image_builds'] = [File.join(@root, "#{label}.log"), *Dir.glob(File.join(state, '**', '*.log'))].flat_map do |path|
+-        File.foreach(path).filter_map { |line| "#{path}: #{line.strip}" if line.match?(%r{building ['"]/nix/store/.+\.drv['"]}) }
+-      end
++      leg['image_builds'] = host_image_builds(label, state)
+       leg['phase_seconds'] = {
+         'cli_prefix_receipt' => leg['phase_receipts']['executor_start'],
+         'executor_reported' => leg['executor_reported_seconds'],
+@@ -367,6 +366,18 @@ module PrebuildBenchmark
+       leg['error'] ||= "Unable to summarize leg: #{e.class}: #{e.message}"
+     end
+ 
++    def host_image_builds(label, state)
++      # Guest shell/console builds are native test work, not host image misses.
++      patterns = [
++        File.join(state, 'os-test-*', 'test-runner.log'),
++        File.join(state, 'os-test-*', 'attempt-*', 'test-runner.log'),
++        File.join(state, 'prebuild-*', 'build.log')
++      ]
++      [File.join(@root, "#{label}.log"), *Dir.glob(patterns)].flat_map do |path|
++        File.foreach(path).filter_map { |line| "#{path}: #{line.strip}" if line.match?(%r{building ['"]/nix/store/.+\.drv['"]}) }
++      end
++    end
++
+     def active_owned(owned, table, state)
+       # Include processes whose exact invocation-owned state appears in argv or
+       # cwd, so an orphaned QEMU does not depend only on ancestry sampling.
+diff --git a/test-runner/spec/github_actions/prebuild_benchmark_spec.rb b/test-runner/spec/github_actions/prebuild_benchmark_spec.rb
+index ce8f3fd03..f18ef44ec 100644
+--- a/test-runner/spec/github_actions/prebuild_benchmark_spec.rb
++++ b/test-runner/spec/github_actions/prebuild_benchmark_spec.rb
+@@ -79,6 +79,52 @@ RSpec.describe PrebuildBenchmark do
+     expect(described_class.compare([a, b.merge('initial_resource_limits' => nil)], 'selected')['comparable_work']).to be(false)
+   end
+ 
++  it 'qualifies a transient runtime reduction while allowing a cleaned complete leg B' do
++    with_tmpdir do |dir|
++      run = described_class::Run.new(dir, dir)
++      run.instance_variable_get(:@report)['selection_digest'] = 'selected'
++      initial = completed_leg(100).fetch('initial_resource_limits')
++      log = <<~LOG
++        [2026-10-19 15:00:00 +0200] Resource limits: #{initial}
++        [2026-10-19 15:00:15 +0200] Resource limits updated: memory=0.00 GiB/32.00 GiB, shm=0.00 GiB/16.00 GiB, cpus=0/48.0, running=0
++        [2026-10-19 15:00:30 +0200] Resource limits updated: #{initial}
++      LOG
++      parsed = described_class.parse_log(log)
++      expect(parsed['initial_resource_limits']).to eq(initial)
++      expect(parsed['resource_limit_updates'].size).to eq(2)
++      expect(parsed['resource_limit_updates'].first).to include('32.00 GiB')
++      outcomes = (0...127).to_h { |i| [i.to_s, 'expected_success'] }
++      a = completed_leg(100).merge('outcomes' => outcomes)
++      b = completed_leg(110).merge('resource_limit_updates' => parsed['resource_limit_updates'], 'outcomes' => outcomes, 'kernel_failures' => [])
++      expect(a['resource_identity']).to eq(b['resource_identity'])
++      expect(a['initial_resource_limits']).to eq(b['initial_resource_limits'])
++      expect(described_class.compare([a, b], 'selected')).to include('complete' => true, 'comparable_work' => false, 'delta_seconds' => 10)
++      expect(run.send(:safe_to_continue?, b)).to be(true)
++    end
++  end
++
++  it 'detects host image builds only in explicit runner-owned preparation logs' do
++    with_tmpdir do |dir|
++      state = File.join(dir, 'A-state')
++      run = described_class::Run.new(dir, dir)
++      host_paths = [
++        File.join(dir, 'A.log'),
++        File.join(state, 'os-test-system__install-123', 'test-runner.log'),
++        File.join(state, 'os-test-system__install-123', 'attempt-1-123', 'test-runner.log'),
++        File.join(state, 'prebuild-123', 'build.log')
++      ]
++      guest_path = File.join(state, 'os-test-system__install-123', 'installer-shell.log')
++      [*host_paths, guest_path].each do |path|
++        FileUtils.mkdir_p(File.dirname(path))
++        File.write(path, "building '/nix/store/fixture-image.drv'...\n")
++      end
++      builds = run.send(:host_image_builds, 'A', state)
++      expect(builds.size).to eq(4)
++      expect(builds).to match_array(host_paths.map { |path| "#{path}: building '/nix/store/fixture-image.drv'..." })
++      expect(described_class.compare([completed_leg(100).merge('image_builds' => builds), completed_leg(110)], 'selected')['comparable_work']).to be(false)
++    end
++  end
++
+   it 'marks an interrupted pair incomplete while retaining the first leg elsewhere' do
+     expect(described_class.compare([completed_leg(100)], 'selected')).to include('complete' => false)
+     b = completed_leg(20).merge('signal' => 15, 'completed_tests' => nil)
+@@ -123,6 +169,11 @@ RSpec.describe PrebuildBenchmark do
+         335.times { |i| puts "  test/\#{i}" }
+         puts
+         puts '[2026-10-19] Running 335 scripts of 127 tests, at most 127 tests at a time (auto)'
++        installer = File.join(state, 'os-test-system__install-123')
++        FileUtils.mkdir_p(installer)
++        %w[installer-shell.log vm-console.log].each do |name|
++          File.write(File.join(installer, name), "building '/nix/store/fixture-aliases.conf.drv'...\n")
++        end
+         127.times do |i|
+           dir = File.join(state, i.to_s)
+           FileUtils.mkdir_p(dir)
+@@ -139,6 +190,7 @@ RSpec.describe PrebuildBenchmark do
+       expect(leg).to include('exit_status' => 1, 'signal' => nil, 'selection_digest' => digest,
+                              'completed_tests' => 127, 'completed_scripts' => 335, 'owned_processes_remaining' => [])
+       expect(leg['wall_seconds']).to be > 0
++      expect(leg['image_builds']).to be_empty
+       expect(run.send(:safe_to_continue?, leg)).to be(true)
+       expect(JSON.parse(File.read(File.join(root, 'timings.json')))['legs'].size).to eq(1)
+       expect(run.send(:safe_to_continue?, leg.merge('forced_cleanup' => true))).to be(false)

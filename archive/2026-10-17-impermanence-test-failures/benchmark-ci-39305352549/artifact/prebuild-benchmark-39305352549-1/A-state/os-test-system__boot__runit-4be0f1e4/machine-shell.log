@@ -1,0 +1,123 @@
+SHELL: 0
+
+START: 2026-10-19 21:51:13 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-19 21:51:13 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 21:51:13 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-19 21:51:13 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 21:51:13 +0200
+COMMAND: sv check runit-script-env
+END: 2026-10-19 21:51:13 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+ok: run: runit-script-env: (pid 849) 2s
+---
+
+START: 2026-10-19 21:51:13 +0200
+COMMAND: test -f /run/runit-script-env/run
+END: 2026-10-19 21:51:13 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 21:51:13 +0200
+COMMAND: test -f /run/runit-script-env/check
+END: 2026-10-19 21:51:13 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 21:51:13 +0200
+COMMAND: sv hup runit-script-env
+END: 2026-10-19 21:51:13 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 21:51:13 +0200
+COMMAND: test -f /run/runit-script-env/control
+END: 2026-10-19 21:51:13 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 21:51:13 +0200
+COMMAND: test -f /run/runit-script-env/control
+END: 2026-10-19 21:51:13 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 21:51:13 +0200
+COMMAND: sv down runit-script-env
+END: 2026-10-19 21:51:13 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 21:51:13 +0200
+COMMAND: test -f /run/runit-script-env/finish
+END: 2026-10-19 21:51:13 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-19 21:51:14 +0200
+COMMAND: test -f /run/runit-script-env/finish
+END: 2026-10-19 21:51:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 21:51:14 +0200
+COMMAND: test -f /run/runit-script-env/finish
+END: 2026-10-19 21:51:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 21:51:14 +0200
+COMMAND: poweroff -f
+END: 2026-10-19 21:51:27 +0200
+ELAPSED: 12.87s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Unable to connect to osctld: socket not found
+Waiting for osctld to prepare for shutdown...... ok
+---
+

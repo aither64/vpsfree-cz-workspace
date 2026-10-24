@@ -1,0 +1,1360 @@
+SHELL: 0
+
+START: 2026-10-20 02:33:08 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 02:33:08 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:33:08 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 02:33:08 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:33:08 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:33:11 +0200
+ELAPSED: 2.26s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:33:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:33:12 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:33:13 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:33:14 +0200
+ELAPSED: 0.74s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:33:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:33:16 +0200
+ELAPSED: 0.94s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:33:17 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:33:18 +0200
+ELAPSED: 0.96s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:33:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:33:20 +0200
+ELAPSED: 0.69s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:33:21 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:33:21 +0200
+ELAPSED: 0.69s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:33:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:33:23 +0200
+ELAPSED: 0.92s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 02:33:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:33:25 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 02:33:26 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:33:27 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 02:33:27 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-20 02:33:27 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Tue, 20 Oct 2026 00:33:27 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 02:33:27 +0200
+COMMAND: osctl ct new --distribution alpine startedct
+END: 2026-10-20 02:33:30 +0200
+ELAPSED: 2.51s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 02:33:30 +0200
+COMMAND: osctl ct unset start-menu startedct
+END: 2026-10-20 02:33:31 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:33:31 +0200
+COMMAND: osctl ct new --distribution alpine stoppedct
+END: 2026-10-20 02:33:33 +0200
+ELAPSED: 1.9s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 02:33:33 +0200
+COMMAND: osctl ct netif new routed stoppedct eth0
+END: 2026-10-20 02:33:33 +0200
+ELAPSED: 0.76s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:33:33 +0200
+COMMAND: osctl ct netif ip add stoppedct eth0 1.2.3.4/32
+END: 2026-10-20 02:33:34 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:33:34 +0200
+COMMAND: osctl ct start startedct
+END: 2026-10-20 02:33:36 +0200
+ELAPSED: 1.96s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 02:33:36 +0200
+COMMAND: osctl ct show -H -o state startedct
+END: 2026-10-20 02:33:37 +0200
+ELAPSED: 0.8s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-10-20 02:33:37 +0200
+COMMAND: osctl ct runscript  startedct /nix/store/njpnmm617bc1arhw7zm7ci9znjnzx4w8-test-stdout-script
+END: 2026-10-20 02:33:39 +0200
+ELAPSED: 1.96s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-20 02:33:39 +0200
+COMMAND: osctl ct runscript  startedct /nix/store/rh5d2h6d4wlhia89j5l83qsyxh0xvdy2-test-stderr-script
+END: 2026-10-20 02:33:41 +0200
+ELAPSED: 2.14s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-20 02:33:41 +0200
+COMMAND: osctl ct runscript  startedct /nix/store/y852j4zbmg1vxiqafpiihz13nj4h31lh-test-error-script
+END: 2026-10-20 02:33:43 +0200
+ELAPSED: 1.73s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 02:33:43 +0200
+COMMAND: osctl ct runscript  startedct totally-invalid-script
+END: 2026-10-20 02:33:44 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory @ rb_check_realpath_internal - totally-invalid-script
+---
+
+START: 2026-10-20 02:33:44 +0200
+COMMAND: osctl ct exec -r startedct rm -f /root/runscript-side-effect.*
+END: 2026-10-20 02:33:46 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:33:46 +0200
+COMMAND: osctl ct runscript  startedct /nix/store/cqzd6xksvcaw4vhffj6pmvi1ws4ccmfn-test-side-effect-script
+END: 2026-10-20 02:33:48 +0200
+ELAPSED: 2.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:33:48 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.single
+END: 2026-10-20 02:33:50 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:33:50 +0200
+COMMAND: seq 1 20 | xargs -I{} -P 20 sh -c 'tmp=$(mktemp); printf "#!/bin/sh\ntouch /root/runscript-side-effect.{}\n" > "$tmp"; chmod 500 "$tmp"; osctl ct runscript  startedct "$tmp"; rc=$?; rm -f "$tmp"; exit $rc'
+END: 2026-10-20 02:34:00 +0200
+ELAPSED: 10.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:00 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.1
+END: 2026-10-20 02:34:03 +0200
+ELAPSED: 2.3s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:03 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.2
+END: 2026-10-20 02:34:05 +0200
+ELAPSED: 1.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:05 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.3
+END: 2026-10-20 02:34:07 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:07 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.4
+END: 2026-10-20 02:34:09 +0200
+ELAPSED: 2.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:09 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.5
+END: 2026-10-20 02:34:11 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:11 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.6
+END: 2026-10-20 02:34:13 +0200
+ELAPSED: 2.21s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:13 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.7
+END: 2026-10-20 02:34:15 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:15 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.8
+END: 2026-10-20 02:34:17 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:17 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.9
+END: 2026-10-20 02:34:19 +0200
+ELAPSED: 2.24s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:19 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.10
+END: 2026-10-20 02:34:21 +0200
+ELAPSED: 1.96s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:21 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.11
+END: 2026-10-20 02:34:23 +0200
+ELAPSED: 1.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:23 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.12
+END: 2026-10-20 02:34:25 +0200
+ELAPSED: 1.96s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:25 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.13
+END: 2026-10-20 02:34:27 +0200
+ELAPSED: 2.3s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:27 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.14
+END: 2026-10-20 02:34:30 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:30 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.15
+END: 2026-10-20 02:34:32 +0200
+ELAPSED: 1.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:32 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.16
+END: 2026-10-20 02:34:33 +0200
+ELAPSED: 1.78s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:33 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.17
+END: 2026-10-20 02:34:35 +0200
+ELAPSED: 1.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:35 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.18
+END: 2026-10-20 02:34:37 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:37 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.19
+END: 2026-10-20 02:34:39 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:39 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.20
+END: 2026-10-20 02:34:42 +0200
+ELAPSED: 2.41s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:34:42 +0200
+COMMAND: osctl ct show -H -o state stoppedct
+END: 2026-10-20 02:34:43 +0200
+ELAPSED: 0.98s
+STATUS: 0
+OUTPUT:
+stopped
+
+---
+
+START: 2026-10-20 02:34:43 +0200
+COMMAND: osctl ct runscript -r stoppedct /nix/store/njpnmm617bc1arhw7zm7ci9znjnzx4w8-test-stdout-script
+END: 2026-10-20 02:34:48 +0200
+ELAPSED: 5.05s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-20 02:34:48 +0200
+COMMAND: osctl ct runscript -r stoppedct /nix/store/rh5d2h6d4wlhia89j5l83qsyxh0xvdy2-test-stderr-script
+END: 2026-10-20 02:34:53 +0200
+ELAPSED: 5.29s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-20 02:34:53 +0200
+COMMAND: osctl ct runscript -r stoppedct /nix/store/y852j4zbmg1vxiqafpiihz13nj4h31lh-test-error-script
+END: 2026-10-20 02:34:59 +0200
+ELAPSED: 5.42s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 02:34:59 +0200
+COMMAND: osctl ct runscript -r stoppedct totally-invalid-script
+END: 2026-10-20 02:34:59 +0200
+ELAPSED: 0.75s
+STATUS: 1
+OUTPUT:
+error: No such file or directory @ rb_check_realpath_internal - totally-invalid-script
+---
+
+START: 2026-10-20 02:34:59 +0200
+COMMAND: osctl ct exec -r stoppedct rm -f /root/runscript-side-effect.*
+END: 2026-10-20 02:35:04 +0200
+ELAPSED: 4.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:04 +0200
+COMMAND: osctl ct runscript -r stoppedct /nix/store/cqzd6xksvcaw4vhffj6pmvi1ws4ccmfn-test-side-effect-script
+END: 2026-10-20 02:35:09 +0200
+ELAPSED: 4.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:09 +0200
+COMMAND: osctl ct exec -r stoppedct test -f /root/runscript-side-effect.single
+END: 2026-10-20 02:35:14 +0200
+ELAPSED: 4.75s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:14 +0200
+COMMAND: osctl ct show -H -o state startedct
+END: 2026-10-20 02:35:15 +0200
+ELAPSED: 0.75s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-10-20 02:35:15 +0200
+COMMAND: osctl ct runscript -r startedct /nix/store/njpnmm617bc1arhw7zm7ci9znjnzx4w8-test-stdout-script
+END: 2026-10-20 02:35:17 +0200
+ELAPSED: 1.99s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-20 02:35:17 +0200
+COMMAND: osctl ct runscript -r startedct /nix/store/rh5d2h6d4wlhia89j5l83qsyxh0xvdy2-test-stderr-script
+END: 2026-10-20 02:35:19 +0200
+ELAPSED: 2.3s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-20 02:35:19 +0200
+COMMAND: osctl ct runscript -r startedct /nix/store/y852j4zbmg1vxiqafpiihz13nj4h31lh-test-error-script
+END: 2026-10-20 02:35:21 +0200
+ELAPSED: 2.0s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 02:35:21 +0200
+COMMAND: osctl ct runscript -r startedct totally-invalid-script
+END: 2026-10-20 02:35:22 +0200
+ELAPSED: 0.73s
+STATUS: 1
+OUTPUT:
+error: No such file or directory @ rb_check_realpath_internal - totally-invalid-script
+---
+
+START: 2026-10-20 02:35:22 +0200
+COMMAND: osctl ct exec -r startedct rm -f /root/runscript-side-effect.*
+END: 2026-10-20 02:35:24 +0200
+ELAPSED: 2.21s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:24 +0200
+COMMAND: osctl ct runscript -r startedct /nix/store/cqzd6xksvcaw4vhffj6pmvi1ws4ccmfn-test-side-effect-script
+END: 2026-10-20 02:35:26 +0200
+ELAPSED: 2.42s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:26 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.single
+END: 2026-10-20 02:35:28 +0200
+ELAPSED: 2.17s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:28 +0200
+COMMAND: seq 1 20 | xargs -I{} -P 20 sh -c 'tmp=$(mktemp); printf "#!/bin/sh\ntouch /root/runscript-side-effect.{}\n" > "$tmp"; chmod 500 "$tmp"; osctl ct runscript -r startedct "$tmp"; rc=$?; rm -f "$tmp"; exit $rc'
+END: 2026-10-20 02:35:41 +0200
+ELAPSED: 12.47s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:41 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.1
+END: 2026-10-20 02:35:43 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:43 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.2
+END: 2026-10-20 02:35:45 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:45 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.3
+END: 2026-10-20 02:35:48 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:48 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.4
+END: 2026-10-20 02:35:50 +0200
+ELAPSED: 2.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:50 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.5
+END: 2026-10-20 02:35:52 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:52 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.6
+END: 2026-10-20 02:35:54 +0200
+ELAPSED: 1.77s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:54 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.7
+END: 2026-10-20 02:35:56 +0200
+ELAPSED: 2.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:56 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.8
+END: 2026-10-20 02:35:58 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:35:58 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.9
+END: 2026-10-20 02:36:00 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:00 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.10
+END: 2026-10-20 02:36:02 +0200
+ELAPSED: 2.38s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:02 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.11
+END: 2026-10-20 02:36:04 +0200
+ELAPSED: 1.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:04 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.12
+END: 2026-10-20 02:36:07 +0200
+ELAPSED: 2.4s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:07 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.13
+END: 2026-10-20 02:36:09 +0200
+ELAPSED: 2.14s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:09 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.14
+END: 2026-10-20 02:36:11 +0200
+ELAPSED: 2.18s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:11 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.15
+END: 2026-10-20 02:36:13 +0200
+ELAPSED: 1.92s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:13 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.16
+END: 2026-10-20 02:36:15 +0200
+ELAPSED: 2.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:15 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.17
+END: 2026-10-20 02:36:17 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:17 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.18
+END: 2026-10-20 02:36:20 +0200
+ELAPSED: 2.35s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:20 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.19
+END: 2026-10-20 02:36:21 +0200
+ELAPSED: 1.89s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:21 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.20
+END: 2026-10-20 02:36:23 +0200
+ELAPSED: 1.91s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:23 +0200
+COMMAND: osctl ct show -H -o state startedct
+END: 2026-10-20 02:36:24 +0200
+ELAPSED: 0.73s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-10-20 02:36:24 +0200
+COMMAND: osctl ct runscript -rn startedct /nix/store/njpnmm617bc1arhw7zm7ci9znjnzx4w8-test-stdout-script
+END: 2026-10-20 02:36:26 +0200
+ELAPSED: 1.92s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-20 02:36:26 +0200
+COMMAND: osctl ct runscript -rn startedct /nix/store/rh5d2h6d4wlhia89j5l83qsyxh0xvdy2-test-stderr-script
+END: 2026-10-20 02:36:28 +0200
+ELAPSED: 2.3s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-20 02:36:28 +0200
+COMMAND: osctl ct runscript -rn startedct /nix/store/y852j4zbmg1vxiqafpiihz13nj4h31lh-test-error-script
+END: 2026-10-20 02:36:31 +0200
+ELAPSED: 2.38s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 02:36:31 +0200
+COMMAND: osctl ct runscript -rn startedct totally-invalid-script
+END: 2026-10-20 02:36:32 +0200
+ELAPSED: 0.86s
+STATUS: 1
+OUTPUT:
+error: No such file or directory @ rb_check_realpath_internal - totally-invalid-script
+---
+
+START: 2026-10-20 02:36:32 +0200
+COMMAND: osctl ct exec -r startedct rm -f /root/runscript-side-effect.*
+END: 2026-10-20 02:36:34 +0200
+ELAPSED: 2.19s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:34 +0200
+COMMAND: osctl ct runscript -rn startedct /nix/store/cqzd6xksvcaw4vhffj6pmvi1ws4ccmfn-test-side-effect-script
+END: 2026-10-20 02:36:36 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:36 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.single
+END: 2026-10-20 02:36:38 +0200
+ELAPSED: 1.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:38 +0200
+COMMAND: seq 1 20 | xargs -I{} -P 20 sh -c 'tmp=$(mktemp); printf "#!/bin/sh\ntouch /root/runscript-side-effect.{}\n" > "$tmp"; chmod 500 "$tmp"; osctl ct runscript -rn startedct "$tmp"; rc=$?; rm -f "$tmp"; exit $rc'
+END: 2026-10-20 02:36:49 +0200
+ELAPSED: 11.28s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:49 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.1
+END: 2026-10-20 02:36:51 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:51 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.2
+END: 2026-10-20 02:36:53 +0200
+ELAPSED: 2.2s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:53 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.3
+END: 2026-10-20 02:36:55 +0200
+ELAPSED: 1.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:55 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.4
+END: 2026-10-20 02:36:57 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:36:57 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.5
+END: 2026-10-20 02:37:00 +0200
+ELAPSED: 2.36s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:00 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.6
+END: 2026-10-20 02:37:02 +0200
+ELAPSED: 2.32s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:02 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.7
+END: 2026-10-20 02:37:04 +0200
+ELAPSED: 2.28s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:04 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.8
+END: 2026-10-20 02:37:06 +0200
+ELAPSED: 1.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:06 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.9
+END: 2026-10-20 02:37:08 +0200
+ELAPSED: 2.24s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:08 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.10
+END: 2026-10-20 02:37:11 +0200
+ELAPSED: 2.25s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:11 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.11
+END: 2026-10-20 02:37:12 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:12 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.12
+END: 2026-10-20 02:37:15 +0200
+ELAPSED: 2.29s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:15 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.13
+END: 2026-10-20 02:37:17 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:17 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.14
+END: 2026-10-20 02:37:19 +0200
+ELAPSED: 2.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:19 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.15
+END: 2026-10-20 02:37:21 +0200
+ELAPSED: 2.24s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:21 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.16
+END: 2026-10-20 02:37:23 +0200
+ELAPSED: 2.17s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:23 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.17
+END: 2026-10-20 02:37:25 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:25 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.18
+END: 2026-10-20 02:37:27 +0200
+ELAPSED: 2.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:27 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.19
+END: 2026-10-20 02:37:30 +0200
+ELAPSED: 2.18s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:30 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.20
+END: 2026-10-20 02:37:32 +0200
+ELAPSED: 2.39s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:32 +0200
+COMMAND: osctl ct show -H -o state stoppedct
+END: 2026-10-20 02:37:33 +0200
+ELAPSED: 0.83s
+STATUS: 0
+OUTPUT:
+stopped
+
+---
+
+START: 2026-10-20 02:37:33 +0200
+COMMAND: osctl ct runscript -rn stoppedct /nix/store/jdx0msmcpai518hgj9bfsqmf5lw67wgm-test-net-script
+END: 2026-10-20 02:37:37 +0200
+ELAPSED: 3.74s
+STATUS: 0
+OUTPUT:
+default via 255.255.255.254 dev eth0 
+255.255.255.254 dev eth0 scope link 
+---
+
+START: 2026-10-20 02:37:37 +0200
+COMMAND: osctl ct show -H -o state startedct
+END: 2026-10-20 02:37:37 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-10-20 02:37:37 +0200
+COMMAND: osctl ct runscript -rn startedct /nix/store/njpnmm617bc1arhw7zm7ci9znjnzx4w8-test-stdout-script
+END: 2026-10-20 02:37:40 +0200
+ELAPSED: 2.15s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-20 02:37:40 +0200
+COMMAND: osctl ct runscript -rn startedct /nix/store/rh5d2h6d4wlhia89j5l83qsyxh0xvdy2-test-stderr-script
+END: 2026-10-20 02:37:42 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-20 02:37:42 +0200
+COMMAND: osctl ct runscript -rn startedct /nix/store/y852j4zbmg1vxiqafpiihz13nj4h31lh-test-error-script
+END: 2026-10-20 02:37:44 +0200
+ELAPSED: 2.32s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-20 02:37:44 +0200
+COMMAND: osctl ct runscript -rn startedct totally-invalid-script
+END: 2026-10-20 02:37:45 +0200
+ELAPSED: 0.82s
+STATUS: 1
+OUTPUT:
+error: No such file or directory @ rb_check_realpath_internal - totally-invalid-script
+---
+
+START: 2026-10-20 02:37:45 +0200
+COMMAND: osctl ct exec -r startedct rm -f /root/runscript-side-effect.*
+END: 2026-10-20 02:37:47 +0200
+ELAPSED: 1.91s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:47 +0200
+COMMAND: osctl ct runscript -rn startedct /nix/store/cqzd6xksvcaw4vhffj6pmvi1ws4ccmfn-test-side-effect-script
+END: 2026-10-20 02:37:49 +0200
+ELAPSED: 1.98s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:49 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.single
+END: 2026-10-20 02:37:51 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:37:51 +0200
+COMMAND: seq 1 20 | xargs -I{} -P 20 sh -c 'tmp=$(mktemp); printf "#!/bin/sh\ntouch /root/runscript-side-effect.{}\n" > "$tmp"; chmod 500 "$tmp"; osctl ct runscript -rn startedct "$tmp"; rc=$?; rm -f "$tmp"; exit $rc'
+END: 2026-10-20 02:38:02 +0200
+ELAPSED: 10.89s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:02 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.1
+END: 2026-10-20 02:38:04 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:04 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.2
+END: 2026-10-20 02:38:06 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:06 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.3
+END: 2026-10-20 02:38:08 +0200
+ELAPSED: 2.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:08 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.4
+END: 2026-10-20 02:38:10 +0200
+ELAPSED: 2.37s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:10 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.5
+END: 2026-10-20 02:38:13 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:13 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.6
+END: 2026-10-20 02:38:15 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:15 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.7
+END: 2026-10-20 02:38:17 +0200
+ELAPSED: 2.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:17 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.8
+END: 2026-10-20 02:38:19 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:19 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.9
+END: 2026-10-20 02:38:21 +0200
+ELAPSED: 2.15s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:21 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.10
+END: 2026-10-20 02:38:23 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:23 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.11
+END: 2026-10-20 02:38:25 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:25 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.12
+END: 2026-10-20 02:38:27 +0200
+ELAPSED: 2.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:27 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.13
+END: 2026-10-20 02:38:29 +0200
+ELAPSED: 2.1s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:29 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.14
+END: 2026-10-20 02:38:31 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:31 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.15
+END: 2026-10-20 02:38:34 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:34 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.16
+END: 2026-10-20 02:38:36 +0200
+ELAPSED: 2.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:36 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.17
+END: 2026-10-20 02:38:38 +0200
+ELAPSED: 2.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:38 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.18
+END: 2026-10-20 02:38:40 +0200
+ELAPSED: 1.93s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:40 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.19
+END: 2026-10-20 02:38:42 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:42 +0200
+COMMAND: osctl ct exec -r startedct test -f /root/runscript-side-effect.20
+END: 2026-10-20 02:38:44 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:38:44 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 02:38:48 +0200
+ELAPSED: 4.78s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/2] Stopping container tank:startedct
+[2/2] Stopping container tank:stoppedct
+Unregistering users, groups and containers
+---
+

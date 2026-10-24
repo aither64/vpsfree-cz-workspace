@@ -1,0 +1,50 @@
+START: 2026-10-20 00:30:48 +0200
+ACTION: start
+END: 2026-10-20 00:30:48 +0200
+ELAPSED: 0.0s
+---
+
+START: 2026-10-20 00:32:16 +0200
+ACTION: kernel-failure
+EXPECTED: true
+LINE: [   85.327386] Kernel panic - not syncing: sysrq triggered crash
+END: 2026-10-20 00:32:16 +0200
+ELAPSED: 0.0s
+---
+
+START: 2026-10-20 00:33:23 +0200
+ACTION: console-wait
+REGEXP: /crash-collect: synced sys\.txt/
+END: 2026-10-20 00:33:23 +0200
+ELAPSED: 0.0s
+MATCH: true
+---
+
+START: 2026-10-20 00:33:23 +0200
+ACTION: console-wait
+REGEXP: /crash-collect: synced tasks\.txt/
+END: 2026-10-20 00:33:23 +0200
+ELAPSED: 0.0s
+MATCH: true
+---
+
+START: 2026-10-20 00:33:27 +0200
+ACTION: qemu_exit
+STATUS: 0
+END: 2026-10-20 00:33:27 +0200
+ELAPSED: 0.0s
+---
+
+START: 2026-10-20 00:34:16 +0200
+ACTION: kill
+SIGNAL: NONE
+END: 2026-10-20 00:34:16 +0200
+ELAPSED: 0.0s
+---
+
+START: 2026-10-20 00:34:16 +0200
+ACTION: destroy
+END: 2026-10-20 00:34:16 +0200
+ELAPSED: 0.0s
+---
+

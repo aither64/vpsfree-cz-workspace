@@ -1,0 +1,540 @@
+SHELL: 0
+
+START: 2026-10-20 01:59:31 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 01:59:31 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:59:31 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 01:59:31 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:59:31 +0200
+COMMAND: test -b /dev/disk/by-id/ata-QEMU_HARDDISK_QM00005 && test -b /dev/disk/by-id/ata-QEMU_HARDDISK_QM00007
+END: 2026-10-20 01:59:31 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:59:31 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:59:33 +0200
+ELAPSED: 2.38s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:59:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:59:35 +0200
+ELAPSED: 0.99s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:59:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:59:37 +0200
+ELAPSED: 0.67s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:59:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:59:39 +0200
+ELAPSED: 0.88s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:59:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:59:40 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:59:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:59:42 +0200
+ELAPSED: 0.97s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:59:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:59:44 +0200
+ELAPSED: 0.99s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 01:59:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:59:46 +0200
+ELAPSED: 0.95s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 01:59:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:59:48 +0200
+ELAPSED: 0.96s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 01:59:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 01:59:50 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 01:59:50 +0200
+COMMAND: echo temporary-root > /root/preservation-marker
+END: 2026-10-20 01:59:50 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:59:50 +0200
+COMMAND: echo pool-marker > /tank/preservation-marker
+END: 2026-10-20 01:59:50 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:59:50 +0200
+COMMAND: printf scratch-marker | dd of=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00007 conv=fsync
+END: 2026-10-20 01:59:50 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+0+1 records in
+0+1 records out
+14 bytes copied, 0.000935238 s, 15.0 kB/s
+---
+
+START: 2026-10-20 01:59:50 +0200
+COMMAND: osctl ct new --distribution alpine preservation
+END: 2026-10-20 01:59:54 +0200
+ELAPSED: 3.92s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 01:59:54 +0200
+COMMAND: osctl ct start preservation
+END: 2026-10-20 01:59:58 +0200
+ELAPSED: 3.72s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 01:59:58 +0200
+COMMAND: osctl ct exec preservation sh -c 'echo container-marker > /root/preservation-marker'
+END: 2026-10-20 02:00:01 +0200
+ELAPSED: 3.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:00:01 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 02:00:07 +0200
+ELAPSED: 5.89s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:preservation
+Unregistering users, groups and containers
+---
+
+START: 2026-10-20 02:00:30 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 02:00:30 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:00:30 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 02:00:30 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:00:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:00:33 +0200
+ELAPSED: 2.3s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:00:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:00:35 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:00:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:00:36 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:00:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:00:38 +0200
+ELAPSED: 0.72s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:00:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:00:40 +0200
+ELAPSED: 0.97s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:00:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:00:42 +0200
+ELAPSED: 0.95s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:00:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:00:44 +0200
+ELAPSED: 0.8s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:00:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:00:45 +0200
+ELAPSED: 0.7s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:00:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:00:47 +0200
+ELAPSED: 1.01s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 02:00:48 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:00:49 +0200
+ELAPSED: 0.73s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 02:00:50 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:00:51 +0200
+ELAPSED: 0.84s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 02:00:51 +0200
+COMMAND: test -e /root/preservation-marker
+END: 2026-10-20 02:00:51 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:00:51 +0200
+COMMAND: cat /tank/preservation-marker
+END: 2026-10-20 02:00:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+pool-marker
+---
+
+START: 2026-10-20 02:00:51 +0200
+COMMAND: cmp -n 14 /dev/disk/by-id/ata-QEMU_HARDDISK_QM00007 /dev/zero
+END: 2026-10-20 02:00:51 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:00:51 +0200
+COMMAND: osctl ct start preservation
+END: 2026-10-20 02:00:53 +0200
+ELAPSED: 2.17s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 02:00:53 +0200
+COMMAND: osctl ct exec preservation cat /root/preservation-marker
+END: 2026-10-20 02:00:56 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+container-marker
+---
+
+START: 2026-10-20 02:00:56 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 02:00:58 +0200
+ELAPSED: 2.76s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/1] Stopping container tank:preservation
+Unregistering users, groups and containers
+---
+
+START: 2026-10-20 02:01:33 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 02:01:33 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:01:33 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 02:01:33 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:01:33 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:01:35 +0200
+ELAPSED: 2.18s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:01:36 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:01:37 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:01:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:01:39 +0200
+ELAPSED: 0.93s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:01:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:01:41 +0200
+ELAPSED: 0.69s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:01:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:01:42 +0200
+ELAPSED: 0.69s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:01:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:01:44 +0200
+ELAPSED: 0.7s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:01:45 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:01:46 +0200
+ELAPSED: 0.77s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:01:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:01:48 +0200
+ELAPSED: 0.91s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:01:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:01:49 +0200
+ELAPSED: 0.74s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 02:01:50 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:01:51 +0200
+ELAPSED: 0.99s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-20 02:01:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:01:53 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 02:01:53 +0200
+COMMAND: test -e /tank/preservation-marker
+END: 2026-10-20 02:01:53 +0200
+ELAPSED: 0.01s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:01:53 +0200
+COMMAND: osctl ct show preservation
+END: 2026-10-20 02:01:54 +0200
+ELAPSED: 0.9s
+STATUS: 1
+OUTPUT:
+error: container not found
+---
+
+START: 2026-10-20 02:01:54 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 02:01:55 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

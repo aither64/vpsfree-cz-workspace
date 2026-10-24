@@ -1,0 +1,5 @@
+- Result: passed (exit status 0), tested revision `a2ccd72d08dc67f678d7f115a92ed5eeca50c1a1`.
+- Command: `nix build --out-link /home/aither/workspace/ai/vpsfree.cz/work/2026-10-17-impermanence-test-failures/benchmark-smoke-runner .#test-runner`
+- Elapsed time: about 39 seconds.
+- Full log: [benchmark-smoke-package.log](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-17-impermanence-test-failures/benchmark-smoke-package.log). Exit status: [benchmark-smoke-package.status](/home/aither/workspace/ai/vpsfree.cz/work/2026-10-17-impermanence-test-failures/benchmark-smoke-package.status).
+- Log tail shows the test-runner derivations built; no unexpected kernel compilation appeared.

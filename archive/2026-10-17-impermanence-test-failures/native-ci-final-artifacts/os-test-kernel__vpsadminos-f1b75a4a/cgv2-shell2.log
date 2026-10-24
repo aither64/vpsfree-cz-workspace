@@ -1,0 +1,3081 @@
+SHELL: 2
+
+START: 2026-10-18 10:27:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 10:27:43 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-18 10:27:43 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-18 10:27:43 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Sun, 18 Oct 2026 08:27:43 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-18 10:27:43 +0200
+COMMAND: mkdir -p "/scripts"
+END: 2026-10-18 10:27:43 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:27:43 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/367d4e3e-nix--store--4f7fz7fyr9bmyh0csbkxnxdi2q2bvmhv-sysinfo-to-json.py" "/scripts/sysinfo.py"
+END: 2026-10-18 10:27:43 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:27:43 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/c79986e3-nix--store--1zbs8n26p7blrap2l7gp49xrzps4pwd6-sysinfo-compat-to-json-static-i686-unknown-linux-musl-1--bin--sysinfo-compat-to-json" "/scripts/sysinfo-compat-to-json"
+END: 2026-10-18 10:27:43 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:27:43 +0200
+COMMAND: chmod 0755 /scripts/sysinfo-compat-to-json
+END: 2026-10-18 10:27:43 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:27:43 +0200
+COMMAND: sv check ct-tank-kloadavg1
+END: 2026-10-18 10:27:43 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: down: ct-tank-kloadavg1: 383s, normally up
+---
+
+START: 2026-10-18 10:27:43 +0200
+COMMAND: osctl ct start --wait 0 kloadavg1
+END: 2026-10-18 10:27:44 +0200
+ELAPSED: 0.73s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+---
+
+START: 2026-10-18 10:27:44 +0200
+COMMAND: osctl ct show -H -o state kloadavg1
+END: 2026-10-18 10:27:45 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+starting
+
+---
+
+START: 2026-10-18 10:27:46 +0200
+COMMAND: osctl ct show -H -o state kloadavg1
+END: 2026-10-18 10:27:46 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-10-18 10:27:46 +0200
+COMMAND: osctl ct exec kloadavg1 systemctl is-system-running
+END: 2026-10-18 10:27:48 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-10-18 10:27:48 +0200
+COMMAND: osctl ct exec kloadavg1 systemctl stop genload >/dev/null 2>&1 || true
+END: 2026-10-18 10:27:50 +0200
+ELAPSED: 1.77s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:27:50 +0200
+COMMAND: sv check ct-tank-kloadavg2
+END: 2026-10-18 10:27:50 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+ok: down: ct-tank-kloadavg2: 390s, normally up
+---
+
+START: 2026-10-18 10:27:50 +0200
+COMMAND: osctl ct start --wait 0 kloadavg2
+END: 2026-10-18 10:27:51 +0200
+ELAPSED: 1.04s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+---
+
+START: 2026-10-18 10:27:51 +0200
+COMMAND: osctl ct show -H -o state kloadavg2
+END: 2026-10-18 10:27:52 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+starting
+
+---
+
+START: 2026-10-18 10:27:53 +0200
+COMMAND: osctl ct show -H -o state kloadavg2
+END: 2026-10-18 10:27:54 +0200
+ELAPSED: 0.78s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-10-18 10:27:54 +0200
+COMMAND: osctl ct exec kloadavg2 systemctl is-system-running
+END: 2026-10-18 10:27:56 +0200
+ELAPSED: 2.01s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-10-18 10:27:56 +0200
+COMMAND: osctl ct exec kloadavg2 systemctl stop genload >/dev/null 2>&1 || true
+END: 2026-10-18 10:27:57 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:28:27 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:28:29 +0200
+ELAPSED: 2.05s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.00 0.00 0.00 1/25 462
+SYSINFO {"uptime":46,"loads_raw":[5248,1088,352],"loads":[0.080078125,0.0166015625,0.00537109375],"totalram":8330702848,"freeram":6550990848,"sharedram":26607616,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":521,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.08 0.02 0.01 1/24 464
+---
+
+START: 2026-10-18 10:28:30 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:28:31 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.08 0.02 0.01 1/25 466
+SYSINFO {"uptime":48,"loads_raw":[5248,1088,352],"loads":[0.080078125,0.0166015625,0.00537109375],"totalram":8330702848,"freeram":6440574976,"sharedram":26554368,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":542,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.08 0.02 0.01 1/24 468
+---
+
+START: 2026-10-18 10:28:31 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:28:33 +0200
+ELAPSED: 1.84s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.08 0.02 0.01 1/25 470
+SYSINFO {"word_bits":32,"loads_raw":[5248,1088,352],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 0.08 0.02 0.01 1/24 471
+---
+
+START: 2026-10-18 10:28:33 +0200
+COMMAND: osctl ct exec kloadavg1 env LC_ALL=C busybox uptime
+END: 2026-10-18 10:28:35 +0200
+ELAPSED: 1.88s
+STATUS: 0
+OUTPUT:
+ 10:28:35 up 0 min,  0 users,  load average: 0.07, 0.01, 0.00
+---
+
+START: 2026-10-18 10:28:35 +0200
+COMMAND: osctl ct exec kloadavg2 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:28:37 +0200
+ELAPSED: 1.77s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.20 0.07 0.02 1/25 462
+SYSINFO {"uptime":47,"loads_raw":[13344,4672,1504],"loads":[0.20361328125,0.0712890625,0.02294921875],"totalram":8330702848,"freeram":6497570816,"sharedram":26746880,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":521,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.20 0.07 0.02 1/24 464
+---
+
+START: 2026-10-18 10:28:37 +0200
+COMMAND: osctl ct exec kloadavg2 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:28:39 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.20 0.07 0.02 1/25 466
+SYSINFO {"word_bits":32,"loads_raw":[13344,4672,1504],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 0.20 0.07 0.02 1/24 467
+---
+
+START: 2026-10-18 10:28:39 +0200
+COMMAND: osctl ct exec kloadavg2 env LC_ALL=C busybox uptime
+END: 2026-10-18 10:28:41 +0200
+ELAPSED: 2.0s
+STATUS: 0
+OUTPUT:
+ 10:28:41 up 0 min,  0 users,  load average: 0.18, 0.06, 0.02
+---
+
+START: 2026-10-18 10:28:41 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:28:43 +0200
+ELAPSED: 1.99s
+STATUS: 0
+OUTPUT:
+0.07 0.02 0.00 1/24 473
+---
+
+START: 2026-10-18 10:28:43 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:28:45 +0200
+ELAPSED: 2.14s
+STATUS: 0
+OUTPUT:
+{"uptime":62,"loads_raw":[4032,992,256],"loads":[0.0615234375,0.01513671875,0.00390625],"totalram":8330702848,"freeram":6453428224,"sharedram":26693632,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":514,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:28:45 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:28:47 +0200
+ELAPSED: 1.83s
+STATUS: 0
+OUTPUT:
+0.06 0.02 0.00 1/24 476
+---
+
+START: 2026-10-18 10:28:47 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:28:49 +0200
+ELAPSED: 1.92s
+STATUS: 0
+OUTPUT:
+{"uptime":66,"loads_raw":[4032,992,256],"loads":[0.0615234375,0.01513671875,0.00390625],"totalram":8330702848,"freeram":6435717120,"sharedram":30560256,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":547,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:28:49 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:28:50 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+0.06 0.01 0.00 1/24 479
+---
+
+START: 2026-10-18 10:28:50 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:28:52 +0200
+ELAPSED: 1.77s
+STATUS: 0
+OUTPUT:
+{"uptime":69,"loads_raw":[3680,960,224],"loads":[0.05615234375,0.0146484375,0.00341796875],"totalram":8330702848,"freeram":6440095744,"sharedram":30646272,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":537,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:28:52 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'echo -e "N_BLOCKED=16
+N_RUNNING=0" > /run/genload.conf'
+END: 2026-10-18 10:28:54 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:28:54 +0200
+COMMAND: osctl ct exec kloadavg1 systemctl restart genload
+END: 2026-10-18 10:28:56 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:28:56 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:28:57 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+0.05 0.01 0.00 17/57 517
+---
+
+START: 2026-10-18 10:29:02 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:29:04 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+1.33 0.28 0.09 17/57 518
+---
+
+START: 2026-10-18 10:29:09 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:29:11 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+3.58 0.80 0.26 17/57 519
+---
+
+START: 2026-10-18 10:29:16 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:29:18 +0200
+ELAPSED: 2.0s
+STATUS: 0
+OUTPUT:
+4.58 1.05 0.35 17/57 520
+---
+
+START: 2026-10-18 10:29:23 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:29:25 +0200
+ELAPSED: 2.11s
+STATUS: 0
+OUTPUT:
+6.34 1.54 0.51 17/57 521
+---
+
+START: 2026-10-18 10:29:30 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:29:32 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+7.11 1.78 0.60 17/57 522
+---
+
+START: 2026-10-18 10:29:37 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:29:39 +0200
+ELAPSED: 1.97s
+STATUS: 0
+OUTPUT:
+7.82 2.02 0.68 17/57 523
+---
+
+START: 2026-10-18 10:29:44 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:29:45 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+9.08 2.48 0.84 17/57 524
+---
+
+START: 2026-10-18 10:29:50 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:29:52 +0200
+ELAPSED: 2.08s
+STATUS: 0
+OUTPUT:
+9.63 2.70 0.93 17/57 525
+---
+
+START: 2026-10-18 10:29:57 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:29:59 +0200
+ELAPSED: 1.64s
+STATUS: 0
+OUTPUT:
+10.14 2.93 1.01 17/57 526
+---
+
+START: 2026-10-18 10:30:04 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:30:06 +0200
+ELAPSED: 1.99s
+STATUS: 0
+OUTPUT:
+11.04 3.36 1.17 17/57 527
+---
+
+START: 2026-10-18 10:30:11 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:30:13 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+11.44 3.57 1.25 17/57 528
+---
+
+START: 2026-10-18 10:30:18 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:30:20 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+12.14 3.98 1.41 17/57 529
+---
+
+START: 2026-10-18 10:30:25 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:30:27 +0200
+ELAPSED: 1.93s
+STATUS: 0
+OUTPUT:
+12.45 4.18 1.49 17/57 530
+---
+
+START: 2026-10-18 10:30:32 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:30:33 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+12.74 4.37 1.56 17/57 531
+---
+
+START: 2026-10-18 10:30:38 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:30:40 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+13.24 4.76 1.72 17/57 532
+---
+
+START: 2026-10-18 10:30:45 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:30:47 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+13.46 4.94 1.80 17/57 533
+---
+
+START: 2026-10-18 10:30:52 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:30:54 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+13.66 5.13 1.87 17/57 534
+---
+
+START: 2026-10-18 10:30:59 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:31:00 +0200
+ELAPSED: 1.78s
+STATUS: 0
+OUTPUT:
+14.02 5.49 2.02 17/57 535
+---
+
+START: 2026-10-18 10:31:05 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:31:07 +0200
+ELAPSED: 1.84s
+STATUS: 0
+OUTPUT:
+14.18 5.66 2.10 17/57 536
+---
+
+START: 2026-10-18 10:31:07 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:31:09 +0200
+ELAPSED: 1.99s
+STATUS: 0
+OUTPUT:
+{"uptime":206,"loads_raw":[929440,370944,137600],"loads":[14.18212890625,5.66015625,2.099609375],"totalram":8330702848,"freeram":6590750720,"sharedram":19038208,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":481,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:31:09 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:31:11 +0200
+ELAPSED: 1.99s
+STATUS: 0
+OUTPUT:
+14.33 5.83 2.17 17/57 539
+---
+
+START: 2026-10-18 10:31:11 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:31:13 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+{"uptime":210,"loads_raw":[939008,382208,142496],"loads":[14.328125,5.83203125,2.17431640625],"totalram":8330702848,"freeram":6661271552,"sharedram":19013632,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":468,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:31:13 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:31:15 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+14.46 6.00 2.25 17/57 542
+---
+
+START: 2026-10-18 10:31:15 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:31:17 +0200
+ELAPSED: 2.02s
+STATUS: 0
+OUTPUT:
+{"uptime":214,"loads_raw":[947808,393280,147392],"loads":[14.46240234375,6.0009765625,2.2490234375],"totalram":8330702848,"freeram":6627631104,"sharedram":18939904,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":467,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:31:17 +0200
+COMMAND: osctl ct exec kloadavg2 cat /proc/loadavg
+END: 2026-10-18 10:31:19 +0200
+ELAPSED: 2.1s
+STATUS: 0
+OUTPUT:
+0.01 0.04 0.01 1/24 469
+---
+
+START: 2026-10-18 10:31:19 +0200
+COMMAND: osctl ct exec kloadavg2 sysinfo-to-json
+END: 2026-10-18 10:31:21 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+{"uptime":211,"loads_raw":[640,2272,448],"loads":[0.009765625,0.03466796875,0.0068359375],"totalram":8330702848,"freeram":6614200320,"sharedram":19017728,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":467,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:31:21 +0200
+COMMAND: osctl ct exec kloadavg2 cat /proc/loadavg
+END: 2026-10-18 10:31:22 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+0.01 0.03 0.01 1/24 472
+---
+
+START: 2026-10-18 10:31:22 +0200
+COMMAND: osctl ct exec kloadavg2 sysinfo-to-json
+END: 2026-10-18 10:31:25 +0200
+ELAPSED: 2.27s
+STATUS: 0
+OUTPUT:
+{"uptime":215,"loads_raw":[576,2208,416],"loads":[0.0087890625,0.03369140625,0.00634765625],"totalram":8330702848,"freeram":6638542848,"sharedram":19017728,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":467,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:31:25 +0200
+COMMAND: osctl ct exec kloadavg2 cat /proc/loadavg
+END: 2026-10-18 10:31:27 +0200
+ELAPSED: 2.0s
+STATUS: 0
+OUTPUT:
+0.01 0.03 0.01 1/24 475
+---
+
+START: 2026-10-18 10:31:27 +0200
+COMMAND: osctl ct exec kloadavg2 sysinfo-to-json
+END: 2026-10-18 10:31:29 +0200
+ELAPSED: 1.95s
+STATUS: 0
+OUTPUT:
+{"uptime":219,"loads_raw":[576,2208,416],"loads":[0.0087890625,0.03369140625,0.00634765625],"totalram":8330702848,"freeram":6649049088,"sharedram":19017728,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":467,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:31:29 +0200
+COMMAND: cat /proc/loadavg
+END: 2026-10-18 10:31:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+17.61 9.24 4.03 1/461 37853
+---
+
+START: 2026-10-18 10:31:29 +0200
+COMMAND: sysinfo-to-json
+END: 2026-10-18 10:31:29 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+{"uptime":653,"loads_raw":[1154272,605600,264224],"loads":[17.61279296875,9.24072265625,4.03173828125],"totalram":8330702848,"freeram":6686711808,"sharedram":18944000,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":461,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:31:29 +0200
+COMMAND: cat /proc/loadavg
+END: 2026-10-18 10:31:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+17.61 9.24 4.03 1/461 37862
+---
+
+START: 2026-10-18 10:31:29 +0200
+COMMAND: sysinfo-to-json
+END: 2026-10-18 10:31:29 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+{"uptime":653,"loads_raw":[1154272,605600,264224],"loads":[17.61279296875,9.24072265625,4.03173828125],"totalram":8330702848,"freeram":6686638080,"sharedram":18944000,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":461,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:31:29 +0200
+COMMAND: cat /proc/loadavg
+END: 2026-10-18 10:31:29 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+17.61 9.24 4.03 1/461 37871
+---
+
+START: 2026-10-18 10:31:29 +0200
+COMMAND: sysinfo-to-json
+END: 2026-10-18 10:31:29 +0200
+ELAPSED: 0.09s
+STATUS: 0
+OUTPUT:
+{"uptime":653,"loads_raw":[1154272,605600,264224],"loads":[17.61279296875,9.24072265625,4.03173828125],"totalram":8330702848,"freeram":6686638080,"sharedram":18944000,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":461,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:31:29 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:31:31 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 14.80 6.49 2.47 17/58 546
+SYSINFO {"uptime":228,"loads_raw":[970176,425408,161888],"loads":[14.8037109375,6.4912109375,2.47021484375],"totalram":8330702848,"freeram":6668611584,"sharedram":19017728,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":468,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 14.80 6.49 2.47 17/57 548
+---
+
+START: 2026-10-18 10:31:31 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:31:33 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 14.80 6.49 2.47 17/58 550
+SYSINFO {"word_bits":32,"loads_raw":[970176,425408,161888],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 14.80 6.49 2.47 17/57 551
+---
+
+START: 2026-10-18 10:31:33 +0200
+COMMAND: osctl ct exec kloadavg1 systemd-run --quiet --wait --pipe --collect --unit loadavg-snapshot-211324-363040 /bin/sh -c 'printf "PROC_BEFORE "; /run/current-system/sw/bin/cat /proc/loadavg; printf "SYSINFO "; /run/current-system/sw/bin/sysinfo-to-json; printf "PROC_AFTER "; /run/current-system/sw/bin/cat /proc/loadavg'
+END: 2026-10-18 10:31:35 +0200
+ELAPSED: 1.96s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 14.80 6.49 2.47 18/59 554
+SYSINFO {"uptime":232,"loads_raw":[970176,425408,161888],"loads":[14.8037109375,6.4912109375,2.47021484375],"totalram":8330702848,"freeram":6696128512,"sharedram":19021824,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":470,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 14.80 6.49 2.47 17/58 556
+---
+
+START: 2026-10-18 10:31:35 +0200
+COMMAND: osctl ct exec kloadavg1 env LC_ALL=C busybox uptime
+END: 2026-10-18 10:31:36 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+ 10:31:36 up 3 min,  0 users,  load average: 14.89, 6.64, 2.54
+---
+
+START: 2026-10-18 10:31:36 +0200
+COMMAND: osctl ct exec kloadavg2 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:31:38 +0200
+ELAPSED: 1.9s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.01 0.03 0.01 1/25 479
+SYSINFO {"uptime":228,"loads_raw":[448,2080,352],"loads":[0.0068359375,0.03173828125,0.00537109375],"totalram":8330702848,"freeram":6662213632,"sharedram":19017728,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":469,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.01 0.03 0.01 1/24 481
+---
+
+START: 2026-10-18 10:31:38 +0200
+COMMAND: osctl ct exec kloadavg2 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:31:40 +0200
+ELAPSED: 1.9s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.01 0.03 0.00 1/25 483
+SYSINFO {"word_bits":32,"loads_raw":[384,2016,320],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 0.01 0.03 0.00 1/24 484
+---
+
+START: 2026-10-18 10:31:40 +0200
+COMMAND: osctl ct exec kloadavg2 env LC_ALL=C busybox uptime
+END: 2026-10-18 10:31:42 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+ 10:31:42 up 3 min,  0 users,  load average: 0.00, 0.03, 0.00
+---
+
+START: 2026-10-18 10:31:42 +0200
+COMMAND: sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:31:42 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 17.52 9.50 4.17 1/463 38022
+SYSINFO {"uptime":666,"loads_raw":[1148064,622368,273344],"loads":[17.51806640625,9.49658203125,4.1708984375],"totalram":8330702848,"freeram":6652346368,"sharedram":18944000,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":463,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 17.52 9.50 4.17 1/462 38024
+---
+
+START: 2026-10-18 10:31:42 +0200
+COMMAND: sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; /scripts/sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:31:42 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 17.52 9.50 4.17 1/463 38029
+SYSINFO {"word_bits":32,"loads_raw":[1148064,622368,273344],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 17.52 9.50 4.17 1/462 38030
+---
+
+START: 2026-10-18 10:31:42 +0200
+COMMAND: osctl ct exec kloadavg1 systemctl stop genload >/dev/null 2>&1 || true
+END: 2026-10-18 10:31:44 +0200
+ELAPSED: 1.83s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:31:44 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:31:46 +0200
+ELAPSED: 1.61s
+STATUS: 0
+OUTPUT:
+13.79 6.69 2.60 1/24 563
+---
+
+START: 2026-10-18 10:31:51 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:31:52 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+12.68 6.58 2.59 1/24 564
+---
+
+START: 2026-10-18 10:31:57 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:31:59 +0200
+ELAPSED: 1.88s
+STATUS: 0
+OUTPUT:
+11.67 6.47 2.57 1/24 565
+---
+
+START: 2026-10-18 10:32:04 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:32:07 +0200
+ELAPSED: 2.46s
+STATUS: 0
+OUTPUT:
+9.87 6.26 2.54 1/24 566
+---
+
+START: 2026-10-18 10:32:12 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:32:13 +0200
+ELAPSED: 1.82s
+STATUS: 0
+OUTPUT:
+9.08 6.15 2.53 1/24 567
+---
+
+START: 2026-10-18 10:32:18 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:32:20 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+7.68 5.95 2.50 1/24 568
+---
+
+START: 2026-10-18 10:32:25 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:32:27 +0200
+ELAPSED: 1.9s
+STATUS: 0
+OUTPUT:
+7.07 5.85 2.49 1/24 569
+---
+
+START: 2026-10-18 10:32:32 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:32:34 +0200
+ELAPSED: 2.1s
+STATUS: 0
+OUTPUT:
+6.50 5.75 2.48 1/24 570
+---
+
+START: 2026-10-18 10:32:39 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:32:42 +0200
+ELAPSED: 2.83s
+STATUS: 0
+OUTPUT:
+5.50 5.56 2.45 1/24 571
+---
+
+START: 2026-10-18 10:32:47 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:32:49 +0200
+ELAPSED: 1.69s
+STATUS: 0
+OUTPUT:
+5.06 5.47 2.44 1/24 573
+---
+
+START: 2026-10-18 10:32:54 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:32:55 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+4.28 5.29 2.41 1/24 574
+---
+
+START: 2026-10-18 10:33:00 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:33:02 +0200
+ELAPSED: 1.93s
+STATUS: 0
+OUTPUT:
+3.94 5.20 2.40 1/24 575
+---
+
+START: 2026-10-18 10:33:07 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:33:09 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+3.62 5.12 2.38 1/24 576
+---
+
+START: 2026-10-18 10:33:14 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:33:16 +0200
+ELAPSED: 1.88s
+STATUS: 0
+OUTPUT:
+3.07 4.95 2.36 1/24 577
+---
+
+START: 2026-10-18 10:33:21 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:33:22 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+2.82 4.86 2.34 1/24 578
+---
+
+START: 2026-10-18 10:33:27 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:33:29 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+2.59 4.78 2.33 1/24 579
+---
+
+START: 2026-10-18 10:33:34 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:33:36 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+2.19 4.63 2.31 1/24 580
+---
+
+START: 2026-10-18 10:33:41 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:33:42 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+2.02 4.55 2.29 1/24 581
+---
+
+START: 2026-10-18 10:33:47 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:33:49 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+1.86 4.47 2.28 1/24 582
+---
+
+START: 2026-10-18 10:33:54 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:33:55 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+1.57 4.32 2.26 1/24 583
+---
+
+START: 2026-10-18 10:34:00 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:34:02 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+1.44 4.25 2.24 1/24 584
+---
+
+START: 2026-10-18 10:34:07 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:34:09 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+1.33 4.18 2.23 1/24 585
+---
+
+START: 2026-10-18 10:34:14 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:34:16 +0200
+ELAPSED: 1.7s
+STATUS: 0
+OUTPUT:
+1.12 4.04 2.21 1/24 586
+---
+
+START: 2026-10-18 10:34:21 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:34:22 +0200
+ELAPSED: 1.7s
+STATUS: 0
+OUTPUT:
+1.03 3.98 2.19 1/24 587
+---
+
+START: 2026-10-18 10:34:27 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:34:29 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+0.95 3.91 2.18 1/24 588
+---
+
+START: 2026-10-18 10:34:34 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:34:36 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+{"uptime":413,"loads_raw":[52736,247776,141472],"loads":[0.8046875,3.78076171875,2.15869140625],"totalram":8330702848,"freeram":6783627264,"sharedram":19046400,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":424,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:34:36 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:34:37 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+{"uptime":415,"loads_raw":[52736,247776,141472],"loads":[0.8046875,3.78076171875,2.15869140625],"totalram":8330702848,"freeram":6761435136,"sharedram":18972672,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":424,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:34:37 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:34:39 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+{"uptime":416,"loads_raw":[52736,247776,141472],"loads":[0.8046875,3.78076171875,2.15869140625],"totalram":8330702848,"freeram":6762962944,"sharedram":19046400,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":424,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:34:39 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:34:41 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.74 3.72 2.15 1/25 596
+SYSINFO {"uptime":418,"loads_raw":[48512,243648,140704],"loads":[0.740234375,3.7177734375,2.14697265625],"totalram":8330702848,"freeram":6771175424,"sharedram":19046400,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":425,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.74 3.72 2.15 1/24 598
+---
+
+START: 2026-10-18 10:34:41 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:34:42 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.74 3.72 2.15 1/25 600
+SYSINFO {"word_bits":32,"loads_raw":[48512,243648,140704],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 0.74 3.72 2.15 1/24 601
+---
+
+START: 2026-10-18 10:34:42 +0200
+COMMAND: osctl ct restart kloadavg1
+END: 2026-10-18 10:34:46 +0200
+ELAPSED: 3.5s
+STATUS: 0
+OUTPUT:
+Stopping container
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 10:35:16 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:35:17 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 435
+---
+
+START: 2026-10-18 10:35:17 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:35:19 +0200
+ELAPSED: 1.6s
+STATUS: 0
+OUTPUT:
+{"uptime":35,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6785658880,"sharedram":18907136,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":437,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:35:19 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:35:21 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 438
+---
+
+START: 2026-10-18 10:35:21 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:35:22 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+{"uptime":38,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6792114176,"sharedram":18980864,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":437,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:35:22 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:35:24 +0200
+ELAPSED: 1.61s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 441
+---
+
+START: 2026-10-18 10:35:24 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:35:26 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+{"uptime":42,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6739718144,"sharedram":19058688,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":437,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:35:26 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:35:27 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.00 0.00 0.00 1/25 445
+SYSINFO {"uptime":43,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6733524992,"sharedram":19058688,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":438,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.00 0.00 0.00 1/24 447
+---
+
+START: 2026-10-18 10:35:27 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:35:29 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.00 0.00 0.00 1/25 449
+SYSINFO {"word_bits":32,"loads_raw":[0,0,0],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 0.00 0.00 0.00 1/24 450
+---
+
+START: 2026-10-18 10:35:29 +0200
+COMMAND: osctl ct exec kloadavg1 env LC_ALL=C busybox uptime
+END: 2026-10-18 10:35:31 +0200
+ELAPSED: 1.61s
+STATUS: 0
+OUTPUT:
+ 10:35:31 up 0 min,  0 users,  load average: 0.00, 0.00, 0.00
+---
+
+START: 2026-10-18 10:35:31 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'echo -e "N_BLOCKED=0
+N_RUNNING=16" > /run/genload.conf'
+END: 2026-10-18 10:35:32 +0200
+ELAPSED: 1.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:35:32 +0200
+COMMAND: osctl ct exec kloadavg1 systemctl restart genload
+END: 2026-10-18 10:35:34 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:35:34 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:35:37 +0200
+ELAPSED: 2.71s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 17/41 471
+---
+
+START: 2026-10-18 10:35:42 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:35:45 +0200
+ELAPSED: 3.47s
+STATUS: 0
+OUTPUT:
+2.46 0.53 0.17 17/41 472
+---
+
+START: 2026-10-18 10:35:50 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:35:54 +0200
+ELAPSED: 3.81s
+STATUS: 0
+OUTPUT:
+3.54 0.78 0.26 17/41 473
+---
+
+START: 2026-10-18 10:35:59 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:36:03 +0200
+ELAPSED: 3.43s
+STATUS: 0
+OUTPUT:
+5.46 1.29 0.43 17/41 474
+---
+
+START: 2026-10-18 10:36:08 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:36:11 +0200
+ELAPSED: 3.62s
+STATUS: 0
+OUTPUT:
+7.08 1.77 0.59 17/41 475
+---
+
+START: 2026-10-18 10:36:16 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:36:20 +0200
+ELAPSED: 3.59s
+STATUS: 0
+OUTPUT:
+8.45 2.24 0.76 17/41 476
+---
+
+START: 2026-10-18 10:36:25 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:36:28 +0200
+ELAPSED: 3.28s
+STATUS: 0
+OUTPUT:
+9.06 2.47 0.84 17/41 477
+---
+
+START: 2026-10-18 10:36:33 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:36:36 +0200
+ELAPSED: 2.53s
+STATUS: 0
+OUTPUT:
+10.12 2.91 1.00 17/41 478
+---
+
+START: 2026-10-18 10:36:41 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:36:44 +0200
+ELAPSED: 3.41s
+STATUS: 0
+OUTPUT:
+10.60 3.13 1.08 17/41 479
+---
+
+START: 2026-10-18 10:36:49 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:36:52 +0200
+ELAPSED: 2.93s
+STATUS: 0
+OUTPUT:
+11.43 3.56 1.25 17/41 480
+---
+
+START: 2026-10-18 10:36:57 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:37:00 +0200
+ELAPSED: 3.27s
+STATUS: 0
+OUTPUT:
+12.13 3.97 1.40 17/41 481
+---
+
+START: 2026-10-18 10:37:05 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:37:08 +0200
+ELAPSED: 2.91s
+STATUS: 0
+OUTPUT:
+12.44 4.17 1.48 17/41 482
+---
+
+START: 2026-10-18 10:37:13 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:37:17 +0200
+ELAPSED: 3.78s
+STATUS: 0
+OUTPUT:
+12.99 4.56 1.64 17/41 483
+---
+
+START: 2026-10-18 10:37:22 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:37:25 +0200
+ELAPSED: 3.24s
+STATUS: 0
+OUTPUT:
+13.45 4.93 1.79 17/41 484
+---
+
+START: 2026-10-18 10:37:30 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:37:33 +0200
+ELAPSED: 2.81s
+STATUS: 0
+OUTPUT:
+13.66 5.12 1.87 17/41 485
+---
+
+START: 2026-10-18 10:37:38 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:37:41 +0200
+ELAPSED: 3.19s
+STATUS: 0
+OUTPUT:
+14.02 5.48 2.02 17/41 486
+---
+
+START: 2026-10-18 10:37:46 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:37:49 +0200
+ELAPSED: 2.6s
+STATUS: 0
+OUTPUT:
+14.18 5.65 2.10 17/41 487
+---
+
+START: 2026-10-18 10:37:49 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:37:52 +0200
+ELAPSED: 2.71s
+STATUS: 0
+OUTPUT:
+{"uptime":188,"loads_raw":[938624,381632,142304],"loads":[14.322265625,5.8232421875,2.17138671875],"totalram":8330702848,"freeram":6741446656,"sharedram":19009536,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":452,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:37:52 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:37:55 +0200
+ELAPSED: 3.3s
+STATUS: 0
+OUTPUT:
+14.46 5.99 2.25 17/41 490
+---
+
+START: 2026-10-18 10:37:55 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:37:58 +0200
+ELAPSED: 2.99s
+STATUS: 0
+OUTPUT:
+{"uptime":194,"loads_raw":[947456,392736,147200],"loads":[14.45703125,5.99267578125,2.24609375],"totalram":8330702848,"freeram":6732976128,"sharedram":19009536,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":452,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:37:58 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:38:01 +0200
+ELAPSED: 3.68s
+STATUS: 0
+OUTPUT:
+14.58 6.16 2.32 17/41 493
+---
+
+START: 2026-10-18 10:38:01 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:38:05 +0200
+ELAPSED: 3.04s
+STATUS: 0
+OUTPUT:
+{"uptime":201,"loads_raw":[955584,403648,152064],"loads":[14.5810546875,6.1591796875,2.3203125],"totalram":8330702848,"freeram":6749016064,"sharedram":19013632,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":452,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:38:05 +0200
+COMMAND: osctl ct exec kloadavg2 cat /proc/loadavg
+END: 2026-10-18 10:38:07 +0200
+ELAPSED: 2.09s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 487
+---
+
+START: 2026-10-18 10:38:07 +0200
+COMMAND: osctl ct exec kloadavg2 sysinfo-to-json
+END: 2026-10-18 10:38:09 +0200
+ELAPSED: 2.18s
+STATUS: 0
+OUTPUT:
+{"uptime":619,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6740733952,"sharedram":19087360,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":452,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:38:09 +0200
+COMMAND: osctl ct exec kloadavg2 cat /proc/loadavg
+END: 2026-10-18 10:38:11 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 490
+---
+
+START: 2026-10-18 10:38:11 +0200
+COMMAND: osctl ct exec kloadavg2 sysinfo-to-json
+END: 2026-10-18 10:38:13 +0200
+ELAPSED: 2.0s
+STATUS: 0
+OUTPUT:
+{"uptime":623,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6731702272,"sharedram":19087360,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":452,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:38:13 +0200
+COMMAND: osctl ct exec kloadavg2 cat /proc/loadavg
+END: 2026-10-18 10:38:15 +0200
+ELAPSED: 2.01s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 493
+---
+
+START: 2026-10-18 10:38:15 +0200
+COMMAND: osctl ct exec kloadavg2 sysinfo-to-json
+END: 2026-10-18 10:38:17 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+{"uptime":627,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6717132800,"sharedram":19013632,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":452,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:38:17 +0200
+COMMAND: cat /proc/loadavg
+END: 2026-10-18 10:38:17 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+15.54 9.58 5.46 17/446 40127
+---
+
+START: 2026-10-18 10:38:17 +0200
+COMMAND: sysinfo-to-json
+END: 2026-10-18 10:38:17 +0200
+ELAPSED: 0.14s
+STATUS: 0
+OUTPUT:
+{"uptime":1061,"loads_raw":[1018560,627712,358048],"loads":[15.5419921875,9.578125,5.46337890625],"totalram":8330702848,"freeram":6717132800,"sharedram":19013632,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":446,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:38:17 +0200
+COMMAND: cat /proc/loadavg
+END: 2026-10-18 10:38:17 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+15.54 9.58 5.46 17/446 40136
+---
+
+START: 2026-10-18 10:38:17 +0200
+COMMAND: sysinfo-to-json
+END: 2026-10-18 10:38:17 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+{"uptime":1061,"loads_raw":[1018560,627712,358048],"loads":[15.5419921875,9.578125,5.46337890625],"totalram":8330702848,"freeram":6717132800,"sharedram":19013632,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":446,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:38:17 +0200
+COMMAND: cat /proc/loadavg
+END: 2026-10-18 10:38:17 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+15.54 9.58 5.46 17/446 40145
+---
+
+START: 2026-10-18 10:38:17 +0200
+COMMAND: sysinfo-to-json
+END: 2026-10-18 10:38:17 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+{"uptime":1061,"loads_raw":[1018560,627712,358048],"loads":[15.5419921875,9.578125,5.46337890625],"totalram":8330702848,"freeram":6717132800,"sharedram":19013632,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":446,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:38:17 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:38:22 +0200
+ELAPSED: 4.61s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 14.98 6.80 2.61 17/42 497
+SYSINFO {"uptime":218,"loads_raw":[982048,445504,171232],"loads":[14.98486328125,6.7978515625,2.61279296875],"totalram":8330702848,"freeram":6695456768,"sharedram":19017728,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":453,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 14.98 6.80 2.61 17/41 499
+---
+
+START: 2026-10-18 10:38:22 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:38:25 +0200
+ELAPSED: 3.23s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 15.07 6.95 2.68 17/42 501
+SYSINFO {"word_bits":32,"loads_raw":[987392,455520,175968],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 15.07 6.95 2.68 17/41 502
+---
+
+START: 2026-10-18 10:38:25 +0200
+COMMAND: osctl ct exec kloadavg1 systemd-run --quiet --wait --pipe --collect --unit loadavg-snapshot-211324-894934 /bin/sh -c 'printf "PROC_BEFORE "; /run/current-system/sw/bin/cat /proc/loadavg; printf "SYSINFO "; /run/current-system/sw/bin/sysinfo-to-json; printf "PROC_AFTER "; /run/current-system/sw/bin/cat /proc/loadavg'
+END: 2026-10-18 10:38:29 +0200
+ELAPSED: 3.6s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 15.07 6.95 2.68 20/43 505
+SYSINFO {"uptime":225,"loads_raw":[987392,455520,175968],"loads":[15.06640625,6.95068359375,2.68505859375],"totalram":8330702848,"freeram":6792462336,"sharedram":19091456,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":454,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 15.07 6.95 2.68 17/42 507
+---
+
+START: 2026-10-18 10:38:29 +0200
+COMMAND: osctl ct exec kloadavg1 env LC_ALL=C busybox uptime
+END: 2026-10-18 10:38:32 +0200
+ELAPSED: 3.02s
+STATUS: 0
+OUTPUT:
+ 10:38:31 up 3 min,  0 users,  load average: 15.14, 7.10, 2.75
+---
+
+START: 2026-10-18 10:38:32 +0200
+COMMAND: osctl ct exec kloadavg2 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:38:33 +0200
+ELAPSED: 1.88s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.00 0.00 0.00 1/25 497
+SYSINFO {"uptime":644,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6822277120,"sharedram":19091456,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":453,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.00 0.00 0.00 1/24 499
+---
+
+START: 2026-10-18 10:38:33 +0200
+COMMAND: osctl ct exec kloadavg2 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:38:35 +0200
+ELAPSED: 1.99s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.00 0.00 0.00 1/25 501
+SYSINFO {"word_bits":32,"loads_raw":[0,0,0],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 0.00 0.00 0.00 1/24 502
+---
+
+START: 2026-10-18 10:38:35 +0200
+COMMAND: osctl ct exec kloadavg2 env LC_ALL=C busybox uptime
+END: 2026-10-18 10:38:37 +0200
+ELAPSED: 1.89s
+STATUS: 0
+OUTPUT:
+ 10:38:37 up 10 min,  0 users,  load average: 0.00, 0.00, 0.00
+---
+
+START: 2026-10-18 10:38:37 +0200
+COMMAND: sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:38:37 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 15.96 10.06 5.71 17/446 40291
+SYSINFO {"uptime":1082,"loads_raw":[1045760,659296,374208],"loads":[15.95703125,10.06005859375,5.7099609375],"totalram":8330702848,"freeram":6909677568,"sharedram":19017728,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":446,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 15.96 10.06 5.71 18/445 40293
+---
+
+START: 2026-10-18 10:38:37 +0200
+COMMAND: sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; /scripts/sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:38:37 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 15.96 10.06 5.71 17/446 40298
+SYSINFO {"word_bits":32,"loads_raw":[1045760,659296,374208],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 15.96 10.06 5.71 17/445 40299
+---
+
+START: 2026-10-18 10:38:37 +0200
+COMMAND: osctl ct exec kloadavg1 systemctl stop genload >/dev/null 2>&1 || true
+END: 2026-10-18 10:38:40 +0200
+ELAPSED: 2.96s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:38:40 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:38:42 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+15.27 7.39 2.90 1/24 514
+---
+
+START: 2026-10-18 10:38:47 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:38:49 +0200
+ELAPSED: 1.93s
+STATUS: 0
+OUTPUT:
+14.05 7.27 2.88 1/24 515
+---
+
+START: 2026-10-18 10:38:54 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:38:55 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+11.89 7.03 2.85 1/24 516
+---
+
+START: 2026-10-18 10:39:00 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:39:02 +0200
+ELAPSED: 1.73s
+STATUS: 0
+OUTPUT:
+10.94 6.91 2.84 1/24 517
+---
+
+START: 2026-10-18 10:39:07 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:39:09 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+10.06 6.80 2.82 1/24 518
+---
+
+START: 2026-10-18 10:39:14 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:39:16 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+8.51 6.57 2.79 1/24 519
+---
+
+START: 2026-10-18 10:39:21 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:39:22 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+7.83 6.46 2.77 1/24 520
+---
+
+START: 2026-10-18 10:39:27 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:39:29 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+7.20 6.36 2.76 1/24 521
+---
+
+START: 2026-10-18 10:39:34 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:39:36 +0200
+ELAPSED: 1.84s
+STATUS: 0
+OUTPUT:
+6.10 6.15 2.73 1/24 522
+---
+
+START: 2026-10-18 10:39:41 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:39:43 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+5.61 6.04 2.71 1/24 523
+---
+
+START: 2026-10-18 10:39:48 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:39:49 +0200
+ELAPSED: 1.61s
+STATUS: 0
+OUTPUT:
+5.16 5.94 2.70 1/24 525
+---
+
+START: 2026-10-18 10:39:54 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:39:56 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+4.37 5.75 2.67 1/24 526
+---
+
+START: 2026-10-18 10:40:01 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:40:03 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+4.02 5.65 2.66 1/24 527
+---
+
+START: 2026-10-18 10:40:08 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:40:10 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+3.40 5.47 2.63 1/24 528
+---
+
+START: 2026-10-18 10:40:15 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:40:16 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+3.13 5.37 2.61 1/24 529
+---
+
+START: 2026-10-18 10:40:21 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:40:23 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+2.88 5.29 2.60 1/24 530
+---
+
+START: 2026-10-18 10:40:28 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:40:30 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+2.43 5.11 2.57 1/24 531
+---
+
+START: 2026-10-18 10:40:35 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:40:37 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+2.24 5.03 2.56 1/24 532
+---
+
+START: 2026-10-18 10:40:42 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:40:43 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+2.06 4.94 2.54 1/24 533
+---
+
+START: 2026-10-18 10:40:48 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:40:50 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+1.74 4.78 2.51 1/24 534
+---
+
+START: 2026-10-18 10:40:55 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:40:57 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+1.60 4.70 2.50 1/24 535
+---
+
+START: 2026-10-18 10:41:02 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:41:03 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+1.47 4.62 2.49 1/24 536
+---
+
+START: 2026-10-18 10:41:08 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:41:10 +0200
+ELAPSED: 1.6s
+STATUS: 0
+OUTPUT:
+1.25 4.47 2.46 1/24 537
+---
+
+START: 2026-10-18 10:41:15 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:41:17 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+1.15 4.39 2.45 1/24 538
+---
+
+START: 2026-10-18 10:41:22 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:41:23 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+1.05 4.32 2.43 1/24 539
+---
+
+START: 2026-10-18 10:41:28 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:41:30 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+0.89 4.18 2.41 1/24 540
+---
+
+START: 2026-10-18 10:41:35 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:41:37 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+0.82 4.11 2.39 1/24 541
+---
+
+START: 2026-10-18 10:41:42 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:41:43 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+0.75 4.04 2.38 1/24 542
+---
+
+START: 2026-10-18 10:41:48 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:41:50 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+0.64 3.91 2.35 1/24 543
+---
+
+START: 2026-10-18 10:41:55 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:41:58 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+0.59 3.84 2.34 1/24 544
+---
+
+START: 2026-10-18 10:42:03 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:42:04 +0200
+ELAPSED: 1.85s
+STATUS: 0
+OUTPUT:
+{"uptime":441,"loads_raw":[32480,243456,151744],"loads":[0.49560546875,3.71484375,2.3154296875],"totalram":8330702848,"freeram":6863355904,"sharedram":19111936,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":424,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:42:04 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:42:06 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+{"uptime":442,"loads_raw":[32480,243456,151744],"loads":[0.49560546875,3.71484375,2.3154296875],"totalram":8330702848,"freeram":6824906752,"sharedram":19111936,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":424,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:42:06 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:42:08 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+{"uptime":444,"loads_raw":[32480,243456,151744],"loads":[0.49560546875,3.71484375,2.3154296875],"totalram":8330702848,"freeram":6788804608,"sharedram":19038208,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":424,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:42:08 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:42:10 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.46 3.65 2.30 1/25 552
+SYSINFO {"uptime":446,"loads_raw":[29856,239392,150912],"loads":[0.45556640625,3.65283203125,2.302734375],"totalram":8330702848,"freeram":6792507392,"sharedram":19038208,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":425,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.46 3.65 2.30 1/24 554
+---
+
+START: 2026-10-18 10:42:10 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:42:11 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.46 3.65 2.30 1/25 556
+SYSINFO {"word_bits":32,"loads_raw":[29856,239392,150912],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 0.46 3.65 2.30 1/24 557
+---
+
+START: 2026-10-18 10:42:11 +0200
+COMMAND: osctl ct restart kloadavg1
+END: 2026-10-18 10:42:15 +0200
+ELAPSED: 3.45s
+STATUS: 0
+OUTPUT:
+Stopping container
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 10:42:45 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:42:46 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+0.05 0.01 0.00 1/24 435
+---
+
+START: 2026-10-18 10:42:46 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:42:48 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+{"uptime":35,"loads_raw":[3072,896,160],"loads":[0.046875,0.013671875,0.00244140625],"totalram":8330702848,"freeram":6786854912,"sharedram":19120128,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":440,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:42:48 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:42:49 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+0.04 0.01 0.00 1/24 438
+---
+
+START: 2026-10-18 10:42:49 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:42:51 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+{"uptime":38,"loads_raw":[2816,864,128],"loads":[0.04296875,0.01318359375,0.001953125],"totalram":8330702848,"freeram":6776193024,"sharedram":19120128,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":440,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:42:51 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:42:53 +0200
+ELAPSED: 1.61s
+STATUS: 0
+OUTPUT:
+0.04 0.01 0.00 1/24 441
+---
+
+START: 2026-10-18 10:42:53 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:42:54 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+{"uptime":41,"loads_raw":[2816,864,128],"loads":[0.04296875,0.01318359375,0.001953125],"totalram":8330702848,"freeram":6815621120,"sharedram":19124224,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":440,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:42:54 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:42:56 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.04 0.01 0.00 1/25 445
+SYSINFO {"uptime":43,"loads_raw":[2560,832,96],"loads":[0.0390625,0.0126953125,0.00146484375],"totalram":8330702848,"freeram":6812938240,"sharedram":19128320,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":441,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.04 0.01 0.00 1/24 447
+---
+
+START: 2026-10-18 10:42:56 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:42:58 +0200
+ELAPSED: 1.98s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.04 0.01 0.00 1/25 449
+SYSINFO {"word_bits":32,"loads_raw":[2560,832,96],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 0.04 0.01 0.00 1/24 450
+---
+
+START: 2026-10-18 10:42:58 +0200
+COMMAND: osctl ct exec kloadavg1 env LC_ALL=C busybox uptime
+END: 2026-10-18 10:43:00 +0200
+ELAPSED: 1.8s
+STATUS: 0
+OUTPUT:
+ 10:43:00 up 0 min,  0 users,  load average: 0.03, 0.01, 0.00
+---
+
+START: 2026-10-18 10:43:00 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'echo -e "N_BLOCKED=8
+N_RUNNING=8" > /run/genload.conf'
+END: 2026-10-18 10:43:01 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:43:01 +0200
+COMMAND: osctl ct exec kloadavg1 systemctl restart genload
+END: 2026-10-18 10:43:03 +0200
+ELAPSED: 1.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:43:03 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:43:05 +0200
+ELAPSED: 1.97s
+STATUS: 0
+OUTPUT:
+1.31 0.28 0.09 17/49 479
+---
+
+START: 2026-10-18 10:43:10 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:43:12 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+2.49 0.54 0.17 17/49 480
+---
+
+START: 2026-10-18 10:43:17 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:43:19 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+3.57 0.80 0.26 17/49 481
+---
+
+START: 2026-10-18 10:43:24 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:43:26 +0200
+ELAPSED: 2.01s
+STATUS: 0
+OUTPUT:
+5.48 1.30 0.43 17/49 482
+---
+
+START: 2026-10-18 10:43:31 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:43:33 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+6.33 1.54 0.51 17/49 483
+---
+
+START: 2026-10-18 10:43:38 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:43:40 +0200
+ELAPSED: 2.01s
+STATUS: 0
+OUTPUT:
+7.81 2.02 0.68 17/49 484
+---
+
+START: 2026-10-18 10:43:45 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:43:46 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+8.47 2.25 0.76 17/49 485
+---
+
+START: 2026-10-18 10:43:51 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:43:54 +0200
+ELAPSED: 2.44s
+STATUS: 0
+OUTPUT:
+9.07 2.48 0.84 17/49 486
+---
+
+START: 2026-10-18 10:43:59 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:44:01 +0200
+ELAPSED: 2.3s
+STATUS: 0
+OUTPUT:
+10.14 2.92 1.01 17/49 487
+---
+
+START: 2026-10-18 10:44:06 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:44:08 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+10.61 3.14 1.09 17/49 488
+---
+
+START: 2026-10-18 10:44:13 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:44:15 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+11.44 3.57 1.25 17/49 489
+---
+
+START: 2026-10-18 10:44:20 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:44:23 +0200
+ELAPSED: 2.32s
+STATUS: 0
+OUTPUT:
+11.80 3.77 1.33 17/49 490
+---
+
+START: 2026-10-18 10:44:28 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:44:30 +0200
+ELAPSED: 2.42s
+STATUS: 0
+OUTPUT:
+12.45 4.17 1.48 17/49 491
+---
+
+START: 2026-10-18 10:44:35 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:44:37 +0200
+ELAPSED: 2.14s
+STATUS: 0
+OUTPUT:
+12.73 4.37 1.56 17/49 492
+---
+
+START: 2026-10-18 10:44:42 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:44:45 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+13.00 4.56 1.64 17/49 493
+---
+
+START: 2026-10-18 10:44:50 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:44:51 +0200
+ELAPSED: 1.88s
+STATUS: 0
+OUTPUT:
+13.46 4.94 1.79 17/49 494
+---
+
+START: 2026-10-18 10:44:56 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:44:59 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+13.66 5.13 1.87 17/49 495
+---
+
+START: 2026-10-18 10:45:04 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:45:05 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+14.02 5.48 2.02 17/49 496
+---
+
+START: 2026-10-18 10:45:10 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:45:12 +0200
+ELAPSED: 1.77s
+STATUS: 0
+OUTPUT:
+14.18 5.66 2.10 17/49 497
+---
+
+START: 2026-10-18 10:45:12 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:45:14 +0200
+ELAPSED: 2.18s
+STATUS: 0
+OUTPUT:
+{"uptime":182,"loads_raw":[929344,370848,137472],"loads":[14.1806640625,5.65869140625,2.09765625],"totalram":8330702848,"freeram":6777294848,"sharedram":19079168,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":465,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:45:14 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:45:16 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+14.33 5.83 2.17 17/49 500
+---
+
+START: 2026-10-18 10:45:16 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:45:18 +0200
+ELAPSED: 1.92s
+STATUS: 0
+OUTPUT:
+{"uptime":185,"loads_raw":[938912,382112,142368],"loads":[14.32666015625,5.83056640625,2.17236328125],"totalram":8330702848,"freeram":6833381376,"sharedram":19152896,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":465,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:45:18 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:45:20 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+14.46 6.00 2.25 17/49 503
+---
+
+START: 2026-10-18 10:45:20 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:45:22 +0200
+ELAPSED: 2.04s
+STATUS: 0
+OUTPUT:
+{"uptime":189,"loads_raw":[947712,393184,147264],"loads":[14.4609375,5.99951171875,2.2470703125],"totalram":8330702848,"freeram":6760353792,"sharedram":19152896,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":465,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:45:22 +0200
+COMMAND: osctl ct exec kloadavg2 cat /proc/loadavg
+END: 2026-10-18 10:45:23 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 506
+---
+
+START: 2026-10-18 10:45:23 +0200
+COMMAND: osctl ct exec kloadavg2 sysinfo-to-json
+END: 2026-10-18 10:45:25 +0200
+ELAPSED: 1.78s
+STATUS: 0
+OUTPUT:
+{"uptime":1055,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6776033280,"sharedram":19152896,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":465,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:45:25 +0200
+COMMAND: osctl ct exec kloadavg2 cat /proc/loadavg
+END: 2026-10-18 10:45:27 +0200
+ELAPSED: 1.85s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 509
+---
+
+START: 2026-10-18 10:45:27 +0200
+COMMAND: osctl ct exec kloadavg2 sysinfo-to-json
+END: 2026-10-18 10:45:29 +0200
+ELAPSED: 1.91s
+STATUS: 0
+OUTPUT:
+{"uptime":1059,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6791966720,"sharedram":19152896,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":465,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:45:29 +0200
+COMMAND: osctl ct exec kloadavg2 cat /proc/loadavg
+END: 2026-10-18 10:45:31 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 512
+---
+
+START: 2026-10-18 10:45:31 +0200
+COMMAND: osctl ct exec kloadavg2 sysinfo-to-json
+END: 2026-10-18 10:45:33 +0200
+ELAPSED: 1.88s
+STATUS: 0
+OUTPUT:
+{"uptime":1063,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6726332416,"sharedram":19152896,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":465,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:45:33 +0200
+COMMAND: cat /proc/loadavg
+END: 2026-10-18 10:45:33 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+15.33 9.17 6.21 9/459 42394
+---
+
+START: 2026-10-18 10:45:33 +0200
+COMMAND: sysinfo-to-json
+END: 2026-10-18 10:45:33 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+{"uptime":1497,"loads_raw":[1004448,600800,407232],"loads":[15.32666015625,9.16748046875,6.2138671875],"totalram":8330702848,"freeram":6776762368,"sharedram":19152896,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":459,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:45:33 +0200
+COMMAND: cat /proc/loadavg
+END: 2026-10-18 10:45:33 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+15.33 9.17 6.21 9/459 42403
+---
+
+START: 2026-10-18 10:45:33 +0200
+COMMAND: sysinfo-to-json
+END: 2026-10-18 10:45:33 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+{"uptime":1497,"loads_raw":[1004448,600800,407232],"loads":[15.32666015625,9.16748046875,6.2138671875],"totalram":8330702848,"freeram":6776922112,"sharedram":19079168,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":459,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:45:33 +0200
+COMMAND: cat /proc/loadavg
+END: 2026-10-18 10:45:33 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+15.33 9.17 6.21 9/459 42412
+---
+
+START: 2026-10-18 10:45:33 +0200
+COMMAND: sysinfo-to-json
+END: 2026-10-18 10:45:33 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+{"uptime":1497,"loads_raw":[1004448,600800,407232],"loads":[15.32666015625,9.16748046875,6.2138671875],"totalram":8330702848,"freeram":6776922112,"sharedram":19079168,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":459,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:45:33 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:45:35 +0200
+ELAPSED: 2.16s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 14.80 6.49 2.47 17/50 507
+SYSINFO {"uptime":202,"loads_raw":[970112,425344,161760],"loads":[14.802734375,6.490234375,2.46826171875],"totalram":8330702848,"freeram":6755737600,"sharedram":19156992,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":466,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 14.80 6.49 2.47 17/49 509
+---
+
+START: 2026-10-18 10:45:35 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:45:37 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 14.80 6.49 2.47 17/50 511
+SYSINFO {"word_bits":32,"loads_raw":[970112,425344,161760],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 14.80 6.49 2.47 17/49 512
+---
+
+START: 2026-10-18 10:45:37 +0200
+COMMAND: osctl ct exec kloadavg1 systemd-run --quiet --wait --pipe --collect --unit loadavg-snapshot-211324-934818 /bin/sh -c 'printf "PROC_BEFORE "; /run/current-system/sw/bin/cat /proc/loadavg; printf "SYSINFO "; /run/current-system/sw/bin/sysinfo-to-json; printf "PROC_AFTER "; /run/current-system/sw/bin/cat /proc/loadavg'
+END: 2026-10-18 10:45:39 +0200
+ELAPSED: 2.22s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 14.80 6.49 2.47 19/51 515
+SYSINFO {"uptime":207,"loads_raw":[981664,436800,166880],"loads":[14.97900390625,6.6650390625,2.54638671875],"totalram":8330702848,"freeram":6777262080,"sharedram":19083264,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":467,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 14.98 6.66 2.55 17/50 517
+---
+
+START: 2026-10-18 10:45:40 +0200
+COMMAND: osctl ct exec kloadavg1 systemd-run --quiet --wait --pipe --collect --unit loadavg-snapshot-211324-538127 /bin/sh -c 'printf "PROC_BEFORE "; /run/current-system/sw/bin/cat /proc/loadavg; printf "SYSINFO "; /run/current-system/sw/bin/sysinfo-to-json; printf "PROC_AFTER "; /run/current-system/sw/bin/cat /proc/loadavg'
+END: 2026-10-18 10:45:42 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 14.98 6.66 2.55 17/51 523
+SYSINFO {"uptime":209,"loads_raw":[981664,436800,166880],"loads":[14.97900390625,6.6650390625,2.54638671875],"totalram":8330702848,"freeram":6752194560,"sharedram":19161088,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":467,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 14.98 6.66 2.55 17/50 525
+---
+
+START: 2026-10-18 10:45:42 +0200
+COMMAND: osctl ct exec kloadavg1 env LC_ALL=C busybox uptime
+END: 2026-10-18 10:45:44 +0200
+ELAPSED: 1.93s
+STATUS: 0
+OUTPUT:
+ 10:45:44 up 3 min,  0 users,  load average: 14.97, 6.66, 2.54
+---
+
+START: 2026-10-18 10:45:44 +0200
+COMMAND: osctl ct exec kloadavg2 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:45:45 +0200
+ELAPSED: 1.7s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.00 0.00 0.00 1/25 516
+SYSINFO {"uptime":1075,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6767194112,"sharedram":19156992,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":466,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.00 0.00 0.00 1/24 518
+---
+
+START: 2026-10-18 10:45:45 +0200
+COMMAND: osctl ct exec kloadavg2 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:45:47 +0200
+ELAPSED: 1.83s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.00 0.00 0.00 1/25 520
+SYSINFO {"word_bits":32,"loads_raw":[0,0,0],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 0.00 0.00 0.00 1/24 521
+---
+
+START: 2026-10-18 10:45:47 +0200
+COMMAND: osctl ct exec kloadavg2 env LC_ALL=C busybox uptime
+END: 2026-10-18 10:45:49 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+ 10:45:49 up 17 min,  0 users,  load average: 0.00, 0.00, 0.00
+---
+
+START: 2026-10-18 10:45:49 +0200
+COMMAND: sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:45:49 +0200
+ELAPSED: 0.17s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 15.70 9.55 6.39 9/460 42578
+SYSINFO {"uptime":1513,"loads_raw":[1028800,625984,418624],"loads":[15.6982421875,9.5517578125,6.3876953125],"totalram":8330702848,"freeram":6780526592,"sharedram":19083264,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":460,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 15.70 9.55 6.39 9/459 42580
+---
+
+START: 2026-10-18 10:45:49 +0200
+COMMAND: sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; /scripts/sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:45:49 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 15.70 9.55 6.39 9/460 42585
+SYSINFO {"word_bits":32,"loads_raw":[1028800,625984,418624],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 15.70 9.55 6.39 9/459 42586
+---
+
+START: 2026-10-18 10:45:49 +0200
+COMMAND: osctl ct exec kloadavg1 systemctl stop genload >/dev/null 2>&1 || true
+END: 2026-10-18 10:45:51 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:45:51 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:45:53 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+15.14 6.97 2.69 1/24 532
+---
+
+START: 2026-10-18 10:45:58 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:45:59 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+13.92 6.86 2.68 1/24 533
+---
+
+START: 2026-10-18 10:46:04 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:46:06 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+11.78 6.63 2.65 1/24 534
+---
+
+START: 2026-10-18 10:46:11 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:46:12 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+10.84 6.52 2.63 1/24 535
+---
+
+START: 2026-10-18 10:46:17 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:46:19 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+9.97 6.41 2.62 1/24 536
+---
+
+START: 2026-10-18 10:46:24 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:46:26 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+8.44 6.20 2.59 1/24 537
+---
+
+START: 2026-10-18 10:46:31 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:46:32 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+7.76 6.10 2.58 1/24 538
+---
+
+START: 2026-10-18 10:46:37 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:46:39 +0200
+ELAPSED: 1.6s
+STATUS: 0
+OUTPUT:
+7.14 6.00 2.56 1/24 539
+---
+
+START: 2026-10-18 10:46:44 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:46:45 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+6.04 5.80 2.53 1/24 540
+---
+
+START: 2026-10-18 10:46:50 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:46:52 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+5.56 5.70 2.52 1/24 541
+---
+
+START: 2026-10-18 10:46:57 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:46:58 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+5.11 5.61 2.51 1/24 542
+---
+
+START: 2026-10-18 10:47:03 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:47:05 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+4.33 5.42 2.48 1/24 543
+---
+
+START: 2026-10-18 10:47:10 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:47:12 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+3.98 5.33 2.46 1/24 544
+---
+
+START: 2026-10-18 10:47:17 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:47:18 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+3.66 5.24 2.45 1/24 546
+---
+
+START: 2026-10-18 10:47:23 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:47:25 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+3.10 5.07 2.42 1/24 547
+---
+
+START: 2026-10-18 10:47:30 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:47:31 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+2.85 4.98 2.41 1/24 548
+---
+
+START: 2026-10-18 10:47:36 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:47:38 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+2.62 4.90 2.40 1/24 549
+---
+
+START: 2026-10-18 10:47:43 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:47:45 +0200
+ELAPSED: 2.17s
+STATUS: 0
+OUTPUT:
+2.22 4.74 2.37 1/24 550
+---
+
+START: 2026-10-18 10:47:50 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:47:52 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+2.04 4.66 2.36 1/24 551
+---
+
+START: 2026-10-18 10:47:57 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:47:58 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+1.88 4.58 2.35 1/24 552
+---
+
+START: 2026-10-18 10:48:03 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:48:05 +0200
+ELAPSED: 1.64s
+STATUS: 0
+OUTPUT:
+1.72 4.51 2.33 1/24 553
+---
+
+START: 2026-10-18 10:48:10 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:48:11 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+1.46 4.36 2.31 1/24 554
+---
+
+START: 2026-10-18 10:48:16 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:48:18 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+1.34 4.29 2.30 1/24 555
+---
+
+START: 2026-10-18 10:48:23 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:48:24 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+1.23 4.21 2.28 1/24 556
+---
+
+START: 2026-10-18 10:48:29 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:48:31 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+1.04 4.07 2.26 1/24 557
+---
+
+START: 2026-10-18 10:48:36 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:48:37 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+0.96 4.01 2.25 1/24 558
+---
+
+START: 2026-10-18 10:48:42 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:48:44 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+0.88 3.94 2.23 1/24 559
+---
+
+START: 2026-10-18 10:48:49 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:48:50 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+0.75 3.81 2.21 1/24 560
+---
+
+START: 2026-10-18 10:48:55 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:48:57 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+{"uptime":404,"loads_raw":[44992,245536,143968],"loads":[0.6865234375,3.74658203125,2.19677734375],"totalram":8330702848,"freeram":6807961600,"sharedram":19099648,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":420,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:48:57 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:48:58 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+{"uptime":406,"loads_raw":[44992,245536,143968],"loads":[0.6865234375,3.74658203125,2.19677734375],"totalram":8330702848,"freeram":6821699584,"sharedram":19099648,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":420,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:48:58 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:49:00 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+{"uptime":407,"loads_raw":[41376,241440,143168],"loads":[0.63134765625,3.68408203125,2.1845703125],"totalram":8330702848,"freeram":6842863616,"sharedram":19173376,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":420,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:49:00 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:49:02 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.63 3.68 2.18 1/25 568
+SYSINFO {"uptime":409,"loads_raw":[41376,241440,143168],"loads":[0.63134765625,3.68408203125,2.1845703125],"totalram":8330702848,"freeram":6810415104,"sharedram":19099648,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":421,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.63 3.68 2.18 1/24 570
+---
+
+START: 2026-10-18 10:49:02 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:49:03 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.63 3.68 2.18 1/25 572
+SYSINFO {"word_bits":32,"loads_raw":[41376,241440,143168],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 0.63 3.68 2.18 1/24 573
+---
+
+START: 2026-10-18 10:49:03 +0200
+COMMAND: osctl ct restart kloadavg1
+END: 2026-10-18 10:49:06 +0200
+ELAPSED: 3.28s
+STATUS: 0
+OUTPUT:
+Stopping container
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 10:49:36 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:49:38 +0200
+ELAPSED: 1.47s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 435
+---
+
+START: 2026-10-18 10:49:38 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:49:39 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+{"uptime":36,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6734798848,"sharedram":19111936,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":438,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:49:39 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:49:41 +0200
+ELAPSED: 1.47s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 438
+---
+
+START: 2026-10-18 10:49:41 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:49:43 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+{"uptime":39,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6773997568,"sharedram":19185664,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":438,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:49:43 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:49:44 +0200
+ELAPSED: 1.49s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 441
+---
+
+START: 2026-10-18 10:49:44 +0200
+COMMAND: osctl ct exec kloadavg1 sysinfo-to-json
+END: 2026-10-18 10:49:46 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+{"uptime":42,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6783733760,"sharedram":19111936,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":438,"totalhigh":0,"freehigh":0,"mem_unit":1}
+---
+
+START: 2026-10-18 10:49:46 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:49:47 +0200
+ELAPSED: 1.68s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.00 0.00 0.00 1/25 445
+SYSINFO {"uptime":43,"loads_raw":[0,0,0],"loads":[0.0,0.0,0.0],"totalram":8330702848,"freeram":6805217280,"sharedram":19185664,"bufferram":692224,"totalswap":0,"freeswap":0,"procs":439,"totalhigh":0,"freehigh":0,"mem_unit":1}
+PROC_AFTER 0.00 0.00 0.00 1/24 447
+---
+
+START: 2026-10-18 10:49:47 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'printf "PROC_BEFORE "; cat /proc/loadavg; printf "SYSINFO "; sysinfo-compat-to-json; printf "PROC_AFTER "; cat /proc/loadavg'
+END: 2026-10-18 10:49:49 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+PROC_BEFORE 0.00 0.00 0.00 1/25 449
+SYSINFO {"word_bits":32,"loads_raw":[0,0,0],"bufferram":692224,"totalswap":0,"freeswap":0,"mem_unit":4096}
+PROC_AFTER 0.00 0.00 0.00 1/24 450
+---
+
+START: 2026-10-18 10:49:49 +0200
+COMMAND: osctl ct exec kloadavg1 env LC_ALL=C busybox uptime
+END: 2026-10-18 10:49:50 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+ 10:49:50 up 0 min,  0 users,  load average: 0.00, 0.00, 0.00
+---
+
+START: 2026-10-18 10:49:50 +0200
+COMMAND: osctl ct exec kloadavg1 cat /proc/loadavg
+END: 2026-10-18 10:49:52 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+0.00 0.00 0.00 1/24 452
+---
+
+START: 2026-10-18 10:49:52 +0200
+COMMAND: osctl ct exec kloadavg1 sh -c 'echo -e "N_BLOCKED=2
+N_RUNNING=0" > /run/genload.conf'
+END: 2026-10-18 10:49:53 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:49:53 +0200
+COMMAND: osctl ct exec kloadavg1 systemctl restart genload
+END: 2026-10-18 10:49:55 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:49:55 +0200
+COMMAND: osctl ct exec kloadavg2 sh -c 'echo -e "N_BLOCKED=4
+N_RUNNING=0" > /run/genload.conf'
+END: 2026-10-18 10:49:56 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:49:56 +0200
+COMMAND: osctl ct exec kloadavg2 systemctl restart genload
+END: 2026-10-18 10:49:58 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:49:58 +0200
+COMMAND: osctl -j ct show kloadavg1
+END: 2026-10-18 10:49:58 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg1","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg1","rootfs":"/tank/ct/kloadavg1/private","boot_dataset":"tank/ct/kloadavg1","boot_rootfs":"/tank/ct/kloadavg1/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg1","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg1/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":43378,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg1","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg1.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/bm181gv75sr9141y9sfrgaankdfys98f-container-kloadavg1.yml","org.vpsadminos.osctl:toplevel":"/nix/store/c1f5bgg2k8wwm6dnmbmh0c67myxvy5qm-nixos-system-kloadavg1-26.05pre-git","memory":24150016,"cpu_us":13722996,"cpu_user_us":10092979,"cpu_system_us":3630016,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-18 10:50:03 +0200
+COMMAND: osctl -j ct show kloadavg1
+END: 2026-10-18 10:50:04 +0200
+ELAPSED: 0.72s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg1","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg1","rootfs":"/tank/ct/kloadavg1/private","boot_dataset":"tank/ct/kloadavg1","boot_rootfs":"/tank/ct/kloadavg1/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg1","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg1/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":43378,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg1","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg1.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/bm181gv75sr9141y9sfrgaankdfys98f-container-kloadavg1.yml","org.vpsadminos.osctl:toplevel":"/nix/store/c1f5bgg2k8wwm6dnmbmh0c67myxvy5qm-nixos-system-kloadavg1-26.05pre-git","memory":24150016,"cpu_us":13722996,"cpu_user_us":10092979,"cpu_system_us":3630016,"loadavg":[0.16,0.03,0.01]}
+---
+
+START: 2026-10-18 10:50:09 +0200
+COMMAND: osctl -j ct show kloadavg1
+END: 2026-10-18 10:50:10 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg1","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg1","rootfs":"/tank/ct/kloadavg1/private","boot_dataset":"tank/ct/kloadavg1","boot_rootfs":"/tank/ct/kloadavg1/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg1","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg1/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":43378,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg1","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg1.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/bm181gv75sr9141y9sfrgaankdfys98f-container-kloadavg1.yml","org.vpsadminos.osctl:toplevel":"/nix/store/c1f5bgg2k8wwm6dnmbmh0c67myxvy5qm-nixos-system-kloadavg1-26.05pre-git","memory":24150016,"cpu_us":13722996,"cpu_user_us":10092979,"cpu_system_us":3630016,"loadavg":[0.44,0.1,0.03]}
+---
+
+START: 2026-10-18 10:50:15 +0200
+COMMAND: osctl -j ct show kloadavg1
+END: 2026-10-18 10:50:16 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg1","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg1","rootfs":"/tank/ct/kloadavg1/private","boot_dataset":"tank/ct/kloadavg1","boot_rootfs":"/tank/ct/kloadavg1/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg1","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg1/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":43378,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg1","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg1.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/bm181gv75sr9141y9sfrgaankdfys98f-container-kloadavg1.yml","org.vpsadminos.osctl:toplevel":"/nix/store/c1f5bgg2k8wwm6dnmbmh0c67myxvy5qm-nixos-system-kloadavg1-26.05pre-git","memory":24150016,"cpu_us":13722996,"cpu_user_us":10092979,"cpu_system_us":3630016,"loadavg":[0.57,0.13,0.04]}
+---
+
+START: 2026-10-18 10:50:21 +0200
+COMMAND: osctl -j ct show kloadavg1
+END: 2026-10-18 10:50:21 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg1","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg1","rootfs":"/tank/ct/kloadavg1/private","boot_dataset":"tank/ct/kloadavg1","boot_rootfs":"/tank/ct/kloadavg1/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg1","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg1/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":43378,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg1","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg1.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/bm181gv75sr9141y9sfrgaankdfys98f-container-kloadavg1.yml","org.vpsadminos.osctl:toplevel":"/nix/store/c1f5bgg2k8wwm6dnmbmh0c67myxvy5qm-nixos-system-kloadavg1-26.05pre-git","memory":24150016,"cpu_us":13722996,"cpu_user_us":10092979,"cpu_system_us":3630016,"loadavg":[0.68,0.16,0.05]}
+---
+
+START: 2026-10-18 10:50:26 +0200
+COMMAND: osctl -j ct show kloadavg1
+END: 2026-10-18 10:50:27 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg1","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg1","rootfs":"/tank/ct/kloadavg1/private","boot_dataset":"tank/ct/kloadavg1","boot_rootfs":"/tank/ct/kloadavg1/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg1","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg1/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":43378,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg1","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg1.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/bm181gv75sr9141y9sfrgaankdfys98f-container-kloadavg1.yml","org.vpsadminos.osctl:toplevel":"/nix/store/c1f5bgg2k8wwm6dnmbmh0c67myxvy5qm-nixos-system-kloadavg1-26.05pre-git","memory":24150016,"cpu_us":13722996,"cpu_user_us":10092979,"cpu_system_us":3630016,"loadavg":[0.79,0.19,0.06]}
+---
+
+START: 2026-10-18 10:50:32 +0200
+COMMAND: osctl -j ct show kloadavg1
+END: 2026-10-18 10:50:33 +0200
+ELAPSED: 0.73s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg1","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg1","rootfs":"/tank/ct/kloadavg1/private","boot_dataset":"tank/ct/kloadavg1","boot_rootfs":"/tank/ct/kloadavg1/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg1","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg1/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":43378,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg1","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg1.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/bm181gv75sr9141y9sfrgaankdfys98f-container-kloadavg1.yml","org.vpsadminos.osctl:toplevel":"/nix/store/c1f5bgg2k8wwm6dnmbmh0c67myxvy5qm-nixos-system-kloadavg1-26.05pre-git","memory":24150016,"cpu_us":13722996,"cpu_user_us":10092979,"cpu_system_us":3630016,"loadavg":[0.89,0.22,0.08]}
+---
+
+START: 2026-10-18 10:50:38 +0200
+COMMAND: osctl -j ct show kloadavg1
+END: 2026-10-18 10:50:38 +0200
+ELAPSED: 0.78s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg1","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg1","rootfs":"/tank/ct/kloadavg1/private","boot_dataset":"tank/ct/kloadavg1","boot_rootfs":"/tank/ct/kloadavg1/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg1","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg1/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":43378,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg1","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg1.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/bm181gv75sr9141y9sfrgaankdfys98f-container-kloadavg1.yml","org.vpsadminos.osctl:toplevel":"/nix/store/c1f5bgg2k8wwm6dnmbmh0c67myxvy5qm-nixos-system-kloadavg1-26.05pre-git","memory":24150016,"cpu_us":13722996,"cpu_user_us":10092979,"cpu_system_us":3630016,"loadavg":[0.97,0.25,0.09]}
+---
+
+START: 2026-10-18 10:50:43 +0200
+COMMAND: osctl -j ct show kloadavg1
+END: 2026-10-18 10:50:44 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg1","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg1","rootfs":"/tank/ct/kloadavg1/private","boot_dataset":"tank/ct/kloadavg1","boot_rootfs":"/tank/ct/kloadavg1/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg1","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg1/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":43378,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg1","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg1.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/bm181gv75sr9141y9sfrgaankdfys98f-container-kloadavg1.yml","org.vpsadminos.osctl:toplevel":"/nix/store/c1f5bgg2k8wwm6dnmbmh0c67myxvy5qm-nixos-system-kloadavg1-26.05pre-git","memory":24150016,"cpu_us":13722996,"cpu_user_us":10092979,"cpu_system_us":3630016,"loadavg":[1.06,0.28,0.1]}
+---
+
+START: 2026-10-18 10:50:44 +0200
+COMMAND: osctl -j ct show kloadavg2
+END: 2026-10-18 10:50:45 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg2","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg2","rootfs":"/tank/ct/kloadavg2/private","boot_dataset":"tank/ct/kloadavg2","boot_rootfs":"/tank/ct/kloadavg2/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg2","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg2/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":24755,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg2","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg2.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/nw99fabzcq79a3wcnpki0rcix2hvb9hg-container-kloadavg2.yml","org.vpsadminos.osctl:toplevel":"/nix/store/jhyz7bmybl8a77fl7f130700bk8gd2gr-nixos-system-kloadavg2-26.05pre-git","memory":29642752,"cpu_us":40897300,"cpu_user_us":32401091,"cpu_system_us":8496208,"loadavg":[2.27,0.62,0.21]}
+---
+
+START: 2026-10-18 10:50:45 +0200
+COMMAND: cat /proc/vpsadminos/loadavg
+END: 2026-10-18 10:50:45 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+4026532471	1.13 0.31 0.11 2/28
+4026532963	2.27 0.62 0.21 4/32
+---
+
+START: 2026-10-18 10:50:45 +0200
+COMMAND: osctl -j ct show kloadavg1
+END: 2026-10-18 10:50:45 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg1","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg1","rootfs":"/tank/ct/kloadavg1/private","boot_dataset":"tank/ct/kloadavg1","boot_rootfs":"/tank/ct/kloadavg1/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg1","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg1/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":43378,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg1","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg1.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/bm181gv75sr9141y9sfrgaankdfys98f-container-kloadavg1.yml","org.vpsadminos.osctl:toplevel":"/nix/store/c1f5bgg2k8wwm6dnmbmh0c67myxvy5qm-nixos-system-kloadavg1-26.05pre-git","memory":24150016,"cpu_us":13722996,"cpu_user_us":10092979,"cpu_system_us":3630016,"loadavg":[1.13,0.31,0.11]}
+---
+
+START: 2026-10-18 10:50:45 +0200
+COMMAND: readlink /proc/43378/ns/cgroup
+END: 2026-10-18 10:50:45 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+cgroup:[4026532471]
+---
+
+START: 2026-10-18 10:50:45 +0200
+COMMAND: cat /proc/vpsadminos/loadavg
+END: 2026-10-18 10:50:45 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+4026532471	1.13 0.31 0.11 2/28
+4026532963	2.27 0.62 0.21 4/32
+---
+
+START: 2026-10-18 10:50:45 +0200
+COMMAND: osctl -j ct show kloadavg2
+END: 2026-10-18 10:50:46 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"kloadavg2","user":"kloadavg","group":"/default","uid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":500000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/kloadavg2","rootfs":"/tank/ct/kloadavg2/private","boot_dataset":"tank/ct/kloadavg2","boot_rootfs":"/tank/ct/kloadavg2/private","lxc_path":"/run/osctl/pools/tank/users/kloadavg/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/kloadavg/group.default/cts/kloadavg2","group_path":"osctl/pool.tank/group.default/user.kloadavg/ct.kloadavg2/user-owned","distribution":"nixos","version":"18.09","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":24755,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":"kloadavg2","dns_resolvers":[],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/kloadavg2.log","org.vpsadminos.osctl:declarative":"yes","org.vpsadminos.osctl:config":"/nix/store/nw99fabzcq79a3wcnpki0rcix2hvb9hg-container-kloadavg2.yml","org.vpsadminos.osctl:toplevel":"/nix/store/jhyz7bmybl8a77fl7f130700bk8gd2gr-nixos-system-kloadavg2-26.05pre-git","memory":29642752,"cpu_us":40897300,"cpu_user_us":32401091,"cpu_system_us":8496208,"loadavg":[2.27,0.62,0.21]}
+---
+
+START: 2026-10-18 10:50:46 +0200
+COMMAND: readlink /proc/24755/ns/cgroup
+END: 2026-10-18 10:50:46 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+cgroup:[4026532963]
+---
+
+START: 2026-10-18 10:50:46 +0200
+COMMAND: cat /proc/vpsadminos/loadavg
+END: 2026-10-18 10:50:46 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+4026532471	1.13 0.31 0.11 2/28
+4026532963	2.27 0.62 0.21 4/32
+---
+
+START: 2026-10-18 10:50:46 +0200
+COMMAND: osctl ct restart kloadavg1
+END: 2026-10-18 10:50:50 +0200
+ELAPSED: 3.41s
+STATUS: 0
+OUTPUT:
+Stopping container
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 10:50:50 +0200
+COMMAND: osctl ct restart kloadavg2
+END: 2026-10-18 10:50:53 +0200
+ELAPSED: 3.21s
+STATUS: 0
+OUTPUT:
+Stopping container
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 10:51:23 +0200
+COMMAND: osctl ct exec kloadavg1 systemctl stop genload >/dev/null 2>&1 || true
+END: 2026-10-18 10:51:24 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 10:51:24 +0200
+COMMAND: osctl ct exec kloadavg2 systemctl stop genload >/dev/null 2>&1 || true
+END: 2026-10-18 10:51:26 +0200
+ELAPSED: 1.71s
+STATUS: 0
+OUTPUT:
+
+---
+

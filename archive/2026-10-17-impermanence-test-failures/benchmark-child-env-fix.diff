@@ -1,0 +1,88 @@
+diff --git a/.github/workflows/scripts/prebuild_benchmark.rb b/.github/workflows/scripts/prebuild_benchmark.rb
+index c94a06dc8..fe2384985 100644
+--- a/.github/workflows/scripts/prebuild_benchmark.rb
++++ b/.github/workflows/scripts/prebuild_benchmark.rb
+@@ -4,6 +4,7 @@ require 'open3'
+ require 'fileutils'
+ require 'socket'
+ require 'time'
++require 'bundler'
+ 
+ # Temporary measurement code; product methods and resource settings are unchanged.
+ module PrebuildBenchmark
+@@ -22,6 +23,10 @@ module PrebuildBenchmark
+      '--system', SYSTEM, '--fresh', '--state-dir', state, '-t', 'ci']
+   end
+ 
++  def self.cli_environment
++    Bundler.unbundled_env
++  end
++
+   def self.parse_log(text)
+     selection = text.split("The following test scripts will be run:\n", 2)[1]&.split("\n\n", 2)&.first
+     scripts = selection ? selection.lines.map(&:strip).reject(&:empty?).sort : nil
+@@ -117,6 +122,7 @@ module PrebuildBenchmark
+       warm_start = PrebuildBenchmark.clock
+       # Warm the normal CLI package check outside both timers.
+       capture('nix', 'build', '--out-link', File.join(@root, 'runner-package'), '.#test-runner')
++      smoke_cli
+       TestRunner::RepositorySource.open(original_path: @product) do |source|
+         config = source.resolve_path(CONFIG)
+         scripts = TestRunner::TestScriptList.new(system: SYSTEM, test_config_path: config, repo_root: source.path)
+@@ -191,6 +197,14 @@ module PrebuildBenchmark
+       write('timings.json', @report)
+     end
+ 
++    def smoke_cli
++      output, status = Open3.capture2e(PrebuildBenchmark.cli_environment, './test-runner.sh', '--help', chdir: @product, unsetenv_others: true)
++      File.write(File.join(@root, 'cli-smoke.log'), output)
++      @report['cli_smoke'] = { 'exit_status' => status.exitstatus, 'signal' => status.termsig }
++      save
++      raise 'Packaged test-runner startup failed; see cli-smoke.log' unless status.success?
++    end
++
+     def read_optional(path)
+       File.read(path).strip
+     rescue Errno::ENOENT, Errno::EACCES, Errno::ESRCH
+@@ -297,9 +311,8 @@ module PrebuildBenchmark
+       @report['legs'] << leg
+       save
+       owned = {}
+-      clean_env = ENV.keys.grep(/\A(?:BUNDLE_|RUBY|GEM_)/).to_h { |name| [name, nil] }
+       start = PrebuildBenchmark.clock
+-      Open3.popen2e(clean_env, *cmd, chdir: @product, pgroup: true) do |stdin, output, waiter|
++      Open3.popen2e(PrebuildBenchmark.cli_environment, *cmd, chdir: @product, pgroup: true, unsetenv_others: true) do |stdin, output, waiter|
+         stdin.close
+         monitoring = true
+         monitor = Thread.new do
+diff --git a/test-runner/spec/github_actions/prebuild_benchmark_spec.rb b/test-runner/spec/github_actions/prebuild_benchmark_spec.rb
+index e32a081ae..8e251c1bf 100644
+--- a/test-runner/spec/github_actions/prebuild_benchmark_spec.rb
++++ b/test-runner/spec/github_actions/prebuild_benchmark_spec.rb
+@@ -16,6 +16,26 @@ RSpec.describe PrebuildBenchmark do
+     expect(a).not_to include('--max-cpus', '--max-memory-mib', '--cores', '--stop-on-failure')
+   end
+ 
++  it 'starts a separate Ruby child without development Bundler startup or inherited bookkeeping' do
++    with_tmpdir do |dir|
++      setup = File.join(dir, 'development_setup.rb')
++      File.write(setup, "abort 'development Bundler startup leaked'\n")
++      original = Bundler.original_env.merge(
++        'BUNDLER_SETUP' => setup, 'BUNDLE_GEMFILE' => File.join(dir, 'Gemfile'),
++        'RUBYOPT' => '-rbundler/setup', 'NIX_BUILD_CORES' => '0',
++        'TEST_RUNNER_STATE_DIR' => '/benchmark/state', 'VPSADMINOS_CONFIG' => ''
++      )
++      stub_const('Bundler::ORIGINAL_ENV', original)
++      environment = described_class.cli_environment
++      code = "puts JSON.generate(ENV.to_h.slice('BUNDLER_SETUP', 'BUNDLE_GEMFILE', 'NIX_BUILD_CORES', 'TEST_RUNNER_STATE_DIR', 'VPSADMINOS_CONFIG'))"
++      output, status = Open3.capture2e(environment, RbConfig.ruby, '-rjson', '-e', code, unsetenv_others: true)
++      expect(status.exitstatus).to eq(0), output
++      expect(JSON.parse(output)).to eq('NIX_BUILD_CORES' => '0', 'TEST_RUNNER_STATE_DIR' => '/benchmark/state', 'VPSADMINOS_CONFIG' => '')
++      expect(environment.keys.grep(/\ABUNDLER_ORIG_/)).to be_empty
++      expect(ENV.fetch('BUNDLER_SETUP')).not_to eq(setup)
++    end
++  end
++
+   it 'captures exact selected scripts, completed work and reported executor time' do
+     log = <<~LOG
+       The following test scripts will be run:

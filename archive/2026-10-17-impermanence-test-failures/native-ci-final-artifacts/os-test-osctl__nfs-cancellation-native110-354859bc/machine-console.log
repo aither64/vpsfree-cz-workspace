@@ -1,0 +1,460 @@
+c[?7l[2J[0mSeaBIOS (version rel-1.17.0-0-gb52ca86e094d-prebuilt.qemu.org)
+
+
+iPXE (http://ipxe.org) 00:03.0 C000 PCI2.10 PnP PMM+BEFD1AA0+BEF31AA0 C000
+Press Ctrl-B to configure iPXE (PCI 00:03.0)...                                                                               
+
+
+Booting from ROM...
+c[?7l[2J
+[1;32m<<< vpsAdminOS Stage 1 >>>[0m
+
+running udev...
+kbd_mode: KDSKBMODE: Inappropriate ioctl for device
+%Gcreated directory: '/mnt/nix/.overlay-store/work'
+created directory: '/mnt/nix/.overlay-store/rw'
+
+[1;32m<<< vpsAdminOS Stage 2 >>>[0m
+
+setting up /etc...
+- runit: $Id: c66c1e3b98d1b630bd51b1d56aaed5c2994e8c9d $: booting.
+- runit: enter stage: /etc/runit/1
+* Applying /etc/sysctl.d/55-nixos-aslr-entropy.conf ...
+* Applying /etc/sysctl.d/60-nixos.conf ...
+vm.mmap_rnd_bits = 32
+vm.mmap_rnd_compat_bits = 16
+fs.aio-max-nr = 3221225471
+fs.inotify.max_queued_events = 2147483647
+fs.inotify.max_user_instances = 2147483647
+fs.inotify.max_user_watches = 2147483647
+fs.nr_open = 4194304
+fs.protected_hardlinks = 1
+fs.protected_symlinks = 1
+kernel.dmesg_restrict = 1
+kernel.keys.maxbytes = 2500000
+kernel.keys.maxkeys = 100000
+kernel.kptr_restrict = 1
+kernel.modprobe = /nix/store/bcx5jqj8lrm9bvjgw3x3a5ih5fa2vw63-kernel-modprobe-wrapper
+kernel.pid_max = 4194304
+kernel.printk = 4
+kernel.pty.max = 16384
+kernel.pty.reserve = 1024
+kernel.sysctl_unprivileged_bpf_time_adjust_nsec = 5000000
+kernel.threads-max = 4194304
+[   14.998757] Spectre V2 : WARNING: Unprivileged eBPF is enabled with eIBRS on, data leaks possible via Spectre v2 BHB attacks!
+kernel.unprivileged_bpf_disabled = 0
+net.core.default_qdisc = fq
+net.ipv4.neigh.default.gc_thresh1 = 2048
+net.ipv4.neigh.default.gc_thresh2 = 4096
+net.ipv4.neigh.default.gc_thresh3 = 8192
+net.ipv4.route.max_size = 2147483647
+net.ipv4.tcp_congestion_control = bbr
+net.ipv6.neigh.default.gc_thresh1 = 2048
+net.ipv6.neigh.default.gc_thresh2 = 4096
+net.ipv6.neigh.default.gc_thresh3 = 8192
+net.ipv6.route.max_size = 2147483647
+net.netfilter.nf_log_all_netns = 1
+vm.max_map_count = 1048576
+vm.min_free_kbytes = 1048576
+vm.min_slab_ratio = 12
+vm.overcommit_ratio = 3200
+vm.swappiness = 0
+- runit: leave stage: /etc/runit/1
+- runit: enter stage: /etc/runit/2
+ok: run: eudev: (pid 896) 0s
+Waiting for /dev/virtio-ports/org.osvm.shell0
+lxcbr-dnsmasq waiting for interface lxcbr0
+
+vpsadminos login: root (automatic login)
+
+/var/cron: No such file or directory
+/var/cron: created
+tabs: No such file or directory
+tabs: created
+Generating public/private rsa key pair.
+Waiting for rpcbind to start
+rsyslogd: getaddrinfo failed obtaining local hostname - using 'vpsadminos' instead; error: System error [v8.2608.0]
+Your identification has been saved in /etc/ssh/ssh_host_rsa_key
+Your public key has been saved in /etc/ssh/ssh_host_rsa_key.pub
+The key fingerprint is:
+SHA256:m1DSfelzIWNQnQScbBLpC8rpGun46QaJRHA9WEXidgs root@vpsadminos
+The key's randomart image is:
++---[RSA 4096]----+
+|o .+ooo   o*o=.. |
+| o..o. . .o.=.o  |
+|.   E.o o..o* .  |
+| . . o +. .+ o . |
+|.. . .ooS. .o .  |
+|. o  .+. o.  o   |
+|   .o.  o        |
+|   o.o.          |
+|  .+*.           |
+[?2004h
+[1;31m[]0;root@vpsadminos: ~root@vpsadminos:~]#[0m +----[SHA256]-----+
+Generating public/private ed25519 key pair.
+Your identification has been saved in /etc/ssh/ssh_host_ed25519_key
+Your public key has been saved in /etc/ssh/ssh_host_ed25519_key.pub
+The key fingerprint is:
+SHA256:8e/pI4Klbl1vhQwv35EP8tUPP9+zZcelK9gZHZ7g4vI root@vpsadminos
+The key's randomart image is:
++--[ED25519 256]--+
+|                 |
+|                 |
+|        .        |
+|         o. . .  |
+|        S .= = +o|
+|        . +.B Xo+|
+|       = o B.B.B*|
+|      + + +.O.o=B|
+|     o.  +E++o..B|
++----[SHA256]-----+
+Waiting for /dev/virtio-ports/org.osvm.shell0
+lxcbr-dnsmasq waiting for interface lxcbr0
+sm-notify: Version 2.9.1 starting
+sm-notify: No hosts to notify; exiting
+Service eudev-trigger successfully finished
+lxcbr-dnsmasq waiting for interface lxcbr0
+Service cpufreq successfully finished
+Service networking successfully finished
+Waiting for service restrict-proc-sysfs to start
+18 Oct 08:31:03 ntpdate[2040]: 46.28.110.153 rate limit response from server.
+18 Oct 08:31:04 ntpdate[2040]: 92.62.231.58 rate limit response from server.
+Waiting for service set-clock to start
+18 Oct 08:31:08 ntpdate[2040]: adjust time server 37.221.242.99 offset +0.073867 sec
+System clock set
+Service set-clock successfully finished
+- runit: $Id: c66c1e3b98d1b630bd51b1d56aaed5c2994e8c9d $: booting.
+- runit: enter stage: /etc/runit/1
+- runit: leave stage: /etc/runit/1
+- runit: enter stage: /etc/runit/2
+sm-notify: Version 2.9.1 starting
+sm-notify: No hosts to notify; exiting
+rpc.mountd: Version 2.9.1 starting
+rpc.mountd: authenticated mount request from 192.168.1.21:745 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: can't open /var/lib/nfs/rmtab for writing
+rpc.mountd: authenticated mount request from 192.168.1.22:832 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:936 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:884 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:885 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated unmount request from 192.168.1.21:637 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:978 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:668 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:969 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:754 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated unmount request from 192.168.1.21:653 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:765 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:892 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:858 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:778 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:865 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:977 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:859 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:892 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:734 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:968 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated unmount request from 192.168.1.21:648 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:968 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:839 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:983 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:982 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:741 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:986 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:736 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:812 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:745 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:777 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:673 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:707 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:792 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:785 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:790 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:879 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:787 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:855 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:935 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:807 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:808 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:693 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:872 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:984 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:942 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:867 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:693 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:995 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated mount request from 192.168.1.21:720 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated unmount request from 192.168.1.21:667 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: authenticated unmount request from 192.168.1.22:794 for /srv/nfs-cancellation (/srv/nfs-cancellation)
+rpc.mountd: v4.0 client attached: 0x35bce68a6ad467e3 from "192.168.1.21:945"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce68c6ad467e3 from "192.168.1.22:909"
+rpc.mountd: v4.0 client detached: 0x35bce68a6ad467e3 from "192.168.1.21:945"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6906ad467e3 from "192.168.1.21:725"
+rpc.mountd: v4.0 client detached: 0x35bce68e6ad467e3 from "192.168.1.21:717"
+rpc.mountd: v4.0 client attached: 0x35bce6926ad467e3 from "192.168.1.21:819"
+rpc.mountd: v4.0 client detached: 0x35bce6906ad467e3 from "192.168.1.21:725"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6946ad467e3 from "192.168.1.21:707"
+rpc.mountd: v4.0 client detached: 0x35bce6926ad467e3 from "192.168.1.21:819"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6966ad467e3 from "192.168.1.21:963"
+rpc.mountd: v4.0 client detached: 0x35bce6946ad467e3 from "192.168.1.21:707"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6986ad467e3 from "192.168.1.21:726"
+rpc.mountd: v4.0 client detached: 0x35bce6966ad467e3 from "192.168.1.21:963"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce69a6ad467e3 from "192.168.1.21:956"
+rpc.mountd: v4.0 client detached: 0x35bce6986ad467e3 from "192.168.1.21:726"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce69c6ad467e3 from "192.168.1.21:691"
+rpc.mountd: v4.0 client detached: 0x35bce69a6ad467e3 from "192.168.1.21:956"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce69e6ad467e3 from "192.168.1.21:774"
+rpc.mountd: v4.0 client detached: 0x35bce69c6ad467e3 from "192.168.1.21:691"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6a06ad467e3 from "192.168.1.21:686"
+rpc.mountd: v4.0 client detached: 0x35bce69e6ad467e3 from "192.168.1.21:774"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6a26ad467e3 from "192.168.1.21:845"
+rpc.mountd: v4.0 client detached: 0x35bce6a06ad467e3 from "192.168.1.21:686"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6a46ad467e3 from "192.168.1.21:873"
+rpc.mountd: v4.0 client detached: 0x35bce6a26ad467e3 from "192.168.1.21:845"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6a66ad467e3 from "192.168.1.21:825"
+rpc.mountd: v4.0 client detached: 0x35bce6a46ad467e3 from "192.168.1.21:873"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6a86ad467e3 from "192.168.1.21:846"
+rpc.mountd: v4.0 client detached: 0x35bce6a66ad467e3 from "192.168.1.21:825"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6aa6ad467e3 from "192.168.1.21:941"
+rpc.mountd: v4.0 client detached: 0x35bce6a86ad467e3 from "192.168.1.21:846"
+rpc.mountd: v4.0 client attached: 0x35bce6ac6ad467e3 from "192.168.1.21:930"
+rpc.mountd: v4.0 client detached: 0x35bce6aa6ad467e3 from "192.168.1.21:941"
+rpc.mountd: v4.0 client attached: 0x35bce6ae6ad467e3 from "192.168.1.21:971"
+rpc.mountd: v4.0 client detached: 0x35bce6ac6ad467e3 from "192.168.1.21:930"
+rpc.mountd: v4.0 client attached: 0x35bce6b06ad467e3 from "192.168.1.21:885"
+rpc.mountd: v4.0 client detached: 0x35bce6ae6ad467e3 from "192.168.1.21:971"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6b26ad467e3 from "192.168.1.21:742"
+rpc.mountd: v4.0 client detached: 0x35bce6b06ad467e3 from "192.168.1.21:885"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6b46ad467e3 from "192.168.1.21:796"
+rpc.mountd: v4.0 client detached: 0x35bce6b26ad467e3 from "192.168.1.21:742"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client detached: 0x35bce6b46ad467e3 from "192.168.1.21:796"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6b86ad467e3 from "192.168.1.21:888"
+rpc.mountd: v4.0 client detached: 0x35bce6b66ad467e3 from "192.168.1.21:853"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6ba6ad467e3 from "192.168.1.21:739"
+rpc.mountd: v4.0 client detached: 0x35bce6b86ad467e3 from "192.168.1.21:888"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6bc6ad467e3 from "192.168.1.21:688"
+rpc.mountd: v4.0 client detached: 0x35bce6ba6ad467e3 from "192.168.1.21:739"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client detached: 0x35bce6bc6ad467e3 from "192.168.1.21:688"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6c06ad467e3 from "192.168.1.21:749"
+rpc.mountd: v4.0 client detached: 0x35bce6be6ad467e3 from "192.168.1.21:677"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6c26ad467e3 from "192.168.1.21:828"
+rpc.mountd: v4.0 client detached: 0x35bce6c06ad467e3 from "192.168.1.21:749"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client detached: 0x35bce6c26ad467e3 from "192.168.1.21:828"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6c66ad467e3 from "192.168.1.21:946"
+rpc.mountd: v4.0 client detached: 0x35bce6c46ad467e3 from "192.168.1.21:785"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6c86ad467e3 from "192.168.1.21:698"
+rpc.mountd: v4.0 client detached: 0x35bce6c66ad467e3 from "192.168.1.21:946"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6ca6ad467e3 from "192.168.1.21:948"
+rpc.mountd: v4.0 client detached: 0x35bce6c86ad467e3 from "192.168.1.21:698"
+rpc.mountd: v4.0 client detached: 0x35bce6ca6ad467e3 from "192.168.1.21:948"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6ce6ad467e3 from "192.168.1.21:728"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6d06ad467e3 from "192.168.1.21:979"
+rpc.mountd: v4.0 client detached: 0x35bce6ce6ad467e3 from "192.168.1.21:728"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client detached: 0x35bce6d06ad467e3 from "192.168.1.21:979"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6d46ad467e3 from "192.168.1.21:759"
+rpc.mountd: v4.0 client detached: 0x35bce6d26ad467e3 from "192.168.1.21:695"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6d66ad467e3 from "192.168.1.21:753"
+rpc.mountd: v4.0 client detached: 0x35bce6d46ad467e3 from "192.168.1.21:759"
+rpc.mountd: v4.0 client attached: 0x35bce6d86ad467e3 from "192.168.1.21:977"
+rpc.mountd: v4.0 client detached: 0x35bce6d66ad467e3 from "192.168.1.21:753"
+rpc.mountd: v4.0 client attached: 0x35bce6da6ad467e3 from "192.168.1.21:846"
+rpc.mountd: v4.0 client detached: 0x35bce6d86ad467e3 from "192.168.1.21:977"
+rpc.mountd: v4.0 client attached: 0x35bce6dc6ad467e3 from "192.168.1.21:830"
+rpc.mountd: v4.0 client detached: 0x35bce6da6ad467e3 from "192.168.1.21:846"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.0 client attached: 0x35bce6de6ad467e3 from "192.168.1.21:1020"
+rpc.mountd: v4.0 client detached: 0x35bce6dc6ad467e3 from "192.168.1.21:830"
+rpc.mountd: v4.0 client detached: (null) from (null)
+rpc.mountd: v4.2 client attached: 0x35bce6e56ad467e3 from "192.168.1.21:809"
+rpc.mountd: v4.2 client detached: 0x35bce6e56ad467e3 from "192.168.1.21:809"
+rpc.mountd: v4.0 client detached: 0x35bce68c6ad467e3 from "192.168.1.22:909"
+rpc.mountd: v4.0 client detached: 0x35bce6de6ad467e3 from "192.168.1.21:1020"
+rpc.mountd: v4.2 client attached: 0x35bce6e96ad467e3 from "192.168.1.21:935"
+rpc.mountd: v4.2 client attached: 0x35bce6eb6ad467e3 from "192.168.1.21:940"
+rpc.mountd: v4.2 client detached: 0x35bce6e96ad467e3 from "192.168.1.21:935"
+rpc.mountd: v4.2 client detached: 0x35bce6eb6ad467e3 from "192.168.1.21:940"
+rpc.mountd: v4.2 client attached: 0x35bce6ef6ad467e3 from "192.168.1.21:902"
+rpc.mountd: v4.2 client attached: 0x35bce6f16ad467e3 from "192.168.1.21:987"
+rpc.mountd: v4.2 client detached: 0x35bce6ef6ad467e3 from "192.168.1.21:902"
+rpc.mountd: v4.2 client attached: 0x35bce6f36ad467e3 from "192.168.1.21:877"
+rpc.mountd: v4.2 client detached: 0x35bce6f16ad467e3 from "192.168.1.21:987"
+rpc.mountd: v4.2 client attached: 0x35bce6f56ad467e3 from "192.168.1.21:854"
+rpc.mountd: v4.2 client detached: 0x35bce6f36ad467e3 from "192.168.1.21:877"
+rpc.mountd: v4.2 client attached: 0x35bce6f76ad467e3 from "192.168.1.21:669"
+rpc.mountd: v4.2 client detached: 0x35bce6f56ad467e3 from "192.168.1.21:854"
+rpc.mountd: v4.2 client attached: 0x35bce6f96ad467e3 from "192.168.1.21:871"
+rpc.mountd: v4.2 client detached: 0x35bce6f76ad467e3 from "192.168.1.21:669"
+rpc.mountd: v4.2 client attached: 0x35bce6fb6ad467e3 from "192.168.1.21:836"
+rpc.mountd: v4.2 client detached: 0x35bce6f96ad467e3 from "192.168.1.21:871"
+rpc.mountd: v4.2 client attached: 0x35bce6fd6ad467e3 from "192.168.1.21:704"
+rpc.mountd: v4.2 client detached: 0x35bce6fb6ad467e3 from "192.168.1.21:836"
+rpc.mountd: v4.2 client detached: 0x35bce6fd6ad467e3 from "192.168.1.21:704"
+rpc.mountd: v4.2 client attached: 0x35bce7016ad467e3 from "192.168.1.21:779"
+rpc.mountd: v4.2 client attached: 0x35bce7036ad467e3 from "192.168.1.21:940"
+rpc.mountd: v4.2 client detached: 0x35bce7016ad467e3 from "192.168.1.21:779"
+rpc.mountd: v4.2 client attached: 0x35bce7056ad467e3 from "192.168.1.21:694"
+rpc.mountd: v4.2 client detached: 0x35bce7036ad467e3 from "192.168.1.21:940"
+rpc.mountd: v4.2 client attached: 0x35bce7076ad467e3 from "192.168.1.21:936"
+rpc.mountd: v4.2 client detached: 0x35bce7056ad467e3 from "192.168.1.21:694"
+rpc.mountd: v4.2 client attached: 0x35bce7096ad467e3 from "192.168.1.21:939"
+rpc.mountd: v4.2 client detached: 0x35bce7076ad467e3 from "192.168.1.21:936"
+rpc.mountd: v4.2 client attached: 0x35bce70b6ad467e3 from "192.168.1.21:714"
+rpc.mountd: v4.2 client detached: 0x35bce7096ad467e3 from "192.168.1.21:939"
+rpc.mountd: v4.2 client attached: 0x35bce70d6ad467e3 from "192.168.1.21:787"
+rpc.mountd: v4.2 client detached: 0x35bce70b6ad467e3 from "192.168.1.21:714"
+rpc.mountd: v4.2 client attached: 0x35bce70f6ad467e3 from "192.168.1.21:989"
+rpc.mountd: v4.2 client detached: 0x35bce70d6ad467e3 from "192.168.1.21:787"
+rpc.mountd: v4.2 client attached: 0x35bce7116ad467e3 from "192.168.1.21:678"
+rpc.mountd: v4.2 client detached: 0x35bce70f6ad467e3 from "192.168.1.21:989"
+rpc.mountd: v4.2 client attached: 0x35bce7136ad467e3 from "192.168.1.21:914"
+rpc.mountd: v4.2 client detached: 0x35bce7116ad467e3 from "192.168.1.21:678"
+rpc.mountd: v4.2 client attached: 0x35bce7156ad467e3 from "192.168.1.21:691"
+rpc.mountd: v4.2 client detached: 0x35bce7136ad467e3 from "192.168.1.21:914"
+rpc.mountd: v4.2 client attached: 0x35bce7176ad467e3 from "192.168.1.21:860"
+rpc.mountd: v4.2 client detached: 0x35bce7156ad467e3 from "192.168.1.21:691"
+rpc.mountd: v4.2 client attached: 0x35bce7196ad467e3 from "192.168.1.21:817"
+rpc.mountd: v4.2 client detached: 0x35bce7176ad467e3 from "192.168.1.21:860"
+rpc.mountd: v4.2 client attached: 0x35bce71b6ad467e3 from "192.168.1.21:745"
+rpc.mountd: v4.2 client detached: 0x35bce7196ad467e3 from "192.168.1.21:817"
+rpc.mountd: v4.2 client attached: 0x35bce71d6ad467e3 from "192.168.1.21:765"
+rpc.mountd: v4.2 client detached: 0x35bce71b6ad467e3 from "192.168.1.21:745"
+rpc.mountd: v4.2 client attached: 0x35bce71f6ad467e3 from "192.168.1.21:761"
+rpc.mountd: v4.2 client detached: 0x35bce71d6ad467e3 from "192.168.1.21:765"
+rpc.mountd: v4.2 client attached: 0x35bce7216ad467e3 from "192.168.1.21:945"
+rpc.mountd: v4.2 client detached: 0x35bce71f6ad467e3 from "192.168.1.21:761"
+rpc.mountd: v4.2 client attached: 0x35bce7236ad467e3 from "192.168.1.21:927"
+rpc.mountd: v4.2 client detached: 0x35bce7216ad467e3 from "192.168.1.21:945"
+rpc.mountd: v4.2 client attached: 0x35bce7256ad467e3 from "192.168.1.21:905"
+rpc.mountd: v4.2 client detached: 0x35bce7236ad467e3 from "192.168.1.21:927"
+rpc.mountd: v4.2 client attached: 0x35bce7276ad467e3 from "192.168.1.21:893"
+rpc.mountd: v4.2 client detached: 0x35bce7256ad467e3 from "192.168.1.21:905"
+rpc.mountd: v4.2 client attached: 0x35bce7296ad467e3 from "192.168.1.21:689"
+rpc.mountd: v4.2 client detached: 0x35bce7276ad467e3 from "192.168.1.21:893"
+rpc.mountd: v4.2 client attached: 0x35bce72b6ad467e3 from "192.168.1.21:816"
+rpc.mountd: v4.2 client detached: 0x35bce7296ad467e3 from "192.168.1.21:689"
+rpc.mountd: v4.2 client attached: 0x35bce72d6ad467e3 from "192.168.1.21:987"
+rpc.mountd: v4.2 client detached: 0x35bce72b6ad467e3 from "192.168.1.21:816"
+rpc.mountd: v4.2 client attached: 0x35bce72f6ad467e3 from "192.168.1.21:792"
+rpc.mountd: v4.2 client detached: 0x35bce72d6ad467e3 from "192.168.1.21:987"
+rpc.mountd: v4.2 client attached: 0x35bce7316ad467e3 from "192.168.1.21:892"
+rpc.mountd: v4.2 client detached: 0x35bce72f6ad467e3 from "192.168.1.21:792"
+rpc.mountd: v4.2 client attached: 0x35bce7336ad467e3 from "192.168.1.21:740"
+rpc.mountd: v4.2 client detached: 0x35bce7316ad467e3 from "192.168.1.21:892"
+rpc.mountd: v4.2 client attached: 0x35bce7356ad467e3 from "192.168.1.21:792"
+rpc.mountd: v4.2 client detached: 0x35bce7336ad467e3 from "192.168.1.21:740"
+rpc.mountd: v4.2 client detached: 0x35bce7356ad467e3 from "192.168.1.21:792"
+rpc.mountd: v4.1 client attached: 0x35bce73b6ad467e3 from "192.168.1.21:780"
+rpc.mountd: v4.1 client detached: 0x35bce73b6ad467e3 from "192.168.1.21:780"
+rpc.mountd: v4.1 client attached: 0x35bce73f6ad467e3 from "192.168.1.21:771"
+rpc.mountd: v4.1 client attached: 0x35bce7416ad467e3 from "192.168.1.21:1006"
+rpc.mountd: v4.1 client detached: 0x35bce73f6ad467e3 from "192.168.1.21:771"
+rpc.mountd: v4.1 client detached: 0x35bce7416ad467e3 from "192.168.1.21:1006"
+rpc.mountd: v4.1 client attached: 0x35bce7456ad467e3 from "192.168.1.21:789"
+rpc.mountd: v4.1 client attached: 0x35bce7476ad467e3 from "192.168.1.21:679"
+rpc.mountd: v4.1 client detached: 0x35bce7456ad467e3 from "192.168.1.21:789"
+rpc.mountd: v4.1 client attached: 0x35bce7496ad467e3 from "192.168.1.21:945"
+rpc.mountd: v4.1 client detached: 0x35bce7476ad467e3 from "192.168.1.21:679"
+rpc.mountd: v4.1 client attached: 0x35bce74b6ad467e3 from "192.168.1.21:955"
+rpc.mountd: v4.1 client detached: 0x35bce7496ad467e3 from "192.168.1.21:945"
+rpc.mountd: v4.1 client attached: 0x35bce74d6ad467e3 from "192.168.1.21:730"
+rpc.mountd: v4.1 client detached: 0x35bce74b6ad467e3 from "192.168.1.21:955"
+rpc.mountd: v4.1 client attached: 0x35bce74f6ad467e3 from "192.168.1.21:713"
+rpc.mountd: v4.1 client detached: 0x35bce74d6ad467e3 from "192.168.1.21:730"
+rpc.mountd: v4.1 client attached: 0x35bce7516ad467e3 from "192.168.1.21:939"
+rpc.mountd: v4.1 client detached: 0x35bce74f6ad467e3 from "192.168.1.21:713"
+rpc.mountd: v4.1 client attached: 0x35bce7536ad467e3 from "192.168.1.21:898"
+rpc.mountd: v4.1 client detached: 0x35bce7516ad467e3 from "192.168.1.21:939"
+rpc.mountd: v4.1 client detached: 0x35bce7536ad467e3 from "192.168.1.21:898"
+rpc.mountd: v4.1 client attached: 0x35bce7576ad467e3 from "192.168.1.21:773"
+rpc.mountd: v4.1 client attached: 0x35bce7596ad467e3 from "192.168.1.21:958"
+rpc.mountd: v4.1 client detached: 0x35bce7576ad467e3 from "192.168.1.21:773"
+rpc.mountd: v4.1 client attached: 0x35bce75b6ad467e3 from "192.168.1.21:883"
+rpc.mountd: v4.1 client detached: 0x35bce7596ad467e3 from "192.168.1.21:958"
+rpc.mountd: v4.1 client attached: 0x35bce75d6ad467e3 from "192.168.1.21:796"
+rpc.mountd: v4.1 client detached: 0x35bce75b6ad467e3 from "192.168.1.21:883"
+rpc.mountd: v4.1 client attached: 0x35bce75f6ad467e3 from "192.168.1.21:859"
+rpc.mountd: v4.1 client detached: 0x35bce75d6ad467e3 from "192.168.1.21:796"
+rpc.mountd: v4.1 client attached: 0x35bce7616ad467e3 from "192.168.1.21:914"
+rpc.mountd: v4.1 client detached: 0x35bce75f6ad467e3 from "192.168.1.21:859"
+rpc.mountd: v4.1 client attached: 0x35bce7636ad467e3 from "192.168.1.21:691"
+rpc.mountd: v4.1 client detached: 0x35bce7616ad467e3 from "192.168.1.21:914"
+rpc.mountd: v4.1 client attached: 0x35bce7656ad467e3 from "192.168.1.21:836"
+rpc.mountd: v4.1 client detached: 0x35bce7636ad467e3 from "192.168.1.21:691"
+rpc.mountd: v4.1 client attached: 0x35bce7676ad467e3 from "192.168.1.21:841"
+rpc.mountd: v4.1 client detached: 0x35bce7656ad467e3 from "192.168.1.21:836"
+rpc.mountd: v4.1 client attached: 0x35bce7696ad467e3 from "192.168.1.21:929"
+rpc.mountd: v4.1 client detached: 0x35bce7676ad467e3 from "192.168.1.21:841"
+rpc.mountd: v4.1 client attached: 0x35bce76b6ad467e3 from "192.168.1.21:718"
+rpc.mountd: v4.1 client detached: 0x35bce7696ad467e3 from "192.168.1.21:929"
+rpc.mountd: v4.1 client attached: 0x35bce76d6ad467e3 from "192.168.1.21:852"
+rpc.mountd: v4.1 client detached: 0x35bce76b6ad467e3 from "192.168.1.21:718"
+rpc.mountd: v4.1 client attached: 0x35bce76f6ad467e3 from "192.168.1.21:699"
+rpc.mountd: v4.1 client detached: 0x35bce76d6ad467e3 from "192.168.1.21:852"
+rpc.mountd: v4.1 client attached: 0x35bce7716ad467e3 from "192.168.1.21:879"
+rpc.mountd: v4.1 client detached: 0x35bce76f6ad467e3 from "192.168.1.21:699"
+rpc.mountd: v4.1 client attached: 0x35bce7736ad467e3 from "192.168.1.21:772"
+rpc.mountd: v4.1 client detached: 0x35bce7716ad467e3 from "192.168.1.21:879"
+rpc.mountd: v4.1 client attached: 0x35bce7756ad467e3 from "192.168.1.21:695"
+rpc.mountd: v4.1 client detached: 0x35bce7736ad467e3 from "192.168.1.21:772"
+rpc.mountd: v4.1 client attached: 0x35bce7776ad467e3 from "192.168.1.21:750"
+rpc.mountd: v4.1 client detached: 0x35bce7756ad467e3 from "192.168.1.21:695"
+rpc.mountd: v4.1 client attached: 0x35bce7796ad467e3 from "192.168.1.21:843"
+rpc.mountd: v4.1 client detached: 0x35bce7776ad467e3 from "192.168.1.21:750"
+rpc.mountd: v4.1 client attached: 0x35bce77b6ad467e3 from "192.168.1.21:737"
+rpc.mountd: v4.1 client detached: 0x35bce7796ad467e3 from "192.168.1.21:843"
+rpc.mountd: v4.1 client attached: 0x35bce77d6ad467e3 from "192.168.1.21:820"
+rpc.mountd: v4.1 client detached: 0x35bce77b6ad467e3 from "192.168.1.21:737"
+rpc.mountd: v4.1 client attached: 0x35bce77f6ad467e3 from "192.168.1.21:763"
+rpc.mountd: v4.1 client detached: 0x35bce77d6ad467e3 from "192.168.1.21:820"
+rpc.mountd: v4.1 client attached: 0x35bce7816ad467e3 from "192.168.1.21:774"
+rpc.mountd: v4.1 client detached: 0x35bce77f6ad467e3 from "192.168.1.21:763"
+rpc.mountd: v4.1 client attached: 0x35bce7836ad467e3 from "192.168.1.21:740"
+rpc.mountd: v4.1 client detached: 0x35bce7816ad467e3 from "192.168.1.21:774"
+rpc.mountd: v4.1 client attached: 0x35bce7856ad467e3 from "192.168.1.21:726"
+rpc.mountd: v4.1 client detached: 0x35bce7836ad467e3 from "192.168.1.21:740"
+rpc.mountd: v4.1 client attached: 0x35bce7876ad467e3 from "192.168.1.21:773"
+rpc.mountd: v4.1 client detached: 0x35bce7856ad467e3 from "192.168.1.21:726"
+rpc.mountd: v4.1 client attached: 0x35bce7896ad467e3 from "192.168.1.21:708"
+rpc.mountd: v4.1 client detached: 0x35bce7876ad467e3 from "192.168.1.21:773"
+rpc.mountd: v4.1 client attached: 0x35bce78b6ad467e3 from "192.168.1.21:831"
+rpc.mountd: v4.1 client detached: 0x35bce7896ad467e3 from "192.168.1.21:708"
+rpc.mountd: v4.1 client detached: 0x35bce78b6ad467e3 from "192.168.1.21:831"
+- runit: leave stage: /etc/runit/2
+- runit: enter stage: /etc/runit/3
+Grabbing pools
+Grabbing all containers
+and down we go
+- runit: leave stage: /etc/runit/3
+- runit: sending KILL signal to all processes...
+- runit: power off...
+[ 3563.963408] reboot: Power down

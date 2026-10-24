@@ -1,0 +1,3848 @@
+SHELL: 0
+
+START: 2026-10-18 08:30:58 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-18 08:30:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:30:58 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-18 08:30:58 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:30:58 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:30:59 +0200
+ELAPSED: 1.85s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:31:00 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:31:01 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:31:02 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:31:03 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:31:04 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:31:04 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:31:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:31:06 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:31:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:31:08 +0200
+ELAPSED: 0.62s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:31:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:31:09 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:31:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:31:11 +0200
+ELAPSED: 0.89s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:31:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:31:13 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-18 08:31:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:31:14 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-18 08:31:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:31:16 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-18 08:31:16 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-18 08:31:16 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Sun, 18 Oct 2026 06:31:16 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-18 08:31:16 +0200
+COMMAND: osctl ct new --distribution ubuntu --version 24.04 docker-b30a
+END: 2026-10-18 08:31:41 +0200
+ELAPSED: 24.45s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-18 08:31:41 +0200
+COMMAND: osctl ct unset start-menu docker-b30a
+END: 2026-10-18 08:31:41 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:31:41 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 --no-dhcp --gateway-v4 auto --gateway-v6 none docker-b30a eth0
+END: 2026-10-18 08:31:42 +0200
+ELAPSED: 0.72s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:31:42 +0200
+COMMAND: osctl ct netif ip add docker-b30a eth0 192.168.1.88/24
+END: 2026-10-18 08:31:43 +0200
+ELAPSED: 0.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:31:43 +0200
+COMMAND: osctl ct set dns-resolver docker-b30a 1.1.1.1
+END: 2026-10-18 08:31:43 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:31:43 +0200
+COMMAND: osctl ct start docker-b30a
+END: 2026-10-18 08:31:45 +0200
+ELAPSED: 1.89s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 08:31:45 +0200
+COMMAND: osctl ct exec docker-b30a sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-18 08:31:47 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58: icmp_seq=1 ttl=254 time=6.21 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 6.208/6.208/6.208/0.000 ms
+---
+
+START: 2026-10-18 08:31:47 +0200
+COMMAND: osctl ct exec docker-b30a apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none update -y
+END: 2026-10-18 08:31:51 +0200
+ELAPSED: 4.05s
+STATUS: 0
+OUTPUT:
+Hit:1 http://cz.archive.ubuntu.com/ubuntu noble InRelease
+Get:2 http://cz.archive.ubuntu.com/ubuntu noble-security InRelease [126 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu noble-updates InRelease [126 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu noble-updates/main amd64 Packages [1397 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu noble-updates/universe amd64 Packages [1704 kB]
+Fetched 3353 kB in 1s (3370 kB/s)
+Reading package lists...
+---
+
+START: 2026-10-18 08:31:51 +0200
+COMMAND: osctl ct exec docker-b30a apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none install -y ca-certificates curl
+END: 2026-10-18 08:31:56 +0200
+ELAPSED: 5.18s
+STATUS: 0
+OUTPUT:
+Reading package lists...
+Building dependency tree...
+Reading state information...
+ca-certificates is already the newest version (20260601~24.04.1).
+The following additional packages will be installed:
+  libbrotli1 libcurl4t64 libldap-common libldap2 libnghttp2-14 librtmp1
+  libsasl2-2 libsasl2-modules libsasl2-modules-db libssh-4
+Suggested packages:
+  libsasl2-modules-gssapi-mit | libsasl2-modules-gssapi-heimdal
+  libsasl2-modules-ldap libsasl2-modules-otp libsasl2-modules-sql
+The following NEW packages will be installed:
+  curl libbrotli1 libcurl4t64 libldap-common libldap2 libnghttp2-14 librtmp1
+  libsasl2-2 libsasl2-modules libsasl2-modules-db libssh-4
+0 upgraded, 11 newly installed, 0 to remove and 4 not upgraded.
+Need to get 1598 kB of archives.
+After this operation, 4390 kB of additional disk space will be used.
+Get:1 http://cz.archive.ubuntu.com/ubuntu noble-security/main amd64 libnghttp2-14 amd64 1.59.0-1ubuntu0.4 [74.6 kB]
+Get:2 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 libbrotli1 amd64 1.1.0-2build2 [331 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-modules-db amd64 2.1.28+dfsg1-5ubuntu3.1 [20.4 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-2 amd64 2.1.28+dfsg1-5ubuntu3.1 [53.2 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu noble-updates/main amd64 libldap2 amd64 2.6.10+dfsg-0ubuntu0.24.04.1 [198 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2build7 [56.3 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu noble-security/main amd64 libssh-4 amd64 0.10.6-2ubuntu0.5 [191 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu noble-security/main amd64 libcurl4t64 amd64 8.5.0-2ubuntu10.16 [344 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu noble-security/main amd64 curl amd64 8.5.0-2ubuntu10.16 [226 kB]
+Get:10 http://cz.archive.ubuntu.com/ubuntu noble-updates/main amd64 libldap-common all 2.6.10+dfsg-0ubuntu0.24.04.1 [32.9 kB]
+Get:11 http://cz.archive.ubuntu.com/ubuntu noble-updates/main amd64 libsasl2-modules amd64 2.1.28+dfsg1-5ubuntu3.1 [69.9 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.38.2 /usr/local/share/perl/5.38.2 /usr/lib/x86_64-linux-gnu/perl5/5.38 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.38 /usr/share/perl/5.38 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 11.)
+debconf: falling back to frontend: Teletype
+dpkg-preconfigure: unable to re-open stdin: 
+Fetched 1598 kB in 0s (28.5 MB/s)
+Selecting previously unselected package libnghttp2-14:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 19541 files and directories currently installed.)
+Preparing to unpack .../00-libnghttp2-14_1.59.0-1ubuntu0.4_amd64.deb ...
+Unpacking libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Selecting previously unselected package libbrotli1:amd64.
+Preparing to unpack .../01-libbrotli1_1.1.0-2build2_amd64.deb ...
+Unpacking libbrotli1:amd64 (1.1.0-2build2) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../02-libsasl2-modules-db_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../03-libsasl2-2_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Selecting previously unselected package libldap2:amd64.
+Preparing to unpack .../04-libldap2_2.6.10+dfsg-0ubuntu0.24.04.1_amd64.deb ...
+Unpacking libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Selecting previously unselected package librtmp1:amd64.
+Preparing to unpack .../05-librtmp1_2.4+20151223.gitfa8646d.1-2build7_amd64.deb ...
+Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Selecting previously unselected package libssh-4:amd64.
+Preparing to unpack .../06-libssh-4_0.10.6-2ubuntu0.5_amd64.deb ...
+Unpacking libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Selecting previously unselected package libcurl4t64:amd64.
+Preparing to unpack .../07-libcurl4t64_8.5.0-2ubuntu10.16_amd64.deb ...
+Unpacking libcurl4t64:amd64 (8.5.0-2ubuntu10.16) ...
+Selecting previously unselected package curl.
+Preparing to unpack .../08-curl_8.5.0-2ubuntu10.16_amd64.deb ...
+Unpacking curl (8.5.0-2ubuntu10.16) ...
+Selecting previously unselected package libldap-common.
+Preparing to unpack .../09-libldap-common_2.6.10+dfsg-0ubuntu0.24.04.1_all.deb ...
+Unpacking libldap-common (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Selecting previously unselected package libsasl2-modules:amd64.
+Preparing to unpack .../10-libsasl2-modules_2.1.28+dfsg1-5ubuntu3.1_amd64.deb ...
+Unpacking libsasl2-modules:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up libbrotli1:amd64 (1.1.0-2build2) ...
+Setting up libsasl2-modules:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up libnghttp2-14:amd64 (1.59.0-1ubuntu0.4) ...
+Setting up libldap-common (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Setting up libsasl2-modules-db:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build7) ...
+Setting up libsasl2-2:amd64 (2.1.28+dfsg1-5ubuntu3.1) ...
+Setting up libssh-4:amd64 (0.10.6-2ubuntu0.5) ...
+Setting up libldap2:amd64 (2.6.10+dfsg-0ubuntu0.24.04.1) ...
+Setting up libcurl4t64:amd64 (8.5.0-2ubuntu10.16) ...
+Setting up curl (8.5.0-2ubuntu10.16) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+---
+
+START: 2026-10-18 08:31:56 +0200
+COMMAND: osctl ct exec docker-b30a install -m 0755 -d /etc/apt/keyrings
+END: 2026-10-18 08:31:58 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:31:58 +0200
+COMMAND: osctl ct exec docker-b30a curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+END: 2026-10-18 08:31:59 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:31:59 +0200
+COMMAND: osctl ct exec docker-b30a chmod a+r /etc/apt/keyrings/docker.asc
+END: 2026-10-18 08:32:01 +0200
+ELAPSED: 1.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:32:01 +0200
+COMMAND: osctl ct exec docker-b30a bash -c 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list'
+END: 2026-10-18 08:32:02 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:32:02 +0200
+COMMAND: osctl ct exec docker-b30a apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none update -y
+END: 2026-10-18 08:32:06 +0200
+ELAPSED: 3.63s
+STATUS: 0
+OUTPUT:
+Hit:1 http://cz.archive.ubuntu.com/ubuntu noble InRelease
+Hit:2 http://cz.archive.ubuntu.com/ubuntu noble-security InRelease
+Hit:3 http://cz.archive.ubuntu.com/ubuntu noble-updates InRelease
+Get:4 https://download.docker.com/linux/ubuntu noble InRelease [48.5 kB]
+Get:5 https://download.docker.com/linux/ubuntu noble/stable amd64 Packages [70.2 kB]
+Fetched 119 kB in 1s (176 kB/s)
+Reading package lists...
+---
+
+START: 2026-10-18 08:32:06 +0200
+COMMAND: osctl ct exec docker-b30a apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none install -y docker-ce docker-ce-cli containerd.io
+END: 2026-10-18 08:32:26 +0200
+ELAPSED: 19.79s
+STATUS: 0
+OUTPUT:
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  apparmor docker-buildx-plugin docker-ce-rootless-extras
+  docker-compose-plugin git git-man iptables libcurl3t64-gnutls liberror-perl
+  libgdbm-compat4t64 libip4tc2 libip6tc2 libjansson4 libnetfilter-conntrack3
+  libnfnetlink0 libnftables1 libnftnl11 libperl5.38t64 nftables patch perl
+  perl-modules-5.38 pigz xz-utils
+Suggested packages:
+  apparmor-profiles-extra apparmor-utils cgroupfs-mount | cgroup-lite
+  docker-model-plugin gettext-base git-daemon-run | git-daemon-sysvinit
+  git-doc git-email git-gui gitk gitweb git-cvs git-mediawiki git-svn
+  firewalld ed diffutils-doc perl-doc libterm-readline-gnu-perl
+  | libterm-readline-perl-perl make libtap-harness-archive-perl
+The following NEW packages will be installed:
+  apparmor containerd.io docker-buildx-plugin docker-ce docker-ce-cli
+  docker-ce-rootless-extras docker-compose-plugin git git-man iptables
+  libcurl3t64-gnutls liberror-perl libgdbm-compat4t64 libip4tc2 libip6tc2
+  libjansson4 libnetfilter-conntrack3 libnfnetlink0 libnftables1 libnftnl11
+  libperl5.38t64 nftables patch perl perl-modules-5.38 pigz xz-utils
+0 upgraded, 27 newly installed, 0 to remove and 4 not upgraded.
+Need to get 117 MB of archives.
+After this operation, 472 MB of additional disk space will be used.
+Get:1 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 libip4tc2 amd64 1.8.10-3ubuntu2 [23.3 kB]
+Get:2 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 libip6tc2 amd64 1.8.10-3ubuntu2 [23.7 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 libnfnetlink0 amd64 1.0.2-2build1 [14.8 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 libnetfilter-conntrack3 amd64 1.0.9-6build1 [45.2 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 libnftnl11 amd64 1.2.6-2build1 [66.0 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 iptables amd64 1.8.10-3ubuntu2 [381 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 libjansson4 amd64 2.14-2build2 [32.8 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu noble-updates/main amd64 libnftables1 amd64 1.0.9-1ubuntu0.1 [359 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu noble-updates/main amd64 nftables amd64 1.0.9-1ubuntu0.1 [69.8 kB]
+Get:10 http://cz.archive.ubuntu.com/ubuntu noble-security/main amd64 perl-modules-5.38 all 5.38.2-3.2ubuntu0.6 [3110 kB]
+Get:11 https://download.docker.com/linux/ubuntu noble/stable amd64 containerd.io amd64 2.4.2-2~ubuntu.24.04~noble [23.3 MB]
+Get:12 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 libgdbm-compat4t64 amd64 1.23-5.1build1 [6710 B]
+Get:13 http://cz.archive.ubuntu.com/ubuntu noble-security/main amd64 libperl5.38t64 amd64 5.38.2-3.2ubuntu0.6 [4864 kB]
+Get:14 http://cz.archive.ubuntu.com/ubuntu noble-security/main amd64 perl amd64 5.38.2-3.2ubuntu0.6 [231 kB]
+Get:15 http://cz.archive.ubuntu.com/ubuntu noble/universe amd64 pigz amd64 2.8-1 [65.6 kB]
+Get:16 http://cz.archive.ubuntu.com/ubuntu noble-updates/main amd64 apparmor amd64 4.0.1really4.0.1-0ubuntu0.24.04.9 [640 kB]
+Get:17 http://cz.archive.ubuntu.com/ubuntu noble-security/main amd64 xz-utils amd64 5.6.1+really5.4.5-1ubuntu0.3 [267 kB]
+Get:18 http://cz.archive.ubuntu.com/ubuntu noble-security/main amd64 libcurl3t64-gnutls amd64 8.5.0-2ubuntu10.16 [337 kB]
+Get:19 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 liberror-perl all 0.17029-2 [25.6 kB]
+Get:20 http://cz.archive.ubuntu.com/ubuntu noble-security/main amd64 git-man all 1:2.43.0-1ubuntu7.3 [1100 kB]
+Get:21 http://cz.archive.ubuntu.com/ubuntu noble-security/main amd64 git amd64 1:2.43.0-1ubuntu7.3 [3680 kB]
+Get:22 http://cz.archive.ubuntu.com/ubuntu noble/main amd64 patch amd64 2.7.6-7build3 [104 kB]
+Get:23 https://download.docker.com/linux/ubuntu noble/stable amd64 docker-ce-cli amd64 5:29.9.1-1~ubuntu.24.04~noble [17.6 MB]
+Get:24 https://download.docker.com/linux/ubuntu noble/stable amd64 docker-ce amd64 5:29.9.1-1~ubuntu.24.04~noble [24.5 MB]
+Get:25 https://download.docker.com/linux/ubuntu noble/stable amd64 docker-buildx-plugin amd64 0.38.0-1~ubuntu.24.04~noble [17.8 MB]
+Get:26 https://download.docker.com/linux/ubuntu noble/stable amd64 docker-ce-rootless-extras amd64 5:29.9.1-1~ubuntu.24.04~noble [10.2 MB]
+Get:27 https://download.docker.com/linux/ubuntu noble/stable amd64 docker-compose-plugin amd64 5.6.0-1~ubuntu.24.04~noble [8080 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC entries checked: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.38.2 /usr/local/share/perl/5.38.2 /usr/lib/x86_64-linux-gnu/perl5/5.38 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.38 /usr/share/perl/5.38 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 8, <STDIN> line 27.)
+debconf: falling back to frontend: Teletype
+dpkg-preconfigure: unable to re-open stdin: 
+Fetched 117 MB in 1s (86.2 MB/s)
+Selecting previously unselected package containerd.io.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 19635 files and directories currently installed.)
+Preparing to unpack .../00-containerd.io_2.4.2-2~ubuntu.24.04~noble_amd64.deb ...
+Unpacking containerd.io (2.4.2-2~ubuntu.24.04~noble) ...
+Selecting previously unselected package docker-ce-cli.
+Preparing to unpack .../01-docker-ce-cli_5%3a29.9.1-1~ubuntu.24.04~noble_amd64.deb ...
+Unpacking docker-ce-cli (5:29.9.1-1~ubuntu.24.04~noble) ...
+Selecting previously unselected package libip4tc2:amd64.
+Preparing to unpack .../02-libip4tc2_1.8.10-3ubuntu2_amd64.deb ...
+Unpacking libip4tc2:amd64 (1.8.10-3ubuntu2) ...
+Selecting previously unselected package libip6tc2:amd64.
+Preparing to unpack .../03-libip6tc2_1.8.10-3ubuntu2_amd64.deb ...
+Unpacking libip6tc2:amd64 (1.8.10-3ubuntu2) ...
+Selecting previously unselected package libnfnetlink0:amd64.
+Preparing to unpack .../04-libnfnetlink0_1.0.2-2build1_amd64.deb ...
+Unpacking libnfnetlink0:amd64 (1.0.2-2build1) ...
+Selecting previously unselected package libnetfilter-conntrack3:amd64.
+Preparing to unpack .../05-libnetfilter-conntrack3_1.0.9-6build1_amd64.deb ...
+Unpacking libnetfilter-conntrack3:amd64 (1.0.9-6build1) ...
+Selecting previously unselected package libnftnl11:amd64.
+Preparing to unpack .../06-libnftnl11_1.2.6-2build1_amd64.deb ...
+Unpacking libnftnl11:amd64 (1.2.6-2build1) ...
+Selecting previously unselected package iptables.
+Preparing to unpack .../07-iptables_1.8.10-3ubuntu2_amd64.deb ...
+Unpacking iptables (1.8.10-3ubuntu2) ...
+Selecting previously unselected package libjansson4:amd64.
+Preparing to unpack .../08-libjansson4_2.14-2build2_amd64.deb ...
+Unpacking libjansson4:amd64 (2.14-2build2) ...
+Selecting previously unselected package libnftables1:amd64.
+Preparing to unpack .../09-libnftables1_1.0.9-1ubuntu0.1_amd64.deb ...
+Unpacking libnftables1:amd64 (1.0.9-1ubuntu0.1) ...
+Selecting previously unselected package nftables.
+Preparing to unpack .../10-nftables_1.0.9-1ubuntu0.1_amd64.deb ...
+Unpacking nftables (1.0.9-1ubuntu0.1) ...
+Selecting previously unselected package docker-ce.
+Preparing to unpack .../11-docker-ce_5%3a29.9.1-1~ubuntu.24.04~noble_amd64.deb ...
+Unpacking docker-ce (5:29.9.1-1~ubuntu.24.04~noble) ...
+Selecting previously unselected package perl-modules-5.38.
+Preparing to unpack .../12-perl-modules-5.38_5.38.2-3.2ubuntu0.6_all.deb ...
+Unpacking perl-modules-5.38 (5.38.2-3.2ubuntu0.6) ...
+Selecting previously unselected package libgdbm-compat4t64:amd64.
+Preparing to unpack .../13-libgdbm-compat4t64_1.23-5.1build1_amd64.deb ...
+Unpacking libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Selecting previously unselected package libperl5.38t64:amd64.
+Preparing to unpack .../14-libperl5.38t64_5.38.2-3.2ubuntu0.6_amd64.deb ...
+Unpacking libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.6) ...
+Selecting previously unselected package perl.
+Preparing to unpack .../15-perl_5.38.2-3.2ubuntu0.6_amd64.deb ...
+Unpacking perl (5.38.2-3.2ubuntu0.6) ...
+Selecting previously unselected package pigz.
+Preparing to unpack .../16-pigz_2.8-1_amd64.deb ...
+Unpacking pigz (2.8-1) ...
+Selecting previously unselected package apparmor.
+Preparing to unpack .../17-apparmor_4.0.1really4.0.1-0ubuntu0.24.04.9_amd64.deb ...
+Unpacking apparmor (4.0.1really4.0.1-0ubuntu0.24.04.9) ...
+Selecting previously unselected package xz-utils.
+Preparing to unpack .../18-xz-utils_5.6.1+really5.4.5-1ubuntu0.3_amd64.deb ...
+Unpacking xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+Selecting previously unselected package docker-buildx-plugin.
+Preparing to unpack .../19-docker-buildx-plugin_0.38.0-1~ubuntu.24.04~noble_amd64.deb ...
+Unpacking docker-buildx-plugin (0.38.0-1~ubuntu.24.04~noble) ...
+Selecting previously unselected package docker-ce-rootless-extras.
+Preparing to unpack .../20-docker-ce-rootless-extras_5%3a29.9.1-1~ubuntu.24.04~noble_amd64.deb ...
+Unpacking docker-ce-rootless-extras (5:29.9.1-1~ubuntu.24.04~noble) ...
+Selecting previously unselected package docker-compose-plugin.
+Preparing to unpack .../21-docker-compose-plugin_5.6.0-1~ubuntu.24.04~noble_amd64.deb ...
+Unpacking docker-compose-plugin (5.6.0-1~ubuntu.24.04~noble) ...
+Selecting previously unselected package libcurl3t64-gnutls:amd64.
+Preparing to unpack .../22-libcurl3t64-gnutls_8.5.0-2ubuntu10.16_amd64.deb ...
+Unpacking libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.16) ...
+Selecting previously unselected package liberror-perl.
+Preparing to unpack .../23-liberror-perl_0.17029-2_all.deb ...
+Unpacking liberror-perl (0.17029-2) ...
+Selecting previously unselected package git-man.
+Preparing to unpack .../24-git-man_1%3a2.43.0-1ubuntu7.3_all.deb ...
+Unpacking git-man (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package git.
+Preparing to unpack .../25-git_1%3a2.43.0-1ubuntu7.3_amd64.deb ...
+Unpacking git (1:2.43.0-1ubuntu7.3) ...
+Selecting previously unselected package patch.
+Preparing to unpack .../26-patch_2.7.6-7build3_amd64.deb ...
+Unpacking patch (2.7.6-7build3) ...
+Setting up libip4tc2:amd64 (1.8.10-3ubuntu2) ...
+Setting up libgdbm-compat4t64:amd64 (1.23-5.1build1) ...
+Setting up libip6tc2:amd64 (1.8.10-3ubuntu2) ...
+Setting up libcurl3t64-gnutls:amd64 (8.5.0-2ubuntu10.16) ...
+Setting up libnftnl11:amd64 (1.2.6-2build1) ...
+Setting up libjansson4:amd64 (2.14-2build2) ...
+Setting up apparmor (4.0.1really4.0.1-0ubuntu0.24.04.9) ...
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (This frontend requires a controlling tty.)
+debconf: falling back to frontend: Teletype
+Created symlink /etc/systemd/system/sysinit.target.wants/apparmor.service → /usr/lib/systemd/system/apparmor.service.
+Setting up docker-buildx-plugin (0.38.0-1~ubuntu.24.04~noble) ...
+Setting up xz-utils (5.6.1+really5.4.5-1ubuntu0.3) ...
+update-alternatives: using /usr/bin/xz to provide /usr/bin/lzma (lzma) in auto mode
+Setting up perl-modules-5.38 (5.38.2-3.2ubuntu0.6) ...
+Setting up containerd.io (2.4.2-2~ubuntu.24.04~noble) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/containerd.service → /usr/lib/systemd/system/containerd.service.
+Setting up patch (2.7.6-7build3) ...
+Setting up docker-compose-plugin (5.6.0-1~ubuntu.24.04~noble) ...
+Setting up docker-ce-cli (5:29.9.1-1~ubuntu.24.04~noble) ...
+Setting up pigz (2.8-1) ...
+Setting up libnfnetlink0:amd64 (1.0.2-2build1) ...
+Setting up git-man (1:2.43.0-1ubuntu7.3) ...
+Setting up docker-ce-rootless-extras (5:29.9.1-1~ubuntu.24.04~noble) ...
+Setting up libperl5.38t64:amd64 (5.38.2-3.2ubuntu0.6) ...
+Setting up libnftables1:amd64 (1.0.9-1ubuntu0.1) ...
+Setting up nftables (1.0.9-1ubuntu0.1) ...
+Setting up perl (5.38.2-3.2ubuntu0.6) ...
+Setting up libnetfilter-conntrack3:amd64 (1.0.9-6build1) ...
+Setting up iptables (1.8.10-3ubuntu2) ...
+update-alternatives: using /usr/sbin/iptables-legacy to provide /usr/sbin/iptables (iptables) in auto mode
+update-alternatives: using /usr/sbin/ip6tables-legacy to provide /usr/sbin/ip6tables (ip6tables) in auto mode
+update-alternatives: using /usr/sbin/iptables-nft to provide /usr/sbin/iptables (iptables) in auto mode
+update-alternatives: using /usr/sbin/ip6tables-nft to provide /usr/sbin/ip6tables (ip6tables) in auto mode
+update-alternatives: using /usr/sbin/arptables-nft to provide /usr/sbin/arptables (arptables) in auto mode
+update-alternatives: using /usr/sbin/ebtables-nft to provide /usr/sbin/ebtables (ebtables) in auto mode
+Setting up liberror-perl (0.17029-2) ...
+Setting up docker-ce (5:29.9.1-1~ubuntu.24.04~noble) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/docker.service → /usr/lib/systemd/system/docker.service.
+Created symlink /etc/systemd/system/sockets.target.wants/docker.socket → /usr/lib/systemd/system/docker.socket.
+Setting up git (1:2.43.0-1ubuntu7.3) ...
+Processing triggers for man-db (2.12.0-4build2) ...
+Processing triggers for libc-bin (2.39-0ubuntu8.9) ...
+---
+
+START: 2026-10-18 08:32:26 +0200
+COMMAND: osctl ct exec docker-b30a sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-18 08:32:27 +0200
+ELAPSED: 1.54s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-18 08:32:27 +0200
+COMMAND: osctl ct exec docker-b30a sh -c mkdir\ -p\ /etc/docker'
+'cat\ \>\ /etc/docker/daemon.json\ \<\<\'EOF\''
+'\{'
+'\ \ \"registry-mirrors\":\ \['
+'\ \ \ \ \"https://docker-registry.vpsadminos.org\"'
+'\ \ \]'
+'\}'
+''
+'EOF'
+'
+END: 2026-10-18 08:32:29 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:32:29 +0200
+COMMAND: osctl ct exec docker-b30a sh -c if\ command\ -v\ update-alternatives\ \>/dev/null\ 2\>\&1\;\ then'
+'\ \ for\ name\ in\ iptables\ ip6tables\ arptables\ ebtables\;\ do'
+'\ \ \ \ target\=\"/usr/sbin/\$\{name\}-nft\"'
+'\ \ \ \ if\ \[\ -x\ \"\$target\"\ \]\ \&\&\ update-alternatives\ --list\ \"\$name\"\ 2\>/dev/null\ \|\ grep\ -Fxq\ \"\$target\"\;\ then'
+'\ \ \ \ \ \ update-alternatives\ --set\ \"\$name\"\ \"\$target\"'
+'\ \ \ \ fi'
+'\ \ done'
+'fi'
+'
+END: 2026-10-18 08:32:31 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:32:31 +0200
+COMMAND: osctl ct exec docker-b30a systemctl reset-failed docker || true
+END: 2026-10-18 08:32:32 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:32:32 +0200
+COMMAND: osctl ct exec docker-b30a systemctl restart docker
+END: 2026-10-18 08:32:35 +0200
+ELAPSED: 2.73s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:32:35 +0200
+COMMAND: osctl ct exec docker-b30a sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-18 08:32:36 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+{
+  "registry-mirrors": [
+    "https://docker-registry.vpsadminos.org"
+  ]
+}
+
+---
+
+START: 2026-10-18 08:32:36 +0200
+COMMAND: osctl ct exec docker-b30a docker info
+END: 2026-10-18 08:32:38 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+Client: Docker Engine - Community
+ Version:    29.9.1
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.38.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.6.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 0
+ Server Version: 29.9.1
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: b7a25261e029d68978bbf290df0a62fc819b3c51
+ runc version: v1.5.2-0-g29dd3dc2
+ init version: de40ad0
+ Security Options:
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.12.109
+ Operating System: Ubuntu 24.04.5 LTS
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 4
+ Total Memory: 7.765GiB
+ Name: docker-b30a
+ ID: 17ecbf7a-0419-42d0-b9c5-557f59d03706
+ Docker Root Dir: /var/lib/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  127.0.0.0/8
+  ::1/128
+ Registry Mirrors:
+  https://docker-registry.vpsadminos.org/
+ Live Restore Enabled: false
+ Firewall Backend: iptables
+  EnableUserlandProxy: true
+  UserlandProxyPath: /usr/bin/docker-proxy
+
+WARNING: No io.weight support
+WARNING: No io.weight (per device) support
+WARNING: No io.max (rbps) support
+WARNING: No io.max (wbps) support
+WARNING: No io.max (riops) support
+WARNING: No io.max (wiops) support
+---
+
+START: 2026-10-18 08:32:38 +0200
+COMMAND: osctl ct exec docker-b30a docker run hello-world
+END: 2026-10-18 08:32:42 +0200
+ELAPSED: 3.8s
+STATUS: 0
+OUTPUT:
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+4f55086f7dd0: Pulling fs layer
+4f55086f7dd0: Download complete
+d5e71e642bf5: Download complete
+4f55086f7dd0: Pull complete
+Digest: sha256:11a3eb1597e864c51b3f56733cb2e8a90bf0c284bfc05f9444d81c558bc848aa
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+---
+
+START: 2026-10-18 08:32:42 +0200
+COMMAND: osctl ct exec docker-b30a sh -c mkdir\ -p\ /tmp/docker-build-test'
+'cat\ \>\ /tmp/docker-build-test/Dockerfile\ \<\<\'EOF\''
+'\#\ syntax\=docker/dockerfile:1'
+''
+'FROM\ alpine:latest'
+'RUN\ echo\ \"Docker\ build\ works\!\"\ \>\ /message.txt'
+'CMD\ \[\"cat\",\ \"/message.txt\"\]'
+''
+'EOF'
+'
+END: 2026-10-18 08:32:44 +0200
+ELAPSED: 1.69s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:32:44 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ build\ -t\ docker-build-test\ /tmp/docker-build-test
+END: 2026-10-18 08:32:50 +0200
+ELAPSED: 6.33s
+STATUS: 0
+OUTPUT:
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 161B done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.4s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 0B / 14.28MB 0.2s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 2.10MB / 14.28MB 0.5s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 4.19MB / 14.28MB 0.8s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 5.24MB / 14.28MB 0.9s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 7.34MB / 14.28MB 1.1s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 8.39MB / 14.28MB 1.2s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 9.44MB / 14.28MB 1.4s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 11.53MB / 14.28MB 1.5s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 12.58MB / 14.28MB 1.7s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 14.28MB / 14.28MB 1.8s done
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 0.2s done
+#3 DONE 2.1s
+
+#4 [internal] load metadata for docker.io/library/alpine:latest
+#4 DONE 0.4s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [1/2] FROM docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+#6 resolve docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 0.0s done
+#6 sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 0B / 3.85MB 0.2s
+#6 sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 1.05MB / 3.85MB 0.3s
+#6 sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 3.15MB / 3.85MB 0.5s
+#6 sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 3.85MB / 3.85MB 0.5s done
+#6 extracting sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5
+#6 extracting sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 0.1s done
+#6 DONE 0.7s
+
+#7 [2/2] RUN echo "Docker build works!" > /message.txt
+#7 DONE 0.2s
+
+#8 exporting to image
+#8 exporting layers 0.1s done
+#8 exporting manifest sha256:d53f91c5b239e17a666d7f60c553a851ba44bddf300e7e0dde03c874ef61d61a done
+#8 exporting config sha256:a33d071895ca6becc6a4bc492617b74d2d42d2c8121883937653ba38fa173e1c done
+#8 exporting attestation manifest sha256:1f8a641c50e37230a5c00c6a66130b5c56caa496c113a487837ad783a669b699
+#8 exporting attestation manifest sha256:1f8a641c50e37230a5c00c6a66130b5c56caa496c113a487837ad783a669b699 0.0s done
+#8 exporting manifest list sha256:4624b24de47654d7c09fa1cb31b327da3c43e996433ad99d74eb1405788add63 done
+#8 naming to docker.io/library/docker-build-test:latest done
+#8 unpacking to docker.io/library/docker-build-test:latest
+#8 unpacking to docker.io/library/docker-build-test:latest 0.2s done
+#8 DONE 0.3s
+---
+
+START: 2026-10-18 08:32:50 +0200
+COMMAND: osctl ct exec docker-b30a docker run --rm docker-build-test
+END: 2026-10-18 08:32:52 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+Docker build works!
+---
+
+START: 2026-10-18 08:32:52 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:32:54 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:32:54 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ create\ --name\ resource-limit-mem64-cpu0_5\ --memory\ 64m\ --cpu-period\ 100000\ --cpu-quota\ 50000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=67108864\''
+'\'expected_cpu_quota\\\=50000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-18 08:32:55 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+a8d0cd9f0dcf776b01f2f8db55775caec64339c884198318cec01e1950b865af
+---
+
+START: 2026-10-18 08:32:55 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ start\ --attach\ resource-limit-mem64-cpu0_5
+END: 2026-10-18 08:32:57 +0200
+ELAPSED: 1.83s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-18 08:32:57 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:32:59 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:32:59 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:33:01 +0200
+ELAPSED: 1.76s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:33:01 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ create\ --name\ resource-limit-mem128-cpu1\ --memory\ 128m\ --cpu-period\ 100000\ --cpu-quota\ 100000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=134217728\''
+'\'expected_cpu_quota\\\=100000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-18 08:33:02 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+8425a5f3163f7c73c8c5bce914822c50854db5b5fee25935ff1a2bb0fa8a75c0
+---
+
+START: 2026-10-18 08:33:02 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ start\ --attach\ resource-limit-mem128-cpu1
+END: 2026-10-18 08:33:04 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-18 08:33:04 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:33:06 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:33:06 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:33:07 +0200
+ELAPSED: 1.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:33:07 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ create\ --name\ resource-limit-mem256-cpu2\ --memory\ 256m\ --cpu-period\ 100000\ --cpu-quota\ 200000\ --cpuset-cpus\ 0-1\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=268435456\''
+'\'expected_cpu_quota\\\=200000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-18 08:33:09 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+5757313bb29ed1afd68f269b5c01022440ca23b01a287e1c8861fb4e32d99f33
+---
+
+START: 2026-10-18 08:33:09 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ start\ --attach\ resource-limit-mem256-cpu2
+END: 2026-10-18 08:33:11 +0200
+ELAPSED: 1.92s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-18 08:33:11 +0200
+COMMAND: osctl ct exec docker-b30a sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:33:13 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:33:13 +0200
+COMMAND: osctl ct exec docker-b30a docker pull gitlab/gitlab-ee:latest
+END: 2026-10-18 08:35:17 +0200
+ELAPSED: 124.3s
+STATUS: 0
+OUTPUT:
+latest: Pulling from gitlab/gitlab-ee
+efc789c857d4: Pulling fs layer
+a60ef8ec184e: Pulling fs layer
+d09a49a97fbc: Pulling fs layer
+a79790b56084: Pulling fs layer
+29fd8e020463: Pulling fs layer
+236de2eed0f1: Pulling fs layer
+4df2190a564d: Pulling fs layer
+921339dbed1b: Pulling fs layer
+35f1d1c4d2fc: Pulling fs layer
+35f1d1c4d2fc: Download complete
+a79790b56084: Download complete
+d09a49a97fbc: Download complete
+4df2190a564d: Download complete
+921339dbed1b: Download complete
+29fd8e020463: Download complete
+236de2eed0f1: Download complete
+a60ef8ec184e: Download complete
+a60ef8ec184e: Pull complete
+a79790b56084: Pull complete
+d09a49a97fbc: Pull complete
+29fd8e020463: Pull complete
+236de2eed0f1: Pull complete
+35f1d1c4d2fc: Pull complete
+4df2190a564d: Pull complete
+921339dbed1b: Pull complete
+efc789c857d4: Download complete
+efc789c857d4: Pull complete
+Digest: sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec
+Status: Downloaded newer image for gitlab/gitlab-ee:latest
+docker.io/gitlab/gitlab-ee:latest
+---
+
+START: 2026-10-18 08:35:17 +0200
+COMMAND: osctl ct exec docker-b30a docker image inspect gitlab/gitlab-ee:latest
+END: 2026-10-18 08:35:19 +0200
+ELAPSED: 1.7s
+STATUS: 0
+OUTPUT:
+[
+    {
+        "Id": "sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec",
+        "RepoTags": [
+            "gitlab/gitlab-ee:latest"
+        ],
+        "RepoDigests": [
+            "gitlab/gitlab-ee@sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-10-15T01:23:45.89919621Z",
+        "Config": {
+            "ExposedPorts": {
+                "22/tcp": {},
+                "443/tcp": {},
+                "80/tcp": {}
+            },
+            "Env": [
+                "PATH=/opt/gitlab/embedded/bin:/opt/gitlab/bin:/assets:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "EDITOR=/bin/vi",
+                "GITLAB_ALLOW_SHA1_RSA=false",
+                "TERM=xterm"
+            ],
+            "Cmd": [
+                "/assets/init-container"
+            ],
+            "Volumes": {
+                "/etc/gitlab": {},
+                "/var/log/gitlab": {},
+                "/var/opt/gitlab": {}
+            },
+            "Labels": {
+                "org.opencontainers.image.authors": "GitLab Distribution Team <distribution-be@gitlab.com>",
+                "org.opencontainers.image.base.name": "docker.io/ubuntu:24.04",
+                "org.opencontainers.image.documentation": "https://docs.gitlab.com/ee/install/docker/",
+                "org.opencontainers.image.source": "https://gitlab.com/gitlab-org/omnibus-gitlab",
+                "org.opencontainers.image.title": "GitLab Omnibus Docker",
+                "org.opencontainers.image.version": "24.04"
+            },
+            "ArgsEscaped": true,
+            "Healthcheck": {
+                "Test": [
+                    "CMD-SHELL",
+                    "/opt/gitlab/bin/gitlab-healthcheck --fail --max-time 10"
+                ],
+                "Interval": 60000000000,
+                "Timeout": 30000000000,
+                "Retries": 5
+            },
+            "Shell": [
+                "/bin/sh",
+                "-c"
+            ]
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 4453903614,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:d81fb2a7c6ee3be05fdefaa7fd223be219c1ab172083ec1b994c3ecda33ac0a8",
+                "sha256:ec4f887c43ef5cc03c5ecdb6ad059b581eadeb3fdebffb2b42c51e454e46601c",
+                "sha256:004caf9960f741ac1ecb4da67c047b51e50e850fcb06ab53f96e35bd41ead9c7",
+                "sha256:35bf502a602d309419afc4c6c4f942fca700f6d6ea2f941cf5a3043f80e613b0",
+                "sha256:44b92107f2ad7d3345c43067e388706479373ce55a5b0ab253d3491a45f83b26",
+                "sha256:bee1346e0b3bb0224c0da75000e7847dd5e8ed39545acf7e149e61dd3c70d597",
+                "sha256:796f2a6a4c9a506fa2189569288402ea2a2c63b23c7107154daa10e1d3f67893",
+                "sha256:7df49fde7f2ec29347e68668ae242e659b6e53d8aaa371e714b1c55cc5407acf",
+                "sha256:9992d41c5af8db68fc1799f2f3c926398b37d4270ed161e788d728a3b10c944d"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-10-18T06:35:17.214016177Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec",
+            "size": 647
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "docker.io/gitlab/gitlab-ee"
+                }
+            ]
+        }
+    }
+]
+---
+
+START: 2026-10-18 08:35:19 +0200
+COMMAND: osctl ct del -f --prune docker-b30a
+END: 2026-10-18 08:35:22 +0200
+ELAPSED: 3.24s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:docker-b30a
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-18 08:35:22 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-18 08:35:23 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/24.04/image-stream.tar
+---
+
+START: 2026-10-18 08:35:23 +0200
+COMMAND: poweroff -f
+END: 2026-10-18 08:35:37 +0200
+ELAPSED: 14.81s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+
+START: 2026-10-18 08:36:06 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-18 08:36:06 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:36:06 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-18 08:36:06 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:36:06 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:36:08 +0200
+ELAPSED: 1.75s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:36:09 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:36:09 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:36:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:36:11 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:36:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:36:13 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:36:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:36:14 +0200
+ELAPSED: 0.69s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:36:15 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:36:16 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:36:17 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:36:18 +0200
+ELAPSED: 0.64s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:36:19 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:36:19 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:36:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:36:21 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-18 08:36:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:36:23 +0200
+ELAPSED: 0.69s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-18 08:36:24 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:36:24 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-18 08:36:24 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-18 08:36:24 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Sun, 18 Oct 2026 06:36:24 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-18 08:36:24 +0200
+COMMAND: osctl ct new --distribution ubuntu --version 20.04 docker-9774
+END: 2026-10-18 08:36:33 +0200
+ELAPSED: 8.56s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-18 08:36:33 +0200
+COMMAND: osctl ct unset start-menu docker-9774
+END: 2026-10-18 08:36:33 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:36:33 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 --no-dhcp --gateway-v4 auto --gateway-v6 none docker-9774 eth0
+END: 2026-10-18 08:36:34 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:36:34 +0200
+COMMAND: osctl ct netif ip add docker-9774 eth0 192.168.1.84/24
+END: 2026-10-18 08:36:35 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:36:35 +0200
+COMMAND: osctl ct set dns-resolver docker-9774 1.1.1.1
+END: 2026-10-18 08:36:35 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:36:35 +0200
+COMMAND: osctl ct start docker-9774
+END: 2026-10-18 08:36:37 +0200
+ELAPSED: 1.91s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 08:36:37 +0200
+COMMAND: osctl ct exec docker-9774 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-18 08:36:39 +0200
+ELAPSED: 1.96s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58 (37.205.14.58): icmp_seq=1 ttl=254 time=0.471 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.471/0.471/0.471/0.000 ms
+---
+
+START: 2026-10-18 08:36:39 +0200
+COMMAND: osctl ct exec docker-9774 apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none update -y
+END: 2026-10-18 08:36:43 +0200
+ELAPSED: 3.92s
+STATUS: 0
+OUTPUT:
+Hit:1 http://cz.archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://cz.archive.ubuntu.com/ubuntu focal-security InRelease [128 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu focal-updates InRelease [128 kB]
+Fetched 256 kB in 1s (409 kB/s)
+Reading package lists...
+---
+
+START: 2026-10-18 08:36:43 +0200
+COMMAND: osctl ct exec docker-9774 apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none install -y ca-certificates curl
+END: 2026-10-18 08:36:48 +0200
+ELAPSED: 5.35s
+STATUS: 0
+OUTPUT:
+Reading package lists...
+Building dependency tree...
+Reading state information...
+ca-certificates is already the newest version (20240203~20.04.1).
+The following additional packages will be installed:
+  libasn1-8-heimdal libbrotli1 libcurl4 libgssapi3-heimdal libhcrypto4-heimdal
+  libheimbase1-heimdal libheimntlm0-heimdal libhx509-5-heimdal
+  libkrb5-26-heimdal libldap-2.4-2 libldap-common libnghttp2-14
+  libroken18-heimdal librtmp1 libsasl2-2 libsasl2-modules libsasl2-modules-db
+  libssh-4 libwind0-heimdal
+Suggested packages:
+  libsasl2-modules-gssapi-mit | libsasl2-modules-gssapi-heimdal
+  libsasl2-modules-ldap libsasl2-modules-otp libsasl2-modules-sql
+The following NEW packages will be installed:
+  curl libasn1-8-heimdal libbrotli1 libcurl4 libgssapi3-heimdal
+  libhcrypto4-heimdal libheimbase1-heimdal libheimntlm0-heimdal
+  libhx509-5-heimdal libkrb5-26-heimdal libldap-2.4-2 libldap-common
+  libnghttp2-14 libroken18-heimdal librtmp1 libsasl2-2 libsasl2-modules
+  libsasl2-modules-db libssh-4 libwind0-heimdal
+0 upgraded, 20 newly installed, 0 to remove and 1 not upgraded.
+Need to get 2068 kB of archives.
+After this operation, 6923 kB of additional disk space will be used.
+Get:1 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libbrotli1 amd64 1.0.7-6ubuntu0.1 [267 kB]
+Get:2 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libroken18-heimdal amd64 7.7.0+dfsg-1ubuntu1.4 [42.5 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libasn1-8-heimdal amd64 7.7.0+dfsg-1ubuntu1.4 [181 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libheimbase1-heimdal amd64 7.7.0+dfsg-1ubuntu1.4 [30.4 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libhcrypto4-heimdal amd64 7.7.0+dfsg-1ubuntu1.4 [88.1 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libwind0-heimdal amd64 7.7.0+dfsg-1ubuntu1.4 [47.7 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libhx509-5-heimdal amd64 7.7.0+dfsg-1ubuntu1.4 [107 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libkrb5-26-heimdal amd64 7.7.0+dfsg-1ubuntu1.4 [207 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libheimntlm0-heimdal amd64 7.7.0+dfsg-1ubuntu1.4 [15.1 kB]
+Get:10 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libgssapi3-heimdal amd64 7.7.0+dfsg-1ubuntu1.4 [96.5 kB]
+Get:11 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libsasl2-modules-db amd64 2.1.27+dfsg-2ubuntu0.1 [14.7 kB]
+Get:12 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libsasl2-2 amd64 2.1.27+dfsg-2ubuntu0.1 [49.3 kB]
+Get:13 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libldap-common all 2.4.49+dfsg-2ubuntu1.10 [16.5 kB]
+Get:14 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libldap-2.4-2 amd64 2.4.49+dfsg-2ubuntu1.10 [155 kB]
+Get:15 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libnghttp2-14 amd64 1.40.0-1ubuntu0.3 [79.9 kB]
+Get:16 http://cz.archive.ubuntu.com/ubuntu focal/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2build1 [54.9 kB]
+Get:17 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libssh-4 amd64 0.9.3-2ubuntu2.5 [171 kB]
+Get:18 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libcurl4 amd64 7.68.0-1ubuntu2.25 [235 kB]
+Get:19 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 curl amd64 7.68.0-1ubuntu2.25 [162 kB]
+Get:20 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libsasl2-modules amd64 2.1.27+dfsg-2ubuntu0.1 [48.8 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.30.0 /usr/local/share/perl/5.30.0 /usr/lib/x86_64-linux-gnu/perl5/5.30 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl/5.30 /usr/share/perl/5.30 /usr/local/lib/site_perl /usr/lib/x86_64-linux-gnu/perl-base) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7, <> line 20.)
+debconf: falling back to frontend: Teletype
+dpkg-preconfigure: unable to re-open stdin: 
+Fetched 2068 kB in 0s (33.0 MB/s)
+Selecting previously unselected package libbrotli1:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 17869 files and directories currently installed.)
+Preparing to unpack .../00-libbrotli1_1.0.7-6ubuntu0.1_amd64.deb ...
+Unpacking libbrotli1:amd64 (1.0.7-6ubuntu0.1) ...
+Selecting previously unselected package libroken18-heimdal:amd64.
+Preparing to unpack .../01-libroken18-heimdal_7.7.0+dfsg-1ubuntu1.4_amd64.deb ...
+Unpacking libroken18-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Selecting previously unselected package libasn1-8-heimdal:amd64.
+Preparing to unpack .../02-libasn1-8-heimdal_7.7.0+dfsg-1ubuntu1.4_amd64.deb ...
+Unpacking libasn1-8-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Selecting previously unselected package libheimbase1-heimdal:amd64.
+Preparing to unpack .../03-libheimbase1-heimdal_7.7.0+dfsg-1ubuntu1.4_amd64.deb ...
+Unpacking libheimbase1-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Selecting previously unselected package libhcrypto4-heimdal:amd64.
+Preparing to unpack .../04-libhcrypto4-heimdal_7.7.0+dfsg-1ubuntu1.4_amd64.deb ...
+Unpacking libhcrypto4-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Selecting previously unselected package libwind0-heimdal:amd64.
+Preparing to unpack .../05-libwind0-heimdal_7.7.0+dfsg-1ubuntu1.4_amd64.deb ...
+Unpacking libwind0-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Selecting previously unselected package libhx509-5-heimdal:amd64.
+Preparing to unpack .../06-libhx509-5-heimdal_7.7.0+dfsg-1ubuntu1.4_amd64.deb ...
+Unpacking libhx509-5-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Selecting previously unselected package libkrb5-26-heimdal:amd64.
+Preparing to unpack .../07-libkrb5-26-heimdal_7.7.0+dfsg-1ubuntu1.4_amd64.deb ...
+Unpacking libkrb5-26-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Selecting previously unselected package libheimntlm0-heimdal:amd64.
+Preparing to unpack .../08-libheimntlm0-heimdal_7.7.0+dfsg-1ubuntu1.4_amd64.deb ...
+Unpacking libheimntlm0-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Selecting previously unselected package libgssapi3-heimdal:amd64.
+Preparing to unpack .../09-libgssapi3-heimdal_7.7.0+dfsg-1ubuntu1.4_amd64.deb ...
+Unpacking libgssapi3-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../10-libsasl2-modules-db_2.1.27+dfsg-2ubuntu0.1_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.27+dfsg-2ubuntu0.1) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../11-libsasl2-2_2.1.27+dfsg-2ubuntu0.1_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.27+dfsg-2ubuntu0.1) ...
+Selecting previously unselected package libldap-common.
+Preparing to unpack .../12-libldap-common_2.4.49+dfsg-2ubuntu1.10_all.deb ...
+Unpacking libldap-common (2.4.49+dfsg-2ubuntu1.10) ...
+Selecting previously unselected package libldap-2.4-2:amd64.
+Preparing to unpack .../13-libldap-2.4-2_2.4.49+dfsg-2ubuntu1.10_amd64.deb ...
+Unpacking libldap-2.4-2:amd64 (2.4.49+dfsg-2ubuntu1.10) ...
+Selecting previously unselected package libnghttp2-14:amd64.
+Preparing to unpack .../14-libnghttp2-14_1.40.0-1ubuntu0.3_amd64.deb ...
+Unpacking libnghttp2-14:amd64 (1.40.0-1ubuntu0.3) ...
+Selecting previously unselected package librtmp1:amd64.
+Preparing to unpack .../15-librtmp1_2.4+20151223.gitfa8646d.1-2build1_amd64.deb ...
+Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build1) ...
+Selecting previously unselected package libssh-4:amd64.
+Preparing to unpack .../16-libssh-4_0.9.3-2ubuntu2.5_amd64.deb ...
+Unpacking libssh-4:amd64 (0.9.3-2ubuntu2.5) ...
+Selecting previously unselected package libcurl4:amd64.
+Preparing to unpack .../17-libcurl4_7.68.0-1ubuntu2.25_amd64.deb ...
+Unpacking libcurl4:amd64 (7.68.0-1ubuntu2.25) ...
+Selecting previously unselected package curl.
+Preparing to unpack .../18-curl_7.68.0-1ubuntu2.25_amd64.deb ...
+Unpacking curl (7.68.0-1ubuntu2.25) ...
+Selecting previously unselected package libsasl2-modules:amd64.
+Preparing to unpack .../19-libsasl2-modules_2.1.27+dfsg-2ubuntu0.1_amd64.deb ...
+Unpacking libsasl2-modules:amd64 (2.1.27+dfsg-2ubuntu0.1) ...
+Setting up libbrotli1:amd64 (1.0.7-6ubuntu0.1) ...
+Setting up libsasl2-modules:amd64 (2.1.27+dfsg-2ubuntu0.1) ...
+Setting up libnghttp2-14:amd64 (1.40.0-1ubuntu0.3) ...
+Setting up libldap-common (2.4.49+dfsg-2ubuntu1.10) ...
+Setting up libsasl2-modules-db:amd64 (2.1.27+dfsg-2ubuntu0.1) ...
+Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build1) ...
+Setting up libsasl2-2:amd64 (2.1.27+dfsg-2ubuntu0.1) ...
+Setting up libssh-4:amd64 (0.9.3-2ubuntu2.5) ...
+Setting up libroken18-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Setting up libheimbase1-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Setting up libasn1-8-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Setting up libhcrypto4-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Setting up libwind0-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Setting up libhx509-5-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Setting up libkrb5-26-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Setting up libheimntlm0-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Setting up libgssapi3-heimdal:amd64 (7.7.0+dfsg-1ubuntu1.4) ...
+Setting up libldap-2.4-2:amd64 (2.4.49+dfsg-2ubuntu1.10) ...
+Setting up libcurl4:amd64 (7.68.0-1ubuntu2.25) ...
+Setting up curl (7.68.0-1ubuntu2.25) ...
+Processing triggers for man-db (2.9.1-1) ...
+Processing triggers for libc-bin (2.31-0ubuntu9.18) ...
+---
+
+START: 2026-10-18 08:36:48 +0200
+COMMAND: osctl ct exec docker-9774 install -m 0755 -d /etc/apt/keyrings
+END: 2026-10-18 08:36:50 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:36:50 +0200
+COMMAND: osctl ct exec docker-9774 curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+END: 2026-10-18 08:36:52 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:36:52 +0200
+COMMAND: osctl ct exec docker-9774 chmod a+r /etc/apt/keyrings/docker.asc
+END: 2026-10-18 08:36:53 +0200
+ELAPSED: 1.7s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:36:53 +0200
+COMMAND: osctl ct exec docker-9774 bash -c 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list'
+END: 2026-10-18 08:36:55 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:36:55 +0200
+COMMAND: osctl ct exec docker-9774 apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none update -y
+END: 2026-10-18 08:36:59 +0200
+ELAPSED: 3.91s
+STATUS: 0
+OUTPUT:
+Hit:1 http://cz.archive.ubuntu.com/ubuntu focal InRelease
+Hit:2 http://cz.archive.ubuntu.com/ubuntu focal-security InRelease
+Hit:3 http://cz.archive.ubuntu.com/ubuntu focal-updates InRelease
+Get:4 https://download.docker.com/linux/ubuntu focal InRelease [57.7 kB]
+Get:5 https://download.docker.com/linux/ubuntu focal/stable amd64 Packages [59.9 kB]
+Fetched 118 kB in 1s (151 kB/s)
+Reading package lists...
+---
+
+START: 2026-10-18 08:36:59 +0200
+COMMAND: osctl ct exec docker-9774 apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none install -y docker-ce docker-ce-cli containerd.io
+END: 2026-10-18 08:37:28 +0200
+ELAPSED: 28.85s
+STATUS: 0
+OUTPUT:
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  apparmor dbus-user-session docker-buildx-plugin docker-ce-rootless-extras
+  docker-compose-plugin git git-man iptables libcurl3-gnutls liberror-perl
+  libgdbm-compat4 libip6tc2 libnetfilter-conntrack3 libnfnetlink0 libnftnl11
+  libperl5.30 patch perl perl-modules-5.30 pigz slirp4netns
+Suggested packages:
+  apparmor-profiles-extra apparmor-utils cgroupfs-mount | cgroup-lite
+  gettext-base git-daemon-run | git-daemon-sysvinit git-doc git-el git-email
+  git-gui gitk gitweb git-cvs git-mediawiki git-svn firewalld nftables ed
+  diffutils-doc perl-doc libterm-readline-gnu-perl
+  | libterm-readline-perl-perl make libb-debug-perl liblocale-codes-perl
+The following NEW packages will be installed:
+  apparmor containerd.io dbus-user-session docker-buildx-plugin docker-ce
+  docker-ce-cli docker-ce-rootless-extras docker-compose-plugin git git-man
+  iptables libcurl3-gnutls liberror-perl libgdbm-compat4 libip6tc2
+  libnetfilter-conntrack3 libnfnetlink0 libnftnl11 libperl5.30 patch perl
+  perl-modules-5.30 pigz slirp4netns
+0 upgraded, 24 newly installed, 0 to remove and 1 not upgraded.
+Need to get 134 MB of archives.
+After this operation, 531 MB of additional disk space will be used.
+Get:1 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 perl-modules-5.30 all 5.30.0-9ubuntu0.5 [2739 kB]
+Get:2 http://cz.archive.ubuntu.com/ubuntu focal/main amd64 libgdbm-compat4 amd64 1.18.1-5 [6244 B]
+Get:3 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libperl5.30 amd64 5.30.0-9ubuntu0.5 [3941 kB]
+Get:4 https://download.docker.com/linux/ubuntu focal/stable amd64 containerd.io amd64 1.7.27-1 [30.5 MB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 perl amd64 5.30.0-9ubuntu0.5 [224 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu focal/universe amd64 pigz amd64 2.4-1 [57.4 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 apparmor amd64 2.13.3-7ubuntu5.4 [505 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu focal-updates/main amd64 libip6tc2 amd64 1.8.4-3ubuntu2.1 [19.4 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu focal/main amd64 libnfnetlink0 amd64 1.0.1-3build1 [13.8 kB]
+Get:10 http://cz.archive.ubuntu.com/ubuntu focal/main amd64 libnetfilter-conntrack3 amd64 1.0.7-2 [41.4 kB]
+Get:11 http://cz.archive.ubuntu.com/ubuntu focal/main amd64 libnftnl11 amd64 1.1.5-1 [57.8 kB]
+Get:12 http://cz.archive.ubuntu.com/ubuntu focal-updates/main amd64 iptables amd64 1.8.4-3ubuntu2.1 [390 kB]
+Get:13 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 dbus-user-session amd64 1.12.16-2ubuntu2.3 [9424 B]
+Get:14 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 libcurl3-gnutls amd64 7.68.0-1ubuntu2.25 [233 kB]
+Get:15 http://cz.archive.ubuntu.com/ubuntu focal/main amd64 liberror-perl all 0.17029-1 [26.5 kB]
+Get:16 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 git-man all 1:2.25.1-1ubuntu3.14 [887 kB]
+Get:17 http://cz.archive.ubuntu.com/ubuntu focal-security/main amd64 git amd64 1:2.25.1-1ubuntu3.14 [4613 kB]
+Get:18 http://cz.archive.ubuntu.com/ubuntu focal/main amd64 patch amd64 2.7.6-6 [105 kB]
+Get:19 http://cz.archive.ubuntu.com/ubuntu focal/universe amd64 slirp4netns amd64 0.4.3-1 [74.3 kB]
+Get:20 https://download.docker.com/linux/ubuntu focal/stable amd64 docker-buildx-plugin amd64 0.23.0-1~ubuntu.20.04~focal [34.6 MB]
+Get:21 https://download.docker.com/linux/ubuntu focal/stable amd64 docker-ce-cli amd64 5:28.1.1-1~ubuntu.20.04~focal [15.8 MB]
+Get:22 https://download.docker.com/linux/ubuntu focal/stable amd64 docker-ce amd64 5:28.1.1-1~ubuntu.20.04~focal [19.2 MB]
+Get:23 https://download.docker.com/linux/ubuntu focal/stable amd64 docker-ce-rootless-extras amd64 5:28.1.1-1~ubuntu.20.04~focal [6097 kB]
+Get:24 https://download.docker.com/linux/ubuntu focal/stable amd64 docker-compose-plugin amd64 2.35.1-1~ubuntu.20.04~focal [13.8 MB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.30.0 /usr/local/share/perl/5.30.0 /usr/lib/x86_64-linux-gnu/perl5/5.30 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl/5.30 /usr/share/perl/5.30 /usr/local/lib/site_perl /usr/lib/x86_64-linux-gnu/perl-base) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7, <> line 24.)
+debconf: falling back to frontend: Teletype
+dpkg-preconfigure: unable to re-open stdin: 
+Fetched 134 MB in 2s (78.8 MB/s)
+Selecting previously unselected package perl-modules-5.30.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 18021 files and directories currently installed.)
+Preparing to unpack .../00-perl-modules-5.30_5.30.0-9ubuntu0.5_all.deb ...
+Unpacking perl-modules-5.30 (5.30.0-9ubuntu0.5) ...
+Selecting previously unselected package libgdbm-compat4:amd64.
+Preparing to unpack .../01-libgdbm-compat4_1.18.1-5_amd64.deb ...
+Unpacking libgdbm-compat4:amd64 (1.18.1-5) ...
+Selecting previously unselected package libperl5.30:amd64.
+Preparing to unpack .../02-libperl5.30_5.30.0-9ubuntu0.5_amd64.deb ...
+Unpacking libperl5.30:amd64 (5.30.0-9ubuntu0.5) ...
+Selecting previously unselected package perl.
+Preparing to unpack .../03-perl_5.30.0-9ubuntu0.5_amd64.deb ...
+Unpacking perl (5.30.0-9ubuntu0.5) ...
+Selecting previously unselected package pigz.
+Preparing to unpack .../04-pigz_2.4-1_amd64.deb ...
+Unpacking pigz (2.4-1) ...
+Selecting previously unselected package apparmor.
+Preparing to unpack .../05-apparmor_2.13.3-7ubuntu5.4_amd64.deb ...
+Unpacking apparmor (2.13.3-7ubuntu5.4) ...
+Selecting previously unselected package libip6tc2:amd64.
+Preparing to unpack .../06-libip6tc2_1.8.4-3ubuntu2.1_amd64.deb ...
+Unpacking libip6tc2:amd64 (1.8.4-3ubuntu2.1) ...
+Selecting previously unselected package libnfnetlink0:amd64.
+Preparing to unpack .../07-libnfnetlink0_1.0.1-3build1_amd64.deb ...
+Unpacking libnfnetlink0:amd64 (1.0.1-3build1) ...
+Selecting previously unselected package libnetfilter-conntrack3:amd64.
+Preparing to unpack .../08-libnetfilter-conntrack3_1.0.7-2_amd64.deb ...
+Unpacking libnetfilter-conntrack3:amd64 (1.0.7-2) ...
+Selecting previously unselected package libnftnl11:amd64.
+Preparing to unpack .../09-libnftnl11_1.1.5-1_amd64.deb ...
+Unpacking libnftnl11:amd64 (1.1.5-1) ...
+Selecting previously unselected package iptables.
+Preparing to unpack .../10-iptables_1.8.4-3ubuntu2.1_amd64.deb ...
+Unpacking iptables (1.8.4-3ubuntu2.1) ...
+Selecting previously unselected package containerd.io.
+Preparing to unpack .../11-containerd.io_1.7.27-1_amd64.deb ...
+Unpacking containerd.io (1.7.27-1) ...
+Selecting previously unselected package dbus-user-session.
+Preparing to unpack .../12-dbus-user-session_1.12.16-2ubuntu2.3_amd64.deb ...
+Unpacking dbus-user-session (1.12.16-2ubuntu2.3) ...
+Selecting previously unselected package docker-buildx-plugin.
+Preparing to unpack .../13-docker-buildx-plugin_0.23.0-1~ubuntu.20.04~focal_amd64.deb ...
+Unpacking docker-buildx-plugin (0.23.0-1~ubuntu.20.04~focal) ...
+Selecting previously unselected package docker-ce-cli.
+Preparing to unpack .../14-docker-ce-cli_5%3a28.1.1-1~ubuntu.20.04~focal_amd64.deb ...
+Unpacking docker-ce-cli (5:28.1.1-1~ubuntu.20.04~focal) ...
+Selecting previously unselected package docker-ce.
+Preparing to unpack .../15-docker-ce_5%3a28.1.1-1~ubuntu.20.04~focal_amd64.deb ...
+Unpacking docker-ce (5:28.1.1-1~ubuntu.20.04~focal) ...
+Selecting previously unselected package docker-ce-rootless-extras.
+Preparing to unpack .../16-docker-ce-rootless-extras_5%3a28.1.1-1~ubuntu.20.04~focal_amd64.deb ...
+Unpacking docker-ce-rootless-extras (5:28.1.1-1~ubuntu.20.04~focal) ...
+Selecting previously unselected package docker-compose-plugin.
+Preparing to unpack .../17-docker-compose-plugin_2.35.1-1~ubuntu.20.04~focal_amd64.deb ...
+Unpacking docker-compose-plugin (2.35.1-1~ubuntu.20.04~focal) ...
+Selecting previously unselected package libcurl3-gnutls:amd64.
+Preparing to unpack .../18-libcurl3-gnutls_7.68.0-1ubuntu2.25_amd64.deb ...
+Unpacking libcurl3-gnutls:amd64 (7.68.0-1ubuntu2.25) ...
+Selecting previously unselected package liberror-perl.
+Preparing to unpack .../19-liberror-perl_0.17029-1_all.deb ...
+Unpacking liberror-perl (0.17029-1) ...
+Selecting previously unselected package git-man.
+Preparing to unpack .../20-git-man_1%3a2.25.1-1ubuntu3.14_all.deb ...
+Unpacking git-man (1:2.25.1-1ubuntu3.14) ...
+Selecting previously unselected package git.
+Preparing to unpack .../21-git_1%3a2.25.1-1ubuntu3.14_amd64.deb ...
+Unpacking git (1:2.25.1-1ubuntu3.14) ...
+Selecting previously unselected package patch.
+Preparing to unpack .../22-patch_2.7.6-6_amd64.deb ...
+Unpacking patch (2.7.6-6) ...
+Selecting previously unselected package slirp4netns.
+Preparing to unpack .../23-slirp4netns_0.4.3-1_amd64.deb ...
+Unpacking slirp4netns (0.4.3-1) ...
+Setting up perl-modules-5.30 (5.30.0-9ubuntu0.5) ...
+Setting up slirp4netns (0.4.3-1) ...
+Setting up libip6tc2:amd64 (1.8.4-3ubuntu2.1) ...
+Setting up libnftnl11:amd64 (1.1.5-1) ...
+Setting up libcurl3-gnutls:amd64 (7.68.0-1ubuntu2.25) ...
+Setting up apparmor (2.13.3-7ubuntu5.4) ...
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+Created symlink /etc/systemd/system/sysinit.target.wants/apparmor.service → /lib/systemd/system/apparmor.service.
+Setting up dbus-user-session (1.12.16-2ubuntu2.3) ...
+Setting up docker-buildx-plugin (0.23.0-1~ubuntu.20.04~focal) ...
+Setting up containerd.io (1.7.27-1) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/containerd.service → /lib/systemd/system/containerd.service.
+Setting up patch (2.7.6-6) ...
+Setting up libgdbm-compat4:amd64 (1.18.1-5) ...
+Setting up docker-compose-plugin (2.35.1-1~ubuntu.20.04~focal) ...
+Setting up docker-ce-cli (5:28.1.1-1~ubuntu.20.04~focal) ...
+Setting up pigz (2.4-1) ...
+Setting up libnfnetlink0:amd64 (1.0.1-3build1) ...
+Setting up libperl5.30:amd64 (5.30.0-9ubuntu0.5) ...
+Setting up git-man (1:2.25.1-1ubuntu3.14) ...
+Setting up docker-ce-rootless-extras (5:28.1.1-1~ubuntu.20.04~focal) ...
+Setting up perl (5.30.0-9ubuntu0.5) ...
+Setting up libnetfilter-conntrack3:amd64 (1.0.7-2) ...
+Setting up iptables (1.8.4-3ubuntu2.1) ...
+update-alternatives: using /usr/sbin/iptables-legacy to provide /usr/sbin/iptables (iptables) in auto mode
+update-alternatives: using /usr/sbin/ip6tables-legacy to provide /usr/sbin/ip6tables (ip6tables) in auto mode
+update-alternatives: using /usr/sbin/arptables-nft to provide /usr/sbin/arptables (arptables) in auto mode
+update-alternatives: using /usr/sbin/ebtables-nft to provide /usr/sbin/ebtables (ebtables) in auto mode
+Setting up liberror-perl (0.17029-1) ...
+Setting up docker-ce (5:28.1.1-1~ubuntu.20.04~focal) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/docker.service → /lib/systemd/system/docker.service.
+Created symlink /etc/systemd/system/sockets.target.wants/docker.socket → /lib/systemd/system/docker.socket.
+Setting up git (1:2.25.1-1ubuntu3.14) ...
+Processing triggers for systemd (245.4-4ubuntu3.24) ...
+Processing triggers for man-db (2.9.1-1) ...
+Processing triggers for libc-bin (2.31-0ubuntu9.18) ...
+---
+
+START: 2026-10-18 08:37:28 +0200
+COMMAND: osctl ct exec docker-9774 sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-18 08:37:29 +0200
+ELAPSED: 1.53s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-18 08:37:29 +0200
+COMMAND: osctl ct exec docker-9774 sh -c mkdir\ -p\ /etc/docker'
+'cat\ \>\ /etc/docker/daemon.json\ \<\<\'EOF\''
+'\{'
+'\ \ \"registry-mirrors\":\ \['
+'\ \ \ \ \"https://docker-registry.vpsadminos.org\"'
+'\ \ \]'
+'\}'
+''
+'EOF'
+'
+END: 2026-10-18 08:37:31 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:37:31 +0200
+COMMAND: osctl ct exec docker-9774 sh -c if\ command\ -v\ update-alternatives\ \>/dev/null\ 2\>\&1\;\ then'
+'\ \ for\ name\ in\ iptables\ ip6tables\ arptables\ ebtables\;\ do'
+'\ \ \ \ target\=\"/usr/sbin/\$\{name\}-nft\"'
+'\ \ \ \ if\ \[\ -x\ \"\$target\"\ \]\ \&\&\ update-alternatives\ --list\ \"\$name\"\ 2\>/dev/null\ \|\ grep\ -Fxq\ \"\$target\"\;\ then'
+'\ \ \ \ \ \ update-alternatives\ --set\ \"\$name\"\ \"\$target\"'
+'\ \ \ \ fi'
+'\ \ done'
+'fi'
+'
+END: 2026-10-18 08:37:32 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+update-alternatives: using /usr/sbin/iptables-nft to provide /usr/sbin/iptables (iptables) in manual mode
+update-alternatives: using /usr/sbin/ip6tables-nft to provide /usr/sbin/ip6tables (ip6tables) in manual mode
+---
+
+START: 2026-10-18 08:37:32 +0200
+COMMAND: osctl ct exec docker-9774 systemctl reset-failed docker || true
+END: 2026-10-18 08:37:34 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:37:34 +0200
+COMMAND: osctl ct exec docker-9774 systemctl restart docker
+END: 2026-10-18 08:37:36 +0200
+ELAPSED: 2.34s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:37:36 +0200
+COMMAND: osctl ct exec docker-9774 sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-18 08:37:38 +0200
+ELAPSED: 1.47s
+STATUS: 0
+OUTPUT:
+{
+  "registry-mirrors": [
+    "https://docker-registry.vpsadminos.org"
+  ]
+}
+
+---
+
+START: 2026-10-18 08:37:38 +0200
+COMMAND: osctl ct exec docker-9774 docker info
+END: 2026-10-18 08:37:40 +0200
+ELAPSED: 1.87s
+STATUS: 0
+OUTPUT:
+Client: Docker Engine - Community
+ Version:    28.1.1
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.23.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v2.35.1
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 0
+ Server Version: 28.1.1
+ Storage Driver: overlay2
+  Backing Filesystem: cramfs
+  Supports d_type: true
+  Using metacopy: false
+  Native Overlay Diff: true
+  userxattr: false
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: 05044ec0a9a75232cad458027ca83437aae3f4da
+ runc version: v1.2.5-0-g59923ef
+ init version: de40ad0
+ Security Options:
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.12.109
+ Operating System: Ubuntu 20.04.6 LTS
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 4
+ Total Memory: 7.765GiB
+ Name: docker-9774
+ ID: 86843748-20a1-48a0-b4fe-b99341f192ba
+ Docker Root Dir: /var/lib/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  ::1/128
+  127.0.0.0/8
+ Registry Mirrors:
+  https://docker-registry.vpsadminos.org/
+ Live Restore Enabled: false
+
+WARNING: No io.weight support
+WARNING: No io.weight (per device) support
+WARNING: No io.max (rbps) support
+WARNING: No io.max (wbps) support
+WARNING: No io.max (riops) support
+WARNING: No io.max (wiops) support
+---
+
+START: 2026-10-18 08:37:40 +0200
+COMMAND: osctl ct exec docker-9774 docker run hello-world
+END: 2026-10-18 08:37:42 +0200
+ELAPSED: 2.49s
+STATUS: 0
+OUTPUT:
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+4f55086f7dd0: Pulling fs layer
+4f55086f7dd0: Verifying Checksum
+4f55086f7dd0: Download complete
+4f55086f7dd0: Pull complete
+Digest: sha256:11a3eb1597e864c51b3f56733cb2e8a90bf0c284bfc05f9444d81c558bc848aa
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+---
+
+START: 2026-10-18 08:37:42 +0200
+COMMAND: osctl ct exec docker-9774 sh -c mkdir\ -p\ /tmp/docker-build-test'
+'cat\ \>\ /tmp/docker-build-test/Dockerfile\ \<\<\'EOF\''
+'\#\ syntax\=docker/dockerfile:1'
+''
+'FROM\ alpine:latest'
+'RUN\ echo\ \"Docker\ build\ works\!\"\ \>\ /message.txt'
+'CMD\ \[\"cat\",\ \"/message.txt\"\]'
+''
+'EOF'
+'
+END: 2026-10-18 08:37:44 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:37:44 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ build\ -t\ docker-build-test\ /tmp/docker-build-test
+END: 2026-10-18 08:37:47 +0200
+ELAPSED: 3.87s
+STATUS: 0
+OUTPUT:
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 161B 0.0s done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.4s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 5.24MB / 14.28MB 0.1s
+#3 sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 9.08kB / 9.08kB done
+#3 sha256:7b32114e84ca21aeb2d6f871a0b62b3a0762193f75d9afd048ee4cbe889f3148 1.13kB / 1.13kB done
+#3 sha256:528c92d70d7e39dbb3dd1c6681f6750c565c7e45b70527cda47c1a61495c1b6a 1.41kB / 1.41kB done
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 12.58MB / 14.28MB 0.2s
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 14.28MB / 14.28MB 0.2s done
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 0.2s done
+#3 DONE 0.5s
+
+#4 [internal] load metadata for docker.io/library/alpine:latest
+#4 DONE 0.4s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [1/2] FROM docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+#6 resolve docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 0.0s done
+#6 extracting sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5
+#6 sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 9.22kB / 9.22kB done
+#6 sha256:d56c381f961d307a21b3ca004cf1e3910f106644aefb1f43e654c8a56c4fd395 1.02kB / 1.02kB done
+#6 sha256:320994c3b997e2ec6433f717f153e108023c5bec8fefa8d76b83451d16d05ea8 611B / 611B done
+#6 sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 3.85MB / 3.85MB 0.1s done
+#6 extracting sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 0.1s done
+#6 DONE 0.3s
+
+#7 [2/2] RUN echo "Docker build works!" > /message.txt
+#7 DONE 0.2s
+
+#8 exporting to image
+#8 exporting layers 0.0s done
+#8 writing image sha256:c1df84188016bbf28bac9336f0f2ca7afabfd172ed90fcc60bb5a7f13d3b0662 done
+#8 naming to docker.io/library/docker-build-test done
+#8 DONE 0.0s
+---
+
+START: 2026-10-18 08:37:47 +0200
+COMMAND: osctl ct exec docker-9774 docker run --rm docker-build-test
+END: 2026-10-18 08:37:49 +0200
+ELAPSED: 1.88s
+STATUS: 0
+OUTPUT:
+Docker build works!
+---
+
+START: 2026-10-18 08:37:49 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:37:51 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:37:51 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ create\ --name\ resource-limit-mem64-cpu0_5\ --memory\ 64m\ --cpu-period\ 100000\ --cpu-quota\ 50000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=67108864\''
+'\'expected_cpu_quota\\\=50000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-18 08:37:52 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+be8e57fed612494ac2261251d0af1a05cf94a4dcbc3ee8a3c343a4399bd8f70b
+---
+
+START: 2026-10-18 08:37:52 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ start\ --attach\ resource-limit-mem64-cpu0_5
+END: 2026-10-18 08:37:54 +0200
+ELAPSED: 1.77s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-18 08:37:54 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:37:56 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:37:56 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:37:57 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:37:57 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ create\ --name\ resource-limit-mem128-cpu1\ --memory\ 128m\ --cpu-period\ 100000\ --cpu-quota\ 100000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=134217728\''
+'\'expected_cpu_quota\\\=100000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-18 08:37:59 +0200
+ELAPSED: 1.67s
+STATUS: 0
+OUTPUT:
+fe73fa4ed6e2af30429987c38e93d0d9ffa9f825a7bbf12fc8eb190b53995376
+---
+
+START: 2026-10-18 08:37:59 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ start\ --attach\ resource-limit-mem128-cpu1
+END: 2026-10-18 08:38:01 +0200
+ELAPSED: 1.84s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-18 08:38:01 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:38:03 +0200
+ELAPSED: 1.59s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:38:03 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:38:04 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:38:04 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ create\ --name\ resource-limit-mem256-cpu2\ --memory\ 256m\ --cpu-period\ 100000\ --cpu-quota\ 200000\ --cpuset-cpus\ 0-1\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=268435456\''
+'\'expected_cpu_quota\\\=200000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-18 08:38:06 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+f5aaa8c2d3eb33c33c45d1172fc2eeb1885aeab6e17c6976e9f535f46720c2c6
+---
+
+START: 2026-10-18 08:38:06 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ start\ --attach\ resource-limit-mem256-cpu2
+END: 2026-10-18 08:38:08 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-18 08:38:08 +0200
+COMMAND: osctl ct exec docker-9774 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:38:09 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:38:09 +0200
+COMMAND: osctl ct exec docker-9774 docker pull gitlab/gitlab-ee:latest
+END: 2026-10-18 08:39:50 +0200
+ELAPSED: 100.82s
+STATUS: 0
+OUTPUT:
+latest: Pulling from gitlab/gitlab-ee
+a60ef8ec184e: Pulling fs layer
+a79790b56084: Pulling fs layer
+29fd8e020463: Pulling fs layer
+236de2eed0f1: Pulling fs layer
+d09a49a97fbc: Pulling fs layer
+921339dbed1b: Pulling fs layer
+4df2190a564d: Pulling fs layer
+35f1d1c4d2fc: Pulling fs layer
+efc789c857d4: Pulling fs layer
+921339dbed1b: Waiting
+4df2190a564d: Waiting
+35f1d1c4d2fc: Waiting
+efc789c857d4: Waiting
+236de2eed0f1: Waiting
+d09a49a97fbc: Waiting
+a79790b56084: Download complete
+236de2eed0f1: Download complete
+d09a49a97fbc: Verifying Checksum
+d09a49a97fbc: Download complete
+921339dbed1b: Download complete
+4df2190a564d: Verifying Checksum
+4df2190a564d: Download complete
+35f1d1c4d2fc: Verifying Checksum
+35f1d1c4d2fc: Download complete
+29fd8e020463: Verifying Checksum
+29fd8e020463: Download complete
+a60ef8ec184e: Verifying Checksum
+a60ef8ec184e: Download complete
+a60ef8ec184e: Pull complete
+a79790b56084: Pull complete
+29fd8e020463: Pull complete
+236de2eed0f1: Pull complete
+d09a49a97fbc: Pull complete
+921339dbed1b: Pull complete
+4df2190a564d: Pull complete
+35f1d1c4d2fc: Pull complete
+efc789c857d4: Verifying Checksum
+efc789c857d4: Download complete
+efc789c857d4: Pull complete
+Digest: sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec
+Status: Downloaded newer image for gitlab/gitlab-ee:latest
+docker.io/gitlab/gitlab-ee:latest
+---
+
+START: 2026-10-18 08:39:50 +0200
+COMMAND: osctl ct exec docker-9774 docker image inspect gitlab/gitlab-ee:latest
+END: 2026-10-18 08:39:51 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+[
+    {
+        "Id": "sha256:9d42973e78aa361ae5f6d639c5e6092c7fbdfd7a91de18b96eff59d5a9571ec1",
+        "RepoTags": [
+            "gitlab/gitlab-ee:latest"
+        ],
+        "RepoDigests": [
+            "gitlab/gitlab-ee@sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec"
+        ],
+        "Parent": "",
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-10-15T01:23:45.89919621Z",
+        "DockerVersion": "",
+        "Author": "",
+        "Config": {
+            "Hostname": "",
+            "Domainname": "",
+            "User": "",
+            "AttachStdin": false,
+            "AttachStdout": false,
+            "AttachStderr": false,
+            "ExposedPorts": {
+                "22/tcp": {},
+                "443/tcp": {},
+                "80/tcp": {}
+            },
+            "Tty": false,
+            "OpenStdin": false,
+            "StdinOnce": false,
+            "Env": [
+                "PATH=/opt/gitlab/embedded/bin:/opt/gitlab/bin:/assets:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "EDITOR=/bin/vi",
+                "GITLAB_ALLOW_SHA1_RSA=false",
+                "TERM=xterm"
+            ],
+            "Cmd": [
+                "/assets/init-container"
+            ],
+            "Healthcheck": {
+                "Test": [
+                    "CMD-SHELL",
+                    "/opt/gitlab/bin/gitlab-healthcheck --fail --max-time 10"
+                ],
+                "Interval": 60000000000,
+                "Timeout": 30000000000,
+                "Retries": 5
+            },
+            "ArgsEscaped": true,
+            "Image": "",
+            "Volumes": {
+                "/etc/gitlab": {},
+                "/var/log/gitlab": {},
+                "/var/opt/gitlab": {}
+            },
+            "WorkingDir": "",
+            "Entrypoint": null,
+            "OnBuild": null,
+            "Labels": {
+                "org.opencontainers.image.authors": "GitLab Distribution Team <distribution-be@gitlab.com>",
+                "org.opencontainers.image.base.name": "docker.io/ubuntu:24.04",
+                "org.opencontainers.image.documentation": "https://docs.gitlab.com/ee/install/docker/",
+                "org.opencontainers.image.source": "https://gitlab.com/gitlab-org/omnibus-gitlab",
+                "org.opencontainers.image.title": "GitLab Omnibus Docker",
+                "org.opencontainers.image.version": "24.04"
+            },
+            "Shell": [
+                "/bin/sh",
+                "-c"
+            ]
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 4661466290,
+        "GraphDriver": {
+            "Data": {
+                "LowerDir": "/var/lib/docker/overlay2/2ef781fc26cc8fda042cb51ceaa7173e8e00194c0504dd9b46b57c87d328dd59/diff:/var/lib/docker/overlay2/7c46495d697b06def72a52235bea08fcf3030765ee9dfb3343b3b74c3cdffd66/diff:/var/lib/docker/overlay2/4eee99bbc6b31749e1be45297f2987dbe4ad816e75a767a90225c2af45d58870/diff:/var/lib/docker/overlay2/3eaeab5dc71bee0891e3c11bb65c36caa0bd6c1219e3bf148493e32abdb79b69/diff:/var/lib/docker/overlay2/90a89447c8186ae3d75033ca91a7a4772226033789500ea447a5739260ff8571/diff:/var/lib/docker/overlay2/28b7112d1751261563c7beb30962ee112cae3bfe97c72aaf23f95ea816ea9a39/diff:/var/lib/docker/overlay2/d98e5bfca6e7706a90864704af3c4424608de361d20e6831d256395ab5d0c36e/diff:/var/lib/docker/overlay2/ac64111eddcf6fe8e29973f1cf4f889f19d15c1554f28fbe46f58375826c11e7/diff",
+                "MergedDir": "/var/lib/docker/overlay2/0a5aac8de33f4a9d9ede1bd52bf308d6bbf4324028aae1667cb9f1ef40f3b27c/merged",
+                "UpperDir": "/var/lib/docker/overlay2/0a5aac8de33f4a9d9ede1bd52bf308d6bbf4324028aae1667cb9f1ef40f3b27c/diff",
+                "WorkDir": "/var/lib/docker/overlay2/0a5aac8de33f4a9d9ede1bd52bf308d6bbf4324028aae1667cb9f1ef40f3b27c/work"
+            },
+            "Name": "overlay2"
+        },
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:d81fb2a7c6ee3be05fdefaa7fd223be219c1ab172083ec1b994c3ecda33ac0a8",
+                "sha256:ec4f887c43ef5cc03c5ecdb6ad059b581eadeb3fdebffb2b42c51e454e46601c",
+                "sha256:004caf9960f741ac1ecb4da67c047b51e50e850fcb06ab53f96e35bd41ead9c7",
+                "sha256:35bf502a602d309419afc4c6c4f942fca700f6d6ea2f941cf5a3043f80e613b0",
+                "sha256:44b92107f2ad7d3345c43067e388706479373ce55a5b0ab253d3491a45f83b26",
+                "sha256:bee1346e0b3bb0224c0da75000e7847dd5e8ed39545acf7e149e61dd3c70d597",
+                "sha256:796f2a6a4c9a506fa2189569288402ea2a2c63b23c7107154daa10e1d3f67893",
+                "sha256:7df49fde7f2ec29347e68668ae242e659b6e53d8aaa371e714b1c55cc5407acf",
+                "sha256:9992d41c5af8db68fc1799f2f3c926398b37d4270ed161e788d728a3b10c944d"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "0001-01-01T00:00:00Z"
+        }
+    }
+]
+---
+
+START: 2026-10-18 08:39:51 +0200
+COMMAND: osctl ct del -f --prune docker-9774
+END: 2026-10-18 08:39:55 +0200
+ELAPSED: 3.39s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:docker-9774
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-18 08:39:55 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-18 08:39:55 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/20.04/image-stream.tar
+---
+
+START: 2026-10-18 08:39:55 +0200
+COMMAND: poweroff -f
+END: 2026-10-18 08:40:10 +0200
+ELAPSED: 14.99s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+
+START: 2026-10-18 08:40:39 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-18 08:40:39 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:40:39 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-18 08:40:39 +0200
+ELAPSED: 0.01s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:40:39 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:40:40 +0200
+ELAPSED: 1.55s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:40:41 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:40:42 +0200
+ELAPSED: 0.57s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:40:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:40:43 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:40:44 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:40:45 +0200
+ELAPSED: 0.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:40:46 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:40:46 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:40:47 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:40:48 +0200
+ELAPSED: 0.59s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:40:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:40:50 +0200
+ELAPSED: 0.65s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:40:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:40:51 +0200
+ELAPSED: 0.61s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 08:40:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:40:53 +0200
+ELAPSED: 0.63s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-18 08:40:54 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:40:55 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-18 08:40:56 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 08:40:56 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-18 08:40:56 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-18 08:40:56 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Sun, 18 Oct 2026 06:40:56 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-18 08:40:56 +0200
+COMMAND: osctl ct new --distribution ubuntu --version 22.04 docker-25d7
+END: 2026-10-18 08:41:08 +0200
+ELAPSED: 11.66s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-18 08:41:08 +0200
+COMMAND: osctl ct unset start-menu docker-25d7
+END: 2026-10-18 08:41:09 +0200
+ELAPSED: 0.63s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:41:09 +0200
+COMMAND: osctl ct netif new bridge --link lxcbr0 --no-dhcp --gateway-v4 auto --gateway-v6 none docker-25d7 eth0
+END: 2026-10-18 08:41:09 +0200
+ELAPSED: 0.72s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:41:09 +0200
+COMMAND: osctl ct netif ip add docker-25d7 eth0 192.168.1.86/24
+END: 2026-10-18 08:41:10 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:41:10 +0200
+COMMAND: osctl ct set dns-resolver docker-25d7 1.1.1.1
+END: 2026-10-18 08:41:11 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:41:11 +0200
+COMMAND: osctl ct start docker-25d7
+END: 2026-10-18 08:41:13 +0200
+ELAPSED: 1.94s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 08:41:13 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c 'ping -c 1 check-online.vpsadminos.org || curl --head https://check-online.vpsadminos.org || wget -O - https://check-online.vpsadminos.org || getent hosts check-online.vpsadminos.org'
+END: 2026-10-18 08:41:14 +0200
+ELAPSED: 1.66s
+STATUS: 0
+OUTPUT:
+PING vpsadminos.org (37.205.14.58) 56(84) bytes of data.
+64 bytes from 37.205.14.58 (37.205.14.58): icmp_seq=1 ttl=254 time=0.378 ms
+
+--- vpsadminos.org ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.378/0.378/0.378/0.000 ms
+---
+
+START: 2026-10-18 08:41:14 +0200
+COMMAND: osctl ct exec docker-25d7 apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none update -y
+END: 2026-10-18 08:41:19 +0200
+ELAPSED: 4.78s
+STATUS: 0
+OUTPUT:
+Hit:1 http://cz.archive.ubuntu.com/ubuntu jammy InRelease
+Get:2 http://cz.archive.ubuntu.com/ubuntu jammy-security InRelease [129 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu jammy-updates InRelease [128 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu jammy-updates/universe amd64 Packages [1289 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu jammy-updates/main amd64 Packages [3907 kB]
+Fetched 5453 kB in 1s (3829 kB/s)
+Reading package lists...
+---
+
+START: 2026-10-18 08:41:19 +0200
+COMMAND: osctl ct exec docker-25d7 apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none install -y ca-certificates curl
+END: 2026-10-18 08:41:24 +0200
+ELAPSED: 4.74s
+STATUS: 0
+OUTPUT:
+Reading package lists...
+Building dependency tree...
+Reading state information...
+ca-certificates is already the newest version (20260601~22.04.1).
+The following additional packages will be installed:
+  libbrotli1 libcurl4 libldap-2.5-0 libldap-common libnghttp2-14 librtmp1
+  libsasl2-2 libsasl2-modules libsasl2-modules-db libssh-4
+Suggested packages:
+  libsasl2-modules-gssapi-mit | libsasl2-modules-gssapi-heimdal
+  libsasl2-modules-ldap libsasl2-modules-otp libsasl2-modules-sql
+The following NEW packages will be installed:
+  curl libbrotli1 libcurl4 libldap-2.5-0 libldap-common libnghttp2-14 librtmp1
+  libsasl2-2 libsasl2-modules libsasl2-modules-db libssh-4
+0 upgraded, 11 newly installed, 0 to remove and 5 not upgraded.
+Need to get 1470 kB of archives.
+After this operation, 4207 kB of additional disk space will be used.
+Get:1 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 libnghttp2-14 amd64 1.43.0-1ubuntu0.4 [76.9 kB]
+Get:2 http://cz.archive.ubuntu.com/ubuntu jammy/main amd64 libbrotli1 amd64 1.0.9-2build6 [315 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu jammy-updates/main amd64 libsasl2-modules-db amd64 2.1.27+dfsg2-3ubuntu1.2 [20.5 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu jammy-updates/main amd64 libsasl2-2 amd64 2.1.27+dfsg2-3ubuntu1.2 [53.8 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu jammy-updates/main amd64 libldap-2.5-0 amd64 2.5.20+dfsg-0ubuntu0.22.04.1 [184 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu jammy/main amd64 librtmp1 amd64 2.4+20151223.gitfa8646d.1-2build4 [58.2 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 libssh-4 amd64 0.9.6-2ubuntu0.22.04.8 [189 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 libcurl4 amd64 7.81.0-1ubuntu1.30 [293 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 curl amd64 7.81.0-1ubuntu1.30 [194 kB]
+Get:10 http://cz.archive.ubuntu.com/ubuntu jammy-updates/main amd64 libldap-common all 2.5.20+dfsg-0ubuntu0.22.04.1 [16.4 kB]
+Get:11 http://cz.archive.ubuntu.com/ubuntu jammy-updates/main amd64 libsasl2-modules amd64 2.1.27+dfsg2-3ubuntu1.2 [68.8 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.34.0 /usr/local/share/perl/5.34.0 /usr/lib/x86_64-linux-gnu/perl5/5.34 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.34 /usr/share/perl/5.34 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7, <> line 11.)
+debconf: falling back to frontend: Teletype
+dpkg-preconfigure: unable to re-open stdin: 
+Fetched 1470 kB in 0s (25.4 MB/s)
+Selecting previously unselected package libnghttp2-14:amd64.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 19024 files and directories currently installed.)
+Preparing to unpack .../00-libnghttp2-14_1.43.0-1ubuntu0.4_amd64.deb ...
+Unpacking libnghttp2-14:amd64 (1.43.0-1ubuntu0.4) ...
+Selecting previously unselected package libbrotli1:amd64.
+Preparing to unpack .../01-libbrotli1_1.0.9-2build6_amd64.deb ...
+Unpacking libbrotli1:amd64 (1.0.9-2build6) ...
+Selecting previously unselected package libsasl2-modules-db:amd64.
+Preparing to unpack .../02-libsasl2-modules-db_2.1.27+dfsg2-3ubuntu1.2_amd64.deb ...
+Unpacking libsasl2-modules-db:amd64 (2.1.27+dfsg2-3ubuntu1.2) ...
+Selecting previously unselected package libsasl2-2:amd64.
+Preparing to unpack .../03-libsasl2-2_2.1.27+dfsg2-3ubuntu1.2_amd64.deb ...
+Unpacking libsasl2-2:amd64 (2.1.27+dfsg2-3ubuntu1.2) ...
+Selecting previously unselected package libldap-2.5-0:amd64.
+Preparing to unpack .../04-libldap-2.5-0_2.5.20+dfsg-0ubuntu0.22.04.1_amd64.deb ...
+Unpacking libldap-2.5-0:amd64 (2.5.20+dfsg-0ubuntu0.22.04.1) ...
+Selecting previously unselected package librtmp1:amd64.
+Preparing to unpack .../05-librtmp1_2.4+20151223.gitfa8646d.1-2build4_amd64.deb ...
+Unpacking librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build4) ...
+Selecting previously unselected package libssh-4:amd64.
+Preparing to unpack .../06-libssh-4_0.9.6-2ubuntu0.22.04.8_amd64.deb ...
+Unpacking libssh-4:amd64 (0.9.6-2ubuntu0.22.04.8) ...
+Selecting previously unselected package libcurl4:amd64.
+Preparing to unpack .../07-libcurl4_7.81.0-1ubuntu1.30_amd64.deb ...
+Unpacking libcurl4:amd64 (7.81.0-1ubuntu1.30) ...
+Selecting previously unselected package curl.
+Preparing to unpack .../08-curl_7.81.0-1ubuntu1.30_amd64.deb ...
+Unpacking curl (7.81.0-1ubuntu1.30) ...
+Selecting previously unselected package libldap-common.
+Preparing to unpack .../09-libldap-common_2.5.20+dfsg-0ubuntu0.22.04.1_all.deb ...
+Unpacking libldap-common (2.5.20+dfsg-0ubuntu0.22.04.1) ...
+Selecting previously unselected package libsasl2-modules:amd64.
+Preparing to unpack .../10-libsasl2-modules_2.1.27+dfsg2-3ubuntu1.2_amd64.deb ...
+Unpacking libsasl2-modules:amd64 (2.1.27+dfsg2-3ubuntu1.2) ...
+Setting up libbrotli1:amd64 (1.0.9-2build6) ...
+Setting up libsasl2-modules:amd64 (2.1.27+dfsg2-3ubuntu1.2) ...
+Setting up libnghttp2-14:amd64 (1.43.0-1ubuntu0.4) ...
+Setting up libldap-common (2.5.20+dfsg-0ubuntu0.22.04.1) ...
+Setting up libsasl2-modules-db:amd64 (2.1.27+dfsg2-3ubuntu1.2) ...
+Setting up librtmp1:amd64 (2.4+20151223.gitfa8646d.1-2build4) ...
+Setting up libsasl2-2:amd64 (2.1.27+dfsg2-3ubuntu1.2) ...
+Setting up libssh-4:amd64 (0.9.6-2ubuntu0.22.04.8) ...
+Setting up libldap-2.5-0:amd64 (2.5.20+dfsg-0ubuntu0.22.04.1) ...
+Setting up libcurl4:amd64 (7.81.0-1ubuntu1.30) ...
+Setting up curl (7.81.0-1ubuntu1.30) ...
+Processing triggers for man-db (2.10.2-1) ...
+Processing triggers for libc-bin (2.35-0ubuntu3.15) ...
+---
+
+START: 2026-10-18 08:41:24 +0200
+COMMAND: osctl ct exec docker-25d7 install -m 0755 -d /etc/apt/keyrings
+END: 2026-10-18 08:41:25 +0200
+ELAPSED: 1.46s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:41:25 +0200
+COMMAND: osctl ct exec docker-25d7 curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+END: 2026-10-18 08:41:27 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:41:27 +0200
+COMMAND: osctl ct exec docker-25d7 chmod a+r /etc/apt/keyrings/docker.asc
+END: 2026-10-18 08:41:28 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:41:28 +0200
+COMMAND: osctl ct exec docker-25d7 bash -c 'echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu $(. /etc/os-release && echo $VERSION_CODENAME) stable" > /etc/apt/sources.list.d/docker.list'
+END: 2026-10-18 08:41:30 +0200
+ELAPSED: 1.51s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:41:30 +0200
+COMMAND: osctl ct exec docker-25d7 apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none update -y
+END: 2026-10-18 08:41:34 +0200
+ELAPSED: 3.93s
+STATUS: 0
+OUTPUT:
+Hit:1 http://cz.archive.ubuntu.com/ubuntu jammy InRelease
+Hit:2 http://cz.archive.ubuntu.com/ubuntu jammy-security InRelease
+Hit:3 http://cz.archive.ubuntu.com/ubuntu jammy-updates InRelease
+Get:4 https://download.docker.com/linux/ubuntu jammy InRelease [48.5 kB]
+Get:5 https://download.docker.com/linux/ubuntu jammy/stable amd64 Packages [90.4 kB]
+Fetched 139 kB in 1s (190 kB/s)
+Reading package lists...
+---
+
+START: 2026-10-18 08:41:34 +0200
+COMMAND: osctl ct exec docker-25d7 apt-get -o Acquire::Retries\=3 -o Acquire::Languages\=none install -y docker-ce docker-ce-cli containerd.io
+END: 2026-10-18 08:41:56 +0200
+ELAPSED: 22.54s
+STATUS: 0
+OUTPUT:
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  apparmor dbus-user-session docker-buildx-plugin docker-ce-rootless-extras
+  docker-compose-plugin git git-man iptables libcurl3-gnutls liberror-perl
+  libgdbm-compat4 libip6tc2 libjansson4 libnetfilter-conntrack3 libnfnetlink0
+  libnftables1 libnftnl11 libperl5.34 nftables patch perl perl-modules-5.34
+  pigz xz-utils
+Suggested packages:
+  apparmor-profiles-extra apparmor-utils cgroupfs-mount | cgroup-lite
+  docker-model-plugin gettext-base git-daemon-run | git-daemon-sysvinit
+  git-doc git-email git-gui gitk gitweb git-cvs git-mediawiki git-svn
+  firewalld ed diffutils-doc perl-doc libterm-readline-gnu-perl
+  | libterm-readline-perl-perl make libtap-harness-archive-perl
+The following NEW packages will be installed:
+  apparmor containerd.io dbus-user-session docker-buildx-plugin docker-ce
+  docker-ce-cli docker-ce-rootless-extras docker-compose-plugin git git-man
+  iptables libcurl3-gnutls liberror-perl libgdbm-compat4 libip6tc2 libjansson4
+  libnetfilter-conntrack3 libnfnetlink0 libnftables1 libnftnl11 libperl5.34
+  nftables patch perl perl-modules-5.34 pigz xz-utils
+0 upgraded, 27 newly installed, 0 to remove and 5 not upgraded.
+Need to get 116 MB of archives.
+After this operation, 466 MB of additional disk space will be used.
+Get:1 http://cz.archive.ubuntu.com/ubuntu jammy-updates/main amd64 libip6tc2 amd64 1.8.7-1ubuntu5.2 [20.3 kB]
+Get:2 http://cz.archive.ubuntu.com/ubuntu jammy/main amd64 libnfnetlink0 amd64 1.0.1-3build3 [14.6 kB]
+Get:3 http://cz.archive.ubuntu.com/ubuntu jammy/main amd64 libnetfilter-conntrack3 amd64 1.0.9-1 [45.3 kB]
+Get:4 http://cz.archive.ubuntu.com/ubuntu jammy/main amd64 libnftnl11 amd64 1.2.1-1build1 [65.5 kB]
+Get:5 http://cz.archive.ubuntu.com/ubuntu jammy-updates/main amd64 iptables amd64 1.8.7-1ubuntu5.2 [455 kB]
+Get:6 http://cz.archive.ubuntu.com/ubuntu jammy/main amd64 libjansson4 amd64 2.13.1-1.1build3 [32.4 kB]
+Get:7 http://cz.archive.ubuntu.com/ubuntu jammy-updates/main amd64 libnftables1 amd64 1.0.2-1ubuntu3.1 [332 kB]
+Get:8 http://cz.archive.ubuntu.com/ubuntu jammy-updates/main amd64 nftables amd64 1.0.2-1ubuntu3.1 [67.2 kB]
+Get:9 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 perl-modules-5.34 all 5.34.0-3ubuntu1.9 [2977 kB]
+Get:10 https://download.docker.com/linux/ubuntu jammy/stable amd64 containerd.io amd64 2.4.2-2~ubuntu.22.04~jammy [23.3 MB]
+Get:11 http://cz.archive.ubuntu.com/ubuntu jammy/main amd64 libgdbm-compat4 amd64 1.23-1 [6606 B]
+Get:12 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 libperl5.34 amd64 5.34.0-3ubuntu1.9 [4796 kB]
+Get:13 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 perl amd64 5.34.0-3ubuntu1.9 [232 kB]
+Get:14 http://cz.archive.ubuntu.com/ubuntu jammy/universe amd64 pigz amd64 2.6-1 [63.6 kB]
+Get:15 http://cz.archive.ubuntu.com/ubuntu jammy-updates/main amd64 apparmor amd64 3.0.4-2ubuntu2.5 [599 kB]
+Get:16 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 xz-utils amd64 5.2.5-2ubuntu1.1 [84.8 kB]
+Get:17 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 dbus-user-session amd64 1.12.20-2ubuntu4.1 [9442 B]
+Get:18 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 libcurl3-gnutls amd64 7.81.0-1ubuntu1.30 [287 kB]
+Get:19 http://cz.archive.ubuntu.com/ubuntu jammy/main amd64 liberror-perl all 0.17029-1 [26.5 kB]
+Get:20 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 git-man all 1:2.34.1-1ubuntu1.17 [954 kB]
+Get:21 http://cz.archive.ubuntu.com/ubuntu jammy-security/main amd64 git amd64 1:2.34.1-1ubuntu1.17 [3174 kB]
+Get:22 http://cz.archive.ubuntu.com/ubuntu jammy/main amd64 patch amd64 2.7.6-7build2 [109 kB]
+Get:23 https://download.docker.com/linux/ubuntu jammy/stable amd64 docker-ce-cli amd64 5:29.9.1-1~ubuntu.22.04~jammy [17.6 MB]
+Get:24 https://download.docker.com/linux/ubuntu jammy/stable amd64 docker-ce amd64 5:29.9.1-1~ubuntu.22.04~jammy [24.6 MB]
+Get:25 https://download.docker.com/linux/ubuntu jammy/stable amd64 docker-buildx-plugin amd64 0.38.0-1~ubuntu.22.04~jammy [17.8 MB]
+Get:26 https://download.docker.com/linux/ubuntu jammy/stable amd64 docker-ce-rootless-extras amd64 5:29.9.1-1~ubuntu.22.04~jammy [10.2 MB]
+Get:27 https://download.docker.com/linux/ubuntu jammy/stable amd64 docker-compose-plugin amd64 5.6.0-1~ubuntu.22.04~jammy [8081 kB]
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+debconf: unable to initialize frontend: Readline
+debconf: (Can't locate Term/ReadLine.pm in @INC (you may need to install the Term::ReadLine module) (@INC contains: /etc/perl /usr/local/lib/x86_64-linux-gnu/perl/5.34.0 /usr/local/share/perl/5.34.0 /usr/lib/x86_64-linux-gnu/perl5/5.34 /usr/share/perl5 /usr/lib/x86_64-linux-gnu/perl-base /usr/lib/x86_64-linux-gnu/perl/5.34 /usr/share/perl/5.34 /usr/local/lib/site_perl) at /usr/share/perl5/Debconf/FrontEnd/Readline.pm line 7, <> line 27.)
+debconf: falling back to frontend: Teletype
+dpkg-preconfigure: unable to re-open stdin: 
+Fetched 116 MB in 1s (77.9 MB/s)
+Selecting previously unselected package containerd.io.
+(Reading database ... (Reading database ... 5%(Reading database ... 10%(Reading database ... 15%(Reading database ... 20%(Reading database ... 25%(Reading database ... 30%(Reading database ... 35%(Reading database ... 40%(Reading database ... 45%(Reading database ... 50%(Reading database ... 55%(Reading database ... 60%(Reading database ... 65%(Reading database ... 70%(Reading database ... 75%(Reading database ... 80%(Reading database ... 85%(Reading database ... 90%(Reading database ... 95%(Reading database ... 100%(Reading database ... 19124 files and directories currently installed.)
+Preparing to unpack .../00-containerd.io_2.4.2-2~ubuntu.22.04~jammy_amd64.deb ...
+Unpacking containerd.io (2.4.2-2~ubuntu.22.04~jammy) ...
+Selecting previously unselected package docker-ce-cli.
+Preparing to unpack .../01-docker-ce-cli_5%3a29.9.1-1~ubuntu.22.04~jammy_amd64.deb ...
+Unpacking docker-ce-cli (5:29.9.1-1~ubuntu.22.04~jammy) ...
+Selecting previously unselected package libip6tc2:amd64.
+Preparing to unpack .../02-libip6tc2_1.8.7-1ubuntu5.2_amd64.deb ...
+Unpacking libip6tc2:amd64 (1.8.7-1ubuntu5.2) ...
+Selecting previously unselected package libnfnetlink0:amd64.
+Preparing to unpack .../03-libnfnetlink0_1.0.1-3build3_amd64.deb ...
+Unpacking libnfnetlink0:amd64 (1.0.1-3build3) ...
+Selecting previously unselected package libnetfilter-conntrack3:amd64.
+Preparing to unpack .../04-libnetfilter-conntrack3_1.0.9-1_amd64.deb ...
+Unpacking libnetfilter-conntrack3:amd64 (1.0.9-1) ...
+Selecting previously unselected package libnftnl11:amd64.
+Preparing to unpack .../05-libnftnl11_1.2.1-1build1_amd64.deb ...
+Unpacking libnftnl11:amd64 (1.2.1-1build1) ...
+Selecting previously unselected package iptables.
+Preparing to unpack .../06-iptables_1.8.7-1ubuntu5.2_amd64.deb ...
+Unpacking iptables (1.8.7-1ubuntu5.2) ...
+Selecting previously unselected package libjansson4:amd64.
+Preparing to unpack .../07-libjansson4_2.13.1-1.1build3_amd64.deb ...
+Unpacking libjansson4:amd64 (2.13.1-1.1build3) ...
+Selecting previously unselected package libnftables1:amd64.
+Preparing to unpack .../08-libnftables1_1.0.2-1ubuntu3.1_amd64.deb ...
+Unpacking libnftables1:amd64 (1.0.2-1ubuntu3.1) ...
+Selecting previously unselected package nftables.
+Preparing to unpack .../09-nftables_1.0.2-1ubuntu3.1_amd64.deb ...
+Unpacking nftables (1.0.2-1ubuntu3.1) ...
+Selecting previously unselected package docker-ce.
+Preparing to unpack .../10-docker-ce_5%3a29.9.1-1~ubuntu.22.04~jammy_amd64.deb ...
+Unpacking docker-ce (5:29.9.1-1~ubuntu.22.04~jammy) ...
+Selecting previously unselected package perl-modules-5.34.
+Preparing to unpack .../11-perl-modules-5.34_5.34.0-3ubuntu1.9_all.deb ...
+Unpacking perl-modules-5.34 (5.34.0-3ubuntu1.9) ...
+Selecting previously unselected package libgdbm-compat4:amd64.
+Preparing to unpack .../12-libgdbm-compat4_1.23-1_amd64.deb ...
+Unpacking libgdbm-compat4:amd64 (1.23-1) ...
+Selecting previously unselected package libperl5.34:amd64.
+Preparing to unpack .../13-libperl5.34_5.34.0-3ubuntu1.9_amd64.deb ...
+Unpacking libperl5.34:amd64 (5.34.0-3ubuntu1.9) ...
+Selecting previously unselected package perl.
+Preparing to unpack .../14-perl_5.34.0-3ubuntu1.9_amd64.deb ...
+Unpacking perl (5.34.0-3ubuntu1.9) ...
+Selecting previously unselected package pigz.
+Preparing to unpack .../15-pigz_2.6-1_amd64.deb ...
+Unpacking pigz (2.6-1) ...
+Selecting previously unselected package apparmor.
+Preparing to unpack .../16-apparmor_3.0.4-2ubuntu2.5_amd64.deb ...
+Unpacking apparmor (3.0.4-2ubuntu2.5) ...
+Selecting previously unselected package xz-utils.
+Preparing to unpack .../17-xz-utils_5.2.5-2ubuntu1.1_amd64.deb ...
+Unpacking xz-utils (5.2.5-2ubuntu1.1) ...
+Selecting previously unselected package dbus-user-session.
+Preparing to unpack .../18-dbus-user-session_1.12.20-2ubuntu4.1_amd64.deb ...
+Unpacking dbus-user-session (1.12.20-2ubuntu4.1) ...
+Selecting previously unselected package docker-buildx-plugin.
+Preparing to unpack .../19-docker-buildx-plugin_0.38.0-1~ubuntu.22.04~jammy_amd64.deb ...
+Unpacking docker-buildx-plugin (0.38.0-1~ubuntu.22.04~jammy) ...
+Selecting previously unselected package docker-ce-rootless-extras.
+Preparing to unpack .../20-docker-ce-rootless-extras_5%3a29.9.1-1~ubuntu.22.04~jammy_amd64.deb ...
+Unpacking docker-ce-rootless-extras (5:29.9.1-1~ubuntu.22.04~jammy) ...
+Selecting previously unselected package docker-compose-plugin.
+Preparing to unpack .../21-docker-compose-plugin_5.6.0-1~ubuntu.22.04~jammy_amd64.deb ...
+Unpacking docker-compose-plugin (5.6.0-1~ubuntu.22.04~jammy) ...
+Selecting previously unselected package libcurl3-gnutls:amd64.
+Preparing to unpack .../22-libcurl3-gnutls_7.81.0-1ubuntu1.30_amd64.deb ...
+Unpacking libcurl3-gnutls:amd64 (7.81.0-1ubuntu1.30) ...
+Selecting previously unselected package liberror-perl.
+Preparing to unpack .../23-liberror-perl_0.17029-1_all.deb ...
+Unpacking liberror-perl (0.17029-1) ...
+Selecting previously unselected package git-man.
+Preparing to unpack .../24-git-man_1%3a2.34.1-1ubuntu1.17_all.deb ...
+Unpacking git-man (1:2.34.1-1ubuntu1.17) ...
+Selecting previously unselected package git.
+Preparing to unpack .../25-git_1%3a2.34.1-1ubuntu1.17_amd64.deb ...
+Unpacking git (1:2.34.1-1ubuntu1.17) ...
+Selecting previously unselected package patch.
+Preparing to unpack .../26-patch_2.7.6-7build2_amd64.deb ...
+Unpacking patch (2.7.6-7build2) ...
+Setting up libip6tc2:amd64 (1.8.7-1ubuntu5.2) ...
+Setting up libnftnl11:amd64 (1.2.1-1build1) ...
+Setting up libcurl3-gnutls:amd64 (7.81.0-1ubuntu1.30) ...
+Setting up perl-modules-5.34 (5.34.0-3ubuntu1.9) ...
+Setting up libjansson4:amd64 (2.13.1-1.1build3) ...
+Setting up apparmor (3.0.4-2ubuntu2.5) ...
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+Created symlink /etc/systemd/system/sysinit.target.wants/apparmor.service → /lib/systemd/system/apparmor.service.
+Setting up dbus-user-session (1.12.20-2ubuntu4.1) ...
+Setting up docker-buildx-plugin (0.38.0-1~ubuntu.22.04~jammy) ...
+Setting up xz-utils (5.2.5-2ubuntu1.1) ...
+update-alternatives: using /usr/bin/xz to provide /usr/bin/lzma (lzma) in auto mode
+Setting up containerd.io (2.4.2-2~ubuntu.22.04~jammy) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/containerd.service → /lib/systemd/system/containerd.service.
+Setting up patch (2.7.6-7build2) ...
+Setting up libgdbm-compat4:amd64 (1.23-1) ...
+Setting up docker-compose-plugin (5.6.0-1~ubuntu.22.04~jammy) ...
+Setting up docker-ce-cli (5:29.9.1-1~ubuntu.22.04~jammy) ...
+Setting up pigz (2.6-1) ...
+Setting up libnfnetlink0:amd64 (1.0.1-3build3) ...
+Setting up git-man (1:2.34.1-1ubuntu1.17) ...
+Setting up docker-ce-rootless-extras (5:29.9.1-1~ubuntu.22.04~jammy) ...
+Setting up libperl5.34:amd64 (5.34.0-3ubuntu1.9) ...
+Setting up libnftables1:amd64 (1.0.2-1ubuntu3.1) ...
+Setting up nftables (1.0.2-1ubuntu3.1) ...
+Setting up perl (5.34.0-3ubuntu1.9) ...
+Setting up libnetfilter-conntrack3:amd64 (1.0.9-1) ...
+Setting up iptables (1.8.7-1ubuntu5.2) ...
+update-alternatives: using /usr/sbin/iptables-legacy to provide /usr/sbin/iptables (iptables) in auto mode
+update-alternatives: using /usr/sbin/ip6tables-legacy to provide /usr/sbin/ip6tables (ip6tables) in auto mode
+update-alternatives: using /usr/sbin/iptables-nft to provide /usr/sbin/iptables (iptables) in auto mode
+update-alternatives: using /usr/sbin/ip6tables-nft to provide /usr/sbin/ip6tables (ip6tables) in auto mode
+update-alternatives: using /usr/sbin/arptables-nft to provide /usr/sbin/arptables (arptables) in auto mode
+update-alternatives: using /usr/sbin/ebtables-nft to provide /usr/sbin/ebtables (ebtables) in auto mode
+Setting up liberror-perl (0.17029-1) ...
+Setting up docker-ce (5:29.9.1-1~ubuntu.22.04~jammy) ...
+Created symlink /etc/systemd/system/multi-user.target.wants/docker.service → /lib/systemd/system/docker.service.
+Created symlink /etc/systemd/system/sockets.target.wants/docker.socket → /lib/systemd/system/docker.socket.
+Setting up git (1:2.34.1-1ubuntu1.17) ...
+Processing triggers for man-db (2.10.2-1) ...
+Processing triggers for libc-bin (2.35-0ubuntu3.15) ...
+---
+
+START: 2026-10-18 08:41:56 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-18 08:41:58 +0200
+ELAPSED: 1.5s
+STATUS: 1
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-18 08:41:58 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c mkdir\ -p\ /etc/docker'
+'cat\ \>\ /etc/docker/daemon.json\ \<\<\'EOF\''
+'\{'
+'\ \ \"registry-mirrors\":\ \['
+'\ \ \ \ \"https://docker-registry.vpsadminos.org\"'
+'\ \ \]'
+'\}'
+''
+'EOF'
+'
+END: 2026-10-18 08:41:59 +0200
+ELAPSED: 1.47s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:41:59 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c if\ command\ -v\ update-alternatives\ \>/dev/null\ 2\>\&1\;\ then'
+'\ \ for\ name\ in\ iptables\ ip6tables\ arptables\ ebtables\;\ do'
+'\ \ \ \ target\=\"/usr/sbin/\$\{name\}-nft\"'
+'\ \ \ \ if\ \[\ -x\ \"\$target\"\ \]\ \&\&\ update-alternatives\ --list\ \"\$name\"\ 2\>/dev/null\ \|\ grep\ -Fxq\ \"\$target\"\;\ then'
+'\ \ \ \ \ \ update-alternatives\ --set\ \"\$name\"\ \"\$target\"'
+'\ \ \ \ fi'
+'\ \ done'
+'fi'
+'
+END: 2026-10-18 08:42:01 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:42:01 +0200
+COMMAND: osctl ct exec docker-25d7 systemctl reset-failed docker || true
+END: 2026-10-18 08:42:02 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:42:02 +0200
+COMMAND: osctl ct exec docker-25d7 systemctl restart docker
+END: 2026-10-18 08:42:05 +0200
+ELAPSED: 2.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:42:05 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c 'test -s /etc/docker/daemon.json && cat /etc/docker/daemon.json'
+END: 2026-10-18 08:42:07 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+{
+  "registry-mirrors": [
+    "https://docker-registry.vpsadminos.org"
+  ]
+}
+
+---
+
+START: 2026-10-18 08:42:07 +0200
+COMMAND: osctl ct exec docker-25d7 docker info
+END: 2026-10-18 08:42:09 +0200
+ELAPSED: 1.86s
+STATUS: 0
+OUTPUT:
+Client: Docker Engine - Community
+ Version:    29.9.1
+ Context:    default
+ Debug Mode: false
+ Plugins:
+  buildx: Docker Buildx (Docker Inc.)
+    Version:  v0.38.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-buildx
+  compose: Docker Compose (Docker Inc.)
+    Version:  v5.6.0
+    Path:     /usr/libexec/docker/cli-plugins/docker-compose
+
+Server:
+ Containers: 0
+  Running: 0
+  Paused: 0
+  Stopped: 0
+ Images: 0
+ Server Version: 29.9.1
+ Storage Driver: overlayfs
+  driver-type: io.containerd.snapshotter.v1
+ Logging Driver: json-file
+ Cgroup Driver: systemd
+ Cgroup Version: 2
+ Plugins:
+  Volume: local
+  Network: bridge host ipvlan macvlan null overlay
+  Log: awslogs fluentd gcplogs gelf journald json-file local splunk syslog
+ CDI spec directories:
+  /etc/cdi
+  /var/run/cdi
+ Swarm: inactive
+ Runtimes: io.containerd.runc.v2 runc
+ Default Runtime: runc
+ Init Binary: docker-init
+ containerd version: b7a25261e029d68978bbf290df0a62fc819b3c51
+ runc version: v1.5.2-0-g29dd3dc2
+ init version: de40ad0
+ Security Options:
+  seccomp
+   Profile: builtin
+  cgroupns
+ Kernel Version: 6.12.109
+ Operating System: Ubuntu 22.04.5 LTS
+ OSType: linux
+ Architecture: x86_64
+ CPUs: 4
+ Total Memory: 7.765GiB
+ Name: docker-25d7
+ ID: 976fe9a2-cd7c-4877-ae43-cfb99cc7db98
+ Docker Root Dir: /var/lib/docker
+ Debug Mode: false
+ Experimental: false
+ Insecure Registries:
+  127.0.0.0/8
+  ::1/128
+ Registry Mirrors:
+  https://docker-registry.vpsadminos.org/
+ Live Restore Enabled: false
+ Firewall Backend: iptables
+  EnableUserlandProxy: true
+  UserlandProxyPath: /usr/bin/docker-proxy
+
+WARNING: No io.weight support
+WARNING: No io.weight (per device) support
+WARNING: No io.max (rbps) support
+WARNING: No io.max (wbps) support
+WARNING: No io.max (riops) support
+WARNING: No io.max (wiops) support
+---
+
+START: 2026-10-18 08:42:09 +0200
+COMMAND: osctl ct exec docker-25d7 docker run hello-world
+END: 2026-10-18 08:42:12 +0200
+ELAPSED: 3.57s
+STATUS: 0
+OUTPUT:
+Unable to find image 'hello-world:latest' locally
+latest: Pulling from library/hello-world
+4f55086f7dd0: Pulling fs layer
+4f55086f7dd0: Download complete
+d5e71e642bf5: Download complete
+4f55086f7dd0: Pull complete
+Digest: sha256:11a3eb1597e864c51b3f56733cb2e8a90bf0c284bfc05f9444d81c558bc848aa
+Status: Downloaded newer image for hello-world:latest
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+---
+
+START: 2026-10-18 08:42:12 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c mkdir\ -p\ /tmp/docker-build-test'
+'cat\ \>\ /tmp/docker-build-test/Dockerfile\ \<\<\'EOF\''
+'\#\ syntax\=docker/dockerfile:1'
+''
+'FROM\ alpine:latest'
+'RUN\ echo\ \"Docker\ build\ works\!\"\ \>\ /message.txt'
+'CMD\ \[\"cat\",\ \"/message.txt\"\]'
+''
+'EOF'
+'
+END: 2026-10-18 08:42:14 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:42:14 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ build\ -t\ docker-build-test\ /tmp/docker-build-test
+END: 2026-10-18 08:42:18 +0200
+ELAPSED: 4.43s
+STATUS: 0
+OUTPUT:
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 161B done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 0.4s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+#3 resolve docker.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e 0.0s done
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 5.24MB / 14.28MB 0.2s
+#3 sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 14.28MB / 14.28MB 0.3s done
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62
+#3 extracting sha256:9d2b4f57f9e20f33279375ce25c6ff14f30f64270ed5c7b613b2b30256754f62 0.2s done
+#3 DONE 0.6s
+
+#4 [internal] load metadata for docker.io/library/alpine:latest
+#4 DONE 0.4s
+
+#5 [internal] load .dockerignore
+#5 transferring context: 2B done
+#5 DONE 0.0s
+
+#6 [1/2] FROM docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+#6 resolve docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6 0.0s done
+#6 DONE 0.0s
+
+#6 [1/2] FROM docker.io/library/alpine:latest@sha256:294b683cb724975bec92580e1e685676bd4b50bda910ddb8c51d4cabeaec77e6
+#6 sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 3.85MB / 3.85MB 0.1s done
+#6 extracting sha256:e2de96513ba9eb53b431787ec8a65cdde380ac4772a3e4c4b714dcfde2a102b5 0.1s done
+#6 DONE 0.3s
+
+#7 [2/2] RUN echo "Docker build works!" > /message.txt
+#7 DONE 0.2s
+
+#8 exporting to image
+#8 exporting layers 0.1s done
+#8 exporting manifest sha256:9f8001f96ea754fae843c6f40c7b0cff1e4ab6d0e1f32c4fdfe5dfb4d3afbe9f done
+#8 exporting config sha256:723f0af70cf1cb46624ed648caa9f34dc39ffe10353c7d6a0f060658bc7fa109 done
+#8 exporting attestation manifest sha256:3ba51c7c48a3a255f6c922b50e54d68b51dfa4ef29f68d6c72692680eb7413a5
+#8 exporting attestation manifest sha256:3ba51c7c48a3a255f6c922b50e54d68b51dfa4ef29f68d6c72692680eb7413a5 0.0s done
+#8 exporting manifest list sha256:90abdd4d65fbb65c7e17dc93325d28cb264e19219bf1c4986d2581d8f0275b13 0.0s done
+#8 naming to docker.io/library/docker-build-test:latest done
+#8 unpacking to docker.io/library/docker-build-test:latest
+#8 unpacking to docker.io/library/docker-build-test:latest 0.2s done
+#8 DONE 0.3s
+---
+
+START: 2026-10-18 08:42:18 +0200
+COMMAND: osctl ct exec docker-25d7 docker run --rm docker-build-test
+END: 2026-10-18 08:42:20 +0200
+ELAPSED: 1.86s
+STATUS: 0
+OUTPUT:
+Docker build works!
+---
+
+START: 2026-10-18 08:42:20 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:42:22 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:42:22 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ create\ --name\ resource-limit-mem64-cpu0_5\ --memory\ 64m\ --cpu-period\ 100000\ --cpu-quota\ 50000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=67108864\''
+'\'expected_cpu_quota\\\=50000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-18 08:42:23 +0200
+ELAPSED: 1.64s
+STATUS: 0
+OUTPUT:
+ed7b900a4b2bf3b6595cd5c73d9eaa01e3cab41d0d851eb8e597eb40392585bf
+---
+
+START: 2026-10-18 08:42:23 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ start\ --attach\ resource-limit-mem64-cpu0_5
+END: 2026-10-18 08:42:25 +0200
+ELAPSED: 1.9s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-18 08:42:25 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ rm\ -f\ resource-limit-mem64-cpu0_5\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:42:27 +0200
+ELAPSED: 1.64s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:42:27 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:42:28 +0200
+ELAPSED: 1.58s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:42:28 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ create\ --name\ resource-limit-mem128-cpu1\ --memory\ 128m\ --cpu-period\ 100000\ --cpu-quota\ 100000\ --cpuset-cpus\ 0\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=134217728\''
+'\'expected_cpu_quota\\\=100000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-18 08:42:30 +0200
+ELAPSED: 1.62s
+STATUS: 0
+OUTPUT:
+f8ac6cda4b2c9fc04bae0af083692cb738f7ab38a84d177710dd38d2fbeb83c0
+---
+
+START: 2026-10-18 08:42:30 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ start\ --attach\ resource-limit-mem128-cpu1
+END: 2026-10-18 08:42:32 +0200
+ELAPSED: 1.74s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-18 08:42:32 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ rm\ -f\ resource-limit-mem128-cpu1\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:42:33 +0200
+ELAPSED: 1.57s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:42:33 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:42:35 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:42:35 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ create\ --name\ resource-limit-mem256-cpu2\ --memory\ 256m\ --cpu-period\ 100000\ --cpu-quota\ 200000\ --cpuset-cpus\ 0-1\ docker-build-test\ sh\ -c\ set\\\ -eu\''
+'\'\''
+'\'expected_memory\\\=268435456\''
+'\'expected_cpu_quota\\\=200000\''
+'\'expected_cpu_period\\\=100000\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$1\\\ \\\=\\\=\\\ \\\"0\\\"\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/memory.max\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/memory/memory.limit_in_bytes\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_memory_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)memory\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_memory\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/memory\\\$current_memory_cgroup/memory.limit_in_bytes\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"memory\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_memory\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_memory\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ memory\\\ limit\\\ \\\$expected_memory,\\\ got\\\ \\\$actual_memory\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cgroup.controllers\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ set\\\ --\\\ \\\$\\\(cat\\\ \\\"/sys/fs/cgroup\\\$current_cgroup/cpu.max\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$1\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$2\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu,cpuacct/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu,cpuacct\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'elif\\\ \\\[\\\ -f\\\ /sys/fs/cgroup/cpu/cpu.cfs_quota_us\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ current_cpu_cgroup\\\=\\\$\\\(awk\\\ -F:\\\ \\\'\\\$2\\\ \\\~\\\ /\\\(\\\^\\\|,\\\)cpu\\\(,\\\|\\\$\\\)/\\\ \\\{\\\ print\\\ \\\$3\\\ \\\}\\\'\\\ /proc/self/cgroup\\\)\''
+'\'\\\ \\\ actual_cpu_quota\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_quota_us\\\"\\\)\''
+'\'\\\ \\\ actual_cpu_period\\\=\\\$\\\(cat\\\ \\\"/sys/fs/cgroup/cpu\\\$current_cpu_cgroup/cpu.cfs_period_us\\\"\\\)\''
+'\'else\''
+'\'\\\ \\\ echo\\\ \\\"CPU\\\ limit\\\ file\\\ not\\\ found\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'if\\\ \\\[\\\ \\\"\\\$actual_cpu_quota\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_quota\\\"\\\ \\\]\\\ \\\ \\\ \\\|\\\|\\\ \\\[\\\ \\\"\\\$actual_cpu_period\\\"\\\ \\\!\\\=\\\ \\\"\\\$expected_cpu_period\\\"\\\ \\\]\\\;\\\ then\''
+'\'\\\ \\\ echo\\\ \\\"expected\\\ CPU\\\ limit\\\ \\\$expected_cpu_quota\\\ \\\$expected_cpu_period,\\\ got\\\ \\\$actual_cpu_quota\\\ \\\$actual_cpu_period\\\"\\\ \\\>\\\&2\''
+'\'\\\ \\\ exit\\\ 1\''
+'\'fi\''
+'\'\''
+'\'echo\\\ \\\"resource\\\ limits\\\ work\\\"\''
+'\'
+END: 2026-10-18 08:42:36 +0200
+ELAPSED: 1.56s
+STATUS: 0
+OUTPUT:
+4b31fa9f9a80917a1a4bccf60dcbc16be86a4e29480595e1a59e909fe59a0661
+---
+
+START: 2026-10-18 08:42:36 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ start\ --attach\ resource-limit-mem256-cpu2
+END: 2026-10-18 08:42:38 +0200
+ELAPSED: 1.82s
+STATUS: 0
+OUTPUT:
+resource limits work
+---
+
+START: 2026-10-18 08:42:38 +0200
+COMMAND: osctl ct exec docker-25d7 sh -c docker\ rm\ -f\ resource-limit-mem256-cpu2\ \>/dev/null\ 2\>\&1\ \|\|\ true
+END: 2026-10-18 08:42:40 +0200
+ELAPSED: 1.54s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 08:42:40 +0200
+COMMAND: osctl ct exec docker-25d7 docker pull gitlab/gitlab-ee:latest
+END: 2026-10-18 08:44:27 +0200
+ELAPSED: 106.8s
+STATUS: 0
+OUTPUT:
+latest: Pulling from gitlab/gitlab-ee
+a60ef8ec184e: Pulling fs layer
+efc789c857d4: Pulling fs layer
+a79790b56084: Pulling fs layer
+29fd8e020463: Pulling fs layer
+236de2eed0f1: Pulling fs layer
+d09a49a97fbc: Pulling fs layer
+921339dbed1b: Pulling fs layer
+4df2190a564d: Pulling fs layer
+35f1d1c4d2fc: Pulling fs layer
+d09a49a97fbc: Download complete
+a79790b56084: Download complete
+29fd8e020463: Download complete
+4df2190a564d: Download complete
+921339dbed1b: Download complete
+35f1d1c4d2fc: Download complete
+236de2eed0f1: Download complete
+a60ef8ec184e: Download complete
+a60ef8ec184e: Pull complete
+a79790b56084: Pull complete
+d09a49a97fbc: Pull complete
+29fd8e020463: Pull complete
+236de2eed0f1: Pull complete
+4df2190a564d: Pull complete
+921339dbed1b: Pull complete
+35f1d1c4d2fc: Pull complete
+efc789c857d4: Download complete
+efc789c857d4: Pull complete
+Digest: sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec
+Status: Downloaded newer image for gitlab/gitlab-ee:latest
+docker.io/gitlab/gitlab-ee:latest
+---
+
+START: 2026-10-18 08:44:27 +0200
+COMMAND: osctl ct exec docker-25d7 docker image inspect gitlab/gitlab-ee:latest
+END: 2026-10-18 08:44:28 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+[
+    {
+        "Id": "sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec",
+        "RepoTags": [
+            "gitlab/gitlab-ee:latest"
+        ],
+        "RepoDigests": [
+            "gitlab/gitlab-ee@sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec"
+        ],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-10-15T01:23:45.89919621Z",
+        "Config": {
+            "ExposedPorts": {
+                "22/tcp": {},
+                "443/tcp": {},
+                "80/tcp": {}
+            },
+            "Env": [
+                "PATH=/opt/gitlab/embedded/bin:/opt/gitlab/bin:/assets:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "LANG=C.UTF-8",
+                "EDITOR=/bin/vi",
+                "GITLAB_ALLOW_SHA1_RSA=false",
+                "TERM=xterm"
+            ],
+            "Cmd": [
+                "/assets/init-container"
+            ],
+            "Volumes": {
+                "/etc/gitlab": {},
+                "/var/log/gitlab": {},
+                "/var/opt/gitlab": {}
+            },
+            "Labels": {
+                "org.opencontainers.image.authors": "GitLab Distribution Team <distribution-be@gitlab.com>",
+                "org.opencontainers.image.base.name": "docker.io/ubuntu:24.04",
+                "org.opencontainers.image.documentation": "https://docs.gitlab.com/ee/install/docker/",
+                "org.opencontainers.image.source": "https://gitlab.com/gitlab-org/omnibus-gitlab",
+                "org.opencontainers.image.title": "GitLab Omnibus Docker",
+                "org.opencontainers.image.version": "24.04"
+            },
+            "ArgsEscaped": true,
+            "Healthcheck": {
+                "Test": [
+                    "CMD-SHELL",
+                    "/opt/gitlab/bin/gitlab-healthcheck --fail --max-time 10"
+                ],
+                "Interval": 60000000000,
+                "Timeout": 30000000000,
+                "Retries": 5
+            },
+            "Shell": [
+                "/bin/sh",
+                "-c"
+            ]
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 4452028158,
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:d81fb2a7c6ee3be05fdefaa7fd223be219c1ab172083ec1b994c3ecda33ac0a8",
+                "sha256:ec4f887c43ef5cc03c5ecdb6ad059b581eadeb3fdebffb2b42c51e454e46601c",
+                "sha256:004caf9960f741ac1ecb4da67c047b51e50e850fcb06ab53f96e35bd41ead9c7",
+                "sha256:35bf502a602d309419afc4c6c4f942fca700f6d6ea2f941cf5a3043f80e613b0",
+                "sha256:44b92107f2ad7d3345c43067e388706479373ce55a5b0ab253d3491a45f83b26",
+                "sha256:bee1346e0b3bb0224c0da75000e7847dd5e8ed39545acf7e149e61dd3c70d597",
+                "sha256:796f2a6a4c9a506fa2189569288402ea2a2c63b23c7107154daa10e1d3f67893",
+                "sha256:7df49fde7f2ec29347e68668ae242e659b6e53d8aaa371e714b1c55cc5407acf",
+                "sha256:9992d41c5af8db68fc1799f2f3c926398b37d4270ed161e788d728a3b10c944d"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-10-18T06:44:26.956933263Z"
+        },
+        "Descriptor": {
+            "mediaType": "application/vnd.oci.image.index.v1+json",
+            "digest": "sha256:f04c71f565601283971d6472dd466609f4679450526f39aab3e3dcd6d23dc0ec",
+            "size": 647
+        },
+        "Identity": {
+            "Pull": [
+                {
+                    "Repository": "docker.io/gitlab/gitlab-ee"
+                }
+            ]
+        }
+    }
+]
+---
+
+START: 2026-10-18 08:44:28 +0200
+COMMAND: osctl ct del -f --prune docker-25d7
+END: 2026-10-18 08:44:31 +0200
+ELAPSED: 3.1s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:docker-25d7
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-18 08:44:31 +0200
+COMMAND: osctl repository images prune
+END: 2026-10-18 08:44:32 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+Deleted /tank/repository/default/v1/vpsadminos/minimal/x86_64/ubuntu/22.04/image-stream.tar
+---
+
+START: 2026-10-18 08:44:32 +0200
+COMMAND: poweroff -f
+END: 2026-10-18 08:44:47 +0200
+ELAPSED: 14.96s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

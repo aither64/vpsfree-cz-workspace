@@ -1,0 +1,90 @@
+START: 2026-10-20 02:56:33 +0200
+ACTION: start
+END: 2026-10-20 02:56:33 +0200
+ELAPSED: 0.0s
+---
+
+START: 2026-10-20 02:57:43 +0200
+ACTION: kernel-failure
+EXPECTED: true
+LINE: [   68.295585] Kernel panic - not syncing: sysrq triggered crash
+END: 2026-10-20 02:57:43 +0200
+ELAPSED: 0.0s
+---
+
+START: 2026-10-20 02:57:51 +0200
+ACTION: kernel-failure
+EXPECTED: true
+LINE: [   68.295585] [   T3969] Kernel panic - not syncing: sysrq triggered crash
+END: 2026-10-20 02:57:51 +0200
+ELAPSED: 0.0s
+---
+
+START: 2026-10-20 02:57:52 +0200
+ACTION: console-wait
+REGEXP: /sysrq: Trigger a crash/
+END: 2026-10-20 02:57:52 +0200
+ELAPSED: 0.0s
+MATCH: true
+---
+
+START: 2026-10-20 02:57:52 +0200
+ACTION: console-wait
+REGEXP: /Kernel panic - not syncing: sysrq triggered crash/
+END: 2026-10-20 02:57:52 +0200
+ELAPSED: 0.0s
+MATCH: true
+---
+
+START: 2026-10-20 02:57:52 +0200
+ACTION: console-wait
+REGEXP: /This is a crash kernel/
+END: 2026-10-20 02:57:52 +0200
+ELAPSED: 0.0s
+MATCH: true
+---
+
+START: 2026-10-20 02:57:52 +0200
+ACTION: console-wait
+REGEXP: /Dumping dmesg/
+END: 2026-10-20 02:57:52 +0200
+ELAPSED: 0.0s
+MATCH: true
+---
+
+START: 2026-10-20 02:57:52 +0200
+ACTION: console-wait
+REGEXP: /makedumpfile exited with 0/
+END: 2026-10-20 02:57:52 +0200
+ELAPSED: 0.0s
+MATCH: true
+---
+
+START: 2026-10-20 02:57:52 +0200
+ACTION: console-wait
+REGEXP: /hello\ crash\ kernel\ test/
+END: 2026-10-20 02:57:52 +0200
+ELAPSED: 0.0s
+MATCH: true
+---
+
+START: 2026-10-20 02:57:52 +0200
+ACTION: kill
+SIGNAL: TERM
+END: 2026-10-20 02:57:52 +0200
+ELAPSED: 0.0s
+---
+
+START: 2026-10-20 02:57:55 +0200
+ACTION: qemu_exit
+STATUS: 0
+END: 2026-10-20 02:57:55 +0200
+ELAPSED: 0.0s
+---
+
+START: 2026-10-20 02:57:55 +0200
+ACTION: destroy
+END: 2026-10-20 02:57:55 +0200
+ELAPSED: 0.0s
+---
+

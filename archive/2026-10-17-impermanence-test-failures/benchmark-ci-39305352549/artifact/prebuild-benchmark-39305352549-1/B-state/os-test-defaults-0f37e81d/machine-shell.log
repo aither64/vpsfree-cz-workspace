@@ -1,0 +1,118 @@
+SHELL: 0
+
+START: 2026-10-20 01:39:59 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 01:39:59 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:39:59 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 01:39:59 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:39:59 +0200
+COMMAND: cat /sys/module/apparmor/parameters/enabled
+END: 2026-10-20 01:39:59 +0200
+ELAPSED: 0.02s
+STATUS: 1
+OUTPUT:
+cat: /sys/module/apparmor/parameters/enabled: No such file or directory
+---
+
+START: 2026-10-20 01:39:59 +0200
+COMMAND: sv check pool-tank
+END: 2026-10-20 01:40:07 +0200
+ELAPSED: 7.75s
+STATUS: 1
+OUTPUT:
+timeout: run: pool-tank: (pid 866) 9s
+---
+
+START: 2026-10-20 01:40:08 +0200
+COMMAND: sv check pool-tank
+END: 2026-10-20 01:40:16 +0200
+ELAPSED: 7.72s
+STATUS: 1
+OUTPUT:
+timeout: run: pool-tank: (pid 866) 18s
+---
+
+START: 2026-10-20 01:40:17 +0200
+COMMAND: sv check pool-tank
+END: 2026-10-20 01:40:19 +0200
+ELAPSED: 2.57s
+STATUS: 0
+OUTPUT:
+ok: down: pool-tank: 0s, normally up
+---
+
+START: 2026-10-20 01:40:19 +0200
+COMMAND: zfs get -H -o value xattr tank
+END: 2026-10-20 01:40:19 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+on
+---
+
+START: 2026-10-20 01:40:19 +0200
+COMMAND: sv check rsyslog
+END: 2026-10-20 01:40:19 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+ok: run: rsyslog: (pid 858) 22s
+---
+
+START: 2026-10-20 01:40:19 +0200
+COMMAND: /run/current-system/sw/bin/logger -t rsyslog-replace-regression ready
+END: 2026-10-20 01:40:19 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:40:19 +0200
+COMMAND: test -s /var/log/rsyslog-replace-regression
+END: 2026-10-20 01:40:19 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:40:19 +0200
+COMMAND: cat /var/log/rsyslog-replace-regression
+END: 2026-10-20 01:40:19 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+a0123456789|aaQ|Xba|Q
+---
+
+START: 2026-10-20 01:40:19 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 01:40:21 +0200
+ELAPSED: 1.27s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

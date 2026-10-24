@@ -1,0 +1,189 @@
+SHELL: 4
+
+START: 2026-10-20 02:51:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:51 +0200
+ELAPSED: 2.07s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:52 +0200
+ELAPSED: 0.87s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:53 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:54 +0200
+ELAPSED: 0.97s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:56 +0200
+ELAPSED: 0.88s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:58 +0200
+ELAPSED: 0.96s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:59 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:52:00 +0200
+ELAPSED: 0.92s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:52:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:52:02 +0200
+ELAPSED: 1.07s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:52:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:52:04 +0200
+ELAPSED: 0.96s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 02:52:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:52:06 +0200
+ELAPSED: 0.91s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-20 02:52:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:52:08 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 02:52:08 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-20 02:52:08 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Tue, 20 Oct 2026 00:52:08 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 02:52:08 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-10-20 02:52:09 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:52:09 +0200
+COMMAND: osctl ct new --distribution alpine kmisc-nice-7ef7
+END: 2026-10-20 02:52:18 +0200
+ELAPSED: 8.6s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 02:52:18 +0200
+COMMAND: osctl ct start kmisc-nice-7ef7
+END: 2026-10-20 02:52:20 +0200
+ELAPSED: 2.43s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 02:52:20 +0200
+COMMAND: osctl ct exec kmisc-nice-7ef7 nice -n 19 uptime
+END: 2026-10-20 02:52:23 +0200
+ELAPSED: 2.44s
+STATUS: 0
+OUTPUT:
+ 02:52:22 up 0 min,  0 users,  load average: 0.00, 0.00, 0.00
+---
+
+START: 2026-10-20 02:52:23 +0200
+COMMAND: osctl ct exec kmisc-nice-7ef7 nice -n -20 uptime
+END: 2026-10-20 02:52:25 +0200
+ELAPSED: 2.08s
+STATUS: 0
+OUTPUT:
+ 02:52:25 up 0 min,  0 users,  load average: 0.00, 0.00, 0.00
+---
+
+START: 2026-10-20 02:52:25 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-10-20 02:52:26 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+kmisc-oom-82d6
+kmisc-attrs-native-ec96
+kmisc-nice-7ef7
+kmisc-oom-1c62
+kmisc-attrs-zfs-cc49
+---
+
+START: 2026-10-20 02:52:26 +0200
+COMMAND: osctl ct del -f --prune kmisc-nice-7ef7 >/dev/null 2>&1 || true
+END: 2026-10-20 02:52:27 +0200
+ELAPSED: 1.81s
+STATUS: 0
+OUTPUT:
+
+---
+

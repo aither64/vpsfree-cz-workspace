@@ -1,0 +1,200 @@
+SHELL: 0
+
+START: 2026-10-20 02:51:02 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 02:51:02 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:51:02 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 02:51:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:51:02 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:04 +0200
+ELAPSED: 2.26s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:06 +0200
+ELAPSED: 0.69s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:07 +0200
+ELAPSED: 0.81s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:08 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:09 +0200
+ELAPSED: 0.85s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:11 +0200
+ELAPSED: 0.85s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:12 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:13 +0200
+ELAPSED: 0.88s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:15 +0200
+ELAPSED: 0.96s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:17 +0200
+ELAPSED: 0.93s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:18 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:19 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 02:51:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:20 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-20 02:51:21 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:22 +0200
+ELAPSED: 0.78s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 02:51:22 +0200
+COMMAND: mv "/run/osvm/shared-dir/push/2a970fe4-nix--store--6blynis12q3c3p8nv2f4vvi72j70aj9s-zfs-large-folio-check-1--bin--zfs-large-folio-check" "/tmp/zfs-large-folio-check"
+END: 2026-10-20 02:51:22 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:51:22 +0200
+COMMAND: chmod +x /tmp/zfs-large-folio-check
+END: 2026-10-20 02:51:22 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:51:22 +0200
+COMMAND: zfs destroy -r tank/large-folio-test >/dev/null 2>&1 || true
+END: 2026-10-20 02:51:22 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:51:22 +0200
+COMMAND: zfs create -o mountpoint=/large-folio-test tank/large-folio-test
+END: 2026-10-20 02:51:22 +0200
+ELAPSED: 0.06s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:51:22 +0200
+COMMAND: /tmp/zfs-large-folio-check /large-folio-test/check.bin
+END: 2026-10-20 02:51:23 +0200
+ELAPSED: 0.5s
+STATUS: 0
+OUTPUT:
+LARGE_FOLIO_PRESENT_PAGES=16384
+LARGE_FOLIO_PFN_VISIBLE_PAGES=16384
+LARGE_FOLIO_COMPOUND_HEAD_PAGES=32
+LARGE_FOLIO_COMPOUND_TAIL_PAGES=16352
+LARGE_FOLIO_THP_PAGES=16384
+LARGE_FOLIO_CHECKSUM=e90be2329c222325
+LARGE_FOLIO_EXPECTED_CHECKSUM=e90be2329c222325
+LARGE_FOLIO_CHECKSUM_MATCH=1
+LARGE_FOLIO_RESULT=ok
+---
+
+START: 2026-10-20 02:51:23 +0200
+COMMAND: zfs destroy -r tank/large-folio-test >/dev/null 2>&1
+END: 2026-10-20 02:51:23 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:51:23 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 02:51:24 +0200
+ELAPSED: 1.1s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

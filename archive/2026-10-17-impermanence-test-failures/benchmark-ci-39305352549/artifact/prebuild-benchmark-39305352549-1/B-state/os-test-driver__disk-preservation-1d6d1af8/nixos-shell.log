@@ -1,0 +1,177 @@
+SHELL: 0
+
+START: 2026-10-20 01:58:57 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 01:58:57 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:58:57 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 01:58:57 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:58:57 +0200
+COMMAND: test -b /dev/disk/by-id/ata-QEMU_HARDDISK_QM00007
+END: 2026-10-20 01:58:57 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:58:57 +0200
+COMMAND: test -b /dev/disk/by-id/ata-QEMU_HARDDISK_QM00009
+END: 2026-10-20 01:58:57 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:58:57 +0200
+COMMAND: echo root-marker > /root/preservation-marker
+END: 2026-10-20 01:58:57 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:58:57 +0200
+COMMAND: printf data-marker | dd of=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00007 conv=fsync
+END: 2026-10-20 01:58:57 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+0+1 records in
+0+1 records out
+11 bytes copied, 0.00595279 s, 1.8 kB/s
+---
+
+START: 2026-10-20 01:58:57 +0200
+COMMAND: printf scratch-marker | dd of=/dev/disk/by-id/ata-QEMU_HARDDISK_QM00009 conv=fsync
+END: 2026-10-20 01:58:57 +0200
+ELAPSED: 0.07s
+STATUS: 0
+OUTPUT:
+0+1 records in
+0+1 records out
+14 bytes copied, 0.00371149 s, 3.8 kB/s
+---
+
+START: 2026-10-20 01:58:57 +0200
+COMMAND: poweroff
+END: 2026-10-20 01:58:57 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:59:14 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 01:59:14 +0200
+ELAPSED: 0.05s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:59:14 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 01:59:14 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:59:14 +0200
+COMMAND: cat /root/preservation-marker
+END: 2026-10-20 01:59:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+root-marker
+---
+
+START: 2026-10-20 01:59:14 +0200
+COMMAND: head -c 11 /dev/disk/by-id/ata-QEMU_HARDDISK_QM00007
+END: 2026-10-20 01:59:14 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+data-marker
+---
+
+START: 2026-10-20 01:59:14 +0200
+COMMAND: cmp -n 14 /dev/disk/by-id/ata-QEMU_HARDDISK_QM00009 /dev/zero
+END: 2026-10-20 01:59:14 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 01:59:14 +0200
+COMMAND: poweroff
+END: 2026-10-20 01:59:15 +0200
+ELAPSED: 0.23s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:01:16 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-20 02:01:16 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:01:16 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-20 02:01:16 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:01:16 +0200
+COMMAND: test -e /root/preservation-marker
+END: 2026-10-20 02:01:16 +0200
+ELAPSED: 0.03s
+STATUS: 1
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:01:16 +0200
+COMMAND: cmp -n 11 /dev/disk/by-id/ata-QEMU_HARDDISK_QM00007 /dev/zero
+END: 2026-10-20 02:01:16 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:01:16 +0200
+COMMAND: poweroff
+END: 2026-10-20 02:01:16 +0200
+ELAPSED: 0.08s
+STATUS: 0
+OUTPUT:
+
+---
+

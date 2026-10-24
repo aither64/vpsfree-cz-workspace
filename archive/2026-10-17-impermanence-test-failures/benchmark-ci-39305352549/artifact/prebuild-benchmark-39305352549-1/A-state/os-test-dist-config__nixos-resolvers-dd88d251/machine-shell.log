@@ -1,0 +1,649 @@
+SHELL: 0
+
+START: 2026-10-19 22:32:10 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-19 22:32:10 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:32:10 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-19 22:32:10 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:32:10 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:32:12 +0200
+ELAPSED: 2.15s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:32:13 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:32:13 +0200
+ELAPSED: 0.69s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:32:14 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:32:15 +0200
+ELAPSED: 0.87s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:32:16 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:32:17 +0200
+ELAPSED: 0.98s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:32:18 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:32:19 +0200
+ELAPSED: 0.66s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:32:20 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:32:21 +0200
+ELAPSED: 0.71s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:32:22 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:32:22 +0200
+ELAPSED: 0.7s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:32:23 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:32:24 +0200
+ELAPSED: 0.87s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-19 22:32:25 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:32:26 +0200
+ELAPSED: 0.91s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-19 22:32:27 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:32:28 +0200
+ELAPSED: 0.92s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-19 22:32:28 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-19 22:32:28 +0200
+ELAPSED: 0.1s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 20:32:28 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-19 22:32:28 +0200
+COMMAND: osctl ct new --distribution nixos --version 22.11 --variant minimal testct-604a
+END: 2026-10-19 22:32:51 +0200
+ELAPSED: 22.76s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-19 22:32:51 +0200
+COMMAND: osctl ct unset start-menu testct-604a
+END: 2026-10-19 22:32:52 +0200
+ELAPSED: 0.91s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:32:52 +0200
+COMMAND: osctl ct netif new routed testct-604a eth0
+END: 2026-10-19 22:32:53 +0200
+ELAPSED: 1.12s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:32:53 +0200
+COMMAND: osctl ct netif ip add testct-604a eth0 192.0.2.80/32
+END: 2026-10-19 22:32:54 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:32:54 +0200
+COMMAND: osctl ct set dns-resolver testct-604a 192.0.2.53
+END: 2026-10-19 22:32:55 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:32:55 +0200
+COMMAND: osctl ct start testct-604a
+END: 2026-10-19 22:32:57 +0200
+ELAPSED: 2.37s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-19 22:32:57 +0200
+COMMAND: ping -c 1 192.0.2.80
+END: 2026-10-19 22:32:59 +0200
+ELAPSED: 2.08s
+STATUS: 0
+OUTPUT:
+PING 192.0.2.80 (192.0.2.80) 56(84) bytes of data.
+64 bytes from 192.0.2.80: icmp_seq=1 ttl=64 time=2053 ms
+
+--- 192.0.2.80 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2052.790/2052.790/2052.790/0.000 ms
+---
+
+START: 2026-10-19 22:32:59 +0200
+COMMAND: osctl ct exec testct-604a systemctl is-system-running --wait
+END: 2026-10-19 22:33:30 +0200
+ELAPSED: 30.67s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-10-19 22:33:30 +0200
+COMMAND: osctl ct exec testct-604a nixos-version
+END: 2026-10-19 22:33:32 +0200
+ELAPSED: 2.26s
+STATUS: 0
+OUTPUT:
+22.11.4369.99fe1b87052 (Raccoon)
+---
+
+START: 2026-10-19 22:33:32 +0200
+COMMAND: osctl ct exec testct-604a readlink /run/current-system
+END: 2026-10-19 22:33:34 +0200
+ELAPSED: 1.72s
+STATUS: 0
+OUTPUT:
+/nix/store/ckdwsnis6c4dcw5f875rfq8ky9224nf8-nixos-system-nixos-22.11.4369.99fe1b87052
+---
+
+START: 2026-10-19 22:33:34 +0200
+COMMAND: osctl -j ct show testct-604a
+END: 2026-10-19 22:33:35 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-604a","user":"testct-604a","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-604a","rootfs":"/tank/ct/testct-604a/private","boot_dataset":"tank/ct/testct-604a","boot_rootfs":"/tank/ct/testct-604a/private","lxc_path":"/run/osctl/pools/tank/users/testct-604a/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-604a/group.default/cts/testct-604a","group_path":"osctl/pool.tank/group.default/user.testct-604a/ct.testct-604a/user-owned","distribution":"nixos","version":"22.11","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":2724,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":["192.0.2.53"],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-604a.log","memory":48648192,"cpu_us":9130343,"cpu_user_us":6489267,"cpu_system_us":2641076,"loadavg":[0.13,0.03,0.01]}
+---
+
+START: 2026-10-19 22:33:35 +0200
+COMMAND: osctl ct set dns-resolver testct-604a 192.0.2.54
+END: 2026-10-19 22:33:36 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:33:36 +0200
+COMMAND: osctl ct exec testct-604a grep -Fx 'nameserver 192.0.2.54' /etc/resolv.conf
+END: 2026-10-19 22:33:38 +0200
+ELAPSED: 2.23s
+STATUS: 0
+OUTPUT:
+nameserver 192.0.2.54
+---
+
+START: 2026-10-19 22:33:38 +0200
+COMMAND: osctl ct unset dns-resolver testct-604a
+END: 2026-10-19 22:33:39 +0200
+ELAPSED: 0.72s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:33:39 +0200
+COMMAND: osctl -j ct show testct-604a
+END: 2026-10-19 22:33:39 +0200
+ELAPSED: 0.68s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-604a","user":"testct-604a","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-604a","rootfs":"/tank/ct/testct-604a/private","boot_dataset":"tank/ct/testct-604a","boot_rootfs":"/tank/ct/testct-604a/private","lxc_path":"/run/osctl/pools/tank/users/testct-604a/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-604a/group.default/cts/testct-604a","group_path":"osctl/pool.tank/group.default/user.testct-604a/ct.testct-604a/user-owned","distribution":"nixos","version":"22.11","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":2724,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-604a.log","memory":48799744,"cpu_us":10438190,"cpu_user_us":7563004,"cpu_system_us":2875186,"loadavg":[0.2,0.05,0.01]}
+---
+
+START: 2026-10-19 22:33:39 +0200
+COMMAND: osctl ct set dns-resolver testct-604a 192.0.2.55
+END: 2026-10-19 22:33:40 +0200
+ELAPSED: 0.82s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:33:40 +0200
+COMMAND: osctl ct exec testct-604a grep -Fx 'nameserver 192.0.2.55' /etc/resolv.conf
+END: 2026-10-19 22:33:42 +0200
+ELAPSED: 2.0s
+STATUS: 0
+OUTPUT:
+nameserver 192.0.2.55
+---
+
+START: 2026-10-19 22:33:42 +0200
+COMMAND: osctl ct exec testct-604a systemctl is-active networking-setup.service
+END: 2026-10-19 22:33:44 +0200
+ELAPSED: 1.95s
+STATUS: 0
+OUTPUT:
+active
+---
+
+START: 2026-10-19 22:33:44 +0200
+COMMAND: osctl ct exec testct-604a systemctl is-system-running --wait
+END: 2026-10-19 22:33:46 +0200
+ELAPSED: 1.97s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-10-19 22:33:46 +0200
+COMMAND: ping -c 1 192.0.2.80
+END: 2026-10-19 22:33:46 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+PING 192.0.2.80 (192.0.2.80) 56(84) bytes of data.
+64 bytes from 192.0.2.80: icmp_seq=1 ttl=64 time=0.386 ms
+
+--- 192.0.2.80 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.386/0.386/0.386/0.000 ms
+---
+
+START: 2026-10-19 22:33:46 +0200
+COMMAND: osctl -j ct show testct-604a
+END: 2026-10-19 22:33:47 +0200
+ELAPSED: 0.96s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-604a","user":"testct-604a","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-604a","rootfs":"/tank/ct/testct-604a/private","boot_dataset":"tank/ct/testct-604a","boot_rootfs":"/tank/ct/testct-604a/private","lxc_path":"/run/osctl/pools/tank/users/testct-604a/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-604a/group.default/cts/testct-604a","group_path":"osctl/pool.tank/group.default/user.testct-604a/ct.testct-604a/user-owned","distribution":"nixos","version":"22.11","arch":"x86_64","vendor":"default","variant":"default","state":"running","recovery_tainted":false,"init_pid":2724,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":["192.0.2.55"],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/testct-604a.log","memory":48807936,"cpu_us":13720610,"cpu_user_us":10213283,"cpu_system_us":3507327,"loadavg":[0.18,0.05,0.01]}
+---
+
+START: 2026-10-19 22:33:47 +0200
+COMMAND: osctl ct exec testct-604a readlink /run/current-system
+END: 2026-10-19 22:33:49 +0200
+ELAPSED: 2.33s
+STATUS: 0
+OUTPUT:
+/nix/store/ckdwsnis6c4dcw5f875rfq8ky9224nf8-nixos-system-nixos-22.11.4369.99fe1b87052
+---
+
+START: 2026-10-19 22:33:49 +0200
+COMMAND: osctl ct del -f --prune testct-604a
+END: 2026-10-19 22:33:51 +0200
+ELAPSED: 1.79s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-604a
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-19 22:33:51 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-19 22:33:52 +0200
+ELAPSED: 0.79s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-19 22:33:52 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-19 22:33:52 +0200
+ELAPSED: 0.39s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Mon, 19 Oct 2026 20:33:52 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-19 22:33:52 +0200
+COMMAND: osctl ct new --distribution nixos --version 24.05 --variant impermanence testct-a215
+END: 2026-10-19 22:34:15 +0200
+ELAPSED: 22.86s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-19 22:34:15 +0200
+COMMAND: osctl ct unset start-menu testct-a215
+END: 2026-10-19 22:34:16 +0200
+ELAPSED: 0.97s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:34:16 +0200
+COMMAND: osctl ct netif new routed testct-a215 eth0
+END: 2026-10-19 22:34:17 +0200
+ELAPSED: 1.09s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:34:17 +0200
+COMMAND: osctl ct netif ip add testct-a215 eth0 192.0.2.80/32
+END: 2026-10-19 22:34:18 +0200
+ELAPSED: 0.95s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:34:18 +0200
+COMMAND: osctl ct set dns-resolver testct-a215 192.0.2.53
+END: 2026-10-19 22:34:19 +0200
+ELAPSED: 0.94s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:34:19 +0200
+COMMAND: osctl ct start testct-a215
+END: 2026-10-19 22:34:22 +0200
+ELAPSED: 2.75s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-19 22:34:22 +0200
+COMMAND: ping -c 1 192.0.2.80
+END: 2026-10-19 22:34:24 +0200
+ELAPSED: 2.1s
+STATUS: 0
+OUTPUT:
+PING 192.0.2.80 (192.0.2.80) 56(84) bytes of data.
+64 bytes from 192.0.2.80: icmp_seq=1 ttl=64 time=2074 ms
+
+--- 192.0.2.80 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 2073.532/2073.532/2073.532/0.000 ms
+---
+
+START: 2026-10-19 22:34:24 +0200
+COMMAND: osctl ct exec testct-a215 systemctl is-system-running --wait
+END: 2026-10-19 22:34:54 +0200
+ELAPSED: 30.4s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-10-19 22:34:54 +0200
+COMMAND: osctl ct exec testct-a215 nixos-version
+END: 2026-10-19 22:34:56 +0200
+ELAPSED: 1.93s
+STATUS: 0
+OUTPUT:
+24.05.6835.0c5b4ecbed5b (Uakari)
+---
+
+START: 2026-10-19 22:34:56 +0200
+COMMAND: osctl ct exec testct-a215 readlink /run/current-system
+END: 2026-10-19 22:34:58 +0200
+ELAPSED: 2.13s
+STATUS: 0
+OUTPUT:
+/nix/store/xj4g16wi5f72qhv9lwzi2yvb8gzi0ix1-nixos-system-nixos-24.05.6835.0c5b4ecbed5b
+---
+
+START: 2026-10-19 22:34:58 +0200
+COMMAND: osctl -j ct show testct-a215
+END: 2026-10-19 22:34:59 +0200
+ELAPSED: 0.93s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-a215","user":"testct-a215","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-a215","rootfs":"/tank/ct/testct-a215/private","boot_dataset":"tank/ct/testct-a215.impermanence-eb19c3","boot_rootfs":"/tank/ct/testct-a215.impermanence-eb19c3/private","lxc_path":"/run/osctl/pools/tank/users/testct-a215/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-a215/group.default/cts/testct-a215","group_path":"osctl/pool.tank/group.default/user.testct-a215/ct.testct-a215/user-owned","distribution":"nixos","version":"24.05","arch":"x86_64","vendor":"vpsadminos","variant":"impermanence","state":"running","recovery_tainted":false,"init_pid":3890,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":["192.0.2.53"],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":true,"impermanence_zfs_properties":{"refquota":"10G"},"raw_lxc":null,"log_file":"/tank/log/ct/testct-a215.log","memory":48074752,"cpu_us":12408418,"cpu_user_us":9675869,"cpu_system_us":2732548,"loadavg":[0.32,0.1,0.03]}
+---
+
+START: 2026-10-19 22:34:59 +0200
+COMMAND: osctl ct set dns-resolver testct-a215 192.0.2.54
+END: 2026-10-19 22:35:00 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:35:00 +0200
+COMMAND: osctl ct exec testct-a215 grep -Fx 'nameserver 192.0.2.54' /etc/resolv.conf
+END: 2026-10-19 22:35:03 +0200
+ELAPSED: 2.07s
+STATUS: 0
+OUTPUT:
+nameserver 192.0.2.54
+---
+
+START: 2026-10-19 22:35:03 +0200
+COMMAND: osctl ct unset dns-resolver testct-a215
+END: 2026-10-19 22:35:03 +0200
+ELAPSED: 0.77s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:35:03 +0200
+COMMAND: osctl -j ct show testct-a215
+END: 2026-10-19 22:35:04 +0200
+ELAPSED: 0.72s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-a215","user":"testct-a215","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-a215","rootfs":"/tank/ct/testct-a215/private","boot_dataset":"tank/ct/testct-a215.impermanence-eb19c3","boot_rootfs":"/tank/ct/testct-a215.impermanence-eb19c3/private","lxc_path":"/run/osctl/pools/tank/users/testct-a215/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-a215/group.default/cts/testct-a215","group_path":"osctl/pool.tank/group.default/user.testct-a215/ct.testct-a215/user-owned","distribution":"nixos","version":"24.05","arch":"x86_64","vendor":"vpsadminos","variant":"impermanence","state":"running","recovery_tainted":false,"init_pid":3890,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":true,"impermanence_zfs_properties":{"refquota":"10G"},"raw_lxc":null,"log_file":"/tank/log/ct/testct-a215.log","memory":48074752,"cpu_us":13480230,"cpu_user_us":10576125,"cpu_system_us":2904105,"loadavg":[0.32,0.1,0.03]}
+---
+
+START: 2026-10-19 22:35:04 +0200
+COMMAND: osctl ct set dns-resolver testct-a215 192.0.2.55
+END: 2026-10-19 22:35:05 +0200
+ELAPSED: 1.0s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-19 22:35:05 +0200
+COMMAND: osctl ct exec testct-a215 grep -Fx 'nameserver 192.0.2.55' /etc/resolv.conf
+END: 2026-10-19 22:35:08 +0200
+ELAPSED: 2.76s
+STATUS: 0
+OUTPUT:
+nameserver 192.0.2.55
+---
+
+START: 2026-10-19 22:35:08 +0200
+COMMAND: osctl ct exec testct-a215 systemctl is-active networking-setup.service
+END: 2026-10-19 22:35:11 +0200
+ELAPSED: 3.19s
+STATUS: 0
+OUTPUT:
+active
+---
+
+START: 2026-10-19 22:35:11 +0200
+COMMAND: osctl ct exec testct-a215 systemctl is-system-running --wait
+END: 2026-10-19 22:35:15 +0200
+ELAPSED: 3.76s
+STATUS: 0
+OUTPUT:
+running
+---
+
+START: 2026-10-19 22:35:15 +0200
+COMMAND: ping -c 1 192.0.2.80
+END: 2026-10-19 22:35:15 +0200
+ELAPSED: 0.04s
+STATUS: 0
+OUTPUT:
+PING 192.0.2.80 (192.0.2.80) 56(84) bytes of data.
+64 bytes from 192.0.2.80: icmp_seq=1 ttl=64 time=0.873 ms
+
+--- 192.0.2.80 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.873/0.873/0.873/0.000 ms
+---
+
+START: 2026-10-19 22:35:15 +0200
+COMMAND: osctl -j ct show testct-a215
+END: 2026-10-19 22:35:17 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"testct-a215","user":"testct-a215","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/testct-a215","rootfs":"/tank/ct/testct-a215/private","boot_dataset":"tank/ct/testct-a215.impermanence-eb19c3","boot_rootfs":"/tank/ct/testct-a215.impermanence-eb19c3/private","lxc_path":"/run/osctl/pools/tank/users/testct-a215/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/testct-a215/group.default/cts/testct-a215","group_path":"osctl/pool.tank/group.default/user.testct-a215/ct.testct-a215/user-owned","distribution":"nixos","version":"24.05","arch":"x86_64","vendor":"vpsadminos","variant":"impermanence","state":"running","recovery_tainted":false,"init_pid":3890,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":["192.0.2.55"],"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":true,"impermanence_zfs_properties":{"refquota":"10G"},"raw_lxc":null,"log_file":"/tank/log/ct/testct-a215.log","memory":48087040,"cpu_us":18972538,"cpu_user_us":15028981,"cpu_system_us":3943556,"loadavg":[0.4,0.13,0.04]}
+---
+
+START: 2026-10-19 22:35:17 +0200
+COMMAND: osctl ct exec testct-a215 readlink /run/current-system
+END: 2026-10-19 22:35:20 +0200
+ELAPSED: 3.87s
+STATUS: 0
+OUTPUT:
+/nix/store/xj4g16wi5f72qhv9lwzi2yvb8gzi0ix1-nixos-system-nixos-24.05.6835.0c5b4ecbed5b
+---
+
+START: 2026-10-19 22:35:20 +0200
+COMMAND: osctl ct del -f --prune testct-a215
+END: 2026-10-19 22:35:24 +0200
+ELAPSED: 3.91s
+STATUS: 0
+OUTPUT:
+Stopping container
+Stopping container
+Verifying recovery cleanup
+Disconnecting console
+Removing shared mount directory
+Moving dataset to trash
+Removing LXC configuration and script hooks
+Unregistering container
+Removing cgroups
+Unregistering user tank:testct-a215
+Reconfiguring LXC usernet
+---
+
+START: 2026-10-19 22:35:24 +0200
+COMMAND: poweroff -f
+END: 2026-10-19 22:35:40 +0200
+ELAPSED: 15.97s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

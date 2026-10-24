@@ -1,0 +1,206 @@
+SHELL: 0
+
+START: 2026-10-20 02:51:49 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:51 +0200
+ELAPSED: 2.08s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:52 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:52 +0200
+ELAPSED: 0.84s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:53 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:54 +0200
+ELAPSED: 0.78s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:55 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:56 +0200
+ELAPSED: 0.92s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:57 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:51:58 +0200
+ELAPSED: 0.91s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:51:59 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:52:00 +0200
+ELAPSED: 0.92s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:52:01 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:52:02 +0200
+ELAPSED: 1.07s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-20 02:52:03 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:52:04 +0200
+ELAPSED: 0.97s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-20 02:52:05 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:52:06 +0200
+ELAPSED: 0.85s
+STATUS: 0
+OUTPUT:
+importing
+
+---
+
+START: 2026-10-20 02:52:07 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-20 02:52:08 +0200
+ELAPSED: 0.88s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-20 02:52:08 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-20 02:52:08 +0200
+ELAPSED: 0.13s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Tue, 20 Oct 2026 00:52:08 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-20 02:52:08 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-10-20 02:52:09 +0200
+ELAPSED: 0.79s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:52:09 +0200
+COMMAND: osctl ct new --distribution alpine kmisc-mknod-43a1
+END: 2026-10-20 02:52:11 +0200
+ELAPSED: 2.76s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-20 02:52:11 +0200
+COMMAND: osctl ct start kmisc-mknod-43a1
+END: 2026-10-20 02:52:14 +0200
+ELAPSED: 2.7s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-20 02:52:14 +0200
+COMMAND: osctl ct exec kmisc-mknod-43a1 mknod /my-char-device c 15 17
+END: 2026-10-20 02:52:16 +0200
+ELAPSED: 2.03s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:52:16 +0200
+COMMAND: osctl ct exec kmisc-mknod-43a1 mknod /my-block-device b 17 23
+END: 2026-10-20 02:52:18 +0200
+ELAPSED: 2.29s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:52:18 +0200
+COMMAND: osctl ct ls -H -o id 2>/dev/null || true
+END: 2026-10-20 02:52:20 +0200
+ELAPSED: 1.02s
+STATUS: 0
+OUTPUT:
+kmisc-mknod-43a1
+kmisc-proc-a79b
+kmisc-oom-82d6
+kmisc-attrs-native-ec96
+kmisc-nice-7ef7
+---
+
+START: 2026-10-20 02:52:20 +0200
+COMMAND: osctl ct del -f --prune kmisc-mknod-43a1 >/dev/null 2>&1 || true
+END: 2026-10-20 02:52:22 +0200
+ELAPSED: 2.24s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-20 02:54:15 +0200
+COMMAND: poweroff -f
+END: 2026-10-20 02:54:21 +0200
+ELAPSED: 5.94s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+Unregistering users, groups and containers
+---
+

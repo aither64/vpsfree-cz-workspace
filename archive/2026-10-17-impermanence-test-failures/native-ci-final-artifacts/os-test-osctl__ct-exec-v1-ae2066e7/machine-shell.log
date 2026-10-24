@@ -1,0 +1,1063 @@
+SHELL: 0
+
+START: 2026-10-18 09:02:28 +0200
+COMMAND: mkdir -p "/run/osvm/shared-dir"
+END: 2026-10-18 09:02:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:02:28 +0200
+COMMAND: mount -t virtiofs vmSharedDir "/run/osvm/shared-dir"
+END: 2026-10-18 09:02:28 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:02:28 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:02:29 +0200
+ELAPSED: 1.6s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:02:30 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:02:31 +0200
+ELAPSED: 0.62s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:02:32 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:02:33 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:02:34 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:02:34 +0200
+ELAPSED: 0.56s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:02:35 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:02:36 +0200
+ELAPSED: 0.67s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:02:37 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:02:37 +0200
+ELAPSED: 0.67s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:02:38 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:02:39 +0200
+ELAPSED: 0.58s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:02:40 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:02:41 +0200
+ELAPSED: 0.67s
+STATUS: 1
+OUTPUT:
+error: No such file or directory - connect(2) for /run/osctl/osctld.sock
+---
+
+START: 2026-10-18 09:02:42 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:02:42 +0200
+ELAPSED: 0.62s
+STATUS: 1
+OUTPUT:
+error: pool not found
+---
+
+START: 2026-10-18 09:02:43 +0200
+COMMAND: osctl pool show -H -o state tank
+END: 2026-10-18 09:02:44 +0200
+ELAPSED: 0.57s
+STATUS: 0
+OUTPUT:
+active
+
+---
+
+START: 2026-10-18 09:02:44 +0200
+COMMAND: curl --head --max-time 10 https://check-online.vpsadminos.org
+END: 2026-10-18 09:02:44 +0200
+ELAPSED: 0.12s
+STATUS: 0
+OUTPUT:
+  % Total    % Received % Xferd  Average Speed  Time    Time    Time   Current
+                                 Dload  Upload  Total   Spent   Left   Speed
+  0      0   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0  0      7   0      0   0      0      0      0                              0
+HTTP/2 200 
+server: nginx
+date: Sun, 18 Oct 2026 07:02:44 GMT
+content-type: text/html
+content-length: 7
+etag: "r824bmpcqfmdqn3yq2lgy2j9r1ssza0m-7"
+accept-ranges: bytes
+
+---
+
+START: 2026-10-18 09:02:44 +0200
+COMMAND: osctl ct new --distribution alpine startedct
+END: 2026-10-18 09:02:46 +0200
+ELAPSED: 1.97s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-18 09:02:46 +0200
+COMMAND: osctl ct unset start-menu startedct
+END: 2026-10-18 09:02:47 +0200
+ELAPSED: 0.6s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:02:47 +0200
+COMMAND: osctl ct new --distribution alpine stoppedct
+END: 2026-10-18 09:02:48 +0200
+ELAPSED: 1.65s
+STATUS: 0
+OUTPUT:
+Fetching image
+Creating datasets
+Configuring LXC home
+Importing rootfs
+Writing data stream
+Generating LXC configuration
+Preparing log file
+Preparing user script hook dir
+---
+
+START: 2026-10-18 09:02:48 +0200
+COMMAND: osctl ct netif new routed stoppedct eth0
+END: 2026-10-18 09:02:49 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:02:49 +0200
+COMMAND: osctl ct netif ip add stoppedct eth0 1.2.3.4/32
+END: 2026-10-18 09:02:50 +0200
+ELAPSED: 0.62s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:02:50 +0200
+COMMAND: osctl ct start startedct
+END: 2026-10-18 09:02:51 +0200
+ELAPSED: 1.75s
+STATUS: 0
+OUTPUT:
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 09:02:51 +0200
+COMMAND: osctl ct exec startedct rc-service networking status
+END: 2026-10-18 09:02:53 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-18 09:02:53 +0200
+COMMAND: osctl -j ct show startedct
+END: 2026-10-18 09:02:53 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"startedct","user":"startedct","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/startedct","rootfs":"/tank/ct/startedct/private","boot_dataset":"tank/ct/startedct","boot_rootfs":"/tank/ct/startedct/private","lxc_path":"/run/osctl/pools/tank/users/startedct/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/startedct/group.default/cts/startedct","group_path":"osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":2551,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/startedct.log","memory":7323648,"cpu_us":2148385,"cpu_user_us":1398650,"cpu_system_us":724667,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-18 09:02:53 +0200
+COMMAND: cat /proc/2551/cgroup; grep ' - cgroup' /proc/2551/mountinfo
+END: 2026-10-18 09:02:53 +0200
+ELAPSED: 0.03s
+STATUS: 0
+OUTPUT:
+11:name=systemd:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+10:hugetlb:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+9:rdma:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+8:perf_event:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+7:pids:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+6:net_cls,net_prio:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+5:freezer:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+4:devices:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+3:memory:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+2:cpu,cpuacct:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+1:cpuset:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+0::/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+151 150 0:47 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/systemd rw,nosuid,nodev,noexec,relatime shared:5 - cgroup cgroup rw,name=systemd
+152 150 0:46 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/hugetlb rw,nosuid,nodev,noexec,relatime shared:6 - cgroup cgroup rw,hugetlb
+153 150 0:45 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/rdma rw,nosuid,nodev,noexec,relatime shared:7 - cgroup cgroup rw,rdma
+154 150 0:44 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/perf_event rw,nosuid,nodev,noexec,relatime shared:8 - cgroup cgroup rw,perf_event
+155 150 0:43 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/pids rw,nosuid,nodev,noexec,relatime shared:9 - cgroup cgroup rw,pids
+156 150 0:42 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/net_cls,net_prio rw,nosuid,nodev,noexec,relatime shared:10 - cgroup cgroup rw,net_cls,net_prio
+157 150 0:41 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime shared:11 - cgroup cgroup rw,freezer
+158 150 0:40 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/devices rw,nosuid,nodev,noexec,relatime shared:12 - cgroup cgroup rw,devices
+159 150 0:39 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:23 - cgroup cgroup rw,memory
+160 150 0:38 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime shared:25 - cgroup cgroup rw,cpu,cpuacct
+161 150 0:37 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime shared:26 - cgroup cgroup rw,cpuset
+162 150 0:48 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/unified rw,nosuid,nodev,noexec,relatime shared:27 - cgroup2 cgroup2 rw
+---
+
+START: 2026-10-18 09:02:53 +0200
+COMMAND: osctl ct exec startedct cat /proc/self/cgroup
+END: 2026-10-18 09:02:55 +0200
+ELAPSED: 1.47s
+STATUS: 0
+OUTPUT:
+11:name=systemd:/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+10:hugetlb:/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+9:rdma:/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+8:perf_event:/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+7:pids:/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+6:net_cls,net_prio:/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+5:freezer:/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+4:devices:/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+3:memory:/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+2:cpu,cpuacct:/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+1:cpuset:/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+0::/osctl.attach.f9f1084982f5f79cb2baf0c224e6030c
+---
+
+START: 2026-10-18 09:02:55 +0200
+COMMAND: osctl ct restart startedct
+END: 2026-10-18 09:03:00 +0200
+ELAPSED: 4.82s
+STATUS: 0
+OUTPUT:
+Stopping container
+Starting container
+Connecting console
+Waiting for the container to start
+---
+
+START: 2026-10-18 09:03:00 +0200
+COMMAND: osctl ct exec startedct rc-service networking status
+END: 2026-10-18 09:03:01 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+ * status: started
+---
+
+START: 2026-10-18 09:03:01 +0200
+COMMAND: osctl -j ct show startedct
+END: 2026-10-18 09:03:02 +0200
+ELAPSED: 0.66s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"startedct","user":"startedct","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/startedct","rootfs":"/tank/ct/startedct/private","boot_dataset":"tank/ct/startedct","boot_rootfs":"/tank/ct/startedct/private","lxc_path":"/run/osctl/pools/tank/users/startedct/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/startedct/group.default/cts/startedct","group_path":"osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":3238,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/startedct.log","memory":5967872,"cpu_us":2013974,"cpu_user_us":1328890,"cpu_system_us":645745,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-18 09:03:02 +0200
+COMMAND: cat /proc/3238/cgroup; grep ' - cgroup' /proc/3238/mountinfo
+END: 2026-10-18 09:03:02 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+11:name=systemd:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+10:hugetlb:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+9:rdma:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+8:perf_event:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+7:pids:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+6:net_cls,net_prio:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+5:freezer:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+4:devices:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+3:memory:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+2:cpu,cpuacct:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+1:cpuset:/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+0::/osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct
+151 150 0:47 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/systemd rw,nosuid,nodev,noexec,relatime shared:5 - cgroup cgroup rw,name=systemd
+152 150 0:46 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/hugetlb rw,nosuid,nodev,noexec,relatime shared:6 - cgroup cgroup rw,hugetlb
+153 150 0:45 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/rdma rw,nosuid,nodev,noexec,relatime shared:7 - cgroup cgroup rw,rdma
+154 150 0:44 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/perf_event rw,nosuid,nodev,noexec,relatime shared:8 - cgroup cgroup rw,perf_event
+155 150 0:43 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/pids rw,nosuid,nodev,noexec,relatime shared:9 - cgroup cgroup rw,pids
+156 150 0:42 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/net_cls,net_prio rw,nosuid,nodev,noexec,relatime shared:10 - cgroup cgroup rw,net_cls,net_prio
+157 150 0:41 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime shared:11 - cgroup cgroup rw,freezer
+158 150 0:40 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/devices rw,nosuid,nodev,noexec,relatime shared:12 - cgroup cgroup rw,devices
+159 150 0:39 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:23 - cgroup cgroup rw,memory
+160 150 0:38 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime shared:25 - cgroup cgroup rw,cpu,cpuacct
+161 150 0:37 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime shared:26 - cgroup cgroup rw,cpuset
+162 150 0:48 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/unified rw,nosuid,nodev,noexec,relatime shared:27 - cgroup2 cgroup2 rw
+---
+
+START: 2026-10-18 09:03:02 +0200
+COMMAND: osctl ct exec startedct cat /proc/self/cgroup
+END: 2026-10-18 09:03:03 +0200
+ELAPSED: 1.52s
+STATUS: 0
+OUTPUT:
+11:name=systemd:/osctl.attach.26588f1598262373101acb727c35982c
+10:hugetlb:/osctl.attach.26588f1598262373101acb727c35982c
+9:rdma:/osctl.attach.26588f1598262373101acb727c35982c
+8:perf_event:/osctl.attach.26588f1598262373101acb727c35982c
+7:pids:/osctl.attach.26588f1598262373101acb727c35982c
+6:net_cls,net_prio:/osctl.attach.26588f1598262373101acb727c35982c
+5:freezer:/osctl.attach.26588f1598262373101acb727c35982c
+4:devices:/osctl.attach.26588f1598262373101acb727c35982c
+3:memory:/osctl.attach.26588f1598262373101acb727c35982c
+2:cpu,cpuacct:/osctl.attach.26588f1598262373101acb727c35982c
+1:cpuset:/osctl.attach.26588f1598262373101acb727c35982c
+0::/osctl.attach.26588f1598262373101acb727c35982c
+---
+
+START: 2026-10-18 09:03:03 +0200
+COMMAND: osctl -j ct show startedct
+END: 2026-10-18 09:03:04 +0200
+ELAPSED: 0.64s
+STATUS: 0
+OUTPUT:
+{"pool":"tank","id":"startedct","user":"startedct","group":"/default","uid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"gid_map":[{"ns_id":0,"host_id":1000000,"id_count":65536}],"map_mode":"native","dataset":"tank/ct/startedct","rootfs":"/tank/ct/startedct/private","boot_dataset":"tank/ct/startedct","boot_rootfs":"/tank/ct/startedct/private","lxc_path":"/run/osctl/pools/tank/users/startedct/group.default/cts","lxc_dir":"/run/osctl/pools/tank/users/startedct/group.default/cts/startedct","group_path":"osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned","distribution":"alpine","version":"3.24","arch":"x86_64","vendor":"vpsadminos","variant":"minimal","state":"running","recovery_tainted":false,"init_pid":3238,"autostart":false,"autostart_priority":null,"autostart_delay":null,"ephemeral":null,"hostname":null,"dns_resolvers":null,"nesting":false,"seccomp_profile":"/etc/lxc/config/common.seccomp","init_cmd":"/sbin/init","cpu_package_inuse":null,"cpu_package_set":"auto","cpu_limit":null,"memory_limit":null,"swap_limit":null,"start_menu":false,"start_menu_timeout":null,"impermanence":false,"impermanence_zfs_properties":null,"raw_lxc":null,"log_file":"/tank/log/ct/startedct.log","memory":5967872,"cpu_us":2884328,"cpu_user_us":2043853,"cpu_system_us":796745,"loadavg":[0.0,0.0,0.0]}
+---
+
+START: 2026-10-18 09:03:04 +0200
+COMMAND: cat /proc/3238/mountinfo
+END: 2026-10-18 09:03:04 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+214 144 0:59 /private / rw,relatime,idmapped shared:2 - zfs tank/ct/startedct rw,xattr,noacl,casesensitive
+215 214 0:63 / /dev rw,relatime - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+216 214 0:64 / /proc rw,nosuid,nodev,noexec,relatime shared:13 - proc proc rw
+217 218 0:64 /sys/net /proc/sys/net rw,nosuid,nodev,noexec,relatime shared:15 - proc proc rw
+218 216 0:64 /sys /proc/sys ro,relatime shared:14 - proc proc rw
+219 216 0:64 /sysrq-trigger /proc/sysrq-trigger ro,relatime shared:16 - proc proc rw
+220 214 0:65 / /sys rw,relatime shared:17 - sysfs sysfs rw
+221 220 0:22 /fs/fuse/connections /sys/fs/fuse/connections rw,nosuid,nodev,noexec,relatime shared:18 - sysfs sys rw
+222 220 0:32 /osctl/debugfs /sys/kernel/debug ro,nosuid,nodev shared:19 - tmpfs tmpfs rw,size=2034092k,mode=755
+223 220 0:32 /osctl/tracing /sys/kernel/tracing ro,nosuid,nodev shared:20 - tmpfs tmpfs rw,size=2034092k,mode=755
+224 220 0:7 / /sys/kernel/security rw,relatime shared:21 - securityfs securityfs rw
+225 220 0:22 /fs/pstore /sys/fs/pstore rw,nosuid,nodev,noexec,relatime shared:22 - sysfs sys rw
+226 215 0:62 / /dev/mqueue rw,relatime - mqueue mqueue rw
+227 214 0:66 / /run rw,nodev,relatime shared:24 - tmpfs run rw,mode=755,uid=1000000,gid=1000000
+228 215 0:67 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs shm rw,uid=1000000,gid=1000000
+229 215 0:32 /osctl/pools/tank/mounts/startedct /dev/.osctl-mount-helper ro,nosuid,nodev master:1 - tmpfs tmpfs rw,size=2034092k,mode=755
+230 220 0:61 / /sys/fs/bpf rw,nosuid,nodev,noexec,relatime - bpf bpf rw,uid=1000000,gid=1000000,mode=700
+212 215 0:68 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+213 215 0:68 /0 /dev/console rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+231 215 0:68 /1 /dev/tty1 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+232 215 0:68 /2 /dev/tty2 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+233 215 0:68 /3 /dev/tty3 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+234 215 0:68 /4 /dev/tty4 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+235 218 0:63 /.lxc-boot-id /proc/sys/kernel/random/boot_id ro,nosuid,nodev,noexec,relatime shared:3 - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+150 220 0:69 / /sys/fs/cgroup ro,relatime shared:4 - tmpfs tmpfs ro,uid=1000000,gid=1000000
+151 150 0:47 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/systemd rw,nosuid,nodev,noexec,relatime shared:5 - cgroup cgroup rw,name=systemd
+152 150 0:46 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/hugetlb rw,nosuid,nodev,noexec,relatime shared:6 - cgroup cgroup rw,hugetlb
+153 150 0:45 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/rdma rw,nosuid,nodev,noexec,relatime shared:7 - cgroup cgroup rw,rdma
+154 150 0:44 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/perf_event rw,nosuid,nodev,noexec,relatime shared:8 - cgroup cgroup rw,perf_event
+155 150 0:43 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/pids rw,nosuid,nodev,noexec,relatime shared:9 - cgroup cgroup rw,pids
+156 150 0:42 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/net_cls,net_prio rw,nosuid,nodev,noexec,relatime shared:10 - cgroup cgroup rw,net_cls,net_prio
+157 150 0:41 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime shared:11 - cgroup cgroup rw,freezer
+158 150 0:40 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/devices rw,nosuid,nodev,noexec,relatime shared:12 - cgroup cgroup rw,devices
+159 150 0:39 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:23 - cgroup cgroup rw,memory
+160 150 0:38 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime shared:25 - cgroup cgroup rw,cpu,cpuacct
+161 150 0:37 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime shared:26 - cgroup cgroup rw,cpuset
+162 150 0:48 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/unified rw,nosuid,nodev,noexec,relatime shared:27 - cgroup2 cgroup2 rw
+---
+
+START: 2026-10-18 09:03:04 +0200
+COMMAND: osctl ct exec startedct sh -c 'echo helper-data > /root/helper-data'
+END: 2026-10-18 09:03:06 +0200
+ELAPSED: 1.4s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:03:06 +0200
+COMMAND: osctl ct exec startedct true
+END: 2026-10-18 09:03:07 +0200
+ELAPSED: 1.5s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:03:07 +0200
+COMMAND: cat /proc/3238/mountinfo
+END: 2026-10-18 09:03:07 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+214 144 0:59 /private / rw,relatime,idmapped shared:2 - zfs tank/ct/startedct rw,xattr,noacl,casesensitive
+215 214 0:63 / /dev rw,relatime - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+216 214 0:64 / /proc rw,nosuid,nodev,noexec,relatime shared:13 - proc proc rw
+217 218 0:64 /sys/net /proc/sys/net rw,nosuid,nodev,noexec,relatime shared:15 - proc proc rw
+218 216 0:64 /sys /proc/sys ro,relatime shared:14 - proc proc rw
+219 216 0:64 /sysrq-trigger /proc/sysrq-trigger ro,relatime shared:16 - proc proc rw
+220 214 0:65 / /sys rw,relatime shared:17 - sysfs sysfs rw
+221 220 0:22 /fs/fuse/connections /sys/fs/fuse/connections rw,nosuid,nodev,noexec,relatime shared:18 - sysfs sys rw
+222 220 0:32 /osctl/debugfs /sys/kernel/debug ro,nosuid,nodev shared:19 - tmpfs tmpfs rw,size=2034092k,mode=755
+223 220 0:32 /osctl/tracing /sys/kernel/tracing ro,nosuid,nodev shared:20 - tmpfs tmpfs rw,size=2034092k,mode=755
+224 220 0:7 / /sys/kernel/security rw,relatime shared:21 - securityfs securityfs rw
+225 220 0:22 /fs/pstore /sys/fs/pstore rw,nosuid,nodev,noexec,relatime shared:22 - sysfs sys rw
+226 215 0:62 / /dev/mqueue rw,relatime - mqueue mqueue rw
+227 214 0:66 / /run rw,nodev,relatime shared:24 - tmpfs run rw,mode=755,uid=1000000,gid=1000000
+228 215 0:67 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs shm rw,uid=1000000,gid=1000000
+229 215 0:32 /osctl/pools/tank/mounts/startedct /dev/.osctl-mount-helper ro,nosuid,nodev master:1 - tmpfs tmpfs rw,size=2034092k,mode=755
+230 220 0:61 / /sys/fs/bpf rw,nosuid,nodev,noexec,relatime - bpf bpf rw,uid=1000000,gid=1000000,mode=700
+212 215 0:68 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+213 215 0:68 /0 /dev/console rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+231 215 0:68 /1 /dev/tty1 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+232 215 0:68 /2 /dev/tty2 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+233 215 0:68 /3 /dev/tty3 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+234 215 0:68 /4 /dev/tty4 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+235 218 0:63 /.lxc-boot-id /proc/sys/kernel/random/boot_id ro,nosuid,nodev,noexec,relatime shared:3 - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+150 220 0:69 / /sys/fs/cgroup ro,relatime shared:4 - tmpfs tmpfs ro,uid=1000000,gid=1000000
+151 150 0:47 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/systemd rw,nosuid,nodev,noexec,relatime shared:5 - cgroup cgroup rw,name=systemd
+152 150 0:46 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/hugetlb rw,nosuid,nodev,noexec,relatime shared:6 - cgroup cgroup rw,hugetlb
+153 150 0:45 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/rdma rw,nosuid,nodev,noexec,relatime shared:7 - cgroup cgroup rw,rdma
+154 150 0:44 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/perf_event rw,nosuid,nodev,noexec,relatime shared:8 - cgroup cgroup rw,perf_event
+155 150 0:43 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/pids rw,nosuid,nodev,noexec,relatime shared:9 - cgroup cgroup rw,pids
+156 150 0:42 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/net_cls,net_prio rw,nosuid,nodev,noexec,relatime shared:10 - cgroup cgroup rw,net_cls,net_prio
+157 150 0:41 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime shared:11 - cgroup cgroup rw,freezer
+158 150 0:40 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/devices rw,nosuid,nodev,noexec,relatime shared:12 - cgroup cgroup rw,devices
+159 150 0:39 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:23 - cgroup cgroup rw,memory
+160 150 0:38 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime shared:25 - cgroup cgroup rw,cpu,cpuacct
+161 150 0:37 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime shared:26 - cgroup cgroup rw,cpuset
+162 150 0:48 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/unified rw,nosuid,nodev,noexec,relatime shared:27 - cgroup2 cgroup2 rw
+---
+
+START: 2026-10-18 09:03:07 +0200
+COMMAND: printf 'exit 0\n' | osctl ct attach startedct
+END: 2026-10-18 09:03:09 +0200
+ELAPSED: 1.47s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:03:09 +0200
+COMMAND: cat /proc/3238/mountinfo
+END: 2026-10-18 09:03:09 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+214 144 0:59 /private / rw,relatime,idmapped shared:2 - zfs tank/ct/startedct rw,xattr,noacl,casesensitive
+215 214 0:63 / /dev rw,relatime - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+216 214 0:64 / /proc rw,nosuid,nodev,noexec,relatime shared:13 - proc proc rw
+217 218 0:64 /sys/net /proc/sys/net rw,nosuid,nodev,noexec,relatime shared:15 - proc proc rw
+218 216 0:64 /sys /proc/sys ro,relatime shared:14 - proc proc rw
+219 216 0:64 /sysrq-trigger /proc/sysrq-trigger ro,relatime shared:16 - proc proc rw
+220 214 0:65 / /sys rw,relatime shared:17 - sysfs sysfs rw
+221 220 0:22 /fs/fuse/connections /sys/fs/fuse/connections rw,nosuid,nodev,noexec,relatime shared:18 - sysfs sys rw
+222 220 0:32 /osctl/debugfs /sys/kernel/debug ro,nosuid,nodev shared:19 - tmpfs tmpfs rw,size=2034092k,mode=755
+223 220 0:32 /osctl/tracing /sys/kernel/tracing ro,nosuid,nodev shared:20 - tmpfs tmpfs rw,size=2034092k,mode=755
+224 220 0:7 / /sys/kernel/security rw,relatime shared:21 - securityfs securityfs rw
+225 220 0:22 /fs/pstore /sys/fs/pstore rw,nosuid,nodev,noexec,relatime shared:22 - sysfs sys rw
+226 215 0:62 / /dev/mqueue rw,relatime - mqueue mqueue rw
+227 214 0:66 / /run rw,nodev,relatime shared:24 - tmpfs run rw,mode=755,uid=1000000,gid=1000000
+228 215 0:67 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs shm rw,uid=1000000,gid=1000000
+229 215 0:32 /osctl/pools/tank/mounts/startedct /dev/.osctl-mount-helper ro,nosuid,nodev master:1 - tmpfs tmpfs rw,size=2034092k,mode=755
+230 220 0:61 / /sys/fs/bpf rw,nosuid,nodev,noexec,relatime - bpf bpf rw,uid=1000000,gid=1000000,mode=700
+212 215 0:68 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+213 215 0:68 /0 /dev/console rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+231 215 0:68 /1 /dev/tty1 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+232 215 0:68 /2 /dev/tty2 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+233 215 0:68 /3 /dev/tty3 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+234 215 0:68 /4 /dev/tty4 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+235 218 0:63 /.lxc-boot-id /proc/sys/kernel/random/boot_id ro,nosuid,nodev,noexec,relatime shared:3 - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+150 220 0:69 / /sys/fs/cgroup ro,relatime shared:4 - tmpfs tmpfs ro,uid=1000000,gid=1000000
+151 150 0:47 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/systemd rw,nosuid,nodev,noexec,relatime shared:5 - cgroup cgroup rw,name=systemd
+152 150 0:46 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/hugetlb rw,nosuid,nodev,noexec,relatime shared:6 - cgroup cgroup rw,hugetlb
+153 150 0:45 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/rdma rw,nosuid,nodev,noexec,relatime shared:7 - cgroup cgroup rw,rdma
+154 150 0:44 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/perf_event rw,nosuid,nodev,noexec,relatime shared:8 - cgroup cgroup rw,perf_event
+155 150 0:43 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/pids rw,nosuid,nodev,noexec,relatime shared:9 - cgroup cgroup rw,pids
+156 150 0:42 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/net_cls,net_prio rw,nosuid,nodev,noexec,relatime shared:10 - cgroup cgroup rw,net_cls,net_prio
+157 150 0:41 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime shared:11 - cgroup cgroup rw,freezer
+158 150 0:40 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/devices rw,nosuid,nodev,noexec,relatime shared:12 - cgroup cgroup rw,devices
+159 150 0:39 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:23 - cgroup cgroup rw,memory
+160 150 0:38 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime shared:25 - cgroup cgroup rw,cpu,cpuacct
+161 150 0:37 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime shared:26 - cgroup cgroup rw,cpuset
+162 150 0:48 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/unified rw,nosuid,nodev,noexec,relatime shared:27 - cgroup2 cgroup2 rw
+---
+
+START: 2026-10-18 09:03:09 +0200
+COMMAND: printf 'exit 0\n' | osctl ct su startedct
+END: 2026-10-18 09:03:10 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:03:10 +0200
+COMMAND: cat /proc/3238/mountinfo
+END: 2026-10-18 09:03:10 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+214 144 0:59 /private / rw,relatime,idmapped shared:2 - zfs tank/ct/startedct rw,xattr,noacl,casesensitive
+215 214 0:63 / /dev rw,relatime - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+216 214 0:64 / /proc rw,nosuid,nodev,noexec,relatime shared:13 - proc proc rw
+217 218 0:64 /sys/net /proc/sys/net rw,nosuid,nodev,noexec,relatime shared:15 - proc proc rw
+218 216 0:64 /sys /proc/sys ro,relatime shared:14 - proc proc rw
+219 216 0:64 /sysrq-trigger /proc/sysrq-trigger ro,relatime shared:16 - proc proc rw
+220 214 0:65 / /sys rw,relatime shared:17 - sysfs sysfs rw
+221 220 0:22 /fs/fuse/connections /sys/fs/fuse/connections rw,nosuid,nodev,noexec,relatime shared:18 - sysfs sys rw
+222 220 0:32 /osctl/debugfs /sys/kernel/debug ro,nosuid,nodev shared:19 - tmpfs tmpfs rw,size=2034092k,mode=755
+223 220 0:32 /osctl/tracing /sys/kernel/tracing ro,nosuid,nodev shared:20 - tmpfs tmpfs rw,size=2034092k,mode=755
+224 220 0:7 / /sys/kernel/security rw,relatime shared:21 - securityfs securityfs rw
+225 220 0:22 /fs/pstore /sys/fs/pstore rw,nosuid,nodev,noexec,relatime shared:22 - sysfs sys rw
+226 215 0:62 / /dev/mqueue rw,relatime - mqueue mqueue rw
+227 214 0:66 / /run rw,nodev,relatime shared:24 - tmpfs run rw,mode=755,uid=1000000,gid=1000000
+228 215 0:67 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs shm rw,uid=1000000,gid=1000000
+229 215 0:32 /osctl/pools/tank/mounts/startedct /dev/.osctl-mount-helper ro,nosuid,nodev master:1 - tmpfs tmpfs rw,size=2034092k,mode=755
+230 220 0:61 / /sys/fs/bpf rw,nosuid,nodev,noexec,relatime - bpf bpf rw,uid=1000000,gid=1000000,mode=700
+212 215 0:68 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+213 215 0:68 /0 /dev/console rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+231 215 0:68 /1 /dev/tty1 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+232 215 0:68 /2 /dev/tty2 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+233 215 0:68 /3 /dev/tty3 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+234 215 0:68 /4 /dev/tty4 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+235 218 0:63 /.lxc-boot-id /proc/sys/kernel/random/boot_id ro,nosuid,nodev,noexec,relatime shared:3 - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+150 220 0:69 / /sys/fs/cgroup ro,relatime shared:4 - tmpfs tmpfs ro,uid=1000000,gid=1000000
+151 150 0:47 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/systemd rw,nosuid,nodev,noexec,relatime shared:5 - cgroup cgroup rw,name=systemd
+152 150 0:46 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/hugetlb rw,nosuid,nodev,noexec,relatime shared:6 - cgroup cgroup rw,hugetlb
+153 150 0:45 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/rdma rw,nosuid,nodev,noexec,relatime shared:7 - cgroup cgroup rw,rdma
+154 150 0:44 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/perf_event rw,nosuid,nodev,noexec,relatime shared:8 - cgroup cgroup rw,perf_event
+155 150 0:43 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/pids rw,nosuid,nodev,noexec,relatime shared:9 - cgroup cgroup rw,pids
+156 150 0:42 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/net_cls,net_prio rw,nosuid,nodev,noexec,relatime shared:10 - cgroup cgroup rw,net_cls,net_prio
+157 150 0:41 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime shared:11 - cgroup cgroup rw,freezer
+158 150 0:40 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/devices rw,nosuid,nodev,noexec,relatime shared:12 - cgroup cgroup rw,devices
+159 150 0:39 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:23 - cgroup cgroup rw,memory
+160 150 0:38 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime shared:25 - cgroup cgroup rw,cpu,cpuacct
+161 150 0:37 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime shared:26 - cgroup cgroup rw,cpuset
+162 150 0:48 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/unified rw,nosuid,nodev,noexec,relatime shared:27 - cgroup2 cgroup2 rw
+---
+
+START: 2026-10-18 09:03:10 +0200
+COMMAND: printf '#!/bin/sh\nexit 0\n' | osctl ct runscript startedct -
+END: 2026-10-18 09:03:11 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+
+---
+
+START: 2026-10-18 09:03:11 +0200
+COMMAND: cat /proc/3238/mountinfo
+END: 2026-10-18 09:03:12 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+214 144 0:59 /private / rw,relatime,idmapped shared:2 - zfs tank/ct/startedct rw,xattr,noacl,casesensitive
+215 214 0:63 / /dev rw,relatime - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+216 214 0:64 / /proc rw,nosuid,nodev,noexec,relatime shared:13 - proc proc rw
+217 218 0:64 /sys/net /proc/sys/net rw,nosuid,nodev,noexec,relatime shared:15 - proc proc rw
+218 216 0:64 /sys /proc/sys ro,relatime shared:14 - proc proc rw
+219 216 0:64 /sysrq-trigger /proc/sysrq-trigger ro,relatime shared:16 - proc proc rw
+220 214 0:65 / /sys rw,relatime shared:17 - sysfs sysfs rw
+221 220 0:22 /fs/fuse/connections /sys/fs/fuse/connections rw,nosuid,nodev,noexec,relatime shared:18 - sysfs sys rw
+222 220 0:32 /osctl/debugfs /sys/kernel/debug ro,nosuid,nodev shared:19 - tmpfs tmpfs rw,size=2034092k,mode=755
+223 220 0:32 /osctl/tracing /sys/kernel/tracing ro,nosuid,nodev shared:20 - tmpfs tmpfs rw,size=2034092k,mode=755
+224 220 0:7 / /sys/kernel/security rw,relatime shared:21 - securityfs securityfs rw
+225 220 0:22 /fs/pstore /sys/fs/pstore rw,nosuid,nodev,noexec,relatime shared:22 - sysfs sys rw
+226 215 0:62 / /dev/mqueue rw,relatime - mqueue mqueue rw
+227 214 0:66 / /run rw,nodev,relatime shared:24 - tmpfs run rw,mode=755,uid=1000000,gid=1000000
+228 215 0:67 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs shm rw,uid=1000000,gid=1000000
+229 215 0:32 /osctl/pools/tank/mounts/startedct /dev/.osctl-mount-helper ro,nosuid,nodev master:1 - tmpfs tmpfs rw,size=2034092k,mode=755
+230 220 0:61 / /sys/fs/bpf rw,nosuid,nodev,noexec,relatime - bpf bpf rw,uid=1000000,gid=1000000,mode=700
+212 215 0:68 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+213 215 0:68 /0 /dev/console rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+231 215 0:68 /1 /dev/tty1 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+232 215 0:68 /2 /dev/tty2 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+233 215 0:68 /3 /dev/tty3 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+234 215 0:68 /4 /dev/tty4 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+235 218 0:63 /.lxc-boot-id /proc/sys/kernel/random/boot_id ro,nosuid,nodev,noexec,relatime shared:3 - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+150 220 0:69 / /sys/fs/cgroup ro,relatime shared:4 - tmpfs tmpfs ro,uid=1000000,gid=1000000
+151 150 0:47 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/systemd rw,nosuid,nodev,noexec,relatime shared:5 - cgroup cgroup rw,name=systemd
+152 150 0:46 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/hugetlb rw,nosuid,nodev,noexec,relatime shared:6 - cgroup cgroup rw,hugetlb
+153 150 0:45 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/rdma rw,nosuid,nodev,noexec,relatime shared:7 - cgroup cgroup rw,rdma
+154 150 0:44 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/perf_event rw,nosuid,nodev,noexec,relatime shared:8 - cgroup cgroup rw,perf_event
+155 150 0:43 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/pids rw,nosuid,nodev,noexec,relatime shared:9 - cgroup cgroup rw,pids
+156 150 0:42 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/net_cls,net_prio rw,nosuid,nodev,noexec,relatime shared:10 - cgroup cgroup rw,net_cls,net_prio
+157 150 0:41 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime shared:11 - cgroup cgroup rw,freezer
+158 150 0:40 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/devices rw,nosuid,nodev,noexec,relatime shared:12 - cgroup cgroup rw,devices
+159 150 0:39 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:23 - cgroup cgroup rw,memory
+160 150 0:38 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime shared:25 - cgroup cgroup rw,cpu,cpuacct
+161 150 0:37 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime shared:26 - cgroup cgroup rw,cpuset
+162 150 0:48 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/unified rw,nosuid,nodev,noexec,relatime shared:27 - cgroup2 cgroup2 rw
+---
+
+START: 2026-10-18 09:03:12 +0200
+COMMAND: set -eu
+t=/sys/kernel/tracing
+mountpoint -q "$t" || mount -t tracefs tracefs "$t"
+echo 0 > "$t/tracing_on"
+echo nop > "$t/current_tracer"
+echo 2048 > "$t/buffer_size_kb"
+grep -E '^(d_invalidate|__detach_mounts|proc_misc_d_revalidate|vpsa_kernfs_filter_dentry_visibility_stale)( |$)' "$t/available_filter_functions"
+printf 'd_invalidate
+__detach_mounts
+' > "$t/set_ftrace_filter"
+echo function > "$t/current_tracer"
+echo 1 > "$t/options/func_stack_trace"
+echo 'r:helper_visibility_stale vpsa_kernfs_filter_dentry_visibility_stale stale=$retval:u8' >> "$t/kprobe_events"
+echo 'stale == 1' > "$t/events/kprobes/helper_visibility_stale/filter"
+echo 1 > "$t/events/kprobes/helper_visibility_stale/enable"
+echo 'r:helper_proc_revalidate proc_misc_d_revalidate result=$retval:s32' >> "$t/kprobe_events"
+echo 'result == 0' > "$t/events/kprobes/helper_proc_revalidate/filter"
+echo 1 > "$t/events/kprobes/helper_proc_revalidate/enable"
+echo > "$t/trace"
+echo 1 > "$t/tracing_on"
+END: 2026-10-18 09:03:12 +0200
+ELAPSED: 0.75s
+STATUS: 0
+OUTPUT:
+vpsa_kernfs_filter_dentry_visibility_stale
+d_invalidate
+__detach_mounts
+proc_misc_d_revalidate
+---
+
+START: 2026-10-18 09:03:12 +0200
+COMMAND: osctl ct cat startedct /root/helper-data
+END: 2026-10-18 09:03:13 +0200
+ELAPSED: 0.67s
+STATUS: 0
+OUTPUT:
+helper-data
+---
+
+START: 2026-10-18 09:03:13 +0200
+COMMAND: set -eu
+t=/sys/kernel/tracing
+echo 0 > "$t/tracing_on"
+cat "$t/trace"
+echo 0 > "$t/events/kprobes/helper_visibility_stale/enable"
+echo 0 > "$t/events/kprobes/helper_proc_revalidate/enable"
+echo '-:helper_visibility_stale' >> "$t/kprobe_events"
+echo '-:helper_proc_revalidate' >> "$t/kprobe_events"
+echo 0 > "$t/options/func_stack_trace"
+echo nop > "$t/current_tracer"
+echo > "$t/set_ftrace_filter"
+END: 2026-10-18 09:03:13 +0200
+ELAPSED: 0.11s
+STATUS: 0
+OUTPUT:
+# tracer: function
+#
+# entries-in-buffer/entries-written: 4/4   #P:4
+#
+#                                _-----=> irqs-off/BH-disabled
+#                               / _----=> need-resched
+#                              | / _---=> hardirq/softirq
+#                              || / _--=> preempt-depth
+#                              ||| / _-=> migrate-disable
+#                              |||| /     delay
+#           TASK-PID     CPU#  |||||  TIMESTAMP  FUNCTION
+#              | |         |   |||||     |         |
+    server.rb:40-3830    [002] .....    59.092214: d_invalidate <-proc_invalidate_siblings_dcache
+    server.rb:40-3830    [002] .....    59.092635: <stack trace>
+ => [FTRACE TRAMPOLINE]
+ => d_invalidate
+ => proc_invalidate_siblings_dcache
+ => release_task
+ => wait_consider_task
+ => __do_wait
+ => do_wait
+ => kernel_wait4
+ => __do_sys_wait4
+ => do_syscall_64
+ => entry_SYSCALL_64_after_hwframe
+            bash-3827    [000] .....    59.115053: d_invalidate <-proc_invalidate_siblings_dcache
+            bash-3827    [000] .....    59.115080: <stack trace>
+ => [FTRACE TRAMPOLINE]
+ => d_invalidate
+ => proc_invalidate_siblings_dcache
+ => release_task
+ => wait_consider_task
+ => __do_wait
+ => do_wait
+ => kernel_wait4
+ => __do_sys_wait4
+ => do_syscall_64
+ => entry_SYSCALL_64_after_hwframe
+---
+
+START: 2026-10-18 09:03:13 +0200
+COMMAND: cat /proc/3238/mountinfo
+END: 2026-10-18 09:03:13 +0200
+ELAPSED: 0.02s
+STATUS: 0
+OUTPUT:
+214 144 0:59 /private / rw,relatime,idmapped shared:2 - zfs tank/ct/startedct rw,xattr,noacl,casesensitive
+215 214 0:63 / /dev rw,relatime - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+216 214 0:64 / /proc rw,nosuid,nodev,noexec,relatime shared:13 - proc proc rw
+217 218 0:64 /sys/net /proc/sys/net rw,nosuid,nodev,noexec,relatime shared:15 - proc proc rw
+218 216 0:64 /sys /proc/sys ro,relatime shared:14 - proc proc rw
+219 216 0:64 /sysrq-trigger /proc/sysrq-trigger ro,relatime shared:16 - proc proc rw
+220 214 0:65 / /sys rw,relatime shared:17 - sysfs sysfs rw
+221 220 0:22 /fs/fuse/connections /sys/fs/fuse/connections rw,nosuid,nodev,noexec,relatime shared:18 - sysfs sys rw
+222 220 0:32 /osctl/debugfs /sys/kernel/debug ro,nosuid,nodev shared:19 - tmpfs tmpfs rw,size=2034092k,mode=755
+223 220 0:32 /osctl/tracing /sys/kernel/tracing ro,nosuid,nodev shared:20 - tmpfs tmpfs rw,size=2034092k,mode=755
+224 220 0:7 / /sys/kernel/security rw,relatime shared:21 - securityfs securityfs rw
+225 220 0:22 /fs/pstore /sys/fs/pstore rw,nosuid,nodev,noexec,relatime shared:22 - sysfs sys rw
+226 215 0:62 / /dev/mqueue rw,relatime - mqueue mqueue rw
+227 214 0:66 / /run rw,nodev,relatime shared:24 - tmpfs run rw,mode=755,uid=1000000,gid=1000000
+228 215 0:67 / /dev/shm rw,nosuid,nodev,noexec,relatime - tmpfs shm rw,uid=1000000,gid=1000000
+229 215 0:32 /osctl/pools/tank/mounts/startedct /dev/.osctl-mount-helper ro,nosuid,nodev master:1 - tmpfs tmpfs rw,size=2034092k,mode=755
+230 220 0:61 / /sys/fs/bpf rw,nosuid,nodev,noexec,relatime - bpf bpf rw,uid=1000000,gid=1000000,mode=700
+212 215 0:68 / /dev/pts rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+213 215 0:68 /0 /dev/console rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+231 215 0:68 /1 /dev/tty1 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+232 215 0:68 /2 /dev/tty2 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+233 215 0:68 /3 /dev/tty3 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+234 215 0:68 /4 /dev/tty4 rw,nosuid,noexec,relatime - devpts devpts rw,gid=1000005,mode=620,ptmxmode=666,max=1028
+235 218 0:63 /.lxc-boot-id /proc/sys/kernel/random/boot_id ro,nosuid,nodev,noexec,relatime shared:3 - tmpfs none rw,size=492k,mode=755,uid=1000000,gid=1000000
+150 220 0:69 / /sys/fs/cgroup ro,relatime shared:4 - tmpfs tmpfs ro,uid=1000000,gid=1000000
+151 150 0:47 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/systemd rw,nosuid,nodev,noexec,relatime shared:5 - cgroup cgroup rw,name=systemd
+152 150 0:46 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/hugetlb rw,nosuid,nodev,noexec,relatime shared:6 - cgroup cgroup rw,hugetlb
+153 150 0:45 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/rdma rw,nosuid,nodev,noexec,relatime shared:7 - cgroup cgroup rw,rdma
+154 150 0:44 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/perf_event rw,nosuid,nodev,noexec,relatime shared:8 - cgroup cgroup rw,perf_event
+155 150 0:43 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/pids rw,nosuid,nodev,noexec,relatime shared:9 - cgroup cgroup rw,pids
+156 150 0:42 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/net_cls,net_prio rw,nosuid,nodev,noexec,relatime shared:10 - cgroup cgroup rw,net_cls,net_prio
+157 150 0:41 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/freezer rw,nosuid,nodev,noexec,relatime shared:11 - cgroup cgroup rw,freezer
+158 150 0:40 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/devices rw,nosuid,nodev,noexec,relatime shared:12 - cgroup cgroup rw,devices
+159 150 0:39 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:23 - cgroup cgroup rw,memory
+160 150 0:38 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpu,cpuacct rw,nosuid,nodev,noexec,relatime shared:25 - cgroup cgroup rw,cpu,cpuacct
+161 150 0:37 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/cpuset rw,nosuid,nodev,noexec,relatime shared:26 - cgroup cgroup rw,cpuset
+162 150 0:48 /osctl/pool.tank/group.default/user.startedct/ct.startedct/user-owned/lxc.payload.startedct /sys/fs/cgroup/unified rw,nosuid,nodev,noexec,relatime shared:27 - cgroup2 cgroup2 rw
+---
+
+START: 2026-10-18 09:03:13 +0200
+COMMAND: osctl ct show -H -o state startedct
+END: 2026-10-18 09:03:14 +0200
+ELAPSED: 0.59s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-10-18 09:03:14 +0200
+COMMAND: osctl ct exec  startedct echo hi
+END: 2026-10-18 09:03:15 +0200
+ELAPSED: 1.44s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-18 09:03:15 +0200
+COMMAND: osctl ct exec  startedct sh -c '>&2 echo hi'
+END: 2026-10-18 09:03:17 +0200
+ELAPSED: 1.48s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-18 09:03:17 +0200
+COMMAND: osctl ct exec  startedct sh -c 'exit 33'
+END: 2026-10-18 09:03:18 +0200
+ELAPSED: 1.45s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-18 09:03:18 +0200
+COMMAND: osctl ct exec  startedct totally-madeup-command
+END: 2026-10-18 09:03:19 +0200
+ELAPSED: 1.45s
+STATUS: 127
+OUTPUT:
+lxc-attach: startedct: ../src/lxc/attach.c: lxc_attach_run_command: 1946 No such file or directory - Failed to exec "totally-madeup-command"
+error: executed command failed
+---
+
+START: 2026-10-18 09:03:19 +0200
+COMMAND: osctl ct show -H -o state stoppedct
+END: 2026-10-18 09:03:20 +0200
+ELAPSED: 0.61s
+STATUS: 0
+OUTPUT:
+stopped
+
+---
+
+START: 2026-10-18 09:03:20 +0200
+COMMAND: osctl ct exec -r stoppedct echo hi
+END: 2026-10-18 09:03:24 +0200
+ELAPSED: 3.92s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-18 09:03:24 +0200
+COMMAND: osctl ct exec -r stoppedct sh -c '>&2 echo hi'
+END: 2026-10-18 09:03:28 +0200
+ELAPSED: 3.88s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-18 09:03:28 +0200
+COMMAND: osctl ct exec -r stoppedct sh -c 'exit 33'
+END: 2026-10-18 09:03:32 +0200
+ELAPSED: 3.84s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-18 09:03:32 +0200
+COMMAND: osctl ct exec -r stoppedct totally-madeup-command
+END: 2026-10-18 09:03:35 +0200
+ELAPSED: 3.74s
+STATUS: 255
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-18 09:03:35 +0200
+COMMAND: osctl ct show -H -o state startedct
+END: 2026-10-18 09:03:36 +0200
+ELAPSED: 0.71s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-10-18 09:03:36 +0200
+COMMAND: osctl ct exec -r startedct echo hi
+END: 2026-10-18 09:03:38 +0200
+ELAPSED: 1.63s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-18 09:03:38 +0200
+COMMAND: osctl ct exec -r startedct sh -c '>&2 echo hi'
+END: 2026-10-18 09:03:39 +0200
+ELAPSED: 1.53s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-18 09:03:39 +0200
+COMMAND: osctl ct exec -r startedct sh -c 'exit 33'
+END: 2026-10-18 09:03:41 +0200
+ELAPSED: 1.52s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-18 09:03:41 +0200
+COMMAND: osctl ct exec -r startedct totally-madeup-command
+END: 2026-10-18 09:03:42 +0200
+ELAPSED: 1.56s
+STATUS: 127
+OUTPUT:
+lxc-attach: startedct: ../src/lxc/attach.c: lxc_attach_run_command: 1946 No such file or directory - Failed to exec "totally-madeup-command"
+error: executed command failed
+---
+
+START: 2026-10-18 09:03:42 +0200
+COMMAND: osctl ct show -H -o state stoppedct
+END: 2026-10-18 09:03:43 +0200
+ELAPSED: 0.58s
+STATUS: 0
+OUTPUT:
+stopped
+
+---
+
+START: 2026-10-18 09:03:43 +0200
+COMMAND: osctl ct exec -rn stoppedct echo hi
+END: 2026-10-18 09:03:46 +0200
+ELAPSED: 2.86s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-18 09:03:46 +0200
+COMMAND: osctl ct exec -rn stoppedct sh -c '>&2 echo hi'
+END: 2026-10-18 09:03:49 +0200
+ELAPSED: 2.8s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-18 09:03:49 +0200
+COMMAND: osctl ct exec -rn stoppedct sh -c 'exit 33'
+END: 2026-10-18 09:03:52 +0200
+ELAPSED: 2.84s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-18 09:03:52 +0200
+COMMAND: osctl ct exec -rn stoppedct totally-madeup-command
+END: 2026-10-18 09:03:54 +0200
+ELAPSED: 2.87s
+STATUS: 127
+OUTPUT:
+lxc-attach: stoppedct: ../src/lxc/attach.c: lxc_attach_run_command: 1946 No such file or directory - Failed to exec "totally-madeup-command"
+error: executed command failed
+---
+
+START: 2026-10-18 09:03:54 +0200
+COMMAND: osctl ct exec -rn stoppedct ping -c 1 1.2.3.4
+END: 2026-10-18 09:03:57 +0200
+ELAPSED: 2.77s
+STATUS: 0
+OUTPUT:
+PING 1.2.3.4 (1.2.3.4): 56 data bytes
+64 bytes from 1.2.3.4: seq=0 ttl=64 time=0.209 ms
+
+--- 1.2.3.4 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.209/0.209/0.209 ms
+---
+
+START: 2026-10-18 09:03:57 +0200
+COMMAND: osctl ct exec -rn stoppedct ping -c 1 255.255.255.254
+END: 2026-10-18 09:04:00 +0200
+ELAPSED: 2.78s
+STATUS: 0
+OUTPUT:
+PING 255.255.255.254 (255.255.255.254): 56 data bytes
+64 bytes from 255.255.255.254: seq=0 ttl=64 time=0.258 ms
+
+--- 255.255.255.254 ping statistics ---
+1 packets transmitted, 1 packets received, 0% packet loss
+round-trip min/avg/max = 0.258/0.258/0.258 ms
+---
+
+START: 2026-10-18 09:04:00 +0200
+COMMAND: osctl ct exec -rn stoppedct ip route show
+END: 2026-10-18 09:04:03 +0200
+ELAPSED: 2.9s
+STATUS: 0
+OUTPUT:
+default via 255.255.255.254 dev eth0 
+255.255.255.254 dev eth0 scope link 
+---
+
+START: 2026-10-18 09:04:03 +0200
+COMMAND: osctl ct show -H -o state startedct
+END: 2026-10-18 09:04:03 +0200
+ELAPSED: 0.65s
+STATUS: 0
+OUTPUT:
+running
+
+---
+
+START: 2026-10-18 09:04:03 +0200
+COMMAND: osctl ct exec -rn startedct echo hi
+END: 2026-10-18 09:04:05 +0200
+ELAPSED: 1.55s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-18 09:04:05 +0200
+COMMAND: osctl ct exec -rn startedct sh -c '>&2 echo hi'
+END: 2026-10-18 09:04:06 +0200
+ELAPSED: 1.45s
+STATUS: 0
+OUTPUT:
+hi
+---
+
+START: 2026-10-18 09:04:06 +0200
+COMMAND: osctl ct exec -rn startedct sh -c 'exit 33'
+END: 2026-10-18 09:04:08 +0200
+ELAPSED: 1.56s
+STATUS: 33
+OUTPUT:
+error: executed command failed
+---
+
+START: 2026-10-18 09:04:08 +0200
+COMMAND: osctl ct exec -rn startedct totally-madeup-command
+END: 2026-10-18 09:04:09 +0200
+ELAPSED: 1.43s
+STATUS: 127
+OUTPUT:
+lxc-attach: startedct: ../src/lxc/attach.c: lxc_attach_run_command: 1946 No such file or directory - Failed to exec "totally-madeup-command"
+error: executed command failed
+---
+
+START: 2026-10-18 09:04:09 +0200
+COMMAND: poweroff -f
+END: 2026-10-18 09:04:14 +0200
+ELAPSED: 4.18s
+STATUS: 0
+OUTPUT:
+Executing pre-run hooks
+Shutting down containers, this operation can still be interrupted
+
+Grabbing pools
+Disabling pool tank
+Grabbing all containers
+Exporting pool tank
+Stopping all containers
+[1/2] Stopping container tank:startedct
+[2/2] Stopping container tank:stoppedct
+Unregistering users, groups and containers
+---
+

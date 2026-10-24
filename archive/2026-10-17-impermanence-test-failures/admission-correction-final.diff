@@ -1,0 +1,258 @@
+diff --git a/docs/os/testing.md b/docs/os/testing.md
+index 4f4d3ebce..fbc1333ed 100644
+--- a/docs/os/testing.md
++++ b/docs/os/testing.md
+@@ -411,10 +411,10 @@ attempts and VM cleanup; runtime loads those exact configurations without
+ invoking Nix. A test script or extension that explicitly starts a separate host
+ build is outside this boundary.
+ 
+-Prebuild is opt-in. `--no-prebuild` keeps per-test image preparation. It does
+-not remove the test squashfs cache default or relax memory admission. `debug`
+-continues to prepare one test when it starts. CI enables prebuild for native
+-tests; the manual `prebuild` boolean can disable it.
++Prebuild is opt-in. `--no-prebuild` keeps per-test image preparation. Both modes
++use the same test squashfs cache default and runtime resource scheduling.
++`debug` continues to prepare one test when it starts. CI enables prebuild for
++native tests; the manual `prebuild` boolean can disable it.
+ 
+ Preparation snapshots VM capacity before building, then refreshes assigned
+ limits before starting VMs. It chooses local Nix build jobs separately from
+@@ -451,14 +451,12 @@ settings (zstd level 10 by default) and image metadata. Override it when needed;
+ pinned OS sources and unrelated Nixpkgs image builders do not inherit this
+ setting.
+ 
+-### Runtime memory admission
++### Runtime resource scheduling
+ 
+-A test whose aggregate RAM or `/dev/shm` request exceeds the nominal capacity
+-fails explicitly instead of bypassing the limit or waiting forever. The error
+-names the test, constraint, requested amount and capacity. CPU-only oversized
+-tests can still run alone when both memory requests fit, including intentional
+-large-vCPU livepatch fixtures. Guest memory, CPU counts and shared-memory
+-requests are unchanged.
++The scheduler budgets RAM, `/dev/shm` and CPUs across concurrent tests. If no
++pending test fits and no test is running, it warns and runs one test alone,
++even when that test exceeds a budget. Guest memory, CPU counts and shared-memory
++requests are unchanged. The test may exhaust the host or fail from OOM.
+ 
+ ## Expected failure
+ A test can be expected to fail. The failure is shown, but it does not result
+diff --git a/test-runner/lib/test-runner/cli/app.rb b/test-runner/lib/test-runner/cli/app.rb
+index e21d920d2..a1489d2a6 100644
+--- a/test-runner/lib/test-runner/cli/app.rb
++++ b/test-runner/lib/test-runner/cli/app.rb
+@@ -58,7 +58,7 @@ module TestRunner::Cli
+         c.desc 'How many tests to run in parallel, or auto'
+         c.flag %w[j jobs], default_value: '1'
+ 
+-        c.desc 'Build selected test images before starting VMs; disabling keeps the test cache and memory admission policies'
++        c.desc 'Build selected test images before starting VMs; disabling keeps the test cache and runtime resource scheduling'
+         c.switch 'prebuild', default_value: false
+ 
+         c.desc 'Estimated preparation memory per Nix build job, in MiB (positive integer; CPU parallelism is unchanged)'
+diff --git a/test-runner/lib/test-runner/executor.rb b/test-runner/lib/test-runner/executor.rb
+index eb9264cdd..1495e4e37 100644
+--- a/test-runner/lib/test-runner/executor.rb
++++ b/test-runner/lib/test-runner/executor.rb
+@@ -7,7 +7,6 @@ require 'test-runner/resource_pool'
+ 
+ module TestRunner
+   class Executor
+-    class ResourceError < StandardError; end
+     # Private parent/child status that cannot be accepted by expectFailure.
+     KERNEL_FAILURE_EXIT_STATUS = 86
+     DEFAULT_RESOURCE_REFRESH_INTERVAL = 15
+@@ -207,9 +206,6 @@ module TestRunner
+           mark_test_finished(test, result)
+         end
+       end
+-    rescue StandardError
+-      stop_work!
+-      raise
+     end
+ 
+     def reserve_next_test
+@@ -244,18 +240,15 @@ module TestRunner
+ 
+       return i unless i.nil?
+ 
++      # Never deadlock the suite just because one test is larger than the
++      # detected capacity. Run it alone and let QEMU or the host enforce the
++      # real limit.
+       if resource_pool.running == 0
+         _test_i, test, = pending.first
+-        unless resource_pool.memory_fits?(test.resources)
+-          raise ResourceError,
+-                "Test #{test.path}: #{resource_pool.memory_overflows(test.resources).join('; ')}"
+-        end
+-
+-        # Keep the CPU-only exception for deliberately large-vCPU tests.
+         log(
+-          "WARNING: Test #{test.path} requests CPUs beyond the scheduler " \
++          "WARNING: Test #{test.path} requests resources beyond the scheduler " \
+           "limits (requested: #{test.resources.summary}; available: #{resource_pool.status}); " \
+-          'running it alone with memory admission enforced'
++          'running it alone may exhaust the host'
+         )
+         return 0
+       end
+diff --git a/test-runner/lib/test-runner/resource_pool.rb b/test-runner/lib/test-runner/resource_pool.rb
+index 515232c1e..86b789b5c 100644
+--- a/test-runner/lib/test-runner/resource_pool.rb
++++ b/test-runner/lib/test-runner/resource_pool.rb
+@@ -425,16 +425,6 @@ module TestRunner
+         fits?(cpus, used.cpus + resources.cpus)
+     end
+ 
+-    def memory_fits?(resources)
+-      memory_overflows(resources).empty?
+-    end
+-
+-    def memory_overflows(resources)
+-      [['memory', memory_mib, resources.memory_mib], ['/dev/shm', shm_mib, resources.shm_mib]].filter_map do |name, cap, requested|
+-        "#{name} request #{requested} MiB exceeds capacity #{cap} MiB" if cap && requested > cap
+-      end
+-    end
+-
+     def prebuild_memory_mib
+       @memory_capacity ? @memory_capacity.preparation_capacity : memory_mib
+     end
+diff --git a/test-runner/man/man1/test-runner.1.md b/test-runner/man/man1/test-runner.1.md
+index 31440f2c7..f339cf1a0 100644
+--- a/test-runner/man/man1/test-runner.1.md
++++ b/test-runner/man/man1/test-runner.1.md
+@@ -63,7 +63,7 @@ selected tests and reporting results.
+       VM. Runtime and retries load the exact prepared configurations without
+       Nix, with their closures GC-rooted through VM cleanup. Disabled by
+       default; `--no-prebuild` keeps per-test preparation. Disabling prebuild
+-      retains the test squashfs cache default and strict memory admission.
++      retains the test squashfs cache default and runtime resource scheduling.
+       Explicit host builds started by test scripts or extensions are outside
+       this boundary. Preparation failure starts no selected VMs, reports the
+       build log and exit code or signal, and creates no script assertion results.
+@@ -233,7 +233,7 @@ root filesystem. Installed systems booted from disks retain those disks.
+ Retained NixOS roots need the selected system closure before direct boot; after
+ changing configuration, use `--fresh` or update the running VM before restart.
+ 
+-## IMAGE CACHE AND MEMORY ADMISSION
++## IMAGE CACHE AND RESOURCE SCHEDULING
+ 
+ vpsAdminOS test images use a 2048 MiB squashfs compressor cache by default.
+ `system.squashfsMemoryMiB` can override it; `null` uses the tool default,
+@@ -242,10 +242,11 @@ and compression settings, including the default zstd level 10. The cache bound
+ does not cap total RSS, and does not apply
+ to historical pinned OS sources or unrelated Nixpkgs image builders.
+ 
+-Tests exceeding the nominal RAM or `/dev/shm` capacity fail explicitly. A
+-CPU-only overage may run alone when memory fits, including large-vCPU livepatch
+-fixtures. These policies apply with either prebuild setting. Preparation sizing
+-assumes no competing test/build workload in the runner container.
++Concurrent tests share the RAM, `/dev/shm` and CPU budgets. When no pending test
++fits and no test is running, one test runs alone with a warning, even if it
++exceeds a budget. The test may exhaust the host or fail from OOM. Resource
++requests are unchanged. This applies with either prebuild setting. Preparation
++sizing assumes no competing test/build workload in the runner container.
+ 
+ ## BUGS
+ Report bugs to https://github.com/vpsfreecz/vpsadminos/issues.
+diff --git a/test-runner/spec/test_runner/cli/app_spec.rb b/test-runner/spec/test_runner/cli/app_spec.rb
+index 00f9e0f80..0b6a03669 100644
+--- a/test-runner/spec/test_runner/cli/app_spec.rb
++++ b/test-runner/spec/test_runner/cli/app_spec.rb
+@@ -12,6 +12,12 @@ RSpec.describe TestRunner::Cli::App do
+     end
+   end
+ 
++  it 'describes runtime scheduling independently of the prebuild switch' do
++    description = described_class.get.commands[:test].switches[:prebuild].description
++    expect(description).to include('runtime resource scheduling')
++    expect(description).not_to include('memory admission')
++  end
++
+   [[], ['--prebuild'], ['--no-prebuild']].each do |flags|
+     it "parses prebuild selection #{flags.inspect} with an opt-in default" do
+       selected = nil
+diff --git a/test-runner/spec/test_runner/executor_spec.rb b/test-runner/spec/test_runner/executor_spec.rb
+index 3cf7de42f..f4bfcc9ad 100644
+--- a/test-runner/spec/test_runner/executor_spec.rb
++++ b/test-runner/spec/test_runner/executor_spec.rb
+@@ -698,36 +698,54 @@ RSpec.describe TestRunner::Executor do
+     expect(executor.instance_variable_get(:@status_monitor)).to be_nil
+   end
+ 
+-  %w[memoryMiB shmMiB].each do |constraint|
+-    it "rejects oversized #{constraint} finitely without starting a test" do
+-      test = build_test(resources: { constraint => 12_000 })
++  {
++    'RAM' => { 'memoryMiB' => 12_000, 'shmMiB' => 8000, 'cpus' => 2 },
++    '/dev/shm' => { 'memoryMiB' => 8000, 'shmMiB' => 12_000, 'cpus' => 2 },
++    'RAM and /dev/shm' => { 'memoryMiB' => 12_000, 'shmMiB' => 12_000, 'cpus' => 2 },
++    'CPUs' => { 'memoryMiB' => 8000, 'shmMiB' => 8000, 'cpus' => 128 }
++  }.each do |constraint, resources|
++    it "waits for running tests, then runs an oversized #{constraint} test alone without changing its requests" do
++      test = build_test(resources:)
+       executor = build_executor(
+-        [build_test_script(test)], max_memory_mib: 10_000, max_shm_mib: 10_000,
+-                                   memory_reserve_mib: 0, shm_reserve_mib: 0
++        [build_test_script(test)], max_memory_mib: 10_000, max_shm_mib: 10_000, max_cpus: 4,
++                                   memory_reserve_mib: 0, shm_reserve_mib: 0, cpu_reserve: 0,
++                                   cpu_overcommit: 1, resource_detector: resource_detector(cpus: 4)
+       )
+-      allow(executor).to receive(:run_test_with_retries)
+-      expect do
+-        executor.send(:reserve_next_test)
+-      end.to raise_error(TestRunner::Executor::ResourceError, /request 12000 MiB exceeds capacity 10000 MiB/)
+-      expect(executor).not_to have_received(:run_test_with_retries)
+-      expect(executor.send(:resource_pool).running).to eq(0)
++      pool = executor.send(:resource_pool)
++      active = TestRunner::TestResources.new(memory_mib: 1000, shm_mib: 1000, cpus: 1)
++      pool.reserve(active)
++      waiting = Queue.new
++      cv = executor.send(:scheduler_cv)
++      allow(cv).to receive(:wait).and_wrap_original do |original, *args|
++        waiting << true
++        original.call(*args)
++      end
++      allow(executor).to receive(:log)
++      worker = Thread.new { executor.send(:reserve_next_test) }
++      begin
++        Timeout.timeout(1) { waiting.pop }
++        expect(pool.running).to eq(1)
++        expect(pool.used.memory_mib).to eq(1000)
++        expect(executor).not_to have_received(:log).with(/WARNING:/)
++
++        executor.send(:release_test_resources, active)
++        _i, selected, _scripts, reserved = Timeout.timeout(1) { worker.value }
++        expect(selected).to equal(test)
++        expect(reserved).to equal(test.resources)
++        expect(pool.used).to have_attributes(memory_mib: resources.fetch('memoryMiB'), shm_mib: resources.fetch('shmMiB'), cpus: resources.fetch('cpus'))
++        expect(pool.running).to eq(1)
++        expect(pool.can_reserve?(active)).to be(false)
++        expect(executor).to have_received(:log).with(a_string_including(
++                                                       'WARNING: Test suite/example requests resources beyond the scheduler limits',
++                                                       "requested: #{test.resources.summary}", 'running it alone may exhaust the host'
++                                                     ))
++      ensure
++        executor.send(:stop_work!)
++        worker.join
++      end
+     end
+   end
+ 
+-  it 'runs CPU-only oversized tests alone when both memory constraints fit' do
+-    test = build_test(resources: { 'memoryMiB' => 8000, 'shmMiB' => 8000, 'cpus' => 128 })
+-    executor = build_executor(
+-      [build_test_script(test)], max_memory_mib: 10_000, max_shm_mib: 10_000, max_cpus: 4,
+-                                 memory_reserve_mib: 0, shm_reserve_mib: 0, resource_detector: resource_detector(cpus: 4)
+-    )
+-    allow(executor).to receive(:log)
+-    _i, selected, = executor.send(:reserve_next_test)
+-    expect(selected).to eq(test)
+-    expect(executor.send(:resource_pool).used.cpus).to eq(128)
+-    expect(executor.send(:resource_pool).used.memory_mib).to eq(8000)
+-    expect(executor).to have_received(:log).with(/CPUs beyond.*memory admission enforced/)
+-  end
+-
+   it 'uses an injected startup pool without resampling post-build availability' do
+     pool = TestRunner::ResourcePool.from_options(
+       { resource_detector: resource_detector(memory_mib: [48_000, 40_000], memory_available_mib: [40_000, 1000]),
